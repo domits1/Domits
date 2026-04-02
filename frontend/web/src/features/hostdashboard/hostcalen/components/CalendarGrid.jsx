@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { dayNames, formatYearMonth, getMonthMatrix, isSameMonthUTC, monthNames } from "../utils/date";
 import { cx } from "../utils/classNames";
-import PulseBarsLoader from "./PulseBarsLoader";
+import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import checkPng from "../../../../images/icons/checkPng.png";
 import calendarUnavailablePng from "../../../../images/icons/calendar-unavailable.png";
 import externalLinkIcon from "../../../../images/icons/external-link-icon.png";

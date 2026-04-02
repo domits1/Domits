@@ -1,551 +1,410 @@
-$brand: #21a33b;               
-$link: #007bff;                
-$text: #111827;
-$text-muted: #555;
-$card-bg: #ffffff;
-$border: #eef0f2;
-$border-strong: #d1d5db;
-$shadow-sm: 0 1px 6px rgba(0,0,0,.05);
-$shadow-md: 0 2px 10px rgba(0,0,0,.06);
-
-.guest-dashboard-page-body {
-  color: $text;
-
-  > h2 {
-    font-size: 24px;
-    margin: 24px 0 8px;
-    text-align: center;
-  }
-
-  .guest-dashboard-dashboards {
-    margin: 0 auto;
-    padding: 0 16px;
-
-    .guest-dashboard-content {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 420px; 
-      gap: 24px;
-      margin-top: 20px;
-     
-      .guest-dashboard-accomodation-side {
-        display: grid;
-        align-content: start;
-        gap: 16px; 
-        
-        .guest-dashboard-viewAllBooking {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-weight: 600;
-          color: $brand;
-          text-decoration: none;
-          padding: 6px 0;
-
-          &:hover { text-decoration: underline; }
-          &:focus-visible {
-            outline: 2px solid rgba(0, 123, 255, .3);
-            outline-offset: 2px;
-            border-radius: 6px;
-          }
-        }
-
-        .booking-details {
-          background: $card-bg;         
-          border: 1px solid $border;      
-          box-shadow: $shadow-md;
-          padding: 12px;
-          display: grid;
-          grid-template-columns: 320px 1fr; 
-          gap: 16px;
-          align-items: start;
-        }
-       
-        .booking-details__media {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 4 / 3;           
-          overflow: hidden;
-          border-radius: 10px;
-          background: #eef2f7;
-        }
-
-        .booking-details__image {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          display: block;
-          object-fit: cover;
-          object-position: center;
-        }
-
-        .booking-details__content {
-          display: grid;
-          gap: 12px;
-        }
-
-        .booking-details__title {
-          font-weight: 700;
-          font-size: 18px;
-          line-height: 1.3;
-          margin: 0;
-        }
-
-        .booking-details__host {
-          font-size: 14px;
-          color: #64748b;
-        }
-       
-        .booking-details__pi {
-          display: grid;
-          gap: 10px;
-        }
-
-        .booking-details__row {
-          display: grid;
-          grid-template-columns: 140px 1fr;   
-          gap: 10px;
-          align-items: center;
-        }
-
-        .booking-details__label {
-          font-weight: 700;
-          color: $text;
-          white-space: nowrap;
-        }
-
-        .booking-details__value,
-        .booking-details__input {
-          min-width: 0;
-        }
-
-        .booking-details__input {
-          width: 100%;
-          padding: 8px 10px;
-          font-size: 14px;
-          border: 1px solid $border-strong;
-          border-radius: 8px;
-          background: #fff;
-
-          &:focus {
-            border-color: $brand;
-            outline: 2px solid rgba(33,163,59,.22);
-            outline-offset: 1px;
-          }
-        }
-
-        .booking-details__actions {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-        .messages-section {
-          background: $card-bg;
-          border: 1px solid $border;
-          border-radius: 12px;
-          padding: 12px 14px;
-          box-shadow: $shadow-sm;
-        }
-
-        .messages-section__header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 8px;
-        }
-
-        .messages-section__title { font-weight: 700; }
-
-        .messages-section__badge {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 22px;
-          height: 22px;
-          padding: 0 6px;
-          font-size: 12px;
-          border-radius: 9999px;
-          background: $brand;
-          color: #fff;
-        }
-
-        .messages-section__cta {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          color: inherit;
-          text-decoration: none;
-          padding: 8px 0;
-          border-radius: 10px;
-          transition: background-color .12s ease, transform .12s ease;
-
-          &:hover   { background: rgba(0,0,0,.02); transform: translateY(-1px); }
-          &:focus-visible {
-            outline: 2px solid rgba($brand, .28);
-            outline-offset: 2px;
-          }
-        }
-
-        .messages-section__icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 9999px;
-          background: rgba($brand, .12);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
-      }
-      
-      .guest-dashboard-personalInfoContent {
-        width: 100%;
-        height: auto;
-       
-        .pi-card {
-          background: $card-bg;
-          border: 1px solid $border;
-          border-radius: 16px;
-          box-shadow: $shadow-md;
-          padding: 16px;
-        }
-
-        .pi-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 12px;
-
-          h3 { font-size: 18px; font-weight: 700; margin: 0; }
-        }
-
-        .pi-list { display: grid; gap: 10px; }
-
-        .pi-row {
-          display: grid;
-          grid-template-columns: 1fr auto;
-          align-items: center;
-          background: $card-bg;
-          border: 1px solid $border;
-          border-radius: 12px;
-          padding: 12px 12px 12px 14px;
-          box-shadow: $shadow-sm;
-        }
-
-        .pi-left {
-          min-width: 0;
-          display: flex;
-          gap: 10px;
-          align-items: center;
-          flex-wrap: wrap;
-        }
-
-        .pi-label { font-weight: 700; white-space: nowrap; }
-
-        .pi-value {
-          color: $text;
-          opacity: .9;
-          min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .pi-input {
-          width: 100%;
-          max-width: 480px;
-          padding: 8px 10px;
-          font-size: 14px;
-          border: 1px solid $border-strong;
-          border-radius: 8px;
-          background: #fff;
-
-          &:focus {
-            border-color: $brand;
-            outline: 2px solid rgba(33,163,59,.22);
-            outline-offset: 1px;
-          }
-        }
-
-        .pi-right   { display: flex; align-items: center; gap: 8px; }
-        .pi-actions { display: flex; align-items: center; gap: 6px; }
-
-        .pi-action {
-          width: 36px; height: 36px;
-          display: inline-flex; align-items: center; justify-content: center;
-          background: $brand;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          box-shadow: 0 1px 6px rgba(0,0,0,.08);
-          transition: transform .12s ease, box-shadow .12s ease;
-
-          img { width: 18px; height: 18px; }
-
-          &:hover  { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
-          &:active { transform: scale(.98); }
-
-          &.cancel {
-            background: #eef2f7;
-            color: #111;
-            font-size: 18px;
-            line-height: 1;
-          }
-        }
-
-        .guest-dashboard-infoBox {
-          margin-bottom: 15px;
-
-          span { font-weight: 700; display: block; margin-bottom: 5px; }
-          p    { font-size: 16px; color: $text-muted; }
-
-          .guest-dashboard-guest-edit-input {
-            width: 100%;
-            padding: 8px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            &:focus { border-color: $link; outline: none; }
-          }
-        }
-      }
-    }
-  }
+.dashboardContainer {
+  display: flex;
+  justify-content: center;
+  width: 90%;
+  margin: auto 5%;
+  margin-bottom: 30px;
 }
 
-/* ---------- Shared buttons ---------- */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  gap: .5rem;
-  padding: .65rem 1rem;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: $brand;
-  color: #fff; text-decoration: none; cursor: pointer;
+.dashboardLeft {
+  width: 100%;
+  max-width: 1900px;
+  margin-top: 24px;
+}
+
+.card h2 {
+  font-size: 28px;
   font-weight: 600;
-}
-.btn--ghost {
-  background: transparent;
-  color: $brand;
-  border-color: $brand;
+  margin-bottom: 4px;
 }
 
-/* -------- Tablet (<= 1024px) -------- */
-@media (max-width: 1024px) {
-  .guest-dashboard-page-body {
-    > h2 {
-      font-size: 22px;
-      margin: 20px 0 8px;
-    }
+.dashboardLeft p {
+  font-size: 18px;
+  color: #444;
+  margin-bottom: 20px;
+}
 
-    .guest-dashboard-dashboards {
-      padding: 0 14px;
+/* STATS */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin: 24px 0;
+}
 
-      .guest-dashboard-content {
-        grid-template-columns: minmax(0, 1fr) 360px; 
-        gap: 18px;
+.statsCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+}
 
-        .guest-dashboard-accomodation-side {
-          gap: 14px;
+.statsIcon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
 
-          .booking-details {
-            padding: 12px;
-            grid-template-columns: 260px 1fr;
-            gap: 14px;
-          }
+.statsText {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
-          .booking-details__title {
-            font-size: 17px;
-          }
+.statsValue {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
 
-          .booking-details__row {
-            grid-template-columns: 120px 1fr;
-            gap: 8px;
-          }
-        }
+.statsLabel {
+  font-size: 13px;
+  color: #444;
+  margin: 0;
+  line-height: 1.2;
+}
 
-        .guest-dashboard-personalInfoContent {
-          .pi-card {
-            padding: 14px;
-            border-radius: 14px;
-          }
+/* GRID */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
 
-          .pi-row {
-            padding: 10px 10px 10px 12px;
-          }
+/* CARD */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid #eaeaea;
+}
 
-          .pi-input {
-            max-width: 420px;
-          }
+.card h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
 
-          .pi-action {
-            width: 34px;
-            height: 34px;
+.card img {
+  width: 200px;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  margin-bottom: 14px;
+}
 
-            img {
-              width: 17px;
-              height: 17px;
-            }
-          }
-        }
-      }
-    }
+.card h4 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+p {
+  font-size: 16px;
+  color: #444;
+  margin: 2px 0;
+}
+
+.card button {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #166534;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mainGrid > div:last-child .card {
+  margin-bottom: 16px;
+}
+
+/* MESSAGES */
+.messageItem {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #eee;
+  padding: 10px 0;
+}
+
+.messageItem strong {
+  font-size: 13px;
+}
+
+.messageTime {
+  font-size: 12px;
+  color: #555;
+}
+
+.seeAllBtn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 8px;
+  background: #f3f3f3;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* EMPTY STATE */
+.emptyState {
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.emptyState p {
+  margin-bottom: 12px;
+}
+
+.emptyBox {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 20px;
+
+  img {
+    width: 120px;
+  }
+
+  button {
+    background: #166534;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
   }
 }
 
-/* -------- Small Tablet / Large Mobile (<= 900px) -------- */
-@media (max-width: 900px) {
-  .guest-dashboard-page-body {
-    .guest-dashboard-dashboards {
-      padding: 0 12px;
+/* STAY */
+.currentStayCard {
+  border: 1px solid #22c55e;
+  background: #f0fdf4;
+  margin-bottom: 30px;
+}
 
-      .guest-dashboard-content {
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-      .guest-dashboard-accomodation-side {
-        .booking-details {
-          grid-template-columns: 1fr;
-          gap: 12px;
-        }
+.cardHeader h2 {
+  margin: 0;
+}
 
-        .booking-details__media {
-          aspect-ratio: 16 / 9;
-          border-radius: 12px;
-        }
+.cardHeader .viewAll {
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #166534;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
 
-        .booking-details__content {
-          gap: 10px;
-        }
+.cardHeader .viewAll:hover {
+  text-decoration: underline;
+}
 
-        .booking-details__title {
-          font-size: 16px;
-        }
+.cardHeader .viewAll:focus-visible {
+  outline: 2px solid rgba(22, 101, 52, 0.35);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
-        .booking-details__row {
-          grid-template-columns: 130px 1fr;
-        }
-      }
+.pastList {
+  margin-top: 10px;
+}
 
-      .guest-dashboard-personalInfoContent {
-        .pi-card {
-          padding: 14px;
-        }
+.pastItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
 
-        .pi-input {
-          max-width: 100%;
-        }
-      }
-    }
+  img {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    object-fit: cover;
+  }
+
+  span {
+    margin-left: auto;
   }
 }
 
-/* -------- Mobile (<= 640px) -------- */
-@media (max-width: 640px) {
-  .guest-dashboard-page-body {
-    margin-left: 50px;
-    padding: 5px;
-    > h2 {
-      font-size: 20px;
-      margin: 16px 0 6px;
-    }
-    
+.pastName {
+  font-size: 14px;
+  font-weight: 500;
+}
 
-    .guest-dashboard-dashboards {
-      padding: 0 10px;
+.pastDates {
+  font-size: 12px;
+  color: #555;
+}
 
-      .guest-dashboard-content {
-        margin-top: 14px;
-        gap: 14px;
-      
+.reminderItem {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid #eee;
 
-      .guest-dashboard-accomodation-side {
-        gap: 12px;
-
-        .booking-details {
-          grid-template-columns: none;
-          padding: 10px;
-          border-radius: 14px;
-        }
-
-        .booking-details__media {
-          border-radius: 12px;
-          aspect-ratio: 4 / 3;
-        }
-
-        .booking-details__title {
-          font-size: 15px;
-        }
-
-        .booking-details__host {
-          font-size: 13px;
-        }
-
-        .booking-details__row {
-          grid-template-columns: 1fr;
-          gap: 6px;
-          align-items: start;
-        }
-
-        .booking-details__label {
-          font-size: 13px;
-          opacity: 0.9;
-        }
-
-        .booking-details__input {
-          font-size: 14px;
-          padding: 8px 10px;
-        }
-
-        .booking-details__actions {
-          gap: 6px;
-        }
-
-        .messages-section {
-          padding: 10px 12px;
-          border-radius: 14px;
-        }
-
-        .messages-section__icon {
-          width: 34px;
-          height: 34px;
-        }
-      }
-
-      .guest-dashboard-personalInfoContent {
-        .pi-card {
-          padding: 12px;
-          border-radius: 14px;
-        }
-
-        .pi-header h3 {
-          font-size: 16px;
-        }
-
-        .pi-row {
-          grid-template-columns: 1fr;
-          gap: 10px;
-          align-items: start;
-        }
-
-        .pi-right {
-          width: 100%;
-          justify-content: flex-end;
-        }
-
-        .pi-value {
-          white-space: normal;
-          overflow: visible;
-          text-overflow: clip;
-        }
-
-        .pi-action {
-          width: 34px;
-          height: 34px;
-        }
-      }
-    }
+  span {
+    color: #16a34a;
   }
 }
+
+.stayInnerCard {
+  display: flex;
+  gap: 0;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+  overflow: hidden;
+  height: 300px;
+}
+
+.stayInnerCard img {
+  width: 345px;
+  height: 100%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.stayContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  padding: 20px;
+  gap: 10px;
+}
+
+.upcomingCard .stayInnerCard {
+  height: 220px;   
+}
+
+.upcomingCard{
+  margin-bottom: 30px;
+}
+
+.upcomingCard .stayInnerCard img {
+  width: 320px;
+}
+
+.metaSeparator {
+  margin: 0 8px;
+  color: #555;
+}
+
+.stayDivider {
+  height: 1px;
+  width: 100%;
+  background: #e5e5e5;
+  margin: 6px 0;
+}
+
+.stayContent h4 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #444;
+  margin: 0;
+}
+
+.stayContent h3 {
+  font-size: 25px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.stayActions, .stayActionsSecondary {
+  display: flex;
+  gap: 15px;
+  margin-top: 12px;
+}
+
+.stayActions button {
+  width: 100%;
+  padding: 10px 25px;
+  background: #15803d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.stayActions button:hover {
+  background: #16a34a;
+  cursor: pointer;
+}
+
+.stayActionsSecondary button {
+  width: 100%;
+  padding: 10px 25px;
+  background: #f5f5f5;
+  color: #000;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.secondaryBtn {
+  margin-top: 12px;
+  padding: 10px 17px;
+  background: #f5f5f5;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.card .secondaryBtn {
+  background: #f5f5f5;
+  color: #000;
+  border: 1px solid #ddd;
+}
+
+.secondaryBtn:hover,
+.stayActionsSecondary button:hover {
+  background: #eaeaea;
+  border-color: #cfcfcf;
+}
+
+.confirmed {
+  color: #16a34a;
+}
+
+@media (max-width: 1100px) {
+  .dashboardLeft {
+    width: 90%;
+  }
+
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

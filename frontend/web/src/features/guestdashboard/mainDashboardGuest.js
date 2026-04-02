@@ -4,10 +4,10 @@ import Pages from "./Pages";
 import GuestDashboard from "./GuestDashboard";
 import GuestBooking from "./GuestBooking";
 import GuestPayments from "./GuestPayments";
-// import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
 import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
+import ReservationDetails from "./ReservationDetails";
 
 const MainDashboardGuest = () => {
   const [activeComponent, setActiveComponent] = useState("Dashboard");
@@ -24,6 +24,11 @@ const MainDashboardGuest = () => {
       "/guestdashboard/wishlist": "Wishlist",
     };
 
+    if (location.pathname.startsWith("/guestdashboard/reservation/")) {
+      setActiveComponent("ReservationDetails");
+      return;
+    }
+
     setActiveComponent(routeToComponentMap[location.pathname] || "Dashboard");
   }, [location.pathname]);
 
@@ -38,15 +43,15 @@ const MainDashboardGuest = () => {
       case "Payments":
         return <GuestPayments />;
 
-      // Work on it later
-      // case "Reviews":
-      //   return <GuestReviews />;
 
       case "Settings":
         return <GuestSettings />;
 
       case "Wishlist":
         return <GuestWishlist />;
+
+      case "ReservationDetails":
+        return <ReservationDetails />;
 
       default:
         return <GuestDashboard />;

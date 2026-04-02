@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import fetchBookingDetailsAndAccommodation from "../utils/FetchBookingDetails";
+import {
+  fetchUserProfileById,
+  getEmptyUserProfile,
+} from "../../services/fetchUserProfileById";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
-const GET_USER_INFO_API = "https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo";
 
 const LEGACY_HOST_CONTACTS_API = "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts";
 const LEGACY_GUEST_CONTACTS_API = "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest";
@@ -18,47 +21,6 @@ const safeJsonParse = (v) => {
 const toIso = (v) => {
   const d = new Date(v ?? Date.now());
   return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-};
-
-const parseCognitoAttributes = (attrsArr) => {
-  if (!Array.isArray(attrsArr)) return null;
-
-  return attrsArr.reduce((acc, a) => {
-    if (a?.Name) acc[a.Name] = a.Value;
-    return acc;
-  }, {});
-};
-
-const fetchUserInfo = async (targetUserId) => {
-  if (!targetUserId) return { givenName: null, userId: targetUserId };
-
-  try {
-    const res = await fetch(GET_USER_INFO_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ UserId: targetUserId }),
-    });
-
-    if (!res.ok) return { givenName: null, userId: targetUserId };
-
-    const userData = await res.json();
-    const parsed = safeJsonParse(userData?.body) ?? userData?.body ?? userData;
-    const first = Array.isArray(parsed) ? parsed[0] : parsed;
-
-    const attrsArr = first?.Attributes;
-    const attrs = parseCognitoAttributes(attrsArr);
-    if (!attrs) return { givenName: null, userId: targetUserId };
-
-    const resolvedUserId =
-      attrs["sub"] || attrs["userId"] || attrsArr?.find?.((a) => a?.Name === "sub")?.Value || targetUserId;
-
-    return {
-      givenName: attrs["given_name"] || attrs["name"] || null,
-      userId: resolvedUserId,
-    };
-  } catch {
-    return { givenName: null, userId: targetUserId };
-  }
 };
 
 const fetchLatestMessage = async (threadId, fallbackRecipientId) => {
@@ -146,7 +108,9 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
   const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
 
   const [userInfo, latestMessage] = await Promise.all([
-    partnerId ? fetchUserInfo(partnerId) : Promise.resolve({ givenName: "Unknown", userId: partnerId }),
+    partnerId
+      ? fetchUserProfileById(partnerId)
+      : Promise.resolve(getEmptyUserProfile(partnerId)),
     contact?.threadId ? fetchLatestMessage(contact.threadId, partnerId) : Promise.resolve(null),
   ]);
 
@@ -204,7 +168,7 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
       contact?.displayName ||
       contact?.contactName ||
       "Unknown",
-    profileImage: contact?.profileImage || null,
+    profileImage: contact?.profileImage || userInfo?.profileImage || null,
 
     latestMessage,
     accoImage,
