@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
-import { createTask, fetchTasks } from './services/faketaskService';
+import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
+import { 
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+    PieChart, Pie, Cell 
+} from 'recharts';
 
 const DEFAULT_FILTERS = {
     property: 'All properties',
@@ -16,6 +20,7 @@ const DEFAULT_NEW_TASK = {
     title: '',
     description: '',
     property: '',
+    property_id: '',
     bookingRef: '',
     type: 'Cleaning',
     assignee: '',
@@ -27,6 +32,7 @@ const DEFAULT_NEW_TASK = {
 const CURRENT_USER = 'Sophie Janssen';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
+
 
 const isTaskOverdue = (task, todayStr) => (
     Boolean(task?.dueDate) &&
@@ -131,7 +137,8 @@ const HostPropertyCare = () => {
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [hostPropertyOptions, setHostPropertyOptions] = useState([]);
+    const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [newTask, setNewTask] = useState({ ...DEFAULT_NEW_TASK });
 
@@ -143,23 +150,125 @@ const HostPropertyCare = () => {
     const [confirmDialog, setConfirmDialog] = useState({
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
-    const handleToggleComplete = (task) => {
+
+    const CURRENT_USER = 'Sophie Janssen';
+
+    const [propertyOptions, setPropertyOptions] = useState([]);
+    const [timeView, setTimeView] = useState('Weekly');
+
+    const reportData = useMemo(() => {
+        const filtered = tasks.filter((task) => matchesTaskFilters(task, filters, {
+            includeAssignee: true,
+            includeDate: true,
+            excludeLegacy: true,
+        }));
+
+        const total = filtered.length;
+        const completed = filtered.filter(t => t.status === 'Completed').length;
+        const overdue = filtered.filter(t => t.status === 'Overdue').length;
+        const inProgress = filtered.filter(t => t.status === 'In progress').length;
+        const pending = filtered.filter(t => t.status === 'Pending').length;
+        const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        const completedWithDates = filtered.filter(t => t.status === 'Completed' && t.completed_date && t.created_at);
+        const avgMs = completedWithDates.length > 0
+            ? completedWithDates.reduce((sum, t) => sum + (Number(t.completed_date) - Number(t.created_at)), 0) / completedWithDates.length
+            : 0;
+        const avgCompletionTime = completedWithDates.length > 0
+            ? `${Math.floor(avgMs / 3600000)}h ${Math.floor((avgMs % 3600000) / 60000)}m`
+            : '—';
+
+        const weekStart = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const overdueThisWeek = filtered.filter(t =>
+            t.status === 'Overdue' && t.due_date && Number(t.due_date) >= weekStart
+        ).length;
+
+        const distributionData = [
+            { name: 'Pending', value: pending, color: '#6c757d' },
+            { name: 'In Progress', value: inProgress, color: '#0062cc' },
+            { name: 'Completed', value: completed, color: '#1e7e34' },
+            { name: 'Overdue', value: overdue, color: '#dc3545' },
+        ];
+
+        const getIntervalKey = (timestamp) => {
+            if (!timestamp) return null;
+            const date = new Date(Number(timestamp));
+            if (timeView === 'Daily') {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            const monday = new Date(date);
+            monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${fmt(monday)} – ${fmt(sunday)}`;
+        };
+
+        const getSortTimestamp = (timestamp) => {
+            if (!timestamp) return 0;
+            const date = new Date(Number(timestamp));
+            if (timeView === 'Daily') return date.getTime();
+            const monday = new Date(date);
+            monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+            monday.setHours(0, 0, 0, 0);
+            return monday.getTime();
+        };
+
+        const timeMap = {};
+        filtered.forEach(task => {
+            const key = getIntervalKey(task.created_at);
+            const sortTs = getSortTimestamp(task.created_at);
+            if (!key) return;
+            if (!timeMap[key]) timeMap[key] = { date: key, _sort: sortTs, pending: 0, progress: 0, completed: 0, overdue: 0 };
+            if (task.status === 'Pending') timeMap[key].pending++;
+            else if (task.status === 'In progress') timeMap[key].progress++;
+            else if (task.status === 'Completed') timeMap[key].completed++;
+            else if (task.status === 'Overdue') timeMap[key].overdue++;
+        });
+        const timeData = Object.values(timeMap).sort((a, b) => a._sort - b._sort);
+
+        const propertyMap = {};
+        filtered.forEach(task => {
+            const label = task.property || task.property_snapshot_label || 'Unknown';
+            if (!propertyMap[label]) propertyMap[label] = { label, completed: 0, inProgress: 0, overdue: 0, total: 0 };
+            propertyMap[label].total++;
+            if (task.status === 'Completed') propertyMap[label].completed++;
+            else if (task.status === 'In progress') propertyMap[label].inProgress++;
+            else if (task.status === 'Overdue') propertyMap[label].overdue++;
+        });
+        const byProperty = Object.values(propertyMap);
+
+        return { total, completed, overdue, inProgress, pending, completionRate, avgCompletionTime, overdueThisWeek, distributionData, timeData, byProperty };
+    }, [tasks, filters, timeView]);
+
+    useEffect(() => {
+        fetchHostTaskPropertyOptions().then(setPropertyOptions);
+    }, []);
+    
+    const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const todayStr = getTodayString(); 
-        
+        const todayStr = new Date().toISOString().split('T')[0];
+
         const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
-        
+
         const updatedTask = {
             ...task,
             status: newStatus,
-            completedAt: newStatus === 'Completed' ? todayStr : null, 
+            completedAt: newStatus === 'Completed' ? todayStr : null,
+            completed_date: newStatus === 'Completed' ? Date.now() : null,
             activities: [
                 ...(task.activities || []),
                 { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
             ]
         };
-        
+
         setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+
+        try {
+            await updateTask(task.id, { status: newStatus });
+        } catch {
+            setTasks(tasks.map(t => t.id === task.id ? task : t));
+        }
     };
 
     useEffect(() => {
@@ -167,24 +276,8 @@ const HostPropertyCare = () => {
     }, []);
 
     useEffect(() => {
-        let mounted = true;
-
-        const loadHostProperties = async () => {
-            const options = await fetchHostTaskPropertyOptions();
-
-            if (!mounted) {
-                return;
-            }
-
-            setHostPropertyOptions(Array.isArray(options) ? options : []);
-        };
-
-        loadHostProperties();
-
-        return () => {
-            mounted = false;
-        };
-    }, []);
+        setCurrentPage(1);
+    }, [filters, sortConfig, activeTab]);
 
     useEffect(() => {
         const today = new Date();
@@ -208,8 +301,14 @@ const HostPropertyCare = () => {
     const loadData = async () => {
         setIsLoading(true);
         const data = await fetchTasks();
-        const todayStr = getTodayString();
-        const processedTasks = data.map((task) => normalizeTaskStatus(task, todayStr));
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        const processedTasks = data.map(task => {
+            if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
+                return { ...task, status: 'Overdue', priority: 'Urgent' };
+            }
+            return task;
+        });
 
         setTasks(processedTasks);
         setIsLoading(false);
@@ -231,20 +330,42 @@ const HostPropertyCare = () => {
                 }]
             }; 
             
-            const todayStr = getTodayString();
-            let created = normalizeTaskStatus(await createTask(taskPayload), todayStr);
+            let created = await createTask(taskPayload);
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
+                created = { ...created, status: 'Overdue', priority: 'Urgent' };
+            }
 
             setTasks([created, ...tasks]);
             setIsModalOpen(false);
             resetForm();
         } catch {
             alert("Error creating task");
-        };
-    }
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handlePropertyChange = (e) => {
+        const selected = createPropertyOptions.find(o => o.id === e.target.value);
+        setNewTask(prev => ({
+            ...prev,
+            property_id: selected?.id || '',
+            property: selected?.label || '',
+        }));
+    };
+
+    const handleEditPropertyChange = (e) => {
+        const selected = editPropertyOptions.find(o => o.id === e.target.value);
+        setEditedTask(prev => ({
+            ...prev,
+            property_id: selected?.id || prev.property_id,
+            property: selected?.label || '',
+        }));
     };
 
     const resetForm = () => {
@@ -303,7 +424,7 @@ const HostPropertyCare = () => {
         }
     };
 
-    const handleSaveChanges = () => {
+    const handleSaveChanges = async () => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         const newLogs = [];
 
@@ -329,12 +450,38 @@ const HostPropertyCare = () => {
 
         const updatedTask = {
             ...editedTask,
+            completed_date: editedTask.status === 'Completed' && viewingTask.status !== 'Completed'
+                ? Date.now()
+                : editedTask.completed_date ?? null,
             activities: [...(editedTask.activities || []), ...newLogs]
         };
 
         setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
         setViewingTask(null);
         setEditedTask(null);
+
+        try {
+            await updateTask(updatedTask.id, updatedTask);
+        } catch {
+            setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
+        }
+    };
+
+    const confirmDeleteTask = async (taskId) => {
+        setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, isLegacy: true } : t
+        ));
+        setViewingTask(null);
+        setEditedTask(null);
+        closeConfirmDialog();
+
+        try {
+            await deleteTask(taskId);
+        } catch {
+            setTasks(prev => prev.map(t =>
+                t.id === taskId ? { ...t, isLegacy: false } : t
+            ));
+        }
     };
 
     const handleDeleteSingleTask = () => {
@@ -344,15 +491,7 @@ const HostPropertyCare = () => {
             message: `Are you sure you want to delete "${viewingTask.title}"? It will be moved to your Legacy Tasks list.`,
             confirmText: 'Yes, Delete',
             cancelText: 'Cancel',
-            onConfirm: async () => {
-                
-                setTasks(tasks.map(t => 
-                    t.id === viewingTask.id ? { ...t, isLegacy: true } : t
-                ));
-                setViewingTask(null);
-                setEditedTask(null);
-                closeConfirmDialog();
-            }
+            onConfirm: () => confirmDeleteTask(viewingTask.id),
         });
     };
 
@@ -364,6 +503,24 @@ const HostPropertyCare = () => {
     const handleClearFilters = () => {
         setFilters({ ...DEFAULT_FILTERS });
     };
+    const renderCommonFilters = () => (
+        <>
+            <select name="property" value={filters.property} onChange={handleFilterChange}>
+                <option value="All properties">All properties</option>
+                {filterPropertyOptions.map(label => (
+                    <option key={label} value={label}>{label}</option>
+                ))}
+            </select>
+
+            <select name="status" value={filters.status} onChange={handleFilterChange}>
+                <option value="All statuses">All statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="In progress">In progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Overdue">Overdue</option>
+            </select>
+        </>
+    );
 
     const getFilteredTasks = () => {
         return tasks.filter((task) => matchesTaskFilters(task, filters, {
@@ -376,104 +533,324 @@ const HostPropertyCare = () => {
     };
 
     const filteredTasks = getFilteredTasks();
+
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const getSortedTasks = (tasksToSort) => {
+        return [...tasksToSort].sort((a, b) => {
+            const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+
+            if (sortConfig.key === 'priority') {
+                const priorityValues = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+                const aVal = priorityValues[a.priority] || 0;
+                const bVal = priorityValues[b.priority] || 0;
+                return (aVal - bVal) * modifier;
+            }
+            if (sortConfig.key === 'dueDate') {
+                const aDate = a.dueDate ? new Date(a.dueDate).getTime() : new Date('9999-12-31').getTime();
+                const bDate = b.dueDate ? new Date(b.dueDate).getTime() : new Date('9999-12-31').getTime();
+                return (aDate - bDate) * modifier;
+            }
+            const aStr = (a[sortConfig.key] || '').toString().toLowerCase();
+            const bStr = (b[sortConfig.key] || '').toString().toLowerCase();
+            
+            if (aStr < bStr) return -1 * modifier;
+            if (aStr > bStr) return 1 * modifier;
+            return 0;
+        });
+    };
+
+    const displayedTasks = getSortedTasks(filteredTasks);
     const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
     const filterPropertyOptions = useMemo(() => {
-        const optionSet = new Set();
-
-        hostPropertyOptions.forEach((option) => {
-            const normalizedOption = String(option || "").trim();
-            if (normalizedOption) {
-                optionSet.add(normalizedOption);
-            }
-        });
+        const labelSet = new Set(propertyOptions.map(o => o.label));
 
         tasks.forEach((task) => {
             const normalizedProperty = String(task?.property || "").trim();
             if (normalizedProperty) {
-                optionSet.add(normalizedProperty);
+                labelSet.add(normalizedProperty);
             }
         });
 
         [newTask.property, editedTask?.property].forEach((value) => {
             const normalizedValue = String(value || "").trim();
             if (normalizedValue) {
-                optionSet.add(normalizedValue);
+                labelSet.add(normalizedValue);
             }
         });
 
-        return [...optionSet];
-    }, [editedTask?.property, hostPropertyOptions, newTask.property, tasks]);
-    const createPropertyOptions = useMemo(() => {
-        return hostPropertyOptions
-            .map((option) => String(option || "").trim())
-            .filter(Boolean);
-    }, [hostPropertyOptions]);
+        return [...labelSet];
+    }, [editedTask?.property, propertyOptions, newTask.property, tasks]);
+
+    const createPropertyOptions = useMemo(() => propertyOptions, [propertyOptions]);
+
+    const assigneeOptions = useMemo(() => {
+        const set = new Set(tasks.map(t => t.assignee).filter(Boolean));
+        return [...set].sort((a, b) => a.localeCompare(b));
+    }, [tasks]);
+
     const editPropertyOptions = useMemo(() => {
-        const optionSet = new Set(createPropertyOptions);
-        const currentEditedProperty = String(editedTask?.property || "").trim();
-        if (currentEditedProperty) {
-            optionSet.add(currentEditedProperty);
+        const currentLabel = String(editedTask?.property || "").trim();
+        if (currentLabel && !propertyOptions.some(o => o.label === currentLabel)) {
+            return [...propertyOptions, { id: editedTask?.property_id || "", label: currentLabel }];
         }
-        return [...optionSet];
-    }, [createPropertyOptions, editedTask?.property]);
+        return propertyOptions;
+    }, [propertyOptions, editedTask?.property, editedTask?.property_id]);
 
-    const renderTaskSearchBox = (compactSearch = false) => (
-        <div className={`search-box${compactSearch ? ' small-search' : ''}`}>
-            <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-            {compactSearch ? (
-                <span aria-hidden="true">🔍</span>
-            ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            )}
-        </div>
-    );
+    const ITEMS_PER_PAGE = 10;
+    const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
 
-    const renderFilterControls = ({
-        className,
-        showAssignee = false,
-        showDate = false,
-        compactSearch = false,
-        priorityOptions,
-    }) => (
-        <div className={className}>
-            <select name="property" value={filters.property} onChange={handleFilterChange}>
-                <option value={DEFAULT_FILTERS.property}>All properties</option>
-                {filterPropertyOptions.map((propertyOption) => (
-                    <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
-                ))}
-            </select>
-            <select name="status" value={filters.status} onChange={handleFilterChange}>
-                <option value={DEFAULT_FILTERS.status}>All statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="In progress">In progress</option>
-            </select>
-            {showAssignee && (
-                <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
-                    <option value={DEFAULT_FILTERS.assignee}>Anyone</option>
-                    <option value="Sophie Janssen">Sophie Janssen</option>
-                    <option value="Jan de Vries">Jan de Vries</option>
-                    <option value="Lisa Meijer">Lisa Meijer</option>
-                </select>
-            )}
-            {showDate && (
-                <select name="date" value={filters.date} onChange={handleFilterChange}>
-                    <option value={DEFAULT_FILTERS.date}>Any date</option>
-                    <option value="Today">Today</option>
-                    <option value="This Week">This Week</option>
-                </select>
-            )}
-            <select name="priority" value={filters.priority} onChange={handleFilterChange}>
-                <option value={DEFAULT_FILTERS.priority}>Any priority</option>
-                {priorityOptions.map((priorityOption) => (
-                    <option key={priorityOption} value={priorityOption}>{priorityOption}</option>
-                ))}
-            </select>
-            {renderTaskSearchBox(compactSearch)}
-        </div>
-    );
+    let paginatedTasks = [];
+    if (activeTab === 'Overview') {
+        paginatedTasks = displayedTasks.slice(0, ITEMS_PER_PAGE);
+    } else {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        paginatedTasks = displayedTasks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }
+
+    const handlePrevPage = () => setCurrentPage(p => Math.max(p - 1, 1));
+    const handleNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
+
+    const handleExportCSV = () => {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-GB').replaceAll('/', '-');
+        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replaceAll(':', '-');
+        const timeDisplay = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        const lines = [];
+        
+
+        lines.push(
+            'TASK REPORT SUMMARY',
+            `Generated,${now.toLocaleDateString('en-GB')} ${timeDisplay}`,
+            '',
+            'KPI METRICS',
+            `Completion Rate,${reportData.completionRate}%`,
+            `Avg Completion Time,${reportData.avgCompletionTime}`,
+            `Total Tasks,${reportData.total}`,
+            `Completed,${reportData.completed}`,
+            `Pending,${reportData.pending}`,
+            `In Progress,${reportData.inProgress}`,
+            `Overdue,${reportData.overdue}`,
+            `Overdue This Week,${reportData.overdueThisWeek}`,
+            '',
+            'TASKS BY PROPERTY',
+            'Property,Total,Completed,In Progress,Overdue'
+        );
+
+        reportData.byProperty.forEach(prop => {
+            lines.push(`"${prop.label}",${prop.total},${prop.completed},${prop.inProgress},${prop.overdue}`);
+        });
+
+        lines.push(
+            '',
+            'TASK LIST',
+            'Title,Status,Priority,Property,Assignee,Due Date'
+        );
+        const filtered = tasks.filter(t => matchesTaskFilters(t, filters, {
+            includeAssignee: true,
+            includeDate: true,
+            excludeLegacy: true,
+        }));
+        filtered.forEach(t => {
+            lines.push([
+                `"${(t.title || '').replaceAll('"', '""')}"`,
+                t.status || '',
+                t.priority || '',
+                `"${(t.property || '').replaceAll('"', '""')}"`,
+                t.assignee || '',
+                t.dueDate || '',
+            ].join(','));
+        });
+
+        const csv = lines.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tasks-report_${dateStr}_${timeStr}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const renderReportsView = () => {
+        return (
+            <div className="reports-container">
+                <div className="reports-controls">
+                    <div className="reports-filters">
+                            {renderCommonFilters()}
+                        <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                            <option value="Any priority">Any priority</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
+                            <option value="Anyone">Anyone</option>
+                            {assigneeOptions.map(a => (
+                                <option key={a} value={a}>{a}</option>
+                            ))}
+                        </select>
+                        <select name="date" value={filters.date} onChange={handleFilterChange}>
+                            <option value="Any date">Any date</option>
+                            <option value="Today">Today</option>
+                            <option value="This Week">This Week</option>
+                        </select>
+                    </div>
+                    <button className="btn-export-green" onClick={handleExportCSV}>↥ Export CSV</button>
+                </div>
+
+                <div className="reports-main-grid">
+                    <div className="reports-left-col">
+                        <div className="reports-kpi-row">
+                            <div className="kpi-card-v2">
+                                <span className="kpi-title">Completion Rate</span>
+                                <span className="kpi-main-val green-text">{reportData.completionRate}%</span>
+                                <span className="kpi-sub">Completed {reportData.completed} out of {reportData.total} tasks</span>
+                            </div>
+                            <div className="kpi-card-v2">
+                                <span className="kpi-title">Avg Completion Time</span>
+                                <span className="kpi-main-val">{reportData.avgCompletionTime}</span>
+                                <span className="kpi-sub">Average time taken to complete each task.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="reports-right-col">
+                        <div className="kpi-card-v2">
+                            <span className="kpi-title">Overdue Tasks</span>
+                            <span className="kpi-main-val red-text">{reportData.overdue}</span>
+                            <span className="kpi-sub">{reportData.overdueThisWeek} this week · {reportData.overdue} tasks exceeded their deadline.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="reports-main-grid">
+                    <div className="chart-box tasks-over-time">
+                        <div className="chart-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
+                            <h4 style={{margin:0}}>Tasks Over Time</h4>
+                            <div className="chart-toggle" style={{display:'flex', gap:'8px'}}>
+                                {['Weekly', 'Daily'].map(v => (
+                                    <button
+                                        key={v}
+                                        onClick={() => setTimeView(v)}
+                                        style={{
+                                            padding: '4px 12px',
+                                            borderRadius: '4px',
+                                            border: '1px solid #ced4da',
+                                            background: timeView === v ? '#28a745' : '#fff',
+                                            color: timeView === v ? '#fff' : '#495057',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                        }}
+                                    >{v}</button>
+                                ))}
+                            </div>
+                        </div>
+                        <div style={{ width: '100%', height: 300 }}>
+                            <ResponsiveContainer>
+                                <BarChart data={reportData.timeData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} />
+                                    <Tooltip cursor={{fill: '#f5f5f5'}} />
+                                    <Legend wrapperStyle={{fontSize: '12px', paddingTop: '12px'}} />
+                                    <Bar dataKey="pending" name="Pending" stackId="a" fill="#6c757d" barSize={30} />
+                                    <Bar dataKey="progress" name="In Progress" stackId="a" fill="#0062cc" />
+                                    <Bar dataKey="completed" name="Completed" stackId="a" fill="#1e7e34" />
+                                    <Bar dataKey="overdue" name="Overdue" stackId="a" fill="#dc3545" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="chart-box task-distribution">
+                        <h4>Task Distribution</h4>
+                        <div className="donut-wrapper">
+                            <div className="donut-chart-area">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={reportData.distributionData.filter(d => d.value > 0)}
+                                            innerRadius="45%"
+                                            outerRadius="65%"
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                            cx="50%"
+                                            cy="50%"
+                                        >
+                                            {reportData.distributionData.filter(d => d.value > 0).map((entry) => (
+                                                <Cell key={`cell-${entry.name}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(value, name) => [`${value} tasks`, name]} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="donut-legend">
+                                {reportData.distributionData.map(d => (
+                                    <div key={d.name} className="summary-item" style={{ border: 'none', padding: '5px 0' }}>
+                                        <span className="dot" style={{ backgroundColor: d.color, marginRight: '8px' }}></span>
+                                        <span style={{fontSize: '13px'}}>{d.name}</span>
+                                        <span className="sum-val">{d.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="reports-bottom-row">
+                    <div className="chart-box tasks-by-property">
+                        <h4>Tasks by Property</h4>
+                        <div className="property-list-v2">
+                            {reportData.byProperty.length === 0 ? (
+                                <p className="empty-state">No tasks match current filters.</p>
+                            ) : reportData.byProperty.map(prop => {
+                                const completedPct = prop.total > 0 ? (prop.completed / prop.total) * 100 : 0;
+                                const progressPct = prop.total > 0 ? (prop.inProgress / prop.total) * 100 : 0;
+                                const overduePct = prop.total > 0 ? (prop.overdue / prop.total) * 100 : 0;
+                                return (
+                                    <div key={prop.label} className="prop-row-v2">
+                                        <div className="prop-name-cell">{prop.label}</div>
+                                        <div className="prop-status-label">
+                                            {prop.completed === prop.total && prop.total > 0 ? 'Completed' : 'In progress'}
+                                        </div>
+                                        <div className="prop-progress-wrapper">
+                                            <div className="multi-progress">
+                                                <div className="progress-segment p-done" style={{width: `${completedPct}%`}}></div>
+                                                <div className="progress-segment p-progress" style={{width: `${progressPct}%`}}></div>
+                                                <div className="progress-segment p-overdue" style={{width: `${overduePct}%`}}></div>
+                                            </div>
+                                        </div>
+                                        <div className="prop-total-val">{prop.total}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="chart-box task-summary-panel">
+                        <h4>Task Summary</h4>
+                        <div className="summary-list">
+                            <div className="summary-item"><span className="sum-icon">📋</span> Total Tasks <span className="sum-val">{reportData.total}</span></div>
+                            <div className="summary-item"><span className="dot dot-pending" style={{marginRight:'8px'}}></span> Pending <span className="sum-val">{reportData.pending}</span></div>
+                            <div className="summary-item"><span className="dot dot-inprogress" style={{marginRight:'8px'}}></span> In Progress <span className="sum-val">{reportData.inProgress}</span></div>
+                            <div className="summary-item"><span className="dot dot-completed" style={{marginRight:'8px'}}></span> Completed <span className="sum-val">{reportData.completed}</span></div>
+                            <div className="summary-item"><span className="dot dot-overdue" style={{marginRight:'8px'}}></span> Overdue <span className="sum-val">{reportData.overdue}</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     const renderContent = () => {
         if (isLoading) return <div className="loading">Loading...</div>;
@@ -485,24 +862,29 @@ const HostPropertyCare = () => {
             case 'My Tasks':
                 return renderMyTasksView();
             case 'Reports':
-                return <div className="placeholder-view">Reports View</div>;
+                return renderReportsView();
             case 'Settings':
-                return <div className="placeholder-view">Settings View</div>;
+                return <div className="placeholder-view">Coming soon</div>;
             default:
                 return null;
         }
     };
     const renderMyTasksView = () => {
-        const todayStr = getTodayString();
+        const todayStr = new Date().toISOString().split('T')[0];
 
         let myTasks = tasks.filter(t => t.assignee === CURRENT_USER && !t.isLegacy);
 
-        myTasks = myTasks.filter((task) => matchesTaskFilters(task, filters, {
-            searchFields: ['title'],
-        }));
+        myTasks = myTasks.filter(task => {
+            const matchProperty = filters.property === 'All properties' || task.property === filters.property;
+            const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
+            const matchPriority = filters.priority === 'Any priority' || task.priority === filters.priority;
+            const searchLower = filters.search.toLowerCase();
+            const matchSearch = filters.search === '' || (task.title?.toLowerCase().includes(searchLower));
+            return matchProperty && matchStatus && matchPriority && matchSearch;
+        });
 
         const todayTasks = myTasks.filter(t => t.dueDate === todayStr && t.status !== 'Overdue');
-        const overdueTasks = myTasks.filter(t => t.status === 'Overdue' || isTaskOverdue(t, todayStr));
+        const overdueTasks = myTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed'));
         
         const upcomingTasks = myTasks.filter(t => t.dueDate && t.dueDate > todayStr)
             .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
@@ -573,11 +955,19 @@ const HostPropertyCare = () => {
                             <h3>Today's Tasks</h3>
                             <span className="task-count">{todayTasks.length} Tasks</span>
                         </div>
-                        {renderFilterControls({
-                            className: 'my-tasks-filters',
-                            compactSearch: true,
-                            priorityOptions: ['Urgent', 'Medium', 'Low'],
-                        })}
+                        <div className="my-tasks-filters">
+                            {renderCommonFilters()}
+                            <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                                <option value="Any priority">Any priority</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <div className="search-box small-search">
+                                <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
+                                <span aria-hidden="true">🔍</span>
+                            </div>
+                        </div>
                     </div>
                     <div className="my-task-list">
                         {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! 🎉</p>}
@@ -606,15 +996,36 @@ const HostPropertyCare = () => {
             </div>
         );
     };
+    const getSortIcon = (columnKey, defaultIcon = '') => {
+        if (sortConfig.key !== columnKey) return defaultIcon;
+        return sortConfig.direction === 'asc' ? '▴' : '▾';
+    };
+
+    const renderPagination = () => (
+        <div className="pagination">
+            <button onClick={handlePrevPage} disabled={currentPage === 1}>Previous</button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button onClick={handleNextPage} disabled={currentPage === totalPages}>Next</button>
+        </div>
+    );
+
     const renderTableView = () => (
         <div className="overview-container">
             <div className="filters-bar">
-                {renderFilterControls({
-                    className: 'filters-dropdowns',
-                    showAssignee: true,
-                    showDate: true,
-                    priorityOptions: ['Urgent', 'High', 'Medium', 'Low'],
-                })}
+                <div className="filters-dropdowns">
+                    {renderCommonFilters()}
+                    <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                        <option value="Any priority">Any priority</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                    <div className="search-box small-search">
+                        <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
+                        <span aria-hidden="true">🔍</span>
+                    </div>
+                </div>
 
                 <div className="active-filters-row">
                     <div className="status-tags">
@@ -632,25 +1043,44 @@ const HostPropertyCare = () => {
                 <table className="tasks-table">
                     <thead>
                         <tr>
-                            <th>Task</th>
-                            <th>Property ▾</th>
-                            <th>Type</th>
-                            <th>Assignee</th>
-                            <th>Due Date ▾</th>
-                            <th>Priority ▾</th>
-                            <th>Status ▾</th>
+                            <th onClick={() => handleSort('title')} className="sortable-header">
+                                Task {getSortIcon('title', '')}
+                            </th>
+                            <th onClick={() => handleSort('property')} className="sortable-header">
+                                Property {getSortIcon('property', '▾')}
+                            </th>
+                            <th onClick={() => handleSort('type')} className="sortable-header">
+                                Type {getSortIcon('type', '')}
+                            </th>
+                            <th onClick={() => handleSort('assignee')} className="sortable-header">
+                                Assignee {getSortIcon('assignee', '')}
+                            </th>
+                            <th onClick={() => handleSort('dueDate')} className="sortable-header">
+                                Due Date {getSortIcon('dueDate', '▾')}
+                            </th>
+                            <th onClick={() => handleSort('priority')} className="sortable-header">
+                                Priority {getSortIcon('priority', '▾')}
+                            </th>
+                            <th onClick={() => handleSort('status')} className="sortable-header">
+                                Status {getSortIcon('status', '▾')}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredTasks.length === 0 ? (
+                        {displayedTasks.length === 0 ? (
                             <tr>
-                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#6c757d'}}>
+                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#495057'}}>
                                     No tasks match your filters (or all are completed/deleted).
                                 </td>
                             </tr>
                         ) : (
-                            filteredTasks.map(task => (
-                                <tr key={task.id} className={`clickable-row row-${task.status.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
+                            paginatedTasks.map(task => {
+                                const isOverdue = task.status === 'Overdue' || isTaskOverdue(task, getTodayString());
+                                const displayPriority = isOverdue ? 'Urgent' : (task.priority || 'Low');
+                                const displayStatus = isOverdue ? 'Overdue' : task.status;
+
+                                return (
+                                <tr key={task.id} className={`clickable-row row-${displayStatus.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
                                     <td>
                                         <div className="task-title-cell" title={task.title}>
                                             <span className="task-arrow">▶</span> 
@@ -662,22 +1092,23 @@ const HostPropertyCare = () => {
                                     <td>{task.property}</td>
                                     <td>{task.type}</td>
                                     <td>{task.assignee}</td>
-                                    <td>{task.dueDate || 'Today'}</td>
+                                    <td>{task.dueDate === new Date().toISOString().split('T')[0] ? 'Today' : task.dueDate}</td>
                                     <td>
-                                        <span className={`badge-priority ${task.priority ? task.priority.toLowerCase() : 'medium'}`}>
-                                            {task.priority || 'Medium'}
+                                        <span className={`badge-priority ${displayPriority.toLowerCase()}`}>
+                                            {displayPriority}
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`badge-status ${task.status.toLowerCase().replace(' ', '-')}`}>
-                                            ● {task.status}
+                                        <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
+                                            ● {displayStatus}
                                         </span>
                                     </td>
                                 </tr>
-                            ))
+                            )})
                         )}
                     </tbody>
                 </table>
+                {renderPagination()}
             </div>
         </div>
     );
@@ -763,12 +1194,10 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-property'>Property</label>
-                                <select id='task-property' name="property" value={newTask.property} onChange={handleInputChange} required>
-                                    <option value="" disabled hidden>
-                                        {createPropertyOptions.length > 0 ? "Select Property" : "No properties available"}
-                                    </option>
-                                    {createPropertyOptions.map((propertyOption) => (
-                                        <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
+                                <select id='task-property' name="property" value={newTask.property_id} onChange={handlePropertyChange} required>
+                                    <option value="" disabled hidden>Select Property</option>
+                                    {createPropertyOptions.map(o => (
+                                        <option key={o.id} value={o.id}>{o.label}</option>
                                     ))}
                                 </select>
                             </div>
@@ -795,7 +1224,7 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-due-date'>Due Date</label>
-                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} onChange={handleInputChange} required />
+                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} onChange={handleInputChange} onClick={(e) => e.target.showPicker?.()} required />
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-priority'>Priority</label>
@@ -828,7 +1257,13 @@ const HostPropertyCare = () => {
                 <div className="modal-overlay">
                     <div className="modal-content-large task-details-modal">
                         <div className="modal-header details-header">
-                            <h3 className="details-title">{editedTask.title}</h3>
+                            <input
+                                className="details-title-input"
+                                name="title"
+                                value={editedTask.title}
+                                onChange={handleEditChange}
+                                placeholder="Task title"
+                            />
                             <button className="close-btn" onClick={closeTaskDetails}>✕</button>
                         </div>
                         
@@ -845,9 +1280,9 @@ const HostPropertyCare = () => {
                                 <option value="High">High</option>
                                 <option value="Urgent">Urgent</option>
                             </select>
-                            <select name="property" value={editedTask.property || ''} onChange={handleEditChange} className="badge-select property-badge">
-                                {editPropertyOptions.map((propertyOption) => (
-                                    <option key={propertyOption} value={propertyOption}>🏢 {propertyOption}</option>
+                            <select name="property" value={editedTask.property_id || ''} onChange={handleEditPropertyChange} className="badge-select property-badge">
+                                {editPropertyOptions.map((o) => (
+                                    <option key={o.id} value={o.id}>🏢 {o.label}</option>
                                 ))}
                             </select>
                         </div>
@@ -881,7 +1316,7 @@ const HostPropertyCare = () => {
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor='task-due-date'>Due Date</label>
-                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} />
+                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} onClick={(e) => e.target.showPicker?.()} />
                                 </div>
                             </div>
 
@@ -952,5 +1387,4 @@ const HostPropertyCare = () => {
         </main>
     );
 };
-
 export default HostPropertyCare;

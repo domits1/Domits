@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "dotenv": "^17.2.2"
+    "dotenv": "^17.2.2",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "eslint-plugin-react-hooks": "^7.0.1"
