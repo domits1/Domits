@@ -1228,6 +1228,55 @@ export default function HostPropertyPoliciesTab({
     }));
   };
 
+  const policyRuleSections = [
+    {
+      title: "Property Rules",
+      toggleFields: PROPERTY_RULE_TOGGLE_FIELDS,
+      sectionState: propertyRuleSection,
+    },
+    {
+      title: "Safety & Property",
+      toggleFields: SAFETY_RULE_TOGGLE_FIELDS,
+      sectionState: safetyRuleSection,
+    },
+  ];
+  const checkInFieldSections = [
+    {
+      id: "checkin",
+      label: "Check-in",
+      windowKey: "checkIn",
+      fallbackValue: CHECK_IN_FALLBACK_TIME,
+      lateEnabled: lateCheckInEnabled,
+      values: checkInDetails?.checkIn,
+    },
+    {
+      id: "checkout",
+      label: "Check-out",
+      windowKey: "checkOut",
+      fallbackValue: CHECK_OUT_FALLBACK_TIME,
+      lateEnabled: lateCheckOutEnabled,
+      values: checkInDetails?.checkOut,
+    },
+  ];
+  const policyAvailabilityFields = [
+    {
+      id: "advance-notice",
+      label: "Minimum advance notice",
+      hint: "Minimum amount of notice required before a guest can book.",
+      value: policyAvailabilitySettings?.advanceNoticeDays ?? 0,
+      field: "advanceNoticeDays",
+      options: ADVANCE_NOTICE_OPTIONS,
+    },
+    {
+      id: "prep-time",
+      label: "Preparation time",
+      hint: "Time required between bookings to clean and prepare the property.",
+      value: policyAvailabilitySettings?.preparationTimeDays ?? 0,
+      field: "preparationTimeDays",
+      options: PREPARATION_TIME_OPTIONS,
+    },
+  ];
+
   return (
     <>
       <section className={`${styles.card} ${styles.policiesCard}`}>
@@ -1297,85 +1346,49 @@ export default function HostPropertyPoliciesTab({
         <h3 className={styles.sectionTitle}>Check-in &amp; Check-out</h3>
 
         <div className={styles.checkinGrid}>
-          <PolicySelectField
-            id="checkin-time"
-            label="Check-in time"
-            value={checkInDetails?.checkIn?.from || CHECK_IN_FALLBACK_TIME}
-            onChange={(e) => updateTimeWindow("checkIn", CHECK_IN_FALLBACK_TIME, lateCheckInEnabled, e.target.value)}
-            disabled={saving}
-            options={TIME_OPTIONS}
-          />
+          {checkInFieldSections.map(({ id, label, windowKey, fallbackValue, lateEnabled, values }) => (
+            <React.Fragment key={id}>
+              <PolicySelectField
+                id={`${id}-time`}
+                label={`${label} time`}
+                value={values?.from || fallbackValue}
+                onChange={(event) => updateTimeWindow(windowKey, fallbackValue, lateEnabled, event.target.value)}
+                disabled={saving}
+                options={TIME_OPTIONS}
+              />
 
-          <PolicyLateTimeField
-            id="late-checkin-time"
-            label="Late check-in time"
-            enabled={lateCheckInEnabled}
-            onToggle={(enabled) =>
-              updateLateTimeWindow(
-                "checkIn",
-                CHECK_IN_FALLBACK_TIME,
-                enabled,
-                enabled
-                  ? checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || CHECK_IN_FALLBACK_TIME
-                  : ""
-              )
-            }
-            value={checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || CHECK_IN_FALLBACK_TIME}
-            onChange={(e) => updateLateTimeWindow("checkIn", CHECK_IN_FALLBACK_TIME, true, e.target.value)}
-            disabled={saving}
-            options={TIME_OPTIONS}
-          />
+              <PolicyLateTimeField
+                id={`late-${id}-time`}
+                label={`Late ${label.toLowerCase()} time`}
+                enabled={lateEnabled}
+                onToggle={(enabled) =>
+                  updateLateTimeWindow(
+                    windowKey,
+                    fallbackValue,
+                    enabled,
+                    enabled ? values?.till || values?.from || fallbackValue : ""
+                  )
+                }
+                value={values?.till || values?.from || fallbackValue}
+                onChange={(event) => updateLateTimeWindow(windowKey, fallbackValue, true, event.target.value)}
+                disabled={saving}
+                options={TIME_OPTIONS}
+              />
+            </React.Fragment>
+          ))}
 
-          <PolicySelectField
-            id="checkout-time"
-            label="Check-out time"
-            value={checkInDetails?.checkOut?.from || CHECK_OUT_FALLBACK_TIME}
-            onChange={(e) =>
-              updateTimeWindow("checkOut", CHECK_OUT_FALLBACK_TIME, lateCheckOutEnabled, e.target.value)
-            }
-            disabled={saving}
-            options={TIME_OPTIONS}
-          />
-
-          <PolicyLateTimeField
-            id="late-checkout-time"
-            label="Late check-out time"
-            enabled={lateCheckOutEnabled}
-            onToggle={(enabled) =>
-              updateLateTimeWindow(
-                "checkOut",
-                CHECK_OUT_FALLBACK_TIME,
-                enabled,
-                enabled
-                  ? checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || CHECK_OUT_FALLBACK_TIME
-                  : ""
-              )
-            }
-            value={checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || CHECK_OUT_FALLBACK_TIME}
-            onChange={(e) => updateLateTimeWindow("checkOut", CHECK_OUT_FALLBACK_TIME, true, e.target.value)}
-            disabled={saving}
-            options={TIME_OPTIONS}
-          />
-
-          <PolicySelectField
-            id="advance-notice"
-            label="Minimum advance notice"
-            hint="Minimum amount of notice required before a guest can book."
-            value={policyAvailabilitySettings?.advanceNoticeDays ?? 0}
-            onChange={(e) => updatePolicyAvailabilityField("advanceNoticeDays", e.target.value)}
-            disabled={saving}
-            options={ADVANCE_NOTICE_OPTIONS}
-          />
-
-          <PolicySelectField
-            id="prep-time"
-            label="Preparation time"
-            hint="Time required between bookings to clean and prepare the property."
-            value={policyAvailabilitySettings?.preparationTimeDays ?? 0}
-            onChange={(e) => updatePolicyAvailabilityField("preparationTimeDays", e.target.value)}
-            disabled={saving}
-            options={PREPARATION_TIME_OPTIONS}
-          />
+          {policyAvailabilityFields.map(({ id, label, hint, value, field, options }) => (
+            <PolicySelectField
+              key={id}
+              id={id}
+              label={label}
+              hint={hint}
+              value={value}
+              onChange={(event) => updatePolicyAvailabilityField(field, event.target.value)}
+              disabled={saving}
+              options={options}
+            />
+          ))}
         </div>
       </section>
 
@@ -1395,39 +1408,25 @@ export default function HostPropertyPoliciesTab({
         </div>
       </section>
 
-      <PolicyRuleSection
-        title="Property Rules"
-        toggleFields={PROPERTY_RULE_TOGGLE_FIELDS}
-        toggleState={propertyRuleSection.toggleState}
-        setToggleState={propertyRuleSection.setToggleState}
-        customRules={propertyRuleSection.customRules}
-        onToggleCustomRule={propertyRuleSection.toggleCustomRule}
-        onDeleteCustomRule={propertyRuleSection.deleteCustomRule}
-        customRuleInputVisible={propertyRuleSection.showRuleInput}
-        customRuleValue={propertyRuleSection.newRuleValue}
-        onCustomRuleChange={(event) => propertyRuleSection.setNewRuleValue(event.target.value)}
-        onConfirmCustomRule={propertyRuleSection.addCustomRule}
-        onCancelCustomRule={propertyRuleSection.cancelCustomRule}
-        onShowCustomRuleInput={() => propertyRuleSection.setShowRuleInput(true)}
-        disabled={saving}
-      />
-
-      <PolicyRuleSection
-        title="Safety &amp; Property"
-        toggleFields={SAFETY_RULE_TOGGLE_FIELDS}
-        toggleState={safetyRuleSection.toggleState}
-        setToggleState={safetyRuleSection.setToggleState}
-        customRules={safetyRuleSection.customRules}
-        onToggleCustomRule={safetyRuleSection.toggleCustomRule}
-        onDeleteCustomRule={safetyRuleSection.deleteCustomRule}
-        customRuleInputVisible={safetyRuleSection.showRuleInput}
-        customRuleValue={safetyRuleSection.newRuleValue}
-        onCustomRuleChange={(event) => safetyRuleSection.setNewRuleValue(event.target.value)}
-        onConfirmCustomRule={safetyRuleSection.addCustomRule}
-        onCancelCustomRule={safetyRuleSection.cancelCustomRule}
-        onShowCustomRuleInput={() => safetyRuleSection.setShowRuleInput(true)}
-        disabled={saving}
-      />
+      {policyRuleSections.map(({ title, toggleFields, sectionState }) => (
+        <PolicyRuleSection
+          key={title}
+          title={title}
+          toggleFields={toggleFields}
+          toggleState={sectionState.toggleState}
+          setToggleState={sectionState.setToggleState}
+          customRules={sectionState.customRules}
+          onToggleCustomRule={sectionState.toggleCustomRule}
+          onDeleteCustomRule={sectionState.deleteCustomRule}
+          customRuleInputVisible={sectionState.showRuleInput}
+          customRuleValue={sectionState.newRuleValue}
+          onCustomRuleChange={(event) => sectionState.setNewRuleValue(event.target.value)}
+          onConfirmCustomRule={sectionState.addCustomRule}
+          onCancelCustomRule={sectionState.cancelCustomRule}
+          onShowCustomRuleInput={() => sectionState.setShowRuleInput(true)}
+          disabled={saving}
+        />
+      ))}
 
       <p className={styles.policiesHint}>
         <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />
