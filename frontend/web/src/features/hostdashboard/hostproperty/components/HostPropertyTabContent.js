@@ -990,6 +990,59 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
   );
 }
 
+function PolicyRuleSection({
+  title,
+  toggleFields,
+  toggleState,
+  setToggleState,
+  customRules,
+  onToggleCustomRule,
+  onDeleteCustomRule,
+  customRuleInputVisible,
+  customRuleValue,
+  onCustomRuleChange,
+  onConfirmCustomRule,
+  onCancelCustomRule,
+  onShowCustomRuleInput,
+  disabled,
+}) {
+  return (
+    <section className={`${styles.card} ${styles.policiesCard}`}>
+      <h3 className={styles.sectionTitle}>{title}</h3>
+
+      <div className={styles.rulesGrid}>
+        {toggleFields.map((field) => (
+          <RuleToggleField
+            key={field.key}
+            label={field.label}
+            checked={Boolean(toggleState[field.key])}
+            onChange={(value) => setToggleState((previous) => ({ ...previous, [field.key]: value }))}
+            disabled={disabled}
+          />
+        ))}
+
+        {customRules.map((rule) => (
+          <CustomRuleRow
+            key={rule.id}
+            rule={rule}
+            onToggle={onToggleCustomRule}
+            onDelete={onDeleteCustomRule}
+          />
+        ))}
+      </div>
+
+      <CustomRuleEditor
+        visible={customRuleInputVisible}
+        value={customRuleValue}
+        onChange={onCustomRuleChange}
+        onConfirm={onConfirmCustomRule}
+        onCancel={onCancelCustomRule}
+        onShow={onShowCustomRuleInput}
+      />
+    </section>
+  );
+}
+
 const POLICY_TOGGLE_FIELDS = [
   { rule: "SuitableForChildren", label: "Children allowed" },
   { rule: "SuitableForInfants", label: "Infants allowed" },
@@ -1021,6 +1074,8 @@ const PREPARATION_TIME_OPTIONS = [
   { value: 6, label: "6 days" },
   { value: 7, label: "7 days" },
 ];
+const CHECK_IN_FALLBACK_TIME = "15:00";
+const CHECK_OUT_FALLBACK_TIME = "11:00";
 const PROPERTY_RULE_TOGGLE_FIELDS = [
   { key: "cookingAllowed", label: "Cooking allowed" },
   { key: "parkingAvailable", label: "Parking available" },
@@ -1126,57 +1181,31 @@ export default function HostPropertyPoliciesTab({
     checkInDetails?.checkOut?.till && checkInDetails?.checkOut?.till !== checkInDetails?.checkOut?.from
   );
 
-  const updateCheckInWindow = (nextValue) => {
-    setCheckInDetails((previous) => ({
-      ...previous,
-      checkIn: {
-        ...previous.checkIn,
-        from: nextValue,
-        till: lateCheckInEnabled
-          ? resolveDistinctLateTime(nextValue, previous?.checkIn?.till, "15:00")
-          : nextValue,
-      },
-    }));
-  };
-
-  const updateCheckInLateWindow = (enabled, nextValue) => {
+  const updateTimeWindow = (windowKey, fallbackValue, lateEnabled, nextValue) => {
     setCheckInDetails((previous) => {
-      const currentFrom = previous?.checkIn?.from || "15:00";
-      const currentTill = previous?.checkIn?.till || currentFrom;
+      const currentWindow = previous?.[windowKey] || {};
       return {
         ...previous,
-        checkIn: {
-          ...previous.checkIn,
-          from: currentFrom,
-          till: enabled ? resolveDistinctLateTime(currentFrom, nextValue || currentTill, "15:00") : currentFrom,
+        [windowKey]: {
+          ...currentWindow,
+          from: nextValue,
+          till: lateEnabled ? resolveDistinctLateTime(nextValue, currentWindow.till, fallbackValue) : nextValue,
         },
       };
     });
   };
 
-  const updateCheckOutWindow = (nextValue) => {
-    setCheckInDetails((previous) => ({
-      ...previous,
-      checkOut: {
-        ...previous.checkOut,
-        from: nextValue,
-        till: lateCheckOutEnabled
-          ? resolveDistinctLateTime(nextValue, previous?.checkOut?.till, "11:00")
-          : nextValue,
-      },
-    }));
-  };
-
-  const updateCheckOutLateWindow = (enabled, nextValue) => {
+  const updateLateTimeWindow = (windowKey, fallbackValue, enabled, nextValue) => {
     setCheckInDetails((previous) => {
-      const currentFrom = previous?.checkOut?.from || "11:00";
-      const currentTill = previous?.checkOut?.till || currentFrom;
+      const currentWindow = previous?.[windowKey] || {};
+      const currentFrom = currentWindow.from || fallbackValue;
+      const currentTill = currentWindow.till || currentFrom;
       return {
         ...previous,
-        checkOut: {
-          ...previous.checkOut,
+        [windowKey]: {
+          ...currentWindow,
           from: currentFrom,
-          till: enabled ? resolveDistinctLateTime(currentFrom, nextValue || currentTill, "11:00") : currentFrom,
+          till: enabled ? resolveDistinctLateTime(currentFrom, nextValue || currentTill, fallbackValue) : currentFrom,
         },
       };
     });
@@ -1261,8 +1290,8 @@ export default function HostPropertyPoliciesTab({
           <PolicySelectField
             id="checkin-time"
             label="Check-in time"
-            value={checkInDetails?.checkIn?.from || "15:00"}
-            onChange={(e) => updateCheckInWindow(e.target.value)}
+            value={checkInDetails?.checkIn?.from || CHECK_IN_FALLBACK_TIME}
+            onChange={(e) => updateTimeWindow("checkIn", CHECK_IN_FALLBACK_TIME, lateCheckInEnabled, e.target.value)}
             disabled={saving}
             options={TIME_OPTIONS}
           />
@@ -1272,13 +1301,17 @@ export default function HostPropertyPoliciesTab({
             label="Late check-in time"
             enabled={lateCheckInEnabled}
             onToggle={(enabled) =>
-              updateCheckInLateWindow(
+              updateLateTimeWindow(
+                "checkIn",
+                CHECK_IN_FALLBACK_TIME,
                 enabled,
-                enabled ? checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || "15:00" : ""
+                enabled
+                  ? checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || CHECK_IN_FALLBACK_TIME
+                  : ""
               )
             }
-            value={checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || "15:00"}
-            onChange={(e) => updateCheckInLateWindow(true, e.target.value)}
+            value={checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || CHECK_IN_FALLBACK_TIME}
+            onChange={(e) => updateLateTimeWindow("checkIn", CHECK_IN_FALLBACK_TIME, true, e.target.value)}
             disabled={saving}
             options={TIME_OPTIONS}
           />
@@ -1286,8 +1319,10 @@ export default function HostPropertyPoliciesTab({
           <PolicySelectField
             id="checkout-time"
             label="Check-out time"
-            value={checkInDetails?.checkOut?.from || "11:00"}
-            onChange={(e) => updateCheckOutWindow(e.target.value)}
+            value={checkInDetails?.checkOut?.from || CHECK_OUT_FALLBACK_TIME}
+            onChange={(e) =>
+              updateTimeWindow("checkOut", CHECK_OUT_FALLBACK_TIME, lateCheckOutEnabled, e.target.value)
+            }
             disabled={saving}
             options={TIME_OPTIONS}
           />
@@ -1297,13 +1332,17 @@ export default function HostPropertyPoliciesTab({
             label="Late check-out time"
             enabled={lateCheckOutEnabled}
             onToggle={(enabled) =>
-              updateCheckOutLateWindow(
+              updateLateTimeWindow(
+                "checkOut",
+                CHECK_OUT_FALLBACK_TIME,
                 enabled,
-                enabled ? checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || "11:00" : ""
+                enabled
+                  ? checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || CHECK_OUT_FALLBACK_TIME
+                  : ""
               )
             }
-            value={checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || "11:00"}
-            onChange={(e) => updateCheckOutLateWindow(true, e.target.value)}
+            value={checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || CHECK_OUT_FALLBACK_TIME}
+            onChange={(e) => updateLateTimeWindow("checkOut", CHECK_OUT_FALLBACK_TIME, true, e.target.value)}
             disabled={saving}
             options={TIME_OPTIONS}
           />
@@ -1346,79 +1385,45 @@ export default function HostPropertyPoliciesTab({
         </div>
       </section>
 
-      <section className={`${styles.card} ${styles.policiesCard}`}>
-        <h3 className={styles.sectionTitle}>Property Rules</h3>
+      <PolicyRuleSection
+        title="Property Rules"
+        toggleFields={PROPERTY_RULE_TOGGLE_FIELDS}
+        toggleState={propertyRules}
+        setToggleState={setPropertyRules}
+        customRules={customPropertyRules}
+        onToggleCustomRule={(id, value) => toggleCustomRule("property", id, value)}
+        onDeleteCustomRule={(id) => deleteCustomRule("property", id)}
+        customRuleInputVisible={showPropertyRuleInput}
+        customRuleValue={newPropertyRule}
+        onCustomRuleChange={(event) => setNewPropertyRule(event.target.value)}
+        onConfirmCustomRule={() => addCustomRule("property")}
+        onCancelCustomRule={() => {
+          setShowPropertyRuleInput(false);
+          setNewPropertyRule("");
+        }}
+        onShowCustomRuleInput={() => setShowPropertyRuleInput(true)}
+        disabled={saving}
+      />
 
-        <div className={styles.rulesGrid}>
-          {PROPERTY_RULE_TOGGLE_FIELDS.map((field) => (
-            <RuleToggleField
-              key={field.key}
-              label={field.label}
-              checked={Boolean(propertyRules[field.key])}
-              onChange={(val) => setPropertyRules((previous) => ({ ...previous, [field.key]: val }))}
-              disabled={saving}
-            />
-          ))}
-
-          {customPropertyRules.map((rule) => (
-            <CustomRuleRow
-              key={rule.id}
-              rule={rule}
-              onToggle={(id, val) => toggleCustomRule("property", id, val)}
-              onDelete={(id) => deleteCustomRule("property", id)}
-            />
-          ))}
-        </div>
-
-        <CustomRuleEditor
-          visible={showPropertyRuleInput}
-          value={newPropertyRule}
-          onChange={(event) => setNewPropertyRule(event.target.value)}
-          onConfirm={() => addCustomRule("property")}
-          onCancel={() => {
-            setShowPropertyRuleInput(false);
-            setNewPropertyRule("");
-          }}
-          onShow={() => setShowPropertyRuleInput(true)}
-        />
-      </section>
-
-      <section className={`${styles.card} ${styles.policiesCard}`}>
-        <h3 className={styles.sectionTitle}>Safety &amp; Property</h3>
-
-        <div className={styles.rulesGrid}>
-          {SAFETY_RULE_TOGGLE_FIELDS.map((field) => (
-            <RuleToggleField
-              key={field.key}
-              label={field.label}
-              checked={Boolean(safetyRules[field.key])}
-              onChange={(val) => setSafetyRules((previous) => ({ ...previous, [field.key]: val }))}
-              disabled={saving}
-            />
-          ))}
-
-          {customSafetyRules.map((rule) => (
-            <CustomRuleRow
-              key={rule.id}
-              rule={rule}
-              onToggle={(id, val) => toggleCustomRule("safety", id, val)}
-              onDelete={(id) => deleteCustomRule("safety", id)}
-            />
-          ))}
-        </div>
-
-        <CustomRuleEditor
-          visible={showSafetyRuleInput}
-          value={newSafetyRule}
-          onChange={(event) => setNewSafetyRule(event.target.value)}
-          onConfirm={() => addCustomRule("safety")}
-          onCancel={() => {
-            setShowSafetyRuleInput(false);
-            setNewSafetyRule("");
-          }}
-          onShow={() => setShowSafetyRuleInput(true)}
-        />
-      </section>
+      <PolicyRuleSection
+        title="Safety &amp; Property"
+        toggleFields={SAFETY_RULE_TOGGLE_FIELDS}
+        toggleState={safetyRules}
+        setToggleState={setSafetyRules}
+        customRules={customSafetyRules}
+        onToggleCustomRule={(id, value) => toggleCustomRule("safety", id, value)}
+        onDeleteCustomRule={(id) => deleteCustomRule("safety", id)}
+        customRuleInputVisible={showSafetyRuleInput}
+        customRuleValue={newSafetyRule}
+        onCustomRuleChange={(event) => setNewSafetyRule(event.target.value)}
+        onConfirmCustomRule={() => addCustomRule("safety")}
+        onCancelCustomRule={() => {
+          setShowSafetyRuleInput(false);
+          setNewSafetyRule("");
+        }}
+        onShowCustomRuleInput={() => setShowSafetyRuleInput(true)}
+        disabled={saving}
+      />
 
       <p className={styles.policiesHint}>
         <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />
@@ -1611,6 +1616,12 @@ const displayedPhotoShape = PropTypes.shape({
   isPending: PropTypes.bool.isRequired,
 });
 
+const customRuleShape = PropTypes.shape({
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  label: PropTypes.string.isRequired,
+  enabled: PropTypes.bool.isRequired,
+});
+
 HostPropertyOverviewTab.propTypes = {
   form: propertyFormShape.isRequired,
   updateField: PropTypes.func.isRequired,
@@ -1682,6 +1693,28 @@ HostPropertyPricingDiscountRow.propTypes = {
 HostPropertyPricingTab.propTypes = {
   pricingForm: pricingFormShape.isRequired,
   setPricingForm: PropTypes.func.isRequired,
+};
+
+PolicyRuleSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  toggleFields: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  toggleState: PropTypes.objectOf(PropTypes.bool).isRequired,
+  setToggleState: PropTypes.func.isRequired,
+  customRules: PropTypes.arrayOf(customRuleShape).isRequired,
+  onToggleCustomRule: PropTypes.func.isRequired,
+  onDeleteCustomRule: PropTypes.func.isRequired,
+  customRuleInputVisible: PropTypes.bool.isRequired,
+  customRuleValue: PropTypes.string.isRequired,
+  onCustomRuleChange: PropTypes.func.isRequired,
+  onConfirmCustomRule: PropTypes.func.isRequired,
+  onCancelCustomRule: PropTypes.func.isRequired,
+  onShowCustomRuleInput: PropTypes.func.isRequired,
+  disabled: PropTypes.bool.isRequired,
 };
 
 HostPropertyPoliciesTab.propTypes = {
