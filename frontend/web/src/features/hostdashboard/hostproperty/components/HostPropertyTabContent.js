@@ -115,6 +115,64 @@ function CustomRuleRow({ rule, onToggle, onDelete }) {
   );
 }
 
+function PolicySelectField({ id, label, value, onChange, disabled, options, hint }) {
+  return (
+    <div className={styles.checkinField}>
+      <label htmlFor={id} className={styles.checkinLabel}>
+        {label}
+      </label>
+      {hint ? <p className={styles.checkinFieldHint}>{hint}</p> : null}
+      <select id={id} className={styles.checkinSelect} value={value} onChange={onChange} disabled={disabled}>
+        {options.map((option) => {
+          const optionValue = typeof option === "object" ? option.value : option;
+          const optionLabel = typeof option === "object" ? option.label : option;
+          return (
+            <option key={optionValue} value={optionValue}>
+              {optionLabel}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+  );
+}
+
+function PolicyLateTimeField({
+  id,
+  label,
+  enabled,
+  onToggle,
+  value,
+  onChange,
+  disabled,
+  options,
+}) {
+  return (
+    <div className={styles.checkinField}>
+      <label htmlFor={id} className={styles.checkinLabel}>
+        {label}
+      </label>
+      <div className={styles.checkinToggleRow}>
+        <ToggleSwitch checked={enabled} onChange={onToggle} disabled={disabled} />
+        {enabled ? (
+          <select
+            id={id}
+            className={styles.checkinSelectInline}
+            value={value}
+            onChange={onChange}
+            disabled={disabled}>
+            {options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function HostPropertyOverviewTab({
   form,
   updateField,
@@ -1161,149 +1219,75 @@ export default function HostPropertyPoliciesTab({
         <h3 className={styles.sectionTitle}>Check-in &amp; Check-out</h3>
 
         <div className={styles.checkinGrid}>
-          <div className={styles.checkinField}>
-            <label htmlFor="checkin-time" className={styles.checkinLabel}>
-              Check-in time
-            </label>
-            <select
-              id="checkin-time"
-              className={styles.checkinSelect}
-              value={checkInDetails?.checkIn?.from || "15:00"}
-              onChange={(e) => updateCheckInWindow(e.target.value)}
-              disabled={saving}
-            >
-              {TIME_OPTIONS.map((timeValue) => (
-                <option key={timeValue} value={timeValue}>
-                  {timeValue}
-                </option>
-              ))}
-            </select>
-          </div>
+          <PolicySelectField
+            id="checkin-time"
+            label="Check-in time"
+            value={checkInDetails?.checkIn?.from || "15:00"}
+            onChange={(e) => updateCheckInWindow(e.target.value)}
+            disabled={saving}
+            options={TIME_OPTIONS}
+          />
 
-          <div className={styles.checkinField}>
-            <label htmlFor="late-checkin-time" className={styles.checkinLabel}>
-              Late check-in time
-            </label>
-            <div className={styles.checkinToggleRow}>
-              <ToggleSwitch
-                checked={lateCheckInEnabled}
-                onChange={(enabled) =>
-                  updateCheckInLateWindow(
-                    enabled,
-                    enabled ? checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || "15:00" : ""
-                  )
-                }
-                disabled={saving}
-              />
-              {lateCheckInEnabled ? (
-                <select
-                  id="late-checkin-time"
-                  className={styles.checkinSelectInline}
-                  value={checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || "15:00"}
-                  onChange={(e) => updateCheckInLateWindow(true, e.target.value)}
-                  disabled={saving}
-                >
-                  {TIME_OPTIONS.map((timeValue) => (
-                    <option key={timeValue} value={timeValue}>
-                      {timeValue}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-            </div>
-          </div>
+          <PolicyLateTimeField
+            id="late-checkin-time"
+            label="Late check-in time"
+            enabled={lateCheckInEnabled}
+            onToggle={(enabled) =>
+              updateCheckInLateWindow(
+                enabled,
+                enabled ? checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || "15:00" : ""
+              )
+            }
+            value={checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || "15:00"}
+            onChange={(e) => updateCheckInLateWindow(true, e.target.value)}
+            disabled={saving}
+            options={TIME_OPTIONS}
+          />
 
-          <div className={styles.checkinField}>
-            <label htmlFor="checkout-time" className={styles.checkinLabel}>
-              Check-out time
-            </label>
-            <select
-              id="checkout-time"
-              className={styles.checkinSelect}
-              value={checkInDetails?.checkOut?.from || "11:00"}
-              onChange={(e) => updateCheckOutWindow(e.target.value)}
-              disabled={saving}
-            >
-              {TIME_OPTIONS.map((timeValue) => (
-                <option key={timeValue} value={timeValue}>
-                  {timeValue}
-                </option>
-              ))}
-            </select>
-          </div>
+          <PolicySelectField
+            id="checkout-time"
+            label="Check-out time"
+            value={checkInDetails?.checkOut?.from || "11:00"}
+            onChange={(e) => updateCheckOutWindow(e.target.value)}
+            disabled={saving}
+            options={TIME_OPTIONS}
+          />
 
-          <div className={styles.checkinField}>
-            <label htmlFor="late-checkout-time" className={styles.checkinLabel}>
-              Late check-out time
-            </label>
-            <div className={styles.checkinToggleRow}>
-              <ToggleSwitch
-                checked={lateCheckOutEnabled}
-                onChange={(enabled) =>
-                  updateCheckOutLateWindow(
-                    enabled,
-                    enabled ? checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || "11:00" : ""
-                  )
-                }
-                disabled={saving}
-              />
-              {lateCheckOutEnabled ? (
-                <select
-                  id="late-checkout-time"
-                  className={styles.checkinSelectInline}
-                  value={checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || "11:00"}
-                  onChange={(e) => updateCheckOutLateWindow(true, e.target.value)}
-                  disabled={saving}
-                >
-                  {TIME_OPTIONS.map((timeValue) => (
-                    <option key={timeValue} value={timeValue}>
-                      {timeValue}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-            </div>
-          </div>
+          <PolicyLateTimeField
+            id="late-checkout-time"
+            label="Late check-out time"
+            enabled={lateCheckOutEnabled}
+            onToggle={(enabled) =>
+              updateCheckOutLateWindow(
+                enabled,
+                enabled ? checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || "11:00" : ""
+              )
+            }
+            value={checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || "11:00"}
+            onChange={(e) => updateCheckOutLateWindow(true, e.target.value)}
+            disabled={saving}
+            options={TIME_OPTIONS}
+          />
 
-          <div className={styles.checkinField}>
-            <label htmlFor="advance-notice" className={styles.checkinLabel}>
-              Minimum advance notice
-            </label>
-            <p className={styles.checkinFieldHint}>Minimum amount of notice required before a guest can book.</p>
-            <select
-              id="advance-notice"
-              className={styles.checkinSelect}
-              value={policyAvailabilitySettings?.advanceNoticeDays ?? 0}
-              onChange={(e) => updatePolicyAvailabilityField("advanceNoticeDays", e.target.value)}
-              disabled={saving}
-            >
-              {ADVANCE_NOTICE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <PolicySelectField
+            id="advance-notice"
+            label="Minimum advance notice"
+            hint="Minimum amount of notice required before a guest can book."
+            value={policyAvailabilitySettings?.advanceNoticeDays ?? 0}
+            onChange={(e) => updatePolicyAvailabilityField("advanceNoticeDays", e.target.value)}
+            disabled={saving}
+            options={ADVANCE_NOTICE_OPTIONS}
+          />
 
-          <div className={styles.checkinField}>
-            <label htmlFor="prep-time" className={styles.checkinLabel}>
-              Preparation time
-            </label>
-            <p className={styles.checkinFieldHint}>Time required between bookings to clean and prepare the property.</p>
-            <select
-              id="prep-time"
-              className={styles.checkinSelect}
-              value={policyAvailabilitySettings?.preparationTimeDays ?? 0}
-              onChange={(e) => updatePolicyAvailabilityField("preparationTimeDays", e.target.value)}
-              disabled={saving}
-            >
-              {PREPARATION_TIME_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <PolicySelectField
+            id="prep-time"
+            label="Preparation time"
+            hint="Time required between bookings to clean and prepare the property."
+            value={policyAvailabilitySettings?.preparationTimeDays ?? 0}
+            onChange={(e) => updatePolicyAvailabilityField("preparationTimeDays", e.target.value)}
+            disabled={saving}
+            options={PREPARATION_TIME_OPTIONS}
+          />
         </div>
       </section>
 
@@ -1825,4 +1809,33 @@ CustomRuleRow.propTypes = {
   }).isRequired,
   onToggle: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+};
+
+PolicySelectField.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  options: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        label: PropTypes.string.isRequired,
+      }),
+    ])
+  ).isRequired,
+  hint: PropTypes.string,
+};
+
+PolicyLateTimeField.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  enabled: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  options: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
