@@ -81,6 +81,27 @@
   min-width: 0;
 }
 
+.statsCardButton {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.statsCardButton:hover {
+  border-color: #c7d2e0;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.statsCardButton:focus-visible {
+  outline: 2px solid #1f4e79;
+  outline-offset: 2px;
+}
+
 .statsIcon {
   flex-shrink: 0;
   width: 56px;

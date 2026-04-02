@@ -39,21 +39,25 @@ function HostDashboard() {
       icon: <FaHome />,
       value: stats.listings,
       label: "Listings",
+      onClick: () => navigate("/hostdashboard/listings"),
     },
     {
       icon: <FaCalendarAlt />,
       value: stats.reservations,
       label: "Reservations",
+      onClick: () => navigate("/hostdashboard/reservations"),
     },
     {
       icon: <ImStatsBars2 />,
       value: formatCurrency(stats.revenue),
       label: "Revenue this month",
+      onClick: () => navigate("/hostdashboard/revenues"),
     },
     {
       icon: <FaChartPie />,
       value: `${stats.occupancy}%`,
       label: "Occupancy rate",
+      onClick: () => navigate("/hostdashboard/revenues"),
     },
   ];
 
@@ -72,6 +76,7 @@ function HostDashboard() {
               value={item.value}
               label={item.label}
               isLoading={loading.stats}
+              onClick={item.onClick}
             />
           ))}
         </div>
