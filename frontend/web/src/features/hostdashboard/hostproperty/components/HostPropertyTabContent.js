@@ -234,17 +234,18 @@ function TextareaField({ id, label, value, onChange, rows = 5 }) {
   );
 }
 
-function HostPropertyOverviewTab({
-  form,
-  updateField,
-  displayedPropertyType,
-  setCapacity,
-  capacity,
-  adjustCapacityField,
-  updateCapacityField,
-  address,
-  updateAddressField,
-}) {
+function HostPropertyOverviewTab(props) {
+  const {
+    form,
+    updateField,
+    displayedPropertyType,
+    setCapacity,
+    capacity,
+    adjustCapacityField,
+    updateCapacityField,
+    address,
+    updateAddressField,
+  } = props;
   const renderCapacityCounter = ({ key, label }) => (
     <div key={key} className={styles.counterItem}>
       <span className={styles.counterLabel}>{label}</span>
@@ -373,27 +374,28 @@ function HostPropertyOverviewTab({
   );
 }
 
-function HostPropertyPhotosTab({
-  displayedPhotos,
-  pendingPhotoCount,
-  onOpenPhotoPicker,
-  onPhotoFilesSelected,
-  onPhotoDrop,
-  onPhotoDragOver,
-  onPhotoDragLeave,
-  isPhotoDragOver,
-  onRequestDeletePhoto,
-  onPhotoTileDragStart,
-  onPhotoTileDragEnd,
-  onPhotoTileDragOver,
-  onPhotoTileDragLeave,
-  onPhotoTileDrop,
-  draggingPhotoId,
-  photoDropTargetId,
-  saving,
-  deletingPhoto,
-  photoInputRef,
-}) {
+function HostPropertyPhotosTab(props) {
+  const {
+    displayedPhotos,
+    pendingPhotoCount,
+    onOpenPhotoPicker,
+    onPhotoFilesSelected,
+    onPhotoDrop,
+    onPhotoDragOver,
+    onPhotoDragLeave,
+    isPhotoDragOver,
+    onRequestDeletePhoto,
+    onPhotoTileDragStart,
+    onPhotoTileDragEnd,
+    onPhotoTileDragOver,
+    onPhotoTileDragLeave,
+    onPhotoTileDrop,
+    draggingPhotoId,
+    photoDropTargetId,
+    saving,
+    deletingPhoto,
+    photoInputRef,
+  } = props;
   const photoTileRefs = useRef(new Map());
   const previousTileRectsRef = useRef(new Map());
   const coverPhoto = displayedPhotos[0] || null;
@@ -646,15 +648,16 @@ export function HostPropertyPhotoDeleteModal({ open, photoSrc, deletingPhoto, on
   );
 }
 
-function HostPropertyAmenitiesTab({
-  amenityCategoryKeys,
-  amenitiesByCategory,
-  expandedAmenityCategories,
-  selectedAmenityCountByCategory,
-  selectedAmenityIdSet,
-  toggleAmenityCategory,
-  toggleAmenitySelection,
-}) {
+function HostPropertyAmenitiesTab(props) {
+  const {
+    amenityCategoryKeys,
+    amenitiesByCategory,
+    expandedAmenityCategories,
+    selectedAmenityCountByCategory,
+    selectedAmenityIdSet,
+    toggleAmenityCategory,
+    toggleAmenitySelection,
+  } = props;
   return (
     <section className={`${styles.card} ${styles.amenitiesCard}`}>
       <h3 className={styles.sectionTitle}>Amenities</h3>
@@ -1152,16 +1155,17 @@ const resolveDistinctLateTime = (fromValue, preferredTillValue, fallbackFromValu
   return normalizedFromValue;
 };
 
-export default function HostPropertyPoliciesTab({
-  policyRules,
-  checkInDetails,
-  policyAvailabilitySettings,
-  setCheckInDetails,
-  setPolicyAvailabilitySettings,
-  updatePolicyRule,
-  handleDeletePropertyClick,
-  saving,
-}) {
+export default function HostPropertyPoliciesTab(props) {
+  const {
+    policyRules,
+    checkInDetails,
+    policyAvailabilitySettings,
+    setCheckInDetails,
+    setPolicyAvailabilitySettings,
+    updatePolicyRule,
+    handleDeletePropertyClick,
+    saving,
+  } = props;
   const [selectedPolicy, setSelectedPolicy] = useState("flexible");
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
   const propertyRuleSection = useRuleSectionState({
@@ -1452,119 +1456,19 @@ export default function HostPropertyPoliciesTab({
   );
 }
 
-export function HostPropertyTabContent({
-  selectedTab,
-  form,
-  updateField,
-  displayedPropertyType,
-  setCapacity,
-  capacity,
-  adjustCapacityField,
-  updateCapacityField,
-  address,
-  updateAddressField,
-  displayedPhotos,
-  pendingPhotoCount,
-  onOpenPhotoPicker,
-  onPhotoFilesSelected,
-  onPhotoDrop,
-  onPhotoDragOver,
-  onPhotoDragLeave,
-  isPhotoDragOver,
-  onRequestDeletePhoto,
-  onPhotoTileDragStart,
-  onPhotoTileDragEnd,
-  onPhotoTileDragOver,
-  onPhotoTileDragLeave,
-  onPhotoTileDrop,
-  draggingPhotoId,
-  photoDropTargetId,
-  deletingPhoto,
-  photoInputRef,
-  amenityCategoryKeys,
-  amenitiesByCategory,
-  expandedAmenityCategories,
-  selectedAmenityCountByCategory,
-  selectedAmenityIdSet,
-  toggleAmenityCategory,
-  toggleAmenitySelection,
-  pricingForm,
-  setPricingForm,
-  policyRules,
-  checkInDetails,
-  policyAvailabilitySettings,
-  setCheckInDetails,
-  setPolicyAvailabilitySettings,
-  updatePolicyRule,
-  handleDeletePropertyClick,
-  saving,
-}) {
+export function HostPropertyTabContent(props) {
+  const { selectedTab, pricingForm, setPricingForm } = props;
   switch (selectedTab) {
     case "Overview":
-      return (
-        <HostPropertyOverviewTab
-          form={form}
-          updateField={updateField}
-          displayedPropertyType={displayedPropertyType}
-          setCapacity={setCapacity}
-          capacity={capacity}
-          adjustCapacityField={adjustCapacityField}
-          updateCapacityField={updateCapacityField}
-          address={address}
-          updateAddressField={updateAddressField}
-        />
-      );
+      return <HostPropertyOverviewTab {...props} />;
     case "Photos":
-      return (
-        <HostPropertyPhotosTab
-          displayedPhotos={displayedPhotos}
-          pendingPhotoCount={pendingPhotoCount}
-          onOpenPhotoPicker={onOpenPhotoPicker}
-          onPhotoFilesSelected={onPhotoFilesSelected}
-          onPhotoDrop={onPhotoDrop}
-          onPhotoDragOver={onPhotoDragOver}
-          onPhotoDragLeave={onPhotoDragLeave}
-          isPhotoDragOver={isPhotoDragOver}
-          onRequestDeletePhoto={onRequestDeletePhoto}
-          onPhotoTileDragStart={onPhotoTileDragStart}
-          onPhotoTileDragEnd={onPhotoTileDragEnd}
-          onPhotoTileDragOver={onPhotoTileDragOver}
-          onPhotoTileDragLeave={onPhotoTileDragLeave}
-          onPhotoTileDrop={onPhotoTileDrop}
-          draggingPhotoId={draggingPhotoId}
-          photoDropTargetId={photoDropTargetId}
-          saving={saving}
-          deletingPhoto={deletingPhoto}
-          photoInputRef={photoInputRef}
-        />
-      );
+      return <HostPropertyPhotosTab {...props} />;
     case "Amenities":
-      return (
-        <HostPropertyAmenitiesTab
-          amenityCategoryKeys={amenityCategoryKeys}
-          amenitiesByCategory={amenitiesByCategory}
-          expandedAmenityCategories={expandedAmenityCategories}
-          selectedAmenityCountByCategory={selectedAmenityCountByCategory}
-          selectedAmenityIdSet={selectedAmenityIdSet}
-          toggleAmenityCategory={toggleAmenityCategory}
-          toggleAmenitySelection={toggleAmenitySelection}
-        />
-      );
+      return <HostPropertyAmenitiesTab {...props} />;
     case "Pricing":
       return <HostPropertyPricingTab pricingForm={pricingForm} setPricingForm={setPricingForm} />;
     case "Policies":
-      return (
-        <HostPropertyPoliciesTab
-          policyRules={policyRules}
-          checkInDetails={checkInDetails}
-          policyAvailabilitySettings={policyAvailabilitySettings}
-          setCheckInDetails={setCheckInDetails}
-          setPolicyAvailabilitySettings={setPolicyAvailabilitySettings}
-          updatePolicyRule={updatePolicyRule}
-          handleDeletePropertyClick={handleDeletePropertyClick}
-          saving={saving}
-        />
-      );
+      return <HostPropertyPoliciesTab {...props} />;
     default:
       return <HostPropertyPlaceholderTab selectedTab={selectedTab} />;
   }
@@ -1625,7 +1529,7 @@ const customRuleShape = PropTypes.shape({
   enabled: PropTypes.bool.isRequired,
 });
 
-HostPropertyOverviewTab.propTypes = {
+const overviewTabPropTypes = {
   form: propertyFormShape.isRequired,
   updateField: PropTypes.func.isRequired,
   displayedPropertyType: PropTypes.string.isRequired,
@@ -1637,7 +1541,7 @@ HostPropertyOverviewTab.propTypes = {
   updateAddressField: PropTypes.func.isRequired,
 };
 
-HostPropertyPhotosTab.propTypes = {
+const photoTabPropTypes = {
   displayedPhotos: PropTypes.arrayOf(displayedPhotoShape).isRequired,
   pendingPhotoCount: PropTypes.number.isRequired,
   onOpenPhotoPicker: PropTypes.func.isRequired,
@@ -1661,15 +1565,7 @@ HostPropertyPhotosTab.propTypes = {
   }).isRequired,
 };
 
-HostPropertyPhotoDeleteModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  photoSrc: PropTypes.string,
-  deletingPhoto: PropTypes.bool.isRequired,
-  onCancel: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-};
-
-HostPropertyAmenitiesTab.propTypes = {
+const amenitiesTabPropTypes = {
   amenityCategoryKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   amenitiesByCategory: PropTypes.objectOf(PropTypes.arrayOf(amenityShape)).isRequired,
   expandedAmenityCategories: PropTypes.objectOf(PropTypes.bool).isRequired,
@@ -1678,6 +1574,45 @@ HostPropertyAmenitiesTab.propTypes = {
   toggleAmenityCategory: PropTypes.func.isRequired,
   toggleAmenitySelection: PropTypes.func.isRequired,
 };
+
+const policiesTabPropTypes = {
+  policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
+  checkInDetails: PropTypes.shape({
+    checkIn: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    checkOut: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+  }),
+  policyAvailabilitySettings: PropTypes.shape({
+    advanceNoticeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    preparationTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    advanceNoticeRestrictionKey: PropTypes.string,
+    preparationTimeRestrictionKey: PropTypes.string,
+  }),
+  setCheckInDetails: PropTypes.func.isRequired,
+  setPolicyAvailabilitySettings: PropTypes.func.isRequired,
+  updatePolicyRule: PropTypes.func.isRequired,
+  handleDeletePropertyClick: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+};
+
+HostPropertyOverviewTab.propTypes = overviewTabPropTypes;
+
+HostPropertyPhotosTab.propTypes = photoTabPropTypes;
+
+HostPropertyPhotoDeleteModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  photoSrc: PropTypes.string,
+  deletingPhoto: PropTypes.bool.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
+
+HostPropertyAmenitiesTab.propTypes = amenitiesTabPropTypes;
 
 HostPropertyPricingDiscountRow.propTypes = {
   title: PropTypes.string.isRequired,
@@ -1720,93 +1655,16 @@ PolicyRuleSection.propTypes = {
   disabled: PropTypes.bool.isRequired,
 };
 
-HostPropertyPoliciesTab.propTypes = {
-  policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
-  checkInDetails: PropTypes.shape({
-    checkIn: PropTypes.shape({
-      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    }),
-    checkOut: PropTypes.shape({
-      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    }),
-  }),
-  policyAvailabilitySettings: PropTypes.shape({
-    advanceNoticeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    preparationTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    advanceNoticeRestrictionKey: PropTypes.string,
-    preparationTimeRestrictionKey: PropTypes.string,
-  }),
-  setCheckInDetails: PropTypes.func.isRequired,
-  setPolicyAvailabilitySettings: PropTypes.func.isRequired,
-  updatePolicyRule: PropTypes.func.isRequired,
-  handleDeletePropertyClick: PropTypes.func.isRequired,
-  saving: PropTypes.bool.isRequired,
-};
+HostPropertyPoliciesTab.propTypes = policiesTabPropTypes;
 
 HostPropertyTabContent.propTypes = {
   selectedTab: PropTypes.string.isRequired,
-  form: propertyFormShape.isRequired,
-  updateField: PropTypes.func.isRequired,
-  displayedPropertyType: PropTypes.string.isRequired,
-  setCapacity: PropTypes.func.isRequired,
-  capacity: propertyCapacityShape.isRequired,
-  adjustCapacityField: PropTypes.func.isRequired,
-  updateCapacityField: PropTypes.func.isRequired,
-  address: propertyAddressShape.isRequired,
-  updateAddressField: PropTypes.func.isRequired,
-  displayedPhotos: PropTypes.arrayOf(displayedPhotoShape).isRequired,
-  pendingPhotoCount: PropTypes.number.isRequired,
-  onOpenPhotoPicker: PropTypes.func.isRequired,
-  onPhotoFilesSelected: PropTypes.func.isRequired,
-  onPhotoDrop: PropTypes.func.isRequired,
-  onPhotoDragOver: PropTypes.func.isRequired,
-  onPhotoDragLeave: PropTypes.func.isRequired,
-  isPhotoDragOver: PropTypes.bool.isRequired,
-  onRequestDeletePhoto: PropTypes.func.isRequired,
-  onPhotoTileDragStart: PropTypes.func.isRequired,
-  onPhotoTileDragEnd: PropTypes.func.isRequired,
-  onPhotoTileDragOver: PropTypes.func.isRequired,
-  onPhotoTileDragLeave: PropTypes.func.isRequired,
-  onPhotoTileDrop: PropTypes.func.isRequired,
-  draggingPhotoId: PropTypes.string,
-  photoDropTargetId: PropTypes.string,
-  deletingPhoto: PropTypes.bool.isRequired,
-  photoInputRef: PropTypes.shape({
-    current: PropTypes.any,
-  }).isRequired,
-  amenityCategoryKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
-  amenitiesByCategory: PropTypes.objectOf(PropTypes.arrayOf(amenityShape)).isRequired,
-  expandedAmenityCategories: PropTypes.objectOf(PropTypes.bool).isRequired,
-  selectedAmenityCountByCategory: PropTypes.objectOf(PropTypes.number).isRequired,
-  selectedAmenityIdSet: PropTypes.instanceOf(Set).isRequired,
-  toggleAmenityCategory: PropTypes.func.isRequired,
-  toggleAmenitySelection: PropTypes.func.isRequired,
+  ...overviewTabPropTypes,
+  ...photoTabPropTypes,
+  ...amenitiesTabPropTypes,
   pricingForm: pricingFormShape.isRequired,
   setPricingForm: PropTypes.func.isRequired,
-  policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
-  checkInDetails: PropTypes.shape({
-    checkIn: PropTypes.shape({
-      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    }),
-    checkOut: PropTypes.shape({
-      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    }),
-  }),
-  policyAvailabilitySettings: PropTypes.shape({
-    advanceNoticeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    preparationTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    advanceNoticeRestrictionKey: PropTypes.string,
-    preparationTimeRestrictionKey: PropTypes.string,
-  }),
-  setCheckInDetails: PropTypes.func.isRequired,
-  setPolicyAvailabilitySettings: PropTypes.func.isRequired,
-  updatePolicyRule: PropTypes.func.isRequired,
-  handleDeletePropertyClick: PropTypes.func.isRequired,
-  saving: PropTypes.bool.isRequired,
+  ...policiesTabPropTypes,
 };
 
 ToggleSwitch.propTypes = {
