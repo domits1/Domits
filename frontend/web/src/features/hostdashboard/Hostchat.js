@@ -549,7 +549,25 @@ const Chat = ({ user }) => {
     };
     return (
         <main className="page-body">
-            <h2 className="chat__heading">Messages</h2>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap'}}>
+                <h2 className="chat__heading" style={{marginBottom: 0}}>Messages</h2>
+                <button
+                    type="button"
+                    onClick={() => navigate("/hostdashboard/messages/preferences")}
+                    style={{
+                        border: 0,
+                        borderRadius: '12px',
+                        padding: '12px 16px',
+                        background: '#111827',
+                        color: '#fff',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    Manage Messaging Preferences
+                </button>
+            </div>
             <section className="chat__container">
                 <Pages />
                 <section className={styles.chat__body}>

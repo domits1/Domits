@@ -226,7 +226,7 @@ const MessagesContent = ({ dashboardType }) => {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Messaging Preferences
+                  Manage Messaging Preferences
                 </button>
               </div>
             ) : null}
