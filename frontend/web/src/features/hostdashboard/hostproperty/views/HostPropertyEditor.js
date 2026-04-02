@@ -38,8 +38,8 @@ import {
   areSnapshotsEqual,
   areStringArraysEqual,
   buildDisplayedPhotos,
+  buildPolicyEditorSnapshot,
   buildOverviewSnapshot,
-  buildPolicyRulesSnapshot,
   buildPricingSnapshot,
   createPendingPhotoFromFile,
   extractFetchedPropertyData,
@@ -94,6 +94,13 @@ export default function HostProperty() {
   const [hostProperties, setHostProperties] = useState([]);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState([]);
   const [policyRules, setPolicyRules] = useState(createInitialPolicyRules);
+  const [checkInDetails, setCheckInDetails] = useState({ checkIn: {}, checkOut: {} });
+  const [policyAvailabilitySettings, setPolicyAvailabilitySettings] = useState({
+    advanceNoticeDays: 0,
+    preparationTimeDays: 0,
+    advanceNoticeRestrictionKey: "MinimumAdvanceReservation",
+    preparationTimeRestrictionKey: "PreparationTimeDays",
+  });
   const [pricingForm, setPricingForm] = useState(createInitialPricingForm);
   const [expandedAmenityCategories, setExpandedAmenityCategories] = useState({});
   const [form, setForm] = useState({
@@ -131,7 +138,18 @@ export default function HostProperty() {
   const [selectedDeletePropertyReasonIds, setSelectedDeletePropertyReasonIds] = useState([]);
   const savedOverviewSnapshotRef = useRef(null);
   const savedAmenityIdsRef = useRef([]);
-  const savedPolicyRulesRef = useRef(buildPolicyRulesSnapshot(createInitialPolicyRules()));
+  const savedPolicyRulesRef = useRef(
+    buildPolicyEditorSnapshot(
+      createInitialPolicyRules(),
+      { checkIn: {}, checkOut: {} },
+      {
+        advanceNoticeDays: 0,
+        preparationTimeDays: 0,
+        advanceNoticeRestrictionKey: "MinimumAdvanceReservation",
+        preparationTimeRestrictionKey: "PreparationTimeDays",
+      }
+    )
+  );
   const savedPricingSnapshotRef = useRef(buildPricingSnapshot(createInitialPricingForm()));
   const bypassUnsavedGuardRef = useRef(false);
   const pendingNavigationActionRef = useRef(null);
@@ -182,8 +200,8 @@ export default function HostProperty() {
     [selectedAmenityIds]
   );
   const policyRulesSnapshot = useMemo(
-    () => buildPolicyRulesSnapshot(policyRules),
-    [policyRules]
+    () => buildPolicyEditorSnapshot(policyRules, checkInDetails, policyAvailabilitySettings),
+    [policyRules, checkInDetails, policyAvailabilitySettings]
   );
   const pricingSnapshot = useMemo(
     () => buildPricingSnapshot(pricingForm),
@@ -242,6 +260,8 @@ export default function HostProperty() {
         setAddress(fetchedPropertyData.address);
         setSelectedAmenityIds(fetchedPropertyData.selectedAmenityIds);
         setPolicyRules(fetchedPropertyData.policyRules);
+        setCheckInDetails(fetchedPropertyData.checkInDetails);
+        setPolicyAvailabilitySettings(fetchedPropertyData.policyAvailabilitySettings);
         setPricingForm(fetchedPropertyData.pricingForm);
         setExistingPhotos(fetchedPropertyData.existingPhotos);
         setPendingPhotos([]);
@@ -258,7 +278,11 @@ export default function HostProperty() {
           fetchedPropertyData.address
         );
         savedAmenityIdsRef.current = normalizeAmenityIds(fetchedPropertyData.selectedAmenityIds);
-        savedPolicyRulesRef.current = buildPolicyRulesSnapshot(fetchedPropertyData.policyRules);
+        savedPolicyRulesRef.current = buildPolicyEditorSnapshot(
+          fetchedPropertyData.policyRules,
+          fetchedPropertyData.checkInDetails,
+          fetchedPropertyData.policyAvailabilitySettings
+        );
         savedPricingSnapshotRef.current = buildPricingSnapshot(fetchedPropertyData.pricingForm);
       } catch (err) {
         console.error(err);
@@ -504,7 +528,13 @@ export default function HostProperty() {
         return;
       }
 
-      const { normalizedForm, normalizedPricingForm, successMessage } = await savePropertyChanges({
+      const {
+        normalizedForm,
+        normalizedPricingForm,
+        normalizedCheckInDetails,
+        normalizedPolicyAvailabilitySettings,
+        successMessage,
+      } = await savePropertyChanges({
         selectedTab,
         propertyId,
         form,
@@ -512,6 +542,8 @@ export default function HostProperty() {
         address,
         selectedAmenityIds,
         policyRules,
+        checkInDetails,
+        policyAvailabilitySettings,
         pricingForm,
       });
       setForm(normalizedForm);
@@ -531,7 +563,17 @@ export default function HostProperty() {
         savedPricingSnapshotRef.current = buildPricingSnapshot(normalizedPricingForm);
       }
       if (selectedTab === "Policies") {
-        savedPolicyRulesRef.current = buildPolicyRulesSnapshot(policyRules);
+        if (normalizedCheckInDetails) {
+          setCheckInDetails(normalizedCheckInDetails);
+        }
+        if (normalizedPolicyAvailabilitySettings) {
+          setPolicyAvailabilitySettings(normalizedPolicyAvailabilitySettings);
+        }
+        savedPolicyRulesRef.current = buildPolicyEditorSnapshot(
+          policyRules,
+          normalizedCheckInDetails || checkInDetails,
+          normalizedPolicyAvailabilitySettings || policyAvailabilitySettings
+        );
       }
       toast.success(successMessage);
     } catch (err) {
@@ -883,6 +925,10 @@ export default function HostProperty() {
             pricingForm={pricingForm}
             setPricingForm={setPricingForm}
             policyRules={policyRules}
+            checkInDetails={checkInDetails}
+            policyAvailabilitySettings={policyAvailabilitySettings}
+            setCheckInDetails={setCheckInDetails}
+            setPolicyAvailabilitySettings={setPolicyAvailabilitySettings}
             updatePolicyRule={updatePolicyRule}
             handleDeletePropertyClick={handleDeletePropertyClick}
             saving={isBusy}

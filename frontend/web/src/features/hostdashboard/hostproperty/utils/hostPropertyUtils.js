@@ -14,6 +14,19 @@ import {
   createInitialPricingForm,
 } from "../constants";
 
+const POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS = [
+  "MinimumAdvanceReservation",
+  "MinimumAdvanceNoticeDays",
+  "MinimumAdvanceBookingDays",
+];
+const DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY = "MinimumAdvanceReservation";
+const POLICY_PREPARATION_TIME_RESTRICTION_KEYS = [
+  "PreparationTimeDays",
+  "PreparationDays",
+  "TurnoverDays",
+];
+const DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY = "PreparationTimeDays";
+
 const clampInteger = (value, fallback, min, max) => {
   const parsedValue = Number(value);
   if (!Number.isFinite(parsedValue)) {
@@ -480,6 +493,64 @@ export const buildPolicyRulesSnapshot = (policyRules) =>
     return snapshot;
   }, {});
 
+const normalizeTimeString = (value, fallback) => {
+  const trimmedValue = String(value || "").trim();
+  if (!trimmedValue) {
+    return fallback;
+  }
+  const timeMatch = /^(\d{2}:\d{2})(:\d{2})?$/.exec(trimmedValue);
+  return timeMatch ? timeMatch[1] : trimmedValue;
+};
+
+export const normalizeCheckInDetails = (checkInDetails) => {
+  const checkInFrom = normalizeTimeString(checkInDetails?.checkIn?.from, "15:00");
+  const checkInTill = normalizeTimeString(checkInDetails?.checkIn?.till, checkInFrom);
+  const checkOutFrom = normalizeTimeString(checkInDetails?.checkOut?.from, "11:00");
+  const checkOutTill = normalizeTimeString(checkInDetails?.checkOut?.till, checkOutFrom);
+
+  return {
+    checkIn: {
+      from: checkInFrom,
+      till: checkInTill,
+    },
+    checkOut: {
+      from: checkOutFrom,
+      till: checkOutTill,
+    },
+  };
+};
+
+export const normalizePolicyAvailabilitySettings = (settings) => ({
+  advanceNoticeDays: clampInteger(settings?.advanceNoticeDays, 0, 0, 365),
+  preparationTimeDays: clampInteger(settings?.preparationTimeDays, 0, 0, 30),
+  advanceNoticeRestrictionKey:
+    String(settings?.advanceNoticeRestrictionKey || "").trim() ||
+    DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY,
+  preparationTimeRestrictionKey:
+    String(settings?.preparationTimeRestrictionKey || "").trim() ||
+    DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY,
+});
+
+export const buildPolicyEditorSnapshot = (policyRules, checkInDetails, policyAvailabilitySettings) => ({
+  rules: buildPolicyRulesSnapshot(policyRules),
+  checkIn: normalizeCheckInDetails(checkInDetails),
+  availability: normalizePolicyAvailabilitySettings(policyAvailabilitySettings),
+});
+
+export const buildPolicyAvailabilityRestrictionsPayload = (policyAvailabilitySettings) => {
+  const normalizedSettings = normalizePolicyAvailabilitySettings(policyAvailabilitySettings);
+  return [
+    {
+      restriction: normalizedSettings.advanceNoticeRestrictionKey,
+      value: normalizedSettings.advanceNoticeDays,
+    },
+    {
+      restriction: normalizedSettings.preparationTimeRestrictionKey,
+      value: normalizedSettings.preparationTimeDays,
+    },
+  ];
+};
+
 export const buildOverviewSnapshot = (form, capacity, address) => ({
   form: {
     title: String(form?.title || ""),
@@ -587,6 +658,36 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const locationData = data?.location || {};
   const propertyType = data?.propertyType || {};
   const propertyPricing = data?.pricing || null;
+  const restrictionValueMap = buildAvailabilityRestrictionValueMap(availabilityRestrictions);
+  const checkInDetails = data?.checkIn && typeof data.checkIn === "object"
+    ? data.checkIn
+    : { checkIn: {}, checkOut: {} };
+  const policyAvailabilitySettings = {
+    advanceNoticeDays: Math.max(
+      0,
+      ...POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS
+        .filter((restrictionKey) => restrictionValueMap.has(restrictionKey))
+        .map((restrictionKey) => Number(restrictionValueMap.get(restrictionKey)) || 0),
+      restrictionValueMap.has(DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY)
+        ? Number(restrictionValueMap.get(DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY)) || 0
+        : 0
+    ),
+    preparationTimeDays: Math.max(
+      0,
+      ...POLICY_PREPARATION_TIME_RESTRICTION_KEYS
+        .filter((restrictionKey) => restrictionValueMap.has(restrictionKey))
+        .map((restrictionKey) => Number(restrictionValueMap.get(restrictionKey)) || 0),
+      restrictionValueMap.has(DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY)
+        ? Number(restrictionValueMap.get(DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY)) || 0
+        : 0
+    ),
+    advanceNoticeRestrictionKey:
+      POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS.find((restrictionKey) => restrictionValueMap.has(restrictionKey)) ||
+      DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY,
+    preparationTimeRestrictionKey:
+      POLICY_PREPARATION_TIME_RESTRICTION_KEYS.find((restrictionKey) => restrictionValueMap.has(restrictionKey)) ||
+      DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY,
+  };
 
   return {
     status: property.status || "INACTIVE",
@@ -611,6 +712,8 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
     },
     selectedAmenityIds: propertyAmenities.map((amenity) => String(amenity?.amenityId || "")).filter(Boolean),
     policyRules: mapPropertyRulesToState(propertyRules),
+    checkInDetails: normalizeCheckInDetails(checkInDetails),
+    policyAvailabilitySettings: normalizePolicyAvailabilitySettings(policyAvailabilitySettings),
     pricingForm: mapPropertyPricingToState(propertyPricing, availabilityRestrictions),
     existingPhotos: mapPropertyImagesToState(propertyImages),
     hostProperties: mapHostProperties(hostPropertiesData, property),

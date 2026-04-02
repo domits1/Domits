@@ -96,6 +96,42 @@ const parseBookingResponse = async (response) => {
   return [];
 };
 
+const normalizeListingProperty = (payload) => {
+  const property = payload && typeof payload === "object" ? payload : {};
+  const normalizedCalendarAvailability =
+    property?.calendarAvailability && typeof property.calendarAvailability === "object"
+      ? property.calendarAvailability
+      : {};
+  const normalizedCheckIn =
+    property?.checkIn && typeof property.checkIn === "object" ? property.checkIn : {};
+
+  return {
+    ...property,
+    property: property?.property && typeof property.property === "object" ? property.property : {},
+    images: Array.isArray(property?.images) ? property.images : [],
+    pricing: property?.pricing && typeof property.pricing === "object" ? property.pricing : {},
+    generalDetails: Array.isArray(property?.generalDetails) ? property.generalDetails : [],
+    amenities: Array.isArray(property?.amenities) ? property.amenities : [],
+    rules: Array.isArray(property?.rules) ? property.rules : [],
+    checkIn: {
+      checkIn:
+        normalizedCheckIn?.checkIn && typeof normalizedCheckIn.checkIn === "object"
+          ? normalizedCheckIn.checkIn
+          : {},
+      checkOut:
+        normalizedCheckIn?.checkOut && typeof normalizedCheckIn.checkOut === "object"
+          ? normalizedCheckIn.checkOut
+          : {},
+    },
+    calendarAvailability: {
+      ...normalizedCalendarAvailability,
+      externalBlockedDates: Array.isArray(normalizedCalendarAvailability?.externalBlockedDates)
+        ? normalizedCalendarAvailability.externalBlockedDates
+        : [],
+    },
+  };
+};
+
 const fetchAcceptedBookingsByPropertyId = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
@@ -161,10 +197,11 @@ const ListingDetails2 = () => {
           FetchPropertyById(id),
           fetchAcceptedBookingsByPropertyId(id).catch(() => []),
         ]);
-        setProperty(fetchedProperty);
+        const normalizedProperty = normalizeListingProperty(fetchedProperty);
+        setProperty(normalizedProperty);
         setAcceptedBookingDateKeys(buildAcceptedBookingDateKeys(acceptedBookings));
 
-        const hostData = await fetchHostInfo(fetchedProperty?.property?.hostId);
+        const hostData = await fetchHostInfo(normalizedProperty?.property?.hostId);
         setHost(hostData);
 
         setLoading(false);

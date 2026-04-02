@@ -1,6 +1,12 @@
 import React from "react";
 
 const RulesContainer = ({ rules, checkIn }) => {
+  const safeRules = Array.isArray(rules) ? rules : [];
+  const checkInFrom = checkIn?.checkIn?.from;
+  const checkInTill = checkIn?.checkIn?.till;
+  const checkOutFrom = checkIn?.checkOut?.from;
+  const checkOutTill = checkIn?.checkOut?.till;
+
   const formatRule = (rule) => {
     const allowedText = rule.value ? "allowed" : "not allowed";
 
@@ -23,14 +29,36 @@ const RulesContainer = ({ rules, checkIn }) => {
     return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
   };
 
+  const formatTimeRange = (from, till) => {
+    const formattedFrom = formatHour(from);
+    const formattedTill = formatHour(till);
+
+    if (formattedFrom && formattedTill) {
+      return `${formattedFrom} - ${formattedTill}`;
+    }
+
+    return formattedFrom || formattedTill;
+  };
+
+  const formattedRules = safeRules.map((rule) => formatRule(rule)).join(" - ");
+  const formattedCheckInRange = formatTimeRange(checkInFrom, checkInTill);
+  const formattedCheckOutRange = formatTimeRange(checkOutFrom, checkOutTill);
+  const hasCheckInInfo = Boolean(formattedCheckInRange || formattedCheckOutRange);
+
+  if (!formattedRules && !hasCheckInInfo) {
+    return null;
+  }
+
   return (
     <div className="rules-container">
       <p className="rules-title">House rules:</p>
-      <p className="rules">{rules.map((rule) => formatRule(rule)).join(" - ")}</p>
-      <div className="rules-check-in-check-out-container">
-        <p>Check-in from: {formatHour(checkIn.checkIn.from)}</p>
-        <p>Check-out from: {formatHour(checkIn.checkOut.from)}</p>
-      </div>
+      {formattedRules ? <p className="rules">{formattedRules}</p> : null}
+      {hasCheckInInfo ? (
+        <div className="rules-check-in-check-out-container">
+          {formattedCheckInRange ? <p>Check-in: {formattedCheckInRange}</p> : null}
+          {formattedCheckOutRange ? <p>Check-out: {formattedCheckOutRange}</p> : null}
+        </div>
+      ) : null}
     </div>
   );
 };

@@ -83,14 +83,6 @@ const CANCELLATION_POLICIES = [
   },
 ];
 
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
-  const h = String(i).padStart(2, "0");
-  return `${h}:00`;
-});
-
-const ADVANCE_NOTICE_OPTIONS = ["Same day", "1 day", "2 days", "3 days", "5 days", "7 days"];
-const PREP_TIME_OPTIONS = ["None", "1 day", "2 days", "3 days"];
-
 function ToggleSwitch({ checked, onChange, disabled }) {
   return (
     <button
@@ -911,26 +903,66 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
   );
 }
 
-export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule, handleDeletePropertyClick, saving }) {
+const POLICY_TOGGLE_FIELDS = [
+  { rule: "SuitableForChildren", label: "Children allowed" },
+  { rule: "SuitableForInfants", label: "Infants allowed" },
+  { rule: "PetsAllowed", label: "Pets allowed" },
+  { rule: "SmokingAllowed", label: "Smoking allowed" },
+  { rule: "Parties/EventsAllowed", label: "Parties / Events allowed" },
+];
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
+  const h = String(i).padStart(2, "0");
+  return `${h}:00`;
+});
+const ADVANCE_NOTICE_OPTIONS = [
+  { value: 0, label: "Same day" },
+  { value: 1, label: "1 day" },
+  { value: 2, label: "2 days" },
+  { value: 3, label: "3 days" },
+  { value: 5, label: "5 days" },
+  { value: 7, label: "7 days" },
+  { value: 14, label: "14 days" },
+  { value: 30, label: "30 days" },
+];
+const PREPARATION_TIME_OPTIONS = [
+  { value: 0, label: "None" },
+  { value: 1, label: "1 day" },
+  { value: 2, label: "2 days" },
+  { value: 3, label: "3 days" },
+  { value: 4, label: "4 days" },
+  { value: 5, label: "5 days" },
+  { value: 6, label: "6 days" },
+  { value: 7, label: "7 days" },
+];
+
+const resolveDistinctLateTime = (fromValue, preferredTillValue, fallbackFromValue) => {
+  const normalizedFromValue = fromValue || fallbackFromValue;
+  const normalizedPreferredTillValue = preferredTillValue || normalizedFromValue;
+
+  if (normalizedPreferredTillValue && normalizedPreferredTillValue !== normalizedFromValue) {
+    return normalizedPreferredTillValue;
+  }
+
+  const selectedTimeIndex = TIME_OPTIONS.indexOf(normalizedFromValue);
+  if (selectedTimeIndex >= 0 && selectedTimeIndex < TIME_OPTIONS.length - 1) {
+    return TIME_OPTIONS[selectedTimeIndex + 1];
+  }
+
+  return normalizedFromValue;
+};
+
+export default function HostPropertyPoliciesTab({
+  policyRules,
+  checkInDetails,
+  policyAvailabilitySettings,
+  setCheckInDetails,
+  setPolicyAvailabilitySettings,
+  updatePolicyRule,
+  handleDeletePropertyClick,
+  saving,
+}) {
   const [selectedPolicy, setSelectedPolicy] = useState("flexible");
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
-
-  const [checkinTime, setCheckinTime] = useState("15:00");
-  const [checkoutTime, setCheckoutTime] = useState("11:00");
-  const [lateCheckinEnabled, setLateCheckinEnabled] = useState(false);
-  const [lateCheckinTime, setLateCheckinTime] = useState("20:00");
-  const [lateCheckoutEnabled, setLateCheckoutEnabled] = useState(false);
-  const [advanceNotice, setAdvanceNotice] = useState("1 day");
-  const [prepTime, setPrepTime] = useState("1 day");
-
-  const [houseRules, setHouseRules] = useState({
-    childrenAllowed: false,
-    smokingAllowed: false,
-    petsAllowed: true,
-    maxGuests: 4,
-    partiesAllowed: false,
-    quietHours: "11:00",
-  });
 
   const [propertyRules, setPropertyRules] = useState({
     cookingAllowed: false,
@@ -988,6 +1020,76 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
     } else {
       setCustomSafetyRules((prev) => prev.filter((r) => r.id !== id));
     }
+  };
+
+  const lateCheckInEnabled = Boolean(
+    checkInDetails?.checkIn?.till && checkInDetails?.checkIn?.till !== checkInDetails?.checkIn?.from
+  );
+  const lateCheckOutEnabled = Boolean(
+    checkInDetails?.checkOut?.till && checkInDetails?.checkOut?.till !== checkInDetails?.checkOut?.from
+  );
+
+  const updateCheckInWindow = (nextValue) => {
+    setCheckInDetails((previous) => ({
+      ...previous,
+      checkIn: {
+        ...previous.checkIn,
+        from: nextValue,
+        till: lateCheckInEnabled
+          ? resolveDistinctLateTime(nextValue, previous?.checkIn?.till, "15:00")
+          : nextValue,
+      },
+    }));
+  };
+
+  const updateCheckInLateWindow = (enabled, nextValue) => {
+    setCheckInDetails((previous) => {
+      const currentFrom = previous?.checkIn?.from || "15:00";
+      const currentTill = previous?.checkIn?.till || currentFrom;
+      return {
+        ...previous,
+        checkIn: {
+          ...previous.checkIn,
+          from: currentFrom,
+          till: enabled ? resolveDistinctLateTime(currentFrom, nextValue || currentTill, "15:00") : currentFrom,
+        },
+      };
+    });
+  };
+
+  const updateCheckOutWindow = (nextValue) => {
+    setCheckInDetails((previous) => ({
+      ...previous,
+      checkOut: {
+        ...previous.checkOut,
+        from: nextValue,
+        till: lateCheckOutEnabled
+          ? resolveDistinctLateTime(nextValue, previous?.checkOut?.till, "11:00")
+          : nextValue,
+      },
+    }));
+  };
+
+  const updateCheckOutLateWindow = (enabled, nextValue) => {
+    setCheckInDetails((previous) => {
+      const currentFrom = previous?.checkOut?.from || "11:00";
+      const currentTill = previous?.checkOut?.till || currentFrom;
+      return {
+        ...previous,
+        checkOut: {
+          ...previous.checkOut,
+          from: currentFrom,
+          till: enabled ? resolveDistinctLateTime(currentFrom, nextValue || currentTill, "11:00") : currentFrom,
+        },
+      };
+    });
+  };
+
+  const updatePolicyAvailabilityField = (field, value) => {
+    setPolicyAvailabilitySettings((previous) => ({
+      ...previous,
+      [field]: Number(value) || 0,
+    }));
   };
 
   return (
@@ -1062,14 +1164,17 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
           <div className={styles.checkinField}>
             <label htmlFor="checkin-time" className={styles.checkinLabel}>
               Check-in time
-            </label>{" "}
+            </label>
             <select
+              id="checkin-time"
               className={styles.checkinSelect}
-              value={checkinTime}
-              onChange={(e) => setCheckinTime(e.target.value)}>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              value={checkInDetails?.checkIn?.from || "15:00"}
+              onChange={(e) => updateCheckInWindow(e.target.value)}
+              disabled={saving}
+            >
+              {TIME_OPTIONS.map((timeValue) => (
+                <option key={timeValue} value={timeValue}>
+                  {timeValue}
                 </option>
               ))}
             </select>
@@ -1080,19 +1185,31 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
               Late check-in time
             </label>
             <div className={styles.checkinToggleRow}>
-              <ToggleSwitch checked={lateCheckinEnabled} onChange={setLateCheckinEnabled} />
-              {lateCheckinEnabled && (
+              <ToggleSwitch
+                checked={lateCheckInEnabled}
+                onChange={(enabled) =>
+                  updateCheckInLateWindow(
+                    enabled,
+                    enabled ? checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || "15:00" : ""
+                  )
+                }
+                disabled={saving}
+              />
+              {lateCheckInEnabled ? (
                 <select
+                  id="late-checkin-time"
                   className={styles.checkinSelectInline}
-                  value={lateCheckinTime}
-                  onChange={(e) => setLateCheckinTime(e.target.value)}>
-                  {TIME_OPTIONS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
+                  value={checkInDetails?.checkIn?.till || checkInDetails?.checkIn?.from || "15:00"}
+                  onChange={(e) => updateCheckInLateWindow(true, e.target.value)}
+                  disabled={saving}
+                >
+                  {TIME_OPTIONS.map((timeValue) => (
+                    <option key={timeValue} value={timeValue}>
+                      {timeValue}
                     </option>
                   ))}
                 </select>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -1101,12 +1218,15 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
               Check-out time
             </label>
             <select
+              id="checkout-time"
               className={styles.checkinSelect}
-              value={checkoutTime}
-              onChange={(e) => setCheckoutTime(e.target.value)}>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              value={checkInDetails?.checkOut?.from || "11:00"}
+              onChange={(e) => updateCheckOutWindow(e.target.value)}
+              disabled={saving}
+            >
+              {TIME_OPTIONS.map((timeValue) => (
+                <option key={timeValue} value={timeValue}>
+                  {timeValue}
                 </option>
               ))}
             </select>
@@ -1116,7 +1236,33 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
             <label htmlFor="late-checkout-time" className={styles.checkinLabel}>
               Late check-out time
             </label>
-            <ToggleSwitch checked={lateCheckoutEnabled} onChange={setLateCheckoutEnabled} />
+            <div className={styles.checkinToggleRow}>
+              <ToggleSwitch
+                checked={lateCheckOutEnabled}
+                onChange={(enabled) =>
+                  updateCheckOutLateWindow(
+                    enabled,
+                    enabled ? checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || "11:00" : ""
+                  )
+                }
+                disabled={saving}
+              />
+              {lateCheckOutEnabled ? (
+                <select
+                  id="late-checkout-time"
+                  className={styles.checkinSelectInline}
+                  value={checkInDetails?.checkOut?.till || checkInDetails?.checkOut?.from || "11:00"}
+                  onChange={(e) => updateCheckOutLateWindow(true, e.target.value)}
+                  disabled={saving}
+                >
+                  {TIME_OPTIONS.map((timeValue) => (
+                    <option key={timeValue} value={timeValue}>
+                      {timeValue}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </div>
           </div>
 
           <div className={styles.checkinField}>
@@ -1125,12 +1271,15 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
             </label>
             <p className={styles.checkinFieldHint}>Minimum amount of notice required before a guest can book.</p>
             <select
+              id="advance-notice"
               className={styles.checkinSelect}
-              value={advanceNotice}
-              onChange={(e) => setAdvanceNotice(e.target.value)}>
-              {ADVANCE_NOTICE_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
+              value={policyAvailabilitySettings?.advanceNoticeDays ?? 0}
+              onChange={(e) => updatePolicyAvailabilityField("advanceNoticeDays", e.target.value)}
+              disabled={saving}
+            >
+              {ADVANCE_NOTICE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -1141,10 +1290,16 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
               Preparation time
             </label>
             <p className={styles.checkinFieldHint}>Time required between bookings to clean and prepare the property.</p>
-            <select className={styles.checkinSelect} value={prepTime} onChange={(e) => setPrepTime(e.target.value)}>
-              {PREP_TIME_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
+            <select
+              id="prep-time"
+              className={styles.checkinSelect}
+              value={policyAvailabilitySettings?.preparationTimeDays ?? 0}
+              onChange={(e) => updatePolicyAvailabilityField("preparationTimeDays", e.target.value)}
+              disabled={saving}
+            >
+              {PREPARATION_TIME_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -1156,60 +1311,16 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
         <h3 className={styles.sectionTitle}>House Rules</h3>
 
         <div className={styles.rulesGrid}>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Children allowed</span>
-            <ToggleSwitch
-              checked={houseRules.childrenAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, childrenAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Smoking allowed</span>
-            <ToggleSwitch
-              checked={houseRules.smokingAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, smokingAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Pets allowed</span>
-            <ToggleSwitch
-              checked={houseRules.petsAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, petsAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Maximum guests</span>
-            <select
-              className={styles.checkinSelectInline}
-              value={houseRules.maxGuests}
-              onChange={(e) => setHouseRules((p) => ({ ...p, maxGuests: e.target.value }))}>
-              {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Parties / Events allowed</span>
-            <ToggleSwitch
-              checked={houseRules.partiesAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, partiesAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Quiet hours start</span>
-            <select
-              className={styles.checkinSelectInline}
-              value={houseRules.quietHours}
-              onChange={(e) => setHouseRules((p) => ({ ...p, quietHours: e.target.value }))}>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
+          {POLICY_TOGGLE_FIELDS.map((field) => (
+            <div key={field.rule} className={styles.ruleToggleRow}>
+              <span className={styles.ruleToggleLabel}>{field.label}</span>
+              <ToggleSwitch
+                checked={Boolean(policyRules[field.rule])}
+                onChange={(val) => updatePolicyRule(field.rule, val)}
+                disabled={saving}
+              />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -1410,6 +1521,10 @@ export function HostPropertyTabContent({
   pricingForm,
   setPricingForm,
   policyRules,
+  checkInDetails,
+  policyAvailabilitySettings,
+  setCheckInDetails,
+  setPolicyAvailabilitySettings,
   updatePolicyRule,
   handleDeletePropertyClick,
   saving,
@@ -1471,6 +1586,10 @@ export function HostPropertyTabContent({
       return (
         <HostPropertyPoliciesTab
           policyRules={policyRules}
+          checkInDetails={checkInDetails}
+          policyAvailabilitySettings={policyAvailabilitySettings}
+          setCheckInDetails={setCheckInDetails}
+          setPolicyAvailabilitySettings={setPolicyAvailabilitySettings}
           updatePolicyRule={updatePolicyRule}
           handleDeletePropertyClick={handleDeletePropertyClick}
           saving={saving}
@@ -1605,6 +1724,24 @@ HostPropertyPricingTab.propTypes = {
 
 HostPropertyPoliciesTab.propTypes = {
   policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
+  checkInDetails: PropTypes.shape({
+    checkIn: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    checkOut: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+  }),
+  policyAvailabilitySettings: PropTypes.shape({
+    advanceNoticeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    preparationTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    advanceNoticeRestrictionKey: PropTypes.string,
+    preparationTimeRestrictionKey: PropTypes.string,
+  }),
+  setCheckInDetails: PropTypes.func.isRequired,
+  setPolicyAvailabilitySettings: PropTypes.func.isRequired,
   updatePolicyRule: PropTypes.func.isRequired,
   handleDeletePropertyClick: PropTypes.func.isRequired,
   saving: PropTypes.bool.isRequired,
@@ -1651,6 +1788,24 @@ HostPropertyTabContent.propTypes = {
   pricingForm: pricingFormShape.isRequired,
   setPricingForm: PropTypes.func.isRequired,
   policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
+  checkInDetails: PropTypes.shape({
+    checkIn: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    checkOut: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+  }),
+  policyAvailabilitySettings: PropTypes.shape({
+    advanceNoticeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    preparationTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    advanceNoticeRestrictionKey: PropTypes.string,
+    preparationTimeRestrictionKey: PropTypes.string,
+  }),
+  setCheckInDetails: PropTypes.func.isRequired,
+  setPolicyAvailabilitySettings: PropTypes.func.isRequired,
   updatePolicyRule: PropTypes.func.isRequired,
   handleDeletePropertyClick: PropTypes.func.isRequired,
   saving: PropTypes.bool.isRequired,
