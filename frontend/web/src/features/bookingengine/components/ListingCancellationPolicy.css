@@ -23,7 +23,7 @@
 
 .policy-badge {
   display: inline-block;
-  background: var(--primary-color, #2d8a5a);
+  background: var(--primary-color, #1e6b3f);
   color: white;
   padding: 6px 12px;
   border-radius: 6px;
