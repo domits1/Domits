@@ -35,6 +35,11 @@ const buildMetaParts = (stay) => {
 
 export const stayShape = PropTypes.shape({
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  hostId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  hostName: PropTypes.string,
+  hostImage: PropTypes.string,
   image: PropTypes.string,
   name: PropTypes.string,
   location: PropTypes.string,
@@ -50,6 +55,7 @@ function StayOverviewCard({
   stay,
   actionClassName,
   onOpenReservation,
+  onMessageHost,
   onBrowseBookings,
 }) {
   const metaParts = buildMetaParts(stay);
@@ -94,8 +100,12 @@ function StayOverviewCard({
         <button type="button" onClick={onOpenReservation}>
           Open reservation
         </button>
-        <button type="button">Message host</button>
-        <button type="button">Download invoice</button>
+        <button type="button" onClick={onMessageHost}>
+          Message host
+        </button>
+        <button type="button" disabled title="Coming soon">
+          Download invoice (Coming soon)
+        </button>
       </div>
     </div>
   );
@@ -107,6 +117,7 @@ StayOverviewCard.propTypes = {
   stay: stayShape,
   actionClassName: PropTypes.string.isRequired,
   onOpenReservation: PropTypes.func.isRequired,
+  onMessageHost: PropTypes.func.isRequired,
   onBrowseBookings: PropTypes.func,
 };
 

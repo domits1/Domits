@@ -37,7 +37,9 @@ export const buildPropertySummary = async (propertyId) => {
     city,
     country,
     locationLabel: [city, country].filter(Boolean).join(", ") || city || country || "Unknown location",
+    hostId: property.hostId || property.hostID || host?.id || host?.userId || null,
     hostName: resolveHostName(hostNameFromHost, hostNameFromProperty, data.hostName, property.hostName),
+    hostImage: host?.profileImage || host?.image || null,
   };
 };
 
@@ -47,7 +49,9 @@ const buildFallbackPropertySummary = (propertyId) => ({
   city: "",
   country: "",
   locationLabel: "Unknown location",
+  hostId: null,
   hostName: "",
+  hostImage: null,
 });
 
 export const fetchPropertySummaries = async (propertyIds) => {

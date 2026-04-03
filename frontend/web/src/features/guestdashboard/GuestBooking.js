@@ -14,6 +14,7 @@ import {
   resolveAccommodationImageUrl,
 } from "../../utils/accommodationImage";
 import {
+  getBookingId,
   getPaidBookings,
   getPropertyId,
   normalizeGuestBookingsResponse,
@@ -225,8 +226,16 @@ function GuestBooking() {
   }, [paidBookings, fetchPropertyDetails]);
 
   const handleBookingClick = (bookingItem) => {
+    const bookingId = getBookingId(bookingItem);
     const propertyId = getPropertyId(bookingItem);
-    if (propertyId) navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
+    if (bookingId) {
+      navigate(`/guestdashboard/reservation/${encodeURIComponent(bookingId)}`);
+      return;
+    }
+
+    if (propertyId) {
+      navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
+    }
   };
 
   const { currentBookings, upcomingBookings, pastBookings } = useMemo(

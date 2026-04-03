@@ -19,21 +19,27 @@ function HouseRules({ rules, cancellationPolicy }) {
       <h3>House rules</h3>
 
       <div className="rulesList">
-        {rules.map((rule) => (
-          <div key={buildRuleKey(rule, ruleCounts)} className="ruleItem">
-            <span className="ruleItemIcon">🚫</span>
-            <span>{rule}</span>
+        {rules.length > 0 ? (
+          rules.map((rule) => (
+            <div key={buildRuleKey(rule, ruleCounts)} className="ruleItem">
+              <span className="ruleItemIcon">-</span>
+              <span>{rule}</span>
+            </div>
+          ))
+        ) : (
+          <div className="ruleItem">
+            <span>No additional house rules have been provided.</span>
           </div>
-        ))}
+        )}
       </div>
 
-      {cancellationPolicy && (
+      {cancellationPolicy ? (
         <div className="policyBlock">
           <h3>Cancellation Policy</h3>
           <span className="policyTag">{cancellationPolicy.type}</span>
           <span>{cancellationPolicy.description}</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -18,20 +18,15 @@ function BookingDetails({ reservationId, bookedDate, onDownload }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="primaryBtn"
-        onClick={onDownload}
-      >
-        ⬇ Download receipt
+      <button type="button" className="primaryBtn" onClick={onDownload}>
+        Download receipt
       </button>
     </div>
   );
 }
 
 BookingDetails.propTypes = {
-  reservationId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    .isRequired,
+  reservationId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   bookedDate: PropTypes.string.isRequired,
   onDownload: PropTypes.func,
 };
