@@ -1,6 +1,5 @@
 import Database from "database";
 import { Property_HouseRule } from "database/models/Property_HouseRule";
-import { v4 as uuidv4 } from "uuid";
 
 export class PropertyHouseRuleRepository {
   constructor(systemManager) {
@@ -31,7 +30,7 @@ export class PropertyHouseRuleRepository {
 
     if (Array.isArray(houseRules) && houseRules.length > 0) {
       const rulesToInsert = houseRules.map((rule) => ({
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         property_id: propertyId,
         rule_text: rule.rule_text || rule.text || "",
         enabled: rule.enabled !== false,

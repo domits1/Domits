@@ -1,6 +1,5 @@
 import Database from "database";
 import { Property_CustomRule } from "database/models/Property_CustomRule";
-import { v4 as uuidv4 } from "uuid";
 
 export class PropertyCustomRuleRepository {
   constructor(systemManager) {
@@ -32,7 +31,7 @@ export class PropertyCustomRuleRepository {
 
     if (Array.isArray(customRules) && customRules.length > 0) {
       const rulesToInsert = customRules.map((rule) => ({
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         property_id: propertyId,
         category: rule.category || "property",
         rule_text: rule.rule_text || rule.text || "",
