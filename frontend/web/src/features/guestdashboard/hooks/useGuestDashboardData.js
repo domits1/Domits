@@ -7,9 +7,13 @@ import {
 } from "../services/bookingAPI";
 import {
   getArrivalDate,
+  getBookingId,
+  getBookingTotal,
   getDepartureDate,
   getPaidBookings,
   getPropertyId,
+  getReservationNumber,
+  normalizeStayStatus,
 } from "../utils/guestDashboardUtils";
 import { normalizeImageUrl, placeholderImage } from "../utils/image";
 import {
@@ -54,35 +58,9 @@ const STAY_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-const TOTAL_KEYS = [
-  "totalprice",
-  "total_price",
-  "totalPrice",
-  "total",
-  "amount",
-  "paymentAmount",
-  "payment_amount",
-];
-
 const safeString = (value, fallback = "") => {
   const text = String(value || "").trim();
   return text || fallback;
-};
-
-const pickFirstNumber = (source, keys) => {
-  for (const key of keys) {
-    const value = source?.[key];
-    if (value == null || value === "") {
-      continue;
-    }
-
-    const numericValue = Number(value);
-    if (Number.isFinite(numericValue)) {
-      return numericValue;
-    }
-  }
-
-  return null;
 };
 
 const formatStayDateRange = (arrivalDate, departureDate) => {
@@ -93,24 +71,6 @@ const formatStayDateRange = (arrivalDate, departureDate) => {
   const firstPart = SHORT_DATE_FORMATTER.format(arrivalDate);
   const secondPart = STAY_DATE_FORMATTER.format(departureDate);
   return `${firstPart} - ${secondPart}`;
-};
-
-const normalizeStayStatus = (value) => {
-  const normalized = safeString(value).toLowerCase();
-
-  if (!normalized) {
-    return "Confirmed";
-  }
-
-  if (["paid", "confirmed"].includes(normalized)) {
-    return "Confirmed";
-  }
-
-  if (normalized === "cancelled" || normalized === "canceled") {
-    return "Cancelled";
-  }
-
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 const buildTripReminders = ({ currentStay, upcomingStay, today }) => {
@@ -203,21 +163,23 @@ const buildStayRecord = ({ booking, arrivalDate, departureDate, propertySummary 
     placeholderImage;
 
   return {
-    id: booking?.id || booking?.paymentid || booking?.paymentId || propertyId || fallbackTitle,
-    bookingId: booking?.id || null,
+    id: getBookingId(booking) || propertyId || fallbackTitle,
+    bookingId: getBookingId(booking),
     propertyId,
+    hostId: propertySummary?.hostId || booking?.hostid || booking?.hostId || booking?.host_id || null,
     name: propertySummary?.title || fallbackTitle,
     location: propertySummary?.locationLabel || booking?.city || booking?.location?.city || "Unknown location",
     dates: formatStayDateRange(arrivalDate, departureDate),
     arrivalDate,
     departureDate,
     image: propertySummary?.imageUrl || fallbackImage,
-    reservationNumber: booking?.paymentid || booking?.paymentId || booking?.id || "-",
-    total: pickFirstNumber(booking, TOTAL_KEYS),
+    reservationNumber: getReservationNumber(booking),
+    total: getBookingTotal(booking),
     status: normalizeStayStatus(booking?.status),
     hostName:
       propertySummary?.hostName ||
       safeString(booking?.hostname || booking?.hostName || booking?.host?.name, ""),
+    hostImage: propertySummary?.hostImage || null,
   };
 };
 
