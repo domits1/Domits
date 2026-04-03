@@ -2,8 +2,10 @@ import dateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
 import { placeholderImage, normalizeImageUrl } from "./image";
 
 export {
+  API_BOOKING_DETAILS_BASE,
   API_FETCH_BOOKINGS,
   API_LISTING_DETAILS_BASE,
+  buildBookingDetailsUrl,
   buildListingDetailsUrl,
 } from "../services/bookingAPI";
 
@@ -14,12 +16,37 @@ const FAMILY_PATTERN = /(\d+)\s*adult[s]?\s*-\s*(\d+)\s*kid[s]?/i;
 
 const ARRIVAL_KEYS = ["arrivaldate", "arrival_date", "arrivalDate"];
 const DEPARTURE_KEYS = ["departuredate", "departure_date", "departureDate"];
+const TOTAL_KEYS = [
+  "totalprice",
+  "total_price",
+  "totalPrice",
+  "total",
+  "amount",
+  "paymentAmount",
+  "payment_amount",
+];
 
 const pickFirst = (obj, keys) => {
   for (const key of keys) {
     const value = obj?.[key];
     if (value != null && value !== "") return value;
   }
+  return null;
+};
+
+const pickFirstNumber = (obj, keys) => {
+  for (const key of keys) {
+    const value = obj?.[key];
+    if (value == null || value === "") {
+      continue;
+    }
+
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue)) {
+      return numericValue;
+    }
+  }
+
   return null;
 };
 
@@ -73,6 +100,24 @@ export const toDate = (rawValue) => {
 
 export const getArrivalDate = (booking) => toDate(pickFirst(booking, ARRIVAL_KEYS));
 export const getDepartureDate = (booking) => toDate(pickFirst(booking, DEPARTURE_KEYS));
+export const getBookingId = (booking) =>
+  booking?.id ??
+  booking?.ID ??
+  booking?.bookingId ??
+  booking?.paymentid ??
+  booking?.paymentId ??
+  null;
+
+export const getReservationNumber = (booking) =>
+  booking?.paymentid ??
+  booking?.paymentId ??
+  getBookingId(booking) ??
+  "-";
+
+export const getBookingCreatedAt = (booking) =>
+  toDate(booking?.createdat ?? booking?.createdAt ?? booking?.bookedAt ?? booking?.bookingDate);
+
+export const getBookingTotal = (booking) => pickFirstNumber(booking, TOTAL_KEYS);
 
 export const splitBookingsByTime = (bookings) => {
   const today = startOfDay(new Date());
@@ -131,6 +176,24 @@ export const getPaidBookings = (bookingData) =>
   normalizeGuestBookingsResponse(bookingData).filter(
     (booking) => String(booking?.status ?? booking?.Status ?? "").toLowerCase() === "paid"
   );
+
+export const normalizeStayStatus = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+
+  if (!normalized) {
+    return "Confirmed";
+  }
+
+  if (["paid", "confirmed"].includes(normalized)) {
+    return "Confirmed";
+  }
+
+  if (normalized === "cancelled" || normalized === "canceled") {
+    return "Cancelled";
+  }
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
 
 export const getCurrentOrUpcomingBooking = (bookingData) => {
   const paidBookings = getPaidBookings(bookingData);

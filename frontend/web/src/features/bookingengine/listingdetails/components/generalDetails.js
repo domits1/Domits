@@ -1,6 +1,10 @@
 import React from "react";
 
-const GeneralDetails = ({generalDetails}) => {
+const GeneralDetails = ({ generalDetails = [] }) => {
+  if (!Array.isArray(generalDetails) || generalDetails.length === 0) {
+    return null;
+  }
+
   return (
     <p className="details">
       {generalDetails

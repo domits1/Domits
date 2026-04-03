@@ -1,0 +1,226 @@
+.dashboardHost {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.hostListingContainer {
+  width: 100%;
+}
+
+.listingBody {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.buttonBox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.greenBtn {
+  color: #fff;
+  background: var(--domits-host-blue);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.greenBtn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.greenBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.listingsDisplay {
+  background: #fff;
+  border: 1px solid #d9dee7;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  padding: 24px;
+}
+
+.listingFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.listingFilterButton {
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #fff;
+  color: #1f2937;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.listingFilterButton:hover:not(:disabled) {
+  border-color: #1f4e79;
+  background: #f4f8fd;
+  color: #113a60;
+  transform: translateY(-1px);
+}
+
+.listingFilterButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.listingFilterButtonActive {
+  border-color: #1f4e79;
+  background: #eaf2fb;
+  color: #113a60;
+}
+
+.header {
+  margin: 0 0 16px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.loader,
+.emptyState {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.emptyState {
+  color: #4b5563;
+  font-size: 1.1rem;
+  border: 1px dashed #d1d5db;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  width: 100%;
+}
+
+.dashboardCard {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid #d9dee7;
+  background: #f8fafc;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboardCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+}
+
+.imgListedDashboard,
+.imgListedDashboardFallback {
+  width: 100%;
+  height: 190px;
+  display: block;
+}
+
+.imgListedDashboard {
+  object-fit: cover;
+}
+
+.imgListedDashboardFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  color: #374151;
+  font-weight: 600;
+}
+
+.accommodationText {
+  padding: 16px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #111827;
+}
+
+.accommodationTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.accommodationLocation {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #6b7280;
+}
+
+.accommodationDetails {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px 14px;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.status {
+  font-weight: 700;
+  color: #1f7a1f;
+}
+
+.isArchived {
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .buttonBox {
+    flex-direction: column;
+  }
+
+  .greenBtn {
+    width: 100%;
+  }
+
+  .listingsDisplay {
+    padding: 18px;
+  }
+
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardCard {
+    width: 100%;
+  }
+
+  .accommodationDetails {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
