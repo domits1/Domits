@@ -771,7 +771,13 @@ function MessagingPreferencesCenter() {
                       <div>
                         <strong>{rule.name}</strong>
                         <p>{rule.channel} · keyword: {rule.keywordPattern}</p>
-                        <p>{rule.replyTemplateId ? `Template: ${rule.replyTemplateId}` : "Custom reply text"}</p>
+                        <p>
+                          {rule.replyTemplateId
+                            ? `Template: ${rule.replyTemplateId}`
+                            : rule.replyText
+                              ? `Custom reply: ${rule.replyText}`
+                              : "Custom reply text"}
+                        </p>
                       </div>
                       <div className="messaging-preferences-card-actions">
                         <button type="button" onClick={() => handleEditRule(rule)}>Edit</button>

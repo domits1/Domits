@@ -2,6 +2,7 @@ import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository from "../data/threadRepository.js";
 import WhatsAppProviderAdapter from "./whatsappProviderAdapter.js";
 import MessagingRuntimeService from "./messagingRuntimeService.js";
+import publishRealtimeMessage from "./publishRealtimeMessage.js";
 
 const isWhatsAppPayload = (payload) => payload.platform === "WHATSAPP";
 const resolveParticipantId = (explicitId, fallbackId) => explicitId || fallbackId;
@@ -50,6 +51,19 @@ const buildStoredMetadata = (payload, providerResult) => {
     ...baseMetadata,
     providerResult,
   });
+};
+
+const parseMetadata = (metadata) => {
+  if (!metadata) return {};
+  if (typeof metadata === "string") {
+    try {
+      return JSON.parse(metadata) || {};
+    } catch {
+      return {};
+    }
+  }
+  if (typeof metadata === "object") return metadata;
+  return {};
 };
 
 class MessageService {
@@ -151,6 +165,8 @@ class MessageService {
       errorMessage,
     });
 
+    const parsedMetadata = parseMetadata(payload.metadata);
+
     await this.threadRepository.updateThreadActivity({
       threadId,
       direction: "OUTBOUND",
@@ -162,18 +178,23 @@ class MessageService {
     const senderIsGuest = hostId && guestId && String(senderId) === String(guestId);
     const recipientIsHost = hostId && String(recipientId) === String(hostId);
 
-    if (senderIsGuest && recipientIsHost) {
-      let parsedMetadata = {};
-      if (typeof payload.metadata === "string") {
-        try {
-          parsedMetadata = JSON.parse(payload.metadata) || {};
-        } catch {
-          parsedMetadata = {};
-        }
-      } else if (payload.metadata && typeof payload.metadata === "object") {
-        parsedMetadata = payload.metadata;
+    if (parsedMetadata?.isAutomated) {
+      try {
+        await publishRealtimeMessage({
+          ...message,
+          threadId,
+          propertyId: payload.propertyId ?? null,
+          platform: payload.platform || "DOMITS",
+          integrationAccountId: payload.integrationAccountId ?? null,
+          externalThreadId: payload.externalThreadId ?? null,
+          metadata: parsedMetadata,
+        });
+      } catch (realtimeError) {
+        console.error("Realtime publish failed for automated message:", realtimeError);
       }
+    }
 
+    if (senderIsGuest && recipientIsHost) {
       try {
         await this.messagingRuntimeService.processInboundGuestMessage({
           hostId,
