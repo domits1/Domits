@@ -551,8 +551,6 @@
 }
 
 
-/*-------------- Listing Styles --------------*/
-
 .listingsContainer {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -560,13 +558,11 @@
   padding: 16px;
 }
 
-/* Layout */
 .listingsGrid {
   display: flex;
   flex-direction: column;
 }
 
-/* Card */
 .listingCard {
   position: relative;
   display: flex;
@@ -576,7 +572,6 @@
   background: white;
 }
 
-/* Divider between cards */
 .listingCard:not(:last-child)::after {
   content: "";
   position: absolute;
@@ -587,7 +582,6 @@
   background: #e5e7eb;
 }
 
-/* Image */
 .listingImage {
   width: 240px;
   height: auto;
@@ -595,7 +589,6 @@
   border-radius: 8px;
 }
 
-/* Right side */
 .cardContent {
   flex: 1;
   display: flex;
@@ -603,28 +596,24 @@
   justify-content: space-between;
 }
 
-/* Rows */
 .row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* Divider lines inside card */
 .divider {
   height: 1px;
   background: #e5e7eb;
   margin: 8px 0;
 }
 
-/* Title */
 .title {
   font-size: 18px;
   font-weight: 700;
   margin: 0;
 }
 
-/* Badge */
 .badge {
   font-size: 12px;
   font-weight: 550;
@@ -647,7 +636,6 @@
   color: #6b7280;
 }
 
-/* Text */
 .location {
   color: #6b7280;
   font-weight: 500;
@@ -658,7 +646,6 @@
   font-size: 13px;
 }
 
-/* Buttons */
 .actionsRow {
   display: flex;
   align-items: center;
@@ -703,12 +690,10 @@
   background: rgb(215, 215, 215);
 }
 
-/* Dropdown wrapper */
 .dropdownWrapper {
   position: relative;
 }
 
-/* Dropdown menu box */
 .dropdownMenu {
   position: absolute;
   top: 38px;
@@ -722,7 +707,6 @@
   z-index: 100;
 }
 
-/* Each option */
 .dropdownItem {
   width: 100%;
   text-align: left;
@@ -736,38 +720,31 @@
   gap: 10px;
 }
 
-/* Hover effect */
 .dropdownItem:hover {
   background: #ececec;
 }
 
-/* Divider between options */
 .dropdownItem:not(:last-child) {
   border-bottom: 1px solid #e0e0e0;
 }
 
-/* Delete option (red) */
 .delete {
   color: #dc3545;
 }
 
-/* hover for delete */
 .delete:hover {
   background: #f8d7da;
 }
 
-/* DropdownIcon */
 .dropdownItem svg {
   flex-shrink: 0;
   font-size: 12px;
 }
 
-/* Location Icon */
 .location svg, .archivedInfo svg {
   font-size: 13px;
 }
 
-/* Archived info box */
 .archivedInfo {
   margin-top: 8px;
   padding: 10px 12px;

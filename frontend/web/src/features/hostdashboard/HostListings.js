@@ -78,7 +78,6 @@ function HostListings() {
     }
   }, [userId]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = () => setOpenMenuId(null);
     document.addEventListener("click", handleClickOutside);
@@ -141,7 +140,6 @@ function HostListings() {
       return changeStatus(id, action.nextStatus);
   };
 
-  // Delete
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
 
@@ -155,7 +153,6 @@ function HostListings() {
     }
   };
 
-  // Archive
   const handleArchive = async (id) => {
     if (!window.confirm("Are you sure you want to archive this listing?")) return;
 
