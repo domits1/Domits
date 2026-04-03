@@ -4,6 +4,20 @@ import StayOverviewCard, { stayShape } from "./StayOverviewCard";
 
 function UpcomingStayCard({ stay }) {
   const navigate = useNavigate();
+  const handleMessageHost = () => {
+    navigate("/guestdashboard/messages", {
+      state: {
+        messageContext: {
+          contactId: stay.hostId || null,
+          contactName: stay.hostName || "Host",
+          contactImage: stay.hostImage || null,
+          propertyId: stay.propertyId || null,
+          propertyTitle: stay.name || null,
+          accoImage: stay.image || null,
+        },
+      },
+    });
+  };
 
   return (
     <StayOverviewCard
@@ -11,7 +25,8 @@ function UpcomingStayCard({ stay }) {
       title="Your upcoming stay"
       stay={stay}
       actionClassName="stayActionsSecondary"
-      onOpenReservation={() => navigate(`/guestdashboard/reservation/${stay.id}`)}
+      onOpenReservation={() => navigate(`/guestdashboard/reservation/${stay.bookingId || stay.id}`)}
+      onMessageHost={handleMessageHost}
       onBrowseBookings={() => navigate("/guestdashboard/bookings")}
     />
   );

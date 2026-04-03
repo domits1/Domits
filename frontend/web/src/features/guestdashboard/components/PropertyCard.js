@@ -14,6 +14,8 @@ function PropertyCard({
   guestsDetails,
   reservationId,
 }) {
+  const guestLabel = guests === 1 ? "guest" : "guests";
+
   return (
     <div className="card leftPropertyCard">
       <img src={image} alt={title} className="propertyImage" />
@@ -38,7 +40,7 @@ function PropertyCard({
               </span>
             </div>
 
-            <span className="arrow">→</span>
+            <span className="arrow">-&gt;</span>
 
             <div className="stayBlock">
               <span className="label">
@@ -59,7 +61,9 @@ function PropertyCard({
             </span>
             <span className="value">
               <span className="guestDetails">{guestsDetails}</span>
-              <span className="guestCount">{guests} guests</span>
+              <span className="guestCount">
+                {guests} {guestLabel}
+              </span>
             </span>
           </div>
         </div>
@@ -83,6 +87,19 @@ PropertyCard.propTypes = {
   guests: PropTypes.number,
   guestsDetails: PropTypes.string,
   reservationId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
+
+PropertyCard.defaultProps = {
+  image: "",
+  title: "",
+  location: "",
+  checkIn: "-",
+  checkInTime: "-",
+  checkOut: "-",
+  checkOutTime: "-",
+  guests: 0,
+  guestsDetails: "Guest details unavailable",
+  reservationId: "-",
 };
 
 export default PropertyCard;

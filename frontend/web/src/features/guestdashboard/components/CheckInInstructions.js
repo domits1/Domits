@@ -13,24 +13,26 @@ const buildInstructionKey = (() => {
 
 function CheckInInstructions({ address, instructions }) {
   const instructionCounts = new Map();
+  const hasInstructions = instructions.length > 0;
 
   return (
     <div className="card">
       <h3>Check-in instructions</h3>
 
-      <p className="instructionsAddress">
-        📍 {address}
-      </p>
+      <p className="instructionsAddress">Address: {address}</p>
 
       <ul>
-        {instructions.map((instruction) => (
-          <li key={buildInstructionKey(instruction, instructionCounts)}>{instruction}</li>
-        ))}
+        {hasInstructions ? (
+          instructions.map((instruction) => (
+            <li key={buildInstructionKey(instruction, instructionCounts)}>{instruction}</li>
+          ))
+        ) : (
+          <li>No additional check-in instructions have been shared yet.</li>
+        )}
       </ul>
 
       <div className="nextStep">
-        <strong>Next step:</strong> You’ll receive your access code on
-        the day of arrival.
+        <strong>Next step:</strong> Check this section again before arrival for any host updates.
       </div>
     </div>
   );
@@ -42,6 +44,7 @@ CheckInInstructions.propTypes = {
 };
 
 CheckInInstructions.defaultProps = {
+  address: "Address unavailable",
   instructions: [],
 };
 

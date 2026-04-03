@@ -20,7 +20,7 @@ function PaymentSummary({ nightlyRate, nights, cleaningFee }) {
       <div className="summaryList">
         <div className="paymentRow">
           <span>
-            {formatCurrency(nightlyRate)} × {nights} nights
+            {formatCurrency(nightlyRate)} x {nights} nights
           </span>
           <span>{formatCurrency(subtotal)}</span>
         </div>

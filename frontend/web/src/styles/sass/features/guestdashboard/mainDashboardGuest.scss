@@ -1,16 +1,29 @@
 .main-dashboard-guest {
     display: flex;
+    align-items: flex-start;
+    gap: clamp(16px, 2vw, 28px);
     min-height: auto;
+    width: 100%;
+}
+
+.main-dashboard-sidebar {
+    flex: 0 0 var(--gd-sidebar-w, 200px);
+    width: var(--gd-sidebar-w, 200px);
 }
 
 .main-dashboard-content {
     flex: 1;
     min-width: 0;
+    width: 100%;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1023px) {
     .main-dashboard-guest {
-    justify-content: center;
-    align-items: center;
+        display: block;
+    }
+
+    .main-dashboard-sidebar {
+        width: 0;
+        flex-basis: 0;
     }
 }
