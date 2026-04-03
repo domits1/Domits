@@ -4,7 +4,7 @@ import "./HostCalendar.scss";
 
 import Toolbar from "./components/Toolbar";
 import CalendarGrid from "./components/CalendarGrid";
-import PulseBarsLoader from "./components/PulseBarsLoader";
+import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
 import CalendarLinkCard from "./components/Sidebar/CalendarLinkCard";

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { UserProvider, useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
@@ -21,6 +22,7 @@ const Messages = ({ dashboardType }) => {
 };
 
 const MessagesContent = ({ dashboardType }) => {
+  const location = useLocation();
   const { userId } = useAuth();
   const { accessToken } = useUser();
 
@@ -42,6 +44,68 @@ const MessagesContent = ({ dashboardType }) => {
   const isTablet = screenWidth >= 768 && screenWidth < 1280;
 
   const { contacts, pendingContacts, loading: contactsLoading, setContacts } = useFetchContacts(userId, dashboardType);
+
+  useEffect(() => {
+    const messageContext = location.state?.messageContext;
+    if (!messageContext || !userId) {
+      return;
+    }
+
+    if (String(messageContext.contactId || "") === String(userId)) {
+      setSelectedContactId(null);
+      setSelectedContactName(null);
+      setSelectedContactImage(null);
+      setSelectedThreadId(null);
+      setSelectedPropertyId(null);
+      setSelectedPropertyTitle(null);
+      setSelectedAccoImage(null);
+      return;
+    }
+
+    setSelectedContactId(messageContext.contactId || null);
+    setSelectedContactName(messageContext.contactName || null);
+    setSelectedContactImage(messageContext.contactImage || null);
+    setSelectedThreadId(messageContext.threadId || null);
+    setSelectedPropertyId(messageContext.propertyId || null);
+    setSelectedPropertyTitle(messageContext.propertyTitle || null);
+    setSelectedAccoImage(messageContext.accoImage || null);
+  }, [location.key, location.state, userId]);
+
+  useEffect(() => {
+    if (!userId || !selectedContactId) {
+      return;
+    }
+
+    const matchedContact = (Array.isArray(contacts) ? contacts : []).find((contact) => {
+      const partnerId =
+        contact?.partnerId ||
+        contact?.recipientId ||
+        contact?.userId ||
+        (String(contact?.hostId || "") === String(userId) ? contact?.guestId : contact?.hostId) ||
+        null;
+
+      if (String(partnerId || "") !== String(selectedContactId)) {
+        return false;
+      }
+
+      if (!selectedPropertyId) {
+        return true;
+      }
+
+      return String(contact?.propertyId || contact?.AccoId || "") === String(selectedPropertyId);
+    });
+
+    if (!matchedContact) {
+      return;
+    }
+
+    setSelectedContactName((previousValue) => previousValue || matchedContact?.givenName || matchedContact?.name || null);
+    setSelectedContactImage((previousValue) => previousValue || matchedContact?.profileImage || null);
+    setSelectedThreadId((previousValue) => previousValue || matchedContact?.threadId || null);
+    setSelectedPropertyId((previousValue) => previousValue || matchedContact?.propertyId || matchedContact?.AccoId || null);
+    setSelectedPropertyTitle((previousValue) => previousValue || matchedContact?.propertyTitle || matchedContact?.propertyName || null);
+    setSelectedAccoImage((previousValue) => previousValue || matchedContact?.accoImage || null);
+  }, [contacts, selectedContactId, selectedPropertyId, userId]);
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
