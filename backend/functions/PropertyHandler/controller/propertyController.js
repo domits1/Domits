@@ -351,6 +351,7 @@ export class PropertyController {
                     location: normalizedOverviewPayload.location,
                     pricing: normalizedOverviewPayload.pricing,
                     availabilityRestrictions: normalizedOverviewPayload.availabilityRestrictions,
+                    checkIn: normalizedOverviewPayload.checkIn,
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
                 }
@@ -470,6 +471,7 @@ export class PropertyController {
             location: body.location,
             pricing: body.pricing,
             availabilityRestrictions: body.availabilityRestrictions,
+            checkIn: body.checkIn,
             amenities: body.amenities,
             rules: body.rules,
         };
@@ -481,6 +483,7 @@ export class PropertyController {
             this.validateOverviewOptionalObjects(payload) ||
             this.validatePricingPayload(payload.pricing) ||
             this.validateAvailabilityRestrictionsPayload(payload.availabilityRestrictions) ||
+            this.validateCheckInPayload(payload.checkIn) ||
             this.validateAmenitiesPayload(payload.amenities) ||
             this.validateRulesPayload(payload.rules) ||
             this.validateOverviewTextContent(payload) ||
@@ -508,6 +511,9 @@ export class PropertyController {
         }
         if (payload.location !== undefined && !this.isPlainObject(payload.location)) {
             return "Location must be an object.";
+        }
+        if (payload.checkIn !== undefined && !this.isPlainObject(payload.checkIn)) {
+            return "Check-in must be an object.";
         }
         return null;
     }
@@ -612,6 +618,28 @@ export class PropertyController {
         );
     }
 
+    validateCheckInPayload(checkIn) {
+        if (checkIn === undefined) {
+            return null;
+        }
+        if (!this.isPlainObject(checkIn)) {
+            return "Check-in must be an object.";
+        }
+        if (!this.isPlainObject(checkIn.checkIn) || !this.isPlainObject(checkIn.checkOut)) {
+            return "Check-in must contain checkIn and checkOut objects.";
+        }
+
+        const normalizedCheckInFrom = this.normalizeTimeValue(checkIn.checkIn.from, "Check-in from");
+        const normalizedCheckInTill = this.normalizeTimeValue(checkIn.checkIn.till, "Check-in till");
+        const normalizedCheckOutFrom = this.normalizeTimeValue(checkIn.checkOut.from, "Check-out from");
+        const normalizedCheckOutTill = this.normalizeTimeValue(checkIn.checkOut.till, "Check-out till");
+
+        if (!normalizedCheckInFrom || !normalizedCheckInTill || !normalizedCheckOutFrom || !normalizedCheckOutTill) {
+            return "Check-in must contain valid time values.";
+        }
+        return null;
+    }
+
     validateOverviewTextContent(payload) {
         if (!payload.title.trim() || !payload.description.trim()) {
             return "Title and description cannot be empty.";
@@ -641,6 +669,7 @@ export class PropertyController {
             availabilityRestrictions: Array.isArray(payload.availabilityRestrictions)
                 ? this.normalizeAvailabilityRestrictionsPayload(payload.availabilityRestrictions)
                 : undefined,
+            checkIn: payload.checkIn ? this.normalizeCheckInPayload(payload.checkIn) : undefined,
             amenities: Array.isArray(payload.amenities)
                 ? Array.from(new Set(payload.amenities.map((amenityId) => String(amenityId).trim()).filter(Boolean)))
                 : undefined,
@@ -658,6 +687,35 @@ export class PropertyController {
                 )
                 : undefined,
         };
+    }
+
+    normalizeCheckInPayload(checkIn) {
+        if (!this.isPlainObject(checkIn) || !this.isPlainObject(checkIn.checkIn) || !this.isPlainObject(checkIn.checkOut)) {
+            throw new TypeError("Check-in must contain checkIn and checkOut objects.");
+        }
+
+        return {
+            checkIn: {
+                from: this.normalizeTimeValue(checkIn.checkIn.from, "Check-in from"),
+                till: this.normalizeTimeValue(checkIn.checkIn.till, "Check-in till"),
+            },
+            checkOut: {
+                from: this.normalizeTimeValue(checkIn.checkOut.from, "Check-out from"),
+                till: this.normalizeTimeValue(checkIn.checkOut.till, "Check-out till"),
+            },
+        };
+    }
+
+    normalizeTimeValue(value, fieldName) {
+        if (typeof value !== "string") {
+            throw new TypeError(`${fieldName} must be a valid time string.`);
+        }
+
+        const normalizedValue = value.trim();
+        if (!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(normalizedValue)) {
+            throw new TypeError(`${fieldName} must be a valid time string.`);
+        }
+        return normalizedValue.length === 5 ? `${normalizedValue}:00` : normalizedValue;
     }
 
     normalizePricingPayload(pricing) {
@@ -996,6 +1054,8 @@ export class PropertyController {
             error?.message?.startsWith("Invalid capacity field:") ||
             error?.message?.startsWith("Location ") ||
             error?.message?.startsWith("Pricing ") ||
+            error?.message?.startsWith("Check-in ") ||
+            error?.message?.startsWith("Check-out ") ||
             error?.message?.startsWith("Unknown availability restrictions:") ||
             error?.message?.startsWith("Unknown amenity IDs:") ||
             error?.message?.startsWith("Unknown policy rules:")

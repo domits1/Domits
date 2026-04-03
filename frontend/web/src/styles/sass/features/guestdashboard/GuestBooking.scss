@@ -35,6 +35,10 @@ $text-muted: #6b7280;
   padding: 24px 0;
   font-size: 14px;
   color: $text-muted;
+  max-width: $summary-max;
+  margin-inline: auto;
+  padding-inline: clamp(8px, 2vw, 16px);
+  text-align: center;
 }
 
 .guest-booking-error {
@@ -45,6 +49,10 @@ $text-muted: #6b7280;
   padding: 8px 0 4px;
   font-size: 13px;
   color: $text-muted;
+  max-width: $summary-max;
+  margin-inline: auto;
+  padding-inline: clamp(8px, 2vw, 16px);
+  text-align: center;
 }
 
 .guest-booking-page-body {
@@ -54,6 +62,33 @@ $text-muted: #6b7280;
 
   .guest-booking-right-empty {
     display: none;
+  }
+
+  > h2,
+  .dashboardHead {
+    max-width: $summary-max;
+    margin-inline: auto;
+    padding-inline: clamp(8px, 2vw, 16px);
+  }
+
+  > h2 {
+    width: 100%;
+    margin-block: 0;
+    text-align: center;
+  }
+
+  .dashboardHead {
+    margin-top: 12px;
+  }
+
+  .dashboardHead .buttonBox {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .dashboardHead .greenBtn {
+    margin: 0;
   }
 }
 
@@ -110,9 +145,9 @@ $text-muted: #6b7280;
       gap: 8px;
 
       .guest-booking-badge {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #ffffff;
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        color: var(--domits-host-blue);
         font-size: 12px;
         padding: 2px 8px;
         border-radius: 999px;

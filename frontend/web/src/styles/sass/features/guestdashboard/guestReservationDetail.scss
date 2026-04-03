@@ -1,0 +1,379 @@
+.reservationHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.reservationTitle {
+  font-size: 35px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.reservationStatus {
+  flex-shrink: 0;
+}
+
+.reservationPage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.reservationLeft,
+.reservationRight {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.reservationStateCard {
+  max-width: 640px;
+}
+
+.viewAll {
+  font-family: inherit;
+  color: #166534;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin-bottom: 12px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.viewAll:hover {
+  text-decoration: underline;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 0;
+}
+
+.card.leftPropertyCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.card.leftPropertyCard > .propertyImage {
+  width: 100%;
+  height: 260px;
+  display: block;
+  object-fit: cover;
+}
+
+.leftPropertyCardContent {
+  padding: 0 24px 20px;
+  box-sizing: border-box;
+}
+
+.leftPropertyCardContent h3 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 630;
+}
+
+.locationRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  font-size: 15px;
+  margin-bottom: 16px;
+}
+
+.stayInfoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  padding: 15px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  margin: 17px 0;
+}
+
+.stayLeft {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  min-width: 0;
+}
+
+.stayBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.arrow {
+  font-size: 16px;
+  color: #9ca3af;
+}
+
+.vertical {
+  width: 1px;
+  height: 40px;
+  background: #e5e7eb;
+  margin: 0;
+}
+
+.guests {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.value {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.time,
+.guestCount {
+  font-size: 12px;
+  color: #313135;
+  font-weight: 400;
+}
+
+.propertyIcon {
+  font-size: 14px;
+  color: #15803d;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #313135;
+}
+
+.reservationIdRow {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.divider {
+  width: 1px;
+  height: 30px;
+  background: #e5e7eb;
+}
+
+.instructionsAddress {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.card ul {
+  padding-left: 18px;
+  margin: 0 0 16px;
+}
+
+.card li {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.nextStep {
+  background: #e7f6ec;
+  color: #0b4020;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rulesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ruleItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.ruleItemIcon {
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.rulesList,
+.policyBlock {
+  font-size: 14px;
+  font-weight: 450;
+}
+
+.policyBlock {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.policyBlock h3 {
+  margin: 0 0 8px;
+}
+
+.policyTag,
+.confirmed {
+  display: inline-block;
+  background: #e7f6ec;
+  color: #166534;
+  width: fit-content;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 15px;
+  border-radius: 7px;
+  margin-bottom: 5px;
+}
+
+.summaryList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paymentRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.totalRow {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 10px;
+  font-weight: 600;
+}
+
+.bookingDetailsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.primaryBtn {
+  width: 100%;
+  background: #166534;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.primaryBtn:hover {
+  background: #14532d;
+}
+
+.viewAll:focus-visible,
+.primaryBtn:focus-visible {
+  outline: 2px solid #166534;
+  outline-offset: 2px;
+}
+
+@media (max-width: 1180px) {
+  .reservationPage {
+    grid-template-columns: 1fr;
+  }
+
+  .reservationRight {
+    order: 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .reservationHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reservationTitle {
+    font-size: 28px;
+  }
+
+  .leftPropertyCardContent {
+    padding: 0 18px 18px;
+  }
+
+  .stayInfoRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stayLeft {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .arrow,
+  .vertical {
+    display: none;
+  }
+
+  .guests {
+    text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .reservationTitle {
+    font-size: 24px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .card.leftPropertyCard {
+    padding: 0;
+  }
+
+  .card.leftPropertyCard > .propertyImage {
+    height: 200px;
+  }
+
+  .leftPropertyCardContent h3 {
+    font-size: 20px;
+  }
+
+  .paymentRow,
+  .detailRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
