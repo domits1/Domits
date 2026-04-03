@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
-import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import "./Housekeeping.css";
 import styles from "./HostDashboard.module.scss";
 import spinner from "../../images/spinnner.gif";
+import { FiArchive, FiTrash2,  FiMapPin, FiInfo } from "react-icons/fi";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import {
   resolveAccommodationImageUrl,
@@ -12,359 +13,341 @@ import {
 } from "../../utils/accommodationImage";
 import { getAccessToken } from "../../services/getAccessToken.js";
 import { useSetLiveEligibility } from "./hooks/useSetLiveEligibility";
-import {
-  updatePropertyLifecycleStatus,
-} from "./hostproperty/services/hostPropertyApi";
+import { updatePropertyLifecycleStatus, deletePropertyListing } from "./hostproperty/services/hostPropertyApi";
 
 const LISTING_FILTERS = [
-  { key: "ACTIVE", label: "Live listings" },
-  { key: "INACTIVE", label: "Drafted listings" },
-  { key: "ARCHIVED", label: "Archived listings" },
+  { key: "ALL", label: "All" },
+  { key: "ACTIVE", label: "Live" },
+  { key: "INACTIVE", label: "Draft" },
+  { key: "ARCHIVED", label: "Archived" },
 ];
 
-const getListingStatus = (accommodation) => String(accommodation?.property?.status || "INACTIVE").toUpperCase();
+const getListingStatus = (a) =>
+  String(a?.property?.status || "INACTIVE").toUpperCase();
 
-const getListingImage = (accommodation) => {
-  const firstImage = Array.isArray(accommodation?.images) ? accommodation.images[0] : null;
-  if (!resolveAccommodationImageKey(firstImage, "thumb")) {
-    return "";
-  }
-  return resolveAccommodationImageUrl(firstImage, "thumb");
+const getListingImage = (a) => {
+  const img = Array.isArray(a?.images) ? a.images[0] : null;
+  if (!resolveAccommodationImageKey(img, "thumb")) return "";
+  return resolveAccommodationImageUrl(img, "thumb");
 };
 
 const getStatusLabel = (status) => {
-  if (status === "ACTIVE") {
-    return "Live";
-  }
-  if (status === "ARCHIVED") {
-    return "Archived";
-  }
-  return "Drafted";
+  if (status === "ACTIVE") return "Live";
+  if (status === "ARCHIVED") return "Archived";
+  return "Draft";
 };
 
 const LISTING_ACTIONS = {
   ACTIVE: [
-    { id: "details", label: "Details", kind: "details" },
     { id: "edit", label: "Edit", kind: "edit" },
+    { id: "unpublish", label: "Unpublish", kind: "status", nextStatus: "INACTIVE" },
   ],
   INACTIVE: [
-    {
-      id: "set-live",
-      label: "Set as live",
-      kind: "status",
-      nextStatus: "ACTIVE",
-      successMessage: "Listing set to Live.",
-    },
+    { id: "set-live", label: "Set as live", kind: "status", nextStatus: "ACTIVE" },
     { id: "edit", label: "Edit", kind: "edit" },
   ],
   ARCHIVED: [
-    {
-      id: "set-draft",
-      label: "Set as draft",
-      kind: "status",
-      nextStatus: "INACTIVE",
-      successMessage: "Listing restored to Draft.",
-    },
+    { id: "restore", label: "Restore", kind: "status", nextStatus: "INACTIVE" },
     { id: "edit", label: "Edit", kind: "edit" },
   ],
-};
-
-const createListingActionClickHandler = (action, onActionClick) => (event) => {
-  event.stopPropagation();
-  onActionClick(action);
-};
-
-function HostListingCardActions({ actions, isBusy, onActionClick }) {
-  return (
-    <div className={styles.buttonBox}>
-      {actions.map((action) => (
-        <button
-          key={action.id}
-          className={styles.greenBtn}
-          onClick={createListingActionClickHandler(action, onActionClick)}
-          disabled={isBusy}
-        >
-          {action.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-HostListingCardActions.propTypes = {
-  actions: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      label: PropTypes.string.isRequired,
-      kind: PropTypes.oneOf(["details", "edit", "status"]).isRequired,
-      nextStatus: PropTypes.string,
-      successMessage: PropTypes.string,
-    })
-  ).isRequired,
-  isBusy: PropTypes.bool.isRequired,
-  onActionClick: PropTypes.func.isRequired,
 };
 
 function HostListings() {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-  const [activeFilter, setActiveFilter] = useState("ACTIVE");
+  const [activeFilter, setActiveFilter] = useState("ALL");
   const [processingPropertyId, setProcessingPropertyId] = useState("");
+  const [openMenuId, setOpenMenuId] = useState(null); 
+
   const navigate = useNavigate();
-  const { liveEligibility, liveEligibilityError, liveEligibilityLoading, fetchVerificationStatus } =
+
+  const { liveEligibility, liveEligibilityLoading, fetchVerificationStatus } =
     useSetLiveEligibility({ userId });
 
   useEffect(() => {
-    const setUserIdAsync = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        setUserId(userInfo?.attributes?.sub || null);
-      } catch (error) {
-        console.error("Error setting user id:", error);
-      }
-    };
-
-    setUserIdAsync();
+    Auth.currentUserInfo().then((u) =>
+      setUserId(u?.attributes?.sub || null)
+    );
   }, []);
 
   useEffect(() => {
     if (userId) {
       fetchVerificationStatus();
-      fetchAccommodations().catch(console.error);
+      fetchAccommodations();
     }
   }, [userId]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const fetchAccommodations = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
+      const res = await fetch(
         "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all",
-        {
-          method: "GET",
-          headers: {
-            Authorization: getAccessToken(),
-          },
-        }
+        { headers: { Authorization: getAccessToken() } }
       );
-      if (!response.ok) {
-        throw new Error("Failed to fetch host properties.");
-      }
-      const data = await response.json();
+      const data = await res.json();
       setAccommodations(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      toast.error(error?.message || "Failed to load listings.");
+    } catch {
+      toast.error("Failed to load listings");
     } finally {
       setIsLoading(false);
     }
   };
 
   const listingsByStatus = useMemo(() => {
-    const grouped = {
-      ACTIVE: [],
-      INACTIVE: [],
-      ARCHIVED: [],
-    };
-
-    accommodations.forEach((accommodation) => {
-      const status = getListingStatus(accommodation);
-      if (!grouped[status]) {
-        grouped.INACTIVE.push(accommodation);
-        return;
-      }
-      grouped[status].push(accommodation);
-    });
-
-    return grouped;
+    const g = { ACTIVE: [], INACTIVE: [], ARCHIVED: [] };
+    accommodations.forEach((a) => g[getListingStatus(a)]?.push(a));
+    return g;
   }, [accommodations]);
 
-  const visibleListings = listingsByStatus[activeFilter] || [];
+  const visibleListings =
+    activeFilter === "ALL"
+      ? accommodations
+      : listingsByStatus[activeFilter] || [];
 
-  const ensureLiveEligibility = async (propertyId) => {
-    if (!userId) {
-      throw new Error("Host user is not loaded.");
-    }
-    if (liveEligibilityLoading) {
-      throw new Error("Checking verification status. Please try again in a moment.");
-    }
-    if (liveEligibilityError) {
-      throw new Error(liveEligibilityError);
-    }
-    if (!liveEligibility) {
-      navigate("/verify", {
-        state: {
-          userId,
-          accommodationId: propertyId,
-        },
-      });
-      return false;
-    }
-    return true;
-  };
-
-  const changeListingStatus = async ({ propertyId, nextStatus, successMessage }) => {
-    if (!propertyId || !nextStatus) {
+  const changeStatus = async (propertyId, nextStatus) => {
+    if (nextStatus === "ACTIVE" && !liveEligibility && !liveEligibilityLoading) {
+      navigate("/verify");
       return;
     }
 
-    if (nextStatus === "ACTIVE") {
-      const canProceed = await ensureLiveEligibility(propertyId);
-      if (!canProceed) {
-        return;
-      }
-    }
-
     setProcessingPropertyId(propertyId);
+
     try {
-      await updatePropertyLifecycleStatus({ propertyId, status: nextStatus });
-      toast.success(successMessage);
+      await updatePropertyLifecycleStatus({
+        propertyId,
+        status: nextStatus,
+      });
       await fetchAccommodations();
-    } catch (error) {
-      console.error(error);
-      toast.error(error?.message || "Failed to update listing status.");
+    } catch {
+      toast.error("Failed to update");
     } finally {
       setProcessingPropertyId("");
     }
   };
 
-  const executeListingAction = (action, propertyId) => {
-    if (action.kind === "details") {
-      navigate(`/listingdetails?ID=${propertyId}`);
-      return;
+  const handleAction = (action, id) => {
+    if (action.kind === "edit")
+      return navigate(`/hostdashboard/property?ID=${id}`);
+
+    if (action.kind === "status")
+      return changeStatus(id, action.nextStatus);
+  };
+
+  // Delete
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this listing?")) return;
+
+    try {
+      await deletePropertyListing({ propertyId: id });
+
+      toast.success("Deleted successfully");
+      fetchAccommodations();
+    } catch {
+      toast.error("Delete failed");
     }
-    if (action.kind === "edit") {
-      navigate(`/hostdashboard/property?ID=${propertyId}`);
-      return;
-    }
-    if (action.kind === "status") {
-      void changeListingStatus({
-        propertyId,
-        nextStatus: action.nextStatus,
-        successMessage: action.successMessage,
+  };
+
+  // Archive
+  const handleArchive = async (id) => {
+    if (!window.confirm("Are you sure you want to archive this listing?")) return;
+
+    try {
+      await updatePropertyLifecycleStatus({
+        propertyId: id,
+        status: "ARCHIVED",
       });
+      fetchAccommodations();
+    } catch {
+      toast.error("Archive failed");
     }
   };
 
   const renderListingsContent = () => {
     if (isLoading) {
       return (
-        <div className={styles.loader}>
+        <div className="loading">
           <img src={spinner} alt="Loading..." />
         </div>
       );
     }
 
     if (visibleListings.length === 0) {
-      return (
-        <div className={styles.emptyState}>
-          <p>No listings found in this section.</p>
-        </div>
-      );
+      return <div className="empty-state">No listings found.</div>;
     }
 
     return (
-      <div className={styles.cardsGrid}>
-        {visibleListings.map((accommodation, index) => {
-          const propertyId = accommodation?.property?.id || "";
-          const propertyStatus = getListingStatus(accommodation);
-          const statusLabel = getStatusLabel(propertyStatus);
-          const propertyTitle = accommodation?.property?.title || "Untitled listing";
-          const propertyCity = accommodation?.location?.city || "Unknown city";
-          const propertyImage = getListingImage(accommodation);
-          const isBusy = processingPropertyId === propertyId;
-          const actions = LISTING_ACTIONS[propertyStatus] || [];
-          const handleListingActionClick = (action) => executeListingAction(action, propertyId);
+      <div className={styles.listingsContainer}>
+        <div className={styles.listingsGrid}>
+          {visibleListings.map((a) => {
+            const id = a?.property?.id;
+            const status = getListingStatus(a);
 
-          return (
-            <div
-              key={propertyId || index}
-              className={styles.dashboardCard}
-              onClick={() => {
-                if (propertyStatus === "ACTIVE") {
-                  navigate(`/listingdetails?ID=${propertyId}`);
-                  return;
-                }
-                navigate(`/hostdashboard/property?ID=${propertyId}`);
-              }}
-            >
-              {propertyImage ? (
-                <img src={propertyImage} alt="Listing" className={styles.imgListedDashboard} />
-              ) : (
-                <div className={styles.imgListedDashboardFallback}>No image</div>
-              )}
+            return (
+              <div key={id} className={styles.listingCard}>
+                <img
+                  src={getListingImage(a)}
+                  className={styles.listingImage}
+                  alt=""
+                />
 
-              <div className={styles.accommodationText}>
-                <p className={styles.accommodationTitle}>{propertyTitle}</p>
-                <p className={styles.accommodationLocation}>{propertyCity}</p>
+                <div className={styles.cardContent}>
+                  <div className={styles.row}>
+                    <h3 className={styles.title}>{a?.property?.title}</h3>
+
+                    <span
+                      className={`${styles.badge} ${
+                        status === "ACTIVE"
+                          ? styles.live
+                          : status === "INACTIVE"
+                          ? styles.draft
+                          : styles.archived
+                      }`}
+                    >
+                      {getStatusLabel(status)}
+                    </span>
+                  </div>
+
+                  <div className={styles.divider} />
+
+                  <div className={styles.row}>
+                    <span className={styles.location}>
+                      <FiMapPin/> {a?.location?.city}
+                    </span>
+                  </div>
+
+                  <div className={styles.divider} />
+
+                  {status === "ARCHIVED" ? (
+                    <>
+                      <div className={styles.row}>
+                        <span className={styles.meta}>
+                          Archived on: {DateFormatterDD_MM_YYYY(a?.property?.updatedAt)}
+                        </span>
+                      </div>
+                
+                     <div className={styles.archivedInfo}>
+                      <FiInfo />
+                        This listing is archived and no longer visible or bookable.
+                      </div>
+                        </>
+                      ) : (
+                        <div className={styles.row}>
+                          <span className={styles.meta}>
+                            Created on: {DateFormatterDD_MM_YYYY(a?.property?.createdAt)}
+                          </span>
+                        </div>
+                      )
+                    }
+
+                  <div className={styles.actionsRow}>
+                    {(LISTING_ACTIONS[status] || []).map((action) => (
+                      <button
+                        key={action.id}
+                        className={
+                          action.id === "set-live"
+                            ? styles.primaryBtn
+                            : styles.secondaryBtn
+                        }
+                        onClick={() => handleAction(action, id)}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+
+                    {/* DROPDOWN */}
+                    <div className={styles.dropdownWrapper}>
+                      <button
+                        className={styles.moreBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === id ? null : id);
+                        }}
+                      >
+                        •••
+                      </button>
+
+                      {openMenuId === id && (
+                        <div className={styles.dropdownMenu}>
+                          {status !== "ARCHIVED" && (
+                            <button
+                              className={styles.dropdownItem}
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                handleArchive(id);
+                              }}
+                            >
+                              <FiArchive/> Archive
+                            </button>
+                          )}
+
+                          <button
+                            className={`${styles.dropdownItem} ${styles.delete}`}
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              handleDelete(id);
+                            }}
+                          >
+                            <FiTrash2/> Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              <div className={styles.accommodationDetails}>
-                <span
-                  className={`${styles.status} ${propertyStatus === "ARCHIVED" ? styles.isArchived : ""}`}
-                >
-                  {statusLabel}
-                </span>
-                <span>On: {DateFormatterDD_MM_YYYY(accommodation?.property?.createdAt)}</span>
-              </div>
-
-              <HostListingCardActions
-                actions={actions}
-                isBusy={isBusy}
-                onActionClick={handleListingActionClick}
-              />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   };
 
   return (
     <main className="page-Host">
-      <p className="page-Host-title">Listings</p>
-
       <div className="page-Host-content">
-        <section className="host-pc-dashboard">
-          <div className={styles.dashboardHost}>
-            <div className={styles.hostListingContainer}>
-              <div className={styles.listingBody}>
-                <div className={styles.buttonBox}>
-                  <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
-                    Add new accommodation
-                  </button>
-                  <button className={styles.greenBtn} onClick={fetchAccommodations}>
-                    Refresh
-                  </button>
-                </div>
+        <div className="task-dashboard-v2">
+          <div className="top-header">
+            <h2>Listings</h2>
 
-                <section className={styles.listingsDisplay}>
-                  <div className={styles.listingFilters}>
-                    {LISTING_FILTERS.map((filterOption) => {
-                      const count = listingsByStatus[filterOption.key]?.length || 0;
-                      const isActive = activeFilter === filterOption.key;
-                      return (
-                        <button
-                          key={filterOption.key}
-                          type="button"
-                          className={`${styles.listingFilterButton} ${isActive ? styles.listingFilterButtonActive : ""}`}
-                          onClick={() => setActiveFilter(filterOption.key)}
-                          disabled={isLoading}
-                        >
-                          {filterOption.label} ({count})
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <p className={styles.header}>{LISTING_FILTERS.find((item) => item.key === activeFilter)?.label}</p>
-
-                  {renderListingsContent()}
-                </section>
-              </div>
-            </div>
+            <button
+              className="btn-create-green"
+              onClick={() => navigate("/hostonboarding")}
+            >
+              + Add property
+            </button>
           </div>
-        </section>
+
+          <div className="tabs-nav">
+            {LISTING_FILTERS.map((f) => {
+              const count =
+                f.key === "ALL"
+                  ? accommodations.length
+                  : listingsByStatus[f.key]?.length || 0;
+
+              return (
+                <button
+                  key={f.key}
+                  className={`tab-btn ${
+                    activeFilter === f.key ? "active" : ""
+                  }`}
+                  onClick={() => setActiveFilter(f.key)}
+                >
+                  {f.label} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          {renderListingsContent()}
+        </div>
       </div>
     </main>
   );

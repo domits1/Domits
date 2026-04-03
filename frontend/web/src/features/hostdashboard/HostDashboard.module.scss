@@ -542,3 +542,233 @@
     }
   }
 }
+
+
+/*-------------- Listing Styles --------------*/
+
+.listingsContainer {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  padding: 16px;
+}
+
+/* Layout */
+.listingsGrid {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card */
+.listingCard {
+  position: relative;
+  display: flex;
+  align-items: stretch; 
+  gap: 20px;
+  padding: 16px 0; 
+  background: white;
+}
+
+/* Divider between cards */
+.listingCard:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* Image */
+.listingImage {
+  width: 240px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Right side */
+.cardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Rows */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Divider lines inside card */
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0;
+}
+
+/* Title */
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Badge */
+.badge {
+  font-size: 12px;
+  font-weight: 550;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.live {
+  background: #e6f9ec;
+  color: #1e7e34;
+}
+
+.draft {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.archived {
+  background: #eee;
+  color: #6b7280;
+}
+
+/* Text */
+.location {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.meta {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* Buttons */
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px; 
+}
+
+.primaryBtn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.primaryBtn:hover {
+  background: #218838;
+}
+
+.primaryBtn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+
+.secondaryBtn,
+.moreBtn {
+  border: 1px solid #ccc;
+  background: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.secondaryBtn:hover,
+.moreBtn:hover {
+  background: rgb(215, 215, 215);
+}
+
+/* Dropdown wrapper */
+.dropdownWrapper {
+  position: relative;
+}
+
+/* Dropdown menu box */
+.dropdownMenu {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: 150px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* Each option */
+.dropdownItem {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Hover effect */
+.dropdownItem:hover {
+  background: #ececec;
+}
+
+/* Divider between options */
+.dropdownItem:not(:last-child) {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Delete option (red) */
+.delete {
+  color: #dc3545;
+}
+
+/* hover for delete */
+.delete:hover {
+  background: #f8d7da;
+}
+
+/* DropdownIcon */
+.dropdownItem svg {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+/* Location Icon */
+.location svg, .archivedInfo svg {
+  font-size: 13px;
+}
+
+/* Archived info box */
+.archivedInfo {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f1f3f5;
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;     
+  width: fit-content;    
+  align-items: center;    
+  gap: 8px;              
+}
