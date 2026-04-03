@@ -8,16 +8,16 @@ import Settings from "@mui/icons-material/Settings";
 // import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
 
 const NAV = [
-  { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "." },
-  { key: "Bookings", label: "Bookings", icon: <BookingIcon />, to: "bookings" },
-  { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "messages" },
+  { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "/guestdashboard" },
+  { key: "Bookings", label: "Bookings", icon: <BookingIcon />, to: "/guestdashboard/bookings" },
+  { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "/guestdashboard/messages" },
   // { key: "Reviews",  label: "Reviews",  icon: <ReviewsOutlinedIcon />, to: "reviews" },
-  { key: "Wishlist", label: "Wishlist", icon: <WishlistIcon />, to: "wishlist" },
+  { key: "Wishlist", label: "Wishlist", icon: <WishlistIcon />, to: "/guestdashboard/wishlist" },
 
-  { key: "Settings", label: "Settings", icon: <Settings />, to: "settings" },
+  { key: "Settings", label: "Settings", icon: <Settings />, to: "/guestdashboard/settings" },
 ];
 
-function Pages({ onNavigate }) {
+function Pages() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const btnRef = useRef(null);
@@ -76,8 +76,7 @@ function Pages({ onNavigate }) {
               <li key={item.key}>
                 <NavLink
                   to={item.to}
-                  end={item.to === "."}
-                  onClick={() => onNavigate?.(item.key)}
+                  end={item.to === "/guestdashboard"}
                   className={({ isActive }) =>
                     `menu-item ${isActive ? "active" : ""}`
                   }

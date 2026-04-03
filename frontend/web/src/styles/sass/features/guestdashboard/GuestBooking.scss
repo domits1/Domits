@@ -145,9 +145,9 @@ $text-muted: #6b7280;
       gap: 8px;
 
       .guest-booking-badge {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #ffffff;
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        color: var(--domits-host-blue);
         font-size: 12px;
         padding: 2px 8px;
         border-radius: 999px;

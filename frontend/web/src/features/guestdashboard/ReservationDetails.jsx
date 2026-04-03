@@ -44,8 +44,13 @@ const DISPLAY_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-const formatDisplayDate = (value) =>
-  isValidDate(value) ? DISPLAY_DATE_FORMATTER.format(value) : "-";
+const formatDisplayDate = (value) => {
+  if (!isValidDate(value)) {
+    return "-";
+  }
+
+  return DISPLAY_DATE_FORMATTER.format(value);
+};
 
 const formatTimeValue = (value) => {
   if (value == null || value === "") {
@@ -114,6 +119,34 @@ const buildAddressLabel = (location, fallbackLocationLabel) => {
   return [streetLine, cityLine, location?.country].filter(Boolean).join(", ") || fallbackLocationLabel;
 };
 
+const resolveGuestDetailsLabel = ({ guestName, familyGuestCount, familyCounts }) => {
+  if (guestName) {
+    return guestName;
+  }
+
+  if (familyGuestCount > 0) {
+    return formatFamilyLabel(familyCounts);
+  }
+
+  return "Guest details unavailable";
+};
+
+const resolveGuestCount = ({ numericGuestCount, familyGuestCount, guestName }) => {
+  if (Number.isFinite(numericGuestCount) && numericGuestCount > 0) {
+    return numericGuestCount;
+  }
+
+  if (familyGuestCount > 0) {
+    return familyGuestCount;
+  }
+
+  if (guestName) {
+    return 1;
+  }
+
+  return 0;
+};
+
 const buildGuestDetails = (booking) => {
   const guestName = String(booking?.guestname || booking?.guestName || "").trim();
   const familyCounts = parseFamilyString(
@@ -121,21 +154,161 @@ const buildGuestDetails = (booking) => {
   );
   const familyGuestCount = familyCounts.adults + familyCounts.kids;
   const numericGuestCount = Number(booking?.guests);
-  const guests =
-    Number.isFinite(numericGuestCount) && numericGuestCount > 0
-      ? numericGuestCount
-      : familyGuestCount > 0
-        ? familyGuestCount
-        : guestName
-          ? 1
-          : 0;
+  const guests = resolveGuestCount({
+    numericGuestCount,
+    familyGuestCount,
+    guestName,
+  });
 
   return {
     guests,
-    guestsDetails:
-      guestName ||
-      (familyGuestCount > 0 ? formatFamilyLabel(familyCounts) : "Guest details unavailable"),
+    guestsDetails: resolveGuestDetailsLabel({
+      guestName,
+      familyGuestCount,
+      familyCounts,
+    }),
   };
+};
+
+const resolveNightlyRate = ({ roomRateRaw, total, nights, cleaningFee }) => {
+  if (Number.isFinite(roomRateRaw)) {
+    return roomRateRaw;
+  }
+
+  if (total != null && nights > 0) {
+    return Math.max(0, total - cleaningFee) / nights;
+  }
+
+  return 0;
+};
+
+const resolveFallbackLocationLabel = ({ location, booking }) => {
+  const locationLabel = [location?.city, location?.country].filter(Boolean).join(", ");
+  if (locationLabel) {
+    return locationLabel;
+  }
+
+  if (booking?.city) {
+    return booking.city;
+  }
+
+  if (booking?.location?.city) {
+    return booking.location.city;
+  }
+
+  return "Unknown location";
+};
+
+const resolveCleaningFee = (pricing) => {
+  const cleaningFeeRaw = Number(pricing?.cleaning);
+  if (Number.isFinite(cleaningFeeRaw)) {
+    return cleaningFeeRaw;
+  }
+
+  return 0;
+};
+
+const resolveStayNights = ({ arrivalDate, departureDate }) => {
+  if (!isValidDate(arrivalDate) || !isValidDate(departureDate)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.round((startOfDay(departureDate) - startOfDay(arrivalDate)) / DAY_IN_MS));
+};
+
+const buildRuleLabels = (propertyDetails) => {
+  const rules = Array.isArray(propertyDetails?.rules) ? propertyDetails.rules : [];
+  return rules.map((ruleEntry) => formatRuleLabel(ruleEntry)).filter(Boolean);
+};
+
+const buildReservationContent = ({
+  isPageLoading,
+  pageError,
+  reservation,
+  handleMessageHost,
+}) => {
+  if (isPageLoading) {
+    return (
+      <div className="card reservationStateCard">
+        <PulseBarsLoader message="Loading reservation..." />
+      </div>
+    );
+  }
+
+  if (pageError) {
+    return (
+      <div className="card reservationStateCard" role="alert">
+        <h3>Reservation unavailable</h3>
+        <p>{pageError}</p>
+      </div>
+    );
+  }
+
+  if (reservation) {
+    return (
+      <>
+        <div className="reservationHeader">
+          <h1 className="reservationTitle">{reservation.property.title}</h1>
+          <span className="confirmed reservationStatus">{reservation.stay.status}</span>
+        </div>
+
+        <div className="reservationPage">
+          <div className="reservationLeft">
+            <PropertyCard
+              image={reservation.property.image}
+              title={reservation.property.title}
+              location={reservation.property.locationLabel}
+              checkIn={reservation.stay.checkInDate}
+              checkInTime={reservation.stay.checkInTime}
+              checkOut={reservation.stay.checkOutDate}
+              checkOutTime={reservation.stay.checkOutTime}
+              guests={reservation.stay.guests}
+              guestsDetails={reservation.stay.guestsDetails}
+              reservationId={reservation.stay.reservationId}
+            />
+
+            <CheckInInstructions
+              address={reservation.property.address}
+              instructions={reservation.instructions}
+            />
+          </div>
+
+          <div className="reservationRight">
+            <HouseRules rules={reservation.rules} cancellationPolicy={null} />
+
+            <div className="card helpCard">
+              <h3>Need help?</h3>
+              <button
+                type="button"
+                className="primaryBtn"
+                onClick={handleMessageHost}
+              >
+                Message host
+              </button>
+            </div>
+
+            <PaymentSummary
+              nightlyRate={reservation.pricing.nightlyRate}
+              nights={reservation.pricing.nights}
+              cleaningFee={reservation.pricing.cleaningFee}
+            />
+
+            <BookingDetails
+              reservationId={reservation.stay.reservationId}
+              bookedDate={reservation.stay.bookedDate}
+            />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div className="card reservationStateCard">
+      <h3>Reservation unavailable</h3>
+      <p>Reservation not found.</p>
+    </div>
+  );
 };
 
 const buildReservationViewModel = ({ booking, propertyDetails }) => {
@@ -148,26 +321,24 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
   const arrivalDate = getArrivalDate(booking);
   const departureDate = getDepartureDate(booking);
   const bookedDate = getBookingCreatedAt(booking);
-  const fallbackLocationLabel =
-    [location?.city, location?.country].filter(Boolean).join(", ") ||
-    booking?.city ||
-    booking?.location?.city ||
-    "Unknown location";
+  const fallbackLocationLabel = resolveFallbackLocationLabel({
+    location,
+    booking,
+  });
   const guestsInfo = buildGuestDetails(booking);
-  const cleaningFeeRaw = Number(pricing?.cleaning);
-  const cleaningFee = Number.isFinite(cleaningFeeRaw) ? cleaningFeeRaw : 0;
-  const nights =
-    isValidDate(arrivalDate) && isValidDate(departureDate)
-      ? Math.max(0, Math.round((startOfDay(departureDate) - startOfDay(arrivalDate)) / DAY_IN_MS))
-      : 0;
+  const cleaningFee = resolveCleaningFee(pricing);
+  const nights = resolveStayNights({
+    arrivalDate,
+    departureDate,
+  });
   const total = getBookingTotal(booking);
   const roomRateRaw = Number(pricing?.roomRate ?? pricing?.roomrate);
-  const nightlyRate =
-    Number.isFinite(roomRateRaw)
-      ? roomRateRaw
-      : total != null && nights > 0
-        ? Math.max(0, total - cleaningFee) / nights
-        : 0;
+  const nightlyRate = resolveNightlyRate({
+    roomRateRaw,
+    total,
+    nights,
+    cleaningFee,
+  });
 
   return {
     property: {
@@ -205,9 +376,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
       nights,
       cleaningFee,
     },
-    rules: (Array.isArray(propertyDetails?.rules) ? propertyDetails.rules : [])
-      .map((ruleEntry) => formatRuleLabel(ruleEntry))
-      .filter(Boolean),
+    rules: buildRuleLabels(propertyDetails),
     instructions: [],
   };
 };
@@ -273,11 +442,11 @@ function ReservationDetails() {
         setReservation(buildReservationViewModel({ booking, propertyDetails }));
       } catch (loadError) {
         if (isMounted) {
-          setError(
-            loadError?.message === "Reservation not found."
-              ? loadError.message
-              : "Could not load this reservation."
-          );
+          let nextError = "Could not load this reservation.";
+          if (loadError?.message === "Reservation not found.") {
+            nextError = loadError.message;
+          }
+          setError(nextError);
           setReservation(null);
         }
       } finally {
@@ -302,24 +471,31 @@ function ReservationDetails() {
   };
 
   const handleMessageHost = () => {
-    if (!reservation?.host?.id) {
-      navigate("/guestdashboard/messages");
+    if (reservation?.host?.id) {
+      navigate("/guestdashboard/messages", {
+        state: {
+          messageContext: {
+            contactId: reservation.host.id,
+            contactName: reservation.host.name,
+            contactImage: reservation.host.image,
+            propertyId: reservation.property.id,
+            propertyTitle: reservation.property.title,
+            accoImage: reservation.property.image,
+          },
+        },
+      });
       return;
     }
 
-    navigate("/guestdashboard/messages", {
-      state: {
-        messageContext: {
-          contactId: reservation.host.id,
-          contactName: reservation.host.name,
-          contactImage: reservation.host.image,
-          propertyId: reservation.property.id,
-          propertyTitle: reservation.property.title,
-          accoImage: reservation.property.image,
-        },
-      },
-    });
+    navigate("/guestdashboard/messages");
   };
+
+  const reservationContent = buildReservationContent({
+    isPageLoading,
+    pageError,
+    reservation,
+    handleMessageHost,
+  });
 
   return (
     <main className="dashboardContainer">
@@ -328,76 +504,7 @@ function ReservationDetails() {
           {"<"} Back to all trips
         </button>
 
-        {isPageLoading ? (
-          <div className="card reservationStateCard">
-            <PulseBarsLoader message="Loading reservation..." />
-          </div>
-        ) : pageError ? (
-          <div className="card reservationStateCard" role="alert">
-            <h3>Reservation unavailable</h3>
-            <p>{pageError}</p>
-          </div>
-        ) : !reservation ? (
-          <div className="card reservationStateCard">
-            <h3>Reservation unavailable</h3>
-            <p>Reservation not found.</p>
-          </div>
-        ) : (
-          <>
-            <div className="reservationHeader">
-              <h1 className="reservationTitle">{reservation.property.title}</h1>
-              <span className="confirmed reservationStatus">{reservation.stay.status}</span>
-            </div>
-
-            <div className="reservationPage">
-              <div className="reservationLeft">
-                <PropertyCard
-                  image={reservation.property.image}
-                  title={reservation.property.title}
-                  location={reservation.property.locationLabel}
-                  checkIn={reservation.stay.checkInDate}
-                  checkInTime={reservation.stay.checkInTime}
-                  checkOut={reservation.stay.checkOutDate}
-                  checkOutTime={reservation.stay.checkOutTime}
-                  guests={reservation.stay.guests}
-                  guestsDetails={reservation.stay.guestsDetails}
-                  reservationId={reservation.stay.reservationId}
-                />
-
-                <CheckInInstructions
-                  address={reservation.property.address}
-                  instructions={reservation.instructions}
-                />
-              </div>
-
-              <div className="reservationRight">
-                <HouseRules rules={reservation.rules} cancellationPolicy={null} />
-
-                <div className="card helpCard">
-                  <h3>Need help?</h3>
-                  <button
-                    type="button"
-                    className="primaryBtn"
-                    onClick={handleMessageHost}
-                  >
-                    Message host
-                  </button>
-                </div>
-
-                <PaymentSummary
-                  nightlyRate={reservation.pricing.nightlyRate}
-                  nights={reservation.pricing.nights}
-                  cleaningFee={reservation.pricing.cleaningFee}
-                />
-
-                <BookingDetails
-                  reservationId={reservation.stay.reservationId}
-                  bookedDate={reservation.stay.bookedDate}
-                />
-              </div>
-            </div>
-          </>
-        )}
+        {reservationContent}
       </div>
     </main>
   );

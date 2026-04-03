@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import Pages from "./Pages";
 import GuestDashboard from "./GuestDashboard";
@@ -10,10 +10,9 @@ import Messages from "../../components/messages/Messages";
 import ReservationDetails from "./ReservationDetails";
 
 const MainDashboardGuest = () => {
-  const [activeComponent, setActiveComponent] = useState("Dashboard");
   const location = useLocation();
 
-  useEffect(() => {
+  const activeComponent = useMemo(() => {
     const routeToComponentMap = {
       "/guestdashboard": "Dashboard",
       "/guestdashboard/": "Dashboard",
@@ -25,11 +24,10 @@ const MainDashboardGuest = () => {
     };
 
     if (location.pathname.startsWith("/guestdashboard/reservation/")) {
-      setActiveComponent("ReservationDetails");
-      return;
+      return "ReservationDetails";
     }
 
-    setActiveComponent(routeToComponentMap[location.pathname] || "Dashboard");
+    return routeToComponentMap[location.pathname] || "Dashboard";
   }, [location.pathname]);
 
   const renderComponent = () => {
@@ -58,14 +56,10 @@ const MainDashboardGuest = () => {
     }
   };
 
-  const handleNavigation = (componentName) => {
-    setActiveComponent(componentName);
-  };
-
   return (
     <div className="main-dashboard-guest">
       <div className="main-dashboard-sidebar">
-        <Pages onNavigate={handleNavigation} />
+        <Pages />
       </div>
       <div className="main-dashboard-content">{renderComponent()}</div>
     </div>
