@@ -4,13 +4,16 @@ import { Property } from "database/models/Property";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 import { Kpi_Snapshot } from "database/models/Kpi_Snapshot";
 
+const BOOKED_STATUSES = ["CONFIRMED", "COMPLETED"];
+
 export class Repository {
   async getBookedNights(cognitoUserId, startDate = null, endDate = null) {
     const client = await Database.getInstance();
     let query = client
       .getRepository(Booking)
       .createQueryBuilder("booking")
-      .where("booking.hostId = :hostId", { hostId: cognitoUserId });
+      .where("booking.hostid = :hostId", { hostId: cognitoUserId })
+      .andWhere("booking.status IN (:...statuses)", { statuses: BOOKED_STATUSES });
 
     if (startDate && endDate) {
       query = query.andWhere(`to_timestamp(booking."arrivaldate" / 1000) BETWEEN :startDate AND :endDate`, {
@@ -93,6 +96,7 @@ export class Repository {
     const bookedResult = await bookingRepo
       .createQueryBuilder("b")
       .where("b.hostid = :hostId", { hostId: cognitoUserId })
+      .andWhere("b.status IN (:...statuses)", { statuses: BOOKED_STATUSES })
       .andWhere(
         `(
         to_timestamp(b."departuredate" / 1000) > :periodStart
@@ -144,7 +148,8 @@ export class Repository {
     let query = client
       .getRepository(Booking)
       .createQueryBuilder("booking")
-      .where("booking.hostId = :hostId", { hostId: cognitoUserId });
+      .where("booking.hostid = :hostId", { hostId: cognitoUserId })
+      .andWhere("booking.status IN (:...statuses)", { statuses: BOOKED_STATUSES });
 
     if (startDate && endDate) {
       query = query.andWhere(`to_timestamp(booking."arrivaldate" / 1000) BETWEEN :startDate AND :endDate`, {
