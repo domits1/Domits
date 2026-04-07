@@ -1,0 +1,229 @@
+.container {
+  padding: 30px 40px;
+  max-width: 1100px;
+}
+
+.back {
+  background: none;
+  border: none;
+  color: #16a34a;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.meta {
+  display: flex;
+  gap: 12px;
+  margin: 10px 0 20px;
+}
+
+.status {
+  background: #dcfce7;
+  color: #16a34a;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.channel {
+  color: #666;
+  font-size: 14px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.property {
+  display: flex;
+  gap: 15px;
+}
+
+.image {
+  width: 180px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.propertyDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.location {
+  color: #666;
+  font-size: 14px;
+}
+
+.reservationMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #888;
+  margin-top: 8px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.guestRow {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.guestInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.subText {
+  font-size: 13px;
+  color: #666;
+}
+
+.request {
+  margin-left: auto;
+  background: #dcfce7;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 300px;
+}
+
+.payment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.total {
+  font-weight: 700;
+}
+
+.paymentBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.paymentLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.paymentRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.block {
+  margin-bottom: 15px;
+}
+
+.blockHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 20px;
+}
+
+.edit {
+  background: none;
+  border: none;
+  color: #16a34a;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.primaryBtn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #16a34a;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.primaryBtn:hover {
+  background: #15803d;
+}
+
+.secondaryBtn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.secondaryBtn:hover {
+  background: #e5e7eb;
+}
