@@ -91,10 +91,10 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
           const alosVal = Number(alosValRaw) || 0;
           const occVal = Number(allRaw?.occupancyRate ?? 0);
 
-          adrRes.push({ month: monthLabel, thisYear: adrVal, lastYear: adrVal * 0.9 });
-          revparRes.push({ month: monthLabel, thisYear: revparVal, lastYear: revparVal * 0.9 });
-          alosRes.push({ month: monthLabel, thisYear: alosVal, lastYear: alosVal * 0.9 });
-          occRes.push({ month: monthLabel, thisYear: occVal, lastYear: occVal * 0.9 });
+          adrRes.push({ month: monthLabel, thisYear: adrVal, lastYear: null });
+          revparRes.push({ month: monthLabel, thisYear: revparVal, lastYear: null });
+          alosRes.push({ month: monthLabel, thisYear: alosVal, lastYear: null });
+          occRes.push({ month: monthLabel, thisYear: occVal, lastYear: null });
         }
 
         if (!isMountedRef.current) return;
@@ -175,10 +175,15 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
   };
 
   const chartData = getChartData();
-          
+
   const selectedMetricHasData = (chartData || []).some(
-  (item) => Number(item.thisYear || 0) !== 0 || Number(item.lastYear || 0) !== 0
-);
+    (item) => Number(item.thisYear || 0) !== 0
+  );
+
+  const hasLastYearData = (chartData || []).some(
+    (item) => item.lastYear !== null && item.lastYear !== undefined && Number(item.lastYear || 0) !== 0
+  );
+
   const yTick = (v) => (selectedMetric === "ALOS" ? `${v}` : selectedMetric === "OCC" ? `${v}%` : `€${v}`);
 
   const tipFmt = (v) => (selectedMetric === "ALOS" ? `${v} nights` : selectedMetric === "OCC" ? `${v}%` : `€${v}`);
@@ -207,15 +212,17 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
               dot={{ r: 3 }}
               name={`${selectedMetric} (This Year)`}
             />
-            <Line
-              type="monotone"
-              dataKey="lastYear"
-              stroke="#999"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              dot={{ r: 2 }}
-              name={`${selectedMetric} (Last Year)`}
-            />
+            {hasLastYearData ? (
+              <Line
+                type="monotone"
+                dataKey="lastYear"
+                stroke="#999"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={{ r: 2 }}
+                name={`${selectedMetric} (Last Year)`}
+              />
+            ) : null}
           </LineChart>
         </ResponsiveContainer>
 

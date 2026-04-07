@@ -45,11 +45,19 @@ export class Service {
       averageLengthOfStay,
     ] = await Promise.all([
       (async () => {
-       try {
-        return await this.paymentsService.getTotalHostRevenue(event);
-      } catch {
-        return { totalRevenue: 0 };
-      }
+        try {
+          const revenue = await this.paymentsService.getTotalHostRevenue(event);
+
+          // If Stripe is not configured or returns no data
+          if (!revenue || revenue.totalRevenue === undefined || revenue.totalRevenue === null) {
+            return { totalRevenue: null, error: "Stripe not configured" };
+          }
+
+          return revenue;
+        } catch (err) {
+          // Instead of silently returning 0, return clear state
+          return { totalRevenue: null, error: "Stripe not configured" };
+        }
       })(),
       this.repository.getBookedNights(userId, start, end),
       this.repository.getAvailableNights(userId, start, end),
