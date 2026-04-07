@@ -27,7 +27,6 @@ export class PropertyHouseRuleRepository {
       .from(Property_HouseRule)
       .where("property_id = :propertyId", { propertyId })
       .execute();
-
     if (Array.isArray(houseRules) && houseRules.length > 0) {
       const rulesToInsert = houseRules.map((rule) => ({
         id: crypto.randomUUID(),
