@@ -44,7 +44,13 @@ export async function getAccommodationByPropertyId(accommodationEndpoint, proper
 
 const guessFileType = (url = "") => {
   const lower = String(url).toLowerCase();
-  if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp") || lower.endsWith(".gif")) {
+  if (
+    lower.endsWith(".png") ||
+    lower.endsWith(".jpg") ||
+    lower.endsWith(".jpeg") ||
+    lower.endsWith(".webp") ||
+    lower.endsWith(".gif")
+  ) {
     return "image";
   }
   if (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm")) {
@@ -66,6 +72,9 @@ export async function sendUnifiedMessage({
   hostId = null,
   guestId = null,
   metadata = { isAutomated: false },
+  platform = "DOMITS",
+  integrationAccountId = null,
+  externalThreadId = null,
 }) {
   const attachments =
     Array.isArray(fileUrls) && fileUrls.length > 0
@@ -84,9 +93,11 @@ export async function sendUnifiedMessage({
     hostId,
     guestId,
     content,
-    platform: "DOMITS",
+    platform,
     metadata,
     attachments,
+    integrationAccountId,
+    externalThreadId,
   };
 
   const res = await fetch(`${UNIFIED_MESSAGING_API}/send`, {
