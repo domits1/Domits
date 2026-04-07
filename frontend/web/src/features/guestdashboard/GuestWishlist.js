@@ -91,9 +91,19 @@ const GuestWishlist = () => {
       </div>
 
       {isEmpty ? (
-        <p>
-          You have not saved any favorites in <strong>"{selectedList}"</strong> yet.
-        </p>
+        <div className="wishlistEmpty">
+          <div className="wishlistEmpty__icon">
+            <svg width="260" height="210" viewBox="0 0 260 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="20" y="40" width="185" height="155" rx="12" fill="#f0f0f0" stroke="#ddd" strokeWidth="2.5" strokeDasharray="10 7"/>
+              <path d="M112 128 C112 110 90 98 90 114 C90 122 101 130 112 142 C123 130 134 122 134 114 C134 98 112 110 112 128Z" fill="none" stroke="#ccc" strokeWidth="3.5"/>
+              <circle cx="195" cy="58" r="36" fill="var(--primary-color)"/>
+              <path d="M195 44 C195 34 177 28 177 40 C177 47 186 54 195 63 C204 54 213 47 213 40 C213 28 195 34 195 44Z" fill="white"/>
+            </svg>
+          </div>
+          <h3 className="wishlistEmpty__title">Your wishlist is empty</h3>
+          <p className="wishlistEmpty__subtitle">Save your favorite listings and plan your next trip!</p>
+          <button className="wishlistEmpty__cta" onClick={() => navigate("/")}>Explore properties</button>
+        </div>
       ) : (
         <div className="wishlistScrollWrapper">
           {showScrollButtons && (
