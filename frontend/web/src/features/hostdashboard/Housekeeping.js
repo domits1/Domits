@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
+import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
@@ -155,6 +156,63 @@ const HostPropertyCare = () => {
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
+
+    const DEFAULT_SETTINGS = {
+        notifEmailAssigned: true,
+        notifEmailOverdue: true,
+        notifEmailCompleted: true,
+        notifSmsUrgent: false,
+        notifInappEnabled: true,
+        defaultPriority: 'Medium',
+        defaultAssignee: 'Anyone',
+        autoAssignCleaning: false,
+        requirePhotoProof: false,
+    };
+    const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS });
+    const [settingsDraft, setSettingsDraft] = useState({ ...DEFAULT_SETTINGS });
+    const [settingsSaved, setSettingsSaved] = useState(false);
+
+    const settingsChanged = JSON.stringify(settings) !== JSON.stringify(settingsDraft);
+
+    const handleSettingChange = (key, value) => {
+        setSettingsDraft(prev => ({ ...prev, [key]: value }));
+    };
+
+    useEffect(() => {
+        fetchSettings()
+            .then(data => {
+                setSettings(data);
+                setSettingsDraft(data);
+            })
+            .catch(() => {});
+    }, []);
+
+    const handleSaveSettings = async () => {
+        try {
+            await saveSettings(settingsDraft);
+            setSettings({ ...settingsDraft });
+            setSettingsSaved(true);
+            setTimeout(() => setSettingsSaved(false), 3000);
+        } catch {
+            setSettingsSaved(false);
+        }
+    };
+
+    const handleCancelSettings = () => {
+        setSettingsDraft({ ...settings });
+    };
+
+    const TEAM_MEMBERS = [
+        { name: 'Sophie Janssen', role: 'Manager', email: 'sophie@example.com', properties: 'All', status: 'Active' },
+        { name: 'Lars de Vries', role: 'Cleaner', email: 'lars@example.com', properties: 'City Loft Breda', status: 'Active' },
+        { name: 'Emma Bakker', role: 'Cleaner', email: 'emma@example.com', properties: 'Beach House Breda', status: 'Suspended' },
+    ];
+
+    const INTEGRATIONS = [
+        { name: 'Airbnb', logo: '🏠', connected: false },
+        { name: 'Booking.com', logo: '🔵', connected: false },
+        { name: 'Vrbo', logo: '🏡', connected: false },
+    ];
 
     const reportData = useMemo(() => {
         const filtered = tasks.filter((task) => matchesTaskFilters(task, filters, {
@@ -680,6 +738,135 @@ const HostPropertyCare = () => {
         URL.revokeObjectURL(url);
     };
 
+    const renderSettingsToggle = (key, label) => (
+        <div key={key} className="settings-toggle-row">
+            <span className="settings-toggle-label">{label}</span>
+            <button
+                className={`settings-toggle ${settingsDraft[key] ? 'on' : ''}`}
+                onClick={() => handleSettingChange(key, !settingsDraft[key])}
+                aria-label={label}
+            >
+                <span className="settings-toggle-knob" />
+            </button>
+        </div>
+    );
+
+    const renderSettingsView = () => (
+        <div className="settings-container">
+            <div className="settings-main-grid">
+
+                {/* ── LEFT COLUMN ─────────────────────────── */}
+                <div className="settings-left-col">
+
+                    {/* Team Members */}
+                    <div className="settings-card settings-team-card">
+                        <div className="settings-card-header">
+                            <h3 className="settings-card-title">Team Members</h3>
+                            <button className="btn-primary-green">+ Invite Member</button>
+                        </div>
+                        <table className="settings-team-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Email</th>
+                                    <th>Properties</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {TEAM_MEMBERS.map(member => (
+                                    <tr key={member.email}>
+                                        <td><span className="settings-row-arrow">▶</span>{member.name}</td>
+                                        <td>{member.role}</td>
+                                        <td>{member.email}</td>
+                                        <td>{member.properties}</td>
+                                        <td>
+                                            <span className={`settings-status-badge ${member.status === 'Active' ? 'active' : 'suspended'}`}>
+                                                {member.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Integrations */}
+                    <div className="settings-card">
+                        <h3 className="settings-card-title">Integrations</h3>
+                        <div className="settings-integrations-grid">
+                            {INTEGRATIONS.map(integration => (
+                                <div key={integration.name} className="settings-integration-card">
+                                    <div className="settings-integration-top">
+                                        <span className="settings-integration-logo">{integration.logo}</span>
+                                        <span className="settings-integration-name">{integration.name}</span>
+                                    </div>
+                                    {integration.connected ? (
+                                        <button className="settings-integration-btn disconnect">
+                                            ✓ Disconnect
+                                        </button>
+                                    ) : (
+                                        <span className="settings-integration-status disconnected">Not Connected</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── RIGHT COLUMN ────────────────────────── */}
+                <div className="settings-right-col">
+
+                    {/* Notifications */}
+                    <div className="settings-card">
+                        <h3 className="settings-card-title">Notifications</h3>
+                        <p className="settings-card-subtitle">Customize your app preferences.</p>
+                        <p className="settings-group-label">Email notifications</p>
+                        {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me')}
+                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue')}
+                        {renderSettingsToggle('notifEmailCompleted', 'Task completed')}
+                        <p className="settings-group-label">SMS notifications</p>
+                        {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only')}
+                        <p className="settings-group-label">In-App notifications</p>
+                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications')}
+                    </div>
+
+                    {/* Default Property Settings */}
+                    <div className="settings-card">
+                        <h3 className="settings-card-title">Default Property Settings</h3>
+                        <p className="settings-card-subtitle">Manage property-level preferences.</p>
+                        <div className="settings-field" style={{ marginBottom: '14px' }}>
+                            <label>Default task priority</label>
+                            <select value={settingsDraft.defaultPriority} onChange={e => handleSettingChange('defaultPriority', e.target.value)}>
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                                <option>Urgent</option>
+                            </select>
+                        </div>
+                        <div className="settings-field" style={{ marginBottom: '16px' }}>
+                            <label>Default assignee</label>
+                            <select value={settingsDraft.defaultAssignee} onChange={e => handleSettingChange('defaultAssignee', e.target.value)}>
+                                <option>Anyone</option>
+                                {TEAM_MEMBERS.map(m => <option key={m.name}>{m.name}</option>)}
+                            </select>
+                        </div>
+                        {renderSettingsToggle('autoAssignCleaning', 'Auto-assign cleaning after checkout')}
+                        {renderSettingsToggle('requirePhotoProof', 'Require photo proof for completed tasks')}
+                    </div>
+                </div>
+            </div>
+
+            {/* Save / Cancel */}
+            <div className="settings-footer">
+                {settingsSaved && <span className="settings-saved-msg">✓ Settings saved successfully.</span>}
+                <button className="settings-cancel-btn" onClick={handleCancelSettings} disabled={!settingsChanged}>Cancel</button>
+                <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!settingsChanged}>Save changes</button>
+            </div>
+        </div>
+    );
+
     const renderReportsView = () => {
         return (
             <div className="reports-container">
@@ -865,7 +1052,7 @@ const HostPropertyCare = () => {
             case 'Reports':
                 return renderReportsView();
             case 'Settings':
-                return <div className="placeholder-view">Coming soon</div>;
+                return renderSettingsView();
             default:
                 return null;
         }
