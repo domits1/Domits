@@ -1466,7 +1466,7 @@
 .settings-integration-btn.disconnect {
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
-    color: #16a34a;
+    color: #14532d;
 }
 
 .settings-integration-btn.disconnect:hover { background: #dcfce7; }
@@ -1525,12 +1525,12 @@
 
 .settings-status-badge.active {
     background: #dcfce7;
-    color: #16a34a;
+    color: #14532d;
 }
 
 .settings-status-badge.suspended {
     background: #fee2e2;
-    color: #dc2626;
+    color: #7f1d1d;
 }
 
 /* Footer */
@@ -1567,7 +1567,7 @@
     padding: 9px 20px;
     border-radius: 6px;
     border: none;
-    background: #28a745;
+    background: #1e7e34;
     color: #fff;
     font-size: 14px;
     font-weight: 600;

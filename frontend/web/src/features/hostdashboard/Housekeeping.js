@@ -754,11 +754,7 @@ const HostPropertyCare = () => {
     const renderSettingsView = () => (
         <div className="settings-container">
             <div className="settings-main-grid">
-
-                {/* ── LEFT COLUMN ─────────────────────────── */}
                 <div className="settings-left-col">
-
-                    {/* Team Members */}
                     <div className="settings-card settings-team-card">
                         <div className="settings-card-header">
                             <h3 className="settings-card-title">Team Members</h3>
@@ -792,7 +788,6 @@ const HostPropertyCare = () => {
                         </table>
                     </div>
 
-                    {/* Integrations */}
                     <div className="settings-card">
                         <h3 className="settings-card-title">Integrations</h3>
                         <div className="settings-integrations-grid">
@@ -815,10 +810,7 @@ const HostPropertyCare = () => {
                     </div>
                 </div>
 
-                {/* ── RIGHT COLUMN ────────────────────────── */}
                 <div className="settings-right-col">
-
-                    {/* Notifications */}
                     <div className="settings-card">
                         <h3 className="settings-card-title">Notifications</h3>
                         <p className="settings-card-subtitle">Customize your app preferences.</p>
@@ -832,13 +824,12 @@ const HostPropertyCare = () => {
                         {renderSettingsToggle('notifInappEnabled', 'Enable notifications')}
                     </div>
 
-                    {/* Default Property Settings */}
                     <div className="settings-card">
                         <h3 className="settings-card-title">Default Property Settings</h3>
                         <p className="settings-card-subtitle">Manage property-level preferences.</p>
                         <div className="settings-field" style={{ marginBottom: '14px' }}>
-                            <label>Default task priority</label>
-                            <select value={settingsDraft.defaultPriority} onChange={e => handleSettingChange('defaultPriority', e.target.value)}>
+                            <label htmlFor="setting-default-priority">Default task priority</label>
+                            <select id="setting-default-priority" value={settingsDraft.defaultPriority} onChange={e => handleSettingChange('defaultPriority', e.target.value)}>
                                 <option>Low</option>
                                 <option>Medium</option>
                                 <option>High</option>
@@ -846,8 +837,8 @@ const HostPropertyCare = () => {
                             </select>
                         </div>
                         <div className="settings-field" style={{ marginBottom: '16px' }}>
-                            <label>Default assignee</label>
-                            <select value={settingsDraft.defaultAssignee} onChange={e => handleSettingChange('defaultAssignee', e.target.value)}>
+                            <label htmlFor="setting-default-assignee">Default assignee</label>
+                            <select id="setting-default-assignee" value={settingsDraft.defaultAssignee} onChange={e => handleSettingChange('defaultAssignee', e.target.value)}>
                                 <option>Anyone</option>
                                 {TEAM_MEMBERS.map(m => <option key={m.name}>{m.name}</option>)}
                             </select>
@@ -858,7 +849,6 @@ const HostPropertyCare = () => {
                 </div>
             </div>
 
-            {/* Save / Cancel */}
             <div className="settings-footer">
                 {settingsSaved && <span className="settings-saved-msg">✓ Settings saved successfully.</span>}
                 <button className="settings-cancel-btn" onClick={handleCancelSettings} disabled={!settingsChanged}>Cancel</button>
