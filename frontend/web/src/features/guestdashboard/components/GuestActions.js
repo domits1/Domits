@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import { FiEdit2, FiTrash2, FiChevronDown } from "react-icons/fi";
 import "../../guestdashboard/styles/GuestActions.scss";
 import { getAccessToken } from "../utils/authUtils";
@@ -10,9 +11,21 @@ import {
   deleteWishlist,
 } from "../services/wishlistService";
 
+const fetchListWithCount = async (name) => {
+  try {
+    const countData = await fetchWishlistItemCount(name);
+    const realItems = (countData.items || []).filter((item) => item.propertyId);
+    return { id: name, name, count: realItems.length };
+  } catch (err) {
+    console.error(`Error fetching count for '${name}':`, err);
+    return { id: name, name, count: 0 };
+  }
+};
+
 const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   const [lists, setLists] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [editValue, setEditValue] = useState("");
   const [activePopup, setActivePopup] = useState(null);
   const [newListName, setNewListName] = useState("");
   const [shareUrl, setShareUrl] = useState("");
@@ -29,24 +42,11 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         const data = await fetchWishlists();
         const wishlists = data?.wishlists || {};
 
-        const structured = await Promise.all(
-          Object.keys(wishlists).map(async (name) => {
-            try {
-              const countData = await fetchWishlistItemCount(name);
-              const realItems = (countData.items || []).filter(
-                (item) => item.propertyId
-              );
-              return { id: name, name, count: realItems.length };
-            } catch (err) {
-              console.error(`Error fetching count for '${name}':`, err);
-              return { id: name, name, count: 0 };
-            }
-          })
-        );
+        const structured = await Promise.all(Object.keys(wishlists).map(fetchListWithCount));
 
         setLists(structured);
 
-        if (!structured.find((l) => l.name === selectedList)) {
+        if (!structured.some((l) => l.name === selectedList)) {
           onListChange("My next trip");
         }
       } catch (err) {
@@ -103,7 +103,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   const handleDelete = async (name) => {
     const token = getAccessToken();
     if (!token) return;
-    if (!window.confirm(`Delete wishlist "${name}"?`)) return;
+    if (!globalThis.confirm(`Delete wishlist "${name}"?`)) return;
 
     try {
       await deleteWishlist(name);
@@ -117,7 +117,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   };
 
   const handleShare = () => {
-    const baseUrl = window.location.origin + "/guestdashboard";
+    const baseUrl = globalThis.location.origin + "/guestdashboard";
     const shareLink = `${baseUrl}?wl=${encodeURIComponent(selectedList)}`;
     setShareUrl(shareLink);
     setActivePopup("share");
@@ -146,10 +146,11 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
 
   return (
     <div className="guestActions" ref={wrapperRef}>
-      <label className="label">Select list:</label>
+      <label className="label" htmlFor="dropdown-toggle">Select list:</label>
 
       <div className="dropdownWrapper">
         <button
+          id="dropdown-toggle"
           className="dropdownToggle"
           onClick={() =>
             setActivePopup(activePopup === "dropdown" ? null : "dropdown")
@@ -164,34 +165,42 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
               {lists.map((list) => (
                 <li key={list.id}>
                   {editingId === list.id ? (
-                    <input
-                      type="text"
-                      defaultValue={list.name}
-                      autoFocus
-                      onBlur={(e) =>
-                        handleRename(list.name, e.target.value)
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleRename(list.name, e.target.value);
-                        }
-                      }}
-                    />
+                    <>
+                      <input
+                        type="text"
+                        value={editValue}
+                        autoFocus
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleRename(list.name, editValue);
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
+                      />
+                      <div className="editActions">
+                        <button className="editSaveBtn" onClick={() => handleRename(list.name, editValue)}>
+                          Save
+                        </button>
+                        <button className="editCancelBtn" onClick={() => setEditingId(null)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </>
                   ) : (
                     <>
-                      <span
+                      <button
+                        className="listNameBtn"
                         onClick={() => {
                           onListChange(list.name);
                           setActivePopup(null);
                         }}
                       >
                         {list.name}
-                      </span>
+                      </button>
                       <div className="rightSide">
                         <span className="badge">{list.count}</span>
                         {list.name !== "My next trip" && (
                           <>
-                            <button onClick={() => setEditingId(list.id)}>
+                            <button onClick={() => { setEditingId(list.id); setEditValue(list.name); }}>
                               <FiEdit2 />
                             </button>
                             <button onClick={() => handleDelete(list.name)}>
@@ -250,6 +259,12 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       )}
     </div>
   );
+};
+
+GuestActions.propTypes = {
+  selectedList: PropTypes.string.isRequired,
+  onListChange: PropTypes.func.isRequired,
+  onCreate: PropTypes.func,
 };
 
 export default GuestActions;

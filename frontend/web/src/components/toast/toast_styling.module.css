@@ -3,12 +3,12 @@
     width: 100%;
   }
   to {
-    width: 0%;
+    width: 0;
   }
 }
 
 .Toast {
-  position: absolute;
+  position: fixed;
   top: 1%;
   right: 1%;
   margin-top: 10px;

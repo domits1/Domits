@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { getAccessToken } from "./utils/authUtils";
-import { fetchWishlistItems, updateWishlistItem } from "./services/wishlistService";
+import { fetchWishlistItems } from "./services/wishlistService";
 
 import "./styles/GuestWishlist.scss";
+import Toast from "../../components/toast/Toast";
 
 import GuestSelector from "./components/GuestSelector";
 import GuestActions from "./components/GuestActions";
@@ -14,7 +16,8 @@ const GuestWishlist = () => {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedList, setSelectedList] = useState("My next trip");
-  const cardListRef = useRef(null);
+  const [toast, setToast] = useState({ message: "", status: "" });
+  const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,32 +48,22 @@ const GuestWishlist = () => {
     };
 
     fetchWishlist();
-  }, [selectedList]);
-
-  const handleUnlike = async (accommodationId) => {
-    setWishlist((prev) => prev.filter((item) => item.property.id !== accommodationId));
-
-    const token = getAccessToken();
-    if (!token) return;
-
-    await updateWishlistItem(accommodationId, "DELETE", selectedList);
-  };
-
-  const scrollLeft = () => {
-    cardListRef.current.scrollBy({ left: -300, behavior: "smooth" });
-  };
-
-  const scrollRight = () => {
-    cardListRef.current.scrollBy({ left: 300, behavior: "smooth" });
-  };
+  }, [selectedList, refreshKey]);
 
   if (loading) return <p>Loading your wishlist...</p>;
 
   const isEmpty = !Array.isArray(wishlist) || wishlist.length === 0;
-  const showScrollButtons = wishlist.length > 4;
 
   return (
     <div className="pageContainer">
+      {ReactDOM.createPortal(
+        <Toast
+          message={toast.message}
+          status={toast.status || "info"}
+          onClose={() => setToast({ message: "", status: "" })}
+        />,
+        document.body,
+      )}
       <div className="wishlistTopBar">
         <div className="wishlistActionsRow">
           <GuestActions
@@ -105,32 +98,16 @@ const GuestWishlist = () => {
           <button className="wishlistEmpty__cta" onClick={() => navigate("/")}>Explore properties</button>
         </div>
       ) : (
-        <div className="wishlistScrollWrapper">
-          {showScrollButtons && (
-            <button className="scrollArrow scrollLeft" onClick={scrollLeft}>
-              &#8592;
-            </button>
-          )}
-
-          <div className="cardList" ref={cardListRef}>
-            {wishlist.map((item) => (
-              <div key={item.property?.id} className="wishlistCardWrapper">
-                <AccommodationCard
-                  accommodation={item}
-                  onClick={(e, id) => navigate(`/listingdetails?ID=${id}`)}
-                />
-                <button className="DeleteButton" onClick={() => handleUnlike(item.property?.id)}>
-                  Delete ❤️
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {showScrollButtons && (
-            <button className="scrollArrow scrollRight" onClick={scrollRight}>
-              &#8594;
-            </button>
-          )}
+        <div className="cardGrid">
+          {wishlist.map((item) => (
+            <div key={item.property?.id} className="wishlistCardWrapper">
+              <AccommodationCard
+                accommodation={item}
+                onClick={(e, id) => navigate(`/listingdetails?ID=${id}`)}
+                onUnlike={() => setRefreshKey((k) => k + 1)}
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>

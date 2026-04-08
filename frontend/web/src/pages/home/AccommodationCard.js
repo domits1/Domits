@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -17,15 +18,17 @@ import {
 } from "../../features/guestdashboard/services/wishlistService";
 import { resolveAccommodationImageUrls } from "../../utils/accommodationImage";
 import { getListingPricingBreakdown } from "../../features/bookingengine/listingdetails/utils/pricing";
+import Toast from "../../components/toast/Toast";
 
 const EURO_SYMBOL = "\u20AC";
 const formatEuroAmount = (value) =>
   `${EURO_SYMBOL}${Number(value || 0).toFixed(2)}`;
 
-const AccommodationCard = ({ accommodation = null, onClick }) => {
+const AccommodationCard = ({ accommodation = null, onClick, onUnlike }) => {
   const [liked, setLiked] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [toast, setToast] = useState({ message: "", status: "" });
 
   useEffect(() => {
     const checkIfLiked = async () => {
@@ -63,9 +66,14 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
 
       if (method === "POST") {
         setShowPopup(true);
+        setToast({ message: "Added to wishlist", status: "success" });
+      } else {
+        setToast({ message: "Removed from wishlist", status: "info" });
+        if (onUnlike) onUnlike(propertyId);
       }
     } catch (err) {
       console.error("Failed to perform wishlist action:", err.message || err);
+      setToast({ message: "Failed to update wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -206,6 +214,15 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
           onClose={() => setShowShareModal(false)}
         />
       )}
+
+      {ReactDOM.createPortal(
+        <Toast
+          message={toast.message}
+          status={toast.status || "info"}
+          onClose={() => setToast({ message: "", status: "" })}
+        />,
+        document.body,
+      )}
     </div>
   );
 };
@@ -230,6 +247,7 @@ AccommodationCard.propTypes = {
     ),
   }),
   onClick: PropTypes.func.isRequired,
+  onUnlike: PropTypes.func,
 };
 
 export default AccommodationCard;
