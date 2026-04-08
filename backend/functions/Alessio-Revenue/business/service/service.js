@@ -49,13 +49,13 @@ export class Service {
           const revenue = await this.paymentsService.getTotalHostRevenue(event);
 
           // If Stripe is not configured or returns no data
-          if (!revenue || revenue.totalRevenue === undefined || revenue.totalRevenue === null) {
+          if (revenue?.totalRevenue == null) {
             return { totalRevenue: null, error: "Stripe not configured" };
           }
 
           return revenue;
         } catch (err) {
-          // Instead of silently returning 0, return clear state
+          console.error("Stripe error while fetching host revenue:", err);
           return { totalRevenue: null, error: "Stripe not configured" };
         }
       })(),
