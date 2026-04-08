@@ -4,6 +4,8 @@ import "./MonthlyComparison.scss";
 
 import { HostKpiAllService } from "../services/HostKpiAllService";
 
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 const MonthlyComparison = ({ hostId, refreshKey }) => {
   const [selectedMetric, setSelectedMetric] = useState("OCC");
 
@@ -27,8 +29,6 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
     alos: "",
     occ: "",
   });
-
-  const shortMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const getMonthRange = (year, monthIndex) => {
     const start = new Date(year, monthIndex, 1);
@@ -76,7 +76,7 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
           if (!isMountedRef.current) return;
 
           const { start, end } = getMonthRange(year, i);
-          const monthLabel = shortMonths[i];
+          const monthLabel = SHORT_MONTHS[i];
 
           const allRaw = await HostKpiAllService.fetchAll(hostId, "custom", start, end);
 
