@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import styles from "../../HostProperty.module.css";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
@@ -983,17 +983,17 @@ function PolicyRuleSection({
   title,
   toggleFields,
   toggleState,
-  setToggleState,
-  customRules,
-  onToggleCustomRule,
-  onDeleteCustomRule,
-  customRuleInputVisible,
-  customRuleValue,
-  onCustomRuleChange,
-  onConfirmCustomRule,
-  onCancelCustomRule,
-  onShowCustomRuleInput,
+  onToggleChange,
   disabled,
+  customRules = [],
+  onToggleCustomRule = () => {},
+  onDeleteCustomRule = () => {},
+  customRuleInputVisible = false,
+  customRuleValue = "",
+  onCustomRuleChange = () => {},
+  onConfirmCustomRule = () => {},
+  onCancelCustomRule = () => {},
+  onShowCustomRuleInput = () => {},
 }) {
   return (
     <section className={`${styles.card} ${styles.policiesCard}`}>
@@ -1002,10 +1002,10 @@ function PolicyRuleSection({
       <div className={styles.rulesGrid}>
         {toggleFields.map((field) => (
           <RuleToggleField
-            key={field.key}
+            key={field.rule || field.key}
             label={field.label}
-            checked={Boolean(toggleState[field.key])}
-            onChange={(value) => setToggleState((previous) => ({ ...previous, [field.key]: value }))}
+            checked={Boolean(toggleState[field.rule || field.key])}
+            onChange={(value) => onToggleChange(field.rule || field.key, value)}
             disabled={disabled}
           />
         ))}
@@ -1110,8 +1110,8 @@ const PREPARATION_TIME_OPTIONS = [
 const CHECK_IN_FALLBACK_TIME = "15:00";
 const CHECK_OUT_FALLBACK_TIME = "11:00";
 const PROPERTY_RULE_TOGGLE_FIELDS = [
-  { key: "cookingAllowed", label: "Cooking allowed" },
-  { key: "parkingAvailable", label: "Parking available" },
+  { key: "CookingAllowed", label: "Cooking allowed", rule: "CookingAllowed" },
+  { key: "ParkingAvailable", label: "Parking available", rule: "ParkingAvailable" },
 ];
 const SAFETY_RULE_TOGGLE_FIELDS = [
   { key: "smokeDetector", label: "Smoke detector" },
@@ -1148,11 +1148,24 @@ export default function HostPropertyPoliciesTab(props) {
     saving,
   } = props;
   const [selectedPolicy, setSelectedPolicy] = useState("flexible");
+  const [cancellationPolicy, setCancellationPolicy] = useState("flexible");
+
+  // Sync cancellation policy from policyRules
+  useEffect(() => {
+    const policyOrder = ["Strict", "Firm", "Moderate", "Flexible"];
+    for (const policyName of policyOrder) {
+      if (policyRules[`CancellationPolicy:${policyName}`]) {
+        const policyId = policyName.toLowerCase();
+        setSelectedPolicy(policyId);
+        setCancellationPolicy(policyId);
+        return;
+      }
+    }
+    // No policy selected, reset to default
+    setSelectedPolicy("flexible");
+    setCancellationPolicy("flexible");
+  }, [policyRules]);
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
-  const propertyRuleSection = useRuleSectionState({
-    cookingAllowed: false,
-    parkingAvailable: false,
-  });
   const safetyRuleSection = useRuleSectionState({
     smokeDetector: true,
     carbonMonoxide: true,
@@ -1162,6 +1175,11 @@ export default function HostPropertyPoliciesTab(props) {
 
   const handleSelectPolicy = (id) => {
     setSelectedPolicy(id);
+    setCancellationPolicy(id);
+    updatePolicyRule(`CancellationPolicy:${id.charAt(0).toUpperCase() + id.slice(1)}`, true);
+    CANCELLATION_POLICIES.filter((p) => p.id !== id).forEach((p) => {
+      updatePolicyRule(`CancellationPolicy:${p.id.charAt(0).toUpperCase() + p.id.slice(1)}`, false);
+    });
     setExpandedPolicy(id);
   };
 
@@ -1217,7 +1235,9 @@ export default function HostPropertyPoliciesTab(props) {
     {
       title: "Property Rules",
       toggleFields: PROPERTY_RULE_TOGGLE_FIELDS,
-      sectionState: propertyRuleSection,
+      policyRules,
+      updatePolicyRule,
+      saving,
     },
     {
       title: "Safety & Property",
@@ -1269,7 +1289,7 @@ export default function HostPropertyPoliciesTab(props) {
 
         <div className={styles.cancellationPolicyList}>
           {CANCELLATION_POLICIES.map((policy) => {
-            const isSelected = selectedPolicy === policy.id;
+            const isSelected = cancellationPolicy === policy.id;
             const isExpanded = expandedPolicy === policy.id;
 
             return (
@@ -1393,23 +1413,15 @@ export default function HostPropertyPoliciesTab(props) {
         </div>
       </section>
 
-      {policyRuleSections.map(({ title, toggleFields, sectionState }) => (
+      {policyRuleSections.map(({ title, toggleFields, policyRules, updatePolicyRule, saving, sectionState }) => (
         <PolicyRuleSection
           key={title}
           title={title}
           toggleFields={toggleFields}
-          toggleState={sectionState.toggleState}
-          setToggleState={sectionState.setToggleState}
-          customRules={sectionState.customRules}
-          onToggleCustomRule={sectionState.toggleCustomRule}
-          onDeleteCustomRule={sectionState.deleteCustomRule}
-          customRuleInputVisible={sectionState.showRuleInput}
-          customRuleValue={sectionState.newRuleValue}
-          onCustomRuleChange={(event) => sectionState.setNewRuleValue(event.target.value)}
-          onConfirmCustomRule={sectionState.addCustomRule}
-          onCancelCustomRule={sectionState.cancelCustomRule}
-          onShowCustomRuleInput={() => sectionState.setShowRuleInput(true)}
+          toggleState={policyRules}
+          onToggleChange={(fieldKey, value) => updatePolicyRule(fieldKey, value)}
           disabled={saving}
+          {...(sectionState || {})}
         />
       ))}
 

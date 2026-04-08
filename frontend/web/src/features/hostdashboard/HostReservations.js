@@ -9,6 +9,14 @@ import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss
 import BooleanToString from "./services/booleanToString.js";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { calculateTotalPayment } from "./utils/reservationCalculations.js";
+import {
+  PolicySection,
+  parseCancellationPolicy,
+  parseHouseRules,
+  parsePropertyRules,
+  parseSafetyFeatures,
+  parseCheckInOut,
+} from "../../utils/policyDisplayUtils.js";
 import { usePagination } from "./hooks/usePagination.js";
 import filterReservations from "./utils/filterReservations.js";
 

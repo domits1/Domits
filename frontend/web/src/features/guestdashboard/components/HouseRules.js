@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { PolicySection } from "../../../utils/policyDisplayUtils.js";
 
 const buildRuleKey = (() => {
   const separator = "::";
@@ -36,8 +37,11 @@ function HouseRules({ rules, cancellationPolicy }) {
       {cancellationPolicy ? (
         <div className="policyBlock">
           <h3>Cancellation Policy</h3>
-          <span className="policyTag">{cancellationPolicy.type}</span>
-          <span>{cancellationPolicy.description}</span>
+          <PolicySection
+            title="Cancellation Policy"
+            items={[cancellationPolicy.summary, ...cancellationPolicy.details]}
+            expandable={true}
+          />
         </div>
       ) : null}
     </div>

@@ -17,6 +17,7 @@ import IosShareIcon from "@mui/icons-material/IosShare";
 import ShareModal from "./components/ShareModal";
 import publicKeys from "../../utils/const/publicKeys.json";
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
+import { parseCancellationPolicy, PolicySection } from "../../utils/policyDisplayUtils.js";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 
@@ -62,7 +63,9 @@ const BookingOverview = () => {
           checkOutDate,
           guests,
           testStatus: Boolean(retrievedPricingObject?.testStatus),
+          cancellationPolicy: parseCancellationPolicy(retrievedPricingObject?.rules || []),
         };
+
         setBookingDetails(retrievedBookingDetails);
 
         if (!retrievedBookingDetails) {
@@ -102,11 +105,11 @@ const BookingOverview = () => {
   }
 
   const createBooking = async () => {
-      const event = {
-        identifiers: {
-          property_Id: propertyId,
-        },
-        general: {
+    const event = {
+      identifiers: {
+        property_Id: propertyId,
+      },
+      general: {
         guests: Number.parseFloat(bookingDetails.guests),
         latePayment: false,
         arrivalDate: Number.parseFloat(bookingDetails.checkInDate),
@@ -178,10 +181,7 @@ const BookingOverview = () => {
           </Link>
         </div>
         <h1>Booking Overview</h1>
-        <button
-          className="booking-share-btn"
-          onClick={() => setShowShareModal(true)}
-          aria-label="Share property">
+        <button className="booking-share-btn" onClick={() => setShowShareModal(true)} aria-label="Share property">
           <IosShareIcon fontSize="small" />
         </button>
       </div>
@@ -261,10 +261,7 @@ const BookingOverview = () => {
             <div className="booking-details-name">
               <img
                 className="bookingDetailsImage"
-                src={resolvePrimaryAccommodationImageUrl(
-                  pricingObject.images,
-                  "thumb"
-                )}
+                src={resolvePrimaryAccommodationImageUrl(pricingObject.images, "thumb")}
                 alt="Accommodation"
               />
               <div>
