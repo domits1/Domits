@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import { FiEdit2, FiTrash2, FiChevronDown } from "react-icons/fi";
 import "../../guestdashboard/styles/GuestActions.scss";
+import Toast from "../../../components/toast/Toast";
 import { getAccessToken } from "../utils/authUtils";
 import {
   fetchWishlists,
@@ -16,8 +18,7 @@ const fetchListWithCount = async (name) => {
     const countData = await fetchWishlistItemCount(name);
     const realItems = (countData.items || []).filter((item) => item.propertyId);
     return { id: name, name, count: realItems.length };
-  } catch (err) {
-    console.error(`Error fetching count for '${name}':`, err);
+  } catch {
     return { id: name, name, count: 0 };
   }
 };
@@ -30,6 +31,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   const [newListName, setNewListName] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [toast, setToast] = useState({ message: "", status: "" });
 
   const wrapperRef = useRef(null);
 
@@ -49,8 +51,8 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         if (!structured.some((l) => l.name === selectedList)) {
           onListChange("My next trip");
         }
-      } catch (err) {
-        console.error("Error loading wishlists:", err.message);
+      } catch {
+        setToast({ message: "Failed to load wishlists. Please try again.", status: "error" });
       }
     };
 
@@ -70,8 +72,8 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       if (onCreate) onCreate(newListName);
       setNewListName("");
       setActivePopup(null);
-    } catch (err) {
-      console.error("Error creating wishlist:", err.message);
+    } catch {
+      setToast({ message: "Failed to create wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -95,8 +97,8 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       setLists(updated);
       if (selectedList === oldName) onListChange(newName);
       setEditingId(null);
-    } catch (err) {
-      console.error("Error renaming wishlist:", err.message);
+    } catch {
+      setToast({ message: "Failed to rename wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -111,8 +113,8 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       const remaining = lists.filter((list) => list.name !== name);
       setLists(remaining);
       if (selectedList === name) onListChange("My next trip");
-    } catch (err) {
-      console.error("Error deleting wishlist:", err.message);
+    } catch {
+      setToast({ message: "Failed to delete wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -128,8 +130,8 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       await navigator.clipboard.writeText(shareUrl);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error("Copy failed:", err);
+    } catch {
+      setToast({ message: "Failed to copy link. Please try again.", status: "error" });
     }
   };
 
@@ -145,6 +147,15 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   }, []);
 
   return (
+    <>
+    {ReactDOM.createPortal(
+      <Toast
+        message={toast.message}
+        status={toast.status || "error"}
+        onClose={() => setToast({ message: "", status: "" })}
+      />,
+      document.body,
+    )}
     <div className="guestActions" ref={wrapperRef}>
       <label className="label" htmlFor="dropdown-toggle">Select list:</label>
 
@@ -258,6 +269,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
