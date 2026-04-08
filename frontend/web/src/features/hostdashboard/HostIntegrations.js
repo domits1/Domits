@@ -6,12 +6,8 @@ import "./hostintegrations/HostIntegrations.scss";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
-/**
- * CHANGE LATER FOR PRODUCTION:
- * - localhost for now
- * - later replace with https://www.domits.com
- */
-const WHATSAPP_CALLBACK_URL = "http://localhost:3000/hostdashboard/integrations-marketplace/whatsapp/callback";
+const WHATSAPP_CALLBACK_PATH = "/hostdashboard/integrations-marketplace/whatsapp/callback";
+const WHATSAPP_CALLBACK_URL = `${globalThis.location?.origin || ""}${WHATSAPP_CALLBACK_PATH}`;
 
 const META_APP_ID = "1808176813897212";
 const META_EMBEDDED_SIGNUP_CONFIG_ID = "1259900802765110";
