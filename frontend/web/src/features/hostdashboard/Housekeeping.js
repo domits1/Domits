@@ -738,13 +738,14 @@ const HostPropertyCare = () => {
         URL.revokeObjectURL(url);
     };
 
-    const renderSettingsToggle = (key, label) => (
+    const renderSettingsToggle = (key, label, disabled = false) => (
         <div key={key} className="settings-toggle-row">
             <span className="settings-toggle-label">{label}</span>
             <button
-                className={`settings-toggle ${settingsDraft[key] ? 'on' : ''}`}
-                onClick={() => handleSettingChange(key, !settingsDraft[key])}
+                className={`settings-toggle ${!disabled && settingsDraft[key] ? 'on' : ''} ${disabled ? 'disabled' : ''}`}
+                onClick={() => !disabled && handleSettingChange(key, !settingsDraft[key])}
                 aria-label={label}
+                aria-disabled={disabled}
             >
                 <span className="settings-toggle-knob" />
             </button>
@@ -789,7 +790,10 @@ const HostPropertyCare = () => {
                     </div>
 
                     <div className="settings-card">
-                        <h3 className="settings-card-title">Integrations</h3>
+                        <div className="settings-card-header">
+                            <h3 className="settings-card-title">Integrations</h3>
+                            <span className="settings-coming-soon">Coming soon</span>
+                        </div>
                         <div className="settings-integrations-grid">
                             {INTEGRATIONS.map(integration => (
                                 <div key={integration.name} className="settings-integration-card">
@@ -812,16 +816,19 @@ const HostPropertyCare = () => {
 
                 <div className="settings-right-col">
                     <div className="settings-card">
-                        <h3 className="settings-card-title">Notifications</h3>
+                        <div className="settings-card-header">
+                            <h3 className="settings-card-title">Notifications</h3>
+                            <span className="settings-coming-soon">Coming soon</span>
+                        </div>
                         <p className="settings-card-subtitle">Customize your app preferences.</p>
                         <p className="settings-group-label">Email notifications</p>
-                        {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me')}
-                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue')}
-                        {renderSettingsToggle('notifEmailCompleted', 'Task completed')}
+                        {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me', true)}
+                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue', true)}
+                        {renderSettingsToggle('notifEmailCompleted', 'Task completed', true)}
                         <p className="settings-group-label">SMS notifications</p>
-                        {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only')}
+                        {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only', true)}
                         <p className="settings-group-label">In-App notifications</p>
-                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications')}
+                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications', true)}
                     </div>
 
                     <div className="settings-card">
