@@ -4,7 +4,7 @@ import { Property } from "database/models/Property";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 import { Kpi_Snapshot } from "database/models/Kpi_Snapshot";
 
-const BOOKED_STATUSES = ["CONFIRMED", "COMPLETED"];
+const BOOKED_STATUSES = ["confirmed", "completed", "paid"];
 
 export class Repository {
   async getBookedNights(cognitoUserId, startDate = null, endDate = null) {
@@ -13,7 +13,7 @@ export class Repository {
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.hostid = :hostId", { hostId: cognitoUserId })
-      .andWhere("booking.status IN (:...statuses)", { statuses: BOOKED_STATUSES });
+      .andWhere("LOWER(booking.status) IN (:...statuses)", { statuses: BOOKED_STATUSES });
 
     if (startDate && endDate) {
       query = query.andWhere(`to_timestamp(booking."arrivaldate" / 1000) BETWEEN :startDate AND :endDate`, {
@@ -96,7 +96,7 @@ export class Repository {
     const bookedResult = await bookingRepo
       .createQueryBuilder("b")
       .where("b.hostid = :hostId", { hostId: cognitoUserId })
-      .andWhere("b.status IN (:...statuses)", { statuses: BOOKED_STATUSES })
+      .andWhere("LOWER(b.status) IN (:...statuses)", { statuses: BOOKED_STATUSES })
       .andWhere(
         `(
         to_timestamp(b."departuredate" / 1000) > :periodStart
@@ -149,7 +149,7 @@ export class Repository {
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.hostid = :hostId", { hostId: cognitoUserId })
-      .andWhere("booking.status IN (:...statuses)", { statuses: BOOKED_STATUSES });
+      .andWhere("LOWER(booking.status) IN (:...statuses)", { statuses: BOOKED_STATUSES });
 
     if (startDate && endDate) {
       query = query.andWhere(`to_timestamp(booking."arrivaldate" / 1000) BETWEEN :startDate AND :endDate`, {
