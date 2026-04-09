@@ -33,10 +33,13 @@ export const useSendMessage = (userId) => {
       token = null;
     }
 
+    const platform = String(options.platform || "DOMITS").toUpperCase();
+    const isWhatsApp = platform === "WHATSAPP";
     const channelID = [userId, recipientId].sort().join("_");
 
     try {
       const metadata = options.metadata ? { isAutomated: false, ...options.metadata } : { isAutomated: false };
+
       const saved = await sendUnifiedMessage({
         senderId: userId,
         recipientId,
@@ -47,35 +50,50 @@ export const useSendMessage = (userId) => {
         hostId: options.hostId ?? null,
         guestId: options.guestId ?? null,
         metadata,
+        platform,
+        integrationAccountId: options.integrationAccountId ?? null,
+        externalThreadId: options.externalThreadId ?? null,
       });
 
       const savedId = pick(saved?.id, saved?.messageId, saved?.message?.id);
       const savedCreatedAt = pick(saved?.createdAt, saved?.message?.createdAt);
       const savedThreadId = pick(saved?.threadId, saved?.message?.threadId, options.threadId, null);
 
-      try {
-        sendWebSocketMessage({
-          action: "sendMessage",
-          senderId: userId,
-          userId: userId,
-          recipientId,
-          text,
-          content: text,
-          fileUrls,
-          channelId: channelID,
-          threadId: savedThreadId,
-          propertyId: options.propertyId ?? null,
-          hostId: options.hostId ?? null,
-          guestId: options.guestId ?? null,
-          metadata,
-          accessToken: token || undefined,
-          id: savedId || undefined,
-          createdAt: savedCreatedAt || undefined,
-          type: "message",
-        });
-      } catch {}
+      if (!isWhatsApp) {
+        try {
+          sendWebSocketMessage({
+            action: "sendMessage",
+            senderId: userId,
+            userId,
+            recipientId,
+            text,
+            content: text,
+            fileUrls,
+            channelId: channelID,
+            threadId: savedThreadId,
+            propertyId: options.propertyId ?? null,
+            hostId: options.hostId ?? null,
+            guestId: options.guestId ?? null,
+            metadata,
+            accessToken: token || undefined,
+            id: savedId || undefined,
+            createdAt: savedCreatedAt || undefined,
+            type: "message",
+            platform,
+          });
+        } catch {}
+      }
 
-      return { success: true, saved: { ...saved, threadId: savedThreadId } };
+      return {
+        success: true,
+        saved: {
+          ...saved,
+          threadId: savedThreadId,
+          platform,
+          integrationAccountId: options.integrationAccountId ?? null,
+          externalThreadId: options.externalThreadId ?? null,
+        },
+      };
     } catch (err) {
       setError(err);
       return { success: false, error: err?.message || String(err) };

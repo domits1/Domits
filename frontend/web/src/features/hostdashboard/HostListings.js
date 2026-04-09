@@ -3,7 +3,7 @@ import { Auth } from "aws-amplify";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import styles from "./HostDashboard.module.scss";
+import styles from "./HostListings.module.scss";
 import spinner from "../../images/spinnner.gif";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import {
