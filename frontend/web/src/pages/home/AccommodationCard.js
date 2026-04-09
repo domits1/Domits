@@ -71,8 +71,7 @@ const AccommodationCard = ({ accommodation = null, onClick, onUnlike }) => {
         setToast({ message: "Removed from wishlist", status: "info" });
         if (onUnlike) onUnlike(propertyId);
       }
-    } catch (err) {
-      console.error("Failed to perform wishlist action:", err.message || err);
+    } catch {
       setToast({ message: "Failed to update wishlist. Please try again.", status: "error" });
     }
   };
