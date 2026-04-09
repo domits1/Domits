@@ -28,8 +28,17 @@ import { Property_Types } from "../../models/Property_Types.js";
 import { Rules } from "../../models/Rules.js";
 import { Property_Type } from "../../models/Property_Type.js";
 import { Stripe_Connected_Accounts } from "../../models/Stripe_Connected_Accounts.js";
-import { UnifiedThread } from "../../models/UnifiedThread.js";
-import { UnifiedMessage } from "../../models/UnifiedMessage.js"; 
+
+import { UnifiedThread } from "../../models/unified/messaging/UnifiedThread.js";
+import { UnifiedMessage } from "../../models/unified/messaging/UnifiedMessage.js";
+
+import { ChannelIntegrationAccount } from "../../models/unified/integrations/ChannelIntegrationAccount.js";
+import { ChannelIntegrationProperty } from "../../models/unified/integrations/ChannelIntegrationProperty.js";
+import { ChannelReservationLink } from "../../models/unified/integrations/ChannelReservationLink.js";
+import { IntegrationSyncState } from "../../models/unified/sync/IntegrationSyncState.js";
+import { IntegrationSyncLog } from "../../models/unified/sync/IntegrationSyncLog.js";
+import { UnifiedThreadNote } from "../../models/unified/collaboration/UnifiedThreadNote.js";
+
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
@@ -65,8 +74,17 @@ export const Tables = [
   Property_Types,
   Rules,
   Stripe_Connected_Accounts,
+
   UnifiedThread,
   UnifiedMessage,
+
+  ChannelIntegrationAccount,
+  ChannelIntegrationProperty,
+  ChannelReservationLink,
+  IntegrationSyncState,
+  IntegrationSyncLog,
+  UnifiedThreadNote,
+
   User_Table,
   PropertyTask,
   Property_Task_Activity,

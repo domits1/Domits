@@ -2,21 +2,16 @@ import React, { useState } from "react";
 import IosShareIcon from "@mui/icons-material/IosShare";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
+import ShareModal from "./components/ShareModal";
 
 const ImageGallery = ({ images }) => {
   const [selectedImg, setSelectedImg] = useState(images[0]);
   const [liked, setLiked] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const handleShare = () => {
-    navigator.clipboard
-      .writeText(window.location.href)
-      .then(() => {
-        alert("URL is copied to clipboard!");
-      })
-      .catch((error) => {
-        console.error("Could not copy the URL:", error);
-      });
+    setShowShareModal(true);
   };
 
   const handleOverlayToggle = () => {
@@ -68,6 +63,10 @@ const ImageGallery = ({ images }) => {
         <button className="show-all-button" onClick={handleOverlayToggle}>
           Show All
         </button>
+      )}
+
+      {showShareModal && (
+        <ShareModal url={globalThis.location.href} onClose={() => setShowShareModal(false)} />
       )}
 
       {showOverlay && (

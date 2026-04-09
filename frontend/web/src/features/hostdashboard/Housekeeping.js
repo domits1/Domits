@@ -409,9 +409,8 @@ const HostPropertyCare = () => {
             resetForm();
         } catch {
             alert("Error creating task");
-            console.error("Error creating task:", error);
-        };
-    }
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
