@@ -587,6 +587,21 @@ export class PropertyService {
     return null;
   }
 
+  async #upsertPropertyRule(propertyId, ruleName, value) {
+    const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
+    if (existing) {
+      const client = await Database.getInstance();
+      await client
+        .createQueryBuilder()
+        .update(Property_Rule)
+        .set({ value, updated_at: Date.now() })
+        .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
+        .execute();
+    } else {
+      await this.propertyRuleRepository.create({ property_id: propertyId, rule: ruleName, value });
+    }
+  }
+
   async updateCheckInTimeslotRule(propertyId, checkInData) {
     if (!checkInData || typeof checkInData !== "object") return;
 
@@ -598,22 +613,7 @@ export class PropertyService {
     ];
 
     for (const ruleUpdate of rulesToUpdate) {
-      const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleUpdate.rule);
-      if (existing) {
-        const client = await Database.getInstance();
-        await client
-          .createQueryBuilder()
-          .update(Property_Rule)
-          .set({ value: ruleUpdate.value, updated_at: Date.now() })
-          .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleUpdate.rule })
-          .execute();
-      } else {
-        await this.propertyRuleRepository.create({
-          property_id: propertyId,
-          rule: ruleUpdate.rule,
-          value: ruleUpdate.value,
-        });
-      }
+      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value);
     }
   }
 
@@ -632,23 +632,7 @@ export class PropertyService {
     if (!policyType) return;
 
     const ruleName = `CancellationPolicy:${policyType}`;
-    const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
-
-    if (existing) {
-      const client = await Database.getInstance();
-      await client
-        .createQueryBuilder()
-        .update(Property_Rule)
-        .set({ value: true, updated_at: Date.now() })
-        .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
-        .execute();
-    } else {
-      await this.propertyRuleRepository.create({
-        property_id: propertyId,
-        rule: ruleName,
-        value: true,
-      });
-    }
+    await this.#upsertPropertyRule(propertyId, ruleName, true);
   }
 
   async getLateCheckin(propertyId) {
@@ -683,22 +667,7 @@ export class PropertyService {
     ];
 
     for (const ruleUpdate of rulesToUpdate) {
-      const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleUpdate.rule);
-      if (existing) {
-        const client = await Database.getInstance();
-        await client
-          .createQueryBuilder()
-          .update(Property_Rule)
-          .set({ value: ruleUpdate.value, updated_at: Date.now() })
-          .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleUpdate.rule })
-          .execute();
-      } else {
-        await this.propertyRuleRepository.create({
-          property_id: propertyId,
-          rule: ruleUpdate.rule,
-          value: ruleUpdate.value,
-        });
-      }
+      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value);
     }
   }
 
@@ -736,23 +705,7 @@ export class PropertyService {
 
     for (const ruleName of houseRuleNames) {
       const isEnabled = (houseRules?.[ruleName] ?? false) === true;
-      const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
-
-      if (existing) {
-        const client = await Database.getInstance();
-        await client
-          .createQueryBuilder()
-          .update(Property_Rule)
-          .set({ value: isEnabled ? "true" : "false", updated_at: Date.now() })
-          .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
-          .execute();
-      } else {
-        await this.propertyRuleRepository.create({
-          property_id: propertyId,
-          rule: ruleName,
-          value: isEnabled ? "true" : "false",
-        });
-      }
+      await this.#upsertPropertyRule(propertyId, ruleName, isEnabled ? "true" : "false");
     }
   }
 

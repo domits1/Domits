@@ -62,6 +62,15 @@ export const parseCancellationPolicy = (rules = []) => {
     : null;
 };
 
+const parseRules = (rules, property, keyMap) => {
+  const parsed = [];
+  Object.entries(keyMap).forEach(([key, label]) => {
+    const value = rules.find((r) => r.rule === key)?.value ?? property[key];
+    if (value !== false) parsed.push(label);
+  });
+  return parsed;
+};
+
 const HOUSE_RULE_KEYS = {
   SuitableForChildren: "Children allowed",
   SuitableForInfants: "Infants allowed",
@@ -69,27 +78,13 @@ const HOUSE_RULE_KEYS = {
   SmokingAllowed: "Smoking allowed",
   "Parties/EventsAllowed": "Parties / Events allowed",
 };
-export const parseHouseRules = (rules = [], property = {}) => {
-  const parsed = [];
-  Object.entries(HOUSE_RULE_KEYS).forEach(([key, label]) => {
-    const value = rules.find((r) => r.rule === key)?.value ?? property[key];
-    if (value !== false) parsed.push(label);
-  });
-  return parsed;
-};
+export const parseHouseRules = (rules = [], property = {}) => parseRules(rules, property, HOUSE_RULE_KEYS);
 
 const PROPERTY_RULE_KEYS = {
   CookingAllowed: "Cooking allowed",
   ParkingAvailable: "Parking available",
 };
-export const parsePropertyRules = (rules = [], property = {}) => {
-  const parsed = [];
-  Object.entries(PROPERTY_RULE_KEYS).forEach(([key, label]) => {
-    const value = rules.find((r) => r.rule === key)?.value ?? property[key];
-    if (value !== false) parsed.push(label);
-  });
-  return parsed;
-};
+export const parsePropertyRules = (rules = [], property = {}) => parseRules(rules, property, PROPERTY_RULE_KEYS);
 
 export const parseSafetyFeatures = (rules = [], property = {}) => {
   const parsed = ["Smoke detector", "Carbon monoxide detector", "Fire extinguisher", "First aid kit"];
@@ -144,15 +139,15 @@ export const PolicySection = ({ title, items = [], expandable = false, className
           {expanded && (
             <ul style={{ marginTop: "0.5rem", paddingLeft: "1.5rem" }}>
               {items.slice(1).map((item, i) => (
-                <li key={i}>{item}</li>
+                <li key={item}>{item}</li>
               ))}
             </ul>
           )}
         </>
       ) : (
         <ul style={{ paddingLeft: "1.5rem" }}>
-          {items.map((item, i) => (
-            <li key={i}>{item}</li>
+          {items.map((item) => (
+            <li key={item}>{item}</li>
           ))}
         </ul>
       )}

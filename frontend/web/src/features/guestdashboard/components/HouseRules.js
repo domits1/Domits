@@ -53,6 +53,8 @@ HouseRules.propTypes = {
   cancellationPolicy: PropTypes.shape({
     type: PropTypes.string,
     description: PropTypes.string,
+    summary: PropTypes.string,
+    details: PropTypes.arrayOf(PropTypes.string),
   }),
 };
 

@@ -1628,6 +1628,7 @@ HostPropertyPricingTab.propTypes = {
 
 PolicyRuleSection.propTypes = {
   title: PropTypes.string.isRequired,
+  onToggleChange: PropTypes.func,
   toggleFields: PropTypes.arrayOf(
     PropTypes.shape({
       key: PropTypes.string.isRequired,

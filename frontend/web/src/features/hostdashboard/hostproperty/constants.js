@@ -81,7 +81,7 @@ export const SAVE_SUCCESS_MESSAGE_BY_TAB = {
 
 export const createInitialPolicyRules = () =>
   POLICY_RULE_CONFIG.reduce((accumulator, ruleConfig) => {
-    accumulator[ruleConfig.rule] = Boolean(ruleConfig.invert ?? false) ? false : true;
+    accumulator[ruleConfig.rule] = !(ruleConfig.invert ?? false);
     return accumulator;
   }, {});
 

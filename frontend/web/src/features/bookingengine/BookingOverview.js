@@ -17,7 +17,7 @@ import IosShareIcon from "@mui/icons-material/IosShare";
 import ShareModal from "./components/ShareModal";
 import publicKeys from "../../utils/const/publicKeys.json";
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
-import { parseCancellationPolicy, PolicySection } from "../../utils/policyDisplayUtils.js";
+import { parseCancellationPolicy } from "../../utils/policyDisplayUtils.js";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 
