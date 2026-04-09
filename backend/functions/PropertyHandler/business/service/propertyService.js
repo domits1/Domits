@@ -139,6 +139,10 @@ export class PropertyService {
       await this.updateAvailabilityRestrictions(propertyId, updates.availabilityRestrictions);
     }
 
+    if (updates?.checkIn) {
+      await this.updateCheckIn(propertyId, updates.checkIn);
+    }
+
     if (updates?.amenities) {
       await this.updateAmenities(propertyId, updates.amenities);
     }
@@ -403,6 +407,14 @@ export class PropertyService {
 
   async getCheckIn(property) {
     return await this.propertyCheckInRepository.getPropertyCheckInTimeslotsByPropertyId(property);
+  }
+
+  async updateCheckIn(propertyId, checkIn) {
+    const result = await this.propertyCheckInRepository.upsertPropertyCheckInByPropertyId(propertyId, checkIn);
+    if (!result) {
+      throw new DatabaseException("Failed to update property check-in settings.");
+    }
+    return result;
   }
 
   async createGeneralDetail(details) {

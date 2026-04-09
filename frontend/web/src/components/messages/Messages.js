@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { UserProvider, useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
@@ -12,6 +13,8 @@ import ListingPanel from "./ListingPanel";
 
 import "./messagesV2.scss";
 
+const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+
 const Messages = ({ dashboardType }) => {
   return (
     <UserProvider>
@@ -21,6 +24,8 @@ const Messages = ({ dashboardType }) => {
 };
 
 const MessagesContent = ({ dashboardType }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { userId } = useAuth();
   const { accessToken } = useUser();
 
@@ -33,10 +38,15 @@ const MessagesContent = ({ dashboardType }) => {
   const [selectedPropertyTitle, setSelectedPropertyTitle] = useState(null);
   const [selectedAccoImage, setSelectedAccoImage] = useState(null);
 
+  const [selectedPlatform, setSelectedPlatform] = useState("DOMITS");
+  const [selectedIntegrationAccountId, setSelectedIntegrationAccountId] = useState(null);
+  const [selectedExternalThreadId, setSelectedExternalThreadId] = useState(null);
+
   const [message, setMessage] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
+  const [integrationsLoading, setIntegrationsLoading] = useState(true);
+  const [whatsAppConnected, setWhatsAppConnected] = useState(false);
 
   const isMobile = screenWidth < 768;
   const isTablet = screenWidth >= 768 && screenWidth < 1280;
@@ -44,10 +54,137 @@ const MessagesContent = ({ dashboardType }) => {
   const { contacts, pendingContacts, loading: contactsLoading, setContacts } = useFetchContacts(userId, dashboardType);
 
   useEffect(() => {
+    const messageContext = location.state?.messageContext;
+    if (!messageContext || !userId) {
+      return;
+    }
+
+    if (String(messageContext.contactId || "") === String(userId)) {
+      setSelectedContactId(null);
+      setSelectedContactName(null);
+      setSelectedContactImage(null);
+      setSelectedThreadId(null);
+      setSelectedPropertyId(null);
+      setSelectedPropertyTitle(null);
+      setSelectedAccoImage(null);
+      setSelectedPlatform("DOMITS");
+      setSelectedIntegrationAccountId(null);
+      setSelectedExternalThreadId(null);
+      return;
+    }
+
+    setSelectedContactId(messageContext.contactId || null);
+    setSelectedContactName(messageContext.contactName || null);
+    setSelectedContactImage(messageContext.contactImage || null);
+    setSelectedThreadId(messageContext.threadId || null);
+    setSelectedPropertyId(messageContext.propertyId || null);
+    setSelectedPropertyTitle(messageContext.propertyTitle || null);
+    setSelectedAccoImage(messageContext.accoImage || null);
+    setSelectedPlatform(messageContext.platform || "DOMITS");
+    setSelectedIntegrationAccountId(messageContext.integrationAccountId || null);
+    setSelectedExternalThreadId(messageContext.externalThreadId || null);
+  }, [location.key, location.state, userId]);
+
+  useEffect(() => {
+    if (!userId || !selectedContactId) {
+      return;
+    }
+
+    const matchedContact = (Array.isArray(contacts) ? contacts : []).find((contact) => {
+      const partnerId =
+        contact?.partnerId ||
+        contact?.recipientId ||
+        contact?.userId ||
+        (String(contact?.hostId || "") === String(userId) ? contact?.guestId : contact?.hostId) ||
+        null;
+
+      if (String(partnerId || "") !== String(selectedContactId)) {
+        return false;
+      }
+
+      if (!selectedPropertyId) {
+        return true;
+      }
+
+      return String(contact?.propertyId || contact?.AccoId || "") === String(selectedPropertyId);
+    });
+
+    if (!matchedContact) {
+      return;
+    }
+
+    setSelectedContactName((previousValue) => previousValue || matchedContact?.givenName || matchedContact?.name || null);
+    setSelectedContactImage((previousValue) => previousValue || matchedContact?.profileImage || null);
+    setSelectedThreadId((previousValue) => previousValue || matchedContact?.threadId || null);
+    setSelectedPropertyId((previousValue) => previousValue || matchedContact?.propertyId || matchedContact?.AccoId || null);
+    setSelectedPropertyTitle(
+      (previousValue) => previousValue || matchedContact?.propertyTitle || matchedContact?.propertyName || null
+    );
+    setSelectedAccoImage((previousValue) => previousValue || matchedContact?.accoImage || null);
+    setSelectedPlatform((previousValue) => previousValue || matchedContact?.platform || "DOMITS");
+    setSelectedIntegrationAccountId(
+      (previousValue) => previousValue || matchedContact?.integrationAccountId || matchedContact?.externalAccountId || null
+    );
+    setSelectedExternalThreadId(
+      (previousValue) => previousValue || matchedContact?.externalThreadId || null
+    );
+  }, [contacts, selectedContactId, selectedPropertyId, userId]);
+
+  useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      if (dashboardType !== "host" || !userId) {
+        setIntegrationsLoading(false);
+        setWhatsAppConnected(false);
+        return;
+      }
+
+      setIntegrationsLoading(true);
+
+      try {
+        const res = await fetch(`${UNIFIED_API}/integrations?userId=${encodeURIComponent(userId)}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch integrations");
+
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : [];
+
+        const hasWhatsApp = list.some(
+          (item) =>
+            String(item?.channel || "").toUpperCase() === "WHATSAPP" &&
+            !!String(item?.externalAccountId || "").trim()
+        );
+
+        if (!cancelled) {
+          setWhatsAppConnected(hasWhatsApp);
+        }
+      } catch {
+        if (!cancelled) {
+          setWhatsAppConnected(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setIntegrationsLoading(false);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dashboardType, userId]);
 
   const handleContactClick = (
     contactId,
@@ -56,7 +193,10 @@ const MessagesContent = ({ dashboardType }) => {
     threadId = null,
     propertyId = null,
     propertyTitle = null,
-    accoImage = null
+    accoImage = null,
+    platform = "DOMITS",
+    integrationAccountId = null,
+    externalThreadId = null
   ) => {
     setSelectedContactId(contactId);
     setSelectedContactName(contactName);
@@ -66,6 +206,10 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedPropertyId(propertyId || null);
     setSelectedPropertyTitle(propertyTitle || null);
     setSelectedAccoImage(accoImage || null);
+
+    setSelectedPlatform(platform || "DOMITS");
+    setSelectedIntegrationAccountId(integrationAccountId || null);
+    setSelectedExternalThreadId(externalThreadId || null);
   };
 
   const handleBackToContacts = () => {
@@ -76,6 +220,10 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedPropertyId(null);
     setSelectedPropertyTitle(null);
     setSelectedAccoImage(null);
+
+    setSelectedPlatform("DOMITS");
+    setSelectedIntegrationAccountId(null);
+    setSelectedExternalThreadId(null);
   };
 
   const handleCloseChat = (contactId = null) => {
@@ -88,6 +236,10 @@ const MessagesContent = ({ dashboardType }) => {
       setSelectedPropertyId(null);
       setSelectedPropertyTitle(null);
       setSelectedAccoImage(null);
+
+      setSelectedPlatform("DOMITS");
+      setSelectedIntegrationAccountId(null);
+      setSelectedExternalThreadId(null);
     }
   };
 
@@ -97,7 +249,11 @@ const MessagesContent = ({ dashboardType }) => {
 
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : true;
-  const showDetailsPanel = !isMobile && !isTablet;
+  const showDetailsPanel = !isMobile && !isTablet && selectedPlatform !== "WHATSAPP";
+
+  const showWhatsAppBanner = useMemo(() => {
+    return dashboardType === "host" && !integrationsLoading && !whatsAppConnected;
+  }, [dashboardType, integrationsLoading, whatsAppConnected]);
 
   return (
     <div className={`${dashboardType}-dashboard-page-body messages-v2`}>
@@ -111,6 +267,66 @@ const MessagesContent = ({ dashboardType }) => {
               userId={userId}
               dashboardType={dashboardType}
             />
+
+            {showWhatsAppBanner ? (
+              <div
+                style={{
+                  marginBottom: "18px",
+                  background: "#ffffff",
+                  border: "1px solid #d9e7dd",
+                  borderRadius: "16px",
+                  boxShadow: "0 10px 24px rgba(0,0,0,0.06)",
+                  padding: "20px 22px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: "16px",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: "#15803d",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      WhatsApp
+                    </p>
+                    <h3 style={{ margin: "6px 0 4px", fontSize: "22px" }}>Connect your WhatsApp Business</h3>
+                    <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.55, maxWidth: "760px" }}>
+                      Link your WhatsApp Business number so you can receive and reply to WhatsApp messages directly
+                      from your Domits inbox.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate("/hostdashboard/integrations-marketplace")}
+                    style={{
+                      border: 0,
+                      borderRadius: "12px",
+                      padding: "12px 16px",
+                      background: "#15803d",
+                      color: "#fff",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Connect WhatsApp
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             <div className="messages-v2-grid">
               {showContactList && (
@@ -143,6 +359,9 @@ const MessagesContent = ({ dashboardType }) => {
                     contactImage={selectedContactImage}
                     threadId={selectedThreadId}
                     propertyId={selectedPropertyId}
+                    platform={selectedPlatform}
+                    integrationAccountId={selectedIntegrationAccountId}
+                    externalThreadId={selectedExternalThreadId}
                     onBack={isTablet ? handleBackToContacts : null}
                     dashboardType={dashboardType}
                   />
