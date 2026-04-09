@@ -26,6 +26,7 @@ const formatEuroAmount = (value) =>
 
 const AccommodationCard = ({ accommodation = null, onClick, onUnlike }) => {
   const [liked, setLiked] = useState(false);
+  const [likedWishlistName, setLikedWishlistName] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [toast, setToast] = useState({ message: "", status: "" });
@@ -39,10 +40,12 @@ const AccommodationCard = ({ accommodation = null, onClick, onUnlike }) => {
       if (!propertyId) return;
 
       try {
-        const isLiked = await isPropertyInAnyWishlist(propertyId);
+        const { liked: isLiked, wishlistName } = await isPropertyInAnyWishlist(propertyId);
         setLiked(isLiked);
+        setLikedWishlistName(wishlistName);
       } catch {
         setLiked(false);
+        setLikedWishlistName(null);
       }
     };
 
@@ -61,13 +64,14 @@ const AccommodationCard = ({ accommodation = null, onClick, onUnlike }) => {
     const method = liked ? "DELETE" : "POST";
 
     try {
-      await updateWishlistItem(propertyId, method);
+      await updateWishlistItem(propertyId, method, likedWishlistName ?? undefined);
       setLiked((prev) => !prev);
 
       if (method === "POST") {
         setShowPopup(true);
         setToast({ message: "Added to wishlist", status: "success" });
       } else {
+        setLikedWishlistName(null);
         setToast({ message: "Removed from wishlist", status: "info" });
         if (onUnlike) onUnlike(propertyId);
       }
@@ -203,6 +207,7 @@ const AccommodationCard = ({ accommodation = null, onClick, onUnlike }) => {
           activeList="My next trip"
           show={showPopup}
           onClose={() => setShowPopup(false)}
+          onSave={(listName) => setLikedWishlistName(listName)}
         />
       )}
 

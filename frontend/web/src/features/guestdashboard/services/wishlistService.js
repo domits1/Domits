@@ -96,12 +96,14 @@ export const updateWishlistItem = async (propertyId, method, wishlistName = DEFA
   return parseJson(res);
 };
 
-// Check if a property is in any wishlist
+// Check if a property is in any wishlist, returns { liked, wishlistName }
 export const isPropertyInAnyWishlist = async (propertyId) => {
   const data = await fetchWishlists();
   const allWishlists = data.wishlists || {};
-  const likedIds = Object.values(allWishlists).flat();
-  return likedIds.includes(propertyId);
+  for (const [name, ids] of Object.entries(allWishlists)) {
+    if (ids.includes(propertyId)) return { liked: true, wishlistName: name };
+  }
+  return { liked: false, wishlistName: null };
 };
 
 // Fetch real item count for a specific wishlist (POST)
