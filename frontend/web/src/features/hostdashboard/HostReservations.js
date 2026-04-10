@@ -66,7 +66,6 @@ const HostReservations = () => {
         const flat = mapReservations(data);
         setBookings(flat);
       } catch (error) {
-        console.error(error);
         toast.error(
           error?.response?.data?.message || "Failed to load reservations"
         );
