@@ -108,6 +108,7 @@ const GuestWishlist = () => {
                 <AccommodationCard
                   accommodation={item}
                   onClick={(e, id) => navigate(`/listingdetails?ID=${id}`)}
+                  imageVariant="web"
                 />
                 <button className="DeleteButton" onClick={() => handleUnlike(item.property?.id)}>
                   Delete ❤️
