@@ -22,7 +22,7 @@ const EURO_SYMBOL = "\u20AC";
 const formatEuroAmount = (value) =>
   `${EURO_SYMBOL}${Number(value || 0).toFixed(2)}`;
 
-const AccommodationCard = ({ accommodation = null, onClick }) => {
+const AccommodationCard = ({ accommodation = null, onClick, imageVariant = "thumb" }) => {
   const [liked, setLiked] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -91,7 +91,7 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
 
   const cardImages = resolveAccommodationImageUrls(
     accommodation.propertyImages,
-    "thumb",
+    imageVariant,
   );
 
   const { nightlyDisplayPrice } = getListingPricingBreakdown(
@@ -230,6 +230,7 @@ AccommodationCard.propTypes = {
     ),
   }),
   onClick: PropTypes.func.isRequired,
+  imageVariant: PropTypes.oneOf(["thumb", "web"]),
 };
 
 export default AccommodationCard;
