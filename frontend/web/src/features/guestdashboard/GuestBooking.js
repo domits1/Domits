@@ -3,22 +3,21 @@ import PropTypes from "prop-types";
 import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
 
-import { getGuestBookings, buildListingDetailsUrl } from "./services/bookingAPI";
+import { getGuestBookings } from "./services/bookingAPI";
+import { fetchPropertySummaries } from "./services/propertySummaryService";
 
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import { getBookingTimestamp } from "../../utils/getBookingTimestamp";
 import { timestampToDate } from "../../utils/timestampToDate";
 import { placeholderImage, normalizeImageUrl } from "./utils/image";
 import {
-  resolvePrimaryAccommodationImageUrl,
   resolveAccommodationImageUrl,
 } from "../../utils/accommodationImage";
 import {
+  getBookingId,
   getPaidBookings,
   getPropertyId,
   normalizeGuestBookingsResponse,
-  resolveHostName,
-  resolveSubtitleCity,
   splitBookingsByTime,
 } from "./utils/guestDashboardUtils";
 
@@ -31,41 +30,6 @@ const formatBookingDates = (bookingItem) => {
   if (!arrivalDate || !departureDate) return "-";
 
   return `${dateFormatterDD_MM_YYYY(arrivalDate)} -> ${dateFormatterDD_MM_YYYY(departureDate)}`;
-};
-
-const buildPropertySummary = async (propertyId) => {
-  const response = await fetch(buildListingDetailsUrl(propertyId));
-  if (!response.ok) {
-    throw new Error("Failed to fetch listing details.");
-  }
-
-  const data = await response.json().catch(() => ({}));
-  const property = data.property || {};
-  const images = Array.isArray(data.images) ? data.images : [];
-  const location = data.location || {};
-  const host = data.host || data.hostInfo || property.host || property.hostInfo || null;
-
-  const hostNameFromHost =
-    host?.name ||
-    host?.fullName ||
-    (host?.firstName && host?.lastName ? `${host.firstName} ${host.lastName}` : null);
-
-  const hostNameFromProperty =
-    property.username && property.familyname
-      ? `${String(property.username).trim()} ${String(property.familyname).trim()}`
-      : (property.username && String(property.username).trim()) ||
-        (property.familyname && String(property.familyname).trim()) ||
-        null;
-
-  const subtitle = property.subtitle || "";
-  const city = location.city || resolveSubtitleCity(subtitle) || "";
-
-  return {
-    title: property.title || property.name || `Property #${property.id || propertyId}`,
-    imageUrl: resolvePrimaryAccommodationImageUrl(images, "thumb"),
-    city,
-    hostName: resolveHostName(hostNameFromHost, hostNameFromProperty, data.hostName, property.hostName),
-  };
 };
 
 const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
@@ -237,27 +201,10 @@ function GuestBooking() {
 
       setPropLoading(true);
       try {
-        const results = await Promise.all(
-          toFetch.map(async (propertyId) => {
-            try {
-              return [propertyId, await buildPropertySummary(propertyId)];
-            } catch {
-              return [
-                propertyId,
-                {
-                  title: `Property #${propertyId}`,
-                  imageUrl: placeholderImage,
-                  city: "",
-                  hostName: "",
-                },
-              ];
-            }
-          })
-        );
-
+        const fetchedSummaries = await fetchPropertySummaries(toFetch);
         setPropertyMap((prev) => {
           const next = { ...prev };
-          results.forEach(([propertyId, summary]) => {
+          Object.entries(fetchedSummaries).forEach(([propertyId, summary]) => {
             next[propertyId] = summary;
           });
           return next;
@@ -279,8 +226,16 @@ function GuestBooking() {
   }, [paidBookings, fetchPropertyDetails]);
 
   const handleBookingClick = (bookingItem) => {
+    const bookingId = getBookingId(bookingItem);
     const propertyId = getPropertyId(bookingItem);
-    if (propertyId) navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
+    if (bookingId) {
+      navigate(`/guestdashboard/reservation/${encodeURIComponent(bookingId)}`);
+      return;
+    }
+
+    if (propertyId) {
+      navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
+    }
   };
 
   const { currentBookings, upcomingBookings, pastBookings } = useMemo(
