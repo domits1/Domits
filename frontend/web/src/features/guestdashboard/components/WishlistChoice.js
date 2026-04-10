@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
+import PropTypes from "prop-types";
 import CloseIcon from "@mui/icons-material/Close";
 import { getAccessToken } from "../utils/authUtils";
 import { fetchWishlists, moveAccommodation } from "../services/wishlistService";
@@ -79,7 +80,6 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
         aria-modal="true"
         aria-label="Wishlist"
         open
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="wishlist-modal__header">
           <h2 className="wishlist-modal__title">
@@ -114,8 +114,8 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
         ) : (
           <div className="wishlist-modal__edit">
             <div className="wishlist-modal__list">
-              {wishlists.map((list, i) => (
-                <label key={i} className="wishlist-modal__option">
+              {wishlists.map((list) => (
+                <label key={list} className="wishlist-modal__option">
                   <input
                     type="radio"
                     name="wishlist"
@@ -165,6 +165,14 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
     </div>,
     document.body,
   );
+};
+
+WishlistChoice.propTypes = {
+  propertyId: PropTypes.string.isRequired,
+  activeList: PropTypes.string.isRequired,
+  show: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func,
 };
 
 export default WishlistChoice;

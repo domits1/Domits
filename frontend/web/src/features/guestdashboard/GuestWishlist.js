@@ -23,7 +23,10 @@ const GuestWishlist = () => {
   useEffect(() => {
     const fetchWishlist = async () => {
       const token = getAccessToken();
-      if (!token) return;
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
       setLoading(true);
 
@@ -40,8 +43,12 @@ const GuestWishlist = () => {
           `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/set?properties=${propertyIds.join(",")}`
         );
 
+        if (!detailsRes.ok) throw new Error("Failed to fetch property details");
+
         const fullData = await detailsRes.json();
         setWishlist(fullData);
+      } catch {
+        setToast({ message: "Failed to load wishlist. Please try again.", status: "error" });
       } finally {
         setLoading(false);
       }

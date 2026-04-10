@@ -219,14 +219,15 @@ const AccommodationCard = ({ accommodation = null, onClick, onUnlike }) => {
         />
       )}
 
-      {ReactDOM.createPortal(
-        <Toast
-          message={toast.message}
-          status={toast.status || "info"}
-          onClose={() => setToast({ message: "", status: "" })}
-        />,
-        document.body,
-      )}
+      {toast.message &&
+        ReactDOM.createPortal(
+          <Toast
+            message={toast.message}
+            status={toast.status || "info"}
+            onClose={() => setToast({ message: "", status: "" })}
+          />,
+          document.body,
+        )}
     </div>
   );
 };
