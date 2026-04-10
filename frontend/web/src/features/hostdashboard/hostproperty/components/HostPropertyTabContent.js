@@ -1114,10 +1114,10 @@ const PROPERTY_RULE_TOGGLE_FIELDS = [
   { key: "ParkingAvailable", label: "Parking available", rule: "ParkingAvailable" },
 ];
 const SAFETY_RULE_TOGGLE_FIELDS = [
-  { key: "smokeDetector", label: "Smoke detector" },
-  { key: "carbonMonoxide", label: "Carbon monoxide" },
-  { key: "fireExtinguisher", label: "Fire extinguisher" },
-  { key: "firstAidKit", label: "First aid kit" },
+  { key: "SmokeDetector", label: "Smoke detector" },
+  { key: "CarbonMonoxide", label: "Carbon monoxide" },
+  { key: "FireExtinguisher", label: "Fire extinguisher" },
+  { key: "FirstAidKit", label: "First aid kit" },
 ];
 
 const resolveDistinctLateTime = (fromValue, preferredTillValue, fallbackFromValue) => {
@@ -1242,6 +1242,9 @@ export default function HostPropertyPoliciesTab(props) {
     {
       title: "Safety & Property",
       toggleFields: SAFETY_RULE_TOGGLE_FIELDS,
+      policyRules: safetyRuleSection.toggleState,
+      updatePolicyRule,
+      saving,
       sectionState: safetyRuleSection,
     },
   ];
@@ -1413,17 +1416,24 @@ export default function HostPropertyPoliciesTab(props) {
         </div>
       </section>
 
-      {policyRuleSections.map(({ title, toggleFields, policyRules, updatePolicyRule, saving, sectionState }) => (
-        <PolicyRuleSection
-          key={title}
-          title={title}
-          toggleFields={toggleFields}
-          toggleState={policyRules}
-          onToggleChange={(fieldKey, value) => updatePolicyRule(fieldKey, value)}
-          disabled={saving}
-          {...(sectionState || {})}
-        />
-      ))}
+      {policyRuleSections.map(({ title, toggleFields, sectionState }) => {
+        const { toggleState, setToggleState, ...customRuleProps } = sectionState || {};
+
+        return (
+          <PolicyRuleSection
+            key={title}
+            title={title}
+            toggleFields={toggleFields}
+            toggleState={policyRules}
+            onToggleChange={(fieldKey, value) => {
+              updatePolicyRule(fieldKey, value);
+              if (setToggleState) setToggleState((prev) => ({ ...prev, [fieldKey]: value })); // Update local state (if exists)
+            }}
+            disabled={saving}
+            {...customRuleProps}
+          />
+        );
+      })}
 
       <p className={styles.policiesHint}>
         <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />
@@ -1628,7 +1638,6 @@ HostPropertyPricingTab.propTypes = {
 
 PolicyRuleSection.propTypes = {
   title: PropTypes.string.isRequired,
-  onToggleChange: PropTypes.func,
   toggleFields: PropTypes.arrayOf(
     PropTypes.shape({
       key: PropTypes.string.isRequired,
@@ -1636,17 +1645,18 @@ PolicyRuleSection.propTypes = {
     })
   ).isRequired,
   toggleState: PropTypes.objectOf(PropTypes.bool).isRequired,
-  setToggleState: PropTypes.func.isRequired,
-  customRules: PropTypes.arrayOf(customRuleShape).isRequired,
-  onToggleCustomRule: PropTypes.func.isRequired,
-  onDeleteCustomRule: PropTypes.func.isRequired,
-  customRuleInputVisible: PropTypes.bool.isRequired,
-  customRuleValue: PropTypes.string.isRequired,
-  onCustomRuleChange: PropTypes.func.isRequired,
-  onConfirmCustomRule: PropTypes.func.isRequired,
-  onCancelCustomRule: PropTypes.func.isRequired,
-  onShowCustomRuleInput: PropTypes.func.isRequired,
-  disabled: PropTypes.bool.isRequired,
+  onToggleChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  setToggleState: PropTypes.func,
+  customRules: PropTypes.arrayOf(customRuleShape),
+  onToggleCustomRule: PropTypes.func,
+  onDeleteCustomRule: PropTypes.func,
+  customRuleInputVisible: PropTypes.bool,
+  customRuleValue: PropTypes.string,
+  onCustomRuleChange: PropTypes.func,
+  onConfirmCustomRule: PropTypes.func,
+  onCancelCustomRule: PropTypes.func,
+  onShowCustomRuleInput: PropTypes.func,
 };
 
 HostPropertyPoliciesTab.propTypes = policiesTabPropTypes;
