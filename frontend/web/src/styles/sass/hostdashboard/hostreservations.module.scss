@@ -138,6 +138,14 @@ $border-color: #e5e7eb;
   td:nth-child(8) {
     text-align: right;
   }
+
+  .noData {
+  text-align: center;
+  padding: 30px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
 }
 
 .status {
@@ -165,14 +173,6 @@ $border-color: #e5e7eb;
 .statusOther {
   background: #e5e7eb;
   color: #374151;
-}
-
-.noData {
-  text-align: center;
-  padding: 60px 20px;
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
 }
 
 .paginationControls {
