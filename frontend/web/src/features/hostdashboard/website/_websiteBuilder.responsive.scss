@@ -70,6 +70,17 @@
     align-items: stretch;
   }
 
+  .previewBuildCard {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .previewStageActions {
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+  }
+
 }
 
 @media (max-width: 639px) {

@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import LanguageIcon from "@mui/icons-material/Language";
 import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router-dom";
 import styles from "./WebsiteBuilderPage.module.scss";
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
+import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import arrowLeftIcon from "../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../images/arrow-right-icon.svg";
 import TemplateSilhouette from "./TemplateSilhouette";
 import { WEBSITE_TEMPLATE_OPTIONS, getWebsiteTemplateById } from "./websiteTemplates";
+import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
+import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
+import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
+import { isWebsiteTemplateImplemented } from "./rendering/templateRegistry";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -19,6 +24,28 @@ const PROPERTY_STATUS_LABELS = {
 };
 
 const SUMMARY_DESCRIPTION_WORD_LIMIT = 23;
+const PREVIEW_STAGE_IDLE = "idle";
+const PREVIEW_STAGE_LOADING = "loading";
+const PREVIEW_STAGE_READY = "ready";
+const PREVIEW_STAGE_ERROR = "error";
+
+const PREVIEW_BUILD_STEPS = [
+  {
+    key: "fetching",
+    title: "Importing listing details",
+    description: "Loading the selected Domits property from the dedicated detail endpoint.",
+  },
+  {
+    key: "mapping",
+    title: "Mapping content into template slots",
+    description: "Connecting title, images, amenities, policies, and stay details to the shared website model.",
+  },
+  {
+    key: "rendering",
+    title: "Preparing the real preview",
+    description: "Rendering the chosen template inside the dashboard preview stage.",
+  },
+];
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
@@ -63,6 +90,16 @@ const getPhotoCardClassName = (photoIndex) => {
   return `${styles.photoCard} ${variantClassName}`.trim();
 };
 
+const waitForNextPaint = () =>
+  new Promise((resolve) => {
+    const scheduleFrame =
+      typeof globalThis.requestAnimationFrame === "function"
+        ? globalThis.requestAnimationFrame.bind(globalThis)
+        : (callback) => globalThis.setTimeout(callback, 0);
+
+    scheduleFrame(() => resolve());
+  });
+
 function WebsiteBuilderPage() {
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
@@ -73,6 +110,11 @@ function WebsiteBuilderPage() {
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [galleryAnimationDirection, setGalleryAnimationDirection] = useState("idle");
   const [galleryAnimationTick, setGalleryAnimationTick] = useState(0);
+  const [previewStage, setPreviewStage] = useState(PREVIEW_STAGE_IDLE);
+  const [previewBuildPhase, setPreviewBuildPhase] = useState(PREVIEW_BUILD_STEPS[0].key);
+  const [previewModel, setPreviewModel] = useState(null);
+  const [previewError, setPreviewError] = useState("");
+  const previewSectionRef = useRef(null);
   const navigate = useNavigate();
 
   const loadProperties = async () => {
@@ -107,6 +149,7 @@ function WebsiteBuilderPage() {
   const importedImageCount = selectedProperty?.imageCount || 0;
   const summaryDescription = truncateDescription(selectedProperty?.description);
   const selectedTemplate = getWebsiteTemplateById(selectedTemplateId);
+  const selectedTemplateIsImplemented = isWebsiteTemplateImplemented(selectedTemplateId);
   const activeGalleryImage = galleryImages[activeGalleryIndex] || galleryImages[0] || "";
   const isListingStepComplete = Boolean(selectedProperty);
 
@@ -124,10 +167,68 @@ function WebsiteBuilderPage() {
     );
   }, [selectedProperty, galleryImages.length]);
 
+  useEffect(() => {
+    setPreviewStage(PREVIEW_STAGE_IDLE);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+  }, [selectedPropertyId]);
+
+  useEffect(() => {
+    if (previewStage === PREVIEW_STAGE_IDLE || !previewSectionRef.current) {
+      return;
+    }
+
+    previewSectionRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [previewStage]);
+
   const setGalleryImage = (nextIndex, direction = "idle") => {
     setGalleryAnimationDirection(direction);
     setActiveGalleryIndex(nextIndex);
     setGalleryAnimationTick((currentTick) => currentTick + 1);
+  };
+
+  const resetPreviewState = () => {
+    setPreviewStage(PREVIEW_STAGE_IDLE);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+  };
+
+  const buildWebsitePreview = async () => {
+    if (!selectedProperty) {
+      return;
+    }
+
+    setPreviewStage(PREVIEW_STAGE_LOADING);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+
+    try {
+      const propertyDetails = await fetchWebsitePropertyDetails(selectedProperty.value);
+
+      setPreviewBuildPhase(PREVIEW_BUILD_STEPS[1].key);
+      await waitForNextPaint();
+
+      const nextPreviewModel = buildWebsiteTemplateModel({
+        propertyDetails,
+        summaryProperty: selectedProperty,
+      });
+
+      setPreviewBuildPhase(PREVIEW_BUILD_STEPS[2].key);
+      await waitForNextPaint();
+
+      setPreviewModel(nextPreviewModel);
+      setPreviewStage(PREVIEW_STAGE_READY);
+    } catch (error) {
+      setPreviewStage(PREVIEW_STAGE_ERROR);
+      setPreviewModel(null);
+      setPreviewError(error?.message || "We could not build the selected website preview.");
+    }
   };
 
   useEffect(() => {
@@ -337,14 +438,126 @@ function WebsiteBuilderPage() {
               <p className={styles.selectedTemplateName}>{selectedTemplate.name}</p>
             </div>
 
-            <button type="button" className={styles.primaryButton}>
-              Build my website
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => void buildWebsitePreview()}
+              disabled={!selectedTemplateIsImplemented || previewStage === PREVIEW_STAGE_LOADING}
+            >
+              {previewStage === PREVIEW_STAGE_LOADING ? "Building preview..." : "Build my website"}
             </button>
           </div>
 
           <p className={styles.selectedTemplateDescription}>{selectedTemplate.description}</p>
+          {!selectedTemplateIsImplemented ? (
+            <p className={styles.previewHelperText}>
+              Real template preview is currently available for Panorama Landing, Trust Signals, and
+              Experience Journey. The other template options stay visible so the chooser is not locked to
+              one direction.
+            </p>
+          ) : null}
         </div>
       </div>
+    );
+  };
+
+  const renderPreviewBuildState = () => (
+    <div className={styles.previewBuildCard}>
+      <div className={styles.previewBuildVisual}>
+        <div className={`${styles.previewBuildSilhouetteShell} ${styles.templatePreviewShell}`}>
+          <TemplateSilhouette layout={selectedTemplate.layout} />
+        </div>
+      </div>
+
+      <div className={styles.previewBuildCopy}>
+        <PulseBarsLoader
+          message={`Preparing ${selectedTemplate.name} from the selected listing`}
+          className={styles.previewLoader}
+        />
+
+        <div className={styles.previewBuildSteps}>
+          {PREVIEW_BUILD_STEPS.map((step, index) => {
+            const activeStepIndex = PREVIEW_BUILD_STEPS.findIndex(
+              (buildStep) => buildStep.key === previewBuildPhase
+            );
+            const isComplete = index < activeStepIndex;
+            const isActive = index === activeStepIndex;
+
+            return (
+              <article
+                key={step.key}
+                className={`${styles.previewBuildStep} ${isComplete ? styles.previewBuildStepComplete : ""} ${
+                  isActive ? styles.previewBuildStepActive : ""
+                }`.trim()}
+              >
+                <span className={styles.previewBuildStepIndex} aria-hidden="true">
+                  {index + 1}
+                </span>
+                <div className={styles.previewBuildStepCopy}>
+                  <p>{step.title}</p>
+                  <span>{step.description}</span>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPreviewStep = () => {
+    if (previewStage === PREVIEW_STAGE_IDLE) {
+      return null;
+    }
+
+    return (
+      <section ref={previewSectionRef} className={styles.builderStepSection}>
+        <div className={styles.stepHeader}>
+          <p className={styles.stepEyebrow}>Step 3</p>
+          <h2>Preview your website</h2>
+          <p>
+            This stage uses the selected listing detail response and maps it into a shared content model
+            before rendering the chosen template.
+          </p>
+        </div>
+
+        {previewStage === PREVIEW_STAGE_LOADING ? renderPreviewBuildState() : null}
+
+        {previewStage === PREVIEW_STAGE_ERROR ? (
+          <div className={`${styles.stateCard} ${styles.errorState}`}>
+            <p>{previewError}</p>
+            <div className={styles.buttonRow}>
+              <button type="button" className={styles.primaryButton} onClick={() => void buildWebsitePreview()}>
+                Try preview again
+              </button>
+              <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
+                Back to template chooser
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {previewStage === PREVIEW_STAGE_READY && previewModel ? (
+          <div className={styles.previewReadyState}>
+            <div className={styles.previewStageActions}>
+              <span className={styles.previewHelperText}>
+                Change the selected template above to compare other implemented layouts against the same
+                imported listing data.
+              </span>
+              <div className={styles.buttonRow}>
+                <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
+                  Back to chooser
+                </button>
+                <button type="button" className={styles.primaryButton} onClick={() => void buildWebsitePreview()}>
+                  Refresh preview
+                </button>
+              </div>
+            </div>
+
+            <WebsiteTemplatePreview templateId={selectedTemplateId} model={previewModel} />
+          </div>
+        ) : null}
+      </section>
     );
   };
 
@@ -397,18 +610,22 @@ function WebsiteBuilderPage() {
               </section>
 
               {isListingStepComplete ? (
-                <section className={styles.builderStepSection}>
-                  <div className={styles.stepHeader}>
-                    <p className={styles.stepEyebrow}>Step 2</p>
-                    <h2>Choose a website template</h2>
-                    <p>
-                      Select the layout direction you want to use for the listing website. You can keep
-                      adjusting the listing choice above while you compare template options.
-                    </p>
-                  </div>
+                <>
+                  <section className={styles.builderStepSection}>
+                    <div className={styles.stepHeader}>
+                      <p className={styles.stepEyebrow}>Step 2</p>
+                      <h2>Choose a website template</h2>
+                      <p>
+                        Select the layout direction you want to use for the listing website. You can keep
+                        adjusting the listing choice above while you compare template options.
+                      </p>
+                    </div>
 
-                  {renderTemplateStep()}
-                </section>
+                    {renderTemplateStep()}
+                  </section>
+
+                  {renderPreviewStep()}
+                </>
               ) : null}
             </div>
           </div>
