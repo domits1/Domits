@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
-import styles from "./HostReservations.module.css";
+import SwapVertIcon from "@mui/icons-material/SwapVert";
+import { useEffect, useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import spinner from "../../images/spinnner.gif";
 import { getAccessToken } from "../../services/getAccessToken.js";
+import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
+import { calculateTotalPayment } from "./utils/reservationCalculations.js";
+import { usePagination } from "./hooks/usePagination.js";
 import { FiSearch } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
 
 const normalizeStatus = (status) => {
   if (!status) return "";
@@ -21,6 +24,9 @@ const labelMap = {
   FAILED: "Failed",
 };
 
+const formatDate = (date) =>
+  date ? new Date(date).toLocaleDateString() : "-";
+
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
@@ -28,266 +34,298 @@ const HostReservations = () => {
   const [search, setSearch] = useState("");
   const [range, setRange] = useState("ALL");
 
-  const authToken = getAccessToken();
-  const navigate = useNavigate();
+  const authToken = useMemo(() => getAccessToken(), []);
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchBookings = async () => {
+      setIsLoading(true);
       try {
         const data = await getReservationsFromToken(authToken);
-        let flat = [];
+        if (!Array.isArray(data) || data.length === 0) {
+          setBookings([]);
+          return;
+        }
 
-        data.forEach((property) => {
-          const reservations = property.res?.response || [];
+        const flat = data.flatMap((property) => {
+          const reservations = Array.isArray(property.res?.response)
+            ? property.res.response
+            : [];
 
-          reservations.forEach((r) => {
-            flat.push({
-              ...r,
-              id: r.bookingId || r.id,
-              bookingId: r.bookingId || r.id,
-              status: normalizeStatus(r.status),
-              title: property.title,
-              city: property.city,
-              country: property.country,
-              image: property.image,
-            });
-          });
+          return reservations.map((item) => ({
+            property_id: property.id,
+            title: property.title,
+            rate: property.rate,
+            city: property.city,
+            country: property.country,
+            ...item,
+            status: normalizeStatus(item.status),
+          }));
         });
 
         setBookings(flat);
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
+        toast.error(
+          error?.response?.data?.message ||
+            "Failed to load reservations"
+        );
         setBookings([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchBookings();
   }, [authToken]);
 
   const filteredBookings = useMemo(() => {
-    let result = bookings;
+    let result = [...bookings];
 
     if (activeTab !== "ALL") {
       result = result.filter((b) => b.status === activeTab);
     }
 
     if (search) {
+      const s = search.toLowerCase();
       result = result.filter(
         (b) =>
-          b.title?.toLowerCase().includes(search.toLowerCase()) ||
-          b.city?.toLowerCase().includes(search.toLowerCase()) ||
-          b.guestname?.toLowerCase().includes(search.toLowerCase())
+          b.title?.toLowerCase().includes(s) ||
+          b.city?.toLowerCase().includes(s) ||
+          b.guestname?.toLowerCase().includes(s) ||
+          (b.id && String(b.id).includes(s))
       );
     }
 
     if (range !== "ALL") {
       const now = new Date();
-
       result = result.filter((b) => {
-        const date = new Date(b.arrivaldate || b.createdAt);
-        const diffDays = Math.abs((now - date) / (1000 * 60 * 60 * 24));
-
-        if (range === "7") return diffDays <= 7;
-        if (range === "30") return diffDays <= 30;
-        if (range === "90") return diffDays <= 90;
-        if (range === "365") return diffDays <= 365;
-
+        const date = new Date(b.arrivaldate || b.createdat);
+        const diff = Math.abs((now - date) / 86400000);
+        if (range === "7") return diff <= 7;
+        if (range === "30") return diff <= 30;
+        if (range === "90") return diff <= 90;
+        if (range === "365") return diff <= 365;
         return true;
       });
     }
 
-    result = [...result].sort(
-      (a, b) => new Date(a.arrivaldate) - new Date(b.arrivaldate)
-    );
-
-    return result;
+    return result.sort((a, b) => {
+      const da = new Date(a.arrivaldate || 0);
+      const db = new Date(b.arrivaldate || 0);
+      return da - db;
+    });
   }, [bookings, activeTab, search, range]);
 
   const count = (type) =>
-    bookings.filter((b) => (type === "ALL" ? true : b.status === type)).length;
+    bookings.filter((b) =>
+      type === "ALL" ? true : b.status === type
+    ).length;
 
-  const formatDate = (d) =>
-    new Date(d).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-    });
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    pageRange,
+    goToPage,
+    goToNextPage,
+    goToPreviousPage,
+  } = usePagination(filteredBookings, itemsPerPage);
 
-  const getNights = (a, d) =>
-    Math.round((new Date(d) - new Date(a)) / (1000 * 60 * 60 * 24));
+  const pageNumbers = useMemo(() => {
+    const count = pageRange.endPage - pageRange.startPage + 1;
+    return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
+  }, [pageRange]);
 
-  const handleMessage = (b, e) => {
-    e.stopPropagation();
-    navigate("/hostdashboard/messages", { state: { guestId: b.guestId } });
+  const mapStatusToClass = (status) => {
+    if (status === "PAID") return "statusPaid";
+    if (status === "AWAITING_PAYMENT") return "statusAwaitingPayment";
+    if (status === "FAILED") return "statusFailed";
+    return "statusOther";
   };
-
-  const handleReminder = (b, e) => {
-    e.stopPropagation();
-    navigate(`/hostdashboard/reservation/${b.bookingId}`);
-  };
-
-  const handleResolve = (b, e) => {
-    e.stopPropagation();
-    navigate(`/hostdashboard/reservation/${b.bookingId}`);
-  };
-
-  if (isLoading) return <img src={spinner} className={styles.loader} />;
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Reservations</h1>
-      <p className={styles.subtitle}>Manage your bookings and guest stays</p>
+    <main className="page-body">
+      {isLoading ? (
+        <img src={spinner} className={styles.CenterMe} />
+      ) : (
+        <div className={styles.container}>
+          <h1 className={styles.title}>Reservations</h1>
+          <p className={styles.subtitle}>
+            Manage your bookings and guest stays
+          </p>
 
-      <div className={styles.searchRow}>
-        <div className={styles.searchBox}>
-          <FiSearch className={styles.searchIcon} />
-          <input
-            placeholder="Search guest, property, or reservation ID"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <select
-          className={styles.dropdown}
-          value={range}
-          onChange={(e) => setRange(e.target.value)}
-        >
-          <option value="ALL">All</option>
-          <option value="7">Last 7 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="90">Last 90 days</option>
-          <option value="365">Last year</option>
-        </select>
-      </div>
-
-      <div className={styles.tabs}>
-        <button
-          className={activeTab === "ALL" ? styles.active : ""}
-          onClick={() => setActiveTab("ALL")}
-        >
-          All ({count("ALL")})
-        </button>
-
-        <button
-          className={activeTab === "PAID" ? styles.active : ""}
-          onClick={() => setActiveTab("PAID")}
-        >
-          Upcoming ({count("PAID")})
-        </button>
-
-        <button
-          className={activeTab === "AWAITING_PAYMENT" ? styles.active : ""}
-          onClick={() => setActiveTab("AWAITING_PAYMENT")}
-        >
-          Awaiting payment ({count("AWAITING_PAYMENT")})
-        </button>
-
-        <button
-          className={activeTab === "FAILED" ? styles.active : ""}
-          onClick={() => setActiveTab("FAILED")}
-        >
-          Failed ({count("FAILED")})
-        </button>
-      </div>
-
-      <div className={styles.list}>
-        {filteredBookings.length === 0 && (
-          <div style={{ textAlign: "center", padding: "40px", color: "#888" }}>
-            {bookings.length === 0
-              ? "No reservations yet"
-              : "No bookings match your filters"}
-          </div>
-        )}
-
-        {filteredBookings.map((b) => (
-          <div
-            key={b.id}
-            className={styles.card}
-            onClick={() =>
-              navigate(`/hostdashboard/reservation/${b.bookingId}`)
-            }
-          >
-            <div className={styles.imageWrapper}>
-              <img src={b.image} className={styles.image} />
+          <div className={styles.searchRow}>
+            <div className={styles.searchBox}>
+              <FiSearch className={styles.searchIcon} />
+              <input
+                placeholder="Search guest, property, or reservation ID"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
 
-            <div className={styles.content}>
-              <div className={styles.header}>
-                <h3>{b.title}</h3>
+            <select
+              className={styles.dropdown}
+              value={range}
+              onChange={(e) => setRange(e.target.value)}
+            >
+              <option value="ALL">All</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last year</option>
+            </select>
+          </div>
 
-                <span
-                  className={`${styles.status} ${
-                    b.status === "PAID"
-                      ? styles.success
-                      : b.status === "AWAITING_PAYMENT"
-                      ? styles.warning
-                      : styles.error
-                  }`}
+          <div className={styles.tabs}>
+            <button
+              className={activeTab === "ALL" ? styles.active : ""}
+              onClick={() => setActiveTab("ALL")}
+            >
+              All ({count("ALL")})
+            </button>
+            <button
+              className={activeTab === "PAID" ? styles.active : ""}
+              onClick={() => setActiveTab("PAID")}
+            >
+              Upcoming ({count("PAID")})
+            </button>
+            <button
+              className={activeTab === "AWAITING_PAYMENT" ? styles.active : ""}
+              onClick={() => setActiveTab("AWAITING_PAYMENT")}
+            >
+              Awaiting payment ({count("AWAITING_PAYMENT")})
+            </button>
+            <button
+              className={activeTab === "FAILED" ? styles.active : ""}
+              onClick={() => setActiveTab("FAILED")}
+            >
+              Failed ({count("FAILED")})
+            </button>
+          </div>
+
+          <div className={styles.list}>
+            <section className={styles.reservationData}>
+              <table className={styles.reservationTable}>
+                <colgroup>
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "16%" }} />
+                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "16%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "14%" }} />
+                  <col style={{ width: "12%" }} />
+                </colgroup>
+
+                <thead>
+                  <tr>
+                    <th>Property ID</th>
+                    <th>Accommodation Name</th>
+                    <th>Location</th>
+                    <th>Guest Name</th>
+                    <th>
+                      <span className={styles.headerCell}>
+                        Dates <SwapVertIcon className={styles.sortIcon} />
+                      </span>
+                    </th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Commission</th>
+                    <th>Reservation</th>
+                    <th>
+                      <span className={styles.headerCell}>
+                        Booked <SwapVertIcon className={styles.sortIcon} />
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filteredBookings.length === 0 ? (
+                    <tr>
+                      <td className={styles.noData} colSpan={10}>
+                        No reservations yet
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedItems.map((b) => {
+                      const total = calculateTotalPayment(
+                        b.rate,
+                        b.arrivaldate,
+                        b.departuredate
+                      );
+                      const commission = (total * 0.1).toFixed(2);
+
+                      return (
+                        <tr key={`${b.id}-${b.property_id}`}>
+                          <td>{b.property_id}</td>
+                          <td>{b.title}</td>
+                          <td>{b.city}, {b.country}</td>
+                          <td>{b.guestname}</td>
+                          <td>
+                            {formatDate(b.arrivaldate)} -{" "}
+                            {formatDate(b.departuredate)}
+                          </td>
+                          <td>
+                            <span
+                              className={`${styles.status} ${
+                                styles[mapStatusToClass(b.status)]
+                              }`}
+                            >
+                              {labelMap[b.status]}
+                            </span>
+                          </td>
+                          <td>€{total}</td>
+                          <td>€{commission}</td>
+                          <td>{b.id}</td>
+                          <td>{formatDate(b.createdat)}</td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </section>
+
+            {filteredBookings.length > 0 && (
+              <div className={styles.paginationControls}>
+                <button
+                  className={styles.paginationButton}
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
                 >
-                  {labelMap[b.status]}
-                </span>
-              </div>
+                  Previous
+                </button>
 
-              <p className={styles.location}>
-                📍 {b.city}, {b.country}
-              </p>
-
-              <p className={styles.dates}>
-                {formatDate(b.arrivaldate)} → {formatDate(b.departuredate)} (
-                {getNights(b.arrivaldate, b.departuredate)} nights)
-              </p>
-
-              <div className={styles.actions}>
-                {b.status === "PAID" && (
+                {pageNumbers.map((p) => (
                   <button
-                    className={styles.primary}
-                    onClick={(e) => handleMessage(b, e)}
+                    key={p}
+                    className={`${styles.paginationButton} ${
+                      currentPage === p ? styles.activePage : ""
+                    }`}
+                    onClick={() => goToPage(p)}
                   >
-                    Message guest
+                    {p}
                   </button>
-                )}
+                ))}
 
-                {b.status === "AWAITING_PAYMENT" && (
-                  <>
-                    <button
-                      className={styles.primary}
-                      onClick={(e) => handleReminder(b, e)}
-                    >
-                      Send reminder
-                    </button>
-                    <button
-                      className={styles.secondary}
-                      onClick={(e) => handleMessage(b, e)}
-                    >
-                      Message guest
-                    </button>
-                  </>
-                )}
-
-                {b.status === "FAILED" && (
-                  <>
-                    <button
-                      className={styles.primary}
-                      onClick={(e) => handleResolve(b, e)}
-                    >
-                      Resolve issue
-                    </button>
-                    <button
-                      className={styles.secondary}
-                      onClick={(e) => handleMessage(b, e)}
-                    >
-                      Message guest
-                    </button>
-                  </>
-                )}
+                <button
+                  className={styles.paginationButton}
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
               </div>
-            </div>
+            )}
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+      )}
+    </main>
   );
 };
 
