@@ -115,6 +115,7 @@ function MainDashboardHost() {
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
 
+          <Route path="reservations/:id" element={<HostReservationDetails />} />
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>
       </div>
