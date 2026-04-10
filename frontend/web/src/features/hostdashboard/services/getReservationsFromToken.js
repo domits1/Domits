@@ -35,7 +35,7 @@ const getReservationsFromToken = async (token) => {
 
   const data = await response.json();
   if (!response.ok) {
-    return "Data not found";
+   throw new Error("Failed to fetch reservations");
   }
   return data;
 };
