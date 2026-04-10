@@ -15,32 +15,6 @@ import {
 } from "react-icons/fi";
 import { getGuestBookingPropertyDetails } from "../guestdashboard/services/bookingAPI";
 
-const mockDetails = {
-  guestId: 1,
-  title: "Sea View Apartment",
-  city: "Barcelona",
-  country: "Spain",
-  image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688",
-  arrivaldate: "2026-04-15",
-  departuredate: "2026-04-20",
-  bookedOn: "2026-03-10",
-  guests: 2,
-  guestname: "John Doe",
-  guestemail: "john@example.com",
-  guestphone: "+31611111111",
-  specialRequest: "Late check-in requested",
-  pricePerNight: 120,
-  cleaningFee: 40,
-  paymentMethod: "Visa",
-  last4: "4242",
-  reservationId: "RES123456",
-  confirmationCode: "RES123",
-  checkinInstructions: "Self check-in with lockbox",
-  houseRules: ["No smoking", "No parties"],
-  cancellationPolicy: "Free cancellation within 5 days",
-  cancellationType: "Flexible"
-};
-
 const HostReservationDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,56 +40,56 @@ const HostReservationDetails = () => {
         const data = await getGuestBookingPropertyDetails(id);
 
         if (!data) {
-          setB(mockDetails);
+          setB(null);
           return;
         }
 
         setB({
           guestId: data?.guestId,
-          title: data?.property?.title || mockDetails.title,
-          city: data?.propertyLocation?.city || mockDetails.city,
-          country: data?.propertyLocation?.country || mockDetails.country,
-          image: data?.propertyImages?.[0]?.image || mockDetails.image,
+          title: data?.property?.title,
+          city: data?.propertyLocation?.city,
+          country: data?.propertyLocation?.country,
+          image: data?.propertyImages?.[0]?.image,
 
-          arrivaldate: data?.arrivalDate || mockDetails.arrivaldate,
-          departuredate: data?.departureDate || mockDetails.departuredate,
-          bookedOn: data?.createdAt || mockDetails.bookedOn,
-          guests: data?.guests || mockDetails.guests,
+          arrivaldate: data?.arrivalDate,
+          departuredate: data?.departureDate,
+          bookedOn: data?.createdAt,
+          guests: data?.guests,
 
-          guestname: data?.guestName || mockDetails.guestname,
-          guestemail: data?.guestEmail || mockDetails.guestemail,
-          guestphone: data?.guestPhone || mockDetails.guestphone,
+          guestname: data?.guestName,
+          guestemail: data?.guestEmail,
+          guestphone: data?.guestPhone,
 
-          specialRequest: data?.specialRequest || mockDetails.specialRequest,
+          specialRequest: data?.specialRequest || "",
 
-          pricePerNight: data?.pricing?.roomRate || mockDetails.pricePerNight,
-          cleaningFee: data?.pricing?.cleaning || mockDetails.cleaningFee,
+          pricePerNight: data?.pricing?.roomRate,
+          cleaningFee: data?.pricing?.cleaning,
 
-          paymentMethod: data?.payment?.method || mockDetails.paymentMethod,
-          last4: data?.payment?.last4 || mockDetails.last4,
+          paymentMethod: data?.payment?.method || "Card",
+          last4: data?.payment?.last4 || "****",
 
-          reservationId: data?.bookingId || mockDetails.reservationId,
+          reservationId: data?.bookingId,
           confirmationCode:
-            data?.bookingId?.slice(0, 6) || mockDetails.confirmationCode,
+            data?.bookingId?.slice(0, 6),
 
           checkinInstructions:
             data?.checkIn?.from && data?.checkIn?.till
               ? `${data.checkIn.from} - ${data.checkIn.till}`
-              : mockDetails.checkinInstructions,
+              : "No check-in instructions",
 
           houseRules:
             Array.isArray(data?.rules) && data.rules.length > 0
               ? data.rules
-              : mockDetails.houseRules,
+              : ["No house rules specified"],
 
           cancellationPolicy:
-            data?.cancellationPolicy || mockDetails.cancellationPolicy,
+            data?.cancellationPolicy,
 
           cancellationType:
-            data?.cancellationType || mockDetails.cancellationType,
+            data?.cancellationType,
         });
       } catch {
-        setB(mockDetails);
+        setB(null);
       }
     };
 
