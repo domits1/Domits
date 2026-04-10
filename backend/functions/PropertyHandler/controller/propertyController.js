@@ -34,20 +34,12 @@ export class PropertyController {
 
       if (imageUploadMode === "presigned") {
         if (!propertyId) {
-          return {
-            statusCode: 400,
-            headers: responseHeaders,
-            body: JSON.stringify({ message: "Missing propertyId." }),
-          };
+          return this.badRequest("Missing propertyId.");
         }
         await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
         const readyCount = await this.propertyImageRepository.getReadyImageCountByPropertyId(propertyId);
         if (readyCount < 5) {
-          return {
-            statusCode: 400,
-            headers: responseHeaders,
-            body: JSON.stringify({ message: "Minimum of 5 images required." }),
-          };
+          return this.badRequest("Minimum of 5 images required.");
         }
         if (eventBody?.property) {
           eventBody.property.id = propertyId;
@@ -90,22 +82,14 @@ export class PropertyController {
       const files = Array.isArray(eventBody.files) ? eventBody.files : [];
 
       if (!propertyId) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Missing propertyId." }),
-        };
+        return this.badRequest("Missing propertyId.");
       }
 
       await this.authManager.authorizePropertyOrDraftOwnerRequest(accessToken, propertyId);
       await this.propertyDraftRepository.touchDraft(propertyId);
 
       if (files.length === 0) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "No files provided." }),
-        };
+        return this.badRequest("No files provided.");
       }
 
       const existingCount = await this.propertyImageRepository.getImageCountByPropertyId(propertyId);
@@ -165,21 +149,13 @@ export class PropertyController {
       const images = Array.isArray(eventBody.images) ? eventBody.images : [];
 
       if (!propertyId) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Missing propertyId." }),
-        };
+        return this.badRequest("Missing propertyId.");
       }
       await this.authManager.authorizePropertyOrDraftOwnerRequest(accessToken, propertyId);
       await this.propertyDraftRepository.touchDraft(propertyId);
 
       if (images.length === 0) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "No images provided." }),
-        };
+        return this.badRequest("No images provided.");
       }
 
       const processed = [];
@@ -226,20 +202,12 @@ export class PropertyController {
       const images = Array.isArray(eventBody.images) ? eventBody.images : [];
 
       if (!propertyId) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Missing propertyId." }),
-        };
+        return this.badRequest("Missing propertyId.");
       }
       await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
 
       if (images.length === 0) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "No images provided." }),
-        };
+        return this.badRequest("No images provided.");
       }
 
       const normalized = images.map((image, index) => ({
@@ -275,19 +243,11 @@ export class PropertyController {
       const imageId = eventBody.imageId;
 
       if (!propertyId || typeof propertyId !== "string") {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Missing propertyId." }),
-        };
+        return this.badRequest("Missing propertyId.");
       }
 
       if (!imageId || typeof imageId !== "string") {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Missing imageId." }),
-        };
+        return this.badRequest("Missing imageId.");
       }
 
       await this.authManager.authorizePropertyOrDraftOwnerRequest(accessToken, propertyId);
@@ -991,18 +951,10 @@ export class PropertyController {
       const allowedStatuses = new Set(["ACTIVE", "INACTIVE", "ARCHIVED"]);
 
       if (!propertyId || typeof propertyId !== "string") {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Missing propertyId." }),
-        };
+        return this.badRequest("Missing propertyId.");
       }
       if (requestedStatus && !allowedStatuses.has(requestedStatus)) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Invalid property status." }),
-        };
+        return this.badRequest("Invalid property status.");
       }
 
       await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
@@ -1258,11 +1210,7 @@ export class PropertyController {
       const reasons = Array.isArray(eventBody.reasons) ? eventBody.reasons : [];
 
       if (!propertyId || typeof propertyId !== "string") {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Missing propertyId." }),
-        };
+        return this.badRequest("Missing propertyId.");
       }
 
       const ownerId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
@@ -1327,21 +1275,13 @@ export class PropertyController {
       const eventBody = JSON.parse(event.body || "{}");
       const propertyId = eventBody.propertyId;
       if (!propertyId) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Missing propertyId." }),
-        };
+        return this.badRequest("Missing propertyId.");
       }
 
       await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
       const existingProperty = await this.propertyService.getBasePropertyInfo(propertyId);
       if (existingProperty) {
-        return {
-          statusCode: 400,
-          headers: responseHeaders,
-          body: JSON.stringify({ message: "Property already exists." }),
-        };
+        return this.badRequest("Property already exists.");
       }
 
       await this.propertyImageRepository.deleteImagesByPropertyId(propertyId);
