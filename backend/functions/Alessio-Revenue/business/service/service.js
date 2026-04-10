@@ -153,16 +153,16 @@ export class Service {
 
     try {
       await this.repository.createKpiSnapshot({
-      userId,
-      hostId: userId, // voorlopig hetzelfde
-      periodType: filterType ?? "alltime",
-      periodStart: start,
-      periodEnd: end,
-      metrics: snapshotPayload,
+        userId,
+        hostId: userId, // voorlopig hetzelfde
+        periodType: filterType ?? "alltime",
+        periodStart: start,
+        periodEnd: end,
+        metrics: snapshotPayload,
       });
     } catch (err) {
-      // Snapshot persistence must not block the KPI response.
-      // Intentionally swallow but document error message for debugging if needed
+      // intentionally ignore but reference err to satisfy lint rules
+      void err;
     }
 
     return {
