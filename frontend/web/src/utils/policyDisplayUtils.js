@@ -1,15 +1,30 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 
+const generatePolicyRuleStrings = (periodDays, refundPercentages) => {
+  return refundPercentages.map((pct, index) => {
+    const periodStr = periodDays === 1 ? `${periodDays} day` : `${periodDays} days`;
+    const refundStr =
+      pct === 100
+        ? "100% refund (you will keep 0% of the booking)"
+        : pct === 70
+          ? "70% refund (you will keep 30% of the booking)"
+          : pct === 50
+            ? "50% refund (you will keep 50% of the booking)"
+            : "no refund ( you will keep 100% of the booking)";
+    if (index === 0) {
+      return `At least ${periodStr} before check-in, they will receive ${refundStr}`;
+    }
+    return `Less than ${periodStr} before check-in, they will receive ${refundStr}`;
+  });
+};
+
 export const CANCELLATION_POLICIES = [
   {
     id: "flexible",
     name: "Flexible",
     summary: "Full refund until 1 day before check-in",
-    rules: [
-      "At least 1 day before check-in, they will receive 100% refund ( you will keep 0% of the booking)",
-      "Less than 1 day before check-in, they will receive no refund ( you will keep 100% of the booking)",
-    ],
+    rules: generatePolicyRuleStrings(1, [100, 0]),
     important:
       "your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
   },
@@ -17,20 +32,14 @@ export const CANCELLATION_POLICIES = [
     id: "moderate",
     name: "Moderate",
     summary: "Full refund until 5 days before check-in",
-    rules: [
-      "At least 5 days before check-in, they will receive 100% refund (you will keep 0% of the booking)",
-      "Less than 5 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
-    ],
+    rules: generatePolicyRuleStrings(5, [100, 50]),
     important: null,
   },
   {
     id: "strict",
     name: "Strict",
     summary: "Full refund until 30 days before check-in",
-    rules: [
-      "At least 30 days before check-in, they will receive a 70% refund (you will keep 30% of the booking)",
-      "Less than 30 days before check-in, they will receive no refund ( you will keep 100% of the booking)",
-    ],
+    rules: generatePolicyRuleStrings(30, [70, 0]),
     important: null,
   },
   {
@@ -38,8 +47,7 @@ export const CANCELLATION_POLICIES = [
     name: "Firm",
     summary: "Full refund until 30 days before check-in",
     rules: [
-      "At least 30 days before check-in, they will receive a 100% refund (you will keep 0% of the booking)",
-      "Less than 30 days but more than 7 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
+      ...generatePolicyRuleStrings(30, [100, 50]),
       "Less than 7 days before check-in, they will receive no refund ( you will keep 100% of the booking)",
     ],
     important: null,
@@ -62,6 +70,26 @@ export const parseCancellationPolicy = (rules = []) => {
     : null;
 };
 
+const RULE_KEY_MAPS = {
+  house: {
+    SuitableForChildren: "Children allowed",
+    SuitableForInfants: "Infants allowed",
+    PetsAllowed: "Pets allowed",
+    SmokingAllowed: "Smoking allowed",
+    "Parties/EventsAllowed": "Parties / Events allowed",
+  },
+  property: {
+    CookingAllowed: "Cooking allowed",
+    ParkingAvailable: "Parking available",
+  },
+  safety: {
+    SmokeDetector: "Smoke detector",
+    CarbonMonoxide: "Carbon monoxide detector",
+    FireExtinguisher: "Fire extinguisher",
+    FirstAidKit: "First aid kit",
+  },
+};
+
 const parseGenericRules = (rules, property, keyMap) => {
   const parsed = [];
   Object.entries(keyMap).forEach(([key, label]) => {
@@ -71,29 +99,11 @@ const parseGenericRules = (rules, property, keyMap) => {
   return parsed;
 };
 
-const HOUSE_RULE_KEYS = {
-  SuitableForChildren: "Children allowed",
-  SuitableForInfants: "Infants allowed",
-  PetsAllowed: "Pets allowed",
-  SmokingAllowed: "Smoking allowed",
-  "Parties/EventsAllowed": "Parties / Events allowed",
-};
-export const parseHouseRules = (rules = [], property = {}) => parseGenericRules(rules, property, HOUSE_RULE_KEYS);
-
-const PROPERTY_RULE_KEYS = {
-  CookingAllowed: "Cooking allowed",
-  ParkingAvailable: "Parking available",
-};
-export const parsePropertyRules = (rules = [], property = {}) => parseGenericRules(rules, property, PROPERTY_RULE_KEYS);
-
-const SAFETY_FEATURE_KEYS = {
-  SmokeDetector: "Smoke detector",
-  CarbonMonoxide: "Carbon monoxide detector",
-  FireExtinguisher: "Fire extinguisher",
-  FirstAidKit: "First aid kit",
-};
+export const parseHouseRules = (rules = [], property = {}) => parseGenericRules(rules, property, RULE_KEY_MAPS.house);
+export const parsePropertyRules = (rules = [], property = {}) =>
+  parseGenericRules(rules, property, RULE_KEY_MAPS.property);
 export const parseSafetyFeatures = (rules = [], property = {}) =>
-  parseGenericRules(rules, property, SAFETY_FEATURE_KEYS);
+  parseGenericRules(rules, property, RULE_KEY_MAPS.safety);
 
 export const parseCheckInOut = (checkInData = {}) => {
   const checkIn = checkInData.checkIn || {};
