@@ -9,10 +9,13 @@ import arrowLeftIcon from "../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../images/arrow-right-icon.svg";
 import TemplateSilhouette from "./TemplateSilhouette";
 import { WEBSITE_TEMPLATE_OPTIONS, getWebsiteTemplateById } from "./websiteTemplates";
-import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
-import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
 import { isWebsiteTemplateImplemented } from "./rendering/templateRegistry";
+import {
+  PREVIEW_BUILD_STEPS,
+  PREVIEW_STAGE,
+  runWebsitePreviewBuildWorkflow,
+} from "./services/websitePreviewWorkflow";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -24,28 +27,6 @@ const PROPERTY_STATUS_LABELS = {
 };
 
 const SUMMARY_DESCRIPTION_WORD_LIMIT = 23;
-const PREVIEW_STAGE_IDLE = "idle";
-const PREVIEW_STAGE_LOADING = "loading";
-const PREVIEW_STAGE_READY = "ready";
-const PREVIEW_STAGE_ERROR = "error";
-
-const PREVIEW_BUILD_STEPS = [
-  {
-    key: "fetching",
-    title: "Importing listing details",
-    description: "Loading the selected Domits property from the dedicated detail endpoint.",
-  },
-  {
-    key: "mapping",
-    title: "Mapping content into template slots",
-    description: "Connecting title, images, amenities, policies, and stay details to the shared website model.",
-  },
-  {
-    key: "rendering",
-    title: "Preparing the real preview",
-    description: "Rendering the chosen template inside the dashboard preview stage.",
-  },
-];
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
@@ -90,16 +71,6 @@ const getPhotoCardClassName = (photoIndex) => {
   return `${styles.photoCard} ${variantClassName}`.trim();
 };
 
-const waitForNextPaint = () =>
-  new Promise((resolve) => {
-    const scheduleFrame =
-      typeof globalThis.requestAnimationFrame === "function"
-        ? globalThis.requestAnimationFrame.bind(globalThis)
-        : (callback) => globalThis.setTimeout(callback, 0);
-
-    scheduleFrame(() => resolve());
-  });
-
 function WebsiteBuilderPage() {
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
@@ -110,7 +81,7 @@ function WebsiteBuilderPage() {
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [galleryAnimationDirection, setGalleryAnimationDirection] = useState("idle");
   const [galleryAnimationTick, setGalleryAnimationTick] = useState(0);
-  const [previewStage, setPreviewStage] = useState(PREVIEW_STAGE_IDLE);
+  const [previewStage, setPreviewStage] = useState(PREVIEW_STAGE.idle);
   const [previewBuildPhase, setPreviewBuildPhase] = useState(PREVIEW_BUILD_STEPS[0].key);
   const [previewModel, setPreviewModel] = useState(null);
   const [previewError, setPreviewError] = useState("");
@@ -168,14 +139,14 @@ function WebsiteBuilderPage() {
   }, [selectedProperty, galleryImages.length]);
 
   useEffect(() => {
-    setPreviewStage(PREVIEW_STAGE_IDLE);
+    setPreviewStage(PREVIEW_STAGE.idle);
     setPreviewModel(null);
     setPreviewError("");
     setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
   }, [selectedPropertyId]);
 
   useEffect(() => {
-    if (previewStage === PREVIEW_STAGE_IDLE || !previewSectionRef.current) {
+    if (previewStage === PREVIEW_STAGE.idle || !previewSectionRef.current) {
       return;
     }
 
@@ -192,7 +163,7 @@ function WebsiteBuilderPage() {
   };
 
   const resetPreviewState = () => {
-    setPreviewStage(PREVIEW_STAGE_IDLE);
+    setPreviewStage(PREVIEW_STAGE.idle);
     setPreviewModel(null);
     setPreviewError("");
     setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
@@ -203,29 +174,22 @@ function WebsiteBuilderPage() {
       return;
     }
 
-    setPreviewStage(PREVIEW_STAGE_LOADING);
+    setPreviewStage(PREVIEW_STAGE.loading);
     setPreviewModel(null);
     setPreviewError("");
     setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
 
     try {
-      const propertyDetails = await fetchWebsitePropertyDetails(selectedProperty.value);
-
-      setPreviewBuildPhase(PREVIEW_BUILD_STEPS[1].key);
-      await waitForNextPaint();
-
-      const nextPreviewModel = buildWebsiteTemplateModel({
-        propertyDetails,
+      const nextPreviewModel = await runWebsitePreviewBuildWorkflow({
+        propertyId: selectedProperty.value,
         summaryProperty: selectedProperty,
+        onPhaseChange: setPreviewBuildPhase,
       });
 
-      setPreviewBuildPhase(PREVIEW_BUILD_STEPS[2].key);
-      await waitForNextPaint();
-
       setPreviewModel(nextPreviewModel);
-      setPreviewStage(PREVIEW_STAGE_READY);
+      setPreviewStage(PREVIEW_STAGE.ready);
     } catch (error) {
-      setPreviewStage(PREVIEW_STAGE_ERROR);
+      setPreviewStage(PREVIEW_STAGE.error);
       setPreviewModel(null);
       setPreviewError(error?.message || "We could not build the selected website preview.");
     }
@@ -442,9 +406,9 @@ function WebsiteBuilderPage() {
               type="button"
               className={styles.primaryButton}
               onClick={() => void buildWebsitePreview()}
-              disabled={!selectedTemplateIsImplemented || previewStage === PREVIEW_STAGE_LOADING}
+              disabled={!selectedTemplateIsImplemented || previewStage === PREVIEW_STAGE.loading}
             >
-              {previewStage === PREVIEW_STAGE_LOADING ? "Building preview..." : "Build my website"}
+              {previewStage === PREVIEW_STAGE.loading ? "Building preview..." : "Build my website"}
             </button>
           </div>
 
@@ -506,7 +470,7 @@ function WebsiteBuilderPage() {
   );
 
   const renderPreviewStep = () => {
-    if (previewStage === PREVIEW_STAGE_IDLE) {
+    if (previewStage === PREVIEW_STAGE.idle) {
       return null;
     }
 
@@ -521,9 +485,9 @@ function WebsiteBuilderPage() {
           </p>
         </div>
 
-        {previewStage === PREVIEW_STAGE_LOADING ? renderPreviewBuildState() : null}
+        {previewStage === PREVIEW_STAGE.loading ? renderPreviewBuildState() : null}
 
-        {previewStage === PREVIEW_STAGE_ERROR ? (
+        {previewStage === PREVIEW_STAGE.error ? (
           <div className={`${styles.stateCard} ${styles.errorState}`}>
             <p>{previewError}</p>
             <div className={styles.buttonRow}>
@@ -537,7 +501,7 @@ function WebsiteBuilderPage() {
           </div>
         ) : null}
 
-        {previewStage === PREVIEW_STAGE_READY && previewModel ? (
+        {previewStage === PREVIEW_STAGE.ready && previewModel ? (
           <div className={styles.previewReadyState}>
             <div className={styles.previewStageActions}>
               <span className={styles.previewHelperText}>

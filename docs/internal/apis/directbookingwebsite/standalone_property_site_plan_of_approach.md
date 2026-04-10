@@ -1,10 +1,25 @@
 # Plan Of Approach - Standalone Website
 
 ## Status
-Working baseline
+Working baseline with active frontend implementation checkpoints
 
 ## Last Updated
-2026-03-20
+2026-04-10
+
+## Current Implementation Checkpoint
+The host-dashboard website builder now includes a real preview build pipeline for the first three templates.
+
+Implemented in frontend:
+- listing selection remains sourced from `hostDashboard/all`
+- selected-listing detail fetch for preview is sourced from `hostDashboard/single`
+- detail payload is mapped into one shared website template model before rendering
+- real preview rendering is available for Panorama Landing, Trust Signals, and Experience Journey
+- preview workflow orchestration is extracted to a dedicated script module for future migration to a dedicated preview route/tab
+- amenity icons are rendered from the shared amenity catalog by amenity ID in implemented templates
+
+Not yet implemented:
+- persistence of built websites per host (preview is still ephemeral)
+- publish-state storage and reloadable draft records
 
 ## Purpose
 This document captures the current plan of approach for the standalone website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.

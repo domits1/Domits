@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
+import { getAmenityIconNode } from "../amenityIconRegistry";
 
 export default function ExperienceJourneyTemplate({ model }) {
   return (
@@ -55,12 +56,28 @@ export default function ExperienceJourneyTemplate({ model }) {
 
         <div className={styles.experienceFooter}>
           <div className={styles.amenityList}>
-            {model.amenities.featured.slice(0, 4).map((amenity) => (
-              <div key={amenity.id} className={styles.amenityRow}>
-                <strong>{amenity.label}</strong>
-                <span>{amenity.category}</span>
-              </div>
-            ))}
+            {model.amenities.featured.slice(0, 4).map((amenity) => {
+              const amenityIcon = getAmenityIconNode(amenity.id, {
+                className: styles.amenityRowIconGlyph,
+                "aria-hidden": true,
+                focusable: "false",
+                sx: {
+                  color: "#314f22",
+                  fontSize: 18,
+                  padding: 0,
+                },
+              });
+
+              return (
+                <div key={amenity.id} className={styles.amenityRow}>
+                  <div className={styles.amenityRowPrimary}>
+                    {amenityIcon ? <span className={styles.amenityRowIcon}>{amenityIcon}</span> : null}
+                    <strong>{amenity.label}</strong>
+                  </div>
+                  <span>{amenity.category}</span>
+                </div>
+              );
+            })}
           </div>
 
           <div className={styles.softCallout}>

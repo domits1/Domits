@@ -252,14 +252,30 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: auto;
-  height: auto;
-  color: #395628;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #f4f7fb;
+  color: #1f2937;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .panoramaFeatureIconGlyph {
-  font-size: 1.2rem;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.panoramaFeatureIconGlyphLarge {
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
+}
+
+.panoramaFeatureIconGlyph path {
+  vector-effect: non-scaling-stroke;
 }
 
 .panoramaFeatureTitle,
@@ -599,12 +615,29 @@
 .amenityChip {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   padding: 0.55rem 0.75rem;
   border-radius: 999px;
   background: rgba(217, 236, 198, 0.62);
   color: #314f22;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.amenityChipIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+}
+
+.amenityChipIconGlyph {
+  width: 16px;
+  height: 16px;
 }
 
 .contentColumn {
@@ -662,6 +695,29 @@
   border-radius: 16px;
   border: 1px solid rgba(31, 78, 121, 0.1);
   background: #ffffff;
+}
+
+.amenityRowPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.amenityRowIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(217, 236, 198, 0.5);
+  flex-shrink: 0;
+}
+
+.amenityRowIconGlyph {
+  width: 18px;
+  height: 18px;
 }
 
 .amenityRow strong {

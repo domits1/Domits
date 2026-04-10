@@ -1,14 +1,24 @@
 import React from "react";
 import PropTypes from "prop-types";
 import HomeIcon from "@mui/icons-material/Home";
-import CalendarIcon from "@mui/icons-material/CalendarToday";
+import EventIcon from "@mui/icons-material/Event";
 import { GiAirplaneArrival } from "react-icons/gi";
 import styles from "../WebsiteTemplatePreview.module.scss";
+import { getAmenityIconNode } from "../amenityIconRegistry";
 
 const PANORAMA_CARD_ICONS = Object.freeze({
-  "stay-details": HomeIcon,
-  "arrival-guidelines": GiAirplaneArrival,
-  "location-context": CalendarIcon,
+  "stay-details": {
+    Icon: HomeIcon,
+    glyphClassName: "",
+  },
+  "arrival-guidelines": {
+    Icon: GiAirplaneArrival,
+    glyphClassName: styles.panoramaFeatureIconGlyphLarge,
+  },
+  "location-context": {
+    Icon: EventIcon,
+    glyphClassName: "",
+  },
 });
 
 const getPanoramaCardIcon = (cardId) => PANORAMA_CARD_ICONS[cardId] || null;
@@ -46,15 +56,17 @@ export default function PanoramaLandingTemplate({ model }) {
 
       <section className={styles.panoramaFeatureGrid}>
         {model.trustCards.map((card) => {
-          const IconComponent = getPanoramaCardIcon(card.id);
+          const iconConfig = getPanoramaCardIcon(card.id);
+          const IconComponent = iconConfig?.Icon || null;
 
           return (
             <article key={card.id} className={styles.panoramaFeatureCard}>
               {IconComponent ? (
-                <IconComponent
-                  aria-hidden="true"
-                  className={`${styles.panoramaFeatureIcon} ${styles.panoramaFeatureIconGlyph}`}
-                />
+                <span className={styles.panoramaFeatureIcon} aria-hidden="true">
+                  <IconComponent
+                    className={`${styles.panoramaFeatureIconGlyph} ${iconConfig.glyphClassName || ""}`.trim()}
+                  />
+                </span>
               ) : (
                 <span className={styles.panoramaFeatureIcon} aria-hidden="true" />
               )}
@@ -86,11 +98,25 @@ export default function PanoramaLandingTemplate({ model }) {
           <div className={styles.amenityPanel}>
             <p className={styles.panelTitle}>Featured amenities</p>
             <div className={styles.amenityChipGrid}>
-              {model.amenities.featured.slice(0, 6).map((amenity) => (
-                <span key={amenity.id} className={styles.amenityChip}>
-                  {amenity.label}
-                </span>
-              ))}
+              {model.amenities.featured.slice(0, 6).map((amenity) => {
+                const amenityIcon = getAmenityIconNode(amenity.id, {
+                  className: styles.amenityChipIconGlyph,
+                  "aria-hidden": true,
+                  focusable: "false",
+                  sx: {
+                    color: "#314f22",
+                    fontSize: 16,
+                    padding: 0,
+                  },
+                });
+
+                return (
+                  <span key={amenity.id} className={styles.amenityChip}>
+                    {amenityIcon ? <span className={styles.amenityChipIcon}>{amenityIcon}</span> : null}
+                    <span>{amenity.label}</span>
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>
