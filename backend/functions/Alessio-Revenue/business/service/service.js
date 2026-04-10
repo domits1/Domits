@@ -163,7 +163,6 @@ export class Service {
     } catch (err) {
       // Snapshot persistence must not block the KPI response.
       // Intentionally swallow but document error message for debugging if needed
-      const _ignoredError = err?.message;
     }
 
     return {
