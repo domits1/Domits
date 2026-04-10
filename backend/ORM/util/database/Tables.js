@@ -41,6 +41,7 @@ import { UnifiedThreadNote } from "../../models/unified/collaboration/UnifiedThr
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
+import { Host_Settings } from "../../models/Host_Settings.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 
 export const Tables = [
@@ -87,5 +88,6 @@ export const Tables = [
   User_Table,
   PropertyTask,
   Property_Task_Activity,
+  Host_Settings,
   Kpi_Snapshot,
 ];
