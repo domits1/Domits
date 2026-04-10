@@ -1,17 +1,23 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 
+const getRefundString = (pct) => {
+  if (pct === 100) {
+    return "100% refund (you will keep 0% of the booking)";
+  }
+  if (pct === 70) {
+    return "70% refund (you will keep 30% of the booking)";
+  }
+  if (pct === 50) {
+    return "50% refund (you will keep 50% of the booking)";
+  }
+  return "no refund ( you will keep 100% of the booking)";
+};
+
 const generatePolicyRuleStrings = (periodDays, refundPercentages) => {
+  const periodStr = periodDays === 1 ? `${periodDays} day` : `${periodDays} days`;
   return refundPercentages.map((pct, index) => {
-    const periodStr = periodDays === 1 ? `${periodDays} day` : `${periodDays} days`;
-    const refundStr =
-      pct === 100
-        ? "100% refund (you will keep 0% of the booking)"
-        : pct === 70
-          ? "70% refund (you will keep 30% of the booking)"
-          : pct === 50
-            ? "50% refund (you will keep 50% of the booking)"
-            : "no refund ( you will keep 100% of the booking)";
+    const refundStr = getRefundString(pct);
     if (index === 0) {
       return `At least ${periodStr} before check-in, they will receive ${refundStr}`;
     }
