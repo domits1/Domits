@@ -97,7 +97,7 @@ const RevPARCard = ({ refreshKey }) => {
       try {
         const user = await Auth.currentAuthenticatedUser();
         if (isMountedRef.current) setCognitoUserId(user.attributes.sub);
-      } catch (err) {
+      } catch {
         if (isMountedRef.current) setError("Failed to authenticate user");
       }
     };
@@ -135,7 +135,7 @@ const RevPARCard = ({ refreshKey }) => {
           const value = Math.max(0, parseFloat(res.revPAR) || 0);
 
           results.push({ label: p.label, revPAR: value });
-        } catch (err) {
+        } catch {
           results.push({ label: p.label, revPAR: 0 });
         }
       }
@@ -203,8 +203,7 @@ const RevPARCard = ({ refreshKey }) => {
         }
 
         if (!silent) setError(null);
-      } catch (err) {
-
+      } catch {
         if (!silent && isMountedRef.current) setError("Failed to fetch RevPAR metrics");
 
         if (!silent && isMountedRef.current) {

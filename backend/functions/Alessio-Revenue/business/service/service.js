@@ -55,7 +55,10 @@ export class Service {
 
           return revenue;
         } catch (err) {
-          return { totalRevenue: null, error: "Stripe not configured" };
+          return {
+            totalRevenue: null,
+            error: err?.message || "Failed to fetch revenue",
+          };
         }
       })(),
       this.repository.getBookedNights(userId, start, end),
@@ -157,8 +160,10 @@ export class Service {
       periodEnd: end,
       metrics: snapshotPayload,
       });
-    } catch {
+    } catch (err) {
       // Snapshot persistence must not block the KPI response.
+      // Intentionally swallow but document error message for debugging if needed
+      const _ignoredError = err?.message;
     }
 
     return {
