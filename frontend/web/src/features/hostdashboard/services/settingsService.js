@@ -1,6 +1,6 @@
 import { getAccessToken } from "../../../services/getAccessToken";
 
-const SETTINGS_API_URL = "PASTE_YOUR_HOST_SETTINGS_URL_HERE";
+const SETTINGS_API_URL = "https://309z0e342d.execute-api.eu-north-1.amazonaws.com/default";
 
 const getHeaders = () => ({
     "Content-Type": "application/json",

@@ -1,194 +1,206 @@
-$primary-color: #4caf50;
-$secondary-color: #333;
+$primary-color: #15803d;
+$secondary-color: #374151;
 $highlight-color: #4a647c;
-$background-color: #f9f9f9;
-$font-size-data: 14px;
-$font-size-big: 16px;
-$base-spacing: 1em;
-$button-padding: 0.2em 2.2em;
-$border-color: #ddd;
-$border-outer: #ffffff;
-$button-size-large: 17px;
-$box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-$border-radius: 8px;
+$border-color: #e5e7eb;
+
+.container {
+  padding: 40px 50px;
+  max-width: 1200px;
+}
+
+.title {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: #4b5563;
+  margin-bottom: 24px;
+}
+
+.searchRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.searchBox {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid $border-color;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.searchBox input {
+  border: none;
+  width: 100%;
+  outline: none;
+  padding-left: 30px;
+  font-size: 14px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: #6b7280;
+}
+
+.dropdown {
+  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid $border-color;
+  background: #fff;
+}
+
+.tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 25px;
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  padding: 10px 0;
+  cursor: pointer;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.tabs .active {
+  color: #16a34a;
+  border-bottom: 2px solid #16a34a;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
 
 .CenterMe {
-  display: flex;
-  margin: auto;
-  text-align: center;
+  display: block;
+  margin: 100px auto;
 }
-.reservationContainer {
+
+.headerCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sortIcon {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.reservationTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    border-right: 1px solid $border-color;
+  }
+
+  th:last-child,
+  td:last-child {
+    border-right: none;
+  }
+
+  thead th {
+    background: $primary-color;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 14px;
+    font-size: 13px;
+    text-align: left;
+    border-bottom: 2px solid $border-color;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 14px;
+    font-size: 13px;
+    color: #374151;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  td:nth-child(7),
+  td:nth-child(8) {
+    text-align: right;
+  }
+
+  .noData {
+  text-align: center;
+  padding: 30px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+}
+
+.status {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusPaid {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.statusAwaitingPayment {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.statusFailed {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+.statusOther {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.paginationControls {
+  margin-top: 25px;
   display: flex;
-  flex-direction: row;
+  justify-content: center;
+  gap: 6px;
+}
 
-  .reservationContent {
-    display: flex;
-    flex-direction: column;
-    margin-left: 5%;
-    min-height: 55rem;
-    padding-right: 5%;
-    box-sizing: border-box;
-    .searchInput {
-      width: 100%;
-      max-width: 680px;
-      padding: 0.5em 0.8em;
-      border: 1px solid $border-color;
-      border-radius: 6px;
-      font-size: $font-size-data;
-      box-sizing: border-box;
-      margin: 0.6em 0 0.8em 0;
-    }
-    .controlsRow {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 0.5em;
-      margin-bottom: 0.5em;
-      width: 100%;
-    }
-    .searchWrap {
-      margin-left: auto;
-      flex: 0 0 520px;
-      max-width: 80%;
-    }
-  }
+.paginationButton {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+}
 
-  .reservationButtons button {
-    font-size: $button-size-large;
-    background-color: #ffffff;
-    border: 1px solid #0000004a;
-    border-radius: 8px;
-    padding: $button-padding;
-    margin: 10px 0.5px;
-    box-shadow:
-      6px 6px 12px $border-color,
-      -6px -6px 12px $border-outer;
-    box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.15);
-    transition:
-      background 0.2s ease,
-      color 0.2s ease;
+.paginationButton:hover {
+  background: #e5e7eb;
+}
 
-    &:hover {
-      background-color: $highlight-color;
-      color: #ffffff;
-    }
-  }
+.paginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-  .reservationTable {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-
-    thead th {
-      background: $primary-color;
-      color: #ffffff;
-      font-weight: 700;
-      padding: 0.9em 0.8em;
-      text-align: left;
-      border-bottom: 2px solid rgba(0, 0, 0, 0.08);
-      vertical-align: middle;
-      font-size: $font-size-data;
-    }
-
-    tbody td {
-      padding: 0.9em 0.8em;
-      border-bottom: 1px solid $border-color;
-      vertical-align: middle;
-      font-size: $font-size-data;
-      word-break: break-word;
-    }
-
-    .singleReservationRow {
-      padding-right: 0.5em;
-    }
-
-    .cellContent {
-      display: inline-block;
-      margin-right: 1.2em;
-    }
-
-    tbody tr:nth-child(odd) {
-      background-color: #ffffff;
-    }
-
-    tbody tr:nth-child(even) {
-      background-color: #fbfbfb;
-    }
-
-    .noData {
-      font-size: $font-size-big;
-      text-align: center;
-      padding: 2em 1em;
-    }
-
-    .reservationIcons {
-      cursor: pointer;
-      display: inline-flex;
-      transition: transform 0.2s;
-
-      &:hover {
-        transform: scale(1.1);
-      }
-    }
-
-    .status {
-      display: inline-block;
-      padding: 0.25em 0.6em;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 12px;
-      text-transform: capitalize;
-      color: #fff;
-    }
-
-    .statusPaid {
-      background-color: $primary-color;
-    }
-
-    .statusAwaitingPayment {
-      background-color: #ff9800;
-    }
-
-    .statusFailed {
-      background-color: #f44336;
-    }
-
-    .statusOther {
-      background-color: $secondary-color;
-    }
-  }
-
-  .paginationControls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 0;
-    gap: 5px;
-  }
-
-  .paginationButton {
-    padding: 8px 12px;
-    margin: 0 3px;
-    border: none;
-    background-color: #f4f4f4;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s ease;
-
-    &:hover:not(:disabled) {
-      background-color: #e6e6e6;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    &.activePage {
-      background-color: $highlight-color;
-      color: #ffffff;
-    }
-  }
+.activePage {
+  background: #16a34a;
+  color: #000;
 }
