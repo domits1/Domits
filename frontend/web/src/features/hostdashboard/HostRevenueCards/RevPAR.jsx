@@ -14,7 +14,56 @@ import "./KpiCard.scss";
 import "./RevPAR.scss"; 
 import { RevPARService } from "../services/RevParService.js";
 
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const getWeekNumber = (date) => {
+  const temp = new Date(date);
+  temp.setHours(0, 0, 0, 0);
+  temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
+  const yearStart = new Date(temp.getFullYear(), 0, 1);
+  return Math.ceil(((temp - yearStart) / MS_PER_DAY + 1) / 7);
+};
+
+const getLastMonths = (count = 6) => {
+  const months = [];
+  const now = new Date();
+
+  for (let i = count - 1; i >= 0; i--) {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const start = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    const end = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+
+    months.push({
+      label: monthDate.toLocaleString("default", { month: "short" }),
+      start,
+      end,
+    });
+  }
+
+  return months;
+};
+
+const getLastWeeks = (count = 6) => {
+  const weeks = [];
+  const now = new Date();
+
+  for (let i = count - 1; i >= 0; i--) {
+    const end = new Date(now);
+    end.setDate(end.getDate() - 7 * i);
+
+    const start = new Date(end);
+    start.setDate(start.getDate() - 6);
+
+    weeks.push({
+      label: `Week ${getWeekNumber(end)}`,
+      start,
+      end,
+    });
+  }
+
+  return weeks;
+};
 
 const RevPARCard = ({ refreshKey }) => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
@@ -49,7 +98,6 @@ const RevPARCard = ({ refreshKey }) => {
         const user = await Auth.currentAuthenticatedUser();
         if (isMountedRef.current) setCognitoUserId(user.attributes.sub);
       } catch (err) {
-        console.error("Error fetching Cognito User ID:", err);
         if (isMountedRef.current) setError("Failed to authenticate user");
       }
     };
@@ -61,53 +109,6 @@ const RevPARCard = ({ refreshKey }) => {
     };
   }, []);
 
-  const getWeekNumber = (date) => {
-    const temp = new Date(date);
-    temp.setHours(0, 0, 0, 0);
-    temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-    const yearStart = new Date(temp.getFullYear(), 0, 1);
-    return Math.ceil(((temp - yearStart) / MS_PER_DAY + 1) / 7);
-  };
-
-  const getLastMonths = (count = 6) => {
-    const months = [];
-    const now = new Date();
-
-    for (let i = count - 1; i >= 0; i--) {
-      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const start = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-      const end = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-
-      months.push({
-        label: monthDate.toLocaleString("default", { month: "short" }),
-        start,
-        end,
-      });
-    }
-
-    return months;
-  };
-
-  const getLastWeeks = (count = 6) => {
-    const weeks = [];
-    const now = new Date();
-
-    for (let i = count - 1; i >= 0; i--) {
-      const end = new Date(now);
-      end.setDate(end.getDate() - 7 * i);
-
-      const start = new Date(end);
-      start.setDate(start.getDate() - 6);
-
-      weeks.push({
-        label: `Week ${getWeekNumber(end)}`,
-        start,
-        end,
-      });
-    }
-
-    return weeks;
-  };
 
   const canFetch = useCallback(() => {
     if (!cognitoUserId) return false;
@@ -135,7 +136,6 @@ const RevPARCard = ({ refreshKey }) => {
 
           results.push({ label: p.label, revPAR: value });
         } catch (err) {
-          console.warn(`Failed for ${p.label}:`, err);
           results.push({ label: p.label, revPAR: 0 });
         }
       }
@@ -204,7 +204,6 @@ const RevPARCard = ({ refreshKey }) => {
 
         if (!silent) setError(null);
       } catch (err) {
-        console.error("Error fetching RevPAR metrics:", err);
 
         if (!silent && isMountedRef.current) setError("Failed to fetch RevPAR metrics");
 
@@ -242,7 +241,7 @@ const RevPARCard = ({ refreshKey }) => {
   const displayData = allZero ? [{ label: "No Data", revPAR: 1 }] : chartData;
 
   return (
-    <div className="kpi-card revpar-card">
+   <div className={`kpi-card revpar-card ${timeFilter === "custom" ? "custom-mode" : ""}`}>
       <h3>RevPAR</h3>
 
       <div className="time-filter">
@@ -290,12 +289,12 @@ const RevPARCard = ({ refreshKey }) => {
 
         {!loading && !error && (
           <div className="revpar-barchart">
-            <div className="bar-wrapper">
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={displayData}>
+            <div className="bar-wrapper">   
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={displayData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
+                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#0d9813" }} />
+                  <YAxis tick={{ fontSize: 12, fill: "#0d9813" }} />
                   <Tooltip />
                   {!allZero && <Legend />}
 

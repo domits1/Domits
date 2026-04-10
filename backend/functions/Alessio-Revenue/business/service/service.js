@@ -55,7 +55,6 @@ export class Service {
 
           return revenue;
         } catch (err) {
-          console.error("Stripe error while fetching host revenue:", err);
           return { totalRevenue: null, error: "Stripe not configured" };
         }
       })(),
