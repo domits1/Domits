@@ -18,6 +18,23 @@ const normalizeStatus = (status) => {
   return status.toUpperCase();
 };
 
+const mapReservations = (data) => {
+  return data.flatMap((property) => {
+    const reservations = Array.isArray(property.res?.response)
+      ? property.res.response
+      : [];
+    return reservations.map((item) => ({
+      property_id: property.id,
+      title: property.title,
+      rate: property.rate,
+      city: property.city,
+      country: property.country,
+      ...item,
+      status: normalizeStatus(item.status),
+    }));
+  });
+};
+
 const labelMap = {
   PAID: "Paid",
   AWAITING_PAYMENT: "Awaiting payment",
@@ -46,36 +63,18 @@ const HostReservations = () => {
           setBookings([]);
           return;
         }
-
-        const flat = data.flatMap((property) => {
-          const reservations = Array.isArray(property.res?.response)
-            ? property.res.response
-            : [];
-
-          return reservations.map((item) => ({
-            property_id: property.id,
-            title: property.title,
-            rate: property.rate,
-            city: property.city,
-            country: property.country,
-            ...item,
-            status: normalizeStatus(item.status),
-          }));
-        });
-
+        const flat = mapReservations(data);
         setBookings(flat);
       } catch (error) {
         console.error(error);
         toast.error(
-          error?.response?.data?.message ||
-            "Failed to load reservations"
+          error?.response?.data?.message || "Failed to load reservations"
         );
         setBookings([]);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchBookings();
   }, [authToken]);
 
@@ -118,9 +117,7 @@ const HostReservations = () => {
   }, [bookings, activeTab, search, range]);
 
   const count = (type) =>
-    bookings.filter((b) =>
-      type === "ALL" ? true : b.status === type
-    ).length;
+    bookings.filter((b) => (type === "ALL" ? true : b.status === type)).length;
 
   const {
     currentPage,
@@ -147,7 +144,7 @@ const HostReservations = () => {
   return (
     <main className="page-body">
       {isLoading ? (
-        <img src={spinner} className={styles.CenterMe} />
+        <img src={spinner} className={styles.CenterMe} alt="Loading" />
       ) : (
         <div className={styles.container}>
           <h1 className={styles.title}>Reservations</h1>
@@ -264,7 +261,9 @@ const HostReservations = () => {
                         <tr key={`${b.id}-${b.property_id}`}>
                           <td>{b.property_id}</td>
                           <td>{b.title}</td>
-                          <td>{b.city}, {b.country}</td>
+                          <td>
+                            {b.city}, {b.country}
+                          </td>
                           <td>{b.guestname}</td>
                           <td>
                             {formatDate(b.arrivaldate)} -{" "}

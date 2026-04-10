@@ -1,18 +1,21 @@
+$primary-color: #15803d;
+$secondary-color: #374151;
+$highlight-color: #4a647c;
+$border-color: #e5e7eb;
+
 .container {
-  padding: 20px 40px;
+  padding: 40px 50px;
   max-width: 1200px;
 }
 
 .title {
   font-size: 30px;
   font-weight: 700;
-  margin-bottom: 6px;
 }
 
 .subtitle {
-  color: #6b7280;
+  color: #4b5563;
   margin-bottom: 24px;
-  font-size: 15px;
 }
 
 .searchRow {
@@ -27,14 +30,9 @@
   display: flex;
   align-items: center;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $border-color;
   border-radius: 10px;
   padding: 10px 14px;
-  transition: border 0.2s ease;
-}
-
-.searchBox:focus-within {
-  border-color: #16a34a;
 }
 
 .searchBox input {
@@ -48,20 +46,20 @@
 .searchIcon {
   position: absolute;
   left: 12px;
-  color: #9ca3af;
+  color: #6b7280;
 }
 
 .dropdown {
   border-radius: 10px;
   padding: 10px 14px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $border-color;
   background: #fff;
 }
 
 .tabs {
   display: flex;
   gap: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid $border-color;
   margin-bottom: 25px;
 }
 
@@ -72,7 +70,6 @@
   cursor: pointer;
   color: #6b7280;
   font-weight: 500;
-  font-size: 14px;
 }
 
 .tabs .active {
@@ -80,44 +77,34 @@
   border-bottom: 2px solid #16a34a;
 }
 
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.CenterMe {
+  display: block;
+  margin: 100px auto;
+}
+
+.headerCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sortIcon {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
 .reservationTable {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-   border-collapse: collapse;
-
-  thead th {
-    background: #16a34a;
-    color: white;
-    font-weight: 600;
-    padding: 14px 12px;
-    font-size: 14px;
-    text-align: left;
-    white-space: nowrap;
-    vertical-align: middle;
-  }
-
-  tbody td {
-    padding: 14px 12px;
-    font-size: 13px;
-    border-bottom: 1px solid #f1f5f9;
-  }
-
-  tbody tr:hover {
-    background: #f9fafb;
-  }
-
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
+  border-collapse: collapse;
 
   th,
   td {
-    border-right: 1px solid #e5e7eb;
+    border-right: 1px solid $border-color;
   }
 
   th:last-child,
@@ -126,27 +113,31 @@
   }
 
   thead th {
-    border-bottom: 2px solid #e5e7eb;
+    background: $primary-color;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 14px;
+    font-size: 13px;
+    text-align: left;
+    border-bottom: 2px solid $border-color;
+    white-space: nowrap;
   }
 
   tbody td {
+    padding: 14px;
+    font-size: 13px;
+    color: #374151;
     border-bottom: 1px solid #f1f5f9;
   }
-  
-  .headerCell {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+
+  tbody tr:hover {
+    background: #f9fafb;
   }
 
-  .sortIcon {
-    font-size: 18px;
-    vertical-align: middle;
+  td:nth-child(7),
+  td:nth-child(8) {
+    text-align: right;
   }
-}
-
-.cellContent {
-  display: block;
 }
 
 .status {
@@ -157,18 +148,31 @@
 }
 
 .statusPaid {
-  background: #dcfce7;
-  color: #16a34a;
+  background: #bbf7d0;
+  color: #166534;
 }
 
 .statusAwaitingPayment {
-  background: #fef3c7;
-  color: #d97706;
+  background: #fde68a;
+  color: #92400e;
 }
 
 .statusFailed {
-  background: #fee2e2;
-  color: #dc2626;
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+.statusOther {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.noData {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .paginationControls {
@@ -191,20 +195,12 @@
   background: #e5e7eb;
 }
 
-.paginationButton.activePage {
+.paginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.activePage {
   background: #16a34a;
   color: white;
-}
-
-.reservationTable  .noData {
-  text-align: center;
-  padding: 30px 20px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #616161;
-}
-
-.CenterMe {
-  display: block;
-  margin: 100px auto;
 }
