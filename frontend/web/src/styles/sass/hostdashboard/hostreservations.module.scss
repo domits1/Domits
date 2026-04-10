@@ -3,9 +3,18 @@ $secondary-color: #374151;
 $highlight-color: #4a647c;
 $border-color: #e5e7eb;
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .container {
   padding: 40px 50px;
   max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  overflow-x: hidden;
 }
 
 .title {
@@ -61,6 +70,7 @@ $border-color: #e5e7eb;
   gap: 24px;
   border-bottom: 1px solid $border-color;
   margin-bottom: 25px;
+  overflow-x: auto;
 }
 
 .tabs button {
@@ -70,6 +80,7 @@ $border-color: #e5e7eb;
   cursor: pointer;
   color: #6b7280;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .tabs .active {
@@ -80,6 +91,7 @@ $border-color: #e5e7eb;
 .list {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .CenterMe {
@@ -98,54 +110,55 @@ $border-color: #e5e7eb;
   opacity: 0.7;
 }
 
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .reservationTable {
   width: 100%;
   border-collapse: collapse;
+}
 
-  th,
-  td {
-    border-right: 1px solid $border-color;
-  }
+.reservationTable th,
+.reservationTable td {
+  border-right: 1px solid $border-color;
+}
 
-  th:last-child,
-  td:last-child {
-    border-right: none;
-  }
+.reservationTable thead th {
+  background: $primary-color;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 14px;
+  font-size: 13px;
+  text-align: left;
+  border-bottom: 2px solid $border-color;
+  white-space: nowrap;
+}
 
-  thead th {
-    background: $primary-color;
-    color: #ffffff;
-    font-weight: 600;
-    padding: 14px;
-    font-size: 13px;
-    text-align: left;
-    border-bottom: 2px solid $border-color;
-    white-space: nowrap;
-  }
+.reservationTable tbody td {
+  padding: 14px;
+  font-size: 13px;
+  color: #374151;
+  border: 1px solid #b2b6ba;
+}
 
-  tbody td {
-    padding: 14px;
-    font-size: 13px;
-    color: #374151;
-    border-bottom: 1px solid #f1f5f9;
-  }
+.reservationTable tbody tr:hover {
+  background: #f9fafb;
+}
 
-  tbody tr:hover {
-    background: #f9fafb;
-  }
+.reservationTable td:nth-child(7),
+.reservationTable td:nth-child(8) {
+  text-align: right;
+}
 
-  td:nth-child(7),
-  td:nth-child(8) {
-    text-align: right;
-  }
-
-  .noData {
+.noData {
   text-align: center;
   padding: 30px 20px;
   font-size: 16px;
   font-weight: 600;
   color: #111827;
-}
 }
 
 .status {
@@ -180,6 +193,7 @@ $border-color: #e5e7eb;
   display: flex;
   justify-content: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .paginationButton {
@@ -201,6 +215,89 @@ $border-color: #e5e7eb;
 }
 
 .activePage {
-  background: #16a34a;
-  color: #000;
+  background: #166534;
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: 30px 24px;
+  }
+
+  .searchRow {
+    flex-direction: column;
+  }
+
+  .dropdown {
+    width: 100%;
+  }
+
+  .tableWrapper {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 16px;
+  }
+
+  .list {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .reservationTable,
+  .reservationTable thead,
+  .reservationTable tbody,
+  .reservationTable tr,
+  .reservationTable td {
+    display: block !important;
+    width: 100%;
+  }
+
+  .reservationTable thead {
+    display: none !important;
+  }
+
+  .reservationTable tbody tr {
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #ffffff;
+    max-width: 100%;
+  }
+
+  .reservationTable tbody td {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border: none !important;
+    gap: 0px;
+    word-break: break-word;
+  }
+
+  .reservationTable tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .reservationTable th,
+  .reservationTable td {
+    border: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 20px;
+  }
+
+  .paginationButton {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
 }
