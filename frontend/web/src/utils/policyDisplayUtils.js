@@ -62,7 +62,7 @@ export const parseCancellationPolicy = (rules = []) => {
     : null;
 };
 
-const parseRules = (rules, property, keyMap) => {
+const parseGenericRules = (rules, property, keyMap) => {
   const parsed = [];
   Object.entries(keyMap).forEach(([key, label]) => {
     const value = rules.find((r) => r.rule === key)?.value ?? property[key];
@@ -78,20 +78,22 @@ const HOUSE_RULE_KEYS = {
   SmokingAllowed: "Smoking allowed",
   "Parties/EventsAllowed": "Parties / Events allowed",
 };
-export const parseHouseRules = (rules = [], property = {}) => parseRules(rules, property, HOUSE_RULE_KEYS);
+export const parseHouseRules = (rules = [], property = {}) => parseGenericRules(rules, property, HOUSE_RULE_KEYS);
 
 const PROPERTY_RULE_KEYS = {
   CookingAllowed: "Cooking allowed",
   ParkingAvailable: "Parking available",
 };
-export const parsePropertyRules = (rules = [], property = {}) => parseRules(rules, property, PROPERTY_RULE_KEYS);
+export const parsePropertyRules = (rules = [], property = {}) => parseGenericRules(rules, property, PROPERTY_RULE_KEYS);
 
-export const parseSafetyFeatures = (rules = [], property = {}) => {
-  const parsed = ["Smoke detector", "Carbon monoxide detector", "Fire extinguisher", "First aid kit"];
-  return parsed.filter((label) => {
-    return true;
-  });
+const SAFETY_FEATURE_KEYS = {
+  SmokeDetector: "Smoke detector",
+  CarbonMonoxide: "Carbon monoxide detector",
+  FireExtinguisher: "Fire extinguisher",
+  FirstAidKit: "First aid kit",
 };
+export const parseSafetyFeatures = (rules = [], property = {}) =>
+  parseGenericRules(rules, property, SAFETY_FEATURE_KEYS);
 
 export const parseCheckInOut = (checkInData = {}) => {
   const checkIn = checkInData.checkIn || {};
