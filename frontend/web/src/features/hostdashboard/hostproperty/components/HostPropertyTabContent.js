@@ -1647,7 +1647,6 @@ PolicyRuleSection.propTypes = {
   toggleState: PropTypes.objectOf(PropTypes.bool).isRequired,
   onToggleChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
-  setToggleState: PropTypes.func,
   customRules: PropTypes.arrayOf(customRuleShape),
   onToggleCustomRule: PropTypes.func,
   onDeleteCustomRule: PropTypes.func,
