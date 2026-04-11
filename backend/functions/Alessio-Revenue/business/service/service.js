@@ -160,9 +160,8 @@ export class Service {
         periodEnd: end,
         metrics: snapshotPayload,
       });
-    } catch (err) {
-      // intentionally ignore but reference err to satisfy lint rules
-      void err;
+    } catch {
+    // intentionally ignore error
     }
 
     return {
