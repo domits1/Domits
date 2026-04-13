@@ -88,6 +88,12 @@ class IntegrationController {
     return await this.integrationService.listChannexProperties(userId);
   }
 
+  async listChannexRoomTypes(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const externalPropertyId = event.queryStringParameters?.externalPropertyId || null;
+    return await this.integrationService.listChannexRoomTypes(userId, externalPropertyId);
+  }
+
   async linkChannexProperty(event) {
     const userId = event.queryStringParameters?.userId || null;
     const body = safeJson(event.body) || {};
