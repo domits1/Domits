@@ -45,8 +45,7 @@ const fetchPropertyPolicies = async (propertyId) => {
       lateCheckOut: data?.property?.lateCheckOut || "",
       preparationTime: data?.property?.preparationTime || "",
     };
-  } catch (error) {
-    ``;
+  } catch {
     return {};
   }
 };
