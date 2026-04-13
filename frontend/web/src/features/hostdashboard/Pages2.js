@@ -73,9 +73,12 @@ function Pages({ onNavigate }) {
         <span aria-hidden="true">{open ? "×" : "☰"}</span>
       </button>
 
-      <div
+      <button
+        type="button"
         className={`sidebar-overlay ${open ? "open" : ""}`}
         onClick={() => setOpen(false)}
+        tabIndex={open ? 0 : -1}
+        aria-label="Close menu overlay"
         aria-hidden={!open}
       />
 

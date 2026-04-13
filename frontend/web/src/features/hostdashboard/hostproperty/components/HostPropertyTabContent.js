@@ -83,14 +83,6 @@ const CANCELLATION_POLICIES = [
   },
 ];
 
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
-  const h = String(i).padStart(2, "0");
-  return `${h}:00`;
-});
-
-const ADVANCE_NOTICE_OPTIONS = ["Same day", "1 day", "2 days", "3 days", "5 days", "7 days"];
-const PREP_TIME_OPTIONS = ["None", "1 day", "2 days", "3 days"];
-
 function ToggleSwitch({ checked, onChange, disabled }) {
   return (
     <button
@@ -123,17 +115,137 @@ function CustomRuleRow({ rule, onToggle, onDelete }) {
   );
 }
 
-function HostPropertyOverviewTab({
-  form,
-  updateField,
-  displayedPropertyType,
-  setCapacity,
-  capacity,
-  adjustCapacityField,
-  updateCapacityField,
-  address,
-  updateAddressField,
+function PolicySelectField({ id, label, value, onChange, disabled, options, hint }) {
+  return (
+    <div className={styles.checkinField}>
+      <label htmlFor={id} className={styles.checkinLabel}>
+        {label}
+      </label>
+      {hint ? <p className={styles.checkinFieldHint}>{hint}</p> : null}
+      <select id={id} className={styles.checkinSelect} value={value} onChange={onChange} disabled={disabled}>
+        {options.map((option) => {
+          const optionValue = typeof option === "object" ? option.value : option;
+          const optionLabel = typeof option === "object" ? option.label : option;
+          return (
+            <option key={optionValue} value={optionValue}>
+              {optionLabel}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+  );
+}
+
+function PolicyLateTimeField({
+  id,
+  label,
+  enabled,
+  onToggle,
+  value,
+  onChange,
+  disabled,
+  options,
 }) {
+  return (
+    <div className={styles.checkinField}>
+      <label htmlFor={id} className={styles.checkinLabel}>
+        {label}
+      </label>
+      <div className={styles.checkinToggleRow}>
+        <ToggleSwitch checked={enabled} onChange={onToggle} disabled={disabled} />
+        {enabled ? (
+          <select
+            id={id}
+            className={styles.checkinSelectInline}
+            value={value}
+            onChange={onChange}
+            disabled={disabled}>
+            {options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function RuleToggleField({ label, checked, onChange, disabled }) {
+  return (
+    <div className={styles.ruleToggleRow}>
+      <span className={styles.ruleToggleLabel}>{label}</span>
+      <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} />
+    </div>
+  );
+}
+
+function CustomRuleEditor({ visible, value, onChange, onConfirm, onCancel, onShow }) {
+  if (visible) {
+    return (
+      <div className={styles.customRuleInputRow}>
+        <input
+          type="text"
+          className={styles.customRuleInput}
+          placeholder="Rule label..."
+          value={value}
+          onChange={onChange}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              onConfirm();
+            }
+          }}
+          autoFocus
+        />
+        <button type="button" className={styles.customRuleAddConfirm} onClick={onConfirm}>
+          Add
+        </button>
+        <button type="button" className={styles.customRuleAddCancel} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button type="button" className={styles.addCustomRuleBtn} onClick={onShow}>
+      <span className={styles.addCustomRulePlus}>+</span> Add custom rule
+    </button>
+  );
+}
+
+function TextInputField({ id, label, value, onChange, type = "text" }) {
+  return (
+    <div className={styles.field}>
+      <label htmlFor={id}>{label}</label>
+      <input id={id} type={type} value={value} onChange={onChange} className={styles.input} />
+    </div>
+  );
+}
+
+function TextareaField({ id, label, value, onChange, rows = 5 }) {
+  return (
+    <div className={styles.field}>
+      <label htmlFor={id}>{label}</label>
+      <textarea id={id} value={value} onChange={onChange} rows={rows} className={styles.textarea} />
+    </div>
+  );
+}
+
+function HostPropertyOverviewTab(props) {
+  const {
+    form,
+    updateField,
+    displayedPropertyType,
+    setCapacity,
+    capacity,
+    adjustCapacityField,
+    updateCapacityField,
+    address,
+    updateAddressField,
+  } = props;
   const renderCapacityCounter = ({ key, label }) => (
     <div key={key} className={styles.counterItem}>
       <span className={styles.counterLabel}>{label}</span>
@@ -162,38 +274,26 @@ function HostPropertyOverviewTab({
   return (
     <section className={styles.card}>
       <h3 className={styles.sectionTitle}>Property Information</h3>
-      <div className={styles.field}>
-        <label htmlFor="property-title">Title</label>
-        <input
-          id="property-title"
-          type="text"
-          value={form.title}
-          onChange={(event) => updateField("title", event.target.value)}
-          className={styles.input}
-        />
-      </div>
+      <TextInputField
+        id="property-title"
+        label="Title"
+        value={form.title}
+        onChange={(event) => updateField("title", event.target.value)}
+      />
 
-      <div className={styles.field}>
-        <label htmlFor="property-description">Description</label>
-        <textarea
-          id="property-description"
-          value={form.description}
-          onChange={(event) => updateField("description", event.target.value)}
-          rows={5}
-          className={styles.textarea}
-        />
-      </div>
+      <TextareaField
+        id="property-description"
+        label="Description"
+        value={form.description}
+        onChange={(event) => updateField("description", event.target.value)}
+      />
 
-      <div className={styles.field}>
-        <label htmlFor="property-subtitle">Subtitle</label>
-        <input
-          id="property-subtitle"
-          type="text"
-          value={form.subtitle}
-          onChange={(event) => updateField("subtitle", event.target.value)}
-          className={styles.input}
-        />
-      </div>
+      <TextInputField
+        id="property-subtitle"
+        label="Subtitle"
+        value={form.subtitle}
+        onChange={(event) => updateField("subtitle", event.target.value)}
+      />
 
       <div className={styles.sectionDivider} />
 
@@ -224,62 +324,42 @@ function HostPropertyOverviewTab({
       <p className={styles.locationNote}>Guests only see the approximate location until booking is confirmed.</p>
 
       <div className={styles.locationGridTwo}>
-        <div className={styles.field}>
-          <label htmlFor="location-street">Street</label>
-          <input
-            id="location-street"
-            type="text"
-            value={address.street}
-            onChange={(event) => updateAddressField("street", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-street"
+          label="Street"
+          value={address.street}
+          onChange={(event) => updateAddressField("street", event.target.value)}
+        />
 
-        <div className={styles.field}>
-          <label htmlFor="location-house-number">House number</label>
-          <input
-            id="location-house-number"
-            type="text"
-            value={address.houseNumber}
-            onChange={(event) => updateAddressField("houseNumber", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-house-number"
+          label="House number"
+          value={address.houseNumber}
+          onChange={(event) => updateAddressField("houseNumber", event.target.value)}
+        />
       </div>
 
       <div className={styles.locationGridThree}>
-        <div className={styles.field}>
-          <label htmlFor="location-postal-code">Postal code</label>
-          <input
-            id="location-postal-code"
-            type="text"
-            value={address.postalCode}
-            onChange={(event) => updateAddressField("postalCode", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-postal-code"
+          label="Postal code"
+          value={address.postalCode}
+          onChange={(event) => updateAddressField("postalCode", event.target.value)}
+        />
 
-        <div className={styles.field}>
-          <label htmlFor="location-city">City</label>
-          <input
-            id="location-city"
-            type="text"
-            value={address.city}
-            onChange={(event) => updateAddressField("city", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-city"
+          label="City"
+          value={address.city}
+          onChange={(event) => updateAddressField("city", event.target.value)}
+        />
 
-        <div className={styles.field}>
-          <label htmlFor="location-country">Country</label>
-          <input
-            id="location-country"
-            type="text"
-            value={address.country}
-            onChange={(event) => updateAddressField("country", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-country"
+          label="Country"
+          value={address.country}
+          onChange={(event) => updateAddressField("country", event.target.value)}
+        />
       </div>
 
       <div className={styles.mapPreview}>
@@ -294,27 +374,28 @@ function HostPropertyOverviewTab({
   );
 }
 
-function HostPropertyPhotosTab({
-  displayedPhotos,
-  pendingPhotoCount,
-  onOpenPhotoPicker,
-  onPhotoFilesSelected,
-  onPhotoDrop,
-  onPhotoDragOver,
-  onPhotoDragLeave,
-  isPhotoDragOver,
-  onRequestDeletePhoto,
-  onPhotoTileDragStart,
-  onPhotoTileDragEnd,
-  onPhotoTileDragOver,
-  onPhotoTileDragLeave,
-  onPhotoTileDrop,
-  draggingPhotoId,
-  photoDropTargetId,
-  saving,
-  deletingPhoto,
-  photoInputRef,
-}) {
+function HostPropertyPhotosTab(props) {
+  const {
+    displayedPhotos,
+    pendingPhotoCount,
+    onOpenPhotoPicker,
+    onPhotoFilesSelected,
+    onPhotoDrop,
+    onPhotoDragOver,
+    onPhotoDragLeave,
+    isPhotoDragOver,
+    onRequestDeletePhoto,
+    onPhotoTileDragStart,
+    onPhotoTileDragEnd,
+    onPhotoTileDragOver,
+    onPhotoTileDragLeave,
+    onPhotoTileDrop,
+    draggingPhotoId,
+    photoDropTargetId,
+    saving,
+    deletingPhoto,
+    photoInputRef,
+  } = props;
   const photoTileRefs = useRef(new Map());
   const previousTileRectsRef = useRef(new Map());
   const coverPhoto = displayedPhotos[0] || null;
@@ -567,15 +648,16 @@ export function HostPropertyPhotoDeleteModal({ open, photoSrc, deletingPhoto, on
   );
 }
 
-function HostPropertyAmenitiesTab({
-  amenityCategoryKeys,
-  amenitiesByCategory,
-  expandedAmenityCategories,
-  selectedAmenityCountByCategory,
-  selectedAmenityIdSet,
-  toggleAmenityCategory,
-  toggleAmenitySelection,
-}) {
+function HostPropertyAmenitiesTab(props) {
+  const {
+    amenityCategoryKeys,
+    amenitiesByCategory,
+    expandedAmenityCategories,
+    selectedAmenityCountByCategory,
+    selectedAmenityIdSet,
+    toggleAmenityCategory,
+    toggleAmenitySelection,
+  } = props;
   return (
     <section className={`${styles.card} ${styles.amenitiesCard}`}>
       <h3 className={styles.sectionTitle}>Amenities</h3>
@@ -911,44 +993,191 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
   );
 }
 
-export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule, handleDeletePropertyClick, saving }) {
+function PolicyRuleSection({
+  title,
+  toggleFields,
+  toggleState,
+  setToggleState,
+  customRules,
+  onToggleCustomRule,
+  onDeleteCustomRule,
+  customRuleInputVisible,
+  customRuleValue,
+  onCustomRuleChange,
+  onConfirmCustomRule,
+  onCancelCustomRule,
+  onShowCustomRuleInput,
+  disabled,
+}) {
+  return (
+    <section className={`${styles.card} ${styles.policiesCard}`}>
+      <h3 className={styles.sectionTitle}>{title}</h3>
+
+      <div className={styles.rulesGrid}>
+        {toggleFields.map((field) => (
+          <RuleToggleField
+            key={field.key}
+            label={field.label}
+            checked={Boolean(toggleState[field.key])}
+            onChange={(value) => setToggleState((previous) => ({ ...previous, [field.key]: value }))}
+            disabled={disabled}
+          />
+        ))}
+
+        {customRules.map((rule) => (
+          <CustomRuleRow
+            key={rule.id}
+            rule={rule}
+            onToggle={onToggleCustomRule}
+            onDelete={onDeleteCustomRule}
+          />
+        ))}
+      </div>
+
+      <CustomRuleEditor
+        visible={customRuleInputVisible}
+        value={customRuleValue}
+        onChange={onCustomRuleChange}
+        onConfirm={onConfirmCustomRule}
+        onCancel={onCancelCustomRule}
+        onShow={onShowCustomRuleInput}
+      />
+    </section>
+  );
+}
+
+const createCustomRule = (label) => ({
+  id: Date.now(),
+  label: label.trim(),
+  enabled: false,
+});
+
+function useRuleSectionState(initialToggleState) {
+  const [toggleState, setToggleState] = useState(initialToggleState);
+  const [customRules, setCustomRules] = useState([]);
+  const [newRuleValue, setNewRuleValue] = useState("");
+  const [showRuleInput, setShowRuleInput] = useState(false);
+
+  const addCustomRule = () => {
+    if (!newRuleValue.trim()) {
+      return;
+    }
+    setCustomRules((previous) => [...previous, createCustomRule(newRuleValue)]);
+    setNewRuleValue("");
+    setShowRuleInput(false);
+  };
+
+  const toggleCustomRule = (ruleId, value) => {
+    setCustomRules((previous) => previous.map((rule) => (rule.id === ruleId ? { ...rule, enabled: value } : rule)));
+  };
+
+  const deleteCustomRule = (ruleId) => {
+    setCustomRules((previous) => previous.filter((rule) => rule.id !== ruleId));
+  };
+
+  const cancelCustomRule = () => {
+    setShowRuleInput(false);
+    setNewRuleValue("");
+  };
+
+  return {
+    toggleState,
+    setToggleState,
+    customRules,
+    newRuleValue,
+    setNewRuleValue,
+    showRuleInput,
+    setShowRuleInput,
+    addCustomRule,
+    toggleCustomRule,
+    deleteCustomRule,
+    cancelCustomRule,
+  };
+}
+
+const POLICY_TOGGLE_FIELDS = [
+  { rule: "SuitableForChildren", label: "Children allowed" },
+  { rule: "SuitableForInfants", label: "Infants allowed" },
+  { rule: "PetsAllowed", label: "Pets allowed" },
+  { rule: "SmokingAllowed", label: "Smoking allowed" },
+  { rule: "Parties/EventsAllowed", label: "Parties / Events allowed" },
+];
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
+  const h = String(i).padStart(2, "0");
+  return `${h}:00`;
+});
+const ADVANCE_NOTICE_OPTIONS = [
+  { value: 0, label: "Same day" },
+  { value: 1, label: "1 day" },
+  { value: 2, label: "2 days" },
+  { value: 3, label: "3 days" },
+  { value: 5, label: "5 days" },
+  { value: 7, label: "7 days" },
+  { value: 14, label: "14 days" },
+  { value: 30, label: "30 days" },
+];
+const PREPARATION_TIME_OPTIONS = [
+  { value: 0, label: "None" },
+  { value: 1, label: "1 day" },
+  { value: 2, label: "2 days" },
+  { value: 3, label: "3 days" },
+  { value: 4, label: "4 days" },
+  { value: 5, label: "5 days" },
+  { value: 6, label: "6 days" },
+  { value: 7, label: "7 days" },
+];
+const CHECK_IN_FALLBACK_TIME = "15:00";
+const CHECK_OUT_FALLBACK_TIME = "11:00";
+const PROPERTY_RULE_TOGGLE_FIELDS = [
+  { key: "cookingAllowed", label: "Cooking allowed" },
+  { key: "parkingAvailable", label: "Parking available" },
+];
+const SAFETY_RULE_TOGGLE_FIELDS = [
+  { key: "smokeDetector", label: "Smoke detector" },
+  { key: "carbonMonoxide", label: "Carbon monoxide" },
+  { key: "fireExtinguisher", label: "Fire extinguisher" },
+  { key: "firstAidKit", label: "First aid kit" },
+];
+
+const resolveDistinctLateTime = (fromValue, preferredTillValue, fallbackFromValue) => {
+  const normalizedFromValue = fromValue || fallbackFromValue;
+  const normalizedPreferredTillValue = preferredTillValue || normalizedFromValue;
+
+  if (normalizedPreferredTillValue && normalizedPreferredTillValue !== normalizedFromValue) {
+    return normalizedPreferredTillValue;
+  }
+
+  const selectedTimeIndex = TIME_OPTIONS.indexOf(normalizedFromValue);
+  if (selectedTimeIndex >= 0 && selectedTimeIndex < TIME_OPTIONS.length - 1) {
+    return TIME_OPTIONS[selectedTimeIndex + 1];
+  }
+
+  return normalizedFromValue;
+};
+
+export default function HostPropertyPoliciesTab(props) {
+  const {
+    policyRules,
+    checkInDetails,
+    policyAvailabilitySettings,
+    setCheckInDetails,
+    setPolicyAvailabilitySettings,
+    updatePolicyRule,
+    handleDeletePropertyClick,
+    saving,
+  } = props;
   const [selectedPolicy, setSelectedPolicy] = useState("flexible");
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
-
-  const [checkinTime, setCheckinTime] = useState("15:00");
-  const [checkoutTime, setCheckoutTime] = useState("11:00");
-  const [lateCheckinEnabled, setLateCheckinEnabled] = useState(false);
-  const [lateCheckinTime, setLateCheckinTime] = useState("20:00");
-  const [lateCheckoutEnabled, setLateCheckoutEnabled] = useState(false);
-  const [advanceNotice, setAdvanceNotice] = useState("1 day");
-  const [prepTime, setPrepTime] = useState("1 day");
-
-  const [houseRules, setHouseRules] = useState({
-    childrenAllowed: false,
-    smokingAllowed: false,
-    petsAllowed: true,
-    maxGuests: 4,
-    partiesAllowed: false,
-    quietHours: "11:00",
-  });
-
-  const [propertyRules, setPropertyRules] = useState({
+  const propertyRuleSection = useRuleSectionState({
     cookingAllowed: false,
     parkingAvailable: false,
   });
-  const [customPropertyRules, setCustomPropertyRules] = useState([]);
-  const [newPropertyRule, setNewPropertyRule] = useState("");
-  const [showPropertyRuleInput, setShowPropertyRuleInput] = useState(false);
-
-  const [safetyRules, setSafetyRules] = useState({
+  const safetyRuleSection = useRuleSectionState({
     smokeDetector: true,
     carbonMonoxide: true,
     fireExtinguisher: true,
     firstAidKit: true,
   });
-  const [customSafetyRules, setCustomSafetyRules] = useState([]);
-  const [newSafetyRule, setNewSafetyRule] = useState("");
-  const [showSafetyRuleInput, setShowSafetyRuleInput] = useState(false);
 
   const handleSelectPolicy = (id) => {
     setSelectedPolicy(id);
@@ -959,36 +1188,98 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
     setExpandedPolicy((prev) => (prev === id ? null : id));
   };
 
-  const addCustomRule = (type) => {
-    const label = type === "property" ? newPropertyRule : newSafetyRule;
-    if (!label.trim()) return;
-    const rule = { id: Date.now(), label: label.trim(), enabled: false };
-    if (type === "property") {
-      setCustomPropertyRules((prev) => [...prev, rule]);
-      setNewPropertyRule("");
-      setShowPropertyRuleInput(false);
-    } else {
-      setCustomSafetyRules((prev) => [...prev, rule]);
-      setNewSafetyRule("");
-      setShowSafetyRuleInput(false);
-    }
+  const lateCheckInEnabled = Boolean(
+    checkInDetails?.checkIn?.till && checkInDetails?.checkIn?.till !== checkInDetails?.checkIn?.from
+  );
+  const lateCheckOutEnabled = Boolean(
+    checkInDetails?.checkOut?.till && checkInDetails?.checkOut?.till !== checkInDetails?.checkOut?.from
+  );
+
+  const updateTimeWindow = (windowKey, fallbackValue, lateEnabled, nextValue) => {
+    setCheckInDetails((previous) => {
+      const currentWindow = previous?.[windowKey] || {};
+      return {
+        ...previous,
+        [windowKey]: {
+          ...currentWindow,
+          from: nextValue,
+          till: lateEnabled ? resolveDistinctLateTime(nextValue, currentWindow.till, fallbackValue) : nextValue,
+        },
+      };
+    });
   };
 
-  const toggleCustomRule = (type, id, val) => {
-    if (type === "property") {
-      setCustomPropertyRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: val } : r)));
-    } else {
-      setCustomSafetyRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: val } : r)));
-    }
+  const updateLateTimeWindow = (windowKey, fallbackValue, enabled, nextValue) => {
+    setCheckInDetails((previous) => {
+      const currentWindow = previous?.[windowKey] || {};
+      const currentFrom = currentWindow.from || fallbackValue;
+      const currentTill = currentWindow.till || currentFrom;
+      return {
+        ...previous,
+        [windowKey]: {
+          ...currentWindow,
+          from: currentFrom,
+          till: enabled ? resolveDistinctLateTime(currentFrom, nextValue || currentTill, fallbackValue) : currentFrom,
+        },
+      };
+    });
   };
 
-  const deleteCustomRule = (type, id) => {
-    if (type === "property") {
-      setCustomPropertyRules((prev) => prev.filter((r) => r.id !== id));
-    } else {
-      setCustomSafetyRules((prev) => prev.filter((r) => r.id !== id));
-    }
+  const updatePolicyAvailabilityField = (field, value) => {
+    setPolicyAvailabilitySettings((previous) => ({
+      ...previous,
+      [field]: Number(value) || 0,
+    }));
   };
+
+  const policyRuleSections = [
+    {
+      title: "Property Rules",
+      toggleFields: PROPERTY_RULE_TOGGLE_FIELDS,
+      sectionState: propertyRuleSection,
+    },
+    {
+      title: "Safety & Property",
+      toggleFields: SAFETY_RULE_TOGGLE_FIELDS,
+      sectionState: safetyRuleSection,
+    },
+  ];
+  const checkInFieldSections = [
+    {
+      id: "checkin",
+      label: "Check-in",
+      windowKey: "checkIn",
+      fallbackValue: CHECK_IN_FALLBACK_TIME,
+      lateEnabled: lateCheckInEnabled,
+      values: checkInDetails?.checkIn,
+    },
+    {
+      id: "checkout",
+      label: "Check-out",
+      windowKey: "checkOut",
+      fallbackValue: CHECK_OUT_FALLBACK_TIME,
+      lateEnabled: lateCheckOutEnabled,
+      values: checkInDetails?.checkOut,
+    },
+  ];
+  const policyAvailabilityFields = [
+    {
+      id: "advance-notice",
+      label: "Minimum advance notice",
+      hint: "Minimum amount of notice required before a guest can book.",
+      value: policyAvailabilitySettings?.advanceNoticeDays ?? 0,
+      field: "advanceNoticeDays",
+      options: ADVANCE_NOTICE_OPTIONS,
+    },
+    {
+      id: "prep-time",
+      label: "Preparation time",
+      hint: "Time required between bookings to clean and prepare the property.",
+      value: policyAvailabilitySettings?.preparationTimeDays ?? 0,
+      field: "preparationTimeDays",
+      options: PREPARATION_TIME_OPTIONS,
+    },
+  ];
 
   return (
     <>
@@ -1059,96 +1350,49 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
         <h3 className={styles.sectionTitle}>Check-in &amp; Check-out</h3>
 
         <div className={styles.checkinGrid}>
-          <div className={styles.checkinField}>
-            <label htmlFor="checkin-time" className={styles.checkinLabel}>
-              Check-in time
-            </label>{" "}
-            <select
-              className={styles.checkinSelect}
-              value={checkinTime}
-              onChange={(e) => setCheckinTime(e.target.value)}>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
+          {checkInFieldSections.map(({ id, label, windowKey, fallbackValue, lateEnabled, values }) => (
+            <React.Fragment key={id}>
+              <PolicySelectField
+                id={`${id}-time`}
+                label={`${label} time`}
+                value={values?.from || fallbackValue}
+                onChange={(event) => updateTimeWindow(windowKey, fallbackValue, lateEnabled, event.target.value)}
+                disabled={saving}
+                options={TIME_OPTIONS}
+              />
 
-          <div className={styles.checkinField}>
-            <label htmlFor="late-checkin-time" className={styles.checkinLabel}>
-              Late check-in time
-            </label>
-            <div className={styles.checkinToggleRow}>
-              <ToggleSwitch checked={lateCheckinEnabled} onChange={setLateCheckinEnabled} />
-              {lateCheckinEnabled && (
-                <select
-                  className={styles.checkinSelectInline}
-                  value={lateCheckinTime}
-                  onChange={(e) => setLateCheckinTime(e.target.value)}>
-                  {TIME_OPTIONS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
+              <PolicyLateTimeField
+                id={`late-${id}-time`}
+                label={`Late ${label.toLowerCase()} time`}
+                enabled={lateEnabled}
+                onToggle={(enabled) =>
+                  updateLateTimeWindow(
+                    windowKey,
+                    fallbackValue,
+                    enabled,
+                    enabled ? values?.till || values?.from || fallbackValue : ""
+                  )
+                }
+                value={values?.till || values?.from || fallbackValue}
+                onChange={(event) => updateLateTimeWindow(windowKey, fallbackValue, true, event.target.value)}
+                disabled={saving}
+                options={TIME_OPTIONS}
+              />
+            </React.Fragment>
+          ))}
 
-          <div className={styles.checkinField}>
-            <label htmlFor="checkout-time" className={styles.checkinLabel}>
-              Check-out time
-            </label>
-            <select
-              className={styles.checkinSelect}
-              value={checkoutTime}
-              onChange={(e) => setCheckoutTime(e.target.value)}>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.checkinField}>
-            <label htmlFor="late-checkout-time" className={styles.checkinLabel}>
-              Late check-out time
-            </label>
-            <ToggleSwitch checked={lateCheckoutEnabled} onChange={setLateCheckoutEnabled} />
-          </div>
-
-          <div className={styles.checkinField}>
-            <label htmlFor="advance-notice" className={styles.checkinLabel}>
-              Minimum advance notice
-            </label>
-            <p className={styles.checkinFieldHint}>Minimum amount of notice required before a guest can book.</p>
-            <select
-              className={styles.checkinSelect}
-              value={advanceNotice}
-              onChange={(e) => setAdvanceNotice(e.target.value)}>
-              {ADVANCE_NOTICE_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.checkinField}>
-            <label htmlFor="prep-time" className={styles.checkinLabel}>
-              Preparation time
-            </label>
-            <p className={styles.checkinFieldHint}>Time required between bookings to clean and prepare the property.</p>
-            <select className={styles.checkinSelect} value={prepTime} onChange={(e) => setPrepTime(e.target.value)}>
-              {PREP_TIME_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </div>
+          {policyAvailabilityFields.map(({ id, label, hint, value, field, options }) => (
+            <PolicySelectField
+              key={id}
+              id={id}
+              label={label}
+              hint={hint}
+              value={value}
+              onChange={(event) => updatePolicyAvailabilityField(field, event.target.value)}
+              disabled={saving}
+              options={options}
+            />
+          ))}
         </div>
       </section>
 
@@ -1156,196 +1400,37 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
         <h3 className={styles.sectionTitle}>House Rules</h3>
 
         <div className={styles.rulesGrid}>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Children allowed</span>
-            <ToggleSwitch
-              checked={houseRules.childrenAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, childrenAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Smoking allowed</span>
-            <ToggleSwitch
-              checked={houseRules.smokingAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, smokingAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Pets allowed</span>
-            <ToggleSwitch
-              checked={houseRules.petsAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, petsAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Maximum guests</span>
-            <select
-              className={styles.checkinSelectInline}
-              value={houseRules.maxGuests}
-              onChange={(e) => setHouseRules((p) => ({ ...p, maxGuests: e.target.value }))}>
-              {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Parties / Events allowed</span>
-            <ToggleSwitch
-              checked={houseRules.partiesAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, partiesAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Quiet hours start</span>
-            <select
-              className={styles.checkinSelectInline}
-              value={houseRules.quietHours}
-              onChange={(e) => setHouseRules((p) => ({ ...p, quietHours: e.target.value }))}>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <section className={`${styles.card} ${styles.policiesCard}`}>
-        <h3 className={styles.sectionTitle}>Property Rules</h3>
-
-        <div className={styles.rulesGrid}>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Cooking allowed</span>
-            <ToggleSwitch
-              checked={propertyRules.cookingAllowed}
-              onChange={(val) => setPropertyRules((p) => ({ ...p, cookingAllowed: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Parking available</span>
-            <ToggleSwitch
-              checked={propertyRules.parkingAvailable}
-              onChange={(val) => setPropertyRules((p) => ({ ...p, parkingAvailable: val }))}
-            />
-          </div>
-
-          {customPropertyRules.map((rule) => (
-            <CustomRuleRow
-              key={rule.id}
-              rule={rule}
-              onToggle={(id, val) => toggleCustomRule("property", id, val)}
-              onDelete={(id) => deleteCustomRule("property", id)}
+          {POLICY_TOGGLE_FIELDS.map((field) => (
+            <RuleToggleField
+              key={field.rule}
+              label={field.label}
+              checked={Boolean(policyRules[field.rule])}
+              onChange={(val) => updatePolicyRule(field.rule, val)}
+              disabled={saving}
             />
           ))}
         </div>
-
-        {showPropertyRuleInput ? (
-          <div className={styles.customRuleInputRow}>
-            <input
-              type="text"
-              className={styles.customRuleInput}
-              placeholder="Rule label…"
-              value={newPropertyRule}
-              onChange={(e) => setNewPropertyRule(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addCustomRule("property")}
-              autoFocus
-            />
-            <button type="button" className={styles.customRuleAddConfirm} onClick={() => addCustomRule("property")}>
-              Add
-            </button>
-            <button
-              type="button"
-              className={styles.customRuleAddCancel}
-              onClick={() => {
-                setShowPropertyRuleInput(false);
-                setNewPropertyRule("");
-              }}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button type="button" className={styles.addCustomRuleBtn} onClick={() => setShowPropertyRuleInput(true)}>
-            <span className={styles.addCustomRulePlus}>+</span> Add custom rule
-          </button>
-        )}
       </section>
 
-      <section className={`${styles.card} ${styles.policiesCard}`}>
-        <h3 className={styles.sectionTitle}>Safety &amp; Property</h3>
-
-        <div className={styles.rulesGrid}>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Smoke detector</span>
-            <ToggleSwitch
-              checked={safetyRules.smokeDetector}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, smokeDetector: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Carbon monoxide</span>
-            <ToggleSwitch
-              checked={safetyRules.carbonMonoxide}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, carbonMonoxide: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Fire extinguisher</span>
-            <ToggleSwitch
-              checked={safetyRules.fireExtinguisher}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, fireExtinguisher: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>First aid kit</span>
-            <ToggleSwitch
-              checked={safetyRules.firstAidKit}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, firstAidKit: val }))}
-            />
-          </div>
-
-          {customSafetyRules.map((rule) => (
-            <CustomRuleRow
-              key={rule.id}
-              rule={rule}
-              onToggle={(id, val) => toggleCustomRule("safety", id, val)}
-              onDelete={(id) => deleteCustomRule("safety", id)}
-            />
-          ))}
-        </div>
-
-        {showSafetyRuleInput ? (
-          <div className={styles.customRuleInputRow}>
-            <input
-              type="text"
-              className={styles.customRuleInput}
-              placeholder="Rule label…"
-              value={newSafetyRule}
-              onChange={(e) => setNewSafetyRule(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addCustomRule("safety")}
-              autoFocus
-            />
-            <button type="button" className={styles.customRuleAddConfirm} onClick={() => addCustomRule("safety")}>
-              Add
-            </button>
-            <button
-              type="button"
-              className={styles.customRuleAddCancel}
-              onClick={() => {
-                setShowSafetyRuleInput(false);
-                setNewSafetyRule("");
-              }}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button type="button" className={styles.addCustomRuleBtn} onClick={() => setShowSafetyRuleInput(true)}>
-            <span className={styles.addCustomRulePlus}>+</span> Add custom rule
-          </button>
-        )}
-      </section>
+      {policyRuleSections.map(({ title, toggleFields, sectionState }) => (
+        <PolicyRuleSection
+          key={title}
+          title={title}
+          toggleFields={toggleFields}
+          toggleState={sectionState.toggleState}
+          setToggleState={sectionState.setToggleState}
+          customRules={sectionState.customRules}
+          onToggleCustomRule={sectionState.toggleCustomRule}
+          onDeleteCustomRule={sectionState.deleteCustomRule}
+          customRuleInputVisible={sectionState.showRuleInput}
+          customRuleValue={sectionState.newRuleValue}
+          onCustomRuleChange={(event) => sectionState.setNewRuleValue(event.target.value)}
+          onConfirmCustomRule={sectionState.addCustomRule}
+          onCancelCustomRule={sectionState.cancelCustomRule}
+          onShowCustomRuleInput={() => sectionState.setShowRuleInput(true)}
+          disabled={saving}
+        />
+      ))}
 
       <p className={styles.policiesHint}>
         <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />
@@ -1371,111 +1456,19 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
   );
 }
 
-export function HostPropertyTabContent({
-  selectedTab,
-  form,
-  updateField,
-  displayedPropertyType,
-  setCapacity,
-  capacity,
-  adjustCapacityField,
-  updateCapacityField,
-  address,
-  updateAddressField,
-  displayedPhotos,
-  pendingPhotoCount,
-  onOpenPhotoPicker,
-  onPhotoFilesSelected,
-  onPhotoDrop,
-  onPhotoDragOver,
-  onPhotoDragLeave,
-  isPhotoDragOver,
-  onRequestDeletePhoto,
-  onPhotoTileDragStart,
-  onPhotoTileDragEnd,
-  onPhotoTileDragOver,
-  onPhotoTileDragLeave,
-  onPhotoTileDrop,
-  draggingPhotoId,
-  photoDropTargetId,
-  deletingPhoto,
-  photoInputRef,
-  amenityCategoryKeys,
-  amenitiesByCategory,
-  expandedAmenityCategories,
-  selectedAmenityCountByCategory,
-  selectedAmenityIdSet,
-  toggleAmenityCategory,
-  toggleAmenitySelection,
-  pricingForm,
-  setPricingForm,
-  policyRules,
-  updatePolicyRule,
-  handleDeletePropertyClick,
-  saving,
-}) {
+export function HostPropertyTabContent(props) {
+  const { selectedTab, pricingForm, setPricingForm } = props;
   switch (selectedTab) {
     case "Overview":
-      return (
-        <HostPropertyOverviewTab
-          form={form}
-          updateField={updateField}
-          displayedPropertyType={displayedPropertyType}
-          setCapacity={setCapacity}
-          capacity={capacity}
-          adjustCapacityField={adjustCapacityField}
-          updateCapacityField={updateCapacityField}
-          address={address}
-          updateAddressField={updateAddressField}
-        />
-      );
+      return <HostPropertyOverviewTab {...props} />;
     case "Photos":
-      return (
-        <HostPropertyPhotosTab
-          displayedPhotos={displayedPhotos}
-          pendingPhotoCount={pendingPhotoCount}
-          onOpenPhotoPicker={onOpenPhotoPicker}
-          onPhotoFilesSelected={onPhotoFilesSelected}
-          onPhotoDrop={onPhotoDrop}
-          onPhotoDragOver={onPhotoDragOver}
-          onPhotoDragLeave={onPhotoDragLeave}
-          isPhotoDragOver={isPhotoDragOver}
-          onRequestDeletePhoto={onRequestDeletePhoto}
-          onPhotoTileDragStart={onPhotoTileDragStart}
-          onPhotoTileDragEnd={onPhotoTileDragEnd}
-          onPhotoTileDragOver={onPhotoTileDragOver}
-          onPhotoTileDragLeave={onPhotoTileDragLeave}
-          onPhotoTileDrop={onPhotoTileDrop}
-          draggingPhotoId={draggingPhotoId}
-          photoDropTargetId={photoDropTargetId}
-          saving={saving}
-          deletingPhoto={deletingPhoto}
-          photoInputRef={photoInputRef}
-        />
-      );
+      return <HostPropertyPhotosTab {...props} />;
     case "Amenities":
-      return (
-        <HostPropertyAmenitiesTab
-          amenityCategoryKeys={amenityCategoryKeys}
-          amenitiesByCategory={amenitiesByCategory}
-          expandedAmenityCategories={expandedAmenityCategories}
-          selectedAmenityCountByCategory={selectedAmenityCountByCategory}
-          selectedAmenityIdSet={selectedAmenityIdSet}
-          toggleAmenityCategory={toggleAmenityCategory}
-          toggleAmenitySelection={toggleAmenitySelection}
-        />
-      );
+      return <HostPropertyAmenitiesTab {...props} />;
     case "Pricing":
       return <HostPropertyPricingTab pricingForm={pricingForm} setPricingForm={setPricingForm} />;
     case "Policies":
-      return (
-        <HostPropertyPoliciesTab
-          policyRules={policyRules}
-          updatePolicyRule={updatePolicyRule}
-          handleDeletePropertyClick={handleDeletePropertyClick}
-          saving={saving}
-        />
-      );
+      return <HostPropertyPoliciesTab {...props} />;
     default:
       return <HostPropertyPlaceholderTab selectedTab={selectedTab} />;
   }
@@ -1530,7 +1523,13 @@ const displayedPhotoShape = PropTypes.shape({
   isPending: PropTypes.bool.isRequired,
 });
 
-HostPropertyOverviewTab.propTypes = {
+const customRuleShape = PropTypes.shape({
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  label: PropTypes.string.isRequired,
+  enabled: PropTypes.bool.isRequired,
+});
+
+const overviewTabPropTypes = {
   form: propertyFormShape.isRequired,
   updateField: PropTypes.func.isRequired,
   displayedPropertyType: PropTypes.string.isRequired,
@@ -1542,7 +1541,7 @@ HostPropertyOverviewTab.propTypes = {
   updateAddressField: PropTypes.func.isRequired,
 };
 
-HostPropertyPhotosTab.propTypes = {
+const photoTabPropTypes = {
   displayedPhotos: PropTypes.arrayOf(displayedPhotoShape).isRequired,
   pendingPhotoCount: PropTypes.number.isRequired,
   onOpenPhotoPicker: PropTypes.func.isRequired,
@@ -1566,15 +1565,7 @@ HostPropertyPhotosTab.propTypes = {
   }).isRequired,
 };
 
-HostPropertyPhotoDeleteModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  photoSrc: PropTypes.string,
-  deletingPhoto: PropTypes.bool.isRequired,
-  onCancel: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-};
-
-HostPropertyAmenitiesTab.propTypes = {
+const amenitiesTabPropTypes = {
   amenityCategoryKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   amenitiesByCategory: PropTypes.objectOf(PropTypes.arrayOf(amenityShape)).isRequired,
   expandedAmenityCategories: PropTypes.objectOf(PropTypes.bool).isRequired,
@@ -1583,6 +1574,45 @@ HostPropertyAmenitiesTab.propTypes = {
   toggleAmenityCategory: PropTypes.func.isRequired,
   toggleAmenitySelection: PropTypes.func.isRequired,
 };
+
+const policiesTabPropTypes = {
+  policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
+  checkInDetails: PropTypes.shape({
+    checkIn: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    checkOut: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+  }),
+  policyAvailabilitySettings: PropTypes.shape({
+    advanceNoticeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    preparationTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    advanceNoticeRestrictionKey: PropTypes.string,
+    preparationTimeRestrictionKey: PropTypes.string,
+  }),
+  setCheckInDetails: PropTypes.func.isRequired,
+  setPolicyAvailabilitySettings: PropTypes.func.isRequired,
+  updatePolicyRule: PropTypes.func.isRequired,
+  handleDeletePropertyClick: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+};
+
+HostPropertyOverviewTab.propTypes = overviewTabPropTypes;
+
+HostPropertyPhotosTab.propTypes = photoTabPropTypes;
+
+HostPropertyPhotoDeleteModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  photoSrc: PropTypes.string,
+  deletingPhoto: PropTypes.bool.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
+
+HostPropertyAmenitiesTab.propTypes = amenitiesTabPropTypes;
 
 HostPropertyPricingDiscountRow.propTypes = {
   title: PropTypes.string.isRequired,
@@ -1603,57 +1633,38 @@ HostPropertyPricingTab.propTypes = {
   setPricingForm: PropTypes.func.isRequired,
 };
 
-HostPropertyPoliciesTab.propTypes = {
-  policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
-  updatePolicyRule: PropTypes.func.isRequired,
-  handleDeletePropertyClick: PropTypes.func.isRequired,
-  saving: PropTypes.bool.isRequired,
+PolicyRuleSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  toggleFields: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  toggleState: PropTypes.objectOf(PropTypes.bool).isRequired,
+  setToggleState: PropTypes.func.isRequired,
+  customRules: PropTypes.arrayOf(customRuleShape).isRequired,
+  onToggleCustomRule: PropTypes.func.isRequired,
+  onDeleteCustomRule: PropTypes.func.isRequired,
+  customRuleInputVisible: PropTypes.bool.isRequired,
+  customRuleValue: PropTypes.string.isRequired,
+  onCustomRuleChange: PropTypes.func.isRequired,
+  onConfirmCustomRule: PropTypes.func.isRequired,
+  onCancelCustomRule: PropTypes.func.isRequired,
+  onShowCustomRuleInput: PropTypes.func.isRequired,
+  disabled: PropTypes.bool.isRequired,
 };
+
+HostPropertyPoliciesTab.propTypes = policiesTabPropTypes;
 
 HostPropertyTabContent.propTypes = {
   selectedTab: PropTypes.string.isRequired,
-  form: propertyFormShape.isRequired,
-  updateField: PropTypes.func.isRequired,
-  displayedPropertyType: PropTypes.string.isRequired,
-  setCapacity: PropTypes.func.isRequired,
-  capacity: propertyCapacityShape.isRequired,
-  adjustCapacityField: PropTypes.func.isRequired,
-  updateCapacityField: PropTypes.func.isRequired,
-  address: propertyAddressShape.isRequired,
-  updateAddressField: PropTypes.func.isRequired,
-  displayedPhotos: PropTypes.arrayOf(displayedPhotoShape).isRequired,
-  pendingPhotoCount: PropTypes.number.isRequired,
-  onOpenPhotoPicker: PropTypes.func.isRequired,
-  onPhotoFilesSelected: PropTypes.func.isRequired,
-  onPhotoDrop: PropTypes.func.isRequired,
-  onPhotoDragOver: PropTypes.func.isRequired,
-  onPhotoDragLeave: PropTypes.func.isRequired,
-  isPhotoDragOver: PropTypes.bool.isRequired,
-  onRequestDeletePhoto: PropTypes.func.isRequired,
-  onPhotoTileDragStart: PropTypes.func.isRequired,
-  onPhotoTileDragEnd: PropTypes.func.isRequired,
-  onPhotoTileDragOver: PropTypes.func.isRequired,
-  onPhotoTileDragLeave: PropTypes.func.isRequired,
-  onPhotoTileDrop: PropTypes.func.isRequired,
-  draggingPhotoId: PropTypes.string,
-  photoDropTargetId: PropTypes.string,
-  deletingPhoto: PropTypes.bool.isRequired,
-  photoInputRef: PropTypes.shape({
-    current: PropTypes.any,
-  }).isRequired,
-  amenityCategoryKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
-  amenitiesByCategory: PropTypes.objectOf(PropTypes.arrayOf(amenityShape)).isRequired,
-  expandedAmenityCategories: PropTypes.objectOf(PropTypes.bool).isRequired,
-  selectedAmenityCountByCategory: PropTypes.objectOf(PropTypes.number).isRequired,
-  selectedAmenityIdSet: PropTypes.instanceOf(Set).isRequired,
-  toggleAmenityCategory: PropTypes.func.isRequired,
-  toggleAmenitySelection: PropTypes.func.isRequired,
+  ...overviewTabPropTypes,
+  ...photoTabPropTypes,
+  ...amenitiesTabPropTypes,
   pricingForm: pricingFormShape.isRequired,
   setPricingForm: PropTypes.func.isRequired,
-  policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
-  updatePolicyRule: PropTypes.func.isRequired,
-  handleDeletePropertyClick: PropTypes.func.isRequired,
-  saving: PropTypes.bool.isRequired,
+  ...policiesTabPropTypes,
 };
 
 ToggleSwitch.propTypes = {
@@ -1671,3 +1682,65 @@ CustomRuleRow.propTypes = {
   onToggle: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
 };
+
+PolicySelectField.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  options: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        label: PropTypes.string.isRequired,
+      }),
+    ])
+  ).isRequired,
+  hint: PropTypes.string,
+};
+
+PolicyLateTimeField.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  enabled: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  options: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
+RuleToggleField.propTypes = {
+  label: PropTypes.string.isRequired,
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+};
+
+CustomRuleEditor.propTypes = {
+  visible: PropTypes.bool.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onShow: PropTypes.func.isRequired,
+};
+
+TextInputField.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  type: PropTypes.string,
+};
+
+TextareaField.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  rows: PropTypes.number,
+};
+

@@ -96,6 +96,42 @@ const parseBookingResponse = async (response) => {
   return [];
 };
 
+const toPlainObject = (value) => (value && typeof value === "object" ? value : {});
+
+const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const normalizeCheckInSection = (checkIn) => {
+  const safeCheckIn = toPlainObject(checkIn);
+  return {
+    checkIn: toPlainObject(safeCheckIn.checkIn),
+    checkOut: toPlainObject(safeCheckIn.checkOut),
+  };
+};
+
+const normalizeCalendarAvailability = (calendarAvailability) => {
+  const safeCalendarAvailability = toPlainObject(calendarAvailability);
+  return {
+    ...safeCalendarAvailability,
+    externalBlockedDates: toArray(safeCalendarAvailability.externalBlockedDates),
+  };
+};
+
+const normalizeListingProperty = (payload) => {
+  const property = toPlainObject(payload);
+
+  return {
+    ...property,
+    property: toPlainObject(property.property),
+    images: toArray(property.images),
+    pricing: toPlainObject(property.pricing),
+    generalDetails: toArray(property.generalDetails),
+    amenities: toArray(property.amenities),
+    rules: toArray(property.rules),
+    checkIn: normalizeCheckInSection(property.checkIn),
+    calendarAvailability: normalizeCalendarAvailability(property.calendarAvailability),
+  };
+};
+
 const fetchAcceptedBookingsByPropertyId = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
@@ -161,10 +197,11 @@ const ListingDetails2 = () => {
           FetchPropertyById(id),
           fetchAcceptedBookingsByPropertyId(id).catch(() => []),
         ]);
-        setProperty(fetchedProperty);
+        const normalizedProperty = normalizeListingProperty(fetchedProperty);
+        setProperty(normalizedProperty);
         setAcceptedBookingDateKeys(buildAcceptedBookingDateKeys(acceptedBookings));
 
-        const hostData = await fetchHostInfo(fetchedProperty?.property?.hostId);
+        const hostData = await fetchHostInfo(normalizedProperty?.property?.hostId);
         setHost(hostData);
 
         setLoading(false);
