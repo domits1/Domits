@@ -76,13 +76,28 @@ export const parseCancellationPolicy = (rules = []) => {
     : null;
 };
 
+export const parseCancellationPolicyString = (policyString = "") => {
+  const policyId = policyString.toLowerCase().trim();
+  const policy = CANCELLATION_POLICIES.find((p) => p.id === policyId);
+  return policy
+    ? {
+        type: policy.name,
+        summary: policy.summary,
+        details: policy.rules,
+        important: policy.important,
+      }
+    : null;
+};
+
 const RULE_KEY_MAPS = {
   house: {
-    SuitableForChildren: "Children allowed",
+    ChildrenAllowed: "Children allowed",
     SuitableForInfants: "Infants allowed",
     PetsAllowed: "Pets allowed",
     SmokingAllowed: "Smoking allowed",
-    "Parties/EventsAllowed": "Parties / Events allowed",
+    EventsAllowed: "Parties / Events allowed",
+    QuietHours: "Quiet hours enforced",
+    MaxGuests: "Max guests limit",
   },
   property: {
     CookingAllowed: "Cooking allowed",
@@ -90,7 +105,7 @@ const RULE_KEY_MAPS = {
   },
   safety: {
     SmokeDetector: "Smoke detector",
-    CarbonMonoxide: "Carbon monoxide detector",
+    CarbonMonoxideDetector: "Carbon monoxide detector",
     FireExtinguisher: "Fire extinguisher",
     FirstAidKit: "First aid kit",
   },
@@ -114,13 +129,17 @@ export const parseSafetyFeatures = (rules = [], property = {}) =>
 export const parseCheckInOut = (checkInData = {}) => {
   const checkIn = checkInData.checkIn || {};
   const checkOut = checkInData.checkOut || {};
+  const checkInFrom = checkIn.from || "15:00";
+  const checkInTill = checkIn.till || checkIn.from;
+  const checkOutFrom = checkOut.from || "11:00";
+  const checkOutTill = checkOut.till || checkOut.from;
   return {
-    checkInFrom: checkIn.from || "15:00",
-    checkInTill: checkIn.till || checkIn.from,
-    checkOutFrom: checkOut.from || "11:00",
-    checkOutTill: checkOut.till || checkOut.from,
-    lateCheckIn: Boolean(checkIn.till && checkIn.till !== checkIn.from),
-    lateCheckOut: Boolean(checkOut.till && checkOut.till !== checkOut.from),
+    checkInFrom,
+    checkInTill,
+    checkOutFrom,
+    checkOutTill,
+    lateCheckIn: Boolean(checkInTill && checkInTill !== checkInFrom),
+    lateCheckOut: Boolean(checkOutTill && checkOutTill !== checkOutFrom),
   };
 };
 
