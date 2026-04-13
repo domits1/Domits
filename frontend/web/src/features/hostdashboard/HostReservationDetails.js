@@ -31,7 +31,7 @@ const HostReservationDetails = () => {
   const formatDate = (d) => {
     if (!d) return "";
     const date = new Date(d);
-    if (isNaN(date)) return "";
+    if (Number.isNaN(date.getTime())) return "";
     return date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
@@ -214,8 +214,11 @@ const HostReservationDetails = () => {
             </div>
 
             <div className={styles.property}>
-              <img src={b.image} className={styles.image} />
-
+              <img
+                src={b.image}
+                className={styles.image}
+                alt={b.title || "Property image"}
+              />
               <div className={styles.propertyDetails}>
                 <h4>{b.title}</h4>
 
@@ -394,8 +397,8 @@ const HostReservationDetails = () => {
                 </>
               ) : (
                 <div className={styles.grayBox}>
-                  {b.houseRules?.map((rule, i) => (
-                    <div key={i} className={styles.guestLine}>
+                  {b.houseRules?.map((rule) => (
+                    <div key={rule} className={styles.guestLine}>
                       {getRuleIcon(rule)} {rule}
                     </div>
                   ))}
