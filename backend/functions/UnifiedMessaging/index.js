@@ -37,12 +37,24 @@ const routeDefinitions = [
     handle: (event) => integrationController.connectHolidu(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/connect"),
+    handle: (event) => integrationController.connectChannex(event),
+  },
+  {
     matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/holidu/status"),
     handle: (event) => integrationController.checkHoliduStatus(event),
   },
   {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/status"),
+    handle: (event) => integrationController.checkChannexStatus(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/holidu/disconnect"),
     handle: (event) => integrationController.disconnectHolidu(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/disconnect"),
+    handle: (event) => integrationController.disconnectChannex(event),
   },
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/connect/complete"),
