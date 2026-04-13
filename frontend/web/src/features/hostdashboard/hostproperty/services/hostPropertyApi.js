@@ -24,10 +24,33 @@ import {
 } from "../utils/hostPropertyUtils";
 
 const CONFIRM_BATCH_SIZE = 8;
+const VERIFICATION_ATTEMPTS = 3;
+const VERIFICATION_RETRY_DELAY_MS = 400;
 const POLICY_RESTRICTION_FALLBACKS = Object.freeze({
   MinimumAdvanceReservation: ["MinimumAdvanceNoticeDays", "MinimumAdvanceBookingDays"],
   PreparationTimeDays: ["PreparationDays", "TurnoverDays"],
 });
+const CHECK_IN_RULE_NAMES = Object.freeze({
+  checkIn: Object.freeze({
+    from: "CheckInFrom",
+    till: "CheckInTill",
+  }),
+  checkOut: Object.freeze({
+    from: "CheckOutFrom",
+    till: "CheckOutTill",
+  }),
+});
+
+const sleep = (delayMs) => new Promise((resolve) => setTimeout(resolve, delayMs));
+
+const normalizeBooleanLike = (value) => {
+  if (typeof value === "string") {
+    const normalizedValue = value.trim().toLowerCase();
+    if (normalizedValue === "true") return true;
+    if (normalizedValue === "false") return false;
+  }
+  return Boolean(value);
+};
 
 const getRestrictionValueWithFallbacks = (restrictionValueMap, restrictionName) => {
   if (restrictionValueMap.has(restrictionName)) {
@@ -79,6 +102,89 @@ const fetchPropertySnapshot = async (propertyId) => {
   return response.json();
 };
 
+const buildRulesValueMap = (rules) =>
+  new Map(
+    (Array.isArray(rules) ? rules : [])
+      .map((rule) => [String(rule?.rule || ""), rule?.value])
+      .filter(([ruleName]) => Boolean(ruleName))
+  );
+
+const hasCheckInWindowValues = (checkInDetails) =>
+  Boolean(
+    checkInDetails?.checkIn?.from ||
+    checkInDetails?.checkIn?.till ||
+    checkInDetails?.checkOut?.from ||
+    checkInDetails?.checkOut?.till
+  );
+
+const extractPersistedCheckInDetails = (verificationData) => {
+  const normalizedSnapshotCheckIn = normalizeCheckInDetails(verificationData?.checkIn);
+  if (hasCheckInWindowValues(verificationData?.checkIn)) {
+    return normalizedSnapshotCheckIn;
+  }
+
+  const rulesValueMap = buildRulesValueMap(verificationData?.rules);
+  return normalizeCheckInDetails({
+    checkIn: {
+      from: rulesValueMap.get(CHECK_IN_RULE_NAMES.checkIn.from),
+      till: rulesValueMap.get(CHECK_IN_RULE_NAMES.checkIn.till),
+    },
+    checkOut: {
+      from: rulesValueMap.get(CHECK_IN_RULE_NAMES.checkOut.from),
+      till: rulesValueMap.get(CHECK_IN_RULE_NAMES.checkOut.till),
+    },
+  });
+};
+
+const hasSamePolicyRules = (verificationData, rulesPayload) => {
+  const persistedRulesMap = buildRulesValueMap(verificationData?.rules);
+  return (rulesPayload || []).every(
+    (rule) => normalizeBooleanLike(persistedRulesMap.get(rule.rule)) === Boolean(rule.value)
+  );
+};
+
+const hasSameCheckInDetails = (verificationData, checkInPayload) => {
+  const persistedCheckIn = extractPersistedCheckInDetails(verificationData);
+  const expectedCheckIn = normalizeCheckInDetails(checkInPayload);
+  return (
+    persistedCheckIn.checkIn.from === expectedCheckIn.checkIn.from &&
+    persistedCheckIn.checkIn.till === expectedCheckIn.checkIn.till &&
+    persistedCheckIn.checkOut.from === expectedCheckIn.checkOut.from &&
+    persistedCheckIn.checkOut.till === expectedCheckIn.checkOut.till
+  );
+};
+
+const hasSameAvailabilityRestrictions = (verificationData, availabilityRestrictionsPayload) => {
+  const persistedRestrictionValueMap = buildAvailabilityRestrictionValueMap(verificationData?.availabilityRestrictions);
+  return (availabilityRestrictionsPayload || []).every((restriction) => {
+    const persistedValue = Number(
+      getRestrictionValueWithFallbacks(persistedRestrictionValueMap, restriction.restriction)
+    );
+    const expectedValue = Number(restriction.value);
+    if (!Number.isFinite(expectedValue)) {
+      return false;
+    }
+    return Number.isFinite(persistedValue) && Math.trunc(persistedValue) === Math.trunc(expectedValue);
+  });
+};
+
+const verifySnapshotWithRetries = async (propertyId, verifier) => {
+  let lastVerificationData = null;
+
+  for (let attempt = 0; attempt < VERIFICATION_ATTEMPTS; attempt += 1) {
+    lastVerificationData = await fetchPropertySnapshot(propertyId);
+    if (verifier(lastVerificationData)) {
+      return lastVerificationData;
+    }
+
+    if (attempt < VERIFICATION_ATTEMPTS - 1) {
+      await sleep(VERIFICATION_RETRY_DELAY_MS);
+    }
+  }
+
+  return lastVerificationData;
+};
+
 const verifyAmenities = async (propertyId, amenitiesPayload) => {
   const verificationData = await fetchPropertySnapshot(propertyId);
   const persistedAmenityIds = new Set(
@@ -97,44 +203,27 @@ const verifyAmenities = async (propertyId, amenitiesPayload) => {
 };
 
 const verifyPolicies = async (propertyId, rulesPayload, checkInPayload, availabilityRestrictionsPayload) => {
-  const verificationData = await fetchPropertySnapshot(propertyId);
-  const persistedRulesMap = new Map(
-    (Array.isArray(verificationData?.rules) ? verificationData.rules : [])
-      .map((rule) => [String(rule?.rule || ""), Boolean(rule?.value)])
-      .filter(([ruleName]) => Boolean(ruleName))
+  const verificationData = await verifySnapshotWithRetries(
+    propertyId,
+    (snapshot) =>
+      hasSamePolicyRules(snapshot, rulesPayload) &&
+      hasSameCheckInDetails(snapshot, checkInPayload) &&
+      hasSameAvailabilityRestrictions(snapshot, availabilityRestrictionsPayload)
   );
 
-  const hasSamePolicies = (rulesPayload || []).every(
-    (rule) => persistedRulesMap.get(rule.rule) === Boolean(rule.value)
-  );
+  const hasSamePolicies = hasSamePolicyRules(verificationData, rulesPayload);
 
   if (!hasSamePolicies) {
     throw new Error("Policies could not be updated in the deployed backend yet.");
   }
 
-  const persistedCheckIn = normalizeCheckInDetails(verificationData?.checkIn);
-  const expectedCheckIn = normalizeCheckInDetails(checkInPayload);
-  const hasSameCheckIn =
-    persistedCheckIn.checkIn.from === expectedCheckIn.checkIn.from &&
-    persistedCheckIn.checkIn.till === expectedCheckIn.checkIn.till &&
-    persistedCheckIn.checkOut.from === expectedCheckIn.checkOut.from &&
-    persistedCheckIn.checkOut.till === expectedCheckIn.checkOut.till;
+  const hasSameCheckIn = hasSameCheckInDetails(verificationData, checkInPayload);
 
   if (!hasSameCheckIn) {
     throw new Error("Check-in and check-out settings could not be updated in the deployed backend yet.");
   }
 
-  const persistedRestrictionValueMap = buildAvailabilityRestrictionValueMap(verificationData?.availabilityRestrictions);
-  const hasSameRestrictions = (availabilityRestrictionsPayload || []).every((restriction) => {
-    const persistedValue = Number(
-      getRestrictionValueWithFallbacks(persistedRestrictionValueMap, restriction.restriction)
-    );
-    const expectedValue = Number(restriction.value);
-    if (!Number.isFinite(expectedValue)) {
-      return false;
-    }
-    return Number.isFinite(persistedValue) && Math.trunc(persistedValue) === Math.trunc(expectedValue);
-  });
+  const hasSameRestrictions = hasSameAvailabilityRestrictions(verificationData, availabilityRestrictionsPayload);
 
   if (!hasSameRestrictions) {
     throw new Error("Policy availability settings could not be updated in the deployed backend yet.");
