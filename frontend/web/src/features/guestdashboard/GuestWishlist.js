@@ -77,6 +77,13 @@ const fetchWishlistDisplayItems = async (propertyIds) => {
   return Promise.all(safePropertyIds.map((propertyId) => fetchWishlistPropertyCard(propertyId)));
 };
 
+const sortWishlistDisplayItems = (items) => {
+  const safeItems = Array.isArray(items) ? items : [];
+  const availableItems = safeItems.filter((item) => !item?.isUnavailable);
+  const unavailableItems = safeItems.filter((item) => item?.isUnavailable);
+  return [...availableItems, ...unavailableItems];
+};
+
 const UnavailableWishlistCard = ({ onRemove }) => (
   <article className="wishlistUnavailableCard" aria-label="Saved listing no longer available">
     <div className="wishlistUnavailableCard__media">
@@ -129,7 +136,7 @@ const GuestWishlist = () => {
         }
 
         const fullData = await fetchWishlistDisplayItems(propertyIds);
-        setWishlist(fullData);
+        setWishlist(sortWishlistDisplayItems(fullData));
       } catch {
         setToast({ message: "Failed to load wishlist. Please try again.", status: "error" });
       } finally {

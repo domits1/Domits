@@ -6,6 +6,22 @@ import { getAccessToken } from "../utils/authUtils";
 import { fetchWishlists, moveAccommodation } from "../services/wishlistService";
 import Toast from "../../../components/toast/Toast";
 
+const sortWishlistNames = (names, defaultName = "My next trip") => {
+  const safeNames = Array.isArray(names) ? [...names] : [];
+
+  return safeNames.sort((left, right) => {
+    const leftIsDefault = left === defaultName;
+    const rightIsDefault = right === defaultName;
+
+    if (leftIsDefault && !rightIsDefault) return -1;
+    if (!leftIsDefault && rightIsDefault) return 1;
+
+    return String(left || "").localeCompare(String(right || ""), undefined, {
+      sensitivity: "base",
+    });
+  });
+};
+
 const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
   const [showEdit, setShowEdit] = useState(false);
   const [wishlists, setWishlists] = useState([]);
@@ -15,12 +31,11 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
 
   const popupRef = useRef();
 
-  // Fetch user's wishlists
-   useEffect(() => {
+  useEffect(() => {
     const getWishlists = async () => {
-     try {
+      try {
         const data = await fetchWishlists();
-        setWishlists(Object.keys(data.wishlists || {}));
+        setWishlists(sortWishlistNames(Object.keys(data.wishlists || {})));
       } catch {
         setToast({ message: "Failed to load wishlists. Please try again.", status: "error" });
       }
@@ -32,7 +47,6 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
     }
   }, [show]);
 
-  // Close popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (popupRef.current && !popupRef.current.contains(event.target)) {
@@ -49,21 +63,18 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
     };
   }, [show, onClose]);
 
-  // Handle the move of an accommodation to a different list
   const handleConfirm = async () => {
     const token = getAccessToken();
     const listToUse = newListName || selectedList;
 
     if (!token || !propertyId || !listToUse) return;
 
-    // Don't send request if the list is unchanged
     if (listToUse === activeList) {
       onClose();
       return;
     }
 
-    // Send PATCH request to move the accommodation from old list to the selected/new lis
-     try {
+    try {
       await moveAccommodation(activeList, listToUse, propertyId);
       if (onSave) onSave(listToUse);
       onClose();

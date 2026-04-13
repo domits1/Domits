@@ -1,0 +1,67 @@
+.listing-policy-section {
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 14px;
+  padding: 24px;
+  margin-top: 30px;
+  transition: all 0.3s ease;
+}
+
+.listing-policy-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border-color: rgba(20, 200, 90, 0.15);
+}
+
+.listing-policy-section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #1a1a1a;
+}
+
+.listing-policy-section-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listing-policy-section-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  color: #4d4d4d;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.listing-policy-section-list-item:last-child {
+  border-bottom: none;
+}
+
+.listing-policy-section-list-item::before {
+  content: "•";
+  color: var(--primary-color, #2d8a5a);
+  font-weight: bold;
+  font-size: 18px;
+  margin-right: 12px;
+}
+
+@media (max-width: 768px) {
+  .listing-policy-section {
+    padding: 18px;
+    border-radius: 14px;
+    margin-top: 22px;
+  }
+
+  .listing-policy-section-title {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .listing-policy-section-list-item {
+    font-size: 14px;
+    padding: 6px 0;
+  }
+}
