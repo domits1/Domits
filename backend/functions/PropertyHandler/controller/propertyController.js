@@ -291,6 +291,7 @@ export class PropertyController {
           capacity: normalizedOverviewPayload.capacity,
           location: normalizedOverviewPayload.location,
           pricing: normalizedOverviewPayload.pricing,
+          checkIn: normalizedOverviewPayload.checkIn,
           availabilityRestrictions: normalizedOverviewPayload.availabilityRestrictions,
           amenities: normalizedOverviewPayload.amenities,
           rules: normalizedOverviewPayload.rules,
@@ -411,6 +412,7 @@ export class PropertyController {
       availabilityRestrictions: body.availabilityRestrictions,
       amenities: body.amenities,
       rules: body.rules,
+      checkIn: body.checkIn,
     };
   }
 
@@ -422,6 +424,7 @@ export class PropertyController {
       this.validateAvailabilityRestrictionsPayload(payload.availabilityRestrictions) ||
       this.validateAmenitiesPayload(payload.amenities) ||
       this.validateRulesPayload(payload.rules) ||
+      this.validateCheckInPayload(payload.checkIn) ||
       this.validateOverviewTextContent(payload) ||
       this.validateCapacitySpaceType(payload.capacity) ||
       null
@@ -447,6 +450,9 @@ export class PropertyController {
     }
     if (payload.location !== undefined && !this.isPlainObject(payload.location)) {
       return "Location must be an object.";
+    }
+    if (payload.checkIn !== undefined && !this.isPlainObject(payload.checkIn)) {
+      return "Check-in must be an object.";
     }
     return null;
   }
@@ -540,6 +546,40 @@ export class PropertyController {
     return null;
   }
 
+  validateCheckInPayload(checkIn) {
+    if (checkIn === undefined) {
+      return null;
+    }
+    if (!this.isPlainObject(checkIn)) {
+      return "Check-in must be an object.";
+    }
+
+    const checkInWindow = checkIn.checkIn;
+    const checkOutWindow = checkIn.checkOut;
+    if (!this.isPlainObject(checkInWindow) || !this.isPlainObject(checkOutWindow)) {
+      return "Check-in must contain checkIn and checkOut objects.";
+    }
+
+    const normalizedValues = [
+      checkInWindow.from,
+      checkInWindow.till,
+      checkOutWindow.from,
+      checkOutWindow.till,
+    ];
+    const hasInvalidTime = normalizedValues.some((value) => {
+      if (typeof value !== "string") {
+        return true;
+      }
+      const normalizedValue = value.trim();
+      return !normalizedValue || !/^(\d{2}:\d{2})(:\d{2})?$/.test(normalizedValue);
+    });
+    if (hasInvalidTime) {
+      return "Check-in times must use HH:MM or HH:MM:SS format.";
+    }
+
+    return null;
+  }
+
   isValidRulePayloadEntry(rule) {
     return (
       rule &&
@@ -576,6 +616,7 @@ export class PropertyController {
       capacity: payload.capacity ? this.normalizeCapacityPayload(payload.capacity) : undefined,
       location: payload.location ? this.normalizeLocationPayload(payload.location) : undefined,
       pricing: payload.pricing ? this.normalizePricingPayload(payload.pricing) : undefined,
+      checkIn: payload.checkIn ? this.normalizeCheckInPayload(payload.checkIn) : undefined,
       availabilityRestrictions: Array.isArray(payload.availabilityRestrictions)
         ? this.normalizeAvailabilityRestrictionsPayload(payload.availabilityRestrictions)
         : undefined,
@@ -595,6 +636,36 @@ export class PropertyController {
             ).values()
           )
         : undefined,
+    };
+  }
+
+  normalizeCheckInPayload(checkIn) {
+    const normalizeTime = (value) => {
+      const normalizedValue = String(value || "").trim();
+      if (!normalizedValue) {
+        throw new Error("Check-in times cannot be empty.");
+      }
+      const timeMatch = /^(\d{2}:\d{2})(:\d{2})?$/.exec(normalizedValue);
+      if (!timeMatch) {
+        throw new Error("Check-in times must use HH:MM or HH:MM:SS format.");
+      }
+      return timeMatch[1];
+    };
+
+    const checkInFrom = normalizeTime(checkIn?.checkIn?.from);
+    const checkInTill = normalizeTime(checkIn?.checkIn?.till);
+    const checkOutFrom = normalizeTime(checkIn?.checkOut?.from);
+    const checkOutTill = normalizeTime(checkIn?.checkOut?.till);
+
+    return {
+      checkIn: {
+        from: checkInFrom,
+        till: checkInTill,
+      },
+      checkOut: {
+        from: checkOutFrom,
+        till: checkOutTill,
+      },
     };
   }
 
