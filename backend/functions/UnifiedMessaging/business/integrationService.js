@@ -1589,6 +1589,90 @@ export default class IntegrationService {
     }
   }
 
+  async listChannexProperties(userId) {
+    const normalizedUserId = requireStr(userId);
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+
+    try {
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+        return bad(409, {
+          error: "Channex integration is not connected for this user.",
+          errorCode: "CHANNEX_NOT_CONNECTED",
+          status: !integration ? CHANNEX_STATUS.NOT_CONNECTED : CHANNEX_STATUS.DISCONNECTED,
+        });
+      }
+
+      const credentialsRef = requireStr(integration.credentialsRef);
+      if (!credentialsRef) {
+        return bad(409, {
+          error: "Channex credentials are missing. Reconnect required.",
+          errorCode: "CHANNEX_RECONNECT_REQUIRED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      let secret;
+      try {
+        secret = await this.channexCredentialStore.readSecretOrNull(credentialsRef);
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(409, {
+          error: "Stored Channex secret could not be read. Reconnect required.",
+          errorCode: "CHANNEX_SECRET_READ_FAILED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          details,
+        });
+      }
+
+      if (
+        !secret ||
+        typeof secret !== "object" ||
+        Array.isArray(secret) ||
+        !hasChannexRequiredCredentialFields(secret)
+      ) {
+        return bad(409, {
+          error: "Stored Channex secret is missing, unreadable, or incomplete. Reconnect required.",
+          errorCode: "CHANNEX_SECRET_INVALID",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      const propertyListResult = await this.channexProviderClient.listProperties(secret);
+      if (!propertyListResult?.success) {
+        return bad(502, {
+          error: propertyListResult?.errorMessage || "Failed to fetch Channex properties.",
+          errorCode: propertyListResult?.errorCode || "CHANNEX_PROPERTY_LIST_FAILED",
+          status:
+            propertyListResult?.providerStatus === "UNAUTHORIZED"
+              ? CHANNEX_STATUS.RECONNECT_REQUIRED
+              : CHANNEX_STATUS.VALIDATION_FAILED,
+          providerStatus: propertyListResult?.providerStatus || "PROPERTY_LIST_FAILED",
+        });
+      }
+
+      return ok({
+        channel: "CHANNEX",
+        integrationAccountId: integration.id,
+        status: CHANNEX_STATUS.CONNECTED,
+        properties: (Array.isArray(propertyListResult.properties) ? propertyListResult.properties : []).map(
+          (property) => ({
+            externalPropertyId: property.externalPropertyId,
+            externalPropertyName: property.externalPropertyName,
+            propertyStatus: property.propertyStatus ?? null,
+          })
+        ),
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to list Channex properties.",
+        errorCode: "CHANNEX_PROPERTY_LIST_SERVICE_FAILED",
+        details,
+      });
+    }
+  }
+
   async completeWhatsAppConnect(body) {
     const userId = requireStr(body.userId);
     const connectSessionId = requireStr(body.connectSessionId);
