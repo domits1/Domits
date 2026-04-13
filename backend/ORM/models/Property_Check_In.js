@@ -11,18 +11,22 @@ export const Property_Check_In = new EntitySchema({
       nullable: false,
     },
     checkInFrom: {
+      name: "checkinfrom",
       type: "time",
       nullable: false,
     },
     checkInTill: {
+      name: "checkintill",
       type: "time",
       nullable: false,
     },
     checkOutFrom: {
+      name: "checkoutfrom",
       type: "time",
       nullable: false,
     },
     checkOutTill: {
+      name: "checkouttill",
       type: "time",
       nullable: false,
     },
