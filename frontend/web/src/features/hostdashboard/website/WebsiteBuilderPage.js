@@ -587,6 +587,8 @@ function WebsiteBuilderPage() {
   };
 
   const renderTemplateStep = () => {
+    const showTemplateImplementationHint = selectedTemplateIsImplemented === false;
+
     return (
       <div className={styles.templateStage}>
         <div className={styles.templateGrid}>
@@ -637,7 +639,7 @@ function WebsiteBuilderPage() {
           </div>
 
           <p className={styles.selectedTemplateDescription}>{selectedTemplate.description}</p>
-          {!selectedTemplateIsImplemented ? (
+          {showTemplateImplementationHint ? (
             <p className={styles.previewHelperText}>
               Real template preview is currently available for Panorama Landing, Trust Signals, and
               Experience Journey. The other template options stay visible so the chooser is not locked to

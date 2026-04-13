@@ -46,7 +46,7 @@ export const Standalone_Site_Draft = new EntitySchema({
       generated: false,
       nullable: false,
       transformer: {
-        from: (value) => Number(value),
+        from: Number,
         to: (value) => value,
       },
     },
@@ -55,7 +55,7 @@ export const Standalone_Site_Draft = new EntitySchema({
       generated: false,
       nullable: false,
       transformer: {
-        from: (value) => Number(value),
+        from: Number,
         to: (value) => value,
       },
     },

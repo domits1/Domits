@@ -1,5 +1,6 @@
+import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
-import { getAuthorizedHeaders, resolveApiErrorMessage } from "./websiteApiServiceShared";
+import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
 
 const buildSinglePropertyUrl = (propertyId) =>
   `${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`;
@@ -10,13 +11,20 @@ export const fetchWebsitePropertyDetails = async (propertyId) => {
     throw new Error("Select a listing before building a website preview.");
   }
 
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("You must be signed in to build a website preview.");
+  }
+
   const response = await fetch(buildSinglePropertyUrl(normalizedPropertyId), {
     method: "GET",
-    headers: getAuthorizedHeaders("You must be signed in to build a website preview."),
+    headers: {
+      Authorization: accessToken,
+    },
   });
 
   if (!response.ok) {
-    const errorMessage = await resolveApiErrorMessage(
+    const errorMessage = await getApiErrorMessage(
       response,
       "We could not load the selected listing for website preview."
     );

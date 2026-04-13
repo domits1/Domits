@@ -1078,7 +1078,7 @@ export class PropertyController {
         }
 
         if (typeof payload !== "object" || Array.isArray(payload)) {
-            throw new Error(`${fieldName} must be a plain object.`);
+            throw new TypeError(`${fieldName} must be a plain object.`);
         }
 
         return payload;

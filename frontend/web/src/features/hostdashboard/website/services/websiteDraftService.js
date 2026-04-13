@@ -1,19 +1,31 @@
+import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
-import { getAuthorizedHeaders, resolveApiErrorMessage } from "./websiteApiServiceShared";
+import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
 
 const buildWebsiteDraftsUrl = () => `${PROPERTY_API_BASE}/website/drafts`;
 const buildWebsiteDraftUrl = (propertyId) =>
   `${PROPERTY_API_BASE}/website/draft?property=${encodeURIComponent(propertyId)}`;
 const buildWebsiteDraftMutationUrl = () => `${PROPERTY_API_BASE}/website/draft`;
 
+const getRequiredAccessToken = () => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("You must be signed in to manage website drafts.");
+  }
+
+  return accessToken;
+};
+
 export const fetchWebsiteDrafts = async () => {
   const response = await fetch(buildWebsiteDraftsUrl(), {
     method: "GET",
-    headers: getAuthorizedHeaders("You must be signed in to manage website drafts."),
+    headers: {
+      Authorization: getRequiredAccessToken(),
+    },
   });
 
   if (!response.ok) {
-    const errorMessage = await resolveApiErrorMessage(
+    const errorMessage = await getApiErrorMessage(
       response,
       "We could not load your website drafts."
     );
@@ -32,7 +44,9 @@ export const fetchWebsiteDraftByPropertyId = async (propertyId) => {
 
   const response = await fetch(buildWebsiteDraftUrl(normalizedPropertyId), {
     method: "GET",
-    headers: getAuthorizedHeaders("You must be signed in to manage website drafts."),
+    headers: {
+      Authorization: getRequiredAccessToken(),
+    },
   });
 
   if (response.status === 404) {
@@ -40,7 +54,7 @@ export const fetchWebsiteDraftByPropertyId = async (propertyId) => {
   }
 
   if (!response.ok) {
-    const errorMessage = await resolveApiErrorMessage(
+    const errorMessage = await getApiErrorMessage(
       response,
       "We could not load the website draft for this listing."
     );
@@ -70,7 +84,7 @@ export const upsertWebsiteDraft = async ({
   const response = await fetch(buildWebsiteDraftMutationUrl(), {
     method: "POST",
     headers: {
-      ...getAuthorizedHeaders("You must be signed in to manage website drafts."),
+      Authorization: getRequiredAccessToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -83,7 +97,7 @@ export const upsertWebsiteDraft = async ({
   });
 
   if (!response.ok) {
-    const errorMessage = await resolveApiErrorMessage(
+    const errorMessage = await getApiErrorMessage(
       response,
       "We could not save this website draft."
     );
