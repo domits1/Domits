@@ -4,23 +4,25 @@ import PropTypes from "prop-types";
 import CloseIcon from "@mui/icons-material/Close";
 import { getAccessToken } from "../utils/authUtils";
 import { fetchWishlists, moveAccommodation } from "../services/wishlistService";
+import Toast from "../../../components/toast/Toast";
 
 const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
   const [showEdit, setShowEdit] = useState(false);
   const [wishlists, setWishlists] = useState([]);
   const [newListName, setNewListName] = useState("");
   const [selectedList, setSelectedList] = useState(activeList || "My next trip");
+  const [toast, setToast] = useState({ message: "", status: "" });
 
   const popupRef = useRef();
 
   // Fetch user's wishlists
    useEffect(() => {
     const getWishlists = async () => {
-      try {
+     try {
         const data = await fetchWishlists();
         setWishlists(Object.keys(data.wishlists || {}));
-      } catch (err) {
-        console.error("Failed to fetch wishlists", err);
+      } catch {
+        setToast({ message: "Failed to load wishlists. Please try again.", status: "error" });
       }
     };
 
@@ -65,8 +67,8 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
       await moveAccommodation(activeList, listToUse, propertyId);
       if (onSave) onSave(listToUse);
       onClose();
-    } catch (err) {
-      console.error("Failed to move accommodation:", err.message);
+    } catch {
+      setToast({ message: "Failed to move accommodation. Please try again.", status: "error" });
     }
   };
 
@@ -162,6 +164,14 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
           </div>
         )}
       </dialog>
+      {ReactDOM.createPortal(
+        <Toast
+          message={toast.message}
+          status={toast.status || "info"}
+          onClose={() => setToast({ message: "", status: "" })}
+        />,
+        document.body,
+      )}
     </div>,
     document.body,
   );

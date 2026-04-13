@@ -23,6 +23,30 @@ const fetchListWithCount = async (name) => {
   }
 };
 
+const sortWishlistLists = (lists, defaultName = "My next trip") => {
+  const safeLists = Array.isArray(lists) ? [...lists] : [];
+
+  return safeLists.sort((left, right) => {
+    const leftIsDefault = left?.name === defaultName;
+    const rightIsDefault = right?.name === defaultName;
+
+    if (leftIsDefault && !rightIsDefault) return -1;
+    if (!leftIsDefault && rightIsDefault) return 1;
+
+    return String(left?.name || "").localeCompare(String(right?.name || ""), undefined, {
+      sensitivity: "base",
+    });
+  });
+};
+
+const resolveFallbackListName = (lists, preferredName = "My next trip") => {
+  const safeLists = Array.isArray(lists) ? lists : [];
+  if (safeLists.some((list) => list.name === preferredName)) {
+    return preferredName;
+  }
+  return safeLists[0]?.name || preferredName;
+};
+
 const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   const [lists, setLists] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -44,12 +68,12 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         const data = await fetchWishlists();
         const wishlists = data?.wishlists || {};
 
-        const structured = await Promise.all(Object.keys(wishlists).map(fetchListWithCount));
+        const structured = sortWishlistLists(await Promise.all(Object.keys(wishlists).map(fetchListWithCount)));
 
         setLists(structured);
 
         if (!structured.some((l) => l.name === selectedList)) {
-          onListChange("My next trip");
+          onListChange(resolveFallbackListName(structured));
         }
       } catch {
         setToast({ message: "Failed to load wishlists. Please try again.", status: "error" });
@@ -67,7 +91,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       await createWishlist(newListName);
 
       const newList = { id: newListName, name: newListName, count: 0 };
-      setLists([...lists, newList]);
+      setLists(sortWishlistLists([...lists, newList]));
       onListChange(newListName);
       if (onCreate) onCreate(newListName);
       setNewListName("");
@@ -89,11 +113,11 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
     try {
       await renameWishlist(oldName, newName);
 
-      const updated = lists.map((list) =>
+      const updated = sortWishlistLists(lists.map((list) =>
         list.name === oldName
           ? { ...list, name: newName, id: newName }
           : list
-      );
+      ));
       setLists(updated);
       if (selectedList === oldName) onListChange(newName);
       setEditingId(null);
@@ -103,6 +127,8 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   };
 
   const handleDelete = async (name) => {
+    if (name === "My next trip") return;
+
     const token = getAccessToken();
     if (!token) return;
     if (!globalThis.confirm(`Delete wishlist "${name}"?`)) return;
@@ -110,9 +136,9 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
     try {
       await deleteWishlist(name);
 
-      const remaining = lists.filter((list) => list.name !== name);
+      const remaining = sortWishlistLists(lists.filter((list) => list.name !== name));
       setLists(remaining);
-      if (selectedList === name) onListChange("My next trip");
+      if (selectedList === name) onListChange(resolveFallbackListName(remaining));
     } catch {
       setToast({ message: "Failed to delete wishlist. Please try again.", status: "error" });
     }
@@ -209,16 +235,18 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
                       </button>
                       <div className="rightSide">
                         <span className="badge">{list.count}</span>
-                        {list.name !== "My next trip" && (
-                          <>
+                        <>
+                          {list.name !== "My next trip" && (
                             <button onClick={() => { setEditingId(list.id); setEditValue(list.name); }}>
                               <FiEdit2 />
                             </button>
+                          )}
+                          {list.name !== "My next trip" && (
                             <button onClick={() => handleDelete(list.name)}>
                               <FiTrash2 />
                             </button>
-                          </>
-                        )}
+                          )}
+                        </>
                       </div>
                     </>
                   )}
