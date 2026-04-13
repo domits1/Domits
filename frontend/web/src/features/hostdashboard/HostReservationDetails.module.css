@@ -62,7 +62,7 @@
 }
 
 .awaiting {
-  color: #92400e;
+  color: #78350f; 
 }
 
 .failed {
@@ -265,7 +265,7 @@
 
 .subText {
   font-size: 13px;
-  color: #374151;
+  color: #1f2937;
 }
 
 .request {
