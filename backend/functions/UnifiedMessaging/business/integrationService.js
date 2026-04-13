@@ -1673,6 +1673,63 @@ export default class IntegrationService {
     }
   }
 
+  async linkChannexProperty(userId, body) {
+    const normalizedUserId = requireStr(userId);
+    if (!normalizedUserId) return bad(400, { error: "Missing required field: userId" });
+
+    const domitsPropertyId = requireStr(body?.domitsPropertyId);
+    const externalPropertyId = requireStr(body?.externalPropertyId);
+    const externalPropertyName = requireStr(body?.externalPropertyName);
+
+    if (!domitsPropertyId) return bad(400, { error: "Missing required field: domitsPropertyId" });
+    if (!externalPropertyId) return bad(400, { error: "Missing required field: externalPropertyId" });
+
+    try {
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+        return bad(409, {
+          error: "Channex integration is not connected for this user.",
+          errorCode: "CHANNEX_NOT_CONNECTED",
+          status: !integration ? CHANNEX_STATUS.NOT_CONNECTED : CHANNEX_STATUS.DISCONNECTED,
+        });
+      }
+
+      if (!requireStr(integration.credentialsRef)) {
+        return bad(409, {
+          error: "Channex integration is not locally usable. Reconnect required.",
+          errorCode: "CHANNEX_RECONNECT_REQUIRED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      const saved = await this.upsertIntegrationProperty(integration.id, {
+        domitsPropertyId,
+        externalPropertyId,
+        externalPropertyName,
+        status: "ACTIVE",
+      });
+
+      if (saved?.statusCode !== 200) {
+        return saved;
+      }
+
+      return ok({
+        integrationAccountId: integration.id,
+        domitsPropertyId: saved.response?.domitsPropertyId ?? domitsPropertyId,
+        externalPropertyId: saved.response?.externalPropertyId ?? externalPropertyId,
+        externalPropertyName: saved.response?.externalPropertyName ?? externalPropertyName ?? null,
+        status: saved.response?.status ?? "ACTIVE",
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to save Channex property mapping.",
+        errorCode: "CHANNEX_PROPERTY_LINK_FAILED",
+        details,
+      });
+    }
+  }
+
   async completeWhatsAppConnect(body) {
     const userId = requireStr(body.userId);
     const connectSessionId = requireStr(body.connectSessionId);
