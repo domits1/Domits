@@ -339,6 +339,7 @@ export class PropertyService {
       this.getHouseRules(propertyId),
       this.getCustomRules(propertyId),
     ]);
+    const resolvedCheckIn = checkIn || this.buildCheckInFromRules(propertyId, rules);
     const technicalDetails =
       propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
         ? await this.getTechnicalDetails(propertyId)
@@ -348,7 +349,7 @@ export class PropertyService {
       amenities: amenities,
       availability: availability,
       availabilityRestrictions: availabilityRestrictions,
-      checkIn: checkIn,
+      checkIn: resolvedCheckIn,
       cancellationPolicy: cancellationPolicy,
       lateCheckin: lateCheckin,
       houseRules: houseRules,
@@ -563,28 +564,32 @@ export class PropertyService {
 
   async getCheckInRules(propertyId) {
     const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+    return this.buildCheckInFromRules(propertyId, rules);
+  }
 
+  buildCheckInFromRules(propertyId, rules) {
     if (!rules || rules.length === 0) return null;
 
-    const checkInFrom = rules?.find((r) => r.rule === "CheckInFrom");
-    const checkInTill = rules?.find((r) => r.rule === "CheckInTill");
-    const checkOutFrom = rules?.find((r) => r.rule === "CheckOutFrom");
-    const checkOutTill = rules?.find((r) => r.rule === "CheckOutTill");
+    const checkInFrom = rules.find((r) => r.rule === "CheckInFrom");
+    const checkInTill = rules.find((r) => r.rule === "CheckInTill");
+    const checkOutFrom = rules.find((r) => r.rule === "CheckOutFrom");
+    const checkOutTill = rules.find((r) => r.rule === "CheckOutTill");
 
-    if (checkInFrom || checkInTill || checkOutFrom || checkOutTill) {
-      return {
-        property_id: propertyId,
-        checkIn: {
-          from: checkInFrom?.value || "09:00:00",
-          till: checkInTill?.value || "18:00:00",
-        },
-        checkOut: {
-          from: checkOutFrom?.value || "07:00:00",
-          till: checkOutTill?.value || "08:00:00",
-        },
-      };
+    if (!checkInFrom && !checkInTill && !checkOutFrom && !checkOutTill) {
+      return null;
     }
-    return null;
+
+    return {
+      property_id: propertyId,
+      checkIn: {
+        from: checkInFrom?.value || "09:00:00",
+        till: checkInTill?.value || "18:00:00",
+      },
+      checkOut: {
+        from: checkOutFrom?.value || "07:00:00",
+        till: checkOutTill?.value || "08:00:00",
+      },
+    };
   }
 
   async #upsertPropertyRule(propertyId, ruleName, value) {
