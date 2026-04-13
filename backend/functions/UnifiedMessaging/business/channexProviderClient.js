@@ -164,4 +164,104 @@ export default class ChannexProviderClient {
       };
     }
   }
+
+  async listRoomTypes(credentials, externalPropertyId) {
+    const apiKey = requireStr(credentials?.apiKey);
+    const propertyId = requireStr(externalPropertyId);
+
+    if (!apiKey) {
+      return {
+        success: false,
+        roomTypes: [],
+        providerStatus: "INVALID_CREDENTIALS",
+        errorCode: "MISSING_API_KEY",
+        errorMessage: "Channex credentials must include apiKey.",
+      };
+    }
+
+    if (!propertyId) {
+      return {
+        success: false,
+        roomTypes: [],
+        providerStatus: "INVALID_REQUEST",
+        errorCode: "MISSING_PROPERTY_ID",
+        errorMessage: "Channex room type discovery requires externalPropertyId.",
+      };
+    }
+
+    try {
+      const url = new URL("/api/v1/room_types", CHANNEX_BASE_URL);
+      url.searchParams.set("filter[property_id]", propertyId);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-api-key": apiKey,
+        },
+      });
+
+      const rawText = await response.text();
+      const parsed = parseJsonSafely(rawText);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          roomTypes: [],
+          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "ROOM_TYPE_LIST_FAILED",
+          errorCode:
+            parsed?.errors?.code ||
+            parsed?.error?.code ||
+            `CHANNEX_ROOM_TYPES_${response.status}`,
+          errorMessage:
+            parsed?.errors?.title ||
+            parsed?.error?.message ||
+            `Channex room type list failed with status ${response.status}.`,
+        };
+      }
+
+      const rows = Array.isArray(parsed?.data) ? parsed.data : null;
+      if (!rows) {
+        return {
+          success: false,
+          roomTypes: [],
+          providerStatus: "INVALID_RESPONSE",
+          errorCode: "CHANNEX_ROOM_TYPES_INVALID_RESPONSE",
+          errorMessage: "Channex room type list response was missing a usable data array.",
+        };
+      }
+
+      const roomTypes = rows
+        .map((row) => {
+          const externalRoomTypeId = requireStr(row?.id);
+          if (!externalRoomTypeId) return null;
+
+          return {
+            externalRoomTypeId,
+            externalRoomTypeName:
+              requireStr(row?.attributes?.title) ||
+              requireStr(row?.attributes?.name) ||
+              null,
+            roomTypeStatus: requireStr(row?.attributes?.state) || null,
+          };
+        })
+        .filter(Boolean);
+
+      return {
+        success: true,
+        roomTypes,
+        providerStatus: "ACTIVE",
+        errorCode: null,
+        errorMessage: null,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        roomTypes: [],
+        providerStatus: "ROOM_TYPE_LIST_FAILED",
+        errorCode: error?.code || error?.name || "CHANNEX_ROOM_TYPE_LIST_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex room type list request failed.",
+      };
+    }
+  }
 }

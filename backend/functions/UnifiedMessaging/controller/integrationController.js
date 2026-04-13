@@ -88,6 +88,12 @@ class IntegrationController {
     return await this.integrationService.listChannexProperties(userId);
   }
 
+  async linkChannexProperty(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.linkChannexProperty(userId, body);
+  }
+
   async disconnectHolidu(event) {
     const body = safeJson(event.body) || {};
     return await this.integrationService.disconnectHolidu(body);

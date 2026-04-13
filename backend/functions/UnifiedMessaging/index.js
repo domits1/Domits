@@ -53,6 +53,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.listChannexProperties(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/properties"),
+    handle: (event) => integrationController.linkChannexProperty(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/holidu/disconnect"),
     handle: (event) => integrationController.disconnectHolidu(event),
   },
