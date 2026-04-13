@@ -235,18 +235,16 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
                       </button>
                       <div className="rightSide">
                         <span className="badge">{list.count}</span>
-                        <>
-                          {list.name !== "My next trip" && (
-                            <button onClick={() => { setEditingId(list.id); setEditValue(list.name); }}>
-                              <FiEdit2 />
-                            </button>
-                          )}
-                          {list.name !== "My next trip" && (
-                            <button onClick={() => handleDelete(list.name)}>
-                              <FiTrash2 />
-                            </button>
-                          )}
-                        </>
+                        {list.name !== "My next trip" && (
+                          <button onClick={() => { setEditingId(list.id); setEditValue(list.name); }}>
+                            <FiEdit2 />
+                          </button>
+                        )}
+                        {list.name !== "My next trip" && (
+                          <button onClick={() => handleDelete(list.name)}>
+                            <FiTrash2 />
+                          </button>
+                        )}
                       </div>
                     </>
                   )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { TiWarningOutline } from "react-icons/ti";
 import Toast from "../../components/toast/Toast";
@@ -15,6 +16,11 @@ import "./styles/GuestWishlist.scss";
 const WISHLIST_COUNT_LABEL = "\u2764\uFE0F";
 const PROPERTY_SET_ENDPOINT =
   "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/set";
+const LOADING_CARD_IDS = [
+  "wishlist-loading-card-1",
+  "wishlist-loading-card-2",
+  "wishlist-loading-card-3",
+];
 
 const createUnavailableWishlistEntry = (propertyId) => ({
   property: {
@@ -108,6 +114,96 @@ const UnavailableWishlistCard = ({ onRemove }) => (
   </article>
 );
 
+UnavailableWishlistCard.propTypes = {
+  onRemove: PropTypes.func.isRequired,
+};
+
+const WishlistLoadingContent = ({ selectedList }) => (
+  <div className="wishlistLoading">
+    <PulseBarsLoader message={`Loading ${selectedList}...`} />
+    <div className="wishlistLoadingGrid" aria-hidden="true">
+      {LOADING_CARD_IDS.map((loadingCardId) => (
+        <div key={loadingCardId} className="wishlistLoadingCard">
+          <div className="wishlistLoadingCard__image" />
+          <div className="wishlistLoadingCard__line wishlistLoadingCard__line--title" />
+          <div className="wishlistLoadingCard__line wishlistLoadingCard__line--meta" />
+          <div className="wishlistLoadingCard__line wishlistLoadingCard__line--metaShort" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+WishlistLoadingContent.propTypes = {
+  selectedList: PropTypes.string.isRequired,
+};
+
+const WishlistEmptyContent = ({ onExplore }) => (
+  <div className="wishlistEmpty">
+    <div className="wishlistEmpty__icon">
+      <svg width="260" height="210" viewBox="0 0 260 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect
+          x="20"
+          y="40"
+          width="185"
+          height="155"
+          rx="12"
+          fill="#f0f0f0"
+          stroke="#ddd"
+          strokeWidth="2.5"
+          strokeDasharray="10 7"
+        />
+        <path
+          d="M112 128 C112 110 90 98 90 114 C90 122 101 130 112 142 C123 130 134 122 134 114 C134 98 112 110 112 128Z"
+          fill="none"
+          stroke="#ccc"
+          strokeWidth="3.5"
+        />
+        <circle cx="195" cy="58" r="36" fill="var(--primary-color)" />
+        <path
+          d="M195 44 C195 34 177 28 177 40 C177 47 186 54 195 63 C204 54 213 47 213 40 C213 28 195 34 195 44Z"
+          fill="white"
+        />
+      </svg>
+    </div>
+    <h3 className="wishlistEmpty__title">Your wishlist is empty</h3>
+    <p className="wishlistEmpty__subtitle">Save your favorite listings and plan your next trip!</p>
+    <button className="wishlistEmpty__cta" onClick={onExplore}>
+      Explore properties
+    </button>
+  </div>
+);
+
+WishlistEmptyContent.propTypes = {
+  onExplore: PropTypes.func.isRequired,
+};
+
+const WishlistCardGrid = ({ wishlist, onNavigateToListing, onRefresh, onRemoveUnavailable }) => (
+  <div className="cardGrid">
+    {wishlist.map((item) => (
+      <div key={item.property?.id} className="wishlistCardWrapper">
+        {item?.isUnavailable ? (
+          <UnavailableWishlistCard onRemove={() => onRemoveUnavailable(item.property?.id)} />
+        ) : (
+          <AccommodationCard
+            accommodation={item}
+            onClick={(event, id) => onNavigateToListing(id)}
+            onUnlike={onRefresh}
+            imageVariant="web"
+          />
+        )}
+      </div>
+    ))}
+  </div>
+);
+
+WishlistCardGrid.propTypes = {
+  wishlist: PropTypes.arrayOf(PropTypes.object).isRequired,
+  onNavigateToListing: PropTypes.func.isRequired,
+  onRefresh: PropTypes.func.isRequired,
+  onRemoveUnavailable: PropTypes.func.isRequired,
+};
+
 const GuestWishlist = () => {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -158,83 +254,22 @@ const GuestWishlist = () => {
   };
 
   const isEmpty = !Array.isArray(wishlist) || wishlist.length === 0;
+  const refreshWishlist = () => setRefreshKey((key) => key + 1);
 
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="wishlistLoading">
-          <PulseBarsLoader message={`Loading ${selectedList}...`} />
-          <div className="wishlistLoadingGrid" aria-hidden="true">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={`wishlist-loading-card-${index}`} className="wishlistLoadingCard">
-                <div className="wishlistLoadingCard__image" />
-                <div className="wishlistLoadingCard__line wishlistLoadingCard__line--title" />
-                <div className="wishlistLoadingCard__line wishlistLoadingCard__line--meta" />
-                <div className="wishlistLoadingCard__line wishlistLoadingCard__line--metaShort" />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
+  let content = (
+    <WishlistCardGrid
+      wishlist={wishlist}
+      onNavigateToListing={(id) => navigate(`/listingdetails?ID=${id}`)}
+      onRefresh={refreshWishlist}
+      onRemoveUnavailable={handleRemoveUnavailable}
+    />
+  );
 
-    if (isEmpty) {
-      return (
-        <div className="wishlistEmpty">
-          <div className="wishlistEmpty__icon">
-            <svg width="260" height="210" viewBox="0 0 260 210" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect
-                x="20"
-                y="40"
-                width="185"
-                height="155"
-                rx="12"
-                fill="#f0f0f0"
-                stroke="#ddd"
-                strokeWidth="2.5"
-                strokeDasharray="10 7"
-              />
-              <path
-                d="M112 128 C112 110 90 98 90 114 C90 122 101 130 112 142 C123 130 134 122 134 114 C134 98 112 110 112 128Z"
-                fill="none"
-                stroke="#ccc"
-                strokeWidth="3.5"
-              />
-              <circle cx="195" cy="58" r="36" fill="var(--primary-color)" />
-              <path
-                d="M195 44 C195 34 177 28 177 40 C177 47 186 54 195 63 C204 54 213 47 213 40 C213 28 195 34 195 44Z"
-                fill="white"
-              />
-            </svg>
-          </div>
-          <h3 className="wishlistEmpty__title">Your wishlist is empty</h3>
-          <p className="wishlistEmpty__subtitle">Save your favorite listings and plan your next trip!</p>
-          <button className="wishlistEmpty__cta" onClick={() => navigate("/")}>
-            Explore properties
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="cardGrid">
-        {wishlist.map((item) => (
-          <div key={item.property?.id} className="wishlistCardWrapper">
-            {item?.isUnavailable ? (
-              <UnavailableWishlistCard onRemove={() => handleRemoveUnavailable(item.property?.id)} />
-            ) : (
-              <AccommodationCard
-                accommodation={item}
-                onClick={(event, id) => navigate(`/listingdetails?ID=${id}`)}
-                onUnlike={() => setRefreshKey((key) => key + 1)}
-                imageVariant="web"
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
+  if (loading) {
+    content = <WishlistLoadingContent selectedList={selectedList} />;
+  } else if (isEmpty) {
+    content = <WishlistEmptyContent onExplore={() => navigate("/")} />;
+  }
 
   return (
     <div className="pageContainer">
@@ -276,7 +311,7 @@ const GuestWishlist = () => {
         </div>
       </div>
 
-      {renderContent()}
+      {content}
     </div>
   );
 };
