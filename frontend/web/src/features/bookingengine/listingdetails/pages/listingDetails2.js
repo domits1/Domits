@@ -12,13 +12,13 @@ const BOOKINGS_API_URL =
   "https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-const startOfUtcDay = (date) =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+const startOfUtcDay = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
 const dateToKey = (date) =>
-  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
-    date.getUTCDate()
-  ).padStart(2, "0")}`;
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(
+    2,
+    "0"
+  )}`;
 
 const normalizeTimestampLike = (value) => {
   if (value === null || value === undefined) {
@@ -119,14 +119,24 @@ const normalizeCalendarAvailability = (calendarAvailability) => {
 const normalizeListingProperty = (payload) => {
   const property = toPlainObject(payload);
 
+  const rawPolicyRules = property.policyRules || property.property?.policyRules || {};
+  const rawCancellationPolicy = property.cancellationPolicy || property.property?.cancellationPolicy || "";
+
+  const rulesArray = Object.entries(rawPolicyRules).map(([key, value]) => ({
+    rule: key,
+    value: Boolean(value),
+  }));
+
   return {
     ...property,
+    policyRules: rawPolicyRules,
+    cancellationPolicy: rawCancellationPolicy,
+    rules: rulesArray,
     property: toPlainObject(property.property),
     images: toArray(property.images),
     pricing: toPlainObject(property.pricing),
     generalDetails: toArray(property.generalDetails),
     amenities: toArray(property.amenities),
-    rules: toArray(property.rules),
     checkIn: normalizeCheckInSection(property.checkIn),
     calendarAvailability: normalizeCalendarAvailability(property.calendarAvailability),
   };
@@ -173,10 +183,10 @@ const ListingDetails2 = () => {
     () =>
       Array.from(
         new Set([
-          ...((Array.isArray(property?.calendarAvailability?.externalBlockedDates)
+          ...(Array.isArray(property?.calendarAvailability?.externalBlockedDates)
             ? property.calendarAvailability.externalBlockedDates
-            : [])),
-          ...((Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : [])),
+            : []),
+          ...(Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : []),
         ])
       ),
     [acceptedBookingDateKeys, property?.calendarAvailability?.externalBlockedDates]
@@ -229,6 +239,7 @@ const ListingDetails2 = () => {
     { id: "about", label: "About", targetId: "listing-about" },
     { id: "amenities", label: "Amenities", targetId: "listing-amenities" },
     { id: "availability", label: "Availability", targetId: "listing-availability" },
+    { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];
 
   return (
