@@ -291,14 +291,6 @@ export default class IntegrationService {
       url.searchParams.set(key, String(value));
     }
 
-    console.log(
-      "WhatsApp Graph request",
-      JSON.stringify({
-        path: normalizedPath,
-        method,
-      })
-    );
-
     const response = await fetch(url, {
       method,
       headers: {
@@ -368,14 +360,6 @@ export default class IntegrationService {
       error.code = "META_TOKEN_MISSING";
       throw error;
     }
-
-    console.log(
-      "WhatsApp code exchange succeeded",
-      JSON.stringify({
-        hasExpiresIn: parsed.expires_in != null,
-        hasTokenType: !!parsed.token_type,
-      })
-    );
 
     return {
       accessToken: parsed.access_token,
