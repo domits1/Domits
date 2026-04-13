@@ -9,7 +9,6 @@ const fetchPropertyPolicies = async (propertyId) => {
     );
 
     if (!response.ok) {
-      console.error("Failed to fetch property policies");
       return {};
     }
 
@@ -47,7 +46,7 @@ const fetchPropertyPolicies = async (propertyId) => {
       preparationTime: data?.property?.preparationTime || "",
     };
   } catch (error) {
-    console.error("Error fetching property policies:", error);
+    ``;
     return {};
   }
 };

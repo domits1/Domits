@@ -369,8 +369,6 @@ const ListingDetails = () => {
       return orderA - orderB;
     });
 
-    console.log("Sorted categories:", sortedCategories);
-
     return (
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-contentPopUp" onClick={(e) => e.stopPropagation()}>

@@ -61,7 +61,6 @@ export class PropertyController {
         body: property.property.id,
       };
     } catch (error) {
-      console.error(error);
       return {
         statusCode: error.statusCode || 500,
         headers: responseHeaders,
@@ -303,7 +302,6 @@ export class PropertyController {
         headers: responseHeaders,
       };
     } catch (error) {
-      console.error(error);
       if (this.isOverviewClientError(error)) {
         return this.badRequest(error.message);
       }
@@ -340,7 +338,6 @@ export class PropertyController {
         }),
       };
     } catch (error) {
-      console.error(error);
       if (this.isCalendarOverrideClientError(error)) {
         return this.badRequest(error.message);
       }
