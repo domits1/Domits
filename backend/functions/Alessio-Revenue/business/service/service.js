@@ -160,9 +160,7 @@ export class Service {
         periodEnd: end,
         metrics: snapshotPayload,
       });
-    } catch {
-    // intentionally ignore error
-    }
+    } catch {}
 
     return {
       revenue: raw.totalRevenue,
