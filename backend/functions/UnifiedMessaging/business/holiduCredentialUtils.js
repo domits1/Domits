@@ -1,4 +1,5 @@
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+const normalizeNullableString = (value) => requireStr(value) || null;
 
 const maskSecret = (value) => {
   const raw = requireStr(value);
@@ -6,6 +7,17 @@ const maskSecret = (value) => {
   if (raw.length <= 4) return "****";
   return `${"*".repeat(Math.max(4, raw.length - 4))}${raw.slice(-4)}`;
 };
+
+export const buildDefaultHoliduProviderValidation = () => ({
+  validationState: "PENDING_PROVIDER_VALIDATION",
+  providerStatus: "NOT_EVALUATED",
+  validationMethod: "REPO_DOCS_CONTRACT_REQUIRED",
+  attemptedAt: null,
+  validatedAt: null,
+  externalAccountId: null,
+  errorCode: null,
+  errorMessage: null,
+});
 
 export const normalizeHoliduCredentials = (credentials) => {
   if (!credentials || typeof credentials !== "object" || Array.isArray(credentials)) {
@@ -38,6 +50,7 @@ export const buildHoliduSecretPayload = ({ credentials, connectedAt, updatedAt }
   notes: credentials.notes,
   connectedAt,
   updatedAt,
+  providerValidation: buildDefaultHoliduProviderValidation(),
 });
 
 export const buildHoliduCredentialSummary = (credentials) => ({
@@ -63,3 +76,29 @@ export const summarizeHoliduRequiredFields = (credentials) => ({
   hasClientSecret: !!requireStr(credentials?.clientSecret),
   requiredFieldsPresent: hasHoliduRequiredCredentialFields(credentials),
 });
+
+export const normalizeHoliduProviderValidation = (providerValidation) => {
+  if (!providerValidation || typeof providerValidation !== "object" || Array.isArray(providerValidation)) {
+    return buildDefaultHoliduProviderValidation();
+  }
+
+  return {
+    validationState:
+      normalizeNullableString(providerValidation.validationState) ||
+      buildDefaultHoliduProviderValidation().validationState,
+    providerStatus:
+      normalizeNullableString(providerValidation.providerStatus) || buildDefaultHoliduProviderValidation().providerStatus,
+    validationMethod:
+      normalizeNullableString(providerValidation.validationMethod) ||
+      buildDefaultHoliduProviderValidation().validationMethod,
+    attemptedAt: Number.isFinite(Number(providerValidation.attemptedAt))
+      ? Number(providerValidation.attemptedAt)
+      : null,
+    validatedAt: Number.isFinite(Number(providerValidation.validatedAt))
+      ? Number(providerValidation.validatedAt)
+      : null,
+    externalAccountId: normalizeNullableString(providerValidation.externalAccountId),
+    errorCode: normalizeNullableString(providerValidation.errorCode),
+    errorMessage: normalizeNullableString(providerValidation.errorMessage),
+  };
+};

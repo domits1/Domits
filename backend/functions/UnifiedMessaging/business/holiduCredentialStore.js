@@ -85,4 +85,19 @@ export default class HoliduCredentialStore {
       throw error;
     }
   }
+
+  async writeSecret(credentialsRef, payload) {
+    if (!credentialsRef) {
+      throw new Error("Missing credentialsRef");
+    }
+
+    await secrets.send(
+      new PutSecretValueCommand({
+        SecretId: credentialsRef,
+        SecretString: JSON.stringify(payload),
+      })
+    );
+
+    return credentialsRef;
+  }
 }

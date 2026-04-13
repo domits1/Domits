@@ -8,12 +8,14 @@ import ReservationLinkRepository from "../data/reservationLinkRepository.js";
 import SyncRunner from "./syncRunner.js";
 import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
 import HoliduCredentialStore from "./holiduCredentialStore.js";
+import HoliduProviderClient from "./holiduProviderClient.js";
 import {
   normalizeHoliduCredentials,
   buildHoliduSecretPayload,
   buildHoliduCredentialSummary,
   hasHoliduRequiredCredentialFields,
   summarizeHoliduRequiredFields,
+  normalizeHoliduProviderValidation,
 } from "./holiduCredentialUtils.js";
 
 const nowMs = () => Date.now();
@@ -133,6 +135,14 @@ const describeLocalError = (error) => ({
   message: error?.message || "Unknown error",
 });
 const HOLIDU_ACCOUNT_POLICY = "SINGLE_ACCOUNT_PER_USER";
+const HOLIDU_STATUS = {
+  NOT_CONNECTED: "NOT_CONNECTED",
+  PENDING_PROVIDER_VALIDATION: "PENDING_PROVIDER_VALIDATION",
+  VALIDATION_FAILED: "VALIDATION_FAILED",
+  RECONNECT_REQUIRED: "RECONNECT_REQUIRED",
+  DISCONNECTED: "DISCONNECTED",
+  CONNECTED: "CONNECTED",
+};
 const shapeHoliduIntegrationForResponse = (integration) => {
   if (!integration || String(integration.channel || "").toUpperCase() !== "HOLIDU") {
     return integration;
@@ -141,16 +151,90 @@ const shapeHoliduIntegrationForResponse = (integration) => {
   const { credentialsRef, ...safeIntegration } = integration;
   return safeIntegration;
 };
+const buildHoliduProviderValidationRecord = (validationResult, attemptedAt) => {
+  if (validationResult?.success) {
+    return normalizeHoliduProviderValidation({
+      validationState: HOLIDU_STATUS.CONNECTED,
+      providerStatus: validationResult.providerStatus || "VALIDATED",
+      validationMethod: "PROVIDER_VALIDATION",
+      attemptedAt,
+      validatedAt: attemptedAt,
+      externalAccountId: validationResult.externalAccountId ?? null,
+      errorCode: null,
+      errorMessage: null,
+    });
+  }
+
+  if (validationResult?.canValidate === false) {
+    return normalizeHoliduProviderValidation({
+      validationState: HOLIDU_STATUS.PENDING_PROVIDER_VALIDATION,
+      providerStatus: validationResult.providerStatus || "UNSUPPORTED_IN_REPO_DOCS",
+      validationMethod: "PROVIDER_VALIDATION_UNAVAILABLE",
+      attemptedAt,
+      validatedAt: null,
+      externalAccountId: null,
+      errorCode: null,
+      errorMessage: validationResult.errorMessage ?? null,
+    });
+  }
+
+  return normalizeHoliduProviderValidation({
+    validationState: HOLIDU_STATUS.VALIDATION_FAILED,
+    providerStatus: validationResult?.providerStatus || "VALIDATION_FAILED",
+    validationMethod: "PROVIDER_VALIDATION",
+    attemptedAt,
+    validatedAt: null,
+    externalAccountId: null,
+    errorCode: validationResult?.errorCode || "HOLIDU_PROVIDER_VALIDATION_FAILED",
+    errorMessage: validationResult?.errorMessage || "Holidu provider validation failed.",
+  });
+};
+const deriveHoliduPersistedState = (validationResult) => {
+  if (validationResult?.success) {
+    return {
+      status: HOLIDU_STATUS.CONNECTED,
+      externalAccountId: validationResult.externalAccountId ?? null,
+      lastErrorCode: null,
+      lastErrorMessage: null,
+    };
+  }
+
+  if (validationResult?.canValidate === false) {
+    return {
+      status: HOLIDU_STATUS.PENDING_PROVIDER_VALIDATION,
+      externalAccountId: null,
+      lastErrorCode: null,
+      lastErrorMessage: null,
+    };
+  }
+
+  return {
+    status: HOLIDU_STATUS.VALIDATION_FAILED,
+    externalAccountId: null,
+    lastErrorCode: validationResult?.errorCode || "HOLIDU_PROVIDER_VALIDATION_FAILED",
+    lastErrorMessage: validationResult?.errorMessage || "Holidu provider validation failed.",
+  };
+};
 
 export default class IntegrationService {
-  constructor() {
-    this.accounts = new IntegrationAccountRepository();
-    this.props = new IntegrationPropertyRepository();
-    this.sync = new IntegrationSyncRepository();
-    this.resLinks = new ReservationLinkRepository();
-    this.runner = new SyncRunner();
-    this.credentialStore = new WhatsAppCredentialStore();
-    this.holiduCredentialStore = new HoliduCredentialStore();
+  constructor({
+    accounts = new IntegrationAccountRepository(),
+    props = new IntegrationPropertyRepository(),
+    sync = new IntegrationSyncRepository(),
+    resLinks = new ReservationLinkRepository(),
+    runner = new SyncRunner(),
+    credentialStore = new WhatsAppCredentialStore(),
+    holiduCredentialStore = new HoliduCredentialStore(),
+    holiduProviderClient = new HoliduProviderClient(),
+  } = {}) {
+    this.accounts = accounts;
+    this.props = props;
+    this.sync = sync;
+    this.resLinks = resLinks;
+    this.runner = runner;
+    this.credentialStore = credentialStore;
+    this.holiduCredentialStore = holiduCredentialStore;
+    this.holiduProviderClient = holiduProviderClient;
   }
 
   logTokenLifecycle(level, message, integration, cause, extra = {}) {
@@ -778,7 +862,6 @@ export default class IntegrationService {
   async connectHolidu(body) {
     const userId = requireStr(body.userId);
     const displayName = requireStr(body.displayName) || "Holidu";
-    const externalAccountId = requireStr(body.externalAccountId);
     const credentials = normalizeHoliduCredentials(body.credentials);
 
     if (!userId) return bad(400, { error: "Missing required field: userId" });
@@ -795,17 +878,18 @@ export default class IntegrationService {
       const integrationAccountId = existing?.id || randomUUID();
       const connectedAt = existing?.createdAt || nowMs();
       const updatedAt = nowMs();
+      const secretPayload = buildHoliduSecretPayload({
+        credentials,
+        connectedAt,
+        updatedAt,
+      });
 
       let credentialsRef;
       try {
         credentialsRef = await this.holiduCredentialStore.ensureSecret({
           userId,
           integrationAccountId,
-          payload: buildHoliduSecretPayload({
-            credentials,
-            connectedAt,
-            updatedAt,
-          }),
+          payload: secretPayload,
         });
       } catch (error) {
         const details = describeLocalError(error);
@@ -816,30 +900,50 @@ export default class IntegrationService {
         });
       }
 
+      const validationAttemptedAt = nowMs();
+      const validationResult = await this.holiduProviderClient.validateAccount(credentials);
+      const providerValidation = buildHoliduProviderValidationRecord(validationResult, validationAttemptedAt);
+      const persistedState = deriveHoliduPersistedState(validationResult);
+
+      try {
+        await this.holiduCredentialStore.writeSecret(credentialsRef, {
+          ...secretPayload,
+          updatedAt: validationAttemptedAt,
+          providerValidation,
+        });
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(503, {
+          error: "Holidu credentials were stored, but provider validation metadata could not be persisted.",
+          errorCode: "HOLIDU_SECRET_UPDATE_FAILED",
+          details,
+        });
+      }
+
       let integration;
       try {
         if (existing) {
           integration = await this.accounts.update(existing.id, {
             displayName,
-            externalAccountId,
-            status: "CONNECTED",
+            externalAccountId: persistedState.externalAccountId,
+            status: persistedState.status,
             credentialsRef,
-            lastErrorCode: null,
-            lastErrorMessage: null,
+            lastErrorCode: persistedState.lastErrorCode,
+            lastErrorMessage: persistedState.lastErrorMessage,
           });
         } else {
           integration = await this.accounts.create({
             id: integrationAccountId,
             userId,
             channel: "HOLIDU",
-            externalAccountId,
+            externalAccountId: persistedState.externalAccountId,
             displayName,
-            status: "CONNECTED",
+            status: persistedState.status,
             credentialsRef,
             lastSuccessfulSyncAt: null,
             lastFailedSyncAt: null,
-            lastErrorCode: null,
-            lastErrorMessage: null,
+            lastErrorCode: persistedState.lastErrorCode,
+            lastErrorMessage: persistedState.lastErrorMessage,
             createdAt: connectedAt,
             updatedAt,
           });
@@ -857,10 +961,14 @@ export default class IntegrationService {
       }
 
       return ok({
-        connected: true,
+        connected: persistedState.status === HOLIDU_STATUS.CONNECTED,
         channel: "HOLIDU",
         integration: shapeHoliduIntegrationForResponse(integration),
         credentialsSummary: buildHoliduCredentialSummary(credentials),
+        validationMode:
+          validationResult?.canValidate === false ? "PROVIDER_VALIDATION_UNAVAILABLE" : "PROVIDER_VALIDATION",
+        validationState: persistedState.status,
+        providerStatus: providerValidation.providerStatus,
         accountPolicy: HOLIDU_ACCOUNT_POLICY,
         multiAccountDeferred: true,
       });
@@ -883,8 +991,9 @@ export default class IntegrationService {
         return ok({
           channel: "HOLIDU",
           integrationAccountId: null,
-          status: "NOT_CONNECTED",
-          validationMode: "LOCAL_SECRET_VALIDATION",
+          status: HOLIDU_STATUS.NOT_CONNECTED,
+          validationMode: "LOCAL_AND_PROVIDER_STATE",
+          validationState: HOLIDU_STATUS.NOT_CONNECTED,
           reason: "No Holidu integration row exists for this user.",
           displayName: null,
           externalAccountId: null,
@@ -898,8 +1007,9 @@ export default class IntegrationService {
         return ok({
           channel: "HOLIDU",
           integrationAccountId: integration.id,
-          status: "DISCONNECTED",
-          validationMode: "LOCAL_SECRET_VALIDATION",
+          status: HOLIDU_STATUS.DISCONNECTED,
+          validationMode: "LOCAL_AND_PROVIDER_STATE",
+          validationState: HOLIDU_STATUS.DISCONNECTED,
           reason: "Holidu integration is disconnected in Domits and is not locally usable.",
           displayName: integration.displayName ?? null,
           externalAccountId: integration.externalAccountId ?? null,
@@ -914,8 +1024,9 @@ export default class IntegrationService {
         return ok({
           channel: "HOLIDU",
           integrationAccountId: integration.id,
-          status: "INCOMPLETE",
+          status: HOLIDU_STATUS.RECONNECT_REQUIRED,
           validationMode: "LOCAL_SECRET_VALIDATION",
+          validationState: HOLIDU_STATUS.RECONNECT_REQUIRED,
           reason: "Integration row exists but credentialsRef is missing.",
           displayName: integration.displayName ?? null,
           externalAccountId: integration.externalAccountId ?? null,
@@ -933,8 +1044,9 @@ export default class IntegrationService {
         return ok({
           channel: "HOLIDU",
           integrationAccountId: integration.id,
-          status: "RECONNECT_REQUIRED",
+          status: HOLIDU_STATUS.RECONNECT_REQUIRED,
           validationMode: "LOCAL_SECRET_VALIDATION",
+          validationState: HOLIDU_STATUS.RECONNECT_REQUIRED,
           reason: `Stored Holidu secret could not be read locally: ${details.message}`,
           displayName: integration.displayName ?? null,
           externalAccountId: integration.externalAccountId ?? null,
@@ -948,8 +1060,9 @@ export default class IntegrationService {
         return ok({
           channel: "HOLIDU",
           integrationAccountId: integration.id,
-          status: "RECONNECT_REQUIRED",
+          status: HOLIDU_STATUS.RECONNECT_REQUIRED,
           validationMode: "LOCAL_SECRET_VALIDATION",
+          validationState: HOLIDU_STATUS.RECONNECT_REQUIRED,
           reason: "Stored Holidu secret is missing, unreadable, or malformed.",
           displayName: integration.displayName ?? null,
           externalAccountId: integration.externalAccountId ?? null,
@@ -964,8 +1077,9 @@ export default class IntegrationService {
         return ok({
           channel: "HOLIDU",
           integrationAccountId: integration.id,
-          status: "INCOMPLETE",
+          status: HOLIDU_STATUS.RECONNECT_REQUIRED,
           validationMode: "LOCAL_SECRET_VALIDATION",
+          validationState: HOLIDU_STATUS.RECONNECT_REQUIRED,
           reason: "Stored Holidu secret is present but required local credential fields are incomplete.",
           displayName: integration.displayName ?? null,
           externalAccountId: integration.externalAccountId ?? null,
@@ -975,14 +1089,54 @@ export default class IntegrationService {
         });
       }
 
+      const providerValidation = normalizeHoliduProviderValidation(secret.providerValidation);
+      const normalizedStatus = String(integration.status || "").toUpperCase();
+      if (
+        normalizedStatus === HOLIDU_STATUS.CONNECTED &&
+        providerValidation.validationState === HOLIDU_STATUS.CONNECTED
+      ) {
+        return ok({
+          channel: "HOLIDU",
+          integrationAccountId: integration.id,
+          status: HOLIDU_STATUS.CONNECTED,
+          validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
+          validationState: HOLIDU_STATUS.CONNECTED,
+          reason: "Stored Holidu credentials are locally valid and provider validation has explicitly succeeded.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? providerValidation.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: true,
+          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
+        });
+      }
+
+      if (normalizedStatus === HOLIDU_STATUS.VALIDATION_FAILED) {
+        return ok({
+          channel: "HOLIDU",
+          integrationAccountId: integration.id,
+          status: HOLIDU_STATUS.VALIDATION_FAILED,
+          validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
+          validationState: HOLIDU_STATUS.VALIDATION_FAILED,
+          reason: integration.lastErrorMessage || providerValidation.errorMessage || "Provider validation failed.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: null,
+          credentialsRefPresent,
+          secretPresent: true,
+          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
+        });
+      }
+
       return ok({
         channel: "HOLIDU",
         integrationAccountId: integration.id,
-        status: "CONNECTED",
-        validationMode: "LOCAL_SECRET_VALIDATION",
-        reason: "Integration row and locally required Holidu secret fields are present.",
+        status: HOLIDU_STATUS.PENDING_PROVIDER_VALIDATION,
+        validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
+        validationState: HOLIDU_STATUS.PENDING_PROVIDER_VALIDATION,
+        reason:
+          providerValidation.errorMessage ||
+          "Stored Holidu credentials are locally valid, but provider validation has not explicitly succeeded.",
         displayName: integration.displayName ?? null,
-        externalAccountId: integration.externalAccountId ?? null,
+        externalAccountId: null,
         credentialsRefPresent,
         secretPresent: true,
         requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
