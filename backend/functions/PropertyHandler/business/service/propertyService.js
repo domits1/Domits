@@ -1,5 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SystemManagerRepository } from "../../data/repository/systemManagerRepository.js";
+import Database from "database";
+import { Property_Rule } from "database/models/Property_Rule";
 
 import { PropertyAmenityRepository } from "../../data/repository/propertyAmenityRepository.js";
 import { PropertyRepository } from "../../data/repository/propertyRepository.js";
@@ -18,6 +20,10 @@ import { PropertyExternalCalendarRepository } from "../../data/repository/proper
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
 import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatusRepository.js";
 import { PropertyDeletionRepository } from "../../data/repository/propertyDeletionRepository.js";
+import { PropertyCancellationPolicyRepository } from "../../data/repository/propertyCancellationPolicyRepository.js";
+import { PropertyLateCheckinRepository } from "../../data/repository/propertyLateCheckinRepository.js";
+import { PropertyHouseRuleRepository } from "../../data/repository/propertyHouseRuleRepository.js";
+import { PropertyCustomRuleRepository } from "../../data/repository/propertyCustomRuleRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
@@ -44,6 +50,10 @@ export class PropertyService {
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
     this.propertyDeletionRepository = new PropertyDeletionRepository(systemManagerRepository);
+    this.propertyCancellationPolicyRepository = new PropertyCancellationPolicyRepository(systemManagerRepository);
+    this.propertyLateCheckinRepository = new PropertyLateCheckinRepository(systemManagerRepository);
+    this.propertyHouseRuleRepository = new PropertyHouseRuleRepository(systemManagerRepository);
+    this.propertyCustomRuleRepository = new PropertyCustomRuleRepository(systemManagerRepository);
   }
 
   async create(property, { skipImages = false } = {}) {
@@ -140,7 +150,7 @@ export class PropertyService {
     }
 
     if (updates?.checkIn) {
-      await this.updateCheckIn(propertyId, updates.checkIn);
+      await this.updateCheckInTimeslotRule(propertyId, updates.checkIn);
     }
 
     if (updates?.amenities) {
@@ -149,6 +159,26 @@ export class PropertyService {
 
     if (updates?.rules) {
       await this.updateRules(propertyId, updates.rules);
+    }
+
+    if (updates?.checkIn) {
+      await this.updateCheckIn(propertyId, updates.checkIn);
+    }
+
+    if (updates?.cancellationPolicy) {
+      await this.updateCancellationPolicy(propertyId, updates.cancellationPolicy);
+    }
+
+    if (updates?.lateCheckin) {
+      await this.updateLateCheckin(propertyId, updates.lateCheckin);
+    }
+
+    if (updates?.houseRules) {
+      await this.updateHouseRules(propertyId, updates.houseRules);
+    }
+
+    if (updates?.customRules) {
+      await this.updateCustomRules(propertyId, updates.customRules);
     }
 
     return updatedProperty;
@@ -287,12 +317,16 @@ export class PropertyService {
       rules,
       propertyType,
       propertyTestStatus,
+      cancellationPolicy,
+      lateCheckin,
+      houseRules,
+      customRules,
     ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getAmenities(propertyId),
       this.getAvailability(propertyId),
       this.getAvailabilityRestrictions(propertyId),
-      this.getCheckIn(propertyId),
+      this.getCheckInRules(propertyId),
       this.getGeneralDetails(propertyId),
       this.getImages(propertyId),
       includeFullLocation ? this.getFullLocation(propertyId) : this.getLocation(propertyId),
@@ -300,6 +334,10 @@ export class PropertyService {
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
       this.getPropertyTestStatus(propertyId),
+      this.getCancellationPolicy(propertyId),
+      this.getLateCheckin(propertyId),
+      this.getHouseRules(propertyId),
+      this.getCustomRules(propertyId),
     ]);
     const technicalDetails =
       propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
@@ -311,6 +349,10 @@ export class PropertyService {
       availability: availability,
       availabilityRestrictions: availabilityRestrictions,
       checkIn: checkIn,
+      cancellationPolicy: cancellationPolicy,
+      lateCheckin: lateCheckin,
+      houseRules: houseRules,
+      customRules: customRules,
       generalDetails: generalDetails,
       images: images,
       location: location,
@@ -327,8 +369,7 @@ export class PropertyService {
   }
 
   async getPublicCalendarAvailability(propertyId) {
-    const externalBlockedDates =
-      await this.propertyExternalCalendarRepository.getBlockedDatesByPropertyId(propertyId);
+    const externalBlockedDates = await this.propertyExternalCalendarRepository.getBlockedDatesByPropertyId(propertyId);
 
     return {
       externalBlockedDates: Array.isArray(externalBlockedDates) ? externalBlockedDates : [],
@@ -489,7 +530,10 @@ export class PropertyService {
   }
 
   async updateAvailabilityRestrictions(propertyId, restrictions) {
-    return await this.propertyAvailabilityRestrictionRepository.replaceRestrictionsByPropertyId(propertyId, restrictions);
+    return await this.propertyAvailabilityRestrictionRepository.replaceRestrictionsByPropertyId(
+      propertyId,
+      restrictions
+    );
   }
 
   async getPropertyCalendarOverrides(propertyId, range = {}) {
@@ -515,6 +559,162 @@ export class PropertyService {
 
   async updateRules(propertyId, rules) {
     await this.propertyRuleRepository.replaceRulesByPropertyId(propertyId, rules);
+  }
+
+  async getCheckInRules(propertyId) {
+    const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+
+    if (!rules || rules.length === 0) return null;
+
+    const checkInFrom = rules?.find((r) => r.rule === "CheckInFrom");
+    const checkInTill = rules?.find((r) => r.rule === "CheckInTill");
+    const checkOutFrom = rules?.find((r) => r.rule === "CheckOutFrom");
+    const checkOutTill = rules?.find((r) => r.rule === "CheckOutTill");
+
+    if (checkInFrom || checkInTill || checkOutFrom || checkOutTill) {
+      return {
+        property_id: propertyId,
+        checkIn: {
+          from: checkInFrom?.value || "09:00:00",
+          till: checkInTill?.value || "18:00:00",
+        },
+        checkOut: {
+          from: checkOutFrom?.value || "07:00:00",
+          till: checkOutTill?.value || "08:00:00",
+        },
+      };
+    }
+    return null;
+  }
+
+  async #upsertPropertyRule(propertyId, ruleName, value) {
+    const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
+    if (existing) {
+      const client = await Database.getInstance();
+      await client
+        .createQueryBuilder()
+        .update(Property_Rule)
+        .set({ value, updated_at: Date.now() })
+        .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
+        .execute();
+    } else {
+      await this.propertyRuleRepository.create({ property_id: propertyId, rule: ruleName, value });
+    }
+  }
+
+  async updateCheckInTimeslotRule(propertyId, checkInData) {
+    if (!checkInData || typeof checkInData !== "object") return;
+
+    const rulesToUpdate = [
+      { rule: "CheckInFrom", value: checkInData.checkIn?.from || "09:00:00" },
+      { rule: "CheckInTill", value: checkInData.checkIn?.till || "18:00:00" },
+      { rule: "CheckOutFrom", value: checkInData.checkOut?.from || "07:00:00" },
+      { rule: "CheckOutTill", value: checkInData.checkOut?.till || "08:00:00" },
+    ];
+
+    for (const ruleUpdate of rulesToUpdate) {
+      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value);
+    }
+  }
+
+  async getCancellationPolicy(propertyId) {
+    const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+    if (!rules || rules.length === 0) return null;
+
+    const policyRule = rules?.find((r) => r?.rule?.startsWith("CancellationPolicy:"));
+    if (policyRule) {
+      return { policy_type: policyRule.rule.replace("CancellationPolicy:", ""), property_id: propertyId };
+    }
+    return null;
+  }
+
+  async updateCancellationPolicy(propertyId, policyType) {
+    if (!policyType) return;
+
+    const ruleName = `CancellationPolicy:${policyType}`;
+    await this.#upsertPropertyRule(propertyId, ruleName, true);
+  }
+
+  async getLateCheckin(propertyId) {
+    const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+    if (!rules || rules.length === 0) return null;
+
+    const lateCheckinEnabled = rules.find((r) => r.rule === "LateCheckinEnabled");
+    const lateCheckinTime = rules.find((r) => r.rule === "LateCheckinTime");
+    const lateCheckoutEnabled = rules.find((r) => r.rule === "LateCheckoutEnabled");
+    const lateCheckoutTime = rules.find((r) => r.rule === "LateCheckoutTime");
+
+    if (lateCheckinEnabled || lateCheckinTime || lateCheckoutEnabled || lateCheckoutTime) {
+      return {
+        property_id: propertyId,
+        late_checkin_enabled: lateCheckinEnabled?.value === true,
+        late_checkin_time: lateCheckinTime?.value || "18:00:00",
+        late_checkout_enabled: lateCheckoutEnabled?.value === true,
+        late_checkout_time: lateCheckoutTime?.value || "10:00:00",
+      };
+    }
+    return null;
+  }
+
+  async updateLateCheckin(propertyId, lateCheckinData) {
+    if (!lateCheckinData || typeof lateCheckinData !== "object") return;
+
+    const rulesToUpdate = [
+      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true ? "true" : "false" },
+      { rule: "LateCheckinTime", value: lateCheckinData.late_checkin_time || "18:00:00" },
+      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true ? "true" : "false" },
+      { rule: "LateCheckoutTime", value: lateCheckinData.late_checkout_time || "10:00:00" },
+    ];
+
+    for (const ruleUpdate of rulesToUpdate) {
+      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value);
+    }
+  }
+
+  async getHouseRules(propertyId) {
+    const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+    if (!rules || rules.length === 0) return {};
+
+    const houseRuleNames = [
+      "ChildrenAllowed",
+      "SmokingAllowed",
+      "PetsAllowed",
+      "PartiesEventsAllowed",
+      "QuietHoursStart",
+    ];
+    const houseRuleObj = {};
+
+    for (const ruleName of houseRuleNames) {
+      const rule = rules?.find((r) => r?.rule === ruleName);
+      houseRuleObj[ruleName] = rule?.value === true;
+    }
+
+    return houseRuleObj;
+  }
+
+  async updateHouseRules(propertyId, houseRules) {
+    if (!houseRules || typeof houseRules !== "object") return;
+
+    const houseRuleNames = [
+      "ChildrenAllowed",
+      "SmokingAllowed",
+      "PetsAllowed",
+      "PartiesEventsAllowed",
+      "QuietHoursStart",
+    ];
+
+    for (const ruleName of houseRuleNames) {
+      const isEnabled = (houseRules?.[ruleName] ?? false) === true;
+      await this.#upsertPropertyRule(propertyId, ruleName, isEnabled ? "true" : "false");
+    }
+  }
+
+  async getCustomRules(propertyId) {
+    return [];
+  }
+
+  async updateCustomRules(propertyId, customRules) {
+    // Custom rules storage to be implemented
   }
 
   async createPropertyType(type) {

@@ -96,12 +96,7 @@ const verifyAmenities = async (propertyId, amenitiesPayload) => {
   }
 };
 
-const verifyPolicies = async (
-  propertyId,
-  rulesPayload,
-  checkInPayload,
-  availabilityRestrictionsPayload,
-) => {
+const verifyPolicies = async (propertyId, rulesPayload, checkInPayload, availabilityRestrictionsPayload) => {
   const verificationData = await fetchPropertySnapshot(propertyId);
   const persistedRulesMap = new Map(
     (Array.isArray(verificationData?.rules) ? verificationData.rules : [])
@@ -150,9 +145,10 @@ const verifyPricing = async (propertyId, pricingPayload, availabilityRestriction
   const verificationData = await fetchPropertySnapshot(propertyId);
   const persistedRoomRate = Number(verificationData?.pricing?.roomRate ?? verificationData?.pricing?.roomrate);
   const expectedRoomRate = Number(pricingPayload?.roomRate);
-  const hasSameRoomRate = Number.isFinite(persistedRoomRate) && Number.isFinite(expectedRoomRate)
-    ? Math.trunc(persistedRoomRate) === Math.trunc(expectedRoomRate)
-    : false;
+  const hasSameRoomRate =
+    Number.isFinite(persistedRoomRate) && Number.isFinite(expectedRoomRate)
+      ? Math.trunc(persistedRoomRate) === Math.trunc(expectedRoomRate)
+      : false;
   if (!hasSameRoomRate) {
     throw new Error("Pricing could not be updated in the deployed backend yet.");
   }
@@ -200,22 +196,18 @@ export const savePropertyChanges = async ({
   if (isSavingPricing && normalizedPricingForm.nightlyRate < PRICING_MIN_NIGHTLY_RATE_FOR_SAVE) {
     throw new Error(`Nightly rate must be at least EUR ${PRICING_MIN_NIGHTLY_RATE_FOR_SAVE}.`);
   }
-  const pricingPayload = isSavingPricing
-    ? { roomRate: normalizedPricingForm.nightlyRate }
-    : undefined;
+  const pricingPayload = isSavingPricing ? { roomRate: normalizedPricingForm.nightlyRate } : undefined;
   let availabilityRestrictionsPayload;
   if (isSavingPricing) {
     availabilityRestrictionsPayload = buildPricingRestrictionsPayload(normalizedPricingForm);
   } else if (isSavingPolicies) {
-    availabilityRestrictionsPayload = buildPolicyAvailabilityRestrictionsPayload(
-      normalizedPolicyAvailabilitySettings
-    );
+    availabilityRestrictionsPayload = buildPolicyAvailabilityRestrictionsPayload(normalizedPolicyAvailabilitySettings);
   }
   const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map(String) : undefined;
   const rulesPayload = isSavingPolicies
-    ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
-        rule: ruleConfig.rule,
-        value: Boolean(policyRules[ruleConfig.rule]),
+    ? Object.keys(policyRules).map((ruleName) => ({
+        rule: ruleName,
+        value: Boolean(policyRules[ruleName]),
       }))
     : undefined;
   const checkInPayload = isSavingPolicies ? normalizedCheckInDetails : undefined;
@@ -323,12 +315,7 @@ const uploadPendingPhotosToStorage = async ({ uploads, orderedPendingPhotos }) =
   );
 };
 
-const confirmPendingPhotoUploads = async ({
-  propertyId,
-  uploads,
-  orderedPendingPhotos,
-  pendingOrderPosition,
-}) => {
+const confirmPendingPhotoUploads = async ({ propertyId, uploads, orderedPendingPhotos, pendingOrderPosition }) => {
   for (let startIndex = 0; startIndex < uploads.length; startIndex += CONFIRM_BATCH_SIZE) {
     const uploadBatch = uploads.slice(startIndex, startIndex + CONFIRM_BATCH_SIZE);
     const confirmResponse = await fetch(`${PROPERTY_API_BASE}/images/confirm`, {
@@ -357,11 +344,7 @@ const confirmPendingPhotoUploads = async ({
   }
 };
 
-const uploadPendingPropertyPhotos = async ({
-  propertyId,
-  orderedPendingPhotos,
-  pendingOrderPosition,
-}) => {
+const uploadPendingPropertyPhotos = async ({ propertyId, orderedPendingPhotos, pendingOrderPosition }) => {
   const uploads = await requestPhotoUploadSlots({ propertyId, orderedPendingPhotos });
   await uploadPendingPhotosToStorage({ uploads, orderedPendingPhotos });
   await confirmPendingPhotoUploads({
@@ -370,9 +353,7 @@ const uploadPendingPropertyPhotos = async ({
     orderedPendingPhotos,
     pendingOrderPosition,
   });
-  return new Map(
-    orderedPendingPhotos.map((photo, index) => [photo.id, String(uploads[index]?.imageId || "")])
-  );
+  return new Map(orderedPendingPhotos.map((photo, index) => [photo.id, String(uploads[index]?.imageId || "")]));
 };
 
 const persistPropertyPhotoOrder = async ({ propertyId, finalPersistedOrder }) => {
@@ -408,19 +389,14 @@ export const savePropertyPhotos = async ({
   photoOrderIds,
   hasPhotoOrderChanges,
 }) => {
-  const {
-    persistedPhotos,
-    queuedPhotos,
-    existingById,
-    normalizedOrderIds,
-    orderedPendingPhotos,
-  } = normalizePhotoSaveInput({
-    existingPhotos,
-    pendingPhotos,
-    photoOrderIds,
-  });
+  const { persistedPhotos, queuedPhotos, existingById, normalizedOrderIds, orderedPendingPhotos } =
+    normalizePhotoSaveInput({
+      existingPhotos,
+      pendingPhotos,
+      photoOrderIds,
+    });
 
-  if ((persistedPhotos.length + queuedPhotos.length) > MAX_PROPERTY_IMAGES) {
+  if (persistedPhotos.length + queuedPhotos.length > MAX_PROPERTY_IMAGES) {
     throw new Error(`A listing can have up to ${MAX_PROPERTY_IMAGES} photos.`);
   }
 
@@ -429,13 +405,14 @@ export const savePropertyPhotos = async ({
   }
 
   const pendingOrderPosition = new Map(normalizedOrderIds.map((photoId, index) => [photoId, index]));
-  const pendingIdToPersistedId = orderedPendingPhotos.length > 0
-    ? await uploadPendingPropertyPhotos({
-        propertyId,
-        orderedPendingPhotos,
-        pendingOrderPosition,
-      })
-    : new Map();
+  const pendingIdToPersistedId =
+    orderedPendingPhotos.length > 0
+      ? await uploadPendingPropertyPhotos({
+          propertyId,
+          orderedPendingPhotos,
+          pendingOrderPosition,
+        })
+      : new Map();
   const finalPersistedOrder = buildFinalPersistedPhotoOrder({
     normalizedOrderIds,
     existingById,

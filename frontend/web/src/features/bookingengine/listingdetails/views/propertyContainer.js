@@ -50,7 +50,7 @@ const PropertyContainer = ({
           }}
         />
       </section>
-      <RulesContainer rules={property.rules} checkIn={property.checkIn} />
+      {/* <RulesContainer rules={property.rules} checkIn={property.checkIn} /> */}
     </div>
   );
 };
