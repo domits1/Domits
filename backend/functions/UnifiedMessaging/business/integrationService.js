@@ -9,6 +9,8 @@ import SyncRunner from "./syncRunner.js";
 import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
 import HoliduCredentialStore from "./holiduCredentialStore.js";
 import HoliduProviderClient from "./holiduProviderClient.js";
+import ChannexCredentialStore from "./channexCredentialStore.js";
+import ChannexProviderClient from "./channexProviderClient.js";
 import {
   normalizeHoliduCredentials,
   buildHoliduSecretPayload,
@@ -17,6 +19,14 @@ import {
   summarizeHoliduRequiredFields,
   normalizeHoliduProviderValidation,
 } from "./holiduCredentialUtils.js";
+import {
+  normalizeChannexCredentials,
+  buildChannexCredentialSummary,
+  hasChannexRequiredCredentialFields,
+  summarizeChannexRequiredFields,
+  normalizeChannexProviderValidation,
+  buildDefaultChannexProviderValidation,
+} from "./channexCredentialUtils.js";
 
 const nowMs = () => Date.now();
 const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
@@ -143,8 +153,18 @@ const HOLIDU_STATUS = {
   DISCONNECTED: "DISCONNECTED",
   CONNECTED: "CONNECTED",
 };
-const shapeHoliduIntegrationForResponse = (integration) => {
-  if (!integration || String(integration.channel || "").toUpperCase() !== "HOLIDU") {
+const CHANNEX_ACCOUNT_POLICY = "SINGLE_ACCOUNT_PER_USER";
+const CHANNEX_STATUS = {
+  NOT_CONNECTED: "NOT_CONNECTED",
+  PENDING_PROVIDER_VALIDATION: "PENDING_PROVIDER_VALIDATION",
+  VALIDATION_FAILED: "VALIDATION_FAILED",
+  RECONNECT_REQUIRED: "RECONNECT_REQUIRED",
+  DISCONNECTED: "DISCONNECTED",
+  CONNECTED: "CONNECTED",
+};
+const shapeCredentialIntegrationForResponse = (integration) => {
+  const channel = String(integration?.channel || "").toUpperCase();
+  if (!integration || (channel !== "HOLIDU" && channel !== "CHANNEX")) {
     return integration;
   }
 
@@ -215,6 +235,48 @@ const deriveHoliduPersistedState = (validationResult) => {
     lastErrorMessage: validationResult?.errorMessage || "Holidu provider validation failed.",
   };
 };
+const buildChannexProviderValidationRecord = (validationResult, attemptedAt) => {
+  if (validationResult?.success) {
+    return normalizeChannexProviderValidation({
+      validationState: CHANNEX_STATUS.CONNECTED,
+      providerStatus: validationResult.providerStatus || "ACTIVE",
+      validationMethod: "PROVIDER_VALIDATION",
+      attemptedAt,
+      validatedAt: attemptedAt,
+      externalAccountId: validationResult.externalAccountId ?? null,
+      errorCode: null,
+      errorMessage: null,
+    });
+  }
+
+  return normalizeChannexProviderValidation({
+    validationState: CHANNEX_STATUS.VALIDATION_FAILED,
+    providerStatus: validationResult?.providerStatus || "VALIDATION_FAILED",
+    validationMethod: "PROVIDER_VALIDATION",
+    attemptedAt,
+    validatedAt: null,
+    externalAccountId: null,
+    errorCode: validationResult?.errorCode || "CHANNEX_PROVIDER_VALIDATION_FAILED",
+    errorMessage: validationResult?.errorMessage || "Channex provider validation failed.",
+  });
+};
+const deriveChannexPersistedState = (validationResult) => {
+  if (validationResult?.success) {
+    return {
+      status: CHANNEX_STATUS.CONNECTED,
+      externalAccountId: validationResult.externalAccountId ?? null,
+      lastErrorCode: null,
+      lastErrorMessage: null,
+    };
+  }
+
+  return {
+    status: CHANNEX_STATUS.VALIDATION_FAILED,
+    externalAccountId: null,
+    lastErrorCode: validationResult?.errorCode || "CHANNEX_PROVIDER_VALIDATION_FAILED",
+    lastErrorMessage: validationResult?.errorMessage || "Channex provider validation failed.",
+  };
+};
 
 export default class IntegrationService {
   constructor({
@@ -226,6 +288,8 @@ export default class IntegrationService {
     credentialStore = new WhatsAppCredentialStore(),
     holiduCredentialStore = new HoliduCredentialStore(),
     holiduProviderClient = new HoliduProviderClient(),
+    channexCredentialStore = new ChannexCredentialStore(),
+    channexProviderClient = new ChannexProviderClient(),
   } = {}) {
     this.accounts = accounts;
     this.props = props;
@@ -235,6 +299,8 @@ export default class IntegrationService {
     this.credentialStore = credentialStore;
     this.holiduCredentialStore = holiduCredentialStore;
     this.holiduProviderClient = holiduProviderClient;
+    this.channexCredentialStore = channexCredentialStore;
+    this.channexProviderClient = channexProviderClient;
   }
 
   logTokenLifecycle(level, message, integration, cause, extra = {}) {
@@ -671,7 +737,7 @@ export default class IntegrationService {
 
   async hydrateListedIntegration(item) {
     if (String(item?.channel || "").toUpperCase() !== "WHATSAPP") {
-      return shapeHoliduIntegrationForResponse(item);
+      return shapeCredentialIntegrationForResponse(item);
     }
 
     try {
@@ -963,7 +1029,7 @@ export default class IntegrationService {
       return ok({
         connected: persistedState.status === HOLIDU_STATUS.CONNECTED,
         channel: "HOLIDU",
-        integration: shapeHoliduIntegrationForResponse(integration),
+        integration: shapeCredentialIntegrationForResponse(integration),
         credentialsSummary: buildHoliduCredentialSummary(credentials),
         validationMode:
           validationResult?.canValidate === false ? "PROVIDER_VALIDATION_UNAVAILABLE" : "PROVIDER_VALIDATION",
@@ -1185,6 +1251,339 @@ export default class IntegrationService {
       return bad(500, {
         error: "Unexpected Holidu disconnect failure.",
         errorCode: "HOLIDU_DISCONNECT_FAILED",
+        details,
+      });
+    }
+  }
+
+  async connectChannex(body) {
+    const userId = requireStr(body.userId);
+    const displayName = requireStr(body.displayName) || "Channex";
+    const credentials = normalizeChannexCredentials(body.credentials);
+
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+    if (!credentials || !hasChannexRequiredCredentialFields(credentials)) {
+      return bad(400, {
+        error: "Channex credentials must include apiKey.",
+      });
+    }
+
+    try {
+      const existing = await this.accounts.findByUserIdAndChannel(userId, "CHANNEX");
+      const integrationAccountId = existing?.id || randomUUID();
+      const connectedAt = existing?.createdAt || nowMs();
+      const updatedAt = nowMs();
+      const secretPayload = {
+        provider: "CHANNEX",
+        credentialType: "MANUAL_CONNECT",
+        ...credentials,
+        connectedAt,
+        updatedAt,
+        providerValidation: buildDefaultChannexProviderValidation(),
+      };
+
+      let credentialsRef;
+      try {
+        credentialsRef = await this.channexCredentialStore.ensureSecret({
+          userId,
+          integrationAccountId,
+          payload: secretPayload,
+        });
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(503, {
+          error: "Failed to store Channex credentials in Secrets Manager.",
+          errorCode: "CHANNEX_SECRET_STORE_FAILED",
+          details,
+        });
+      }
+
+      const validationAttemptedAt = nowMs();
+      const validationResult = await this.channexProviderClient.validateApiKey(credentials);
+      const providerValidation = buildChannexProviderValidationRecord(validationResult, validationAttemptedAt);
+      const persistedState = deriveChannexPersistedState(validationResult);
+
+      try {
+        await this.channexCredentialStore.writeSecret(credentialsRef, {
+          ...secretPayload,
+          updatedAt: validationAttemptedAt,
+          providerValidation,
+        });
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(503, {
+          error: "Channex credentials were stored, but provider validation metadata could not be persisted.",
+          errorCode: "CHANNEX_SECRET_UPDATE_FAILED",
+          details,
+        });
+      }
+
+      let integration;
+      try {
+        if (existing) {
+          integration = await this.accounts.update(existing.id, {
+            displayName,
+            externalAccountId: persistedState.externalAccountId,
+            status: persistedState.status,
+            credentialsRef,
+            lastErrorCode: persistedState.lastErrorCode,
+            lastErrorMessage: persistedState.lastErrorMessage,
+          });
+        } else {
+          integration = await this.accounts.create({
+            id: integrationAccountId,
+            userId,
+            channel: "CHANNEX",
+            externalAccountId: persistedState.externalAccountId,
+            displayName,
+            status: persistedState.status,
+            credentialsRef,
+            lastSuccessfulSyncAt: null,
+            lastFailedSyncAt: null,
+            lastErrorCode: persistedState.lastErrorCode,
+            lastErrorMessage: persistedState.lastErrorMessage,
+            createdAt: connectedAt,
+            updatedAt,
+          });
+
+          await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
+          await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
+        }
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(500, {
+          error: "Channex credentials were stored, but the integration record could not be persisted.",
+          errorCode: "CHANNEX_CONNECTION_PERSIST_FAILED",
+          details,
+        });
+      }
+
+      return ok({
+        connected: persistedState.status === CHANNEX_STATUS.CONNECTED,
+        channel: "CHANNEX",
+        integration: shapeCredentialIntegrationForResponse(integration),
+        credentialsSummary: buildChannexCredentialSummary(credentials),
+        validationMode: "PROVIDER_VALIDATION",
+        validationState: persistedState.status,
+        providerStatus: providerValidation.providerStatus,
+        accountPolicy: CHANNEX_ACCOUNT_POLICY,
+        multiAccountDeferred: true,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Unexpected Channex connection failure.",
+        errorCode: "CHANNEX_CONNECT_FAILED",
+        details,
+      });
+    }
+  }
+
+  async checkChannexStatus(userId) {
+    const normalizedUserId = requireStr(userId);
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+
+    try {
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration) {
+        return ok({
+          channel: "CHANNEX",
+          integrationAccountId: null,
+          status: CHANNEX_STATUS.NOT_CONNECTED,
+          validationMode: "LOCAL_AND_PROVIDER_STATE",
+          validationState: CHANNEX_STATUS.NOT_CONNECTED,
+          reason: "No Channex integration row exists for this user.",
+          displayName: null,
+          externalAccountId: null,
+          credentialsRefPresent: false,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
+
+      if (String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+        return ok({
+          channel: "CHANNEX",
+          integrationAccountId: integration.id,
+          status: CHANNEX_STATUS.DISCONNECTED,
+          validationMode: "LOCAL_AND_PROVIDER_STATE",
+          validationState: CHANNEX_STATUS.DISCONNECTED,
+          reason: "Channex integration is disconnected in Domits and is not locally usable.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent: false,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
+
+      const credentialsRefPresent = !!requireStr(integration.credentialsRef);
+      if (!credentialsRefPresent) {
+        return ok({
+          channel: "CHANNEX",
+          integrationAccountId: integration.id,
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          validationState: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          reason: "Integration row exists but credentialsRef is missing.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
+
+      let secret;
+      try {
+        secret = await this.channexCredentialStore.readSecretOrNull(integration.credentialsRef);
+      } catch (error) {
+        const details = describeLocalError(error);
+        return ok({
+          channel: "CHANNEX",
+          integrationAccountId: integration.id,
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          validationState: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          reason: `Stored Channex secret could not be read locally: ${details.message}`,
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
+
+      if (!secret || typeof secret !== "object" || Array.isArray(secret)) {
+        return ok({
+          channel: "CHANNEX",
+          integrationAccountId: integration.id,
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          validationState: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          reason: "Stored Channex secret is missing, unreadable, or malformed.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
+
+      const requiredFieldSummary = summarizeChannexRequiredFields(secret);
+      if (!hasChannexRequiredCredentialFields(secret)) {
+        return ok({
+          channel: "CHANNEX",
+          integrationAccountId: integration.id,
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          validationState: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          reason: "Stored Channex secret is present but required local credential fields are incomplete.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: true,
+          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
+        });
+      }
+
+      const providerValidation = normalizeChannexProviderValidation(secret.providerValidation);
+      const normalizedStatus = String(integration.status || "").toUpperCase();
+      if (
+        normalizedStatus === CHANNEX_STATUS.CONNECTED &&
+        providerValidation.validationState === CHANNEX_STATUS.CONNECTED
+      ) {
+        return ok({
+          channel: "CHANNEX",
+          integrationAccountId: integration.id,
+          status: CHANNEX_STATUS.CONNECTED,
+          validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
+          validationState: CHANNEX_STATUS.CONNECTED,
+          reason: "Stored Channex credentials are locally valid and provider validation has explicitly succeeded.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? providerValidation.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: true,
+          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
+        });
+      }
+
+      if (normalizedStatus === CHANNEX_STATUS.VALIDATION_FAILED) {
+        return ok({
+          channel: "CHANNEX",
+          integrationAccountId: integration.id,
+          status: CHANNEX_STATUS.VALIDATION_FAILED,
+          validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
+          validationState: CHANNEX_STATUS.VALIDATION_FAILED,
+          reason: integration.lastErrorMessage || providerValidation.errorMessage || "Provider validation failed.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: null,
+          credentialsRefPresent,
+          secretPresent: true,
+          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
+        });
+      }
+
+      return ok({
+        channel: "CHANNEX",
+        integrationAccountId: integration.id,
+        status: CHANNEX_STATUS.PENDING_PROVIDER_VALIDATION,
+        validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
+        validationState: CHANNEX_STATUS.PENDING_PROVIDER_VALIDATION,
+        reason:
+          providerValidation.errorMessage ||
+          "Stored Channex credentials are locally valid, but provider validation has not explicitly succeeded.",
+        displayName: integration.displayName ?? null,
+        externalAccountId: null,
+        credentialsRefPresent,
+        secretPresent: true,
+        requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to evaluate Channex local connectivity state.",
+        errorCode: "CHANNEX_STATUS_CHECK_FAILED",
+        details,
+      });
+    }
+  }
+
+  async disconnectChannex(body) {
+    const userId = requireStr(body.userId);
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+
+    try {
+      const existing = await this.accounts.findByUserIdAndChannel(userId, "CHANNEX");
+      if (!existing) return bad(404, { error: "Channex integration not found" });
+
+      let disconnected;
+      try {
+        disconnected = await this.accounts.disconnect(existing.id);
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(500, {
+          error: "Failed to persist Channex disconnect state in Domits.",
+          errorCode: "CHANNEX_DISCONNECT_PERSIST_FAILED",
+          details,
+        });
+      }
+
+      if (!disconnected) return bad(404, { error: "Channex integration not found" });
+
+      return ok({
+        disconnected: true,
+        channel: "CHANNEX",
+        integrationAccountId: disconnected.id,
+        status: disconnected.status,
+        message:
+          "Channex integration disconnected in Domits. credentialsRef was cleared on the integration row; the underlying secret is not deleted by this flow.",
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Unexpected Channex disconnect failure.",
+        errorCode: "CHANNEX_DISCONNECT_FAILED",
         details,
       });
     }
