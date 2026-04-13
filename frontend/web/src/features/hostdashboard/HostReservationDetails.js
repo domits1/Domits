@@ -11,7 +11,9 @@ import {
   FiCheckCircle,
   FiHome,
   FiVolumeX,
-  FiUsers
+  FiUsers,
+  FiAlertCircle,
+  FiClock,
 } from "react-icons/fi";
 import { getGuestBookingPropertyDetails } from "../guestdashboard/services/bookingAPI";
 
@@ -21,6 +23,10 @@ const HostReservationDetails = () => {
   const { id } = useParams();
 
   const [b, setB] = useState(location.state?.booking || null);
+  const [loading, setLoading] = useState(!location.state?.booking);
+  const [error, setError] = useState(false);
+  const [editingSection, setEditingSection] = useState(null);
+  const [formData, setFormData] = useState({});
 
   const formatDate = (d) => {
     if (!d) return "";
@@ -32,71 +38,141 @@ const HostReservationDetails = () => {
     });
   };
 
+  const POLICY_TYPES = {
+    Flexible: "Free cancellation up to 24 hours before check-in.",
+    Moderate: "Free cancellation up to 5 days before check-in.",
+    Strict: "No free cancellation after booking.",
+  };
+
+  const STATUS_CLASS = {
+    PAID: styles.statusPaid,
+    AWAITING_PAYMENT: styles.statusAwaiting,
+    FAILED: styles.statusFailed,
+  };
+
+  const STATUS_CONFIG = {
+    PAID: { label: "Confirmed", icon: <FiCheckCircle /> },
+    AWAITING_PAYMENT: { label: "Awaiting payment", icon: <FiClock /> },
+    FAILED: { label: "Failed", icon: <FiAlertCircle /> },
+  };
+
+  const PAYMENT_STATUS_CONFIG = {
+    PAID: {
+      label: "Payment received",
+      text: "Paid in full on",
+      className: styles.paid,
+    },
+    AWAITING_PAYMENT: {
+      label: "Awaiting payment",
+      text: "Payment pending",
+      className: styles.awaiting,
+    },
+    FAILED: {
+      label: "Payment failed",
+      text: "Payment was not successful",
+      className: styles.failed,
+    },
+  };
+
+  const PAYMENT_BOX_CLASS = {
+    PAID: styles.paymentBoxPaid,
+    AWAITING_PAYMENT: styles.paymentBoxAwaiting,
+    FAILED: styles.paymentBoxFailed,
+  };
+
+  const handleEdit = (section) => {
+    setEditingSection(section);
+    setFormData({ ...b });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "cancellationType") {
+      setFormData((prev) => ({
+        ...prev,
+        cancellationType: value,
+        cancellationPolicy: POLICY_TYPES[value],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const handleSave = () => {
+    setB((prev) => ({
+      ...prev,
+      ...formData,
+    }));
+    setEditingSection(null);
+  };
+
+  const handleCancel = () => {
+    setEditingSection(null);
+  };
+
   useEffect(() => {
-    if (b) return;
+    if (location.state?.booking) return;
 
     const load = async () => {
       try {
+        setLoading(true);
         const data = await getGuestBookingPropertyDetails(id);
 
         if (!data) {
-          setB(null);
+          setError(true);
           return;
         }
 
         setB({
           guestId: data?.guestId,
+          channel: data?.channel,
+          status: data?.status,
           title: data?.property?.title,
           city: data?.propertyLocation?.city,
           country: data?.propertyLocation?.country,
           image: data?.propertyImages?.[0]?.image,
-
           arrivaldate: data?.arrivalDate,
           departuredate: data?.departureDate,
           bookedOn: data?.createdAt,
           guests: data?.guests,
-
           guestname: data?.guestName,
           guestemail: data?.guestEmail,
           guestphone: data?.guestPhone,
-
           specialRequest: data?.specialRequest || "",
-
           pricePerNight: data?.pricing?.roomRate,
           cleaningFee: data?.pricing?.cleaning,
-
           paymentMethod: data?.payment?.method || "Card",
           last4: data?.payment?.last4 || "****",
-
           reservationId: data?.bookingId,
-          confirmationCode:
-            data?.bookingId?.slice(0, 6),
-
+          confirmationCode: data?.bookingId?.slice(0, 6),
           checkinInstructions:
             data?.checkIn?.from && data?.checkIn?.till
               ? `${data.checkIn.from} - ${data.checkIn.till}`
               : "No check-in instructions",
-
           houseRules:
             Array.isArray(data?.rules) && data.rules.length > 0
               ? data.rules
               : ["No house rules specified"],
-
-          cancellationPolicy:
-            data?.cancellationPolicy,
-
-          cancellationType:
-            data?.cancellationType,
+          cancellationPolicy: data?.cancellationPolicy,
+          cancellationType: data?.cancellationType,
         });
       } catch {
-        setB(null);
+        setError(true);
+      } finally {
+        setLoading(false);
       }
     };
 
     load();
-  }, [id, b]);
+  }, [id, location.state]);
 
-  if (!b) return <div className={styles.container}>Loading...</div>;
+  if (loading) return <div className={styles.container}>Loading...</div>;
+  if (error) return <div className={styles.container}>Failed to load reservation.</div>;
+  if (!b) return <div className={styles.container}>No reservation found.</div>;
 
   const nights =
     (new Date(b.departuredate) - new Date(b.arrivaldate)) /
@@ -120,10 +196,14 @@ const HostReservationDetails = () => {
       <h1 className={styles.title}>{b.title}</h1>
 
       <div className={styles.meta}>
-        <span className={styles.status}>
-          <FiCheckCircle /> Confirmed
+        <span className={`${styles.status} ${STATUS_CLASS[b.status] || ""}`}>
+          {STATUS_CONFIG[b.status]?.icon}
+          {STATUS_CONFIG[b.status]?.label}
         </span>
-        <span className={styles.channel}>Booked via Direct</span>
+
+        <span className={styles.channel}>
+          Booked via {b.channel}
+        </span>
       </div>
 
       <div className={styles.layout}>
@@ -147,6 +227,8 @@ const HostReservationDetails = () => {
                   {formatDate(b.arrivaldate)} →{" "}
                   {formatDate(b.departuredate)}
                 </p>
+
+                <p>Check-in: {b.checkinInstructions}</p>
 
                 <div className={styles.metaLine}>
                   <span>{nights} nights</span>
@@ -229,26 +311,32 @@ const HostReservationDetails = () => {
                 </div>
               </div>
 
-              <div className={styles.paymentBox}>
+              <div className={`${styles.paymentBox} ${PAYMENT_BOX_CLASS[b.status] || ""}`}>
                 <div className={styles.paymentHeader}>
                   <FiCheckCircle />
-                <span>Payment received</span>
-              </div>
+                  <span>
+                    {PAYMENT_STATUS_CONFIG[b.status]?.label || "Payment"}
+                  </span>
+                </div>
 
-              <div className={styles.paymentStatus}>
-                <span className={styles.paid}>Paid in full on </span>
-               <span className={styles.date}>
-               {formatDate(b.bookedOn)}
-                </span>
-              </div>
+                <div className={styles.paymentStatus}>
+                  <span className={PAYMENT_STATUS_CONFIG[b.status]?.className}>
+                    {PAYMENT_STATUS_CONFIG[b.status]?.text}
+                  </span>
+                  <span className={styles.date}>
+                    {formatDate(b.bookedOn)}
+                  </span>
+                </div>
 
-  <div className={styles.paymentMethod}>
-    <span className={styles.paid}>Method</span>
-    <span className={styles.date}>
-      **** {b.last4} {b.paymentMethod}
-    </span>
-  </div>
-</div>
+                <div className={styles.paymentMethod}>
+                  <span className={PAYMENT_STATUS_CONFIG[b.status]?.className}>
+                    Method
+                  </span>
+                  <span className={styles.date}>
+                    **** {b.last4} {b.paymentMethod}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -262,41 +350,98 @@ const HostReservationDetails = () => {
             <div className={styles.block}>
               <div className={styles.blockHeader2}>
                 <span>Check-in instructions</span>
-                <button className={styles.edit}>Edit</button>
+                <button onClick={() => handleEdit("checkin")} className={styles.edit}>
+                  Edit
+                </button>
               </div>
-              <p className={styles.grayBox}>{b.checkinInstructions}</p>
+
+              {editingSection === "checkin" ? (
+                <>
+                  <input
+                    name="checkinInstructions"
+                    value={formData.checkinInstructions || ""}
+                    onChange={handleChange}
+                  />
+                  <button onClick={handleSave}>Save</button>
+                  <button onClick={handleCancel}>Cancel</button>
+                </>
+              ) : (
+                <p className={styles.grayBox}>{b.checkinInstructions}</p>
+              )}
             </div>
 
             <div className={styles.block}>
               <div className={styles.blockHeader2}>
                 <span>House Rules</span>
-                <button className={styles.edit}>Edit</button>
+                <button onClick={() => handleEdit("rules")} className={styles.edit}>
+                  Edit
+                </button>
               </div>
 
-              <div className={styles.grayBox}>
-                {b.houseRules?.map((rule, i) => (
-                  <div key={i} className={styles.guestLine}>
-                    {getRuleIcon(rule)} {rule}
-                  </div>
-                ))}
-              </div>
+              {editingSection === "rules" ? (
+                <>
+                  <textarea
+                    value={(formData.houseRules || []).join("\n")}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        houseRules: e.target.value.split("\n"),
+                      })
+                    }
+                  />
+                  <button onClick={handleSave}>Save</button>
+                  <button onClick={handleCancel}>Cancel</button>
+                </>
+              ) : (
+                <div className={styles.grayBox}>
+                  {b.houseRules?.map((rule, i) => (
+                    <div key={i} className={styles.guestLine}>
+                      {getRuleIcon(rule)} {rule}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className={styles.block}>
               <div className={styles.blockHeader2}>
                 <span>Cancellation Policy</span>
-                <button className={styles.edit}>Edit</button>
+                <button onClick={() => handleEdit("policy")} className={styles.edit}>
+                  Edit
+                </button>
               </div>
 
-              {b.cancellationType && (
-                <span className={styles.policyTag}>
-                  {b.cancellationType}
-                </span>
-              )}
+              {editingSection === "policy" ? (
+                <>
+                  <select
+                    name="cancellationType"
+                    value={formData.cancellationType || ""}
+                    onChange={handleChange}
+                  >
+                    {Object.keys(POLICY_TYPES).map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
 
-              <p className={styles.grayBox}>
-                {b.cancellationPolicy}
-              </p>
+                  <p className={styles.grayBox}>
+                    {formData.cancellationPolicy}
+                  </p>
+
+                  <button onClick={handleSave}>Save</button>
+                  <button onClick={handleCancel}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  {b.cancellationType && (
+                    <span className={styles.policyTag}>
+                      {b.cancellationType}
+                    </span>
+                  )}
+                  <p className={styles.grayBox}>{b.cancellationPolicy}</p>
+                </>
+              )}
             </div>
           </div>
 
@@ -305,13 +450,16 @@ const HostReservationDetails = () => {
               <span>Actions</span>
             </div>
 
-            <button className={styles.primaryBtn}>
+            <button
+              className={styles.primaryBtn}
+              onClick={() => navigate("/hostdashboard/calendar-pricing")}
+            >
               <FiCalendar /> View in calendar
             </button>
 
-           <button className={styles.secondaryActionBtn}>
+            <button className={styles.secondaryActionBtn}>
               <FiDownload /> Download receipt
-           </button>
+            </button>
           </div>
         </div>
       </div>

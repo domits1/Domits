@@ -29,14 +29,44 @@
 }
 
 .status {
-  background: #dcfce7;
-  color: #166534;
   padding: 6px 14px;
+  gap: 4px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   display: flex;
   align-items: center;
+}
+
+
+.statusPaid,
+.paymentBoxPaid {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.statusAwaiting,
+.paymentBoxAwaiting {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.statusFailed,
+.paymentBoxFailed {
+  color: #7f1d1d;
+  background: #fee2e2;
+}
+
+.paid {
+  color: #166534;
+}
+
+.awaiting {
+  color: #92400e;
+}
+
+.failed {
+  color: #7f1d1d;
 }
 
 .channel {
@@ -294,7 +324,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: #dcfce7;
   border-radius: 10px;
   padding: 16px;
   min-width: 240px;
@@ -312,12 +341,10 @@
   font-weight: 500;
 }
 
-
 .paymentMethod, .paymentStatus {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
-  color: #111827;
   font-weight: 500;
 }
 
