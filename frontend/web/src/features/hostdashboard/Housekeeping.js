@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Auth } from 'aws-amplify';
+import {
+    LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
+    LuSearch, LuChevronRight, LuBuilding2, LuTriangleAlert, LuX, LuCheck
+} from 'react-icons/lu';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
 import { fetchSettings, saveSettings } from './services/settingsService';
@@ -152,6 +156,7 @@ const HostPropertyCare = () => {
     });
 
     const [currentUser, setCurrentUser] = useState({ name: '', email: '' });
+    const [openDropdown, setOpenDropdown] = useState(null); 
 
     useEffect(() => {
         Auth.currentAuthenticatedUser()
@@ -164,6 +169,27 @@ const HostPropertyCare = () => {
             })
             .catch(() => {});
     }, []);
+
+    useEffect(() => {
+        if (!openDropdown) return;
+        const handler = () => setOpenDropdown(null);
+        document.addEventListener('click', handler);
+        return () => document.removeEventListener('click', handler);
+    }, [openDropdown]);
+
+    const STATUS_OPTIONS = [
+        { value: 'Pending',     label: '● Pending',     cls: 'status-pending' },
+        { value: 'In progress', label: '● In progress', cls: 'status-in-progress' },
+        { value: 'Completed',   label: '● Completed',   cls: 'status-completed' },
+        { value: 'Overdue',     label: '● Overdue',     cls: 'status-overdue' },
+        { value: 'Cancelled',   label: '● Cancelled',   cls: 'status-cancelled' },
+    ];
+    const PRIORITY_OPTIONS = [
+        { value: 'Low',    label: 'Low',    cls: 'priority-low' },
+        { value: 'Medium', label: 'Medium', cls: 'priority-medium' },
+        { value: 'High',   label: 'High',   cls: 'priority-high' },
+        { value: 'Urgent', label: 'Urgent', cls: 'priority-urgent' },
+    ];
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
@@ -594,7 +620,7 @@ const HostPropertyCare = () => {
             includeAssignee: true,
             includeDate: true,
             excludeLegacy: true,
-            excludeCompleted: true,
+            excludeCompleted: activeTab === 'Overview',
             searchFields: ['title', 'property', 'assignee'],
         }));
     };
@@ -656,6 +682,15 @@ const HostPropertyCare = () => {
     }, [editedTask?.property, propertyOptions, newTask.property, tasks]);
 
     const createPropertyOptions = useMemo(() => propertyOptions, [propertyOptions]);
+
+    const propertyLabelMap = useMemo(() => {
+        const map = {};
+        propertyOptions.forEach(o => { map[o.id] = o.label; });
+        return map;
+    }, [propertyOptions]);
+
+    const getPropertyLabel = (task) =>
+        (task.property_id && propertyLabelMap[task.property_id]) || task.property || '';
 
     const assigneeOptions = useMemo(() => {
         const set = new Set(tasks.map(t => t.assignee).filter(Boolean));
@@ -782,7 +817,7 @@ const HostPropertyCare = () => {
                             <tbody>
                                 {TEAM_MEMBERS.map(member => (
                                     <tr key={member.email}>
-                                        <td><span className="settings-row-arrow">▶</span>{member.name}</td>
+                                        <td><LuChevronRight className="settings-row-arrow" />{member.name}</td>
                                         <td>{member.role}</td>
                                         <td>{member.email}</td>
                                         <td>{member.properties}</td>
@@ -865,7 +900,7 @@ const HostPropertyCare = () => {
             </div>
 
             <div className="settings-footer">
-                {settingsSaved && <span className="settings-saved-msg">✓ Settings saved successfully.</span>}
+                {settingsSaved && <span className="settings-saved-msg"><LuCheck /> Settings saved successfully.</span>}
                 <button className="settings-cancel-btn" onClick={handleCancelSettings} disabled={!settingsChanged}>Cancel</button>
                 <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!settingsChanged}>Save changes</button>
             </div>
@@ -1033,7 +1068,7 @@ const HostPropertyCare = () => {
                     <div className="chart-box task-summary-panel">
                         <h4>Task Summary</h4>
                         <div className="summary-list">
-                            <div className="summary-item"><span className="sum-icon">📋</span> Total Tasks <span className="sum-val">{reportData.total}</span></div>
+                            <div className="summary-item"><span className="sum-icon"><LuClipboardList /></span> Total Tasks <span className="sum-val">{reportData.total}</span></div>
                             <div className="summary-item"><span className="dot dot-pending" style={{marginRight:'8px'}}></span> Pending <span className="sum-val">{reportData.pending}</span></div>
                             <div className="summary-item"><span className="dot dot-inprogress" style={{marginRight:'8px'}}></span> In Progress <span className="sum-val">{reportData.inProgress}</span></div>
                             <div className="summary-item"><span className="dot dot-completed" style={{marginRight:'8px'}}></span> Completed <span className="sum-val">{reportData.completed}</span></div>
@@ -1103,10 +1138,10 @@ const HostPropertyCare = () => {
                     style={{ opacity: isCompleted ? 0.6 : 1 }}
                 >
                     <div className="my-task-left">
-                        <div className="my-task-icon">📋</div>
+                        <div className="my-task-icon"><LuClipboardList /></div>
                         <div className="my-task-info">
                             <h4>{task.title}</h4>
-                            <span>{task.property}</span>
+                            <span>{getPropertyLabel(task)}</span>
                         </div>
                     </div>
                     
@@ -1158,7 +1193,7 @@ const HostPropertyCare = () => {
                             </select>
                             <div className="search-box small-search">
                                 <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-                                <span aria-hidden="true">🔍</span>
+                                <LuSearch aria-hidden="true" />
                             </div>
                         </div>
                     </div>
@@ -1216,8 +1251,9 @@ const HostPropertyCare = () => {
                     </select>
                     <div className="search-box small-search">
                         <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-                        <span aria-hidden="true">🔍</span>
+                        <LuSearch aria-hidden="true" />
                     </div>
+                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
                 </div>
 
                 <div className="active-filters-row">
@@ -1228,7 +1264,6 @@ const HostPropertyCare = () => {
                         <span className="status-tag"><span className="dot dot-overdue"></span> Overdue</span>
                         <span className="status-tag"><span className="dot dot-cancelled"></span> Cancelled</span>
                     </div>
-                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
                 </div>
             </div>
 
@@ -1276,13 +1311,13 @@ const HostPropertyCare = () => {
                                 <tr key={task.id} className={`clickable-row row-${displayStatus.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
                                     <td>
                                         <div className="task-title-cell" title={task.title}>
-                                            <span className="task-arrow">▶</span> 
+                                            <LuChevronRight className="task-arrow" />
                                             <div className="truncate-text">
                                                 <strong>{task.title}</strong>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{task.property}</td>
+                                    <td>{getPropertyLabel(task)}</td>
                                     <td>{task.type}</td>
                                     <td>{task.assignee}</td>
                                     <td>{task.dueDate === new Date().toISOString().split('T')[0] ? 'Today' : task.dueDate}</td>
@@ -1310,10 +1345,14 @@ const HostPropertyCare = () => {
         <main className="task-dashboard-v2">
             <div className="top-header">
                 <h2>Tasks</h2>
-                <button className="btn-create-green" onClick={() => setIsModalOpen(true)}>
+                <button className="btn-create-green btn-create-desktop" onClick={() => setIsModalOpen(true)}>
                     + Create Task
                 </button>
             </div>
+
+            <button className="btn-create-fab" onClick={() => setIsModalOpen(true)} aria-label="Create Task">
+                +
+            </button>
 
             <div className="tabs-nav">
                 {['Overview', 'My Tasks', 'All Tasks', 'Reports', 'Settings'].map(tab => (
@@ -1330,14 +1369,14 @@ const HostPropertyCare = () => {
             {activeTab === 'Overview' && (
                 <div className="overview-stats-row">
                     <div className="overview-stat-card">
-                        <div className="overview-stat-icon">📋</div>
+                        <div className="overview-stat-icon"><LuClipboardList /></div>
                         <div className="overview-stat-info">
                             <span className="overview-stat-label">Total Tasks</span>
                             <span className="overview-stat-value">{stats.total}</span>
                         </div>
                     </div>
                     <div className="overview-stat-card">
-                        <div className="overview-stat-icon error-icon">!</div>
+                        <div className="overview-stat-icon error-icon"><LuCircleAlert /></div>
                         <div className="overview-stat-info">
                             <span className="overview-stat-label">Overdue</span>
                             <span className="overview-stat-value">
@@ -1349,14 +1388,14 @@ const HostPropertyCare = () => {
                         </div>
                     </div>
                     <div className="overview-stat-card">
-                        <div className="overview-stat-icon info-icon">↻</div>
+                        <div className="overview-stat-icon info-icon"><LuRefreshCw /></div>
                         <div className="overview-stat-info">
                             <span className="overview-stat-label">In Progress</span>
                             <span className="overview-stat-value">{stats.inProgress}</span>
                         </div>
                     </div>
                     <div className="overview-stat-card">
-                        <div className="overview-stat-icon success-icon">✓</div>
+                        <div className="overview-stat-icon success-icon"><LuCircleCheck /></div>
                         <div className="overview-stat-info">
                             <span className="overview-stat-label">Completed Today</span>
                             <span className="overview-stat-value">{stats.completedToday}</span>
@@ -1370,11 +1409,11 @@ const HostPropertyCare = () => {
             </div>
 
             {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content-large">
+                <div className="modal-overlay" onClick={handleCancelModal}>
+                    <div className="modal-content-large" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Create Task</h3>
-                            <button className="close-btn" onClick={handleCancelModal}>✕</button>
+                            <button className="close-btn" onClick={handleCancelModal}><LuX /></button>
                         </div>
                         <form onSubmit={handleCreateTask}>
                             <div className="form-group">
@@ -1395,8 +1434,8 @@ const HostPropertyCare = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label htmlFor='task-booking-ref'>Booking Reference (optional)</label>
-                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} onChange={handleInputChange} placeholder="Select booking." />
+                                <label htmlFor='task-booking-ref'>Booking Reference <span className="settings-coming-soon">Coming soon</span></label>
+                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} placeholder="Select booking." disabled />
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-type'>Type</label>
@@ -1455,25 +1494,65 @@ const HostPropertyCare = () => {
                                 onChange={handleEditChange}
                                 placeholder="Task title"
                             />
-                            <button className="close-btn" onClick={closeTaskDetails}>✕</button>
+                            <button className="close-btn" onClick={closeTaskDetails}><LuX /></button>
                         </div>
                         
                         <div className="details-badges-row">
-                            <select name="status" value={editedTask.status} onChange={handleEditChange} className={`badge-select status-${editedTask.status.toLowerCase().replace(' ', '-')}`}>
-                                <option value="Pending">● Pending</option>
-                                <option value="In progress">● In progress</option>
-                                <option value="Completed">● Completed</option>
-                                <option value="Overdue">● Overdue</option>
-                            </select>
-                            <select name="priority" value={editedTask.priority} onChange={handleEditChange} className={`badge-select priority-${editedTask.priority.toLowerCase()}`}>
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
-                                <option value="Urgent">Urgent</option>
-                            </select>
+                            <div className="custom-badge-select-wrapper" onClick={e => e.stopPropagation()}>
+                                <button
+                                    type="button"
+                                    className={`badge-select status-${editedTask.status.toLowerCase().replace(' ', '-')}`}
+                                    onClick={() => setOpenDropdown(openDropdown === 'status' ? null : 'status')}
+                                >
+                                    ● {editedTask.status}
+                                </button>
+                                {openDropdown === 'status' && (
+                                    <div className="custom-badge-options">
+                                        {STATUS_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                className={`custom-badge-option ${opt.cls}`}
+                                                onClick={() => {
+                                                    handleEditChange({ target: { name: 'status', value: opt.value } });
+                                                    setOpenDropdown(null);
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="custom-badge-select-wrapper" onClick={e => e.stopPropagation()}>
+                                <button
+                                    type="button"
+                                    className={`badge-select priority-${editedTask.priority.toLowerCase()}`}
+                                    onClick={() => setOpenDropdown(openDropdown === 'priority' ? null : 'priority')}
+                                >
+                                    {editedTask.priority}
+                                </button>
+                                {openDropdown === 'priority' && (
+                                    <div className="custom-badge-options">
+                                        {PRIORITY_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                className={`custom-badge-option ${opt.cls}`}
+                                                onClick={() => {
+                                                    handleEditChange({ target: { name: 'priority', value: opt.value } });
+                                                    setOpenDropdown(null);
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             <select name="property" value={editedTask.property_id || ''} onChange={handleEditPropertyChange} className="badge-select property-badge">
                                 {editPropertyOptions.map((o) => (
-                                    <option key={o.id} value={o.id}>🏢 {o.label}</option>
+                                    <option key={o.id} value={o.id}>{o.label}</option>
                                 ))}
                             </select>
                         </div>
@@ -1500,8 +1579,8 @@ const HostPropertyCare = () => {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor='task-booking-ref'>Booking Reference (optional)</label>
-                                    <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} onChange={handleEditChange} placeholder="Select booking." />
+                                    <label htmlFor='task-booking-ref'>Booking Reference <span className="settings-coming-soon">Coming soon</span></label>
+                                    <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} placeholder="Select booking." disabled />
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor='task-due-date'>Due Date</label>
@@ -1563,7 +1642,7 @@ const HostPropertyCare = () => {
             {confirmDialog.isOpen && (
                 <div className="confirm-modal-overlay">
                     <div className="confirm-modal-content">
-                        <div className="confirm-modal-icon">⚠️</div>
+                        <div className="confirm-modal-icon"><LuTriangleAlert /></div>
                         <h3>{confirmDialog.title}</h3>
                         <p>{confirmDialog.message}</p>
                         <div className="confirm-modal-actions">
