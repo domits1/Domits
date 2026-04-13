@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Auth } from 'aws-amplify';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
 import { fetchSettings, saveSettings } from './services/settingsService';
@@ -29,8 +30,6 @@ const DEFAULT_NEW_TASK = {
     priority: 'Medium',
     attachments: null,
 };
-
-const CURRENT_USER = 'Sophie Janssen';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
@@ -152,7 +151,19 @@ const HostPropertyCare = () => {
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
 
-    const CURRENT_USER = 'Sophie Janssen';
+    const [currentUser, setCurrentUser] = useState({ name: '', email: '' });
+
+    useEffect(() => {
+        Auth.currentAuthenticatedUser()
+            .then(u => {
+                const attrs = u.attributes || {};
+                setCurrentUser({
+                    name: attrs.given_name || attrs.name || u.username || '',
+                    email: attrs.email || '',
+                });
+            })
+            .catch(() => {});
+    }, []);
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
@@ -202,11 +213,9 @@ const HostPropertyCare = () => {
         setSettingsDraft({ ...settings });
     };
 
-    const TEAM_MEMBERS = [
-        { name: 'Sophie Janssen', role: 'Manager', email: 'sophie@example.com', properties: 'All', status: 'Active' },
-        { name: 'Lars de Vries', role: 'Cleaner', email: 'lars@example.com', properties: 'City Loft Breda', status: 'Active' },
-        { name: 'Emma Bakker', role: 'Cleaner', email: 'emma@example.com', properties: 'Beach House Breda', status: 'Suspended' },
-    ];
+    const TEAM_MEMBERS = currentUser.name
+        ? [{ name: currentUser.name, role: 'Host', email: currentUser.email, properties: 'All', status: 'Active' }]
+        : [];
 
     const INTEGRATIONS = [
         { name: 'Airbnb', logo: '🏠', connected: false },
@@ -316,7 +325,7 @@ const HostPropertyCare = () => {
             completed_date: newStatus === 'Completed' ? Date.now() : null,
             activities: [
                 ...(task.activities || []),
-                { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
+                { id: Date.now(), user: currentUser.name, action: `marked task ${newStatus}`, timestamp: now }
             ]
         };
 
@@ -846,7 +855,7 @@ const HostPropertyCare = () => {
                             <label htmlFor="setting-default-assignee">Default assignee</label>
                             <select id="setting-default-assignee" value={settingsDraft.defaultAssignee} onChange={e => handleSettingChange('defaultAssignee', e.target.value)}>
                                 <option>Anyone</option>
-                                {TEAM_MEMBERS.map(m => <option key={m.name}>{m.name}</option>)}
+                                {currentUser.name && <option value={currentUser.name}>{currentUser.name}</option>}
                             </select>
                         </div>
                         {renderSettingsToggle('autoAssignCleaning', 'Auto-assign cleaning after checkout')}
@@ -1056,7 +1065,7 @@ const HostPropertyCare = () => {
     const renderMyTasksView = () => {
         const todayStr = new Date().toISOString().split('T')[0];
 
-        let myTasks = tasks.filter(t => t.assignee === CURRENT_USER && !t.isLegacy);
+        let myTasks = tasks.filter(t => t.assignee === currentUser.name && !t.isLegacy);
 
         myTasks = myTasks.filter(task => {
             const matchProperty = filters.property === 'All properties' || task.property === filters.property;
@@ -1401,9 +1410,7 @@ const HostPropertyCare = () => {
                                 <label htmlFor='task-assignee'>Assignee</label>
                                 <select id='task-assignee' name="assignee" value={newTask.assignee} onChange={handleInputChange} required>
                                     <option value="" disabled hidden>Select Assignee</option>
-                                    <option value="Sophie Janssen">Sophie Janssen (sophie@domits.com)</option>
-                                    <option value="Jan de Vries">Jan de Vries (jan@domits.com)</option>
-                                    <option value="Lisa Meijer">Lisa Meijer (lisa@domits.com)</option>
+                                    {currentUser.name && <option value={currentUser.name}>{currentUser.name}{currentUser.email ? ` (${currentUser.email})` : ''}</option>}
                                 </select>
                             </div>
                             <div className="form-group">
@@ -1481,9 +1488,7 @@ const HostPropertyCare = () => {
                                 <div className="form-group">
                                     <label htmlFor='task-assignee'>Assignee</label>
                                     <select id='task-assignee' name="assignee" value={editedTask.assignee} onChange={handleEditChange}>
-                                        <option value="Sophie Janssen">Sophie Janssen</option>
-                                        <option value="Jan de Vries">Jan de Vries</option>
-                                        <option value="Lisa Meijer">Lisa Meijer</option>
+                                        {currentUser.name && <option value={currentUser.name}>{currentUser.name}</option>}
                                     </select>
                                 </div>
                                 <div className="form-group">

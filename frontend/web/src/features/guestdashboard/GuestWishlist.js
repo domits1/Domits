@@ -84,7 +84,7 @@ const GuestWishlist = () => {
         <div className="wishlistHeader">
           <h2>{selectedList}</h2>
           <div className="wishlistSubRow">
-            <p className="wishlistCount">❤️ {wishlist.length} saved accommodations</p>
+            <p className="wishlistCount">â¤ï¸ {wishlist.length} saved accommodations</p>
             <GuestSelector onClose={() => {}} />
           </div>
         </div>
@@ -112,6 +112,7 @@ const GuestWishlist = () => {
                 accommodation={item}
                 onClick={(e, id) => navigate(`/listingdetails?ID=${id}`)}
                 onUnlike={() => setRefreshKey((k) => k + 1)}
+                imageVariant="web"
               />
             </div>
           ))}
