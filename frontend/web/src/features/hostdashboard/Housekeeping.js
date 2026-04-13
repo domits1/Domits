@@ -1249,11 +1249,11 @@ const HostPropertyCare = () => {
                         <option value="Medium">Medium</option>
                         <option value="Low">Low</option>
                     </select>
+                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
                     <div className="search-box small-search">
                         <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
                         <LuSearch aria-hidden="true" />
                     </div>
-                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
                 </div>
 
                 <div className="active-filters-row">
