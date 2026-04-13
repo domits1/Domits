@@ -1673,6 +1673,98 @@ export default class IntegrationService {
     }
   }
 
+  async listChannexRoomTypes(userId, externalPropertyId) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedExternalPropertyId = requireStr(externalPropertyId);
+
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+    if (!normalizedExternalPropertyId) {
+      return bad(400, {
+        error: "Missing required query param: externalPropertyId",
+      });
+    }
+
+    try {
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+        return bad(409, {
+          error: "Channex integration is not connected for this user.",
+          errorCode: "CHANNEX_NOT_CONNECTED",
+          status: !integration ? CHANNEX_STATUS.NOT_CONNECTED : CHANNEX_STATUS.DISCONNECTED,
+        });
+      }
+
+      const credentialsRef = requireStr(integration.credentialsRef);
+      if (!credentialsRef) {
+        return bad(409, {
+          error: "Channex credentials are missing. Reconnect required.",
+          errorCode: "CHANNEX_RECONNECT_REQUIRED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      let secret;
+      try {
+        secret = await this.channexCredentialStore.readSecretOrNull(credentialsRef);
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(409, {
+          error: "Stored Channex secret could not be read. Reconnect required.",
+          errorCode: "CHANNEX_SECRET_READ_FAILED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          details,
+        });
+      }
+
+      if (
+        !secret ||
+        typeof secret !== "object" ||
+        Array.isArray(secret) ||
+        !hasChannexRequiredCredentialFields(secret)
+      ) {
+        return bad(409, {
+          error: "Stored Channex secret is missing, unreadable, or incomplete. Reconnect required.",
+          errorCode: "CHANNEX_SECRET_INVALID",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      const roomTypeListResult = await this.channexProviderClient.listRoomTypes(secret, normalizedExternalPropertyId);
+      if (!roomTypeListResult?.success) {
+        return bad(502, {
+          error: roomTypeListResult?.errorMessage || "Failed to fetch Channex room types.",
+          errorCode: roomTypeListResult?.errorCode || "CHANNEX_ROOM_TYPE_LIST_FAILED",
+          status:
+            roomTypeListResult?.providerStatus === "UNAUTHORIZED"
+              ? CHANNEX_STATUS.RECONNECT_REQUIRED
+              : CHANNEX_STATUS.VALIDATION_FAILED,
+          providerStatus: roomTypeListResult?.providerStatus || "ROOM_TYPE_LIST_FAILED",
+        });
+      }
+
+      return ok({
+        channel: "CHANNEX",
+        integrationAccountId: integration.id,
+        externalPropertyId: normalizedExternalPropertyId,
+        status: CHANNEX_STATUS.CONNECTED,
+        roomTypes: (Array.isArray(roomTypeListResult.roomTypes) ? roomTypeListResult.roomTypes : []).map(
+          (roomType) => ({
+            externalRoomTypeId: roomType.externalRoomTypeId,
+            externalRoomTypeName: roomType.externalRoomTypeName,
+            roomTypeStatus: roomType.roomTypeStatus ?? null,
+          })
+        ),
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to list Channex room types.",
+        errorCode: "CHANNEX_ROOM_TYPE_LIST_SERVICE_FAILED",
+        details,
+      });
+    }
+  }
+
   async linkChannexProperty(userId, body) {
     const normalizedUserId = requireStr(userId);
     if (!normalizedUserId) return bad(400, { error: "Missing required field: userId" });
