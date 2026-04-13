@@ -289,6 +289,14 @@ $border-color: #e5e7eb;
   .reservationTable td {
     border: none !important;
   }
+
+  .noData {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
