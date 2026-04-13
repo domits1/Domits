@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Auth } from 'aws-amplify';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
-    LuSearch, LuChevronRight, LuBuilding2, LuTriangleAlert, LuX, LuCheck
+    LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck
 } from 'react-icons/lu';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
@@ -1409,8 +1409,8 @@ const HostPropertyCare = () => {
             </div>
 
             {isModalOpen && (
-                <div className="modal-overlay" onClick={handleCancelModal}>
-                    <div className="modal-content-large" onClick={e => e.stopPropagation()}>
+                <div className="modal-overlay" role="presentation" onClick={handleCancelModal} onKeyDown={(e) => e.key === 'Escape' && handleCancelModal()}>
+                    <div className="modal-content-large" role="dialog" aria-modal="true" aria-label="Create Task" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Create Task</h3>
                             <button className="close-btn" onClick={handleCancelModal}><LuX /></button>
@@ -1498,7 +1498,7 @@ const HostPropertyCare = () => {
                         </div>
                         
                         <div className="details-badges-row">
-                            <div className="custom-badge-select-wrapper" onClick={e => e.stopPropagation()}>
+                            <div className="custom-badge-select-wrapper" role="none" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
                                 <button
                                     type="button"
                                     className={`badge-select status-${editedTask.status.toLowerCase().replace(' ', '-')}`}
@@ -1524,7 +1524,7 @@ const HostPropertyCare = () => {
                                     </div>
                                 )}
                             </div>
-                            <div className="custom-badge-select-wrapper" onClick={e => e.stopPropagation()}>
+                            <div className="custom-badge-select-wrapper" role="none" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
                                 <button
                                     type="button"
                                     className={`badge-select priority-${editedTask.priority.toLowerCase()}`}
