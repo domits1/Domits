@@ -77,4 +77,91 @@ export default class ChannexProviderClient {
       };
     }
   }
+
+  async listProperties(credentials) {
+    const apiKey = requireStr(credentials?.apiKey);
+
+    if (!apiKey) {
+      return {
+        success: false,
+        properties: [],
+        providerStatus: "INVALID_CREDENTIALS",
+        errorCode: "MISSING_API_KEY",
+        errorMessage: "Channex credentials must include apiKey.",
+      };
+    }
+
+    try {
+      const url = new URL("/api/v1/properties", CHANNEX_BASE_URL);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-api-key": apiKey,
+        },
+      });
+
+      const rawText = await response.text();
+      const parsed = parseJsonSafely(rawText);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          properties: [],
+          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "PROPERTY_LIST_FAILED",
+          errorCode:
+            parsed?.errors?.code ||
+            parsed?.error?.code ||
+            `CHANNEX_PROPERTIES_${response.status}`,
+          errorMessage:
+            parsed?.errors?.title ||
+            parsed?.error?.message ||
+            `Channex property list failed with status ${response.status}.`,
+        };
+      }
+
+      const rows = Array.isArray(parsed?.data) ? parsed.data : null;
+      if (!rows) {
+        return {
+          success: false,
+          properties: [],
+          providerStatus: "INVALID_RESPONSE",
+          errorCode: "CHANNEX_PROPERTIES_INVALID_RESPONSE",
+          errorMessage: "Channex property list response was missing a usable data array.",
+        };
+      }
+
+      const properties = rows
+        .map((row) => {
+          const externalPropertyId = requireStr(row?.id);
+          if (!externalPropertyId) return null;
+
+          return {
+            externalPropertyId,
+            externalPropertyName:
+              requireStr(row?.attributes?.title) ||
+              requireStr(row?.attributes?.name) ||
+              null,
+            propertyStatus: requireStr(row?.attributes?.state) || null,
+          };
+        })
+        .filter(Boolean);
+
+      return {
+        success: true,
+        properties,
+        providerStatus: "ACTIVE",
+        errorCode: null,
+        errorMessage: null,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        properties: [],
+        providerStatus: "PROPERTY_LIST_FAILED",
+        errorCode: error?.code || error?.name || "CHANNEX_PROPERTY_LIST_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex property list request failed.",
+      };
+    }
+  }
 }
