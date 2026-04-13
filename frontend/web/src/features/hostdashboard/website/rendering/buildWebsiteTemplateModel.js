@@ -31,7 +31,7 @@ const cleanText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
 const humanizeCamelCase = (value) =>
   cleanText(value)
     .replaceAll("/", " / ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replaceAll(/([a-z])([A-Z])/g, "$1 $2")
     .replaceAll("_", " ");
 
 const readNumber = (value, fallback = 0) => {
@@ -135,7 +135,8 @@ const buildPolicyHighlights = (rules) => {
         return null;
       }
 
-      const isActive = ruleConfig.invert ? !Boolean(ruleEntry?.value) : Boolean(ruleEntry?.value);
+      const isEnabled = ruleEntry?.value === true;
+      const isActive = ruleConfig.invert ? !isEnabled : isEnabled;
       return isActive ? ruleConfig.label : null;
     })
     .filter(Boolean);
@@ -144,7 +145,7 @@ const buildPolicyHighlights = (rules) => {
   const fallbackRules = ruleEntries
     .filter((ruleEntry) => {
       const ruleName = cleanText(ruleEntry?.rule);
-      return ruleName && !configuredRuleNames.has(ruleName) && Boolean(ruleEntry?.value);
+      return ruleName && !configuredRuleNames.has(ruleName) && ruleEntry?.value === true;
     })
     .map((ruleEntry) => humanizeCamelCase(ruleEntry.rule));
 

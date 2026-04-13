@@ -60,16 +60,42 @@ const directCases = [
     statusCode: 204,
   }),
   buildCase({
+    name: "POST website draft upsert request",
+    controllerMethod: "upsertWebsiteDraft",
+    event: withHttpMethod("POST", { resource: "/property/website/draft" }),
+    statusCode: 200,
+  }),
+  buildCase({
     name: "GET property calendar overrides request",
     controllerMethod: "getPropertyCalendarOverrides",
     event: withHttpMethod("GET", { resource: "/property/calendar/overrides" }),
     statusCode: 200,
+  }),
+  buildCase({
+    name: "GET website drafts request",
+    controllerMethod: "getWebsiteDrafts",
+    event: withHttpMethod("GET", { resource: "/property/website/drafts" }),
+    statusCode: 200,
+  }),
+  buildCase({
+    name: "GET website draft by property request",
+    controllerMethod: "getWebsiteDraftByPropertyId",
+    event: withHttpMethod("GET", { resource: "/property/website/draft" }),
+    statusCode: 200,
+  }),
+  buildCase({
+    name: "DELETE website draft request",
+    controllerMethod: "deleteWebsiteDraft",
+    event: withHttpMethod("DELETE", { resource: "/property/website/draft" }),
+    statusCode: 204,
   }),
 ];
 
 const hostDashboardCases = [
   ["all", "getFullOwnedProperties", "GET all hostDashboard properties"],
   ["single", "getFullOwnedPropertyById", "GET single hostDashboard property"],
+  ["websiteDrafts", "getWebsiteDrafts", "GET hostDashboard website drafts"],
+  ["websiteDraft", "getWebsiteDraftByPropertyId", "GET hostDashboard website draft by property"],
 ].map(([subResource, controllerMethod, name]) =>
   buildCase({
     name,

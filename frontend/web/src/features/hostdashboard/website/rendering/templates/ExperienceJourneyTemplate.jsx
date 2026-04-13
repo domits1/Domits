@@ -92,6 +92,9 @@ export default function ExperienceJourneyTemplate({ model }) {
 
 ExperienceJourneyTemplate.propTypes = {
   model: PropTypes.shape({
+    site: PropTypes.shape({
+      title: PropTypes.string,
+    }).isRequired,
     hero: PropTypes.shape({
       title: PropTypes.string,
       description: PropTypes.string,

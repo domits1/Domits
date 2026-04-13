@@ -127,6 +127,9 @@ export default function PanoramaLandingTemplate({ model }) {
 
 PanoramaLandingTemplate.propTypes = {
   model: PropTypes.shape({
+    site: PropTypes.shape({
+      title: PropTypes.string,
+    }).isRequired,
     hero: PropTypes.shape({
       eyebrow: PropTypes.string,
       title: PropTypes.string,

@@ -1,10 +1,13 @@
 # Standalone Property Site Frontend Status
 
 ## Purpose
-This document tracks the current implementation status of the host-side standalone website builder in the frontend. It captures what is production-real now, what is still preview-only, and what the next phase must cover.
+This document tracks the current implementation status of the host-side standalone website builder in the frontend. It captures what is production-real now, what is preview-only, and what the next phase must cover.
+
+Historical iteration log:
+- `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
 
 ## Current status
-The builder is no longer only a setup shell. It now builds a real in-dashboard preview from selected listing data for the first three templates.
+The builder is no longer only a setup shell. It now builds a real in-dashboard preview from selected listing data for the first three templates and persists per-host website drafts.
 
 What is in place:
 - A dedicated website builder page with a step-based flow.
@@ -12,6 +15,8 @@ What is in place:
 - Template chooser with silhouette previews.
 - Real preview build flow for implemented templates.
 - Data mapping from selected listing detail payload into a shared template model.
+- Draft persistence to backend storage per host and property.
+- Saved website draft overview tab (`My websites`) with reopen-in-builder flow.
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -100,19 +105,17 @@ Current implementation details:
 - Real preview pipeline exists for the first three templates.
 - Preview workflow logic is extracted into a dedicated script module to support future dedicated preview route/new-tab flow.
 - Shared template model is in place and reusable by additional templates.
+- Built previews are persisted as website drafts keyed by host and property.
+- Hosts can return to previously built drafts from the workspace overview tab.
 
 ## Next phase
-The next high-priority phase is persistence. Current preview output is not saved yet.
+The next high-priority phase is draft editing and publish lifecycle wiring.
 
-Required next step:
-- Persist built website config per host and property:
-  - selected template
-  - normalized/published content snapshot inputs
-  - section-level overrides
-  - branding/theme tokens
-  - lifecycle state (draft/preview/published)
-
-Without this, Step 3 remains an ephemeral render and hosts cannot return to previously built website drafts.
+Required next steps:
+- Persist and edit section-level/content overrides instead of saving empty override payloads.
+- Introduce per-draft detail page/route for dedicated editing and preview.
+- Add publish/unpublish state transitions and domain management hooks on top of stored drafts.
+- Add preview URL strategy (in-page now, dedicated preview route/new tab later).
 
 ## Additional implementation note
 - The Website route still exists in the frontend.

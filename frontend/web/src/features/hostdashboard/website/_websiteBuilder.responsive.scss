@@ -70,6 +70,22 @@
     align-items: stretch;
   }
 
+  .workspaceTabs {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .workspaceTabButton {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .websiteDraftCardHeader,
+  .websiteDraftMetaRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .previewBuildCard {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
