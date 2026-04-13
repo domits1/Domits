@@ -149,16 +149,16 @@ export class PropertyService {
       await this.updateAvailabilityRestrictions(propertyId, updates.availabilityRestrictions);
     }
 
-    if (updates?.checkIn) {
-      await this.updateCheckInTimeslotRule(propertyId, updates.checkIn);
-    }
-
     if (updates?.amenities) {
       await this.updateAmenities(propertyId, updates.amenities);
     }
 
     if (updates?.rules) {
       await this.updateRules(propertyId, updates.rules);
+    }
+
+    if (updates?.checkIn) {
+      await this.updateCheckInTimeslotRule(propertyId, updates.checkIn);
     }
 
     if (updates?.checkIn) {
