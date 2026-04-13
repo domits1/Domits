@@ -326,7 +326,7 @@ export class PropertyService {
       this.getAmenities(propertyId),
       this.getAvailability(propertyId),
       this.getAvailabilityRestrictions(propertyId),
-      this.getCheckInRules(propertyId),
+      this.getCheckIn(propertyId),
       this.getGeneralDetails(propertyId),
       this.getImages(propertyId),
       includeFullLocation ? this.getFullLocation(propertyId) : this.getLocation(propertyId),
@@ -599,7 +599,7 @@ export class PropertyService {
       await client
         .createQueryBuilder()
         .update(Property_Rule)
-        .set({ value, updated_at: Date.now() })
+        .set({ value })
         .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
         .execute();
     } else {
