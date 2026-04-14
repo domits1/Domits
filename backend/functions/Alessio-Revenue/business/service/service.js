@@ -48,7 +48,6 @@ export class Service {
         try {
           const revenue = await this.paymentsService.getTotalHostRevenue(event);
 
-          // If Stripe is not configured or returns no data
           if (revenue?.totalRevenue == null) {
             return { totalRevenue: null, error: "Stripe not configured" };
           }
@@ -131,7 +130,6 @@ export class Service {
     }
   }
 
-  // All KPIs in one call
 
   async getAllKpis(event) {
     const { userId, filterType, start, end } =
@@ -154,7 +152,7 @@ export class Service {
     try {
       await this.repository.createKpiSnapshot({
         userId,
-        hostId: userId, // voorlopig hetzelfde
+        hostId: userId,
         periodType: filterType ?? "alltime",
         periodStart: start,
         periodEnd: end,
