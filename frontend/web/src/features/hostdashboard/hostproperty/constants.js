@@ -19,11 +19,21 @@ export const AMENITY_CATEGORY_ORDER = [
   "EcoFriendly",
 ];
 export const POLICY_RULE_CONFIG = [
+  { rule: "SmokeDetector", label: "Smoke detector" },
+  { rule: "CarbonMonoxide", label: "Carbon monoxide" },
+  { rule: "FireExtinguisher", label: "Fire extinguisher" },
+  { rule: "FirstAidKit", label: "First aid kit" },
+  { rule: "CookingAllowed", label: "Cooking allowed" },
+  { rule: "ParkingAvailable", label: "Parking available" },
   { rule: "SmokingAllowed", label: "No smoking", invert: true },
   { rule: "PetsAllowed", label: "No pets", invert: true },
   { rule: "Parties/EventsAllowed", label: "No parties or events", invert: true },
   { rule: "SuitableForChildren", label: "Suitable for children", invert: false },
   { rule: "SuitableForInfants", label: "Suitable for infants", invert: false },
+  { rule: "CancellationPolicy:Flexible", label: "Flexible (Cancel up to 1 day before)", invert: false },
+  { rule: "CancellationPolicy:Moderate", label: "Moderate (Cancel up to 5 days before)", invert: false },
+  { rule: "CancellationPolicy:Strict", label: "Strict (Cancel up to 30 days before)", invert: false },
+  { rule: "CancellationPolicy:Firm", label: "Firm (Cancel up to 30 days before)", invert: false },
 ];
 export const PRICING_RESTRICTION_KEYS = {
   minimumStay: "MinimumStay",
@@ -75,7 +85,7 @@ export const SAVE_SUCCESS_MESSAGE_BY_TAB = {
 
 export const createInitialPolicyRules = () =>
   POLICY_RULE_CONFIG.reduce((accumulator, ruleConfig) => {
-    accumulator[ruleConfig.rule] = false;
+    accumulator[ruleConfig.rule] = !(ruleConfig.invert ?? false);
     return accumulator;
   }, {});
 
