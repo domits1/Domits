@@ -1,13 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import LanguageIcon from "@mui/icons-material/Language";
 import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router-dom";
 import styles from "./WebsiteBuilderPage.module.scss";
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
+import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import arrowLeftIcon from "../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../images/arrow-right-icon.svg";
 import TemplateSilhouette from "./TemplateSilhouette";
 import { WEBSITE_TEMPLATE_OPTIONS, getWebsiteTemplateById } from "./websiteTemplates";
+import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
+import { isWebsiteTemplateImplemented } from "./rendering/templateRegistry";
+import {
+  PREVIEW_BUILD_STEPS,
+  PREVIEW_STAGE,
+  runWebsitePreviewBuildWorkflow,
+} from "./services/websitePreviewWorkflow";
+import { fetchWebsiteDrafts, upsertWebsiteDraft } from "./services/websiteDraftService";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -19,6 +28,8 @@ const PROPERTY_STATUS_LABELS = {
 };
 
 const SUMMARY_DESCRIPTION_WORD_LIMIT = 23;
+const WORKSPACE_TAB_BUILDER = "builder";
+const WORKSPACE_TAB_WEBSITES = "websites";
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
@@ -63,7 +74,27 @@ const getPhotoCardClassName = (photoIndex) => {
   return `${styles.photoCard} ${variantClassName}`.trim();
 };
 
+const formatDraftUpdatedAt = (updatedAt) => {
+  const parsedValue = Number(updatedAt);
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    return "Unknown update time";
+  }
+
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(parsedValue));
+  } catch {
+    return "Unknown update time";
+  }
+};
+
 function WebsiteBuilderPage() {
+  const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_BUILDER);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
   const [selectedTemplateId, setSelectedTemplateId] = useState(WEBSITE_TEMPLATE_OPTIONS[0].id);
@@ -73,6 +104,18 @@ function WebsiteBuilderPage() {
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [galleryAnimationDirection, setGalleryAnimationDirection] = useState("idle");
   const [galleryAnimationTick, setGalleryAnimationTick] = useState(0);
+  const [previewStage, setPreviewStage] = useState(PREVIEW_STAGE.idle);
+  const [previewBuildPhase, setPreviewBuildPhase] = useState(PREVIEW_BUILD_STEPS[0].key);
+  const [previewModel, setPreviewModel] = useState(null);
+  const [previewError, setPreviewError] = useState("");
+  const [websiteDrafts, setWebsiteDrafts] = useState([]);
+  const [isLoadingWebsiteDrafts, setIsLoadingWebsiteDrafts] = useState(true);
+  const [websiteDraftsError, setWebsiteDraftsError] = useState("");
+  const [isPersistingWebsiteDraft, setIsPersistingWebsiteDraft] = useState(false);
+  const [persistWebsiteDraftMessage, setPersistWebsiteDraftMessage] = useState("");
+  const [persistWebsiteDraftError, setPersistWebsiteDraftError] = useState("");
+  const [pendingDraftSelection, setPendingDraftSelection] = useState(null);
+  const previewSectionRef = useRef(null);
   const navigate = useNavigate();
 
   const loadProperties = async () => {
@@ -96,8 +139,24 @@ function WebsiteBuilderPage() {
     }
   };
 
+  const loadHostWebsiteDrafts = async () => {
+    setIsLoadingWebsiteDrafts(true);
+    setWebsiteDraftsError("");
+
+    try {
+      const drafts = await fetchWebsiteDrafts();
+      setWebsiteDrafts(drafts);
+    } catch (error) {
+      setWebsiteDrafts([]);
+      setWebsiteDraftsError(error?.message || "We could not load your saved website drafts.");
+    } finally {
+      setIsLoadingWebsiteDrafts(false);
+    }
+  };
+
   useEffect(() => {
     void loadProperties();
+    void loadHostWebsiteDrafts();
   }, []);
 
   const selectedProperty =
@@ -107,6 +166,7 @@ function WebsiteBuilderPage() {
   const importedImageCount = selectedProperty?.imageCount || 0;
   const summaryDescription = truncateDescription(selectedProperty?.description);
   const selectedTemplate = getWebsiteTemplateById(selectedTemplateId);
+  const selectedTemplateIsImplemented = isWebsiteTemplateImplemented(selectedTemplateId);
   const activeGalleryImage = galleryImages[activeGalleryIndex] || galleryImages[0] || "";
   const isListingStepComplete = Boolean(selectedProperty);
 
@@ -124,10 +184,118 @@ function WebsiteBuilderPage() {
     );
   }, [selectedProperty, galleryImages.length]);
 
+  useEffect(() => {
+    setPreviewStage(PREVIEW_STAGE.idle);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+    setPersistWebsiteDraftMessage("");
+    setPersistWebsiteDraftError("");
+  }, [selectedPropertyId]);
+
+  useEffect(() => {
+    if (previewStage === PREVIEW_STAGE.idle || !previewSectionRef.current) {
+      return;
+    }
+
+    previewSectionRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [previewStage]);
+
+  useEffect(() => {
+    if (!pendingDraftSelection) {
+      return;
+    }
+
+    if (workspaceTab !== WORKSPACE_TAB_BUILDER) {
+      return;
+    }
+
+    if (!selectedProperty || selectedProperty.value !== pendingDraftSelection.propertyId) {
+      return;
+    }
+
+    if (selectedTemplateId !== pendingDraftSelection.templateKey) {
+      return;
+    }
+
+    if (!isWebsiteTemplateImplemented(selectedTemplateId)) {
+      setPendingDraftSelection(null);
+      return;
+    }
+
+    setPendingDraftSelection(null);
+    void buildWebsitePreview();
+  }, [pendingDraftSelection, workspaceTab, selectedProperty, selectedTemplateId]);
+
   const setGalleryImage = (nextIndex, direction = "idle") => {
     setGalleryAnimationDirection(direction);
     setActiveGalleryIndex(nextIndex);
     setGalleryAnimationTick((currentTick) => currentTick + 1);
+  };
+
+  const resetPreviewState = () => {
+    setPreviewStage(PREVIEW_STAGE.idle);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+    setPersistWebsiteDraftMessage("");
+    setPersistWebsiteDraftError("");
+  };
+
+  const persistSelectedWebsiteDraft = async () => {
+    if (!selectedProperty) {
+      return;
+    }
+
+    setIsPersistingWebsiteDraft(true);
+    setPersistWebsiteDraftMessage("");
+    setPersistWebsiteDraftError("");
+
+    try {
+      await upsertWebsiteDraft({
+        propertyId: selectedProperty.value,
+        templateKey: selectedTemplateId,
+        status: "DRAFT",
+        contentOverrides: {},
+        themeOverrides: {},
+      });
+      setPersistWebsiteDraftMessage("Draft saved to your website workspace.");
+      await loadHostWebsiteDrafts();
+    } catch (error) {
+      setPersistWebsiteDraftError(error?.message || "Preview is ready, but saving the website draft failed.");
+    } finally {
+      setIsPersistingWebsiteDraft(false);
+    }
+  };
+
+  const buildWebsitePreview = async () => {
+    if (!selectedProperty) {
+      return;
+    }
+
+    setPreviewStage(PREVIEW_STAGE.loading);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+
+    try {
+      const nextPreviewModel = await runWebsitePreviewBuildWorkflow({
+        propertyId: selectedProperty.value,
+        summaryProperty: selectedProperty,
+        onPhaseChange: setPreviewBuildPhase,
+      });
+
+      setPreviewModel(nextPreviewModel);
+      setPreviewStage(PREVIEW_STAGE.ready);
+      await persistSelectedWebsiteDraft();
+    } catch (error) {
+      setPreviewStage(PREVIEW_STAGE.error);
+      setPreviewModel(null);
+      setPreviewError(error?.message || "We could not build the selected website preview.");
+    }
   };
 
   useEffect(() => {
@@ -191,6 +359,25 @@ function WebsiteBuilderPage() {
     setGalleryImage(nextIndex, direction < 0 ? "backward" : "forward");
   };
 
+  const openWebsiteDraftInBuilder = (draft) => {
+    const propertyId = String(draft?.propertyId || "").trim();
+    if (!propertyId) {
+      return;
+    }
+
+    const templateKey = String(draft?.templateKey || "").trim();
+    const resolvedTemplate = getWebsiteTemplateById(templateKey);
+    const nextTemplateId = resolvedTemplate?.id || WEBSITE_TEMPLATE_OPTIONS[0].id;
+
+    setWorkspaceTab(WORKSPACE_TAB_BUILDER);
+    setSelectedPropertyId(propertyId);
+    setSelectedTemplateId(nextTemplateId);
+    setPendingDraftSelection({
+      propertyId,
+      templateKey: nextTemplateId,
+    });
+  };
+
   const renderPhotoStack = () => (
     <div className={styles.photoStack}>
       {previewImages.map((imageUrl, index) => (
@@ -212,6 +399,107 @@ function WebsiteBuilderPage() {
     </div>
   );
 
+  const renderWorkspaceTabs = () => (
+    <div className={styles.workspaceTabs} role="tablist" aria-label="Website workspace">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={workspaceTab === WORKSPACE_TAB_BUILDER}
+        className={`${styles.workspaceTabButton} ${
+          workspaceTab === WORKSPACE_TAB_BUILDER ? styles.workspaceTabButtonActive : ""
+        }`.trim()}
+        onClick={() => setWorkspaceTab(WORKSPACE_TAB_BUILDER)}
+      >
+        Build website
+      </button>
+
+      <button
+        type="button"
+        role="tab"
+        aria-selected={workspaceTab === WORKSPACE_TAB_WEBSITES}
+        className={`${styles.workspaceTabButton} ${
+          workspaceTab === WORKSPACE_TAB_WEBSITES ? styles.workspaceTabButtonActive : ""
+        }`.trim()}
+        onClick={() => setWorkspaceTab(WORKSPACE_TAB_WEBSITES)}
+      >
+        My websites
+      </button>
+    </div>
+  );
+
+  const renderWebsiteDraftOverview = () => {
+    if (isLoadingWebsiteDrafts) {
+      return (
+        <div className={styles.stateCard}>
+          <PulseBarsLoader message="Loading your saved website drafts..." />
+        </div>
+      );
+    }
+
+    if (websiteDraftsError) {
+      return (
+        <div className={`${styles.stateCard} ${styles.errorState}`}>
+          <p>{websiteDraftsError}</p>
+          <div className={styles.buttonRow}>
+            <button type="button" className={styles.primaryButton} onClick={() => void loadHostWebsiteDrafts()}>
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (websiteDrafts.length < 1) {
+      return (
+        <div className={styles.stateCard}>
+          <p>
+            You do not have any saved website drafts yet. Build a preview from the builder tab and the
+            draft will appear here.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.websiteDraftList}>
+        {websiteDrafts.map((draft) => {
+          const template = getWebsiteTemplateById(draft.templateKey);
+          const templateName = template?.name || draft.templateKey || "Unknown template";
+
+          return (
+            <article key={draft.id || `${draft.propertyId}-${draft.updatedAt}`} className={styles.websiteDraftCard}>
+              <div className={styles.websiteDraftCardHeader}>
+                <div className={styles.websiteDraftCardCopy}>
+                  <p className={styles.summaryLabel}>Saved website draft</p>
+                  <p className={styles.summaryValue}>
+                    {draft.propertyTitle || "Untitled listing website"}
+                  </p>
+                  {draft.location ? <p className={styles.summaryLocation}>{draft.location}</p> : null}
+                </div>
+                <span className={styles.statusPill}>{draft.status || "DRAFT"}</span>
+              </div>
+
+              <div className={styles.websiteDraftMetaRow}>
+                <span className={styles.metaText}>Template: {templateName}</span>
+                <span className={styles.metaText}>Updated: {formatDraftUpdatedAt(draft.updatedAt)}</span>
+              </div>
+
+              <div className={styles.buttonRow}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={() => openWebsiteDraftInBuilder(draft)}
+                >
+                  Open in builder
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderSelectionState = () => {
     if (loadError && propertyOptions.length === 0) {
       return (
@@ -226,7 +514,8 @@ function WebsiteBuilderPage() {
       );
     }
 
-    if (!isLoading && propertyOptions.length === 0) {
+    const showNoListingsState = isLoading === false && propertyOptions.length === 0;
+    if (showNoListingsState) {
       return (
         <div className={styles.stateCard}>
           <p>
@@ -298,6 +587,8 @@ function WebsiteBuilderPage() {
   };
 
   const renderTemplateStep = () => {
+    const showTemplateImplementationHint = selectedTemplateIsImplemented === false;
+
     return (
       <div className={styles.templateStage}>
         <div className={styles.templateGrid}>
@@ -337,14 +628,137 @@ function WebsiteBuilderPage() {
               <p className={styles.selectedTemplateName}>{selectedTemplate.name}</p>
             </div>
 
-            <button type="button" className={styles.primaryButton}>
-              Build my website
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => void buildWebsitePreview()}
+              disabled={!selectedTemplateIsImplemented || previewStage === PREVIEW_STAGE.loading}
+            >
+              {previewStage === PREVIEW_STAGE.loading ? "Building preview..." : "Build my website"}
             </button>
           </div>
 
           <p className={styles.selectedTemplateDescription}>{selectedTemplate.description}</p>
+          {showTemplateImplementationHint ? (
+            <p className={styles.previewHelperText}>
+              Real template preview is currently available for Panorama Landing, Trust Signals, and
+              Experience Journey. The other template options stay visible so the chooser is not locked to
+              one direction.
+            </p>
+          ) : null}
         </div>
       </div>
+    );
+  };
+
+  const renderPreviewBuildState = () => (
+    <div className={styles.previewBuildCard}>
+      <div className={styles.previewBuildVisual}>
+        <div className={`${styles.previewBuildSilhouetteShell} ${styles.templatePreviewShell}`}>
+          <TemplateSilhouette layout={selectedTemplate.layout} />
+        </div>
+      </div>
+
+      <div className={styles.previewBuildCopy}>
+        <PulseBarsLoader
+          message={`Preparing ${selectedTemplate.name} from the selected listing`}
+          className={styles.previewLoader}
+        />
+
+        <div className={styles.previewBuildSteps}>
+          {PREVIEW_BUILD_STEPS.map((step, index) => {
+            const activeStepIndex = PREVIEW_BUILD_STEPS.findIndex(
+              (buildStep) => buildStep.key === previewBuildPhase
+            );
+            const isComplete = index < activeStepIndex;
+            const isActive = index === activeStepIndex;
+
+            return (
+              <article
+                key={step.key}
+                className={`${styles.previewBuildStep} ${isComplete ? styles.previewBuildStepComplete : ""} ${
+                  isActive ? styles.previewBuildStepActive : ""
+                }`.trim()}
+              >
+                <span className={styles.previewBuildStepIndex} aria-hidden="true">
+                  {index + 1}
+                </span>
+                <div className={styles.previewBuildStepCopy}>
+                  <p>{step.title}</p>
+                  <span>{step.description}</span>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPreviewStep = () => {
+    if (previewStage === PREVIEW_STAGE.idle) {
+      return null;
+    }
+
+    return (
+      <section ref={previewSectionRef} className={styles.builderStepSection}>
+        <div className={styles.stepHeader}>
+          <p className={styles.stepEyebrow}>Step 3</p>
+          <h2>Preview your website</h2>
+          <p>
+            This stage uses the selected listing detail response and maps it into a shared content model
+            before rendering the chosen template.
+          </p>
+        </div>
+
+        {previewStage === PREVIEW_STAGE.loading ? renderPreviewBuildState() : null}
+
+        {previewStage === PREVIEW_STAGE.error ? (
+          <div className={`${styles.stateCard} ${styles.errorState}`}>
+            <p>{previewError}</p>
+            <div className={styles.buttonRow}>
+              <button type="button" className={styles.primaryButton} onClick={() => void buildWebsitePreview()}>
+                Try preview again
+              </button>
+              <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
+                Back to template chooser
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {previewStage === PREVIEW_STAGE.ready && previewModel ? (
+          <div className={styles.previewReadyState}>
+            <div className={styles.previewStageActions}>
+              <div className={styles.previewStageMessageStack}>
+                <span className={styles.previewHelperText}>
+                  Change the selected template above to compare other implemented layouts against the same
+                  imported listing data.
+                </span>
+                {isPersistingWebsiteDraft ? (
+                  <span className={styles.previewHelperText}>Saving website draft to your workspace...</span>
+                ) : null}
+                {persistWebsiteDraftMessage ? (
+                  <span className={styles.previewPersistSuccessText}>{persistWebsiteDraftMessage}</span>
+                ) : null}
+                {persistWebsiteDraftError ? (
+                  <span className={styles.previewPersistErrorText}>{persistWebsiteDraftError}</span>
+                ) : null}
+              </div>
+              <div className={styles.buttonRow}>
+                <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
+                  Back to chooser
+                </button>
+                <button type="button" className={styles.primaryButton} onClick={() => void buildWebsitePreview()}>
+                  Refresh preview
+                </button>
+              </div>
+            </div>
+
+            <WebsiteTemplatePreview templateId={selectedTemplateId} model={previewModel} />
+          </div>
+        ) : null}
+      </section>
     );
   };
 
@@ -377,40 +791,61 @@ function WebsiteBuilderPage() {
               </p>
             </div>
 
-            <div className={styles.builderSteps}>
-              <section className={styles.builderStepSection}>
-                <div className={styles.stepHeader}>
-                  <p className={styles.stepEyebrow}>Step 1</p>
-                  <div className={styles.stepTitleRow}>
-                    <span className={styles.titleIconBadge} aria-hidden="true">
-                      <HomeIcon className={styles.titleIcon} />
-                    </span>
-                    <h2>Choose your listing</h2>
-                  </div>
-                  <p>
-                    Pick the property you want to use as the base for your website. This page only
-                    shows listings that belong to your host account.
-                  </p>
-                </div>
+            {renderWorkspaceTabs()}
 
-                {renderSelectionState()}
-              </section>
-
-              {isListingStepComplete ? (
+            {workspaceTab === WORKSPACE_TAB_BUILDER ? (
+              <div className={styles.builderSteps}>
                 <section className={styles.builderStepSection}>
                   <div className={styles.stepHeader}>
-                    <p className={styles.stepEyebrow}>Step 2</p>
-                    <h2>Choose a website template</h2>
+                    <p className={styles.stepEyebrow}>Step 1</p>
+                    <div className={styles.stepTitleRow}>
+                      <span className={styles.titleIconBadge} aria-hidden="true">
+                        <HomeIcon className={styles.titleIcon} />
+                      </span>
+                      <h2>Choose your listing</h2>
+                    </div>
                     <p>
-                      Select the layout direction you want to use for the listing website. You can keep
-                      adjusting the listing choice above while you compare template options.
+                      Pick the property you want to use as the base for your website. This page only
+                      shows listings that belong to your host account.
                     </p>
                   </div>
 
-                  {renderTemplateStep()}
+                  {renderSelectionState()}
                 </section>
-              ) : null}
-            </div>
+
+                {isListingStepComplete ? (
+                  <>
+                    <section className={styles.builderStepSection}>
+                      <div className={styles.stepHeader}>
+                        <p className={styles.stepEyebrow}>Step 2</p>
+                        <h2>Choose a website template</h2>
+                        <p>
+                          Select the layout direction you want to use for the listing website. You can keep
+                          adjusting the listing choice above while you compare template options.
+                        </p>
+                      </div>
+
+                      {renderTemplateStep()}
+                    </section>
+
+                    {renderPreviewStep()}
+                  </>
+                ) : null}
+              </div>
+            ) : (
+              <section className={styles.builderStepSection}>
+                <div className={styles.stepHeader}>
+                  <p className={styles.stepEyebrow}>Website workspace</p>
+                  <h2>Saved websites</h2>
+                  <p>
+                    These are your persisted website drafts. Open any draft to continue editing and previewing
+                    it in the builder flow.
+                  </p>
+                </div>
+
+                {renderWebsiteDraftOverview()}
+              </section>
+            )}
           </div>
         </section>
       </div>
