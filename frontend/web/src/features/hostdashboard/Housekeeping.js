@@ -1418,7 +1418,7 @@ const HostPropertyCare = () => {
             {isModalOpen && (
                 <>
                 <button className="modal-backdrop" onClick={handleCancelModal} aria-label="Close modal" />
-                <dialog className="modal-overlay" open aria-label="Create Task">
+                <div className="modal-overlay">
                     <div className="modal-content-large">
                         <div className="modal-header">
                             <h3>Create Task</h3>
@@ -1489,11 +1489,13 @@ const HostPropertyCare = () => {
                             </div>
                         </form>
                     </div>
-                </dialog>
+                </div>
                 </>
             )}
 
             {viewingTask && editedTask && (
+                <>
+                <button className="modal-backdrop" onClick={closeTaskDetails} aria-label="Close modal" />
                 <div className="modal-overlay">
                     <div className="modal-content-large task-details-modal">
                         <div className="modal-header details-header">
@@ -1647,6 +1649,7 @@ const HostPropertyCare = () => {
                         </div>
                     </div>
                 </div>
+                </>
             )}
 
             {confirmDialog.isOpen && (
