@@ -229,10 +229,10 @@
                     width: 100%;
                     grid-row: 1 / span 2;
 
-                    .gallery-share-btn {
+                    .gallery-share-btn,
+                    .gallery-like-btn {
                         position: absolute;
                         top: 10px;
-                        left: 10px;
                         background-color: rgba(255, 255, 255, 0.85);
                         border: none;
                         border-radius: 50%;
@@ -254,6 +254,19 @@
                         &:focus-visible {
                             outline: 2px solid var(--primary-color);
                             outline-offset: 2px;
+                        }
+                    }
+
+                    .gallery-share-btn {
+                        left: 10px;
+                    }
+
+                    .gallery-like-btn {
+                        left: 58px;
+                        color: #252b35;
+
+                        &.is-active {
+                            color: #ec5050;
                         }
                     }
                 }
