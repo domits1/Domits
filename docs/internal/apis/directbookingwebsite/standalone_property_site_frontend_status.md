@@ -16,7 +16,22 @@ What is in place:
 - Real preview build flow for implemented templates.
 - Data mapping from selected listing detail payload into a shared template model.
 - Draft persistence to backend storage per host and property.
-- Saved website draft overview tab (`My websites`) with reopen-in-builder flow.
+- Saved website draft overview tab (`My websites`) with dedicated editor-page entry.
+- Dedicated draft editor page with controlled text override editing for:
+  - website title
+  - hero eyebrow
+  - hero title
+  - hero description
+  - CTA label
+  - CTA note
+- Template-aware section visibility toggles for implemented templates.
+- Image-slot selection for hero/gallery slots used by implemented templates.
+- Scaled preview rendering with dedicated desktop/tablet/mobile viewport switching in the editor.
+- Compact scaled website preview cards inside `My websites`.
+- Acceptance AWS wiring has been validated far enough for draft save/list behavior:
+  - Aurora `main.standalone_site_draft`
+  - API Gateway `/property/website/draft` and `/property/website/drafts`
+  - CORS preflight on the new website routes
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -107,13 +122,20 @@ Current implementation details:
 - Shared template model is in place and reusable by additional templates.
 - Built previews are persisted as website drafts keyed by host and property.
 - Hosts can return to previously built drafts from the workspace overview tab.
+- Saved drafts now open in a dedicated editor route instead of reusing Step 3 in the builder.
+- Saved draft cards now render a compact scaled version of the current website preview.
+- Implemented templates now honor draft visibility toggles for major sections.
+- Acceptance environment issues found during rollout were resolved:
+  - missing unique index on `property_id` caused `ON CONFLICT` failure
+  - missing `host_id` index had to be added separately for the intended draft-by-host access path
+  - missing/incomplete CORS on website draft routes blocked browser fetches
 
 ## Next phase
-The next high-priority phase is draft editing and publish lifecycle wiring.
+The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.
 
 Required next steps:
-- Persist and edit section-level/content overrides instead of saving empty override payloads.
-- Introduce per-draft detail page/route for dedicated editing and preview.
+- Expand section-level/content override coverage further into template-specific headings and branding/theme controls.
+- Introduce image reordering / richer media management beyond the current slot reassignment approach.
 - Add publish/unpublish state transitions and domain management hooks on top of stored drafts.
 - Add preview URL strategy (in-page now, dedicated preview route/new tab later).
 

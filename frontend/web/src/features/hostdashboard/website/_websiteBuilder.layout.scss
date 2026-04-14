@@ -574,16 +574,30 @@
 }
 
 .websiteDraftCardHeader {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px) auto;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 14px;
 }
 
 .websiteDraftCardCopy {
   display: grid;
   gap: 4px;
   min-width: 0;
+}
+
+.websiteDraftCardPreview {
+  min-width: 0;
+}
+
+.websiteDraftPreviewPlaceholder {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px dashed #d3deea;
+  background: #f8fbff;
 }
 
 .websiteDraftMetaRow {

@@ -425,5 +425,13 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       label: "Check live availability",
       note: "Live pricing and availability stay server-side and are checked on quote request.",
     },
+    visibility: {
+      topBar: true,
+      trustCards: true,
+      gallerySection: true,
+      amenitiesPanel: true,
+      callToAction: true,
+      journeyStops: true,
+    },
   };
 };

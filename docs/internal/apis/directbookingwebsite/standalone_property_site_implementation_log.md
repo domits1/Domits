@@ -279,7 +279,6 @@ Open risks / Next:
 
 Evidence (commit(s), file(s), docs):
 - Files:
-  - `frontend/web/src/features/hostdashboard/website/services/websiteApiServiceShared.js`
   - `frontend/web/src/features/hostdashboard/website/services/websitePropertyService.js`
   - `frontend/web/src/features/hostdashboard/website/services/websiteDraftService.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
@@ -287,4 +286,149 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
+
+## [2026-04-14] Acceptance AWS activation for website drafts
+Context:
+Draft persistence code existed, but acceptance still failed until the AWS side matched the implementation contract.
+
+Implementation:
+- Created `main.standalone_site_draft` in Aurora.
+- Added API Gateway resources and methods for:
+  - `/property/website/draft`
+  - `/property/website/drafts`
+- Fixed CORS preflight on the new website routes.
+- Verified draft save/list behavior from the host dashboard.
+
+Decision / Rationale:
+- Keep standalone website persistence isolated in standalone-owned storage instead of mixing website state into existing `property_*` tables.
+- The builder page is now a valid entry point, but not the long-term editing surface.
+
+AWS / Data impact:
+- Rollout exposed two concrete infrastructure constraints:
+  - `ON CONFLICT (property_id)` requires a unique index on `property_id`
+  - browser calls to new API Gateway resources require complete `OPTIONS`/CORS setup and redeploy
+
+Validation:
+- Browser flow reached successful draft persistence.
+- `My websites` now shows persisted drafts.
+
+Open risks / Next:
+- The current reopen behavior still routes back into the builder flow.
+- Next implementation should be a dedicated draft editor page that reads and writes `content_overrides_json` and `theme_overrides_json`.
+
+Evidence (commit(s), file(s), docs):
+- Acceptance verification notes:
+  - table `main.standalone_site_draft`
+  - index `standalone_site_draft_property_unique`
+  - API Gateway methods for `/property/website/draft(s)`
+
+## [2026-04-14] Dedicated draft editor page with controlled text overrides
+Context:
+Persisted drafts were reachable from the workspace, but reopening them inside the builder kept the creation flow overloaded and mixed two different responsibilities.
+
+Implementation:
+- Added a dedicated draft editor route:
+  - `/hostdashboard/website/:propertyId`
+- Added editor page that:
+  - loads saved draft record by property
+  - loads selected property detail payload
+  - rebuilds the canonical website model
+  - applies saved `content_overrides_json`
+  - exposes controlled text editing fields
+  - saves updated overrides back into the same draft record
+- Added initial override utility for:
+  - `siteTitle`
+  - `heroTitle`
+  - `heroDescription`
+  - `ctaLabel`
+- Updated builder workspace actions so saved drafts open the dedicated editor instead of rebuilding Step 3 in place.
+
+Decision / Rationale:
+- Keep the builder focused on creation and first preview generation.
+- Move long-term editing into a draft-specific page so future image editing, section controls, publish workflow, and domain setup do not bloat the builder.
+
+AWS / Data impact:
+- No new schema/API routes beyond existing draft persistence.
+- Verified draft editor continues to rely on `main.standalone_site_draft`.
+- Acceptance rollout also revealed the intended host-scoped access path should keep `standalone_site_draft_host_idx` present.
+
+Validation:
+- Frontend build to be used as the first structural validation checkpoint.
+- Browser flow target:
+  - save draft in builder
+  - open draft from `My websites`
+  - edit controlled fields
+  - save and verify persisted override reload
+
+Open risks / Next:
+- Override coverage is still intentionally small.
+- Image slot editing, section toggles, publish state, and domain linking still need implementation.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/websiteDraftContentOverrides.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/mainDashboardHost.js`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+  - `standalone_property_site_plan_of_approach.md`
+
+## [2026-04-14] Editor override expansion + scaled preview cards
+Context:
+The first dedicated editor page worked, but its scope was too narrow: only a few text fields were editable, saved drafts still lacked a visual summary in the workspace, and preview scaling needed to behave like a controlled product surface instead of relying on incidental browser width changes.
+
+Implementation:
+- Expanded the draft override model to support:
+  - common content fields (`siteTitle`, `heroEyebrow`, `heroTitle`, `heroDescription`, `ctaLabel`, `ctaNote`)
+  - visibility overrides for major sections
+  - image-slot overrides for hero/gallery positions
+  - trust card copy overrides
+  - journey stop copy overrides
+- Updated implemented templates to honor visibility overrides.
+- Added scaled preview rendering with viewport switching:
+  - desktop
+  - tablet
+  - mobile
+- Added compact scaled website previews to the `My websites` workspace cards.
+- Kept all of this on top of the existing persisted `content_overrides_json` contract instead of introducing new tables prematurely.
+
+Decision / Rationale:
+- The builder page remains a creation flow.
+- The editor page becomes the controlled configuration surface.
+- Preview scaling belongs in the shared preview renderer, not in each page.
+- Slot-based image reassignment is good enough for this phase and avoids fake “page builder” behavior.
+
+AWS / Data impact:
+- No new API routes or schema changes were required.
+- Acceptance SQL still needs `standalone_site_draft_host_idx` present for the intended host-scoped draft list path.
+
+Validation:
+- Frontend production build used as structural validation after the refactor.
+- Browser flow target:
+  - open saved draft
+  - change visibility/text/image slot overrides
+  - save
+  - refresh editor and workspace
+  - confirm persisted override reload and compact preview update
+
+Open risks / Next:
+- Public publish/unpublish lifecycle and domain connection still do not exist.
+- Editor surface still lacks full branding/theme control and richer section-specific copy.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/websiteDraftContentOverrides.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+  - `standalone_property_site_plan_of_approach.md`
 

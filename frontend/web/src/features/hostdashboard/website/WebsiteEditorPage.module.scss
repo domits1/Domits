@@ -1,0 +1,413 @@
+.editorPage {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+}
+
+.heroCard {
+  display: grid;
+  gap: 14px;
+  padding: clamp(24px, 3vw, 36px);
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(31, 78, 121, 0.1), rgba(255, 255, 255, 0.95)),
+    #ffffff;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--domits-host-blue, #1f4e79);
+}
+
+.heroHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: clamp(1.65rem, 1.2rem + 1.4vw, 2.4rem);
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.heroDescription {
+  margin: 0;
+  max-width: 72ch;
+  color: #334155;
+  line-height: 1.65;
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.metaPill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.46rem 0.82rem;
+  background: rgba(31, 78, 121, 0.1);
+  color: #153e64;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.surface {
+  display: grid;
+  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.editorPanel,
+.previewPanel,
+.stateCard {
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
+}
+
+.editorPanel,
+.previewPanel {
+  padding: 24px;
+}
+
+.stateCard {
+  padding: 28px;
+}
+
+.panelHeader {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.panelDescription {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.editorForm {
+  display: grid;
+  gap: 16px;
+}
+
+.panelSection {
+  display: grid;
+  gap: 16px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.panelSection:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.sectionBlockHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.sectionBlockTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sectionBlockDescription {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.fieldStack,
+.toggleStack,
+.collectionStack {
+  display: grid;
+  gap: 14px;
+}
+
+.fieldGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldLabel {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #153e64;
+}
+
+.textInput,
+.selectInput,
+.textArea {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid #cbd5e1;
+  background: #f8fbff;
+  color: #0f172a;
+  font: inherit;
+  padding: 0.9rem 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.textInput:focus,
+.selectInput:focus,
+.textArea:focus {
+  outline: none;
+  border-color: rgba(31, 78, 121, 0.42);
+  box-shadow: 0 0 0 4px rgba(31, 78, 121, 0.12);
+  background: #ffffff;
+}
+
+.textArea {
+  min-height: 148px;
+  resize: vertical;
+}
+
+.helperText {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.toggleCard,
+.collectionCard,
+.imageSlotCard {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid #dbe5ef;
+  background: #fbfdff;
+}
+
+.toggleCard {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.toggleCopy {
+  display: grid;
+  gap: 4px;
+}
+
+.toggleLabel,
+.collectionTitle {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.toggleDescription {
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.toggleInput {
+  width: 20px;
+  height: 20px;
+  accent-color: #1f4e79;
+}
+
+.imageSlotGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.imageSlotPreview {
+  display: grid;
+  place-items: center;
+  min-height: 132px;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid #d7e3ef;
+  background:
+    radial-gradient(circle at top left, rgba(31, 78, 121, 0.07), transparent 34%),
+    linear-gradient(180deg, #f8fbff, #ffffff);
+}
+
+.imageSlotPreviewImage {
+  width: 100%;
+  height: 100%;
+  min-height: 132px;
+  object-fit: cover;
+  display: block;
+}
+
+.imageSlotPreviewEmpty {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.primaryButton,
+.secondaryButton {
+  appearance: none;
+  border: none;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.95rem 1.2rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #1f4e79, #163d61);
+  color: #ffffff;
+  box-shadow: 0 16px 26px rgba(31, 78, 121, 0.22);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+  transform: none;
+}
+
+.secondaryButton {
+  background: #eaf2fb;
+  color: #153e64;
+}
+
+.primaryButton:not(:disabled):hover,
+.secondaryButton:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.successText,
+.errorText {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.successText {
+  color: #2f5b1e;
+}
+
+.errorText {
+  color: #991b1b;
+}
+
+.stateCardError {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: #fff7f7;
+}
+
+.previewViewportControls {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid #d7e1ec;
+  background: #f7fbff;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 18px;
+}
+
+.previewViewportButton {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #334155;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.72rem 0.92rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.previewViewportButton:hover {
+  color: #0f172a;
+  background: #dce8f5;
+}
+
+.previewViewportButtonActive {
+  color: #153e64;
+  border-color: rgba(31, 78, 121, 0.24);
+  background: #ffffff;
+  box-shadow: 0 8px 16px rgba(31, 78, 121, 0.1);
+}
+
+@media (max-width: 1120px) {
+  .surface {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .editorPanel,
+  .previewPanel,
+  .stateCard {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .buttonRow {
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+
+  .toggleCard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .previewViewportControls {
+    width: 100%;
+  }
+
+  .previewViewportButton {
+    flex: 1 1 0;
+  }
+}

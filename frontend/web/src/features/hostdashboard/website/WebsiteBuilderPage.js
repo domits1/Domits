@@ -17,6 +17,9 @@ import {
   runWebsitePreviewBuildWorkflow,
 } from "./services/websitePreviewWorkflow";
 import { fetchWebsiteDrafts, upsertWebsiteDraft } from "./services/websiteDraftService";
+import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
+import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
+import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -111,10 +114,10 @@ function WebsiteBuilderPage() {
   const [websiteDrafts, setWebsiteDrafts] = useState([]);
   const [isLoadingWebsiteDrafts, setIsLoadingWebsiteDrafts] = useState(true);
   const [websiteDraftsError, setWebsiteDraftsError] = useState("");
+  const [websiteDraftPreviewModels, setWebsiteDraftPreviewModels] = useState({});
   const [isPersistingWebsiteDraft, setIsPersistingWebsiteDraft] = useState(false);
   const [persistWebsiteDraftMessage, setPersistWebsiteDraftMessage] = useState("");
   const [persistWebsiteDraftError, setPersistWebsiteDraftError] = useState("");
-  const [pendingDraftSelection, setPendingDraftSelection] = useState(null);
   const previewSectionRef = useRef(null);
   const navigate = useNavigate();
 
@@ -158,6 +161,49 @@ function WebsiteBuilderPage() {
     void loadProperties();
     void loadHostWebsiteDrafts();
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadWebsiteDraftPreviewModels = async () => {
+      if (workspaceTab !== WORKSPACE_TAB_WEBSITES || websiteDrafts.length < 1) {
+        if (isMounted) {
+          setWebsiteDraftPreviewModels({});
+        }
+        return;
+      }
+
+      const previewEntries = await Promise.all(
+        websiteDrafts.map(async (draft) => {
+          try {
+            const propertyDetails = await fetchWebsitePropertyDetails(draft.propertyId);
+            const baseModel = buildWebsiteTemplateModel({
+              propertyDetails,
+              summaryProperty: null,
+            });
+            const previewModel = applyWebsiteDraftContentOverrides(baseModel, draft.contentOverrides || {});
+            return [draft.propertyId, previewModel];
+          } catch {
+            return [draft.propertyId, null];
+          }
+        })
+      );
+
+      if (!isMounted) {
+        return;
+      }
+
+      setWebsiteDraftPreviewModels(
+        Object.fromEntries(previewEntries.filter(([, previewModel]) => Boolean(previewModel)))
+      );
+    };
+
+    void loadWebsiteDraftPreviewModels();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [websiteDrafts, workspaceTab]);
 
   const selectedProperty =
     propertyOptions.find((propertyOption) => propertyOption.value === selectedPropertyId) || null;
@@ -203,32 +249,6 @@ function WebsiteBuilderPage() {
       block: "start",
     });
   }, [previewStage]);
-
-  useEffect(() => {
-    if (!pendingDraftSelection) {
-      return;
-    }
-
-    if (workspaceTab !== WORKSPACE_TAB_BUILDER) {
-      return;
-    }
-
-    if (!selectedProperty || selectedProperty.value !== pendingDraftSelection.propertyId) {
-      return;
-    }
-
-    if (selectedTemplateId !== pendingDraftSelection.templateKey) {
-      return;
-    }
-
-    if (!isWebsiteTemplateImplemented(selectedTemplateId)) {
-      setPendingDraftSelection(null);
-      return;
-    }
-
-    setPendingDraftSelection(null);
-    void buildWebsitePreview();
-  }, [pendingDraftSelection, workspaceTab, selectedProperty, selectedTemplateId]);
 
   const setGalleryImage = (nextIndex, direction = "idle") => {
     setGalleryAnimationDirection(direction);
@@ -359,23 +379,13 @@ function WebsiteBuilderPage() {
     setGalleryImage(nextIndex, direction < 0 ? "backward" : "forward");
   };
 
-  const openWebsiteDraftInBuilder = (draft) => {
+  const openWebsiteDraftEditor = (draft) => {
     const propertyId = String(draft?.propertyId || "").trim();
     if (!propertyId) {
       return;
     }
 
-    const templateKey = String(draft?.templateKey || "").trim();
-    const resolvedTemplate = getWebsiteTemplateById(templateKey);
-    const nextTemplateId = resolvedTemplate?.id || WEBSITE_TEMPLATE_OPTIONS[0].id;
-
-    setWorkspaceTab(WORKSPACE_TAB_BUILDER);
-    setSelectedPropertyId(propertyId);
-    setSelectedTemplateId(nextTemplateId);
-    setPendingDraftSelection({
-      propertyId,
-      templateKey: nextTemplateId,
-    });
+    navigate(`/hostdashboard/website/${propertyId}`);
   };
 
   const renderPhotoStack = () => (
@@ -465,6 +475,7 @@ function WebsiteBuilderPage() {
         {websiteDrafts.map((draft) => {
           const template = getWebsiteTemplateById(draft.templateKey);
           const templateName = template?.name || draft.templateKey || "Unknown template";
+          const draftPreviewModel = websiteDraftPreviewModels[draft.propertyId] || null;
 
           return (
             <article key={draft.id || `${draft.propertyId}-${draft.updatedAt}`} className={styles.websiteDraftCard}>
@@ -475,6 +486,20 @@ function WebsiteBuilderPage() {
                     {draft.propertyTitle || "Untitled listing website"}
                   </p>
                   {draft.location ? <p className={styles.summaryLocation}>{draft.location}</p> : null}
+                </div>
+                <div className={styles.websiteDraftCardPreview}>
+                  {draftPreviewModel ? (
+                    <WebsiteTemplatePreview
+                      templateId={draft.templateKey}
+                      model={draftPreviewModel}
+                      variant="compact"
+                      viewport="desktop"
+                    />
+                  ) : (
+                    <div className={styles.websiteDraftPreviewPlaceholder}>
+                      <PulseBarsLoader message="Loading saved preview..." />
+                    </div>
+                  )}
                 </div>
                 <span className={styles.statusPill}>{draft.status || "DRAFT"}</span>
               </div>
@@ -488,9 +513,9 @@ function WebsiteBuilderPage() {
                 <button
                   type="button"
                   className={styles.primaryButton}
-                  onClick={() => openWebsiteDraftInBuilder(draft)}
+                  onClick={() => openWebsiteDraftEditor(draft)}
                 >
-                  Open in builder
+                  Open editor
                 </button>
               </div>
             </article>
@@ -749,6 +774,14 @@ function WebsiteBuilderPage() {
                 <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
                   Back to chooser
                 </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => navigate(`/hostdashboard/website/${selectedProperty.value}`)}
+                  disabled={isPersistingWebsiteDraft || Boolean(persistWebsiteDraftError)}
+                >
+                  Open editor
+                </button>
                 <button type="button" className={styles.primaryButton} onClick={() => void buildWebsitePreview()}>
                   Refresh preview
                 </button>
@@ -838,8 +871,8 @@ function WebsiteBuilderPage() {
                   <p className={styles.stepEyebrow}>Website workspace</p>
                   <h2>Saved websites</h2>
                   <p>
-                    These are your persisted website drafts. Open any draft to continue editing and previewing
-                    it in the builder flow.
+                    These are your persisted website drafts. Open any draft to move into the dedicated
+                    editor page and continue adjusting your website's content there.
                   </p>
                 </div>
 

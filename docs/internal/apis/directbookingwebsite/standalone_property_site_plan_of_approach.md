@@ -4,7 +4,7 @@
 Working baseline with active frontend implementation checkpoints
 
 ## Last Updated
-2026-04-10
+2026-04-14
 
 ## Current Implementation Checkpoint
 The host-dashboard website builder now includes a real preview build pipeline for the first three templates.
@@ -17,10 +17,17 @@ Implemented in frontend:
 - preview workflow orchestration is extracted to a dedicated script module for future migration to a dedicated preview route/tab
 - amenity icons are rendered from the shared amenity catalog by amenity ID in implemented templates
 - built preview drafts are persisted per host and property via dedicated website draft APIs
-- workspace now has a `My websites` tab with reopen-in-builder support
+- workspace now has a `My websites` tab with dedicated editor-page entry
+- dedicated draft editor page exists for controlled text overrides, visibility toggles, and image-slot selection on saved drafts
+- acceptance AWS rollout has been proven for draft persistence after:
+  - creating `main.standalone_site_draft`
+  - adding the unique `property_id` index required by `ON CONFLICT`
+  - adding the `host_id` index for the intended host-scoped draft access path
+  - exposing `/property/website/draft(s)` in API Gateway
+  - fixing CORS preflight on the new website routes
 
 Not yet implemented:
-- draft detail editing flow for section/content overrides
+- richer template-specific heading/branding controls beyond the current override surface
 - publish-state lifecycle and domain linking workflow on top of draft records
 
 ## Purpose

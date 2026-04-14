@@ -4,19 +4,27 @@ import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 
 export default function ExperienceJourneyTemplate({ model }) {
+  const showTopBar = model.visibility?.topBar !== false;
+  const showJourneyStops = model.visibility?.journeyStops !== false;
+  const showAmenitiesPanel = model.visibility?.amenitiesPanel !== false;
+  const showCallToAction = model.visibility?.callToAction !== false;
+  const showExperienceFooter = showAmenitiesPanel || showCallToAction;
+
   return (
     <article className={styles.templateSite}>
-      <div className={styles.templateTopBar}>
-        <div className={styles.templateTopBarBrand}>
-          <span className={styles.templateTopBarMark} aria-hidden="true" />
-          <span>{model.site.title}</span>
+      {showTopBar ? (
+        <div className={styles.templateTopBar}>
+          <div className={styles.templateTopBarBrand}>
+            <span className={styles.templateTopBarMark} aria-hidden="true" />
+            <span>{model.site.title}</span>
+          </div>
+          <div className={styles.templateTopBarNav}>
+            <span>Arrival</span>
+            <span>Stay</span>
+            <span>Area</span>
+          </div>
         </div>
-        <div className={styles.templateTopBarNav}>
-          <span>Arrival</span>
-          <span>Stay</span>
-          <span>Area</span>
-        </div>
-      </div>
+      ) : null}
 
       <section className={styles.experienceIntro}>
         <div className={styles.experienceIntroCopy}>
@@ -26,66 +34,74 @@ export default function ExperienceJourneyTemplate({ model }) {
         </div>
       </section>
 
-      <section className={styles.experienceJourneyStack}>
-        {model.journeyStops.slice(0, 3).map((stop, index) => {
-          const imageUrl = model.gallery.images[index] || model.media.heroImage;
-          const isReversed = index % 2 === 1;
+      {showJourneyStops ? (
+        <section className={styles.experienceJourneyStack}>
+          {model.journeyStops.slice(0, 3).map((stop, index) => {
+            const imageUrl = model.gallery.images[index] || model.media.heroImage;
+            const isReversed = index % 2 === 1;
 
-          return (
-            <article
-              key={stop.id}
-              className={`${styles.experienceJourneyRow} ${
-                isReversed ? styles.experienceJourneyRowReversed : ""
-              }`.trim()}
-            >
-              <div className={styles.experienceJourneyCopy}>
-                <p className={styles.journeyLabel}>{stop.title}</p>
-                <p>{stop.description}</p>
-              </div>
-              <img className={styles.experienceJourneyVisual} src={imageUrl} alt={`${stop.title} visual`} />
-            </article>
-          );
-        })}
-      </section>
-
-      <section className={styles.sectionCard}>
-        <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>Imported highlights</p>
-          <h2>Featured amenities and next step</h2>
-        </div>
-
-        <div className={styles.experienceFooter}>
-          <div className={styles.amenityList}>
-            {model.amenities.featured.slice(0, 4).map((amenity) => {
-              const amenityIcon = getAmenityIconNode(amenity.id, {
-                className: styles.amenityRowIconGlyph,
-                "aria-hidden": true,
-                focusable: "false",
-                sx: {
-                  color: "#314f22",
-                  fontSize: 18,
-                  padding: 0,
-                },
-              });
-
-              return (
-                <div key={amenity.id} className={styles.amenityRow}>
-                  <div className={styles.amenityRowPrimary}>
-                    {amenityIcon ? <span className={styles.amenityRowIcon}>{amenityIcon}</span> : null}
-                    <strong>{amenity.label}</strong>
-                  </div>
-                  <span>{amenity.category}</span>
+            return (
+              <article
+                key={stop.id}
+                className={`${styles.experienceJourneyRow} ${
+                  isReversed ? styles.experienceJourneyRowReversed : ""
+                }`.trim()}
+              >
+                <div className={styles.experienceJourneyCopy}>
+                  <p className={styles.journeyLabel}>{stop.title}</p>
+                  <p>{stop.description}</p>
                 </div>
-              );
-            })}
+                <img className={styles.experienceJourneyVisual} src={imageUrl} alt={`${stop.title} visual`} />
+              </article>
+            );
+          })}
+        </section>
+      ) : null}
+
+      {showExperienceFooter ? (
+        <section className={styles.sectionCard}>
+          <div className={styles.sectionHeading}>
+            <p className={styles.sectionEyebrow}>Imported highlights</p>
+            <h2>Featured amenities and next step</h2>
           </div>
 
-          <div className={styles.softCallout}>
-            <strong>{model.callToAction.label}</strong>
-            <p>{model.callToAction.note}</p>
+          <div className={styles.experienceFooter}>
+            {showAmenitiesPanel ? (
+              <div className={styles.amenityList}>
+                {model.amenities.featured.slice(0, 4).map((amenity) => {
+                  const amenityIcon = getAmenityIconNode(amenity.id, {
+                    className: styles.amenityRowIconGlyph,
+                    "aria-hidden": true,
+                    focusable: "false",
+                    sx: {
+                      color: "#314f22",
+                      fontSize: 18,
+                      padding: 0,
+                    },
+                  });
+
+                  return (
+                    <div key={amenity.id} className={styles.amenityRow}>
+                      <div className={styles.amenityRowPrimary}>
+                        {amenityIcon ? <span className={styles.amenityRowIcon}>{amenityIcon}</span> : null}
+                        <strong>{amenity.label}</strong>
+                      </div>
+                      <span>{amenity.category}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {showCallToAction ? (
+              <div className={styles.softCallout}>
+                <strong>{model.callToAction.label}</strong>
+                <p>{model.callToAction.note}</p>
+              </div>
+            ) : null}
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
     </article>
   );
 }
@@ -124,6 +140,12 @@ ExperienceJourneyTemplate.propTypes = {
     callToAction: PropTypes.shape({
       label: PropTypes.string.isRequired,
       note: PropTypes.string.isRequired,
+    }).isRequired,
+    visibility: PropTypes.shape({
+      topBar: PropTypes.bool,
+      amenitiesPanel: PropTypes.bool,
+      callToAction: PropTypes.bool,
+      journeyStops: PropTypes.bool,
     }).isRequired,
   }).isRequired,
 };
