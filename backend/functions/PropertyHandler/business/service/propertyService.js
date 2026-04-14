@@ -75,7 +75,7 @@ export class PropertyService {
       tasks.push(this.createImages(property.propertyImages));
     }
     await Promise.all(tasks);
-    if (property.propertyType.property_type === "Boat" || property.propertyType.property_type === "Camper") {
+    if (property.propertyType?.property_type === "Boat" || property.propertyType?.property_type === "Camper") {
       await this.createTechnicalDetails(property.propertyTechnicalDetails);
     }
   }
@@ -155,10 +155,6 @@ export class PropertyService {
 
     if (updates?.rules) {
       await this.updateRules(propertyId, updates.rules);
-    }
-
-    if (updates?.checkIn) {
-      await this.updateCheckInTimeslotRule(propertyId, updates.checkIn);
     }
 
     if (updates?.checkIn) {
@@ -254,7 +250,18 @@ export class PropertyService {
 
   async getFullPropertiesByHostId(hostId) {
     const propertyIdentifiers = await this.propertyRepository.getPropertiesByHostId(hostId);
-    return await Promise.all(propertyIdentifiers.map(async (property) => this.getFullPropertyAttributes(property)));
+    const settledProperties = await Promise.allSettled(
+      propertyIdentifiers.map(async (property) => this.getFullPropertyAttributes(property))
+    );
+    return settledProperties
+      .map((result, index) => {
+        if (result.status === "fulfilled") {
+          return result.value;
+        }
+        console.error(`Failed to load full property ${propertyIdentifiers[index]}.`, result.reason);
+        return null;
+      })
+      .filter(Boolean);
   }
 
   async getActivePropertyCardsByHostId(hostId) {
@@ -340,10 +347,9 @@ export class PropertyService {
       this.getCustomRules(propertyId),
     ]);
     const resolvedCheckIn = checkIn || this.buildCheckInFromRules(propertyId, rules);
+    const propertyTypeName = propertyType?.property_type;
     const technicalDetails =
-      propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
-        ? await this.getTechnicalDetails(propertyId)
-        : null;
+      propertyTypeName === "Boat" || propertyTypeName === "Camper" ? await this.getTechnicalDetails(propertyId) : null;
     const response = {
       property: basePropertyInfo,
       amenities: amenities,
@@ -448,7 +454,12 @@ export class PropertyService {
   }
 
   async getCheckIn(property) {
-    return await this.propertyCheckInRepository.getPropertyCheckInTimeslotsByPropertyId(property);
+    try {
+      return await this.propertyCheckInRepository.getPropertyCheckInTimeslotsByPropertyId(property);
+    } catch (error) {
+      console.error(`Failed to load property check-in for ${property}.`, error);
+      return null;
+    }
   }
 
   async updateCheckIn(propertyId, checkIn) {
@@ -641,7 +652,22 @@ export class PropertyService {
   }
 
   async getLateCheckin(propertyId) {
-    const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+    try {
+      const persistedLateCheckin = await this.propertyLateCheckinRepository.getLateCheckinByPropertyId(propertyId);
+      if (persistedLateCheckin) {
+        return persistedLateCheckin;
+      }
+    } catch (error) {
+      console.error(`Failed to load dedicated late check-in settings for ${propertyId}.`, error);
+    }
+
+    let rules = [];
+    try {
+      rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+    } catch (error) {
+      console.error(`Failed to load late check-in fallback rules for ${propertyId}.`, error);
+      return null;
+    }
     if (!rules || rules.length === 0) return null;
 
     const lateCheckinEnabled = rules.find((r) => r.rule === "LateCheckinEnabled");
@@ -652,9 +678,9 @@ export class PropertyService {
     if (lateCheckinEnabled || lateCheckinTime || lateCheckoutEnabled || lateCheckoutTime) {
       return {
         property_id: propertyId,
-        late_checkin_enabled: lateCheckinEnabled?.value === true,
+        late_checkin_enabled: lateCheckinEnabled?.value === true || lateCheckinEnabled?.value === "true",
         late_checkin_time: lateCheckinTime?.value || "18:00:00",
-        late_checkout_enabled: lateCheckoutEnabled?.value === true,
+        late_checkout_enabled: lateCheckoutEnabled?.value === true || lateCheckoutEnabled?.value === "true",
         late_checkout_time: lateCheckoutTime?.value || "10:00:00",
       };
     }
@@ -664,16 +690,16 @@ export class PropertyService {
   async updateLateCheckin(propertyId, lateCheckinData) {
     if (!lateCheckinData || typeof lateCheckinData !== "object") return;
 
-    const rulesToUpdate = [
-      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true ? "true" : "false" },
-      { rule: "LateCheckinTime", value: lateCheckinData.late_checkin_time || "18:00:00" },
-      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true ? "true" : "false" },
-      { rule: "LateCheckoutTime", value: lateCheckinData.late_checkout_time || "10:00:00" },
-    ];
-
-    for (const ruleUpdate of rulesToUpdate) {
-      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value);
+    const result = await this.propertyLateCheckinRepository.updateLateCheckin(propertyId, {
+      late_checkin_enabled: lateCheckinData.late_checkin_enabled === true,
+      late_checkin_time: lateCheckinData.late_checkin_time || null,
+      late_checkout_enabled: lateCheckinData.late_checkout_enabled === true,
+      late_checkout_time: lateCheckinData.late_checkout_time || null,
+    });
+    if (!result) {
+      throw new DatabaseException("Failed to update late check-in settings.");
     }
+    return result;
   }
 
   async getHouseRules(propertyId) {
