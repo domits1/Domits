@@ -1414,7 +1414,7 @@ const HostPropertyCare = () => {
             <div className="content-area">
                 {renderContent()}
             </div>
-
+            
             {isModalOpen && (
                 <>
                 <button className="modal-backdrop" onClick={handleCancelModal} aria-label="Close modal" />
