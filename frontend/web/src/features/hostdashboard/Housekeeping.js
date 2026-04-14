@@ -1409,8 +1409,8 @@ const HostPropertyCare = () => {
             </div>
 
             {isModalOpen && (
-                <div className="modal-overlay" onClick={handleCancelModal} onKeyDown={(e) => e.key === 'Escape' && handleCancelModal()}>
-                    <dialog className="modal-content-large" aria-modal="true" aria-label="Create Task" open onClick={e => e.stopPropagation()}>
+                <dialog className="modal-overlay" open aria-label="Create Task" onClick={(e) => { if (e.target === e.currentTarget) handleCancelModal(); }} onKeyDown={(e) => e.key === 'Escape' && handleCancelModal()}>
+                    <div className="modal-content-large">
                         <div className="modal-header">
                             <h3>Create Task</h3>
                             <button className="close-btn" onClick={handleCancelModal}><LuX /></button>
@@ -1479,8 +1479,8 @@ const HostPropertyCare = () => {
                                 <button type="submit" className="btn-create-green">Create Task</button>
                             </div>
                         </form>
-                    </dialog>
-                </div>
+                    </div>
+                </dialog>
             )}
 
             {viewingTask && editedTask && (
