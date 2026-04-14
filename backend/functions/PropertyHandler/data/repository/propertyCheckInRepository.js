@@ -12,7 +12,7 @@ export class PropertyCheckInRepository {
     const result = await client
       .getRepository(Property_Check_In)
       .createQueryBuilder("property_checkin")
-      .where("property_checkin.property_id = :id", { id: id })
+      .where("property_id = :id", { id: id })
       .getOne();
     return result ? CheckInMapping.mapDatabaseEntryToCheckIn(result) : null;
   }
