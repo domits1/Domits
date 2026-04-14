@@ -158,6 +158,10 @@ export class PropertyService {
     }
 
     if (updates?.checkIn) {
+      await this.updateCheckInTimeslotRule(propertyId, updates.checkIn);
+    }
+
+    if (updates?.checkIn) {
       await this.updateCheckIn(propertyId, updates.checkIn);
     }
 
@@ -637,11 +641,6 @@ export class PropertyService {
   }
 
   async getLateCheckin(propertyId) {
-    const persistedLateCheckin = await this.propertyLateCheckinRepository.getLateCheckinByPropertyId(propertyId);
-    if (persistedLateCheckin) {
-      return persistedLateCheckin;
-    }
-
     const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
     if (!rules || rules.length === 0) return null;
 
@@ -653,9 +652,9 @@ export class PropertyService {
     if (lateCheckinEnabled || lateCheckinTime || lateCheckoutEnabled || lateCheckoutTime) {
       return {
         property_id: propertyId,
-        late_checkin_enabled: lateCheckinEnabled?.value === true || lateCheckinEnabled?.value === "true",
+        late_checkin_enabled: lateCheckinEnabled?.value === true,
         late_checkin_time: lateCheckinTime?.value || "18:00:00",
-        late_checkout_enabled: lateCheckoutEnabled?.value === true || lateCheckoutEnabled?.value === "true",
+        late_checkout_enabled: lateCheckoutEnabled?.value === true,
         late_checkout_time: lateCheckoutTime?.value || "10:00:00",
       };
     }
@@ -665,16 +664,16 @@ export class PropertyService {
   async updateLateCheckin(propertyId, lateCheckinData) {
     if (!lateCheckinData || typeof lateCheckinData !== "object") return;
 
-    const result = await this.propertyLateCheckinRepository.updateLateCheckin(propertyId, {
-      late_checkin_enabled: lateCheckinData.late_checkin_enabled === true,
-      late_checkin_time: lateCheckinData.late_checkin_time || null,
-      late_checkout_enabled: lateCheckinData.late_checkout_enabled === true,
-      late_checkout_time: lateCheckinData.late_checkout_time || null,
-    });
-    if (!result) {
-      throw new DatabaseException("Failed to update late check-in settings.");
+    const rulesToUpdate = [
+      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true ? "true" : "false" },
+      { rule: "LateCheckinTime", value: lateCheckinData.late_checkin_time || "18:00:00" },
+      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true ? "true" : "false" },
+      { rule: "LateCheckoutTime", value: lateCheckinData.late_checkout_time || "10:00:00" },
+    ];
+
+    for (const ruleUpdate of rulesToUpdate) {
+      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value);
     }
-    return result;
   }
 
   async getHouseRules(propertyId) {
