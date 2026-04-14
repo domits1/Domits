@@ -177,6 +177,13 @@ const HostPropertyCare = () => {
         return () => document.removeEventListener('click', handler);
     }, [openDropdown]);
 
+    useEffect(() => {
+        if (!isModalOpen) return;
+        const handler = (e) => { if (e.key === 'Escape') handleCancelModal(); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [isModalOpen]);
+
     const STATUS_OPTIONS = [
         { value: 'Pending',     label: '● Pending',     cls: 'status-pending' },
         { value: 'In progress', label: '● In progress', cls: 'status-in-progress' },
@@ -1409,7 +1416,9 @@ const HostPropertyCare = () => {
             </div>
 
             {isModalOpen && (
-                <dialog className="modal-overlay" open aria-label="Create Task" onClick={(e) => { if (e.target === e.currentTarget) handleCancelModal(); }} onKeyDown={(e) => e.key === 'Escape' && handleCancelModal()}>
+                <>
+                <button className="modal-backdrop" onClick={handleCancelModal} aria-label="Close modal" />
+                <dialog className="modal-overlay" open aria-label="Create Task">
                     <div className="modal-content-large">
                         <div className="modal-header">
                             <h3>Create Task</h3>
@@ -1481,6 +1490,7 @@ const HostPropertyCare = () => {
                         </form>
                     </div>
                 </dialog>
+                </>
             )}
 
             {viewingTask && editedTask && (
