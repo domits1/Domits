@@ -1813,6 +1813,25 @@
         width: 100%;
     }
 
+    .filters-dropdowns select {
+        flex: 1 1 100%;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .filters-dropdowns .small-search {
+        order: 4;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .filters-dropdowns .btn-clear-filters {
+        order: 5;
+        align-self: center;
+        white-space: nowrap;
+        margin-left: 8px;
+    }
+
     .my-task-card {
         flex-direction: column;
         align-items: flex-start;
@@ -1863,9 +1882,5 @@
 @media (max-width: 480px) {
     .overview-stats-row {
         grid-template-columns: 1fr;
-    }
-
-    .filters-dropdowns select {
-        flex: 1 1 100%;
     }
 }
