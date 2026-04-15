@@ -25,10 +25,10 @@ export class PropertyCheckInRepository {
       .into(Property_Check_In)
       .values({
         property_id: timeslots.property_id,
-        checkInFrom: timeslots.checkIn.from,
-        checkInTill: timeslots.checkIn.till,
-        checkOutFrom: timeslots.checkOut.from,
-        checkOutTill: timeslots.checkOut.till,
+        checkinfrom: timeslots.checkIn.from,
+        checkintill: timeslots.checkIn.till,
+        checkoutfrom: timeslots.checkOut.from,
+        checkouttill: timeslots.checkOut.till,
       })
       .execute();
     const result = await this.getPropertyCheckInTimeslotsByPropertyId(timeslots.property_id);

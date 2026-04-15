@@ -162,6 +162,43 @@
   grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
+.templateCanvasPanorama .templateHeroBand {
+  min-height: 92px;
+}
+
+.templateCanvasPanorama .templateSearchStub {
+  width: 52%;
+  max-width: 92px;
+  height: 16px;
+  margin-top: -16px;
+}
+
+.templateCanvasPanorama .templateFeatureRow {
+  gap: 10px;
+}
+
+.templateCanvasPanorama .templateFeatureCard {
+  align-content: start;
+  gap: 9px;
+  padding: 12px 8px 10px;
+  border-radius: 16px;
+}
+
+.templateCanvasPanorama .templateMiniIcon {
+  width: 22px;
+  height: 22px;
+  aspect-ratio: auto;
+  border-radius: 8px;
+}
+
+.templateCanvasPanorama .templateLineWide {
+  width: 78%;
+}
+
+.templateCanvasPanorama .templateLineShort {
+  width: 48%;
+}
+
 .templateCanvasTrustSignals .templateHeroBand {
   min-height: 60px;
 }
@@ -194,19 +231,87 @@
 }
 
 .templateCanvasAmenitiesSpotlight .templateAmenitiesVisual {
-  min-height: 118px;
+  min-height: 132px;
 }
 
 .templateCanvasAmenitiesSpotlight {
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
+.templateCanvasAmenitiesSpotlight .templateAmenitiesHero {
+  grid-template-columns: minmax(0, 1.05fr) 72px;
+  gap: 12px;
+}
+
+.templateCanvasAmenitiesSpotlight .templateAmenitiesList {
+  gap: 10px;
+}
+
+.templateCanvasAmenitiesSpotlight .templateAmenityRow {
+  align-content: center;
+  gap: 5px;
+  padding: 10px;
+  border-radius: 16px;
+}
+
+.templateCanvasAmenitiesSpotlight .templateAmenityRow .templateLineWide {
+  width: 100%;
+}
+
+.templateCanvasAmenitiesSpotlight .templateAmenityRow .templateLineShort {
+  width: 62%;
+}
+
+.templateCanvasAmenitiesSpotlight .templateAmenityPill {
+  justify-items: center;
+  padding: 10px 8px;
+  border-radius: 16px;
+}
+
+.templateCanvasAmenitiesSpotlight .templateAmenityPill .templateTinyLine {
+  width: 28px;
+}
+
 .templateCanvasEditorial .templateEditorialVisual {
-  min-height: 120px;
+  min-height: 142px;
 }
 
 .templateCanvasEditorial {
   grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.templateCanvasEditorial .templateEditorialBody {
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.templateCanvasEditorial .templateEditorialCopy {
+  gap: 8px;
+  align-content: start;
+  padding-top: 4px;
+}
+
+.templateCanvasEditorial .templateEditorialCopy .templateLineWide {
+  width: 100%;
+}
+
+.templateCanvasEditorial .templateEditorialCopy .templateLineShort {
+  width: 68%;
+}
+
+.templateCanvasEditorial .templateEditorialCopy .templateButtonStub {
+  width: 100%;
+  max-width: 128px;
+}
+
+.templateCanvasEditorial .templateEditorialFooter {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.templateCanvasEditorial .templateEditorialFooter .templateLineShort {
+  width: 70px;
 }
 
 .templateCanvasGalleryGrid .templateGalleryVisual {
@@ -231,11 +336,47 @@
 }
 
 .templateCanvasLocalGuide .templateHeroBand {
-  min-height: 56px;
+  min-height: 82px;
 }
 
 .templateCanvasLocalGuide {
   grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.templateCanvasLocalGuide .templateLocalGuideBody {
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.templateCanvasLocalGuide .templateLocalGuideVisual {
+  min-height: 78px;
+  border-radius: 18px;
+}
+
+.templateCanvasLocalGuide .templateLocalGuideCopy {
+  gap: 7px;
+}
+
+.templateCanvasLocalGuide .templateLocalGuideCopy .templateLineWide {
+  width: 100%;
+}
+
+.templateCanvasLocalGuide .templateLocalGuideCopy .templateLineShort {
+  width: 70%;
+}
+
+.templateCanvasLocalGuide .templateLocalGuideCopy .templateButtonStub {
+  width: 100%;
+}
+
+.templateCanvasLocalGuide .templateLocalGuideFooter {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.templateCanvasLocalGuide .templateLocalGuideFooter .templateTinyLine {
+  width: 36px;
 }
 
 .templateChrome {

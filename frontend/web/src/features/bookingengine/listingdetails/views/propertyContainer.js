@@ -99,7 +99,11 @@ const PropertyContainer = ({
   return (
     <div className="property-container">
       <section id="listing-photos" className="listing-section-block listing-section-block--photos">
-        <ImageGallery images={property.images} propertyTitle={property?.property?.title} />
+        <ImageGallery
+          images={property.images}
+          propertyTitle={property?.property?.title}
+          propertyId={property?.property?.id}
+        />
         <PricingPerNight pricing={property.pricing} />
         <GeneralDetails generalDetails={property.generalDetails} />
       </section>
@@ -158,6 +162,7 @@ PropertyContainer.propTypes = {
     }),
     generalDetails: PropTypes.array,
     property: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       description: PropTypes.string,
     }),
     amenities: PropTypes.array,

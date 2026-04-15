@@ -4,14 +4,27 @@ export const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com
 
 export const HostRevenueService = {
   async fetchMetricData(arg1, arg2, filterType = "monthly", startDate, endDate) {
-    let hostId, metric;
+    const allowedFilters = ["weekly", "monthly", "yearly", "custom"];
+    const safeFilterType = allowedFilters.includes(filterType) ? filterType : "monthly";
 
-    if ((typeof arg1 === "string" && arg1.startsWith("us-")) || arg1.length > 10) {
-      hostId = arg1;
-      metric = arg2;
-    } else {
+    let hostId;
+    let metric;
+
+    const knownMetrics = [
+      "revenue",
+      "bookedNights",
+      "availableNights",
+      "propertyCount",
+      "averageLengthOfStay",
+      "all",
+    ];
+
+    if (knownMetrics.includes(arg1)) {
       metric = arg1;
       hostId = arg2;
+    } else {
+      hostId = arg1;
+      metric = arg2;
     }
 
     if (!hostId) throw new Error("Host ID is missing");
@@ -26,8 +39,8 @@ export const HostRevenueService = {
         return `${d}-${m}-${y}`;
       };
 
-      let url = `${BASE_URL}?hostId=${hostId}&metric=${metric}&filterType=${filterType}`;
-      if (filterType === "custom" && startDate && endDate) {
+      let url = `${BASE_URL}?hostId=${hostId}&metric=${metric}&filterType=${safeFilterType}`;
+      if (safeFilterType === "custom" && startDate && endDate) {
         url += `&startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
       }
 
