@@ -575,25 +575,26 @@
 
 .websiteDraftCardHeader {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 196px) auto;
   align-items: flex-start;
   gap: 14px;
 }
 
 .websiteDraftCardCopy {
   display: grid;
-  gap: 4px;
+  gap: 10px;
   min-width: 0;
 }
 
 .websiteDraftCardPreview {
   min-width: 0;
+  justify-self: end;
 }
 
 .websiteDraftPreviewPlaceholder {
   display: grid;
   place-items: center;
-  min-height: 220px;
+  min-height: 138px;
   padding: 14px;
   border-radius: 18px;
   border: 1px dashed #d3deea;

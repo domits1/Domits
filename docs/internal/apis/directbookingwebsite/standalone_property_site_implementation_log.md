@@ -432,3 +432,180 @@ Evidence (commit(s), file(s), docs):
   - `standalone_property_site_frontend_status.md`
   - `standalone_property_site_plan_of_approach.md`
 
+## [2026-04-15] Draft persistence hardening for editor saves
+Context:
+Draft save feedback reported success, but re-opening the editor later could still surface stale draft content. That is not acceptable for a draft editor. The system needs to prove the saved version is the persisted version.
+
+Implementation:
+- Added `cache: "no-store"` to website draft list/read/write fetches in the frontend draft service.
+- Changed editor save flow to perform a read-after-write fetch of the draft after a successful upsert.
+- Added no-store response headers on standalone website draft controller responses so API/cache layers do not hand the frontend stale payloads.
+
+Decision / Rationale:
+- Draft editing is stateful and user-trust sensitive. Returning stale GET responses after a save makes the feature feel broken even if the write succeeded.
+- Read-after-write is the right discipline here because it verifies the persisted payload instead of trusting a local optimistic assumption.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway route change.
+- Draft endpoints now return cache-busting headers; this is backward-compatible.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/services/websiteDraftService.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-15] Editor feedback cleanup and compact media selection
+Context:
+The dedicated draft editor worked, but two UX issues remained:
+- save feedback was still rendered inline inside the form
+- image selection overlay spent most of its space on one oversized preview image
+
+Implementation:
+- Replaced inline "Draft changes saved." feedback with toast notifications.
+- Simplified image selection overlay into a thumbnail-first grid with direct-select behavior.
+- Removed oversized preview-stage/navigation controls from the overlay.
+- Tightened `My websites` compact preview cards by clipping preview height and reducing preview width.
+
+Decision / Rationale:
+- Save feedback should not take persistent space inside the editor form.
+- Thumbnail-first image picking scales better when properties have tens of imported photos.
+- Saved-draft overview cards should behave like summaries, not miniature full-page browsers.
+
+AWS / Data impact:
+- No AWS or schema change.
+
+Validation:
+- Frontend production build passed after editor/preview adjustments.
+
+Open risks / Next:
+- If imported photo counts grow significantly, add lightweight search/filtering inside the image picker.
+- Continue with publish/unpublish lifecycle and domain workflow after editor UX is stable.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-15] Editor navigation and collapsible control surface
+Context:
+The dedicated editor had started to accumulate enough controls that the left panel became cumbersome to navigate. At the same time, the preview could show editable content but did not help the user reach the corresponding editor controls.
+
+Implementation:
+- Added collapsible editor sections for common content, visibility, image slots, trust cards, and journey stops.
+- Added preview-to-editor linking for implemented templates.
+- Clicking preview images now opens the image picker directly.
+- Clicking preview text/copy sections now expands and scrolls to the matching editor area.
+- Reworked compact saved-draft preview rendering to use a more deterministic summary-thumbnail approach instead of relying only on background hydration.
+
+Decision / Rationale:
+- The editor should remain controlled and structured, not degrade into a long scrolling wall of inputs.
+- The preview should act as a navigation surface for the editor, not just a passive render.
+
+AWS / Data impact:
+- No AWS or schema change.
+
+Validation:
+- Frontend production build passed after template/editor/preview wiring changes.
+
+Open risks / Next:
+- The saved-draft card preview still needs real browser verification after the compact render refactor.
+- Next major phase remains publish/unpublish and domain workflow.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-15] Calendar availability import, compact preview cleanup, and visual image picker
+Context:
+The dedicated editor and workspace were functionally usable, but three product issues remained obvious:
+- saved-draft preview cards reserved excessive whitespace because scaled previews still behaved like full-size layout boxes
+- image-slot selection used a dropdown instead of a visual picker
+- the website model ignored calendar availability and iCal sync metadata even though the website feature needs to communicate current availability honestly
+
+Implementation:
+- Extended host-owned property detail fetch path so website-related host detail payloads include `calendarAvailability`.
+- Extended external calendar repository/service response to include:
+  - imported blocked dates
+  - iCal sync presence
+  - sync-source count
+  - last sync timestamp
+  - source metadata list
+- Extended the shared website template model with an availability snapshot object.
+- Added a reusable read-only availability preview component and rendered it in the three implemented templates.
+- Fixed scaled preview shell behavior so compact preview cards use the actual scaled height instead of leaving large blank space.
+- Tightened `My websites` card structure and reduced preview width so saved website previews behave like thumbnails rather than oversized page slices.
+- Reworked editor image-slot reassignment from dropdown-only selection into an overlay picker with:
+  - large preview
+  - next/previous navigation
+  - thumbnail rail
+  - explicit confirm-select action
+- Fixed editor field overflow by enforcing better input sizing behavior inside the editor panel.
+
+Decision / Rationale:
+- Calendar visibility should be honest and controlled:
+  - imported calendar snapshot for preview and public render context
+  - live quote API remains authoritative for booking correctness
+- A visual media picker is appropriate for images; a dropdown is not.
+- Shared preview scaling must be solved in the renderer, not with page-specific layout hacks.
+
+AWS / Data impact:
+- No new Aurora schema change was required.
+- No new API Gateway routes were required.
+- Backend response contract for host-owned property detail was expanded in a backward-compatible way.
+- Existing acceptance SQL requirement still stands:
+  - `main.standalone_site_draft`
+  - unique index on `property_id`
+  - host index on `host_id`
+
+Validation:
+- Backend routing unit test passed:
+  - `test/PropertyHandler/routing-unit.test.js`
+- Frontend production build passed:
+  - `react-scripts build`
+
+Open risks / Next:
+- Availability snapshot currently reflects imported external calendar blocks and sync metadata, not a full booking-engine calendar.
+- Publish/unpublish lifecycle and domain connection are still the next major product step.
+- Richer branding/theme controls and image ordering still remain open.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/functions/PropertyHandler/business/service/propertyService.js`
+  - `backend/functions/PropertyHandler/data/repository/propertyExternalCalendarRepository.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/buildWebsiteTemplateModel.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+  - `standalone_property_site_plan_of_approach.md`
+

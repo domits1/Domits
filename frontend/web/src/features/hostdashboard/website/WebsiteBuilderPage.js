@@ -20,6 +20,7 @@ import { fetchWebsiteDrafts, upsertWebsiteDraft } from "./services/websiteDraftS
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
+import { placeholderImage } from "../../../utils/accommodationImage";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -94,6 +95,149 @@ const formatDraftUpdatedAt = (updatedAt) => {
   } catch {
     return "Unknown update time";
   }
+};
+
+const buildDraftCardFallbackPreviewModel = (draft) => {
+  const contentOverrides =
+    draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
+  const locationLabel = String(draft?.location || "").trim();
+  const title = String(draft?.propertyTitle || "Untitled listing website").trim();
+  const subtitle = String(draft?.propertySubtitle || "").trim();
+  const selectedGalleryImages = Array.isArray(contentOverrides.galleryImages)
+    ? contentOverrides.galleryImages.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)
+    : [];
+  const heroImage = String(contentOverrides.heroImage || selectedGalleryImages[0] || placeholderImage).trim();
+  const galleryImages = [heroImage, ...selectedGalleryImages].filter(Boolean).slice(0, 5);
+  const normalizedGalleryImages = galleryImages.length > 0 ? galleryImages : [placeholderImage];
+  const previewImages = normalizedGalleryImages.slice(0, 3);
+
+  return applyWebsiteDraftContentOverrides(
+    {
+      source: {
+        propertyId: String(draft?.propertyId || "").trim(),
+        status: String(draft?.propertyStatus || draft?.status || "DRAFT").trim(),
+        locale: "en",
+      },
+      site: {
+        title,
+        subtitle,
+        templateReadyTitle: title,
+        locationLabel,
+      },
+      media: {
+        heroImage,
+        galleryImages: normalizedGalleryImages,
+        previewImages,
+        featuredGalleryImages: normalizedGalleryImages,
+      },
+      hero: {
+        eyebrow: locationLabel || "Saved website draft",
+        title,
+        subtitle,
+        description: subtitle || "Saved website preview for this selected listing.",
+        imageUrl: heroImage,
+      },
+      stay: {
+        propertyTypeLabel: "",
+        guests: 0,
+        bedrooms: 0,
+        beds: 0,
+        bathrooms: 0,
+        guestsLabel: "",
+        bedroomsLabel: "",
+        bedsLabel: "",
+        bathroomsLabel: "",
+        nightlyRate: 0,
+        nightlyRateLabel: "",
+        minimumStay: 0,
+        minimumStayLabel: "",
+        checkInLabel: "",
+        checkOutLabel: "",
+        stats: [],
+      },
+      location: {
+        city: "",
+        country: "",
+        label: locationLabel,
+        narrative: locationLabel ? `This stay is located in ${locationLabel}.` : "",
+      },
+      amenities: {
+        featured: [],
+        all: [],
+        summary: "",
+      },
+      policies: {
+        featured: [],
+        all: [],
+        summary: "",
+      },
+      availability: {
+        externalBlockedDates: [],
+        blockedDateCount: 0,
+        hasExternalCalendarSync: false,
+        syncedSourceCount: 0,
+        syncSummary: "Loading imported calendar context",
+        blockedDateSummary: "Loading imported blocked dates",
+        lastSyncLabel: "",
+        nextBlockedDate: "",
+        nextBlockedLabel: "",
+        callout: "Saved draft preview uses persisted content first and hydrates listing details in the background.",
+      },
+      gallery: {
+        images: normalizedGalleryImages,
+        countLabel: `${normalizedGalleryImages.length} imported photo${
+          normalizedGalleryImages.length === 1 ? "" : "s"
+        }`,
+      },
+      trustCards: [
+        {
+          id: "draft-summary",
+          title: "Draft summary",
+          description: subtitle || "Saved website draft ready to continue editing.",
+        },
+        {
+          id: "draft-location",
+          title: "Location context",
+          description: locationLabel || "Location details are attached to this saved website draft.",
+        },
+        {
+          id: "draft-template",
+          title: "Template state",
+          description: String(draft?.templateKey || "Template selected").trim(),
+        },
+      ],
+      journeyStops: [
+        {
+          id: "draft-step-1",
+          title: "Draft created",
+          description: "This website can be reopened from the workspace at any time.",
+        },
+        {
+          id: "draft-step-2",
+          title: "Content editable",
+          description: "Text, visibility, and image slots can be adjusted in the editor.",
+        },
+        {
+          id: "draft-step-3",
+          title: "Ready for next phase",
+          description: "Publish and domain connection can build on top of this draft state.",
+        },
+      ],
+      callToAction: {
+        label: "Open editor",
+        note: "Saved website draft ready for continued editing.",
+      },
+      visibility: {
+        topBar: true,
+        trustCards: true,
+        gallerySection: true,
+        amenitiesPanel: true,
+        callToAction: true,
+        journeyStops: true,
+      },
+    },
+    contentOverrides
+  );
 };
 
 function WebsiteBuilderPage() {
@@ -173,6 +317,14 @@ function WebsiteBuilderPage() {
         return;
       }
 
+      const fallbackPreviewModels = Object.fromEntries(
+        websiteDrafts.map((draft) => [draft.propertyId, buildDraftCardFallbackPreviewModel(draft)])
+      );
+
+      if (isMounted) {
+        setWebsiteDraftPreviewModels(fallbackPreviewModels);
+      }
+
       const previewEntries = await Promise.all(
         websiteDrafts.map(async (draft) => {
           try {
@@ -194,7 +346,12 @@ function WebsiteBuilderPage() {
       }
 
       setWebsiteDraftPreviewModels(
-        Object.fromEntries(previewEntries.filter(([, previewModel]) => Boolean(previewModel)))
+        Object.fromEntries(
+          previewEntries.map(([propertyId, previewModel]) => [
+            propertyId,
+            previewModel || fallbackPreviewModels[propertyId],
+          ])
+        )
       );
     };
 
@@ -486,7 +643,23 @@ function WebsiteBuilderPage() {
                     {draft.propertyTitle || "Untitled listing website"}
                   </p>
                   {draft.location ? <p className={styles.summaryLocation}>{draft.location}</p> : null}
+
+                  <div className={styles.websiteDraftMetaRow}>
+                    <span className={styles.metaText}>Template: {templateName}</span>
+                    <span className={styles.metaText}>Updated: {formatDraftUpdatedAt(draft.updatedAt)}</span>
+                  </div>
+
+                  <div className={styles.buttonRow}>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={() => openWebsiteDraftEditor(draft)}
+                    >
+                      Open editor
+                    </button>
+                  </div>
                 </div>
+
                 <div className={styles.websiteDraftCardPreview}>
                   {draftPreviewModel ? (
                     <WebsiteTemplatePreview
@@ -501,22 +674,8 @@ function WebsiteBuilderPage() {
                     </div>
                   )}
                 </div>
+
                 <span className={styles.statusPill}>{draft.status || "DRAFT"}</span>
-              </div>
-
-              <div className={styles.websiteDraftMetaRow}>
-                <span className={styles.metaText}>Template: {templateName}</span>
-                <span className={styles.metaText}>Updated: {formatDraftUpdatedAt(draft.updatedAt)}</span>
-              </div>
-
-              <div className={styles.buttonRow}>
-                <button
-                  type="button"
-                  className={styles.primaryButton}
-                  onClick={() => openWebsiteDraftEditor(draft)}
-                >
-                  Open editor
-                </button>
               </div>
             </article>
           );

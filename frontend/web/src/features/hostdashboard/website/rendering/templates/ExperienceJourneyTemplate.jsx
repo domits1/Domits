@@ -2,8 +2,29 @@ import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
+import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 
-export default function ExperienceJourneyTemplate({ model }) {
+const getInteractiveTargetProps = (className, onSelectTarget, target) => {
+  if (!onSelectTarget) {
+    return { className };
+  }
+
+  const handleActivate = () => onSelectTarget(target);
+  return {
+    className: `${className} ${styles.previewInteractiveTarget}`.trim(),
+    role: "button",
+    tabIndex: 0,
+    onClick: handleActivate,
+    onKeyDown: (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleActivate();
+      }
+    },
+  };
+};
+
+export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showJourneyStops = model.visibility?.journeyStops !== false;
   const showAmenitiesPanel = model.visibility?.amenitiesPanel !== false;
@@ -13,7 +34,11 @@ export default function ExperienceJourneyTemplate({ model }) {
   return (
     <article className={styles.templateSite}>
       {showTopBar ? (
-        <div className={styles.templateTopBar}>
+        <div
+          {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
+            sectionId: "common",
+          })}
+        >
           <div className={styles.templateTopBarBrand}>
             <span className={styles.templateTopBarMark} aria-hidden="true" />
             <span>{model.site.title}</span>
@@ -26,7 +51,11 @@ export default function ExperienceJourneyTemplate({ model }) {
         </div>
       ) : null}
 
-      <section className={styles.experienceIntro}>
+      <section
+        {...getInteractiveTargetProps(styles.experienceIntro, onSelectTarget, {
+          sectionId: "common",
+        })}
+      >
         <div className={styles.experienceIntroCopy}>
           <p className={styles.sectionEyebrow}>Experience-led layout</p>
           <h1 className={styles.heroTitle}>{model.hero.title}</h1>
@@ -43,20 +72,35 @@ export default function ExperienceJourneyTemplate({ model }) {
             return (
               <article
                 key={stop.id}
-                className={`${styles.experienceJourneyRow} ${
-                  isReversed ? styles.experienceJourneyRowReversed : ""
-                }`.trim()}
+                {...getInteractiveTargetProps(
+                  `${styles.experienceJourneyRow} ${
+                    isReversed ? styles.experienceJourneyRowReversed : ""
+                  }`.trim(),
+                  onSelectTarget,
+                  {
+                    sectionId: "journeyStops",
+                  }
+                )}
               >
                 <div className={styles.experienceJourneyCopy}>
                   <p className={styles.journeyLabel}>{stop.title}</p>
                   <p>{stop.description}</p>
                 </div>
-                <img className={styles.experienceJourneyVisual} src={imageUrl} alt={`${stop.title} visual`} />
+                <img
+                  {...getInteractiveTargetProps(styles.experienceJourneyVisual, onSelectTarget, {
+                    sectionId: "images",
+                    imageSlot: { kind: "gallery", index },
+                  })}
+                  src={imageUrl}
+                  alt={`${stop.title} visual`}
+                />
               </article>
             );
           })}
         </section>
       ) : null}
+
+      <AvailabilityCalendarPreview availability={model.availability} />
 
       {showExperienceFooter ? (
         <section className={styles.sectionCard}>
@@ -94,7 +138,11 @@ export default function ExperienceJourneyTemplate({ model }) {
             ) : null}
 
             {showCallToAction ? (
-              <div className={styles.softCallout}>
+              <div
+                {...getInteractiveTargetProps(styles.softCallout, onSelectTarget, {
+                  sectionId: "common",
+                })}
+              >
                 <strong>{model.callToAction.label}</strong>
                 <p>{model.callToAction.note}</p>
               </div>
@@ -137,6 +185,14 @@ ExperienceJourneyTemplate.propTypes = {
         })
       ).isRequired,
     }).isRequired,
+    availability: PropTypes.shape({
+      externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
+      syncSummary: PropTypes.string,
+      blockedDateSummary: PropTypes.string,
+      lastSyncLabel: PropTypes.string,
+      nextBlockedLabel: PropTypes.string,
+      callout: PropTypes.string,
+    }).isRequired,
     callToAction: PropTypes.shape({
       label: PropTypes.string.isRequired,
       note: PropTypes.string.isRequired,
@@ -148,4 +204,5 @@ ExperienceJourneyTemplate.propTypes = {
       journeyStops: PropTypes.bool,
     }).isRequired,
   }).isRequired,
+  onSelectTarget: PropTypes.func,
 };

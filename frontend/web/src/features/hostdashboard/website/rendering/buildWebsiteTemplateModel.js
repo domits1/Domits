@@ -6,6 +6,12 @@ const DEFAULT_LOCALE = "en";
 const MAX_FEATURED_AMENITIES = 6;
 const MAX_FEATURED_POLICIES = 3;
 const MAX_FEATURED_GALLERY_IMAGES = 5;
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const toDateKey = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(
+    2,
+    "0"
+  )}`;
 
 const AMENITY_LOOKUP = new Map(
   amenitiesCatalog.map(({ id, amenity, category }) => [
@@ -27,6 +33,40 @@ const RESTRICTION_KEYS = Object.freeze({
 });
 
 const cleanText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
+const formatShortDate = (value) => {
+  const normalizedValue = cleanText(value);
+  if (!DATE_KEY_PATTERN.test(normalizedValue)) {
+    return "";
+  }
+
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      month: "short",
+      day: "2-digit",
+    }).format(new Date(`${normalizedValue}T00:00:00`));
+  } catch {
+    return normalizedValue;
+  }
+};
+
+const formatTimestampLabel = (value) => {
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    return "";
+  }
+
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(parsedValue));
+  } catch {
+    return "";
+  }
+};
 
 const humanizeCamelCase = (value) =>
   cleanText(value)
@@ -286,6 +326,52 @@ const buildJourneyStops = ({
   ];
 };
 
+const buildCalendarAvailability = (calendarAvailability) => {
+  const externalBlockedDates = (Array.isArray(calendarAvailability?.externalBlockedDates)
+    ? calendarAvailability.externalBlockedDates
+    : []
+  )
+    .map((dateKey) => cleanText(dateKey))
+    .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey))
+    .sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
+
+  const syncedSourceCount = Math.max(0, Math.trunc(readNumber(calendarAvailability?.syncedSourceCount, 0)));
+  const hasExternalCalendarSync =
+    calendarAvailability?.hasExternalCalendarSync === true || syncedSourceCount > 0;
+  const todayDateKey = toDateKey(new Date());
+  const nextBlockedDate = externalBlockedDates.find((dateKey) => dateKey >= todayDateKey) || "";
+  const lastSyncLabel = formatTimestampLabel(calendarAvailability?.lastSyncAt);
+
+  const syncSummary = hasExternalCalendarSync
+    ? `${syncedSourceCount} iCal sync${syncedSourceCount === 1 ? "" : "s"} connected`
+    : "No iCal sync connected yet";
+
+  const blockedDateSummary =
+    externalBlockedDates.length > 0
+      ? `${externalBlockedDates.length} imported blocked date${
+          externalBlockedDates.length === 1 ? "" : "s"
+        }`
+      : "No imported blocked dates";
+
+  const nextBlockedLabel = nextBlockedDate ? `Next blocked: ${formatShortDate(nextBlockedDate)}` : "";
+
+  return {
+    externalBlockedDates,
+    blockedDateCount: externalBlockedDates.length,
+    hasExternalCalendarSync,
+    syncedSourceCount,
+    syncSummary,
+    blockedDateSummary,
+    lastSyncLabel,
+    nextBlockedDate,
+    nextBlockedLabel,
+    callout:
+      hasExternalCalendarSync || externalBlockedDates.length > 0
+        ? "Imported external calendar blocks are shown below. Live quote requests still validate current availability before a guest can continue."
+        : "No external calendar blocks have been imported yet. Live quote requests still validate current availability before a guest can continue.",
+  };
+};
+
 export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = null }) => {
   const property = propertyDetails?.property || {};
   const generalDetails = Array.isArray(propertyDetails?.generalDetails) ? propertyDetails.generalDetails : [];
@@ -321,6 +407,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   const amenities = buildAmenityItems(propertyDetails?.amenities);
   const featuredAmenities = amenities.slice(0, MAX_FEATURED_AMENITIES);
   const policyHighlights = buildPolicyHighlights(propertyDetails?.rules);
+  const availabilitySnapshot = buildCalendarAvailability(propertyDetails?.calendarAvailability);
 
   return {
     source: {
@@ -396,6 +483,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       all: policyHighlights,
       summary: policyHighlights.slice(0, MAX_FEATURED_POLICIES).join(", "),
     },
+    availability: availabilitySnapshot,
     gallery: {
       images: featuredGalleryImages,
       countLabel: `${galleryImages.length} imported photo${galleryImages.length === 1 ? "" : "s"}`,

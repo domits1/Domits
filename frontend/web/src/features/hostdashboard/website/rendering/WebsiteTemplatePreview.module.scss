@@ -5,6 +5,7 @@
 
 .previewShellCompact {
   gap: 0;
+  width: 100%;
 }
 
 .previewHeader {
@@ -81,13 +82,19 @@
 .previewScaleShell {
   position: relative;
   width: 100%;
-}
-
-.previewScaleShellCompact {
   overflow: hidden;
 }
 
+.previewScaleShellCompact {
+  width: 100%;
+  max-width: 184px;
+  margin-left: auto;
+}
+
 .previewScaleInner {
+  position: absolute;
+  top: 0;
+  left: 0;
   transform-origin: top left;
   will-change: transform;
 }
@@ -128,6 +135,15 @@
   background:
     radial-gradient(circle at top left, rgba(31, 78, 121, 0.06), transparent 28%),
     linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(255, 255, 255, 0.98));
+}
+
+.previewInteractiveTarget {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.previewInteractiveTarget:hover {
+  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
 }
 
 .previewUnsupported {
@@ -196,7 +212,13 @@
   justify-items: start;
 }
 
-.panoramaIntroCopy,
+.panoramaIntroCopy {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: none;
+}
+
 .experienceIntroCopy {
   display: grid;
   gap: 12px;

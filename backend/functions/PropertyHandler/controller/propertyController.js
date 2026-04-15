@@ -11,6 +11,13 @@ import { randomUUID } from "node:crypto";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 
+const draftResponseHeaders = {
+    ...responseHeaders,
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+};
+
 export class PropertyController {
 
     propertyService;
@@ -1452,7 +1459,7 @@ export class PropertyController {
 
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(draft),
             };
         } catch (error) {
@@ -1478,7 +1485,7 @@ export class PropertyController {
             const drafts = await this.standaloneSiteDraftRepository.listDraftsByHostId(hostId);
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(drafts),
             };
         } catch (error) {
@@ -1508,14 +1515,14 @@ export class PropertyController {
             if (!draft) {
                 return {
                     statusCode: 404,
-                    headers: responseHeaders,
+                    headers: draftResponseHeaders,
                     body: JSON.stringify({ message: "Website draft not found." }),
                 };
             }
 
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(draft),
             };
         } catch (error) {

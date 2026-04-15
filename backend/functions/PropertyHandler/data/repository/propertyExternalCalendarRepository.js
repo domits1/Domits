@@ -73,6 +73,37 @@ const safeParseJson = (value) => {
   }
 };
 
+const normalizeTimestamp = (value) => {
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
+};
+
+const buildBlockedDateKeys = (rows) => {
+  const blockedDateKeys = new Set();
+
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const blockedDates = safeParseJson(row?.blockedDates);
+    (Array.isArray(blockedDates) ? blockedDates : []).forEach((dateKey) => {
+      const normalizedKey = String(dateKey || "").trim();
+      if (DATE_KEY_PATTERN.test(normalizedKey)) {
+        blockedDateKeys.add(normalizedKey);
+      }
+    });
+  });
+
+  return Array.from(blockedDateKeys).sort((left, right) => left.localeCompare(right));
+};
+
+const mapCalendarSyncSource = (row) => ({
+  propertyId: String(row?.propertyId || "").trim(),
+  sourceId: String(row?.sourceId || "").trim(),
+  calendarName: String(row?.calendarName || "").trim(),
+  calendarUrl: String(row?.calendarUrl || "").trim(),
+  provider: String(row?.provider || "").trim(),
+  lastSyncAt: normalizeTimestamp(row?.lastSyncAt),
+  updatedAt: normalizeTimestamp(row?.updatedAt),
+});
+
 const hasProviderColumn = async (client) => {
   try {
     const schemaName = getSchemaName(client);
@@ -132,24 +163,36 @@ export class PropertyExternalCalendarRepository {
     this.systemManager = systemManager;
   }
 
-  async getBlockedDatesByPropertyId(propertyId) {
+  async getAvailabilitySnapshotByPropertyId(propertyId) {
     const client = await Database.getInstance();
     const rows = await listSourcesByProperty(client, propertyId, {
       order: "DESC",
       tolerateMissingTable: true,
     });
 
-    const blockedDateKeys = new Set();
-    (Array.isArray(rows) ? rows : []).forEach((row) => {
-      const blockedDates = safeParseJson(row?.blockedDates);
-      (Array.isArray(blockedDates) ? blockedDates : []).forEach((dateKey) => {
-        const normalizedKey = String(dateKey || "").trim();
-        if (DATE_KEY_PATTERN.test(normalizedKey)) {
-          blockedDateKeys.add(normalizedKey);
-        }
-      });
-    });
+    const blockedDateKeys = buildBlockedDateKeys(rows);
+    const syncSources = (Array.isArray(rows) ? rows : []).map(mapCalendarSyncSource);
+    const syncedSourceCount = syncSources.length;
+    const lastSyncAt = syncSources.reduce((latestTimestamp, source) => {
+      const candidateTimestamp = source.lastSyncAt || source.updatedAt;
+      if (!candidateTimestamp) {
+        return latestTimestamp;
+      }
 
-    return Array.from(blockedDateKeys).sort((left, right) => left.localeCompare(right));
+      return latestTimestamp && latestTimestamp > candidateTimestamp ? latestTimestamp : candidateTimestamp;
+    }, null);
+
+    return {
+      externalBlockedDates: blockedDateKeys,
+      hasExternalCalendarSync: syncedSourceCount > 0,
+      syncedSourceCount,
+      lastSyncAt,
+      syncSources,
+    };
+  }
+
+  async getBlockedDatesByPropertyId(propertyId) {
+    const snapshot = await this.getAvailabilitySnapshotByPropertyId(propertyId);
+    return snapshot.externalBlockedDates;
   }
 }

@@ -5,6 +5,7 @@ import EventIcon from "@mui/icons-material/Event";
 import { GiAirplaneArrival } from "react-icons/gi";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
+import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 
 const PANORAMA_CARD_ICONS = Object.freeze({
   "stay-details": {
@@ -23,7 +24,27 @@ const PANORAMA_CARD_ICONS = Object.freeze({
 
 const getPanoramaCardIcon = (cardId) => PANORAMA_CARD_ICONS[cardId] || null;
 
-export default function PanoramaLandingTemplate({ model }) {
+const getInteractiveTargetProps = (className, onSelectTarget, target) => {
+  if (!onSelectTarget) {
+    return { className };
+  }
+
+  const handleActivate = () => onSelectTarget(target);
+  return {
+    className: `${className} ${styles.previewInteractiveTarget}`.trim(),
+    role: "button",
+    tabIndex: 0,
+    onClick: handleActivate,
+    onKeyDown: (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleActivate();
+      }
+    },
+  };
+};
+
+export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showTrustCards = model.visibility?.trustCards !== false;
   const showGallerySection = model.visibility?.gallerySection !== false;
@@ -34,7 +55,11 @@ export default function PanoramaLandingTemplate({ model }) {
   return (
     <article className={styles.templateSite}>
       {showTopBar ? (
-        <div className={styles.templateTopBar}>
+        <div
+          {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
+            sectionId: "common",
+          })}
+        >
           <div className={styles.templateTopBarBrand}>
             <span className={styles.templateTopBarMark} aria-hidden="true" />
             <span>{model.site.title}</span>
@@ -47,7 +72,11 @@ export default function PanoramaLandingTemplate({ model }) {
         </div>
       ) : null}
 
-      <section className={styles.panoramaIntro}>
+      <section
+        {...getInteractiveTargetProps(styles.panoramaIntro, onSelectTarget, {
+          sectionId: "common",
+        })}
+      >
         <div className={styles.panoramaIntroCopy}>
           <p className={styles.sectionEyebrow}>{model.hero.eyebrow}</p>
           <h1 className={styles.heroTitle}>{model.hero.title}</h1>
@@ -56,9 +85,20 @@ export default function PanoramaLandingTemplate({ model }) {
       </section>
 
       <section className={styles.panoramaHeroCard}>
-        <img className={styles.panoramaHeroImage} src={model.media.heroImage} alt={model.hero.title} />
+        <img
+          {...getInteractiveTargetProps(styles.panoramaHeroImage, onSelectTarget, {
+            sectionId: "images",
+            imageSlot: { kind: "hero" },
+          })}
+          src={model.media.heroImage}
+          alt={model.hero.title}
+        />
         {showCallToAction ? (
-          <div className={styles.panoramaSearchStub}>
+          <div
+            {...getInteractiveTargetProps(styles.panoramaSearchStub, onSelectTarget, {
+              sectionId: "common",
+            })}
+          >
             <strong>{model.callToAction.label}</strong>
             {model.stay.nightlyRateLabel ? <span>{model.stay.nightlyRateLabel}</span> : null}
           </div>
@@ -72,7 +112,12 @@ export default function PanoramaLandingTemplate({ model }) {
             const IconComponent = iconConfig?.Icon || null;
 
             return (
-              <article key={card.id} className={styles.panoramaFeatureCard}>
+              <article
+                key={card.id}
+                {...getInteractiveTargetProps(styles.panoramaFeatureCard, onSelectTarget, {
+                  sectionId: "trustCards",
+                })}
+              >
                 {IconComponent ? (
                   <span className={styles.panoramaFeatureIcon} aria-hidden="true">
                     <IconComponent
@@ -90,6 +135,8 @@ export default function PanoramaLandingTemplate({ model }) {
         </section>
       ) : null}
 
+      <AvailabilityCalendarPreview availability={model.availability} />
+
       {showPanoramaSecondarySection ? (
         <section className={styles.sectionCard}>
           <div className={styles.sectionHeading}>
@@ -103,7 +150,10 @@ export default function PanoramaLandingTemplate({ model }) {
                 {model.gallery.images.slice(0, 3).map((imageUrl, index) => (
                   <img
                     key={`${imageUrl}-${index}`}
-                    className={styles.galleryImage}
+                    {...getInteractiveTargetProps(styles.galleryImage, onSelectTarget, {
+                      sectionId: "images",
+                      imageSlot: { kind: "gallery", index },
+                    })}
                     src={imageUrl}
                     alt={`${model.hero.title} view ${index + 1}`}
                   />
@@ -188,6 +238,14 @@ PanoramaLandingTemplate.propTypes = {
         })
       ).isRequired,
     }).isRequired,
+    availability: PropTypes.shape({
+      externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
+      syncSummary: PropTypes.string,
+      blockedDateSummary: PropTypes.string,
+      lastSyncLabel: PropTypes.string,
+      nextBlockedLabel: PropTypes.string,
+      callout: PropTypes.string,
+    }).isRequired,
     visibility: PropTypes.shape({
       topBar: PropTypes.bool,
       trustCards: PropTypes.bool,
@@ -196,4 +254,5 @@ PanoramaLandingTemplate.propTypes = {
       callToAction: PropTypes.bool,
     }).isRequired,
   }).isRequired,
+  onSelectTarget: PropTypes.func,
 };

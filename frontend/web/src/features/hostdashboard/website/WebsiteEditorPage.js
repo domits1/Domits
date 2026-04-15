@@ -1,11 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import LaptopMacOutlinedIcon from "@mui/icons-material/LaptopMacOutlined";
 import TabletMacOutlinedIcon from "@mui/icons-material/TabletMacOutlined";
 import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
+import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
+import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
+import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { fetchWebsiteDraftByPropertyId, upsertWebsiteDraft } from "./services/websiteDraftService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
@@ -173,7 +177,34 @@ const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
   },
 });
 
-const getImageOptionLabel = (imageUrl, index) => `Imported image ${index + 1}`;
+const EDITOR_SECTION_KEYS = Object.freeze({
+  common: "common",
+  visibility: "visibility",
+  images: "images",
+  trustCards: "trustCards",
+  journeyStops: "journeyStops",
+});
+
+const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
+
+const getSelectedImageForSlot = (slot, editorValues) =>
+  slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
+
+const resolveSectionNode = (sectionRefEntry) => {
+  if (!sectionRefEntry) {
+    return null;
+  }
+
+  if (typeof sectionRefEntry.scrollIntoView === "function") {
+    return sectionRefEntry;
+  }
+
+  if (sectionRefEntry.current && typeof sectionRefEntry.current.scrollIntoView === "function") {
+    return sectionRefEntry.current;
+  }
+
+  return null;
+};
 
 const fieldPropTypes = PropTypes.shape({
   key: PropTypes.string.isRequired,
@@ -219,6 +250,43 @@ TextField.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
+function CollapsibleSection({ sectionId, title, description, isOpen, onToggle, sectionRef, children }) {
+  return (
+    <section ref={sectionRef} className={styles.panelSection}>
+      <button
+        type="button"
+        className={`${styles.sectionToggle} ${isOpen ? styles.sectionToggleOpen : ""}`.trim()}
+        onClick={() => onToggle(sectionId)}
+        aria-expanded={isOpen}
+      >
+        <div className={styles.sectionBlockHeader}>
+          <h3 className={styles.sectionBlockTitle}>{title}</h3>
+          <p className={styles.sectionBlockDescription}>{description}</p>
+        </div>
+        <KeyboardArrowDownOutlinedIcon className={styles.sectionToggleIcon} />
+      </button>
+
+      {isOpen ? <div className={styles.panelSectionBody}>{children}</div> : null}
+    </section>
+  );
+}
+
+CollapsibleSection.propTypes = {
+  sectionId: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  isOpen: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  sectionRef: PropTypes.shape({
+    current: PropTypes.any,
+  }),
+  children: PropTypes.node.isRequired,
+};
+
+CollapsibleSection.defaultProps = {
+  sectionRef: null,
+};
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -229,8 +297,18 @@ function WebsiteEditorPage() {
   const [editorValues, setEditorValues] = useState(createEmptyWebsiteDraftEditorValues);
   const [previewViewport, setPreviewViewport] = useState("desktop");
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState("");
-  const [saveError, setSaveError] = useState("");
+  const [expandedSections, setExpandedSections] = useState({
+    [EDITOR_SECTION_KEYS.common]: true,
+    [EDITOR_SECTION_KEYS.visibility]: false,
+    [EDITOR_SECTION_KEYS.images]: false,
+    [EDITOR_SECTION_KEYS.trustCards]: false,
+    [EDITOR_SECTION_KEYS.journeyStops]: false,
+  });
+  const [imagePickerState, setImagePickerState] = useState({
+    isOpen: false,
+    slot: null,
+  });
+  const sectionRefs = useRef({});
 
   useEffect(() => {
     let isMounted = true;
@@ -238,8 +316,6 @@ function WebsiteEditorPage() {
     const loadEditorState = async () => {
       setIsLoading(true);
       setLoadError("");
-      setSaveMessage("");
-      setSaveError("");
 
       try {
         const [draft, propertyDetails] = await Promise.all([
@@ -322,6 +398,66 @@ function WebsiteEditorPage() {
     return JSON.stringify(mergedContentOverrides) !== JSON.stringify(persistedOverrides);
   }, [draftRecord, mergedContentOverrides]);
 
+  useEffect(() => {
+    setExpandedSections({
+      [EDITOR_SECTION_KEYS.common]: true,
+      [EDITOR_SECTION_KEYS.visibility]: false,
+      [EDITOR_SECTION_KEYS.images]: false,
+      [EDITOR_SECTION_KEYS.trustCards]: false,
+      [EDITOR_SECTION_KEYS.journeyStops]: false,
+    });
+  }, [draftRecord?.templateKey]);
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections((currentSections) => ({
+      ...currentSections,
+      [sectionId]: !currentSections[sectionId],
+    }));
+  };
+
+  const openSection = (sectionId) => {
+    setExpandedSections((currentSections) => {
+      if (currentSections[sectionId]) {
+        return currentSections;
+      }
+
+      return {
+        ...currentSections,
+        [sectionId]: true,
+      };
+    });
+  };
+
+  const focusEditorSection = (sectionId) => {
+    if (!sectionId) {
+      return;
+    }
+
+    openSection(sectionId);
+    globalThis.setTimeout(() => {
+      const targetSectionNode = resolveSectionNode(sectionRefs.current[sectionId]);
+
+      targetSectionNode?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 120);
+  };
+
+  const handlePreviewTargetSelect = ({ sectionId, imageSlot } = {}) => {
+    if (imageSlot) {
+      focusEditorSection(EDITOR_SECTION_KEYS.images);
+      globalThis.setTimeout(() => {
+        openImagePicker(imageSlot);
+      }, 140);
+      return;
+    }
+
+    if (sectionId) {
+      focusEditorSection(sectionId);
+    }
+  };
+
   const handleCommonFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
     setEditorValues((currentValues) => ({
@@ -331,8 +467,6 @@ function WebsiteEditorPage() {
         [fieldKey]: nextValue,
       },
     }));
-    setSaveMessage("");
-    setSaveError("");
   };
 
   const handleVisibilityFieldChange = (fieldKey) => (event) => {
@@ -344,28 +478,26 @@ function WebsiteEditorPage() {
         [fieldKey]: nextChecked,
       },
     }));
-    setSaveMessage("");
-    setSaveError("");
   };
 
-  const handleHeroImageChange = (event) => {
-    const nextValue = event.target.value;
-    setEditorValues((currentValues) => ({
-      ...currentValues,
-      images: {
-        ...currentValues.images,
-        heroImage: nextValue,
-      },
-    }));
-    setSaveMessage("");
-    setSaveError("");
-  };
+  const updateImageSlotSelection = (slot, nextValue) => {
+    if (!slot) {
+      return;
+    }
 
-  const handleGalleryImageChange = (index) => (event) => {
-    const nextValue = event.target.value;
     setEditorValues((currentValues) => {
+      if (slot.kind === "hero") {
+        return {
+          ...currentValues,
+          images: {
+            ...currentValues.images,
+            heroImage: nextValue,
+          },
+        };
+      }
+
       const nextGalleryValues = [...currentValues.images.gallery];
-      nextGalleryValues[index] = nextValue;
+      nextGalleryValues[slot.index] = nextValue;
 
       return {
         ...currentValues,
@@ -375,8 +507,33 @@ function WebsiteEditorPage() {
         },
       };
     });
-    setSaveMessage("");
-    setSaveError("");
+  };
+
+  const openImagePicker = (slot) => {
+    if (!slot || importedImageOptions.length < 1) {
+      return;
+    }
+
+    setImagePickerState({
+      isOpen: true,
+      slot,
+    });
+  };
+
+  const closeImagePicker = () => {
+    setImagePickerState({
+      isOpen: false,
+      slot: null,
+    });
+  };
+
+  const selectImageFromPicker = (imageUrl) => {
+    if (!imagePickerState.slot || !imageUrl) {
+      return;
+    }
+
+    updateImageSlotSelection(imagePickerState.slot, imageUrl);
+    closeImagePicker();
   };
 
   const handleCollectionFieldChange = (collectionKey, itemIndex, fieldKey) => (event) => {
@@ -393,8 +550,6 @@ function WebsiteEditorPage() {
         [collectionKey]: nextCollection,
       };
     });
-    setSaveMessage("");
-    setSaveError("");
   };
 
   const saveDraftChanges = async () => {
@@ -403,11 +558,9 @@ function WebsiteEditorPage() {
     }
 
     setIsSaving(true);
-    setSaveMessage("");
-    setSaveError("");
 
     try {
-      const nextDraft = await upsertWebsiteDraft({
+      await upsertWebsiteDraft({
         propertyId: draftRecord.propertyId,
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
@@ -415,14 +568,46 @@ function WebsiteEditorPage() {
         themeOverrides: draftRecord.themeOverrides || {},
       });
 
-      setDraftRecord(nextDraft);
-      setSaveMessage("Draft changes saved.");
+      const persistedDraft = await fetchWebsiteDraftByPropertyId(draftRecord.propertyId);
+      if (!persistedDraft) {
+        throw new Error("Draft save completed, but the updated draft could not be reloaded.");
+      }
+
+      setDraftRecord(persistedDraft);
+      toast.success("Draft changes saved.");
     } catch (error) {
-      setSaveError(error?.message || "We could not save your website changes.");
+      toast.error(error?.message || "We could not save your website changes.");
     } finally {
       setIsSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!imagePickerState.isOpen) {
+      return undefined;
+    }
+
+    const documentBody = globalThis.document?.body;
+    const previousOverflow = documentBody?.style.overflow ?? "";
+    if (documentBody) {
+      documentBody.style.overflow = "hidden";
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeImagePicker();
+      }
+    };
+
+    globalThis.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      if (documentBody) {
+        documentBody.style.overflow = previousOverflow;
+      }
+      globalThis.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [imagePickerState.isOpen]);
 
   if (isLoading) {
     return (
@@ -509,14 +694,14 @@ function WebsiteEditorPage() {
               </div>
 
               <div className={styles.editorForm}>
-                <section className={styles.panelSection}>
-                  <div className={styles.sectionBlockHeader}>
-                    <h3 className={styles.sectionBlockTitle}>Common content</h3>
-                    <p className={styles.sectionBlockDescription}>
-                      Shared copy fields that affect the rendered website directly.
-                    </p>
-                  </div>
-
+                <CollapsibleSection
+                  sectionId={EDITOR_SECTION_KEYS.common}
+                  title="Common content"
+                  description="Shared copy fields that affect the rendered website directly."
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.common])}
+                  onToggle={toggleSection}
+                  sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.common] ??= React.createRef())}
+                >
                   <div className={styles.fieldStack}>
                     {COMMON_TEXT_FIELDS.map((field) => (
                       <TextField
@@ -527,17 +712,17 @@ function WebsiteEditorPage() {
                       />
                     ))}
                   </div>
-                </section>
+                </CollapsibleSection>
 
                 {visibilityFields.length > 0 ? (
-                  <section className={styles.panelSection}>
-                    <div className={styles.sectionBlockHeader}>
-                      <h3 className={styles.sectionBlockTitle}>Section visibility</h3>
-                      <p className={styles.sectionBlockDescription}>
-                        Toggle major sections without changing the underlying draft data.
-                      </p>
-                    </div>
-
+                  <CollapsibleSection
+                    sectionId={EDITOR_SECTION_KEYS.visibility}
+                    title="Section visibility"
+                    description="Toggle major sections without changing the underlying draft data."
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.visibility])}
+                    onToggle={toggleSection}
+                    sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.visibility] ??= React.createRef())}
+                  >
                     <div className={styles.toggleStack}>
                       {visibilityFields.map((field) => (
                         <label key={field.key} className={styles.toggleCard}>
@@ -554,24 +739,24 @@ function WebsiteEditorPage() {
                         </label>
                       ))}
                     </div>
-                  </section>
+                  </CollapsibleSection>
                 ) : null}
 
                 {imageSlots.length > 0 ? (
-                  <section className={styles.panelSection}>
-                    <div className={styles.sectionBlockHeader}>
-                      <h3 className={styles.sectionBlockTitle}>Image slots</h3>
-                      <p className={styles.sectionBlockDescription}>
-                        Reassign imported listing images to the key visual slots used by this template.
-                      </p>
-                    </div>
-
+                  <CollapsibleSection
+                    sectionId={EDITOR_SECTION_KEYS.images}
+                    title="Image slots"
+                    description="Reassign imported listing images to the key visual slots used by this template."
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.images])}
+                    onToggle={toggleSection}
+                    sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.images] ??= React.createRef())}
+                  >
                     <div className={styles.imageSlotGrid}>
                       {imageSlots.map((slot) => {
-                        const selectedImageUrl =
-                          slot.kind === "hero"
-                            ? editorValues.images.heroImage
-                            : editorValues.images.gallery[slot.index] || "";
+                        const selectedImageUrl = getSelectedImageForSlot(slot, editorValues);
+                        const selectedImageIndex = importedImageOptions.findIndex(
+                          (imageUrl) => imageUrl === selectedImageUrl
+                        );
 
                         return (
                           <div
@@ -586,25 +771,25 @@ function WebsiteEditorPage() {
                               )}
                             </div>
 
-                            <div className={styles.fieldGroup}>
-                              <label
-                                className={styles.fieldLabel}
-                                htmlFor={`website-editor-image-${slot.kind}-${slot.index ?? "hero"}`}
+                            <div className={styles.imageSlotMeta}>
+                              <div className={styles.fieldGroup}>
+                                <span className={styles.fieldLabel}>{slot.label}</span>
+                                <span className={styles.helperText}>
+                                  {selectedImageIndex > -1
+                                    ? getImageOptionLabel(selectedImageIndex)
+                                    : "No imported image assigned"}
+                                </span>
+                              </div>
+
+                              <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                onClick={() => openImagePicker(slot)}
+                                disabled={importedImageOptions.length < 1}
                               >
-                                {slot.label}
-                              </label>
-                              <select
-                                id={`website-editor-image-${slot.kind}-${slot.index ?? "hero"}`}
-                                className={styles.selectInput}
-                                value={selectedImageUrl}
-                                onChange={slot.kind === "hero" ? handleHeroImageChange : handleGalleryImageChange(slot.index)}
-                              >
-                                {importedImageOptions.map((imageUrl, index) => (
-                                  <option key={`${slot.label}-${imageUrl}-${index}`} value={imageUrl}>
-                                    {getImageOptionLabel(imageUrl, index)}
-                                  </option>
-                                ))}
-                              </select>
+                                <CollectionsOutlinedIcon fontSize="small" />
+                                Choose image
+                              </button>
                             </div>
 
                             <p className={styles.helperText}>{slot.description}</p>
@@ -612,18 +797,18 @@ function WebsiteEditorPage() {
                         );
                       })}
                     </div>
-                  </section>
+                  </CollapsibleSection>
                 ) : null}
 
                 {copyCollectionConfig.trustCards ? (
-                  <section className={styles.panelSection}>
-                    <div className={styles.sectionBlockHeader}>
-                      <h3 className={styles.sectionBlockTitle}>{copyCollectionConfig.trustCards.title}</h3>
-                      <p className={styles.sectionBlockDescription}>
-                        {copyCollectionConfig.trustCards.description}
-                      </p>
-                    </div>
-
+                  <CollapsibleSection
+                    sectionId={EDITOR_SECTION_KEYS.trustCards}
+                    title={copyCollectionConfig.trustCards.title}
+                    description={copyCollectionConfig.trustCards.description}
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.trustCards])}
+                    onToggle={toggleSection}
+                    sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.trustCards] ??= React.createRef())}
+                  >
                     <div className={styles.collectionStack}>
                       {editorValues.trustCards
                         .slice(0, copyCollectionConfig.trustCards.count)
@@ -649,18 +834,18 @@ function WebsiteEditorPage() {
                           </div>
                         ))}
                     </div>
-                  </section>
+                  </CollapsibleSection>
                 ) : null}
 
                 {copyCollectionConfig.journeyStops ? (
-                  <section className={styles.panelSection}>
-                    <div className={styles.sectionBlockHeader}>
-                      <h3 className={styles.sectionBlockTitle}>{copyCollectionConfig.journeyStops.title}</h3>
-                      <p className={styles.sectionBlockDescription}>
-                        {copyCollectionConfig.journeyStops.description}
-                      </p>
-                    </div>
-
+                  <CollapsibleSection
+                    sectionId={EDITOR_SECTION_KEYS.journeyStops}
+                    title={copyCollectionConfig.journeyStops.title}
+                    description={copyCollectionConfig.journeyStops.description}
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.journeyStops])}
+                    onToggle={toggleSection}
+                    sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.journeyStops] ??= React.createRef())}
+                  >
                     <div className={styles.collectionStack}>
                       {editorValues.journeyStops
                         .slice(0, copyCollectionConfig.journeyStops.count)
@@ -686,16 +871,13 @@ function WebsiteEditorPage() {
                           </div>
                         ))}
                     </div>
-                  </section>
+                  </CollapsibleSection>
                 ) : null}
 
                 <p className={styles.helperText}>
                   Emptying a text field falls back to the imported listing value instead of forcing blank
                   output.
                 </p>
-
-                {saveMessage ? <p className={styles.successText}>{saveMessage}</p> : null}
-                {saveError ? <p className={styles.errorText}>{saveError}</p> : null}
 
                 <div className={styles.buttonRow}>
                   <button
@@ -712,41 +894,105 @@ function WebsiteEditorPage() {
             </aside>
 
             <section className={styles.previewPanel}>
-              <div className={styles.panelHeader}>
+              <div className={`${styles.panelHeader} ${styles.previewPanelHeader}`.trim()}>
                 <h2 className={styles.panelTitle}>Live preview</h2>
-                <p className={styles.panelDescription}>
-                  The preview now scales inside the available viewport. Switch device widths here instead
-                  of hoping random browser width changes tell you enough.
-                </p>
-              </div>
-
-              <div className={styles.previewViewportControls} role="tablist" aria-label="Preview viewport">
-                {PREVIEW_VIEWPORT_OPTIONS.map(({ id, label, Icon }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    role="tab"
-                    aria-selected={previewViewport === id}
-                    className={`${styles.previewViewportButton} ${
-                      previewViewport === id ? styles.previewViewportButtonActive : ""
-                    }`.trim()}
-                    onClick={() => setPreviewViewport(id)}
-                  >
-                    <Icon fontSize="small" />
-                    <span>{label}</span>
-                  </button>
-                ))}
+                <div className={styles.previewViewportControls} role="tablist" aria-label="Preview viewport">
+                  {PREVIEW_VIEWPORT_OPTIONS.map(({ id, label, Icon }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={previewViewport === id}
+                      className={`${styles.previewViewportButton} ${
+                        previewViewport === id ? styles.previewViewportButtonActive : ""
+                      }`.trim()}
+                      onClick={() => setPreviewViewport(id)}
+                    >
+                      <Icon fontSize="small" />
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <WebsiteTemplatePreview
                 templateId={draftRecord.templateKey}
                 model={previewModel}
                 viewport={previewViewport}
+                onSelectTarget={handlePreviewTargetSelect}
               />
             </section>
           </div>
         </section>
       </div>
+
+      {imagePickerState.isOpen && imagePickerState.slot ? (
+        <div
+          className={styles.imagePickerOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Select image for ${imagePickerState.slot.label}`}
+          onClick={closeImagePicker}
+        >
+          <div
+            className={styles.imagePickerDialog}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.imagePickerHeader}>
+              <div className={styles.imagePickerHeaderCopy}>
+                <p className={styles.eyebrow}>Choose imported image</p>
+                <h2 className={styles.panelTitle}>{imagePickerState.slot.label}</h2>
+                <p className={styles.panelDescription}>
+                  Pick from the imported listing photos. Selecting a thumbnail applies it immediately to
+                  this slot.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className={styles.imagePickerCloseButton}
+                onClick={closeImagePicker}
+                aria-label="Close image picker"
+              >
+                <CloseOutlinedIcon fontSize="small" />
+              </button>
+            </div>
+
+            <div className={styles.imagePickerMetaRow}>
+              <span className={styles.imagePickerCount}>
+                {importedImageOptions.length} imported {importedImageOptions.length === 1 ? "image" : "images"}
+              </span>
+              <span className={styles.helperText}>Scroll and click a thumbnail to assign it.</span>
+            </div>
+
+            <div className={styles.imagePickerThumbRail}>
+              {importedImageOptions.map((imageUrl, index) => {
+                const isSelected = imageUrl === getSelectedImageForSlot(imagePickerState.slot, editorValues);
+
+                return (
+                  <button
+                    key={`${imagePickerState.slot.label}-${imageUrl}-${index}`}
+                    type="button"
+                    className={`${styles.imagePickerThumbButton} ${
+                      isSelected ? styles.imagePickerThumbButtonActive : ""
+                    }`.trim()}
+                    onClick={() => selectImageFromPicker(imageUrl)}
+                    aria-label={`Use imported image ${index + 1}`}
+                  >
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      aria-hidden="true"
+                      className={styles.imagePickerThumbImage}
+                    />
+                    <span className={styles.imagePickerThumbLabel}>{getImageOptionLabel(index)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

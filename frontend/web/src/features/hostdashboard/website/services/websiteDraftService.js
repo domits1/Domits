@@ -19,6 +19,7 @@ const getRequiredAccessToken = () => {
 export const fetchWebsiteDrafts = async () => {
   const response = await fetch(buildWebsiteDraftsUrl(), {
     method: "GET",
+    cache: "no-store",
     headers: {
       Authorization: getRequiredAccessToken(),
     },
@@ -44,6 +45,7 @@ export const fetchWebsiteDraftByPropertyId = async (propertyId) => {
 
   const response = await fetch(buildWebsiteDraftUrl(normalizedPropertyId), {
     method: "GET",
+    cache: "no-store",
     headers: {
       Authorization: getRequiredAccessToken(),
     },
@@ -83,6 +85,7 @@ export const upsertWebsiteDraft = async ({
 
   const response = await fetch(buildWebsiteDraftMutationUrl(), {
     method: "POST",
+    cache: "no-store",
     headers: {
       Authorization: getRequiredAccessToken(),
       "Content-Type": "application/json",

@@ -1,8 +1,29 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
+import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 
-export default function TrustSignalsTemplate({ model }) {
+const getInteractiveTargetProps = (className, onSelectTarget, target) => {
+  if (!onSelectTarget) {
+    return { className };
+  }
+
+  const handleActivate = () => onSelectTarget(target);
+  return {
+    className: `${className} ${styles.previewInteractiveTarget}`.trim(),
+    role: "button",
+    tabIndex: 0,
+    onClick: handleActivate,
+    onKeyDown: (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleActivate();
+      }
+    },
+  };
+};
+
+export default function TrustSignalsTemplate({ model, onSelectTarget }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showTrustCards = model.visibility?.trustCards !== false;
   const showCallToAction = model.visibility?.callToAction !== false;
@@ -10,7 +31,11 @@ export default function TrustSignalsTemplate({ model }) {
   return (
     <article className={styles.templateSite}>
       {showTopBar ? (
-        <div className={styles.templateTopBar}>
+        <div
+          {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
+            sectionId: "common",
+          })}
+        >
           <div className={styles.templateTopBarBrand}>
             <span className={styles.templateTopBarMark} aria-hidden="true" />
             <span>{model.site.title}</span>
@@ -23,18 +48,34 @@ export default function TrustSignalsTemplate({ model }) {
       ) : null}
 
       <section className={styles.trustSignalsShell}>
-        <div className={styles.trustSignalsIntro}>
+        <div
+          {...getInteractiveTargetProps(styles.trustSignalsIntro, onSelectTarget, {
+            sectionId: "common",
+          })}
+        >
           <p className={styles.sectionEyebrow}>Trust-oriented layout</p>
           <h1 className={styles.heroTitle}>{model.hero.title}</h1>
           <p className={styles.heroDescription}>{model.hero.description}</p>
         </div>
 
-        <img className={styles.trustSignalsHeroImage} src={model.media.heroImage} alt={model.hero.title} />
+        <img
+          {...getInteractiveTargetProps(styles.trustSignalsHeroImage, onSelectTarget, {
+            sectionId: "images",
+            imageSlot: { kind: "hero" },
+          })}
+          src={model.media.heroImage}
+          alt={model.hero.title}
+        />
 
         {showTrustCards ? (
           <div className={styles.trustSignalsStack}>
             {model.trustCards.slice(0, 2).map((card) => (
-              <article key={card.id} className={styles.trustSignalsCard}>
+              <article
+                key={card.id}
+                {...getInteractiveTargetProps(styles.trustSignalsCard, onSelectTarget, {
+                  sectionId: "trustCards",
+                })}
+              >
                 <div className={styles.trustSignalsCardMeta}>
                   <span />
                   <span />
@@ -47,9 +88,15 @@ export default function TrustSignalsTemplate({ model }) {
           </div>
         ) : null}
 
+        <AvailabilityCalendarPreview availability={model.availability} />
+
         {showCallToAction ? (
           <div className={styles.trustSignalsFooter}>
-            <div className={styles.softCallout}>
+            <div
+              {...getInteractiveTargetProps(styles.softCallout, onSelectTarget, {
+                sectionId: "common",
+              })}
+            >
               <strong>{model.callToAction.label}</strong>
               <p>{model.callToAction.note}</p>
             </div>
@@ -85,6 +132,14 @@ TrustSignalsTemplate.propTypes = {
     location: PropTypes.shape({
       label: PropTypes.string,
     }).isRequired,
+    availability: PropTypes.shape({
+      externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
+      syncSummary: PropTypes.string,
+      blockedDateSummary: PropTypes.string,
+      lastSyncLabel: PropTypes.string,
+      nextBlockedLabel: PropTypes.string,
+      callout: PropTypes.string,
+    }).isRequired,
     callToAction: PropTypes.shape({
       label: PropTypes.string.isRequired,
       note: PropTypes.string.isRequired,
@@ -95,4 +150,5 @@ TrustSignalsTemplate.propTypes = {
       callToAction: PropTypes.bool,
     }).isRequired,
   }).isRequired,
+  onSelectTarget: PropTypes.func,
 };

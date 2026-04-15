@@ -25,13 +25,24 @@ What is in place:
   - CTA label
   - CTA note
 - Template-aware section visibility toggles for implemented templates.
-- Image-slot selection for hero/gallery slots used by implemented templates.
+- Image-slot selection for hero/gallery slots used by implemented templates, now driven through a visual image-picker overlay instead of dropdown-only controls.
+- Editor save feedback now uses toast notifications instead of inline status copy inside the form.
+- Image-slot picker now uses a compact thumbnail grid that can scale to larger imported photo sets without a large hero preview stage.
 - Scaled preview rendering with dedicated desktop/tablet/mobile viewport switching in the editor.
-- Compact scaled website preview cards inside `My websites`.
+- Compact scaled website preview cards inside `My websites`, with corrected thumbnail scaling, clipped preview height, and reduced card whitespace.
+- Editor sections are now collapsible so the left-side control surface remains usable as more override fields are added.
+- Clicking editable areas in the editor preview now opens or scrolls to the matching editor section, and clicking preview images opens the image picker directly.
+- Imported calendar availability now flows into website previews from `hostDashboard/single`, including:
+  - imported external blocked dates
+  - iCal sync presence
+  - sync-source count
+  - last sync timestamp when available
+- Implemented templates now render a read-only availability snapshot card using the shared website model.
 - Acceptance AWS wiring has been validated far enough for draft save/list behavior:
   - Aurora `main.standalone_site_draft`
   - API Gateway `/property/website/draft` and `/property/website/drafts`
   - CORS preflight on the new website routes
+- Draft save/read now explicitly bypasses cache and the editor performs a read-after-write refresh to avoid stale draft payloads after saving.
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -68,6 +79,15 @@ Current data path:
 - The detail payload is normalized into a canonical website content model before template rendering.
 
 This split prevents dropdown payload bloat and keeps template rendering decoupled from list-fetch logic.
+
+Calendar data path:
+- `hostDashboard/single` now returns `calendarAvailability` for the selected host-owned property.
+- The website model maps this into a shared availability object instead of letting each template interpret raw calendar payloads separately.
+- Current rendered availability is intentionally a read-only imported snapshot:
+  - external blocked dates
+  - iCal sync state
+  - sync metadata
+- Live quote requests remain the authoritative check before a guest can proceed.
 
 ## Template implementation status
 Templates available in chooser:
@@ -125,6 +145,13 @@ Current implementation details:
 - Saved drafts now open in a dedicated editor route instead of reusing Step 3 in the builder.
 - Saved draft cards now render a compact scaled version of the current website preview.
 - Implemented templates now honor draft visibility toggles for major sections.
+- Editor image slot reassignment now uses an overlay gallery with navigation and confirm-select behavior.
+- Editor image slot reassignment now uses a thumbnail-only overlay grid with direct-select behavior.
+- Editor field overflow issues were corrected by tightening field sizing/box-model behavior.
+- Shared preview scaling was corrected so compact preview cards no longer reserve large unscaled whitespace.
+- Editor save success/error feedback was moved into toast notifications to keep the editor surface cleaner.
+- Preview-to-editor linking now exists for implemented templates so the preview can drive navigation to text/image editing areas.
+- Host-side website detail payload now includes calendar availability and iCal sync metadata without introducing a new schema change.
 - Acceptance environment issues found during rollout were resolved:
   - missing unique index on `property_id` caused `ON CONFLICT` failure
   - missing `host_id` index had to be added separately for the intended draft-by-host access path

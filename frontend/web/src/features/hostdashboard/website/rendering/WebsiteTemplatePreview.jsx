@@ -14,6 +14,8 @@ const DEFAULT_SCALE_METRICS = Object.freeze({
   scale: 1,
   height: null,
 });
+const COMPACT_PREVIEW_WIDTH = 184;
+const COMPACT_PREVIEW_MAX_HEIGHT = 228;
 
 const resolveViewportWidth = (viewport) => PREVIEW_VIEWPORT_WIDTHS[viewport] || PREVIEW_VIEWPORT_WIDTHS.desktop;
 
@@ -87,48 +89,53 @@ UnsupportedTemplatePreview.propTypes = {
   templateName: PropTypes.string.isRequired,
 };
 
-export default function WebsiteTemplatePreview({ templateId, model, variant = "default", viewport = "desktop" }) {
+export default function WebsiteTemplatePreview({
+  templateId,
+  model,
+  variant = "default",
+  viewport = "desktop",
+  onSelectTarget,
+}) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
   const viewportWidth = resolveViewportWidth(viewport);
   const { scaleShellRef, scaleInnerRef, scaleMetrics } = usePreviewScaleMetrics(viewportWidth);
   const isCompactVariant = variant === "compact";
+  const compactScale = COMPACT_PREVIEW_WIDTH / viewportWidth;
+  const previewHeight = scaleMetrics.height
+    ? `${isCompactVariant ? Math.min(scaleMetrics.height, COMPACT_PREVIEW_MAX_HEIGHT) : scaleMetrics.height}px`
+    : undefined;
+  const scaleShellStyle = isCompactVariant
+    ? {
+        width: `${COMPACT_PREVIEW_WIDTH}px`,
+        height: `${COMPACT_PREVIEW_MAX_HEIGHT}px`,
+      }
+    : previewHeight
+      ? { height: previewHeight }
+      : undefined;
+  const scaleInnerStyle = isCompactVariant
+    ? {
+        width: `${viewportWidth}px`,
+        transform: `scale(${compactScale})`,
+      }
+    : {
+        width: `${viewportWidth}px`,
+        transform: `scale(${scaleMetrics.scale})`,
+      };
 
   return (
     <section
       className={`${styles.previewShell} ${isCompactVariant ? styles.previewShellCompact : ""}`.trim()}
     >
-      {!isCompactVariant ? (
-        <div className={styles.previewHeader}>
-          <div className={styles.previewHeaderCopy}>
-            <p className={styles.previewEyebrow}>Imported listing preview</p>
-            <h3>{model.site.templateReadyTitle}</h3>
-            <p>
-              Previewing the selected Domits listing inside the {template.name} layout. Saved draft
-              overrides are applied on top of the shared website content model before rendering.
-            </p>
-          </div>
-
-          <div className={styles.previewHeaderMeta}>
-            <span className={styles.previewMetaPill}>{template.name}</span>
-            <span className={styles.previewMetaPill}>{viewport}</span>
-            {model.location.label ? <span className={styles.previewMetaPill}>{model.location.label}</span> : null}
-          </div>
-        </div>
-      ) : null}
-
       <div
         ref={scaleShellRef}
         className={`${styles.previewScaleShell} ${isCompactVariant ? styles.previewScaleShellCompact : ""}`.trim()}
-        style={scaleMetrics.height ? { minHeight: `${scaleMetrics.height}px` } : undefined}
+        style={scaleShellStyle}
       >
         <div
           ref={scaleInnerRef}
           className={styles.previewScaleInner}
-          style={{
-            width: `${viewportWidth}px`,
-            transform: `scale(${scaleMetrics.scale})`,
-          }}
+          style={scaleInnerStyle}
         >
           <div className={`${styles.previewBrowser} ${isCompactVariant ? styles.previewBrowserCompact : ""}`.trim()}>
             <div className={styles.previewBrowserBar}>
@@ -142,7 +149,7 @@ export default function WebsiteTemplatePreview({ templateId, model, variant = "d
 
             <div className={styles.previewCanvas}>
               {TemplateComponent ? (
-                <TemplateComponent model={model} />
+                <TemplateComponent model={model} onSelectTarget={onSelectTarget} />
               ) : (
                 <UnsupportedTemplatePreview templateName={template.name} />
               )}
@@ -167,4 +174,5 @@ WebsiteTemplatePreview.propTypes = {
   }).isRequired,
   variant: PropTypes.oneOf(["default", "compact"]),
   viewport: PropTypes.oneOf(["desktop", "tablet", "mobile"]),
+  onSelectTarget: PropTypes.func,
 };
