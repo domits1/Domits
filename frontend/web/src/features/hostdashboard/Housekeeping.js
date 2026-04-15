@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Auth } from 'aws-amplify';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
-    LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck
+    LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck, LuPartyPopper
 } from 'react-icons/lu';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
@@ -1205,7 +1205,7 @@ const HostPropertyCare = () => {
                         </div>
                     </div>
                     <div className="my-task-list">
-                        {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! 🎉</p>}
+                        {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! <LuPartyPopper aria-hidden="true" /></p>}
                     </div>
                 </div>
 
@@ -1443,8 +1443,8 @@ const HostPropertyCare = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label htmlFor='task-booking-ref'>Booking Reference <span className="settings-coming-soon">Coming soon</span></label>
-                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} placeholder="Select booking." disabled />
+                                <label htmlFor='task-booking-ref'>Booking Reference</label>
+                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} placeholder="Coming soon" disabled />
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-type'>Type</label>
@@ -1591,8 +1591,8 @@ const HostPropertyCare = () => {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor='task-booking-ref'>Booking Reference <span className="settings-coming-soon">Coming soon</span></label>
-                                    <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} placeholder="Select booking." disabled />
+                                    <label htmlFor='task-booking-ref'>Booking Reference</label>
+                                    <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} placeholder="Coming soon" disabled />
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor='task-due-date'>Due Date</label>
@@ -1641,7 +1641,7 @@ const HostPropertyCare = () => {
                             <button className="btn-text" onClick={closeTaskDetails}>Cancel</button>
                             
                             {JSON.stringify(viewingTask) === JSON.stringify(editedTask) ? (
-                                <button className="btn-create-green" onClick={handleDeleteSingleTask}>Delete</button>
+                                <button className="btn-danger" onClick={handleDeleteSingleTask}>Delete</button>
                             ) : (
                                 <button className="btn-create-green" onClick={handleSaveChanges}>Save Changes</button>
                             )}
@@ -1660,7 +1660,7 @@ const HostPropertyCare = () => {
                         <p>{confirmDialog.message}</p>
                         <div className="confirm-modal-actions">
                             <button className="btn-text" onClick={closeConfirmDialog}>{confirmDialog.cancelText}</button>
-                            <button className="btn-create-green" onClick={confirmDialog.onConfirm}>{confirmDialog.confirmText}</button>
+                            <button className="btn-danger" onClick={confirmDialog.onConfirm}>{confirmDialog.confirmText}</button>
                         </div>
                     </div>
                 </div>
