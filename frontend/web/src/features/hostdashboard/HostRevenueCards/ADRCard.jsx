@@ -136,11 +136,10 @@ const ADRCard = ({ refreshKey }) => {
   const allZero = donutData.every((i) => i.value === 0);
   const displayData = allZero ? [{ name: "No Data", value: 1 }] : donutData;
 
-  const COLORS = ["#0d9813", "#82ca9d", "#ffc658"];
+  const COLORS = ["#0d9813", "#43b649", "#82ca9d"];
 
   return (
-    <div className="kpi-card adr-card">
-      <h3>Average Daily Rate</h3>
+      <div className={`kpi-card adr-card ${timeFilter === "custom" ? "custom-mode" : ""}`}>      <h3>Average Daily Rate</h3>
 
       <div className="time-filter">
         <label>Time Filter:</label>
@@ -194,7 +193,7 @@ const ADRCard = ({ refreshKey }) => {
 
         {!loading && !error && (
           <div className="adr-donut-chart">
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={displayData}
