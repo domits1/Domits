@@ -56,6 +56,18 @@ $nav-h: 64px;
     color: $brand;
   }
 
+  &.active {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .18);
+    color: #111827;
+  }
+
+  &.active .icon {
+    background: #e5e7eb;
+    color: #111827;
+  }
+
   &:focus-visible { outline: 2px solid rgba($brand, .25); outline-offset: 2px; }
   
   &:where(button) {
@@ -74,3 +86,14 @@ $nav-h: 64px;
   background: #f1f5ff;
 }
 
+.sidebar .menu-item.active {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .18);
+  color: #111827;
+}
+
+.sidebar .menu-item.active .icon {
+  background: #e5e7eb;
+  color: #111827;
+}

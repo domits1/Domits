@@ -1,13 +1,33 @@
 # Plan Of Approach - Standalone Website
 
 ## Status
-Working baseline
+Working baseline with active frontend implementation checkpoints
 
 ## Last Updated
-2026-03-20
+2026-04-10
+
+## Current Implementation Checkpoint
+The host-dashboard website builder now includes a real preview build pipeline for the first three templates.
+
+Implemented in frontend:
+- listing selection remains sourced from `hostDashboard/all`
+- selected-listing detail fetch for preview is sourced from `hostDashboard/single`
+- detail payload is mapped into one shared website template model before rendering
+- real preview rendering is available for Panorama Landing, Trust Signals, and Experience Journey
+- preview workflow orchestration is extracted to a dedicated script module for future migration to a dedicated preview route/tab
+- amenity icons are rendered from the shared amenity catalog by amenity ID in implemented templates
+- built preview drafts are persisted per host and property via dedicated website draft APIs
+- workspace now has a `My websites` tab with reopen-in-builder support
+
+Not yet implemented:
+- draft detail editing flow for section/content overrides
+- publish-state lifecycle and domain linking workflow on top of draft records
 
 ## Purpose
 This document captures the current plan of approach for the standalone website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.
+
+For chronological implementation history, see:
+- `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
 
 ## Core Question
 How can Domits design a template-based, one-click standalone booking website that is scalable, secure, and cost-efficient to host, while integrating correctly with availability and bookings from the Property Management System?

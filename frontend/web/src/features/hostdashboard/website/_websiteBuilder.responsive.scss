@@ -70,6 +70,33 @@
     align-items: stretch;
   }
 
+  .workspaceTabs {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .workspaceTabButton {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .websiteDraftCardHeader,
+  .websiteDraftMetaRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .previewBuildCard {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .previewStageActions {
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+  }
+
 }
 
 @media (max-width: 639px) {
@@ -81,9 +108,9 @@
   .templateCard {
     width: 100%;
     min-width: 0;
-    min-height: 366px;
+    min-height: 360px;
     gap: 10px;
-    padding: 12px 12px 12px;
+    padding: 12px 12px 10px;
     border-radius: 20px;
   }
 
@@ -120,9 +147,9 @@
   }
 
   .templateCard {
-    min-height: 344px;
+    min-height: 338px;
     gap: 8px;
-    padding: 10px 10px 10px;
+    padding: 10px 10px 8px;
     border-radius: 18px;
   }
 
