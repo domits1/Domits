@@ -35,37 +35,12 @@ export default class IngestionService {
     this.messageRepo = new MessageRepository();
   }
 
-  /**
-   * Ingest external messages into unified tables.
-   *
-   * Expected payload:
-   * {
-   *  integrationAccountId: string,
-   *  platform: string, // e.g. "BOOKING_COM"
-   *  externalThreadId: string,
-   *  hostId: string,
-   *  guestId: string,
-   *  propertyId?: string|null,
-   *  messages: [{
-   *    platformMessageId?: string|null,
-   *    senderId: string,
-   *    recipientId: string,
-   *    content: string,
-   *    externalCreatedAt?: number|string|null,
-   *    direction?: "INBOUND"|"OUTBOUND"|"SYSTEM",
-   *    externalSenderType?: string|null,
-   *    metadata?: any,
-   *    attachments?: any,
-   *  }]
-   * }
-   */
   async ingestExternalThread(payload) {
     const validationError = validateIngestionPayload(payload);
     if (validationError) {
       return badRequest(validationError);
     }
 
-    // 1) upsert thread by (platform + integrationAccountId + externalThreadId)
     const thread = await this.threadRepo.upsertExternalThread({
       integrationAccountId: payload.integrationAccountId,
       platform: payload.platform,
@@ -76,7 +51,6 @@ export default class IngestionService {
       status: payload?.status ?? "OPEN",
     });
 
-    // 2) insert messages with dedupe (platformMessageId preferred)
     const incoming = Array.isArray(payload?.messages) ? payload.messages : [];
     let inserted = 0;
     let lastSuccessfulItemAt = null;
@@ -94,7 +68,7 @@ export default class IngestionService {
         recipientId: m.recipientId,
         content: m.content ?? "",
         platformMessageId,
-        createdAt: nowMs(), // internal created time
+        createdAt: nowMs(),
         isRead: false,
         deliveryStatus: resolveDeliveryStatus(direction),
         direction,
@@ -114,7 +88,6 @@ export default class IngestionService {
         }
       }
 
-      // update thread activity timestamps
       await this.threadRepo.updateThreadActivity({
         threadId: thread.id,
         direction,

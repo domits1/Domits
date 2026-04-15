@@ -13,7 +13,6 @@ export default async function publishRealtimeMessage(message) {
   const recipientId = message.recipientId || null;
 
   if (!senderId || !recipientId) {
-    console.log("publishRealtimeMessage skipped: missing senderId or recipientId");
     return;
   }
 
@@ -59,15 +58,6 @@ export default async function publishRealtimeMessage(message) {
     } catch {
       parsedPayload = null;
     }
-
-    console.log("publishRealtimeMessage websocket lambda response", {
-      functionName: FUNCTION_NAME,
-      senderId,
-      recipientId,
-      threadId: websocketBody.threadId,
-      platform: websocketBody.platform,
-      response: parsedPayload,
-    });
   } catch (error) {
     console.error("publishRealtimeMessage failed", error);
     throw error;

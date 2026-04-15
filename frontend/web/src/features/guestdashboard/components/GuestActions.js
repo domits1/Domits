@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
+import PropTypes from "prop-types";
 import { FiEdit2, FiTrash2, FiChevronDown } from "react-icons/fi";
 import "../../guestdashboard/styles/GuestActions.scss";
+import Toast from "../../../components/toast/Toast";
 import { getAccessToken } from "../utils/authUtils";
 import {
   fetchWishlists,
@@ -10,13 +13,49 @@ import {
   deleteWishlist,
 } from "../services/wishlistService";
 
+const fetchListWithCount = async (name) => {
+  try {
+    const countData = await fetchWishlistItemCount(name);
+    const realItems = (countData.items || []).filter((item) => item.propertyId);
+    return { id: name, name, count: realItems.length };
+  } catch {
+    return { id: name, name, count: 0 };
+  }
+};
+
+const sortWishlistLists = (lists, defaultName = "My next trip") => {
+  const safeLists = Array.isArray(lists) ? [...lists] : [];
+
+  return safeLists.sort((left, right) => {
+    const leftIsDefault = left?.name === defaultName;
+    const rightIsDefault = right?.name === defaultName;
+
+    if (leftIsDefault && !rightIsDefault) return -1;
+    if (!leftIsDefault && rightIsDefault) return 1;
+
+    return String(left?.name || "").localeCompare(String(right?.name || ""), undefined, {
+      sensitivity: "base",
+    });
+  });
+};
+
+const resolveFallbackListName = (lists, preferredName = "My next trip") => {
+  const safeLists = Array.isArray(lists) ? lists : [];
+  if (safeLists.some((list) => list.name === preferredName)) {
+    return preferredName;
+  }
+  return safeLists[0]?.name || preferredName;
+};
+
 const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   const [lists, setLists] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [editValue, setEditValue] = useState("");
   const [activePopup, setActivePopup] = useState(null);
   const [newListName, setNewListName] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [toast, setToast] = useState({ message: "", status: "" });
 
   const wrapperRef = useRef(null);
 
@@ -29,28 +68,15 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         const data = await fetchWishlists();
         const wishlists = data?.wishlists || {};
 
-        const structured = await Promise.all(
-          Object.keys(wishlists).map(async (name) => {
-            try {
-              const countData = await fetchWishlistItemCount(name);
-              const realItems = (countData.items || []).filter(
-                (item) => item.propertyId
-              );
-              return { id: name, name, count: realItems.length };
-            } catch (err) {
-              console.error(`Error fetching count for '${name}':`, err);
-              return { id: name, name, count: 0 };
-            }
-          })
-        );
+        const structured = sortWishlistLists(await Promise.all(Object.keys(wishlists).map(fetchListWithCount)));
 
         setLists(structured);
 
-        if (!structured.find((l) => l.name === selectedList)) {
-          onListChange("My next trip");
+        if (!structured.some((l) => l.name === selectedList)) {
+          onListChange(resolveFallbackListName(structured));
         }
-      } catch (err) {
-        console.error("Error loading wishlists:", err.message);
+      } catch {
+        setToast({ message: "Failed to load wishlists. Please try again.", status: "error" });
       }
     };
 
@@ -65,13 +91,13 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       await createWishlist(newListName);
 
       const newList = { id: newListName, name: newListName, count: 0 };
-      setLists([...lists, newList]);
+      setLists(sortWishlistLists([...lists, newList]));
       onListChange(newListName);
       if (onCreate) onCreate(newListName);
       setNewListName("");
       setActivePopup(null);
-    } catch (err) {
-      console.error("Error creating wishlist:", err.message);
+    } catch {
+      setToast({ message: "Failed to create wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -87,37 +113,39 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
     try {
       await renameWishlist(oldName, newName);
 
-      const updated = lists.map((list) =>
+      const updated = sortWishlistLists(lists.map((list) =>
         list.name === oldName
           ? { ...list, name: newName, id: newName }
           : list
-      );
+      ));
       setLists(updated);
       if (selectedList === oldName) onListChange(newName);
       setEditingId(null);
-    } catch (err) {
-      console.error("Error renaming wishlist:", err.message);
+    } catch {
+      setToast({ message: "Failed to rename wishlist. Please try again.", status: "error" });
     }
   };
 
   const handleDelete = async (name) => {
+    if (name === "My next trip") return;
+
     const token = getAccessToken();
     if (!token) return;
-    if (!window.confirm(`Delete wishlist "${name}"?`)) return;
+    if (!globalThis.confirm(`Delete wishlist "${name}"?`)) return;
 
     try {
       await deleteWishlist(name);
 
-      const remaining = lists.filter((list) => list.name !== name);
+      const remaining = sortWishlistLists(lists.filter((list) => list.name !== name));
       setLists(remaining);
-      if (selectedList === name) onListChange("My next trip");
-    } catch (err) {
-      console.error("Error deleting wishlist:", err.message);
+      if (selectedList === name) onListChange(resolveFallbackListName(remaining));
+    } catch {
+      setToast({ message: "Failed to delete wishlist. Please try again.", status: "error" });
     }
   };
 
   const handleShare = () => {
-    const baseUrl = window.location.origin + "/guestdashboard";
+    const baseUrl = globalThis.location.origin + "/guestdashboard";
     const shareLink = `${baseUrl}?wl=${encodeURIComponent(selectedList)}`;
     setShareUrl(shareLink);
     setActivePopup("share");
@@ -128,8 +156,8 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       await navigator.clipboard.writeText(shareUrl);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error("Copy failed:", err);
+    } catch {
+      setToast({ message: "Failed to copy link. Please try again.", status: "error" });
     }
   };
 
@@ -145,11 +173,21 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   }, []);
 
   return (
+    <>
+    {ReactDOM.createPortal(
+      <Toast
+        message={toast.message}
+        status={toast.status || "error"}
+        onClose={() => setToast({ message: "", status: "" })}
+      />,
+      document.body,
+    )}
     <div className="guestActions" ref={wrapperRef}>
-      <label className="label">Select list:</label>
+      <label className="label" htmlFor="dropdown-toggle">Select list:</label>
 
       <div className="dropdownWrapper">
         <button
+          id="dropdown-toggle"
           className="dropdownToggle"
           onClick={() =>
             setActivePopup(activePopup === "dropdown" ? null : "dropdown")
@@ -164,40 +202,48 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
               {lists.map((list) => (
                 <li key={list.id}>
                   {editingId === list.id ? (
-                    <input
-                      type="text"
-                      defaultValue={list.name}
-                      autoFocus
-                      onBlur={(e) =>
-                        handleRename(list.name, e.target.value)
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleRename(list.name, e.target.value);
-                        }
-                      }}
-                    />
+                    <>
+                      <input
+                        type="text"
+                        value={editValue}
+                        autoFocus
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleRename(list.name, editValue);
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
+                      />
+                      <div className="editActions">
+                        <button className="editSaveBtn" onClick={() => handleRename(list.name, editValue)}>
+                          Save
+                        </button>
+                        <button className="editCancelBtn" onClick={() => setEditingId(null)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </>
                   ) : (
                     <>
-                      <span
+                      <button
+                        className="listNameBtn"
                         onClick={() => {
                           onListChange(list.name);
                           setActivePopup(null);
                         }}
                       >
                         {list.name}
-                      </span>
+                      </button>
                       <div className="rightSide">
                         <span className="badge">{list.count}</span>
                         {list.name !== "My next trip" && (
-                          <>
-                            <button onClick={() => setEditingId(list.id)}>
-                              <FiEdit2 />
-                            </button>
-                            <button onClick={() => handleDelete(list.name)}>
-                              <FiTrash2 />
-                            </button>
-                          </>
+                          <button onClick={() => { setEditingId(list.id); setEditValue(list.name); }}>
+                            <FiEdit2 />
+                          </button>
+                        )}
+                        {list.name !== "My next trip" && (
+                          <button onClick={() => handleDelete(list.name)}>
+                            <FiTrash2 />
+                          </button>
                         )}
                       </div>
                     </>
@@ -249,7 +295,14 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         </div>
       )}
     </div>
+    </>
   );
+};
+
+GuestActions.propTypes = {
+  selectedList: PropTypes.string.isRequired,
+  onListChange: PropTypes.func.isRequired,
+  onCreate: PropTypes.func,
 };
 
 export default GuestActions;

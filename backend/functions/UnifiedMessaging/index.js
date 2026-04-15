@@ -128,21 +128,11 @@ const findRouteHandler = (httpMethod, path) =>
 export const handler = async (event) => {
   const { httpMethod, path } = event;
 
-  console.log(
-    "Event received:",
-    JSON.stringify({
-      httpMethod,
-      path,
-      queryStringParameters: event.queryStringParameters,
-    })
-  );
-
   try {
     const route = `${httpMethod}:${path}`;
     const routeHandler = findRouteHandler(httpMethod, path);
 
     if (!routeHandler) {
-      console.log("No matching route for:", route);
       return {
         statusCode: notFound.statusCode,
         headers: {
