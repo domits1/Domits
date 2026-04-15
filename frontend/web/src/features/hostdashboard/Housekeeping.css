@@ -1790,6 +1790,24 @@
 }
 
 @media (max-width: 768px) {
+    .tabs-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 20px;
+        padding-bottom: 2px;
+        flex-wrap: nowrap;
+    }
+
+    .tabs-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab-btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
     .overview-stats-row {
         grid-template-columns: repeat(2, 1fr);
     }
