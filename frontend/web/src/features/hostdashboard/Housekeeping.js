@@ -809,7 +809,7 @@ const HostPropertyCare = () => {
                     <div className="settings-card settings-team-card">
                         <div className="settings-card-header">
                             <h3 className="settings-card-title">Team Members</h3>
-                            <button className="btn-primary-green">+ Invite Member</button>
+                            <button className="btn-primary-green" disabled>+ Invite Member</button>
                         </div>
                         <table className="settings-team-table">
                             <thead>
