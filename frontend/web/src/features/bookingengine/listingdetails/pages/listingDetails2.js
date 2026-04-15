@@ -116,23 +116,56 @@ const normalizeCalendarAvailability = (calendarAvailability) => {
   };
 };
 
+const normalizeRulesArray = (value) =>
+  toArray(value).filter((rule) => rule && typeof rule === "object" && rule.rule);
+
+const normalizePolicyRulesObject = (value) => {
+  const safeValue = toPlainObject(value);
+  return Object.entries(safeValue).reduce((acc, [key, ruleValue]) => {
+    if (key) {
+      acc[key] = ruleValue;
+    }
+    return acc;
+  }, {});
+};
+
 const normalizeListingProperty = (payload) => {
   const property = toPlainObject(payload);
-
-  const rawPolicyRules = property.policyRules || property.property?.policyRules || {};
-  const rawCancellationPolicy = property.cancellationPolicy || property.property?.cancellationPolicy || "";
-
-  const rulesArray = Object.entries(rawPolicyRules).map(([key, value]) => ({
-    rule: key,
-    value: Boolean(value),
-  }));
+  const nestedProperty = toPlainObject(property.property);
+  const rawRulesArray = normalizeRulesArray(property.rules || nestedProperty.rules);
+  const rawPolicyRules = normalizePolicyRulesObject(property.policyRules || nestedProperty.policyRules);
+  const derivedPolicyRules =
+    rawRulesArray.length > 0
+      ? rawRulesArray.reduce((acc, rule) => {
+          acc[rule.rule] = rule.value;
+          return acc;
+        }, {})
+      : rawPolicyRules;
+  const rawCancellationPolicy = property.cancellationPolicy || nestedProperty.cancellationPolicy || "";
+  const normalizedCancellationPolicy =
+    rawCancellationPolicy && typeof rawCancellationPolicy === "object"
+      ? {
+          policy_type: rawCancellationPolicy.policy_type || rawCancellationPolicy.type || "",
+          policyType: rawCancellationPolicy.policyType || rawCancellationPolicy.policy_type || rawCancellationPolicy.type || "",
+          type: rawCancellationPolicy.type || rawCancellationPolicy.policy_type || rawCancellationPolicy.policyType || "",
+          id: rawCancellationPolicy.id || "",
+          name: rawCancellationPolicy.name || "",
+          description: rawCancellationPolicy.description || rawCancellationPolicy.summary || rawCancellationPolicy.label || "",
+        }
+      : rawCancellationPolicy;
 
   return {
     ...property,
-    policyRules: rawPolicyRules,
-    cancellationPolicy: rawCancellationPolicy,
-    rules: rulesArray,
-    property: toPlainObject(property.property),
+    policyRules: derivedPolicyRules,
+    cancellationPolicy: normalizedCancellationPolicy,
+    rules:
+      rawRulesArray.length > 0
+        ? rawRulesArray
+        : Object.entries(derivedPolicyRules).map(([key, value]) => ({
+            rule: key,
+            value,
+          })),
+    property: nestedProperty,
     images: toArray(property.images),
     pricing: toPlainObject(property.pricing),
     generalDetails: toArray(property.generalDetails),

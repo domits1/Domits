@@ -8,13 +8,16 @@ import AmenitiesContainer from "./amenitiesContainer";
 import Description from "../components/description";
 import RangeCalendar from "./RangeCalendar";
 import {
+  getActiveCancellationPolicyId,
   parseHouseRules,
   parsePropertyRules,
   parseSafetyFeatures,
   parseCheckInOut,
+  parseCancellationPolicy,
   parseCancellationPolicyString,
   PolicySection,
 } from "../../../../utils/policyDisplayUtils";
+import "../../components/ListingPolicySections.css";
 
 const PropertyContainer = ({
   property = {
@@ -33,35 +36,63 @@ const PropertyContainer = ({
   setCheckInDate,
   setCheckOutDate,
 }) => {
+  const policyRules = React.useMemo(
+    () =>
+      (property?.rules || []).reduce((acc, rule) => {
+        if (rule?.rule) {
+          acc[rule.rule] = rule.value;
+        }
+        return acc;
+      }, {}),
+    [property?.rules]
+  );
+
   const parsedHouseRules = React.useMemo(
-    () => parseHouseRules([], property?.policyRules || {}),
-    [property?.policyRules]
+    () => parseHouseRules(policyRules, property?.policyRules || {}),
+    [policyRules, property?.policyRules]
   );
   const parsedPropertyRules = React.useMemo(
-    () => parsePropertyRules([], property?.policyRules || {}),
-    [property?.policyRules]
+    () => parsePropertyRules(policyRules, property?.policyRules || {}),
+    [policyRules, property?.policyRules]
   );
   const parsedSafetyFeatures = React.useMemo(
-    () => parseSafetyFeatures([], property?.policyRules || {}),
-    [property?.policyRules]
+    () => parseSafetyFeatures(policyRules, property?.policyRules || {}),
+    [policyRules, property?.policyRules]
   );
-  const checkInOut = React.useMemo(() => parseCheckInOut(property?.checkIn || {}), [property?.checkIn]);
+  const checkInOut = React.useMemo(
+    () => parseCheckInOut(property?.checkIn || {}, policyRules),
+    [property?.checkIn, policyRules]
+  );
+  const activeCancellationPolicyId = React.useMemo(
+    () => getActiveCancellationPolicyId(property?.rules || []) || getActiveCancellationPolicyId(policyRules),
+    [property?.rules, policyRules]
+  );
   const cancellationPolicy = React.useMemo(
-    () => parseCancellationPolicyString(property?.cancellationPolicy || ""),
-    [property?.cancellationPolicy]
+    () =>
+      activeCancellationPolicyId
+        ? parseCancellationPolicyString(activeCancellationPolicyId)
+        : property?.cancellationPolicy
+          ? parseCancellationPolicyString(property.cancellationPolicy)
+          : parseCancellationPolicy(property?.rules || []),
+    [activeCancellationPolicyId, property?.cancellationPolicy, property?.rules]
   );
 
   const checkInItems = [];
   if (checkInOut?.checkInFrom) {
     checkInItems.push(
       `Check-in: ${checkInOut.checkInFrom}` +
-        (checkInOut.lateCheckIn ? ` - ${checkInOut.checkInTill} (Late check-in possible)` : "")
+        (checkInOut.checkInTill && checkInOut.checkInTill !== checkInOut.checkInFrom
+          ? ` - ${checkInOut.checkInTill}`
+          : "") +
+        (checkInOut.lateCheckinEnabled ? " (Late check-in possible)" : "")
     );
   }
   if (checkInOut?.checkOutFrom) {
     checkInItems.push(
       `Check-out: ${checkInOut.checkOutFrom}` +
-        (checkInOut.lateCheckOut ? ` - ${checkInOut.checkOutTill} (Late check-out possible)` : "")
+        (checkInOut.checkOutTill && checkInOut.checkOutTill !== checkInOut.checkOutFrom
+          ? ` - ${checkInOut.checkOutTill}`
+          : "")
     );
   }
 
@@ -73,7 +104,7 @@ const PropertyContainer = ({
         <GeneralDetails generalDetails={property.generalDetails} />
       </section>
       <section id="listing-about" className="listing-section-block">
-        <Description description={property.property.description} />
+        <Description description={property?.property?.description} />
       </section>
       <section id="listing-amenities" className="listing-section-block">
         <AmenitiesContainer amenityIds={property.amenities} />
@@ -93,7 +124,18 @@ const PropertyContainer = ({
         {cancellationPolicy && (
           <PolicySection
             title="Cancellation Policy"
-            items={[cancellationPolicy.summary, ...cancellationPolicy.details]}
+            items={[
+              {
+                summary: cancellationPolicy.summary,
+                badge: cancellationPolicy.type
+                  ? {
+                      label: cancellationPolicy.type,
+                      color: cancellationPolicy.color,
+                    }
+                  : null,
+              },
+              ...(cancellationPolicy.details || []),
+            ]}
             expandable={true}
           />
         )}
@@ -124,7 +166,7 @@ PropertyContainer.propTypes = {
     }),
     rules: PropTypes.array,
     policyRules: PropTypes.object,
-    cancellationPolicy: PropTypes.string,
+    cancellationPolicy: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     checkIn: PropTypes.shape({
       checkIn: PropTypes.shape({
         from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
