@@ -67,14 +67,16 @@ const PropertyContainer = ({
     () => getActiveCancellationPolicyId(property?.rules || []) || getActiveCancellationPolicyId(policyRules),
     [property?.rules, policyRules]
   );
+  const fallbackCancellationPolicy = React.useMemo(() => {
+    if (property?.cancellationPolicy) {
+      return parseCancellationPolicyString(property.cancellationPolicy);
+    }
+
+    return parseCancellationPolicy(property?.rules || []);
+  }, [property?.cancellationPolicy, property?.rules]);
   const cancellationPolicy = React.useMemo(
-    () =>
-      activeCancellationPolicyId
-        ? parseCancellationPolicyString(activeCancellationPolicyId)
-        : property?.cancellationPolicy
-          ? parseCancellationPolicyString(property.cancellationPolicy)
-          : parseCancellationPolicy(property?.rules || []),
-    [activeCancellationPolicyId, property?.cancellationPolicy, property?.rules]
+    () => (activeCancellationPolicyId ? parseCancellationPolicyString(activeCancellationPolicyId) : fallbackCancellationPolicy),
+    [activeCancellationPolicyId, fallbackCancellationPolicy]
   );
 
   const checkInItems = [];

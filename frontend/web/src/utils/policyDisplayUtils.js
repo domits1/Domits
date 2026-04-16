@@ -64,8 +64,8 @@ const toNormalizedPolicyId = (value = "") =>
   String(value || "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/-/g, "_");
+    .replaceAll(/\s+/g, "_")
+    .replaceAll("-", "_");
 
 const getCancellationPolicyColor = (policyId = "") => {
   const normalizedId = toNormalizedPolicyId(policyId);
@@ -257,97 +257,125 @@ export const parseCheckInOut = (checkInData = {}, rulesOrObject = []) => {
 };
 
 const getItemLabel = (item) => {
-  if (typeof item === "string") {
-    return item;
+  if (typeof item !== "string") {
+    const label = item?.label || "";
+    if (typeof item?.value === "boolean") {
+      return item.value ? label : `No ${label.charAt(0).toLowerCase()}${label.slice(1)}`;
+    }
+
+    if (typeof item?.value === "string" && item.value.trim()) {
+      return `${label}: ${item.value}`;
+    }
+
+    return label;
   }
 
-  const label = item?.label || "";
-  if (typeof item?.value === "boolean") {
-    return item.value ? label : `No ${label.charAt(0).toLowerCase()}${label.slice(1)}`;
-  }
-
-  if (typeof item?.value === "string" && item.value.trim()) {
-    return `${label}: ${item.value}`;
-  }
-
-  return label;
+  return item;
 };
 
 const getItemIcon = (item) => {
-  if (typeof item === "string") {
-    return null;
-  }
+  if (typeof item !== "string") {
+    if (typeof item?.value === "boolean") {
+      return item.value ? (
+        <span className="listing-policy-icon listing-policy-icon--positive" aria-hidden="true">
+          ✓
+        </span>
+      ) : (
+        <span className="listing-policy-icon listing-policy-icon--negative" aria-hidden="true">
+          ✗
+        </span>
+      );
+    }
 
-  if (typeof item?.value === "boolean") {
-    return item.value ? (
-      <span className="listing-policy-icon listing-policy-icon--positive" aria-hidden="true">
-        ✓
-      </span>
-    ) : (
-      <span className="listing-policy-icon listing-policy-icon--negative" aria-hidden="true">
-        ✗
+    return (
+      <span className="listing-policy-icon listing-policy-icon--neutral" aria-hidden="true">
+        •
       </span>
     );
   }
 
+  return null;
+};
+
+const getPolicyMetadata = (items = [], expandable = false) => {
+  if (!expandable || typeof items[0] !== "object") {
+    return null;
+  }
+
+  return items[0];
+};
+
+const getPolicyListItems = (items = [], expandable = false) => (expandable ? items.slice(1) : items);
+
+const getVisiblePolicyItems = (listItems = [], expandable = false, expanded = false) => {
+  if (!expandable || expanded) {
+    return listItems;
+  }
+
+  return listItems.slice(0, 3);
+};
+
+const renderPolicyList = (title, items = []) => (
+  <ul className="listing-policy-section-list">
+    {items.map((item, index) => (
+      <li key={`${title}-${index}`} className="listing-policy-section-list-item">
+        {getItemIcon(item)}
+        <span>{getItemLabel(item)}</span>
+      </li>
+    ))}
+  </ul>
+);
+
+const renderPolicyBadge = (badge) => {
+  if (!badge) {
+    return null;
+  }
+
   return (
-    <span className="listing-policy-icon listing-policy-icon--neutral" aria-hidden="true">
-      •
+    <span className="listing-policy-badge" style={{ backgroundColor: badge.color || "#6b7280" }}>
+      {badge.label}
     </span>
   );
 };
+
+const renderExpandableSection = (title, visibleItems, shouldShowToggle, expanded, setExpanded) => (
+  <>
+    {shouldShowToggle ? (
+      <button
+        type="button"
+        onClick={() => setExpanded((current) => !current)}
+        className="listing-policy-details-button">
+        {expanded ? "Show less" : "Show more"}
+      </button>
+    ) : null}
+    {renderPolicyList(title, visibleItems)}
+  </>
+);
 
 export const PolicySection = ({ title, items = [], expandable = false, className = "" }) => {
   const [expanded, setExpanded] = useState(false);
   if (!items.length) return null;
 
-  const metadata = expandable && typeof items[0] === "object" ? items[0] : null;
-  const listItems = expandable ? items.slice(1) : items;
-  const visibleItems = expandable ? (expanded ? listItems : listItems.slice(0, 3)) : listItems;
+  const metadata = getPolicyMetadata(items, expandable);
+  const listItems = getPolicyListItems(items, expandable);
+  const visibleItems = getVisiblePolicyItems(listItems, expandable, expanded);
   const shouldShowToggle = expandable && listItems.length > 3;
+  let sectionContent = renderPolicyList(title, listItems);
+
+  if (expandable) {
+    sectionContent = renderExpandableSection(title, visibleItems, shouldShowToggle, expanded, setExpanded);
+  }
 
   return (
     <section className={`policy-section listing-policy-section ${className}`}>
       <div className="listing-policy-section-header">
         <h4 className="listing-policy-section-title">{title}</h4>
-        {metadata?.badge ? (
-          <span className="listing-policy-badge" style={{ backgroundColor: metadata.badge.color || "#6b7280" }}>
-            {metadata.badge.label}
-          </span>
-        ) : null}
+        {renderPolicyBadge(metadata?.badge)}
       </div>
 
       {metadata?.summary ? <p className="listing-policy-summary">{metadata.summary}</p> : null}
 
-      {expandable ? (
-        <>
-          {shouldShowToggle ? (
-            <button
-              type="button"
-              onClick={() => setExpanded((current) => !current)}
-              className="listing-policy-details-button">
-              {expanded ? "Show less" : "Show more"}
-            </button>
-          ) : null}
-          <ul className="listing-policy-section-list">
-            {visibleItems.map((item, index) => (
-              <li key={`${title}-${index}`} className="listing-policy-section-list-item">
-                {getItemIcon(item)}
-                <span>{getItemLabel(item)}</span>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : (
-        <ul className="listing-policy-section-list">
-          {listItems.map((item, index) => (
-            <li key={`${title}-${index}`} className="listing-policy-section-list-item">
-              {getItemIcon(item)}
-              <span>{getItemLabel(item)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {sectionContent}
     </section>
   );
 };
