@@ -205,18 +205,20 @@ const toPolicyRuleObject = (rulesOrObject = []) => {
 const parseGenericRules = (rulesOrObject = [], property = {}, keyMap = {}) => {
   const parsed = [];
   const normalizedRules = toPolicyRuleObject(rulesOrObject);
+  const getFirstDefinedValue = (source = {}, aliases = []) =>
+    aliases.reduce((foundValue, alias) => {
+      if (foundValue === undefined) {
+        return source?.[alias];
+      }
+
+      return foundValue;
+    }, undefined);
 
   Object.values(keyMap).forEach((config) => {
     const aliases = Array.isArray(config?.aliases) && config.aliases.length > 0 ? config.aliases : [];
     const label = config?.label || "";
-    const valueFromRules = aliases.reduce(
-      (foundValue, alias) => (foundValue !== undefined ? foundValue : normalizedRules?.[alias]),
-      undefined
-    );
-    const valueFromProperty = aliases.reduce(
-      (foundValue, alias) => (foundValue !== undefined ? foundValue : property?.[alias]),
-      undefined
-    );
+    const valueFromRules = getFirstDefinedValue(normalizedRules, aliases);
+    const valueFromProperty = getFirstDefinedValue(property, aliases);
     const value = valueFromRules ?? valueFromProperty;
 
     if (value === null || value === undefined) {
