@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Auth } from 'aws-amplify';
+import {
+    LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
+    LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck, LuPartyPopper
+} from 'react-icons/lu';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
+import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
@@ -28,8 +34,6 @@ const DEFAULT_NEW_TASK = {
     priority: 'Medium',
     attachments: null,
 };
-
-const CURRENT_USER = 'Sophie Janssen';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
@@ -151,10 +155,106 @@ const HostPropertyCare = () => {
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
 
-    const CURRENT_USER = 'Sophie Janssen';
+    const [currentUser, setCurrentUser] = useState({ name: '', email: '' });
+    const [openDropdown, setOpenDropdown] = useState(null); 
+
+    useEffect(() => {
+        Auth.currentAuthenticatedUser()
+            .then(u => {
+                const attrs = u.attributes || {};
+                setCurrentUser({
+                    name: attrs.given_name || attrs.name || u.username || '',
+                    email: attrs.email || '',
+                });
+            })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        if (!openDropdown) return;
+        const handler = () => setOpenDropdown(null);
+        document.addEventListener('click', handler);
+        return () => document.removeEventListener('click', handler);
+    }, [openDropdown]);
+
+    useEffect(() => {
+        if (!isModalOpen) return;
+        const handler = (e) => { if (e.key === 'Escape') handleCancelModal(); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [isModalOpen]);
+
+    const STATUS_OPTIONS = [
+        { value: 'Pending',     label: '● Pending',     cls: 'status-pending' },
+        { value: 'In progress', label: '● In progress', cls: 'status-in-progress' },
+        { value: 'Completed',   label: '● Completed',   cls: 'status-completed' },
+        { value: 'Overdue',     label: '● Overdue',     cls: 'status-overdue' },
+        { value: 'Cancelled',   label: '● Cancelled',   cls: 'status-cancelled' },
+    ];
+    const PRIORITY_OPTIONS = [
+        { value: 'Low',    label: 'Low',    cls: 'priority-low' },
+        { value: 'Medium', label: 'Medium', cls: 'priority-medium' },
+        { value: 'High',   label: 'High',   cls: 'priority-high' },
+        { value: 'Urgent', label: 'Urgent', cls: 'priority-urgent' },
+    ];
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
+
+    const DEFAULT_SETTINGS = {
+        notifEmailAssigned: true,
+        notifEmailOverdue: true,
+        notifEmailCompleted: true,
+        notifSmsUrgent: false,
+        notifInappEnabled: true,
+        defaultPriority: 'Medium',
+        defaultAssignee: 'Anyone',
+        autoAssignCleaning: false,
+        requirePhotoProof: false,
+    };
+    const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS });
+    const [settingsDraft, setSettingsDraft] = useState({ ...DEFAULT_SETTINGS });
+    const [settingsSaved, setSettingsSaved] = useState(false);
+
+    const settingsChanged = JSON.stringify(settings) !== JSON.stringify(settingsDraft);
+
+    const handleSettingChange = (key, value) => {
+        setSettingsDraft(prev => ({ ...prev, [key]: value }));
+    };
+
+    useEffect(() => {
+        fetchSettings()
+            .then(data => {
+                setSettings(data);
+                setSettingsDraft(data);
+            })
+            .catch(() => {});
+    }, []);
+
+    const handleSaveSettings = async () => {
+        try {
+            await saveSettings(settingsDraft);
+            setSettings({ ...settingsDraft });
+            setSettingsSaved(true);
+            setTimeout(() => setSettingsSaved(false), 3000);
+        } catch {
+            setSettingsSaved(false);
+        }
+    };
+
+    const handleCancelSettings = () => {
+        setSettingsDraft({ ...settings });
+    };
+
+    const TEAM_MEMBERS = currentUser.name
+        ? [{ name: currentUser.name, role: 'Host', email: currentUser.email, properties: 'All', status: 'Active' }]
+        : [];
+
+    const INTEGRATIONS = [
+        { name: 'Airbnb', logo: '🏠', connected: false },
+        { name: 'Booking.com', logo: '🔵', connected: false },
+        { name: 'Vrbo', logo: '🏡', connected: false },
+    ];
 
     const reportData = useMemo(() => {
         const filtered = tasks.filter((task) => matchesTaskFilters(task, filters, {
@@ -258,7 +358,7 @@ const HostPropertyCare = () => {
             completed_date: newStatus === 'Completed' ? Date.now() : null,
             activities: [
                 ...(task.activities || []),
-                { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
+                { id: Date.now(), user: currentUser.name, action: `marked task ${newStatus}`, timestamp: now }
             ]
         };
 
@@ -527,7 +627,7 @@ const HostPropertyCare = () => {
             includeAssignee: true,
             includeDate: true,
             excludeLegacy: true,
-            excludeCompleted: true,
+            excludeCompleted: activeTab === 'Overview',
             searchFields: ['title', 'property', 'assignee'],
         }));
     };
@@ -589,6 +689,15 @@ const HostPropertyCare = () => {
     }, [editedTask?.property, propertyOptions, newTask.property, tasks]);
 
     const createPropertyOptions = useMemo(() => propertyOptions, [propertyOptions]);
+
+    const propertyLabelMap = useMemo(() => {
+        const map = {};
+        propertyOptions.forEach(o => { map[o.id] = o.label; });
+        return map;
+    }, [propertyOptions]);
+
+    const getPropertyLabel = (task) =>
+        (task.property_id && propertyLabelMap[task.property_id]) || task.property || '';
 
     const assigneeOptions = useMemo(() => {
         const set = new Set(tasks.map(t => t.assignee).filter(Boolean));
@@ -678,6 +787,132 @@ const HostPropertyCare = () => {
         a.click();
         URL.revokeObjectURL(url);
     };
+
+    const renderSettingsToggle = (key, label, disabled = false) => (
+        <div key={key} className="settings-toggle-row">
+            <span className="settings-toggle-label">{label}</span>
+            <button
+                className={`settings-toggle ${!disabled && settingsDraft[key] ? 'on' : ''} ${disabled ? 'disabled' : ''}`}
+                onClick={() => !disabled && handleSettingChange(key, !settingsDraft[key])}
+                aria-label={label}
+                aria-disabled={disabled}
+            >
+                <span className="settings-toggle-knob" />
+            </button>
+        </div>
+    );
+
+    const renderSettingsView = () => (
+        <div className="settings-container">
+            <div className="settings-main-grid">
+                <div className="settings-left-col">
+                    <div className="settings-card settings-team-card">
+                        <div className="settings-card-header">
+                            <h3 className="settings-card-title">Team Members</h3>
+                            <button className="btn-primary-green" disabled>+ Invite Member</button>
+                        </div>
+                        <table className="settings-team-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Email</th>
+                                    <th>Properties</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {TEAM_MEMBERS.map(member => (
+                                    <tr key={member.email}>
+                                        <td><LuChevronRight className="settings-row-arrow" />{member.name}</td>
+                                        <td>{member.role}</td>
+                                        <td>{member.email}</td>
+                                        <td>{member.properties}</td>
+                                        <td>
+                                            <span className={`settings-status-badge ${member.status === 'Active' ? 'active' : 'suspended'}`}>
+                                                {member.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="settings-card">
+                        <div className="settings-card-header">
+                            <h3 className="settings-card-title">Integrations</h3>
+                            <span className="settings-coming-soon">Coming soon</span>
+                        </div>
+                        <div className="settings-integrations-grid">
+                            {INTEGRATIONS.map(integration => (
+                                <div key={integration.name} className="settings-integration-card">
+                                    <div className="settings-integration-top">
+                                        <span className="settings-integration-logo">{integration.logo}</span>
+                                        <span className="settings-integration-name">{integration.name}</span>
+                                    </div>
+                                    {integration.connected ? (
+                                        <button className="settings-integration-btn disconnect">
+                                            ✓ Disconnect
+                                        </button>
+                                    ) : (
+                                        <span className="settings-integration-status disconnected">Not Connected</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="settings-right-col">
+                    <div className="settings-card">
+                        <div className="settings-card-header">
+                            <h3 className="settings-card-title">Notifications</h3>
+                            <span className="settings-coming-soon">Coming soon</span>
+                        </div>
+                        <p className="settings-card-subtitle">Customize your app preferences.</p>
+                        <p className="settings-group-label">Email notifications</p>
+                        {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me', true)}
+                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue', true)}
+                        {renderSettingsToggle('notifEmailCompleted', 'Task completed', true)}
+                        <p className="settings-group-label">SMS notifications</p>
+                        {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only', true)}
+                        <p className="settings-group-label">In-App notifications</p>
+                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications', true)}
+                    </div>
+
+                    <div className="settings-card">
+                        <h3 className="settings-card-title">Default Property Settings</h3>
+                        <p className="settings-card-subtitle">Manage property-level preferences.</p>
+                        <div className="settings-field" style={{ marginBottom: '14px' }}>
+                            <label htmlFor="setting-default-priority">Default task priority</label>
+                            <select id="setting-default-priority" value={settingsDraft.defaultPriority} onChange={e => handleSettingChange('defaultPriority', e.target.value)}>
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                                <option>Urgent</option>
+                            </select>
+                        </div>
+                        <div className="settings-field" style={{ marginBottom: '16px' }}>
+                            <label htmlFor="setting-default-assignee">Default assignee</label>
+                            <select id="setting-default-assignee" value={settingsDraft.defaultAssignee} onChange={e => handleSettingChange('defaultAssignee', e.target.value)}>
+                                <option>Anyone</option>
+                                {currentUser.name && <option value={currentUser.name}>{currentUser.name}</option>}
+                            </select>
+                        </div>
+                        {renderSettingsToggle('autoAssignCleaning', 'Auto-assign cleaning after checkout')}
+                        {renderSettingsToggle('requirePhotoProof', 'Require photo proof for completed tasks')}
+                    </div>
+                </div>
+            </div>
+
+            <div className="settings-footer">
+                {settingsSaved && <span className="settings-saved-msg"><LuCheck /> Settings saved successfully.</span>}
+                <button className="settings-cancel-btn" onClick={handleCancelSettings} disabled={!settingsChanged}>Cancel</button>
+                <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!settingsChanged}>Save changes</button>
+            </div>
+        </div>
+    );
 
     const renderReportsView = () => {
         return (
@@ -840,7 +1075,7 @@ const HostPropertyCare = () => {
                     <div className="chart-box task-summary-panel">
                         <h4>Task Summary</h4>
                         <div className="summary-list">
-                            <div className="summary-item"><span className="sum-icon">📋</span> Total Tasks <span className="sum-val">{reportData.total}</span></div>
+                            <div className="summary-item"><span className="sum-icon"><LuClipboardList /></span> Total Tasks <span className="sum-val">{reportData.total}</span></div>
                             <div className="summary-item"><span className="dot dot-pending" style={{marginRight:'8px'}}></span> Pending <span className="sum-val">{reportData.pending}</span></div>
                             <div className="summary-item"><span className="dot dot-inprogress" style={{marginRight:'8px'}}></span> In Progress <span className="sum-val">{reportData.inProgress}</span></div>
                             <div className="summary-item"><span className="dot dot-completed" style={{marginRight:'8px'}}></span> Completed <span className="sum-val">{reportData.completed}</span></div>
@@ -864,7 +1099,7 @@ const HostPropertyCare = () => {
             case 'Reports':
                 return renderReportsView();
             case 'Settings':
-                return <div className="placeholder-view">Coming soon</div>;
+                return renderSettingsView();
             default:
                 return null;
         }
@@ -872,7 +1107,7 @@ const HostPropertyCare = () => {
     const renderMyTasksView = () => {
         const todayStr = new Date().toISOString().split('T')[0];
 
-        let myTasks = tasks.filter(t => t.assignee === CURRENT_USER && !t.isLegacy);
+        let myTasks = tasks.filter(t => t.assignee === currentUser.name && !t.isLegacy);
 
         myTasks = myTasks.filter(task => {
             const matchProperty = filters.property === 'All properties' || task.property === filters.property;
@@ -910,10 +1145,10 @@ const HostPropertyCare = () => {
                     style={{ opacity: isCompleted ? 0.6 : 1 }}
                 >
                     <div className="my-task-left">
-                        <div className="my-task-icon">📋</div>
+                        <div className="my-task-icon"><LuClipboardList /></div>
                         <div className="my-task-info">
                             <h4>{task.title}</h4>
-                            <span>{task.property}</span>
+                            <span>{getPropertyLabel(task)}</span>
                         </div>
                     </div>
                     
@@ -965,12 +1200,12 @@ const HostPropertyCare = () => {
                             </select>
                             <div className="search-box small-search">
                                 <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-                                <span aria-hidden="true">🔍</span>
+                                <LuSearch aria-hidden="true" />
                             </div>
                         </div>
                     </div>
                     <div className="my-task-list">
-                        {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! 🎉</p>}
+                        {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! <LuPartyPopper aria-hidden="true" /></p>}
                     </div>
                 </div>
 
@@ -1021,9 +1256,10 @@ const HostPropertyCare = () => {
                         <option value="Medium">Medium</option>
                         <option value="Low">Low</option>
                     </select>
+                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
                     <div className="search-box small-search">
                         <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-                        <span aria-hidden="true">🔍</span>
+                        <LuSearch aria-hidden="true" />
                     </div>
                 </div>
 
@@ -1035,7 +1271,6 @@ const HostPropertyCare = () => {
                         <span className="status-tag"><span className="dot dot-overdue"></span> Overdue</span>
                         <span className="status-tag"><span className="dot dot-cancelled"></span> Cancelled</span>
                     </div>
-                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
                 </div>
             </div>
 
@@ -1083,13 +1318,13 @@ const HostPropertyCare = () => {
                                 <tr key={task.id} className={`clickable-row row-${displayStatus.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
                                     <td>
                                         <div className="task-title-cell" title={task.title}>
-                                            <span className="task-arrow">▶</span> 
+                                            <LuChevronRight className="task-arrow" />
                                             <div className="truncate-text">
                                                 <strong>{task.title}</strong>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{task.property}</td>
+                                    <td>{getPropertyLabel(task)}</td>
                                     <td>{task.type}</td>
                                     <td>{task.assignee}</td>
                                     <td>{task.dueDate === new Date().toISOString().split('T')[0] ? 'Today' : task.dueDate}</td>
@@ -1117,10 +1352,14 @@ const HostPropertyCare = () => {
         <main className="task-dashboard-v2">
             <div className="top-header">
                 <h2>Tasks</h2>
-                <button className="btn-create-green" onClick={() => setIsModalOpen(true)}>
+                <button className="btn-create-green btn-create-desktop" onClick={() => setIsModalOpen(true)}>
                     + Create Task
                 </button>
             </div>
+
+            <button className="btn-create-fab" onClick={() => setIsModalOpen(true)} aria-label="Create Task">
+                +
+            </button>
 
             <div className="tabs-nav">
                 {['Overview', 'My Tasks', 'All Tasks', 'Reports', 'Settings'].map(tab => (
@@ -1137,14 +1376,14 @@ const HostPropertyCare = () => {
             {activeTab === 'Overview' && (
                 <div className="overview-stats-row">
                     <div className="overview-stat-card">
-                        <div className="overview-stat-icon">📋</div>
+                        <div className="overview-stat-icon"><LuClipboardList /></div>
                         <div className="overview-stat-info">
                             <span className="overview-stat-label">Total Tasks</span>
                             <span className="overview-stat-value">{stats.total}</span>
                         </div>
                     </div>
                     <div className="overview-stat-card">
-                        <div className="overview-stat-icon error-icon">!</div>
+                        <div className="overview-stat-icon error-icon"><LuCircleAlert /></div>
                         <div className="overview-stat-info">
                             <span className="overview-stat-label">Overdue</span>
                             <span className="overview-stat-value">
@@ -1156,14 +1395,14 @@ const HostPropertyCare = () => {
                         </div>
                     </div>
                     <div className="overview-stat-card">
-                        <div className="overview-stat-icon info-icon">↻</div>
+                        <div className="overview-stat-icon info-icon"><LuRefreshCw /></div>
                         <div className="overview-stat-info">
                             <span className="overview-stat-label">In Progress</span>
                             <span className="overview-stat-value">{stats.inProgress}</span>
                         </div>
                     </div>
                     <div className="overview-stat-card">
-                        <div className="overview-stat-icon success-icon">✓</div>
+                        <div className="overview-stat-icon success-icon"><LuCircleCheck /></div>
                         <div className="overview-stat-info">
                             <span className="overview-stat-label">Completed Today</span>
                             <span className="overview-stat-value">{stats.completedToday}</span>
@@ -1175,13 +1414,15 @@ const HostPropertyCare = () => {
             <div className="content-area">
                 {renderContent()}
             </div>
-
+            
             {isModalOpen && (
+                <>
+                <button className="modal-backdrop" onClick={handleCancelModal} aria-label="Close modal" />
                 <div className="modal-overlay">
                     <div className="modal-content-large">
                         <div className="modal-header">
                             <h3>Create Task</h3>
-                            <button className="close-btn" onClick={handleCancelModal}>✕</button>
+                            <button className="close-btn" onClick={handleCancelModal}><LuX /></button>
                         </div>
                         <form onSubmit={handleCreateTask}>
                             <div className="form-group">
@@ -1202,8 +1443,8 @@ const HostPropertyCare = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label htmlFor='task-booking-ref'>Booking Reference (optional)</label>
-                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} onChange={handleInputChange} placeholder="Select booking." />
+                                <label htmlFor='task-booking-ref'>Booking Reference</label>
+                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} placeholder="Coming soon" disabled />
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-type'>Type</label>
@@ -1217,9 +1458,7 @@ const HostPropertyCare = () => {
                                 <label htmlFor='task-assignee'>Assignee</label>
                                 <select id='task-assignee' name="assignee" value={newTask.assignee} onChange={handleInputChange} required>
                                     <option value="" disabled hidden>Select Assignee</option>
-                                    <option value="Sophie Janssen">Sophie Janssen (sophie@domits.com)</option>
-                                    <option value="Jan de Vries">Jan de Vries (jan@domits.com)</option>
-                                    <option value="Lisa Meijer">Lisa Meijer (lisa@domits.com)</option>
+                                    {currentUser.name && <option value={currentUser.name}>{currentUser.name}{currentUser.email ? ` (${currentUser.email})` : ''}</option>}
                                 </select>
                             </div>
                             <div className="form-group">
@@ -1251,9 +1490,12 @@ const HostPropertyCare = () => {
                         </form>
                     </div>
                 </div>
+                </>
             )}
 
             {viewingTask && editedTask && (
+                <>
+                <button className="modal-backdrop" onClick={closeTaskDetails} aria-label="Close modal" />
                 <div className="modal-overlay">
                     <div className="modal-content-large task-details-modal">
                         <div className="modal-header details-header">
@@ -1264,25 +1506,65 @@ const HostPropertyCare = () => {
                                 onChange={handleEditChange}
                                 placeholder="Task title"
                             />
-                            <button className="close-btn" onClick={closeTaskDetails}>✕</button>
+                            <button className="close-btn" onClick={closeTaskDetails}><LuX /></button>
                         </div>
                         
                         <div className="details-badges-row">
-                            <select name="status" value={editedTask.status} onChange={handleEditChange} className={`badge-select status-${editedTask.status.toLowerCase().replace(' ', '-')}`}>
-                                <option value="Pending">● Pending</option>
-                                <option value="In progress">● In progress</option>
-                                <option value="Completed">● Completed</option>
-                                <option value="Overdue">● Overdue</option>
-                            </select>
-                            <select name="priority" value={editedTask.priority} onChange={handleEditChange} className={`badge-select priority-${editedTask.priority.toLowerCase()}`}>
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
-                                <option value="Urgent">Urgent</option>
-                            </select>
+                            <div className="custom-badge-select-wrapper" role="none" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+                                <button
+                                    type="button"
+                                    className={`badge-select status-${editedTask.status.toLowerCase().replace(' ', '-')}`}
+                                    onClick={() => setOpenDropdown(openDropdown === 'status' ? null : 'status')}
+                                >
+                                    ● {editedTask.status}
+                                </button>
+                                {openDropdown === 'status' && (
+                                    <div className="custom-badge-options">
+                                        {STATUS_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                className={`custom-badge-option ${opt.cls}`}
+                                                onClick={() => {
+                                                    handleEditChange({ target: { name: 'status', value: opt.value } });
+                                                    setOpenDropdown(null);
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="custom-badge-select-wrapper" role="none" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+                                <button
+                                    type="button"
+                                    className={`badge-select priority-${editedTask.priority.toLowerCase()}`}
+                                    onClick={() => setOpenDropdown(openDropdown === 'priority' ? null : 'priority')}
+                                >
+                                    {editedTask.priority}
+                                </button>
+                                {openDropdown === 'priority' && (
+                                    <div className="custom-badge-options">
+                                        {PRIORITY_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                className={`custom-badge-option ${opt.cls}`}
+                                                onClick={() => {
+                                                    handleEditChange({ target: { name: 'priority', value: opt.value } });
+                                                    setOpenDropdown(null);
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             <select name="property" value={editedTask.property_id || ''} onChange={handleEditPropertyChange} className="badge-select property-badge">
                                 {editPropertyOptions.map((o) => (
-                                    <option key={o.id} value={o.id}>🏢 {o.label}</option>
+                                    <option key={o.id} value={o.id}>{o.label}</option>
                                 ))}
                             </select>
                         </div>
@@ -1297,9 +1579,7 @@ const HostPropertyCare = () => {
                                 <div className="form-group">
                                     <label htmlFor='task-assignee'>Assignee</label>
                                     <select id='task-assignee' name="assignee" value={editedTask.assignee} onChange={handleEditChange}>
-                                        <option value="Sophie Janssen">Sophie Janssen</option>
-                                        <option value="Jan de Vries">Jan de Vries</option>
-                                        <option value="Lisa Meijer">Lisa Meijer</option>
+                                        {currentUser.name && <option value={currentUser.name}>{currentUser.name}</option>}
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -1311,8 +1591,8 @@ const HostPropertyCare = () => {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor='task-booking-ref'>Booking Reference (optional)</label>
-                                    <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} onChange={handleEditChange} placeholder="Select booking." />
+                                    <label htmlFor='task-booking-ref'>Booking Reference</label>
+                                    <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} placeholder="Coming soon" disabled />
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor='task-due-date'>Due Date</label>
@@ -1361,7 +1641,7 @@ const HostPropertyCare = () => {
                             <button className="btn-text" onClick={closeTaskDetails}>Cancel</button>
                             
                             {JSON.stringify(viewingTask) === JSON.stringify(editedTask) ? (
-                                <button className="btn-create-green" onClick={handleDeleteSingleTask}>Delete</button>
+                                <button className="btn-danger" onClick={handleDeleteSingleTask}>Delete</button>
                             ) : (
                                 <button className="btn-create-green" onClick={handleSaveChanges}>Save Changes</button>
                             )}
@@ -1369,17 +1649,18 @@ const HostPropertyCare = () => {
                         </div>
                     </div>
                 </div>
+                </>
             )}
 
             {confirmDialog.isOpen && (
                 <div className="confirm-modal-overlay">
                     <div className="confirm-modal-content">
-                        <div className="confirm-modal-icon">⚠️</div>
+                        <div className="confirm-modal-icon"><LuTriangleAlert /></div>
                         <h3>{confirmDialog.title}</h3>
                         <p>{confirmDialog.message}</p>
                         <div className="confirm-modal-actions">
                             <button className="btn-text" onClick={closeConfirmDialog}>{confirmDialog.cancelText}</button>
-                            <button className="btn-create-green" onClick={confirmDialog.onConfirm}>{confirmDialog.confirmText}</button>
+                            <button className="btn-danger" onClick={confirmDialog.onConfirm}>{confirmDialog.confirmText}</button>
                         </div>
                     </div>
                 </div>

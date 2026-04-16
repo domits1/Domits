@@ -45,11 +45,20 @@ export class Service {
       averageLengthOfStay,
     ] = await Promise.all([
       (async () => {
-       try {
-        return await this.paymentsService.getTotalHostRevenue(event);
-      } catch {
-        return { totalRevenue: 0 };
-      }
+        try {
+          const revenue = await this.paymentsService.getTotalHostRevenue(event);
+
+          if (revenue?.totalRevenue == null) {
+            return { totalRevenue: null, error: "Stripe not configured" };
+          }
+
+          return revenue;
+        } catch (err) {
+          return {
+            totalRevenue: null,
+            error: err?.message || "Failed to fetch revenue",
+          };
+        }
       })(),
       this.repository.getBookedNights(userId, start, end),
       this.repository.getAvailableNights(userId, start, end),
@@ -121,7 +130,6 @@ export class Service {
     }
   }
 
-  // All KPIs in one call
 
   async getAllKpis(event) {
     const { userId, filterType, start, end } =
@@ -143,16 +151,14 @@ export class Service {
 
     try {
       await this.repository.createKpiSnapshot({
-      userId,
-      hostId: userId, // voorlopig hetzelfde
-      periodType: filterType ?? "alltime",
-      periodStart: start,
-      periodEnd: end,
-      metrics: snapshotPayload,
+        userId,
+        hostId: userId,
+        periodType: filterType ?? "alltime",
+        periodStart: start,
+        periodEnd: end,
+        metrics: snapshotPayload,
       });
-    } catch {
-      // Snapshot persistence must not block the KPI response.
-    }
+    } catch {}
 
     return {
       revenue: raw.totalRevenue,

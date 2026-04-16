@@ -38,7 +38,13 @@ class ReservationController {
     // -----------
     async patch(event) {
         try {
-            const body = JSON.parse(event.body);
+            if (event?.body === undefined || event?.body === null) {
+                throw new Error("Missing request body.");
+            }
+            const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+            if (!body?.paymentid) {
+                throw new Error("Missing paymentid.");
+            }
             let confirmed;
             if (body?.failedpayment){
                 confirmed = await this.bookingService.failPayment(body.paymentid);

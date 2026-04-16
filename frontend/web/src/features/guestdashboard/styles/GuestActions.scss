@@ -14,10 +14,10 @@
 
     .dropdownToggle {
       padding: 8px 12px;
-      border: 1px solid #00c203;
+      border: 1px solid #007a02;
       border-radius: 6px;
       background-color: white;
-      color: #00c203;
+      color: #007a02;
       font-weight: 500;
       display: flex;
       align-items: center;
@@ -49,15 +49,56 @@
           padding: 6px 0;
           font-size: 14px;
           gap: 6px;
+          flex-wrap: wrap;
 
-          span {
+          .listNameBtn {
             flex: 1;
             cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: inherit;
+            text-align: left;
           }
 
           input {
             flex: 1;
             padding: 4px 6px;
+          }
+
+          .editActions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+
+            .editSaveBtn {
+              background-color: #007a02;
+              color: white;
+              border: none;
+              padding: 3px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: 600;
+              cursor: pointer;
+
+              &:hover {
+                background-color: #005f02;
+              }
+            }
+
+            .editCancelBtn {
+              background: white;
+              color: #555;
+              border: 1px solid #ccc;
+              padding: 3px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              cursor: pointer;
+
+              &:hover {
+                background-color: #f5f5f5;
+              }
+            }
           }
 
           .rightSide {
@@ -77,11 +118,11 @@
               background: none;
               border: none;
               font-size: 14px;
-              color: #00c203;
+              color: #007a02;
               cursor: pointer;
 
               &:hover {
-                color: #03ab05;
+                color: #005f02;
               }
             }
           }
@@ -91,7 +132,7 @@
   }
 
   .actionBtn {
-    background-color: #00c203;
+    background-color: #007a02;
     color: white;
     border: none;
     padding: 8px 14px;
@@ -100,7 +141,7 @@
     cursor: pointer;
 
     &:hover {
-      background-color: #03ab05;
+      background-color: #005f02;
     }
   }
 
@@ -137,7 +178,7 @@
 
     .confirmBtn {
       width: 100%;
-      background-color: #00c203;
+      background-color: #007a02;
       color: white;
       padding: 10px;
       border: none;
@@ -146,7 +187,7 @@
       cursor: pointer;
 
       &:hover {
-        background-color: #03ab05;
+        background-color: #005f02;
       }
     }
   }
@@ -184,7 +225,7 @@
           gap: 6px;
           padding: 10px 0;
 
-          span {
+          .listNameBtn {
             font-size: 16px;
             width: 100%;
           }
@@ -214,13 +255,13 @@
               font-size: 16px;
               padding: 6px 10px;
               border-radius: 6px;
-              border: 1px solid #00c203;
-              color: #00c203;
+              border: 1px solid #007a02;
+              color: #007a02;
               background: white;
               flex: 1;
 
               &:hover {
-                background-color: #f2fff2;
+                background-color: #e6f7e6;
               }
             }
 

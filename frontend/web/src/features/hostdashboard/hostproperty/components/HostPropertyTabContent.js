@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import styles from "../../HostProperty.module.css";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
@@ -137,16 +137,7 @@ function PolicySelectField({ id, label, value, onChange, disabled, options, hint
   );
 }
 
-function PolicyLateTimeField({
-  id,
-  label,
-  enabled,
-  onToggle,
-  value,
-  onChange,
-  disabled,
-  options,
-}) {
+function PolicyLateTimeField({ id, label, enabled, onToggle, value, onChange, disabled, options }) {
   return (
     <div className={styles.checkinField}>
       <label htmlFor={id} className={styles.checkinLabel}>
@@ -155,12 +146,7 @@ function PolicyLateTimeField({
       <div className={styles.checkinToggleRow}>
         <ToggleSwitch checked={enabled} onChange={onToggle} disabled={disabled} />
         {enabled ? (
-          <select
-            id={id}
-            className={styles.checkinSelectInline}
-            value={value}
-            onChange={onChange}
-            disabled={disabled}>
+          <select id={id} className={styles.checkinSelectInline} value={value} onChange={onChange} disabled={disabled}>
             {options.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -997,17 +983,17 @@ function PolicyRuleSection({
   title,
   toggleFields,
   toggleState,
-  setToggleState,
-  customRules,
-  onToggleCustomRule,
-  onDeleteCustomRule,
-  customRuleInputVisible,
-  customRuleValue,
-  onCustomRuleChange,
-  onConfirmCustomRule,
-  onCancelCustomRule,
-  onShowCustomRuleInput,
+  onToggleChange,
   disabled,
+  customRules = [],
+  onToggleCustomRule = () => {},
+  onDeleteCustomRule = () => {},
+  customRuleInputVisible = false,
+  customRuleValue = "",
+  onCustomRuleChange = () => {},
+  onConfirmCustomRule = () => {},
+  onCancelCustomRule = () => {},
+  onShowCustomRuleInput = () => {},
 }) {
   return (
     <section className={`${styles.card} ${styles.policiesCard}`}>
@@ -1016,21 +1002,16 @@ function PolicyRuleSection({
       <div className={styles.rulesGrid}>
         {toggleFields.map((field) => (
           <RuleToggleField
-            key={field.key}
+            key={field.rule || field.key}
             label={field.label}
-            checked={Boolean(toggleState[field.key])}
-            onChange={(value) => setToggleState((previous) => ({ ...previous, [field.key]: value }))}
+            checked={Boolean(toggleState[field.rule || field.key])}
+            onChange={(value) => onToggleChange(field.rule || field.key, value)}
             disabled={disabled}
           />
         ))}
 
         {customRules.map((rule) => (
-          <CustomRuleRow
-            key={rule.id}
-            rule={rule}
-            onToggle={onToggleCustomRule}
-            onDelete={onDeleteCustomRule}
-          />
+          <CustomRuleRow key={rule.id} rule={rule} onToggle={onToggleCustomRule} onDelete={onDeleteCustomRule} />
         ))}
       </div>
 
@@ -1129,14 +1110,14 @@ const PREPARATION_TIME_OPTIONS = [
 const CHECK_IN_FALLBACK_TIME = "15:00";
 const CHECK_OUT_FALLBACK_TIME = "11:00";
 const PROPERTY_RULE_TOGGLE_FIELDS = [
-  { key: "cookingAllowed", label: "Cooking allowed" },
-  { key: "parkingAvailable", label: "Parking available" },
+  { key: "CookingAllowed", label: "Cooking allowed", rule: "CookingAllowed" },
+  { key: "ParkingAvailable", label: "Parking available", rule: "ParkingAvailable" },
 ];
 const SAFETY_RULE_TOGGLE_FIELDS = [
-  { key: "smokeDetector", label: "Smoke detector" },
-  { key: "carbonMonoxide", label: "Carbon monoxide" },
-  { key: "fireExtinguisher", label: "Fire extinguisher" },
-  { key: "firstAidKit", label: "First aid kit" },
+  { key: "SmokeDetector", label: "Smoke detector" },
+  { key: "CarbonMonoxide", label: "Carbon monoxide" },
+  { key: "FireExtinguisher", label: "Fire extinguisher" },
+  { key: "FirstAidKit", label: "First aid kit" },
 ];
 
 const resolveDistinctLateTime = (fromValue, preferredTillValue, fallbackFromValue) => {
@@ -1167,11 +1148,24 @@ export default function HostPropertyPoliciesTab(props) {
     saving,
   } = props;
   const [selectedPolicy, setSelectedPolicy] = useState("flexible");
+  const [cancellationPolicy, setCancellationPolicy] = useState("flexible");
+
+  // Sync cancellation policy from policyRules
+  useEffect(() => {
+    const policyOrder = ["Strict", "Firm", "Moderate", "Flexible"];
+    for (const policyName of policyOrder) {
+      if (policyRules[`CancellationPolicy:${policyName}`]) {
+        const policyId = policyName.toLowerCase();
+        setSelectedPolicy(policyId);
+        setCancellationPolicy(policyId);
+        return;
+      }
+    }
+    // No policy selected, reset to default
+    setSelectedPolicy("flexible");
+    setCancellationPolicy("flexible");
+  }, [policyRules]);
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
-  const propertyRuleSection = useRuleSectionState({
-    cookingAllowed: false,
-    parkingAvailable: false,
-  });
   const safetyRuleSection = useRuleSectionState({
     smokeDetector: true,
     carbonMonoxide: true,
@@ -1181,6 +1175,11 @@ export default function HostPropertyPoliciesTab(props) {
 
   const handleSelectPolicy = (id) => {
     setSelectedPolicy(id);
+    setCancellationPolicy(id);
+    updatePolicyRule(`CancellationPolicy:${id.charAt(0).toUpperCase() + id.slice(1)}`, true);
+    CANCELLATION_POLICIES.filter((p) => p.id !== id).forEach((p) => {
+      updatePolicyRule(`CancellationPolicy:${p.id.charAt(0).toUpperCase() + p.id.slice(1)}`, false);
+    });
     setExpandedPolicy(id);
   };
 
@@ -1236,11 +1235,16 @@ export default function HostPropertyPoliciesTab(props) {
     {
       title: "Property Rules",
       toggleFields: PROPERTY_RULE_TOGGLE_FIELDS,
-      sectionState: propertyRuleSection,
+      policyRules,
+      updatePolicyRule,
+      saving,
     },
     {
       title: "Safety & Property",
       toggleFields: SAFETY_RULE_TOGGLE_FIELDS,
+      policyRules: safetyRuleSection.toggleState,
+      updatePolicyRule,
+      saving,
       sectionState: safetyRuleSection,
     },
   ];
@@ -1288,7 +1292,7 @@ export default function HostPropertyPoliciesTab(props) {
 
         <div className={styles.cancellationPolicyList}>
           {CANCELLATION_POLICIES.map((policy) => {
-            const isSelected = selectedPolicy === policy.id;
+            const isSelected = cancellationPolicy === policy.id;
             const isExpanded = expandedPolicy === policy.id;
 
             return (
@@ -1412,25 +1416,24 @@ export default function HostPropertyPoliciesTab(props) {
         </div>
       </section>
 
-      {policyRuleSections.map(({ title, toggleFields, sectionState }) => (
-        <PolicyRuleSection
-          key={title}
-          title={title}
-          toggleFields={toggleFields}
-          toggleState={sectionState.toggleState}
-          setToggleState={sectionState.setToggleState}
-          customRules={sectionState.customRules}
-          onToggleCustomRule={sectionState.toggleCustomRule}
-          onDeleteCustomRule={sectionState.deleteCustomRule}
-          customRuleInputVisible={sectionState.showRuleInput}
-          customRuleValue={sectionState.newRuleValue}
-          onCustomRuleChange={(event) => sectionState.setNewRuleValue(event.target.value)}
-          onConfirmCustomRule={sectionState.addCustomRule}
-          onCancelCustomRule={sectionState.cancelCustomRule}
-          onShowCustomRuleInput={() => sectionState.setShowRuleInput(true)}
-          disabled={saving}
-        />
-      ))}
+      {policyRuleSections.map(({ title, toggleFields, sectionState }) => {
+        const { toggleState, setToggleState, ...customRuleProps } = sectionState || {};
+
+        return (
+          <PolicyRuleSection
+            key={title}
+            title={title}
+            toggleFields={toggleFields}
+            toggleState={policyRules}
+            onToggleChange={(fieldKey, value) => {
+              updatePolicyRule(fieldKey, value);
+              if (setToggleState) setToggleState((prev) => ({ ...prev, [fieldKey]: value })); // Update local state (if exists)
+            }}
+            disabled={saving}
+            {...customRuleProps}
+          />
+        );
+      })}
 
       <p className={styles.policiesHint}>
         <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />
@@ -1642,23 +1645,50 @@ PolicyRuleSection.propTypes = {
     })
   ).isRequired,
   toggleState: PropTypes.objectOf(PropTypes.bool).isRequired,
-  setToggleState: PropTypes.func.isRequired,
-  customRules: PropTypes.arrayOf(customRuleShape).isRequired,
-  onToggleCustomRule: PropTypes.func.isRequired,
-  onDeleteCustomRule: PropTypes.func.isRequired,
-  customRuleInputVisible: PropTypes.bool.isRequired,
-  customRuleValue: PropTypes.string.isRequired,
-  onCustomRuleChange: PropTypes.func.isRequired,
-  onConfirmCustomRule: PropTypes.func.isRequired,
-  onCancelCustomRule: PropTypes.func.isRequired,
-  onShowCustomRuleInput: PropTypes.func.isRequired,
-  disabled: PropTypes.bool.isRequired,
+  onToggleChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  customRules: PropTypes.arrayOf(customRuleShape),
+  onToggleCustomRule: PropTypes.func,
+  onDeleteCustomRule: PropTypes.func,
+  customRuleInputVisible: PropTypes.bool,
+  customRuleValue: PropTypes.string,
+  onCustomRuleChange: PropTypes.func,
+  onConfirmCustomRule: PropTypes.func,
+  onCancelCustomRule: PropTypes.func,
+  onShowCustomRuleInput: PropTypes.func,
 };
 
 HostPropertyPoliciesTab.propTypes = policiesTabPropTypes;
 
 HostPropertyTabContent.propTypes = {
   selectedTab: PropTypes.string.isRequired,
+  checkinTime: PropTypes.string,
+  setCheckinTime: PropTypes.func,
+  checkoutTime: PropTypes.string,
+  setCheckoutTime: PropTypes.func,
+  lateCheckinEnabled: PropTypes.bool,
+  setLateCheckinEnabled: PropTypes.func,
+  lateCheckinTime: PropTypes.string,
+  setLateCheckinTime: PropTypes.func,
+  lateCheckoutEnabled: PropTypes.bool,
+  setLateCheckoutEnabled: PropTypes.func,
+  lateCheckoutTime: PropTypes.string,
+  setLateCheckoutTime: PropTypes.func,
+  houseRules: PropTypes.object,
+  setHouseRules: PropTypes.func,
+  updateHouseRule: PropTypes.func,
+  propertyRules: PropTypes.object,
+  setPropertyRules: PropTypes.func,
+  updatePropertyRule: PropTypes.func,
+  customPropertyRules: PropTypes.array,
+  setCustomPropertyRules: PropTypes.func,
+  safetyRules: PropTypes.object,
+  setSafetyRules: PropTypes.func,
+  updateSafetyRule: PropTypes.func,
+  customSafetyRules: PropTypes.array,
+  setCustomSafetyRules: PropTypes.func,
+  selectedCancellationPolicy: PropTypes.string,
+  setSelectedCancellationPolicy: PropTypes.func,
   ...overviewTabPropTypes,
   ...photoTabPropTypes,
   ...amenitiesTabPropTypes,
@@ -1743,4 +1773,3 @@ TextareaField.propTypes = {
   onChange: PropTypes.func.isRequired,
   rows: PropTypes.number,
 };
-
