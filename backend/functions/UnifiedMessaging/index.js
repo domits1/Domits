@@ -57,6 +57,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.listChannexRoomTypes(event),
   },
   {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/linked-room-types"),
+    handle: (event) => integrationController.listLinkedChannexRoomTypes(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/room-types"),
     handle: (event) => integrationController.linkChannexRoomType(event),
   },
