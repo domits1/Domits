@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
 import IntegrationPropertyRepository from "../data/integrationPropertyRepository.js";
+import IntegrationRoomTypeRepository from "../data/integrationRoomTypeRepository.js";
 import IntegrationSyncRepository from "../data/integrationSyncRepository.js";
 import ReservationLinkRepository from "../data/reservationLinkRepository.js";
 
@@ -282,6 +283,7 @@ export default class IntegrationService {
   constructor({
     accounts = new IntegrationAccountRepository(),
     props = new IntegrationPropertyRepository(),
+    roomTypes = new IntegrationRoomTypeRepository(),
     sync = new IntegrationSyncRepository(),
     resLinks = new ReservationLinkRepository(),
     runner = new SyncRunner(),
@@ -293,6 +295,7 @@ export default class IntegrationService {
   } = {}) {
     this.accounts = accounts;
     this.props = props;
+    this.roomTypes = roomTypes;
     this.sync = sync;
     this.resLinks = resLinks;
     this.runner = runner;
@@ -1817,6 +1820,64 @@ export default class IntegrationService {
       return bad(500, {
         error: "Failed to save Channex property mapping.",
         errorCode: "CHANNEX_PROPERTY_LINK_FAILED",
+        details,
+      });
+    }
+  }
+
+  async linkChannexRoomType(userId, body) {
+    const normalizedUserId = requireStr(userId);
+    if (!normalizedUserId) return bad(400, { error: "Missing required field: userId" });
+
+    const domitsPropertyId = requireStr(body?.domitsPropertyId);
+    const externalPropertyId = requireStr(body?.externalPropertyId);
+    const externalRoomTypeId = requireStr(body?.externalRoomTypeId);
+    const externalRoomTypeName = requireStr(body?.externalRoomTypeName);
+
+    if (!domitsPropertyId) return bad(400, { error: "Missing required field: domitsPropertyId" });
+    if (!externalPropertyId) return bad(400, { error: "Missing required field: externalPropertyId" });
+    if (!externalRoomTypeId) return bad(400, { error: "Missing required field: externalRoomTypeId" });
+
+    try {
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+        return bad(409, {
+          error: "Channex integration is not connected for this user.",
+          errorCode: "CHANNEX_NOT_CONNECTED",
+          status: !integration ? CHANNEX_STATUS.NOT_CONNECTED : CHANNEX_STATUS.DISCONNECTED,
+        });
+      }
+
+      if (!requireStr(integration.credentialsRef)) {
+        return bad(409, {
+          error: "Channex integration is not locally usable. Reconnect required.",
+          errorCode: "CHANNEX_RECONNECT_REQUIRED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      const saved = await this.roomTypes.upsert({
+        integrationAccountId: integration.id,
+        domitsPropertyId,
+        externalPropertyId,
+        externalRoomTypeId,
+        externalRoomTypeName,
+        status: "ACTIVE",
+      });
+
+      return ok({
+        integrationAccountId: integration.id,
+        domitsPropertyId: saved.domitsPropertyId ?? domitsPropertyId,
+        externalPropertyId: saved.externalPropertyId ?? externalPropertyId,
+        externalRoomTypeId: saved.externalRoomTypeId ?? externalRoomTypeId,
+        externalRoomTypeName: saved.externalRoomTypeName ?? externalRoomTypeName ?? null,
+        status: saved.status ?? "ACTIVE",
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to save Channex room type mapping.",
+        errorCode: "CHANNEX_ROOM_TYPE_LINK_FAILED",
         details,
       });
     }
