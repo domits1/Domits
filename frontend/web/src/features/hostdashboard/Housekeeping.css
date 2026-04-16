@@ -376,8 +376,9 @@
 }
 
 .radio-group {
-    display: flex;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
 }
 
 .radio-group label {
