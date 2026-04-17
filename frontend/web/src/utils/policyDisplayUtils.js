@@ -3,15 +3,15 @@ import PropTypes from "prop-types";
 
 const getRefundString = (pct) => {
   if (pct === 100) {
-    return "100% refund (you will keep 0% of the booking)";
+    return "100% refund.";
   }
   if (pct === 70) {
-    return "70% refund (you will keep 30% of the booking)";
+    return "70% refund.";
   }
   if (pct === 50) {
-    return "50% refund (you will keep 50% of the booking)";
+    return "50% refund.";
   }
-  return "No refund (you will keep 100% of the booking)";
+  return "No refund.";
 };
 
 const generatePolicyRuleStrings = (periodDays, refundPercentages) => {
@@ -19,9 +19,9 @@ const generatePolicyRuleStrings = (periodDays, refundPercentages) => {
   return refundPercentages.map((pct, index) => {
     const refundStr = getRefundString(pct);
     if (index === 0) {
-      return `At least ${periodStr} before check-in, they will receive ${refundStr}`;
+      return `At least ${periodStr} before check-in, Guests will receive ${refundStr}`;
     }
-    return `Less than ${periodStr} before check-in, they will receive ${refundStr}`;
+    return `Less than ${periodStr} before check-in, Guests will receive ${refundStr}`;
   });
 };
 
@@ -54,7 +54,7 @@ export const CANCELLATION_POLICIES = [
     summary: "Full refund until 30 days before check-in",
     rules: [
       ...generatePolicyRuleStrings(30, [100, 50]),
-      "Less than 7 days before check-in, they will receive No refund (you will keep 100% of the booking)",
+      "Less than 7 days before check-in, Guests will receive No refund.",
     ],
     important: null,
   },
@@ -202,17 +202,27 @@ const toPolicyRuleObject = (rulesOrObject = []) => {
   return {};
 };
 
+const CHECK_IN_OUT_KEY_MAP = {
+  CheckInTime: ["CheckInTime", "checkInTime"],
+  CheckOutTime: ["CheckOutTime", "checkOutTime"],
+  LateCheckInTime: ["LateCheckInTime", "lateCheckInTime"],
+  LateCheckOutTime: ["LateCheckOutTime", "lateCheckOutTime"],
+};
+
+const getFirstDefinedValue = (source = {}, aliases = []) =>
+  aliases.reduce((foundValue, alias) => {
+    if (foundValue === undefined) {
+      return source?.[alias];
+    }
+
+    return foundValue;
+  }, undefined);
+
+const formatPolicyTimeValue = (value) => (typeof value === "string" ? value?.slice(0, 5) : value);
+
 const parseGenericRules = (rulesOrObject = [], property = {}, keyMap = {}) => {
   const parsed = [];
   const normalizedRules = toPolicyRuleObject(rulesOrObject);
-  const getFirstDefinedValue = (source = {}, aliases = []) =>
-    aliases.reduce((foundValue, alias) => {
-      if (foundValue === undefined) {
-        return source?.[alias];
-      }
-
-      return foundValue;
-    }, undefined);
 
   Object.values(keyMap).forEach((config) => {
     const aliases = Array.isArray(config?.aliases) && config.aliases.length > 0 ? config.aliases : [];
@@ -242,10 +252,22 @@ export const parseCheckInOut = (checkInData = {}, rulesOrObject = []) => {
   const normalizedRules = toPolicyRuleObject(rulesOrObject);
   const checkIn = checkInData?.checkIn || {};
   const checkOut = checkInData?.checkOut || {};
-  const checkInFrom = typeof checkIn.from === "string" ? checkIn.from : "15:00";
-  const checkInTill = typeof checkIn.till === "string" ? checkIn.till : checkIn.from;
-  const checkOutFrom = typeof checkOut.from === "string" ? checkOut.from : "11:00";
-  const checkOutTill = typeof checkOut.till === "string" ? checkOut.till : checkOut.from;
+  const checkInFrom =
+    formatPolicyTimeValue(getFirstDefinedValue(checkInData, CHECK_IN_OUT_KEY_MAP.CheckInTime)) ||
+    formatPolicyTimeValue(typeof checkIn?.from === "string" ? checkIn.from : undefined) ||
+    "15:00";
+  const checkInTill =
+    formatPolicyTimeValue(getFirstDefinedValue(checkInData, CHECK_IN_OUT_KEY_MAP.LateCheckInTime)) ||
+    formatPolicyTimeValue(typeof checkIn?.till === "string" ? checkIn.till : undefined) ||
+    checkInFrom;
+  const checkOutFrom =
+    formatPolicyTimeValue(getFirstDefinedValue(checkInData, CHECK_IN_OUT_KEY_MAP.CheckOutTime)) ||
+    formatPolicyTimeValue(typeof checkOut?.from === "string" ? checkOut.from : undefined) ||
+    "11:00";
+  const checkOutTill =
+    formatPolicyTimeValue(getFirstDefinedValue(checkInData, CHECK_IN_OUT_KEY_MAP.LateCheckOutTime)) ||
+    formatPolicyTimeValue(typeof checkOut?.till === "string" ? checkOut.till : undefined) ||
+    checkOutFrom;
 
   return {
     checkInFrom,
