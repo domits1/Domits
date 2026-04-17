@@ -1186,7 +1186,7 @@ export class PropertyController {
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(property)
             }
         } catch (error) {

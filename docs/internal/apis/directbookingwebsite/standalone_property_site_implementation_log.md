@@ -609,3 +609,149 @@ Evidence (commit(s), file(s), docs):
   - `standalone_property_site_frontend_status.md`
   - `standalone_property_site_plan_of_approach.md`
 
+## [2026-04-17] Builder availability guard, calendar-sync hardening, and editor interaction polish
+Context:
+The standalone website feature had three remaining product-quality gaps:
+- the builder still offered listings that already had a saved website attached
+- the website-side calendar snapshot could drift from the PMS/iCal sync state seen in the host calendar tab
+- the editor interaction model was functional but still rough, with hard section jumps, a single blocking loader, and abrupt expand/collapse behavior
+
+Implementation:
+- Filtered the builder listing dropdown so any listing with an existing saved website draft is hidden until that website is deleted.
+- Disabled the builder listing selector while draft availability is still loading so listings do not briefly appear and then disappear once draft data arrives.
+- Hardened website property detail fetches with `cache: "no-store"`.
+- Returned no-store headers from `GET /property/hostDashboard/single` for host-owned property detail reads used by the website feature.
+- Replaced the website-side external calendar repository’s duplicated source-table query logic with the shared iCal source reader used by the iCal service.
+- Added defensive timestamp normalization for `last_sync_at` / `updated_at`, which are not stored as clean numeric values in the current Aurora contract.
+- Added section-level editor loading shells using `PulseBarsLoader` while the draft editor is opening.
+- Added animated expand/collapse behavior for editor sections instead of hard mount/unmount switching.
+- Added preview-to-editor highlight feedback so clicking a preview target now scrolls to the matching section and briefly flashes that section.
+- Tightened the compact saved-website preview so it renders against a mobile-biased viewport and uses a fixed summary-width column.
+
+Decision / Rationale:
+- The builder must respect saved website ownership, otherwise the same listing can be re-used into conflicting website drafts.
+- The website calendar snapshot should not use a drifting duplicate interpretation of `property_ical_source` when the iCal flow already has a shared reader contract.
+- Editor UX should stay structured and responsive as the override surface grows; keeping the shell visible and animating section behavior is cleaner than hard blocking or hard jumping.
+
+AWS / Data impact:
+- No new Aurora schema change.
+- No new API Gateway routes.
+- Host-owned property detail responses now carry no-store headers for website-related reads.
+- Existing draft table/index requirements remain unchanged:
+  - `main.standalone_site_draft`
+  - unique index on `property_id`
+  - host index on `host_id`
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+- Backend routing unit test passed:
+  - `test/PropertyHandler/routing-unit.test.js`
+
+Open risks / Next:
+- Compact saved-preview rendering should still be visually verified in the browser after the latest width/viewport adjustments.
+- If PMS/iCal data still diverges after these changes, the next step is to inspect live `property_ical_source` rows for a real property and compare them against `LIST_SOURCES` output from the iCal service.
+- Next major feature phase remains publish/unpublish and domain workflow.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websitePropertyService.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/data/repository/propertyExternalCalendarRepository.js`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-17] Workspace deletion flow, desktop compact previews, and host-calendar enrichment fallback
+Context:
+Three UX/consistency issues remained after the previous editor polish pass:
+- saved website cards still needed direct deletion controls
+- compact website thumbnails had drifted into a mobile-looking render instead of a desktop-style summary
+- website preview calendar parity still needed a stronger bridge to the same iCal data used by the host calendar tab
+
+Implementation:
+- Added frontend delete support for saved website drafts from `My websites`.
+- Added a dedicated `DELETE` draft service call and refreshed workspace state after removal.
+- Removed the builder helper text that announced how many listings were hidden because of existing website drafts.
+- Simplified the editor left-panel header from explanatory copy to a clean `Editor` title only.
+- Switched compact website thumbnails back to a desktop-style layout by using a dedicated compact desktop viewport width instead of forcing the compact renderer into mobile mode.
+- Enriched the website-side property detail fetch with `dbListIcalSources(propertyId)` as a host-side fallback/merge path so blocked dates and sync-source counts can align with the host calendar sync view even when the standalone property detail payload is lagging.
+- Made website calendar blocked days visually explicit by rendering imported external-booking styling and labels instead of relying on a subtle background tint.
+
+Decision / Rationale:
+- The workspace must allow direct lifecycle control over saved websites; reopening a draft is not enough.
+- A compact summary thumbnail should still read as the chosen desktop website, not as a separate mobile preview mode.
+- For host-side preview/editor flows, reusing the same iCal source payload already trusted by the host calendar tab is the pragmatic way to close calendar parity gaps without inventing a parallel contract.
+
+AWS / Data impact:
+- No new Aurora schema change.
+- No new API Gateway route.
+- No acceptance SQL change.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Open risks / Next:
+- Calendar parity still needs browser verification on a real property with imported external bookings.
+- If the website calendar still diverges after this fallback merge, inspect the live `hostDashboard/single` response and the `LIST_SOURCES` payload side by side for the same property.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteDraftService.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websitePropertyService.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.module.scss`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-17] Website calendar parity for PMS blocked dates
+Context:
+The website-side availability snapshot already showed imported external bookings, but it still missed PMS-side unavailable override dates that were visible in the host calendar tab. That made the standalone website calendar under-report blocked dates.
+
+Implementation:
+- Enriched the website property-detail merge path with the existing `GET /property/calendar/overrides` endpoint.
+- Parsed override rows where `isAvailable === false` into `unavailableDateKeys`.
+- Extended the shared website availability model to carry:
+  - `externalBlockedDates`
+  - `unavailableDateKeys`
+  - separate summaries/counts for both categories
+  - a total blocked-date summary and next blocked label based on the union
+- Updated the website availability preview so:
+  - imported external bookings stay striped with an external label
+  - PMS blocked dates render as grey blocked cells with a blocked icon
+  - the legend and metadata pills distinguish both sources clearly
+
+Decision / Rationale:
+- The correct behavior is not “iCal only.” The website preview must reflect both imported external bookings and host-side PMS unavailable overrides, otherwise availability parity is misleading.
+- Reusing the existing override endpoint is the pragmatic fix because it already powers the host calendar editing flow.
+
+AWS / Data impact:
+- No new Aurora schema change.
+- No new API Gateway route.
+- Reused existing `calendar/overrides` API surface.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Open risks / Next:
+- If any real property still shows a mismatch after this, inspect the actual override payload returned by `GET /property/calendar/overrides?propertyId=...` for that listing and compare it against the host calendar state.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/services/websitePropertyService.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/buildWebsiteTemplateModel.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+

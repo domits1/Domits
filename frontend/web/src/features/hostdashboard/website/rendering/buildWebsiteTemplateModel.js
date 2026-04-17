@@ -334,41 +334,64 @@ const buildCalendarAvailability = (calendarAvailability) => {
     .map((dateKey) => cleanText(dateKey))
     .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey))
     .sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
+  const unavailableDateKeys = (Array.isArray(calendarAvailability?.unavailableDateKeys)
+    ? calendarAvailability.unavailableDateKeys
+    : []
+  )
+    .map((dateKey) => cleanText(dateKey))
+    .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey))
+    .sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
+  const allBlockedDates = Array.from(new Set([...externalBlockedDates, ...unavailableDateKeys])).sort(
+    (leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey)
+  );
 
   const syncedSourceCount = Math.max(0, Math.trunc(readNumber(calendarAvailability?.syncedSourceCount, 0)));
   const hasExternalCalendarSync =
     calendarAvailability?.hasExternalCalendarSync === true || syncedSourceCount > 0;
   const todayDateKey = toDateKey(new Date());
-  const nextBlockedDate = externalBlockedDates.find((dateKey) => dateKey >= todayDateKey) || "";
+  const nextBlockedDate = allBlockedDates.find((dateKey) => dateKey >= todayDateKey) || "";
   const lastSyncLabel = formatTimestampLabel(calendarAvailability?.lastSyncAt);
 
   const syncSummary = hasExternalCalendarSync
     ? `${syncedSourceCount} iCal sync${syncedSourceCount === 1 ? "" : "s"} connected`
     : "No iCal sync connected yet";
 
-  const blockedDateSummary =
+  const externalBlockedSummary =
     externalBlockedDates.length > 0
-      ? `${externalBlockedDates.length} imported blocked date${
+      ? `${externalBlockedDates.length} imported external booking${
           externalBlockedDates.length === 1 ? "" : "s"
         }`
-      : "No imported blocked dates";
+      : "No imported external bookings";
+  const unavailableDateSummary =
+    unavailableDateKeys.length > 0
+      ? `${unavailableDateKeys.length} PMS blocked date${unavailableDateKeys.length === 1 ? "" : "s"}`
+      : "No PMS blocked dates";
+  const blockedDateSummary =
+    allBlockedDates.length > 0
+      ? `${allBlockedDates.length} blocked date${allBlockedDates.length === 1 ? "" : "s"} in total`
+      : "No blocked dates";
 
   const nextBlockedLabel = nextBlockedDate ? `Next blocked: ${formatShortDate(nextBlockedDate)}` : "";
 
   return {
     externalBlockedDates,
-    blockedDateCount: externalBlockedDates.length,
+    unavailableDateKeys,
+    blockedDateCount: allBlockedDates.length,
+    externalBlockedDateCount: externalBlockedDates.length,
+    unavailableDateCount: unavailableDateKeys.length,
     hasExternalCalendarSync,
     syncedSourceCount,
     syncSummary,
+    externalBlockedSummary,
+    unavailableDateSummary,
     blockedDateSummary,
     lastSyncLabel,
     nextBlockedDate,
     nextBlockedLabel,
     callout:
-      hasExternalCalendarSync || externalBlockedDates.length > 0
-        ? "Imported external calendar blocks are shown below. Live quote requests still validate current availability before a guest can continue."
-        : "No external calendar blocks have been imported yet. Live quote requests still validate current availability before a guest can continue.",
+      hasExternalCalendarSync || allBlockedDates.length > 0
+        ? "Imported external bookings and PMS blocked dates are shown below. Live quote requests still validate current availability before a guest can continue."
+        : "No external bookings or PMS blocked dates have been imported yet. Live quote requests still validate current availability before a guest can continue.",
   };
 };
 

@@ -128,6 +128,11 @@
   gap: 16px;
   padding-top: 18px;
   border-top: 1px solid #e2e8f0;
+  border-radius: 18px;
+  transition:
+    background-color 0.24s ease,
+    box-shadow 0.24s ease,
+    border-color 0.24s ease;
 }
 
 .panelSection:first-of-type {
@@ -166,7 +171,49 @@
 
 .panelSectionBody {
   display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.24s ease,
+    opacity 0.24s ease;
+}
+
+.panelSectionBodyOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.panelSectionBodyInner {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
   gap: 16px;
+}
+
+.loadingSectionHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.loadingSectionBody,
+.loadingPreviewCard {
+  display: grid;
+  place-items: center;
+  min-height: 188px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px dashed #dbe5ef;
+  background:
+    radial-gradient(circle at top left, rgba(31, 78, 121, 0.06), transparent 34%),
+    #f8fbff;
+}
+
+.loadingPreviewCard {
+  min-height: 420px;
 }
 
 .sectionBlockTitle {
@@ -237,6 +284,10 @@
   color: #64748b;
   font-size: 0.88rem;
   line-height: 1.5;
+}
+
+.editorTargetHighlighted {
+  animation: editorTargetHighlight 1.8s ease;
 }
 
 .toggleCard,
@@ -563,6 +614,31 @@
   .surface {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .heroHeader,
+  .previewPanelHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .previewPanelHeader .previewViewportControls {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .previewViewportButton {
+    flex: 1 1 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .heroMeta {
+    width: 100%;
+  }
+
+  .previewViewportControls {
+    gap: 8px;
+  }
 }
 
 @media (max-width: 639px) {
@@ -606,5 +682,22 @@
   .imagePickerThumbRail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     max-height: 56vh;
+  }
+}
+
+@keyframes editorTargetHighlight {
+  0% {
+    background: rgba(220, 236, 250, 0.9);
+    box-shadow: 0 0 0 0 rgba(31, 78, 121, 0.18);
+  }
+
+  35% {
+    background: rgba(220, 236, 250, 0.7);
+    box-shadow: 0 0 0 6px rgba(31, 78, 121, 0.12);
+  }
+
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 0 rgba(31, 78, 121, 0);
   }
 }

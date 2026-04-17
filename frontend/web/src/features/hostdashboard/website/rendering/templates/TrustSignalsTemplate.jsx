@@ -34,6 +34,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
         <div
           {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
             sectionId: "common",
+            targetId: "common.siteTitle",
           })}
         >
           <div className={styles.templateTopBarBrand}>
@@ -49,18 +50,38 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
 
       <section className={styles.trustSignalsShell}>
         <div
-          {...getInteractiveTargetProps(styles.trustSignalsIntro, onSelectTarget, {
-            sectionId: "common",
-          })}
+          className={styles.trustSignalsIntro}
         >
-          <p className={styles.sectionEyebrow}>Trust-oriented layout</p>
-          <h1 className={styles.heroTitle}>{model.hero.title}</h1>
-          <p className={styles.heroDescription}>{model.hero.description}</p>
+          <p
+            {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroEyebrow",
+            })}
+          >
+            Trust-oriented layout
+          </p>
+          <h1
+            {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroTitle",
+            })}
+          >
+            {model.hero.title}
+          </h1>
+          <p
+            {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroDescription",
+            })}
+          >
+            {model.hero.description}
+          </p>
         </div>
 
         <img
           {...getInteractiveTargetProps(styles.trustSignalsHeroImage, onSelectTarget, {
             sectionId: "images",
+            targetId: "images.hero",
             imageSlot: { kind: "hero" },
           })}
           src={model.media.heroImage}
@@ -69,11 +90,12 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
 
         {showTrustCards ? (
           <div className={styles.trustSignalsStack}>
-            {model.trustCards.slice(0, 2).map((card) => (
+            {model.trustCards.slice(0, 2).map((card, index) => (
               <article
                 key={card.id}
                 {...getInteractiveTargetProps(styles.trustSignalsCard, onSelectTarget, {
                   sectionId: "trustCards",
+                  targetId: `trustCards.${index}`,
                 })}
               >
                 <div className={styles.trustSignalsCardMeta}>
@@ -95,6 +117,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
             <div
               {...getInteractiveTargetProps(styles.softCallout, onSelectTarget, {
                 sectionId: "common",
+                targetId: "common.ctaLabel",
               })}
             >
               <strong>{model.callToAction.label}</strong>

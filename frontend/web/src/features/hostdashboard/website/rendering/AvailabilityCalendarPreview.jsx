@@ -1,8 +1,10 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
+import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
 import SyncOutlinedIcon from "@mui/icons-material/SyncOutlined";
 import EventBusyOutlinedIcon from "@mui/icons-material/EventBusyOutlined";
+import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
 import styles from "./AvailabilityCalendarPreview.module.scss";
 
 const WEEKDAY_LABELS = Object.freeze(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
@@ -17,7 +19,7 @@ const startOfCalendarGrid = (viewMonth) => {
   return new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1 - weekdayOffset);
 };
 
-const buildCalendarCells = (viewMonth, blockedDateKeys) => {
+const buildCalendarCells = (viewMonth, externalBlockedDateKeys, unavailableDateKeys) => {
   const calendarStart = startOfCalendarGrid(viewMonth);
   const todayDateKey = toDateKey(new Date());
 
@@ -30,21 +32,26 @@ const buildCalendarCells = (viewMonth, blockedDateKeys) => {
       id: dateKey,
       dayOfMonth: cellDate.getDate(),
       isCurrentMonth: cellDate.getMonth() === viewMonth.getMonth(),
-      isBlocked: blockedDateKeys.has(dateKey),
+      isExternalBlocked: externalBlockedDateKeys.has(dateKey),
+      isUnavailable: unavailableDateKeys.has(dateKey),
       isToday: dateKey === todayDateKey,
     };
   });
 };
 
 export default function AvailabilityCalendarPreview({ availability }) {
-  const blockedDateKeySet = useMemo(
+  const externalBlockedDateKeySet = useMemo(
     () => new Set(Array.isArray(availability?.externalBlockedDates) ? availability.externalBlockedDates : []),
+    [availability]
+  );
+  const unavailableDateKeySet = useMemo(
+    () => new Set(Array.isArray(availability?.unavailableDateKeys) ? availability.unavailableDateKeys : []),
     [availability]
   );
   const viewMonth = useMemo(() => new Date(), []);
   const calendarCells = useMemo(
-    () => buildCalendarCells(viewMonth, blockedDateKeySet),
-    [blockedDateKeySet, viewMonth]
+    () => buildCalendarCells(viewMonth, externalBlockedDateKeySet, unavailableDateKeySet),
+    [externalBlockedDateKeySet, unavailableDateKeySet, viewMonth]
   );
   const monthLabel = useMemo(
     () =>
@@ -71,8 +78,14 @@ export default function AvailabilityCalendarPreview({ availability }) {
           </span>
           <span className={styles.calendarMetaPill}>
             <EventBusyOutlinedIcon fontSize="inherit" />
-            {availability.blockedDateSummary}
+            {availability.externalBlockedSummary || availability.blockedDateSummary}
           </span>
+          {availability.unavailableDateCount > 0 ? (
+            <span className={styles.calendarMetaPill}>
+              <BlockOutlinedIcon fontSize="inherit" />
+              {availability.unavailableDateSummary}
+            </span>
+          ) : null}
           {availability.lastSyncLabel ? (
             <span className={styles.calendarMetaPill}>Last sync: {availability.lastSyncLabel}</span>
           ) : null}
@@ -89,7 +102,11 @@ export default function AvailabilityCalendarPreview({ availability }) {
         </span>
         <span className={styles.calendarLegendItem}>
           <span className={`${styles.calendarLegendDot} ${styles.calendarLegendDotBlocked}`} aria-hidden="true" />
-          Imported blocked
+          Imported external booking
+        </span>
+        <span className={styles.calendarLegendItem}>
+          <span className={`${styles.calendarLegendDot} ${styles.calendarLegendDotUnavailable}`} aria-hidden="true" />
+          PMS blocked date
         </span>
         <span className={styles.calendarLegendItem}>
           <EventAvailableOutlinedIcon fontSize="inherit" />
@@ -110,10 +127,30 @@ export default function AvailabilityCalendarPreview({ availability }) {
           <span
             key={cell.id}
             className={`${styles.calendarCell} ${cell.isCurrentMonth ? styles.calendarCellCurrent : ""} ${
-              cell.isBlocked ? styles.calendarCellBlocked : ""
+              cell.isExternalBlocked ? styles.calendarCellBlocked : ""
+            } ${cell.isUnavailable && !cell.isExternalBlocked ? styles.calendarCellUnavailable : ""} ${
+              cell.isUnavailable ? styles.calendarCellBlockedBase : ""
             } ${cell.isToday ? styles.calendarCellToday : ""}`.trim()}
+            title={
+              cell.isExternalBlocked
+                ? "Imported external booking"
+                : cell.isUnavailable
+                  ? "Blocked in PMS availability"
+                  : undefined
+            }
           >
-            {cell.dayOfMonth}
+            <span className={styles.calendarCellDay}>{cell.dayOfMonth}</span>
+            {cell.isExternalBlocked ? (
+              <span className={styles.calendarCellStatus}>
+                <LinkOutlinedIcon fontSize="inherit" />
+                <span>External</span>
+              </span>
+            ) : cell.isUnavailable ? (
+              <span className={styles.calendarCellStatus}>
+                <BlockOutlinedIcon fontSize="inherit" />
+                <span>Blocked</span>
+              </span>
+            ) : null}
           </span>
         ))}
       </div>
@@ -124,7 +161,11 @@ export default function AvailabilityCalendarPreview({ availability }) {
 AvailabilityCalendarPreview.propTypes = {
   availability: PropTypes.shape({
     externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
+    unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+    unavailableDateCount: PropTypes.number,
     syncSummary: PropTypes.string,
+    externalBlockedSummary: PropTypes.string,
+    unavailableDateSummary: PropTypes.string,
     blockedDateSummary: PropTypes.string,
     lastSyncLabel: PropTypes.string,
     nextBlockedLabel: PropTypes.string,

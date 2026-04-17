@@ -587,7 +587,8 @@
 }
 
 .websiteDraftCardPreview {
-  min-width: 0;
+  width: min(100%, 196px);
+  min-width: 184px;
   justify-self: end;
 }
 

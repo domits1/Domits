@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import LanguageIcon from "@mui/icons-material/Language";
 import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import styles from "./WebsiteBuilderPage.module.scss";
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
@@ -16,7 +17,11 @@ import {
   PREVIEW_STAGE,
   runWebsitePreviewBuildWorkflow,
 } from "./services/websitePreviewWorkflow";
-import { fetchWebsiteDrafts, upsertWebsiteDraft } from "./services/websiteDraftService";
+import {
+  deleteWebsiteDraft,
+  fetchWebsiteDrafts,
+  upsertWebsiteDraft,
+} from "./services/websiteDraftService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
@@ -173,10 +178,15 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
       },
       availability: {
         externalBlockedDates: [],
+        unavailableDateKeys: [],
         blockedDateCount: 0,
+        externalBlockedDateCount: 0,
+        unavailableDateCount: 0,
         hasExternalCalendarSync: false,
         syncedSourceCount: 0,
         syncSummary: "Loading imported calendar context",
+        externalBlockedSummary: "Loading imported external bookings",
+        unavailableDateSummary: "Loading PMS blocked dates",
         blockedDateSummary: "Loading imported blocked dates",
         lastSyncLabel: "",
         nextBlockedDate: "",
@@ -265,6 +275,25 @@ function WebsiteBuilderPage() {
   const previewSectionRef = useRef(null);
   const navigate = useNavigate();
 
+  const draftedPropertyIds = useMemo(
+    () =>
+      new Set(
+        websiteDrafts
+          .map((draft) => String(draft?.propertyId || "").trim())
+          .filter(Boolean)
+      ),
+    [websiteDrafts]
+  );
+
+  const availablePropertyOptions = useMemo(
+    () =>
+      propertyOptions.filter((propertyOption) => {
+        const propertyId = String(propertyOption?.value || "").trim();
+        return propertyId && !draftedPropertyIds.has(propertyId);
+      }),
+    [draftedPropertyIds, propertyOptions]
+  );
+
   const loadProperties = async () => {
     setIsLoading(true);
     setLoadError("");
@@ -305,6 +334,20 @@ function WebsiteBuilderPage() {
     void loadProperties();
     void loadHostWebsiteDrafts();
   }, []);
+
+  useEffect(() => {
+    setSelectedPropertyId((currentPropertyId) => {
+      if (!currentPropertyId) {
+        return currentPropertyId;
+      }
+
+      const listingStillAvailable = availablePropertyOptions.some(
+        (propertyOption) => propertyOption.value === currentPropertyId
+      );
+
+      return listingStillAvailable ? currentPropertyId : EMPTY_SELECTION;
+    });
+  }, [availablePropertyOptions]);
 
   useEffect(() => {
     let isMounted = true;
@@ -363,7 +406,7 @@ function WebsiteBuilderPage() {
   }, [websiteDrafts, workspaceTab]);
 
   const selectedProperty =
-    propertyOptions.find((propertyOption) => propertyOption.value === selectedPropertyId) || null;
+    availablePropertyOptions.find((propertyOption) => propertyOption.value === selectedPropertyId) || null;
   const previewImages = selectedProperty?.previewImages || [];
   const galleryImages = selectedProperty?.galleryImages || previewImages;
   const importedImageCount = selectedProperty?.imageCount || 0;
@@ -545,6 +588,35 @@ function WebsiteBuilderPage() {
     navigate(`/hostdashboard/website/${propertyId}`);
   };
 
+  const removeWebsiteDraft = async (draft) => {
+    const propertyId = String(draft?.propertyId || "").trim();
+    if (!propertyId) {
+      return;
+    }
+
+    const propertyLabel = String(draft?.propertyTitle || draft?.location || "this website").trim();
+    const isDeleteConfirmed = globalThis.confirm(
+      `Delete the saved website for ${propertyLabel}? The listing will become available in Build website again.`
+    );
+
+    if (!isDeleteConfirmed) {
+      return;
+    }
+
+    try {
+      await deleteWebsiteDraft(propertyId);
+      setWebsiteDraftPreviewModels((currentPreviewModels) => {
+        const nextPreviewModels = { ...currentPreviewModels };
+        delete nextPreviewModels[propertyId];
+        return nextPreviewModels;
+      });
+      await loadHostWebsiteDrafts();
+      toast.success("Website deleted from your workspace.");
+    } catch (error) {
+      toast.error(error?.message || "We could not delete this website.");
+    }
+  };
+
   const renderPhotoStack = () => (
     <div className={styles.photoStack}>
       {previewImages.map((imageUrl, index) => (
@@ -657,6 +729,13 @@ function WebsiteBuilderPage() {
                     >
                       Open editor
                     </button>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => void removeWebsiteDraft(draft)}
+                    >
+                      Delete website
+                    </button>
                   </div>
                 </div>
 
@@ -715,6 +794,31 @@ function WebsiteBuilderPage() {
       );
     }
 
+    const showAllListingsUnavailableState =
+      isLoading === false &&
+      isLoadingWebsiteDrafts === false &&
+      propertyOptions.length > 0 &&
+      availablePropertyOptions.length === 0;
+    if (showAllListingsUnavailableState) {
+      return (
+        <div className={styles.stateCard}>
+          <p>
+            Every current listing already has a saved website draft or website attached to it. Delete an
+            existing website first if you want that listing to become available again in the builder.
+          </p>
+          <div className={styles.buttonRow}>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => setWorkspaceTab(WORKSPACE_TAB_WEBSITES)}
+            >
+              Open my websites
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
         <div className={styles.fieldGroup}>
@@ -726,18 +830,28 @@ function WebsiteBuilderPage() {
             className={styles.selectInput}
             value={selectedPropertyId}
             onChange={(event) => setSelectedPropertyId(event.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isLoadingWebsiteDrafts}
           >
             <option value={EMPTY_SELECTION}>
-              {isLoading ? "Loading your listings..." : "Choose a listing"}
+              {isLoading
+                ? "Loading your listings..."
+                : isLoadingWebsiteDrafts
+                  ? "Checking website availability..."
+                  : "Choose a listing"}
             </option>
-            {propertyOptions.map((propertyOption) => (
+            {availablePropertyOptions.map((propertyOption) => (
               <option key={propertyOption.value} value={propertyOption.value}>
                 {propertyOption.label}
               </option>
             ))}
           </select>
         </div>
+
+        {isLoadingWebsiteDrafts ? (
+          <p className={styles.previewHelperText}>
+            Checking which listings are already linked to a saved website.
+          </p>
+        ) : null}
 
         {selectedProperty ? (
           <div className={styles.selectionSummary}>

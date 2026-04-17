@@ -96,6 +96,11 @@
   box-shadow: inset 0 0 0 2px rgba(160, 182, 118, 0.8);
 }
 
+.calendarLegendDotUnavailable {
+  background: rgba(215, 221, 230, 0.96);
+  box-shadow: inset 0 0 0 2px rgba(115, 130, 150, 0.8);
+}
+
 .calendarGridHeader,
 .calendarGridBody {
   display: grid;
@@ -118,9 +123,8 @@
 }
 
 .calendarCell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  align-content: space-between;
   min-height: 38px;
   border-radius: 12px;
   border: 1px solid transparent;
@@ -128,6 +132,8 @@
   font-size: 0.88rem;
   font-weight: 700;
   background: rgba(248, 250, 252, 0.7);
+  padding: 6px;
+  text-align: left;
 }
 
 .calendarCellCurrent {
@@ -137,13 +143,46 @@
 }
 
 .calendarCellBlocked {
-  color: #395628;
-  border-color: rgba(181, 209, 148, 0.46);
-  background: rgba(237, 245, 229, 0.96);
+  color: #314f22;
+  border-color: rgba(181, 209, 148, 0.52);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(239, 245, 248, 0.98),
+      rgba(239, 245, 248, 0.98) 10px,
+      rgba(250, 252, 255, 0.98) 10px,
+      rgba(250, 252, 255, 0.98) 20px
+    ),
+    #f4f8fc;
+}
+
+.calendarCellBlockedBase {
+  color: #475569;
+}
+
+.calendarCellUnavailable {
+  border-color: rgba(148, 163, 184, 0.55);
+  background: rgba(226, 232, 240, 0.9);
 }
 
 .calendarCellToday {
   box-shadow: inset 0 0 0 2px rgba(31, 78, 121, 0.4);
+}
+
+.calendarCellDay {
+  display: inline-flex;
+  justify-content: flex-start;
+  color: inherit;
+}
+
+.calendarCellStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+  font-size: 0.56rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 @media (max-width: 720px) {
@@ -155,5 +194,9 @@
     min-height: 34px;
     border-radius: 10px;
     font-size: 0.82rem;
+  }
+
+  .calendarCellStatus {
+    font-size: 0.5rem;
   }
 }

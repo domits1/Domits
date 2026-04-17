@@ -6,6 +6,7 @@
 .previewShellCompact {
   gap: 0;
   width: 100%;
+  min-width: 184px;
 }
 
 .previewHeader {
@@ -88,6 +89,7 @@
 .previewScaleShellCompact {
   width: 100%;
   max-width: 184px;
+  min-width: 184px;
   margin-left: auto;
 }
 

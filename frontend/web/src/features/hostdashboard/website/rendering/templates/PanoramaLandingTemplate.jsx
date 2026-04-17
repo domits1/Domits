@@ -58,6 +58,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
         <div
           {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
             sectionId: "common",
+            targetId: "common.siteTitle",
           })}
         >
           <div className={styles.templateTopBarBrand}>
@@ -72,15 +73,32 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
         </div>
       ) : null}
 
-      <section
-        {...getInteractiveTargetProps(styles.panoramaIntro, onSelectTarget, {
-          sectionId: "common",
-        })}
-      >
+      <section className={styles.panoramaIntro}>
         <div className={styles.panoramaIntroCopy}>
-          <p className={styles.sectionEyebrow}>{model.hero.eyebrow}</p>
-          <h1 className={styles.heroTitle}>{model.hero.title}</h1>
-          <p className={styles.heroDescription}>{model.hero.description}</p>
+          <p
+            {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroEyebrow",
+            })}
+          >
+            {model.hero.eyebrow}
+          </p>
+          <h1
+            {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroTitle",
+            })}
+          >
+            {model.hero.title}
+          </h1>
+          <p
+            {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroDescription",
+            })}
+          >
+            {model.hero.description}
+          </p>
         </div>
       </section>
 
@@ -88,6 +106,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
         <img
           {...getInteractiveTargetProps(styles.panoramaHeroImage, onSelectTarget, {
             sectionId: "images",
+            targetId: "images.hero",
             imageSlot: { kind: "hero" },
           })}
           src={model.media.heroImage}
@@ -97,6 +116,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
           <div
             {...getInteractiveTargetProps(styles.panoramaSearchStub, onSelectTarget, {
               sectionId: "common",
+              targetId: "common.ctaLabel",
             })}
           >
             <strong>{model.callToAction.label}</strong>
@@ -116,6 +136,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
                 key={card.id}
                 {...getInteractiveTargetProps(styles.panoramaFeatureCard, onSelectTarget, {
                   sectionId: "trustCards",
+                  targetId: `trustCards.${model.trustCards.findIndex((entry) => entry.id === card.id)}`,
                 })}
               >
                 {IconComponent ? (
@@ -152,6 +173,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
                     key={`${imageUrl}-${index}`}
                     {...getInteractiveTargetProps(styles.galleryImage, onSelectTarget, {
                       sectionId: "images",
+                      targetId: `images.gallery.${index}`,
                       imageSlot: { kind: "gallery", index },
                     })}
                     src={imageUrl}

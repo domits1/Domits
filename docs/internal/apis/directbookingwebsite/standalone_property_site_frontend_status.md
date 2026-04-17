@@ -12,6 +12,7 @@ The builder is no longer only a setup shell. It now builds a real in-dashboard p
 What is in place:
 - A dedicated website builder page with a step-based flow.
 - Listing selection via host-owned listing options.
+- Listings that already have a saved website draft are excluded from the builder dropdown until that website is deleted.
 - Template chooser with silhouette previews.
 - Real preview build flow for implemented templates.
 - Data mapping from selected listing detail payload into a shared template model.
@@ -30,13 +31,19 @@ What is in place:
 - Image-slot picker now uses a compact thumbnail grid that can scale to larger imported photo sets without a large hero preview stage.
 - Scaled preview rendering with dedicated desktop/tablet/mobile viewport switching in the editor.
 - Compact scaled website preview cards inside `My websites`, with corrected thumbnail scaling, clipped preview height, and reduced card whitespace.
+- Saved website cards now expose both `Open editor` and `Delete website`, so deleting a website immediately makes its listing available again in the builder.
 - Editor sections are now collapsible so the left-side control surface remains usable as more override fields are added.
 - Clicking editable areas in the editor preview now opens or scrolls to the matching editor section, and clicking preview images opens the image picker directly.
+- Preview-to-editor jumps now briefly highlight the matched editor section so users can see where they landed after clicking the preview.
+- Editor loading now keeps the editor shell visible and uses section-level pulse-bar loaders instead of a single blocking state card.
+- Editor section bodies now open and close with an animated dropdown transition instead of a hard mount/unmount jump.
 - Imported calendar availability now flows into website previews from `hostDashboard/single`, including:
   - imported external blocked dates
   - iCal sync presence
   - sync-source count
   - last sync timestamp when available
+- The website-side calendar payload is now enriched with the same iCal source/block data used by the host calendar sync flow, which keeps the website calendar snapshot closer to the PMS/calendar tab.
+- The website-side calendar payload now also merges PMS unavailable date overrides from the existing calendar override endpoint, so grey blocked days can appear alongside imported external bookings.
 - Implemented templates now render a read-only availability snapshot card using the shared website model.
 - Acceptance AWS wiring has been validated far enough for draft save/list behavior:
   - Aurora `main.standalone_site_draft`
@@ -83,8 +90,10 @@ This split prevents dropdown payload bloat and keeps template rendering decouple
 Calendar data path:
 - `hostDashboard/single` now returns `calendarAvailability` for the selected host-owned property.
 - The website model maps this into a shared availability object instead of letting each template interpret raw calendar payloads separately.
+- The website detail fetch now uses `no-store`, and the host-owned property detail response also returns no-store headers to reduce stale calendar sync snapshots.
 - Current rendered availability is intentionally a read-only imported snapshot:
   - external blocked dates
+  - PMS unavailable override dates
   - iCal sync state
   - sync metadata
 - Live quote requests remain the authoritative check before a guest can proceed.
@@ -141,9 +150,10 @@ Current implementation details:
 - Preview workflow logic is extracted into a dedicated script module to support future dedicated preview route/new-tab flow.
 - Shared template model is in place and reusable by additional templates.
 - Built previews are persisted as website drafts keyed by host and property.
+- Listings with an existing saved website are no longer offered again in the builder flow.
 - Hosts can return to previously built drafts from the workspace overview tab.
 - Saved drafts now open in a dedicated editor route instead of reusing Step 3 in the builder.
-- Saved draft cards now render a compact scaled version of the current website preview.
+- Saved draft cards now render a clipped desktop-style website thumbnail instead of a mobile-biased preview.
 - Implemented templates now honor draft visibility toggles for major sections.
 - Editor image slot reassignment now uses an overlay gallery with navigation and confirm-select behavior.
 - Editor image slot reassignment now uses a thumbnail-only overlay grid with direct-select behavior.
@@ -151,7 +161,11 @@ Current implementation details:
 - Shared preview scaling was corrected so compact preview cards no longer reserve large unscaled whitespace.
 - Editor save success/error feedback was moved into toast notifications to keep the editor surface cleaner.
 - Preview-to-editor linking now exists for implemented templates so the preview can drive navigation to text/image editing areas.
+- Preview-to-editor linking now includes temporary section highlight feedback after navigation.
+- The editor now renders per-section loading states while opening instead of replacing the whole page with one loader card.
+- Editor sections now animate when expanding and collapsing.
 - Host-side website detail payload now includes calendar availability and iCal sync metadata without introducing a new schema change.
+- The website-side calendar sync snapshot path now uses the shared iCal source reader instead of a drifting duplicate query contract.
 - Acceptance environment issues found during rollout were resolved:
   - missing unique index on `property_id` caused `ON CONFLICT` failure
   - missing `host_id` index had to be added separately for the intended draft-by-host access path

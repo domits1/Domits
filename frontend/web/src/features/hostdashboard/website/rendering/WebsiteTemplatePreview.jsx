@@ -16,6 +16,7 @@ const DEFAULT_SCALE_METRICS = Object.freeze({
 });
 const COMPACT_PREVIEW_WIDTH = 184;
 const COMPACT_PREVIEW_MAX_HEIGHT = 228;
+const COMPACT_PREVIEW_VIEWPORT_WIDTH = 960;
 
 const resolveViewportWidth = (viewport) => PREVIEW_VIEWPORT_WIDTHS[viewport] || PREVIEW_VIEWPORT_WIDTHS.desktop;
 
@@ -98,9 +99,11 @@ export default function WebsiteTemplatePreview({
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
-  const viewportWidth = resolveViewportWidth(viewport);
-  const { scaleShellRef, scaleInnerRef, scaleMetrics } = usePreviewScaleMetrics(viewportWidth);
   const isCompactVariant = variant === "compact";
+  const viewportWidth = isCompactVariant
+    ? COMPACT_PREVIEW_VIEWPORT_WIDTH
+    : resolveViewportWidth(viewport);
+  const { scaleShellRef, scaleInnerRef, scaleMetrics } = usePreviewScaleMetrics(viewportWidth);
   const compactScale = COMPACT_PREVIEW_WIDTH / viewportWidth;
   const previewHeight = scaleMetrics.height
     ? `${isCompactVariant ? Math.min(scaleMetrics.height, COMPACT_PREVIEW_MAX_HEIGHT) : scaleMetrics.height}px`

@@ -185,6 +185,41 @@ const EDITOR_SECTION_KEYS = Object.freeze({
   journeyStops: "journeyStops",
 });
 
+const EDITOR_TARGET_KEYS = Object.freeze({
+  common: {
+    siteTitle: "common.siteTitle",
+    heroEyebrow: "common.heroEyebrow",
+    heroTitle: "common.heroTitle",
+    heroDescription: "common.heroDescription",
+    ctaLabel: "common.ctaLabel",
+    ctaNote: "common.ctaNote",
+  },
+  images: {
+    hero: "images.hero",
+    gallery: (index) => `images.gallery.${index}`,
+  },
+  trustCards: (index) => `trustCards.${index}`,
+  journeyStops: (index) => `journeyStops.${index}`,
+});
+
+const LOADING_EDITOR_SECTIONS = Object.freeze([
+  {
+    id: EDITOR_SECTION_KEYS.common,
+    title: "Common content",
+    description: "Loading imported text fields and template copy bindings.",
+  },
+  {
+    id: EDITOR_SECTION_KEYS.visibility,
+    title: "Section visibility",
+    description: "Loading which website sections can be toggled on or off.",
+  },
+  {
+    id: EDITOR_SECTION_KEYS.images,
+    title: "Image slots",
+    description: "Loading imported listing photos and template image slot mappings.",
+  },
+]);
+
 const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
 
 const getSelectedImageForSlot = (slot, editorValues) =>
@@ -206,16 +241,40 @@ const resolveSectionNode = (sectionRefEntry) => {
   return null;
 };
 
+const getViewportHeight = () => {
+  const viewportHeight = globalThis.innerHeight || globalThis.document?.documentElement?.clientHeight || 0;
+  return viewportHeight > 0 ? viewportHeight : 0;
+};
+
+const getCenteredScrollTop = (node) => {
+  if (!node || typeof node.getBoundingClientRect !== "function") {
+    return null;
+  }
+
+  const viewportHeight = getViewportHeight();
+  if (viewportHeight < 1) {
+    return null;
+  }
+
+  const currentScrollTop = globalThis.scrollY || globalThis.pageYOffset || 0;
+  const nodeRect = node.getBoundingClientRect();
+  const centeredTop = currentScrollTop + nodeRect.top - viewportHeight / 2 + nodeRect.height / 2;
+  return Math.max(0, Math.round(centeredTop));
+};
+
 const fieldPropTypes = PropTypes.shape({
   key: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   component: PropTypes.oneOf(["input", "textarea"]).isRequired,
 });
 
-function TextField({ field, value, onChange }) {
+function TextField({ field, value, onChange, fieldRef, isHighlighted }) {
   if (field.component === "textarea") {
     return (
-      <div className={styles.fieldGroup}>
+      <div
+        ref={fieldRef}
+        className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+      >
         <label className={styles.fieldLabel} htmlFor={`website-editor-${field.key}`}>
           {field.label}
         </label>
@@ -230,7 +289,10 @@ function TextField({ field, value, onChange }) {
   }
 
   return (
-    <div className={styles.fieldGroup}>
+    <div
+      ref={fieldRef}
+      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+    >
       <label className={styles.fieldLabel} htmlFor={`website-editor-${field.key}`}>
         {field.label}
       </label>
@@ -248,11 +310,34 @@ TextField.propTypes = {
   field: fieldPropTypes.isRequired,
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
+  fieldRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({
+      current: PropTypes.any,
+    }),
+  ]),
+  isHighlighted: PropTypes.bool,
 };
 
-function CollapsibleSection({ sectionId, title, description, isOpen, onToggle, sectionRef, children }) {
+TextField.defaultProps = {
+  fieldRef: null,
+  isHighlighted: false,
+};
+
+function CollapsibleSection({
+  sectionId,
+  title,
+  description,
+  isOpen,
+  onToggle,
+  sectionRef,
+  children,
+}) {
   return (
-    <section ref={sectionRef} className={styles.panelSection}>
+    <section
+      ref={sectionRef}
+      className={styles.panelSection}
+    >
       <button
         type="button"
         className={`${styles.sectionToggle} ${isOpen ? styles.sectionToggleOpen : ""}`.trim()}
@@ -266,7 +351,12 @@ function CollapsibleSection({ sectionId, title, description, isOpen, onToggle, s
         <KeyboardArrowDownOutlinedIcon className={styles.sectionToggleIcon} />
       </button>
 
-      {isOpen ? <div className={styles.panelSectionBody}>{children}</div> : null}
+      <div
+        className={`${styles.panelSectionBody} ${isOpen ? styles.panelSectionBodyOpen : ""}`.trim()}
+        aria-hidden={!isOpen}
+      >
+        <div className={styles.panelSectionBodyInner}>{children}</div>
+      </div>
     </section>
   );
 }
@@ -277,9 +367,12 @@ CollapsibleSection.propTypes = {
   description: PropTypes.string.isRequired,
   isOpen: PropTypes.bool.isRequired,
   onToggle: PropTypes.func.isRequired,
-  sectionRef: PropTypes.shape({
-    current: PropTypes.any,
-  }),
+  sectionRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({
+      current: PropTypes.any,
+    }),
+  ]),
   children: PropTypes.node.isRequired,
 };
 
@@ -297,6 +390,7 @@ function WebsiteEditorPage() {
   const [editorValues, setEditorValues] = useState(createEmptyWebsiteDraftEditorValues);
   const [previewViewport, setPreviewViewport] = useState("desktop");
   const [isSaving, setIsSaving] = useState(false);
+  const [highlightedTargetId, setHighlightedTargetId] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
     [EDITOR_SECTION_KEYS.visibility]: false,
@@ -309,6 +403,8 @@ function WebsiteEditorPage() {
     slot: null,
   });
   const sectionRefs = useRef({});
+  const targetRefs = useRef({});
+  const sectionHighlightResetTimeoutRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -408,6 +504,15 @@ function WebsiteEditorPage() {
     });
   }, [draftRecord?.templateKey]);
 
+  useEffect(
+    () => () => {
+      if (sectionHighlightResetTimeoutRef.current) {
+        globalThis.clearTimeout(sectionHighlightResetTimeoutRef.current);
+      }
+    },
+    []
+  );
+
   const toggleSection = (sectionId) => {
     setExpandedSections((currentSections) => ({
       ...currentSections,
@@ -428,25 +533,85 @@ function WebsiteEditorPage() {
     });
   };
 
-  const focusEditorSection = (sectionId) => {
+  const setSectionRef = (sectionId) => (node) => {
+    sectionRefs.current[sectionId] = node;
+  };
+
+  const setTargetRef = (targetId) => (node) => {
+    targetRefs.current[targetId] = node;
+  };
+
+  const resolvePreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) => {
+    if (targetId) {
+      return targetId;
+    }
+
+    if (imageSlot?.kind === "hero") {
+      return EDITOR_TARGET_KEYS.images.hero;
+    }
+
+    if (imageSlot?.kind === "gallery" && Number.isInteger(imageSlot.index)) {
+      return EDITOR_TARGET_KEYS.images.gallery(imageSlot.index);
+    }
+
+    if (sectionId === EDITOR_SECTION_KEYS.common) {
+      return EDITOR_TARGET_KEYS.common.heroTitle;
+    }
+
+    return "";
+  };
+
+  const focusEditorTarget = ({ sectionId, targetId }) => {
     if (!sectionId) {
       return;
     }
 
     openSection(sectionId);
-    globalThis.setTimeout(() => {
-      const targetSectionNode = resolveSectionNode(sectionRefs.current[sectionId]);
+    setHighlightedTargetId("");
 
-      targetSectionNode?.scrollIntoView({
+    const resolvedTargetId = resolvePreviewTargetId({ sectionId, targetId });
+
+    globalThis.setTimeout(() => {
+      if (resolvedTargetId) {
+        setHighlightedTargetId(resolvedTargetId);
+      }
+    }, 0);
+
+    if (sectionHighlightResetTimeoutRef.current) {
+      globalThis.clearTimeout(sectionHighlightResetTimeoutRef.current);
+    }
+
+    sectionHighlightResetTimeoutRef.current = globalThis.setTimeout(() => {
+      setHighlightedTargetId("");
+    }, 1800);
+
+    globalThis.setTimeout(() => {
+      const targetEditorNode =
+        resolveSectionNode(targetRefs.current[resolvedTargetId]) ||
+        resolveSectionNode(sectionRefs.current[sectionId]);
+
+      const centeredScrollTop = getCenteredScrollTop(targetEditorNode);
+      if (centeredScrollTop !== null) {
+        globalThis.scrollTo({
+          top: centeredScrollTop,
+          behavior: "smooth",
+        });
+        return;
+      }
+
+      targetEditorNode?.scrollIntoView({
         behavior: "smooth",
-        block: "start",
+        block: "center",
       });
     }, 120);
   };
 
-  const handlePreviewTargetSelect = ({ sectionId, imageSlot } = {}) => {
+  const handlePreviewTargetSelect = ({ sectionId, targetId, imageSlot } = {}) => {
     if (imageSlot) {
-      focusEditorSection(EDITOR_SECTION_KEYS.images);
+      focusEditorTarget({
+        sectionId: EDITOR_SECTION_KEYS.images,
+        targetId: targetId || resolvePreviewTargetId({ imageSlot, sectionId: EDITOR_SECTION_KEYS.images }),
+      });
       globalThis.setTimeout(() => {
         openImagePicker(imageSlot);
       }, 140);
@@ -454,7 +619,7 @@ function WebsiteEditorPage() {
     }
 
     if (sectionId) {
-      focusEditorSection(sectionId);
+      focusEditorTarget({ sectionId, targetId });
     }
   };
 
@@ -609,13 +774,54 @@ function WebsiteEditorPage() {
     };
   }, [imagePickerState.isOpen]);
 
+  const renderLoadingSection = ({ id, title, description }) => (
+    <section key={id} className={styles.panelSection}>
+      <div className={styles.loadingSectionHeader}>
+        <h3 className={styles.sectionBlockTitle}>{title}</h3>
+        <p className={styles.sectionBlockDescription}>{description}</p>
+      </div>
+      <div className={styles.loadingSectionBody}>
+        <PulseBarsLoader message={`Loading ${title.toLowerCase()}...`} />
+      </div>
+    </section>
+  );
+
   if (isLoading) {
     return (
       <main className="page-Host">
         <div className="page-Host-content">
           <section className={styles.editorPage}>
-            <div className={styles.stateCard}>
-              <PulseBarsLoader message="Opening your website editor..." />
+            <div className={styles.heroCard}>
+              <p className={styles.eyebrow}>Standalone website draft editor</p>
+              <div className={styles.heroHeader}>
+                <div>
+                  <h1 className={styles.heroTitle}>Opening website editor</h1>
+                  <p className={styles.heroDescription}>
+                    Imported listing data, saved overrides, and template bindings are loading into the
+                    editor surface.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.surface}>
+              <aside className={styles.editorPanel}>
+                <div className={styles.panelHeader}>
+                  <h2 className={styles.panelTitle}>Editor</h2>
+                </div>
+
+                <div className={styles.editorForm}>{LOADING_EDITOR_SECTIONS.map(renderLoadingSection)}</div>
+              </aside>
+
+              <section className={styles.previewPanel}>
+                <div className={`${styles.panelHeader} ${styles.previewPanelHeader}`.trim()}>
+                  <h2 className={styles.panelTitle}>Live preview</h2>
+                </div>
+
+                <div className={styles.loadingPreviewCard}>
+                  <PulseBarsLoader message="Loading live website preview..." />
+                </div>
+              </section>
             </div>
           </section>
         </div>
@@ -686,11 +892,7 @@ function WebsiteEditorPage() {
           <div className={styles.surface}>
             <aside className={styles.editorPanel}>
               <div className={styles.panelHeader}>
-                <h2 className={styles.panelTitle}>Editable content</h2>
-                <p className={styles.panelDescription}>
-                  Keep the override surface controlled. Text, visibility, and image slots are enough for
-                  this phase; free-form builder behavior is not.
-                </p>
+                <h2 className={styles.panelTitle}>Editor</h2>
               </div>
 
               <div className={styles.editorForm}>
@@ -700,7 +902,7 @@ function WebsiteEditorPage() {
                   description="Shared copy fields that affect the rendered website directly."
                   isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.common])}
                   onToggle={toggleSection}
-                  sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.common] ??= React.createRef())}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.common)}
                 >
                   <div className={styles.fieldStack}>
                     {COMMON_TEXT_FIELDS.map((field) => (
@@ -709,6 +911,8 @@ function WebsiteEditorPage() {
                         field={field}
                         value={editorValues.common[field.key]}
                         onChange={handleCommonFieldChange(field.key)}
+                        fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common[field.key])}
+                        isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common[field.key]}
                       />
                     ))}
                   </div>
@@ -721,7 +925,7 @@ function WebsiteEditorPage() {
                     description="Toggle major sections without changing the underlying draft data."
                     isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.visibility])}
                     onToggle={toggleSection}
-                    sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.visibility] ??= React.createRef())}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.visibility)}
                   >
                     <div className={styles.toggleStack}>
                       {visibilityFields.map((field) => (
@@ -749,7 +953,7 @@ function WebsiteEditorPage() {
                     description="Reassign imported listing images to the key visual slots used by this template."
                     isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.images])}
                     onToggle={toggleSection}
-                    sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.images] ??= React.createRef())}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.images)}
                   >
                     <div className={styles.imageSlotGrid}>
                       {imageSlots.map((slot) => {
@@ -761,7 +965,19 @@ function WebsiteEditorPage() {
                         return (
                           <div
                             key={`${slot.kind}-${slot.index ?? "hero"}`}
-                            className={styles.imageSlotCard}
+                            ref={setTargetRef(
+                              slot.kind === "hero"
+                                ? EDITOR_TARGET_KEYS.images.hero
+                                : EDITOR_TARGET_KEYS.images.gallery(slot.index)
+                            )}
+                            className={`${styles.imageSlotCard} ${
+                              highlightedTargetId ===
+                              (slot.kind === "hero"
+                                ? EDITOR_TARGET_KEYS.images.hero
+                                : EDITOR_TARGET_KEYS.images.gallery(slot.index))
+                                ? styles.editorTargetHighlighted
+                                : ""
+                            }`.trim()}
                           >
                             <div className={styles.imageSlotPreview}>
                               {selectedImageUrl ? (
@@ -807,13 +1023,21 @@ function WebsiteEditorPage() {
                     description={copyCollectionConfig.trustCards.description}
                     isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.trustCards])}
                     onToggle={toggleSection}
-                    sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.trustCards] ??= React.createRef())}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.trustCards)}
                   >
                     <div className={styles.collectionStack}>
                       {editorValues.trustCards
                         .slice(0, copyCollectionConfig.trustCards.count)
                         .map((card, index) => (
-                          <div key={`trust-card-${index}`} className={styles.collectionCard}>
+                          <div
+                            key={`trust-card-${index}`}
+                            ref={setTargetRef(EDITOR_TARGET_KEYS.trustCards(index))}
+                            className={`${styles.collectionCard} ${
+                              highlightedTargetId === EDITOR_TARGET_KEYS.trustCards(index)
+                                ? styles.editorTargetHighlighted
+                                : ""
+                            }`.trim()}
+                          >
                             <p className={styles.collectionTitle}>
                               {copyCollectionConfig.trustCards.itemLabel} {index + 1}
                             </p>
@@ -844,13 +1068,21 @@ function WebsiteEditorPage() {
                     description={copyCollectionConfig.journeyStops.description}
                     isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.journeyStops])}
                     onToggle={toggleSection}
-                    sectionRef={(sectionRefs.current[EDITOR_SECTION_KEYS.journeyStops] ??= React.createRef())}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.journeyStops)}
                   >
                     <div className={styles.collectionStack}>
                       {editorValues.journeyStops
                         .slice(0, copyCollectionConfig.journeyStops.count)
                         .map((stop, index) => (
-                          <div key={`journey-stop-${index}`} className={styles.collectionCard}>
+                          <div
+                            key={`journey-stop-${index}`}
+                            ref={setTargetRef(EDITOR_TARGET_KEYS.journeyStops(index))}
+                            className={`${styles.collectionCard} ${
+                              highlightedTargetId === EDITOR_TARGET_KEYS.journeyStops(index)
+                                ? styles.editorTargetHighlighted
+                                : ""
+                            }`.trim()}
+                          >
                             <p className={styles.collectionTitle}>
                               {copyCollectionConfig.journeyStops.itemLabel} {index + 1}
                             </p>

@@ -37,6 +37,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
         <div
           {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
             sectionId: "common",
+            targetId: "common.siteTitle",
           })}
         >
           <div className={styles.templateTopBarBrand}>
@@ -51,15 +52,32 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
         </div>
       ) : null}
 
-      <section
-        {...getInteractiveTargetProps(styles.experienceIntro, onSelectTarget, {
-          sectionId: "common",
-        })}
-      >
+      <section className={styles.experienceIntro}>
         <div className={styles.experienceIntroCopy}>
-          <p className={styles.sectionEyebrow}>Experience-led layout</p>
-          <h1 className={styles.heroTitle}>{model.hero.title}</h1>
-          <p className={styles.heroDescription}>{model.hero.description}</p>
+          <p
+            {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroEyebrow",
+            })}
+          >
+            Experience-led layout
+          </p>
+          <h1
+            {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroTitle",
+            })}
+          >
+            {model.hero.title}
+          </h1>
+          <p
+            {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroDescription",
+            })}
+          >
+            {model.hero.description}
+          </p>
         </div>
       </section>
 
@@ -79,6 +97,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
                   onSelectTarget,
                   {
                     sectionId: "journeyStops",
+                    targetId: `journeyStops.${index}`,
                   }
                 )}
               >
@@ -89,6 +108,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
                 <img
                   {...getInteractiveTargetProps(styles.experienceJourneyVisual, onSelectTarget, {
                     sectionId: "images",
+                    targetId: `images.gallery.${index}`,
                     imageSlot: { kind: "gallery", index },
                   })}
                   src={imageUrl}
@@ -141,6 +161,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
               <div
                 {...getInteractiveTargetProps(styles.softCallout, onSelectTarget, {
                   sectionId: "common",
+                  targetId: "common.ctaLabel",
                 })}
               >
                 <strong>{model.callToAction.label}</strong>
