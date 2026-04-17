@@ -264,4 +264,104 @@ export default class ChannexProviderClient {
       };
     }
   }
+
+  async listRatePlans(credentials, externalRoomTypeId) {
+    const apiKey = requireStr(credentials?.apiKey);
+    const roomTypeId = requireStr(externalRoomTypeId);
+
+    if (!apiKey) {
+      return {
+        success: false,
+        ratePlans: [],
+        providerStatus: "INVALID_CREDENTIALS",
+        errorCode: "MISSING_API_KEY",
+        errorMessage: "Channex credentials must include apiKey.",
+      };
+    }
+
+    if (!roomTypeId) {
+      return {
+        success: false,
+        ratePlans: [],
+        providerStatus: "INVALID_REQUEST",
+        errorCode: "MISSING_ROOM_TYPE_ID",
+        errorMessage: "Channex rate plan discovery requires externalRoomTypeId.",
+      };
+    }
+
+    try {
+      const url = new URL("/api/v1/rate_plans", CHANNEX_BASE_URL);
+      url.searchParams.set("filter[room_type_id]", roomTypeId);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-api-key": apiKey,
+        },
+      });
+
+      const rawText = await response.text();
+      const parsed = parseJsonSafely(rawText);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          ratePlans: [],
+          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "RATE_PLAN_LIST_FAILED",
+          errorCode:
+            parsed?.errors?.code ||
+            parsed?.error?.code ||
+            `CHANNEX_RATE_PLANS_${response.status}`,
+          errorMessage:
+            parsed?.errors?.title ||
+            parsed?.error?.message ||
+            `Channex rate plan list failed with status ${response.status}.`,
+        };
+      }
+
+      const rows = Array.isArray(parsed?.data) ? parsed.data : null;
+      if (!rows) {
+        return {
+          success: false,
+          ratePlans: [],
+          providerStatus: "INVALID_RESPONSE",
+          errorCode: "CHANNEX_RATE_PLANS_INVALID_RESPONSE",
+          errorMessage: "Channex rate plan list response was missing a usable data array.",
+        };
+      }
+
+      const ratePlans = rows
+        .map((row) => {
+          const externalRatePlanId = requireStr(row?.id);
+          if (!externalRatePlanId) return null;
+
+          return {
+            externalRatePlanId,
+            externalRatePlanName:
+              requireStr(row?.attributes?.title) ||
+              requireStr(row?.attributes?.name) ||
+              null,
+            ratePlanStatus: requireStr(row?.attributes?.state) || null,
+          };
+        })
+        .filter(Boolean);
+
+      return {
+        success: true,
+        ratePlans,
+        providerStatus: "ACTIVE",
+        errorCode: null,
+        errorMessage: null,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        ratePlans: [],
+        providerStatus: "RATE_PLAN_LIST_FAILED",
+        errorCode: error?.code || error?.name || "CHANNEX_RATE_PLAN_LIST_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex rate plan list request failed.",
+      };
+    }
+  }
 }
