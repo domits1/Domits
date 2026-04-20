@@ -62,7 +62,7 @@
 }
 
 .awaiting {
-  color: #78350f; 
+  color: #78350f;
 }
 
 .failed {
@@ -243,7 +243,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 22px;
-  color: #16a34a;
+  color: #166534;
   border: 2px solid #16a34a;
 }
 
@@ -334,7 +334,8 @@
   font-size: 14px;
 }
 
-.paymentMethod, .paymentStatus {
+.paymentMethod,
+.paymentStatus {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
@@ -361,6 +362,63 @@
   border-radius: 8px;
   font-size: 14px;
   color: #111827;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.editWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editBtnPrimary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #16a34a;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.editBtnPrimary:hover {
+  background: #15803d;
+}
+
+.editBtnSecondary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.editBtnSecondary:hover {
+  background: #e5e7eb;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 .policyTag {

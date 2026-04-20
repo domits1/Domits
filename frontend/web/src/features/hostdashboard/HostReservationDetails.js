@@ -131,10 +131,10 @@ const HostReservationDetails = () => {
           guestId: data?.guestId,
           channel: data?.channel,
           status: data?.status,
-          title: data?.property?.title,
-          city: data?.propertyLocation?.city,
-          country: data?.propertyLocation?.country,
-          image: data?.propertyImages?.[0]?.image,
+          title: data?.property?.title || "Untitled property",
+          city: data?.propertyLocation?.city || "",
+          country: data?.propertyLocation?.country || "",
+          image: data?.propertyImages?.[0]?.image || "",
           arrivaldate: data?.arrivalDate,
           departuredate: data?.departureDate,
           bookedOn: data?.createdAt,
@@ -182,10 +182,13 @@ const HostReservationDetails = () => {
     (b.pricePerNight || 0) * nights + (b.cleaningFee || 0);
 
   const getRuleIcon = (rule) => {
-    if (rule.toLowerCase().includes("smoking")) return <FiVolumeX />;
-    if (rule.toLowerCase().includes("parties")) return <FiUsers />;
+    if (!rule) return <FiHome />;
+    const r = rule.toLowerCase();
+
+    if (r.includes("smoking")) return <FiVolumeX />;
+    if (r.includes("parties")) return <FiUsers />;
     return <FiHome />;
-  };
+};
 
   return (
     <div className={styles.container}>
@@ -202,7 +205,7 @@ const HostReservationDetails = () => {
         </span>
 
         <span className={styles.channel}>
-          Booked via {b.channel}
+          Booked via {b.channel || "Direct"}
         </span>
       </div>
 
@@ -231,7 +234,9 @@ const HostReservationDetails = () => {
                   {formatDate(b.departuredate)}
                 </p>
 
-                <p>Check-in: {b.checkinInstructions}</p>
+                {b.checkinInstructions && (
+                  <p>Check-in: {b.checkinInstructions}</p>
+                )}
 
                 <div className={styles.metaLine}>
                   <span>{nights} nights</span>
@@ -359,15 +364,21 @@ const HostReservationDetails = () => {
               </div>
 
               {editingSection === "checkin" ? (
-                <>
+                <div className={styles.editWrapper}>
                   <input
                     name="checkinInstructions"
                     value={formData.checkinInstructions || ""}
                     onChange={handleChange}
                   />
-                  <button onClick={handleSave}>Save</button>
-                  <button onClick={handleCancel}>Cancel</button>
-                </>
+                  <div className={styles.editActions}>
+                    <button className={styles.editBtnPrimary} onClick={handleSave}>
+                      Save
+                    </button>
+                    <button className={styles.editBtnSecondary} onClick={handleCancel}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <p className={styles.grayBox}>{b.checkinInstructions}</p>
               )}
@@ -382,7 +393,7 @@ const HostReservationDetails = () => {
               </div>
 
               {editingSection === "rules" ? (
-                <>
+                <div className={styles.editWrapper}>
                   <textarea
                     value={(formData.houseRules || []).join("\n")}
                     onChange={(e) =>
@@ -392,9 +403,15 @@ const HostReservationDetails = () => {
                       })
                     }
                   />
-                  <button onClick={handleSave}>Save</button>
-                  <button onClick={handleCancel}>Cancel</button>
-                </>
+                  <div className={styles.editActions}>
+                    <button className={styles.editBtnPrimary} onClick={handleSave}>
+                      Save
+                    </button>
+                    <button className={styles.editBtnSecondary} onClick={handleCancel}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <div className={styles.grayBox}>
                   {b.houseRules?.map((rule) => (
@@ -415,7 +432,7 @@ const HostReservationDetails = () => {
               </div>
 
               {editingSection === "policy" ? (
-                <>
+                <div className={styles.editWrapper}>
                   <select
                     name="cancellationType"
                     value={formData.cancellationType || ""}
@@ -432,9 +449,15 @@ const HostReservationDetails = () => {
                     {formData.cancellationPolicy}
                   </p>
 
-                  <button onClick={handleSave}>Save</button>
-                  <button onClick={handleCancel}>Cancel</button>
-                </>
+                  <div className={styles.editActions}>
+                    <button className={styles.editBtnPrimary} onClick={handleSave}>
+                      Save
+                    </button>
+                    <button className={styles.editBtnSecondary} onClick={handleCancel}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   {b.cancellationType && (
