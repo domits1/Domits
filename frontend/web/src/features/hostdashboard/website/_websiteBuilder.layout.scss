@@ -256,6 +256,83 @@
   background: #f1f7fd;
 }
 
+.dangerButton {
+  border: 0;
+  background: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 12px 22px rgba(220, 38, 38, 0.18);
+}
+
+.dangerButton:hover {
+  border: 0;
+  background: #b91c1c;
+  color: #ffffff;
+  box-shadow: 0 16px 28px rgba(185, 28, 28, 0.22);
+}
+
+.dangerButton:disabled,
+.dangerButton:disabled:hover {
+  cursor: not-allowed;
+  background: #dc2626;
+  color: #ffffff;
+  box-shadow: none;
+  opacity: 0.58;
+  transform: none;
+}
+
+.deleteDraftOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(6px);
+}
+
+.deleteDraftDialog {
+  width: min(100%, 460px);
+  border-radius: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background:
+    radial-gradient(circle at top left, rgba(220, 38, 38, 0.08), transparent 42%),
+    #ffffff;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+  padding: 28px;
+}
+
+.deleteDraftEyebrow {
+  margin: 0 0 10px;
+  color: #991b1b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.deleteDraftTitle {
+  margin: 0 0 12px;
+  color: #0f172a;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  line-height: 1.1;
+}
+
+.deleteDraftCopy {
+  margin: 0 0 12px;
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.deleteDraftActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
 .selectionSummary {
   padding: 22px;
   border-radius: 18px;

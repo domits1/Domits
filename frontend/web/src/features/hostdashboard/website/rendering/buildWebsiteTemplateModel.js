@@ -435,6 +435,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   return {
     source: {
       propertyId: cleanText(property.id || summaryProperty?.value),
+      hostId: cleanText(property.hostId || property.host_id || summaryProperty?.hostId),
       status: cleanText(property.status || summaryProperty?.status || "INACTIVE"),
       locale: DEFAULT_LOCALE,
     },
@@ -541,8 +542,10 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       trustCards: true,
       gallerySection: true,
       amenitiesPanel: true,
+      availabilityCalendar: true,
       callToAction: true,
       journeyStops: true,
+      chatWidget: true,
     },
   };
 };

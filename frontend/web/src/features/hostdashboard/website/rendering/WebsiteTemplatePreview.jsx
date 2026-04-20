@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import styles from "./WebsiteTemplatePreview.module.scss";
 import { getWebsiteTemplateById } from "../websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./templateRegistry";
+import WebsiteContactWidget from "./WebsiteContactWidget";
 
 const PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   desktop: 1180,
@@ -100,6 +101,7 @@ export default function WebsiteTemplatePreview({
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
   const isCompactVariant = variant === "compact";
+  const showContactWidget = !isCompactVariant && model.visibility?.chatWidget !== false;
   const viewportWidth = isCompactVariant
     ? COMPACT_PREVIEW_VIEWPORT_WIDTH
     : resolveViewportWidth(viewport);
@@ -156,6 +158,7 @@ export default function WebsiteTemplatePreview({
               ) : (
                 <UnsupportedTemplatePreview templateName={template.name} />
               )}
+              {showContactWidget ? <WebsiteContactWidget model={model} /> : null}
             </div>
           </div>
         </div>
@@ -167,6 +170,10 @@ export default function WebsiteTemplatePreview({
 WebsiteTemplatePreview.propTypes = {
   templateId: PropTypes.string.isRequired,
   model: PropTypes.shape({
+    source: PropTypes.shape({
+      hostId: PropTypes.string,
+      propertyId: PropTypes.string,
+    }),
     site: PropTypes.shape({
       title: PropTypes.string,
       templateReadyTitle: PropTypes.string,
@@ -174,6 +181,10 @@ WebsiteTemplatePreview.propTypes = {
     location: PropTypes.shape({
       label: PropTypes.string,
     }).isRequired,
+    visibility: PropTypes.shape({
+      availabilityCalendar: PropTypes.bool,
+      chatWidget: PropTypes.bool,
+    }),
   }).isRequired,
   variant: PropTypes.oneOf(["default", "compact"]),
   viewport: PropTypes.oneOf(["desktop", "tablet", "mobile"]),

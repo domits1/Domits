@@ -28,6 +28,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showJourneyStops = model.visibility?.journeyStops !== false;
   const showAmenitiesPanel = model.visibility?.amenitiesPanel !== false;
+  const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
   const showCallToAction = model.visibility?.callToAction !== false;
   const showExperienceFooter = showAmenitiesPanel || showCallToAction;
 
@@ -60,7 +61,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
               targetId: "common.heroEyebrow",
             })}
           >
-            Experience-led layout
+            {model.hero.eyebrow}
           </p>
           <h1
             {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
@@ -120,7 +121,15 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
         </section>
       ) : null}
 
-      <AvailabilityCalendarPreview availability={model.availability} />
+      {showAvailabilityCalendar ? (
+        <AvailabilityCalendarPreview
+          availability={model.availability}
+          interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
+            sectionId: "visibility",
+            targetId: "visibility.availabilityCalendar",
+          })}
+        />
+      ) : null}
 
       {showExperienceFooter ? (
         <section className={styles.sectionCard}>
@@ -181,6 +190,7 @@ ExperienceJourneyTemplate.propTypes = {
       title: PropTypes.string,
     }).isRequired,
     hero: PropTypes.shape({
+      eyebrow: PropTypes.string,
       title: PropTypes.string,
       description: PropTypes.string,
     }).isRequired,
@@ -221,8 +231,10 @@ ExperienceJourneyTemplate.propTypes = {
     visibility: PropTypes.shape({
       topBar: PropTypes.bool,
       amenitiesPanel: PropTypes.bool,
+      availabilityCalendar: PropTypes.bool,
       callToAction: PropTypes.bool,
       journeyStops: PropTypes.bool,
+      chatWidget: PropTypes.bool,
     }).isRequired,
   }).isRequired,
   onSelectTarget: PropTypes.func,

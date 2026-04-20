@@ -39,7 +39,7 @@ const buildCalendarCells = (viewMonth, externalBlockedDateKeys, unavailableDateK
   });
 };
 
-export default function AvailabilityCalendarPreview({ availability }) {
+export default function AvailabilityCalendarPreview({ availability, interactiveTargetProps = {} }) {
   const externalBlockedDateKeySet = useMemo(
     () => new Set(Array.isArray(availability?.externalBlockedDates) ? availability.externalBlockedDates : []),
     [availability]
@@ -61,9 +61,11 @@ export default function AvailabilityCalendarPreview({ availability }) {
       }).format(viewMonth),
     [viewMonth]
   );
+  const { className: interactiveClassName = "", ...rootInteractiveProps } = interactiveTargetProps || {};
+  const calendarClassName = `${styles.calendarCard} ${interactiveClassName}`.trim();
 
   return (
-    <section className={styles.calendarCard}>
+    <section {...rootInteractiveProps} className={calendarClassName}>
       <div className={styles.calendarHeader}>
         <div className={styles.calendarHeaderCopy}>
           <p className={styles.calendarEyebrow}>Availability snapshot</p>
@@ -171,4 +173,11 @@ AvailabilityCalendarPreview.propTypes = {
     nextBlockedLabel: PropTypes.string,
     callout: PropTypes.string,
   }).isRequired,
+  interactiveTargetProps: PropTypes.shape({
+    className: PropTypes.string,
+    role: PropTypes.string,
+    tabIndex: PropTypes.number,
+    onClick: PropTypes.func,
+    onKeyDown: PropTypes.func,
+  }),
 };

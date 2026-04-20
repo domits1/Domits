@@ -17,8 +17,10 @@ const VISIBILITY_KEYS = Object.freeze([
   "trustCards",
   "gallerySection",
   "amenitiesPanel",
+  "availabilityCalendar",
   "callToAction",
   "journeyStops",
+  "chatWidget",
 ]);
 
 const cleanText = (value) => String(value || "").trim();

@@ -91,6 +91,16 @@ const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
       label: "Show amenities panel",
       description: "Controls the featured amenities panel in the lower content block.",
     },
+    {
+      key: "availabilityCalendar",
+      label: "Show availability calendar",
+      description: "Controls the imported availability snapshot section.",
+    },
+    {
+      key: "chatWidget",
+      label: "Show chat widget",
+      description: "Shows the visitor contact widget on the website.",
+    },
   ],
   "trust-signals": [
     {
@@ -107,6 +117,16 @@ const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
       key: "callToAction",
       label: "Show soft CTA",
       description: "Controls the soft callout at the bottom of the page.",
+    },
+    {
+      key: "availabilityCalendar",
+      label: "Show availability calendar",
+      description: "Controls the imported availability snapshot section.",
+    },
+    {
+      key: "chatWidget",
+      label: "Show chat widget",
+      description: "Shows the visitor contact widget on the website.",
     },
   ],
   "experience-journey": [
@@ -129,6 +149,16 @@ const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
       key: "callToAction",
       label: "Show next-step callout",
       description: "Controls the CTA callout in the footer block.",
+    },
+    {
+      key: "availabilityCalendar",
+      label: "Show availability calendar",
+      description: "Controls the imported availability snapshot section.",
+    },
+    {
+      key: "chatWidget",
+      label: "Show chat widget",
+      description: "Shows the visitor contact widget on the website.",
     },
   ],
 });
@@ -194,6 +224,7 @@ const EDITOR_TARGET_KEYS = Object.freeze({
     ctaLabel: "common.ctaLabel",
     ctaNote: "common.ctaNote",
   },
+  visibility: (fieldKey) => `visibility.${fieldKey}`,
   images: {
     hero: "images.hero",
     gallery: (index) => `images.gallery.${index}`,
@@ -928,20 +959,30 @@ function WebsiteEditorPage() {
                     sectionRef={setSectionRef(EDITOR_SECTION_KEYS.visibility)}
                   >
                     <div className={styles.toggleStack}>
-                      {visibilityFields.map((field) => (
-                        <label key={field.key} className={styles.toggleCard}>
-                          <div className={styles.toggleCopy}>
-                            <span className={styles.toggleLabel}>{field.label}</span>
-                            <span className={styles.toggleDescription}>{field.description}</span>
-                          </div>
-                          <input
-                            type="checkbox"
-                            className={styles.toggleInput}
-                            checked={Boolean(editorValues.visibility[field.key])}
-                            onChange={handleVisibilityFieldChange(field.key)}
-                          />
-                        </label>
-                      ))}
+                      {visibilityFields.map((field) => {
+                        const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
+
+                        return (
+                          <label
+                            key={field.key}
+                            ref={setTargetRef(visibilityTargetId)}
+                            className={`${styles.toggleCard} ${
+                              highlightedTargetId === visibilityTargetId ? styles.editorTargetHighlighted : ""
+                            }`.trim()}
+                          >
+                            <div className={styles.toggleCopy}>
+                              <span className={styles.toggleLabel}>{field.label}</span>
+                              <span className={styles.toggleDescription}>{field.description}</span>
+                            </div>
+                            <input
+                              type="checkbox"
+                              className={styles.toggleInput}
+                              checked={Boolean(editorValues.visibility[field.key])}
+                              onChange={handleVisibilityFieldChange(field.key)}
+                            />
+                          </label>
+                        );
+                      })}
                     </div>
                   </CollapsibleSection>
                 ) : null}

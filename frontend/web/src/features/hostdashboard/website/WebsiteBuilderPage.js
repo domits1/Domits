@@ -83,6 +83,18 @@ const getPhotoCardClassName = (photoIndex) => {
   return `${styles.photoCard} ${variantClassName}`.trim();
 };
 
+const getDraftContentOverrides = (draft) =>
+  draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
+
+const getDraftDisplayTitle = (draft) => {
+  const contentOverrides = getDraftContentOverrides(draft);
+  return (
+    String(contentOverrides.siteTitle || "").trim() ||
+    String(draft?.propertyTitle || "").trim() ||
+    "Untitled listing website"
+  );
+};
+
 const formatDraftUpdatedAt = (updatedAt) => {
   const parsedValue = Number(updatedAt);
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
@@ -103,10 +115,9 @@ const formatDraftUpdatedAt = (updatedAt) => {
 };
 
 const buildDraftCardFallbackPreviewModel = (draft) => {
-  const contentOverrides =
-    draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
+  const contentOverrides = getDraftContentOverrides(draft);
   const locationLabel = String(draft?.location || "").trim();
-  const title = String(draft?.propertyTitle || "Untitled listing website").trim();
+  const title = getDraftDisplayTitle(draft);
   const subtitle = String(draft?.propertySubtitle || "").trim();
   const selectedGalleryImages = Array.isArray(contentOverrides.galleryImages)
     ? contentOverrides.galleryImages.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)
@@ -120,6 +131,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
     {
       source: {
         propertyId: String(draft?.propertyId || "").trim(),
+        hostId: String(draft?.hostId || "").trim(),
         status: String(draft?.propertyStatus || draft?.status || "DRAFT").trim(),
         locale: "en",
       },
@@ -242,8 +254,10 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
         trustCards: true,
         gallerySection: true,
         amenitiesPanel: true,
+        availabilityCalendar: true,
         callToAction: true,
         journeyStops: true,
+        chatWidget: true,
       },
     },
     contentOverrides
@@ -251,7 +265,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
 };
 
 function WebsiteBuilderPage() {
-  const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_BUILDER);
+  const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_WEBSITES);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
   const [selectedTemplateId, setSelectedTemplateId] = useState(WEBSITE_TEMPLATE_OPTIONS[0].id);
@@ -272,6 +286,8 @@ function WebsiteBuilderPage() {
   const [isPersistingWebsiteDraft, setIsPersistingWebsiteDraft] = useState(false);
   const [persistWebsiteDraftMessage, setPersistWebsiteDraftMessage] = useState("");
   const [persistWebsiteDraftError, setPersistWebsiteDraftError] = useState("");
+  const [websiteDraftPendingDelete, setWebsiteDraftPendingDelete] = useState(null);
+  const [isDeletingWebsiteDraft, setIsDeletingWebsiteDraft] = useState(false);
   const previewSectionRef = useRef(null);
   const navigate = useNavigate();
 
@@ -588,20 +604,31 @@ function WebsiteBuilderPage() {
     navigate(`/hostdashboard/website/${propertyId}`);
   };
 
-  const removeWebsiteDraft = async (draft) => {
+  const openWebsiteDraftDeleteDialog = (draft) => {
     const propertyId = String(draft?.propertyId || "").trim();
     if (!propertyId) {
       return;
     }
 
-    const propertyLabel = String(draft?.propertyTitle || draft?.location || "this website").trim();
-    const isDeleteConfirmed = globalThis.confirm(
-      `Delete the saved website for ${propertyLabel}? The listing will become available in Build website again.`
-    );
+    setWebsiteDraftPendingDelete(draft);
+  };
 
-    if (!isDeleteConfirmed) {
+  const closeWebsiteDraftDeleteDialog = () => {
+    if (isDeletingWebsiteDraft) {
       return;
     }
+
+    setWebsiteDraftPendingDelete(null);
+  };
+
+  const removeWebsiteDraft = async () => {
+    const propertyId = String(websiteDraftPendingDelete?.propertyId || "").trim();
+    if (!propertyId) {
+      setWebsiteDraftPendingDelete(null);
+      return;
+    }
+
+    setIsDeletingWebsiteDraft(true);
 
     try {
       await deleteWebsiteDraft(propertyId);
@@ -610,10 +637,13 @@ function WebsiteBuilderPage() {
         delete nextPreviewModels[propertyId];
         return nextPreviewModels;
       });
+      setWebsiteDraftPendingDelete(null);
       await loadHostWebsiteDrafts();
       toast.success("Website deleted from your workspace.");
     } catch (error) {
       toast.error(error?.message || "We could not delete this website.");
+    } finally {
+      setIsDeletingWebsiteDraft(false);
     }
   };
 
@@ -643,18 +673,6 @@ function WebsiteBuilderPage() {
       <button
         type="button"
         role="tab"
-        aria-selected={workspaceTab === WORKSPACE_TAB_BUILDER}
-        className={`${styles.workspaceTabButton} ${
-          workspaceTab === WORKSPACE_TAB_BUILDER ? styles.workspaceTabButtonActive : ""
-        }`.trim()}
-        onClick={() => setWorkspaceTab(WORKSPACE_TAB_BUILDER)}
-      >
-        Build website
-      </button>
-
-      <button
-        type="button"
-        role="tab"
         aria-selected={workspaceTab === WORKSPACE_TAB_WEBSITES}
         className={`${styles.workspaceTabButton} ${
           workspaceTab === WORKSPACE_TAB_WEBSITES ? styles.workspaceTabButtonActive : ""
@@ -662,6 +680,18 @@ function WebsiteBuilderPage() {
         onClick={() => setWorkspaceTab(WORKSPACE_TAB_WEBSITES)}
       >
         My websites
+      </button>
+
+      <button
+        type="button"
+        role="tab"
+        aria-selected={workspaceTab === WORKSPACE_TAB_BUILDER}
+        className={`${styles.workspaceTabButton} ${
+          workspaceTab === WORKSPACE_TAB_BUILDER ? styles.workspaceTabButtonActive : ""
+        }`.trim()}
+        onClick={() => setWorkspaceTab(WORKSPACE_TAB_BUILDER)}
+      >
+        Build website
       </button>
     </div>
   );
@@ -705,6 +735,7 @@ function WebsiteBuilderPage() {
           const template = getWebsiteTemplateById(draft.templateKey);
           const templateName = template?.name || draft.templateKey || "Unknown template";
           const draftPreviewModel = websiteDraftPreviewModels[draft.propertyId] || null;
+          const draftDisplayTitle = getDraftDisplayTitle(draft);
 
           return (
             <article key={draft.id || `${draft.propertyId}-${draft.updatedAt}`} className={styles.websiteDraftCard}>
@@ -712,7 +743,7 @@ function WebsiteBuilderPage() {
                 <div className={styles.websiteDraftCardCopy}>
                   <p className={styles.summaryLabel}>Saved website draft</p>
                   <p className={styles.summaryValue}>
-                    {draft.propertyTitle || "Untitled listing website"}
+                    {draftDisplayTitle}
                   </p>
                   {draft.location ? <p className={styles.summaryLocation}>{draft.location}</p> : null}
 
@@ -731,10 +762,10 @@ function WebsiteBuilderPage() {
                     </button>
                     <button
                       type="button"
-                      className={styles.secondaryButton}
-                      onClick={() => void removeWebsiteDraft(draft)}
+                      className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
+                      onClick={() => openWebsiteDraftDeleteDialog(draft)}
                     >
-                      Delete website
+                      Delete permanently
                     </button>
                   </div>
                 </div>
@@ -1233,6 +1264,51 @@ function WebsiteBuilderPage() {
             ))}
           </div>
         </dialog>
+      ) : null}
+
+      {websiteDraftPendingDelete ? (
+        <div className={styles.deleteDraftOverlay} role="presentation">
+          <section
+            className={styles.deleteDraftDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-website-draft-title"
+          >
+            <p className={styles.deleteDraftEyebrow}>Delete website</p>
+            <h3 id="delete-website-draft-title" className={styles.deleteDraftTitle}>
+              Delete this website permanently?
+            </h3>
+            <p className={styles.deleteDraftCopy}>
+              This removes the saved website draft for{" "}
+              <strong>
+                {getDraftDisplayTitle(websiteDraftPendingDelete)}
+              </strong>
+              . The listing will become available again in the Build website dropdown.
+            </p>
+            <p className={styles.deleteDraftCopy}>
+              This does not delete the listing itself.
+            </p>
+
+            <div className={styles.deleteDraftActions}>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={closeWebsiteDraftDeleteDialog}
+                disabled={isDeletingWebsiteDraft}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
+                onClick={() => void removeWebsiteDraft()}
+                disabled={isDeletingWebsiteDraft}
+              >
+                {isDeletingWebsiteDraft ? "Deleting..." : "Delete permanently"}
+              </button>
+            </div>
+          </section>
+        </div>
       ) : null}
     </main>
   );

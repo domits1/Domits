@@ -755,3 +755,179 @@ Evidence (commit(s), file(s), docs):
 - Docs:
   - `standalone_property_site_frontend_status.md`
 
+## [2026-04-20] Calendar preview to visibility-toggle targeting
+Context:
+After making the availability calendar toggleable, clicking the calendar in the preview needed to take the host directly to the corresponding show/hide control.
+
+Implementation:
+- Added editor target IDs for visibility controls.
+- Registered visibility toggle rows as precise editor targets.
+- Made the availability calendar root accept preview interaction props.
+- Connected Panorama Landing, Trust Signals, and Experience Journey calendar previews to `visibility.availabilityCalendar`.
+
+Decision / Rationale:
+- Preview-to-editor navigation should land on the exact editable control, not just the broad editor section.
+- Keeping the target ID in the template preserves the existing renderer/editor contract.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-20] Availability calendar visibility toggle
+Context:
+The website preview availability calendar needed to be optional like other controlled sections in the editor.
+
+Implementation:
+- Added `availabilityCalendar` to the managed visibility override contract.
+- Added `Show availability calendar` controls for Panorama Landing, Trust Signals, and Experience Journey.
+- Made all three implemented templates conditionally render the availability calendar from the shared visibility flag.
+- Added the flag to fallback draft previews and the canonical website template model defaults.
+
+Decision / Rationale:
+- The calendar is a full website section, not fixed template chrome, so it belongs in the same controlled visibility surface as gallery, amenities, trust cards, CTA, and chat.
+- This keeps the renderer contract stable for future public publish because the draft stores one explicit visibility override.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- Existing `content_overrides_json.visibility` can store the new key without migration.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/websiteDraftContentOverrides.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/buildWebsiteTemplateModel.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-20] Website title and hero eyebrow binding fixes
+Context:
+Saved website cards still displayed the original listing title instead of the edited website title, and two implemented templates were still using hardcoded hero eyebrow labels.
+
+Implementation:
+- Made `My websites` derive the visible card title from `contentOverrides.siteTitle` before falling back to the listing title.
+- Connected Trust Signals hero eyebrow rendering to `model.hero.eyebrow`.
+- Connected Experience Journey hero eyebrow rendering to `model.hero.eyebrow`.
+- Updated template PropTypes to include the hero eyebrow field.
+
+Decision / Rationale:
+- Templates must consume the canonical website model instead of embedding fixed copy where editable fields exist.
+- The workspace overview should reflect the persisted website draft state, not only the original listing snapshot.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-20] Saved website deletion confirmation overlay
+Context:
+The saved website delete action needed to match the destructive button style used elsewhere and should not delete immediately from a single button click.
+
+Implementation:
+- Renamed the saved website delete action to `Delete permanently`.
+- Replaced the browser confirm call with an in-page confirmation overlay.
+- Kept the existing draft delete endpoint and refresh behavior.
+- Updated the destructive button styling to use a filled red button with white text.
+
+Decision / Rationale:
+- Browser confirm dialogs are inconsistent with the rest of the host dashboard and are not good enough for a persistent workspace action.
+- The listing itself is not deleted, so the overlay explicitly states that only the saved website draft is removed.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+
+## [2026-04-20] Visitor contact widget and workspace destructive-action polish
+Context:
+The workspace delete action was visually too neutral, and standalone website previews needed an early contact-widget surface so visitors can message the host from a generated website.
+
+Implementation:
+- Styled the saved website delete action as a destructive red button in `My websites`.
+- Added `chatWidget` to the managed visibility override contract.
+- Added a `Show chat widget` visibility toggle for the implemented templates.
+- Added a reusable website contact widget rendered by the shared preview shell instead of duplicating widget markup per template.
+- Added a website contact service that reuses the unified messaging send service with generated visitor id, host id, property id, and thread context.
+- Added host id to the canonical website template model source data.
+
+Decision / Rationale:
+- Delete is destructive and should not look like a normal secondary action.
+- The chat widget belongs at the shared preview/render layer because it is template-agnostic.
+- The current implementation reuses the unified messaging send path, but the future public website should still get a dedicated public contact endpoint contract instead of depending on host-dashboard assumptions.
+
+AWS / Data impact:
+- No new Aurora schema change.
+- No new API Gateway route in this slice.
+- The widget currently uses the existing unified messaging API used by host messages.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Open risks / Next:
+- Before public launch, define a proper public website contact endpoint that validates site/property/host context server-side and rate limits anonymous visitor messages.
+- Add anti-abuse controls before exposing this on public domains.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/websiteDraftContentOverrides.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/buildWebsiteTemplateModel.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteContactWidget.jsx`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteContactService.js`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+

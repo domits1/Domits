@@ -49,6 +49,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
   const showTrustCards = model.visibility?.trustCards !== false;
   const showGallerySection = model.visibility?.gallerySection !== false;
   const showAmenitiesPanel = model.visibility?.amenitiesPanel !== false;
+  const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
   const showCallToAction = model.visibility?.callToAction !== false;
   const showPanoramaSecondarySection = showGallerySection || showAmenitiesPanel;
 
@@ -156,7 +157,15 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
         </section>
       ) : null}
 
-      <AvailabilityCalendarPreview availability={model.availability} />
+      {showAvailabilityCalendar ? (
+        <AvailabilityCalendarPreview
+          availability={model.availability}
+          interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
+            sectionId: "visibility",
+            targetId: "visibility.availabilityCalendar",
+          })}
+        />
+      ) : null}
 
       {showPanoramaSecondarySection ? (
         <section className={styles.sectionCard}>
@@ -273,7 +282,9 @@ PanoramaLandingTemplate.propTypes = {
       trustCards: PropTypes.bool,
       gallerySection: PropTypes.bool,
       amenitiesPanel: PropTypes.bool,
+      availabilityCalendar: PropTypes.bool,
       callToAction: PropTypes.bool,
+      chatWidget: PropTypes.bool,
     }).isRequired,
   }).isRequired,
   onSelectTarget: PropTypes.func,

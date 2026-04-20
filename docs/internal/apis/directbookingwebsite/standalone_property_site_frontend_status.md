@@ -26,17 +26,23 @@ What is in place:
   - CTA label
   - CTA note
 - Template-aware section visibility toggles for implemented templates.
+- The availability calendar is part of the controlled visibility surface and can be shown or hidden per website draft.
 - Image-slot selection for hero/gallery slots used by implemented templates, now driven through a visual image-picker overlay instead of dropdown-only controls.
 - Editor save feedback now uses toast notifications instead of inline status copy inside the form.
 - Image-slot picker now uses a compact thumbnail grid that can scale to larger imported photo sets without a large hero preview stage.
 - Scaled preview rendering with dedicated desktop/tablet/mobile viewport switching in the editor.
 - Compact scaled website preview cards inside `My websites`, with corrected thumbnail scaling, clipped preview height, and reduced card whitespace.
-- Saved website cards now expose both `Open editor` and `Delete website`, so deleting a website immediately makes its listing available again in the builder.
+- Saved website cards display the persisted website title override when the host changes the title in the editor.
+- Saved website cards now expose both `Open editor` and `Delete permanently`, so deleting a website immediately makes its listing available again in the builder.
+- The saved website delete action is visually destructive/red and now opens an in-app confirmation overlay before deletion.
 - Editor sections are now collapsible so the left-side control surface remains usable as more override fields are added.
 - Clicking editable areas in the editor preview now opens or scrolls to the matching editor section, and clicking preview images opens the image picker directly.
+- Clicking the availability calendar in the editor preview now opens the visibility section and highlights the `Show availability calendar` toggle.
 - Preview-to-editor jumps now briefly highlight the matched editor section so users can see where they landed after clicking the preview.
 - Editor loading now keeps the editor shell visible and uses section-level pulse-bar loaders instead of a single blocking state card.
 - Editor section bodies now open and close with an animated dropdown transition instead of a hard mount/unmount jump.
+- Implemented previews now include a reusable visitor contact widget that can be shown or hidden through the editor visibility controls.
+- The visitor contact widget uses the shared unified messaging send service with host/property context so it can flow toward Domits messages once the public-site contact endpoint contract is finalized.
 - Imported calendar availability now flows into website previews from `hostDashboard/single`, including:
   - imported external blocked dates
   - iCal sync presence

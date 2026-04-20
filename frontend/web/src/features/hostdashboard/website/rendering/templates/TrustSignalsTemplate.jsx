@@ -26,6 +26,7 @@ const getInteractiveTargetProps = (className, onSelectTarget, target) => {
 export default function TrustSignalsTemplate({ model, onSelectTarget }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showTrustCards = model.visibility?.trustCards !== false;
+  const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
   const showCallToAction = model.visibility?.callToAction !== false;
 
   return (
@@ -58,7 +59,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
               targetId: "common.heroEyebrow",
             })}
           >
-            Trust-oriented layout
+            {model.hero.eyebrow}
           </p>
           <h1
             {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
@@ -110,7 +111,15 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
           </div>
         ) : null}
 
-        <AvailabilityCalendarPreview availability={model.availability} />
+        {showAvailabilityCalendar ? (
+          <AvailabilityCalendarPreview
+            availability={model.availability}
+            interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
+              sectionId: "visibility",
+              targetId: "visibility.availabilityCalendar",
+            })}
+          />
+        ) : null}
 
         {showCallToAction ? (
           <div className={styles.trustSignalsFooter}>
@@ -136,6 +145,7 @@ TrustSignalsTemplate.propTypes = {
       title: PropTypes.string,
     }).isRequired,
     hero: PropTypes.shape({
+      eyebrow: PropTypes.string,
       title: PropTypes.string,
       description: PropTypes.string,
     }).isRequired,
@@ -170,7 +180,9 @@ TrustSignalsTemplate.propTypes = {
     visibility: PropTypes.shape({
       topBar: PropTypes.bool,
       trustCards: PropTypes.bool,
+      availabilityCalendar: PropTypes.bool,
       callToAction: PropTypes.bool,
+      chatWidget: PropTypes.bool,
     }).isRequired,
   }).isRequired,
   onSelectTarget: PropTypes.func,
