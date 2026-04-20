@@ -2086,6 +2086,53 @@ export default class IntegrationService {
     }
   }
 
+  async listLinkedChannexRatePlans(userId) {
+    const normalizedUserId = requireStr(userId);
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+
+    try {
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+        return bad(409, {
+          error: "Channex integration is not connected for this user.",
+          errorCode: "CHANNEX_NOT_CONNECTED",
+          status: !integration ? CHANNEX_STATUS.NOT_CONNECTED : CHANNEX_STATUS.DISCONNECTED,
+        });
+      }
+
+      if (!requireStr(integration.credentialsRef)) {
+        return bad(409, {
+          error: "Channex integration is not locally usable. Reconnect required.",
+          errorCode: "CHANNEX_RECONNECT_REQUIRED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      const mappings = await this.ratePlans.listByAccountId(integration.id);
+
+      return ok({
+        channel: "CHANNEX",
+        integrationAccountId: integration.id,
+        status: integration.status,
+        ratePlanMappings: (Array.isArray(mappings) ? mappings : []).map((mapping) => ({
+          domitsPropertyId: mapping.domitsPropertyId,
+          externalPropertyId: mapping.externalPropertyId,
+          externalRoomTypeId: mapping.externalRoomTypeId,
+          externalRatePlanId: mapping.externalRatePlanId,
+          externalRatePlanName: mapping.externalRatePlanName ?? null,
+          status: mapping.status,
+        })),
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to list linked Channex rate plan mappings.",
+        errorCode: "CHANNEX_RATE_PLAN_MAPPING_LIST_FAILED",
+        details,
+      });
+    }
+  }
+
   async completeWhatsAppConnect(body) {
     const userId = requireStr(body.userId);
     const connectSessionId = requireStr(body.connectSessionId);
