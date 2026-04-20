@@ -3,6 +3,7 @@ import { UnifiedMessage } from "../../../models/unified/messaging/UnifiedMessage
 
 import { ChannelIntegrationAccount } from "../../../models/unified/integrations/ChannelIntegrationAccount.js";
 import { ChannelIntegrationProperty } from "../../../models/unified/integrations/ChannelIntegrationProperty.js";
+import { ChannelIntegrationRatePlan } from "../../../models/unified/integrations/ChannelIntegrationRatePlan.js";
 import { ChannelIntegrationRoomType } from "../../../models/unified/integrations/ChannelIntegrationRoomType.js";
 import { ChannelReservationLink } from "../../../models/unified/integrations/ChannelReservationLink.js";
 
@@ -16,6 +17,7 @@ export const Tables = [
 
   ChannelIntegrationAccount,
   ChannelIntegrationProperty,
+  ChannelIntegrationRatePlan,
   ChannelIntegrationRoomType,
   ChannelReservationLink,
 
