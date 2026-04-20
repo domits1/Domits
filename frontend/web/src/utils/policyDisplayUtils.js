@@ -3,15 +3,15 @@ import PropTypes from "prop-types";
 
 const getRefundString = (pct) => {
   if (pct === 100) {
-    return "100% refund (you will keep 0% of the booking)";
+    return "100% refund.";
   }
   if (pct === 70) {
-    return "70% refund (you will keep 30% of the booking)";
+    return "70% refund.";
   }
   if (pct === 50) {
-    return "50% refund (you will keep 50% of the booking)";
+    return "50% refund.";
   }
-  return "no refund ( you will keep 100% of the booking)";
+  return "No refund.";
 };
 
 const generatePolicyRuleStrings = (periodDays, refundPercentages) => {
@@ -19,9 +19,9 @@ const generatePolicyRuleStrings = (periodDays, refundPercentages) => {
   return refundPercentages.map((pct, index) => {
     const refundStr = getRefundString(pct);
     if (index === 0) {
-      return `At least ${periodStr} before check-in, they will receive ${refundStr}`;
+      return `At least ${periodStr} before check-in, Guests will receive ${refundStr}`;
     }
-    return `Less than ${periodStr} before check-in, they will receive ${refundStr}`;
+    return `Less than ${periodStr} before check-in, Guests will receive ${refundStr}`;
   });
 };
 
@@ -32,7 +32,7 @@ export const CANCELLATION_POLICIES = [
     summary: "Full refund until 1 day before check-in",
     rules: generatePolicyRuleStrings(1, [100, 0]),
     important:
-      "your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
+      "Your payout is processed once the booking becomes non-refundable. You should receive your payout within 3 days of processing.",
   },
   {
     id: "moderate",
@@ -54,121 +54,352 @@ export const CANCELLATION_POLICIES = [
     summary: "Full refund until 30 days before check-in",
     rules: [
       ...generatePolicyRuleStrings(30, [100, 50]),
-      "Less than 7 days before check-in, they will receive no refund ( you will keep 100% of the booking)",
+      "Less than 7 days before check-in, Guests will receive No refund.",
     ],
     important: null,
   },
 ];
 
-export const parseCancellationPolicy = (rules = []) => {
-  const activePolicy = rules.find((rule) => rule.rule?.startsWith("CancellationPolicy:") && rule.value === true);
-  if (!activePolicy) return null;
+const toNormalizedPolicyId = (value = "") =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replaceAll(/\s+/g, "_")
+    .replaceAll("-", "_");
 
-  const policyId = activePolicy.rule.replace("CancellationPolicy:", "").toLowerCase();
-  const policy = CANCELLATION_POLICIES.find((p) => p.id === policyId);
-  return policy
-    ? {
-        type: policy.name,
-        summary: policy.summary,
-        details: policy.rules,
-        important: policy.important,
-      }
-    : null;
+const getCancellationPolicyColor = (policyId = "") => {
+  const normalizedId = toNormalizedPolicyId(policyId);
+  if (normalizedId === "flexible") return "#4CAF50";
+  if (normalizedId === "moderate") return "#00BCD4";
+  if (normalizedId === "strict" || normalizedId === "firm") return "#FF7043";
+  return "#6b7280";
+};
+
+const buildCancellationPolicy = (policyId, description = null) => {
+  const normalizedId = toNormalizedPolicyId(policyId);
+  const policy = CANCELLATION_POLICIES.find((item) => item.id === normalizedId);
+
+  if (!policy) {
+    return null;
+  }
+
+  return {
+    id: normalizedId,
+    type: policy.name,
+    summary: description || policy.summary,
+    details: policy.rules,
+    important: policy.important,
+    color: getCancellationPolicyColor(normalizedId),
+  };
+};
+
+export const parseCancellationPolicy = (rules = []) => {
+  const activePolicy = (rules || []).find(
+    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && rule?.value === true
+  );
+
+  if (!activePolicy?.rule) {
+    return null;
+  }
+
+  return buildCancellationPolicy(activePolicy.rule.replace("CancellationPolicy:", ""));
+};
+
+export const getActiveCancellationPolicyId = (rulesOrObject = []) => {
+  if (Array.isArray(rulesOrObject)) {
+    const activePolicy = rulesOrObject.find(
+      (rule) => rule?.rule?.startsWith("CancellationPolicy:") && rule?.value === true
+    );
+
+    return activePolicy?.rule ? activePolicy.rule.replace("CancellationPolicy:", "") : "";
+  }
+
+  if (rulesOrObject && typeof rulesOrObject === "object") {
+    const activePolicyKey = Object.keys(rulesOrObject).find(
+      (key) => key?.startsWith("CancellationPolicy:") && rulesOrObject[key] === true
+    );
+
+    return activePolicyKey ? activePolicyKey.replace("CancellationPolicy:", "") : "";
+  }
+
+  return "";
+};
+
+export const parseCancellationPolicyString = (policyInput = "") => {
+  const policyId =
+    typeof policyInput === "string"
+      ? policyInput
+      : policyInput?.policy_type ||
+        policyInput?.policyType ||
+        policyInput?.policy ||
+        policyInput?.type ||
+        policyInput?.id ||
+        policyInput?.name ||
+        "";
+
+  const description =
+    typeof policyInput === "object" && policyInput !== null
+      ? policyInput?.description || policyInput?.summary || policyInput?.label || null
+      : null;
+
+  const parsed = buildCancellationPolicy(policyId, description);
+  if (parsed) {
+    return parsed;
+  }
+
+  return {
+    id: null,
+    type: "Not specified",
+    summary: description || "No cancellation policy selected.",
+    details: [],
+    important: null,
+    color: getCancellationPolicyColor(),
+  };
 };
 
 const RULE_KEY_MAPS = {
   house: {
-    SuitableForChildren: "Children allowed",
-    SuitableForInfants: "Infants allowed",
-    PetsAllowed: "Pets allowed",
-    SmokingAllowed: "Smoking allowed",
-    "Parties/EventsAllowed": "Parties / Events allowed",
+    ChildrenAllowed: { label: "Children allowed", aliases: ["ChildrenAllowed", "SuitableForChildren"] },
+    SuitableForInfants: { label: "Infants allowed", aliases: ["SuitableForInfants", "InfantsAllowed"] },
+    PetsAllowed: { label: "Pets allowed", aliases: ["PetsAllowed"] },
+    SmokingAllowed: { label: "Smoking allowed", aliases: ["SmokingAllowed"] },
+    EventsAllowed: {
+      label: "Parties / Events allowed",
+      aliases: ["EventsAllowed", "PartiesAllowed", "Parties/EventsAllowed"],
+    },
+    QuietHours: { label: "Quiet hours enforced", aliases: ["QuietHours"] },
+    MaxGuests: { label: "Max guests limit", aliases: ["MaxGuests"] },
   },
   property: {
-    CookingAllowed: "Cooking allowed",
-    ParkingAvailable: "Parking available",
+    CookingAllowed: { label: "Cooking allowed", aliases: ["CookingAllowed", "cookingAllowed"] },
+    ParkingAvailable: { label: "Parking available", aliases: ["ParkingAvailable", "parkingAvailable"] },
   },
   safety: {
-    SmokeDetector: "Smoke detector",
-    CarbonMonoxide: "Carbon monoxide detector",
-    FireExtinguisher: "Fire extinguisher",
-    FirstAidKit: "First aid kit",
+    SmokeDetector: { label: "Smoke detector", aliases: ["SmokeDetector", "smokeDetector"] },
+    CarbonMonoxideDetector: {
+      label: "Carbon monoxide detector",
+      aliases: ["CarbonMonoxideDetector", "CarbonMonoxide", "carbonMonoxideDetector", "carbonMonoxide"],
+    },
+    FireExtinguisher: { label: "Fire extinguisher", aliases: ["FireExtinguisher", "fireExtinguisher"] },
+    FirstAidKit: { label: "First aid kit", aliases: ["FirstAidKit", "firstAidKit"] },
   },
 };
 
-const parseGenericRules = (rules, property, keyMap) => {
+const toPolicyRuleObject = (rulesOrObject = []) => {
+  if (Array.isArray(rulesOrObject)) {
+    return rulesOrObject.reduce((acc, rule) => {
+      if (rule?.rule) {
+        acc[rule.rule] = rule.value;
+      }
+      return acc;
+    }, {});
+  }
+
+  if (rulesOrObject && typeof rulesOrObject === "object") {
+    return rulesOrObject;
+  }
+
+  return {};
+};
+
+const CHECK_IN_OUT_KEY_MAP = {
+  CheckInTime: ["CheckInTime", "checkInTime"],
+  CheckOutTime: ["CheckOutTime", "checkOutTime"],
+  LateCheckInTime: ["LateCheckInTime", "lateCheckInTime"],
+  LateCheckOutTime: ["LateCheckOutTime", "lateCheckOutTime"],
+};
+
+const getFirstDefinedValue = (source = {}, aliases = []) =>
+  aliases.reduce((foundValue, alias) => {
+    if (foundValue === undefined) {
+      return source?.[alias];
+    }
+
+    return foundValue;
+  }, undefined);
+
+const formatPolicyTimeValue = (value) => (typeof value === "string" ? value?.slice(0, 5) : value);
+
+const parseGenericRules = (rulesOrObject = [], property = {}, keyMap = {}) => {
   const parsed = [];
-  Object.entries(keyMap).forEach(([key, label]) => {
-    const value = rules.find((r) => r.rule === key)?.value ?? property[key];
-    if (value !== false) parsed.push(label);
+  const normalizedRules = toPolicyRuleObject(rulesOrObject);
+
+  Object.values(keyMap).forEach((config) => {
+    const aliases = Array.isArray(config?.aliases) && config.aliases.length > 0 ? config.aliases : [];
+    const label = config?.label || "";
+    const valueFromRules = getFirstDefinedValue(normalizedRules, aliases);
+    const valueFromProperty = getFirstDefinedValue(property, aliases);
+    const value = valueFromRules ?? valueFromProperty;
+
+    if (value === null || value === undefined) {
+      return;
+    }
+
+    parsed.push({ label, value });
   });
+
   return parsed;
 };
 
-export const parseHouseRules = (rules = [], property = {}) => parseGenericRules(rules, property, RULE_KEY_MAPS.house);
-export const parsePropertyRules = (rules = [], property = {}) =>
-  parseGenericRules(rules, property, RULE_KEY_MAPS.property);
-export const parseSafetyFeatures = (rules = [], property = {}) =>
-  parseGenericRules(rules, property, RULE_KEY_MAPS.safety);
+export const parseHouseRules = (rulesOrObject = [], property = {}) =>
+  parseGenericRules(rulesOrObject, property, RULE_KEY_MAPS.house);
+export const parsePropertyRules = (rulesOrObject = [], property = {}) =>
+  parseGenericRules(rulesOrObject, property, RULE_KEY_MAPS.property);
+export const parseSafetyFeatures = (rulesOrObject = [], property = {}) =>
+  parseGenericRules(rulesOrObject, property, RULE_KEY_MAPS.safety);
 
-export const parseCheckInOut = (checkInData = {}) => {
-  const checkIn = checkInData.checkIn || {};
-  const checkOut = checkInData.checkOut || {};
+export const parseCheckInOut = (checkInData = {}, rulesOrObject = []) => {
+  const normalizedRules = toPolicyRuleObject(rulesOrObject);
+  const checkIn = checkInData?.checkIn || {};
+  const checkOut = checkInData?.checkOut || {};
+  const checkInFrom =
+    formatPolicyTimeValue(getFirstDefinedValue(checkInData, CHECK_IN_OUT_KEY_MAP.CheckInTime)) ||
+    formatPolicyTimeValue(typeof checkIn?.from === "string" ? checkIn.from : undefined) ||
+    "15:00";
+  const checkInTill =
+    formatPolicyTimeValue(getFirstDefinedValue(checkInData, CHECK_IN_OUT_KEY_MAP.LateCheckInTime)) ||
+    formatPolicyTimeValue(typeof checkIn?.till === "string" ? checkIn.till : undefined) ||
+    checkInFrom;
+  const checkOutFrom =
+    formatPolicyTimeValue(getFirstDefinedValue(checkInData, CHECK_IN_OUT_KEY_MAP.CheckOutTime)) ||
+    formatPolicyTimeValue(typeof checkOut?.from === "string" ? checkOut.from : undefined) ||
+    "11:00";
+  const checkOutTill =
+    formatPolicyTimeValue(getFirstDefinedValue(checkInData, CHECK_IN_OUT_KEY_MAP.LateCheckOutTime)) ||
+    formatPolicyTimeValue(typeof checkOut?.till === "string" ? checkOut.till : undefined) ||
+    checkOutFrom;
+
   return {
-    checkInFrom: checkIn.from || "15:00",
-    checkInTill: checkIn.till || checkIn.from,
-    checkOutFrom: checkOut.from || "11:00",
-    checkOutTill: checkOut.till || checkOut.from,
-    lateCheckIn: Boolean(checkIn.till && checkIn.till !== checkIn.from),
-    lateCheckOut: Boolean(checkOut.till && checkOut.till !== checkOut.from),
+    checkInFrom,
+    checkInTill,
+    checkOutFrom,
+    checkOutTill,
+    lateCheckinEnabled: normalizedRules.LateCheckinEnabled === true,
+    lateCheckIn: Boolean(checkInTill && checkInTill !== checkInFrom),
+    lateCheckOut: Boolean(checkOutTill && checkOutTill !== checkOutFrom),
   };
 };
+
+const getItemLabel = (item) => {
+  if (typeof item !== "string") {
+    const label = item?.label || "";
+    if (typeof item?.value === "boolean") {
+      return item.value ? label : `No ${label.charAt(0).toLowerCase()}${label.slice(1)}`;
+    }
+
+    if (typeof item?.value === "string" && item.value.trim()) {
+      return `${label}: ${item.value}`;
+    }
+
+    return label;
+  }
+
+  return item;
+};
+
+const getItemIcon = (item) => {
+  if (typeof item !== "string") {
+    if (typeof item?.value === "boolean") {
+      return item.value ? (
+        <span className="listing-policy-icon listing-policy-icon--positive" aria-hidden="true">
+          ✓
+        </span>
+      ) : (
+        <span className="listing-policy-icon listing-policy-icon--negative" aria-hidden="true">
+          ✗
+        </span>
+      );
+    }
+
+    return (
+      <span className="listing-policy-icon listing-policy-icon--neutral" aria-hidden="true">
+        •
+      </span>
+    );
+  }
+
+  return null;
+};
+
+const getPolicyMetadata = (items = [], expandable = false) => {
+  if (!expandable || typeof items[0] !== "object") {
+    return null;
+  }
+
+  return items[0];
+};
+
+const getPolicyListItems = (items = [], expandable = false) => (expandable ? items.slice(1) : items);
+
+const getVisiblePolicyItems = (listItems = [], expandable = false, expanded = false) => {
+  if (!expandable || expanded) {
+    return listItems;
+  }
+
+  return listItems.slice(0, 3);
+};
+
+const renderPolicyList = (title, items = []) => (
+  <ul className="listing-policy-section-list">
+    {items.map((item, index) => (
+      <li key={`${title}-${index}`} className="listing-policy-section-list-item">
+        {getItemIcon(item)}
+        <span>{getItemLabel(item)}</span>
+      </li>
+    ))}
+  </ul>
+);
+
+const renderPolicyBadge = (badge) => {
+  if (!badge) {
+    return null;
+  }
+
+  return (
+    <span className="listing-policy-badge" style={{ backgroundColor: badge.color || "#6b7280" }}>
+      {badge.label}
+    </span>
+  );
+};
+
+const renderExpandableSection = (title, visibleItems, shouldShowToggle, expanded, setExpanded) => (
+  <>
+    {shouldShowToggle ? (
+      <button
+        type="button"
+        onClick={() => setExpanded((current) => !current)}
+        className="listing-policy-details-button">
+        {expanded ? "Show less" : "Show more"}
+      </button>
+    ) : null}
+    {renderPolicyList(title, visibleItems)}
+  </>
+);
 
 export const PolicySection = ({ title, items = [], expandable = false, className = "" }) => {
   const [expanded, setExpanded] = useState(false);
   if (!items.length) return null;
+
+  const metadata = getPolicyMetadata(items, expandable);
+  const listItems = getPolicyListItems(items, expandable);
+  const visibleItems = getVisiblePolicyItems(listItems, expandable, expanded);
+  const shouldShowToggle = expandable && listItems.length > 3;
+  let sectionContent = renderPolicyList(title, listItems);
+
+  if (expandable) {
+    sectionContent = renderExpandableSection(title, visibleItems, shouldShowToggle, expanded, setExpanded);
+  }
+
   return (
-    <section
-      className={`policy-section ${className}`}
-      style={{
-        marginBottom: "1rem",
-        padding: "1rem",
-        border: "1px solid #e0e0e0",
-        borderRadius: "8px",
-        background: "#f9f9f9",
-      }}>
-      <h4 style={{ marginBottom: "0.5rem", color: "#0D9813" }}>{title}</h4>
-      {expandable ? (
-        <>
-          <div style={{ marginBottom: "0.5rem" }}>{items[0]}</div>
-          <button
-            onClick={() => setExpanded(!expanded)}
-            style={{
-              background: "#0D9813",
-              color: "white",
-              border: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-            }}>
-            View {expanded ? "less" : "details"}
-          </button>
-          {expanded && (
-            <ul style={{ marginTop: "0.5rem", paddingLeft: "1.5rem" }}>
-              {items.slice(1).map((item, i) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          )}
-        </>
-      ) : (
-        <ul style={{ paddingLeft: "1.5rem" }}>
-          {items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      )}
+    <section className={`policy-section listing-policy-section ${className}`}>
+      <div className="listing-policy-section-header">
+        <h4 className="listing-policy-section-title">{title}</h4>
+        {renderPolicyBadge(metadata?.badge)}
+      </div>
+
+      {metadata?.summary ? <p className="listing-policy-summary">{metadata.summary}</p> : null}
+
+      {sectionContent}
     </section>
   );
 };
