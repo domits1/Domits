@@ -117,6 +117,12 @@ class IntegrationController {
     return await this.integrationService.linkChannexRoomType(userId, body);
   }
 
+  async linkChannexRatePlan(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.linkChannexRatePlan(userId, body);
+  }
+
   async disconnectHolidu(event) {
     const body = safeJson(event.body) || {};
     return await this.integrationService.disconnectHolidu(body);
