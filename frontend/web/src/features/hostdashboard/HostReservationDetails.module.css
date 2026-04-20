@@ -389,7 +389,7 @@
   padding: 8px 16px;
   border-radius: 6px;
   border: none;
-  background: #16a34a;
+  background: #15803d;
   color: white;
   font-weight: 600;
   font-size: 13px;
@@ -397,7 +397,7 @@
 }
 
 .editBtnPrimary:hover {
-  background: #15803d;
+  background: #166534;
 }
 
 .editBtnSecondary {
@@ -437,7 +437,7 @@
   padding: 12px;
   border-radius: 8px;
   border: none;
-  background: #16a34a;
+  background: #15803d;
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -450,7 +450,7 @@
 }
 
 .primaryBtn:hover {
-  background: #15803d;
+  background: #166534;
 }
 
 .fullBtn {
