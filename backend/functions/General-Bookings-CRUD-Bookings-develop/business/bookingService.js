@@ -53,6 +53,7 @@ class BookingService {
 
     const userEmail = authenticatedUser.email;
     const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
+    const cancellationPolicy = await this.propertyRepository.getCancellationPolicyByPropertyId(propertyId);
     const hostEmail = await getHostEmailById(fetchedProperty.hostId);
 
     const bookingInfo = {
@@ -63,7 +64,12 @@ class BookingService {
     };
     await sendEmail(userEmail, hostEmail, bookingInfo);
 
-    return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
+    return await this.reservationRepository.addBookingToTable(
+      event,
+      authenticatedUser.sub,
+      fetchedProperty.hostId,
+      cancellationPolicy
+    );
   }
 
   parseBookingDateToMs(value, fieldName) {

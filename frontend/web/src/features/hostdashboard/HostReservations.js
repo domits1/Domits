@@ -18,11 +18,17 @@ const normalizeStatus = (status) => {
   return status.toUpperCase();
 };
 
+const resolveCancellationType = (cancellationPolicy, rules = []) => {
+  if (cancellationPolicy) return cancellationPolicy;
+  const match = (rules || []).find(
+    (r) => r?.rule?.startsWith("CancellationPolicy:") && (r.value === true || r.value === "true")
+  );
+  return match ? match.rule.replace("CancellationPolicy:", "").trim() : null;
+};
+
 const mapReservations = (data) => {
   return data.flatMap((property) => {
-    const reservations = Array.isArray(property.res?.response)
-      ? property.res.response
-      : [];
+    const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
     return reservations.map((item) => ({
       property_id: property.id,
       title: property.title,
@@ -31,6 +37,7 @@ const mapReservations = (data) => {
       country: property.country,
       ...item,
       status: normalizeStatus(item.status),
+      cancellationType: resolveCancellationType(item.cancellation_policy, property.rules),
     }));
   });
 };
@@ -41,8 +48,7 @@ const labelMap = {
   FAILED: "Failed",
 };
 
-const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString() : "-";
+const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : "-");
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -66,9 +72,7 @@ const HostReservations = () => {
         const flat = mapReservations(data);
         setBookings(flat);
       } catch (error) {
-        toast.error(
-          error?.response?.data?.message || "Failed to load reservations"
-        );
+        toast.error(error?.response?.data?.message || "Failed to load reservations");
         setBookings([]);
       } finally {
         setIsLoading(false);
@@ -115,18 +119,10 @@ const HostReservations = () => {
     });
   }, [bookings, activeTab, search, range]);
 
-  const count = (type) =>
-    bookings.filter((b) => (type === "ALL" ? true : b.status === type)).length;
+  const count = (type) => bookings.filter((b) => (type === "ALL" ? true : b.status === type)).length;
 
-  const {
-    currentPage,
-    totalPages,
-    paginatedItems,
-    pageRange,
-    goToPage,
-    goToNextPage,
-    goToPreviousPage,
-  } = usePagination(filteredBookings, itemsPerPage);
+  const { currentPage, totalPages, paginatedItems, pageRange, goToPage, goToNextPage, goToPreviousPage } =
+    usePagination(filteredBookings, itemsPerPage);
 
   const pageNumbers = useMemo(() => {
     const count = pageRange.endPage - pageRange.startPage + 1;
@@ -147,9 +143,7 @@ const HostReservations = () => {
       ) : (
         <div className={styles.container}>
           <h1 className={styles.title}>Reservations</h1>
-          <p className={styles.subtitle}>
-            Manage your bookings and guest stays
-          </p>
+          <p className={styles.subtitle}>Manage your bookings and guest stays</p>
 
           <div className={styles.searchRow}>
             <div className={styles.searchBox}>
@@ -161,11 +155,7 @@ const HostReservations = () => {
               />
             </div>
 
-            <select
-              className={styles.dropdown}
-              value={range}
-              onChange={(e) => setRange(e.target.value)}
-            >
+            <select className={styles.dropdown} value={range} onChange={(e) => setRange(e.target.value)}>
               <option value="ALL">All</option>
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
@@ -175,28 +165,18 @@ const HostReservations = () => {
           </div>
 
           <div className={styles.tabs}>
-            <button
-              className={activeTab === "ALL" ? styles.active : ""}
-              onClick={() => setActiveTab("ALL")}
-            >
+            <button className={activeTab === "ALL" ? styles.active : ""} onClick={() => setActiveTab("ALL")}>
               All ({count("ALL")})
             </button>
-            <button
-              className={activeTab === "PAID" ? styles.active : ""}
-              onClick={() => setActiveTab("PAID")}
-            >
+            <button className={activeTab === "PAID" ? styles.active : ""} onClick={() => setActiveTab("PAID")}>
               Upcoming ({count("PAID")})
             </button>
             <button
               className={activeTab === "AWAITING_PAYMENT" ? styles.active : ""}
-              onClick={() => setActiveTab("AWAITING_PAYMENT")}
-            >
+              onClick={() => setActiveTab("AWAITING_PAYMENT")}>
               Awaiting payment ({count("AWAITING_PAYMENT")})
             </button>
-            <button
-              className={activeTab === "FAILED" ? styles.active : ""}
-              onClick={() => setActiveTab("FAILED")}
-            >
+            <button className={activeTab === "FAILED" ? styles.active : ""} onClick={() => setActiveTab("FAILED")}>
               Failed ({count("FAILED")})
             </button>
           </div>
@@ -206,15 +186,16 @@ const HostReservations = () => {
               <table className={styles.reservationTable}>
                 <colgroup>
                   <col style={{ width: "8%" }} />
-                  <col style={{ width: "16%" }} />
-                  <col style={{ width: "12%" }} />
-                  <col style={{ width: "12%" }} />
-                  <col style={{ width: "16%" }} />
-                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "14%" }} />
                   <col style={{ width: "10%" }} />
                   <col style={{ width: "10%" }} />
                   <col style={{ width: "14%" }} />
-                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "8%" }} />
                 </colgroup>
 
                 <thead>
@@ -231,6 +212,7 @@ const HostReservations = () => {
                     <th>Status</th>
                     <th>Total</th>
                     <th>Commission</th>
+                    <th>Policy</th>
                     <th>Reservation</th>
                     <th>
                       <span className={styles.headerCell}>
@@ -243,17 +225,13 @@ const HostReservations = () => {
                 <tbody>
                   {filteredBookings.length === 0 ? (
                     <tr>
-                      <td className={styles.noData} colSpan={10}>
+                      <td className={styles.noData} colSpan={11}>
                         No reservations yet
                       </td>
                     </tr>
                   ) : (
                     paginatedItems.map((b) => {
-                      const total = calculateTotalPayment(
-                        b.rate,
-                        b.arrivaldate,
-                        b.departuredate
-                      );
+                      const total = calculateTotalPayment(b.rate, b.arrivaldate, b.departuredate);
                       const commission = (total * 0.1).toFixed(2);
 
                       return (
@@ -265,20 +243,22 @@ const HostReservations = () => {
                           </td>
                           <td>{b.guestname}</td>
                           <td>
-                            {formatDate(b.arrivaldate)} -{" "}
-                            {formatDate(b.departuredate)}
+                            {formatDate(b.arrivaldate)} - {formatDate(b.departuredate)}
                           </td>
                           <td>
-                            <span
-                              className={`${styles.status} ${
-                                styles[mapStatusToClass(b.status)]
-                              }`}
-                            >
+                            <span className={`${styles.status} ${styles[mapStatusToClass(b.status)]}`}>
                               {labelMap[b.status]}
                             </span>
                           </td>
                           <td>€{total}</td>
                           <td>€{commission}</td>
+                          <td>
+                            {b.cancellationType ? (
+                              <span className={styles.cancellationBadge}>{b.cancellationType}</span>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
                           <td>{b.id}</td>
                           <td>{formatDate(b.createdat)}</td>
                         </tr>
@@ -291,22 +271,15 @@ const HostReservations = () => {
 
             {filteredBookings.length > 0 && (
               <div className={styles.paginationControls}>
-                <button
-                  className={styles.paginationButton}
-                  onClick={goToPreviousPage}
-                  disabled={currentPage === 1}
-                >
+                <button className={styles.paginationButton} onClick={goToPreviousPage} disabled={currentPage === 1}>
                   Previous
                 </button>
 
                 {pageNumbers.map((p) => (
                   <button
                     key={p}
-                    className={`${styles.paginationButton} ${
-                      currentPage === p ? styles.activePage : ""
-                    }`}
-                    onClick={() => goToPage(p)}
-                  >
+                    className={`${styles.paginationButton} ${currentPage === p ? styles.activePage : ""}`}
+                    onClick={() => goToPage(p)}>
                     {p}
                   </button>
                 ))}
@@ -314,8 +287,7 @@ const HostReservations = () => {
                 <button
                   className={styles.paginationButton}
                   onClick={goToNextPage}
-                  disabled={currentPage === totalPages}
-                >
+                  disabled={currentPage === totalPages}>
                   Next
                 </button>
               </div>

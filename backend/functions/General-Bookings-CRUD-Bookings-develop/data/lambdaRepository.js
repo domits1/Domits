@@ -1,6 +1,7 @@
 import NotFoundException from "../util/exception/NotFoundException.js";
 import Database from "database";
 import { Property_Pricing } from "database/models/Property_Pricing";
+import { Property_Rule } from "database/models/Property_Rule";
 class LambdaRepository {
   extractPropertyCards(payload) {
     if (Array.isArray(payload)) {
@@ -30,12 +31,29 @@ class LambdaRepository {
       throw new NotFoundException("User has no active properties.");
     }
 
+    const client = await Database.getInstance();
+    const propertyIds = propertyCards.map((p) => p.property.id);
+
+    const allRules = propertyIds.length
+      ? await client
+          .getRepository(Property_Rule)
+          .createQueryBuilder("pr")
+          .where("pr.property_id IN (:...ids)", { ids: propertyIds })
+          .getMany()
+      : [];
+
+    const rulesByPropertyId = allRules.reduce((acc, r) => {
+      (acc[r.property_id] = acc[r.property_id] || []).push({ rule: r.rule, value: r.value });
+      return acc;
+    }, {});
+
     const properties = propertyCards.map((property) => ({
       id: property.property.id,
       title: property.property.title,
       rate: property.propertyPricing.roomRate,
       city: property.propertyLocation.city,
       country: property.propertyLocation.country,
+      rules: rulesByPropertyId[property.property.id] || [],
     }));
 
     return properties;

@@ -11,7 +11,7 @@ class ReservationRepository {
   // ---------
   // Booking Create (auth)
   // ---------
-  async addBookingToTable(requestBody, userId, hostId) {
+  async addBookingToTable(requestBody, userId, hostId, cancellationPolicy = null) {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
@@ -37,6 +37,7 @@ class ReservationRepository {
         tempPaymentId,
         property_id: requestBody.identifiers.property_Id,
         status: "Awaiting Payment",
+        cancellation_policy: cancellationPolicy,
       })
       .execute();
     try {
@@ -81,6 +82,7 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
+      .addSelect("booking.cancellation_policy")
       .where("booking.property_id = :property_id", { property_id: property_Id })
       .getMany();
 
@@ -164,7 +166,6 @@ class ReservationRepository {
   // Read bookings by HostID
   // ---------
   async readByHostId(host_Id) {
-    // Fetches user's property first, throws error if not found
     this.lambdaRepository = new LambdaRepository();
     const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
     const properties = propertiesOutput.map((item) => ({
@@ -173,16 +174,21 @@ class ReservationRepository {
       rate: item.rate,
       city: item.city,
       country: item.country,
+      rules: item.rules || [],
     }));
 
-    // Proceeds to send a request for every id returning their respective data
+    const client = await Database.getInstance();
     const results = await Promise.all(
       properties.map(async (property) => {
-        const res = await this.readByPropertyId(property.id);
+        const bookings = await client
+          .getRepository(Booking)
+          .createQueryBuilder("booking")
+          .where("booking.property_id = :property_id", { property_id: property.id })
+          .getMany();
 
         return {
           ...property,
-          res,
+          res: { response: bookings },
         };
       })
     );
