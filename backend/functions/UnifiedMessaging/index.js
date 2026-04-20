@@ -65,6 +65,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.listChannexRatePlans(event),
   },
   {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/linked-rate-plans"),
+    handle: (event) => integrationController.listLinkedChannexRatePlans(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/rate-plans"),
     handle: (event) => integrationController.linkChannexRatePlan(event),
   },
