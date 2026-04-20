@@ -191,8 +191,8 @@ function HostListings() {
       return false;
     }
     if (liveEligibilityError || !liveEligibility) {
-      toast.error("You need to complete your bank details before you can publish this listing. Redirecting to verification...");
-      navigate("/verify", { state: { userId, accommodationId: propertyId } });
+      toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
+      navigate("/hostdashboard/finance");
       return false;
     }
     return true;
