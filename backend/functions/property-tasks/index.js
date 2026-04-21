@@ -14,6 +14,9 @@ export const handler = async (event) => {
                 if (event.queryStringParameters?.action === 'upload-url') {
                     return await controller.getUploadUrl(event);
                 }
+                if (event.queryStringParameters?.action === 'view-url') {
+                    return await controller.getViewUrl(event);
+                }
                 return await controller.getTasks(event);
             
             case "POST":

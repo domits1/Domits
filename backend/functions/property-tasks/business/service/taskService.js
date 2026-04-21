@@ -1,7 +1,7 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload } from "../model/taskValidator.js";
 import Database from "database";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
 
@@ -96,9 +96,16 @@ export const getUploadUrl = async (hostId, fileName, fileType) => {
 
     return {
         uploadUrl,
-        fileUrl: `https://${BUCKET_NAME}.s3.eu-north-1.amazonaws.com/${key}`,
         key,
     };
+};
+
+export const getViewUrl = async (key) => {
+    const command = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+    });
+    return await getSignedUrl(s3, command, { expiresIn: 3600 });
 };
 
 export const logActivity = async (dataSource, { taskId, userId, actionType, oldValue = null, newValue = null }) => {
