@@ -90,11 +90,13 @@ function WebsitePublicPreviewPage() {
 
   const canRenderPreview = !loadError && previewModel && TemplateComponent;
   if (canRenderPreview) {
+    const shouldShowContactWidget = previewModel.visibility?.chatWidget ?? true;
+
     return (
       <main className={styles.publicPreviewPage}>
         <div className={styles.publicPreviewCanvas}>
           <TemplateComponent model={previewModel} />
-          {previewModel.visibility?.chatWidget !== false ? <WebsiteContactWidget model={previewModel} /> : null}
+          {shouldShowContactWidget ? <WebsiteContactWidget model={previewModel} /> : null}
         </div>
       </main>
     );

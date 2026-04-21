@@ -1046,7 +1046,7 @@ function WebsiteEditorPage() {
             event.preventDefault();
             closeImagePicker();
           }}
-          onClick={(event) => {
+          onPointerDown={(event) => {
             if (event.target === event.currentTarget) {
               closeImagePicker();
             }

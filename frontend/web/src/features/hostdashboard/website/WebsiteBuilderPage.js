@@ -324,6 +324,117 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
   );
 };
 
+function WebsiteDraftDeleteDialog({
+  draft,
+  deleteReasons,
+  deleteStep,
+  isDeleting,
+  onClose,
+  onBackToReasons,
+  onConfirm,
+  onReasonToggle,
+  onReasonNext,
+}) {
+  if (!draft) {
+    return null;
+  }
+
+  const isReasonStep = deleteStep === DELETE_WEBSITE_DRAFT_STEP_REASON;
+  const hasSelectedReason = deleteReasons.length > 0;
+
+  return (
+    <dialog
+      open
+      className={styles.deleteDraftOverlay}
+      aria-labelledby="delete-website-draft-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section className={styles.deleteDraftDialog}>
+        <p className={styles.deleteDraftEyebrow}>Delete website</p>
+        {isReasonStep ? (
+          <>
+            <h3 id="delete-website-draft-title" className={styles.deleteDraftTitle}>
+              Why are you deleting this website?
+            </h3>
+            <p className={styles.deleteDraftCopy}>Choose all reasons that apply.</p>
+
+            <fieldset className={styles.deleteReasonFieldset}>
+              <legend className={styles.deleteReasonLegend}>Select at least one reason to continue.</legend>
+              <div className={styles.deleteReasonList}>
+                {WEBSITE_DRAFT_DELETE_REASONS.map((reason) => (
+                  <label key={reason} className={styles.deleteReasonOption}>
+                    <input
+                      type="checkbox"
+                      value={reason}
+                      checked={deleteReasons.includes(reason)}
+                      onChange={() => onReasonToggle(reason)}
+                      disabled={isDeleting}
+                    />
+                    <span>{reason}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </>
+        ) : (
+          <>
+            <h3 id="delete-website-draft-title" className={styles.deleteDraftTitle}>
+              Delete this website permanently?
+            </h3>
+            <p className={styles.deleteDraftCopy}>
+              This removes the saved website draft for <strong>{getDraftDisplayTitle(draft)}</strong>.
+            </p>
+            <p className={styles.deleteDraftCopy}>
+              The listing will become available again in the Build website dropdown.
+            </p>
+            <p className={styles.deleteDraftCopy}>
+              This <strong>does not</strong> delete the listing itself.
+            </p>
+          </>
+        )}
+
+        <div className={styles.deleteDraftActions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={isReasonStep ? onClose : onBackToReasons}
+            disabled={isDeleting}
+          >
+            {isReasonStep ? "Cancel" : "Back"}
+          </button>
+          {isReasonStep ? (
+            <button
+              type="button"
+              className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
+              onClick={onReasonNext}
+              disabled={isDeleting || !hasSelectedReason}
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
+              onClick={onConfirm}
+              disabled={isDeleting || !hasSelectedReason}
+            >
+              {isDeleting ? "Deleting..." : "Delete permanently"}
+            </button>
+          )}
+        </div>
+      </section>
+    </dialog>
+  );
+}
+
 function WebsiteBuilderPage() {
   const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_WEBSITES);
   const [propertyOptions, setPropertyOptions] = useState([]);
@@ -512,8 +623,6 @@ function WebsiteBuilderPage() {
   const selectedTemplateIsImplemented = isWebsiteTemplateImplemented(selectedTemplateId);
   const activeGalleryImage = galleryImages[activeGalleryIndex] || galleryImages[0] || "";
   const isListingStepComplete = Boolean(selectedProperty);
-  const hasSelectedWebsiteDraftDeleteReason = websiteDraftDeleteReasons.length > 0;
-  const isWebsiteDraftDeleteReasonStep = websiteDraftDeleteStep === DELETE_WEBSITE_DRAFT_STEP_REASON;
 
   useEffect(() => {
     if (!selectedProperty) {
@@ -1406,104 +1515,17 @@ function WebsiteBuilderPage() {
         </dialog>
       ) : null}
 
-      {websiteDraftPendingDelete ? (
-        <dialog
-          open
-          className={styles.deleteDraftOverlay}
-          aria-labelledby="delete-website-draft-title"
-          onCancel={(event) => {
-            event.preventDefault();
-            closeWebsiteDraftDeleteDialog();
-          }}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              closeWebsiteDraftDeleteDialog();
-            }
-          }}
-        >
-          <section className={styles.deleteDraftDialog}>
-            <p className={styles.deleteDraftEyebrow}>Delete website</p>
-            {isWebsiteDraftDeleteReasonStep ? (
-              <>
-                <h3 id="delete-website-draft-title" className={styles.deleteDraftTitle}>
-                  Why are you deleting this website?
-                </h3>
-                <p className={styles.deleteDraftCopy}>Choose all reasons that apply.</p>
-
-                <fieldset className={styles.deleteReasonFieldset}>
-                  <legend className={styles.deleteReasonLegend}>Select at least one reason to continue.</legend>
-                  <div className={styles.deleteReasonList}>
-                    {WEBSITE_DRAFT_DELETE_REASONS.map((reason) => (
-                      <label key={reason} className={styles.deleteReasonOption}>
-                        <input
-                          type="checkbox"
-                          value={reason}
-                          checked={websiteDraftDeleteReasons.includes(reason)}
-                          onChange={() => toggleWebsiteDraftDeleteReason(reason)}
-                          disabled={isDeletingWebsiteDraft}
-                        />
-                        <span>{reason}</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              </>
-            ) : (
-              <>
-                <h3 id="delete-website-draft-title" className={styles.deleteDraftTitle}>
-                  Delete this website permanently?
-                </h3>
-                <p className={styles.deleteDraftCopy}>
-                  This removes the saved website draft for <strong>{getDraftDisplayTitle(websiteDraftPendingDelete)}</strong>.
-                </p>
-                <p className={styles.deleteDraftCopy}>
-                  The listing will become available again in the Build website dropdown.
-                </p>
-                <p className={styles.deleteDraftCopy}>
-                  This <strong>does not</strong> delete the listing itself.
-                </p>
-              </>
-            )}
-
-            <div className={styles.deleteDraftActions}>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={() => {
-                  if (!isWebsiteDraftDeleteReasonStep) {
-                    setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_REASON);
-                    return;
-                  }
-
-                  closeWebsiteDraftDeleteDialog();
-                }}
-                disabled={isDeletingWebsiteDraft}
-              >
-                {isWebsiteDraftDeleteReasonStep ? "Cancel" : "Back"}
-              </button>
-              {isWebsiteDraftDeleteReasonStep ? (
-                <button
-                  type="button"
-                  className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
-                  onClick={() => setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_CONFIRM)}
-                  disabled={isDeletingWebsiteDraft || !hasSelectedWebsiteDraftDeleteReason}
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
-                  onClick={() => void removeWebsiteDraft()}
-                  disabled={isDeletingWebsiteDraft || !hasSelectedWebsiteDraftDeleteReason}
-                >
-                  {isDeletingWebsiteDraft ? "Deleting..." : "Delete permanently"}
-                </button>
-              )}
-            </div>
-          </section>
-        </dialog>
-      ) : null}
+      <WebsiteDraftDeleteDialog
+        draft={websiteDraftPendingDelete}
+        deleteReasons={websiteDraftDeleteReasons}
+        deleteStep={websiteDraftDeleteStep}
+        isDeleting={isDeletingWebsiteDraft}
+        onClose={closeWebsiteDraftDeleteDialog}
+        onBackToReasons={() => setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_REASON)}
+        onConfirm={() => void removeWebsiteDraft()}
+        onReasonToggle={toggleWebsiteDraftDeleteReason}
+        onReasonNext={() => setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_CONFIRM)}
+      />
     </main>
   );
 }
