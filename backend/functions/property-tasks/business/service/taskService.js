@@ -60,6 +60,12 @@ export const updateTask = async (hostId, taskId, updateData) => {
         fieldsToUpdate.due_date = new Date(fieldsToUpdate.due_date).getTime();
     }
 
+    if (fieldsToUpdate.attachments !== undefined) {
+        fieldsToUpdate.attachments = Array.isArray(fieldsToUpdate.attachments)
+            ? JSON.stringify(fieldsToUpdate.attachments)
+            : null;
+    }
+
     if (fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed') {
         fieldsToUpdate.completed_date = Date.now();
     }
