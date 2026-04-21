@@ -98,7 +98,7 @@ export const deleteTask = async (hostId, taskId) => {
                     Delete: { Objects: keys.map(key => ({ Key: key })) },
                 }));
             }
-        } catch { /* ignore parse errors */ }
+        } catch { }
     }
 
     return await updateTask(hostId, taskId, { is_legacy: true });
