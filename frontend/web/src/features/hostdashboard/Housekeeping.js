@@ -1479,6 +1479,7 @@ const HostPropertyCare = () => {
                                     <label><input type="radio" id='task-type-cleaning' name="type" value="Cleaning" checked={newTask.type === 'Cleaning'} onChange={handleInputChange} /> Cleaning</label>
                                     <label><input type="radio" id='task-type-maintenance' name="type" value="Maintenance" checked={newTask.type === 'Maintenance'} onChange={handleInputChange} /> Maintenance</label>
                                     <label><input type="radio" id='task-type-inspection' name="type" value="Inspection" checked={newTask.type === 'Inspection'} onChange={handleInputChange} /> Inspection</label>
+                                    <label><input type="radio" id='task-type-administration' name="type" value="Administration" checked={newTask.type === 'Administration'} onChange={handleInputChange} /> Administration</label>
                                 </div>
                             </div>
                             <div className="form-group">
@@ -1615,6 +1616,7 @@ const HostPropertyCare = () => {
                                         <option value="Cleaning">Cleaning</option>
                                         <option value="Maintenance">Maintenance</option>
                                         <option value="Inspection">Inspection</option>
+                                        <option value="Administration">Administration</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
