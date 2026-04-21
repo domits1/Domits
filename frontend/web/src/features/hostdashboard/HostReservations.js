@@ -8,6 +8,7 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { calculateTotalPayment } from "./utils/reservationCalculations.js";
 import { usePagination } from "./hooks/usePagination.js";
 import { FiSearch } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 const normalizeStatus = (status) => {
   if (!status) return "";
@@ -50,6 +51,19 @@ const HostReservations = () => {
   const [activeTab, setActiveTab] = useState("ALL");
   const [search, setSearch] = useState("");
   const [range, setRange] = useState("ALL");
+  const [sortField, setSortField] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+
+  const navigate = useNavigate();
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   const authToken = useMemo(() => getAccessToken(), []);
   const itemsPerPage = 10;
@@ -63,9 +77,10 @@ const HostReservations = () => {
           setBookings([]);
           return;
         }
+
         const flat = mapReservations(data);
         setBookings(flat);
-      } catch (error) {
+        } catch (error) {
         toast.error(
           error?.response?.data?.message || "Failed to load reservations"
         );
@@ -109,11 +124,31 @@ const HostReservations = () => {
     }
 
     return result.sort((a, b) => {
-      const da = new Date(a.arrivaldate || 0);
-      const db = new Date(b.arrivaldate || 0);
-      return da - db;
+      if (!sortField) {
+        const da = new Date(a.arrivaldate || 0);
+        const db = new Date(b.arrivaldate || 0);
+        return da - db;
+      }
+
+      let valueA, valueB;
+
+      if (sortField === "dates") {
+        valueA = new Date(a.arrivaldate || 0);
+        valueB = new Date(b.arrivaldate || 0);
+      }
+
+      if (sortField === "booked") {
+        valueA = new Date(a.createdat || 0);
+        valueB = new Date(b.createdat || 0);
+      }
+
+      if (!valueA || !valueB) return 0;
+
+      return sortDirection === "asc"
+        ? valueA - valueB
+       : valueB - valueA;
     });
-  }, [bookings, activeTab, search, range]);
+  }, [bookings, activeTab, search, range, sortField, sortDirection]);
 
   const count = (type) =>
     bookings.filter((b) => (type === "ALL" ? true : b.status === type)).length;
@@ -188,7 +223,9 @@ const HostReservations = () => {
               Upcoming ({count("PAID")})
             </button>
             <button
-              className={activeTab === "AWAITING_PAYMENT" ? styles.active : ""}
+              className={
+                activeTab === "AWAITING_PAYMENT" ? styles.active : ""
+              }
               onClick={() => setActiveTab("AWAITING_PAYMENT")}
             >
               Awaiting payment ({count("AWAITING_PAYMENT")})
@@ -203,90 +240,95 @@ const HostReservations = () => {
 
           <div className={styles.list}>
             <section className={styles.reservationData}>
-              <table className={styles.reservationTable}>
-                <colgroup>
-                  <col style={{ width: "8%" }} />
-                  <col style={{ width: "16%" }} />
-                  <col style={{ width: "12%" }} />
-                  <col style={{ width: "12%" }} />
-                  <col style={{ width: "16%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "14%" }} />
-                  <col style={{ width: "12%" }} />
-                </colgroup>
-
-                <thead>
-                  <tr>
-                    <th>Property ID</th>
-                    <th>Accommodation Name</th>
-                    <th>Location</th>
-                    <th>Guest Name</th>
-                    <th>
-                      <span className={styles.headerCell}>
-                        Dates <SwapVertIcon className={styles.sortIcon} />
-                      </span>
-                    </th>
-                    <th>Status</th>
-                    <th>Total</th>
-                    <th>Commission</th>
-                    <th>Reservation</th>
-                    <th>
-                      <span className={styles.headerCell}>
-                        Booked <SwapVertIcon className={styles.sortIcon} />
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredBookings.length === 0 ? (
+              <div className={styles.tableWrapper}>
+                <table className={styles.reservationTable}>
+                  <thead>
                     <tr>
-                      <td className={styles.noData} colSpan={10}>
-                        No reservations yet
-                      </td>
+                      <th>Property ID</th>
+                      <th>Accommodation Name</th>
+                      <th>Location</th>
+                      <th>Guest Name</th>
+                      <th
+                        onClick={() => handleSort("dates")}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <span className={styles.headerCell}>
+                          Dates <SwapVertIcon className={styles.sortIcon} />
+                        </span>
+                      </th>
+                      <th>Status</th>
+                      <th>Total</th>
+                      <th>Commission</th>
+                      <th>Reservation</th>
+                      <th
+                        onClick={() => handleSort("booked")}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <span className={styles.headerCell}>
+                          Booked <SwapVertIcon className={styles.sortIcon} />
+                        </span>
+                      </th>
                     </tr>
-                  ) : (
-                    paginatedItems.map((b) => {
-                      const total = calculateTotalPayment(
-                        b.rate,
-                        b.arrivaldate,
-                        b.departuredate
-                      );
-                      const commission = (total * 0.1).toFixed(2);
+                  </thead>
 
-                      return (
-                        <tr key={`${b.id}-${b.property_id}`}>
-                          <td>{b.property_id}</td>
-                          <td>{b.title}</td>
-                          <td>
-                            {b.city}, {b.country}
-                          </td>
-                          <td>{b.guestname}</td>
-                          <td>
-                            {formatDate(b.arrivaldate)} -{" "}
-                            {formatDate(b.departuredate)}
-                          </td>
-                          <td>
-                            <span
-                              className={`${styles.status} ${
-                                styles[mapStatusToClass(b.status)]
-                              }`}
-                            >
-                              {labelMap[b.status]}
-                            </span>
-                          </td>
-                          <td>€{total}</td>
-                          <td>€{commission}</td>
-                          <td>{b.id}</td>
-                          <td>{formatDate(b.createdat)}</td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                  <tbody>
+                    {filteredBookings.length === 0 ? (
+                      <tr>
+                        <td className={styles.noData} colSpan={10}>
+                          No reservations yet
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedItems.map((b) => {
+                        const total = calculateTotalPayment(
+                          b.rate,
+                          b.arrivaldate,
+                          b.departuredate
+                        );
+                        const commission = (total * 0.1).toFixed(2);
+
+                        return (
+                          <tr
+                            key={`${b.id}-${b.property_id}`}
+                            onClick={() =>
+                              navigate(`${b.id}`, {
+                                state: { booking: b },
+                              })
+                            }
+                            style={{ cursor: "pointer" }}
+                          >
+                            <td data-label="Property ID">{b.property_id}</td>
+                            <td data-label="Accommodation Name">{b.title}</td>
+                            <td data-label="Location">
+                              {b.city}, {b.country}
+                            </td>
+                            <td data-label="Guest Name">{b.guestname}</td>
+                            <td data-label="Dates">
+                              {formatDate(b.arrivaldate)} -{" "}
+                              {formatDate(b.departuredate)}
+                            </td>
+                            <td data-label="Status">
+                              <span
+                                className={`${styles.status} ${
+                                  styles[mapStatusToClass(b.status)]
+                                }`}
+                              >
+                                {labelMap[b.status]}
+                              </span>
+                            </td>
+                            <td data-label="Total">€{total}</td>
+                            <td data-label="Commission">€{commission}</td>
+                            <td data-label="Reservation">{b.id}</td>
+                            <td data-label="Booked">
+                              {formatDate(b.createdat)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </section>
 
             {filteredBookings.length > 0 && (

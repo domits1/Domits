@@ -1,0 +1,462 @@
+.container {
+  padding: 30px 40px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.back {
+  background: none;
+  border: none;
+  color: #16a34a;
+  cursor: pointer;
+  margin-bottom: 12px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0 22px;
+}
+
+.status {
+  padding: 6px 14px;
+  gap: 4px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.paid {
+  color: #166534;
+  font-weight: 500;
+}
+
+.statusPaid,
+.paymentBoxPaid {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.statusAwaiting,
+.paymentBoxAwaiting {
+  color: #78350f;
+  background: #fde68a;
+}
+
+.statusFailed,
+.paymentBoxFailed {
+  color: #7f1d1d;
+  background: #fee2e2;
+}
+
+.awaiting {
+  color: #78350f;
+}
+
+.failed {
+  color: #7f1d1d;
+}
+
+.channel {
+  color: #374151;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 28px;
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 25px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cardHeader {
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.blockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.blockHeader2 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.blockHeader span {
+  font-size: 23px;
+  font-weight: 650;
+  color: #111827;
+}
+
+.edit {
+  background: none;
+  border: none;
+  color: #16a34a;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.property {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.image {
+  width: 220px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+
+.propertyDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.propertyDetails h4 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #111827;
+}
+
+.location {
+  color: #374151;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.dates {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 6px;
+  color: #111827;
+}
+
+.metaLine {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.bookingDate {
+  font-size: 13px;
+  color: #374151;
+}
+
+.reservationMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #374151;
+}
+
+.secondaryBtnGuest {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.secondaryActionBtn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.secondaryBtnGuest:hover,
+.secondaryActionBtn:hover {
+  background: #e5e7eb;
+}
+
+.guestRow {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 22px;
+  color: #166534;
+  border: 2px solid #16a34a;
+}
+
+.guestInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  gap: 4px;
+}
+
+.guestLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.subText {
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.request {
+  margin-left: auto;
+  background: #dcfce7;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.request strong {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.paymentWrapper {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.payment {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #111827;
+}
+
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0;
+}
+
+.total {
+  font-weight: 700;
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+.paymentBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 16px;
+  min-width: 240px;
+}
+
+.paymentHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.paymentMethod,
+.paymentStatus {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.method {
+  text-transform: capitalize;
+}
+
+.cardIconRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.block {
+  margin-bottom: 16px;
+}
+
+.grayBox {
+  background: #f3f4f6;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.editWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editBtnPrimary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #15803d;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.editBtnPrimary:hover {
+  background: #166534;
+}
+
+.editBtnSecondary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.editBtnSecondary:hover {
+  background: #e5e7eb;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.policyTag {
+  display: inline-block;
+  background: #dcfce7;
+  color: #166534;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.primaryBtn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #15803d;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.primaryBtn:hover {
+  background: #166534;
+}
+
+.fullBtn {
+  width: 100%;
+}
+
+.right .card {
+  margin-bottom: 16px;
+}

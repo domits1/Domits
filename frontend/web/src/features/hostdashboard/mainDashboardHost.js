@@ -33,6 +33,7 @@ import PropertyRateView from "../hostonboarding/views/10_PropertyRateView";
 import PropertyAvailabilityView from "../hostonboarding/views/11_PropertyAvailabilityView";
 import SummaryViewAndSubmit from "../hostonboarding/views/12_SummarySubmitView";
 import RegistrationNumberView from "../../features/verification/hostverification/HostVerifyRegistrationNumber";
+import HostReservationDetails from "./HostReservationDetails";
 
 function MainDashboardHost() {
   return (
@@ -114,6 +115,7 @@ function MainDashboardHost() {
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
 
+          <Route path="reservations/:id" element={<HostReservationDetails />} />
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>
       </div>
