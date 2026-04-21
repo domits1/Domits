@@ -1,4 +1,4 @@
-import { getTasks, createTask, updateTask, deleteTask } from "../business/service/taskService.js";
+import { getTasks, createTask, updateTask, deleteTask, getUploadUrl } from "../business/service/taskService.js";
 import { AuthManager } from "../auth/authManager.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
@@ -58,6 +58,22 @@ export class Controller {
             const taskId = event.queryStringParameters?.id || event.pathParameters?.id;
 
             const result = await deleteTask(hostId, taskId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async getUploadUrl(event) {
+        try {
+            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
+            const { fileName, fileType } = event.queryStringParameters || {};
+
+            if (!fileName || !fileType) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "fileName and fileType are required" }) };
+            }
+
+            const result = await getUploadUrl(hostId, fileName, fileType);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);

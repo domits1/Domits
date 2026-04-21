@@ -5,7 +5,7 @@ import {
     LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck, LuPartyPopper
 } from 'react-icons/lu';
 import './Housekeeping.css';
-import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from './services/taskService';
 import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 import { 
@@ -430,7 +430,12 @@ const HostPropertyCare = () => {
                 }]
             }; 
             
-            let created = await createTask(taskPayload);
+            let attachmentUrls = [];
+            if (newTask.attachments?.length > 0) {
+                attachmentUrls = await Promise.all(newTask.attachments.map(uploadTaskAttachment));
+            }
+
+            let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
             
             const todayStr = new Date().toISOString().split('T')[0];
             if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
@@ -572,12 +577,22 @@ const HostPropertyCare = () => {
             activities: [...(editedTask.activities || []), ...newLogs]
         };
 
-        setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+        const newFiles = (editedTask.attachments || []).filter(a => a instanceof File);
+        let existingUrls = (editedTask.attachments || []).filter(a => typeof a === 'string');
+
+        if (newFiles.length > 0) {
+            const uploaded = await Promise.all(newFiles.map(uploadTaskAttachment));
+            existingUrls = [...existingUrls, ...uploaded];
+        }
+
+        const finalTask = { ...updatedTask, attachments: existingUrls };
+
+        setTasks(tasks.map(t => t.id === finalTask.id ? finalTask : t));
         setViewingTask(null);
         setEditedTask(null);
 
         try {
-            await updateTask(updatedTask.id, updatedTask);
+            await updateTask(finalTask.id, finalTask);
         } catch {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
         }
