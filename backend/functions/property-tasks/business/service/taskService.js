@@ -1,6 +1,12 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload } from "../model/taskValidator.js";
 import Database from "database";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { randomUUID } from "node:crypto";
+
+const s3 = new S3Client({ region: "eu-north-1" });
+const BUCKET_NAME = "domits-task-attachments";
 
 export const getTasks = async (hostId, filters) => {
     const dataSource = await Database.getInstance();
@@ -23,6 +29,7 @@ export const createTask = async (hostId, taskData) => {
         priority: taskData.priority || 'Medium',
         due_date: taskData.due_date ? new Date(taskData.due_date).getTime() : null,
         assignee_name: taskData.assignee_name || null,
+        attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
         created_at: Date.now(),
         updated_at: Date.now()
     };
@@ -53,6 +60,12 @@ export const updateTask = async (hostId, taskId, updateData) => {
         fieldsToUpdate.due_date = new Date(fieldsToUpdate.due_date).getTime();
     }
 
+    if (fieldsToUpdate.attachments !== undefined) {
+        fieldsToUpdate.attachments = Array.isArray(fieldsToUpdate.attachments)
+            ? JSON.stringify(fieldsToUpdate.attachments)
+            : null;
+    }
+
     if (fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed') {
         fieldsToUpdate.completed_date = Date.now();
     }
@@ -74,6 +87,32 @@ export const updateTask = async (hostId, taskId, updateData) => {
 
 export const deleteTask = async (hostId, taskId) => {
     return await updateTask(hostId, taskId, { is_legacy: true });
+};
+
+export const getUploadUrl = async (hostId, fileName, fileType) => {
+    const ext = fileName.split('.').pop();
+    const key = `tasks/${hostId}/${randomUUID()}.${ext}`;
+
+    const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        ContentType: fileType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+
+    return {
+        uploadUrl,
+        key,
+    };
+};
+
+export const getViewUrl = async (key) => {
+    const command = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+    });
+    return await getSignedUrl(s3, command, { expiresIn: 3600 });
 };
 
 export const logActivity = async (dataSource, { taskId, userId, actionType, oldValue = null, newValue = null }) => {
