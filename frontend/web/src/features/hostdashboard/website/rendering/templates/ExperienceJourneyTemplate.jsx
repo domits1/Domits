@@ -2,30 +2,25 @@ import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
-import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
-
-const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
-  if (!onSelectTarget) {
-    return { className };
-  }
-
-  const isActiveTarget = target?.targetId && target.targetId === activeTargetId;
-  const handleActivate = () => onSelectTarget(target);
-  return {
-    className: `${className} ${styles.previewInteractiveTarget} ${
-      isActiveTarget ? styles.previewInteractiveTargetActive : ""
-    }`.trim(),
-    role: "button",
-    tabIndex: 0,
-    onClick: handleActivate,
-    onKeyDown: (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        handleActivate();
-      }
-    },
-  };
-};
+import {
+  getInteractiveTargetProps,
+  TemplateAvailabilityCalendar,
+  TemplateHeroCopy,
+  TemplateSoftCallout,
+  TemplateTopBar,
+} from "./templateSharedSections";
+import {
+  amenityPropType,
+  availabilityPropType,
+  callToActionPropType,
+  copyItemPropType,
+  galleryPropType,
+  heroPropType,
+  mediaPropType,
+  sitePropType,
+  templateInteractionPropTypes,
+  visibilityPropType,
+} from "./templatePropTypes";
 
 export default function ExperienceJourneyTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
@@ -38,51 +33,22 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
   return (
     <article className={styles.templateSite}>
       {showTopBar ? (
-        <div
-          {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
-            sectionId: "common",
-            targetId: "common.siteTitle",
-          }, activeTargetId)}
-        >
-          <div className={styles.templateTopBarBrand}>
-            <span className={styles.templateTopBarMark} aria-hidden="true" />
-            <span>{model.site.title}</span>
-          </div>
+        <TemplateTopBar model={model} onSelectTarget={onSelectTarget} activeTargetId={activeTargetId}>
           <div className={styles.templateTopBarNav}>
             <span>Arrival</span>
             <span>Stay</span>
             <span>Area</span>
           </div>
-        </div>
+        </TemplateTopBar>
       ) : null}
 
       <section className={styles.experienceIntro}>
-        <div className={styles.experienceIntroCopy}>
-          <p
-            {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroEyebrow",
-            }, activeTargetId)}
-          >
-            {model.hero.eyebrow}
-          </p>
-          <h1
-            {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroTitle",
-            }, activeTargetId)}
-          >
-            {model.hero.title}
-          </h1>
-          <p
-            {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroDescription",
-            }, activeTargetId)}
-          >
-            {model.hero.description}
-          </p>
-        </div>
+        <TemplateHeroCopy
+          className={styles.experienceIntroCopy}
+          model={model}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
+        />
       </section>
 
       {showJourneyStops ? (
@@ -126,12 +92,10 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
       ) : null}
 
       {showAvailabilityCalendar ? (
-        <AvailabilityCalendarPreview
-          availability={model.availability}
-          interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
-            sectionId: "visibility",
-            targetId: "visibility.availabilityCalendar",
-          }, activeTargetId)}
+        <TemplateAvailabilityCalendar
+          model={model}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
         />
       ) : null}
 
@@ -171,15 +135,12 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
             ) : null}
 
             {showCallToAction ? (
-              <div
-                {...getInteractiveTargetProps(styles.softCallout, onSelectTarget, {
-                  sectionId: "common",
-                  targetId: "common.ctaLabel",
-                }, activeTargetId)}
-              >
-                <strong>{model.callToAction.label}</strong>
-                <p>{model.callToAction.note}</p>
-              </div>
+              <TemplateSoftCallout
+                className={styles.softCallout}
+                model={model}
+                onSelectTarget={onSelectTarget}
+                activeTargetId={activeTargetId}
+              />
             ) : null}
           </div>
         </section>
@@ -190,57 +151,17 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
 
 ExperienceJourneyTemplate.propTypes = {
   model: PropTypes.shape({
-    site: PropTypes.shape({
-      title: PropTypes.string,
-    }).isRequired,
-    hero: PropTypes.shape({
-      eyebrow: PropTypes.string,
-      title: PropTypes.string,
-      description: PropTypes.string,
-    }).isRequired,
-    journeyStops: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-    gallery: PropTypes.shape({
-      images: PropTypes.arrayOf(PropTypes.string).isRequired,
-    }).isRequired,
-    media: PropTypes.shape({
-      heroImage: PropTypes.string,
-    }).isRequired,
+    site: sitePropType.isRequired,
+    hero: heroPropType.isRequired,
+    journeyStops: PropTypes.arrayOf(copyItemPropType).isRequired,
+    gallery: galleryPropType.isRequired,
+    media: mediaPropType.isRequired,
     amenities: PropTypes.shape({
-      featured: PropTypes.arrayOf(
-        PropTypes.shape({
-          id: PropTypes.string.isRequired,
-          label: PropTypes.string.isRequired,
-          category: PropTypes.string.isRequired,
-        })
-      ).isRequired,
+      featured: PropTypes.arrayOf(amenityPropType).isRequired,
     }).isRequired,
-    availability: PropTypes.shape({
-      externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
-      syncSummary: PropTypes.string,
-      blockedDateSummary: PropTypes.string,
-      lastSyncLabel: PropTypes.string,
-      nextBlockedLabel: PropTypes.string,
-      callout: PropTypes.string,
-    }).isRequired,
-    callToAction: PropTypes.shape({
-      label: PropTypes.string.isRequired,
-      note: PropTypes.string.isRequired,
-    }).isRequired,
-    visibility: PropTypes.shape({
-      topBar: PropTypes.bool,
-      amenitiesPanel: PropTypes.bool,
-      availabilityCalendar: PropTypes.bool,
-      callToAction: PropTypes.bool,
-      journeyStops: PropTypes.bool,
-      chatWidget: PropTypes.bool,
-    }).isRequired,
+    availability: availabilityPropType.isRequired,
+    callToAction: callToActionPropType.isRequired,
+    visibility: visibilityPropType.isRequired,
   }).isRequired,
-  onSelectTarget: PropTypes.func,
-  activeTargetId: PropTypes.string,
+  ...templateInteractionPropTypes,
 };

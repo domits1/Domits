@@ -25,10 +25,11 @@ import {
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
-import { placeholderImage } from "../../../utils/accommodationImage";
+import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
+const PREVIEW_BUILD_STEP_KEYS = PREVIEW_BUILD_STEPS.map((step) => step.key);
 
 const PROPERTY_STATUS_LABELS = {
   ACTIVE: "Live",
@@ -39,6 +40,14 @@ const PROPERTY_STATUS_LABELS = {
 const SUMMARY_DESCRIPTION_WORD_LIMIT = 23;
 const WORKSPACE_TAB_BUILDER = "builder";
 const WORKSPACE_TAB_WEBSITES = "websites";
+const WEBSITE_DRAFT_DELETE_REASONS = Object.freeze([
+  "I no longer need this website.",
+  "I built it for the wrong listing.",
+  "The imported content does not look right.",
+  "I want to try a different template.",
+  "I prefer to manage bookings without a standalone website.",
+  "Other",
+]);
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
@@ -62,6 +71,18 @@ const getImportedPhotoSummary = (importedImageCount, emptyLabel = "No photos imp
   }
 
   return `${importedImageCount} photo${importedImageCount === 1 ? "" : "s"} imported`;
+};
+
+const getPropertySelectPlaceholder = ({ isLoading, isLoadingWebsiteDrafts }) => {
+  if (isLoading) {
+    return "Loading your listings...";
+  }
+
+  if (isLoadingWebsiteDrafts) {
+    return "Checking website availability...";
+  }
+
+  return "Choose a listing";
 };
 
 const getGalleryAnimationClassName = (direction) => {
@@ -96,6 +117,41 @@ const getDraftDisplayTitle = (draft) => {
 };
 
 const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
+
+const buildImageVariantMap = (images) => {
+  const imageVariantMap = new Map();
+  (Array.isArray(images) ? images : []).forEach((image) => {
+    const thumbUrl = resolveAccommodationImageUrl(image, "thumb");
+    const webUrl = resolveAccommodationImageUrl(image, "web");
+
+    if (thumbUrl && thumbUrl !== placeholderImage) {
+      imageVariantMap.set(thumbUrl, thumbUrl);
+      if (webUrl && webUrl !== placeholderImage) {
+        imageVariantMap.set(webUrl, thumbUrl);
+      }
+    }
+  });
+  return imageVariantMap;
+};
+
+const mapImageOverridesToThumbnails = (contentOverrides, imageVariantMap) => {
+  if (!contentOverrides || typeof contentOverrides !== "object" || imageVariantMap.size < 1) {
+    return contentOverrides || {};
+  }
+
+  const nextOverrides = { ...contentOverrides };
+  if (nextOverrides.heroImage) {
+    nextOverrides.heroImage = imageVariantMap.get(nextOverrides.heroImage) || nextOverrides.heroImage;
+  }
+
+  if (Array.isArray(nextOverrides.galleryImages)) {
+    nextOverrides.galleryImages = nextOverrides.galleryImages.map(
+      (imageUrl) => imageVariantMap.get(imageUrl) || imageUrl
+    );
+  }
+
+  return nextOverrides;
+};
 
 const formatDraftUpdatedAt = (updatedAt) => {
   const parsedValue = Number(updatedAt);
@@ -288,6 +344,7 @@ function WebsiteBuilderPage() {
   const [isPersistingWebsiteDraft, setIsPersistingWebsiteDraft] = useState(false);
   const [persistWebsiteDraftError, setPersistWebsiteDraftError] = useState("");
   const [websiteDraftPendingDelete, setWebsiteDraftPendingDelete] = useState(null);
+  const [websiteDraftDeleteReasons, setWebsiteDraftDeleteReasons] = useState([]);
   const [isDeletingWebsiteDraft, setIsDeletingWebsiteDraft] = useState(false);
   const previewSectionRef = useRef(null);
   const navigate = useNavigate();
@@ -396,8 +453,13 @@ function WebsiteBuilderPage() {
             const baseModel = buildWebsiteTemplateModel({
               propertyDetails,
               summaryProperty: null,
+              imageVariant: "thumb",
             });
-            const previewModel = applyWebsiteDraftContentOverrides(baseModel, draft.contentOverrides || {});
+            const thumbContentOverrides = mapImageOverridesToThumbnails(
+              draft.contentOverrides || {},
+              buildImageVariantMap(propertyDetails?.images)
+            );
+            const previewModel = applyWebsiteDraftContentOverrides(baseModel, thumbContentOverrides);
             return [draft.propertyId, previewModel];
           } catch {
             return [draft.propertyId, null];
@@ -588,6 +650,33 @@ function WebsiteBuilderPage() {
     };
   }, [activeGalleryIndex, galleryImages.length, isGalleryOpen]);
 
+  useEffect(() => {
+    if (!websiteDraftPendingDelete) {
+      return undefined;
+    }
+
+    const documentBody = globalThis.document?.body;
+    const previousOverflow = documentBody?.style.overflow ?? "";
+    if (documentBody) {
+      documentBody.style.overflow = "hidden";
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeWebsiteDraftDeleteDialog();
+      }
+    };
+
+    globalThis.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      if (documentBody) {
+        documentBody.style.overflow = previousOverflow;
+      }
+      globalThis.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [websiteDraftPendingDelete, isDeletingWebsiteDraft]);
+
   const openGallery = (imageIndex = 0) => {
     if (!selectedProperty || galleryImages.length < 1) {
       return;
@@ -638,6 +727,7 @@ function WebsiteBuilderPage() {
     }
 
     setWebsiteDraftPendingDelete(draft);
+    setWebsiteDraftDeleteReasons([]);
   };
 
   const closeWebsiteDraftDeleteDialog = () => {
@@ -646,6 +736,15 @@ function WebsiteBuilderPage() {
     }
 
     setWebsiteDraftPendingDelete(null);
+    setWebsiteDraftDeleteReasons([]);
+  };
+
+  const toggleWebsiteDraftDeleteReason = (reason) => {
+    setWebsiteDraftDeleteReasons((currentReasons) =>
+      currentReasons.includes(reason)
+        ? currentReasons.filter((currentReason) => currentReason !== reason)
+        : [...currentReasons, reason]
+    );
   };
 
   const removeWebsiteDraft = async () => {
@@ -899,11 +998,7 @@ function WebsiteBuilderPage() {
             disabled={isLoading || isLoadingWebsiteDrafts}
           >
             <option value={EMPTY_SELECTION}>
-              {isLoading
-                ? "Loading your listings..."
-                : isLoadingWebsiteDrafts
-                  ? "Checking website availability..."
-                  : "Choose a listing"}
+              {getPropertySelectPlaceholder({ isLoading, isLoadingWebsiteDrafts })}
             </option>
             {propertySelectOptions.map((propertyOption) => (
               <option key={propertyOption.value} value={propertyOption.value}>
@@ -1015,49 +1110,50 @@ function WebsiteBuilderPage() {
     );
   };
 
-  const renderPreviewBuildState = () => (
-    <div className={styles.previewBuildCard}>
-      <div className={styles.previewBuildVisual}>
-        <div className={`${styles.previewBuildSilhouetteShell} ${styles.templatePreviewShell}`}>
-          <TemplateSilhouette layout={selectedTemplate.layout} />
+  const renderPreviewBuildState = () => {
+    const activeStepIndex = PREVIEW_BUILD_STEP_KEYS.indexOf(previewBuildPhase);
+
+    return (
+      <div className={styles.previewBuildCard}>
+        <div className={styles.previewBuildVisual}>
+          <div className={`${styles.previewBuildSilhouetteShell} ${styles.templatePreviewShell}`}>
+            <TemplateSilhouette layout={selectedTemplate.layout} />
+          </div>
+        </div>
+
+        <div className={styles.previewBuildCopy}>
+          <PulseBarsLoader
+            message={`Preparing ${selectedTemplate.name} from the selected listing`}
+            className={styles.previewLoader}
+          />
+
+          <div className={styles.previewBuildSteps}>
+            {PREVIEW_BUILD_STEPS.map((step, index) => {
+              const isComplete = index < activeStepIndex;
+              const isActive = index === activeStepIndex;
+
+              return (
+                <article
+                  key={step.key}
+                  className={`${styles.previewBuildStep} ${isComplete ? styles.previewBuildStepComplete : ""} ${
+                    isActive ? styles.previewBuildStepActive : ""
+                  }`.trim()}
+                >
+                  <span className={styles.previewBuildStepIndex} aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <div className={styles.previewBuildStepCopy}>
+                    <p>{step.title}</p>
+                    <span>{step.description}</span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      <div className={styles.previewBuildCopy}>
-        <PulseBarsLoader
-          message={`Preparing ${selectedTemplate.name} from the selected listing`}
-          className={styles.previewLoader}
-        />
-
-        <div className={styles.previewBuildSteps}>
-          {PREVIEW_BUILD_STEPS.map((step, index) => {
-            const activeStepIndex = PREVIEW_BUILD_STEPS.findIndex(
-              (buildStep) => buildStep.key === previewBuildPhase
-            );
-            const isComplete = index < activeStepIndex;
-            const isActive = index === activeStepIndex;
-
-            return (
-              <article
-                key={step.key}
-                className={`${styles.previewBuildStep} ${isComplete ? styles.previewBuildStepComplete : ""} ${
-                  isActive ? styles.previewBuildStepActive : ""
-                }`.trim()}
-              >
-                <span className={styles.previewBuildStepIndex} aria-hidden="true">
-                  {index + 1}
-                </span>
-                <div className={styles.previewBuildStepCopy}>
-                  <p>{step.title}</p>
-                  <span>{step.description}</span>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderPreviewStep = () => {
     if (previewStage === PREVIEW_STAGE.idle) {
@@ -1288,8 +1384,7 @@ function WebsiteBuilderPage() {
               >
                 <img
                   src={imageUrl}
-                  alt=""
-                  aria-hidden="true"
+                  alt={`Gallery item ${index + 1} for ${selectedProperty.title || selectedProperty.label}`}
                   className={styles.galleryThumbnailImage}
                 />
               </button>
@@ -1299,27 +1394,51 @@ function WebsiteBuilderPage() {
       ) : null}
 
       {websiteDraftPendingDelete ? (
-        <div className={styles.deleteDraftOverlay} role="presentation">
-          <section
-            className={styles.deleteDraftDialog}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-website-draft-title"
-          >
+        <dialog
+          open
+          className={styles.deleteDraftOverlay}
+          aria-labelledby="delete-website-draft-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            closeWebsiteDraftDeleteDialog();
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeWebsiteDraftDeleteDialog();
+            }
+          }}
+        >
+          <section className={styles.deleteDraftDialog}>
             <p className={styles.deleteDraftEyebrow}>Delete website</p>
             <h3 id="delete-website-draft-title" className={styles.deleteDraftTitle}>
-              Delete this website permanently?
+              Why are you deleting this website?
             </h3>
             <p className={styles.deleteDraftCopy}>
-              This removes the saved website draft for{" "}
-              <strong>
-                {getDraftDisplayTitle(websiteDraftPendingDelete)}
-              </strong>
-              . The listing will become available again in the Build website dropdown.
+              This removes the saved website draft for <strong>{getDraftDisplayTitle(websiteDraftPendingDelete)}</strong>.
             </p>
             <p className={styles.deleteDraftCopy}>
-              This does not delete the listing itself.
+              The listing will become available again in the Build website dropdown.
             </p>
+            <p className={styles.deleteDraftCopy}>
+              This <strong>does not</strong> delete the listing itself.
+            </p>
+
+            <fieldset className={styles.deleteReasonFieldset}>
+              <legend className={styles.deleteReasonLegend}>Choose all reasons that apply.</legend>
+              <div className={styles.deleteReasonList}>
+                {WEBSITE_DRAFT_DELETE_REASONS.map((reason) => (
+                  <label key={reason} className={styles.deleteReasonOption}>
+                    <input
+                      type="checkbox"
+                      value={reason}
+                      checked={websiteDraftDeleteReasons.includes(reason)}
+                      onChange={() => toggleWebsiteDraftDeleteReason(reason)}
+                    />
+                    <span>{reason}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
 
             <div className={styles.deleteDraftActions}>
               <button
@@ -1340,7 +1459,7 @@ function WebsiteBuilderPage() {
               </button>
             </div>
           </section>
-        </div>
+        </dialog>
       ) : null}
     </main>
   );

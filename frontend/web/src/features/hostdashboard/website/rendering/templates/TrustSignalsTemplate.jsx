@@ -1,30 +1,23 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
-import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
-
-const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
-  if (!onSelectTarget) {
-    return { className };
-  }
-
-  const isActiveTarget = target?.targetId && target.targetId === activeTargetId;
-  const handleActivate = () => onSelectTarget(target);
-  return {
-    className: `${className} ${styles.previewInteractiveTarget} ${
-      isActiveTarget ? styles.previewInteractiveTargetActive : ""
-    }`.trim(),
-    role: "button",
-    tabIndex: 0,
-    onClick: handleActivate,
-    onKeyDown: (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        handleActivate();
-      }
-    },
-  };
-};
+import {
+  getInteractiveTargetProps,
+  TemplateAvailabilityCalendar,
+  TemplateHeroCopy,
+  TemplateSoftCallout,
+  TemplateTopBar,
+} from "./templateSharedSections";
+import {
+  availabilityPropType,
+  callToActionPropType,
+  copyItemPropType,
+  heroPropType,
+  mediaPropType,
+  sitePropType,
+  templateInteractionPropTypes,
+  visibilityPropType,
+} from "./templatePropTypes";
 
 export default function TrustSignalsTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
@@ -35,52 +28,21 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
   return (
     <article className={styles.templateSite}>
       {showTopBar ? (
-        <div
-          {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
-            sectionId: "common",
-            targetId: "common.siteTitle",
-          }, activeTargetId)}
-        >
-          <div className={styles.templateTopBarBrand}>
-            <span className={styles.templateTopBarMark} aria-hidden="true" />
-            <span>{model.site.title}</span>
-          </div>
+        <TemplateTopBar model={model} onSelectTarget={onSelectTarget} activeTargetId={activeTargetId}>
           <div className={styles.templateTopBarMeta}>
             {model.stay.minimumStayLabel ? <span>{model.stay.minimumStayLabel}</span> : null}
             {model.location.label ? <span>{model.location.label}</span> : null}
           </div>
-        </div>
+        </TemplateTopBar>
       ) : null}
 
       <section className={styles.trustSignalsShell}>
-        <div
+        <TemplateHeroCopy
           className={styles.trustSignalsIntro}
-        >
-          <p
-            {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroEyebrow",
-            }, activeTargetId)}
-          >
-            {model.hero.eyebrow}
-          </p>
-          <h1
-            {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroTitle",
-            }, activeTargetId)}
-          >
-            {model.hero.title}
-          </h1>
-          <p
-            {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroDescription",
-            }, activeTargetId)}
-          >
-            {model.hero.description}
-          </p>
-        </div>
+          model={model}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
+        />
 
         <img
           {...getInteractiveTargetProps(styles.trustSignalsHeroImage, onSelectTarget, {
@@ -115,26 +77,21 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
         ) : null}
 
         {showAvailabilityCalendar ? (
-          <AvailabilityCalendarPreview
-            availability={model.availability}
-            interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
-              sectionId: "visibility",
-              targetId: "visibility.availabilityCalendar",
-            }, activeTargetId)}
+          <TemplateAvailabilityCalendar
+            model={model}
+            onSelectTarget={onSelectTarget}
+            activeTargetId={activeTargetId}
           />
         ) : null}
 
         {showCallToAction ? (
           <div className={styles.trustSignalsFooter}>
-            <div
-              {...getInteractiveTargetProps(styles.softCallout, onSelectTarget, {
-                sectionId: "common",
-                targetId: "common.ctaLabel",
-              }, activeTargetId)}
-            >
-              <strong>{model.callToAction.label}</strong>
-              <p>{model.callToAction.note}</p>
-            </div>
+            <TemplateSoftCallout
+              className={styles.softCallout}
+              model={model}
+              onSelectTarget={onSelectTarget}
+              activeTargetId={activeTargetId}
+            />
           </div>
         ) : null}
       </section>
@@ -144,50 +101,19 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
 
 TrustSignalsTemplate.propTypes = {
   model: PropTypes.shape({
-    site: PropTypes.shape({
-      title: PropTypes.string,
-    }).isRequired,
-    hero: PropTypes.shape({
-      eyebrow: PropTypes.string,
-      title: PropTypes.string,
-      description: PropTypes.string,
-    }).isRequired,
-    media: PropTypes.shape({
-      heroImage: PropTypes.string,
-    }).isRequired,
-    trustCards: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-      })
-    ).isRequired,
+    site: sitePropType.isRequired,
+    hero: heroPropType.isRequired,
+    media: mediaPropType.isRequired,
+    trustCards: PropTypes.arrayOf(copyItemPropType).isRequired,
     stay: PropTypes.shape({
       minimumStayLabel: PropTypes.string,
     }).isRequired,
     location: PropTypes.shape({
       label: PropTypes.string,
     }).isRequired,
-    availability: PropTypes.shape({
-      externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
-      syncSummary: PropTypes.string,
-      blockedDateSummary: PropTypes.string,
-      lastSyncLabel: PropTypes.string,
-      nextBlockedLabel: PropTypes.string,
-      callout: PropTypes.string,
-    }).isRequired,
-    callToAction: PropTypes.shape({
-      label: PropTypes.string.isRequired,
-      note: PropTypes.string.isRequired,
-    }).isRequired,
-    visibility: PropTypes.shape({
-      topBar: PropTypes.bool,
-      trustCards: PropTypes.bool,
-      availabilityCalendar: PropTypes.bool,
-      callToAction: PropTypes.bool,
-      chatWidget: PropTypes.bool,
-    }).isRequired,
+    availability: availabilityPropType.isRequired,
+    callToAction: callToActionPropType.isRequired,
+    visibility: visibilityPropType.isRequired,
   }).isRequired,
-  onSelectTarget: PropTypes.func,
-  activeTargetId: PropTypes.string,
+  ...templateInteractionPropTypes,
 };

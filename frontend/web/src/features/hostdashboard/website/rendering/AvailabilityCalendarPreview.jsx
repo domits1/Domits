@@ -39,6 +39,34 @@ const buildCalendarCells = (viewMonth, externalBlockedDateKeys, unavailableDateK
   });
 };
 
+const getCalendarCellStatus = (cell) => {
+  if (cell.isExternalBlocked) {
+    return {
+      title: "Imported external booking",
+      Icon: LinkOutlinedIcon,
+      label: "External",
+    };
+  }
+
+  if (cell.isUnavailable) {
+    return {
+      title: "Blocked in PMS availability",
+      Icon: BlockOutlinedIcon,
+      label: "Blocked",
+    };
+  }
+
+  return null;
+};
+
+function CalendarLegendItem({ children }) {
+  return <span className={styles.calendarLegendItem}>{children}</span>;
+}
+
+CalendarLegendItem.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 export default function AvailabilityCalendarPreview({ availability, interactiveTargetProps = {} }) {
   const externalBlockedDateKeySet = useMemo(
     () => new Set(Array.isArray(availability?.externalBlockedDates) ? availability.externalBlockedDates : []),
@@ -98,22 +126,22 @@ export default function AvailabilityCalendarPreview({ availability, interactiveT
       </div>
 
       <div className={styles.calendarLegend}>
-        <span className={styles.calendarLegendItem}>
+        <CalendarLegendItem>
           <span className={`${styles.calendarLegendDot} ${styles.calendarLegendDotToday}`} aria-hidden="true" />
-          Today
-        </span>
-        <span className={styles.calendarLegendItem}>
+          <span>Today</span>
+        </CalendarLegendItem>
+        <CalendarLegendItem>
           <span className={`${styles.calendarLegendDot} ${styles.calendarLegendDotBlocked}`} aria-hidden="true" />
-          Imported external booking
-        </span>
-        <span className={styles.calendarLegendItem}>
+          <span>Imported external booking</span>
+        </CalendarLegendItem>
+        <CalendarLegendItem>
           <span className={`${styles.calendarLegendDot} ${styles.calendarLegendDotUnavailable}`} aria-hidden="true" />
-          PMS blocked date
-        </span>
-        <span className={styles.calendarLegendItem}>
+          <span>PMS blocked date</span>
+        </CalendarLegendItem>
+        <CalendarLegendItem>
           <EventAvailableOutlinedIcon fontSize="inherit" />
-          Live quote still validates current availability
-        </span>
+          <span>Live quote still validates current availability</span>
+        </CalendarLegendItem>
       </div>
 
       <div className={styles.calendarGridHeader}>
@@ -125,36 +153,30 @@ export default function AvailabilityCalendarPreview({ availability, interactiveT
       </div>
 
       <div className={styles.calendarGridBody}>
-        {calendarCells.map((cell) => (
-          <span
-            key={cell.id}
-            className={`${styles.calendarCell} ${cell.isCurrentMonth ? styles.calendarCellCurrent : ""} ${
-              cell.isExternalBlocked ? styles.calendarCellBlocked : ""
-            } ${cell.isUnavailable && !cell.isExternalBlocked ? styles.calendarCellUnavailable : ""} ${
-              cell.isUnavailable ? styles.calendarCellBlockedBase : ""
-            } ${cell.isToday ? styles.calendarCellToday : ""}`.trim()}
-            title={
-              cell.isExternalBlocked
-                ? "Imported external booking"
-                : cell.isUnavailable
-                  ? "Blocked in PMS availability"
-                  : undefined
-            }
-          >
-            <span className={styles.calendarCellDay}>{cell.dayOfMonth}</span>
-            {cell.isExternalBlocked ? (
-              <span className={styles.calendarCellStatus}>
-                <LinkOutlinedIcon fontSize="inherit" />
-                <span>External</span>
-              </span>
-            ) : cell.isUnavailable ? (
-              <span className={styles.calendarCellStatus}>
-                <BlockOutlinedIcon fontSize="inherit" />
-                <span>Blocked</span>
-              </span>
-            ) : null}
-          </span>
-        ))}
+        {calendarCells.map((cell) => {
+          const status = getCalendarCellStatus(cell);
+          const StatusIcon = status?.Icon;
+
+          return (
+            <span
+              key={cell.id}
+              className={`${styles.calendarCell} ${cell.isCurrentMonth ? styles.calendarCellCurrent : ""} ${
+                cell.isExternalBlocked ? styles.calendarCellBlocked : ""
+              } ${cell.isUnavailable && !cell.isExternalBlocked ? styles.calendarCellUnavailable : ""} ${
+                cell.isUnavailable ? styles.calendarCellBlockedBase : ""
+              } ${cell.isToday ? styles.calendarCellToday : ""}`.trim()}
+              title={status?.title}
+            >
+              <span className={styles.calendarCellDay}>{cell.dayOfMonth}</span>
+              {status && StatusIcon ? (
+                <span className={styles.calendarCellStatus}>
+                  <StatusIcon fontSize="inherit" />
+                  <span>{status.label}</span>
+                </span>
+              ) : null}
+            </span>
+          );
+        })}
       </div>
     </section>
   );

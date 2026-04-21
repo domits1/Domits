@@ -1004,3 +1004,45 @@ Evidence (commit(s), file(s), docs):
   - `standalone_property_site_frontend_status.md`
   - `standalone_property_site_implementation_log.md`
 
+## [2026-04-21] Workspace delete-reason dialog and compact thumbnail optimization
+Context:
+The saved website workspace needed tighter mobile behavior and a more useful delete flow. The compact website preview was also too small to justify loading full web-sized images.
+
+Implementation:
+- Centered compact saved website previews on mobile cards.
+- Changed compact draft preview model hydration to request thumbnail image variants.
+- Mapped persisted web-image overrides back to thumbnail URLs where the selected property image payload exposes both variants.
+- Replaced the plain delete confirmation copy with a reason-selection dialog using checkbox options.
+- Made the delete overlay close when clicking outside the dialog.
+- Emphasized that deleting a website draft does not delete the listing itself.
+
+Decision / Rationale:
+- The workspace card preview is a tiny summary, so thumbnail images are the correct default. Blurry is acceptable there; unnecessary image weight is not.
+- Deletion reasons are valuable product data, but wiring them to persistence should come later with a deliberate analytics/event contract instead of stuffing it into the draft delete endpoint casually.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- Delete reason selections are currently UI-only and not persisted.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+- Backend routing unit test passed:
+  - `test/PropertyHandler/routing-unit.test.js`
+
+Open risks / Next:
+- Persist delete reasons through a dedicated analytics/event path when product wants actual reporting.
+- Browser-check compact preview centering on a real mobile viewport after deployment.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/buildWebsiteTemplateModel.js`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+  - `standalone_property_site_implementation_log.md`
+

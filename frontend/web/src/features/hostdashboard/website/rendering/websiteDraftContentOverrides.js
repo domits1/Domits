@@ -151,49 +151,65 @@ export const buildWebsiteDraftEditorValues = (model) => ({
     gallery: Array.from({ length: 3 }, (_, index) => String(model?.gallery?.images?.[index] || "")),
   },
   trustCards: (Array.isArray(model?.trustCards) ? model.trustCards : []).map((card) => ({
+    id: String(card?.id || card?.title || ""),
     title: String(card?.title || ""),
     description: String(card?.description || ""),
   })),
   journeyStops: (Array.isArray(model?.journeyStops) ? model.journeyStops : []).map((stop) => ({
+    id: String(stop?.id || stop?.title || ""),
     title: String(stop?.title || ""),
     description: String(stop?.description || ""),
   })),
 });
 
-export const buildWebsiteDraftOverridePatch = (editorValues, baseModel) => {
-  const nextPatch = {};
-  const normalizedSiteTitle = cleanText(editorValues?.common?.siteTitle);
-  const normalizedHeroEyebrow = cleanText(editorValues?.common?.heroEyebrow);
-  const normalizedHeroTitle = cleanText(editorValues?.common?.heroTitle);
-  const normalizedHeroDescription = cleanText(editorValues?.common?.heroDescription);
-  const normalizedCtaLabel = cleanText(editorValues?.common?.ctaLabel);
-  const normalizedCtaNote = cleanText(editorValues?.common?.ctaNote);
+const TEXT_OVERRIDE_FIELDS = Object.freeze([
+  {
+    patchKey: "siteTitle",
+    editorValue: (editorValues) => editorValues?.common?.siteTitle,
+    baseValue: (baseModel) => baseModel?.site?.title,
+  },
+  {
+    patchKey: "heroEyebrow",
+    editorValue: (editorValues) => editorValues?.common?.heroEyebrow,
+    baseValue: (baseModel) => baseModel?.hero?.eyebrow,
+  },
+  {
+    patchKey: "heroTitle",
+    editorValue: (editorValues) => editorValues?.common?.heroTitle,
+    baseValue: (baseModel) => baseModel?.hero?.title,
+  },
+  {
+    patchKey: "heroDescription",
+    editorValue: (editorValues) => editorValues?.common?.heroDescription,
+    baseValue: (baseModel) => baseModel?.hero?.description,
+  },
+  {
+    patchKey: "ctaLabel",
+    editorValue: (editorValues) => editorValues?.common?.ctaLabel,
+    baseValue: (baseModel) => baseModel?.callToAction?.label,
+  },
+  {
+    patchKey: "ctaNote",
+    editorValue: (editorValues) => editorValues?.common?.ctaNote,
+    baseValue: (baseModel) => baseModel?.callToAction?.note,
+  },
+  {
+    patchKey: "heroImage",
+    editorValue: (editorValues) => editorValues?.images?.heroImage,
+    baseValue: (baseModel) => baseModel?.media?.heroImage,
+  },
+]);
 
-  if (normalizedSiteTitle && normalizedSiteTitle !== cleanText(baseModel?.site?.title)) {
-    nextPatch.siteTitle = normalizedSiteTitle;
+const addTextOverride = (patch, field, editorValues, baseModel) => {
+  const normalizedEditorValue = cleanText(field.editorValue(editorValues));
+
+  if (normalizedEditorValue && normalizedEditorValue !== cleanText(field.baseValue(baseModel))) {
+    patch[field.patchKey] = normalizedEditorValue;
   }
+};
 
-  if (normalizedHeroEyebrow && normalizedHeroEyebrow !== cleanText(baseModel?.hero?.eyebrow)) {
-    nextPatch.heroEyebrow = normalizedHeroEyebrow;
-  }
-
-  if (normalizedHeroTitle && normalizedHeroTitle !== cleanText(baseModel?.hero?.title)) {
-    nextPatch.heroTitle = normalizedHeroTitle;
-  }
-
-  if (normalizedHeroDescription && normalizedHeroDescription !== cleanText(baseModel?.hero?.description)) {
-    nextPatch.heroDescription = normalizedHeroDescription;
-  }
-
-  if (normalizedCtaLabel && normalizedCtaLabel !== cleanText(baseModel?.callToAction?.label)) {
-    nextPatch.ctaLabel = normalizedCtaLabel;
-  }
-
-  if (normalizedCtaNote && normalizedCtaNote !== cleanText(baseModel?.callToAction?.note)) {
-    nextPatch.ctaNote = normalizedCtaNote;
-  }
-
-  const nextVisibilityPatch = VISIBILITY_KEYS.reduce((visibilityPatch, visibilityKey) => {
+const buildVisibilityPatch = (editorValues, baseModel) =>
+  VISIBILITY_KEYS.reduce((visibilityPatch, visibilityKey) => {
     const editorVisibilityValue = Boolean(editorValues?.visibility?.[visibilityKey]);
     const baseVisibilityValue = Boolean(baseModel?.visibility?.[visibilityKey]);
 
@@ -207,67 +223,52 @@ export const buildWebsiteDraftOverridePatch = (editorValues, baseModel) => {
     return visibilityPatch;
   }, {});
 
+const buildGalleryImagesPatch = (editorValues, baseModel) =>
+  (Array.isArray(baseModel?.gallery?.images) ? baseModel.gallery.images : []).map((baseImage, index) => {
+    const normalizedEditorImage = cleanText(editorValues?.images?.gallery?.[index]);
+    return normalizedEditorImage && normalizedEditorImage !== cleanText(baseImage) ? normalizedEditorImage : "";
+  });
+
+const buildCopyCollectionPatch = (baseItems, editorItems) =>
+  (Array.isArray(baseItems) ? baseItems : []).map((baseItem, index) => {
+    const normalizedTitle = cleanText(editorItems?.[index]?.title);
+    const normalizedDescription = cleanText(editorItems?.[index]?.description);
+    const itemPatch = {};
+
+    if (normalizedTitle && normalizedTitle !== cleanText(baseItem?.title)) {
+      itemPatch.title = normalizedTitle;
+    }
+
+    if (normalizedDescription && normalizedDescription !== cleanText(baseItem?.description)) {
+      itemPatch.description = normalizedDescription;
+    }
+
+    return itemPatch;
+  });
+
+const hasCollectionPatch = (patchItems) => patchItems.some((itemPatch) => Object.keys(itemPatch).length > 0);
+
+export const buildWebsiteDraftOverridePatch = (editorValues, baseModel) => {
+  const nextPatch = {};
+  TEXT_OVERRIDE_FIELDS.forEach((field) => addTextOverride(nextPatch, field, editorValues, baseModel));
+
+  const nextVisibilityPatch = buildVisibilityPatch(editorValues, baseModel);
   if (Object.keys(nextVisibilityPatch).length > 0) {
     nextPatch.visibility = nextVisibilityPatch;
   }
 
-  const normalizedHeroImage = cleanText(editorValues?.images?.heroImage);
-  if (normalizedHeroImage && normalizedHeroImage !== cleanText(baseModel?.media?.heroImage)) {
-    nextPatch.heroImage = normalizedHeroImage;
-  }
-
-  const nextGalleryImagesPatch = (Array.isArray(baseModel?.gallery?.images) ? baseModel.gallery.images : []).map(
-    (baseImage, index) => {
-      const normalizedEditorImage = cleanText(editorValues?.images?.gallery?.[index]);
-      return normalizedEditorImage && normalizedEditorImage !== cleanText(baseImage) ? normalizedEditorImage : "";
-    }
-  );
-
+  const nextGalleryImagesPatch = buildGalleryImagesPatch(editorValues, baseModel);
   if (nextGalleryImagesPatch.some(Boolean)) {
     nextPatch.galleryImages = nextGalleryImagesPatch;
   }
 
-  const nextTrustCardsPatch = (Array.isArray(baseModel?.trustCards) ? baseModel.trustCards : []).map(
-    (baseCard, index) => {
-      const normalizedTitle = cleanText(editorValues?.trustCards?.[index]?.title);
-      const normalizedDescription = cleanText(editorValues?.trustCards?.[index]?.description);
-      const trustCardPatch = {};
-
-      if (normalizedTitle && normalizedTitle !== cleanText(baseCard?.title)) {
-        trustCardPatch.title = normalizedTitle;
-      }
-
-      if (normalizedDescription && normalizedDescription !== cleanText(baseCard?.description)) {
-        trustCardPatch.description = normalizedDescription;
-      }
-
-      return trustCardPatch;
-    }
-  );
-
-  if (nextTrustCardsPatch.some((cardPatch) => Object.keys(cardPatch).length > 0)) {
+  const nextTrustCardsPatch = buildCopyCollectionPatch(baseModel?.trustCards, editorValues?.trustCards);
+  if (hasCollectionPatch(nextTrustCardsPatch)) {
     nextPatch.trustCards = nextTrustCardsPatch;
   }
 
-  const nextJourneyStopsPatch = (Array.isArray(baseModel?.journeyStops) ? baseModel.journeyStops : []).map(
-    (baseStop, index) => {
-      const normalizedTitle = cleanText(editorValues?.journeyStops?.[index]?.title);
-      const normalizedDescription = cleanText(editorValues?.journeyStops?.[index]?.description);
-      const journeyStopPatch = {};
-
-      if (normalizedTitle && normalizedTitle !== cleanText(baseStop?.title)) {
-        journeyStopPatch.title = normalizedTitle;
-      }
-
-      if (normalizedDescription && normalizedDescription !== cleanText(baseStop?.description)) {
-        journeyStopPatch.description = normalizedDescription;
-      }
-
-      return journeyStopPatch;
-    }
-  );
-
-  if (nextJourneyStopsPatch.some((stopPatch) => Object.keys(stopPatch).length > 0)) {
+  const nextJourneyStopsPatch = buildCopyCollectionPatch(baseModel?.journeyStops, editorValues?.journeyStops);
+  if (hasCollectionPatch(nextJourneyStopsPatch)) {
     nextPatch.journeyStops = nextJourneyStopsPatch;
   }
 

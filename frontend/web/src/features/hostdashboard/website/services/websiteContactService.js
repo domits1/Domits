@@ -4,12 +4,26 @@ const VISITOR_ID_STORAGE_KEY = "domits_standalone_visitor_id";
 
 const cleanText = (value) => String(value || "").trim();
 
+let fallbackVisitorIdSequence = 0;
+
+const createRandomVisitorSegment = () => {
+  const cryptoApi = globalThis.crypto;
+  if (!cryptoApi?.getRandomValues) {
+    fallbackVisitorIdSequence += 1;
+    return `${Date.now()}-${fallbackVisitorIdSequence}`;
+  }
+
+  const randomBytes = new Uint32Array(4);
+  cryptoApi.getRandomValues(randomBytes);
+  return Array.from(randomBytes, (value) => value.toString(16).padStart(8, "0")).join("");
+};
+
 const createVisitorId = () => {
   if (globalThis.crypto?.randomUUID) {
     return `visitor-${globalThis.crypto.randomUUID()}`;
   }
 
-  return `visitor-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `visitor-${createRandomVisitorSegment()}`;
 };
 
 const getOrCreateVisitorId = () => {

@@ -65,6 +65,26 @@ const mapCalendarSyncSource = (row) => ({
   updatedAt: normalizeTimestamp(row?.updatedAt),
 });
 
+const getLatestSyncTimestamp = (syncSources) => {
+  let latestTimestamp = null;
+
+  syncSources.forEach((source) => {
+    const candidateTimestamp = source.lastSyncAt || source.updatedAt;
+    if (!candidateTimestamp) {
+      return;
+    }
+
+    if (latestTimestamp === null) {
+      latestTimestamp = candidateTimestamp;
+      return;
+    }
+
+    latestTimestamp = Math.max(latestTimestamp, candidateTimestamp);
+  });
+
+  return latestTimestamp;
+};
+
 export class PropertyExternalCalendarRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
@@ -80,14 +100,7 @@ export class PropertyExternalCalendarRepository {
     const blockedDateKeys = buildBlockedDateKeys(rows);
     const syncSources = (Array.isArray(rows) ? rows : []).map(mapCalendarSyncSource);
     const syncedSourceCount = syncSources.length;
-    const lastSyncAt = syncSources.reduce((latestTimestamp, source) => {
-      const candidateTimestamp = source.lastSyncAt || source.updatedAt;
-      if (!candidateTimestamp) {
-        return latestTimestamp;
-      }
-
-      return latestTimestamp && latestTimestamp > candidateTimestamp ? latestTimestamp : candidateTimestamp;
-    }, null);
+    const lastSyncAt = getLatestSyncTimestamp(syncSources);
 
     return {
       externalBlockedDates: blockedDateKeys,

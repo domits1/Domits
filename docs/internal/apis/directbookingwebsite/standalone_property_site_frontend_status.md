@@ -35,6 +35,9 @@ What is in place:
 - Saved website cards display the persisted website title override when the host changes the title in the editor.
 - Saved website cards now expose both `Open editor` and `Delete permanently`, so deleting a website immediately makes its listing available again in the builder.
 - The saved website delete action is visually destructive/red and now opens an in-app confirmation overlay before deletion.
+- The saved website delete overlay now includes local-only deletion-reason checkboxes for future analytics/traceability and can be closed by clicking outside the dialog.
+- Compact saved website previews use thumbnail image variants where the property image payload provides them, reducing unnecessary image weight in `My websites`.
+- Compact saved website previews are centered on mobile cards.
 - Editor sections are now collapsible so the left-side control surface remains usable as more override fields are added.
 - Clicking editable areas in the editor preview now opens or scrolls to the matching editor section, and clicking preview images opens the image picker directly.
 - Clicking the availability calendar in the editor preview now opens the visibility section and highlights the `Show availability calendar` toggle.

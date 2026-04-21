@@ -5,7 +5,24 @@ import EventIcon from "@mui/icons-material/Event";
 import { GiAirplaneArrival } from "react-icons/gi";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
-import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
+import {
+  getInteractiveTargetProps,
+  TemplateAvailabilityCalendar,
+  TemplateHeroCopy,
+  TemplateTopBar,
+} from "./templateSharedSections";
+import {
+  amenityPropType,
+  availabilityPropType,
+  callToActionPropType,
+  copyItemPropType,
+  galleryPropType,
+  heroPropType,
+  mediaPropType,
+  sitePropType,
+  templateInteractionPropTypes,
+  visibilityPropType,
+} from "./templatePropTypes";
 
 const PANORAMA_CARD_ICONS = Object.freeze({
   "stay-details": {
@@ -24,29 +41,6 @@ const PANORAMA_CARD_ICONS = Object.freeze({
 
 const getPanoramaCardIcon = (cardId) => PANORAMA_CARD_ICONS[cardId] || null;
 
-const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
-  if (!onSelectTarget) {
-    return { className };
-  }
-
-  const isActiveTarget = target?.targetId && target.targetId === activeTargetId;
-  const handleActivate = () => onSelectTarget(target);
-  return {
-    className: `${className} ${styles.previewInteractiveTarget} ${
-      isActiveTarget ? styles.previewInteractiveTargetActive : ""
-    }`.trim(),
-    role: "button",
-    tabIndex: 0,
-    onClick: handleActivate,
-    onKeyDown: (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        handleActivate();
-      }
-    },
-  };
-};
-
 export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showTrustCards = model.visibility?.trustCards !== false;
@@ -59,51 +53,22 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
   return (
     <article className={styles.templateSite}>
       {showTopBar ? (
-        <div
-          {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
-            sectionId: "common",
-            targetId: "common.siteTitle",
-          }, activeTargetId)}
-        >
-          <div className={styles.templateTopBarBrand}>
-            <span className={styles.templateTopBarMark} aria-hidden="true" />
-            <span>{model.site.title}</span>
-          </div>
+        <TemplateTopBar model={model} onSelectTarget={onSelectTarget} activeTargetId={activeTargetId}>
           <div className={styles.templateTopBarNav}>
             <span>Overview</span>
             <span>Amenities</span>
             <span>Contact</span>
           </div>
-        </div>
+        </TemplateTopBar>
       ) : null}
 
       <section className={styles.panoramaIntro}>
-        <div className={styles.panoramaIntroCopy}>
-          <p
-            {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroEyebrow",
-            }, activeTargetId)}
-          >
-            {model.hero.eyebrow}
-          </p>
-          <h1
-            {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroTitle",
-            }, activeTargetId)}
-          >
-            {model.hero.title}
-          </h1>
-          <p
-            {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroDescription",
-            }, activeTargetId)}
-          >
-            {model.hero.description}
-          </p>
-        </div>
+        <TemplateHeroCopy
+          className={styles.panoramaIntroCopy}
+          model={model}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
+        />
       </section>
 
       <section className={styles.panoramaHeroCard}>
@@ -131,7 +96,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
 
       {showTrustCards ? (
         <section className={styles.panoramaFeatureGrid}>
-          {model.trustCards.map((card) => {
+          {model.trustCards.map((card, index) => {
             const iconConfig = getPanoramaCardIcon(card.id);
             const IconComponent = iconConfig?.Icon || null;
 
@@ -140,7 +105,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
                 key={card.id}
                 {...getInteractiveTargetProps(styles.panoramaFeatureCard, onSelectTarget, {
                   sectionId: "trustCards",
-                  targetId: `trustCards.${model.trustCards.findIndex((entry) => entry.id === card.id)}`,
+                  targetId: `trustCards.${index}`,
                 }, activeTargetId)}
               >
                 {IconComponent ? (
@@ -161,12 +126,10 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       ) : null}
 
       {showAvailabilityCalendar ? (
-        <AvailabilityCalendarPreview
-          availability={model.availability}
-          interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
-            sectionId: "visibility",
-            targetId: "visibility.availabilityCalendar",
-          }, activeTargetId)}
+        <TemplateAvailabilityCalendar
+          model={model}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
         />
       ) : null}
 
@@ -182,7 +145,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               <div className={styles.galleryStrip}>
                 {model.gallery.images.slice(0, 3).map((imageUrl, index) => (
                   <img
-                    key={`${imageUrl}-${index}`}
+                    key={`${model.site.title}-${imageUrl}`}
                     {...getInteractiveTargetProps(styles.galleryImage, onSelectTarget, {
                       sectionId: "images",
                       targetId: `images.gallery.${index}`,
@@ -230,17 +193,9 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
 
 PanoramaLandingTemplate.propTypes = {
   model: PropTypes.shape({
-    site: PropTypes.shape({
-      title: PropTypes.string,
-    }).isRequired,
-    hero: PropTypes.shape({
-      eyebrow: PropTypes.string,
-      title: PropTypes.string,
-      description: PropTypes.string,
-    }).isRequired,
-    media: PropTypes.shape({
-      heroImage: PropTypes.string,
-    }).isRequired,
+    site: sitePropType.isRequired,
+    hero: heroPropType.isRequired,
+    media: mediaPropType.isRequired,
     stay: PropTypes.shape({
       stats: PropTypes.arrayOf(
         PropTypes.shape({
@@ -251,45 +206,14 @@ PanoramaLandingTemplate.propTypes = {
       ).isRequired,
       nightlyRateLabel: PropTypes.string,
     }).isRequired,
-    callToAction: PropTypes.shape({
-      label: PropTypes.string.isRequired,
-    }).isRequired,
-    trustCards: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-    gallery: PropTypes.shape({
-      images: PropTypes.arrayOf(PropTypes.string).isRequired,
-    }).isRequired,
+    callToAction: callToActionPropType.isRequired,
+    trustCards: PropTypes.arrayOf(copyItemPropType).isRequired,
+    gallery: galleryPropType.isRequired,
     amenities: PropTypes.shape({
-      featured: PropTypes.arrayOf(
-        PropTypes.shape({
-          id: PropTypes.string.isRequired,
-          label: PropTypes.string.isRequired,
-        })
-      ).isRequired,
+      featured: PropTypes.arrayOf(amenityPropType).isRequired,
     }).isRequired,
-    availability: PropTypes.shape({
-      externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
-      syncSummary: PropTypes.string,
-      blockedDateSummary: PropTypes.string,
-      lastSyncLabel: PropTypes.string,
-      nextBlockedLabel: PropTypes.string,
-      callout: PropTypes.string,
-    }).isRequired,
-    visibility: PropTypes.shape({
-      topBar: PropTypes.bool,
-      trustCards: PropTypes.bool,
-      gallerySection: PropTypes.bool,
-      amenitiesPanel: PropTypes.bool,
-      availabilityCalendar: PropTypes.bool,
-      callToAction: PropTypes.bool,
-      chatWidget: PropTypes.bool,
-    }).isRequired,
+    availability: availabilityPropType.isRequired,
+    visibility: visibilityPropType.isRequired,
   }).isRequired,
-  onSelectTarget: PropTypes.func,
-  activeTargetId: PropTypes.string,
+  ...templateInteractionPropTypes,
 };

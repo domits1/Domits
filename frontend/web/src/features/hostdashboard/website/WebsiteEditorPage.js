@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import LaptopMacOutlinedIcon from "@mui/icons-material/LaptopMacOutlined";
-import TabletMacOutlinedIcon from "@mui/icons-material/TabletMacOutlined";
-import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
 import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
@@ -23,233 +20,19 @@ import {
   mergeWebsiteDraftContentOverrides,
 } from "./rendering/websiteDraftContentOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
+import {
+  COMMON_TEXT_FIELDS,
+  EDITOR_SECTION_KEYS,
+  EDITOR_TARGET_KEYS,
+  LOADING_EDITOR_SECTIONS,
+  PREVIEW_VIEWPORT_OPTIONS,
+  TEMPLATE_COPY_COLLECTION_CONFIG,
+  TEMPLATE_IMAGE_SLOT_MAP,
+  TEMPLATE_VISIBILITY_FIELD_MAP,
+  getCollectionTargetId,
+  getImageSlotTargetId,
+} from "./websiteEditorConfig";
 import styles from "./WebsiteEditorPage.module.scss";
-
-const PREVIEW_VIEWPORT_OPTIONS = Object.freeze([
-  { id: "desktop", label: "Desktop", Icon: LaptopMacOutlinedIcon },
-  { id: "tablet", label: "Tablet", Icon: TabletMacOutlinedIcon },
-  { id: "mobile", label: "Mobile", Icon: SmartphoneOutlinedIcon },
-]);
-
-const COMMON_TEXT_FIELDS = Object.freeze([
-  {
-    key: "siteTitle",
-    label: "Website title",
-    component: "input",
-  },
-  {
-    key: "heroEyebrow",
-    label: "Hero eyebrow",
-    component: "input",
-  },
-  {
-    key: "heroTitle",
-    label: "Hero title",
-    component: "input",
-  },
-  {
-    key: "heroDescription",
-    label: "Hero description",
-    component: "textarea",
-  },
-  {
-    key: "ctaLabel",
-    label: "CTA label",
-    component: "input",
-  },
-  {
-    key: "ctaNote",
-    label: "CTA note",
-    component: "textarea",
-  },
-]);
-
-const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
-  "panorama-landing": [
-    {
-      key: "topBar",
-      label: "Show top bar",
-      description: "Keep or hide the navigation strip at the top of the page.",
-    },
-    {
-      key: "callToAction",
-      label: "Show booking prompt",
-      description: "Controls the booking CTA pill below the hero image.",
-    },
-    {
-      key: "trustCards",
-      label: "Show trust cards",
-      description: "Controls the three quick-scan feature cards below the hero.",
-    },
-    {
-      key: "gallerySection",
-      label: "Show gallery section",
-      description: "Controls the imported photo strip in the lower content block.",
-    },
-    {
-      key: "amenitiesPanel",
-      label: "Show amenities panel",
-      description: "Controls the featured amenities panel in the lower content block.",
-    },
-    {
-      key: "availabilityCalendar",
-      label: "Show availability calendar",
-      description: "Controls the imported availability snapshot section.",
-    },
-    {
-      key: "chatWidget",
-      label: "Show chat widget",
-      description: "Shows the visitor contact widget on the website.",
-    },
-  ],
-  "trust-signals": [
-    {
-      key: "topBar",
-      label: "Show top bar",
-      description: "Keep or hide the compact website bar at the top.",
-    },
-    {
-      key: "trustCards",
-      label: "Show reassurance cards",
-      description: "Controls the stacked trust cards under the hero image.",
-    },
-    {
-      key: "callToAction",
-      label: "Show soft CTA",
-      description: "Controls the soft callout at the bottom of the page.",
-    },
-    {
-      key: "availabilityCalendar",
-      label: "Show availability calendar",
-      description: "Controls the imported availability snapshot section.",
-    },
-    {
-      key: "chatWidget",
-      label: "Show chat widget",
-      description: "Shows the visitor contact widget on the website.",
-    },
-  ],
-  "experience-journey": [
-    {
-      key: "topBar",
-      label: "Show top bar",
-      description: "Keep or hide the navigation strip at the top of the page.",
-    },
-    {
-      key: "journeyStops",
-      label: "Show journey sections",
-      description: "Controls the arrival, stay, and area narrative blocks.",
-    },
-    {
-      key: "amenitiesPanel",
-      label: "Show amenities recap",
-      description: "Controls the featured amenities list in the footer block.",
-    },
-    {
-      key: "callToAction",
-      label: "Show next-step callout",
-      description: "Controls the CTA callout in the footer block.",
-    },
-    {
-      key: "availabilityCalendar",
-      label: "Show availability calendar",
-      description: "Controls the imported availability snapshot section.",
-    },
-    {
-      key: "chatWidget",
-      label: "Show chat widget",
-      description: "Shows the visitor contact widget on the website.",
-    },
-  ],
-});
-
-const TEMPLATE_IMAGE_SLOT_MAP = Object.freeze({
-  "panorama-landing": [
-    { kind: "hero", label: "Hero image", description: "Main visual used in the top hero section." },
-    { kind: "gallery", index: 0, label: "Gallery slot 1", description: "First image in the lower gallery strip." },
-    { kind: "gallery", index: 1, label: "Gallery slot 2", description: "Second image in the lower gallery strip." },
-    { kind: "gallery", index: 2, label: "Gallery slot 3", description: "Third image in the lower gallery strip." },
-  ],
-  "trust-signals": [
-    { kind: "hero", label: "Hero image", description: "Main image used in the trust-oriented layout." },
-  ],
-  "experience-journey": [
-    { kind: "gallery", index: 0, label: "Journey image 1", description: "Visual used next to the first journey stop." },
-    { kind: "gallery", index: 1, label: "Journey image 2", description: "Visual used next to the second journey stop." },
-    { kind: "gallery", index: 2, label: "Journey image 3", description: "Visual used next to the third journey stop." },
-  ],
-});
-
-const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
-  "panorama-landing": {
-    trustCards: {
-      title: "Quick-scan cards",
-      description: "These cards drive the fast-scan content block directly below the hero.",
-      itemLabel: "Card",
-      count: 3,
-    },
-  },
-  "trust-signals": {
-    trustCards: {
-      title: "Trust cards",
-      description: "These cards control the reassurance stack in the trust layout.",
-      itemLabel: "Card",
-      count: 2,
-    },
-  },
-  "experience-journey": {
-    journeyStops: {
-      title: "Journey sections",
-      description: "These stops control the step-by-step narrative in the experience layout.",
-      itemLabel: "Stop",
-      count: 3,
-    },
-  },
-});
-
-const EDITOR_SECTION_KEYS = Object.freeze({
-  common: "common",
-  visibility: "visibility",
-  images: "images",
-  trustCards: "trustCards",
-  journeyStops: "journeyStops",
-});
-
-const EDITOR_TARGET_KEYS = Object.freeze({
-  common: {
-    siteTitle: "common.siteTitle",
-    heroEyebrow: "common.heroEyebrow",
-    heroTitle: "common.heroTitle",
-    heroDescription: "common.heroDescription",
-    ctaLabel: "common.ctaLabel",
-    ctaNote: "common.ctaNote",
-  },
-  visibility: (fieldKey) => `visibility.${fieldKey}`,
-  images: {
-    hero: "images.hero",
-    gallery: (index) => `images.gallery.${index}`,
-  },
-  trustCards: (index) => `trustCards.${index}`,
-  journeyStops: (index) => `journeyStops.${index}`,
-});
-
-const LOADING_EDITOR_SECTIONS = Object.freeze([
-  {
-    id: EDITOR_SECTION_KEYS.common,
-    title: "Common content",
-    description: "Loading imported text fields and template copy bindings.",
-  },
-  {
-    id: EDITOR_SECTION_KEYS.visibility,
-    title: "Section visibility",
-    description: "Loading which website sections can be toggled on or off.",
-  },
-  {
-    id: EDITOR_SECTION_KEYS.images,
-    title: "Image slots",
-    description: "Loading imported listing photos and template image slot mappings.",
-  },
-]);
 
 const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
 
@@ -276,7 +59,7 @@ const resolveSectionNode = (sectionRefEntry) => {
 
 const getViewportHeight = () => {
   const viewportHeight = globalThis.innerHeight || globalThis.document?.documentElement?.clientHeight || 0;
-  return viewportHeight > 0 ? viewportHeight : 0;
+  return Math.max(0, viewportHeight);
 };
 
 const getCenteredScrollTop = (node) => {
@@ -508,7 +291,10 @@ function WebsiteEditorPage() {
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
-  const importedImageOptions = Array.isArray(baseModel?.media?.galleryImages) ? baseModel.media.galleryImages : [];
+  const importedImageOptions = useMemo(() => {
+    const rawImageOptions = Array.isArray(baseModel?.media?.galleryImages) ? baseModel.media.galleryImages : [];
+    return Array.from(new Set(rawImageOptions.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)));
+  }, [baseModel]);
 
   const contentOverridePatch = useMemo(() => {
     if (!baseModel) {
@@ -754,18 +540,18 @@ function WebsiteEditorPage() {
 
   const handleCollectionFieldChange = (collectionKey, itemIndex, fieldKey) => (event) => {
     const nextValue = event.target.value;
-    const targetId =
-      collectionKey === EDITOR_SECTION_KEYS.trustCards
-        ? EDITOR_TARGET_KEYS.trustCards(itemIndex)
-        : collectionKey === EDITOR_SECTION_KEYS.journeyStops
-          ? EDITOR_TARGET_KEYS.journeyStops(itemIndex)
-          : "";
+    const targetId = getCollectionTargetId(collectionKey, itemIndex);
 
     setActivePreviewTargetId(targetId);
     setEditorValues((currentValues) => {
       const nextCollection = [...currentValues[collectionKey]];
+      const currentItem = nextCollection[itemIndex];
+      if (!currentItem) {
+        return currentValues;
+      }
+
       nextCollection[itemIndex] = {
-        ...(nextCollection[itemIndex] || {}),
+        ...currentItem,
         [fieldKey]: nextValue,
       };
 
@@ -1008,9 +794,11 @@ function WebsiteEditorPage() {
                     <div className={styles.toggleStack}>
                       {visibilityFields.map((field) => {
                         const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
+                        const labelId = `website-editor-visibility-${field.key}-label`;
+                        const descriptionId = `website-editor-visibility-${field.key}-description`;
 
                         return (
-                          <label
+                          <div
                             key={field.key}
                             ref={setTargetRef(visibilityTargetId)}
                             className={`${styles.toggleCard} ${
@@ -1018,16 +806,18 @@ function WebsiteEditorPage() {
                             }`.trim()}
                           >
                             <div className={styles.toggleCopy}>
-                              <span className={styles.toggleLabel}>{field.label}</span>
-                              <span className={styles.toggleDescription}>{field.description}</span>
+                              <span id={labelId} className={styles.toggleLabel}>{field.label}</span>
+                              <span id={descriptionId} className={styles.toggleDescription}>{field.description}</span>
                             </div>
                             <input
                               type="checkbox"
                               className={styles.toggleInput}
                               checked={Boolean(editorValues.visibility[field.key])}
                               onChange={handleVisibilityFieldChange(field.key)}
+                              aria-labelledby={labelId}
+                              aria-describedby={descriptionId}
                             />
-                          </label>
+                          </div>
                         );
                       })}
                     </div>
@@ -1046,26 +836,19 @@ function WebsiteEditorPage() {
                     <div className={styles.imageSlotGrid}>
                       {imageSlots.map((slot) => {
                         const selectedImageUrl = getSelectedImageForSlot(slot, editorValues);
-                        const selectedImageIndex = importedImageOptions.findIndex(
-                          (imageUrl) => imageUrl === selectedImageUrl
-                        );
+                        const selectedImageIndex = importedImageOptions.indexOf(selectedImageUrl);
+                        const imageSlotTargetId = getImageSlotTargetId(slot);
+                        const isImageSlotHighlighted = highlightedTargetId === imageSlotTargetId;
+                        let selectedImageLabel = "No imported image assigned";
+                        if (selectedImageIndex > -1) {
+                          selectedImageLabel = getImageOptionLabel(selectedImageIndex);
+                        }
 
                         return (
                           <div
-                            key={`${slot.kind}-${slot.index ?? "hero"}`}
-                            ref={setTargetRef(
-                              slot.kind === "hero"
-                                ? EDITOR_TARGET_KEYS.images.hero
-                                : EDITOR_TARGET_KEYS.images.gallery(slot.index)
-                            )}
-                            className={`${styles.imageSlotCard} ${
-                              highlightedTargetId ===
-                              (slot.kind === "hero"
-                                ? EDITOR_TARGET_KEYS.images.hero
-                                : EDITOR_TARGET_KEYS.images.gallery(slot.index))
-                                ? styles.editorTargetHighlighted
-                                : ""
-                            }`.trim()}
+                            key={slot.id}
+                            ref={setTargetRef(imageSlotTargetId)}
+                            className={`${styles.imageSlotCard} ${isImageSlotHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
                           >
                             <div className={styles.imageSlotPreview}>
                               {selectedImageUrl ? (
@@ -1078,11 +861,7 @@ function WebsiteEditorPage() {
                             <div className={styles.imageSlotMeta}>
                               <div className={styles.fieldGroup}>
                                 <span className={styles.fieldLabel}>{slot.label}</span>
-                                <span className={styles.helperText}>
-                                  {selectedImageIndex > -1
-                                    ? getImageOptionLabel(selectedImageIndex)
-                                    : "No imported image assigned"}
-                                </span>
+                                <span className={styles.helperText}>{selectedImageLabel}</span>
                               </div>
 
                               <button
@@ -1118,7 +897,7 @@ function WebsiteEditorPage() {
                         .slice(0, copyCollectionConfig.trustCards.count)
                         .map((card, index) => (
                           <div
-                            key={`trust-card-${index}`}
+                            key={card.id}
                             ref={setTargetRef(EDITOR_TARGET_KEYS.trustCards(index))}
                             className={`${styles.collectionCard} ${
                               highlightedTargetId === EDITOR_TARGET_KEYS.trustCards(index)
@@ -1167,7 +946,7 @@ function WebsiteEditorPage() {
                         .slice(0, copyCollectionConfig.journeyStops.count)
                         .map((stop, index) => (
                           <div
-                            key={`journey-stop-${index}`}
+                            key={stop.id}
                             ref={setTargetRef(EDITOR_TARGET_KEYS.journeyStops(index))}
                             className={`${styles.collectionCard} ${
                               highlightedTargetId === EDITOR_TARGET_KEYS.journeyStops(index)
@@ -1256,17 +1035,21 @@ function WebsiteEditorPage() {
       </div>
 
       {imagePickerState.isOpen && imagePickerState.slot ? (
-        <div
+        <dialog
+          open
           className={styles.imagePickerOverlay}
-          role="dialog"
-          aria-modal="true"
           aria-label={`Select image for ${imagePickerState.slot.label}`}
-          onClick={closeImagePicker}
+          onCancel={(event) => {
+            event.preventDefault();
+            closeImagePicker();
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeImagePicker();
+            }
+          }}
         >
-          <div
-            className={styles.imagePickerDialog}
-            onClick={(event) => event.stopPropagation()}
-          >
+          <section className={styles.imagePickerDialog}>
             <div className={styles.imagePickerHeader}>
               <div className={styles.imagePickerHeaderCopy}>
                 <p className={styles.eyebrow}>Choose imported image</p>
@@ -1300,7 +1083,7 @@ function WebsiteEditorPage() {
 
                 return (
                   <button
-                    key={`${imagePickerState.slot.label}-${imageUrl}-${index}`}
+                    key={`${imagePickerState.slot.label}-${imageUrl}`}
                     type="button"
                     className={`${styles.imagePickerThumbButton} ${
                       isSelected ? styles.imagePickerThumbButtonActive : ""
@@ -1319,8 +1102,8 @@ function WebsiteEditorPage() {
                 );
               })}
             </div>
-          </div>
-        </div>
+          </section>
+        </dialog>
       ) : null}
     </main>
   );

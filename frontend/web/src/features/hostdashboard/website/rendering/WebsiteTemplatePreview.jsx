@@ -108,26 +108,22 @@ export default function WebsiteTemplatePreview({
     : resolveViewportWidth(viewport);
   const { scaleShellRef, scaleInnerRef, scaleMetrics } = usePreviewScaleMetrics(viewportWidth);
   const compactScale = COMPACT_PREVIEW_WIDTH / viewportWidth;
-  const previewHeight = scaleMetrics.height
-    ? `${isCompactVariant ? Math.min(scaleMetrics.height, COMPACT_PREVIEW_MAX_HEIGHT) : scaleMetrics.height}px`
-    : undefined;
-  const scaleShellStyle = isCompactVariant
-    ? {
-        width: `${COMPACT_PREVIEW_WIDTH}px`,
-        height: `${COMPACT_PREVIEW_MAX_HEIGHT}px`,
-      }
-    : previewHeight
-      ? { height: previewHeight }
-      : undefined;
-  const scaleInnerStyle = isCompactVariant
-    ? {
-        width: `${viewportWidth}px`,
-        transform: `scale(${compactScale})`,
-      }
-    : {
-        width: `${viewportWidth}px`,
-        transform: `scale(${scaleMetrics.scale})`,
-      };
+  const previewHeight = scaleMetrics.height ? `${scaleMetrics.height}px` : undefined;
+  const compactShellStyle = {
+    width: `${COMPACT_PREVIEW_WIDTH}px`,
+    height: `${COMPACT_PREVIEW_MAX_HEIGHT}px`,
+  };
+  const scaledShellStyle = previewHeight ? { height: previewHeight } : undefined;
+  const scaleShellStyle = isCompactVariant ? compactShellStyle : scaledShellStyle;
+  const compactInnerStyle = {
+    width: `${viewportWidth}px`,
+    transform: `scale(${compactScale})`,
+  };
+  const scaledInnerStyle = {
+    width: `${viewportWidth}px`,
+    transform: `scale(${scaleMetrics.scale})`,
+  };
+  const scaleInnerStyle = isCompactVariant ? compactInnerStyle : scaledInnerStyle;
 
   return (
     <section

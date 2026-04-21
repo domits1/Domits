@@ -60,8 +60,8 @@
   align-items: center;
   border-radius: 999px;
   padding: 0.46rem 0.82rem;
-  background: rgba(31, 78, 121, 0.1);
-  color: #153e64;
+  background: #e6f0f8;
+  color: #0f3154;
   font-size: 0.88rem;
   font-weight: 700;
 }
@@ -371,12 +371,23 @@
 .imagePickerOverlay {
   position: fixed;
   inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  border: 0;
   z-index: 1400;
   display: grid;
   place-items: center;
   padding: 16px;
+  color: inherit;
   background: rgba(15, 23, 42, 0.58);
   backdrop-filter: blur(8px);
+}
+
+.imagePickerOverlay::backdrop {
+  background: transparent;
 }
 
 .imagePickerDialog {
@@ -412,17 +423,14 @@
   border: 1px solid rgba(31, 78, 121, 0.16);
   background: #f8fbff;
   color: #153e64;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-}
-
-.imagePickerCloseButton {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
 }
 
 .imagePickerCloseButton:hover {
@@ -552,9 +560,6 @@
   margin: 0;
   font-size: 0.92rem;
   font-weight: 700;
-}
-
-.errorText {
   color: #991b1b;
 }
 

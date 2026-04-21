@@ -88,24 +88,25 @@ function WebsitePublicPreviewPage() {
     );
   }
 
-  if (loadError || !previewModel || !TemplateComponent) {
+  const canRenderPreview = !loadError && previewModel && TemplateComponent;
+  if (canRenderPreview) {
     return (
-      <main className={styles.publicPreviewStatePage}>
-        <section className={`${styles.publicPreviewStateCard} ${styles.publicPreviewErrorCard}`.trim()}>
-          <p className={styles.publicPreviewEyebrow}>Website preview</p>
-          <h1>{template?.name || "Preview unavailable"}</h1>
-          <p>{loadError || "This website preview is not available."}</p>
-        </section>
+      <main className={styles.publicPreviewPage}>
+        <div className={styles.publicPreviewCanvas}>
+          <TemplateComponent model={previewModel} />
+          {previewModel.visibility?.chatWidget !== false ? <WebsiteContactWidget model={previewModel} /> : null}
+        </div>
       </main>
     );
   }
 
   return (
-    <main className={styles.publicPreviewPage}>
-      <div className={styles.publicPreviewCanvas}>
-        <TemplateComponent model={previewModel} />
-        {previewModel.visibility?.chatWidget !== false ? <WebsiteContactWidget model={previewModel} /> : null}
-      </div>
+    <main className={styles.publicPreviewStatePage}>
+      <section className={`${styles.publicPreviewStateCard} ${styles.publicPreviewErrorCard}`.trim()}>
+        <p className={styles.publicPreviewEyebrow}>Website preview</p>
+        <h1>{template?.name || "Preview unavailable"}</h1>
+        <p>{loadError || "This website preview is not available."}</p>
+      </section>
     </main>
   );
 }

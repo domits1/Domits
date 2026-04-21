@@ -85,6 +85,15 @@
     align-items: flex-start;
   }
 
+  .websiteDraftCardPreview {
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .websiteDraftCardHeader > .statusPill {
+    justify-self: center;
+  }
+
   .websiteDraftMetaRow {
     flex-direction: column;
     align-items: flex-start;

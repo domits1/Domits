@@ -192,8 +192,8 @@ const buildPolicyHighlights = (rules) => {
   return [...configuredRules, ...fallbackRules];
 };
 
-const buildGalleryImages = (propertyDetails, summaryProperty) => {
-  const detailImages = resolveAccommodationImageUrls(propertyDetails?.images, "web");
+const buildGalleryImages = (propertyDetails, summaryProperty, imageVariant) => {
+  const detailImages = resolveAccommodationImageUrls(propertyDetails?.images, imageVariant);
   if (detailImages.length > 0) {
     return detailImages;
   }
@@ -237,6 +237,34 @@ const joinListWithAnd = (items) => {
   return `${safeItems.slice(0, -1).join(", ")}, and ${safeItems[safeItems.length - 1]}`;
 };
 
+const buildArrivalSummary = (checkInLabel, checkOutLabel) => {
+  const arrivalParts = [];
+
+  if (checkInLabel) {
+    arrivalParts.push(`check-in ${checkInLabel}`);
+  }
+
+  if (checkOutLabel) {
+    arrivalParts.push(`check-out ${checkOutLabel}`);
+  }
+
+  return joinListWithAnd(arrivalParts);
+};
+
+const buildBookingSummary = (nightlyRateLabel, minimumStayLabel) => {
+  const bookingParts = [];
+
+  if (nightlyRateLabel) {
+    bookingParts.push(`from ${nightlyRateLabel}`);
+  }
+
+  if (minimumStayLabel) {
+    bookingParts.push(minimumStayLabel.toLowerCase());
+  }
+
+  return joinListWithAnd(bookingParts);
+};
+
 const buildTrustCards = ({
   guestsLabel,
   bedroomsLabel,
@@ -249,12 +277,8 @@ const buildTrustCards = ({
   locationLabel,
 }) => {
   const staySummary = joinListWithAnd([guestsLabel, bedroomsLabel, bathroomsLabel]);
-  const arrivalSummary = joinListWithAnd(
-    [checkInLabel ? `check-in ${checkInLabel}` : "", checkOutLabel ? `check-out ${checkOutLabel}` : ""].filter(Boolean)
-  );
-  const bookingSummary = joinListWithAnd(
-    [nightlyRateLabel ? `from ${nightlyRateLabel}` : "", minimumStayLabel ? minimumStayLabel.toLowerCase() : ""].filter(Boolean)
-  );
+  const arrivalSummary = buildArrivalSummary(checkInLabel, checkOutLabel);
+  const bookingSummary = buildBookingSummary(nightlyRateLabel, minimumStayLabel);
 
   return [
     {
@@ -290,14 +314,10 @@ const buildJourneyStops = ({
   nightlyRateLabel,
   minimumStayLabel,
 }) => {
-  const arrivalSummary = joinListWithAnd(
-    [checkInLabel ? `check-in ${checkInLabel}` : "", checkOutLabel ? `check-out ${checkOutLabel}` : ""].filter(Boolean)
-  );
+  const arrivalSummary = buildArrivalSummary(checkInLabel, checkOutLabel);
   const staySummary = joinListWithAnd([guestsLabel, bedroomsLabel]);
   const amenitySummary = joinListWithAnd(featuredAmenities.slice(0, 3).map((amenity) => amenity.label.toLowerCase()));
-  const bookingSummary = joinListWithAnd(
-    [nightlyRateLabel ? `from ${nightlyRateLabel}` : "", minimumStayLabel ? minimumStayLabel.toLowerCase() : ""].filter(Boolean)
-  );
+  const bookingSummary = buildBookingSummary(nightlyRateLabel, minimumStayLabel);
 
   return [
     {
@@ -326,21 +346,36 @@ const buildJourneyStops = ({
   ];
 };
 
+const normalizeDateKeys = (dateKeys) =>
+  (Array.isArray(dateKeys) ? dateKeys : [])
+    .map((dateKey) => cleanText(dateKey))
+    .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey))
+    .sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
+
+const formatCountSummary = ({ count, singularLabel, pluralLabel, emptyLabel }) => {
+  if (count < 1) {
+    return emptyLabel;
+  }
+
+  return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+};
+
+const buildSyncSummary = (hasExternalCalendarSync, syncedSourceCount) => {
+  if (!hasExternalCalendarSync) {
+    return "No iCal sync connected yet";
+  }
+
+  return formatCountSummary({
+    count: syncedSourceCount,
+    singularLabel: "iCal sync connected",
+    pluralLabel: "iCal syncs connected",
+    emptyLabel: "No iCal sync connected yet",
+  });
+};
+
 const buildCalendarAvailability = (calendarAvailability) => {
-  const externalBlockedDates = (Array.isArray(calendarAvailability?.externalBlockedDates)
-    ? calendarAvailability.externalBlockedDates
-    : []
-  )
-    .map((dateKey) => cleanText(dateKey))
-    .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey))
-    .sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
-  const unavailableDateKeys = (Array.isArray(calendarAvailability?.unavailableDateKeys)
-    ? calendarAvailability.unavailableDateKeys
-    : []
-  )
-    .map((dateKey) => cleanText(dateKey))
-    .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey))
-    .sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
+  const externalBlockedDates = normalizeDateKeys(calendarAvailability?.externalBlockedDates);
+  const unavailableDateKeys = normalizeDateKeys(calendarAvailability?.unavailableDateKeys);
   const allBlockedDates = Array.from(new Set([...externalBlockedDates, ...unavailableDateKeys])).sort(
     (leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey)
   );
@@ -352,24 +387,26 @@ const buildCalendarAvailability = (calendarAvailability) => {
   const nextBlockedDate = allBlockedDates.find((dateKey) => dateKey >= todayDateKey) || "";
   const lastSyncLabel = formatTimestampLabel(calendarAvailability?.lastSyncAt);
 
-  const syncSummary = hasExternalCalendarSync
-    ? `${syncedSourceCount} iCal sync${syncedSourceCount === 1 ? "" : "s"} connected`
-    : "No iCal sync connected yet";
+  const syncSummary = buildSyncSummary(hasExternalCalendarSync, syncedSourceCount);
 
-  const externalBlockedSummary =
-    externalBlockedDates.length > 0
-      ? `${externalBlockedDates.length} imported external booking${
-          externalBlockedDates.length === 1 ? "" : "s"
-        }`
-      : "No imported external bookings";
-  const unavailableDateSummary =
-    unavailableDateKeys.length > 0
-      ? `${unavailableDateKeys.length} PMS blocked date${unavailableDateKeys.length === 1 ? "" : "s"}`
-      : "No PMS blocked dates";
-  const blockedDateSummary =
-    allBlockedDates.length > 0
-      ? `${allBlockedDates.length} blocked date${allBlockedDates.length === 1 ? "" : "s"} in total`
-      : "No blocked dates";
+  const externalBlockedSummary = formatCountSummary({
+    count: externalBlockedDates.length,
+    singularLabel: "imported external booking",
+    pluralLabel: "imported external bookings",
+    emptyLabel: "No imported external bookings",
+  });
+  const unavailableDateSummary = formatCountSummary({
+    count: unavailableDateKeys.length,
+    singularLabel: "PMS blocked date",
+    pluralLabel: "PMS blocked dates",
+    emptyLabel: "No PMS blocked dates",
+  });
+  const blockedDateSummary = formatCountSummary({
+    count: allBlockedDates.length,
+    singularLabel: "blocked date in total",
+    pluralLabel: "blocked dates in total",
+    emptyLabel: "No blocked dates",
+  });
 
   const nextBlockedLabel = nextBlockedDate ? `Next blocked: ${formatShortDate(nextBlockedDate)}` : "";
 
@@ -395,11 +432,11 @@ const buildCalendarAvailability = (calendarAvailability) => {
   };
 };
 
-export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = null }) => {
+export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = null, imageVariant = "web" }) => {
   const property = propertyDetails?.property || {};
   const generalDetails = Array.isArray(propertyDetails?.generalDetails) ? propertyDetails.generalDetails : [];
   const availabilityRestrictions = buildRestrictionValueMap(propertyDetails?.availabilityRestrictions);
-  const galleryImages = buildGalleryImages(propertyDetails, summaryProperty);
+  const galleryImages = buildGalleryImages(propertyDetails, summaryProperty, imageVariant);
   const previewImages = galleryImages.slice(0, 3);
   const featuredGalleryImages = galleryImages.slice(0, MAX_FEATURED_GALLERY_IMAGES);
   const locationLabel = buildLocationLabel(propertyDetails?.location, summaryProperty);
