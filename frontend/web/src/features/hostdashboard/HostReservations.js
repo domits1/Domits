@@ -27,8 +27,12 @@ const resolveCancellationType = (cancellationPolicy, rules = []) => {
 };
 
 const mapReservations = (data) => {
-  return data.flatMap((property) => {
+  const properties = Array.isArray(data?.response) ? data.response : Array.isArray(data) ? data : [];
+
+  return properties.flatMap((property) => {
     const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
+    const propertyRules = Array.isArray(property.rules) ? property.rules : [];
+
     return reservations.map((item) => ({
       property_id: property.id,
       title: property.title,
@@ -37,7 +41,7 @@ const mapReservations = (data) => {
       country: property.country,
       ...item,
       status: normalizeStatus(item.status),
-      cancellationType: resolveCancellationType(item.cancellation_policy, property.rules),
+      cancellationType: resolveCancellationType(item.cancellation_policy, propertyRules),
     }));
   });
 };
@@ -65,7 +69,8 @@ const HostReservations = () => {
       setIsLoading(true);
       try {
         const data = await getReservationsFromToken(authToken);
-        if (!Array.isArray(data) || data.length === 0) {
+        const properties = Array.isArray(data?.response) ? data.response : Array.isArray(data) ? data : [];
+        if (properties.length === 0) {
           setBookings([]);
           return;
         }
