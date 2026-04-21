@@ -110,6 +110,12 @@ class IntegrationController {
     return await this.integrationService.listLinkedChannexRatePlans(userId);
   }
 
+  async getChannexAriTargets(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    return await this.integrationService.getChannexAriTargets(userId, domitsPropertyId);
+  }
+
   async linkChannexProperty(event) {
     const userId = event.queryStringParameters?.userId || null;
     const body = safeJson(event.body) || {};
