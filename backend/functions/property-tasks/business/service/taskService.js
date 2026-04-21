@@ -1,7 +1,7 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload } from "../model/taskValidator.js";
 import Database from "database";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
 
@@ -86,6 +86,21 @@ export const updateTask = async (hostId, taskId, updateData) => {
 };
 
 export const deleteTask = async (hostId, taskId) => {
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+
+    if (task?.attachments) {
+        try {
+            const keys = JSON.parse(task.attachments);
+            if (keys.length > 0) {
+                await s3.send(new DeleteObjectsCommand({
+                    Bucket: BUCKET_NAME,
+                    Delete: { Objects: keys.map(key => ({ Key: key })) },
+                }));
+            }
+        } catch { /* ignore parse errors */ }
+    }
+
     return await updateTask(hostId, taskId, { is_legacy: true });
 };
 
