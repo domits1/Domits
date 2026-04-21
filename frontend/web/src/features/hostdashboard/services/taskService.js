@@ -110,7 +110,7 @@ export const uploadTaskAttachment = async (file) => {
         throw new Error(`Failed to get upload URL: ${response.status}`);
     }
 
-    const { uploadUrl, fileUrl } = await response.json();
+    const { uploadUrl, key } = await response.json();
 
     await fetch(uploadUrl, {
         method: "PUT",
@@ -118,7 +118,19 @@ export const uploadTaskAttachment = async (file) => {
         body: file,
     });
 
-    return fileUrl;
+    return key;
+};
+
+export const getAttachmentViewUrl = async (key) => {
+    const params = new URLSearchParams({ action: 'view-url', key });
+    const response = await fetch(`${TASKS_API_URL}?${params}`, {
+        method: "GET",
+        headers: getHeaders(),
+    });
+
+    if (!response.ok) throw new Error(`Failed to get view URL: ${response.status}`);
+    const { viewUrl } = await response.json();
+    return viewUrl;
 };
 
 export const deleteTask = async (taskId) => {

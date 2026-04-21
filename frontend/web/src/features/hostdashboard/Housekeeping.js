@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { Auth } from 'aws-amplify';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
     LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck, LuPartyPopper
 } from 'react-icons/lu';
 import './Housekeeping.css';
-import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from './services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, getAttachmentViewUrl } from './services/taskService';
 import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 import { 
@@ -37,6 +38,35 @@ const DEFAULT_NEW_TASK = {
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
+const AttachmentThumb = ({ attachment }) => {
+    const [url, setUrl] = React.useState(null);
+
+    React.useEffect(() => {
+        if (attachment instanceof File) {
+            const objectUrl = URL.createObjectURL(attachment);
+            setUrl(objectUrl);
+            return () => URL.revokeObjectURL(objectUrl);
+        } else {
+            getAttachmentViewUrl(attachment).then(setUrl).catch(() => {});
+        }
+    }, [attachment]);
+
+    if (!url) return <div className="attachment-thumb attachment-loading" />;
+
+    const name = attachment instanceof File ? attachment.name : attachment.split('/').pop();
+    const isPdf = name.endsWith('.pdf');
+
+    return (
+        <a href={url} target="_blank" rel="noreferrer" className="attachment-thumb">
+            {isPdf ? <div className="attachment-pdf-icon">PDF</div> : <img src={url} alt={name} />}
+        </a>
+    );
+};
+
+
+AttachmentThumb.propTypes = {
+    attachment: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.string]).isRequired,
+};
 
 const isTaskOverdue = (task, todayStr) => (
     Boolean(task?.dueDate) &&
@@ -1638,9 +1668,11 @@ const HostPropertyCare = () => {
                                     {(!editedTask.attachments || editedTask.attachments.length === 0) ? (
                                         <p className="no-attachments-text">No attachments yet.</p>
                                     ) : (
-                                        editedTask.attachments.map((f) => (
-                                            <p key={f.name || f} className="no-attachments-text">{f.name || f}</p>
-                                        ))
+                                        <div className="attachments-grid">
+                                            {editedTask.attachments.map((f) => (
+                                                <AttachmentThumb key={f instanceof File ? f.name : f} attachment={f} />
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
                                 <div className="custom-file-upload" style={{ marginTop: '8px' }}>

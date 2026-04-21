@@ -1,4 +1,4 @@
-import { getTasks, createTask, updateTask, deleteTask, getUploadUrl } from "../business/service/taskService.js";
+import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl } from "../business/service/taskService.js";
 import { AuthManager } from "../auth/authManager.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
@@ -59,6 +59,20 @@ export class Controller {
 
             const result = await deleteTask(hostId, taskId);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async getViewUrl(event) {
+        try {
+            await this.authManager.getHostId(event.headers?.Authorization);
+            const { key } = event.queryStringParameters || {};
+            if (!key) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "key is required" }) };
+            }
+            const viewUrl = await getViewUrl(key);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ viewUrl }) };
         } catch (error) {
             return this.handleError(error);
         }
