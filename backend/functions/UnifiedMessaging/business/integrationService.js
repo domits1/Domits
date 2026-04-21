@@ -2133,6 +2133,96 @@ export default class IntegrationService {
     }
   }
 
+  async getChannexAriTargets(userId, domitsPropertyId) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+    if (!normalizedDomitsPropertyId) {
+      return bad(400, { error: "Missing required query param: domitsPropertyId" });
+    }
+
+    try {
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+        return bad(409, {
+          error: "Channex integration is not connected for this user.",
+          errorCode: "CHANNEX_NOT_CONNECTED",
+          status: !integration ? CHANNEX_STATUS.NOT_CONNECTED : CHANNEX_STATUS.DISCONNECTED,
+        });
+      }
+
+      if (!requireStr(integration.credentialsRef)) {
+        return bad(409, {
+          error: "Channex integration is not locally usable. Reconnect required.",
+          errorCode: "CHANNEX_RECONNECT_REQUIRED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      const [propertyMappings, roomTypeMappings, ratePlanMappings] = await Promise.all([
+        this.props.listByAccountId(integration.id),
+        this.roomTypes.listByAccountId(integration.id),
+        this.ratePlans.listByAccountId(integration.id),
+      ]);
+
+      const propertyMapping =
+        (Array.isArray(propertyMappings) ? propertyMappings : []).find(
+          (mapping) => mapping.domitsPropertyId === normalizedDomitsPropertyId
+        ) || null;
+      const propertyScopedRoomTypeMappings = (Array.isArray(roomTypeMappings) ? roomTypeMappings : []).filter(
+        (mapping) => mapping.domitsPropertyId === normalizedDomitsPropertyId
+      );
+      const propertyScopedRatePlanMappings = (Array.isArray(ratePlanMappings) ? ratePlanMappings : []).filter(
+        (mapping) => mapping.domitsPropertyId === normalizedDomitsPropertyId
+      );
+
+      const missingMappings = [];
+      if (!propertyMapping) missingMappings.push("PROPERTY_MAPPING_MISSING");
+      if (!propertyScopedRoomTypeMappings.length) missingMappings.push("ROOM_TYPE_MAPPING_MISSING");
+      if (!propertyScopedRatePlanMappings.length) missingMappings.push("RATE_PLAN_MAPPING_MISSING");
+
+      return ok({
+        channel: "CHANNEX",
+        integrationAccountId: integration.id,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        status: integration.status,
+        ready: missingMappings.length === 0,
+        missingMappings,
+        propertyMapping: propertyMapping
+          ? {
+              domitsPropertyId: propertyMapping.domitsPropertyId,
+              externalPropertyId: propertyMapping.externalPropertyId,
+              externalPropertyName: propertyMapping.externalPropertyName ?? null,
+              status: propertyMapping.status,
+            }
+          : null,
+        roomTypeMappings: propertyScopedRoomTypeMappings.map((mapping) => ({
+          domitsPropertyId: mapping.domitsPropertyId,
+          externalPropertyId: mapping.externalPropertyId,
+          externalRoomTypeId: mapping.externalRoomTypeId,
+          externalRoomTypeName: mapping.externalRoomTypeName ?? null,
+          status: mapping.status,
+        })),
+        ratePlanMappings: propertyScopedRatePlanMappings.map((mapping) => ({
+          domitsPropertyId: mapping.domitsPropertyId,
+          externalPropertyId: mapping.externalPropertyId,
+          externalRoomTypeId: mapping.externalRoomTypeId,
+          externalRatePlanId: mapping.externalRatePlanId,
+          externalRatePlanName: mapping.externalRatePlanName ?? null,
+          status: mapping.status,
+        })),
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to get Channex ARI targets.",
+        errorCode: "CHANNEX_ARI_TARGETS_FAILED",
+        details,
+      });
+    }
+  }
+
   async completeWhatsAppConnect(body) {
     const userId = requireStr(body.userId);
     const connectSessionId = requireStr(body.connectSessionId);
