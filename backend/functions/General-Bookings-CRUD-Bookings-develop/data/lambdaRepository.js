@@ -43,7 +43,8 @@ class LambdaRepository {
       : [];
 
     const rulesByPropertyId = allRules.reduce((acc, r) => {
-      (acc[r.property_id] = acc[r.property_id] || []).push({ rule: r.rule, value: r.value });
+      acc[r.property_id] = acc[r.property_id] || [];
+      acc[r.property_id].push({ rule: r.rule, value: r.value });
       return acc;
     }, {});
 

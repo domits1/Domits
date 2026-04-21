@@ -19,11 +19,16 @@ const normalizeStatus = (status) => {
 };
 
 const resolveCancellationType = (cancellationPolicy, rules = []) => {
-  if (cancellationPolicy) return cancellationPolicy;
+  if (cancellationPolicy) {
+    return cancellationPolicy;
+  }
   const match = (rules || []).find(
     (r) => r?.rule?.startsWith("CancellationPolicy:") && (r.value === true || r.value === "true")
   );
-  return match ? match.rule.replace("CancellationPolicy:", "").trim() : null;
+  if (match) {
+    return match.rule.replace("CancellationPolicy:", "").trim();
+  }
+  return null;
 };
 
 const mapReservations = (data) => {
@@ -33,16 +38,18 @@ const mapReservations = (data) => {
     const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
     const propertyRules = Array.isArray(property.rules) ? property.rules : [];
 
-    return reservations.map((item) => ({
-      property_id: property.id,
-      title: property.title,
-      rate: property.rate,
-      city: property.city,
-      country: property.country,
-      ...item,
-      status: normalizeStatus(item.status),
-      cancellationType: resolveCancellationType(item.cancellation_policy, propertyRules),
-    }));
+    return reservations.map((item) => {
+      return {
+        property_id: property.id,
+        title: property.title,
+        rate: property.rate,
+        city: property.city,
+        country: property.country,
+        ...item,
+        status: normalizeStatus(item.status),
+        cancellationType: resolveCancellationType(item.cancellation_policy, propertyRules),
+      };
+    });
   });
 };
 
