@@ -1490,7 +1490,7 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-due-date'>Due Date</label>
-                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} onChange={handleInputChange} onClick={(e) => e.target.showPicker?.()} required />
+                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} min={getTodayString()} onChange={handleInputChange} onClick={(e) => e.target.showPicker?.()} required />
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-priority'>Priority</label>
