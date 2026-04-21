@@ -97,6 +97,7 @@ export default function WebsiteTemplatePreview({
   variant = "default",
   viewport = "desktop",
   onSelectTarget,
+  activeTargetId = "",
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
@@ -154,7 +155,11 @@ export default function WebsiteTemplatePreview({
 
             <div className={styles.previewCanvas}>
               {TemplateComponent ? (
-                <TemplateComponent model={model} onSelectTarget={onSelectTarget} />
+                <TemplateComponent
+                  model={model}
+                  onSelectTarget={onSelectTarget}
+                  activeTargetId={activeTargetId}
+                />
               ) : (
                 <UnsupportedTemplatePreview templateName={template.name} />
               )}
@@ -189,4 +194,5 @@ WebsiteTemplatePreview.propTypes = {
   variant: PropTypes.oneOf(["default", "compact"]),
   viewport: PropTypes.oneOf(["desktop", "tablet", "mobile"]),
   onSelectTarget: PropTypes.func,
+  activeTargetId: PropTypes.string,
 };

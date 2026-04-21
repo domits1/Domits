@@ -3,14 +3,17 @@ import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 
-const getInteractiveTargetProps = (className, onSelectTarget, target) => {
+const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
   if (!onSelectTarget) {
     return { className };
   }
 
+  const isActiveTarget = target?.targetId && target.targetId === activeTargetId;
   const handleActivate = () => onSelectTarget(target);
   return {
-    className: `${className} ${styles.previewInteractiveTarget}`.trim(),
+    className: `${className} ${styles.previewInteractiveTarget} ${
+      isActiveTarget ? styles.previewInteractiveTargetActive : ""
+    }`.trim(),
     role: "button",
     tabIndex: 0,
     onClick: handleActivate,
@@ -23,7 +26,7 @@ const getInteractiveTargetProps = (className, onSelectTarget, target) => {
   };
 };
 
-export default function TrustSignalsTemplate({ model, onSelectTarget }) {
+export default function TrustSignalsTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showTrustCards = model.visibility?.trustCards !== false;
   const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
@@ -36,7 +39,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
           {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
             sectionId: "common",
             targetId: "common.siteTitle",
-          })}
+          }, activeTargetId)}
         >
           <div className={styles.templateTopBarBrand}>
             <span className={styles.templateTopBarMark} aria-hidden="true" />
@@ -57,7 +60,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroEyebrow",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.eyebrow}
           </p>
@@ -65,7 +68,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroTitle",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.title}
           </h1>
@@ -73,7 +76,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroDescription",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.description}
           </p>
@@ -84,7 +87,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
             sectionId: "images",
             targetId: "images.hero",
             imageSlot: { kind: "hero" },
-          })}
+          }, activeTargetId)}
           src={model.media.heroImage}
           alt={model.hero.title}
         />
@@ -97,7 +100,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
                 {...getInteractiveTargetProps(styles.trustSignalsCard, onSelectTarget, {
                   sectionId: "trustCards",
                   targetId: `trustCards.${index}`,
-                })}
+                }, activeTargetId)}
               >
                 <div className={styles.trustSignalsCardMeta}>
                   <span />
@@ -117,7 +120,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
             interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
               sectionId: "visibility",
               targetId: "visibility.availabilityCalendar",
-            })}
+            }, activeTargetId)}
           />
         ) : null}
 
@@ -127,7 +130,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget }) {
               {...getInteractiveTargetProps(styles.softCallout, onSelectTarget, {
                 sectionId: "common",
                 targetId: "common.ctaLabel",
-              })}
+              }, activeTargetId)}
             >
               <strong>{model.callToAction.label}</strong>
               <p>{model.callToAction.note}</p>
@@ -186,4 +189,5 @@ TrustSignalsTemplate.propTypes = {
     }).isRequired,
   }).isRequired,
   onSelectTarget: PropTypes.func,
+  activeTargetId: PropTypes.string,
 };

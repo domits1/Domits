@@ -95,6 +95,8 @@ const getDraftDisplayTitle = (draft) => {
   );
 };
 
+const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
+
 const formatDraftUpdatedAt = (updatedAt) => {
   const parsedValue = Number(updatedAt);
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
@@ -284,7 +286,6 @@ function WebsiteBuilderPage() {
   const [websiteDraftsError, setWebsiteDraftsError] = useState("");
   const [websiteDraftPreviewModels, setWebsiteDraftPreviewModels] = useState({});
   const [isPersistingWebsiteDraft, setIsPersistingWebsiteDraft] = useState(false);
-  const [persistWebsiteDraftMessage, setPersistWebsiteDraftMessage] = useState("");
   const [persistWebsiteDraftError, setPersistWebsiteDraftError] = useState("");
   const [websiteDraftPendingDelete, setWebsiteDraftPendingDelete] = useState(null);
   const [isDeletingWebsiteDraft, setIsDeletingWebsiteDraft] = useState(false);
@@ -357,13 +358,17 @@ function WebsiteBuilderPage() {
         return currentPropertyId;
       }
 
+      if (previewStage !== PREVIEW_STAGE.idle || isPersistingWebsiteDraft) {
+        return currentPropertyId;
+      }
+
       const listingStillAvailable = availablePropertyOptions.some(
         (propertyOption) => propertyOption.value === currentPropertyId
       );
 
       return listingStillAvailable ? currentPropertyId : EMPTY_SELECTION;
     });
-  }, [availablePropertyOptions]);
+  }, [availablePropertyOptions, isPersistingWebsiteDraft, previewStage]);
 
   useEffect(() => {
     let isMounted = true;
@@ -422,7 +427,18 @@ function WebsiteBuilderPage() {
   }, [websiteDrafts, workspaceTab]);
 
   const selectedProperty =
-    availablePropertyOptions.find((propertyOption) => propertyOption.value === selectedPropertyId) || null;
+    propertyOptions.find((propertyOption) => propertyOption.value === selectedPropertyId) || null;
+  const selectedPropertyIsAvailable = availablePropertyOptions.some(
+    (propertyOption) => propertyOption.value === selectedPropertyId
+  );
+  const shouldKeepSelectedPropertyVisible =
+    Boolean(selectedProperty) &&
+    Boolean(selectedPropertyId) &&
+    !selectedPropertyIsAvailable &&
+    (previewStage !== PREVIEW_STAGE.idle || isPersistingWebsiteDraft);
+  const propertySelectOptions = shouldKeepSelectedPropertyVisible
+    ? [selectedProperty, ...availablePropertyOptions]
+    : availablePropertyOptions;
   const previewImages = selectedProperty?.previewImages || [];
   const galleryImages = selectedProperty?.galleryImages || previewImages;
   const importedImageCount = selectedProperty?.imageCount || 0;
@@ -451,7 +467,6 @@ function WebsiteBuilderPage() {
     setPreviewModel(null);
     setPreviewError("");
     setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
-    setPersistWebsiteDraftMessage("");
     setPersistWebsiteDraftError("");
   }, [selectedPropertyId]);
 
@@ -477,7 +492,6 @@ function WebsiteBuilderPage() {
     setPreviewModel(null);
     setPreviewError("");
     setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
-    setPersistWebsiteDraftMessage("");
     setPersistWebsiteDraftError("");
   };
 
@@ -487,21 +501,21 @@ function WebsiteBuilderPage() {
     }
 
     setIsPersistingWebsiteDraft(true);
-    setPersistWebsiteDraftMessage("");
     setPersistWebsiteDraftError("");
 
     try {
-      await upsertWebsiteDraft({
+      const savedDraft = await upsertWebsiteDraft({
         propertyId: selectedProperty.value,
         templateKey: selectedTemplateId,
         status: "DRAFT",
         contentOverrides: {},
         themeOverrides: {},
       });
-      setPersistWebsiteDraftMessage("Draft saved to your website workspace.");
       await loadHostWebsiteDrafts();
+      return savedDraft;
     } catch (error) {
       setPersistWebsiteDraftError(error?.message || "Preview is ready, but saving the website draft failed.");
+      return null;
     } finally {
       setIsPersistingWebsiteDraft(false);
     }
@@ -526,7 +540,10 @@ function WebsiteBuilderPage() {
 
       setPreviewModel(nextPreviewModel);
       setPreviewStage(PREVIEW_STAGE.ready);
-      await persistSelectedWebsiteDraft();
+      const savedDraft = await persistSelectedWebsiteDraft();
+      if (savedDraft) {
+        toast.success("Website built and ready for review.");
+      }
     } catch (error) {
       setPreviewStage(PREVIEW_STAGE.error);
       setPreviewModel(null);
@@ -602,6 +619,16 @@ function WebsiteBuilderPage() {
     }
 
     navigate(`/hostdashboard/website/${propertyId}`);
+  };
+
+  const openWebsiteDraftPreview = (draft) => {
+    const draftId = String(draft?.id || "").trim();
+    if (!draftId) {
+      toast.error("This website does not have a preview link yet.");
+      return;
+    }
+
+    globalThis.open(buildWebsitePreviewPath(draftId), "_blank", "noopener,noreferrer");
   };
 
   const openWebsiteDraftDeleteDialog = (draft) => {
@@ -762,6 +789,13 @@ function WebsiteBuilderPage() {
                     </button>
                     <button
                       type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => openWebsiteDraftPreview(draft)}
+                    >
+                      Open live preview
+                    </button>
+                    <button
+                      type="button"
                       className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
                       onClick={() => openWebsiteDraftDeleteDialog(draft)}
                     >
@@ -829,7 +863,8 @@ function WebsiteBuilderPage() {
       isLoading === false &&
       isLoadingWebsiteDrafts === false &&
       propertyOptions.length > 0 &&
-      availablePropertyOptions.length === 0;
+      availablePropertyOptions.length === 0 &&
+      !shouldKeepSelectedPropertyVisible;
     if (showAllListingsUnavailableState) {
       return (
         <div className={styles.stateCard}>
@@ -870,7 +905,7 @@ function WebsiteBuilderPage() {
                   ? "Checking website availability..."
                   : "Choose a listing"}
             </option>
-            {availablePropertyOptions.map((propertyOption) => (
+            {propertySelectOptions.map((propertyOption) => (
               <option key={propertyOption.value} value={propertyOption.value}>
                 {propertyOption.label}
               </option>
@@ -1066,9 +1101,6 @@ function WebsiteBuilderPage() {
                 </span>
                 {isPersistingWebsiteDraft ? (
                   <span className={styles.previewHelperText}>Saving website draft to your workspace...</span>
-                ) : null}
-                {persistWebsiteDraftMessage ? (
-                  <span className={styles.previewPersistSuccessText}>{persistWebsiteDraftMessage}</span>
                 ) : null}
                 {persistWebsiteDraftError ? (
                   <span className={styles.previewPersistErrorText}>{persistWebsiteDraftError}</span>

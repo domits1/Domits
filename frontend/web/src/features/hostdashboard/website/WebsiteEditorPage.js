@@ -256,6 +256,8 @@ const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
 const getSelectedImageForSlot = (slot, editorValues) =>
   slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
 
+const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
+
 const resolveSectionNode = (sectionRefEntry) => {
   if (!sectionRefEntry) {
     return null;
@@ -299,7 +301,7 @@ const fieldPropTypes = PropTypes.shape({
   component: PropTypes.oneOf(["input", "textarea"]).isRequired,
 });
 
-function TextField({ field, value, onChange, fieldRef, isHighlighted }) {
+function TextField({ field, value, onChange, fieldRef, isHighlighted, onFocus, onBlur }) {
   if (field.component === "textarea") {
     return (
       <div
@@ -314,6 +316,8 @@ function TextField({ field, value, onChange, fieldRef, isHighlighted }) {
           className={styles.textArea}
           value={value}
           onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
         />
       </div>
     );
@@ -332,6 +336,8 @@ function TextField({ field, value, onChange, fieldRef, isHighlighted }) {
         className={styles.textInput}
         value={value}
         onChange={onChange}
+        onFocus={onFocus}
+        onBlur={onBlur}
       />
     </div>
   );
@@ -341,6 +347,8 @@ TextField.propTypes = {
   field: fieldPropTypes.isRequired,
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
+  onFocus: PropTypes.func,
+  onBlur: PropTypes.func,
   fieldRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({
@@ -353,6 +361,8 @@ TextField.propTypes = {
 TextField.defaultProps = {
   fieldRef: null,
   isHighlighted: false,
+  onFocus: undefined,
+  onBlur: undefined,
 };
 
 function CollapsibleSection({
@@ -422,6 +432,7 @@ function WebsiteEditorPage() {
   const [previewViewport, setPreviewViewport] = useState("desktop");
   const [isSaving, setIsSaving] = useState(false);
   const [highlightedTargetId, setHighlightedTargetId] = useState("");
+  const [activePreviewTargetId, setActivePreviewTargetId] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
     [EDITOR_SECTION_KEYS.visibility]: false,
@@ -656,6 +667,7 @@ function WebsiteEditorPage() {
 
   const handleCommonFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
+    setActivePreviewTargetId(EDITOR_TARGET_KEYS.common[fieldKey] || "");
     setEditorValues((currentValues) => ({
       ...currentValues,
       common: {
@@ -663,6 +675,14 @@ function WebsiteEditorPage() {
         [fieldKey]: nextValue,
       },
     }));
+  };
+
+  const activatePreviewTarget = (targetId) => () => {
+    setActivePreviewTargetId(targetId);
+  };
+
+  const clearActivePreviewTarget = () => {
+    setActivePreviewTargetId("");
   };
 
   const handleVisibilityFieldChange = (fieldKey) => (event) => {
@@ -734,6 +754,14 @@ function WebsiteEditorPage() {
 
   const handleCollectionFieldChange = (collectionKey, itemIndex, fieldKey) => (event) => {
     const nextValue = event.target.value;
+    const targetId =
+      collectionKey === EDITOR_SECTION_KEYS.trustCards
+        ? EDITOR_TARGET_KEYS.trustCards(itemIndex)
+        : collectionKey === EDITOR_SECTION_KEYS.journeyStops
+          ? EDITOR_TARGET_KEYS.journeyStops(itemIndex)
+          : "";
+
+    setActivePreviewTargetId(targetId);
     setEditorValues((currentValues) => {
       const nextCollection = [...currentValues[collectionKey]];
       nextCollection[itemIndex] = {
@@ -776,6 +804,16 @@ function WebsiteEditorPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const openWebsitePreviewLink = () => {
+    const draftId = String(draftRecord?.id || "").trim();
+    if (!draftId) {
+      toast.error("This website does not have a preview link yet.");
+      return;
+    }
+
+    globalThis.open(buildWebsitePreviewPath(draftId), "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
@@ -917,6 +955,13 @@ function WebsiteEditorPage() {
                 <ArrowBackIcon fontSize="small" />
                 Back to website workspace
               </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={openWebsitePreviewLink}
+              >
+                Open live preview
+              </button>
             </div>
           </div>
 
@@ -944,6 +989,8 @@ function WebsiteEditorPage() {
                         onChange={handleCommonFieldChange(field.key)}
                         fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common[field.key])}
                         isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common[field.key]}
+                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common[field.key])}
+                        onBlur={clearActivePreviewTarget}
                       />
                     ))}
                   </div>
@@ -1086,6 +1133,8 @@ function WebsiteEditorPage() {
                               field={{ key: `trust-card-title-${index}`, label: "Title", component: "input" }}
                               value={card.title}
                               onChange={handleCollectionFieldChange("trustCards", index, "title")}
+                              onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                              onBlur={clearActivePreviewTarget}
                             />
                             <TextField
                               field={{
@@ -1095,6 +1144,8 @@ function WebsiteEditorPage() {
                               }}
                               value={card.description}
                               onChange={handleCollectionFieldChange("trustCards", index, "description")}
+                              onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                              onBlur={clearActivePreviewTarget}
                             />
                           </div>
                         ))}
@@ -1131,6 +1182,8 @@ function WebsiteEditorPage() {
                               field={{ key: `journey-stop-title-${index}`, label: "Title", component: "input" }}
                               value={stop.title}
                               onChange={handleCollectionFieldChange("journeyStops", index, "title")}
+                              onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.journeyStops(index))}
+                              onBlur={clearActivePreviewTarget}
                             />
                             <TextField
                               field={{
@@ -1140,6 +1193,8 @@ function WebsiteEditorPage() {
                               }}
                               value={stop.description}
                               onChange={handleCollectionFieldChange("journeyStops", index, "description")}
+                              onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.journeyStops(index))}
+                              onBlur={clearActivePreviewTarget}
                             />
                           </div>
                         ))}
@@ -1193,6 +1248,7 @@ function WebsiteEditorPage() {
                 model={previewModel}
                 viewport={previewViewport}
                 onSelectTarget={handlePreviewTargetSelect}
+                activeTargetId={activePreviewTargetId}
               />
             </section>
           </div>

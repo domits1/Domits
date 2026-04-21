@@ -4,14 +4,17 @@ import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 
-const getInteractiveTargetProps = (className, onSelectTarget, target) => {
+const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
   if (!onSelectTarget) {
     return { className };
   }
 
+  const isActiveTarget = target?.targetId && target.targetId === activeTargetId;
   const handleActivate = () => onSelectTarget(target);
   return {
-    className: `${className} ${styles.previewInteractiveTarget}`.trim(),
+    className: `${className} ${styles.previewInteractiveTarget} ${
+      isActiveTarget ? styles.previewInteractiveTargetActive : ""
+    }`.trim(),
     role: "button",
     tabIndex: 0,
     onClick: handleActivate,
@@ -24,7 +27,7 @@ const getInteractiveTargetProps = (className, onSelectTarget, target) => {
   };
 };
 
-export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
+export default function ExperienceJourneyTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showJourneyStops = model.visibility?.journeyStops !== false;
   const showAmenitiesPanel = model.visibility?.amenitiesPanel !== false;
@@ -39,7 +42,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
           {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
             sectionId: "common",
             targetId: "common.siteTitle",
-          })}
+          }, activeTargetId)}
         >
           <div className={styles.templateTopBarBrand}>
             <span className={styles.templateTopBarMark} aria-hidden="true" />
@@ -59,7 +62,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroEyebrow",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.eyebrow}
           </p>
@@ -67,7 +70,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroTitle",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.title}
           </h1>
@@ -75,7 +78,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroDescription",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.description}
           </p>
@@ -99,7 +102,8 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
                   {
                     sectionId: "journeyStops",
                     targetId: `journeyStops.${index}`,
-                  }
+                  },
+                  activeTargetId
                 )}
               >
                 <div className={styles.experienceJourneyCopy}>
@@ -111,7 +115,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
                     sectionId: "images",
                     targetId: `images.gallery.${index}`,
                     imageSlot: { kind: "gallery", index },
-                  })}
+                  }, activeTargetId)}
                   src={imageUrl}
                   alt={`${stop.title} visual`}
                 />
@@ -127,7 +131,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
           interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
             sectionId: "visibility",
             targetId: "visibility.availabilityCalendar",
-          })}
+          }, activeTargetId)}
         />
       ) : null}
 
@@ -171,7 +175,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget }) {
                 {...getInteractiveTargetProps(styles.softCallout, onSelectTarget, {
                   sectionId: "common",
                   targetId: "common.ctaLabel",
-                })}
+                }, activeTargetId)}
               >
                 <strong>{model.callToAction.label}</strong>
                 <p>{model.callToAction.note}</p>
@@ -238,4 +242,5 @@ ExperienceJourneyTemplate.propTypes = {
     }).isRequired,
   }).isRequired,
   onSelectTarget: PropTypes.func,
+  activeTargetId: PropTypes.string,
 };

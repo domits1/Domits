@@ -1094,6 +1094,7 @@ export class PropertyController {
     isWebsiteDraftClientError(error) {
         return (
             error?.message?.startsWith("Missing propertyId") ||
+            error?.message?.startsWith("Missing draftId") ||
             error?.message?.startsWith("Missing templateKey") ||
             error?.message?.includes("must be a plain object")
         );
@@ -1527,6 +1528,56 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/preview
+    // -------------------------
+    async getWebsitePreviewByDraftId(event) {
+        try {
+            const draftId = String(
+                event.queryStringParameters?.draft ||
+                event.queryStringParameters?.draftId ||
+                ""
+            ).trim();
+
+            if (!draftId) {
+                return this.badRequest("Missing draftId.");
+            }
+
+            const draft = await this.standaloneSiteDraftRepository.getDraftById(draftId);
+            if (!draft || draft.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website preview not found." }),
+                };
+            }
+
+            const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
+                draft.propertyId,
+                { includeCalendarAvailability: true }
+            );
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify({
+                    draft,
+                    propertyDetails,
+                }),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
             return {
                 statusCode: error.statusCode || 500,
                 headers: responseHeaders,

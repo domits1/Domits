@@ -149,6 +149,13 @@
   box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
 }
 
+.previewInteractiveTargetActive {
+  box-shadow:
+    0 0 0 3px rgba(31, 78, 121, 0.18),
+    0 14px 32px rgba(31, 78, 121, 0.12);
+  transform: translateY(-1px);
+}
+
 .availabilityCalendarTarget {
   border-radius: 24px;
 }

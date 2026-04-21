@@ -24,14 +24,17 @@ const PANORAMA_CARD_ICONS = Object.freeze({
 
 const getPanoramaCardIcon = (cardId) => PANORAMA_CARD_ICONS[cardId] || null;
 
-const getInteractiveTargetProps = (className, onSelectTarget, target) => {
+const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
   if (!onSelectTarget) {
     return { className };
   }
 
+  const isActiveTarget = target?.targetId && target.targetId === activeTargetId;
   const handleActivate = () => onSelectTarget(target);
   return {
-    className: `${className} ${styles.previewInteractiveTarget}`.trim(),
+    className: `${className} ${styles.previewInteractiveTarget} ${
+      isActiveTarget ? styles.previewInteractiveTargetActive : ""
+    }`.trim(),
     role: "button",
     tabIndex: 0,
     onClick: handleActivate,
@@ -44,7 +47,7 @@ const getInteractiveTargetProps = (className, onSelectTarget, target) => {
   };
 };
 
-export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
+export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showTrustCards = model.visibility?.trustCards !== false;
   const showGallerySection = model.visibility?.gallerySection !== false;
@@ -60,7 +63,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
           {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
             sectionId: "common",
             targetId: "common.siteTitle",
-          })}
+          }, activeTargetId)}
         >
           <div className={styles.templateTopBarBrand}>
             <span className={styles.templateTopBarMark} aria-hidden="true" />
@@ -80,7 +83,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroEyebrow",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.eyebrow}
           </p>
@@ -88,7 +91,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.heroTitle, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroTitle",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.title}
           </h1>
@@ -96,7 +99,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
               sectionId: "common",
               targetId: "common.heroDescription",
-            })}
+            }, activeTargetId)}
           >
             {model.hero.description}
           </p>
@@ -109,7 +112,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
             sectionId: "images",
             targetId: "images.hero",
             imageSlot: { kind: "hero" },
-          })}
+          }, activeTargetId)}
           src={model.media.heroImage}
           alt={model.hero.title}
         />
@@ -118,7 +121,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
             {...getInteractiveTargetProps(styles.panoramaSearchStub, onSelectTarget, {
               sectionId: "common",
               targetId: "common.ctaLabel",
-            })}
+            }, activeTargetId)}
           >
             <strong>{model.callToAction.label}</strong>
             {model.stay.nightlyRateLabel ? <span>{model.stay.nightlyRateLabel}</span> : null}
@@ -138,7 +141,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
                 {...getInteractiveTargetProps(styles.panoramaFeatureCard, onSelectTarget, {
                   sectionId: "trustCards",
                   targetId: `trustCards.${model.trustCards.findIndex((entry) => entry.id === card.id)}`,
-                })}
+                }, activeTargetId)}
               >
                 {IconComponent ? (
                   <span className={styles.panoramaFeatureIcon} aria-hidden="true">
@@ -163,7 +166,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
           interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
             sectionId: "visibility",
             targetId: "visibility.availabilityCalendar",
-          })}
+          }, activeTargetId)}
         />
       ) : null}
 
@@ -184,7 +187,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget }) {
                       sectionId: "images",
                       targetId: `images.gallery.${index}`,
                       imageSlot: { kind: "gallery", index },
-                    })}
+                    }, activeTargetId)}
                     src={imageUrl}
                     alt={`${model.hero.title} view ${index + 1}`}
                   />
@@ -288,4 +291,5 @@ PanoramaLandingTemplate.propTypes = {
     }).isRequired,
   }).isRequired,
   onSelectTarget: PropTypes.func,
+  activeTargetId: PropTypes.string,
 };

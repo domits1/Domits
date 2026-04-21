@@ -931,3 +931,76 @@ Evidence (commit(s), file(s), docs):
 - Docs:
   - `standalone_property_site_frontend_status.md`
 
+## [2026-04-20] Public draft preview link and editor-to-preview feedback
+Context:
+The builder could persist website drafts, but opening a generated website still happened only inside the dashboard/editor flow. The first live-preview link needed to exist before publish/domain work can be designed honestly. The builder also needed to keep the generated preview visible after saving instead of dropping back into a refreshed state.
+
+Implementation:
+- Added a public draft preview API path:
+  - `GET /property/website/preview?draft=<draftId>`
+- Added draft lookup by draft id in the standalone draft repository.
+- Added a top-level frontend route:
+  - `/website-preview/:draftId`
+- Added a public preview page that:
+  - fetches the saved draft and property details
+  - rebuilds the canonical website template model
+  - applies persisted content overrides
+  - renders the chosen template directly, not inside the dashboard preview browser frame
+  - respects the saved contact-widget visibility flag
+- Added `Open live preview` actions from:
+  - `My websites`
+  - the dedicated editor page
+- Fixed the builder flow so the generated Step 3 preview remains visible after draft persistence.
+- Replaced build-save inline feedback with a toast notification that the website is built and ready for review.
+- Added editor-to-preview highlighting for text edits:
+  - common text fields
+  - trust card copy
+  - journey stop copy
+- Kept section visibility toggles out of active preview highlighting while editing, because those controls affect section presence rather than text content.
+
+Decision / Rationale:
+- A preview URL is the correct stepping stone before publish/unpublish and domain routing. It proves the saved draft can render outside the host dashboard shell.
+- Rendering the public preview through the real template keeps the route close to future public-site behavior.
+- The current preview identifier is the draft UUID. That is acceptable for internal/acceptance preview, but not the final public-domain security model.
+
+AWS / Data impact:
+- No Aurora schema change.
+- New API Gateway route/method required:
+  - `GET /property/website/preview`
+  - public/no Cognito authorizer for the preview fetch, because access is by draft id
+  - CORS `OPTIONS` for browser access
+- Existing table remains:
+  - `main.standalone_site_draft`
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+- Backend routing unit test passed:
+  - `test/PropertyHandler/routing-unit.test.js`
+
+Open risks / Next:
+- Before production publish, replace bare draft-id preview access with a stronger preview token or published-site route contract.
+- Add publish/unpublish transitions so public links can be intentionally enabled/disabled instead of relying only on draft existence.
+- Add domain routing after the preview route is stable.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDraftRepository.js`
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/App.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/services/websitePublicPreviewService.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
+- Docs:
+  - `standalone_property_site_frontend_status.md`
+  - `standalone_property_site_implementation_log.md`
+

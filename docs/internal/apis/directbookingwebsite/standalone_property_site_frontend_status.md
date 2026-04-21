@@ -56,6 +56,10 @@ What is in place:
   - API Gateway `/property/website/draft` and `/property/website/drafts`
   - CORS preflight on the new website routes
 - Draft save/read now explicitly bypasses cache and the editor performs a read-after-write refresh to avoid stale draft payloads after saving.
+- Building a website now keeps the Step 3 preview visible while the draft is saved, then shows a toast that the website is ready for review.
+- A first public preview route exists at `/website-preview/:draftId`; it renders the saved draft through the real template instead of the dashboard preview frame.
+- Saved website cards and the editor expose `Open live preview` actions that open the draft preview link in a new tab.
+- Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -83,6 +87,8 @@ What is in place:
   - mapping content to template slots
   - rendering preview
 - The page scrolls to Step 3 automatically when build starts.
+- The built preview remains visible after draft persistence finishes.
+- A toast confirms when the draft is saved and ready for review.
 - Build failures are surfaced with retry controls.
 
 ## Data flow status
@@ -154,6 +160,7 @@ Current implementation details:
 - Setup and selection flow is complete.
 - Real preview pipeline exists for the first three templates.
 - Preview workflow logic is extracted into a dedicated script module to support future dedicated preview route/new-tab flow.
+- A dedicated public preview route now exists for saved drafts and can be opened from the workspace/editor.
 - Shared template model is in place and reusable by additional templates.
 - Built previews are persisted as website drafts keyed by host and property.
 - Listings with an existing saved website are no longer offered again in the builder flow.
@@ -167,6 +174,7 @@ Current implementation details:
 - Shared preview scaling was corrected so compact preview cards no longer reserve large unscaled whitespace.
 - Editor save success/error feedback was moved into toast notifications to keep the editor surface cleaner.
 - Preview-to-editor linking now exists for implemented templates so the preview can drive navigation to text/image editing areas.
+- Editor-to-preview linking now also exists for active text editing, so the preview target is highlighted while a text field is focused or changing.
 - Preview-to-editor linking now includes temporary section highlight feedback after navigation.
 - The editor now renders per-section loading states while opening instead of replacing the whole page with one loader card.
 - Editor sections now animate when expanding and collapsing.
@@ -185,6 +193,10 @@ Required next steps:
 - Introduce image reordering / richer media management beyond the current slot reassignment approach.
 - Add publish/unpublish state transitions and domain management hooks on top of stored drafts.
 - Add preview URL strategy (in-page now, dedicated preview route/new tab later).
+- Harden preview URL strategy before production publish:
+  - add token rotation or preview-token hashing if draft UUID links are not considered sufficient
+  - add publish/unpublish state transitions
+  - add domain management hooks
 
 ## Additional implementation note
 - The Website route still exists in the frontend.
