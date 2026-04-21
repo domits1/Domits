@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import LanguageIcon from "@mui/icons-material/Language";
 import HomeIcon from "@mui/icons-material/Home";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import styles from "./WebsiteBuilderPage.module.scss";
@@ -434,6 +435,30 @@ function WebsiteDraftDeleteDialog({
     </dialog>
   );
 }
+
+WebsiteDraftDeleteDialog.propTypes = {
+  draft: PropTypes.shape({
+    contentOverrides: PropTypes.shape({
+      siteTitle: PropTypes.string,
+    }),
+    propertyTitle: PropTypes.string,
+  }),
+  deleteReasons: PropTypes.arrayOf(PropTypes.string).isRequired,
+  deleteStep: PropTypes.oneOf([
+    DELETE_WEBSITE_DRAFT_STEP_REASON,
+    DELETE_WEBSITE_DRAFT_STEP_CONFIRM,
+  ]).isRequired,
+  isDeleting: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onBackToReasons: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onReasonToggle: PropTypes.func.isRequired,
+  onReasonNext: PropTypes.func.isRequired,
+};
+
+WebsiteDraftDeleteDialog.defaultProps = {
+  draft: null,
+};
 
 function WebsiteBuilderPage() {
   const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_WEBSITES);
