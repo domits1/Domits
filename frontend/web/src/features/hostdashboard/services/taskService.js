@@ -24,6 +24,7 @@ const normalizeTask = (task) => ({
     dueDate: toDateString(task.due_date),
     completedAt: toDateString(task.completed_date),
     isLegacy: task.is_legacy,
+    attachments: task.attachments ? JSON.parse(task.attachments) : [],
 });
 
 const toBackendPayload = (taskData) => {
@@ -40,6 +41,9 @@ const toBackendPayload = (taskData) => {
     if (taskData.dueDate !== undefined) payload.due_date = toUnixTimestamp(taskData.dueDate);
     if (taskData.assignee !== undefined || taskData.assignee_name !== undefined) {
         payload.assignee_name = taskData.assignee || taskData.assignee_name || null;
+    }
+    if (taskData.attachments !== undefined) {
+        payload.attachments = taskData.attachments;
     }
     return payload;
 };

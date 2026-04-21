@@ -29,6 +29,7 @@ export const createTask = async (hostId, taskData) => {
         priority: taskData.priority || 'Medium',
         due_date: taskData.due_date ? new Date(taskData.due_date).getTime() : null,
         assignee_name: taskData.assignee_name || null,
+        attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
         created_at: Date.now(),
         updated_at: Date.now()
     };
