@@ -1,6 +1,12 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload } from "../model/taskValidator.js";
 import Database from "database";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { randomUUID } from "node:crypto";
+
+const s3 = new S3Client({ region: "eu-north-1" });
+const BUCKET_NAME = "domits-task-attachments";
 
 export const getTasks = async (hostId, filters) => {
     const dataSource = await Database.getInstance();
@@ -74,6 +80,25 @@ export const updateTask = async (hostId, taskId, updateData) => {
 
 export const deleteTask = async (hostId, taskId) => {
     return await updateTask(hostId, taskId, { is_legacy: true });
+};
+
+export const getUploadUrl = async (hostId, fileName, fileType) => {
+    const ext = fileName.split('.').pop();
+    const key = `tasks/${hostId}/${randomUUID()}.${ext}`;
+
+    const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        ContentType: fileType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+
+    return {
+        uploadUrl,
+        fileUrl: `https://${BUCKET_NAME}.s3.eu-north-1.amazonaws.com/${key}`,
+        key,
+    };
 };
 
 export const logActivity = async (dataSource, { taskId, userId, actionType, oldValue = null, newValue = null }) => {

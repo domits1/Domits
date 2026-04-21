@@ -94,6 +94,33 @@ export const updateTask = async (taskId, updateData) => {
     return await response.json();
 };
 
+export const uploadTaskAttachment = async (file) => {
+    const params = new URLSearchParams({
+        action: 'upload-url',
+        fileName: file.name,
+        fileType: file.type,
+    });
+
+    const response = await fetch(`${TASKS_API_URL}?${params}`, {
+        method: "GET",
+        headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get upload URL: ${response.status}`);
+    }
+
+    const { uploadUrl, fileUrl } = await response.json();
+
+    await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+    });
+
+    return fileUrl;
+};
+
 export const deleteTask = async (taskId) => {
     const response = await fetch(`${TASKS_API_URL}?id=${taskId}`, {
         method: "DELETE",

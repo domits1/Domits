@@ -11,6 +11,9 @@ export const handler = async (event) => {
 
         switch (event.httpMethod) {
             case "GET":
+                if (event.queryStringParameters?.action === 'upload-url') {
+                    return await controller.getUploadUrl(event);
+                }
                 return await controller.getTasks(event);
             
             case "POST":
