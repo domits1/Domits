@@ -1,6 +1,9 @@
 const CHANNEX_BASE_URL = process.env.CHANNEX_BASE_URL || "https://staging.channex.io";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+const normalizeWarnings = (parsed) => (Array.isArray(parsed?.meta?.warnings) ? parsed.meta.warnings : []);
+const normalizeTaskIds = (parsed) =>
+  Array.isArray(parsed?.data) ? parsed.data.map((item) => requireStr(item?.id)).filter(Boolean) : [];
 
 const parseJsonSafely = (value) => {
   try {
@@ -425,10 +428,8 @@ export default class ChannexProviderClient {
 
         const rawText = await response.text();
         const parsed = parseJsonSafely(rawText);
-        const warnings = Array.isArray(parsed?.meta?.warnings) ? parsed.meta.warnings : [];
-        const taskIds = Array.isArray(parsed?.data)
-          ? parsed.data.map((item) => requireStr(item?.id)).filter(Boolean)
-          : [];
+        const warnings = normalizeWarnings(parsed);
+        const taskIds = normalizeTaskIds(parsed);
 
         if (!response.ok) {
           results.push({
@@ -481,6 +482,135 @@ export default class ChannexProviderClient {
           warnings: [],
           errorCode: error?.code || error?.name || "CHANNEX_AVAILABILITY_PUSH_REQUEST_FAILED",
           errorMessage: error?.message || "Channex availability push request failed.",
+        });
+      }
+    }
+
+    return {
+      success: results.every((result) => result.success),
+      results,
+    };
+  }
+
+  async pushRestrictions(credentials, groupedRestrictionRatePayloads) {
+    const apiKey = requireStr(credentials?.apiKey);
+    const groups = Array.isArray(groupedRestrictionRatePayloads) ? groupedRestrictionRatePayloads : [];
+
+    if (!apiKey) {
+      return {
+        success: false,
+        results: groups.map((group) => ({
+          externalPropertyId: requireStr(group?.externalPropertyId),
+          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+          externalRatePlanId: requireStr(group?.externalRatePlanId),
+          requestBody: {
+            values: Array.isArray(group?.values) ? group.values : [],
+          },
+          httpStatus: null,
+          providerStatus: "INVALID_CREDENTIALS",
+          success: false,
+          taskId: null,
+          warnings: [],
+          errorCode: "MISSING_API_KEY",
+          errorMessage: "Channex credentials must include apiKey.",
+        })),
+      };
+    }
+
+    const results = [];
+
+    for (const group of groups) {
+      const requestBody = {
+        values: Array.isArray(group?.values) ? group.values : [],
+      };
+
+      if (!requestBody.values.length) {
+        results.push({
+          externalPropertyId: requireStr(group?.externalPropertyId),
+          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+          externalRatePlanId: requireStr(group?.externalRatePlanId),
+          requestBody,
+          httpStatus: null,
+          providerStatus: "INVALID_REQUEST",
+          success: false,
+          taskId: null,
+          warnings: [],
+          errorCode: "CHANNEX_RESTRICTIONS_VALUES_MISSING",
+          errorMessage: "Channex restrictions push requires at least one values entry.",
+        });
+        continue;
+      }
+
+      try {
+        const url = new URL("/api/v1/restrictions", CHANNEX_BASE_URL);
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "user-api-key": apiKey,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        const rawText = await response.text();
+        const parsed = parseJsonSafely(rawText);
+        const warnings = normalizeWarnings(parsed);
+        const taskIds = normalizeTaskIds(parsed);
+
+        if (!response.ok) {
+          results.push({
+            externalPropertyId: requireStr(group?.externalPropertyId),
+            externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+            externalRatePlanId: requireStr(group?.externalRatePlanId),
+            requestBody,
+            httpStatus: response.status,
+            providerStatus:
+              response.status === 401
+                ? "UNAUTHORIZED"
+                : response.status === 429
+                  ? "RATE_LIMITED"
+                  : "RESTRICTIONS_PUSH_FAILED",
+            success: false,
+            taskId: taskIds[0] ?? null,
+            warnings,
+            errorCode:
+              parsed?.errors?.code ||
+              parsed?.error?.code ||
+              `CHANNEX_RESTRICTIONS_PUSH_${response.status}`,
+            errorMessage:
+              parsed?.errors?.title ||
+              parsed?.error?.message ||
+              `Channex restrictions push failed with status ${response.status}.`,
+          });
+          continue;
+        }
+
+        results.push({
+          externalPropertyId: requireStr(group?.externalPropertyId),
+          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+          externalRatePlanId: requireStr(group?.externalRatePlanId),
+          requestBody,
+          httpStatus: response.status,
+          providerStatus: warnings.length ? "ACCEPTED_WITH_WARNINGS" : "SYNCED",
+          success: warnings.length === 0,
+          taskId: taskIds[0] ?? null,
+          warnings,
+          errorCode: null,
+          errorMessage: warnings.length ? "Channex accepted the request with warnings." : null,
+        });
+      } catch (error) {
+        results.push({
+          externalPropertyId: requireStr(group?.externalPropertyId),
+          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+          externalRatePlanId: requireStr(group?.externalRatePlanId),
+          requestBody,
+          httpStatus: null,
+          providerStatus: "RESTRICTIONS_PUSH_FAILED",
+          success: false,
+          taskId: null,
+          warnings: [],
+          errorCode: error?.code || error?.name || "CHANNEX_RESTRICTIONS_PUSH_REQUEST_FAILED",
+          errorMessage: error?.message || "Channex restrictions push request failed.",
         });
       }
     }

@@ -85,6 +85,14 @@ const routeDefinitions = [
     handle: (event) => integrationController.syncChannexAvailability(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/restrictions"),
+    handle: (event) => integrationController.syncChannexRestrictions(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/ari"),
+    handle: (event) => integrationController.syncChannexAri(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/rate-plans"),
     handle: (event) => integrationController.linkChannexRatePlan(event),
   },

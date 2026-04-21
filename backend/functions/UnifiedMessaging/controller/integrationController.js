@@ -145,6 +145,22 @@ class IntegrationController {
     return await this.integrationService.syncChannexAvailability(userId, domitsPropertyId, dateFrom, dateTo);
   }
 
+  async syncChannexRestrictions(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const dateFrom = event.queryStringParameters?.dateFrom || null;
+    const dateTo = event.queryStringParameters?.dateTo || null;
+    return await this.integrationService.syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo);
+  }
+
+  async syncChannexAri(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const dateFrom = event.queryStringParameters?.dateFrom || null;
+    const dateTo = event.queryStringParameters?.dateTo || null;
+    return await this.integrationService.syncChannexAri(userId, domitsPropertyId, dateFrom, dateTo);
+  }
+
   async linkChannexProperty(event) {
     const userId = event.queryStringParameters?.userId || null;
     const body = safeJson(event.body) || {};

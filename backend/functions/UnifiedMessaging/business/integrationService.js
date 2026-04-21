@@ -148,6 +148,11 @@ const isWeekendIsoDate = (isoDate) => {
   const day = date.getUTCDay();
   return day === 5 || day === 6;
 };
+const formatNightlyPriceForChannexRate = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return null;
+  return numericValue.toFixed(2);
+};
 const getPropertyAvailabilityWindows = async (propertyId) => {
   const client = await Database.getInstance();
   const rows = await client.query(
@@ -2936,6 +2941,331 @@ export default class IntegrationService {
       return bad(500, {
         error: "Failed to sync Channex availability.",
         errorCode: "CHANNEX_AVAILABILITY_SYNC_FAILED",
+        details,
+      });
+    }
+  }
+
+  async syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+    const normalizedDateFrom = parseIsoDateParam(dateFrom);
+    const normalizedDateTo = parseIsoDateParam(dateTo);
+
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+    if (!normalizedDomitsPropertyId) {
+      return bad(400, { error: "Missing required query param: domitsPropertyId" });
+    }
+    if (!normalizedDateFrom) {
+      return bad(400, { error: "Invalid or missing required query param: dateFrom" });
+    }
+    if (!normalizedDateTo) {
+      return bad(400, { error: "Invalid or missing required query param: dateTo" });
+    }
+    if (normalizedDateFrom > normalizedDateTo) {
+      return bad(400, {
+        error: "dateFrom must be less than or equal to dateTo.",
+      });
+    }
+
+    try {
+      const payloadPreviewResult = await this.previewChannexAriPayloads(
+        normalizedUserId,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo
+      );
+      if (payloadPreviewResult?.statusCode !== 200) {
+        return payloadPreviewResult;
+      }
+
+      const payloadPreview = payloadPreviewResult.response || {};
+      const baseNotes = [
+        ...(Array.isArray(payloadPreview.notes) ? payloadPreview.notes : []),
+        "Manual staging sync only. This endpoint sends rate updates through Channex restrictions and does not run a scheduler, retries, or sync-state persistence.",
+        "Current first version sends only rate values from nightlyPrice. Domits restriction name/value pairs are omitted because they are not yet mapped to Channex restriction keys with enough confidence.",
+      ];
+
+      if (!payloadPreview.ready) {
+        return ok({
+          channel: payloadPreview.channel || "CHANNEX",
+          integrationAccountId: payloadPreview.integrationAccountId || null,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+          ready: false,
+          calledProvider: false,
+          requestCount: 0,
+          results: [],
+          notes: baseNotes,
+          missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
+        });
+      }
+
+      const groupedPayloads = Array.isArray(payloadPreview?.restrictionRatePayloadPreview?.groupedPayloads)
+        ? payloadPreview.restrictionRatePayloadPreview.groupedPayloads
+        : [];
+
+      const transformedPayloads = groupedPayloads
+        .map((group) => {
+          const values = (Array.isArray(group.values) ? group.values : [])
+            .map((value) => {
+              const rate = formatNightlyPriceForChannexRate(value?.nightlyPrice);
+              if (!rate) return null;
+
+              return {
+                property_id: group.externalPropertyId,
+                rate_plan_id: group.externalRatePlanId,
+                date: value.date,
+                rate,
+              };
+            })
+            .filter(Boolean);
+
+          return {
+            externalPropertyId: group.externalPropertyId,
+            externalRoomTypeId: group.externalRoomTypeId,
+            externalRatePlanId: group.externalRatePlanId,
+            values,
+          };
+        })
+        .filter((group) => group.values.length > 0);
+
+      if (!transformedPayloads.length) {
+        return ok({
+          channel: payloadPreview.channel || "CHANNEX",
+          integrationAccountId: payloadPreview.integrationAccountId || null,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+          ready: true,
+          calledProvider: false,
+          requestCount: 0,
+          results: [],
+          notes: [...baseNotes, "No nightlyPrice values were available to send, so nothing was posted to Channex."],
+        });
+      }
+
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+        return bad(409, {
+          error: "Channex integration is not connected for this user.",
+          errorCode: "CHANNEX_NOT_CONNECTED",
+          status: !integration ? CHANNEX_STATUS.NOT_CONNECTED : CHANNEX_STATUS.DISCONNECTED,
+        });
+      }
+
+      const credentialsRef = requireStr(integration.credentialsRef);
+      if (!credentialsRef) {
+        return bad(409, {
+          error: "Channex credentials are missing. Reconnect required.",
+          errorCode: "CHANNEX_RECONNECT_REQUIRED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      let secret;
+      try {
+        secret = await this.channexCredentialStore.readSecretOrNull(credentialsRef);
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(409, {
+          error: "Stored Channex secret could not be read. Reconnect required.",
+          errorCode: "CHANNEX_SECRET_READ_FAILED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          details,
+        });
+      }
+
+      if (
+        !secret ||
+        typeof secret !== "object" ||
+        Array.isArray(secret) ||
+        !hasChannexRequiredCredentialFields(secret)
+      ) {
+        return bad(409, {
+          error: "Stored Channex secret is missing, unreadable, or incomplete. Reconnect required.",
+          errorCode: "CHANNEX_SECRET_INVALID",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        });
+      }
+
+      const providerResult = await this.channexProviderClient.pushRestrictions(secret, transformedPayloads);
+      const results = Array.isArray(providerResult?.results) ? providerResult.results : [];
+
+      return ok({
+        channel: "CHANNEX",
+        integrationAccountId: integration.id,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+        ready: true,
+        calledProvider: true,
+        requestCount: transformedPayloads.length,
+        results: results.map((result) => ({
+          externalPropertyId: result.externalPropertyId ?? null,
+          externalRoomTypeId: result.externalRoomTypeId ?? null,
+          externalRatePlanId: result.externalRatePlanId ?? null,
+          requestBody: result.requestBody ?? null,
+          providerStatus: result.providerStatus ?? null,
+          httpStatus: result.httpStatus ?? null,
+          success: !!result.success,
+          taskId: result.taskId ?? null,
+          warnings: Array.isArray(result.warnings) ? result.warnings : [],
+          errorCode: result.errorCode ?? null,
+          errorMessage: result.errorMessage ?? null,
+        })),
+        notes: baseNotes,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to sync Channex restrictions.",
+        errorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
+        details,
+      });
+    }
+  }
+
+  async syncChannexAri(userId, domitsPropertyId, dateFrom, dateTo) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+    const normalizedDateFrom = parseIsoDateParam(dateFrom);
+    const normalizedDateTo = parseIsoDateParam(dateTo);
+
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+    if (!normalizedDomitsPropertyId) {
+      return bad(400, { error: "Missing required query param: domitsPropertyId" });
+    }
+    if (!normalizedDateFrom) {
+      return bad(400, { error: "Invalid or missing required query param: dateFrom" });
+    }
+    if (!normalizedDateTo) {
+      return bad(400, { error: "Invalid or missing required query param: dateTo" });
+    }
+    if (normalizedDateFrom > normalizedDateTo) {
+      return bad(400, {
+        error: "dateFrom must be less than or equal to dateTo.",
+      });
+    }
+
+    try {
+      const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
+      if (readinessResult?.statusCode !== 200) {
+        return readinessResult;
+      }
+
+      const readiness = readinessResult.response || {};
+      const baseNotes = [
+        "Manual staging orchestration only. This endpoint runs the existing availability sync first and the existing rate-only restrictions sync second.",
+        "Restrictions sync currently sends rate values only and does not yet map Domits restriction name/value pairs to Channex restriction fields.",
+      ];
+
+      if (!readiness.ready) {
+        return ok({
+          channel: readiness.channel || "CHANNEX",
+          integrationAccountId: readiness.integrationAccountId || null,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+          ready: false,
+          calledProvider: false,
+          steps: {
+            availability: null,
+            restrictions: null,
+          },
+          overallSuccess: false,
+          notes: [...baseNotes, ...((Array.isArray(readiness.missingMappings) && readiness.missingMappings.length)
+            ? [`Missing mappings: ${readiness.missingMappings.join(", ")}`]
+            : [])],
+        });
+      }
+
+      const availabilityStep = await this.syncChannexAvailability(
+        normalizedUserId,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo
+      );
+
+      const availabilityResponse = availabilityStep?.response || {};
+      const availabilityCalledProvider = !!availabilityResponse.calledProvider;
+      const availabilityWarnings = Array.isArray(availabilityResponse.results)
+        ? availabilityResponse.results.some((result) => Array.isArray(result?.warnings) && result.warnings.length > 0)
+        : false;
+      const availabilityErrors = Array.isArray(availabilityResponse.results)
+        ? availabilityResponse.results.some((result) => result?.success === false)
+        : false;
+
+      let restrictionsStep = null;
+      if (
+        availabilityStep?.statusCode === 200 &&
+        availabilityResponse.ready !== false &&
+        availabilityCalledProvider &&
+        !availabilityWarnings &&
+        !availabilityErrors
+      ) {
+        restrictionsStep = await this.syncChannexRestrictions(
+          normalizedUserId,
+          normalizedDomitsPropertyId,
+          normalizedDateFrom,
+          normalizedDateTo
+        );
+      } else if (availabilityStep?.statusCode === 200 && !availabilityCalledProvider) {
+        baseNotes.push("Restrictions sync was skipped because availability sync did not make a provider call.");
+      } else if (availabilityWarnings || availabilityErrors) {
+        baseNotes.push("Restrictions sync was skipped because availability sync returned warnings or errors.");
+      } else if (availabilityStep?.statusCode !== 200) {
+        baseNotes.push("Restrictions sync was skipped because availability sync did not complete successfully.");
+      }
+
+      const restrictionsResponse = restrictionsStep?.response || null;
+      const restrictionsCalledProvider = !!restrictionsResponse?.calledProvider;
+      const restrictionsWarnings = Array.isArray(restrictionsResponse?.results)
+        ? restrictionsResponse.results.some((result) => Array.isArray(result?.warnings) && result.warnings.length > 0)
+        : false;
+      const restrictionsErrors = Array.isArray(restrictionsResponse?.results)
+        ? restrictionsResponse.results.some((result) => result?.success === false)
+        : false;
+
+      const overallSuccess =
+        availabilityStep?.statusCode === 200 &&
+        availabilityCalledProvider &&
+        !availabilityWarnings &&
+        !availabilityErrors &&
+        restrictionsStep?.statusCode === 200 &&
+        restrictionsCalledProvider &&
+        !restrictionsWarnings &&
+        !restrictionsErrors;
+
+      return ok({
+        channel: readiness.channel || "CHANNEX",
+        integrationAccountId:
+          availabilityResponse.integrationAccountId ??
+          restrictionsResponse?.integrationAccountId ??
+          readiness.integrationAccountId ??
+          null,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+        ready: true,
+        calledProvider: availabilityCalledProvider || restrictionsCalledProvider,
+        steps: {
+          availability: availabilityStep?.statusCode === 200 ? availabilityResponse : availabilityStep,
+          restrictions: restrictionsStep
+            ? restrictionsStep.statusCode === 200
+              ? restrictionsResponse
+              : restrictionsStep
+            : null,
+        },
+        overallSuccess,
+        notes: baseNotes,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to run combined Channex ARI sync.",
+        errorCode: "CHANNEX_ARI_SYNC_FAILED",
         details,
       });
     }
