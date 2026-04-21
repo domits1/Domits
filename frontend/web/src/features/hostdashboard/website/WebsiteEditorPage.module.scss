@@ -304,6 +304,14 @@
 .toggleCard {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.toggleCard:hover {
+  border-color: rgba(31, 78, 121, 0.34);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
 }
 
 .toggleCopy {
@@ -327,6 +335,7 @@
   width: 20px;
   height: 20px;
   accent-color: #1f4e79;
+  cursor: pointer;
 }
 
 .imageSlotGrid {

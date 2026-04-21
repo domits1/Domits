@@ -794,13 +794,15 @@ function WebsiteEditorPage() {
                     <div className={styles.toggleStack}>
                       {visibilityFields.map((field) => {
                         const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
+                        const inputId = `website-editor-visibility-${field.key}`;
                         const labelId = `website-editor-visibility-${field.key}-label`;
                         const descriptionId = `website-editor-visibility-${field.key}-description`;
 
                         return (
-                          <div
+                          <label
                             key={field.key}
                             ref={setTargetRef(visibilityTargetId)}
+                            htmlFor={inputId}
                             className={`${styles.toggleCard} ${
                               highlightedTargetId === visibilityTargetId ? styles.editorTargetHighlighted : ""
                             }`.trim()}
@@ -810,6 +812,7 @@ function WebsiteEditorPage() {
                               <span id={descriptionId} className={styles.toggleDescription}>{field.description}</span>
                             </div>
                             <input
+                              id={inputId}
                               type="checkbox"
                               className={styles.toggleInput}
                               checked={Boolean(editorValues.visibility[field.key])}
@@ -817,7 +820,7 @@ function WebsiteEditorPage() {
                               aria-labelledby={labelId}
                               aria-describedby={descriptionId}
                             />
-                          </div>
+                          </label>
                         );
                       })}
                     </div>
