@@ -450,6 +450,22 @@ const HostPropertyCare = () => {
         setNewTask(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setNewTask(prev => ({
+            ...prev,
+            attachments: [...(prev.attachments || []), ...files],
+        }));
+    };
+
+    const handleEditFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setEditedTask(prev => ({
+            ...prev,
+            attachments: [...(prev.attachments || []), ...files],
+        }));
+    };
+
     const handlePropertyChange = (e) => {
         const selected = createPropertyOptions.find(o => o.id === e.target.value);
         setNewTask(prev => ({
@@ -716,12 +732,8 @@ const HostPropertyCare = () => {
     const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
 
     let paginatedTasks = [];
-    if (activeTab === 'Overview') {
-        paginatedTasks = displayedTasks.slice(0, ITEMS_PER_PAGE);
-    } else {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        paginatedTasks = displayedTasks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    }
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    paginatedTasks = displayedTasks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     const handlePrevPage = () => setCurrentPage(p => Math.max(p - 1, 1));
     const handleNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
@@ -1477,9 +1489,9 @@ const HostPropertyCare = () => {
                             <div className="form-group">
                                 <label htmlFor='task-attachments'>Attachments (optional)</label>
                                 <div className="custom-file-upload">
-                                    <input type="file" id="file-upload" />
+                                    <input type="file" id="file-upload" name="attachments" multiple accept="image/*,application/pdf" onChange={handleFileChange} />
                                     <label htmlFor="file-upload">
-                                        <span className="upload-text">Upload file...</span>
+                                        <span className="upload-text">{newTask.attachments?.length > 0 ? `${newTask.attachments.length} file(s) selected` : 'Upload file...'}</span>
                                     </label>
                                 </div>
                             </div>
@@ -1602,11 +1614,23 @@ const HostPropertyCare = () => {
 
                             <div className="form-group attachments-section">
                                 <div className="attachments-header">
-                                    <label htmlFor='task-attachments'>Attachments (optional)</label>
-                                    <span className="attachments-count">0 Attachments</span>
+                                    <label htmlFor='task-attachments-edit'>Attachments (optional)</label>
+                                    <span className="attachments-count">{(editedTask.attachments?.length || 0)} Attachments</span>
                                 </div>
                                 <div className="attachments-box">
-                                    <p className="no-attachments-text">No attachments yet.</p>
+                                    {(!editedTask.attachments || editedTask.attachments.length === 0) ? (
+                                        <p className="no-attachments-text">No attachments yet.</p>
+                                    ) : (
+                                        editedTask.attachments.map((f, i) => (
+                                            <p key={i} className="no-attachments-text">{f.name || f}</p>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="custom-file-upload" style={{ marginTop: '8px' }}>
+                                    <input type="file" id="task-attachments-edit" name="attachments" multiple accept="image/*,application/pdf" onChange={handleEditFileChange} />
+                                    <label htmlFor="task-attachments-edit">
+                                        <span className="upload-text">Upload file...</span>
+                                    </label>
                                 </div>
                             </div>
 
