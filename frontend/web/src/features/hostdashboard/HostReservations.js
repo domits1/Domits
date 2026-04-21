@@ -31,11 +31,28 @@ const resolveCancellationType = (cancellationPolicy, rules = []) => {
   return null;
 };
 
+const getPropertiesArray = (data) => {
+  if (Array.isArray(data?.response)) {
+    return data.response;
+  }
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [];
+};
+
+const getReservationsArray = (property) => {
+  if (Array.isArray(property.res?.response)) {
+    return property.res.response;
+  }
+  return [];
+};
+
 const mapReservations = (data) => {
-  const properties = Array.isArray(data?.response) ? data.response : Array.isArray(data) ? data : [];
+  const properties = getPropertiesArray(data);
 
   return properties.flatMap((property) => {
-    const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
+    const reservations = getReservationsArray(property);
     const propertyRules = Array.isArray(property.rules) ? property.rules : [];
 
     return reservations.map((item) => {
@@ -61,6 +78,13 @@ const labelMap = {
 
 const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : "-");
 
+const renderPolicyDisplay = (cancellationType) => {
+  if (cancellationType) {
+    return <span className={styles.cancellationBadge}>{cancellationType}</span>;
+  }
+  return <span>-</span>;
+};
+
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
@@ -76,7 +100,14 @@ const HostReservations = () => {
       setIsLoading(true);
       try {
         const data = await getReservationsFromToken(authToken);
-        const properties = Array.isArray(data?.response) ? data.response : Array.isArray(data) ? data : [];
+        let properties;
+        if (Array.isArray(data?.response)) {
+          properties = data.response;
+        } else if (Array.isArray(data)) {
+          properties = data;
+        } else {
+          properties = [];
+        }
         if (properties.length === 0) {
           setBookings([]);
           return;
@@ -131,7 +162,12 @@ const HostReservations = () => {
     });
   }, [bookings, activeTab, search, range]);
 
-  const count = (type) => bookings.filter((b) => (type === "ALL" ? true : b.status === type)).length;
+  const count = (type) => {
+    if (type === "ALL") {
+      return bookings.length;
+    }
+    return bookings.filter((b) => b.status === type).length;
+  };
 
   const { currentPage, totalPages, paginatedItems, pageRange, goToPage, goToNextPage, goToPreviousPage } =
     usePagination(filteredBookings, itemsPerPage);
@@ -265,11 +301,7 @@ const HostReservations = () => {
                           <td>€{total}</td>
                           <td>€{commission}</td>
                           <td>
-                            {b.cancellationType ? (
-                              <span className={styles.cancellationBadge}>{b.cancellationType}</span>
-                            ) : (
-                              "-"
-                            )}
+                            {renderPolicyDisplay(b.cancellationType)}
                           </td>
                           <td>{b.id}</td>
                           <td>{formatDate(b.createdat)}</td>
