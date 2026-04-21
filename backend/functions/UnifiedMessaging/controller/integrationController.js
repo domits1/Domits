@@ -116,6 +116,14 @@ class IntegrationController {
     return await this.integrationService.getChannexAriTargets(userId, domitsPropertyId);
   }
 
+  async previewChannexAri(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const dateFrom = event.queryStringParameters?.dateFrom || null;
+    const dateTo = event.queryStringParameters?.dateTo || null;
+    return await this.integrationService.previewChannexAri(userId, domitsPropertyId, dateFrom, dateTo);
+  }
+
   async linkChannexProperty(event) {
     const userId = event.queryStringParameters?.userId || null;
     const body = safeJson(event.body) || {};

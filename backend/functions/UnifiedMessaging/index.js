@@ -73,6 +73,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.getChannexAriTargets(event),
   },
   {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/ari-preview"),
+    handle: (event) => integrationController.previewChannexAri(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/rate-plans"),
     handle: (event) => integrationController.linkChannexRatePlan(event),
   },

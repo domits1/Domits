@@ -6,6 +6,7 @@ import IntegrationRatePlanRepository from "../data/integrationRatePlanRepository
 import IntegrationRoomTypeRepository from "../data/integrationRoomTypeRepository.js";
 import IntegrationSyncRepository from "../data/integrationSyncRepository.js";
 import ReservationLinkRepository from "../data/reservationLinkRepository.js";
+import Database from "../ORM/index.js";
 
 import SyncRunner from "./syncRunner.js";
 import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
@@ -43,6 +44,221 @@ const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
 
 const requireStr = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
+const quoteIdentifier = (value) => `"${String(value || "").replaceAll('"', '""')}"`;
+const resolveDatabaseSchemaName = (client) => {
+  if (process.env.TEST === "true") return "test";
+
+  const schema = requireStr(client?.options?.schema);
+  if (!schema) return "main";
+
+  return schema.toLowerCase() === "public" ? "main" : schema.trim().toLowerCase();
+};
+const qualifyTableName = (client, tableName) =>
+  `${quoteIdentifier(resolveDatabaseSchemaName(client))}.${quoteIdentifier(tableName)}`;
+const toIntegerOrNull = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
+};
+const parseIsoDateParam = (value) => {
+  const normalized = requireStr(value);
+  if (!normalized) return null;
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() + 1 !== month ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return normalized;
+};
+const isoDateToCalendarInt = (value) => {
+  const normalized = parseIsoDateParam(value);
+  return normalized ? Number(normalized.replaceAll("-", "")) : null;
+};
+const calendarIntToIsoDate = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return null;
+
+  const truncatedValue = Math.trunc(numericValue);
+  if (truncatedValue < 10000101 || truncatedValue > 99991231) return null;
+
+  const stringValue = String(truncatedValue);
+  return `${stringValue.slice(0, 4)}-${stringValue.slice(4, 6)}-${stringValue.slice(6, 8)}`;
+};
+const normalizeValueToCalendarInt = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+
+  if (typeof value === "string") {
+    const normalizedIso = parseIsoDateParam(value);
+    if (normalizedIso) return Number(normalizedIso.replaceAll("-", ""));
+
+    const trimmed = value.trim();
+    if (/^\d{8}$/.test(trimmed)) {
+      return Number(trimmed);
+    }
+  }
+
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return null;
+
+  const truncatedValue = Math.trunc(numericValue);
+  if (truncatedValue >= 10000101 && truncatedValue <= 99991231) {
+    return truncatedValue;
+  }
+
+  const milliseconds = truncatedValue > 1000000000000 ? truncatedValue : truncatedValue * 1000;
+  const date = new Date(milliseconds);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return Number(
+    `${date.getUTCFullYear()}${String(date.getUTCMonth() + 1).padStart(2, "0")}${String(date.getUTCDate()).padStart(
+      2,
+      "0"
+    )}`
+  );
+};
+const buildCalendarDateRange = (startIsoDate, endIsoDate) => {
+  const out = [];
+  const start = parseIsoDateParam(startIsoDate);
+  const end = parseIsoDateParam(endIsoDate);
+  if (!start || !end) return out;
+
+  const cursor = new Date(`${start}T00:00:00.000Z`);
+  const endDate = new Date(`${end}T00:00:00.000Z`);
+  while (cursor.getTime() <= endDate.getTime()) {
+    out.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return out;
+};
+const isWeekendIsoDate = (isoDate) => {
+  const date = new Date(`${isoDate}T00:00:00.000Z`);
+  const day = date.getUTCDay();
+  return day === 5 || day === 6;
+};
+const getPropertyAvailabilityWindows = async (propertyId) => {
+  const client = await Database.getInstance();
+  const rows = await client.query(
+    `
+      SELECT property_id, availablestartdate, availableenddate
+      FROM ${qualifyTableName(client, "property_availability")}
+      WHERE property_id = $1
+      ORDER BY availablestartdate ASC
+    `,
+    [propertyId]
+  );
+
+  return (Array.isArray(rows) ? rows : []).map((row) => ({
+    propertyId: String(row?.property_id || ""),
+    availableStartDate: row?.availablestartdate,
+    availableEndDate: row?.availableenddate,
+  }));
+};
+const getPropertyCalendarOverrides = async (propertyId, startDate, endDate) => {
+  const client = await Database.getInstance();
+  const tableName = qualifyTableName(client, "property_calendar_override");
+  const params = [propertyId];
+  const where = ["property_id = $1"];
+
+  if (startDate) {
+    params.push(startDate);
+    where.push(`calendar_date >= $${params.length}`);
+  }
+
+  if (endDate) {
+    params.push(endDate);
+    where.push(`calendar_date <= $${params.length}`);
+  }
+
+  const rows = await client.query(
+    `
+      SELECT property_id, calendar_date, is_available, nightly_price, updated_at
+      FROM ${tableName}
+      WHERE ${where.join(" AND ")}
+      ORDER BY calendar_date ASC
+    `,
+    params
+  );
+
+  return (Array.isArray(rows) ? rows : []).map((row) => ({
+    propertyId: String(row?.property_id || ""),
+    date: toIntegerOrNull(row?.calendar_date),
+    isAvailable: row?.is_available === null || row?.is_available === undefined ? null : Boolean(row.is_available),
+    nightlyPrice: toIntegerOrNull(row?.nightly_price),
+    updatedAt: toIntegerOrNull(row?.updated_at),
+  }));
+};
+const getPropertyPricing = async (propertyId) => {
+  const client = await Database.getInstance();
+  const schemaName = resolveDatabaseSchemaName(client);
+  const weekendRateColumnResult = await client.query(
+    `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = $1
+        AND table_schema = $2
+        AND lower(column_name) = 'weekendrate'
+      LIMIT 1
+    `,
+    ["property_pricing", schemaName]
+  );
+  const hasWeekendRateColumn = Array.isArray(weekendRateColumnResult) && weekendRateColumnResult.length > 0;
+
+  const rows = await client.query(
+    `
+      SELECT
+        property_id,
+        roomrate,
+        cleaning,
+        ${hasWeekendRateColumn ? "weekendrate" : "roomrate AS weekendrate"}
+      FROM ${qualifyTableName(client, "property_pricing")}
+      WHERE property_id = $1
+      LIMIT 1
+    `,
+    [propertyId]
+  );
+
+  const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+  if (!row) return null;
+
+  return {
+    propertyId: String(row?.property_id || ""),
+    roomRate: toIntegerOrNull(row?.roomrate),
+    cleaning: row?.cleaning === null || row?.cleaning === undefined ? null : toIntegerOrNull(row?.cleaning),
+    weekendRate: toIntegerOrNull(row?.weekendrate ?? row?.roomrate),
+  };
+};
+const getPropertyAvailabilityRestrictions = async (propertyId) => {
+  const client = await Database.getInstance();
+  const rows = await client.query(
+    `
+      SELECT id, property_id, restriction, value
+      FROM ${qualifyTableName(client, "property_availabilityrestriction")}
+      WHERE property_id = $1
+      ORDER BY restriction ASC
+    `,
+    [propertyId]
+  );
+
+  return (Array.isArray(rows) ? rows : []).map((row) => ({
+    id: String(row?.id || ""),
+    propertyId: String(row?.property_id || ""),
+    restriction: requireStr(row?.restriction),
+    value: Number.isFinite(Number(row?.value)) ? Number(row.value) : null,
+  }));
+};
 const requireEnv = (name) => {
   const value = requireStr(process.env[name]);
   if (!value) {
@@ -2218,6 +2434,167 @@ export default class IntegrationService {
       return bad(500, {
         error: "Failed to get Channex ARI targets.",
         errorCode: "CHANNEX_ARI_TARGETS_FAILED",
+        details,
+      });
+    }
+  }
+
+  async previewChannexAri(userId, domitsPropertyId, dateFrom, dateTo) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+    const normalizedDateFrom = parseIsoDateParam(dateFrom);
+    const normalizedDateTo = parseIsoDateParam(dateTo);
+
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+    if (!normalizedDomitsPropertyId) {
+      return bad(400, { error: "Missing required query param: domitsPropertyId" });
+    }
+    if (!normalizedDateFrom) {
+      return bad(400, { error: "Invalid or missing required query param: dateFrom" });
+    }
+    if (!normalizedDateTo) {
+      return bad(400, { error: "Invalid or missing required query param: dateTo" });
+    }
+    if (normalizedDateFrom > normalizedDateTo) {
+      return bad(400, {
+        error: "dateFrom must be less than or equal to dateTo.",
+      });
+    }
+
+    try {
+      const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
+      if (readinessResult?.statusCode !== 200) {
+        return readinessResult;
+      }
+
+      const readiness = readinessResult.response || {};
+      if (!readiness.ready) {
+        return ok({
+          channel: readiness.channel || "CHANNEX",
+          integrationAccountId: readiness.integrationAccountId || null,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+          ready: false,
+          missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
+          propertyMapping: readiness.propertyMapping || null,
+          roomTypeMappings: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : [],
+          ratePlanMappings: Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings : [],
+          sourceSummary: null,
+          availabilityPreview: [],
+          rateRestrictionPreview: [],
+        });
+      }
+
+      const startDateInt = isoDateToCalendarInt(normalizedDateFrom);
+      const endDateInt = isoDateToCalendarInt(normalizedDateTo);
+      const [availabilityWindows, calendarOverrides, pricing, restrictions] = await Promise.all([
+        getPropertyAvailabilityWindows(normalizedDomitsPropertyId),
+        getPropertyCalendarOverrides(normalizedDomitsPropertyId, startDateInt, endDateInt),
+        getPropertyPricing(normalizedDomitsPropertyId),
+        getPropertyAvailabilityRestrictions(normalizedDomitsPropertyId),
+      ]);
+
+      const normalizedAvailabilityWindows = (Array.isArray(availabilityWindows) ? availabilityWindows : [])
+        .map((entry) => ({
+          availableStartDate: normalizeValueToCalendarInt(entry?.availableStartDate),
+          availableEndDate: normalizeValueToCalendarInt(entry?.availableEndDate),
+        }))
+        .filter((entry) => entry.availableStartDate && entry.availableEndDate);
+
+      const overrideMap = new Map(
+        (Array.isArray(calendarOverrides) ? calendarOverrides : [])
+          .map((entry) => {
+            const isoDate = calendarIntToIsoDate(entry?.date);
+            if (!isoDate) return null;
+
+            return [
+              isoDate,
+              {
+                isAvailable: entry?.isAvailable ?? null,
+                nightlyPrice: entry?.nightlyPrice ?? null,
+                updatedAt: entry?.updatedAt ?? null,
+              },
+            ];
+          })
+          .filter(Boolean)
+      );
+
+      const normalizedRestrictions = (Array.isArray(restrictions) ? restrictions : [])
+        .map((restriction) => ({
+          restriction: requireStr(restriction?.restriction),
+          value: Number.isFinite(Number(restriction?.value)) ? Number(restriction.value) : null,
+        }))
+        .filter((restriction) => restriction.restriction && restriction.value !== null);
+
+      const dates = buildCalendarDateRange(normalizedDateFrom, normalizedDateTo);
+
+      const availabilityPreview = [];
+      const rateRestrictionPreview = [];
+
+      for (const isoDate of dates) {
+        const calendarDate = isoDateToCalendarInt(isoDate);
+        const override = overrideMap.get(isoDate) || null;
+        const isAvailableFromWindows = normalizedAvailabilityWindows.some(
+          (entry) => calendarDate >= entry.availableStartDate && calendarDate <= entry.availableEndDate
+        );
+        const effectiveAvailability =
+          override?.isAvailable === null || override?.isAvailable === undefined ? isAvailableFromWindows : override.isAvailable;
+        const effectiveNightlyPrice =
+          override?.nightlyPrice ??
+          (pricing ? (isWeekendIsoDate(isoDate) ? pricing.weekendRate : pricing.roomRate) : null);
+
+        for (const roomTypeMapping of Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : []) {
+          availabilityPreview.push({
+            domitsPropertyId: normalizedDomitsPropertyId,
+            externalPropertyId: roomTypeMapping.externalPropertyId,
+            externalRoomTypeId: roomTypeMapping.externalRoomTypeId,
+            date: isoDate,
+            availability: effectiveAvailability,
+          });
+        }
+
+        for (const ratePlanMapping of Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings : []) {
+          rateRestrictionPreview.push({
+            domitsPropertyId: normalizedDomitsPropertyId,
+            externalPropertyId: ratePlanMapping.externalPropertyId,
+            externalRoomTypeId: ratePlanMapping.externalRoomTypeId,
+            externalRatePlanId: ratePlanMapping.externalRatePlanId,
+            date: isoDate,
+            nightlyPrice: effectiveNightlyPrice,
+            restrictions: normalizedRestrictions.map((restriction) => ({
+              restriction: restriction.restriction,
+              value: restriction.value,
+            })),
+          });
+        }
+      }
+
+      return ok({
+        channel: readiness.channel || "CHANNEX",
+        integrationAccountId: readiness.integrationAccountId,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+        ready: true,
+        missingMappings: [],
+        propertyMapping: readiness.propertyMapping || null,
+        roomTypeMappings: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : [],
+        ratePlanMappings: Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings : [],
+        sourceSummary: {
+          propertyAvailabilityWindows: normalizedAvailabilityWindows.length,
+          calendarOverrides: overrideMap.size,
+          hasBasePricing: !!pricing,
+          availabilityRestrictions: normalizedRestrictions.length,
+        },
+        availabilityPreview,
+        rateRestrictionPreview,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to build Channex ARI preview.",
+        errorCode: "CHANNEX_ARI_PREVIEW_FAILED",
         details,
       });
     }
