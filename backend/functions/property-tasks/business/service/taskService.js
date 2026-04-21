@@ -3,7 +3,7 @@ import { validateTaskPayload } from "../model/taskValidator.js";
 import Database from "database";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";

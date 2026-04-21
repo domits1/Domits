@@ -1636,8 +1636,8 @@ const HostPropertyCare = () => {
                                     {(!editedTask.attachments || editedTask.attachments.length === 0) ? (
                                         <p className="no-attachments-text">No attachments yet.</p>
                                     ) : (
-                                        editedTask.attachments.map((f, i) => (
-                                            <p key={i} className="no-attachments-text">{f.name || f}</p>
+                                        editedTask.attachments.map((f) => (
+                                            <p key={f.name || f} className="no-attachments-text">{f.name || f}</p>
                                         ))
                                     )}
                                 </div>
