@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { Auth } from 'aws-amplify';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
@@ -62,6 +63,10 @@ const AttachmentThumb = ({ attachment }) => {
     );
 };
 
+
+AttachmentThumb.propTypes = {
+    attachment: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.string]).isRequired,
+};
 
 const isTaskOverdue = (task, todayStr) => (
     Boolean(task?.dueDate) &&
