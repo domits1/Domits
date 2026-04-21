@@ -364,4 +364,130 @@ export default class ChannexProviderClient {
       };
     }
   }
+
+  async pushAvailability(credentials, groupedAvailabilityPayloads) {
+    const apiKey = requireStr(credentials?.apiKey);
+    const groups = Array.isArray(groupedAvailabilityPayloads) ? groupedAvailabilityPayloads : [];
+
+    if (!apiKey) {
+      return {
+        success: false,
+        results: groups.map((group) => ({
+          externalPropertyId: requireStr(group?.externalPropertyId),
+          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+          requestBody: {
+            values: Array.isArray(group?.values) ? group.values : [],
+          },
+          httpStatus: null,
+          providerStatus: "INVALID_CREDENTIALS",
+          success: false,
+          taskId: null,
+          warnings: [],
+          errorCode: "MISSING_API_KEY",
+          errorMessage: "Channex credentials must include apiKey.",
+        })),
+      };
+    }
+
+    const results = [];
+
+    for (const group of groups) {
+      const requestBody = {
+        values: Array.isArray(group?.values) ? group.values : [],
+      };
+
+      if (!requestBody.values.length) {
+        results.push({
+          externalPropertyId: requireStr(group?.externalPropertyId),
+          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+          requestBody,
+          httpStatus: null,
+          providerStatus: "INVALID_REQUEST",
+          success: false,
+          taskId: null,
+          warnings: [],
+          errorCode: "CHANNEX_AVAILABILITY_VALUES_MISSING",
+          errorMessage: "Channex availability push requires at least one values entry.",
+        });
+        continue;
+      }
+
+      try {
+        const url = new URL("/api/v1/availability", CHANNEX_BASE_URL);
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "user-api-key": apiKey,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        const rawText = await response.text();
+        const parsed = parseJsonSafely(rawText);
+        const warnings = Array.isArray(parsed?.meta?.warnings) ? parsed.meta.warnings : [];
+        const taskIds = Array.isArray(parsed?.data)
+          ? parsed.data.map((item) => requireStr(item?.id)).filter(Boolean)
+          : [];
+
+        if (!response.ok) {
+          results.push({
+            externalPropertyId: requireStr(group?.externalPropertyId),
+            externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+            requestBody,
+            httpStatus: response.status,
+            providerStatus:
+              response.status === 401
+                ? "UNAUTHORIZED"
+                : response.status === 429
+                  ? "RATE_LIMITED"
+                  : "AVAILABILITY_PUSH_FAILED",
+            success: false,
+            taskId: taskIds[0] ?? null,
+            warnings,
+            errorCode:
+              parsed?.errors?.code ||
+              parsed?.error?.code ||
+              `CHANNEX_AVAILABILITY_PUSH_${response.status}`,
+            errorMessage:
+              parsed?.errors?.title ||
+              parsed?.error?.message ||
+              `Channex availability push failed with status ${response.status}.`,
+          });
+          continue;
+        }
+
+        results.push({
+          externalPropertyId: requireStr(group?.externalPropertyId),
+          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+          requestBody,
+          httpStatus: response.status,
+          providerStatus: warnings.length ? "ACCEPTED_WITH_WARNINGS" : "SYNCED",
+          success: warnings.length === 0,
+          taskId: taskIds[0] ?? null,
+          warnings,
+          errorCode: null,
+          errorMessage: warnings.length ? "Channex accepted the request with warnings." : null,
+        });
+      } catch (error) {
+        results.push({
+          externalPropertyId: requireStr(group?.externalPropertyId),
+          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+          requestBody,
+          httpStatus: null,
+          providerStatus: "AVAILABILITY_PUSH_FAILED",
+          success: false,
+          taskId: null,
+          warnings: [],
+          errorCode: error?.code || error?.name || "CHANNEX_AVAILABILITY_PUSH_REQUEST_FAILED",
+          errorMessage: error?.message || "Channex availability push request failed.",
+        });
+      }
+    }
+
+    return {
+      success: results.every((result) => result.success),
+      results,
+    };
+  }
 }
