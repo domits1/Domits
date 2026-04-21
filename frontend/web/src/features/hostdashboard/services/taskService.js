@@ -24,7 +24,7 @@ const normalizeTask = (task) => ({
     dueDate: toDateString(task.due_date),
     completedAt: toDateString(task.completed_date),
     isLegacy: task.is_legacy,
-    attachments: task.attachments ? JSON.parse(task.attachments) : [],
+    attachments: (() => { try { return task.attachments ? JSON.parse(task.attachments) : []; } catch { return []; } })(),
 });
 
 const toBackendPayload = (taskData) => {
