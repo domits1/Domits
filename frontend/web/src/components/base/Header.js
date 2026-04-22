@@ -215,9 +215,9 @@ function Header({ setSearchResults, setLoading }) {
           <button onClick={navigateToMessages} className="dropdownLoginButton">
             {components.user.messages}
           </button>
-          <button onClick={navigateToPayments} className="dropdownLoginButton">
+          {/* <button onClick={navigateToPayments} className="dropdownLoginButton">
             {components.user.payments}
-          </button>
+          </button> */}
           {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
             Reviews 
           </button> */}
