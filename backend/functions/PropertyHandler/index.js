@@ -69,6 +69,9 @@ const bookingEngineHandlers = {
 };
 
 const handleGet = async (event) => {
+  if (isPath(event, "/property/website/preview")) {
+    return controller.getWebsitePreviewByDraftId(event);
+  }
   if (isPath(event, "/property/website/drafts")) {
     return controller.getWebsiteDrafts(event);
   }
