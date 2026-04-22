@@ -19,7 +19,7 @@ const getSubResource = (event, resourceTemplate, pathPrefix) => {
     return undefined;
   }
 
-  return path.slice(pathPrefix.length).split("/").filter(Boolean)[0];
+  return path.slice(pathPrefix.length).split("/").find(Boolean);
 };
 
 const handlePost = async (event) => {
