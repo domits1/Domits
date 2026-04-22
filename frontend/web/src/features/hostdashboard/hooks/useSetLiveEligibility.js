@@ -13,12 +13,10 @@ export const useSetLiveEligibility = ({ userId }) => {
       const isVerified = status.verificationStatus === "verified";
       setLiveEligibility(isVerified);
     } catch (error) {
-        if (error.statusCode === 404) {
-            setLiveEligibility(false);
-          } else {
-            setLiveEligibilityError(error.message);
-            console.error("Error fetching verification status:", error);
-          }
+        setLiveEligibility(false);
+        if (error.statusCode !== 404) {
+          console.error("Error fetching verification status:", error);
+        }
     } finally {
       setLiveEligibilityLoading(false);
     }
