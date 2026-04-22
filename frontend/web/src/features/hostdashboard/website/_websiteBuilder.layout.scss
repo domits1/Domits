@@ -256,132 +256,6 @@
   background: #f1f7fd;
 }
 
-.dangerButton {
-  border: 0;
-  background: #dc2626;
-  color: #ffffff;
-  box-shadow: 0 12px 22px rgba(220, 38, 38, 0.18);
-}
-
-.dangerButton:hover {
-  border: 0;
-  background: #b91c1c;
-  color: #ffffff;
-  box-shadow: 0 16px 28px rgba(185, 28, 28, 0.22);
-}
-
-.dangerButton:disabled,
-.dangerButton:disabled:hover {
-  cursor: not-allowed;
-  background: #dc2626;
-  color: #ffffff;
-  box-shadow: none;
-  opacity: 0.58;
-  transform: none;
-}
-
-.deleteDraftOverlay {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  max-height: none;
-  margin: 0;
-  border: 0;
-  z-index: 1400;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  color: inherit;
-  background: rgba(15, 23, 42, 0.56);
-  backdrop-filter: blur(6px);
-}
-
-.deleteDraftOverlay::backdrop {
-  background: transparent;
-}
-
-.deleteDraftDialog {
-  width: min(100%, 460px);
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background:
-    radial-gradient(circle at top left, rgba(220, 38, 38, 0.08), transparent 42%),
-    #ffffff;
-  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
-  padding: 24px;
-}
-
-.deleteDraftEyebrow {
-  margin: 0 0 10px;
-  color: #991b1b;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.deleteDraftTitle {
-  margin: 0 0 12px;
-  color: #0f172a;
-  font-size: clamp(1.45rem, 3vw, 2rem);
-  line-height: 1.1;
-}
-
-.deleteDraftCopy {
-  margin: 0 0 12px;
-  color: #475569;
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-.deleteDraftActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.deleteReasonFieldset {
-  min-width: 0;
-  margin: 18px 0 0;
-  padding: 0;
-  border: 0;
-}
-
-.deleteReasonLegend {
-  margin: 0 0 10px;
-  color: #64748b;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.deleteReasonList {
-  display: grid;
-  gap: 10px;
-}
-
-.deleteReasonOption {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  color: #0f172a;
-  font-size: 0.95rem;
-  font-weight: 650;
-  line-height: 1.35;
-  cursor: pointer;
-}
-
-.deleteReasonOption input {
-  width: 18px;
-  height: 18px;
-  margin: 0.08rem 0 0;
-  accent-color: #dc2626;
-  flex-shrink: 0;
-}
-
 .selectionSummary {
   padding: 22px;
   border-radius: 18px;
@@ -700,32 +574,16 @@
 }
 
 .websiteDraftCardHeader {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(170px, 196px) auto;
+  display: flex;
   align-items: flex-start;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .websiteDraftCardCopy {
   display: grid;
-  gap: 10px;
+  gap: 4px;
   min-width: 0;
-}
-
-.websiteDraftCardPreview {
-  width: min(100%, 196px);
-  min-width: 184px;
-  justify-self: end;
-}
-
-.websiteDraftPreviewPlaceholder {
-  display: grid;
-  place-items: center;
-  min-height: 138px;
-  padding: 14px;
-  border-radius: 18px;
-  border: 1px dashed #d3deea;
-  background: #f8fbff;
 }
 
 .websiteDraftMetaRow {
