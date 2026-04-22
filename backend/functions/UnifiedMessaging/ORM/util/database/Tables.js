@@ -9,6 +9,7 @@ import { ChannelReservationLink } from "../../../models/unified/integrations/Cha
 
 import { IntegrationSyncState } from "../../../models/unified/sync/IntegrationSyncState.js";
 import { IntegrationSyncLog } from "../../../models/unified/sync/IntegrationSyncLog.js";
+import { ChannexSyncEvidence } from "../../../models/unified/sync/ChannexSyncEvidence.js";
 
 export const Tables = [
 
@@ -23,4 +24,5 @@ export const Tables = [
 
   IntegrationSyncState,
   IntegrationSyncLog,
+  ChannexSyncEvidence,
 ];

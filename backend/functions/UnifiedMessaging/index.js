@@ -81,6 +81,18 @@ const routeDefinitions = [
     handle: (event) => integrationController.previewChannexAriPayloads(event),
   },
   {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/sync-evidence/latest"),
+    handle: (event) => integrationController.getLatestChannexSyncEvidenceSummary(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && /\/integrations\/channex\/sync-evidence\/[^/]+$/.test(String(path || "")),
+    handle: (event) => integrationController.getChannexSyncEvidence(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/sync-evidence"),
+    handle: (event) => integrationController.listChannexSyncEvidence(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/availability"),
     handle: (event) => integrationController.syncChannexAvailability(event),
   },

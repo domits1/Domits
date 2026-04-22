@@ -1,5 +1,5 @@
 import IntegrationService from "../business/integrationService.js";
-import { extractIntegrationId, safeJson } from "./controllerUtils.js";
+import { extractIntegrationId, extractLastPathSegment, safeJson } from "./controllerUtils.js";
 
 class IntegrationController {
   constructor() {
@@ -135,6 +135,40 @@ class IntegrationController {
       dateFrom,
       dateTo
     );
+  }
+
+  async listChannexSyncEvidence(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const integrationAccountId = event.queryStringParameters?.integrationAccountId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const syncType = event.queryStringParameters?.syncType || null;
+    const status = event.queryStringParameters?.status || null;
+    const dateFrom = event.queryStringParameters?.dateFrom || null;
+    const dateTo = event.queryStringParameters?.dateTo || null;
+    const limitRaw = event.queryStringParameters?.limit;
+    const limit = limitRaw ? Number(limitRaw) : 50;
+
+    return await this.integrationService.listChannexSyncEvidence(userId, {
+      integrationAccountId,
+      domitsPropertyId,
+      syncType,
+      status,
+      dateFrom,
+      dateTo,
+      limit,
+    });
+  }
+
+  async getChannexSyncEvidence(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const evidenceId = extractLastPathSegment(event.path);
+    return await this.integrationService.getChannexSyncEvidence(userId, evidenceId);
+  }
+
+  async getLatestChannexSyncEvidenceSummary(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    return await this.integrationService.getLatestChannexSyncEvidenceSummary(userId, domitsPropertyId);
   }
 
   async syncChannexAvailability(event) {
