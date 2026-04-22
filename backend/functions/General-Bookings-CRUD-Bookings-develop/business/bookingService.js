@@ -171,6 +171,28 @@ class BookingService {
     }
   }
 
+  async acceptInquiry(bookingId, authToken) {
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(bookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+    const booking = bookingResult.response;
+    if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
+    if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
+    await this.reservationRepository.updateBookingStatus(bookingId, "Awaiting Payment");
+    return { bookingId, status: "Awaiting Payment" };
+  }
+
+  async declineInquiry(bookingId, authToken) {
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(bookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+    const booking = bookingResult.response;
+    if (booking.hostid !== user.sub) throw new Forbidden("Only the host may decline this inquiry.");
+    if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
+    await this.reservationRepository.updateBookingStatus(bookingId, "Declined");
+    return { bookingId, status: "Declined" };
+  }
+
   async verifyEventDataTypes(event) {
     try {
       if (event?.identifiers && event?.tax && event?.general) {

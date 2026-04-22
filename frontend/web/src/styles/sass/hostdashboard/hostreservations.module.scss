@@ -155,6 +155,11 @@ $border-color: #e5e7eb;
   font-weight: 600;
 }
 
+.statusInquiry {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
 .statusPaid {
   background: #bbf7d0;
   color: #166534;
@@ -170,9 +175,62 @@ $border-color: #e5e7eb;
   color: #7f1d1d;
 }
 
+.statusDeclined {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
 .statusOther {
   background: #e5e7eb;
   color: #374151;
+}
+
+.inquiryActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.btnAccept {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #16a34a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #15803d;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btnDecline {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #b91c1c;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .paginationControls {
