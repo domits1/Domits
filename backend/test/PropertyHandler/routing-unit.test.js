@@ -84,7 +84,44 @@ const bookingEngineCases = bookingEngineSpecs.map(([name, controllerMethod, subR
   })
 );
 
-const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases];
+const pathFallbackSpecs = [
+  buildCase({
+    name: "GET all hostDashboard properties from path fallback",
+    controllerMethod: "getFullOwnedProperties",
+    httpMethod: "GET",
+    resource: "/property/{proxy+}",
+    statusCode: 200,
+  }),
+  buildCase({
+    name: "GET all active properties from path fallback",
+    controllerMethod: "getActivePropertiesCard",
+    httpMethod: "GET",
+    resource: "/property/{proxy+}",
+    statusCode: 200,
+  }),
+];
+
+const pathFallbackCases = [
+  {
+    testCase: pathFallbackSpecs[0],
+    path: "/property/hostDashboard/all",
+    proxy: "hostDashboard/all",
+  },
+  {
+    testCase: pathFallbackSpecs[1],
+    path: "/property/bookingEngine/all",
+    proxy: "bookingEngine/all",
+  },
+].map(({ testCase, path, proxy }) => ({
+  ...testCase,
+  event: {
+    ...testCase.event,
+    path,
+    pathParameters: { proxy },
+  },
+}));
+
+const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases, ...pathFallbackCases];
 
 const notFoundCases = [
   {

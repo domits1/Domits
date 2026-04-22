@@ -9,6 +9,19 @@ const notFound = (body) => ({
 
 const isPath = (event, route) => event.resource === route || event.path === route;
 
+const getSubResource = (event, resourceTemplate, pathPrefix) => {
+  if (event.resource === resourceTemplate) {
+    return event.pathParameters?.subResource;
+  }
+
+  const path = String(event.path || "");
+  if (!path.startsWith(pathPrefix)) {
+    return undefined;
+  }
+
+  return path.slice(pathPrefix.length).split("/").filter(Boolean)[0];
+};
+
 const handlePost = async (event) => {
   if (isPath(event, "/property/images/presign")) {
     return controller.createImageUploadUrls(event);
@@ -69,16 +82,25 @@ const handleGet = async (event) => {
     return controller.getPropertyCalendarOverrides(event);
   }
 
-  const subResource = event.pathParameters?.subResource;
-  if (event.resource === "/property/hostDashboard/{subResource}") {
-    const handler = hostDashboardHandlers[subResource];
+  const hostDashboardSubResource = getSubResource(
+    event,
+    "/property/hostDashboard/{subResource}",
+    "/property/hostDashboard/"
+  );
+  if (hostDashboardSubResource) {
+    const handler = hostDashboardHandlers[hostDashboardSubResource];
     return handler
       ? handler(event)
       : notFound("Sub-resource for '/property/hostDashboard' not found.");
   }
 
-  if (event.resource === "/property/bookingEngine/{subResource}") {
-    const handler = bookingEngineHandlers[subResource];
+  const bookingEngineSubResource = getSubResource(
+    event,
+    "/property/bookingEngine/{subResource}",
+    "/property/bookingEngine/"
+  );
+  if (bookingEngineSubResource) {
+    const handler = bookingEngineHandlers[bookingEngineSubResource];
     return handler
       ? handler(event)
       : notFound("Sub-resource for '/property/bookingEngine' not found.");
