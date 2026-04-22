@@ -30,7 +30,6 @@ const directRouteSpecs = [
   ["PATCH property activation request", "activateProperty", "PATCH", "/property", 204],
   ["POST website draft upsert request", "upsertWebsiteDraft", "POST", "/property/website/draft", 200],
   ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],
-  ["GET public website preview request", "getWebsitePreviewByDraftId", "GET", "/property/website/preview", 200],
   ["GET website drafts request", "getWebsiteDrafts", "GET", "/property/website/drafts", 200],
   ["GET website draft by property request", "getWebsiteDraftByPropertyId", "GET", "/property/website/draft", 200],
   ["DELETE website draft request", "deleteWebsiteDraft", "DELETE", "/property/website/draft", 204],

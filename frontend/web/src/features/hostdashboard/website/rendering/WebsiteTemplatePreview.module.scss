@@ -3,12 +3,6 @@
   gap: 18px;
 }
 
-.previewShellCompact {
-  gap: 0;
-  width: 100%;
-  min-width: 184px;
-}
-
 .previewHeader {
   display: flex;
   flex-wrap: wrap;
@@ -67,38 +61,11 @@
 }
 
 .previewBrowser {
-  width: 100%;
   border-radius: 28px;
   border: 1px solid rgba(31, 78, 121, 0.14);
   background: #ffffff;
   box-shadow: 0 26px 54px rgba(15, 23, 42, 0.09);
   overflow: hidden;
-}
-
-.previewBrowserCompact {
-  border-radius: 24px;
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
-}
-
-.previewScaleShell {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-}
-
-.previewScaleShellCompact {
-  width: 100%;
-  max-width: 184px;
-  min-width: 184px;
-  margin-left: auto;
-}
-
-.previewScaleInner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: top left;
-  will-change: transform;
 }
 
 .previewBrowserBar {
@@ -133,31 +100,10 @@
 }
 
 .previewCanvas {
-  position: relative;
   padding: clamp(18px, 2.4vw, 28px);
   background:
     radial-gradient(circle at top left, rgba(31, 78, 121, 0.06), transparent 28%),
     linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(255, 255, 255, 0.98));
-}
-
-.previewInteractiveTarget {
-  cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-.previewInteractiveTarget:hover {
-  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
-}
-
-.previewInteractiveTargetActive {
-  box-shadow:
-    0 0 0 3px rgba(31, 78, 121, 0.18),
-    0 14px 32px rgba(31, 78, 121, 0.12);
-  transform: translateY(-1px);
-}
-
-.availabilityCalendarTarget {
-  border-radius: 24px;
 }
 
 .previewUnsupported {
@@ -226,18 +172,7 @@
   justify-items: start;
 }
 
-.panoramaIntroCopy {
-  display: grid;
-  gap: 12px;
-  width: 100%;
-  max-width: none;
-}
-
-.panoramaIntroCopy .heroDescription {
-  width: 100%;
-  max-width: none;
-}
-
+.panoramaIntroCopy,
 .experienceIntroCopy {
   display: grid;
   gap: 12px;
@@ -789,159 +724,6 @@
   color: #0f172a;
 }
 
-.visitorChatLauncher,
-.visitorChatPanel {
-  position: fixed;
-  right: 34px;
-  bottom: 34px;
-  z-index: 12;
-}
-
-.visitorChatLauncher {
-  appearance: none;
-  border: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 48px;
-  padding: 0 18px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #1f4e79, #163d61);
-  color: #ffffff;
-  font: inherit;
-  font-size: 0.92rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 18px 32px rgba(31, 78, 121, 0.28);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.visitorChatLauncher:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 22px 38px rgba(31, 78, 121, 0.34);
-}
-
-.visitorChatPanel {
-  width: min(360px, calc(100% - 56px));
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 24px;
-  border: 1px solid rgba(31, 78, 121, 0.16);
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
-}
-
-.visitorChatHeader {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.visitorChatHeader h3,
-.visitorChatEyebrow,
-.visitorChatSuccess,
-.visitorChatError {
-  margin: 0;
-}
-
-.visitorChatHeader h3 {
-  color: #0f172a;
-  font-size: 1.02rem;
-}
-
-.visitorChatEyebrow {
-  color: #1f4e79;
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.visitorChatCloseButton {
-  appearance: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  border: 1px solid rgba(31, 78, 121, 0.14);
-  background: #f8fbff;
-  color: #153e64;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.visitorChatForm {
-  display: grid;
-  gap: 10px;
-}
-
-.visitorChatForm label {
-  display: grid;
-  gap: 6px;
-  color: #153e64;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.visitorChatForm input,
-.visitorChatForm textarea {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  border-radius: 14px;
-  border: 1px solid #cbd5e1;
-  background: #f8fbff;
-  color: #0f172a;
-  font: inherit;
-  font-size: 0.88rem;
-  padding: 0.72rem 0.84rem;
-}
-
-.visitorChatForm textarea {
-  min-height: 104px;
-  resize: vertical;
-}
-
-.visitorChatSuccess,
-.visitorChatError {
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1.45;
-}
-
-.visitorChatSuccess {
-  color: #166534;
-}
-
-.visitorChatError {
-  color: #991b1b;
-}
-
-.visitorChatSendButton {
-  appearance: none;
-  border: 0;
-  min-height: 42px;
-  border-radius: 14px;
-  background: #1f4e79;
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.visitorChatSendButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
-}
-
 @media (max-width: 920px) {
   .panoramaFeatureGrid,
   .experienceFooter {
@@ -999,29 +781,10 @@
   .galleryColumn {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .visitorChatLauncher,
-  .visitorChatPanel {
-    right: 18px;
-    bottom: 18px;
-  }
-
-  .visitorChatLauncher span {
-    display: none;
-  }
-
-  .visitorChatLauncher {
-    width: 52px;
-    height: 52px;
-    min-height: 52px;
-    padding: 0;
-    justify-content: center;
-  }
 }
 
 @media (max-width: 520px) {
-  .previewBrowser,
-  .previewBrowserCompact {
+  .previewBrowser {
     border-radius: 22px;
   }
 
