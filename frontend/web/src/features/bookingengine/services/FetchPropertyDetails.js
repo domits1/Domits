@@ -27,6 +27,7 @@ const FetchPropertyDetails = async (propertyId, checkInDate, checkOutDate) => {
       differenceInDays: differenceInDays,
       hostId: accommodationData.property.hostId,
       testStatus: accommodationData.propertyTestStatus.isTest,
+      rules: accommodationData.rules || [],
     };
   } catch (error) {
     console.error("Unable to fetch property data.", error);

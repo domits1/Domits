@@ -17,7 +17,7 @@ import IosShareIcon from "@mui/icons-material/IosShare";
 import ShareModal from "./components/ShareModal";
 import publicKeys from "../../utils/const/publicKeys.json";
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
-import { parseCancellationPolicy } from "../../utils/policyDisplayUtils.js";
+import CancellationPolicySection from "./CancellationPolicySection";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 
@@ -56,6 +56,8 @@ const BookingOverview = () => {
         }
 
         const retrievedPricingObject = await FetchPropertyDetails(propertyId, checkInDate, checkOutDate);
+        console.log("🔍 DEBUG - Full pricing object:", retrievedPricingObject);
+        console.log("🔍 DEBUG - Rules array:", retrievedPricingObject?.rules);
         setPricingObject(retrievedPricingObject);
         const retrievedBookingDetails = {
           accommodation: retrievedPricingObject,
@@ -63,7 +65,6 @@ const BookingOverview = () => {
           checkOutDate,
           guests,
           testStatus: Boolean(retrievedPricingObject?.testStatus),
-          cancellationPolicy: parseCancellationPolicy(retrievedPricingObject?.rules || []),
         };
 
         setBookingDetails(retrievedBookingDetails);
@@ -214,6 +215,8 @@ const BookingOverview = () => {
               <span className="detail-value">{bookingDetails.guests} guests</span>
             </div>
           </div>
+
+          <CancellationPolicySection rules={pricingObject?.rules} />
 
           {showAuthenticationPrompt ? (
             <div>

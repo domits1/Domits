@@ -1,0 +1,94 @@
+.container {
+  margin: 20px 0;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.flexible {
+  background: #d4edda;
+  color: #155724;
+}
+
+.moderate {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.strict {
+  background: #ffe5cc;
+  color: #cc5500;
+}
+
+.firm {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.summary {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.rulesList {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #555;
+
+  li {
+    margin-bottom: 8px;
+  }
+}
+
+.important {
+  margin: 12px 0 0 0;
+  padding: 12px;
+  background: #e7f3ff;
+  border-left: 3px solid #2196f3;
+  font-size: 13px;
+  color: #0d47a1;
+  border-radius: 4px;
+}
+
+.toggleButton {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  text-decoration: underline;
+
+  &:hover {
+    color: #0056b3;
+  }
+}
