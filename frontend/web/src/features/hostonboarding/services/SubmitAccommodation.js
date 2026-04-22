@@ -123,21 +123,31 @@ export async function submitAccommodation(navigate, builder, options = {}) {
     }
   };
 
-  if (payload.propertyCheckIn) {
-    payload.propertyCheckIn = {
-      ...payload.propertyCheckIn,
-      checkIn: {
-        from: toTimeString(payload.propertyCheckIn.checkIn.from),
-        till: toTimeString(payload.propertyCheckIn.checkIn.till),
-      },
-      checkOut: {
-        from: toTimeString(payload.propertyCheckIn.checkOut.from),
-        till: toTimeString(payload.propertyCheckIn.checkOut.till),
-      },
-    };
-  }
+  const rawCheckIn = payload.propertyCheckIn?.checkIn;
+  const rawCheckOut = payload.propertyCheckIn?.checkOut;
+  payload.propertyCheckIn = {
+    checkIn: {
+      from: toTimeString(typeof rawCheckIn?.from === "number" ? rawCheckIn.from : 9),
+      till: toTimeString(typeof rawCheckIn?.till === "number" ? rawCheckIn.till : 18),
+    },
+    checkOut: {
+      from: toTimeString(typeof rawCheckOut?.from === "number" ? rawCheckOut.from : 7),
+      till: toTimeString(typeof rawCheckOut?.till === "number" ? rawCheckOut.till : 8),
+    },
+  };
   if (!Array.isArray(payload.propertyAvailability)) {
     payload.propertyAvailability = [];
+  }
+  if (payload.propertyAvailability.length > 0) {
+    const tomorrowUTC = (() => {
+      const d = new Date();
+      return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
+    })();
+    payload.propertyAvailability = payload.propertyAvailability.map((av) => ({
+      ...av,
+      availableStartDate:
+        av.availableStartDate <= Date.now() ? tomorrowUTC : av.availableStartDate,
+    }));
   }
   payload.propertyTestStatus = {
     ...(payload.propertyTestStatus || {}),
