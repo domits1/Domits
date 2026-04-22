@@ -297,19 +297,29 @@
 }
 
 .homePage-container .domits-homepage .domits-accommodationGroup {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
+  align-items: start;
+  gap: clamp(16px, 2vw, 24px);
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding-inline: clamp(14px, 3vw, 32px);
+}
+
+.homePage-container .domits-homepage .domits-accommodationGroup .accocard-wrapper {
+  width: 100%;
+  max-width: 450px;
+  justify-self: center;
 }
 
 @media (max-width: 768px) {
   .homePage-container .domits-homepage .domits-accommodationGroup {
-    padding-left: 0;
-    flex-direction: column;
-    margin-left: 15px;
-    margin-right: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    padding-inline: clamp(12px, 4vw, 18px);
   }
 }
 
@@ -1025,9 +1035,8 @@
   }
 
   .homePage-container .domits-homepage .domits-accommodationGroup {
-    flex-direction: column;
     margin: 0;
-    padding: 0 14px;
+    padding-inline: 14px;
   }
 
   .homePage-container .domits-homepage .become-host-section {
