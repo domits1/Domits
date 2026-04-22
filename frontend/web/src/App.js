@@ -1,5 +1,5 @@
 import "./styles/sass/app.scss";
-import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
+import { ApolloClient, ApolloProvider, HttpLink, InMemoryCache } from "@apollo/client";
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
@@ -79,6 +79,15 @@ import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const apolloClient = new ApolloClient({
+  link: new HttpLink({
+    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
+    headers: {
+      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",
+    },
+  }),
+  cache: new InMemoryCache(),
+});
 Modal.setAppElement("#root");
 
 function RedirectHostOnboardingCatchAll() {
@@ -90,15 +99,6 @@ function RedirectHostOnboardingCatchAll() {
 function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Apollo Client
-  const client = new ApolloClient({
-    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
-    cache: new InMemoryCache(),
-    headers: {
-      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
-    },
-  });
 
   useEffect(() => {
     document.title = "Domits";
@@ -130,7 +130,7 @@ function App() {
   const [flowState, setFlowState] = useState({ isHost: false });
 
   return (
-    <ApolloProvider client={client}>
+    <ApolloProvider client={apolloClient}>
       {" "}
       {/* ApolloProvider */}
       <ToastContainer
