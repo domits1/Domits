@@ -1,45 +1,7 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
+import { CANCELLATION_POLICIES } from "../../utils/policyDisplayUtils";
 import styles from "./CancellationPolicySection.module.scss";
-
-const CANCELLATION_POLICIES = [
-  {
-    id: "flexible",
-    name: "Flexible",
-    summary: "Full refund until 1 day before check-in",
-    rules: ["At least 1 day before check-in, guests receive 100% refund", "Less than 1 day before check-in, no refund"],
-    important:
-      "Your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
-  },
-  {
-    id: "moderate",
-    name: "Moderate",
-    summary: "Full refund until 5 days before check-in",
-    rules: [
-      "At least 5 days before check-in, guests receive 100% refund",
-      "Less than 5 days before check-in, guests receive a 50% refund",
-    ],
-  },
-  {
-    id: "strict",
-    name: "Limited",
-    summary: "Full refund until 14 days before check-in",
-    rules: [
-      "At least 14 days before check-in, guests receive 100% refund",
-      "Between 7 and 14 days before check-in, guests receive 50% refund",
-      "Less than 7 days before check-in, no refund",
-    ],
-  },
-  {
-    id: "firm",
-    name: "Firm",
-    summary: "Full refund until 30 days before check-in",
-    rules: [
-      "At least 30 days before check-in, guests receive 100% refund",
-      "Between 7-30 days before check-in, guests receive 50% refund",
-      "Less than 7 days before check-in, no refund",
-    ],
-  },
-];
 
 const CancellationPolicySection = ({ rules }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -69,8 +31,8 @@ const CancellationPolicySection = ({ rules }) => {
       {isExpanded && (
         <div className={styles.details}>
           <ul className={styles.rulesList}>
-            {policy.rules.map((rule, index) => (
-              <li key={index}>{rule}</li>
+            {policy.rules.map((rule) => (
+              <li key={rule}>{rule}</li>
             ))}
           </ul>
           {policy.important && <p className={styles.important}>{policy.important}</p>}
@@ -81,6 +43,18 @@ const CancellationPolicySection = ({ rules }) => {
       </button>
     </div>
   );
+};
+
+CancellationPolicySection.propTypes = {
+  rules: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        rule: PropTypes.string,
+        value: PropTypes.bool,
+      }),
+    ])
+  ),
 };
 
 export default CancellationPolicySection;
