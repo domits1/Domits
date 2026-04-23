@@ -1,7 +1,54 @@
 import Database from "database";
-import { listSourcesByProperty } from "../../../.shared/icalSourceRepositoryHelpers.js";
 
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const SELECT_COLUMNS_WITH_PROVIDER = `
+  property_id AS "propertyId",
+  source_id AS "sourceId",
+  calendar_name AS "calendarName",
+  calendar_url AS "calendarUrl",
+  provider AS "provider",
+  blocked_dates AS "blockedDates",
+  last_sync_at AS "lastSyncAt",
+  updated_at AS "updatedAt",
+  etag AS "etag",
+  last_modified AS "lastModified"
+`;
+
+const SELECT_COLUMNS_NO_PROVIDER = `
+  property_id AS "propertyId",
+  source_id AS "sourceId",
+  calendar_name AS "calendarName",
+  calendar_url AS "calendarUrl",
+  blocked_dates AS "blockedDates",
+  last_sync_at AS "lastSyncAt",
+  updated_at AS "updatedAt",
+  etag AS "etag",
+  last_modified AS "lastModified"
+`;
+
+const normalizeOrder = (order) => (String(order || "").toUpperCase() === "ASC" ? "ASC" : "DESC");
+const quoteIdentifier = (identifier) => `"${String(identifier).replaceAll('"', '""')}"`;
+const isValidSchemaName = (value) =>
+  typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
+
+const getSchemaName = (client) => {
+  if (process.env.TEST === "true") {
+    return "test";
+  }
+
+  const schema = client?.options?.schema;
+  if (isValidSchemaName(schema)) {
+    const normalized = schema.trim().toLowerCase();
+    return normalized === "public" ? "main" : normalized;
+  }
+
+  return "main";
+};
+
+const getIcalSourceTableName = (client) => {
+  const schemaName = getSchemaName(client);
+  return `${quoteIdentifier(schemaName)}.${quoteIdentifier("property_ical_source")}`;
+};
 
 const safeParseJson = (value) => {
   if (value == null) {
@@ -37,6 +84,56 @@ const normalizeTimestamp = (value) => {
   const parsedDate = new Date(String(value));
   const parsedTimestamp = parsedDate.getTime();
   return Number.isFinite(parsedTimestamp) ? parsedTimestamp : null;
+};
+
+const hasProviderColumn = async (client) => {
+  try {
+    const schemaName = getSchemaName(client);
+    const rows = await client.query(
+      `
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_name = $1
+        AND column_name = $2
+        AND table_schema = $3
+      LIMIT 1
+      `,
+      ["property_ical_source", "provider", schemaName]
+    );
+    return Array.isArray(rows) && rows.length > 0;
+  } catch {
+    return false;
+  }
+};
+
+const listSourcesByProperty = async (
+  client,
+  propertyId,
+  { order = "DESC", tolerateMissingTable = false } = {}
+) => {
+  const providerColumnExists = await hasProviderColumn(client);
+  const selectColumns = providerColumnExists ? SELECT_COLUMNS_WITH_PROVIDER : SELECT_COLUMNS_NO_PROVIDER;
+  const sortOrder = normalizeOrder(order);
+  const sourceTable = getIcalSourceTableName(client);
+
+  try {
+    const rows = await client.query(
+      `
+      SELECT
+        ${selectColumns}
+      FROM ${sourceTable}
+      WHERE property_id = $1
+      ORDER BY updated_at ${sortOrder}
+      `,
+      [propertyId]
+    );
+    return Array.isArray(rows) ? rows : [];
+  } catch (error) {
+    if (tolerateMissingTable && error?.code === "42P01") {
+      return [];
+    }
+    throw error;
+  }
 };
 
 const buildBlockedDateKeys = (rows) => {
