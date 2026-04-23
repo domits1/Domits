@@ -24,6 +24,7 @@ const normalizeTask = (task) => ({
     dueDate: toDateString(task.due_date),
     completedAt: toDateString(task.completed_date),
     isLegacy: task.is_legacy,
+    attachments: (() => { try { return task.attachments ? JSON.parse(task.attachments) : []; } catch { return []; } })(),
 });
 
 const toBackendPayload = (taskData) => {
@@ -40,6 +41,9 @@ const toBackendPayload = (taskData) => {
     if (taskData.dueDate !== undefined) payload.due_date = toUnixTimestamp(taskData.dueDate);
     if (taskData.assignee !== undefined || taskData.assignee_name !== undefined) {
         payload.assignee_name = taskData.assignee || taskData.assignee_name || null;
+    }
+    if (taskData.attachments !== undefined) {
+        payload.attachments = taskData.attachments;
     }
     return payload;
 };
@@ -92,6 +96,45 @@ export const updateTask = async (taskId, updateData) => {
     }
 
     return await response.json();
+};
+
+export const uploadTaskAttachment = async (file) => {
+    const params = new URLSearchParams({
+        action: 'upload-url',
+        fileName: file.name,
+        fileType: file.type,
+    });
+
+    const response = await fetch(`${TASKS_API_URL}?${params}`, {
+        method: "GET",
+        headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get upload URL: ${response.status}`);
+    }
+
+    const { uploadUrl, key } = await response.json();
+
+    await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+    });
+
+    return key;
+};
+
+export const getAttachmentViewUrl = async (key) => {
+    const params = new URLSearchParams({ action: 'view-url', key });
+    const response = await fetch(`${TASKS_API_URL}?${params}`, {
+        method: "GET",
+        headers: getHeaders(),
+    });
+
+    if (!response.ok) throw new Error(`Failed to get view URL: ${response.status}`);
+    const { viewUrl } = await response.json();
+    return viewUrl;
 };
 
 export const deleteTask = async (taskId) => {
