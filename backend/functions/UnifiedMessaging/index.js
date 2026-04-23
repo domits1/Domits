@@ -93,6 +93,14 @@ const routeDefinitions = [
     handle: (event) => integrationController.listChannexSyncEvidence(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/receive"),
+    handle: (event) => integrationController.receiveChannexBookingRevisions(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/ack"),
+    handle: (event) => integrationController.acknowledgeChannexBookingRevisions(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/availability"),
     handle: (event) => integrationController.syncChannexAvailability(event),
   },
@@ -103,6 +111,10 @@ const routeDefinitions = [
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/ari"),
     handle: (event) => integrationController.syncChannexAri(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/full"),
+    handle: (event) => integrationController.syncChannexFull(event),
   },
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/rate-plans"),

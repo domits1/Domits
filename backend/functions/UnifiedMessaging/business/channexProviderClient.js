@@ -4,6 +4,37 @@ const requireStr = (value) => (typeof value === "string" && value.trim() ? value
 const normalizeWarnings = (parsed) => (Array.isArray(parsed?.meta?.warnings) ? parsed.meta.warnings : []);
 const normalizeTaskIds = (parsed) =>
   Array.isArray(parsed?.data) ? parsed.data.map((item) => requireStr(item?.id)).filter(Boolean) : [];
+const normalizeChannexBookingRevision = (row) => {
+  const revisionId = requireStr(row?.id);
+  const attributes = row?.attributes && typeof row.attributes === "object" ? row.attributes : {};
+  const customer = attributes?.customer && typeof attributes.customer === "object" ? attributes.customer : {};
+  const rooms = Array.isArray(attributes?.rooms) ? attributes.rooms : [];
+  const firstRoom = rooms.length ? rooms[0] : null;
+
+  return {
+    revisionId,
+    bookingId: requireStr(attributes?.booking_id),
+    propertyId: requireStr(attributes?.property_id),
+    uniqueId: requireStr(attributes?.unique_id),
+    systemId: requireStr(attributes?.system_id),
+    otaReservationCode: requireStr(attributes?.ota_reservation_code),
+    otaName: requireStr(attributes?.ota_name),
+    status: requireStr(attributes?.status),
+    arrivalDate: requireStr(attributes?.arrival_date),
+    departureDate: requireStr(attributes?.departure_date),
+    arrivalHour: requireStr(attributes?.arrival_hour),
+    amount: attributes?.amount ?? null,
+    currency: requireStr(attributes?.currency),
+    insertedAt: requireStr(attributes?.inserted_at),
+    guestName:
+      requireStr(customer?.name) ||
+      [requireStr(customer?.first_name), requireStr(customer?.last_name)].filter(Boolean).join(" ") ||
+      null,
+    ratePlanId: requireStr(firstRoom?.rate_plan_id),
+    roomTypeId: requireStr(firstRoom?.room_type_id),
+    rawPayload: row,
+  };
+};
 
 const parseJsonSafely = (value) => {
   try {
@@ -619,5 +650,234 @@ export default class ChannexProviderClient {
       success: results.every((result) => result.success),
       results,
     };
+  }
+
+  async listBookingRevisionFeed(credentials, { externalPropertyId } = {}) {
+    const apiKey = requireStr(credentials?.apiKey);
+    const propertyId = requireStr(externalPropertyId);
+
+    if (!apiKey) {
+      return {
+        success: false,
+        revisions: [],
+        providerStatus: "INVALID_CREDENTIALS",
+        errorCode: "MISSING_API_KEY",
+        errorMessage: "Channex credentials must include apiKey.",
+      };
+    }
+
+    if (!propertyId) {
+      return {
+        success: false,
+        revisions: [],
+        providerStatus: "INVALID_REQUEST",
+        errorCode: "MISSING_PROPERTY_ID",
+        errorMessage: "Channex booking revision feed requires externalPropertyId.",
+      };
+    }
+
+    try {
+      const url = new URL("/api/v1/booking_revisions/feed", CHANNEX_BASE_URL);
+      url.searchParams.set("filter[property_id]", propertyId);
+      url.searchParams.set("order[inserted_at]", "asc");
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-api-key": apiKey,
+        },
+      });
+
+      const rawText = await response.text();
+      const parsed = parseJsonSafely(rawText);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          revisions: [],
+          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_FEED_FAILED",
+          errorCode:
+            parsed?.errors?.code ||
+            parsed?.error?.code ||
+            `CHANNEX_BOOKING_FEED_${response.status}`,
+          errorMessage:
+            parsed?.errors?.title ||
+            parsed?.error?.message ||
+            `Channex booking revision feed failed with status ${response.status}.`,
+        };
+      }
+
+      const rows = Array.isArray(parsed?.data) ? parsed.data : [];
+      return {
+        success: true,
+        revisions: rows.map((row) => normalizeChannexBookingRevision(row)).filter((row) => row.revisionId),
+        providerStatus: "ACTIVE",
+        errorCode: null,
+        errorMessage: null,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        revisions: [],
+        providerStatus: "BOOKING_FEED_FAILED",
+        errorCode: error?.code || error?.name || "CHANNEX_BOOKING_FEED_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex booking revision feed request failed.",
+      };
+    }
+  }
+
+  async getBookingRevision(credentials, revisionId) {
+    const apiKey = requireStr(credentials?.apiKey);
+    const normalizedRevisionId = requireStr(revisionId);
+
+    if (!apiKey) {
+      return {
+        success: false,
+        revision: null,
+        providerStatus: "INVALID_CREDENTIALS",
+        errorCode: "MISSING_API_KEY",
+        errorMessage: "Channex credentials must include apiKey.",
+      };
+    }
+
+    if (!normalizedRevisionId) {
+      return {
+        success: false,
+        revision: null,
+        providerStatus: "INVALID_REQUEST",
+        errorCode: "MISSING_BOOKING_REVISION_ID",
+        errorMessage: "Channex booking revision fetch requires revisionId.",
+      };
+    }
+
+    try {
+      const url = new URL(`/api/v1/booking_revisions/${normalizedRevisionId}`, CHANNEX_BASE_URL);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-api-key": apiKey,
+        },
+      });
+
+      const rawText = await response.text();
+      const parsed = parseJsonSafely(rawText);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          revision: null,
+          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_REVISION_GET_FAILED",
+          errorCode:
+            parsed?.errors?.code ||
+            parsed?.error?.code ||
+            `CHANNEX_BOOKING_REVISION_${response.status}`,
+          errorMessage:
+            parsed?.errors?.title ||
+            parsed?.error?.message ||
+            `Channex booking revision fetch failed with status ${response.status}.`,
+        };
+      }
+
+      const row = parsed?.data && typeof parsed.data === "object" ? parsed.data : null;
+      const revision = row ? normalizeChannexBookingRevision(row) : null;
+      if (!revision?.revisionId) {
+        return {
+          success: false,
+          revision: null,
+          providerStatus: "INVALID_RESPONSE",
+          errorCode: "CHANNEX_BOOKING_REVISION_INVALID_RESPONSE",
+          errorMessage: "Channex booking revision response was missing a usable booking revision object.",
+        };
+      }
+
+      return {
+        success: true,
+        revision,
+        providerStatus: "ACTIVE",
+        errorCode: null,
+        errorMessage: null,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        revision: null,
+        providerStatus: "BOOKING_REVISION_GET_FAILED",
+        errorCode: error?.code || error?.name || "CHANNEX_BOOKING_REVISION_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex booking revision request failed.",
+      };
+    }
+  }
+
+  async acknowledgeBookingRevision(credentials, revisionId) {
+    const apiKey = requireStr(credentials?.apiKey);
+    const normalizedRevisionId = requireStr(revisionId);
+
+    if (!apiKey) {
+      return {
+        success: false,
+        revisionId: normalizedRevisionId,
+        providerStatus: "INVALID_CREDENTIALS",
+        errorCode: "MISSING_API_KEY",
+        errorMessage: "Channex credentials must include apiKey.",
+      };
+    }
+
+    if (!normalizedRevisionId) {
+      return {
+        success: false,
+        revisionId: null,
+        providerStatus: "INVALID_REQUEST",
+        errorCode: "MISSING_BOOKING_REVISION_ID",
+        errorMessage: "Channex booking revision acknowledge requires revisionId.",
+      };
+    }
+
+    try {
+      const url = new URL(`/api/v1/booking_revisions/${normalizedRevisionId}/ack`, CHANNEX_BASE_URL);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-api-key": apiKey,
+        },
+      });
+
+      const rawText = await response.text();
+      const parsed = parseJsonSafely(rawText);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          revisionId: normalizedRevisionId,
+          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_REVISION_ACK_FAILED",
+          errorCode:
+            parsed?.errors?.code ||
+            parsed?.error?.code ||
+            `CHANNEX_BOOKING_ACK_${response.status}`,
+          errorMessage:
+            parsed?.errors?.title ||
+            parsed?.error?.message ||
+            `Channex booking revision acknowledge failed with status ${response.status}.`,
+        };
+      }
+
+      return {
+        success: true,
+        revisionId: normalizedRevisionId,
+        providerStatus: "ACKNOWLEDGED",
+        errorCode: null,
+        errorMessage: null,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        revisionId: normalizedRevisionId,
+        providerStatus: "BOOKING_REVISION_ACK_FAILED",
+        errorCode: error?.code || error?.name || "CHANNEX_BOOKING_ACK_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex booking revision acknowledge request failed.",
+      };
+    }
   }
 }

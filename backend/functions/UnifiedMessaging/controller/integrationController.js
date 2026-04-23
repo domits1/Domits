@@ -171,6 +171,19 @@ class IntegrationController {
     return await this.integrationService.getLatestChannexSyncEvidenceSummary(userId, domitsPropertyId);
   }
 
+  async receiveChannexBookingRevisions(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    return await this.integrationService.receiveChannexBookingRevisions(userId, domitsPropertyId);
+  }
+
+  async acknowledgeChannexBookingRevisions(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.acknowledgeChannexBookingRevisions(userId, domitsPropertyId, body);
+  }
+
   async syncChannexAvailability(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
@@ -193,6 +206,14 @@ class IntegrationController {
     const dateFrom = event.queryStringParameters?.dateFrom || null;
     const dateTo = event.queryStringParameters?.dateTo || null;
     return await this.integrationService.syncChannexAri(userId, domitsPropertyId, dateFrom, dateTo);
+  }
+
+  async syncChannexFull(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const dateFrom = event.queryStringParameters?.dateFrom || null;
+    const dateTo = event.queryStringParameters?.dateTo || null;
+    return await this.integrationService.syncChannexFull(userId, domitsPropertyId, dateFrom, dateTo);
   }
 
   async linkChannexProperty(event) {

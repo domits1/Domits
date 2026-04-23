@@ -6,6 +6,7 @@ import { ChannelIntegrationProperty } from "../../../models/unified/integrations
 import { ChannelIntegrationRatePlan } from "../../../models/unified/integrations/ChannelIntegrationRatePlan.js";
 import { ChannelIntegrationRoomType } from "../../../models/unified/integrations/ChannelIntegrationRoomType.js";
 import { ChannelReservationLink } from "../../../models/unified/integrations/ChannelReservationLink.js";
+import { ChannexBookingRevision } from "../../../models/unified/integrations/ChannexBookingRevision.js";
 
 import { IntegrationSyncState } from "../../../models/unified/sync/IntegrationSyncState.js";
 import { IntegrationSyncLog } from "../../../models/unified/sync/IntegrationSyncLog.js";
@@ -21,6 +22,7 @@ export const Tables = [
   ChannelIntegrationRatePlan,
   ChannelIntegrationRoomType,
   ChannelReservationLink,
+  ChannexBookingRevision,
 
   IntegrationSyncState,
   IntegrationSyncLog,
