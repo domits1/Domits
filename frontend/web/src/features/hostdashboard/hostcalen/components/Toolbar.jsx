@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import PulseBarsLoader from "./PulseBarsLoader";
+import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../../../images/arrow-up-icon.svg";
 

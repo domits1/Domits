@@ -38,7 +38,23 @@ class ReservationController {
     // -----------
     async patch(event) {
         try {
-            const body = JSON.parse(event.body);
+            if (event?.body === undefined || event?.body === null) {
+                throw new Error("Missing request body.");
+            }
+            const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+            const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
+
+            if (body?.action === "accept-inquiry" || body?.action === "decline-inquiry") {
+                if (!body?.bookingId) throw new Error("Missing bookingId.");
+                const result = body.action === "accept-inquiry"
+                    ? await this.bookingService.acceptInquiry(body.bookingId, authToken)
+                    : await this.bookingService.declineInquiry(body.bookingId, authToken);
+                return { statusCode: 200, headers: responseHeaderJSON, response: result };
+            }
+
+            if (!body?.paymentid) {
+                throw new Error("Missing paymentid.");
+            }
             let confirmed;
             if (body?.failedpayment){
                 confirmed = await this.bookingService.failPayment(body.paymentid);

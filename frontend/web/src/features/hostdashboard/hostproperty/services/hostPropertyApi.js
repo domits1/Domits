@@ -7,6 +7,7 @@ import {
 } from "../constants";
 import {
   buildAvailabilityRestrictionValueMap,
+  buildPolicyAvailabilityRestrictionsPayload,
   buildFinalPersistedPhotoOrder,
   buildNoPhotoChangesResult,
   buildPricingRestrictionsPayload,
@@ -15,12 +16,51 @@ import {
   getPhotoSaveSuccessMessage,
   getSaveSuccessMessage,
   mapPropertyImagesToState,
+  normalizeCheckInDetails,
   normalizePhotoSaveInput,
+  normalizePolicyAvailabilitySettings,
   normalizeCapacityValue,
   normalizePricingForm,
 } from "../utils/hostPropertyUtils";
 
 const CONFIRM_BATCH_SIZE = 8;
+const VERIFICATION_ATTEMPTS = 3;
+const VERIFICATION_RETRY_DELAY_MS = 400;
+const POLICY_RESTRICTION_FALLBACKS = Object.freeze({
+  MinimumAdvanceReservation: ["MinimumAdvanceNoticeDays", "MinimumAdvanceBookingDays"],
+  PreparationTimeDays: ["PreparationDays", "TurnoverDays"],
+});
+const CHECK_IN_RULE_NAMES = Object.freeze({
+  checkIn: Object.freeze({
+    from: "CheckInFrom",
+    till: "CheckInTill",
+  }),
+  checkOut: Object.freeze({
+    from: "CheckOutFrom",
+    till: "CheckOutTill",
+  }),
+});
+
+const sleep = (delayMs) => new Promise((resolve) => setTimeout(resolve, delayMs));
+
+const normalizeBooleanLike = (value) => {
+  if (typeof value === "string") {
+    const normalizedValue = value.trim().toLowerCase();
+    if (normalizedValue === "true") return true;
+    if (normalizedValue === "false") return false;
+  }
+  return Boolean(value);
+};
+
+const getRestrictionValueWithFallbacks = (restrictionValueMap, restrictionName) => {
+  if (restrictionValueMap.has(restrictionName)) {
+    return restrictionValueMap.get(restrictionName);
+  }
+
+  const fallbackKeys = POLICY_RESTRICTION_FALLBACKS[restrictionName] || [];
+  const matchedFallbackKey = fallbackKeys.find((fallbackKey) => restrictionValueMap.has(fallbackKey));
+  return matchedFallbackKey ? restrictionValueMap.get(matchedFallbackKey) : undefined;
+};
 
 export const fetchPropertyAndListings = async (propertyId) => {
   const [response, hostPropertiesResponse] = await Promise.all([
@@ -62,6 +102,89 @@ const fetchPropertySnapshot = async (propertyId) => {
   return response.json();
 };
 
+const buildRulesValueMap = (rules) =>
+  new Map(
+    (Array.isArray(rules) ? rules : [])
+      .map((rule) => [String(rule?.rule || ""), rule?.value])
+      .filter(([ruleName]) => Boolean(ruleName))
+  );
+
+const hasCheckInWindowValues = (checkInDetails) =>
+  Boolean(
+    checkInDetails?.checkIn?.from ||
+    checkInDetails?.checkIn?.till ||
+    checkInDetails?.checkOut?.from ||
+    checkInDetails?.checkOut?.till
+  );
+
+const extractPersistedCheckInDetails = (verificationData) => {
+  const normalizedSnapshotCheckIn = normalizeCheckInDetails(verificationData?.checkIn);
+  if (hasCheckInWindowValues(verificationData?.checkIn)) {
+    return normalizedSnapshotCheckIn;
+  }
+
+  const rulesValueMap = buildRulesValueMap(verificationData?.rules);
+  return normalizeCheckInDetails({
+    checkIn: {
+      from: rulesValueMap.get(CHECK_IN_RULE_NAMES.checkIn.from),
+      till: rulesValueMap.get(CHECK_IN_RULE_NAMES.checkIn.till),
+    },
+    checkOut: {
+      from: rulesValueMap.get(CHECK_IN_RULE_NAMES.checkOut.from),
+      till: rulesValueMap.get(CHECK_IN_RULE_NAMES.checkOut.till),
+    },
+  });
+};
+
+const hasSamePolicyRules = (verificationData, rulesPayload) => {
+  const persistedRulesMap = buildRulesValueMap(verificationData?.rules);
+  return (rulesPayload || []).every(
+    (rule) => normalizeBooleanLike(persistedRulesMap.get(rule.rule)) === Boolean(rule.value)
+  );
+};
+
+const hasSameCheckInDetails = (verificationData, checkInPayload) => {
+  const persistedCheckIn = extractPersistedCheckInDetails(verificationData);
+  const expectedCheckIn = normalizeCheckInDetails(checkInPayload);
+  return (
+    persistedCheckIn.checkIn.from === expectedCheckIn.checkIn.from &&
+    persistedCheckIn.checkIn.till === expectedCheckIn.checkIn.till &&
+    persistedCheckIn.checkOut.from === expectedCheckIn.checkOut.from &&
+    persistedCheckIn.checkOut.till === expectedCheckIn.checkOut.till
+  );
+};
+
+const hasSameAvailabilityRestrictions = (verificationData, availabilityRestrictionsPayload) => {
+  const persistedRestrictionValueMap = buildAvailabilityRestrictionValueMap(verificationData?.availabilityRestrictions);
+  return (availabilityRestrictionsPayload || []).every((restriction) => {
+    const persistedValue = Number(
+      getRestrictionValueWithFallbacks(persistedRestrictionValueMap, restriction.restriction)
+    );
+    const expectedValue = Number(restriction.value);
+    if (!Number.isFinite(expectedValue)) {
+      return false;
+    }
+    return Number.isFinite(persistedValue) && Math.trunc(persistedValue) === Math.trunc(expectedValue);
+  });
+};
+
+const verifySnapshotWithRetries = async (propertyId, verifier) => {
+  let lastVerificationData = null;
+
+  for (let attempt = 0; attempt < VERIFICATION_ATTEMPTS; attempt += 1) {
+    lastVerificationData = await fetchPropertySnapshot(propertyId);
+    if (verifier(lastVerificationData)) {
+      return lastVerificationData;
+    }
+
+    if (attempt < VERIFICATION_ATTEMPTS - 1) {
+      await sleep(VERIFICATION_RETRY_DELAY_MS);
+    }
+  }
+
+  return lastVerificationData;
+};
+
 const verifyAmenities = async (propertyId, amenitiesPayload) => {
   const verificationData = await fetchPropertySnapshot(propertyId);
   const persistedAmenityIds = new Set(
@@ -79,20 +202,31 @@ const verifyAmenities = async (propertyId, amenitiesPayload) => {
   }
 };
 
-const verifyPolicies = async (propertyId, rulesPayload) => {
-  const verificationData = await fetchPropertySnapshot(propertyId);
-  const persistedRulesMap = new Map(
-    (Array.isArray(verificationData?.rules) ? verificationData.rules : [])
-      .map((rule) => [String(rule?.rule || ""), Boolean(rule?.value)])
-      .filter(([ruleName]) => Boolean(ruleName))
+const verifyPolicies = async (propertyId, rulesPayload, checkInPayload, availabilityRestrictionsPayload) => {
+  const verificationData = await verifySnapshotWithRetries(
+    propertyId,
+    (snapshot) =>
+      hasSamePolicyRules(snapshot, rulesPayload) &&
+      hasSameCheckInDetails(snapshot, checkInPayload) &&
+      hasSameAvailabilityRestrictions(snapshot, availabilityRestrictionsPayload)
   );
 
-  const hasSamePolicies = (rulesPayload || []).every(
-    (rule) => persistedRulesMap.get(rule.rule) === Boolean(rule.value)
-  );
+  const hasSamePolicies = hasSamePolicyRules(verificationData, rulesPayload);
 
   if (!hasSamePolicies) {
     throw new Error("Policies could not be updated in the deployed backend yet.");
+  }
+
+  const hasSameCheckIn = hasSameCheckInDetails(verificationData, checkInPayload);
+
+  if (!hasSameCheckIn) {
+    throw new Error("Check-in and check-out settings could not be updated in the deployed backend yet.");
+  }
+
+  const hasSameRestrictions = hasSameAvailabilityRestrictions(verificationData, availabilityRestrictionsPayload);
+
+  if (!hasSameRestrictions) {
+    throw new Error("Policy availability settings could not be updated in the deployed backend yet.");
   }
 };
 
@@ -100,9 +234,10 @@ const verifyPricing = async (propertyId, pricingPayload, availabilityRestriction
   const verificationData = await fetchPropertySnapshot(propertyId);
   const persistedRoomRate = Number(verificationData?.pricing?.roomRate ?? verificationData?.pricing?.roomrate);
   const expectedRoomRate = Number(pricingPayload?.roomRate);
-  const hasSameRoomRate = Number.isFinite(persistedRoomRate) && Number.isFinite(expectedRoomRate)
-    ? Math.trunc(persistedRoomRate) === Math.trunc(expectedRoomRate)
-    : false;
+  const hasSameRoomRate =
+    Number.isFinite(persistedRoomRate) && Number.isFinite(expectedRoomRate)
+      ? Math.trunc(persistedRoomRate) === Math.trunc(expectedRoomRate)
+      : false;
   if (!hasSameRoomRate) {
     throw new Error("Pricing could not be updated in the deployed backend yet.");
   }
@@ -129,6 +264,8 @@ export const savePropertyChanges = async ({
   address,
   selectedAmenityIds,
   policyRules,
+  checkInDetails,
+  policyAvailabilitySettings,
   pricingForm,
 }) => {
   const normalizedTitle = form.title.trim();
@@ -143,22 +280,26 @@ export const savePropertyChanges = async ({
   }
 
   const normalizedPricingForm = normalizePricingForm(pricingForm);
+  const normalizedCheckInDetails = normalizeCheckInDetails(checkInDetails);
+  const normalizedPolicyAvailabilitySettings = normalizePolicyAvailabilitySettings(policyAvailabilitySettings);
   if (isSavingPricing && normalizedPricingForm.nightlyRate < PRICING_MIN_NIGHTLY_RATE_FOR_SAVE) {
     throw new Error(`Nightly rate must be at least EUR ${PRICING_MIN_NIGHTLY_RATE_FOR_SAVE}.`);
   }
-  const pricingPayload = isSavingPricing
-    ? { roomRate: normalizedPricingForm.nightlyRate }
-    : undefined;
-  const availabilityRestrictionsPayload = isSavingPricing
-    ? buildPricingRestrictionsPayload(normalizedPricingForm)
-    : undefined;
+  const pricingPayload = isSavingPricing ? { roomRate: normalizedPricingForm.nightlyRate } : undefined;
+  let availabilityRestrictionsPayload;
+  if (isSavingPricing) {
+    availabilityRestrictionsPayload = buildPricingRestrictionsPayload(normalizedPricingForm);
+  } else if (isSavingPolicies) {
+    availabilityRestrictionsPayload = buildPolicyAvailabilityRestrictionsPayload(normalizedPolicyAvailabilitySettings);
+  }
   const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map(String) : undefined;
   const rulesPayload = isSavingPolicies
-    ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
-        rule: ruleConfig.rule,
-        value: Boolean(policyRules[ruleConfig.rule]),
+    ? Object.keys(policyRules).map((ruleName) => ({
+        rule: ruleName,
+        value: Boolean(policyRules[ruleName]),
       }))
     : undefined;
+  const checkInPayload = isSavingPolicies ? normalizedCheckInDetails : undefined;
 
   const response = await fetch(`${PROPERTY_API_BASE}/overview`, {
     method: "PATCH",
@@ -181,6 +322,7 @@ export const savePropertyChanges = async ({
       location: getLocationPayload(address),
       amenities: amenitiesPayload,
       rules: rulesPayload,
+      checkIn: checkInPayload,
       pricing: pricingPayload,
       availabilityRestrictions: availabilityRestrictionsPayload,
     }),
@@ -196,7 +338,7 @@ export const savePropertyChanges = async ({
   }
 
   if (isSavingPolicies) {
-    await verifyPolicies(propertyId, rulesPayload);
+    await verifyPolicies(propertyId, rulesPayload, checkInPayload, availabilityRestrictionsPayload);
   }
 
   if (isSavingPricing) {
@@ -210,6 +352,8 @@ export const savePropertyChanges = async ({
       description: normalizedDescription,
     },
     normalizedPricingForm,
+    normalizedCheckInDetails,
+    normalizedPolicyAvailabilitySettings,
     successMessage: getSaveSuccessMessage(selectedTab),
   };
 };
@@ -260,12 +404,7 @@ const uploadPendingPhotosToStorage = async ({ uploads, orderedPendingPhotos }) =
   );
 };
 
-const confirmPendingPhotoUploads = async ({
-  propertyId,
-  uploads,
-  orderedPendingPhotos,
-  pendingOrderPosition,
-}) => {
+const confirmPendingPhotoUploads = async ({ propertyId, uploads, orderedPendingPhotos, pendingOrderPosition }) => {
   for (let startIndex = 0; startIndex < uploads.length; startIndex += CONFIRM_BATCH_SIZE) {
     const uploadBatch = uploads.slice(startIndex, startIndex + CONFIRM_BATCH_SIZE);
     const confirmResponse = await fetch(`${PROPERTY_API_BASE}/images/confirm`, {
@@ -294,11 +433,7 @@ const confirmPendingPhotoUploads = async ({
   }
 };
 
-const uploadPendingPropertyPhotos = async ({
-  propertyId,
-  orderedPendingPhotos,
-  pendingOrderPosition,
-}) => {
+const uploadPendingPropertyPhotos = async ({ propertyId, orderedPendingPhotos, pendingOrderPosition }) => {
   const uploads = await requestPhotoUploadSlots({ propertyId, orderedPendingPhotos });
   await uploadPendingPhotosToStorage({ uploads, orderedPendingPhotos });
   await confirmPendingPhotoUploads({
@@ -307,9 +442,7 @@ const uploadPendingPropertyPhotos = async ({
     orderedPendingPhotos,
     pendingOrderPosition,
   });
-  return new Map(
-    orderedPendingPhotos.map((photo, index) => [photo.id, String(uploads[index]?.imageId || "")])
-  );
+  return new Map(orderedPendingPhotos.map((photo, index) => [photo.id, String(uploads[index]?.imageId || "")]));
 };
 
 const persistPropertyPhotoOrder = async ({ propertyId, finalPersistedOrder }) => {
@@ -345,19 +478,14 @@ export const savePropertyPhotos = async ({
   photoOrderIds,
   hasPhotoOrderChanges,
 }) => {
-  const {
-    persistedPhotos,
-    queuedPhotos,
-    existingById,
-    normalizedOrderIds,
-    orderedPendingPhotos,
-  } = normalizePhotoSaveInput({
-    existingPhotos,
-    pendingPhotos,
-    photoOrderIds,
-  });
+  const { persistedPhotos, queuedPhotos, existingById, normalizedOrderIds, orderedPendingPhotos } =
+    normalizePhotoSaveInput({
+      existingPhotos,
+      pendingPhotos,
+      photoOrderIds,
+    });
 
-  if ((persistedPhotos.length + queuedPhotos.length) > MAX_PROPERTY_IMAGES) {
+  if (persistedPhotos.length + queuedPhotos.length > MAX_PROPERTY_IMAGES) {
     throw new Error(`A listing can have up to ${MAX_PROPERTY_IMAGES} photos.`);
   }
 
@@ -366,13 +494,14 @@ export const savePropertyPhotos = async ({
   }
 
   const pendingOrderPosition = new Map(normalizedOrderIds.map((photoId, index) => [photoId, index]));
-  const pendingIdToPersistedId = orderedPendingPhotos.length > 0
-    ? await uploadPendingPropertyPhotos({
-        propertyId,
-        orderedPendingPhotos,
-        pendingOrderPosition,
-      })
-    : new Map();
+  const pendingIdToPersistedId =
+    orderedPendingPhotos.length > 0
+      ? await uploadPendingPropertyPhotos({
+          propertyId,
+          orderedPendingPhotos,
+          pendingOrderPosition,
+        })
+      : new Map();
   const finalPersistedOrder = buildFinalPersistedPhotoOrder({
     normalizedOrderIds,
     existingById,

@@ -13,8 +13,11 @@ import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import Calender from "@mui/icons-material/CalendarTodayOutlined";
 import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
+import IosShareIcon from "@mui/icons-material/IosShare";
+import ShareModal from "./components/ShareModal";
 import publicKeys from "../../utils/const/publicKeys.json";
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
+import { parseCancellationPolicy } from "../../utils/policyDisplayUtils.js";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 
@@ -31,6 +34,7 @@ const BookingOverview = () => {
   const [pricingObject, setPricingObject] = useState(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const [stripeClientSecret, setStripeClientSecret] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const propertyId = searchParams.get("id");
@@ -59,7 +63,9 @@ const BookingOverview = () => {
           checkOutDate,
           guests,
           testStatus: Boolean(retrievedPricingObject?.testStatus),
+          cancellationPolicy: parseCancellationPolicy(retrievedPricingObject?.rules || []),
         };
+
         setBookingDetails(retrievedBookingDetails);
 
         if (!retrievedBookingDetails) {
@@ -99,11 +105,11 @@ const BookingOverview = () => {
   }
 
   const createBooking = async () => {
-      const event = {
-        identifiers: {
-          property_Id: propertyId,
-        },
-        general: {
+    const event = {
+      identifiers: {
+        property_Id: propertyId,
+      },
+      general: {
         guests: Number.parseFloat(bookingDetails.guests),
         latePayment: false,
         arrivalDate: Number.parseFloat(bookingDetails.checkInDate),
@@ -175,7 +181,18 @@ const BookingOverview = () => {
           </Link>
         </div>
         <h1>Booking Overview</h1>
+        <button className="booking-share-btn" onClick={() => setShowShareModal(true)} aria-label="Share property">
+          <IosShareIcon fontSize="small" />
+        </button>
       </div>
+
+      {showShareModal && (
+        <ShareModal
+          url={`${globalThis.location.origin}/listingdetails?ID=${propertyId}`}
+          title={pricingObject?.title}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
 
       <div className="Bookingcontainer">
         <div className="right-panel">
@@ -244,10 +261,7 @@ const BookingOverview = () => {
             <div className="booking-details-name">
               <img
                 className="bookingDetailsImage"
-                src={resolvePrimaryAccommodationImageUrl(
-                  pricingObject.images,
-                  "thumb"
-                )}
+                src={resolvePrimaryAccommodationImageUrl(pricingObject.images, "thumb")}
                 alt="Accommodation"
               />
               <div>

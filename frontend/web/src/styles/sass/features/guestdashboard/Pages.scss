@@ -46,7 +46,7 @@
   .menu-content { display: grid; gap: 12px; }
   .sidebar-title {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.5rem;
     margin: 4px 0 8px;
     align-content: center;
   }
@@ -59,7 +59,11 @@
     gap: 6px;
   }
 
-  .label { margin: 5px; }
+  .label {
+    margin: 5px;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
 
   .menu-item {
     width: 100%;                
@@ -88,6 +92,19 @@
       box-shadow: 0 2px 10px rgba(0,0,0,.06);
       color: var(--gd-brand);
     }
+
+    &.active {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+      color: #111827;
+    }
+
+    &.active .icon {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
     &:focus-visible { outline: 2px solid rgba(33,163,59,.25); outline-offset: 2px; }
   }
 

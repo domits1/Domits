@@ -1,0 +1,140 @@
+#listing-policies {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.listing-policy-section,
+.policy-section {
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 14px;
+  padding: 24px;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+.listing-policy-section:hover,
+.policy-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border-color: rgba(20, 200, 90, 0.15);
+}
+
+.listing-policy-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.listing-policy-section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.listing-policy-section-list,
+.listing-policy-section-list li,
+.policy-section ul,
+.policy-section ul li {
+  list-style: none;
+  list-style-type: none !important;
+  padding: 0;
+  margin: 0;
+}
+
+.listing-policy-section-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  color: #4d4d4d;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.listing-policy-section-list-item:last-child {
+  border-bottom: none;
+}
+
+.listing-policy-section-list-item::before,
+.policy-section ul li::before {
+  content: none !important;
+}
+
+.listing-policy-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.listing-policy-icon--positive {
+  color: #4caf50;
+}
+
+.listing-policy-icon--negative {
+  color: #f44336;
+}
+
+.listing-policy-icon--neutral {
+  color: #6b7280;
+}
+
+.listing-policy-summary {
+  margin: 0 0 12px;
+  color: #4d4d4d;
+  line-height: 1.5;
+}
+
+.listing-policy-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.listing-policy-details-button {
+  background: none;
+  border: none;
+  color: #0d9813;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  #listing-policies {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-policy-section,
+  .policy-section {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .listing-policy-section-title {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .listing-policy-section-list-item {
+    font-size: 14px;
+    padding: 6px 0;
+  }
+}

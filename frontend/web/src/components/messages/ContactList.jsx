@@ -38,6 +38,11 @@ const resolveContactName = (contact) => {
 
 const fetchUserInfo = async (targetUserId) => {
   if (targetUserId) {
+    const isLikelyPhone = /^[\d+\-\s()]+$/.test(String(targetUserId));
+    if (isLikelyPhone) {
+      return { givenName: String(targetUserId), userId: targetUserId, profileImage: null };
+    }
+
     try {
       const userResponse = await fetch("https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo", {
         method: "POST",
@@ -102,6 +107,9 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
     updated[idx] = {
       ...updated[idx],
       latestMessage: { ...incoming, text: displayText },
+      platform: incoming?.platform || updated[idx]?.platform || "DOMITS",
+      integrationAccountId: incoming?.integrationAccountId || updated[idx]?.integrationAccountId || null,
+      externalThreadId: incoming?.externalThreadId || updated[idx]?.externalThreadId || null,
     };
   } else {
     updated.unshift({
@@ -116,6 +124,11 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
       profileImage: null,
       latestMessage: { ...incoming, text: displayText },
       isFromRealtime: true,
+      platform: incoming?.platform || "DOMITS",
+      integrationAccountId: incoming?.integrationAccountId || null,
+      externalThreadId: incoming?.externalThreadId || null,
+      channelLabel: incoming?.platform === "WHATSAPP" ? "WhatsApp" : incoming?.platform || null,
+      isWhatsApp: String(incoming?.platform || "").toUpperCase() === "WHATSAPP",
     });
   }
 
@@ -223,7 +236,10 @@ const ContactList = ({
       threadId,
       contact?.propertyId || contact?.AccoId || null,
       contact?.propertyTitle || contact?.propertyName || null,
-      contact?.accoImage || null
+      contact?.accoImage || null,
+      contact?.platform || "DOMITS",
+      contact?.integrationAccountId || null,
+      contact?.externalThreadId || null
     );
   };
 
@@ -384,6 +400,9 @@ ContactList.propTypes = {
     text: PropTypes.string,
     content: PropTypes.string,
     fileUrls: PropTypes.arrayOf(PropTypes.string),
+    platform: PropTypes.string,
+    integrationAccountId: PropTypes.string,
+    externalThreadId: PropTypes.string,
   }),
   dashboardType: PropTypes.string,
   isChatOpen: PropTypes.bool,

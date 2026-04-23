@@ -61,6 +61,7 @@ const normalizeWs = (raw) => {
   const id = msg?.id || `${senderId}:${recipientId}:${createdAt}:${String(text).slice(0, 40)}:${fileUrls.length}`;
 
   const metadata = normalizeMetadata(msg?.metadata);
+  const platform = msg?.platform || metadata?.channel || "DOMITS";
 
   return {
     ...msg,
@@ -74,6 +75,7 @@ const normalizeWs = (raw) => {
     createdAt,
     fileUrls,
     metadata,
+    platform,
   };
 };
 
@@ -113,6 +115,7 @@ const resolveThreadIdForPartner = async (userId, partnerId) => {
 
 const transformApiMessage = (msg, selfUserId, threadIdFallback) => {
   const metadata = normalizeMetadata(msg?.metadata);
+  const platform = msg?.platform || metadata?.channel || "DOMITS";
 
   return {
     ...msg,
@@ -128,6 +131,7 @@ const transformApiMessage = (msg, selfUserId, threadIdFallback) => {
     createdAt: toIso(msg?.createdAt),
     fileUrls: extractFileUrlsFromAttachments(msg?.attachments),
     metadata,
+    platform,
   };
 };
 

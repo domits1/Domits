@@ -213,12 +213,69 @@
                     }
                 }
 
+                .image-button {
+                    display: block;
+                    padding: 0;
+                    border: none;
+                    background: none;
+                    width: 100%;
+                    height: 100%;
+                    cursor: pointer;
+                }
+
+                .main-image-wrapper {
+                    position: relative;
+                    display: inline-block;
+                    width: 100%;
+                    grid-row: 1 / span 2;
+
+                    .gallery-share-btn,
+                    .gallery-like-btn {
+                        position: absolute;
+                        top: 10px;
+                        background-color: rgba(255, 255, 255, 0.85);
+                        border: none;
+                        border-radius: 50%;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                        transition: background-color 0.2s ease, transform 0.2s ease;
+                        z-index: 1;
+
+                        &:hover {
+                            background-color: rgba(200, 200, 200, 0.85);
+                            transform: scale(1.1);
+                        }
+
+                        &:focus-visible {
+                            outline: 2px solid var(--primary-color);
+                            outline-offset: 2px;
+                        }
+                    }
+
+                    .gallery-share-btn {
+                        left: 10px;
+                    }
+
+                    .gallery-like-btn {
+                        left: 58px;
+                        color: #252b35;
+
+                        &.is-active {
+                            color: #ec5050;
+                        }
+                    }
+                }
+
                 .main-image {
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
                     border-radius: 12px;
-                    grid-row: 1 / span 2;
                     display: block;
                     transition: transform 0.4s ease;
 

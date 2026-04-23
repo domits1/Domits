@@ -12,13 +12,13 @@ const BOOKINGS_API_URL =
   "https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-const startOfUtcDay = (date) =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+const startOfUtcDay = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
 const dateToKey = (date) =>
-  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
-    date.getUTCDate()
-  ).padStart(2, "0")}`;
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(
+    2,
+    "0"
+  )}`;
 
 const normalizeTimestampLike = (value) => {
   if (value === null || value === undefined) {
@@ -96,6 +96,85 @@ const parseBookingResponse = async (response) => {
   return [];
 };
 
+const toPlainObject = (value) => (value && typeof value === "object" ? value : {});
+
+const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const normalizeCheckInSection = (checkIn) => {
+  const safeCheckIn = toPlainObject(checkIn);
+  return {
+    checkIn: toPlainObject(safeCheckIn.checkIn),
+    checkOut: toPlainObject(safeCheckIn.checkOut),
+  };
+};
+
+const normalizeCalendarAvailability = (calendarAvailability) => {
+  const safeCalendarAvailability = toPlainObject(calendarAvailability);
+  return {
+    ...safeCalendarAvailability,
+    externalBlockedDates: toArray(safeCalendarAvailability.externalBlockedDates),
+  };
+};
+
+const normalizeRulesArray = (value) =>
+  toArray(value).filter((rule) => rule && typeof rule === "object" && rule.rule);
+
+const normalizePolicyRulesObject = (value) => {
+  const safeValue = toPlainObject(value);
+  return Object.entries(safeValue).reduce((acc, [key, ruleValue]) => {
+    if (key) {
+      acc[key] = ruleValue;
+    }
+    return acc;
+  }, {});
+};
+
+const normalizeListingProperty = (payload) => {
+  const property = toPlainObject(payload);
+  const nestedProperty = toPlainObject(property.property);
+  const rawRulesArray = normalizeRulesArray(property.rules || nestedProperty.rules);
+  const rawPolicyRules = normalizePolicyRulesObject(property.policyRules || nestedProperty.policyRules);
+  const derivedPolicyRules =
+    rawRulesArray.length > 0
+      ? rawRulesArray.reduce((acc, rule) => {
+          acc[rule.rule] = rule.value;
+          return acc;
+        }, {})
+      : rawPolicyRules;
+  const rawCancellationPolicy = property.cancellationPolicy || nestedProperty.cancellationPolicy || "";
+  const normalizedCancellationPolicy =
+    rawCancellationPolicy && typeof rawCancellationPolicy === "object"
+      ? {
+          policy_type: rawCancellationPolicy.policy_type || rawCancellationPolicy.type || "",
+          policyType: rawCancellationPolicy.policyType || rawCancellationPolicy.policy_type || rawCancellationPolicy.type || "",
+          type: rawCancellationPolicy.type || rawCancellationPolicy.policy_type || rawCancellationPolicy.policyType || "",
+          id: rawCancellationPolicy.id || "",
+          name: rawCancellationPolicy.name || "",
+          description: rawCancellationPolicy.description || rawCancellationPolicy.summary || rawCancellationPolicy.label || "",
+        }
+      : rawCancellationPolicy;
+
+  return {
+    ...property,
+    policyRules: derivedPolicyRules,
+    cancellationPolicy: normalizedCancellationPolicy,
+    rules:
+      rawRulesArray.length > 0
+        ? rawRulesArray
+        : Object.entries(derivedPolicyRules).map(([key, value]) => ({
+            rule: key,
+            value,
+          })),
+    property: nestedProperty,
+    images: toArray(property.images),
+    pricing: toPlainObject(property.pricing),
+    generalDetails: toArray(property.generalDetails),
+    amenities: toArray(property.amenities),
+    checkIn: normalizeCheckInSection(property.checkIn),
+    calendarAvailability: normalizeCalendarAvailability(property.calendarAvailability),
+  };
+};
+
 const fetchAcceptedBookingsByPropertyId = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
@@ -137,10 +216,10 @@ const ListingDetails2 = () => {
     () =>
       Array.from(
         new Set([
-          ...((Array.isArray(property?.calendarAvailability?.externalBlockedDates)
+          ...(Array.isArray(property?.calendarAvailability?.externalBlockedDates)
             ? property.calendarAvailability.externalBlockedDates
-            : [])),
-          ...((Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : [])),
+            : []),
+          ...(Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : []),
         ])
       ),
     [acceptedBookingDateKeys, property?.calendarAvailability?.externalBlockedDates]
@@ -161,10 +240,11 @@ const ListingDetails2 = () => {
           FetchPropertyById(id),
           fetchAcceptedBookingsByPropertyId(id).catch(() => []),
         ]);
-        setProperty(fetchedProperty);
+        const normalizedProperty = normalizeListingProperty(fetchedProperty);
+        setProperty(normalizedProperty);
         setAcceptedBookingDateKeys(buildAcceptedBookingDateKeys(acceptedBookings));
 
-        const hostData = await fetchHostInfo(fetchedProperty?.property?.hostId);
+        const hostData = await fetchHostInfo(normalizedProperty?.property?.hostId);
         setHost(hostData);
 
         setLoading(false);
@@ -192,6 +272,7 @@ const ListingDetails2 = () => {
     { id: "about", label: "About", targetId: "listing-about" },
     { id: "amenities", label: "Amenities", targetId: "listing-amenities" },
     { id: "availability", label: "Availability", targetId: "listing-availability" },
+    { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];
 
   return (

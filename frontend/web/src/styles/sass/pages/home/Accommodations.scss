@@ -1,16 +1,14 @@
-.accocard {
+.accocard-wrapper {
   width: 100%;
   max-width: 450px;
   margin: 1% auto 10px;
-  background: #fff;
-  overflow: hidden;
   display: inline-block;
   vertical-align: top;
   position: relative;
   z-index: 1;
   transition:
-    transform 0.5s ease-in-out,
-    opacity 0.5s ease-in-out;
+          transform 0.5s ease-in-out,
+          opacity 0.5s ease-in-out;
 
   @media (max-width: 1292px) {
     display: block;
@@ -40,6 +38,32 @@
   }
 }
 
+.accocard {
+  width: 100%;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  border: none;
+  padding: 0;
+  text-align: left;
+  display: block;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  color: inherit;
+}
+
+.accocard:focus {
+  outline: none;
+}
+
+.accocard:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 4px;
+  border-radius: 15px;
+}
+
 .accocard-share-button,
 .accocard-like-button {
   position: absolute;
@@ -58,13 +82,25 @@
   opacity: 0;
   transform: scale(0.95);
   transition:
-    opacity 0.4s ease-in-out,
-    transform 0.4s ease-in-out;
+          opacity 0.4s ease-in-out,
+          transform 0.4s ease-in-out;
+}
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.9);
-    transform: scale(1.1);
-  }
+.accocard-share-button:hover,
+.accocard-like-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+.accocard-share-button:focus,
+.accocard-like-button:focus {
+  outline: none;
+}
+
+.accocard-share-button:focus-visible,
+.accocard-like-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .accocard-share-button {
@@ -87,6 +123,10 @@
 
 .accocard-content {
   padding: 15px 0;
+
+  .accocard-media {
+    margin: -15px 0 0;
+  }
 }
 
 .accocard-title {
@@ -138,19 +178,142 @@
   gap: 5px;
 }
 
-.wishlist-popup {
-  position: absolute;
-  top: 55px;
-  right: 12px;
-  z-index: 99;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-  padding: 12px;
-  width: 230px;
-  font-size: 14px;
-  transition: all 0.3s ease;
+.wishlist-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.wishlist-modal {
+  border: none;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin: 0;
+  }
+
+  &__close {
+    background: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #666;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+  }
+
+  &__confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__saved-text {
+    font-size: 0.95rem;
+    color: #333;
+    margin: 0;
+  }
+
+  &__edit-btn {
+    background: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: #333;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: #333;
+    cursor: pointer;
+
+    input[type="radio"] {
+      accent-color: var(--primary-color);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+  }
+
+  &__new-input {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    outline: none;
+    margin-top: 4px;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: var(--primary-color);
+    }
+  }
+
+  &__save-btn {
+    width: 100%;
+    background: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #0a7a10;
+    }
+  }
 }
 
 #container {
@@ -289,7 +452,7 @@
     gap: 14px;
   }
 
-  .accocard {
+  .accocard-wrapper {
     max-width: 100%;
     margin: 0 auto 14px;
   }
