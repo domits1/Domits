@@ -1,99 +1,50 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
-import {
-  getInteractiveTargetProps,
-  TemplateAvailabilityCalendar,
-  TemplateHeroCopy,
-  TemplateSoftCallout,
-  TemplateTopBar,
-} from "./templateSharedSections";
-import {
-  availabilityPropType,
-  callToActionPropType,
-  copyItemPropType,
-  heroPropType,
-  mediaPropType,
-  sitePropType,
-  templateInteractionPropTypes,
-  visibilityPropType,
-} from "./templatePropTypes";
 
-export default function TrustSignalsTemplate({ model, onSelectTarget, activeTargetId }) {
-  const showTopBar = model.visibility?.topBar !== false;
-  const showTrustCards = model.visibility?.trustCards !== false;
-  const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
-  const showCallToAction = model.visibility?.callToAction !== false;
-
+export default function TrustSignalsTemplate({ model }) {
   return (
     <article className={styles.templateSite}>
-      {showTopBar ? (
-        <TemplateTopBar model={model} onSelectTarget={onSelectTarget} activeTargetId={activeTargetId}>
-          <div className={styles.templateTopBarMeta}>
-            {model.stay.minimumStayLabel ? <span>{model.stay.minimumStayLabel}</span> : null}
-            {model.location.label ? <span>{model.location.label}</span> : null}
-          </div>
-        </TemplateTopBar>
-      ) : null}
+      <div className={styles.templateTopBar}>
+        <div className={styles.templateTopBarBrand}>
+          <span className={styles.templateTopBarMark} aria-hidden="true" />
+          <span>{model.site.title}</span>
+        </div>
+        <div className={styles.templateTopBarMeta}>
+          {model.stay.minimumStayLabel ? <span>{model.stay.minimumStayLabel}</span> : null}
+          {model.location.label ? <span>{model.location.label}</span> : null}
+        </div>
+      </div>
 
       <section className={styles.trustSignalsShell}>
-        <TemplateHeroCopy
-          className={styles.trustSignalsIntro}
-          model={model}
-          onSelectTarget={onSelectTarget}
-          activeTargetId={activeTargetId}
-        />
+        <div className={styles.trustSignalsIntro}>
+          <p className={styles.sectionEyebrow}>Trust-oriented layout</p>
+          <h1 className={styles.heroTitle}>{model.hero.title}</h1>
+          <p className={styles.heroDescription}>{model.hero.description}</p>
+        </div>
 
-        <img
-          {...getInteractiveTargetProps(styles.trustSignalsHeroImage, onSelectTarget, {
-            sectionId: "images",
-            targetId: "images.hero",
-            imageSlot: { kind: "hero" },
-          }, activeTargetId)}
-          src={model.media.heroImage}
-          alt={model.hero.title}
-        />
+        <img className={styles.trustSignalsHeroImage} src={model.media.heroImage} alt={model.hero.title} />
 
-        {showTrustCards ? (
-          <div className={styles.trustSignalsStack}>
-            {model.trustCards.slice(0, 2).map((card, index) => (
-              <article
-                key={card.id}
-                {...getInteractiveTargetProps(styles.trustSignalsCard, onSelectTarget, {
-                  sectionId: "trustCards",
-                  targetId: `trustCards.${index}`,
-                }, activeTargetId)}
-              >
-                <div className={styles.trustSignalsCardMeta}>
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <p className={styles.signalTitle}>{card.title}</p>
-                <p>{card.description}</p>
-              </article>
-            ))}
+        <div className={styles.trustSignalsStack}>
+          {model.trustCards.slice(0, 2).map((card) => (
+            <article key={card.id} className={styles.trustSignalsCard}>
+              <div className={styles.trustSignalsCardMeta}>
+                <span />
+                <span />
+                <span />
+              </div>
+              <p className={styles.signalTitle}>{card.title}</p>
+              <p>{card.description}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className={styles.trustSignalsFooter}>
+          <div className={styles.softCallout}>
+            <strong>{model.callToAction.label}</strong>
+            <p>{model.callToAction.note}</p>
           </div>
-        ) : null}
-
-        {showAvailabilityCalendar ? (
-          <TemplateAvailabilityCalendar
-            model={model}
-            onSelectTarget={onSelectTarget}
-            activeTargetId={activeTargetId}
-          />
-        ) : null}
-
-        {showCallToAction ? (
-          <div className={styles.trustSignalsFooter}>
-            <TemplateSoftCallout
-              className={styles.softCallout}
-              model={model}
-              onSelectTarget={onSelectTarget}
-              activeTargetId={activeTargetId}
-            />
-          </div>
-        ) : null}
+        </div>
       </section>
     </article>
   );
@@ -101,19 +52,32 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
 
 TrustSignalsTemplate.propTypes = {
   model: PropTypes.shape({
-    site: sitePropType.isRequired,
-    hero: heroPropType.isRequired,
-    media: mediaPropType.isRequired,
-    trustCards: PropTypes.arrayOf(copyItemPropType).isRequired,
+    site: PropTypes.shape({
+      title: PropTypes.string,
+    }).isRequired,
+    hero: PropTypes.shape({
+      title: PropTypes.string,
+      description: PropTypes.string,
+    }).isRequired,
+    media: PropTypes.shape({
+      heroImage: PropTypes.string,
+    }).isRequired,
+    trustCards: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        description: PropTypes.string.isRequired,
+      })
+    ).isRequired,
     stay: PropTypes.shape({
       minimumStayLabel: PropTypes.string,
     }).isRequired,
     location: PropTypes.shape({
       label: PropTypes.string,
     }).isRequired,
-    availability: availabilityPropType.isRequired,
-    callToAction: callToActionPropType.isRequired,
-    visibility: visibilityPropType.isRequired,
+    callToAction: PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      note: PropTypes.string.isRequired,
+    }).isRequired,
   }).isRequired,
-  ...templateInteractionPropTypes,
 };

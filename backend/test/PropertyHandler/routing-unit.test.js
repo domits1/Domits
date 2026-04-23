@@ -30,7 +30,6 @@ const directRouteSpecs = [
   ["PATCH property activation request", "activateProperty", "PATCH", "/property", 204],
   ["POST website draft upsert request", "upsertWebsiteDraft", "POST", "/property/website/draft", 200],
   ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],
-  ["GET public website preview request", "getWebsitePreviewByDraftId", "GET", "/property/website/preview", 200],
   ["GET website drafts request", "getWebsiteDrafts", "GET", "/property/website/drafts", 200],
   ["GET website draft by property request", "getWebsiteDraftByPropertyId", "GET", "/property/website/draft", 200],
   ["DELETE website draft request", "deleteWebsiteDraft", "DELETE", "/property/website/draft", 204],
@@ -84,44 +83,7 @@ const bookingEngineCases = bookingEngineSpecs.map(([name, controllerMethod, subR
   })
 );
 
-const pathFallbackSpecs = [
-  buildCase({
-    name: "GET all hostDashboard properties from path fallback",
-    controllerMethod: "getFullOwnedProperties",
-    httpMethod: "GET",
-    resource: "/property/{proxy+}",
-    statusCode: 200,
-  }),
-  buildCase({
-    name: "GET all active properties from path fallback",
-    controllerMethod: "getActivePropertiesCard",
-    httpMethod: "GET",
-    resource: "/property/{proxy+}",
-    statusCode: 200,
-  }),
-];
-
-const pathFallbackCases = [
-  {
-    testCase: pathFallbackSpecs[0],
-    path: "/property/hostDashboard/all",
-    proxy: "hostDashboard/all",
-  },
-  {
-    testCase: pathFallbackSpecs[1],
-    path: "/property/bookingEngine/all",
-    proxy: "bookingEngine/all",
-  },
-].map(({ testCase, path, proxy }) => ({
-  ...testCase,
-  event: {
-    ...testCase.event,
-    path,
-    pathParameters: { proxy },
-  },
-}));
-
-const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases, ...pathFallbackCases];
+const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases];
 
 const notFoundCases = [
   {

@@ -9,19 +9,6 @@ const notFound = (body) => ({
 
 const isPath = (event, route) => event.resource === route || event.path === route;
 
-const getSubResource = (event, resourceTemplate, pathPrefix) => {
-  if (event.resource === resourceTemplate) {
-    return event.pathParameters?.subResource;
-  }
-
-  const path = String(event.path || "");
-  if (!path.startsWith(pathPrefix)) {
-    return undefined;
-  }
-
-  return path.slice(pathPrefix.length).split("/").find(Boolean);
-};
-
 const handlePost = async (event) => {
   if (isPath(event, "/property/images/presign")) {
     return controller.createImageUploadUrls(event);
@@ -69,9 +56,6 @@ const bookingEngineHandlers = {
 };
 
 const handleGet = async (event) => {
-  if (isPath(event, "/property/website/preview")) {
-    return controller.getWebsitePreviewByDraftId(event);
-  }
   if (isPath(event, "/property/website/drafts")) {
     return controller.getWebsiteDrafts(event);
   }
@@ -82,25 +66,16 @@ const handleGet = async (event) => {
     return controller.getPropertyCalendarOverrides(event);
   }
 
-  const hostDashboardSubResource = getSubResource(
-    event,
-    "/property/hostDashboard/{subResource}",
-    "/property/hostDashboard/"
-  );
-  if (hostDashboardSubResource) {
-    const handler = hostDashboardHandlers[hostDashboardSubResource];
+  const subResource = event.pathParameters?.subResource;
+  if (event.resource === "/property/hostDashboard/{subResource}") {
+    const handler = hostDashboardHandlers[subResource];
     return handler
       ? handler(event)
       : notFound("Sub-resource for '/property/hostDashboard' not found.");
   }
 
-  const bookingEngineSubResource = getSubResource(
-    event,
-    "/property/bookingEngine/{subResource}",
-    "/property/bookingEngine/"
-  );
-  if (bookingEngineSubResource) {
-    const handler = bookingEngineHandlers[bookingEngineSubResource];
+  if (event.resource === "/property/bookingEngine/{subResource}") {
+    const handler = bookingEngineHandlers[subResource];
     return handler
       ? handler(event)
       : notFound("Sub-resource for '/property/bookingEngine' not found.");
