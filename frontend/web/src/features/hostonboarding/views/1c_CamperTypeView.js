@@ -31,13 +31,12 @@ function CamperTypeView() {
           onSelectType={setCamperType}
         />
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath={prevPath || "/hostonboarding"} btnText="Back" />
+          <OnboardingButton routePath={prevPath || "/hostdashboard/hostonboarding"} btnText="Back" />
           <OnboardingButton
             onClick={ () => {
               builder.addPropertyType({type: "Camper", spaceType: selectedCamperType});
-              console.log(builder);
             }}
-            routePath={nextPath || "/hostonboarding/camper/address"}
+            routePath={nextPath || "/hostdashboard/hostonboarding/camper/address"}
             btnText="Proceed"
             disabled={!selectedCamperType}
           />

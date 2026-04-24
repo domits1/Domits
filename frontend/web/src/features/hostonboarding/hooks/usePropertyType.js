@@ -20,11 +20,11 @@ export const useHandleAccommodationTypeProceed = () => {
     markStepComplete("type")
 
     if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) {
-      navigate("/hostonboarding/accommodation")
+      navigate("/hostdashboard/hostonboarding/accommodation")
     } else if (selectedType === "Boat") {
-      navigate("/hostonboarding/boat")
+      navigate("/hostdashboard/hostonboarding/boat")
     } else if (selectedType === "Camper") {
-      navigate("/hostonboarding/camper")
+      navigate("/hostdashboard/hostonboarding/camper")
     }
     return true
   }

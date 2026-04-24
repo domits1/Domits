@@ -23,13 +23,16 @@ export const useOnboardingFlow = () => {
   const prevPath = steps[safeIndex - 1]?.path || null
   const nextPath = steps[safeIndex + 1]?.path || null
 
+  const toHostPath = (path) =>
+    path ? path.replace("/hostonboarding", "/hostdashboard/hostonboarding") : null
+
   return {
     flowKey,
     steps,
     currentPath,
     stepIndex,
     totalSteps,
-    prevPath,
-    nextPath,
+    prevPath: toHostPath(prevPath),
+    nextPath: toHostPath(nextPath),
   }
 }
