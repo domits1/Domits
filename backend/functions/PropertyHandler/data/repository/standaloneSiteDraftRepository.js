@@ -228,6 +228,32 @@ export class StandaloneSiteDraftRepository {
     return mapDraftRow(rows?.[0] || null);
   }
 
+  async getDraftById(draftId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = draftTableName(schemaName);
+
+    const rows = await client.query(
+      `SELECT
+        id,
+        property_id,
+        host_id,
+        template_key,
+        status,
+        content_overrides_json,
+        theme_overrides_json,
+        created_at,
+        updated_at,
+        last_preview_built_at
+      FROM ${tableName}
+      WHERE id = $1
+      LIMIT 1`,
+      [draftId]
+    );
+
+    return mapDraftRow(rows?.[0] || null);
+  }
+
   async deleteDraftByPropertyIdAndHostId(propertyId, hostId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);

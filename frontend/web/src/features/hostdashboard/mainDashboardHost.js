@@ -10,6 +10,7 @@ import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
+import WebsiteEditorPage from "./website/WebsiteEditorPage";
 import HostSettings from "./HostSettings";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
@@ -111,6 +112,7 @@ function MainDashboardHost() {
           <Route path="finance" element={<HostFinanceTab />} />
           <Route path="listings" element={<HostListings />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
+          <Route path="website/:propertyId" element={<WebsiteEditorPage />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
 
