@@ -7,16 +7,23 @@ import { getWebsiteTemplateById } from "./websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
 import { fetchWebsitePreviewByDraftId } from "./services/websitePublicPreviewService";
+import { subscribeToWebsitePreviewUpdates } from "./services/websitePreviewSync";
 import styles from "./WebsitePublicPreviewPage.module.scss";
 
-const getDraftContentOverrides = (draft) =>
-  draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
+const getDraftPublishedContentOverrides = (draft) => {
+  if (draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object") {
+    return draft.publishedContentOverrides;
+  }
+
+  return {};
+};
 
 function WebsitePublicPreviewPage() {
   const { draftId } = useParams();
   const [payload, setPayload] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [refreshVersion, setRefreshVersion] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,6 +58,12 @@ function WebsitePublicPreviewPage() {
     return () => {
       isMounted = false;
     };
+  }, [draftId, refreshVersion]);
+
+  useEffect(() => {
+    return subscribeToWebsitePreviewUpdates(draftId, () => {
+      setRefreshVersion((currentVersion) => currentVersion + 1);
+    });
   }, [draftId]);
 
   const previewModel = useMemo(() => {
@@ -63,7 +76,7 @@ function WebsitePublicPreviewPage() {
       summaryProperty: null,
     });
 
-    return applyWebsiteDraftContentOverrides(baseModel, getDraftContentOverrides(payload.draft));
+    return applyWebsiteDraftContentOverrides(baseModel, getDraftPublishedContentOverrides(payload.draft));
   }, [payload]);
 
   const templateId = payload?.draft?.templateKey || "";
