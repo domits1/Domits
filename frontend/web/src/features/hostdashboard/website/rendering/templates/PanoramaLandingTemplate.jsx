@@ -145,7 +145,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               <div className={styles.galleryStrip}>
                 {model.gallery.images.slice(0, 3).map((imageUrl, index) => (
                   <img
-                    key={`${model.site.title}-${imageUrl}`}
+                    key={`${model.site.title}-${index}-${imageUrl}`}
                     {...getInteractiveTargetProps(styles.galleryImage, onSelectTarget, {
                       sectionId: "images",
                       targetId: `images.gallery.${index}`,

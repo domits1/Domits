@@ -84,7 +84,15 @@ const fieldPropTypes = PropTypes.shape({
   component: PropTypes.oneOf(["input", "textarea"]).isRequired,
 });
 
-function TextField({ field, value, onChange, fieldRef, isHighlighted, onFocus, onBlur }) {
+function TextField({
+  field,
+  value,
+  onChange,
+  fieldRef = null,
+  isHighlighted = false,
+  onFocus = undefined,
+  onBlur = undefined,
+}) {
   if (field.component === "textarea") {
     return (
       <div
@@ -141,20 +149,13 @@ TextField.propTypes = {
   isHighlighted: PropTypes.bool,
 };
 
-TextField.defaultProps = {
-  fieldRef: null,
-  isHighlighted: false,
-  onFocus: undefined,
-  onBlur: undefined,
-};
-
 function CollapsibleSection({
   sectionId,
   title,
   description,
   isOpen,
   onToggle,
-  sectionRef,
+  sectionRef = null,
   children,
 }) {
   return (
@@ -198,10 +199,6 @@ CollapsibleSection.propTypes = {
     }),
   ]),
   children: PropTypes.node.isRequired,
-};
-
-CollapsibleSection.defaultProps = {
-  sectionRef: null,
 };
 
 function WebsiteEditorPage() {
@@ -1086,7 +1083,7 @@ function WebsiteEditorPage() {
 
                 return (
                   <button
-                    key={`${imagePickerState.slot.label}-${imageUrl}`}
+                    key={`${imagePickerState.slot.label}-${index}-${imageUrl}`}
                     type="button"
                     className={`${styles.imagePickerThumbButton} ${
                       isSelected ? styles.imagePickerThumbButtonActive : ""

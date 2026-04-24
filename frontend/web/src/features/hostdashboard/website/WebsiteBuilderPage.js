@@ -326,7 +326,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
 };
 
 function WebsiteDraftDeleteDialog({
-  draft,
+  draft = null,
   deleteReasons,
   deleteStep,
   isDeleting,
@@ -454,10 +454,6 @@ WebsiteDraftDeleteDialog.propTypes = {
   onConfirm: PropTypes.func.isRequired,
   onReasonToggle: PropTypes.func.isRequired,
   onReasonNext: PropTypes.func.isRequired,
-};
-
-WebsiteDraftDeleteDialog.defaultProps = {
-  draft: null,
 };
 
 function WebsiteBuilderPage() {
@@ -924,7 +920,7 @@ function WebsiteBuilderPage() {
     <div className={styles.photoStack}>
       {previewImages.map((imageUrl, index) => (
         <button
-          key={`${selectedProperty.value}-${imageUrl}`}
+          key={`${selectedProperty.value}-${index}-${imageUrl}`}
           type="button"
           className={getPhotoCardClassName(index)}
           onClick={() => openGallery(index)}
@@ -1517,7 +1513,7 @@ function WebsiteBuilderPage() {
           <div className="overlay-thumbnails">
             {galleryImages.map((imageUrl, index) => (
               <button
-                key={`${selectedProperty.value}-gallery-${imageUrl}`}
+                key={`${selectedProperty.value}-gallery-${index}-${imageUrl}`}
                 type="button"
                 className={`${index === activeGalleryIndex ? "thumb active" : "thumb"} ${styles.galleryThumbnailButton}`}
                 onClick={() => {
