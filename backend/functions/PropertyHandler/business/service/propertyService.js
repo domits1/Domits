@@ -591,36 +591,28 @@ export class PropertyService {
     return {
       property_id: propertyId,
       checkIn: {
-        from: checkInFrom?.value_text || checkInFrom?.value || "09:00:00",
-        till: checkInTill?.value_text || checkInTill?.value || "18:00:00",
+        from: checkInFrom?.value || "09:00:00",
+        till: checkInTill?.value || "18:00:00",
       },
       checkOut: {
-        from: checkOutFrom?.value_text || checkOutFrom?.value || "07:00:00",
-        till: checkOutTill?.value_text || checkOutTill?.value || "08:00:00",
+        from: checkOutFrom?.value || "07:00:00",
+        till: checkOutTill?.value || "08:00:00",
       },
     };
   }
 
-  async #upsertPropertyRule(propertyId, ruleName, value = null, valueText = null) {
+  async #upsertPropertyRule(propertyId, ruleName, value) {
     const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
     if (existing) {
       const client = await Database.getInstance();
       await client
         .createQueryBuilder()
         .update(Property_Rule)
-        .set({
-          value,
-          value_text: valueText,
-        })
+        .set({ value })
         .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
         .execute();
     } else {
-      await this.propertyRuleRepository.create({
-        property_id: propertyId,
-        rule: ruleName,
-        value,
-        value_text: valueText,
-      });
+      await this.propertyRuleRepository.create({ property_id: propertyId, rule: ruleName, value });
     }
   }
 
@@ -628,14 +620,14 @@ export class PropertyService {
     if (!checkInData || typeof checkInData !== "object") return;
 
     const rulesToUpdate = [
-      { rule: "CheckInFrom", value: null, value_text: checkInData.checkIn?.from || "09:00:00" },
-      { rule: "CheckInTill", value: null, value_text: checkInData.checkIn?.till || "18:00:00" },
-      { rule: "CheckOutFrom", value: null, value_text: checkInData.checkOut?.from || "07:00:00" },
-      { rule: "CheckOutTill", value: null, value_text: checkInData.checkOut?.till || "08:00:00" },
+      { rule: "CheckInFrom", value: checkInData.checkIn?.from || "09:00:00" },
+      { rule: "CheckInTill", value: checkInData.checkIn?.till || "18:00:00" },
+      { rule: "CheckOutFrom", value: checkInData.checkOut?.from || "07:00:00" },
+      { rule: "CheckOutTill", value: checkInData.checkOut?.till || "08:00:00" },
     ];
 
     for (const ruleUpdate of rulesToUpdate) {
-      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value, ruleUpdate.value_text);
+      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value);
     }
   }
 
@@ -682,19 +674,14 @@ export class PropertyService {
     if (!lateCheckinData || typeof lateCheckinData !== "object") return;
 
     const rulesToUpdate = [
-      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true, value_text: null },
-      { rule: "LateCheckinTime", value: null, value_text: lateCheckinData.late_checkin_time || "18:00:00" },
-      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true, value_text: null },
-      { rule: "LateCheckoutTime", value: null, value_text: lateCheckinData.late_checkout_time || "10:00:00" },
+      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true ? "true" : "false" },
+      { rule: "LateCheckinTime", value: lateCheckinData.late_checkin_time || "18:00:00" },
+      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true ? "true" : "false" },
+      { rule: "LateCheckoutTime", value: lateCheckinData.late_checkout_time || "10:00:00" },
     ];
 
     for (const ruleUpdate of rulesToUpdate) {
-      await this.#upsertPropertyRule(
-        propertyId,
-        ruleUpdate.rule,
-        ruleUpdate.value,
-        ruleUpdate.value_text
-      );
+      await this.#upsertPropertyRule(propertyId, ruleUpdate.rule, ruleUpdate.value);
     }
   }
 
@@ -723,16 +710,16 @@ export class PropertyService {
     if (!houseRules || typeof houseRules !== "object") return;
 
     const houseRuleNames = [
-      "PetsAllowed",
+      "ChildrenAllowed",
       "SmokingAllowed",
+      "PetsAllowed",
       "PartiesEventsAllowed",
-      "SuitableForChildren",
-      "SuitableForInfants",
+      "QuietHoursStart",
     ];
 
     for (const ruleName of houseRuleNames) {
       const isEnabled = (houseRules?.[ruleName] ?? false) === true;
-      await this.#upsertPropertyRule(propertyId, ruleName, isEnabled, null);
+      await this.#upsertPropertyRule(propertyId, ruleName, isEnabled ? "true" : "false");
     }
   }
 

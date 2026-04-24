@@ -293,31 +293,11 @@ export const savePropertyChanges = async ({
     availabilityRestrictionsPayload = buildPolicyAvailabilityRestrictionsPayload(normalizedPolicyAvailabilitySettings);
   }
   const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map(String) : undefined;
-  const EXCLUDED_TIME_RULES = new Set([
-    "CheckInFrom",
-    "CheckInTill",
-    "CheckOutFrom",
-    "CheckOutTill",
-    "LateCheckinTime",
-    "LateCheckoutTime",
-    "QuietHoursStart",
-    "QuietHoursEnd",
-  ]);
-
   const rulesPayload = isSavingPolicies
-    ? Object.keys(policyRules)
-        .filter((ruleName) => {
-          if (EXCLUDED_TIME_RULES.has(ruleName)) return false;
-
-          const value = policyRules[ruleName];
-          if (typeof value === "string" && value.includes(":")) return false;
-
-          return true;
-        })
-        .map((ruleName) => ({
-          rule: ruleName,
-          value: Boolean(policyRules[ruleName]),
-        }))
+    ? Object.keys(policyRules).map((ruleName) => ({
+        rule: ruleName,
+        value: Boolean(policyRules[ruleName]),
+      }))
     : undefined;
   const checkInPayload = isSavingPolicies ? normalizedCheckInDetails : undefined;
 
