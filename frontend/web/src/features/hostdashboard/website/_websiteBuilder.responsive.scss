@@ -3,6 +3,10 @@
     grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
     gap: 28px;
   }
+
+  .kpiGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -78,6 +82,10 @@
   .workspaceTabButton {
     flex: 1 1 0;
     text-align: center;
+  }
+
+  .kpiGrid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .websiteDraftCardHeader {

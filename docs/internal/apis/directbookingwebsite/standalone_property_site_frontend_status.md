@@ -35,7 +35,7 @@ What is in place:
 - Saved website cards display the persisted website title override when the host changes the title in the editor.
 - Saved website cards now expose both `Open editor` and `Delete permanently`, so deleting a website immediately makes its listing available again in the builder.
 - The saved website delete action is visually destructive/red and now opens an in-app confirmation overlay before deletion.
-- The saved website delete overlay now includes local-only deletion-reason checkboxes for future analytics/traceability and can be closed by clicking outside the dialog.
+- The saved website delete overlay now forwards selected deletion reasons to backend website event tracking and can be closed by clicking outside the dialog.
 - Compact saved website previews use thumbnail image variants where the property image payload provides them, reducing unnecessary image weight in `My websites`.
 - Compact saved website previews are centered on mobile cards.
 - Editor sections are now collapsible so the left-side control surface remains usable as more override fields are added.
@@ -68,6 +68,8 @@ What is in place:
   - `Discard all changes` resets the working draft back to the currently published preview state
 - An already-open shared preview tab now refreshes itself when the editor pushes a new live-preview update, so hosts do not need to manually reload the preview page after publishing draft changes.
 - Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
+- Standalone website KPIs now live on a dedicated host dashboard route instead of inside the website builder/workspace page.
+- The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -197,6 +199,9 @@ Current implementation details:
   - `published_content_overrides_json`
   - `published_theme_overrides_json`
   These fields must exist in `main` before backend code that reads/writes published preview state is deployed.
+- Website KPI tracking now relies on a separate standalone-owned table in `main`:
+  - `standalone_site_event`
+  This table must exist in `main` before the website KPI overview can load successfully in the host dashboard.
 
 ## Next phase
 The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.

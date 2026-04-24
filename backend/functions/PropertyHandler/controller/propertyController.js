@@ -6,6 +6,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { PropertyImageRepository } from "../data/repository/propertyImageRepository.js";
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
 import { StandaloneSiteDraftRepository } from "../data/repository/standaloneSiteDraftRepository.js";
+import { StandaloneSiteEventRepository } from "../data/repository/standaloneSiteEventRepository.js";
 import { randomUUID } from "node:crypto";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
@@ -29,6 +30,7 @@ export class PropertyController {
         this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
         this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
         this.standaloneSiteDraftRepository = new StandaloneSiteDraftRepository(systemManagerRepository);
+        this.standaloneSiteEventRepository = new StandaloneSiteEventRepository(systemManagerRepository);
     }
 
     // -------------------------
@@ -1099,12 +1101,29 @@ export class PropertyController {
         return this.parseWebsiteOverridePayload(payload, fieldName);
     }
 
+    parseWebsiteDeleteReasons(payload) {
+        if (payload === undefined || payload === null) {
+            return [];
+        }
+
+        if (!Array.isArray(payload)) {
+            throw new TypeError("deleteReasons must be an array.");
+        }
+
+        return [...new Set(
+            payload
+                .map((reason) => String(reason || "").trim())
+                .filter(Boolean)
+        )];
+    }
+
     isWebsiteDraftClientError(error) {
         return (
             error?.message?.startsWith("Missing propertyId") ||
             error?.message?.startsWith("Missing draftId") ||
             error?.message?.startsWith("Missing templateKey") ||
-            error?.message?.includes("must be a plain object")
+            error?.message?.includes("must be a plain object") ||
+            error?.message?.includes("deleteReasons must be an array")
         );
     }
 
@@ -1114,6 +1133,22 @@ export class PropertyController {
             headers: responseHeaders,
             body: JSON.stringify({ message }),
         };
+    }
+
+    websiteServerError(message = "We could not complete this website request. Please try again.") {
+        return {
+            statusCode: 500,
+            headers: draftResponseHeaders,
+            body: JSON.stringify({ message }),
+        };
+    }
+
+    async recordStandaloneWebsiteEventSafely(eventInput) {
+        try {
+            await this.standaloneSiteEventRepository.recordEvent(eventInput);
+        } catch (error) {
+            console.error("Failed to record standalone website event.", error);
+        }
     }
 
     // -------------------------
@@ -1464,6 +1499,7 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
 
             const draft = await this.standaloneSiteDraftRepository.upsertDraft({
                 hostId,
@@ -1476,6 +1512,33 @@ export class PropertyController {
                 publishedThemeOverrides,
             });
 
+            const shouldTrackLivePreviewUpdate =
+                publishedContentOverrides !== undefined || publishedThemeOverrides !== undefined;
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: draft?.id || existingDraft?.id || null,
+                propertyId,
+                hostId,
+                eventType: existingDraft ? "WEBSITE_DRAFT_SAVED" : "WEBSITE_DRAFT_CREATED",
+                payload: {
+                    templateKey,
+                    status,
+                },
+            });
+
+            if (shouldTrackLivePreviewUpdate) {
+                await this.recordStandaloneWebsiteEventSafely({
+                    draftId: draft?.id || existingDraft?.id || null,
+                    propertyId,
+                    hostId,
+                    eventType: "LIVE_PREVIEW_UPDATED",
+                    payload: {
+                        templateKey,
+                        status,
+                    },
+                });
+            }
+
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
@@ -1486,11 +1549,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            };
+            return this.websiteServerError();
         }
     }
 
@@ -1509,11 +1568,7 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            };
+            return this.websiteServerError();
         }
     }
 
@@ -1546,11 +1601,27 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/kpis
+    // -------------------------
+    async getWebsiteKpis(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const summary = await this.standaloneSiteEventRepository.getGlobalKpiSummary();
+
             return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(summary),
             };
+        } catch (error) {
+            console.error(error);
+            return this.websiteServerError();
         }
     }
 
@@ -1583,6 +1654,16 @@ export class PropertyController {
                 { includeCalendarAvailability: true }
             );
 
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: draft.id,
+                propertyId: draft.propertyId,
+                hostId: draft.hostId,
+                eventType: "PUBLIC_PREVIEW_OPENED",
+                payload: {
+                    templateKey: draft.templateKey,
+                },
+            });
+
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
@@ -1596,11 +1677,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            };
+            return this.websiteServerError();
         }
     }
 
@@ -1613,24 +1690,37 @@ export class PropertyController {
             const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
             const eventBody = JSON.parse(event.body || "{}");
             const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+            const deleteReasons = this.parseWebsiteDeleteReasons(eventBody.deleteReasons);
 
             if (!propertyId) {
                 return this.badRequest("Missing propertyId.");
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
             await this.standaloneSiteDraftRepository.deleteDraftByPropertyIdAndHostId(propertyId, hostId);
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: existingDraft?.id || null,
+                propertyId,
+                hostId,
+                eventType: "WEBSITE_DELETED",
+                payload: {
+                    templateKey: existingDraft?.templateKey || "",
+                    reasons: deleteReasons,
+                },
+            });
+
             return {
                 statusCode: 204,
                 headers: responseHeaders,
             };
         } catch (error) {
             console.error(error);
-            return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            };
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
         }
     }
 

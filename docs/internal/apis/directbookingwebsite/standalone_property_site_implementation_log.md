@@ -318,6 +318,62 @@ Open risks / Next:
 
 Evidence (commit(s), file(s), docs):
 - Acceptance verification notes:
+
+## [2026-04-24] Website KPI tracking and delete-reason analytics
+Context:
+The standalone website workspace had draft persistence and preview sharing, but no operational visibility into how hosts were using website drafts or why they removed them.
+
+Implementation:
+- Added standalone website event storage:
+  - `main.standalone_site_event`
+- Added repository-backed KPI aggregation for standalone website metrics, later split into global and host-scoped use cases.
+- Added PropertyHandler route:
+  - `GET /property/website/kpis`
+- Started recording website events for:
+  - draft creation
+  - draft save
+  - shared preview open
+  - live preview update
+  - website deletion
+- Wired selected website delete reasons from frontend into backend delete event payloads.
+- Added KPI overview cards plus deletion-reason breakdown on a dedicated host dashboard route for standalone website analytics.
+- Tightened website-specific backend 500 responses so internal error messages are no longer returned directly to the client.
+
+Decision / Rationale:
+- Website analytics should remain standalone-feature scoped rather than being mixed into existing property or platform KPI tables.
+- Event writes are best-effort; analytics must never block draft save/delete/preview flows.
+- Delete reasons are useful product signal, but they should be stored as website events instead of ad hoc frontend-only state.
+- The first KPI dashboard is platform-wide and intended for internal/admin analysis. Host-specific website analytics can later build on the same event stream with a scoped endpoint.
+
+AWS / Data impact:
+- New Aurora table required in schema `main`:
+  - `standalone_site_event`
+- Acceptance API Gateway must expose:
+  - `GET /property/website/kpis`
+  - `OPTIONS /property/website/kpis`
+- Existing website draft routes remain unchanged.
+
+Validation:
+- Backend routing unit test extended to cover `/property/website/kpis`.
+- Frontend production build and website workspace flow to be revalidated after deploy.
+
+Open risks / Next:
+- KPI data is only as complete as the currently tracked event types; future live-site/custom-domain flows should emit their own events instead of overloading draft events.
+- The KPI route depends on `main.standalone_site_event`; deploying backend/frontend before that table exists will surface KPI load failures in the dashboard.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/ORM/migrations/20260424_standalone_site_event.js`
+  - `backend/ORM/models/Standalone_Site_Event.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteKpiService.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteDraftService.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
   - table `main.standalone_site_draft`
   - index `standalone_site_draft_property_unique`
   - API Gateway methods for `/property/website/draft(s)`
