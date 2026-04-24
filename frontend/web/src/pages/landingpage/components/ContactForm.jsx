@@ -1,7 +1,9 @@
 import React from "react";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer } from "../utils/animations";
+import "../../../styles/sass/pages/landingpage/components/_contactForm.scss";
 
-const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChange, onSubmit, onSmoothScroll }) => {
-  // Input constraints
+const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChange, onSubmit }) => {
   const PHONE_CHAR_REGEX = /^[0-9+\s]$/;
   const DIGIT_CHAR_REGEX = /^[0-9]$/;
   const ALLOWED_KEYS = [
@@ -21,20 +23,34 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
   const isValidPhonePaste = (text) => /^[0-9+\s]*$/.test(text);
   const isValidDigitKey = (key) => DIGIT_CHAR_REGEX.test(key);
   const isValidDigitPaste = (text) => /^[0-9]*$/.test(text);
+
   return (
-    <div className="questionsContainer" id="Contact">
-      <h1>{content.title}</h1>
-      <p>{content.description}</p>
+    <motion.div
+      className="questionsContainer"
+      id="Contact"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+      variants={staggerContainer}
+    >
+
+      <motion.h1 variants={fadeUp}>{content.title}</motion.h1>
+      <motion.p variants={fadeUp}>{content.description}</motion.p>
 
       {feedbackMessage && (
-        <p className={`feedback ${feedbackMessage.includes("successfully") ? "success" : "error"}`}>
+        <motion.p
+          className={`feedback ${feedbackMessage.includes("successfully") ? "success" : "error"}`}
+          variants={fadeUp}
+        >
           {feedbackMessage}
-        </p>
+        </motion.p>
       )}
 
-      <form className="contactform" onSubmit={onSubmit}>
-        <div className="inputContainer">
-          <label>
+      <motion.form className="contactform" onSubmit={onSubmit} variants={staggerContainer}>
+
+        <motion.div className="inputContainer" variants={staggerContainer}>
+
+          <motion.label variants={fadeUp}>
             {content.fields.firstName}
             <input
               type="text"
@@ -44,9 +60,9 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               placeholder={content.placeholders.firstName}
               required
             />
-          </label>
+          </motion.label>
 
-          <label>
+          <motion.label variants={fadeUp}>
             {content.fields.lastName}
             <input
               type="text"
@@ -56,9 +72,9 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               placeholder={content.placeholders.lastName}
               required
             />
-          </label>
+          </motion.label>
 
-          <label>
+          <motion.label variants={fadeUp}>
             {content.fields.email}
             <input
               type="email"
@@ -68,9 +84,9 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               placeholder={content.placeholders.email}
               required
             />
-          </label>
+          </motion.label>
 
-          <label>
+          <motion.label variants={fadeUp}>
             {content.fields.phone}
             <input
               type="tel"
@@ -91,9 +107,9 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               placeholder={content.placeholders.phone}
               required
             />
-          </label>
+          </motion.label>
 
-          <label>
+          <motion.label variants={fadeUp}>
             {content.fields.city}
             <input
               type="text"
@@ -103,16 +119,15 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               placeholder={content.placeholders.city}
               required
             />
-          </label>
+          </motion.label>
 
-          <label>
+          <motion.label variants={fadeUp}>
             {content.fields.properties}
             <input
               type="number"
               name="properties"
               value={formData.properties}
               onChange={(e) => {
-                // Enforce numeric-only input via typing and paste
                 const { value } = e.target;
                 if (value === '' || /^[0-9]+$/.test(value)) {
                   onChange(e);
@@ -133,10 +148,11 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               min="1"
               required
             />
-          </label>
-        </div>
+          </motion.label>
 
-        <div className="biginput">
+        </motion.div>
+
+        <motion.div className="fullWidth" variants={fadeUp}>
           <label>
             {content.fields.comments}
             <textarea
@@ -147,18 +163,23 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               required
             ></textarea>
           </label>
-        </div>
+        </motion.div>
 
-        <div className="formbuttons">
-          <button id="sendbutton" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? content.sending : content.submit}
-          </button>
-        </div>
-      </form>
-    </div>
+        <motion.button
+          id="sendbutton"
+          type="submit"
+          disabled={isSubmitting}
+          variants={fadeUp}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          {isSubmitting ? content.sending : content.submit}
+        </motion.button>
+
+      </motion.form>
+
+    </motion.div>
   );
 };
 
 export default ContactForm;
-
-
