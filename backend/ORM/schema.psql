@@ -313,6 +313,10 @@ DROP TABLE IF EXISTS main.rules;
 
 CREATE TABLE IF NOT EXISTS main.rules (
   rule VARCHAR(255) NOT NULL,
+  rule_name VARCHAR(255),
+  value_type VARCHAR(64),
+  value_text VARCHAR(255),
+  value_number NUMERIC(10,2),
   PRIMARY KEY (rule)
 );
 CREATE UNIQUE INDEX ASYNC rule_UNIQUE ON main.rules (rule);
@@ -325,7 +329,8 @@ DROP TABLE IF EXISTS main.property_rule;
 CREATE TABLE IF NOT EXISTS main.property_rule (
   property_id VARCHAR(255) NOT NULL,
   rule VARCHAR(255) NOT NULL,
-  value BOOLEAN NOT NULL,
+  value BOOLEAN NOT NULL DEFAULT FALSE,
+  value_new VARCHAR(255),
   PRIMARY KEY (property_id, rule)
 );
 

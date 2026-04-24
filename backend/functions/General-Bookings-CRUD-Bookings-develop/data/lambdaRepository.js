@@ -1,7 +1,6 @@
 import NotFoundException from "../util/exception/NotFoundException.js";
 import Database from "database";
 import { Property_Pricing } from "database/models/Property_Pricing";
-import { Property_Rule } from "database/models/Property_Rule";
 class LambdaRepository {
   extractPropertyCards(payload) {
     if (Array.isArray(payload)) {
@@ -36,15 +35,18 @@ class LambdaRepository {
 
     const allRules = propertyIds.length
       ? await client
-          .getRepository(Property_Rule)
-          .createQueryBuilder("pr")
+          .createQueryBuilder()
+          .select("pr.property_id", "property_id")
+          .addSelect("pr.rule", "rule")
+          .addSelect("pr.value", "value")
+          .from("property_rule", "pr")
           .where("pr.property_id IN (:...ids)", { ids: propertyIds })
-          .getMany()
+          .getRawMany()
       : [];
 
     const rulesByPropertyId = allRules.reduce((acc, r) => {
       acc[r.property_id] = acc[r.property_id] || [];
-      acc[r.property_id].push({ rule: r.rule, value: r.value });
+      acc[r.property_id].push({ rule: r.rule, value: r.value === true || r.value === "true" });
       return acc;
     }, {});
 

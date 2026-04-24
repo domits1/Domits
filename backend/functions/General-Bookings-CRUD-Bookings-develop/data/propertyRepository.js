@@ -1,6 +1,5 @@
 import Database from "database";
 import { Property } from "database/models/Property";
-import { Property_Rule } from "database/models/Property_Rule";
 import NotFoundException from "../util/exception/NotFoundException.js";
 
 class PropertyRepository {
@@ -26,12 +25,13 @@ class PropertyRepository {
   async getCancellationPolicyByPropertyId(propertyId) {
     const client = await Database.getInstance();
     const rule = await client
-      .getRepository(Property_Rule)
-      .createQueryBuilder("pr")
+      .createQueryBuilder()
+      .select("pr.rule", "rule")
+      .from("property_rule", "pr")
       .where("pr.property_id = :propertyId", { propertyId })
       .andWhere("pr.rule LIKE 'CancellationPolicy:%'")
-      .andWhere("pr.value = 'true'")
-      .getOne();
+      .andWhere("pr.value = :value", { value: true })
+      .getRawOne();
     return rule ? rule.rule.replace("CancellationPolicy:", "") : null;
   }
 }

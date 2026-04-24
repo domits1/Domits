@@ -26,8 +26,8 @@ export class PropertyRule {
   }
 
   set _value(value) {
-    if (typeof value !== "string" && typeof value !== "boolean") {
-      throw new TypeException("propertyRule - Value must be a string or boolean.");
+    if (typeof value !== "string" && typeof value !== "boolean" && typeof value !== "number") {
+      throw new TypeException("propertyRule - Value must be a string, number or boolean.");
     }
     this.value = value;
   }
