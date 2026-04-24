@@ -25,38 +25,54 @@ const generatePolicyRuleStrings = (periodDays, refundPercentages) => {
   });
 };
 
+const generateFlexiblePolicyRules = () => generatePolicyRuleStrings(1, [100, 0]);
+
+const generateModeratePolicyRules = () => generatePolicyRuleStrings(5, [100, 50]);
+
+const generateLimitedPolicyRules = () => [
+  "At least 14 days before check-in, Guests will receive 100% refund.",
+  "Between 7 and 14 days before check-in, Guests will receive 50% refund.",
+  "Less than 7 days before check-in, Guests will receive No refund.",
+];
+
+const generateFirmPolicyRules = () => [
+  "At least 30 days before check-in, Guests will receive 100% refund.",
+  "Between 7 and 30 days before check-in, Guests will receive 50% refund.",
+  "Less than 7 days before check-in, Guests will receive No refund.",
+];
+
 export const CANCELLATION_POLICIES = [
   {
     id: "flexible",
     name: "Flexible",
     summary: "Full refund until 1 day before check-in",
-    rules: generatePolicyRuleStrings(1, [100, 0]),
+    rules: generateFlexiblePolicyRules(),
     important:
-      "Your payout is processed once the booking becomes non-refundable. You should receive your payout within 3 days of processing.",
+      "Your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
   },
   {
     id: "moderate",
     name: "Moderate",
     summary: "Full refund until 5 days before check-in",
-    rules: generatePolicyRuleStrings(5, [100, 50]),
-    important: null,
+    rules: generateModeratePolicyRules(),
+    important:
+      "Your payout is processed once the booking becomes non-refundable (5 days before check-in). You should receive your payout within 3 days of processing.",
   },
   {
     id: "strict",
-    name: "Strict",
-    summary: "Full refund until 30 days before check-in",
-    rules: generatePolicyRuleStrings(30, [70, 0]),
-    important: null,
+    name: "Limited",
+    summary: "Full refund until 14 days before check-in",
+    rules: generateLimitedPolicyRules(),
+    important:
+      "Your payout is processed once the booking becomes non-refundable (14 days before check-in). You should receive your payout within 3 days of processing.",
   },
   {
     id: "firm",
     name: "Firm",
     summary: "Full refund until 30 days before check-in",
-    rules: [
-      ...generatePolicyRuleStrings(30, [100, 50]),
-      "Less than 7 days before check-in, Guests will receive No refund.",
-    ],
-    important: null,
+    rules: generateFirmPolicyRules(),
+    important:
+      "Your payout is processed once the booking becomes non-refundable (30 days before check-in). You should receive your payout within 3 days of processing.",
   },
 ];
 

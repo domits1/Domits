@@ -11,7 +11,7 @@ const buildInstructionKey = (() => {
   };
 })();
 
-function CheckInInstructions({ address, instructions }) {
+function CheckInInstructions({ address = "Address unavailable", instructions = [] }) {
   const instructionCounts = new Map();
   const hasInstructions = instructions.length > 0;
 
@@ -41,11 +41,6 @@ function CheckInInstructions({ address, instructions }) {
 CheckInInstructions.propTypes = {
   address: PropTypes.string,
   instructions: PropTypes.arrayOf(PropTypes.string),
-};
-
-CheckInInstructions.defaultProps = {
-  address: "Address unavailable",
-  instructions: [],
 };
 
 export default CheckInInstructions;

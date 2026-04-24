@@ -3,16 +3,16 @@ import PropTypes from "prop-types";
 import { FaMapPin, FaCalendarAlt, FaUsers } from "react-icons/fa";
 
 function PropertyCard({
-  image,
-  title,
-  location,
-  checkIn,
-  checkInTime,
-  checkOut,
-  checkOutTime,
-  guests,
-  guestsDetails,
-  reservationId,
+  image = "",
+  title = "",
+  location = "",
+  checkIn = "-",
+  checkInTime = "-",
+  checkOut = "-",
+  checkOutTime = "-",
+  guests = 0,
+  guestsDetails = "Guest details unavailable",
+  reservationId = "-",
 }) {
   const guestLabel = guests === 1 ? "guest" : "guests";
 
@@ -87,19 +87,6 @@ PropertyCard.propTypes = {
   guests: PropTypes.number,
   guestsDetails: PropTypes.string,
   reservationId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-};
-
-PropertyCard.defaultProps = {
-  image: "",
-  title: "",
-  location: "",
-  checkIn: "-",
-  checkInTime: "-",
-  checkOut: "-",
-  checkOutTime: "-",
-  guests: 0,
-  guestsDetails: "Guest details unavailable",
-  reservationId: "-",
 };
 
 export default PropertyCard;

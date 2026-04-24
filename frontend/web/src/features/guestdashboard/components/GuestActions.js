@@ -7,20 +7,17 @@ import Toast from "../../../components/toast/Toast";
 import { getAccessToken } from "../utils/authUtils";
 import {
   fetchWishlists,
-  fetchWishlistItemCount,
   createWishlist,
   renameWishlist,
   deleteWishlist,
 } from "../services/wishlistService";
 
-const fetchListWithCount = async (name) => {
-  try {
-    const countData = await fetchWishlistItemCount(name);
-    const realItems = (countData.items || []).filter((item) => item.propertyId);
-    return { id: name, name, count: realItems.length };
-  } catch {
-    return { id: name, name, count: 0 };
-  }
+const buildListSummary = ([name, propertyIds]) => {
+  const count = Array.isArray(propertyIds)
+    ? propertyIds.filter((propertyId) => typeof propertyId === "string" && propertyId.length > 0).length
+    : 0;
+
+  return { id: name, name, count };
 };
 
 const sortWishlistLists = (lists, defaultName = "My next trip") => {
@@ -68,7 +65,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         const data = await fetchWishlists();
         const wishlists = data?.wishlists || {};
 
-        const structured = sortWishlistLists(await Promise.all(Object.keys(wishlists).map(fetchListWithCount)));
+        const structured = sortWishlistLists(Object.entries(wishlists).map(buildListSummary));
 
         setLists(structured);
 

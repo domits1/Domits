@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-function BookingDetails({ reservationId, bookedDate, onDownload }) {
+function BookingDetails({ reservationId, bookedDate, onDownload = () => {} }) {
   return (
     <div className="card">
       <h3>Booking details</h3>
@@ -29,10 +29,6 @@ BookingDetails.propTypes = {
   reservationId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   bookedDate: PropTypes.string.isRequired,
   onDownload: PropTypes.func,
-};
-
-BookingDetails.defaultProps = {
-  onDownload: () => {},
 };
 
 export default BookingDetails;
