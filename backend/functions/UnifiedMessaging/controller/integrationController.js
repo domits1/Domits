@@ -63,6 +63,21 @@ class IntegrationController {
     return await this.integrationService.startWhatsAppConnect(body);
   }
 
+  async connectHolidu(event) {
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.connectHolidu(body);
+  }
+
+  async checkHoliduStatus(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    return await this.integrationService.checkHoliduStatus(userId);
+  }
+
+  async disconnectHolidu(event) {
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.disconnectHolidu(body);
+  }
+
   async completeWhatsAppConnect(event) {
     const body = safeJson(event.body) || {};
     return await this.integrationService.completeWhatsAppConnect(body);

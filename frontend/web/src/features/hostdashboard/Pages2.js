@@ -82,7 +82,11 @@ function Pages({ onNavigate }) {
         aria-hidden={!open}
       />
 
-      <nav className={`sidebar ${open ? "open" : ""}`} aria-label="Host navigation" id="host-menu">
+      <nav
+        className={`sidebar ${open ? "open" : ""}`}
+        aria-label="Host navigation"
+        id="host-menu"
+      >
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
           <ul className="menu-list">
