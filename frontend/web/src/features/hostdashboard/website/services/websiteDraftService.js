@@ -114,7 +114,7 @@ export const upsertWebsiteDraft = async ({
   return response.json();
 };
 
-export const deleteWebsiteDraft = async (propertyId) => {
+export const deleteWebsiteDraft = async (propertyId, deleteReasons = []) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
     throw new Error("Missing propertyId for website draft delete.");
@@ -129,6 +129,7 @@ export const deleteWebsiteDraft = async (propertyId) => {
     },
     body: JSON.stringify({
       propertyId: normalizedPropertyId,
+      deleteReasons,
     }),
   });
 

@@ -75,6 +75,9 @@ const handleGet = async (event) => {
   if (isPath(event, "/property/website/drafts")) {
     return controller.getWebsiteDrafts(event);
   }
+  if (isPath(event, "/property/website/kpis")) {
+    return controller.getWebsiteKpis(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.getWebsiteDraftByPropertyId(event);
   }

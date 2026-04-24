@@ -895,7 +895,7 @@ function WebsiteBuilderPage() {
     setIsDeletingWebsiteDraft(true);
 
     try {
-      await deleteWebsiteDraft(propertyId);
+      await deleteWebsiteDraft(propertyId, websiteDraftDeleteReasons);
       setWebsiteDraftPreviewModels((currentPreviewModels) => {
         const nextPreviewModels = { ...currentPreviewModels };
         delete nextPreviewModels[propertyId];

@@ -95,6 +95,104 @@
   box-shadow: 0 8px 16px rgba(31, 78, 121, 0.1);
 }
 
+.kpiSection {
+  display: grid;
+  gap: 18px;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.kpiCard {
+  display: grid;
+  gap: 10px;
+  min-height: 156px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(255, 255, 255, 1)),
+    #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.kpiCardTitle {
+  margin: 0;
+  color: #334155;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.kpiCardValue {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.9rem, 1.4rem + 1vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.kpiCardMeta {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.deletionReasonPanel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background: #f8fbff;
+}
+
+.deletionReasonHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.deletionReasonHeader h3,
+.deletionReasonHeader p {
+  margin: 0;
+}
+
+.deletionReasonHeader h3 {
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.deletionReasonHeader p {
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.deletionReasonList {
+  display: grid;
+  gap: 10px;
+}
+
+.deletionReasonRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 78, 121, 0.12);
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.deletionReasonRow strong {
+  color: #153e64;
+}
+
 .builderSteps {
   display: grid;
   gap: 28px;
