@@ -5,6 +5,7 @@ import spinner from "../../images/spinnner.gif";
 import { getAccessToken } from "../../services/getAccessToken.js";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
+import { updateInquiryStatus } from "./services/reservationService.js";
 import { calculateTotalPayment } from "./utils/reservationCalculations.js";
 import { usePagination } from "./hooks/usePagination.js";
 import { FiSearch } from "react-icons/fi";
@@ -12,6 +13,8 @@ import { FiSearch } from "react-icons/fi";
 const normalizeStatus = (status) => {
   if (!status) return "";
   const s = status.toLowerCase();
+  if (s === "inquiry") return "INQUIRY";
+  if (s === "declined") return "DECLINED";
   if (s.includes("paid")) return "PAID";
   if (s.includes("await")) return "AWAITING_PAYMENT";
   if (s.includes("fail")) return "FAILED";
@@ -71,9 +74,11 @@ const mapReservations = (data) => {
 };
 
 const labelMap = {
+  INQUIRY: "Inquiry",
   PAID: "Paid",
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Failed",
+  DECLINED: "Declined",
 };
 
 const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : "-");
@@ -91,6 +96,7 @@ const HostReservations = () => {
   const [activeTab, setActiveTab] = useState("ALL");
   const [search, setSearch] = useState("");
   const [range, setRange] = useState("ALL");
+  const [inquiryLoading, setInquiryLoading] = useState({});
 
   const authToken = useMemo(() => getAccessToken(), []);
   const itemsPerPage = 10;
@@ -177,10 +183,30 @@ const HostReservations = () => {
     return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
   }, [pageRange]);
 
+  const handleInquiryAction = async (bookingId, action) => {
+    setInquiryLoading((prev) => ({ ...prev, [bookingId]: true }));
+    try {
+      await updateInquiryStatus(bookingId, action, authToken);
+      const newStatus = action === "accept-inquiry" ? "AWAITING_PAYMENT" : "DECLINED";
+      setBookings((prev) =>
+        prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
+      );
+      toast.success(
+        action === "accept-inquiry" ? "Inquiry accepted." : "Inquiry declined."
+      );
+    } catch {
+      toast.error("Failed to update inquiry status.");
+    } finally {
+      setInquiryLoading((prev) => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
   const mapStatusToClass = (status) => {
+    if (status === "INQUIRY") return "statusInquiry";
     if (status === "PAID") return "statusPaid";
     if (status === "AWAITING_PAYMENT") return "statusAwaitingPayment";
     if (status === "FAILED") return "statusFailed";
+    if (status === "DECLINED") return "statusDeclined";
     return "statusOther";
   };
 
@@ -227,6 +253,12 @@ const HostReservations = () => {
             <button className={activeTab === "FAILED" ? styles.active : ""} onClick={() => setActiveTab("FAILED")}>
               Failed ({count("FAILED")})
             </button>
+            <button
+              className={activeTab === "DECLINED" ? styles.active : ""}
+              onClick={() => setActiveTab("DECLINED")}
+            >
+              Declined ({count("DECLINED")})
+            </button>
           </div>
 
           <div className={styles.list}>
@@ -267,6 +299,7 @@ const HostReservations = () => {
                         Booked <SwapVertIcon className={styles.sortIcon} />
                       </span>
                     </th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
 
@@ -281,6 +314,8 @@ const HostReservations = () => {
                     paginatedItems.map((b) => {
                       const total = calculateTotalPayment(b.rate, b.arrivaldate, b.departuredate);
                       const commission = (total * 0.1).toFixed(2);
+                      const isInquiryPending =
+                        inquiryLoading[b.id] || false;
 
                       return (
                         <tr key={`${b.id}-${b.property_id}`}>
@@ -305,6 +340,36 @@ const HostReservations = () => {
                           </td>
                           <td>{b.id}</td>
                           <td>{formatDate(b.createdat)}</td>
+                          <td>
+                            {b.status === "INQUIRY" && (
+                              <div className={styles.inquiryActions}>
+                                <button
+                                  className={styles.btnAccept}
+                                  disabled={isInquiryPending}
+                                  onClick={() =>
+                                    handleInquiryAction(
+                                      b.id,
+                                      "accept-inquiry"
+                                    )
+                                  }
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  className={styles.btnDecline}
+                                  disabled={isInquiryPending}
+                                  onClick={() =>
+                                    handleInquiryAction(
+                                      b.id,
+                                      "decline-inquiry"
+                                    )
+                                  }
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       );
                     })

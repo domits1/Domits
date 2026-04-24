@@ -11,6 +11,13 @@ import { randomUUID } from "node:crypto";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 
+const draftResponseHeaders = {
+    ...responseHeaders,
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+};
+
 export class PropertyController {
 
     propertyService;
@@ -1084,9 +1091,18 @@ export class PropertyController {
         return payload;
     }
 
+    parseOptionalWebsiteOverridePayload(payload, fieldName) {
+        if (payload === undefined) {
+            return undefined;
+        }
+
+        return this.parseWebsiteOverridePayload(payload, fieldName);
+    }
+
     isWebsiteDraftClientError(error) {
         return (
             error?.message?.startsWith("Missing propertyId") ||
+            error?.message?.startsWith("Missing draftId") ||
             error?.message?.startsWith("Missing templateKey") ||
             error?.message?.includes("must be a plain object")
         );
@@ -1179,7 +1195,7 @@ export class PropertyController {
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(property)
             }
         } catch (error) {
@@ -1430,6 +1446,14 @@ export class PropertyController {
             const status = String(eventBody.status || "DRAFT").trim().toUpperCase();
             const contentOverrides = this.parseWebsiteOverridePayload(eventBody.contentOverrides, "contentOverrides");
             const themeOverrides = this.parseWebsiteOverridePayload(eventBody.themeOverrides, "themeOverrides");
+            const publishedContentOverrides = this.parseOptionalWebsiteOverridePayload(
+                eventBody.publishedContentOverrides,
+                "publishedContentOverrides"
+            );
+            const publishedThemeOverrides = this.parseOptionalWebsiteOverridePayload(
+                eventBody.publishedThemeOverrides,
+                "publishedThemeOverrides"
+            );
 
             if (!propertyId) {
                 return this.badRequest("Missing propertyId.");
@@ -1448,11 +1472,13 @@ export class PropertyController {
                 status,
                 contentOverrides,
                 themeOverrides,
+                publishedContentOverrides,
+                publishedThemeOverrides,
             });
 
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(draft),
             };
         } catch (error) {
@@ -1478,7 +1504,7 @@ export class PropertyController {
             const drafts = await this.standaloneSiteDraftRepository.listDraftsByHostId(hostId);
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(drafts),
             };
         } catch (error) {
@@ -1508,18 +1534,68 @@ export class PropertyController {
             if (!draft) {
                 return {
                     statusCode: 404,
-                    headers: responseHeaders,
+                    headers: draftResponseHeaders,
                     body: JSON.stringify({ message: "Website draft not found." }),
                 };
             }
 
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(draft),
             };
         } catch (error) {
             console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/preview
+    // -------------------------
+    async getWebsitePreviewByDraftId(event) {
+        try {
+            const draftId = String(
+                event.queryStringParameters?.draft ||
+                event.queryStringParameters?.draftId ||
+                ""
+            ).trim();
+
+            if (!draftId) {
+                return this.badRequest("Missing draftId.");
+            }
+
+            const draft = await this.standaloneSiteDraftRepository.getDraftById(draftId);
+            if (!draft || draft.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website preview not found." }),
+                };
+            }
+
+            const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
+                draft.propertyId,
+                { includeCalendarAvailability: true }
+            );
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify({
+                    draft,
+                    propertyDetails,
+                }),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
             return {
                 statusCode: error.statusCode || 500,
                 headers: responseHeaders,

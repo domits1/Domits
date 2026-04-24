@@ -63,14 +63,21 @@ const mapDraftRow = (row) => {
     return null;
   }
 
+  const contentOverrides = safeParseJson(row.content_overrides_json, {});
+  const themeOverrides = safeParseJson(row.theme_overrides_json, {});
+  const publishedContentOverrides = safeParseJson(row.published_content_overrides_json, {});
+  const publishedThemeOverrides = safeParseJson(row.published_theme_overrides_json, {});
+
   return {
     id: String(row.id),
     propertyId: String(row.property_id),
     hostId: String(row.host_id),
     templateKey: String(row.template_key),
     status: String(row.status),
-    contentOverrides: safeParseJson(row.content_overrides_json, {}),
-    themeOverrides: safeParseJson(row.theme_overrides_json, {}),
+    contentOverrides,
+    themeOverrides,
+    publishedContentOverrides,
+    publishedThemeOverrides,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
     lastPreviewBuiltAt:
@@ -107,6 +114,8 @@ export class StandaloneSiteDraftRepository {
     status = "DRAFT",
     contentOverrides = {},
     themeOverrides = {},
+    publishedContentOverrides = undefined,
+    publishedThemeOverrides = undefined,
   }) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
@@ -115,6 +124,14 @@ export class StandaloneSiteDraftRepository {
     const normalizedStatus = normalizeStatus(status);
     const normalizedContentOverrides = normalizeOverrides(contentOverrides, FALLBACK_CONTENT_OVERRIDES);
     const normalizedThemeOverrides = normalizeOverrides(themeOverrides, FALLBACK_THEME_OVERRIDES);
+    const normalizedPublishedContentOverrides =
+      publishedContentOverrides === undefined
+        ? null
+        : normalizeOverrides(publishedContentOverrides, FALLBACK_CONTENT_OVERRIDES);
+    const normalizedPublishedThemeOverrides =
+      publishedThemeOverrides === undefined
+        ? null
+        : normalizeOverrides(publishedThemeOverrides, FALLBACK_THEME_OVERRIDES);
 
     const rows = await client.query(
       `INSERT INTO ${tableName} (
@@ -125,11 +142,13 @@ export class StandaloneSiteDraftRepository {
         status,
         content_overrides_json,
         theme_overrides_json,
+        published_content_overrides_json,
+        published_theme_overrides_json,
         created_at,
         updated_at,
         last_preview_built_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, $6), COALESCE($9, $7), $10, $11, $12)
       ON CONFLICT (property_id)
       DO UPDATE SET
         host_id = EXCLUDED.host_id,
@@ -137,6 +156,14 @@ export class StandaloneSiteDraftRepository {
         status = EXCLUDED.status,
         content_overrides_json = EXCLUDED.content_overrides_json,
         theme_overrides_json = EXCLUDED.theme_overrides_json,
+        published_content_overrides_json = COALESCE(
+          EXCLUDED.published_content_overrides_json,
+          ${tableName}.published_content_overrides_json
+        ),
+        published_theme_overrides_json = COALESCE(
+          EXCLUDED.published_theme_overrides_json,
+          ${tableName}.published_theme_overrides_json
+        ),
         updated_at = EXCLUDED.updated_at,
         last_preview_built_at = EXCLUDED.last_preview_built_at
       RETURNING
@@ -147,6 +174,8 @@ export class StandaloneSiteDraftRepository {
         status,
         content_overrides_json,
         theme_overrides_json,
+        published_content_overrides_json,
+        published_theme_overrides_json,
         created_at,
         updated_at,
         last_preview_built_at`,
@@ -158,6 +187,8 @@ export class StandaloneSiteDraftRepository {
         normalizedStatus,
         normalizedContentOverrides,
         normalizedThemeOverrides,
+        normalizedPublishedContentOverrides,
+        normalizedPublishedThemeOverrides,
         now,
         now,
         now,
@@ -183,6 +214,8 @@ export class StandaloneSiteDraftRepository {
         draft.status,
         draft.content_overrides_json,
         draft.theme_overrides_json,
+        draft.published_content_overrides_json,
+        draft.published_theme_overrides_json,
         draft.created_at,
         draft.updated_at,
         draft.last_preview_built_at,
@@ -216,6 +249,8 @@ export class StandaloneSiteDraftRepository {
         status,
         content_overrides_json,
         theme_overrides_json,
+        published_content_overrides_json,
+        published_theme_overrides_json,
         created_at,
         updated_at,
         last_preview_built_at
@@ -223,6 +258,34 @@ export class StandaloneSiteDraftRepository {
       WHERE property_id = $1 AND host_id = $2
       LIMIT 1`,
       [propertyId, hostId]
+    );
+
+    return mapDraftRow(rows?.[0] || null);
+  }
+
+  async getDraftById(draftId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = draftTableName(schemaName);
+
+    const rows = await client.query(
+      `SELECT
+        id,
+        property_id,
+        host_id,
+        template_key,
+        status,
+        content_overrides_json,
+        theme_overrides_json,
+        published_content_overrides_json,
+        published_theme_overrides_json,
+        created_at,
+        updated_at,
+        last_preview_built_at
+      FROM ${tableName}
+      WHERE id = $1
+      LIMIT 1`,
+      [draftId]
     );
 
     return mapDraftRow(rows?.[0] || null);

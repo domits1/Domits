@@ -25,10 +25,10 @@ export class PropertyCheckInRepository {
       .into(Property_Check_In)
       .values({
         property_id: timeslots.property_id,
-        checkinfrom: timeslots.checkIn.from,
-        checkintill: timeslots.checkIn.till,
-        checkoutfrom: timeslots.checkOut.from,
-        checkouttill: timeslots.checkOut.till,
+        checkInFrom: timeslots.checkIn.from,
+        checkInTill: timeslots.checkIn.till,
+        checkOutFrom: timeslots.checkOut.from,
+        checkOutTill: timeslots.checkOut.till,
       })
       .execute();
     const result = await this.getPropertyCheckInTimeslotsByPropertyId(timeslots.property_id);
@@ -55,10 +55,10 @@ export class PropertyCheckInRepository {
         .createQueryBuilder()
         .update(Property_Check_In)
         .set({
-          checkinfrom: normalizedCheckIn.checkIn.from,
-          checkintill: normalizedCheckIn.checkIn.till,
-          checkoutfrom: normalizedCheckIn.checkOut.from,
-          checkouttill: normalizedCheckIn.checkOut.till,
+          checkInFrom: normalizedCheckIn.checkIn.from,
+          checkInTill: normalizedCheckIn.checkIn.till,
+          checkOutFrom: normalizedCheckIn.checkOut.from,
+          checkOutTill: normalizedCheckIn.checkOut.till,
         })
         .where("property_id = :propertyId", { propertyId })
         .execute();
@@ -69,10 +69,10 @@ export class PropertyCheckInRepository {
         .into(Property_Check_In)
         .values({
           property_id: normalizedCheckIn.property_id,
-          checkinfrom: normalizedCheckIn.checkIn.from,
-          checkintill: normalizedCheckIn.checkIn.till,
-          checkoutfrom: normalizedCheckIn.checkOut.from,
-          checkouttill: normalizedCheckIn.checkOut.till,
+          checkInFrom: normalizedCheckIn.checkIn.from,
+          checkInTill: normalizedCheckIn.checkIn.till,
+          checkOutFrom: normalizedCheckIn.checkOut.from,
+          checkOutTill: normalizedCheckIn.checkOut.till,
         })
         .execute();
     }

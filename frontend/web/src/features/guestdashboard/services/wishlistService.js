@@ -2,6 +2,15 @@ import { getAccessToken } from "../utils/authUtils";
 
 const BASE_URL = "https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist";
 const DEFAULT_WISHLIST_NAME = "My next trip";
+const WISHLIST_CACHE_TTL_MS = 15000;
+
+let wishlistsCachePromise = null;
+let wishlistsCacheExpiresAt = 0;
+
+const invalidateWishlistsCache = () => {
+  wishlistsCachePromise = null;
+  wishlistsCacheExpiresAt = 0;
+};
 
 const getRequestHeaders = () => {
   const headers = { "Content-Type": "application/json" };
@@ -13,24 +22,28 @@ const getRequestHeaders = () => {
 };
 
 const parseJson = async (response) => {
+  const text = await response.text();
+  if (!text) {
+    return {};
+  }
+
   try {
-    return await response.json();
+    return JSON.parse(text);
   } catch {
     throw new Error("Invalid response received from wishlist service");
   }
 };
 
-const normalizeWishlistItems = (data) => {
-  let items;
-  if (Array.isArray(data)) {
-    items = data;
-  } else if (Array.isArray(data?.items)) {
-    items = data.items;
-  } else {
-    items = [];
+const createServiceError = async (response, fallbackMessage) => {
+  let details = "";
+  try {
+    details = await response.text();
+  } catch {
+    details = "";
   }
 
-  return items.filter((item) => typeof item?.propertyId === "string" && item.propertyId.length > 0);
+  const suffix = details ? `: ${details.slice(0, 240)}` : "";
+  return new Error(`${fallbackMessage} (${response.status})${suffix}`);
 };
 
 const normalizeWishlistsMap = (data) => {
@@ -48,19 +61,33 @@ const normalizeWishlistsMap = (data) => {
   }, {});
 };
 
-// Fetch user's wishlists (GET)
-export const fetchWishlists = async () => {
-  const res = await fetch(BASE_URL, {
-    method: "GET",
-    headers: getRequestHeaders(),
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch wishlists");
+export const fetchWishlists = async ({ forceRefresh = false } = {}) => {
+  const cacheIsFresh = wishlistsCachePromise && Date.now() < wishlistsCacheExpiresAt;
+  if (!forceRefresh && cacheIsFresh) {
+    return wishlistsCachePromise;
   }
 
-  const data = await parseJson(res);
-  return { wishlists: normalizeWishlistsMap(data) };
+  wishlistsCachePromise = (async () => {
+    const res = await fetch(BASE_URL, {
+      method: "GET",
+      headers: getRequestHeaders(),
+    });
+
+    if (!res.ok) {
+      throw await createServiceError(res, "Failed to fetch wishlists");
+    }
+
+    const data = await parseJson(res);
+    return { wishlists: normalizeWishlistsMap(data) };
+  })();
+  wishlistsCacheExpiresAt = Date.now() + WISHLIST_CACHE_TTL_MS;
+
+  try {
+    return await wishlistsCachePromise;
+  } catch (error) {
+    invalidateWishlistsCache();
+    throw error;
+  }
 };
 
 // Move accommodation to a different wishlist (PATCH)
@@ -72,10 +99,12 @@ export const moveAccommodation = async (oldName, newName, propertyId) => {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to move accommodation");
+    throw await createServiceError(res, "Failed to move accommodation");
   }
 
-  return parseJson(res);
+  const data = await parseJson(res);
+  invalidateWishlistsCache();
+  return data;
 };
 
 // Add or remove accommodation from a wishlist (POST / DELETE)
@@ -90,10 +119,15 @@ export const updateWishlistItem = async (propertyId, method, wishlistName = DEFA
   });
 
   if (!res.ok) {
-    throw new Error(`Failed to ${method === "POST" ? "add to" : "remove from"} wishlist`);
+    throw await createServiceError(
+      res,
+      `Failed to ${method === "POST" ? "add to" : "remove from"} wishlist`,
+    );
   }
 
-  return parseJson(res);
+  const data = await parseJson(res);
+  invalidateWishlistsCache();
+  return data;
 };
 
 // Check if a property is in any wishlist, returns { liked, wishlistName }
@@ -106,23 +140,9 @@ export const isPropertyInAnyWishlist = async (propertyId) => {
   return { liked: false, wishlistName: null };
 };
 
-// Fetch real item count for a specific wishlist (POST)
-export const fetchWishlistItemCount = async (wishlistName) => {
-  const res = await fetch(BASE_URL, {
-    method: "POST",
-    headers: getRequestHeaders(),
-    body: JSON.stringify({
-      action: "getWishlist",
-      wishlistName,
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to get item count for wishlist '${wishlistName}'`);
-  }
-
-  const data = await parseJson(res);
-  return { items: normalizeWishlistItems(data) };
+const buildWishlistItems = (wishlistsMap, wishlistName) => {
+  const propertyIds = Array.isArray(wishlistsMap?.[wishlistName]) ? wishlistsMap[wishlistName] : [];
+  return propertyIds.map((propertyId) => ({ propertyId }));
 };
 
 // Create a new wishlist (PUT)
@@ -134,10 +154,12 @@ export const createWishlist = async (wishlistName) => {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create wishlist");
+    throw await createServiceError(res, "Failed to create wishlist");
   }
 
-  return parseJson(res);
+  const data = await parseJson(res);
+  invalidateWishlistsCache();
+  return data;
 };
 
 // Rename a wishlist (PATCH)
@@ -149,10 +171,12 @@ export const renameWishlist = async (oldName, newName) => {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to rename wishlist");
+    throw await createServiceError(res, "Failed to rename wishlist");
   }
 
-  return parseJson(res);
+  const data = await parseJson(res);
+  invalidateWishlistsCache();
+  return data;
 };
 
 // Delete a wishlist (DELETE)
@@ -164,13 +188,15 @@ export const deleteWishlist = async (wishlistName) => {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to delete wishlist");
+    throw await createServiceError(res, "Failed to delete wishlist");
   }
 
-  return parseJson(res);
+  const data = await parseJson(res);
+  invalidateWishlistsCache();
+  return data;
 };
 
 export const fetchWishlistItems = async (wishlistName = DEFAULT_WISHLIST_NAME) => {
-  const response = await fetchWishlistItemCount(wishlistName);
-  return response.items;
+  const { wishlists } = await fetchWishlists();
+  return buildWishlistItems(wishlists, wishlistName);
 };

@@ -220,6 +220,7 @@ $breakpoint-sm: 480px;
   }
 
   @media screen and (max-width: $breakpoint-md) {
+    position: sticky;
     height: auto;
     min-height: 96px;
     padding: 16px 16px 18px;
