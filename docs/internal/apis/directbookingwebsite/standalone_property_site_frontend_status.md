@@ -62,6 +62,11 @@ What is in place:
 - Building a website now keeps the Step 3 preview visible while the draft is saved, then shows a toast that the website is ready for review.
 - A first public preview route exists at `/website-preview/:draftId`; it renders the saved draft through the real template instead of the dashboard preview frame.
 - Saved website cards and the editor expose `Open live preview` actions that open the draft preview link in a new tab.
+- Draft editing and shared preview state are now deliberately separated:
+  - `Save changes` updates only the working draft
+  - `Update live preview` pushes the current draft state to the shared preview link
+  - `Discard all changes` resets the working draft back to the currently published preview state
+- An already-open shared preview tab now refreshes itself when the editor pushes a new live-preview update, so hosts do not need to manually reload the preview page after publishing draft changes.
 - Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
 
 ## Implemented page flow
@@ -164,6 +169,7 @@ Current implementation details:
 - Real preview pipeline exists for the first three templates.
 - Preview workflow logic is extracted into a dedicated script module to support future dedicated preview route/new-tab flow.
 - A dedicated public preview route now exists for saved drafts and can be opened from the workspace/editor.
+- The shared preview route currently uses the draft id as the preview identifier. This is acceptable for acceptance/internal review, but should be replaced by a stronger preview token or signed-link strategy before treating preview links as production-grade public URLs.
 - Shared template model is in place and reusable by additional templates.
 - Built previews are persisted as website drafts keyed by host and property.
 - Listings with an existing saved website are no longer offered again in the builder flow.
@@ -187,6 +193,10 @@ Current implementation details:
   - missing unique index on `property_id` caused `ON CONFLICT` failure
   - missing `host_id` index had to be added separately for the intended draft-by-host access path
   - missing/incomplete CORS on website draft routes blocked browser fetches
+- Published preview state now relies on separate standalone-owned fields in `main.standalone_site_draft`:
+  - `published_content_overrides_json`
+  - `published_theme_overrides_json`
+  These fields must exist in `main` before backend code that reads/writes published preview state is deployed.
 
 ## Next phase
 The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.

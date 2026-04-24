@@ -1046,3 +1046,54 @@ Evidence (commit(s), file(s), docs):
   - `standalone_property_site_frontend_status.md`
   - `standalone_property_site_implementation_log.md`
 
+## [2026-04-24] Draft state split from shared preview state
+Context:
+Saving draft edits and publishing preview-link updates were previously collapsing into one effective state, which made the shared preview link behave like the working draft instead of a separately controlled published preview.
+
+Implementation:
+- Added published preview state fields to standalone website draft storage:
+  - `published_content_overrides_json`
+  - `published_theme_overrides_json`
+- Updated the draft repository and PropertyHandler controller to read/write those fields explicitly.
+- Updated the editor so:
+  - `Save changes` only persists the working draft
+  - `Update live preview` publishes the current editor state to the shared preview link
+  - `Discard all changes` resets the working draft back to the published preview version
+- Updated the public preview page to render only the published preview overrides instead of falling back to working-draft overrides.
+- Added a cross-tab preview refresh signal so an already-open preview tab reloads itself after `Update live preview`.
+
+Decision / Rationale:
+- The host needs two distinct states:
+  - editable draft state
+  - shared preview/live state
+- Without this split, preview links are not trustworthy because they can accidentally expose unpublished edits.
+
+AWS / Data impact:
+- Requires standalone-owned columns in `main.standalone_site_draft` for published preview state.
+- These columns are not created just by deploying frontend/backend code.
+- The schema change must be applied in Aurora `main` before backend code that selects those fields is activated.
+
+Validation:
+- Backend routing tests passed.
+- Frontend production build passed.
+- Editor workflow verified for:
+  - save without preview update
+  - update preview link explicitly
+  - discard back to published preview state
+
+Open risks / Next:
+- Preview links still use raw draft ids and should be hardened before production public exposure.
+- The same split should later back real publish/unpublish + custom-domain live state.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDraftRepository.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/ORM/migrations/20260424_standalone_site_published_state.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/services/websitePreviewSync.js`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - table `main.standalone_site_draft`
+  - index `standalone_site_draft_property_unique`
+  - API Gateway methods for `/property/website/draft(s)`

@@ -20,6 +20,7 @@ import {
   mergeWebsiteDraftContentOverrides,
 } from "./rendering/websiteDraftContentOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
+import { announceWebsitePreviewUpdate } from "./services/websitePreviewSync";
 import {
   COMMON_TEXT_FIELDS,
   EDITOR_SECTION_KEYS,
@@ -40,6 +41,27 @@ const getSelectedImageForSlot = (slot, editorValues) =>
   slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
 
 const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
+
+const getDraftWorkingContentOverrides = (draft) =>
+  draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
+
+const getDraftPublishedContentOverrides = (draft) =>
+  draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object"
+    ? draft.publishedContentOverrides
+    : {};
+
+const getDraftThemeOverrides = (draft) =>
+  draft?.themeOverrides && typeof draft.themeOverrides === "object" ? draft.themeOverrides : {};
+
+const getDraftPublishedThemeOverrides = (draft) =>
+  draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object"
+    ? draft.publishedThemeOverrides
+    : {};
+
+const buildEditorValuesFromDraft = (baseModel, draft) =>
+  buildWebsiteDraftEditorValues(
+    applyWebsiteDraftContentOverrides(baseModel, getDraftWorkingContentOverrides(draft))
+  );
 
 const resolveSectionNode = (sectionRefEntry) => {
   if (!sectionRefEntry) {
@@ -84,7 +106,15 @@ const fieldPropTypes = PropTypes.shape({
   component: PropTypes.oneOf(["input", "textarea"]).isRequired,
 });
 
-function TextField({ field, value, onChange, fieldRef, isHighlighted, onFocus, onBlur }) {
+function TextField({
+  field,
+  value,
+  onChange,
+  fieldRef = null,
+  isHighlighted = false,
+  onFocus = undefined,
+  onBlur = undefined,
+}) {
   if (field.component === "textarea") {
     return (
       <div
@@ -141,20 +171,13 @@ TextField.propTypes = {
   isHighlighted: PropTypes.bool,
 };
 
-TextField.defaultProps = {
-  fieldRef: null,
-  isHighlighted: false,
-  onFocus: undefined,
-  onBlur: undefined,
-};
-
 function CollapsibleSection({
   sectionId,
   title,
   description,
   isOpen,
   onToggle,
-  sectionRef,
+  sectionRef = null,
   children,
 }) {
   return (
@@ -200,10 +223,6 @@ CollapsibleSection.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-CollapsibleSection.defaultProps = {
-  sectionRef: null,
-};
-
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -214,6 +233,8 @@ function WebsiteEditorPage() {
   const [editorValues, setEditorValues] = useState(createEmptyWebsiteDraftEditorValues);
   const [previewViewport, setPreviewViewport] = useState("desktop");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDiscardingChanges, setIsDiscardingChanges] = useState(false);
+  const [isUpdatingLivePreview, setIsUpdatingLivePreview] = useState(false);
   const [highlightedTargetId, setHighlightedTargetId] = useState("");
   const [activePreviewTargetId, setActivePreviewTargetId] = useState("");
   const [expandedSections, setExpandedSections] = useState({
@@ -254,7 +275,7 @@ function WebsiteEditorPage() {
         });
         const nextPreviewModel = applyWebsiteDraftContentOverrides(
           nextBaseModel,
-          draft.contentOverrides || {}
+          getDraftWorkingContentOverrides(draft)
         );
 
         if (!isMounted) {
@@ -305,8 +326,13 @@ function WebsiteEditorPage() {
   }, [baseModel, editorValues]);
 
   const mergedContentOverrides = useMemo(
-    () => mergeWebsiteDraftContentOverrides(draftRecord?.contentOverrides || {}, contentOverridePatch),
+    () => mergeWebsiteDraftContentOverrides(getDraftWorkingContentOverrides(draftRecord), contentOverridePatch),
     [contentOverridePatch, draftRecord]
+  );
+
+  const publishedContentOverrides = useMemo(
+    () => getDraftPublishedContentOverrides(draftRecord),
+    [draftRecord]
   );
 
   const previewModel = useMemo(() => {
@@ -318,9 +344,16 @@ function WebsiteEditorPage() {
   }, [baseModel, mergedContentOverrides]);
 
   const hasUnsavedChanges = useMemo(() => {
-    const persistedOverrides = draftRecord?.contentOverrides || {};
+    const persistedOverrides = getDraftWorkingContentOverrides(draftRecord);
     return JSON.stringify(mergedContentOverrides) !== JSON.stringify(persistedOverrides);
   }, [draftRecord, mergedContentOverrides]);
+
+  const hasPreviewSyncPending = useMemo(
+    () => JSON.stringify(mergedContentOverrides) !== JSON.stringify(publishedContentOverrides),
+    [mergedContentOverrides, publishedContentOverrides]
+  );
+
+  const isMutatingDraft = isSaving || isDiscardingChanges || isUpdatingLivePreview;
 
   useEffect(() => {
     setExpandedSections({
@@ -562,6 +595,20 @@ function WebsiteEditorPage() {
     });
   };
 
+  const reloadDraftRecord = async () => {
+    const persistedDraft = await fetchWebsiteDraftByPropertyId(propertyId);
+    if (!persistedDraft) {
+      throw new Error("Draft update completed, but the website draft could not be reloaded.");
+    }
+
+    setDraftRecord(persistedDraft);
+    if (baseModel) {
+      setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft));
+    }
+
+    return persistedDraft;
+  };
+
   const saveDraftChanges = async () => {
     if (!draftRecord || !hasUnsavedChanges) {
       return;
@@ -575,20 +622,68 @@ function WebsiteEditorPage() {
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
         contentOverrides: mergedContentOverrides,
-        themeOverrides: draftRecord.themeOverrides || {},
+        themeOverrides: getDraftThemeOverrides(draftRecord),
       });
 
-      const persistedDraft = await fetchWebsiteDraftByPropertyId(draftRecord.propertyId);
-      if (!persistedDraft) {
-        throw new Error("Draft save completed, but the updated draft could not be reloaded.");
-      }
-
-      setDraftRecord(persistedDraft);
+      await reloadDraftRecord();
       toast.success("Draft changes saved.");
     } catch (error) {
       toast.error(error?.message || "We could not save your website changes.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const discardDraftChanges = async () => {
+    if (!draftRecord || !hasPreviewSyncPending || isMutatingDraft) {
+      return;
+    }
+
+    setIsDiscardingChanges(true);
+
+    try {
+      await upsertWebsiteDraft({
+        propertyId: draftRecord.propertyId,
+        templateKey: draftRecord.templateKey,
+        status: draftRecord.status || "DRAFT",
+        contentOverrides: publishedContentOverrides,
+        themeOverrides: getDraftThemeOverrides(draftRecord),
+      });
+
+      await reloadDraftRecord();
+      toast.success("Draft reverted to the live preview version.");
+    } catch (error) {
+      toast.error(error?.message || "We could not discard your draft changes.");
+    } finally {
+      setIsDiscardingChanges(false);
+    }
+  };
+
+  const updateLivePreviewChanges = async () => {
+    if (!draftRecord || !hasPreviewSyncPending || isMutatingDraft) {
+      return;
+    }
+
+    setIsUpdatingLivePreview(true);
+
+    try {
+      await upsertWebsiteDraft({
+        propertyId: draftRecord.propertyId,
+        templateKey: draftRecord.templateKey,
+        status: draftRecord.status || "DRAFT",
+        contentOverrides: mergedContentOverrides,
+        themeOverrides: getDraftThemeOverrides(draftRecord),
+        publishedContentOverrides: mergedContentOverrides,
+        publishedThemeOverrides: getDraftPublishedThemeOverrides(draftRecord),
+      });
+
+      await reloadDraftRecord();
+      announceWebsitePreviewUpdate(draftRecord.id);
+      toast.success("Live preview updated.");
+    } catch (error) {
+      toast.error(error?.message || "We could not update the live preview.");
+    } finally {
+      setIsUpdatingLivePreview(false);
     }
   };
 
@@ -747,6 +842,22 @@ function WebsiteEditorPage() {
                 onClick={openWebsitePreviewLink}
               >
                 Open live preview
+              </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={() => void updateLivePreviewChanges()}
+                disabled={isMutatingDraft || !hasPreviewSyncPending}
+              >
+                {isUpdatingLivePreview ? "Updating..." : "Update live preview"}
+              </button>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={() => void discardDraftChanges()}
+                disabled={isMutatingDraft || !hasPreviewSyncPending}
+              >
+                {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
               </button>
             </div>
           </div>
@@ -985,8 +1096,9 @@ function WebsiteEditorPage() {
                 ) : null}
 
                 <p className={styles.helperText}>
-                  Emptying a text field falls back to the imported listing value instead of forcing blank
-                  output.
+                  Save changes updates only this working draft. Use the actions above to push the
+                  current editor state to the shared preview link or to discard everything that differs
+                  from the current live preview version.
                 </p>
 
                 <div className={styles.buttonRow}>
@@ -994,7 +1106,7 @@ function WebsiteEditorPage() {
                     type="button"
                     className={styles.primaryButton}
                     onClick={() => void saveDraftChanges()}
-                    disabled={isSaving || !hasUnsavedChanges}
+                    disabled={isMutatingDraft || !hasUnsavedChanges}
                   >
                     <SaveOutlinedIcon fontSize="small" />
                     {isSaving ? "Saving..." : "Save changes"}
@@ -1086,7 +1198,7 @@ function WebsiteEditorPage() {
 
                 return (
                   <button
-                    key={`${imagePickerState.slot.label}-${imageUrl}`}
+                    key={`${imagePickerState.slot.label}-${index}-${imageUrl}`}
                     type="button"
                     className={`${styles.imagePickerThumbButton} ${
                       isSelected ? styles.imagePickerThumbButtonActive : ""

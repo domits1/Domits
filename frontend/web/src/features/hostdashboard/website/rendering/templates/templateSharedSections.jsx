@@ -27,7 +27,7 @@ export const getInteractiveTargetProps = (className, onSelectTarget, target, act
   };
 };
 
-export function TemplateTopBar({ model, onSelectTarget, activeTargetId, children }) {
+export function TemplateTopBar({ model, onSelectTarget = undefined, activeTargetId = "", children }) {
   return (
     <div
       {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
@@ -55,12 +55,7 @@ TemplateTopBar.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-TemplateTopBar.defaultProps = {
-  onSelectTarget: undefined,
-  activeTargetId: "",
-};
-
-export function TemplateHeroCopy({ className, model, onSelectTarget, activeTargetId }) {
+export function TemplateHeroCopy({ className, model, onSelectTarget = undefined, activeTargetId = "" }) {
   return (
     <div className={className}>
       <p
@@ -104,12 +99,11 @@ TemplateHeroCopy.propTypes = {
   activeTargetId: PropTypes.string,
 };
 
-TemplateHeroCopy.defaultProps = {
-  onSelectTarget: undefined,
-  activeTargetId: "",
-};
-
-export function TemplateAvailabilityCalendar({ model, onSelectTarget, activeTargetId }) {
+export function TemplateAvailabilityCalendar({
+  model,
+  onSelectTarget = undefined,
+  activeTargetId = "",
+}) {
   return (
     <AvailabilityCalendarPreview
       availability={model.availability}
@@ -129,12 +123,12 @@ TemplateAvailabilityCalendar.propTypes = {
   activeTargetId: PropTypes.string,
 };
 
-TemplateAvailabilityCalendar.defaultProps = {
-  onSelectTarget: undefined,
-  activeTargetId: "",
-};
-
-export function TemplateSoftCallout({ className, model, onSelectTarget, activeTargetId }) {
+export function TemplateSoftCallout({
+  className,
+  model,
+  onSelectTarget = undefined,
+  activeTargetId = "",
+}) {
   return (
     <div
       {...getInteractiveTargetProps(className, onSelectTarget, {
@@ -160,7 +154,3 @@ TemplateSoftCallout.propTypes = {
   activeTargetId: PropTypes.string,
 };
 
-TemplateSoftCallout.defaultProps = {
-  onSelectTarget: undefined,
-  activeTargetId: "",
-};
