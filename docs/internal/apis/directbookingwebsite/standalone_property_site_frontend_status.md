@@ -66,6 +66,7 @@ What is in place:
   - `Save changes` updates only the working draft
   - `Update live preview` pushes the current draft state to the shared preview link
   - `Discard all changes` resets the working draft back to the currently published preview state
+- The editor save path now explicitly preserves the current published preview overrides during a normal draft save, so `Save changes` no longer mutates the shared preview link implicitly.
 - An already-open shared preview tab now refreshes itself when the editor pushes a new live-preview update, so hosts do not need to manually reload the preview page after publishing draft changes.
 - Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
 

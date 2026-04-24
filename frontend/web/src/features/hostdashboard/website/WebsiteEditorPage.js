@@ -623,6 +623,8 @@ function WebsiteEditorPage() {
         status: draftRecord.status || "DRAFT",
         contentOverrides: mergedContentOverrides,
         themeOverrides: getDraftThemeOverrides(draftRecord),
+        publishedContentOverrides,
+        publishedThemeOverrides: getDraftPublishedThemeOverrides(draftRecord),
       });
 
       await reloadDraftRecord();
