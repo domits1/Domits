@@ -56,8 +56,6 @@ const BookingOverview = () => {
         }
 
         const retrievedPricingObject = await FetchPropertyDetails(propertyId, checkInDate, checkOutDate);
-        console.log("🔍 DEBUG - Full pricing object:", retrievedPricingObject);
-        console.log("🔍 DEBUG - Rules array:", retrievedPricingObject?.rules);
         setPricingObject(retrievedPricingObject);
         const retrievedBookingDetails = {
           accommodation: retrievedPricingObject,
