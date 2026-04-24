@@ -15,7 +15,7 @@ export class PropertyRuleRepository {
       .createQueryBuilder("rules")
       .where("rule = :id", { id: id })
       .getOne();
-    return result ?? null;
+    return result ? result : null;
   }
 
   async getRulesByPropertyId(id) {
@@ -36,17 +36,7 @@ export class PropertyRuleRepository {
       .where("property_id = :id", { id: id })
       .andWhere("rule = :rule", { rule: rule })
       .getOne();
-    return result ?? null;
-  }
-
-  #determineValueType(rule) {
-    if (rule.value_text) {
-      return "string";
-    }
-    if (typeof rule.value === "boolean" || typeof rule.value === "number") {
-      return "boolean";
-    }
-    return null;
+    return result ? result : null;
   }
 
   async create(rule) {
@@ -58,13 +48,11 @@ export class PropertyRuleRepository {
       .values({
         property_id: rule.property_id,
         rule: rule.rule,
-        value: rule.value ?? null,
-        value_text: rule.value_text ?? null,
-        value_type: rule.value_type ?? this.#determineValueType(rule),
+        value: rule.value,
       })
       .execute();
     const result = await this.getRuleByPropertyIdAndRule(rule.property_id, rule.rule);
-    return result ?? null;
+    return result ? result : null;
   }
 
   async replaceRulesByPropertyId(propertyId, rules) {
@@ -112,9 +100,7 @@ export class PropertyRuleRepository {
             normalizedRules.map((rule) => ({
               property_id: propertyId,
               rule: rule.rule,
-              value: rule.value ?? null,
-              value_text: rule.value_text ?? null,
-              value_type: rule.value_type ?? this.#determineValueType(rule),
+              value: rule.value,
             }))
           )
           .execute();
