@@ -24,7 +24,9 @@ export class PropertyRuleRepository {
   }
 
   normalizeValueType(valueType) {
-    return String(valueType || "").trim().toLowerCase();
+    return String(valueType || "")
+      .trim()
+      .toLowerCase();
   }
 
   resolveRuleValueType(ruleName, valueType) {
@@ -87,7 +89,7 @@ export class PropertyRuleRepository {
   }
 
   async getRuleDefinitionsByNames(client, ruleNames) {
-    const normalizedRuleNames = Array.from(new Set((ruleNames || []).map((ruleName) => String(ruleName)).filter(Boolean)));
+    const normalizedRuleNames = Array.from(new Set((ruleNames || []).map(String).filter(Boolean)));
     if (normalizedRuleNames.length === 0) {
       return new Map();
     }
@@ -202,7 +204,10 @@ export class PropertyRuleRepository {
       return [];
     }
 
-    const ruleDefinitionMap = await this.getRuleDefinitionsByNames(client, rows.map((row) => row.rule));
+    const ruleDefinitionMap = await this.getRuleDefinitionsByNames(
+      client,
+      rows.map((row) => row.rule)
+    );
     return rows.map((row) => this.mapPropertyRuleRow(row, ruleDefinitionMap));
   }
 
