@@ -181,20 +181,18 @@ function HostListings() {
 
   const visibleListings = listingsByStatus[activeFilter] || [];
 
-  const ensureLiveEligibility = async (propertyId) => {
+  const ensureLiveEligibility = (propertyId) => {
     if (!userId) {
-      throw new Error("Host user is not loaded.");
+      toast.error("User is not loaded. Please refresh and try again.");
+      return false;
     }
     if (liveEligibilityLoading) {
-      throw new Error("Checking verification status. Please try again in a moment.");
+      toast.info("Checking verification status. Please try again in a moment.");
+      return false;
     }
-    if (!liveEligibility) {
-      navigate("/verify", {
-        state: {
-          userId,
-          accommodationId: propertyId,
-        },
-      });
+    if (liveEligibilityError || !liveEligibility) {
+      toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
+      navigate("/hostdashboard/finance");
       return false;
     }
     return true;
@@ -206,7 +204,7 @@ function HostListings() {
     }
 
     if (nextStatus === "ACTIVE") {
-      const canProceed = await ensureLiveEligibility(propertyId);
+      const canProceed = ensureLiveEligibility(propertyId);
       if (!canProceed) {
         return;
       }
