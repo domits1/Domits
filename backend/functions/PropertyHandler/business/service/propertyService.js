@@ -1,7 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SystemManagerRepository } from "../../data/repository/systemManagerRepository.js";
-import Database from "database";
-import { Property_Rule } from "database/models/Property_Rule";
 
 import { PropertyAmenityRepository } from "../../data/repository/propertyAmenityRepository.js";
 import { PropertyRepository } from "../../data/repository/propertyRepository.js";
@@ -155,10 +153,6 @@ export class PropertyService {
 
     if (updates?.rules) {
       await this.updateRules(propertyId, updates.rules);
-    }
-
-    if (updates?.checkIn) {
-      await this.updateCheckInTimeslotRule(propertyId, updates.checkIn);
     }
 
     if (updates?.checkIn) {
@@ -602,18 +596,7 @@ export class PropertyService {
   }
 
   async #upsertPropertyRule(propertyId, ruleName, value) {
-    const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
-    if (existing) {
-      const client = await Database.getInstance();
-      await client
-        .createQueryBuilder()
-        .update(Property_Rule)
-        .set({ value })
-        .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
-        .execute();
-    } else {
-      await this.propertyRuleRepository.create({ property_id: propertyId, rule: ruleName, value });
-    }
+    await this.propertyRuleRepository.upsertRuleByPropertyId(propertyId, ruleName, value);
   }
 
   async updateCheckInTimeslotRule(propertyId, checkInData) {
@@ -674,9 +657,9 @@ export class PropertyService {
     if (!lateCheckinData || typeof lateCheckinData !== "object") return;
 
     const rulesToUpdate = [
-      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true ? "true" : "false" },
+      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true },
       { rule: "LateCheckinTime", value: lateCheckinData.late_checkin_time || "18:00:00" },
-      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true ? "true" : "false" },
+      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true },
       { rule: "LateCheckoutTime", value: lateCheckinData.late_checkout_time || "10:00:00" },
     ];
 
@@ -719,7 +702,7 @@ export class PropertyService {
 
     for (const ruleName of houseRuleNames) {
       const isEnabled = (houseRules?.[ruleName] ?? false) === true;
-      await this.#upsertPropertyRule(propertyId, ruleName, isEnabled ? "true" : "false");
+      await this.#upsertPropertyRule(propertyId, ruleName, isEnabled);
     }
   }
 

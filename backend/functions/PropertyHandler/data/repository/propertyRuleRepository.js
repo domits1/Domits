@@ -8,6 +8,26 @@ export class PropertyRuleRepository {
     this.systemManager = systemManager;
   }
 
+  normalizeValueType(valueType) {
+    return String(valueType || "").trim().toLowerCase();
+  }
+
+  buildTypedRuleValues(ruleDefinition, rawValue) {
+    const normalizedValueType = this.normalizeValueType(ruleDefinition?.value_type);
+
+    if (normalizedValueType === "time" || normalizedValueType === "text") {
+      return {
+        value: false,
+        value_new: rawValue == null ? null : String(rawValue),
+      };
+    }
+
+    return {
+      value: rawValue === true || String(rawValue).trim().toLowerCase() === "true",
+      value_new: null,
+    };
+  }
+
   async getRuleById(id) {
     const client = await Database.getInstance();
     const result = await client
@@ -25,7 +45,25 @@ export class PropertyRuleRepository {
       .createQueryBuilder("property_rule")
       .where("property_id = :id", { id: id })
       .getMany();
-    return result.length > 0 ? result.map((item) => RuleMapping.mapDatabaseEntryToRule(item)) : [];
+    if (result.length === 0) {
+      return [];
+    }
+
+    const ruleDefinitions = await client
+      .getRepository(Rules)
+      .createQueryBuilder("rules")
+      .where("rules.rule IN (:...ruleNames)", { ruleNames: result.map((item) => item.rule) })
+      .getMany();
+    const ruleDefinitionMap = new Map(
+      ruleDefinitions.map((ruleDefinition) => [String(ruleDefinition.rule), ruleDefinition])
+    );
+
+    return result.map((item) =>
+      RuleMapping.mapDatabaseEntryToRule({
+        ...item,
+        value_type: ruleDefinitionMap.get(String(item.rule))?.value_type,
+      })
+    );
   }
 
   async getRuleByPropertyIdAndRule(id, rule) {
@@ -41,6 +79,12 @@ export class PropertyRuleRepository {
 
   async create(rule) {
     const client = await Database.getInstance();
+    const ruleDefinition = await this.getRuleById(rule.rule);
+    if (!ruleDefinition) {
+      throw new Error(`Unknown policy rule: ${rule.rule}`);
+    }
+    const typedValues = this.buildTypedRuleValues(ruleDefinition, rule.value);
+
     await client
       .createQueryBuilder()
       .insert()
@@ -48,11 +92,54 @@ export class PropertyRuleRepository {
       .values({
         property_id: rule.property_id,
         rule: rule.rule,
-        value: rule.value,
+        ...typedValues,
       })
       .execute();
     const result = await this.getRuleByPropertyIdAndRule(rule.property_id, rule.rule);
     return result ? result : null;
+  }
+
+  async upsertRuleByPropertyId(propertyId, ruleName, rawValue, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
+    const ruleDefinition = await client
+      .getRepository(Rules)
+      .createQueryBuilder("rules")
+      .where("rules.rule = :rule", { rule: ruleName })
+      .getOne();
+
+    if (!ruleDefinition) {
+      throw new Error(`Unknown policy rule: ${ruleName}`);
+    }
+
+    const typedValues = this.buildTypedRuleValues(ruleDefinition, rawValue);
+    const existingRule = await client
+      .getRepository(Property_Rule)
+      .createQueryBuilder("property_rule")
+      .where("property_rule.property_id = :propertyId", { propertyId })
+      .andWhere("property_rule.rule = :rule", { rule: ruleName })
+      .getOne();
+
+    if (existingRule) {
+      await client
+        .createQueryBuilder()
+        .update(Property_Rule)
+        .set(typedValues)
+        .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
+        .execute();
+    } else {
+      await client
+        .createQueryBuilder()
+        .insert()
+        .into(Property_Rule)
+        .values({
+          property_id: propertyId,
+          rule: ruleName,
+          ...typedValues,
+        })
+        .execute();
+    }
+
+    return await this.getRuleByPropertyIdAndRule(propertyId, ruleName);
   }
 
   async replaceRulesByPropertyId(propertyId, rules) {
@@ -75,35 +162,47 @@ export class PropertyRuleRepository {
         const existingRuleMappings = await transactionManager
           .getRepository(Rules)
           .createQueryBuilder("rules")
-          .select(["rules.rule"])
+          .select(["rules.rule", "rules.value_type"])
           .where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames })
           .getMany();
-        const existingRuleNameSet = new Set(existingRuleMappings.map((rule) => String(rule.rule)));
+        const ruleDefinitionMap = new Map(
+          existingRuleMappings.map((ruleDefinition) => [String(ruleDefinition.rule), ruleDefinition])
+        );
+        const existingRuleNameSet = new Set(ruleDefinitionMap.keys());
         const invalidRuleNames = normalizedRuleNames.filter((ruleName) => !existingRuleNameSet.has(ruleName));
         if (invalidRuleNames.length > 0) {
           throw new Error(`Unknown policy rules: ${invalidRuleNames.join(", ")}`);
         }
 
-        await transactionManager
-          .createQueryBuilder()
-          .delete()
-          .from(Property_Rule)
-          .where("property_id = :propertyId", { propertyId })
-          .andWhere("rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames })
-          .execute();
+        for (const rule of normalizedRules) {
+          const typedValues = this.buildTypedRuleValues(ruleDefinitionMap.get(rule.rule), rule.value);
+          const existingRule = await transactionManager
+            .getRepository(Property_Rule)
+            .createQueryBuilder("property_rule")
+            .where("property_rule.property_id = :propertyId", { propertyId })
+            .andWhere("property_rule.rule = :rule", { rule: rule.rule })
+            .getOne();
 
-        await transactionManager
-          .createQueryBuilder()
-          .insert()
-          .into(Property_Rule)
-          .values(
-            normalizedRules.map((rule) => ({
-              property_id: propertyId,
-              rule: rule.rule,
-              value: rule.value,
-            }))
-          )
-          .execute();
+          if (existingRule) {
+            await transactionManager
+              .createQueryBuilder()
+              .update(Property_Rule)
+              .set(typedValues)
+              .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: rule.rule })
+              .execute();
+          } else {
+            await transactionManager
+              .createQueryBuilder()
+              .insert()
+              .into(Property_Rule)
+              .values({
+                property_id: propertyId,
+                rule: rule.rule,
+                ...typedValues,
+              })
+              .execute();
+          }
+        }
       }
 
       const updatedRules = await transactionManager
@@ -112,7 +211,25 @@ export class PropertyRuleRepository {
         .where("property_id = :id", { id: propertyId })
         .getMany();
 
-      return updatedRules.length > 0 ? updatedRules.map((item) => RuleMapping.mapDatabaseEntryToRule(item)) : [];
+      if (updatedRules.length === 0) {
+        return [];
+      }
+
+      const ruleDefinitions = await transactionManager
+        .getRepository(Rules)
+        .createQueryBuilder("rules")
+        .where("rules.rule IN (:...ruleNames)", { ruleNames: updatedRules.map((item) => item.rule) })
+        .getMany();
+      const ruleDefinitionMap = new Map(
+        ruleDefinitions.map((ruleDefinition) => [String(ruleDefinition.rule), ruleDefinition])
+      );
+
+      return updatedRules.map((item) =>
+        RuleMapping.mapDatabaseEntryToRule({
+          ...item,
+          value_type: ruleDefinitionMap.get(String(item.rule))?.value_type,
+        })
+      );
     });
   }
 }

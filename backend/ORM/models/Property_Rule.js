@@ -17,6 +17,11 @@ export const Property_Rule = new EntitySchema({
       nullable: false,
     },
     value: {
+      type: "boolean",
+      nullable: false,
+      default: false,
+    },
+    value_new: {
       type: "varchar",
       nullable: true,
     },
