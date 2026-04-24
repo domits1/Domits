@@ -77,6 +77,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
+import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 Modal.setAppElement("#root");
@@ -109,11 +110,13 @@ function App() {
   }, []);
 
   const currentPath = window.location.pathname;
+  const isWebsitePreviewPath = currentPath.startsWith("/website-preview");
 
   const renderFooter = () => {
     if (
       ["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(currentPath) ||
-      currentPath.startsWith("/verify")
+      currentPath.startsWith("/verify") ||
+      isWebsitePreviewPath
     ) {
       return null;
     }
@@ -121,7 +124,7 @@ function App() {
   };
 
   const renderChatWidget = () => {
-    if (currentPath.startsWith("/verify")) {
+    if (currentPath.startsWith("/verify") || isWebsitePreviewPath) {
       return null;
     }
     return <ChatWidget />;
@@ -152,7 +155,9 @@ function App() {
           <AuthProvider>
             <UserProvider>
               <div className="App" aria-busy={loading}>
-                {currentPath !== "/admin" && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
+                {currentPath !== "/admin" && !isWebsitePreviewPath && (
+                  <Header setSearchResults={setSearchResults} setLoading={setLoading} />
+                )}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} />} />
                   <Route path="/" element={<Homepage />} />
@@ -175,6 +180,7 @@ function App() {
                   <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/security" element={<Security />} />
+                  <Route path="/website-preview/:draftId" element={<WebsitePublicPreviewPage />} />
 
                   {/* Chat */}
                   {/*<Route path="/chat" element={<Chat/>}/>*/}
@@ -255,7 +261,7 @@ function App() {
                   <Route path="/*" element={<PageNotFound />} />
                 </Routes>
                 {renderFooter()}
-                {currentPath !== "/admin" && <MenuBar />}
+                {currentPath !== "/admin" && !isWebsitePreviewPath && <MenuBar />}
                 {renderChatWidget()}
               </div>
             </UserProvider>
