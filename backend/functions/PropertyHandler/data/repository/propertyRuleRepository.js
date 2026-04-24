@@ -2,45 +2,41 @@ import { RuleMapping } from "../../util/mapping/rule.js";
 import Database from "database";
 import { Property_Rule } from "database/models/Property_Rule";
 
+const RULE_VALUE_TYPE_OVERRIDES = Object.freeze({
+  "CancellationPolicy:Firm": "text",
+  "CancellationPolicy:Flexible": "text",
+  "CancellationPolicy:Moderate": "text",
+  "CancellationPolicy:Strict": "text",
+  CheckInFrom: "time",
+  CheckInTill: "time",
+  CheckOutFrom: "time",
+  CheckOutTill: "time",
+  LateCheckinEnabled: "boolean",
+  LateCheckinTime: "time",
+  LateCheckoutEnabled: "boolean",
+  LateCheckoutTime: "time",
+});
+
 export class PropertyRuleRepository {
   constructor(dynamoDbClient, systemManager) {
     this.systemManager = systemManager;
-    this.columnCache = new Map();
-  }
-
-  async getTableColumns(client, tableName) {
-    const cacheKey = tableName;
-    if (this.columnCache.has(cacheKey)) {
-      return this.columnCache.get(cacheKey);
-    }
-
-    const rows = await client.query(
-      `
-        SELECT column_name
-        FROM information_schema.columns
-        WHERE table_name = $1
-      `,
-      [tableName]
-    );
-    const columnSet = new Set(rows.map((row) => String(row.column_name)));
-    this.columnCache.set(cacheKey, columnSet);
-    return columnSet;
+    this.propertyRuleHasValueNew = undefined;
   }
 
   normalizeValueType(valueType) {
     return String(valueType || "").trim().toLowerCase();
   }
 
-  async getRuleDefinitionColumns(client) {
-    return await this.getTableColumns(client, "rules");
-  }
-
-  async getPropertyRuleColumns(client) {
-    return await this.getTableColumns(client, "property_rule");
+  resolveRuleValueType(ruleName, valueType) {
+    const normalizedValueType = this.normalizeValueType(valueType);
+    if (normalizedValueType) {
+      return normalizedValueType;
+    }
+    return this.normalizeValueType(RULE_VALUE_TYPE_OVERRIDES[String(ruleName)] || "");
   }
 
   buildTypedRuleValues(ruleDefinition, rawValue) {
-    const normalizedValueType = this.normalizeValueType(ruleDefinition?.value_type);
+    const normalizedValueType = this.resolveRuleValueType(ruleDefinition?.rule, ruleDefinition?.value_type);
 
     if (normalizedValueType === "time" || normalizedValueType === "text") {
       return {
@@ -55,24 +51,39 @@ export class PropertyRuleRepository {
     };
   }
 
-  sanitizePropertyRuleValues(typedValues, propertyRuleColumns) {
-    const sanitizedValues = { value: typedValues.value };
-
-    if (propertyRuleColumns.has("value_new")) {
-      sanitizedValues.value_new = typedValues.value_new ?? null;
-    }
-
-    return sanitizedValues;
-  }
-
   mapPropertyRuleRow(row, ruleDefinitionMap) {
     return RuleMapping.mapDatabaseEntryToRule({
       property_id: row.property_id,
       rule: row.rule,
       value: row.value === true || row.value === "true",
       value_new: row.value_new ?? null,
-      value_type: ruleDefinitionMap.get(String(row.rule))?.value_type,
+      value_type: this.resolveRuleValueType(row.rule, ruleDefinitionMap.get(String(row.rule))?.value_type),
     });
+  }
+
+  async detectValueNewSupport(client) {
+    if (this.propertyRuleHasValueNew !== undefined) {
+      return this.propertyRuleHasValueNew;
+    }
+
+    if (typeof client.createQueryBuilder !== "function") {
+      this.propertyRuleHasValueNew = false;
+      return this.propertyRuleHasValueNew;
+    }
+
+    try {
+      await client
+        .createQueryBuilder()
+        .select("property_rule.value_new", "value_new")
+        .from("property_rule", "property_rule")
+        .where("1 = 0")
+        .getRawMany();
+      this.propertyRuleHasValueNew = true;
+    } catch {
+      this.propertyRuleHasValueNew = false;
+    }
+
+    return this.propertyRuleHasValueNew;
   }
 
   async getRuleDefinitionsByNames(client, ruleNames) {
@@ -81,49 +92,99 @@ export class PropertyRuleRepository {
       return new Map();
     }
 
-    const ruleDefinitionColumns = await this.getRuleDefinitionColumns(client);
-    const query = client
-      .createQueryBuilder()
-      .select("rules.rule", "rule")
-      .from("rules", "rules")
-      .where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames });
+    if (typeof client.createQueryBuilder === "function") {
+      try {
+        const rows = await client
+          .createQueryBuilder()
+          .select("rules.rule", "rule")
+          .addSelect("rules.value_type", "value_type")
+          .from("rules", "rules")
+          .where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames })
+          .getRawMany();
 
-    if (ruleDefinitionColumns.has("value_type")) {
-      query.addSelect("rules.value_type", "value_type");
+        return new Map(
+          rows.map((row) => [
+            String(row.rule),
+            {
+              rule: row.rule,
+              value_type: this.resolveRuleValueType(row.rule, row.value_type),
+            },
+          ])
+        );
+      } catch {
+        const rows = await client
+          .createQueryBuilder()
+          .select("rules.rule", "rule")
+          .from("rules", "rules")
+          .where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames })
+          .getRawMany();
+
+        return new Map(
+          rows.map((row) => [
+            String(row.rule),
+            {
+              rule: row.rule,
+              value_type: this.resolveRuleValueType(row.rule),
+            },
+          ])
+        );
+      }
     }
 
-    const rows = await query.getRawMany();
-    return new Map(
-      rows.map((row) => [
-        String(row.rule),
-        {
-          rule: row.rule,
-          value_type: row.value_type,
-        },
-      ])
-    );
+    const rows = await Promise.all(normalizedRuleNames.map(async (ruleName) => await this.getRuleById(ruleName)));
+    return new Map(rows.filter(Boolean).map((row) => [String(row.rule), row]));
   }
 
   async getRuleById(id) {
     const client = await Database.getInstance();
-    const ruleDefinitionColumns = await this.getRuleDefinitionColumns(client);
-    const query = client
-      .createQueryBuilder()
-      .select("rules.rule", "rule")
-      .from("rules", "rules")
-      .where("rules.rule = :id", { id });
 
-    if (ruleDefinitionColumns.has("value_type")) {
-      query.addSelect("rules.value_type", "value_type");
+    if (typeof client.createQueryBuilder === "function") {
+      try {
+        const row = await client
+          .createQueryBuilder()
+          .select("rules.rule", "rule")
+          .addSelect("rules.value_type", "value_type")
+          .from("rules", "rules")
+          .where("rules.rule = :id", { id })
+          .getRawOne();
+
+        return row
+          ? {
+              rule: row.rule,
+              value_type: this.resolveRuleValueType(row.rule, row.value_type),
+            }
+          : null;
+      } catch {
+        const row = await client
+          .createQueryBuilder()
+          .select("rules.rule", "rule")
+          .from("rules", "rules")
+          .where("rules.rule = :id", { id })
+          .getRawOne();
+
+        return row
+          ? {
+              rule: row.rule,
+              value_type: this.resolveRuleValueType(row.rule),
+            }
+          : null;
+      }
     }
 
-    const row = await query.getRawOne();
-    return row ? row : null;
+    const repository = client.getRepository?.("rules") || client.getRepository?.(Property_Rule);
+    const result = await repository?.createQueryBuilder?.("rules").where("rule = :id", { id }).getOne();
+    return result
+      ? {
+          rule: result.rule ?? id,
+          value_type: this.resolveRuleValueType(result.rule ?? id, result.value_type),
+        }
+      : null;
   }
 
   async getRulesByPropertyId(id) {
     const client = await Database.getInstance();
-    const propertyRuleColumns = await this.getPropertyRuleColumns(client);
+    const supportsValueNew = await this.detectValueNewSupport(client);
+
     const query = client
       .createQueryBuilder()
       .select("property_rule.property_id", "property_id")
@@ -132,7 +193,7 @@ export class PropertyRuleRepository {
       .from("property_rule", "property_rule")
       .where("property_rule.property_id = :id", { id });
 
-    if (propertyRuleColumns.has("value_new")) {
+    if (supportsValueNew) {
       query.addSelect("property_rule.value_new", "value_new");
     }
 
@@ -141,17 +202,14 @@ export class PropertyRuleRepository {
       return [];
     }
 
-    const ruleDefinitionMap = await this.getRuleDefinitionsByNames(
-      client,
-      rows.map((row) => row.rule)
-    );
-
+    const ruleDefinitionMap = await this.getRuleDefinitionsByNames(client, rows.map((row) => row.rule));
     return rows.map((row) => this.mapPropertyRuleRow(row, ruleDefinitionMap));
   }
 
   async getRuleByPropertyIdAndRule(id, rule) {
     const client = await Database.getInstance();
-    const propertyRuleColumns = await this.getPropertyRuleColumns(client);
+    const supportsValueNew = await this.detectValueNewSupport(client);
+
     const query = client
       .createQueryBuilder()
       .select("property_rule.property_id", "property_id")
@@ -161,7 +219,7 @@ export class PropertyRuleRepository {
       .where("property_rule.property_id = :id", { id })
       .andWhere("property_rule.rule = :rule", { rule });
 
-    if (propertyRuleColumns.has("value_new")) {
+    if (supportsValueNew) {
       query.addSelect("property_rule.value_new", "value_new");
     }
 
@@ -181,45 +239,42 @@ export class PropertyRuleRepository {
       throw new Error(`Unknown policy rule: ${rule.rule}`);
     }
 
-    const propertyRuleColumns = await this.getPropertyRuleColumns(client);
-    const sanitizedValues = this.sanitizePropertyRuleValues(
-      this.buildTypedRuleValues(ruleDefinition, rule.value),
-      propertyRuleColumns
-    );
+    const typedValues = this.buildTypedRuleValues(ruleDefinition, rule.value);
+    const valuesToInsert = {
+      property_id: rule.property_id,
+      rule: rule.rule,
+      value: typedValues.value,
+    };
 
-    await client
-      .createQueryBuilder()
-      .insert()
-      .into(Property_Rule)
-      .values({
-        property_id: rule.property_id,
-        rule: rule.rule,
-        ...sanitizedValues,
-      })
-      .execute();
+    if (await this.detectValueNewSupport(client)) {
+      valuesToInsert.value_new = typedValues.value_new;
+    }
+
+    await client.createQueryBuilder().insert().into(Property_Rule).values(valuesToInsert).execute();
     return await this.getRuleByPropertyIdAndRule(rule.property_id, rule.rule);
   }
 
   async upsertRuleByPropertyId(propertyId, ruleName, rawValue, transactionManager = null) {
     const client = transactionManager || (await Database.getInstance());
-    const propertyRuleColumns = await this.getPropertyRuleColumns(client);
     const ruleDefinition = await this.getRuleById(ruleName);
 
     if (!ruleDefinition) {
       throw new Error(`Unknown policy rule: ${ruleName}`);
     }
 
-    const typedValues = this.sanitizePropertyRuleValues(
-      this.buildTypedRuleValues(ruleDefinition, rawValue),
-      propertyRuleColumns
-    );
+    const typedValues = this.buildTypedRuleValues(ruleDefinition, rawValue);
+    const valuesToPersist = { value: typedValues.value };
+    if (await this.detectValueNewSupport(client)) {
+      valuesToPersist.value_new = typedValues.value_new;
+    }
+
     const existingRule = await this.getRuleByPropertyIdAndRule(propertyId, ruleName);
 
     if (existingRule) {
       await client
         .createQueryBuilder()
         .update(Property_Rule)
-        .set(typedValues)
+        .set(valuesToPersist)
         .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
         .execute();
     } else {
@@ -230,7 +285,7 @@ export class PropertyRuleRepository {
         .values({
           property_id: propertyId,
           rule: ruleName,
-          ...typedValues,
+          ...valuesToPersist,
         })
         .execute();
     }
@@ -254,32 +309,34 @@ export class PropertyRuleRepository {
 
     return await client.transaction(async (transactionManager) => {
       if (normalizedRules.length > 0) {
-        const propertyRuleColumns = await this.getPropertyRuleColumns(transactionManager);
         const ruleDefinitionMap = await this.getRuleDefinitionsByNames(
           transactionManager,
           normalizedRules.map((rule) => rule.rule)
         );
-        const existingRuleNameSet = new Set(ruleDefinitionMap.keys());
         const invalidRuleNames = normalizedRules
           .map((rule) => rule.rule)
-          .filter((ruleName) => !existingRuleNameSet.has(ruleName));
+          .filter((ruleName) => !ruleDefinitionMap.has(ruleName));
 
         if (invalidRuleNames.length > 0) {
           throw new Error(`Unknown policy rules: ${invalidRuleNames.join(", ")}`);
         }
 
+        const supportsValueNew = await this.detectValueNewSupport(transactionManager);
+
         for (const rule of normalizedRules) {
-          const typedValues = this.sanitizePropertyRuleValues(
-            this.buildTypedRuleValues(ruleDefinitionMap.get(rule.rule), rule.value),
-            propertyRuleColumns
-          );
+          const typedValues = this.buildTypedRuleValues(ruleDefinitionMap.get(rule.rule), rule.value);
+          const valuesToPersist = { value: typedValues.value };
+          if (supportsValueNew) {
+            valuesToPersist.value_new = typedValues.value_new;
+          }
+
           const existingRule = await this.getRuleByPropertyIdAndRule(propertyId, rule.rule);
 
           if (existingRule) {
             await transactionManager
               .createQueryBuilder()
               .update(Property_Rule)
-              .set(typedValues)
+              .set(valuesToPersist)
               .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: rule.rule })
               .execute();
           } else {
@@ -290,7 +347,7 @@ export class PropertyRuleRepository {
               .values({
                 property_id: propertyId,
                 rule: rule.rule,
-                ...typedValues,
+                ...valuesToPersist,
               })
               .execute();
           }
