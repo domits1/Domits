@@ -171,7 +171,6 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
           type="submit"
           disabled={isSubmitting}
           variants={fadeUp}
-          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.97 }}
         >
           {isSubmitting ? content.sending : content.submit}

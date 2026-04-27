@@ -28,7 +28,7 @@ function HeroSection({ landingContent }) {
         <motion.div className="hero__content" variants={fadeUp}>
 
           <motion.div className="hero__badge" variants={fadeUp}>
-            <span className="dot"></span>
+            <span className="dot"></span>{" "}
             Trusted by many hosts
           </motion.div>
 
