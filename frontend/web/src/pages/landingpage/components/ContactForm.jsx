@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import PropTypes from "prop-types";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import "../../../styles/sass/pages/landingpage/components/_contactForm.scss";
 
@@ -180,6 +181,20 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
 
     </motion.div>
   );
+};
+
+
+
+ContactForm.propTypes = {
+  content: PropTypes.shape({
+    title: PropTypes.string,
+    description: PropTypes.string,
+  }),
+  formData: PropTypes.object,
+  isSubmitting: PropTypes.bool,
+  feedbackMessage: PropTypes.string,
+  onChange: PropTypes.func,
+  onSubmit: PropTypes.func,
 };
 
 export default ContactForm;

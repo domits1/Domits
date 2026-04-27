@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import PropTypes from "prop-types";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import FaqItem from "./FaqItem";
 
@@ -20,7 +21,7 @@ function FaqSection({ faqs, toggleOpen }) {
 
         <motion.div className="faq-landing__list" variants={staggerContainer}>
           {faqs.map((faq, index) => (
-            <motion.div key={index} variants={fadeUp}>
+            <motion.div key={faq.id || faq.question} variants={fadeUp}>
               <FaqItem
                 question={faq.question}
                 answer={faq.answer}
@@ -35,5 +36,10 @@ function FaqSection({ faqs, toggleOpen }) {
     </motion.section>
   );
 }
+
+FaqSection.propTypes = {
+  faqs: PropTypes.arrayOf(PropTypes.object),
+  toggleOpen: PropTypes.func,
+};
 
 export default FaqSection;

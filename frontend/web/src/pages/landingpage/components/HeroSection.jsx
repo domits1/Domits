@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import { Banknote, ShieldCheck, Phone, BadgeCheck } from "lucide-react";
@@ -160,5 +161,14 @@ function HeroSection({ landingContent }) {
     </section>
   );
 }
+
+HeroSection.propTypes = {
+  landingContent: PropTypes.shape({
+    secure: PropTypes.object,
+    verified: PropTypes.object,
+    quick: PropTypes.object,
+    guarantee: PropTypes.object,
+  }),
+};
 
 export default HeroSection;

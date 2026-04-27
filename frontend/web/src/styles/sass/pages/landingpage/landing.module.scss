@@ -54,7 +54,7 @@ section + section {
 
 .section-description {
   font-size: 16px;
-  color: #6b7280;
+  color: #374151;
   max-width: 600px;
   margin: 0 auto;
 }
@@ -103,7 +103,7 @@ section + section {
 .hero__badge .dot {
   width: 6px;
   height: 6px;
-  background: #16a34a;
+  background: #15803d;
   border-radius: 50%;
 }
 
@@ -115,12 +115,12 @@ section + section {
 }
 
 .hero__title span {
-  color: #16a34a;
+  color: #15803d;
 }
 
 .hero__description {
   font-size: 17px;
-  color: #6b7280;
+  color: #374151;
   max-width: 520px;
   margin-bottom: 40px;
   line-height: 2;
@@ -147,7 +147,7 @@ section + section {
 
 .hero__stats span {
   font-size: 15px;
-  color: #6b7280;
+  color: #374151;
 }
 
 .hero__integrations {
@@ -156,7 +156,7 @@ section + section {
 
 .hero__integrations span {
   font-size: 14px;
-  color: #6b7280;
+  color: #374151;
 }
 
 .hero__logos {
@@ -301,7 +301,7 @@ section + section {
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: #6b7280;
+  color: #374151;
 }
 
 .hero__proof svg {
@@ -602,16 +602,6 @@ box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   box-shadow: 0 15px 30px rgba(0,0,0,0.15);
 }
 
-.checklist__item h4 {
-  margin-bottom: 5px;
-  font-size: 16px;
-}
-
-.checklist__item p {
-  font-size: 14px;
-  color: #555;
-}
-
 .checklist__cta {
   background: linear-gradient(135deg, #10b981, #065f46);
   padding: 30px;
@@ -650,7 +640,7 @@ box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .register__subtitle {
-  color: #6b7280;
+  color: #374151;
   margin-bottom: 60px;
 }
 
@@ -697,7 +687,7 @@ box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
 .register__card p {
   font-size: 14px;
-  color: #6b7280;
+  color: #374151;
 }
 
 .register__cta {
@@ -931,7 +921,7 @@ box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
 .features__card p {
   font-size: 14px;
-  color: #6b7280;
+  color: #374151;
 }
 
 .features__card:hover .features__icon {
@@ -1307,15 +1297,12 @@ width: 100%;
 .contact-section .contact-section__right form {
 width: 100%;
 max-width: 100%;
+grid-template-columns: 1fr;
+gap: 16px;
 }
 
 .contact-section .contact-section__right * {
 max-width: 100%;
-}
-
-.contact-section .contact-section__right form {
-grid-template-columns: 1fr;
-gap: 16px;
 }
 
 .contact-section .contact-section__right form > div {

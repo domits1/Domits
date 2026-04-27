@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import PropTypes from "prop-types";
 import { fadeUp, staggerContainer } from "../utils/animations";
 
 function StepsSection({ landingContent }) {
@@ -51,5 +52,25 @@ function StepsSection({ landingContent }) {
     </motion.section>
   );
 }
+
+
+StepsSection.propTypes = {
+  landingContent: PropTypes.shape({
+    hosting: PropTypes.shape({
+      first: PropTypes.shape({
+        title: PropTypes.string,
+        description: PropTypes.string,
+      }),
+      second: PropTypes.shape({
+        title: PropTypes.string,
+        description: PropTypes.string,
+      }),
+      third: PropTypes.shape({
+        title: PropTypes.string,
+        description: PropTypes.string,
+      }),
+    }),
+  }),
+};
 
 export default StepsSection;
