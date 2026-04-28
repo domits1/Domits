@@ -161,12 +161,12 @@
 
 .sectionToggleIcon {
   flex: 0 0 auto;
-  color: #47678a;
-  transition: transform 0.15s ease;
-}
-
-.sectionToggleOpen .sectionToggleIcon {
-  transform: rotate(180deg);
+  width: 18px;
+  height: 18px;
+  display: block;
+  opacity: 0.82;
+  filter: brightness(0) saturate(100%) invert(39%) sepia(12%) saturate(744%) hue-rotate(170deg)
+    brightness(93%) contrast(88%);
 }
 
 .panelSectionBody {

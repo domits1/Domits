@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
 import PropTypes from "prop-types";
@@ -34,6 +33,8 @@ import {
   getImageSlotTargetId,
 } from "./websiteEditorConfig";
 import styles from "./WebsiteEditorPage.module.scss";
+import arrowDownIcon from "../../../images/arrow-down-icon.svg";
+import arrowUpIcon from "../../../images/arrow-up-icon.svg";
 
 const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
 
@@ -180,6 +181,8 @@ function CollapsibleSection({
   sectionRef = null,
   children,
 }) {
+  const toggleIcon = isOpen ? arrowUpIcon : arrowDownIcon;
+
   return (
     <section
       ref={sectionRef}
@@ -187,7 +190,7 @@ function CollapsibleSection({
     >
       <button
         type="button"
-        className={`${styles.sectionToggle} ${isOpen ? styles.sectionToggleOpen : ""}`.trim()}
+        className={styles.sectionToggle}
         onClick={() => onToggle(sectionId)}
         aria-expanded={isOpen}
       >
@@ -195,7 +198,12 @@ function CollapsibleSection({
           <h3 className={styles.sectionBlockTitle}>{title}</h3>
           <p className={styles.sectionBlockDescription}>{description}</p>
         </div>
-        <KeyboardArrowDownOutlinedIcon className={styles.sectionToggleIcon} />
+        <img
+          src={toggleIcon}
+          alt=""
+          aria-hidden="true"
+          className={styles.sectionToggleIcon}
+        />
       </button>
 
       <div
