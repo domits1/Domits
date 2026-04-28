@@ -1,5 +1,5 @@
 .kpi-card {
-  width: 300px;
+  width: 360px;
   padding: 20px;
   margin: 20px auto;
   border: 1px solid #ddd;
@@ -7,7 +7,8 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: #f9f9f9;
   text-align: center;
-  height: 450px;
+  min-height: 560px;
+  height: 560px;
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -73,8 +74,8 @@
   .custom-date-filter {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin: 10px 0;
+    gap: 14px;
+    margin: 10px 0 16px;
     flex-wrap: wrap;
 
     div {
@@ -94,7 +95,7 @@
       border: 2px solid #eef2f7;
       border-radius: 50px;
       padding: 8px 14px;
-      width: 160px;
+      width: 150px;
       text-align: center;
       font-size: 14px;
       color: #333;
@@ -113,7 +114,7 @@
       }
     }
   }
-  
+
   .kpi-body {
     flex: 1;
     display: flex;
@@ -121,16 +122,16 @@
     justify-content: flex-start;
   }
 }
-/* Force KPI cards to be consistent in size */
+
 .kpi-card,
 .booked-nights-card,
 .or-occupancy-rate-card,
 .alos-card,
 .adr-card,
 .revpar-card {
-  width: 300px !important;
-  height: 460px !important;
-  min-height: 460px !important;
+  width: 360px !important;
+  min-height: 560px !important;
+  height: 560px !important;
   display: flex;
   flex-direction: column;
 }

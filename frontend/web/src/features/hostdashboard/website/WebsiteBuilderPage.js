@@ -1,16 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import LanguageIcon from "@mui/icons-material/Language";
 import HomeIcon from "@mui/icons-material/Home";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import styles from "./WebsiteBuilderPage.module.scss";
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
+import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import arrowLeftIcon from "../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../images/arrow-right-icon.svg";
 import TemplateSilhouette from "./TemplateSilhouette";
 import { WEBSITE_TEMPLATE_OPTIONS, getWebsiteTemplateById } from "./websiteTemplates";
+import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
+import { isWebsiteTemplateImplemented } from "./rendering/templateRegistry";
+import {
+  PREVIEW_BUILD_STEPS,
+  PREVIEW_STAGE,
+  runWebsitePreviewBuildWorkflow,
+} from "./services/websitePreviewWorkflow";
+import {
+  deleteWebsiteDraft,
+  fetchWebsiteDrafts,
+  upsertWebsiteDraft,
+} from "./services/websiteDraftService";
+import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
+import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
+import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
+import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
+const PREVIEW_BUILD_STEP_KEYS = PREVIEW_BUILD_STEPS.map((step) => step.key);
 
 const PROPERTY_STATUS_LABELS = {
   ACTIVE: "Live",
@@ -19,6 +39,18 @@ const PROPERTY_STATUS_LABELS = {
 };
 
 const SUMMARY_DESCRIPTION_WORD_LIMIT = 23;
+const WORKSPACE_TAB_BUILDER = "builder";
+const WORKSPACE_TAB_WEBSITES = "websites";
+const DELETE_WEBSITE_DRAFT_STEP_REASON = "reason";
+const DELETE_WEBSITE_DRAFT_STEP_CONFIRM = "confirm";
+const WEBSITE_DRAFT_DELETE_REASONS = Object.freeze([
+  "I no longer need this website.",
+  "I built it for the wrong listing.",
+  "The imported content does not look right.",
+  "I want to try a different template.",
+  "I prefer to manage bookings without a standalone website.",
+  "Other",
+]);
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
@@ -44,6 +76,18 @@ const getImportedPhotoSummary = (importedImageCount, emptyLabel = "No photos imp
   return `${importedImageCount} photo${importedImageCount === 1 ? "" : "s"} imported`;
 };
 
+const getPropertySelectPlaceholder = ({ isLoading, isLoadingWebsiteDrafts }) => {
+  if (isLoading) {
+    return "Loading your listings...";
+  }
+
+  if (isLoadingWebsiteDrafts) {
+    return "Checking website availability...";
+  }
+
+  return "Choose a listing";
+};
+
 const getGalleryAnimationClassName = (direction) => {
   if (direction === "forward") {
     return styles.galleryAnimatedImageForward;
@@ -63,7 +107,361 @@ const getPhotoCardClassName = (photoIndex) => {
   return `${styles.photoCard} ${variantClassName}`.trim();
 };
 
+const getDraftContentOverrides = (draft) =>
+  draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
+
+const getDraftPublishedContentOverrides = (draft) =>
+  draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object"
+    ? draft.publishedContentOverrides
+    : {};
+
+const getDraftDisplayTitle = (draft, contentOverrides = getDraftContentOverrides(draft)) => {
+  return (
+    String(contentOverrides.siteTitle || "").trim() ||
+    String(draft?.propertyTitle || "").trim() ||
+    "Untitled listing website"
+  );
+};
+
+const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
+
+const buildImageVariantMap = (images) => {
+  const imageVariantMap = new Map();
+  (Array.isArray(images) ? images : []).forEach((image) => {
+    const thumbUrl = resolveAccommodationImageUrl(image, "thumb");
+    const webUrl = resolveAccommodationImageUrl(image, "web");
+
+    if (thumbUrl && thumbUrl !== placeholderImage) {
+      imageVariantMap.set(thumbUrl, thumbUrl);
+      if (webUrl && webUrl !== placeholderImage) {
+        imageVariantMap.set(webUrl, thumbUrl);
+      }
+    }
+  });
+  return imageVariantMap;
+};
+
+const mapImageOverridesToThumbnails = (contentOverrides, imageVariantMap) => {
+  if (!contentOverrides || typeof contentOverrides !== "object" || imageVariantMap.size < 1) {
+    return contentOverrides || {};
+  }
+
+  const nextOverrides = { ...contentOverrides };
+  if (nextOverrides.heroImage) {
+    nextOverrides.heroImage = imageVariantMap.get(nextOverrides.heroImage) || nextOverrides.heroImage;
+  }
+
+  if (Array.isArray(nextOverrides.galleryImages)) {
+    nextOverrides.galleryImages = nextOverrides.galleryImages.map(
+      (imageUrl) => imageVariantMap.get(imageUrl) || imageUrl
+    );
+  }
+
+  return nextOverrides;
+};
+
+const formatDraftUpdatedAt = (updatedAt) => {
+  const parsedValue = Number(updatedAt);
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    return "Unknown update time";
+  }
+
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(parsedValue));
+  } catch {
+    return "Unknown update time";
+  }
+};
+
+const buildDraftCardFallbackPreviewModel = (draft) => {
+  const contentOverrides = getDraftPublishedContentOverrides(draft);
+  const locationLabel = String(draft?.location || "").trim();
+  const title = getDraftDisplayTitle(draft, contentOverrides);
+  const subtitle = String(draft?.propertySubtitle || "").trim();
+  const selectedGalleryImages = Array.isArray(contentOverrides.galleryImages)
+    ? contentOverrides.galleryImages.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)
+    : [];
+  const heroImage = String(contentOverrides.heroImage || selectedGalleryImages[0] || placeholderImage).trim();
+  const galleryImages = [heroImage, ...selectedGalleryImages].filter(Boolean).slice(0, 5);
+  const normalizedGalleryImages = galleryImages.length > 0 ? galleryImages : [placeholderImage];
+  const previewImages = normalizedGalleryImages.slice(0, 3);
+
+  return applyWebsiteDraftContentOverrides(
+    {
+      source: {
+        propertyId: String(draft?.propertyId || "").trim(),
+        hostId: String(draft?.hostId || "").trim(),
+        status: String(draft?.propertyStatus || draft?.status || "DRAFT").trim(),
+        locale: "en",
+      },
+      site: {
+        title,
+        subtitle,
+        templateReadyTitle: title,
+        locationLabel,
+      },
+      media: {
+        heroImage,
+        galleryImages: normalizedGalleryImages,
+        previewImages,
+        featuredGalleryImages: normalizedGalleryImages,
+      },
+      hero: {
+        eyebrow: locationLabel || "Saved website draft",
+        title,
+        subtitle,
+        description: subtitle || "Saved website preview for this selected listing.",
+        imageUrl: heroImage,
+      },
+      stay: {
+        propertyTypeLabel: "",
+        guests: 0,
+        bedrooms: 0,
+        beds: 0,
+        bathrooms: 0,
+        guestsLabel: "",
+        bedroomsLabel: "",
+        bedsLabel: "",
+        bathroomsLabel: "",
+        nightlyRate: 0,
+        nightlyRateLabel: "",
+        minimumStay: 0,
+        minimumStayLabel: "",
+        checkInLabel: "",
+        checkOutLabel: "",
+        stats: [],
+      },
+      location: {
+        city: "",
+        country: "",
+        label: locationLabel,
+        narrative: locationLabel ? `This stay is located in ${locationLabel}.` : "",
+      },
+      amenities: {
+        featured: [],
+        all: [],
+        summary: "",
+      },
+      policies: {
+        featured: [],
+        all: [],
+        summary: "",
+      },
+      availability: {
+        externalBlockedDates: [],
+        unavailableDateKeys: [],
+        blockedDateCount: 0,
+        externalBlockedDateCount: 0,
+        unavailableDateCount: 0,
+        hasExternalCalendarSync: false,
+        syncedSourceCount: 0,
+        syncSummary: "Loading imported calendar context",
+        externalBlockedSummary: "Loading imported external bookings",
+        unavailableDateSummary: "Loading PMS blocked dates",
+        blockedDateSummary: "Loading imported blocked dates",
+        lastSyncLabel: "",
+        nextBlockedDate: "",
+        nextBlockedLabel: "",
+        callout: "Saved draft preview uses persisted content first and hydrates listing details in the background.",
+      },
+      gallery: {
+        images: normalizedGalleryImages,
+        countLabel: `${normalizedGalleryImages.length} imported photo${
+          normalizedGalleryImages.length === 1 ? "" : "s"
+        }`,
+      },
+      trustCards: [
+        {
+          id: "draft-summary",
+          title: "Draft summary",
+          description: subtitle || "Saved website draft ready to continue editing.",
+        },
+        {
+          id: "draft-location",
+          title: "Location context",
+          description: locationLabel || "Location details are attached to this saved website draft.",
+        },
+        {
+          id: "draft-template",
+          title: "Template state",
+          description: String(draft?.templateKey || "Template selected").trim(),
+        },
+      ],
+      journeyStops: [
+        {
+          id: "draft-step-1",
+          title: "Draft created",
+          description: "This website can be reopened from the workspace at any time.",
+        },
+        {
+          id: "draft-step-2",
+          title: "Content editable",
+          description: "Text, visibility, and image slots can be adjusted in the editor.",
+        },
+        {
+          id: "draft-step-3",
+          title: "Ready for next phase",
+          description: "Publish and domain connection can build on top of this draft state.",
+        },
+      ],
+      callToAction: {
+        label: "Open editor",
+        note: "Saved website draft ready for continued editing.",
+      },
+      visibility: {
+        topBar: true,
+        trustCards: true,
+        gallerySection: true,
+        amenitiesPanel: true,
+        availabilityCalendar: true,
+        callToAction: true,
+        journeyStops: true,
+        chatWidget: true,
+      },
+    },
+    contentOverrides
+  );
+};
+
+function WebsiteDraftDeleteDialog({
+  draft = null,
+  deleteReasons,
+  deleteStep,
+  isDeleting,
+  onClose,
+  onBackToReasons,
+  onConfirm,
+  onReasonToggle,
+  onReasonNext,
+}) {
+  if (!draft) {
+    return null;
+  }
+
+  const isReasonStep = deleteStep === DELETE_WEBSITE_DRAFT_STEP_REASON;
+  const hasSelectedReason = deleteReasons.length > 0;
+
+  return (
+    <dialog
+      open
+      className={styles.deleteDraftOverlay}
+      aria-labelledby="delete-website-draft-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section className={styles.deleteDraftDialog}>
+        <p className={styles.deleteDraftEyebrow}>Delete website</p>
+        {isReasonStep ? (
+          <>
+            <h3 id="delete-website-draft-title" className={styles.deleteDraftTitle}>
+              Why are you deleting this website?
+            </h3>
+            <p className={styles.deleteDraftCopy}>Choose all reasons that apply.</p>
+
+            <fieldset className={styles.deleteReasonFieldset}>
+              <legend className={styles.deleteReasonLegend}>Select at least one reason to continue.</legend>
+              <div className={styles.deleteReasonList}>
+                {WEBSITE_DRAFT_DELETE_REASONS.map((reason) => (
+                  <label key={reason} className={styles.deleteReasonOption}>
+                    <input
+                      type="checkbox"
+                      value={reason}
+                      checked={deleteReasons.includes(reason)}
+                      onChange={() => onReasonToggle(reason)}
+                      disabled={isDeleting}
+                    />
+                    <span>{reason}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </>
+        ) : (
+          <>
+            <h3 id="delete-website-draft-title" className={styles.deleteDraftTitle}>
+              Delete this website permanently?
+            </h3>
+            <p className={styles.deleteDraftCopy}>
+              This removes the saved website draft for <strong>{getDraftDisplayTitle(draft)}</strong>.
+            </p>
+            <p className={styles.deleteDraftCopy}>
+              The listing will become available again in the Build website dropdown.
+            </p>
+            <p className={styles.deleteDraftCopy}>
+              This <strong>does not</strong> delete the listing itself.
+            </p>
+          </>
+        )}
+
+        <div className={styles.deleteDraftActions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={isReasonStep ? onClose : onBackToReasons}
+            disabled={isDeleting}
+          >
+            {isReasonStep ? "Cancel" : "Back"}
+          </button>
+          {isReasonStep ? (
+            <button
+              type="button"
+              className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
+              onClick={onReasonNext}
+              disabled={isDeleting || !hasSelectedReason}
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
+              onClick={onConfirm}
+              disabled={isDeleting || !hasSelectedReason}
+            >
+              {isDeleting ? "Deleting..." : "Delete permanently"}
+            </button>
+          )}
+        </div>
+      </section>
+    </dialog>
+  );
+}
+
+WebsiteDraftDeleteDialog.propTypes = {
+  draft: PropTypes.shape({
+    contentOverrides: PropTypes.shape({
+      siteTitle: PropTypes.string,
+    }),
+    propertyTitle: PropTypes.string,
+  }),
+  deleteReasons: PropTypes.arrayOf(PropTypes.string).isRequired,
+  deleteStep: PropTypes.oneOf([
+    DELETE_WEBSITE_DRAFT_STEP_REASON,
+    DELETE_WEBSITE_DRAFT_STEP_CONFIRM,
+  ]).isRequired,
+  isDeleting: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onBackToReasons: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onReasonToggle: PropTypes.func.isRequired,
+  onReasonNext: PropTypes.func.isRequired,
+};
+
 function WebsiteBuilderPage() {
+  const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_WEBSITES);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
   const [selectedTemplateId, setSelectedTemplateId] = useState(WEBSITE_TEMPLATE_OPTIONS[0].id);
@@ -73,7 +471,41 @@ function WebsiteBuilderPage() {
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [galleryAnimationDirection, setGalleryAnimationDirection] = useState("idle");
   const [galleryAnimationTick, setGalleryAnimationTick] = useState(0);
+  const [previewStage, setPreviewStage] = useState(PREVIEW_STAGE.idle);
+  const [previewBuildPhase, setPreviewBuildPhase] = useState(PREVIEW_BUILD_STEPS[0].key);
+  const [previewModel, setPreviewModel] = useState(null);
+  const [previewError, setPreviewError] = useState("");
+  const [websiteDrafts, setWebsiteDrafts] = useState([]);
+  const [isLoadingWebsiteDrafts, setIsLoadingWebsiteDrafts] = useState(true);
+  const [websiteDraftsError, setWebsiteDraftsError] = useState("");
+  const [websiteDraftPreviewModels, setWebsiteDraftPreviewModels] = useState({});
+  const [isPersistingWebsiteDraft, setIsPersistingWebsiteDraft] = useState(false);
+  const [persistWebsiteDraftError, setPersistWebsiteDraftError] = useState("");
+  const [websiteDraftPendingDelete, setWebsiteDraftPendingDelete] = useState(null);
+  const [websiteDraftDeleteReasons, setWebsiteDraftDeleteReasons] = useState([]);
+  const [websiteDraftDeleteStep, setWebsiteDraftDeleteStep] = useState(DELETE_WEBSITE_DRAFT_STEP_REASON);
+  const [isDeletingWebsiteDraft, setIsDeletingWebsiteDraft] = useState(false);
+  const previewSectionRef = useRef(null);
   const navigate = useNavigate();
+
+  const draftedPropertyIds = useMemo(
+    () =>
+      new Set(
+        websiteDrafts
+          .map((draft) => String(draft?.propertyId || "").trim())
+          .filter(Boolean)
+      ),
+    [websiteDrafts]
+  );
+
+  const availablePropertyOptions = useMemo(
+    () =>
+      propertyOptions.filter((propertyOption) => {
+        const propertyId = String(propertyOption?.value || "").trim();
+        return propertyId && !draftedPropertyIds.has(propertyId);
+      }),
+    [draftedPropertyIds, propertyOptions]
+  );
 
   const loadProperties = async () => {
     setIsLoading(true);
@@ -96,17 +528,117 @@ function WebsiteBuilderPage() {
     }
   };
 
+  const loadHostWebsiteDrafts = async () => {
+    setIsLoadingWebsiteDrafts(true);
+    setWebsiteDraftsError("");
+
+    try {
+      const drafts = await fetchWebsiteDrafts();
+      setWebsiteDrafts(drafts);
+    } catch (error) {
+      setWebsiteDrafts([]);
+      setWebsiteDraftsError(error?.message || "We could not load your saved website drafts.");
+    } finally {
+      setIsLoadingWebsiteDrafts(false);
+    }
+  };
+
   useEffect(() => {
     void loadProperties();
+    void loadHostWebsiteDrafts();
   }, []);
+
+  useEffect(() => {
+    setSelectedPropertyId((currentPropertyId) => {
+      if (!currentPropertyId) {
+        return currentPropertyId;
+      }
+
+      if (previewStage !== PREVIEW_STAGE.idle || isPersistingWebsiteDraft) {
+        return currentPropertyId;
+      }
+
+      const listingStillAvailable = availablePropertyOptions.some(
+        (propertyOption) => propertyOption.value === currentPropertyId
+      );
+
+      return listingStillAvailable ? currentPropertyId : EMPTY_SELECTION;
+    });
+  }, [availablePropertyOptions, isPersistingWebsiteDraft, previewStage]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadWebsiteDraftPreviewModels = async () => {
+      if (workspaceTab !== WORKSPACE_TAB_WEBSITES || websiteDrafts.length < 1) {
+        if (isMounted) {
+          setWebsiteDraftPreviewModels({});
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setWebsiteDraftPreviewModels({});
+      }
+
+      const previewEntries = await Promise.all(
+        websiteDrafts.map(async (draft) => {
+          try {
+            const propertyDetails = await fetchWebsitePropertyDetails(draft.propertyId);
+            const baseModel = buildWebsiteTemplateModel({
+              propertyDetails,
+              summaryProperty: null,
+              imageVariant: "thumb",
+            });
+            const thumbContentOverrides = mapImageOverridesToThumbnails(
+              getDraftPublishedContentOverrides(draft),
+              buildImageVariantMap(propertyDetails?.images)
+            );
+            const previewModel = applyWebsiteDraftContentOverrides(baseModel, thumbContentOverrides);
+            return [draft.propertyId, previewModel];
+          } catch {
+            return [draft.propertyId, buildDraftCardFallbackPreviewModel(draft)];
+          }
+        })
+      );
+
+      if (!isMounted) {
+        return;
+      }
+
+      setWebsiteDraftPreviewModels(
+        Object.fromEntries(
+          previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel])
+        )
+      );
+    };
+
+    void loadWebsiteDraftPreviewModels();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [websiteDrafts, workspaceTab]);
 
   const selectedProperty =
     propertyOptions.find((propertyOption) => propertyOption.value === selectedPropertyId) || null;
+  const selectedPropertyIsAvailable = availablePropertyOptions.some(
+    (propertyOption) => propertyOption.value === selectedPropertyId
+  );
+  const shouldKeepSelectedPropertyVisible =
+    Boolean(selectedProperty) &&
+    Boolean(selectedPropertyId) &&
+    !selectedPropertyIsAvailable &&
+    (previewStage !== PREVIEW_STAGE.idle || isPersistingWebsiteDraft);
+  const propertySelectOptions = shouldKeepSelectedPropertyVisible
+    ? [selectedProperty, ...availablePropertyOptions]
+    : availablePropertyOptions;
   const previewImages = selectedProperty?.previewImages || [];
   const galleryImages = selectedProperty?.galleryImages || previewImages;
   const importedImageCount = selectedProperty?.imageCount || 0;
   const summaryDescription = truncateDescription(selectedProperty?.description);
   const selectedTemplate = getWebsiteTemplateById(selectedTemplateId);
+  const selectedTemplateIsImplemented = isWebsiteTemplateImplemented(selectedTemplateId);
   const activeGalleryImage = galleryImages[activeGalleryIndex] || galleryImages[0] || "";
   const isListingStepComplete = Boolean(selectedProperty);
 
@@ -124,10 +656,93 @@ function WebsiteBuilderPage() {
     );
   }, [selectedProperty, galleryImages.length]);
 
+  useEffect(() => {
+    setPreviewStage(PREVIEW_STAGE.idle);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+    setPersistWebsiteDraftError("");
+  }, [selectedPropertyId]);
+
+  useEffect(() => {
+    if (previewStage === PREVIEW_STAGE.idle || !previewSectionRef.current) {
+      return;
+    }
+
+    previewSectionRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [previewStage]);
+
   const setGalleryImage = (nextIndex, direction = "idle") => {
     setGalleryAnimationDirection(direction);
     setActiveGalleryIndex(nextIndex);
     setGalleryAnimationTick((currentTick) => currentTick + 1);
+  };
+
+  const resetPreviewState = () => {
+    setPreviewStage(PREVIEW_STAGE.idle);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+    setPersistWebsiteDraftError("");
+  };
+
+  const persistSelectedWebsiteDraft = async () => {
+    if (!selectedProperty) {
+      return;
+    }
+
+    setIsPersistingWebsiteDraft(true);
+    setPersistWebsiteDraftError("");
+
+    try {
+      const savedDraft = await upsertWebsiteDraft({
+        propertyId: selectedProperty.value,
+        templateKey: selectedTemplateId,
+        status: "DRAFT",
+        contentOverrides: {},
+        themeOverrides: {},
+      });
+      await loadHostWebsiteDrafts();
+      return savedDraft;
+    } catch (error) {
+      setPersistWebsiteDraftError(error?.message || "Preview is ready, but saving the website draft failed.");
+      return null;
+    } finally {
+      setIsPersistingWebsiteDraft(false);
+    }
+  };
+
+  const buildWebsitePreview = async () => {
+    if (!selectedProperty) {
+      return;
+    }
+
+    setPreviewStage(PREVIEW_STAGE.loading);
+    setPreviewModel(null);
+    setPreviewError("");
+    setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
+
+    try {
+      const nextPreviewModel = await runWebsitePreviewBuildWorkflow({
+        propertyId: selectedProperty.value,
+        summaryProperty: selectedProperty,
+        onPhaseChange: setPreviewBuildPhase,
+      });
+
+      setPreviewModel(nextPreviewModel);
+      setPreviewStage(PREVIEW_STAGE.ready);
+      const savedDraft = await persistSelectedWebsiteDraft();
+      if (savedDraft) {
+        toast.success("Website built and ready for review.");
+      }
+    } catch (error) {
+      setPreviewStage(PREVIEW_STAGE.error);
+      setPreviewModel(null);
+      setPreviewError(error?.message || "We could not build the selected website preview.");
+    }
   };
 
   useEffect(() => {
@@ -167,6 +782,33 @@ function WebsiteBuilderPage() {
     };
   }, [activeGalleryIndex, galleryImages.length, isGalleryOpen]);
 
+  useEffect(() => {
+    if (!websiteDraftPendingDelete) {
+      return undefined;
+    }
+
+    const documentBody = globalThis.document?.body;
+    const previousOverflow = documentBody?.style.overflow ?? "";
+    if (documentBody) {
+      documentBody.style.overflow = "hidden";
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeWebsiteDraftDeleteDialog();
+      }
+    };
+
+    globalThis.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      if (documentBody) {
+        documentBody.style.overflow = previousOverflow;
+      }
+      globalThis.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [websiteDraftPendingDelete, isDeletingWebsiteDraft]);
+
   const openGallery = (imageIndex = 0) => {
     if (!selectedProperty || galleryImages.length < 1) {
       return;
@@ -191,11 +833,91 @@ function WebsiteBuilderPage() {
     setGalleryImage(nextIndex, direction < 0 ? "backward" : "forward");
   };
 
+  const openWebsiteDraftEditor = (draft) => {
+    const propertyId = String(draft?.propertyId || "").trim();
+    if (!propertyId) {
+      return;
+    }
+
+    navigate(`/hostdashboard/website/${propertyId}`);
+  };
+
+  const openWebsiteDraftPreview = (draft) => {
+    const draftId = String(draft?.id || "").trim();
+    if (!draftId) {
+      toast.error("This website does not have a preview link yet.");
+      return;
+    }
+
+    globalThis.open(buildWebsitePreviewPath(draftId), "_blank", "noopener,noreferrer");
+  };
+
+  const openWebsiteDraftDeleteDialog = (draft) => {
+    const propertyId = String(draft?.propertyId || "").trim();
+    if (!propertyId) {
+      return;
+    }
+
+    setWebsiteDraftPendingDelete(draft);
+    setWebsiteDraftDeleteReasons([]);
+    setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_REASON);
+  };
+
+  const closeWebsiteDraftDeleteDialog = () => {
+    if (isDeletingWebsiteDraft) {
+      return;
+    }
+
+    setWebsiteDraftPendingDelete(null);
+    setWebsiteDraftDeleteReasons([]);
+    setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_REASON);
+  };
+
+  const toggleWebsiteDraftDeleteReason = (reason) => {
+    setWebsiteDraftDeleteReasons((currentReasons) =>
+      currentReasons.includes(reason)
+        ? currentReasons.filter((currentReason) => currentReason !== reason)
+        : [...currentReasons, reason]
+    );
+  };
+
+  const removeWebsiteDraft = async () => {
+    const propertyId = String(websiteDraftPendingDelete?.propertyId || "").trim();
+    if (!propertyId) {
+      setWebsiteDraftPendingDelete(null);
+      return;
+    }
+
+    if (websiteDraftDeleteReasons.length < 1 || isDeletingWebsiteDraft) {
+      return;
+    }
+
+    setIsDeletingWebsiteDraft(true);
+
+    try {
+      await deleteWebsiteDraft(propertyId);
+      setWebsiteDraftPreviewModels((currentPreviewModels) => {
+        const nextPreviewModels = { ...currentPreviewModels };
+        delete nextPreviewModels[propertyId];
+        return nextPreviewModels;
+      });
+      setWebsiteDraftPendingDelete(null);
+      setWebsiteDraftDeleteReasons([]);
+      setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_REASON);
+      await loadHostWebsiteDrafts();
+      toast.success("Website deleted from your workspace.");
+    } catch (error) {
+      toast.error(error?.message || "We could not delete this website.");
+    } finally {
+      setIsDeletingWebsiteDraft(false);
+    }
+  };
+
   const renderPhotoStack = () => (
     <div className={styles.photoStack}>
       {previewImages.map((imageUrl, index) => (
         <button
-          key={`${selectedProperty.value}-${imageUrl}`}
+          key={`${selectedProperty.value}-${index}-${imageUrl}`}
           type="button"
           className={getPhotoCardClassName(index)}
           onClick={() => openGallery(index)}
@@ -212,6 +934,139 @@ function WebsiteBuilderPage() {
     </div>
   );
 
+  const renderWorkspaceTabs = () => (
+    <div className={styles.workspaceTabs} role="tablist" aria-label="Website workspace">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={workspaceTab === WORKSPACE_TAB_WEBSITES}
+        className={`${styles.workspaceTabButton} ${
+          workspaceTab === WORKSPACE_TAB_WEBSITES ? styles.workspaceTabButtonActive : ""
+        }`.trim()}
+        onClick={() => setWorkspaceTab(WORKSPACE_TAB_WEBSITES)}
+      >
+        My websites
+      </button>
+
+      <button
+        type="button"
+        role="tab"
+        aria-selected={workspaceTab === WORKSPACE_TAB_BUILDER}
+        className={`${styles.workspaceTabButton} ${
+          workspaceTab === WORKSPACE_TAB_BUILDER ? styles.workspaceTabButtonActive : ""
+        }`.trim()}
+        onClick={() => setWorkspaceTab(WORKSPACE_TAB_BUILDER)}
+      >
+        Build website
+      </button>
+    </div>
+  );
+
+  const renderWebsiteDraftOverview = () => {
+    if (isLoadingWebsiteDrafts) {
+      return (
+        <div className={styles.stateCard}>
+          <PulseBarsLoader message="Loading your saved website drafts..." />
+        </div>
+      );
+    }
+
+    if (websiteDraftsError) {
+      return (
+        <div className={`${styles.stateCard} ${styles.errorState}`}>
+          <p>{websiteDraftsError}</p>
+          <div className={styles.buttonRow}>
+            <button type="button" className={styles.primaryButton} onClick={() => void loadHostWebsiteDrafts()}>
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (websiteDrafts.length < 1) {
+      return (
+        <div className={styles.stateCard}>
+          <p>
+            You do not have any saved website drafts yet. Build a preview from the builder tab and the
+            draft will appear here.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.websiteDraftList}>
+        {websiteDrafts.map((draft) => {
+          const template = getWebsiteTemplateById(draft.templateKey);
+          const templateName = template?.name || draft.templateKey || "Unknown template";
+          const draftPreviewModel = websiteDraftPreviewModels[draft.propertyId] || null;
+          const draftDisplayTitle = getDraftDisplayTitle(draft, getDraftPublishedContentOverrides(draft));
+
+          return (
+            <article key={draft.id || `${draft.propertyId}-${draft.updatedAt}`} className={styles.websiteDraftCard}>
+              <div className={styles.websiteDraftCardHeader}>
+                <div className={styles.websiteDraftCardCopy}>
+                  <p className={styles.summaryLabel}>Saved website draft</p>
+                  <p className={styles.summaryValue}>
+                    {draftDisplayTitle}
+                  </p>
+                  {draft.location ? <p className={styles.summaryLocation}>{draft.location}</p> : null}
+
+                  <div className={styles.websiteDraftMetaRow}>
+                    <span className={styles.metaText}>Template: {templateName}</span>
+                    <span className={styles.metaText}>Updated: {formatDraftUpdatedAt(draft.updatedAt)}</span>
+                  </div>
+
+                  <div className={styles.buttonRow}>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={() => openWebsiteDraftEditor(draft)}
+                    >
+                      Open editor
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => openWebsiteDraftPreview(draft)}
+                    >
+                      Open live preview
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.primaryButton} ${styles.dangerButton}`.trim()}
+                      onClick={() => openWebsiteDraftDeleteDialog(draft)}
+                    >
+                      Delete permanently
+                    </button>
+                  </div>
+                </div>
+
+                <div className={styles.websiteDraftCardPreview}>
+                  {draftPreviewModel ? (
+                    <WebsiteTemplatePreview
+                      templateId={draft.templateKey}
+                      model={draftPreviewModel}
+                      variant="compact"
+                      viewport="desktop"
+                    />
+                  ) : (
+                    <div className={styles.websiteDraftPreviewPlaceholder}>
+                      <PulseBarsLoader message="Loading saved preview..." />
+                    </div>
+                  )}
+                </div>
+
+                <span className={styles.statusPill}>{draft.status || "DRAFT"}</span>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderSelectionState = () => {
     if (loadError && propertyOptions.length === 0) {
       return (
@@ -226,7 +1081,8 @@ function WebsiteBuilderPage() {
       );
     }
 
-    if (!isLoading && propertyOptions.length === 0) {
+    const showNoListingsState = isLoading === false && propertyOptions.length === 0;
+    if (showNoListingsState) {
       return (
         <div className={styles.stateCard}>
           <p>
@@ -236,6 +1092,32 @@ function WebsiteBuilderPage() {
           <div className={styles.buttonRow}>
             <button type="button" className={styles.primaryButton} onClick={() => navigate("/hostonboarding")}>
               Add new accommodation
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const showAllListingsUnavailableState =
+      isLoading === false &&
+      isLoadingWebsiteDrafts === false &&
+      propertyOptions.length > 0 &&
+      availablePropertyOptions.length === 0 &&
+      !shouldKeepSelectedPropertyVisible;
+    if (showAllListingsUnavailableState) {
+      return (
+        <div className={styles.stateCard}>
+          <p>
+            Every current listing already has a saved website draft or website attached to it. Delete an
+            existing website first if you want that listing to become available again in the builder.
+          </p>
+          <div className={styles.buttonRow}>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => setWorkspaceTab(WORKSPACE_TAB_WEBSITES)}
+            >
+              Open my websites
             </button>
           </div>
         </div>
@@ -253,18 +1135,24 @@ function WebsiteBuilderPage() {
             className={styles.selectInput}
             value={selectedPropertyId}
             onChange={(event) => setSelectedPropertyId(event.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isLoadingWebsiteDrafts}
           >
             <option value={EMPTY_SELECTION}>
-              {isLoading ? "Loading your listings..." : "Choose a listing"}
+              {getPropertySelectPlaceholder({ isLoading, isLoadingWebsiteDrafts })}
             </option>
-            {propertyOptions.map((propertyOption) => (
+            {propertySelectOptions.map((propertyOption) => (
               <option key={propertyOption.value} value={propertyOption.value}>
                 {propertyOption.label}
               </option>
             ))}
           </select>
         </div>
+
+        {isLoadingWebsiteDrafts ? (
+          <p className={styles.previewHelperText}>
+            Checking which listings are already linked to a saved website.
+          </p>
+        ) : null}
 
         {selectedProperty ? (
           <div className={styles.selectionSummary}>
@@ -298,6 +1186,8 @@ function WebsiteBuilderPage() {
   };
 
   const renderTemplateStep = () => {
+    const showTemplateImplementationHint = selectedTemplateIsImplemented === false;
+
     return (
       <div className={styles.templateStage}>
         <div className={styles.templateGrid}>
@@ -337,14 +1227,143 @@ function WebsiteBuilderPage() {
               <p className={styles.selectedTemplateName}>{selectedTemplate.name}</p>
             </div>
 
-            <button type="button" className={styles.primaryButton}>
-              Build my website
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => void buildWebsitePreview()}
+              disabled={!selectedTemplateIsImplemented || previewStage === PREVIEW_STAGE.loading}
+            >
+              {previewStage === PREVIEW_STAGE.loading ? "Building preview..." : "Build my website"}
             </button>
           </div>
 
           <p className={styles.selectedTemplateDescription}>{selectedTemplate.description}</p>
+          {showTemplateImplementationHint ? (
+            <p className={styles.previewHelperText}>
+              Real template preview is currently available for Panorama Landing, Trust Signals, and
+              Experience Journey. The other template options stay visible so the chooser is not locked to
+              one direction.
+            </p>
+          ) : null}
         </div>
       </div>
+    );
+  };
+
+  const renderPreviewBuildState = () => {
+    const activeStepIndex = PREVIEW_BUILD_STEP_KEYS.indexOf(previewBuildPhase);
+
+    return (
+      <div className={styles.previewBuildCard}>
+        <div className={styles.previewBuildVisual}>
+          <div className={`${styles.previewBuildSilhouetteShell} ${styles.templatePreviewShell}`}>
+            <TemplateSilhouette layout={selectedTemplate.layout} />
+          </div>
+        </div>
+
+        <div className={styles.previewBuildCopy}>
+          <PulseBarsLoader
+            message={`Preparing ${selectedTemplate.name} from the selected listing`}
+            className={styles.previewLoader}
+          />
+
+          <div className={styles.previewBuildSteps}>
+            {PREVIEW_BUILD_STEPS.map((step, index) => {
+              const isComplete = index < activeStepIndex;
+              const isActive = index === activeStepIndex;
+
+              return (
+                <article
+                  key={step.key}
+                  className={`${styles.previewBuildStep} ${isComplete ? styles.previewBuildStepComplete : ""} ${
+                    isActive ? styles.previewBuildStepActive : ""
+                  }`.trim()}
+                >
+                  <span className={styles.previewBuildStepIndex} aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <div className={styles.previewBuildStepCopy}>
+                    <p>{step.title}</p>
+                    <span>{step.description}</span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPreviewStep = () => {
+    if (previewStage === PREVIEW_STAGE.idle) {
+      return null;
+    }
+
+    return (
+      <section ref={previewSectionRef} className={styles.builderStepSection}>
+        <div className={styles.stepHeader}>
+          <p className={styles.stepEyebrow}>Step 3</p>
+          <h2>Preview your website</h2>
+          <p>
+            This stage uses the selected listing detail response and maps it into a shared content model
+            before rendering the chosen template.
+          </p>
+        </div>
+
+        {previewStage === PREVIEW_STAGE.loading ? renderPreviewBuildState() : null}
+
+        {previewStage === PREVIEW_STAGE.error ? (
+          <div className={`${styles.stateCard} ${styles.errorState}`}>
+            <p>{previewError}</p>
+            <div className={styles.buttonRow}>
+              <button type="button" className={styles.primaryButton} onClick={() => void buildWebsitePreview()}>
+                Try preview again
+              </button>
+              <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
+                Back to template chooser
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {previewStage === PREVIEW_STAGE.ready && previewModel ? (
+          <div className={styles.previewReadyState}>
+            <div className={styles.previewStageActions}>
+              <div className={styles.previewStageMessageStack}>
+                <span className={styles.previewHelperText}>
+                  Change the selected template above to compare other implemented layouts against the same
+                  imported listing data.
+                </span>
+                {isPersistingWebsiteDraft ? (
+                  <span className={styles.previewHelperText}>Saving website draft to your workspace...</span>
+                ) : null}
+                {persistWebsiteDraftError ? (
+                  <span className={styles.previewPersistErrorText}>{persistWebsiteDraftError}</span>
+                ) : null}
+              </div>
+              <div className={styles.buttonRow}>
+                <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
+                  Back to chooser
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => navigate(`/hostdashboard/website/${selectedProperty.value}`)}
+                  disabled={isPersistingWebsiteDraft || Boolean(persistWebsiteDraftError)}
+                >
+                  Open editor
+                </button>
+                <button type="button" className={styles.primaryButton} onClick={() => void buildWebsitePreview()}>
+                  Refresh preview
+                </button>
+              </div>
+            </div>
+
+            <WebsiteTemplatePreview templateId={selectedTemplateId} model={previewModel} />
+          </div>
+        ) : null}
+      </section>
     );
   };
 
@@ -377,40 +1396,61 @@ function WebsiteBuilderPage() {
               </p>
             </div>
 
-            <div className={styles.builderSteps}>
-              <section className={styles.builderStepSection}>
-                <div className={styles.stepHeader}>
-                  <p className={styles.stepEyebrow}>Step 1</p>
-                  <div className={styles.stepTitleRow}>
-                    <span className={styles.titleIconBadge} aria-hidden="true">
-                      <HomeIcon className={styles.titleIcon} />
-                    </span>
-                    <h2>Choose your listing</h2>
-                  </div>
-                  <p>
-                    Pick the property you want to use as the base for your website. This page only
-                    shows listings that belong to your host account.
-                  </p>
-                </div>
+            {renderWorkspaceTabs()}
 
-                {renderSelectionState()}
-              </section>
-
-              {isListingStepComplete ? (
+            {workspaceTab === WORKSPACE_TAB_BUILDER ? (
+              <div className={styles.builderSteps}>
                 <section className={styles.builderStepSection}>
                   <div className={styles.stepHeader}>
-                    <p className={styles.stepEyebrow}>Step 2</p>
-                    <h2>Choose a website template</h2>
+                    <p className={styles.stepEyebrow}>Step 1</p>
+                    <div className={styles.stepTitleRow}>
+                      <span className={styles.titleIconBadge} aria-hidden="true">
+                        <HomeIcon className={styles.titleIcon} />
+                      </span>
+                      <h2>Choose your listing</h2>
+                    </div>
                     <p>
-                      Select the layout direction you want to use for the listing website. You can keep
-                      adjusting the listing choice above while you compare template options.
+                      Pick the property you want to use as the base for your website. This page only
+                      shows listings that belong to your host account.
                     </p>
                   </div>
 
-                  {renderTemplateStep()}
+                  {renderSelectionState()}
                 </section>
-              ) : null}
-            </div>
+
+                {isListingStepComplete ? (
+                  <>
+                    <section className={styles.builderStepSection}>
+                      <div className={styles.stepHeader}>
+                        <p className={styles.stepEyebrow}>Step 2</p>
+                        <h2>Choose a website template</h2>
+                        <p>
+                          Select the layout direction you want to use for the listing website. You can keep
+                          adjusting the listing choice above while you compare template options.
+                        </p>
+                      </div>
+
+                      {renderTemplateStep()}
+                    </section>
+
+                    {renderPreviewStep()}
+                  </>
+                ) : null}
+              </div>
+            ) : (
+              <section className={styles.builderStepSection}>
+                <div className={styles.stepHeader}>
+                  <p className={styles.stepEyebrow}>Website workspace</p>
+                  <h2>Saved websites</h2>
+                  <p>
+                    These are your persisted website drafts. Open any draft to move into the dedicated
+                    editor page and continue adjusting your website's content there.
+                  </p>
+                </div>
+
+                {renderWebsiteDraftOverview()}
+              </section>
+            )}
           </div>
         </section>
       </div>
@@ -470,7 +1510,7 @@ function WebsiteBuilderPage() {
           <div className="overlay-thumbnails">
             {galleryImages.map((imageUrl, index) => (
               <button
-                key={`${selectedProperty.value}-gallery-${imageUrl}`}
+                key={`${selectedProperty.value}-gallery-${index}-${imageUrl}`}
                 type="button"
                 className={`${index === activeGalleryIndex ? "thumb active" : "thumb"} ${styles.galleryThumbnailButton}`}
                 onClick={() => {
@@ -484,8 +1524,7 @@ function WebsiteBuilderPage() {
               >
                 <img
                   src={imageUrl}
-                  alt=""
-                  aria-hidden="true"
+                  alt={`Gallery item ${index + 1} for ${selectedProperty.title || selectedProperty.label}`}
                   className={styles.galleryThumbnailImage}
                 />
               </button>
@@ -493,6 +1532,18 @@ function WebsiteBuilderPage() {
           </div>
         </dialog>
       ) : null}
+
+      <WebsiteDraftDeleteDialog
+        draft={websiteDraftPendingDelete}
+        deleteReasons={websiteDraftDeleteReasons}
+        deleteStep={websiteDraftDeleteStep}
+        isDeleting={isDeletingWebsiteDraft}
+        onClose={closeWebsiteDraftDeleteDialog}
+        onBackToReasons={() => setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_REASON)}
+        onConfirm={() => void removeWebsiteDraft()}
+        onReasonToggle={toggleWebsiteDraftDeleteReason}
+        onReasonNext={() => setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_CONFIRM)}
+      />
     </main>
   );
 }

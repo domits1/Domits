@@ -10,10 +10,7 @@ import PaymentSummary from "./components/PaymentSummary";
 import BookingDetails from "./components/BookingDetails";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader";
 import useDashboardIdentity from "../../hooks/useDashboardIdentity";
-import {
-  getGuestBookingPropertyDetails,
-  getGuestBookings,
-} from "./services/bookingAPI";
+import { getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
 import {
   formatFamilyLabel,
   getArrivalDate,
@@ -28,10 +25,8 @@ import {
   parseFamilyString,
 } from "./utils/guestDashboardUtils";
 import { normalizeImageUrl, placeholderImage } from "./utils/image";
-import {
-  resolveAccommodationImageUrl,
-  resolvePrimaryAccommodationImageUrl,
-} from "../../utils/accommodationImage";
+import { resolveAccommodationImageUrl, resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
+import { parseCancellationPolicy } from "../../utils/policyDisplayUtils.js";
 import { isValidDate, startOfDay } from "../../utils/dashboardShared";
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
@@ -69,7 +64,10 @@ const formatRuleLabel = (ruleEntry) => {
 
   const segments = ruleName.split("/").map((segment) => {
     const cleanedSegment = segment.replace("Allowed", "");
-    return cleanedSegment.split(/(?=[A-Z])/).join(" ").trim();
+    return cleanedSegment
+      .split(/(?=[A-Z])/)
+      .join(" ")
+      .trim();
   });
   const attributes = segments.join(" and ");
   const isAllowed = Boolean(ruleEntry?.value);
@@ -98,13 +96,9 @@ const matchesReservationRoute = (booking, reservationId) => {
     return false;
   }
 
-  return [
-    getBookingId(booking),
-    booking?.paymentid,
-    booking?.paymentId,
-    booking?.id,
-    booking?.ID,
-  ].some((candidate) => String(candidate || "").trim() === normalizedReservationId);
+  return [getBookingId(booking), booking?.paymentid, booking?.paymentId, booking?.id, booking?.ID].some(
+    (candidate) => String(candidate || "").trim() === normalizedReservationId
+  );
 };
 
 const buildAddressLabel = (location, fallbackLocationLabel) => {
@@ -149,9 +143,7 @@ const resolveGuestCount = ({ numericGuestCount, familyGuestCount, guestName }) =
 
 const buildGuestDetails = (booking) => {
   const guestName = String(booking?.guestname || booking?.guestName || "").trim();
-  const familyCounts = parseFamilyString(
-    booking?.family || booking?.guestsDetails || booking?.guestDetails || ""
-  );
+  const familyCounts = parseFamilyString(booking?.family || booking?.guestsDetails || booking?.guestDetails || "");
   const familyGuestCount = familyCounts.adults + familyCounts.kids;
   const numericGuestCount = Number(booking?.guests);
   const guests = resolveGuestCount({
@@ -221,12 +213,7 @@ const buildRuleLabels = (propertyDetails) => {
   return rules.map((ruleEntry) => formatRuleLabel(ruleEntry)).filter(Boolean);
 };
 
-const buildReservationContent = ({
-  isPageLoading,
-  pageError,
-  reservation,
-  handleMessageHost,
-}) => {
+const buildReservationContent = ({ isPageLoading, pageError, reservation, handleMessageHost }) => {
   if (isPageLoading) {
     return (
       <div className="card reservationStateCard">
@@ -267,22 +254,15 @@ const buildReservationContent = ({
               reservationId={reservation.stay.reservationId}
             />
 
-            <CheckInInstructions
-              address={reservation.property.address}
-              instructions={reservation.instructions}
-            />
+            <CheckInInstructions address={reservation.property.address} instructions={reservation.instructions} />
           </div>
 
           <div className="reservationRight">
-            <HouseRules rules={reservation.rules} cancellationPolicy={null} />
+            <HouseRules rules={reservation.rules} cancellationPolicy={parseCancellationPolicy(reservation.rules)} />
 
             <div className="card helpCard">
               <h3>Need help?</h3>
-              <button
-                type="button"
-                className="primaryBtn"
-                onClick={handleMessageHost}
-              >
+              <button type="button" className="primaryBtn" onClick={handleMessageHost}>
                 Message host
               </button>
             </div>
@@ -293,10 +273,7 @@ const buildReservationContent = ({
               cleaningFee={reservation.pricing.cleaningFee}
             />
 
-            <BookingDetails
-              reservationId={reservation.stay.reservationId}
-              bookedDate={reservation.stay.bookedDate}
-            />
+            <BookingDetails reservationId={reservation.stay.reservationId} bookedDate={reservation.stay.bookedDate} />
           </div>
         </div>
       </>
@@ -350,13 +327,12 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
         resolvePrimaryAccommodationImageUrl(images, "thumb") ||
         resolveAccommodationImageUrl(booking?.images?.[0], "thumb") ||
         resolveAccommodationImageUrl(booking?.property?.images?.[0], "thumb") ||
-        normalizeImageUrl(
-          booking?.propertyImage || booking?.image || booking?.property?.coverImage || null
-        ) ||
+        normalizeImageUrl(booking?.propertyImage || booking?.image || booking?.property?.coverImage || null) ||
         placeholderImage,
     },
     host: {
-      id: property?.hostId || property?.hostID || host?.id || host?.userId || booking?.hostid || booking?.hostId || null,
+      id:
+        property?.hostId || property?.hostID || host?.id || host?.userId || booking?.hostid || booking?.hostId || null,
       name: host?.givenName || host?.name || host?.fullName || booking?.hostname || booking?.hostName || "Host",
       image: host?.profileImage || host?.image || null,
     },
@@ -387,16 +363,9 @@ function ReservationDetails() {
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const {
-    userId: guestId,
-    loading: identityLoading,
-    error: identityError,
-  } = useDashboardIdentity("Guest");
+  const { userId: guestId, loading: identityLoading, error: identityError } = useDashboardIdentity("Guest");
 
-  const reservationRouteId = useMemo(
-    () => extractReservationIdFromPath(location.pathname),
-    [location.pathname]
-  );
+  const reservationRouteId = useMemo(() => extractReservationIdFromPath(location.pathname), [location.pathname]);
 
   useEffect(() => {
     let isMounted = true;

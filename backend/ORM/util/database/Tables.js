@@ -8,6 +8,7 @@ import { Property_Test_Status } from "../../models/Property_Test_Status.js";
 import { Faq } from "../../models/Faq.js";
 import { General_Details } from "../../models/General_Details.js";
 import { Guest_Favorite } from "../../models/Guest_Favorite.js";
+import { Standalone_Site_Draft } from "../../models/Standalone_Site_Draft.js";
 import { Payment } from "../../models/Payment.js";
 import { Property } from "../../models/Property.js";
 import { Property_Amenity } from "../../models/Property_Amenity.js";
@@ -53,6 +54,7 @@ export const Tables = [
   Faq,
   General_Details,
   Guest_Favorite,
+  Standalone_Site_Draft,
   Payment,
   Property,
   Property_Amenity,

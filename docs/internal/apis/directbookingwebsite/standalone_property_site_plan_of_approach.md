@@ -1,13 +1,47 @@
 # Plan Of Approach - Standalone Website
 
 ## Status
-Working baseline
+Working baseline with active frontend implementation checkpoints
 
 ## Last Updated
-2026-03-20
+2026-04-15
+
+## Current Implementation Checkpoint
+The host-dashboard website builder now includes a real preview build pipeline for the first three templates.
+
+Implemented in frontend:
+- listing selection remains sourced from `hostDashboard/all`
+- selected-listing detail fetch for preview is sourced from `hostDashboard/single`
+- detail payload is mapped into one shared website template model before rendering
+- real preview rendering is available for Panorama Landing, Trust Signals, and Experience Journey
+- preview workflow orchestration is extracted to a dedicated script module for future migration to a dedicated preview route/tab
+- amenity icons are rendered from the shared amenity catalog by amenity ID in implemented templates
+- built preview drafts are persisted per host and property via dedicated website draft APIs
+- workspace now has a `My websites` tab with dedicated editor-page entry
+- dedicated draft editor page exists for controlled text overrides, visibility toggles, and image-slot selection on saved drafts
+- image-slot reassignment in the editor now uses a visual picker overlay with thumbnail navigation and explicit confirm-select behavior
+- acceptance AWS rollout has been proven for draft persistence after:
+  - creating `main.standalone_site_draft`
+  - adding the unique `property_id` index required by `ON CONFLICT`
+  - adding the `host_id` index for the intended host-scoped draft access path
+  - exposing `/property/website/draft(s)` in API Gateway
+  - fixing CORS preflight on the new website routes
+- host property detail fetch for the website flow now includes calendar availability payload for:
+  - imported external blocked dates
+  - iCal sync presence and source count
+  - last sync timestamp when available
+- the shared website model now includes availability snapshot data and implemented templates render that as a read-only calendar section
+- compact `My websites` previews were tightened so thumbnail scaling no longer leaves large empty vertical space
+
+Not yet implemented:
+- richer template-specific heading/branding controls beyond the current override surface
+- publish-state lifecycle and domain linking workflow on top of draft records
 
 ## Purpose
 This document captures the current plan of approach for the standalone website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.
+
+For chronological implementation history, see:
+- `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
 
 ## Core Question
 How can Domits design a template-based, one-click standalone booking website that is scalable, secure, and cost-efficient to host, while integrating correctly with availability and bookings from the Property Management System?
@@ -232,6 +266,7 @@ Current implementation direction:
 - descriptive property content is imported from PMS into standalone-owned published data at publish or refresh time
 - public render uses that standalone snapshot
 - quote pricing and availability remain live PMS reads
+- editor/preview availability visualization uses imported calendar snapshot data, but authoritative booking availability remains server-side at quote time
 
 #### 5.6 Security and isolation
 Analyze:

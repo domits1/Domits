@@ -153,6 +153,19 @@ export const buildAvailabilityRestrictionValueMap = (availabilityRestrictions) =
       .filter(Boolean)
   );
 
+const buildRuleValueMap = (rules) =>
+  new Map(
+    (Array.isArray(rules) ? rules : [])
+      .map((entry) => {
+        const rule = String(entry?.rule || "").trim();
+        if (!rule) {
+          return null;
+        }
+        return [rule, entry?.value];
+      })
+      .filter(Boolean)
+  );
+
 const readRestrictionValue = (restrictionValueMap, restrictionKey, fallbackValue = 0) => {
   if (!restrictionValueMap.has(restrictionKey)) {
     return fallbackValue;
@@ -659,9 +672,20 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const propertyType = data?.propertyType || {};
   const propertyPricing = data?.pricing || null;
   const restrictionValueMap = buildAvailabilityRestrictionValueMap(availabilityRestrictions);
+  const ruleValueMap = buildRuleValueMap(propertyRules);
+  const checkInDetailsFromRules = {
+    checkIn: {
+      from: ruleValueMap.get("CheckInFrom"),
+      till: ruleValueMap.get("CheckInTill"),
+    },
+    checkOut: {
+      from: ruleValueMap.get("CheckOutFrom"),
+      till: ruleValueMap.get("CheckOutTill"),
+    },
+  };
   const checkInDetails = data?.checkIn && typeof data.checkIn === "object"
     ? data.checkIn
-    : { checkIn: {}, checkOut: {} };
+    : checkInDetailsFromRules;
   const policyAvailabilitySettings = {
     advanceNoticeDays: Math.max(
       0,

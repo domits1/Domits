@@ -1,23 +1,79 @@
 # Standalone Property Site Frontend Status
 
 ## Purpose
-This document tracks the current implementation status of the host-side standalone website builder in the frontend, so progress is easy to review before moving into actual template implementation.
+This document tracks the current implementation status of the host-side standalone website builder in the frontend. It captures what is production-real now, what is preview-only, and what the next phase must cover.
+
+Historical iteration log:
+- `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
 
 ## Current status
-The website builder page is essentially complete as a selection and setup flow.
+The builder is no longer only a setup shell. It now builds a real in-dashboard preview from selected listing data for the first three templates and persists per-host website drafts.
 
-What is already in place:
-- A dedicated website builder page has been created.
-- The host can select one of their listings as the basis for a standalone property website.
-- After selecting a listing, the page shows the selected listing context so the host can verify they picked the correct property.
-- The template chooser is implemented and only appears after the listing has been selected.
-- Multiple template options are already defined, rendered, and selectable.
-- The builder flow is now structured step by step, with later steps only appearing after the previous step is completed.
+What is in place:
+- A dedicated website builder page with a step-based flow.
+- Listing selection via host-owned listing options.
+- Listings that already have a saved website draft are excluded from the builder dropdown until that website is deleted.
+- Template chooser with silhouette previews.
+- Real preview build flow for implemented templates.
+- Data mapping from selected listing detail payload into a shared template model.
+- Draft persistence to backend storage per host and property.
+- Saved website draft overview tab (`My websites`) with dedicated editor-page entry.
+- Dedicated draft editor page with controlled text override editing for:
+  - website title
+  - hero eyebrow
+  - hero title
+  - hero description
+  - CTA label
+  - CTA note
+- Template-aware section visibility toggles for implemented templates.
+- The availability calendar is part of the controlled visibility surface and can be shown or hidden per website draft.
+- Image-slot selection for hero/gallery slots used by implemented templates, now driven through a visual image-picker overlay instead of dropdown-only controls.
+- Editor save feedback now uses toast notifications instead of inline status copy inside the form.
+- Image-slot picker now uses a compact thumbnail grid that can scale to larger imported photo sets without a large hero preview stage.
+- Scaled preview rendering with dedicated desktop/tablet/mobile viewport switching in the editor.
+- Compact scaled website preview cards inside `My websites`, with corrected thumbnail scaling, clipped preview height, and reduced card whitespace.
+- Saved website cards display the persisted website title override when the host changes the title in the editor.
+- Saved website cards now expose both `Open editor` and `Delete permanently`, so deleting a website immediately makes its listing available again in the builder.
+- The saved website delete action is visually destructive/red and now opens an in-app confirmation overlay before deletion.
+- The saved website delete overlay now includes local-only deletion-reason checkboxes for future analytics/traceability and can be closed by clicking outside the dialog.
+- Compact saved website previews use thumbnail image variants where the property image payload provides them, reducing unnecessary image weight in `My websites`.
+- Compact saved website previews are centered on mobile cards.
+- Editor sections are now collapsible so the left-side control surface remains usable as more override fields are added.
+- Clicking editable areas in the editor preview now opens or scrolls to the matching editor section, and clicking preview images opens the image picker directly.
+- Clicking the availability calendar in the editor preview now opens the visibility section and highlights the `Show availability calendar` toggle.
+- Preview-to-editor jumps now briefly highlight the matched editor section so users can see where they landed after clicking the preview.
+- Editor loading now keeps the editor shell visible and uses section-level pulse-bar loaders instead of a single blocking state card.
+- Editor section bodies now open and close with an animated dropdown transition instead of a hard mount/unmount jump.
+- Implemented previews now include a reusable visitor contact widget that can be shown or hidden through the editor visibility controls.
+- The visitor contact widget uses the shared unified messaging send service with host/property context so it can flow toward Domits messages once the public-site contact endpoint contract is finalized.
+- Imported calendar availability now flows into website previews from `hostDashboard/single`, including:
+  - imported external blocked dates
+  - iCal sync presence
+  - sync-source count
+  - last sync timestamp when available
+- The website-side calendar payload is now enriched with the same iCal source/block data used by the host calendar sync flow, which keeps the website calendar snapshot closer to the PMS/calendar tab.
+- The website-side calendar payload now also merges PMS unavailable date overrides from the existing calendar override endpoint, so grey blocked days can appear alongside imported external bookings.
+- Implemented templates now render a read-only availability snapshot card using the shared website model.
+- Acceptance AWS wiring has been validated far enough for draft save/list behavior:
+  - Aurora `main.standalone_site_draft`
+  - API Gateway `/property/website/draft` and `/property/website/drafts`
+  - CORS preflight on the new website routes
+- Draft save/read now explicitly bypasses cache and the editor performs a read-after-write refresh to avoid stale draft payloads after saving.
+- Building a website now keeps the Step 3 preview visible while the draft is saved, then shows a toast that the website is ready for review.
+- A first public preview route exists at `/website-preview/:draftId`; it renders the saved draft through the real template instead of the dashboard preview frame.
+- Saved website cards and the editor expose `Open live preview` actions that open the draft preview link in a new tab.
+- Draft editing and shared preview state are now deliberately separated:
+  - `Save changes` updates only the working draft
+  - `Update live preview` pushes the current draft state to the shared preview link
+  - `Discard all changes` resets the working draft back to the currently published preview state
+- The editor save path now explicitly preserves the current published preview overrides during a normal draft save, so `Save changes` no longer mutates the shared preview link implicitly.
+- An already-open shared preview tab now refreshes itself when the editor pushes a new live-preview update, so hosts do not need to manually reload the preview page after publishing draft changes.
+- Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
 
 ## Implemented page flow
 ### Step 1: Choose your listing
 - Listing dropdown is implemented.
-- Listings are loaded in the background and become available in the selector.
+- Listings are loaded in the background using the host listing options endpoint.
 - After a listing is selected, the page shows:
   - stacked property photos
   - listing title
@@ -33,8 +89,38 @@ What is already in place:
 - The current chosen template is reflected in the summary area below the grid.
 - The selected state is visually indicated.
 
-## Implemented templates
-The current template set includes:
+### Step 3: Build and preview website
+- Clicking `Build my website` starts a real preview build workflow.
+- The UI shows phase-based loading with pulse bars:
+  - importing listing details
+  - mapping content to template slots
+  - rendering preview
+- The page scrolls to Step 3 automatically when build starts.
+- The built preview remains visible after draft persistence finishes.
+- A toast confirms when the draft is saved and ready for review.
+- Build failures are surfaced with retry controls.
+
+## Data flow status
+Current data path:
+- `hostDashboard/all` is used for listing selection and summary context.
+- `hostDashboard/single` is fetched only for the selected listing when preview build starts.
+- The detail payload is normalized into a canonical website content model before template rendering.
+
+This split prevents dropdown payload bloat and keeps template rendering decoupled from list-fetch logic.
+
+Calendar data path:
+- `hostDashboard/single` now returns `calendarAvailability` for the selected host-owned property.
+- The website model maps this into a shared availability object instead of letting each template interpret raw calendar payloads separately.
+- The website detail fetch now uses `no-store`, and the host-owned property detail response also returns no-store headers to reduce stale calendar sync snapshots.
+- Current rendered availability is intentionally a read-only imported snapshot:
+  - external blocked dates
+  - PMS unavailable override dates
+  - iCal sync state
+  - sync metadata
+- Live quote requests remain the authoritative check before a guest can proceed.
+
+## Template implementation status
+Templates available in chooser:
 - Panorama Landing
 - Trust Signals
 - Experience Journey
@@ -45,11 +131,32 @@ The current template set includes:
 - Contact Focus
 - Local Guide
 
-There is also a hidden legacy template kept in code for compatibility:
+Real preview rendering implemented:
+- Panorama Landing
+- Trust Signals
+- Experience Journey
+
+Silhouette-only (not yet real-rendered):
+- Amenities Spotlight
+- Gallery Grid
+- Editorial Split
+- Booking Focus
+- Contact Focus
+- Local Guide
+
+Legacy hidden template kept for compatibility:
 - Feature Stack
 
-## Display and selection status
-The template previews are already implemented as visual silhouettes.
+## Amenity icon status
+- Amenity labels are mapped from selected listing detail data.
+- Amenity icons are now rendered from the shared amenity catalog by amenity ID in the implemented templates.
+- Icon fallback is safe: if an amenity icon is missing, label rendering continues.
+
+## Animation and interaction status
+Animations remain aesthetic/supportive and not business-critical:
+- listing gallery overlay transitions
+- selected template interaction and silhouette cursor motion
+- phase-based preview build loading
 
 Current implementation details:
 - Templates are shown in a responsive grid.
@@ -58,42 +165,52 @@ Current implementation details:
 - The selected card has a distinct visual state.
 - The selected template can be changed freely after listing selection.
 
-## Animations implemented
-Animations were added mainly for aesthetic and preview purposes, not yet for product-critical behavior.
+## What is done now
+- Setup and selection flow is complete.
+- Real preview pipeline exists for the first three templates.
+- Preview workflow logic is extracted into a dedicated script module to support future dedicated preview route/new-tab flow.
+- A dedicated public preview route now exists for saved drafts and can be opened from the workspace/editor.
+- The shared preview route currently uses the draft id as the preview identifier. This is acceptable for acceptance/internal review, but should be replaced by a stronger preview token or signed-link strategy before treating preview links as production-grade public URLs.
+- Shared template model is in place and reusable by additional templates.
+- Built previews are persisted as website drafts keyed by host and property.
+- Listings with an existing saved website are no longer offered again in the builder flow.
+- Hosts can return to previously built drafts from the workspace overview tab.
+- Saved drafts now open in a dedicated editor route instead of reusing Step 3 in the builder.
+- Saved draft cards now render a clipped desktop-style website thumbnail instead of a mobile-biased preview.
+- Implemented templates now honor draft visibility toggles for major sections.
+- Editor image slot reassignment now uses an overlay gallery with navigation and confirm-select behavior.
+- Editor image slot reassignment now uses a thumbnail-only overlay grid with direct-select behavior.
+- Editor field overflow issues were corrected by tightening field sizing/box-model behavior.
+- Shared preview scaling was corrected so compact preview cards no longer reserve large unscaled whitespace.
+- Editor save success/error feedback was moved into toast notifications to keep the editor surface cleaner.
+- Preview-to-editor linking now exists for implemented templates so the preview can drive navigation to text/image editing areas.
+- Editor-to-preview linking now also exists for active text editing, so the preview target is highlighted while a text field is focused or changing.
+- Preview-to-editor linking now includes temporary section highlight feedback after navigation.
+- The editor now renders per-section loading states while opening instead of replacing the whole page with one loader card.
+- Editor sections now animate when expanding and collapsing.
+- Host-side website detail payload now includes calendar availability and iCal sync metadata without introducing a new schema change.
+- The website-side calendar sync snapshot path now uses the shared iCal source reader instead of a drifting duplicate query contract.
+- Acceptance environment issues found during rollout were resolved:
+  - missing unique index on `property_id` caused `ON CONFLICT` failure
+  - missing `host_id` index had to be added separately for the intended draft-by-host access path
+  - missing/incomplete CORS on website draft routes blocked browser fetches
+- Published preview state now relies on separate standalone-owned fields in `main.standalone_site_draft`:
+  - `published_content_overrides_json`
+  - `published_theme_overrides_json`
+  These fields must exist in `main` before backend code that reads/writes published preview state is deployed.
 
-Current animations include:
-- listing gallery overlay image transition when going next or previous
-- stacked property photo entry animation in the selected-listing card
-- selected template radio pulse animation
-- decorative cursor movement inside template silhouettes
-- subtle highlight/glow on silhouette sections when the decorative cursor interacts with them
+## Next phase
+The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.
 
-The cursor animation system was refactored into a more expandable structure:
-- template interaction sequence config
-- shared cursor layer
-- semantic silhouette targets
-- shared interaction styling
-
-This means new templates can be added later without hardcoding raw cursor coordinates for each one.
-
-## What is effectively done now
-At this stage, the builder page is largely done as a setup and selection experience.
-
-That means:
-- page structure is in place
-- listing selection is in place
-- selected listing verification is in place
-- template display is in place
-- template selection is in place
-- aesthetic preview animations are in place
-
-## Next logical focus
-The next implementation phase should focus on the actual website output based on:
-- the chosen listing
-- the chosen template
-- the imported listing data
-
-The main next step is no longer the builder shell itself, but implementing how each selected template becomes a real standalone website using the selected listing information.
+Required next steps:
+- Expand section-level/content override coverage further into template-specific headings and branding/theme controls.
+- Introduce image reordering / richer media management beyond the current slot reassignment approach.
+- Add publish/unpublish state transitions and domain management hooks on top of stored drafts.
+- Add preview URL strategy (in-page now, dedicated preview route/new tab later).
+- Harden preview URL strategy before production publish:
+  - add token rotation or preview-token hashing if draft UUID links are not considered sufficient
+  - add publish/unpublish state transitions
+  - add domain management hooks
 
 ## Additional implementation note
 - The Website route still exists in the frontend.

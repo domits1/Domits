@@ -6,105 +6,140 @@ const HOST_DASHBOARD_RESOURCE = "/property/hostDashboard/{subResource}";
 const BOOKING_ENGINE_RESOURCE = "/property/bookingEngine/{subResource}";
 
 const withHttpMethod = (httpMethod, overrides = {}) => ({ httpMethod, ...overrides });
-const withHostDashboardSubResource = (subResource) =>
-  withHttpMethod("GET", { resource: HOST_DASHBOARD_RESOURCE, pathParameters: { subResource } });
-const withBookingEngineSubResource = (subResource) =>
-  withHttpMethod("GET", { resource: BOOKING_ENGINE_RESOURCE, pathParameters: { subResource } });
 
-const buildCase = ({ name, controllerMethod, event, statusCode, body }) => ({
+const buildEvent = ({ httpMethod, resource, subResource }) =>
+  subResource === undefined
+    ? withHttpMethod(httpMethod, { resource })
+    : withHttpMethod(httpMethod, { resource, pathParameters: { subResource } });
+
+const buildCase = ({ name, controllerMethod, httpMethod, resource, statusCode, body, subResource }) => ({
   name,
   controllerMethod,
-  event,
+  event: buildEvent({ httpMethod, resource, subResource }),
   mockResponse: body === undefined ? { statusCode } : { statusCode, body },
   expectedStatusCode: statusCode,
   expectedBody: body,
 });
 
-const directCases = [
+const directRouteSpecs = [
+  ["POST request", "create", "POST", undefined, 201, "1"],
+  ["DELETE request", "delete", "DELETE", undefined, 200, "Deleted"],
+  ["DELETE property image request", "deletePropertyImage", "DELETE", "/property/images", 204],
+  ["PATCH property overview request", "updatePropertyOverview", "PATCH", "/property/overview", 204],
+  ["PATCH property calendar overrides request", "updatePropertyCalendarOverrides", "PATCH", "/property/calendar/overrides", 200],
+  ["PATCH property activation request", "activateProperty", "PATCH", "/property", 204],
+  ["POST website draft upsert request", "upsertWebsiteDraft", "POST", "/property/website/draft", 200],
+  ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],
+  ["GET public website preview request", "getWebsitePreviewByDraftId", "GET", "/property/website/preview", 200],
+  ["GET website drafts request", "getWebsiteDrafts", "GET", "/property/website/drafts", 200],
+  ["GET website draft by property request", "getWebsiteDraftByPropertyId", "GET", "/property/website/draft", 200],
+  ["DELETE website draft request", "deleteWebsiteDraft", "DELETE", "/property/website/draft", 204],
+];
+
+const hostDashboardSpecs = [
+  ["GET all hostDashboard properties", "getFullOwnedProperties", "all"],
+  ["GET single hostDashboard property", "getFullOwnedPropertyById", "single"],
+  ["GET hostDashboard website drafts", "getWebsiteDrafts", "websiteDrafts"],
+  ["GET hostDashboard website draft by property", "getWebsiteDraftByPropertyId", "websiteDraft"],
+];
+
+const bookingEngineSpecs = [
+  ["GET bookingEngine properties by type", "getActivePropertiesCardByType", "byType"],
+  ["GET all active properties", "getActivePropertiesCard", "all"],
+  ["GET properties by hostId", "getActivePropertiesCardByHostId", "byHostId"],
+  ["GET set of properties", "getActivePropertiesCardById", "set"],
+  ["GET active listing details", "getFullActivePropertyById", "listingDetails"],
+];
+
+const directCases = directRouteSpecs.map(([name, controllerMethod, httpMethod, resource, statusCode, body]) =>
   buildCase({
-    name: "POST request",
-    controllerMethod: "create",
-    event: withHttpMethod("POST"),
-    statusCode: 201,
-    body: "1",
-  }),
+    name,
+    controllerMethod,
+    httpMethod,
+    resource,
+    statusCode,
+    body,
+  })
+);
+
+const hostDashboardCases = hostDashboardSpecs.map(([name, controllerMethod, subResource]) =>
   buildCase({
-    name: "DELETE request",
-    controllerMethod: "delete",
-    event: withHttpMethod("DELETE"),
+    name,
+    controllerMethod,
+    httpMethod: "GET",
+    resource: HOST_DASHBOARD_RESOURCE,
+    subResource,
     statusCode: 200,
-    body: "Deleted",
-  }),
+  })
+);
+
+const bookingEngineCases = bookingEngineSpecs.map(([name, controllerMethod, subResource]) =>
   buildCase({
-    name: "DELETE property image request",
-    controllerMethod: "deletePropertyImage",
-    event: withHttpMethod("DELETE", { resource: "/property/images" }),
-    statusCode: 204,
-  }),
+    name,
+    controllerMethod,
+    httpMethod: "GET",
+    resource: BOOKING_ENGINE_RESOURCE,
+    subResource,
+    statusCode: 200,
+  })
+);
+
+const pathFallbackSpecs = [
   buildCase({
-    name: "PATCH property overview request",
-    controllerMethod: "updatePropertyOverview",
-    event: withHttpMethod("PATCH", { resource: "/property/overview" }),
-    statusCode: 204,
-  }),
-  buildCase({
-    name: "PATCH property calendar overrides request",
-    controllerMethod: "updatePropertyCalendarOverrides",
-    event: withHttpMethod("PATCH", { resource: "/property/calendar/overrides" }),
+    name: "GET all hostDashboard properties from path fallback",
+    controllerMethod: "getFullOwnedProperties",
+    httpMethod: "GET",
+    resource: "/property/{proxy+}",
     statusCode: 200,
   }),
   buildCase({
-    name: "PATCH property activation request",
-    controllerMethod: "activateProperty",
-    event: withHttpMethod("PATCH", { resource: "/property" }),
-    statusCode: 204,
-  }),
-  buildCase({
-    name: "GET property calendar overrides request",
-    controllerMethod: "getPropertyCalendarOverrides",
-    event: withHttpMethod("GET", { resource: "/property/calendar/overrides" }),
+    name: "GET all active properties from path fallback",
+    controllerMethod: "getActivePropertiesCard",
+    httpMethod: "GET",
+    resource: "/property/{proxy+}",
     statusCode: 200,
   }),
 ];
 
-const hostDashboardCases = [
-  ["all", "getFullOwnedProperties", "GET all hostDashboard properties"],
-  ["single", "getFullOwnedPropertyById", "GET single hostDashboard property"],
-].map(([subResource, controllerMethod, name]) =>
-  buildCase({
-    name,
-    controllerMethod,
-    event: withHostDashboardSubResource(subResource),
-    statusCode: 200,
-  })
-);
+const pathFallbackCases = [
+  {
+    testCase: pathFallbackSpecs[0],
+    path: "/property/hostDashboard/all",
+    proxy: "hostDashboard/all",
+  },
+  {
+    testCase: pathFallbackSpecs[1],
+    path: "/property/bookingEngine/all",
+    proxy: "bookingEngine/all",
+  },
+].map(({ testCase, path, proxy }) => ({
+  ...testCase,
+  event: {
+    ...testCase.event,
+    path,
+    pathParameters: { proxy },
+  },
+}));
 
-const bookingEngineCases = [
-  ["byType", "getActivePropertiesCardByType", "GET bookingEngine properties by type"],
-  ["all", "getActivePropertiesCard", "GET all active properties"],
-  ["byHostId", "getActivePropertiesCardByHostId", "GET properties by hostId"],
-  ["set", "getActivePropertiesCardById", "GET set of properties"],
-  ["listingDetails", "getFullActivePropertyById", "GET active listing details"],
-].map(([subResource, controllerMethod, name]) =>
-  buildCase({
-    name,
-    controllerMethod,
-    event: withBookingEngineSubResource(subResource),
-    statusCode: 200,
-  })
-);
-
-const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases];
+const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases, ...pathFallbackCases];
 
 const notFoundCases = [
   {
     name: "unknown '/property/hostDashboard' sub-resource",
-    event: withHostDashboardSubResource("unknown"),
+    event: buildEvent({
+      httpMethod: "GET",
+      resource: HOST_DASHBOARD_RESOURCE,
+      subResource: "unknown",
+    }),
     expectedBody: "Sub-resource for '/property/hostDashboard' not found.",
   },
   {
     name: "unknown '/property/bookingEngine' sub-resource",
-    event: withBookingEngineSubResource("unknown"),
+    event: buildEvent({
+      httpMethod: "GET",
+      resource: BOOKING_ENGINE_RESOURCE,
+      subResource: "unknown",
+    }),
     expectedBody: "Sub-resource for '/property/bookingEngine' not found.",
   },
   {

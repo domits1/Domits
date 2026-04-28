@@ -9,12 +9,28 @@ const notFound = (body) => ({
 
 const isPath = (event, route) => event.resource === route || event.path === route;
 
+const getSubResource = (event, resourceTemplate, pathPrefix) => {
+  if (event.resource === resourceTemplate) {
+    return event.pathParameters?.subResource;
+  }
+
+  const path = String(event.path || "");
+  if (!path.startsWith(pathPrefix)) {
+    return undefined;
+  }
+
+  return path.slice(pathPrefix.length).split("/").find(Boolean);
+};
+
 const handlePost = async (event) => {
   if (isPath(event, "/property/images/presign")) {
     return controller.createImageUploadUrls(event);
   }
   if (isPath(event, "/property/images/confirm")) {
     return controller.confirmImageUploads(event);
+  }
+  if (isPath(event, "/property/website/draft")) {
+    return controller.upsertWebsiteDraft(event);
   }
   if (isPath(event, "/property/draft")) {
     return controller.createDraft(event);
@@ -38,6 +54,8 @@ const handlePatch = async (event) => {
 const hostDashboardHandlers = {
   all: (event) => controller.getFullOwnedProperties(event),
   single: (event) => controller.getFullOwnedPropertyById(event),
+  websiteDrafts: (event) => controller.getWebsiteDrafts(event),
+  websiteDraft: (event) => controller.getWebsiteDraftByPropertyId(event),
 };
 
 const bookingEngineHandlers = {
@@ -51,20 +69,38 @@ const bookingEngineHandlers = {
 };
 
 const handleGet = async (event) => {
+  if (isPath(event, "/property/website/preview")) {
+    return controller.getWebsitePreviewByDraftId(event);
+  }
+  if (isPath(event, "/property/website/drafts")) {
+    return controller.getWebsiteDrafts(event);
+  }
+  if (isPath(event, "/property/website/draft")) {
+    return controller.getWebsiteDraftByPropertyId(event);
+  }
   if (isPath(event, "/property/calendar/overrides")) {
     return controller.getPropertyCalendarOverrides(event);
   }
 
-  const subResource = event.pathParameters?.subResource;
-  if (event.resource === "/property/hostDashboard/{subResource}") {
-    const handler = hostDashboardHandlers[subResource];
+  const hostDashboardSubResource = getSubResource(
+    event,
+    "/property/hostDashboard/{subResource}",
+    "/property/hostDashboard/"
+  );
+  if (hostDashboardSubResource) {
+    const handler = hostDashboardHandlers[hostDashboardSubResource];
     return handler
       ? handler(event)
       : notFound("Sub-resource for '/property/hostDashboard' not found.");
   }
 
-  if (event.resource === "/property/bookingEngine/{subResource}") {
-    const handler = bookingEngineHandlers[subResource];
+  const bookingEngineSubResource = getSubResource(
+    event,
+    "/property/bookingEngine/{subResource}",
+    "/property/bookingEngine/"
+  );
+  if (bookingEngineSubResource) {
+    const handler = bookingEngineHandlers[bookingEngineSubResource];
     return handler
       ? handler(event)
       : notFound("Sub-resource for '/property/bookingEngine' not found.");
@@ -76,6 +112,9 @@ const handleGet = async (event) => {
 const handleDelete = async (event) => {
   if (isPath(event, "/property/images")) {
     return controller.deletePropertyImage(event);
+  }
+  if (isPath(event, "/property/website/draft")) {
+    return controller.deleteWebsiteDraft(event);
   }
   if (isPath(event, "/property/draft")) {
     return controller.deleteDraft(event);

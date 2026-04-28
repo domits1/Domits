@@ -53,6 +53,7 @@ class BookingService {
 
     const userEmail = authenticatedUser.email;
     const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
+    const cancellationPolicy = await this.propertyRepository.getCancellationPolicyByPropertyId(propertyId);
     const hostEmail = await getHostEmailById(fetchedProperty.hostId);
 
     const bookingInfo = {
@@ -63,7 +64,12 @@ class BookingService {
     };
     await sendEmail(userEmail, hostEmail, bookingInfo);
 
-    return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
+    return await this.reservationRepository.addBookingToTable(
+      event,
+      authenticatedUser.sub,
+      fetchedProperty.hostId,
+      cancellationPolicy
+    );
   }
 
   parseBookingDateToMs(value, fieldName) {
@@ -169,6 +175,28 @@ class BookingService {
         throw new TypeException("Unable to determine what read type to use.");
       }
     }
+  }
+
+  async acceptInquiry(bookingId, authToken) {
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(bookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+    const booking = bookingResult.response;
+    if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
+    if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
+    await this.reservationRepository.updateBookingStatus(bookingId, "Awaiting Payment");
+    return { bookingId, status: "Awaiting Payment" };
+  }
+
+  async declineInquiry(bookingId, authToken) {
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(bookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+    const booking = bookingResult.response;
+    if (booking.hostid !== user.sub) throw new Forbidden("Only the host may decline this inquiry.");
+    if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
+    await this.reservationRepository.updateBookingStatus(bookingId, "Declined");
+    return { bookingId, status: "Declined" };
   }
 
   async verifyEventDataTypes(event) {
