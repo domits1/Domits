@@ -12,7 +12,7 @@ const buildRuleKey = (() => {
   };
 })();
 
-function HouseRules({ rules, cancellationPolicy }) {
+function HouseRules({ rules = [], cancellationPolicy = null }) {
   const ruleCounts = new Map();
 
   return (
@@ -56,11 +56,6 @@ HouseRules.propTypes = {
     summary: PropTypes.string,
     details: PropTypes.arrayOf(PropTypes.string),
   }),
-};
-
-HouseRules.defaultProps = {
-  rules: [],
-  cancellationPolicy: null,
 };
 
 export default HouseRules;

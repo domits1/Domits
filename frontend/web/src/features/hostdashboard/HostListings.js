@@ -188,9 +188,6 @@ function HostListings() {
     if (liveEligibilityLoading) {
       throw new Error("Checking verification status. Please try again in a moment.");
     }
-    if (liveEligibilityError) {
-      throw new Error(liveEligibilityError);
-    }
     if (!liveEligibility) {
       navigate("/verify", {
         state: {

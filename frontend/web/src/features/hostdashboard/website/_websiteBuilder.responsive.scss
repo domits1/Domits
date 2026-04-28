@@ -80,7 +80,20 @@
     text-align: center;
   }
 
-  .websiteDraftCardHeader,
+  .websiteDraftCardHeader {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: flex-start;
+  }
+
+  .websiteDraftCardPreview {
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .websiteDraftCardHeader > .statusPill {
+    justify-self: center;
+  }
+
   .websiteDraftMetaRow {
     flex-direction: column;
     align-items: flex-start;
@@ -95,6 +108,10 @@
     flex-direction: column;
     justify-content: stretch;
     align-items: stretch;
+  }
+
+  .websiteDraftPreviewPlaceholder {
+    min-height: 180px;
   }
 
 }
