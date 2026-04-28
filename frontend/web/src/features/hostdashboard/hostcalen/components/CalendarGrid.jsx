@@ -47,6 +47,56 @@ const readOverrideAvailability = (availabilityOverrides, key) => {
   return null;
 };
 
+const readOverrideField = (source, camelField, snakeField) => {
+  if (!source || typeof source !== "object") {
+    return undefined;
+  }
+  return source[camelField] !== undefined ? source[camelField] : source[snakeField];
+};
+
+const normalizeNullableBoolean = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    if (value === 1) {
+      return true;
+    }
+    if (value === 0) {
+      return false;
+    }
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true" || normalized === "1") {
+      return true;
+    }
+    if (normalized === "false" || normalized === "0") {
+      return false;
+    }
+  }
+  return null;
+};
+
+const normalizeNullableStay = (value) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
+    return null;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return Math.trunc(parsed);
+};
+
 const readRestrictionOverride = (restrictionOverrides, key) => {
   const source =
     restrictionOverrides && typeof restrictionOverrides === "object" ? restrictionOverrides[key] : null;
@@ -60,58 +110,55 @@ const readRestrictionOverride = (restrictionOverrides, key) => {
     };
   }
 
-  const minStay = Number(source.minStay);
-  const maxStay = Number(source.maxStay);
   return {
-    stopSell: source.stopSell === null || source.stopSell === undefined ? null : Boolean(source.stopSell),
-    closedToArrival:
-      source.closedToArrival === null || source.closedToArrival === undefined
-        ? null
-        : Boolean(source.closedToArrival),
-    closedToDeparture:
-      source.closedToDeparture === null || source.closedToDeparture === undefined
-        ? null
-        : Boolean(source.closedToDeparture),
-    minStay: Number.isFinite(minStay) && minStay >= 0 ? Math.trunc(minStay) : null,
-    maxStay: Number.isFinite(maxStay) && maxStay >= 0 ? Math.trunc(maxStay) : null,
+    stopSell: normalizeNullableBoolean(readOverrideField(source, "stopSell", "stop_sell")),
+    closedToArrival: normalizeNullableBoolean(
+      readOverrideField(source, "closedToArrival", "closed_to_arrival")
+    ),
+    closedToDeparture: normalizeNullableBoolean(
+      readOverrideField(source, "closedToDeparture", "closed_to_departure")
+    ),
+    minStay: normalizeNullableStay(readOverrideField(source, "minStay", "min_stay")),
+    maxStay: normalizeNullableStay(readOverrideField(source, "maxStay", "max_stay")),
   };
 };
 
 const buildRestrictionIndicators = (restriction) => {
+  const safeRestriction = restriction && typeof restriction === "object" ? restriction : {};
   const indicators = [];
-  if (restriction.stopSell === true) {
+  if (safeRestriction.stopSell === true) {
     indicators.push({
       key: "stopSell",
       label: "Stop selling this date",
       text: "Stop",
     });
   }
-  if (restriction.closedToArrival === true) {
+  if (safeRestriction.closedToArrival === true) {
     indicators.push({
       key: "closedToArrival",
       label: "No check-in on this date",
       text: "No CI",
     });
   }
-  if (restriction.closedToDeparture === true) {
+  if (safeRestriction.closedToDeparture === true) {
     indicators.push({
       key: "closedToDeparture",
       label: "No check-out on this date",
       text: "No CO",
     });
   }
-  if (restriction.minStay !== null) {
+  if (safeRestriction.minStay !== null && safeRestriction.minStay !== undefined) {
     indicators.push({
       key: "minStay",
-      label: `Minimum stay ${restriction.minStay}`,
-      text: `Min ${restriction.minStay}`,
+      label: `Minimum stay ${safeRestriction.minStay}`,
+      text: `Min ${safeRestriction.minStay}`,
     });
   }
-  if (restriction.maxStay !== null) {
+  if (safeRestriction.maxStay !== null && safeRestriction.maxStay !== undefined) {
     indicators.push({
       key: "maxStay",
-      label: `Maximum stay ${restriction.maxStay}`,
-      text: `Max ${restriction.maxStay}`,
+      label: `Maximum stay ${safeRestriction.maxStay}`,
+      text: `Max ${safeRestriction.maxStay}`,
     });
   }
   return indicators;
@@ -228,6 +275,7 @@ const buildDayPresentation = ({
     showUnavailableYearIcon: !isBlocked && !isBooked && isUnavailable,
     showBookedYearIcon: isBooked,
     displayPrice,
+    restrictionIndicators,
     cellAriaLabel: buildCellAriaLabel({
       date,
       displayPrice,
@@ -335,6 +383,9 @@ export default function CalendarGrid({
           <div className="hc-calendar-grid">
             {safeGrid.flat().map((date) => {
               const dayPresentation = getDayPresentation(date, cursor);
+              const restrictionIndicators = Array.isArray(dayPresentation.restrictionIndicators)
+                ? dayPresentation.restrictionIndicators
+                : EMPTY_ARRAY;
 
               return (
                 <button
@@ -389,9 +440,9 @@ export default function CalendarGrid({
                     <span className="hc-cell-price">{formatEuroAmount(dayPresentation.displayPrice)}</span>
                   )}
 
-                  {dayPresentation.restrictionIndicators.length > 0 ? (
+                  {restrictionIndicators.length > 0 ? (
                     <span className="hc-cell-restrictions" aria-hidden="true">
-                      {dayPresentation.restrictionIndicators.map((indicator) => (
+                      {restrictionIndicators.map((indicator) => (
                         <span
                           key={indicator.key}
                           className={`hc-cell-restriction-chip hc-cell-restriction-chip--${indicator.key}`}
@@ -424,6 +475,9 @@ export default function CalendarGrid({
                   const dayPresentation = getDayPresentation(date, monthView.monthCursor);
                   const isOutsideMonth = dayPresentation.isOutsideMonth;
                   const isCurrentMonth = !isOutsideMonth;
+                  const restrictionIndicators = Array.isArray(dayPresentation.restrictionIndicators)
+                    ? dayPresentation.restrictionIndicators
+                    : EMPTY_ARRAY;
                   return (
                     <div
                       key={`${monthView.monthName}-${dayPresentation.key}`}
@@ -444,7 +498,7 @@ export default function CalendarGrid({
                           "hc-year-day--unavailable",
                         isCurrentMonth && dayPresentation.isAvailable && "hc-year-day--available",
                         isCurrentMonth &&
-                          dayPresentation.restrictionIndicators.length > 0 &&
+                          restrictionIndicators.length > 0 &&
                           "hc-year-day--has-restrictions",
                         isCurrentMonth && dayPresentation.isSelected && "hc-year-day--selected"
                       )}
@@ -473,7 +527,7 @@ export default function CalendarGrid({
                             </span>
                           )}
 
-                          {dayPresentation.restrictionIndicators.length > 0 && (
+                          {restrictionIndicators.length > 0 && (
                             <span className="hc-year-day-restriction-dot" aria-hidden="true" />
                           )}
                         </>

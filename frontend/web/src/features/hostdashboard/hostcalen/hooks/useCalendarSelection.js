@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 
@@ -93,16 +93,44 @@ const normalizeNullableStay = (value) => {
   return Math.trunc(parsed);
 };
 
+const readOverrideField = (source, camelField, snakeField) => {
+  if (!source || typeof source !== "object") {
+    return undefined;
+  }
+  return source[camelField] !== undefined ? source[camelField] : source[snakeField];
+};
+
 const normalizeRestrictionOverride = (source = {}) => ({
-  stopSell: normalizeNullableBoolean(source?.stopSell),
-  closedToArrival: normalizeNullableBoolean(source?.closedToArrival),
-  closedToDeparture: normalizeNullableBoolean(source?.closedToDeparture),
-  minStay: normalizeNullableStay(source?.minStay),
-  maxStay: normalizeNullableStay(source?.maxStay),
+  stopSell: normalizeNullableBoolean(readOverrideField(source, "stopSell", "stop_sell")),
+  closedToArrival: normalizeNullableBoolean(
+    readOverrideField(source, "closedToArrival", "closed_to_arrival")
+  ),
+  closedToDeparture: normalizeNullableBoolean(
+    readOverrideField(source, "closedToDeparture", "closed_to_departure")
+  ),
+  minStay: normalizeNullableStay(readOverrideField(source, "minStay", "min_stay")),
+  maxStay: normalizeNullableStay(readOverrideField(source, "maxStay", "max_stay")),
 });
 
 const hasRestrictionOverrideValue = (restriction) =>
   CALENDAR_RESTRICTION_FIELDS.some((field) => restriction?.[field] !== null && restriction?.[field] !== undefined);
+
+const hasDirtyFields = (dirtyFields) => Object.values(dirtyFields || {}).some(Boolean);
+
+const getSelectedDateKeySignature = (dateKeys) => (Array.isArray(dateKeys) ? dateKeys.join("|") : "");
+
+const mergeServerMapPreservingKeys = (serverMap, previousMap, keysToPreserve) => {
+  const next = { ...(serverMap || {}) };
+  const previous = previousMap && typeof previousMap === "object" ? previousMap : {};
+  (Array.isArray(keysToPreserve) ? keysToPreserve : []).forEach((key) => {
+    if (Object.hasOwn(previous, key)) {
+      next[key] = previous[key];
+    } else if (Object.hasOwn(next, key)) {
+      delete next[key];
+    }
+  });
+  return next;
+};
 
 const getRestrictionForKey = (restrictionsByKey, key) => {
   if (!restrictionsByKey || typeof restrictionsByKey !== "object") {
@@ -135,14 +163,17 @@ const parseOverrideResponse = (overrides) => {
   const priceByKey = {};
   const restrictionsByKey = {};
   (Array.isArray(overrides) ? overrides : []).forEach((override) => {
-    const key = dateNumberToKey(override?.date ?? override?.calendarDate);
+    const key = dateNumberToKey(
+      override?.date ?? readOverrideField(override, "calendarDate", "calendar_date")
+    );
     if (!key) {
       return;
     }
-    if (override?.isAvailable !== null && override?.isAvailable !== undefined) {
-      availabilityByKey[key] = Boolean(override.isAvailable);
+    const isAvailable = readOverrideField(override, "isAvailable", "is_available");
+    if (isAvailable !== null && isAvailable !== undefined) {
+      availabilityByKey[key] = Boolean(isAvailable);
     }
-    const nightlyPrice = Number(override?.nightlyPrice);
+    const nightlyPrice = Number(readOverrideField(override, "nightlyPrice", "nightly_price"));
     if (Number.isFinite(nightlyPrice) && nightlyPrice > 0) {
       priceByKey[key] = Math.trunc(nightlyPrice);
     }
@@ -264,6 +295,17 @@ export const useCalendarSelection = ({
   const [selectionRestrictionDirtyFields, setSelectionRestrictionDirtyFields] = useState({});
   const [pendingSelectionStartKey, setPendingSelectionStartKey] = useState(null);
   const [selectedDateKeys, setSelectedDateKeys] = useState([]);
+  const latestSelectedDateKeysRef = useRef([]);
+  const localOverrideVersionRef = useRef(0);
+  const restrictionDraftSelectionKeyRef = useRef("");
+
+  const markLocalOverrideTouched = () => {
+    localOverrideVersionRef.current += 1;
+  };
+
+  useEffect(() => {
+    latestSelectedDateKeysRef.current = Array.isArray(selectedDateKeys) ? selectedDateKeys : [];
+  }, [selectedDateKeys]);
 
   const persistOverrides = async (
     propertyId,
@@ -431,6 +473,11 @@ export const useCalendarSelection = ({
     selectedDateKeys.length > 0 &&
     Number.isFinite(parsedSelectionPriceInput) &&
     parsedSelectionPriceInput >= 2;
+  const selectionRestrictionsDirty = hasDirtyFields(selectionRestrictionDirtyFields);
+  const selectedDateKeySignature = useMemo(
+    () => getSelectedDateKeySignature(selectedDateKeys),
+    [selectedDateKeys]
+  );
 
   useEffect(() => {
     if (!selectedDateKeys.length) {
@@ -453,9 +500,22 @@ export const useCalendarSelection = ({
   );
 
   useEffect(() => {
+    if (!selectedDateKeySignature) {
+      restrictionDraftSelectionKeyRef.current = "";
+      setSelectionRestrictionsForm(createSelectionRestrictionsForm());
+      setSelectionRestrictionDirtyFields({});
+      return;
+    }
+
+    const selectedDatesChanged = restrictionDraftSelectionKeyRef.current !== selectedDateKeySignature;
+    if (!selectedDatesChanged && selectionRestrictionsDirty) {
+      return;
+    }
+
+    restrictionDraftSelectionKeyRef.current = selectedDateKeySignature;
     setSelectionRestrictionsForm(selectedRestrictionSnapshot.form);
     setSelectionRestrictionDirtyFields({});
-  }, [selectedRestrictionSnapshot]);
+  }, [selectedDateKeySignature, selectedRestrictionSnapshot, selectionRestrictionsDirty]);
 
   useEffect(() => {
     let mounted = true;
@@ -468,6 +528,7 @@ export const useCalendarSelection = ({
       if (!token) {
         return;
       }
+      const requestStartedAtLocalVersion = localOverrideVersionRef.current;
 
       try {
         const response = await fetch(
@@ -487,11 +548,31 @@ export const useCalendarSelection = ({
           return;
         }
         const { availabilityByKey, priceByKey, restrictionsByKey } = parseOverrideResponse(body?.overrides);
-        setAvailabilityOverrides(availabilityByKey);
-        setRestrictionOverrides(restrictionsByKey);
+        const localOverridesChangedDuringRequest =
+          localOverrideVersionRef.current !== requestStartedAtLocalVersion;
+        const selectedKeysToPreserve = localOverridesChangedDuringRequest
+          ? latestSelectedDateKeysRef.current
+          : [];
+
+        setAvailabilityOverrides((previous) =>
+          localOverridesChangedDuringRequest
+            ? mergeServerMapPreservingKeys(availabilityByKey, previous, selectedKeysToPreserve)
+            : availabilityByKey
+        );
+        setRestrictionOverrides((previous) =>
+          localOverridesChangedDuringRequest
+            ? mergeServerMapPreservingKeys(restrictionsByKey, previous, selectedKeysToPreserve)
+            : restrictionsByKey
+        );
         setPriceOverridesByPropertyId((previous) => ({
           ...previous,
-          [selectedPropertyId]: priceByKey,
+          [selectedPropertyId]: localOverridesChangedDuringRequest
+            ? mergeServerMapPreservingKeys(
+                priceByKey,
+                previous?.[selectedPropertyId],
+                selectedKeysToPreserve
+              )
+            : priceByKey,
         }));
       } catch (error) {
         console.error(error?.message || error);
@@ -514,6 +595,7 @@ export const useCalendarSelection = ({
     setSelectionRestrictionDirtyFields({});
     setPendingSelectionStartKey(null);
     setSelectedDateKeys([]);
+    restrictionDraftSelectionKeyRef.current = "";
   }, [selectedPropertyId]);
 
   const resetSelectionState = () => {
@@ -525,6 +607,7 @@ export const useCalendarSelection = ({
     setSelectionRestrictionDirtyFields({});
     setPendingSelectionStartKey(null);
     setSelectedDateKeys([]);
+    restrictionDraftSelectionKeyRef.current = "";
   };
 
   const handleDateSelect = (dateContext) => {
@@ -571,6 +654,7 @@ export const useCalendarSelection = ({
       }
     });
 
+    markLocalOverrideTouched();
     setAvailabilityOverrides(nextAvailabilityOverrides);
 
     void persistOverrides(
@@ -606,6 +690,7 @@ export const useCalendarSelection = ({
       ...previous,
       [selectedPropertyId]: nextPropertyPriceOverrides,
     }));
+    markLocalOverrideTouched();
     setSelectionPriceDirty(false);
 
     void persistOverrides(
@@ -631,9 +716,9 @@ export const useCalendarSelection = ({
       ...previous,
       [field]: true,
     }));
+    markLocalOverrideTouched();
   };
 
-  const selectionRestrictionsDirty = Object.values(selectionRestrictionDirtyFields).some(Boolean);
   const canSaveSelectionRestrictions =
     selectionRestrictionsDirty &&
     selectedDateKeys.length > 0 &&
@@ -676,6 +761,7 @@ export const useCalendarSelection = ({
       }
     });
 
+    markLocalOverrideTouched();
     setRestrictionOverrides(nextRestrictionOverrides);
     setSelectionRestrictionDirtyFields({});
 
