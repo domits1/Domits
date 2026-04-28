@@ -11,7 +11,7 @@ const buildRuleKey = (() => {
   };
 })();
 
-function HouseRules({ rules }) {
+function HouseRules({ rules = [], cancellationPolicy = null }) {
   const ruleCounts = new Map();
 
   return (

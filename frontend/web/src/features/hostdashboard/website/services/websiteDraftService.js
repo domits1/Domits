@@ -72,6 +72,8 @@ export const upsertWebsiteDraft = async ({
   status = "DRAFT",
   contentOverrides = {},
   themeOverrides = {},
+  publishedContentOverrides = undefined,
+  publishedThemeOverrides = undefined,
 }) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
@@ -96,6 +98,8 @@ export const upsertWebsiteDraft = async ({
       status,
       contentOverrides,
       themeOverrides,
+      publishedContentOverrides,
+      publishedThemeOverrides,
     }),
   });
 
