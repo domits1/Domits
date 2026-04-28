@@ -26,6 +26,7 @@ const FetchPropertyDetails = async (propertyId, checkInDate, checkOutDate) => {
       country: accommodationData.location.country,
       differenceInDays: differenceInDays,
       hostId: accommodationData.property.hostId,
+      bookingType: accommodationData.property.bookingType || "direct",
       testStatus: accommodationData.propertyTestStatus.isTest,
     };
   } catch (error) {

@@ -267,6 +267,7 @@ export const savePropertyChanges = async ({
   checkInDetails,
   policyAvailabilitySettings,
   pricingForm,
+  bookingType,
 }) => {
   const normalizedTitle = form.title.trim();
   const normalizedSubtitle = form.subtitle.trim();
@@ -312,6 +313,7 @@ export const savePropertyChanges = async ({
       title: normalizedTitle,
       subtitle: normalizedSubtitle,
       description: normalizedDescription,
+      bookingType: bookingType === "inquiry" || bookingType === "direct" ? bookingType : undefined,
       capacity: {
         spaceType: capacity.propertyType || "Entire house",
         guests: normalizeCapacityValue(capacity.guests),

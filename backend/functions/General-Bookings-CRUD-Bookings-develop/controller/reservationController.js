@@ -15,8 +15,15 @@ class ReservationController {
     // -----------
 
     async create(event){
-        try{ 
+        try{
             const returnInfo = await this.bookingService.create(event.event);
+            if (returnInfo.isInquiry) {
+                return {
+                    statusCode: 201,
+                    headers: responseHeaderJSON,
+                    response: { bookingId: returnInfo.bookingId, status: "Inquiry" },
+                };
+            }
             const paymentData = await this.paymentSerivce.create(returnInfo.hostId, returnInfo.bookingId, returnInfo.propertyId, returnInfo.dates);
             return {
                 statusCode: returnInfo.statusCode,

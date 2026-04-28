@@ -356,6 +356,7 @@ export class PropertyController {
                     checkIn: normalizedOverviewPayload.checkIn,
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
+                    bookingType: normalizedOverviewPayload.bookingType,
                 }
             );
 
@@ -476,6 +477,7 @@ export class PropertyController {
             checkIn: body.checkIn,
             amenities: body.amenities,
             rules: body.rules,
+            bookingType: body.bookingType,
         };
     }
 
@@ -688,6 +690,7 @@ export class PropertyController {
                     ).values()
                 )
                 : undefined,
+            bookingType: payload.bookingType === "inquiry" ? "inquiry" : payload.bookingType === "direct" ? "direct" : undefined,
         };
     }
 

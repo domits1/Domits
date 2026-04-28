@@ -231,6 +231,8 @@ function HostPropertyOverviewTab(props) {
     updateCapacityField,
     address,
     updateAddressField,
+    bookingType,
+    onBookingTypeChange,
   } = props;
   const renderCapacityCounter = ({ key, label }) => (
     <div key={key} className={styles.counterItem}>
@@ -280,6 +282,19 @@ function HostPropertyOverviewTab(props) {
         value={form.subtitle}
         onChange={(event) => updateField("subtitle", event.target.value)}
       />
+
+      <div className={styles.field}>
+        <label htmlFor="booking-type">Booking type</label>
+        <select
+          id="booking-type"
+          className={styles.input}
+          value={bookingType || "direct"}
+          onChange={(event) => onBookingTypeChange(event.target.value)}
+        >
+          <option value="direct">Direct booking (guest pays immediately)</option>
+          <option value="inquiry">Inquiry first (host reviews before payment)</option>
+        </select>
+      </div>
 
       <div className={styles.sectionDivider} />
 
