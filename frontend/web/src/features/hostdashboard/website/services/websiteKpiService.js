@@ -18,6 +18,11 @@ const normalizeNumericMetric = (value) => {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 };
 
+const normalizeNullableMetric = (value) => {
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
 export const fetchWebsiteKpis = async () => {
   const response = await fetch(buildWebsiteKpisUrl(), {
     method: "GET",
@@ -55,6 +60,14 @@ export const fetchWebsiteKpis = async () => {
     deletedWebsiteCount: normalizeNumericMetric(parsedBody?.deletedWebsiteCount),
     lastPublicPreviewAt: normalizeNumericMetric(parsedBody?.lastPublicPreviewAt),
     lastLivePreviewUpdateAt: normalizeNumericMetric(parsedBody?.lastLivePreviewUpdateAt),
+    timeToPublishP95: normalizeNullableMetric(parsedBody?.timeToPublishP95),
+    costPerActiveSitePerMonth: normalizeNullableMetric(parsedBody?.costPerActiveSitePerMonth),
+    siteLcpMobileP75: normalizeNullableMetric(parsedBody?.siteLcpMobileP75),
+    fallbackSubdomainAvailability: normalizeNullableMetric(parsedBody?.fallbackSubdomainAvailability),
+    quoteToChargeMismatchRate: normalizeNullableMetric(parsedBody?.quoteToChargeMismatchRate),
+    bookingApiErrorRate: normalizeNullableMetric(parsedBody?.bookingApiErrorRate),
+    bookingFunnelCompletionRate: normalizeNullableMetric(parsedBody?.bookingFunnelCompletionRate),
+    customDomainSetupSuccessRate: normalizeNullableMetric(parsedBody?.customDomainSetupSuccessRate),
     deletionReasonBreakdown,
   };
 };

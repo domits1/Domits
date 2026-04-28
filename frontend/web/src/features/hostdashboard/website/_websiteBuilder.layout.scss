@@ -135,6 +135,13 @@
   line-height: 1;
 }
 
+.kpiCardLoader,
+.researchKpiCardLoader {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
 .kpiCardMeta {
   margin: 0;
   color: #64748b;
@@ -191,6 +198,123 @@
 
 .deletionReasonRow strong {
   color: #153e64;
+}
+
+.researchKpiPanel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 1)),
+    #ffffff;
+}
+
+.researchKpiHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.researchKpiHeader h3,
+.researchKpiHeader p {
+  margin: 0;
+}
+
+.researchKpiHeader h3 {
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.researchKpiHeader p {
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.researchKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.researchKpiCard {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.12);
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+}
+
+.researchKpiCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.researchKpiCardTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.researchKpiStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.34rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.researchKpiStatusBadgeReady {
+  background: #e7f7ee;
+  color: #1d6b44;
+}
+
+.researchKpiStatusBadgePending {
+  background: #eef3f8;
+  color: #46627f;
+}
+
+.researchKpiCardValue {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.researchKpiCriteriaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.researchKpiCriterionTag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.36rem 0.72rem;
+  background: #f1f6fb;
+  color: #1f4e79;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.researchKpiCardMeta {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 
 .builderSteps {

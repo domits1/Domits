@@ -15,8 +15,91 @@ const EMPTY_WEBSITE_KPIS = Object.freeze({
   deletedWebsiteCount: 0,
   lastPublicPreviewAt: 0,
   lastLivePreviewUpdateAt: 0,
+  timeToPublishP95: null,
+  costPerActiveSitePerMonth: null,
+  siteLcpMobileP75: null,
+  fallbackSubdomainAvailability: null,
+  quoteToChargeMismatchRate: null,
+  bookingApiErrorRate: null,
+  bookingFunnelCompletionRate: null,
+  customDomainSetupSuccessRate: null,
   deletionReasonBreakdown: [],
 });
+
+const RESEARCH_KPI_DEFINITIONS = Object.freeze([
+  {
+    id: "time_to_publish_p95",
+    criteria: ["Scalability", "User experience"],
+    valueKey: "timeToPublishP95",
+    formatter: (value) => `${value.toFixed(1)} min`,
+    emptyValue: "Pending",
+    note:
+      "Requires a real publish lifecycle with publish-requested and publish-succeeded timestamps. The current preview-link workflow is not the final publish contract.",
+  },
+  {
+    id: "cost_per_active_site_per_month",
+    criteria: ["Scalability", "Cost"],
+    valueKey: "costPerActiveSitePerMonth",
+    formatter: (value) => `EUR ${value.toFixed(2)}`,
+    emptyValue: "Pending",
+    note:
+      "Requires infrastructure cost allocation plus a real count of active published sites. Drafts and preview links are not enough for a defensible value.",
+  },
+  {
+    id: "site_lcp_mobile_p75",
+    criteria: ["Performance"],
+    valueKey: "siteLcpMobileP75",
+    formatter: (value) => `${value.toFixed(2)} s`,
+    emptyValue: "Pending",
+    note:
+      "Requires mobile web-vitals telemetry from the public standalone website surface. The host dashboard preview does not emit that measurement.",
+  },
+  {
+    id: "fallback_subdomain_availability",
+    criteria: ["Reliability"],
+    valueKey: "fallbackSubdomainAvailability",
+    formatter: (value) => `${value.toFixed(2)}%`,
+    emptyValue: "Pending",
+    note:
+      "Requires real fallback subdomain routing plus synthetic availability checks. Preview links do not represent subdomain uptime.",
+  },
+  {
+    id: "booking_api_error_rate",
+    criteria: ["Reliability", "Correctness"],
+    valueKey: "bookingApiErrorRate",
+    formatter: (value) => `${value.toFixed(2)}%`,
+    emptyValue: "Pending",
+    note:
+      "Requires the standalone booking API path to be live and instrumented. This remains a v2 metric until direct booking flow is active.",
+  },
+  {
+    id: "quote_to_charge_mismatch_rate",
+    criteria: ["Correctness"],
+    valueKey: "quoteToChargeMismatchRate",
+    formatter: (value) => `${value.toFixed(2)}%`,
+    emptyValue: "Pending",
+    note:
+      "Requires quote issuance and final successful charge comparison. That data does not exist until checkout and payment instrumentation is in place.",
+  },
+  {
+    id: "booking_funnel_completion_rate",
+    criteria: ["User experience"],
+    valueKey: "bookingFunnelCompletionRate",
+    formatter: (value) => `${value.toFixed(2)}%`,
+    emptyValue: "Pending",
+    note:
+      "Requires end-to-end funnel events from quote to completed booking. Current standalone website analytics stop at draft and preview usage.",
+  },
+  {
+    id: "custom_domain_setup_success_rate",
+    criteria: ["User experience"],
+    valueKey: "customDomainSetupSuccessRate",
+    formatter: (value) => `${value.toFixed(2)}%`,
+    emptyValue: "Pending",
+    note:
+      "Requires custom-domain setup flow, verification states, and success/failure events. That domain workflow is not implemented yet.",
+  },
+]);
 
 const formatKpiTimestamp = (timestamp) => {
   const parsedValue = Number(timestamp);
@@ -100,15 +183,19 @@ function WebsiteKpiDashboardPage() {
     },
   ];
 
-  const renderKpiContent = () => {
-    if (isLoadingWebsiteKpis) {
-      return (
-        <div className={styles.stateCard}>
-          <PulseBarsLoader message="Loading standalone website KPIs..." />
-        </div>
-      );
-    }
+  const researchKpiCards = RESEARCH_KPI_DEFINITIONS.map((researchKpi) => {
+    const rawValue = websiteKpis[researchKpi.valueKey];
+    const isInstrumented = typeof rawValue === "number" && Number.isFinite(rawValue);
 
+    return {
+      ...researchKpi,
+      isInstrumented,
+      value: isInstrumented ? researchKpi.formatter(rawValue) : researchKpi.emptyValue,
+      statusLabel: isInstrumented ? "Instrumented" : "Not instrumented yet",
+    };
+  });
+
+  const renderKpiContent = () => {
     if (websiteKpisError) {
       return (
         <div className={`${styles.stateCard} ${styles.errorState}`}>
@@ -128,11 +215,72 @@ function WebsiteKpiDashboardPage() {
           {metricCards.map((metricCard) => (
             <article key={metricCard.id} className={styles.kpiCard}>
               <p className={styles.kpiCardTitle}>{metricCard.title}</p>
-              <p className={styles.kpiCardValue}>{metricCard.value}</p>
-              <p className={styles.kpiCardMeta}>{metricCard.meta}</p>
+              {isLoadingWebsiteKpis ? (
+                <div className={styles.kpiCardLoader}>
+                  <PulseBarsLoader inline message="" />
+                </div>
+              ) : (
+                <p className={styles.kpiCardValue}>{metricCard.value}</p>
+              )}
+              <p className={styles.kpiCardMeta}>
+                {isLoadingWebsiteKpis ? "Loading aggregated website activity..." : metricCard.meta}
+              </p>
             </article>
           ))}
         </div>
+
+        <article className={styles.researchKpiPanel}>
+          <div className={styles.researchKpiHeader}>
+            <h3>Research KPI set</h3>
+            <p>
+              These KPI names come directly from the research. The dashboard shows them already, but
+              only metrics with real instrumentation should surface values.
+            </p>
+          </div>
+
+          <div className={styles.researchKpiGrid}>
+            {researchKpiCards.map((researchKpiCard) => (
+              <article key={researchKpiCard.id} className={styles.researchKpiCard}>
+                <div className={styles.researchKpiCardHeader}>
+                  <p className={styles.researchKpiCardTitle}>{researchKpiCard.id}</p>
+                  <span
+                    className={`${styles.researchKpiStatusBadge} ${
+                      isLoadingWebsiteKpis
+                        ? styles.researchKpiStatusBadgePending
+                        : researchKpiCard.isInstrumented
+                        ? styles.researchKpiStatusBadgeReady
+                        : styles.researchKpiStatusBadgePending
+                    }`.trim()}
+                  >
+                    {isLoadingWebsiteKpis ? "Loading" : researchKpiCard.statusLabel}
+                  </span>
+                </div>
+                {isLoadingWebsiteKpis ? (
+                  <div className={styles.researchKpiCardLoader}>
+                    <PulseBarsLoader inline message="" />
+                  </div>
+                ) : (
+                  <p className={styles.researchKpiCardValue}>{researchKpiCard.value}</p>
+                )}
+                <div className={styles.researchKpiCriteriaRow}>
+                  {researchKpiCard.criteria.map((criterion) => (
+                    <span
+                      key={`${researchKpiCard.id}-${criterion}`}
+                      className={styles.researchKpiCriterionTag}
+                    >
+                      {criterion}
+                    </span>
+                  ))}
+                </div>
+                <p className={styles.researchKpiCardMeta}>
+                  {isLoadingWebsiteKpis
+                    ? "Loading KPI status and instrumentation availability..."
+                    : researchKpiCard.note}
+                </p>
+              </article>
+            ))}
+          </div>
+        </article>
 
         <article className={styles.deletionReasonPanel}>
           <div className={styles.deletionReasonHeader}>
@@ -140,7 +288,11 @@ function WebsiteKpiDashboardPage() {
             <p>Counts are aggregated from the reasons selected in the standalone website delete flow.</p>
           </div>
 
-          {websiteKpis.deletionReasonBreakdown.length > 0 ? (
+          {isLoadingWebsiteKpis ? (
+            <div className={styles.stateCard}>
+              <PulseBarsLoader message="Loading website deletion reasons..." />
+            </div>
+          ) : websiteKpis.deletionReasonBreakdown.length > 0 ? (
             <div className={styles.deletionReasonList}>
               {websiteKpis.deletionReasonBreakdown.map((reasonEntry) => (
                 <div key={reasonEntry.reason} className={styles.deletionReasonRow}>
@@ -188,9 +340,14 @@ function WebsiteKpiDashboardPage() {
             </div>
 
             <div className={styles.buttonRow}>
-              <button type="button" className={styles.secondaryButton} onClick={() => void loadWebsiteKpis()}>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={() => void loadWebsiteKpis()}
+                disabled={isLoadingWebsiteKpis}
+              >
                 <RefreshOutlinedIcon fontSize="small" />
-                Refresh data
+                {isLoadingWebsiteKpis ? "Loading..." : "Refresh data"}
               </button>
             </div>
 

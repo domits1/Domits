@@ -1153,3 +1153,73 @@ Evidence (commit(s), file(s), docs):
   - table `main.standalone_site_draft`
   - index `standalone_site_draft_property_unique`
   - API Gateway methods for `/property/website/draft(s)`
+
+## [2026-04-28] Research KPI catalogue surfaced in dashboard
+Context:
+The KPI dashboard already exposed real standalone website usage metrics, but it still missed the broader KPI set defined in the research. That made implementation and evaluation drift apart.
+
+Implementation:
+- Extended the dedicated KPI dashboard UI to show the research KPI set explicitly:
+  - `time_to_publish_p95`
+  - `cost_per_active_site_per_month`
+  - `site_lcp_mobile_p75`
+  - `fallback_subdomain_availability`
+  - `quote_to_charge_mismatch_rate`
+  - `booking_api_error_rate`
+  - `booking_funnel_completion_rate`
+  - `custom_domain_setup_success_rate`
+- Added criteria tags so each KPI stays linked to the research categories.
+- Marked non-instrumented KPIs clearly as pending instead of inventing placeholder values.
+- Kept the current global usage metrics and deletion-reason analytics unchanged.
+
+Decision / Rationale:
+- The dashboard should reflect the research model honestly.
+- Showing KPI names now is useful, but only if the page makes it explicit which metrics are truly instrumented and which still require platform work.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- This slice is frontend-only and consumes the existing KPI endpoint.
+
+Validation:
+- Frontend production build passed.
+
+Open risks / Next:
+- When publish flow, public domains, performance telemetry, and booking flow are implemented, the backend KPI contract should be extended so these research KPIs can move from pending to real measured values.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteKpiService.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-28] KPI dashboard loading state aligned with host dashboard patterns
+Context:
+The dedicated standalone website KPI dashboard already used the shared pulse-bars loader, but it still replaced too much of the page during the initial fetch. That made the page feel like a blank state instead of a stable dashboard shell with loading metrics.
+
+Implementation:
+- Kept the KPI dashboard shell visible immediately on route entry.
+- Moved the loading experience inside the KPI cards and deletion-reason panel so the page now shows pulse-bar loaders where values are still being fetched.
+- Disabled the refresh action while the initial KPI request is in flight.
+
+Decision / Rationale:
+- This matches the interaction pattern already used across host dashboard surfaces such as stats cards, calendar, and website builder flows.
+- Users should see the KPI layout immediately, with only the data points in a loading state.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- This slice is frontend-only.
+
+Validation:
+- Frontend production build passed.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`

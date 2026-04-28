@@ -202,6 +202,17 @@ Current implementation details:
 - Website KPI tracking now relies on a separate standalone-owned table in `main`:
   - `standalone_site_event`
   This table must exist in `main` before the website KPI overview can load successfully in the host dashboard.
+- The dedicated website KPI dashboard now also shows the broader research KPI set explicitly:
+  - `time_to_publish_p95`
+  - `cost_per_active_site_per_month`
+  - `site_lcp_mobile_p75`
+  - `fallback_subdomain_availability`
+  - `quote_to_charge_mismatch_rate`
+  - `booking_api_error_rate`
+  - `booking_funnel_completion_rate`
+  - `custom_domain_setup_success_rate`
+  Metrics without real instrumentation are shown as pending instead of fabricated values.
+- The dedicated KPI dashboard now keeps its full page shell visible on first load and renders pulse-bar loaders inside the KPI sections while aggregated data is still loading.
 
 ## Next phase
 The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.
