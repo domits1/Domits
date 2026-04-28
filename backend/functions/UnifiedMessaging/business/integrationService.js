@@ -171,19 +171,45 @@ const formatNightlyPriceForChannexRate = (value) => {
   if (!Number.isFinite(numericValue) || numericValue <= 0) return null;
   return numericValue.toFixed(2);
 };
-const CHANNEX_SUPPORTED_RESTRICTION_FIELDS = ["min_stay_through", "max_stay"];
+const CHANNEX_SUPPORTED_RESTRICTION_FIELDS = [
+  "closed_to_arrival",
+  "closed_to_departure",
+  "max_stay",
+  "min_stay_through",
+  "stop_sell",
+];
 const normalizeRestrictionInteger = (value) => {
   if (value === undefined || value === null || value === "") return null;
 
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? Math.trunc(numericValue) : null;
 };
+const normalizeRestrictionBoolean = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") {
+    if (value === 1) return true;
+    if (value === 0) return false;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true" || normalized === "1") return true;
+    if (normalized === "false" || normalized === "0") return false;
+  }
+  return null;
+};
 const copySupportedChannexRestrictions = (source) => {
   if (!source || typeof source !== "object" || Array.isArray(source)) return {};
 
+  const stopSell = normalizeRestrictionBoolean(source.stop_sell);
+  const closedToArrival = normalizeRestrictionBoolean(source.closed_to_arrival);
+  const closedToDeparture = normalizeRestrictionBoolean(source.closed_to_departure);
   const minStayThrough = normalizeRestrictionInteger(source.min_stay_through);
   const maxStay = normalizeRestrictionInteger(source.max_stay);
   return {
+    ...(stopSell === true ? { stop_sell: true } : {}),
+    ...(closedToArrival === true ? { closed_to_arrival: true } : {}),
+    ...(closedToDeparture === true ? { closed_to_departure: true } : {}),
     ...(minStayThrough !== null ? { min_stay_through: minStayThrough } : {}),
     ...(maxStay !== null && maxStay > 0 ? { max_stay: maxStay } : {}),
   };
@@ -251,6 +277,150 @@ const buildChannexRestrictionMapping = (restrictions) => {
     ).sort(),
   };
 };
+const buildCalendarRestrictionOverrideSummary = (override) => {
+  const stopSell = normalizeRestrictionBoolean(override?.stopSell);
+  const closedToArrival = normalizeRestrictionBoolean(override?.closedToArrival);
+  const closedToDeparture = normalizeRestrictionBoolean(override?.closedToDeparture);
+  const minStay = normalizeRestrictionInteger(override?.minStay);
+  const maxStay = normalizeRestrictionInteger(override?.maxStay);
+
+  return {
+    stopSell,
+    closedToArrival,
+    closedToDeparture,
+    minStay,
+    maxStay,
+    hasAnyValue:
+      stopSell !== null ||
+      closedToArrival !== null ||
+      closedToDeparture !== null ||
+      minStay !== null ||
+      maxStay !== null,
+  };
+};
+const addGlobalRestrictionField = (out, globalRestrictionMapping, channexField) => {
+  const globalRestriction = (Array.isArray(globalRestrictionMapping?.supportedRestrictions)
+    ? globalRestrictionMapping.supportedRestrictions
+    : []
+  ).find((restriction) => restriction.channexField === channexField);
+  if (!globalRestriction) return;
+
+  out.channexRestrictions[channexField] = globalRestriction.value;
+  out.supportedRestrictions.push({ ...globalRestriction, source: "global_availability_restriction" });
+};
+const addBooleanCalendarRestrictionField = ({
+  out,
+  overrideSummary,
+  sourceField,
+  domitsRestriction,
+  channexField,
+}) => {
+  const value = overrideSummary?.[sourceField];
+  if (value === true) {
+    out.channexRestrictions[channexField] = true;
+    out.supportedRestrictions.push({
+      domitsRestriction,
+      channexField,
+      value: true,
+      source: "calendar_override",
+    });
+    return;
+  }
+
+  if (value === false) {
+    out.omittedRestrictions.push({
+      domitsRestriction,
+      channexField,
+      value: false,
+      source: "calendar_override",
+      reason:
+        "Explicit false calendar override values are omitted because Channex clearing semantics are not verified in this integration.",
+    });
+  }
+};
+const buildEffectiveChannexRestrictionMapping = (globalRestrictionMapping, override) => {
+  const overrideSummary = buildCalendarRestrictionOverrideSummary(override);
+  const out = {
+    channexRestrictions: {},
+    supportedRestrictions: [],
+    omittedRestrictions: Array.isArray(globalRestrictionMapping?.omittedRestrictions)
+      ? globalRestrictionMapping.omittedRestrictions.map((restriction) => ({ ...restriction }))
+      : [],
+    calendarRestrictionOverride: {
+      stopSell: overrideSummary.stopSell,
+      closedToArrival: overrideSummary.closedToArrival,
+      closedToDeparture: overrideSummary.closedToDeparture,
+      minStay: overrideSummary.minStay,
+      maxStay: overrideSummary.maxStay,
+    },
+  };
+
+  addBooleanCalendarRestrictionField({
+    out,
+    overrideSummary,
+    sourceField: "stopSell",
+    domitsRestriction: "stopSell",
+    channexField: "stop_sell",
+  });
+  addBooleanCalendarRestrictionField({
+    out,
+    overrideSummary,
+    sourceField: "closedToArrival",
+    domitsRestriction: "closedToArrival",
+    channexField: "closed_to_arrival",
+  });
+  addBooleanCalendarRestrictionField({
+    out,
+    overrideSummary,
+    sourceField: "closedToDeparture",
+    domitsRestriction: "closedToDeparture",
+    channexField: "closed_to_departure",
+  });
+
+  if (overrideSummary.minStay !== null) {
+    out.channexRestrictions.min_stay_through = overrideSummary.minStay;
+    out.supportedRestrictions.push({
+      domitsRestriction: "minStay",
+      channexField: "min_stay_through",
+      value: overrideSummary.minStay,
+      source: "calendar_override",
+    });
+  } else {
+    addGlobalRestrictionField(out, globalRestrictionMapping, "min_stay_through");
+  }
+
+  if (overrideSummary.maxStay !== null) {
+    if (overrideSummary.maxStay > 0) {
+      out.channexRestrictions.max_stay = overrideSummary.maxStay;
+      out.supportedRestrictions.push({
+        domitsRestriction: "maxStay",
+        channexField: "max_stay",
+        value: overrideSummary.maxStay,
+        source: "calendar_override",
+      });
+    } else {
+      out.omittedRestrictions.push({
+        domitsRestriction: "maxStay",
+        channexField: "max_stay",
+        value: overrideSummary.maxStay,
+        source: "calendar_override",
+        reason:
+          "Domits calendar override maxStay values less than or equal to 0 mean no maximum, so Channex max_stay is omitted.",
+      });
+    }
+  } else {
+    addGlobalRestrictionField(out, globalRestrictionMapping, "max_stay");
+  }
+
+  out.supportedChannexRestrictionFields = Array.from(
+    new Set(out.supportedRestrictions.map((restriction) => restriction.channexField).filter(Boolean))
+  ).sort();
+  out.omittedDomitsRestrictionNames = Array.from(
+    new Set(out.omittedRestrictions.map((restriction) => restriction.domitsRestriction).filter(Boolean))
+  ).sort();
+
+  return out;
+};
 const collectChannexRestrictionFieldsFromGroups = (groups) => {
   const fields = new Set();
   for (const group of Array.isArray(groups) ? groups : []) {
@@ -301,7 +471,17 @@ const getPropertyCalendarOverrides = async (propertyId, startDate, endDate) => {
 
   const rows = await client.query(
     `
-      SELECT property_id, calendar_date, is_available, nightly_price, updated_at
+      SELECT
+        property_id,
+        calendar_date,
+        is_available,
+        nightly_price,
+        stop_sell,
+        closed_to_arrival,
+        closed_to_departure,
+        min_stay,
+        max_stay,
+        updated_at
       FROM ${tableName}
       WHERE ${where.join(" AND ")}
       ORDER BY calendar_date ASC
@@ -314,6 +494,17 @@ const getPropertyCalendarOverrides = async (propertyId, startDate, endDate) => {
     date: toIntegerOrNull(row?.calendar_date),
     isAvailable: row?.is_available === null || row?.is_available === undefined ? null : Boolean(row.is_available),
     nightlyPrice: toIntegerOrNull(row?.nightly_price),
+    stopSell: row?.stop_sell === null || row?.stop_sell === undefined ? null : Boolean(row.stop_sell),
+    closedToArrival:
+      row?.closed_to_arrival === null || row?.closed_to_arrival === undefined
+        ? null
+        : Boolean(row.closed_to_arrival),
+    closedToDeparture:
+      row?.closed_to_departure === null || row?.closed_to_departure === undefined
+        ? null
+        : Boolean(row.closed_to_departure),
+    minStay: toIntegerOrNull(row?.min_stay),
+    maxStay: toIntegerOrNull(row?.max_stay),
     updatedAt: toIntegerOrNull(row?.updated_at),
   }));
 };
@@ -2714,6 +2905,11 @@ export default class IntegrationService {
               {
                 isAvailable: entry?.isAvailable ?? null,
                 nightlyPrice: entry?.nightlyPrice ?? null,
+                stopSell: entry?.stopSell ?? null,
+                closedToArrival: entry?.closedToArrival ?? null,
+                closedToDeparture: entry?.closedToDeparture ?? null,
+                minStay: entry?.minStay ?? null,
+                maxStay: entry?.maxStay ?? null,
                 updatedAt: entry?.updatedAt ?? null,
               },
             ];
@@ -2733,10 +2929,25 @@ export default class IntegrationService {
 
       const availabilityPreview = [];
       const rateRestrictionPreview = [];
+      const calendarRestrictionOverrideDates = Array.from(overrideMap.values()).filter(
+        (override) => buildCalendarRestrictionOverrideSummary(override).hasAnyValue
+      ).length;
+      const effectiveChannexRestrictionFields = new Set();
+      const supportedCalendarRestrictionOverrideFields = new Set();
 
       for (const isoDate of dates) {
         const calendarDate = isoDateToCalendarInt(isoDate);
         const override = overrideMap.get(isoDate) || null;
+        const effectiveRestrictionMapping = buildEffectiveChannexRestrictionMapping(
+          restrictionMapping,
+          override
+        );
+        Object.keys(effectiveRestrictionMapping.channexRestrictions).forEach((field) =>
+          effectiveChannexRestrictionFields.add(field)
+        );
+        effectiveRestrictionMapping.supportedRestrictions
+          .filter((restriction) => restriction.source === "calendar_override")
+          .forEach((restriction) => supportedCalendarRestrictionOverrideFields.add(restriction.channexField));
         const isAvailableFromWindows = normalizedAvailabilityWindows.some(
           (entry) => calendarDate >= entry.availableStartDate && calendarDate <= entry.availableEndDate
         );
@@ -2764,13 +2975,15 @@ export default class IntegrationService {
             externalRatePlanId: ratePlanMapping.externalRatePlanId,
             date: isoDate,
             nightlyPrice: effectiveNightlyPrice,
-            channexRestrictions: { ...restrictionMapping.channexRestrictions },
-            supportedRestrictions: restrictionMapping.supportedRestrictions.map((restriction) => ({ ...restriction })),
-            omittedRestrictions: restrictionMapping.omittedRestrictions.map((restriction) => ({ ...restriction })),
-            restrictions: restrictionMapping.supportedRestrictions.map((restriction) => ({
+            channexRestrictions: { ...effectiveRestrictionMapping.channexRestrictions },
+            supportedRestrictions: effectiveRestrictionMapping.supportedRestrictions.map((restriction) => ({ ...restriction })),
+            omittedRestrictions: effectiveRestrictionMapping.omittedRestrictions.map((restriction) => ({ ...restriction })),
+            calendarRestrictionOverride: { ...effectiveRestrictionMapping.calendarRestrictionOverride },
+            restrictions: effectiveRestrictionMapping.supportedRestrictions.map((restriction) => ({
               restriction: restriction.domitsRestriction,
               channexField: restriction.channexField,
               value: restriction.value,
+              source: restriction.source ?? null,
             })),
             domitsRestrictions: normalizedRestrictions.map((restriction) => ({
               restriction: restriction.restriction,
@@ -2797,7 +3010,10 @@ export default class IntegrationService {
           hasBasePricing: !!pricing,
           availabilityRestrictions: normalizedRestrictions.length,
           supportedAvailabilityRestrictions: restrictionMapping.supportedRestrictions.length,
-          supportedChannexRestrictionFields: restrictionMapping.supportedChannexRestrictionFields,
+          globalSupportedChannexRestrictionFields: restrictionMapping.supportedChannexRestrictionFields,
+          calendarRestrictionOverrides: calendarRestrictionOverrideDates,
+          supportedCalendarRestrictionOverrideFields: Array.from(supportedCalendarRestrictionOverrideFields).sort(),
+          supportedChannexRestrictionFields: Array.from(effectiveChannexRestrictionFields).sort(),
           omittedAvailabilityRestrictions: restrictionMapping.omittedRestrictions.length,
           omittedDomitsRestrictionNames: restrictionMapping.omittedDomitsRestrictionNames,
         },
@@ -2851,8 +3067,11 @@ export default class IntegrationService {
       const notes = [
         "Availability values are currently derived from property-scoped Domits availability and fanned out across saved Channex room type mappings.",
         "Rate values are currently derived from property-scoped Domits pricing and nightly overrides, then fanned out across saved Channex rate plan mappings.",
-        "Supported Domits restrictions are mapped as MinimumStay -> Channex min_stay_through and MaximumStay -> Channex max_stay when MaximumStay is greater than 0.",
-        "stop_sell, closed_to_arrival, closed_to_departure, MinimumAdvanceReservation, MaximumNightsPerYear, PreparationTimeDays, occupancy-based pricing, taxes, and currency fields are omitted from Channex restriction payloads.",
+        "Supported Domits restrictions are mapped as date-level minStay or global MinimumStay -> Channex min_stay_through, and date-level maxStay or global MaximumStay -> Channex max_stay when the effective value is greater than 0.",
+        "Supported date-level calendar restriction booleans are mapped as stopSell -> stop_sell, closedToArrival -> closed_to_arrival, and closedToDeparture -> closed_to_departure when explicitly true.",
+        "Date-level calendar restriction overrides take priority over global Domits availability restrictions for the same Channex field.",
+        "Explicit false values for stop_sell, closed_to_arrival, and closed_to_departure are omitted because Channex clearing semantics are not verified in this integration.",
+        "MinimumAdvanceReservation, MaximumNightsPerYear, PreparationTimeDays, occupancy-based pricing, taxes, and currency fields are omitted from Channex restriction payloads.",
       ];
 
       if (!preview.ready) {
@@ -2886,7 +3105,7 @@ export default class IntegrationService {
       if (supportedRestrictionFields.length) {
         notes.push(`Supported Channex restriction fields present in this preview: ${supportedRestrictionFields.join(", ")}.`);
       } else {
-        notes.push("No supported MinimumStay or positive MaximumStay values were found, so rate payload previews remain rate-only.");
+        notes.push("No supported global stay restrictions or date-level calendar restriction overrides were found, so rate payload previews remain rate-only.");
       }
       if (omittedRestrictionNames.length) {
         notes.push(`Omitted Domits availability restrictions in this preview: ${omittedRestrictionNames.join(", ")}.`);
@@ -2942,8 +3161,12 @@ export default class IntegrationService {
               restriction: restriction.restriction,
               channexField: restriction.channexField,
               value: restriction.value,
+              source: restriction.source ?? null,
             }))
           : [],
+        calendarRestrictionOverride: item.calendarRestrictionOverride
+          ? { ...item.calendarRestrictionOverride }
+          : null,
       }));
       const restrictionRatePayloadGroups = Array.from(
         new Map(
@@ -2969,6 +3192,7 @@ export default class IntegrationService {
                   supportedRestrictions: candidate.supportedRestrictions,
                   omittedRestrictions: candidate.omittedRestrictions,
                   restrictions: candidate.restrictions,
+                  calendarRestrictionOverride: candidate.calendarRestrictionOverride,
                 })),
             },
           ])
@@ -2978,8 +3202,11 @@ export default class IntegrationService {
       if (!preview.sourceSummary?.hasBasePricing) {
         notes.push("Base property pricing is missing, so nightlyPrice may be null unless a calendar override price exists.");
       }
-      if (!preview.sourceSummary?.availabilityRestrictions) {
-        notes.push("No Domits availability restrictions were found for this property, so only rate fields are shown in restriction payload previews.");
+      if (
+        !preview.sourceSummary?.availabilityRestrictions &&
+        !preview.sourceSummary?.calendarRestrictionOverrides
+      ) {
+        notes.push("No Domits availability restrictions or date-level calendar restriction overrides were found for this property, so only rate fields are shown in restriction payload previews.");
       }
 
       return ok({
@@ -4506,7 +4733,7 @@ export default class IntegrationService {
       const baseNotes = [
         ...(Array.isArray(payloadPreview.notes) ? payloadPreview.notes : []),
         "Manual staging sync only. This endpoint sends rate updates through Channex restrictions and does not run a scheduler, retries, or sync-state persistence.",
-        "Restrictions sync sends Channex rate values and adds only the supported mapped fields: min_stay_through from Domits MinimumStay and max_stay from Domits MaximumStay when greater than 0.",
+        "Restrictions sync sends Channex rate values and can add supported mapped fields: stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay.",
       ];
       const mappingSnapshot = {
         missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
@@ -4578,7 +4805,7 @@ export default class IntegrationService {
           `Restrictions sync included Channex restriction fields in outbound payloads: ${sentChannexRestrictionFields.join(", ")}.`
         );
       } else {
-        baseNotes.push("Restrictions sync outbound payloads are rate-only because no supported MinimumStay or positive MaximumStay values were available to send.");
+        baseNotes.push("Restrictions sync outbound payloads are rate-only because no supported global stay restrictions or date-level calendar restriction overrides were available to send.");
       }
       if (captureState) {
         captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
@@ -4896,7 +5123,7 @@ export default class IntegrationService {
       const readiness = readinessResult.response || {};
       const baseNotes = [
         "Manual staging orchestration only. This endpoint runs the existing availability sync first and the Channex restrictions sync second.",
-        "Restrictions sync sends rate values and can include mapped min_stay_through/max_stay fields when supported Domits stay restrictions are present.",
+        "Restrictions sync sends rate values and can include mapped stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay fields when supported Domits calendar/global restrictions are present.",
       ];
       const mappingSnapshot = {
         missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
@@ -5286,7 +5513,7 @@ export default class IntegrationService {
       const readiness = readinessResult.response || {};
       const baseNotes = [
         "Manual staging certification-prep runner only. This endpoint executes one availability sync and one restrictions sync for the selected full range.",
-        "Restrictions sync sends rate values and can include mapped min_stay_through/max_stay fields when supported Domits stay restrictions are present.",
+        "Restrictions sync sends rate values and can include mapped stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay fields when supported Domits calendar/global restrictions are present.",
       ];
       if (usingDefaultDateRange) {
         baseNotes.push(
