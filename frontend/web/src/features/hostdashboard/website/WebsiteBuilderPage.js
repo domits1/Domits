@@ -110,8 +110,12 @@ const getPhotoCardClassName = (photoIndex) => {
 const getDraftContentOverrides = (draft) =>
   draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
 
-const getDraftDisplayTitle = (draft) => {
-  const contentOverrides = getDraftContentOverrides(draft);
+const getDraftPublishedContentOverrides = (draft) =>
+  draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object"
+    ? draft.publishedContentOverrides
+    : {};
+
+const getDraftDisplayTitle = (draft, contentOverrides = getDraftContentOverrides(draft)) => {
   return (
     String(contentOverrides.siteTitle || "").trim() ||
     String(draft?.propertyTitle || "").trim() ||
@@ -176,9 +180,9 @@ const formatDraftUpdatedAt = (updatedAt) => {
 };
 
 const buildDraftCardFallbackPreviewModel = (draft) => {
-  const contentOverrides = getDraftContentOverrides(draft);
+  const contentOverrides = getDraftPublishedContentOverrides(draft);
   const locationLabel = String(draft?.location || "").trim();
-  const title = getDraftDisplayTitle(draft);
+  const title = getDraftDisplayTitle(draft, contentOverrides);
   const subtitle = String(draft?.propertySubtitle || "").trim();
   const selectedGalleryImages = Array.isArray(contentOverrides.galleryImages)
     ? contentOverrides.galleryImages.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)
@@ -326,7 +330,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
 };
 
 function WebsiteDraftDeleteDialog({
-  draft,
+  draft = null,
   deleteReasons,
   deleteStep,
   isDeleting,
@@ -456,10 +460,6 @@ WebsiteDraftDeleteDialog.propTypes = {
   onReasonNext: PropTypes.func.isRequired,
 };
 
-WebsiteDraftDeleteDialog.defaultProps = {
-  draft: null,
-};
-
 function WebsiteBuilderPage() {
   const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_WEBSITES);
   const [propertyOptions, setPropertyOptions] = useState([]);
@@ -577,12 +577,8 @@ function WebsiteBuilderPage() {
         return;
       }
 
-      const fallbackPreviewModels = Object.fromEntries(
-        websiteDrafts.map((draft) => [draft.propertyId, buildDraftCardFallbackPreviewModel(draft)])
-      );
-
       if (isMounted) {
-        setWebsiteDraftPreviewModels(fallbackPreviewModels);
+        setWebsiteDraftPreviewModels({});
       }
 
       const previewEntries = await Promise.all(
@@ -595,13 +591,13 @@ function WebsiteBuilderPage() {
               imageVariant: "thumb",
             });
             const thumbContentOverrides = mapImageOverridesToThumbnails(
-              draft.contentOverrides || {},
+              getDraftPublishedContentOverrides(draft),
               buildImageVariantMap(propertyDetails?.images)
             );
             const previewModel = applyWebsiteDraftContentOverrides(baseModel, thumbContentOverrides);
             return [draft.propertyId, previewModel];
           } catch {
-            return [draft.propertyId, null];
+            return [draft.propertyId, buildDraftCardFallbackPreviewModel(draft)];
           }
         })
       );
@@ -612,10 +608,7 @@ function WebsiteBuilderPage() {
 
       setWebsiteDraftPreviewModels(
         Object.fromEntries(
-          previewEntries.map(([propertyId, previewModel]) => [
-            propertyId,
-            previewModel || fallbackPreviewModels[propertyId],
-          ])
+          previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel])
         )
       );
     };
@@ -924,7 +917,7 @@ function WebsiteBuilderPage() {
     <div className={styles.photoStack}>
       {previewImages.map((imageUrl, index) => (
         <button
-          key={`${selectedProperty.value}-${imageUrl}`}
+          key={`${selectedProperty.value}-${index}-${imageUrl}`}
           type="button"
           className={getPhotoCardClassName(index)}
           onClick={() => openGallery(index)}
@@ -1008,7 +1001,7 @@ function WebsiteBuilderPage() {
           const template = getWebsiteTemplateById(draft.templateKey);
           const templateName = template?.name || draft.templateKey || "Unknown template";
           const draftPreviewModel = websiteDraftPreviewModels[draft.propertyId] || null;
-          const draftDisplayTitle = getDraftDisplayTitle(draft);
+          const draftDisplayTitle = getDraftDisplayTitle(draft, getDraftPublishedContentOverrides(draft));
 
           return (
             <article key={draft.id || `${draft.propertyId}-${draft.updatedAt}`} className={styles.websiteDraftCard}>
@@ -1517,7 +1510,7 @@ function WebsiteBuilderPage() {
           <div className="overlay-thumbnails">
             {galleryImages.map((imageUrl, index) => (
               <button
-                key={`${selectedProperty.value}-gallery-${imageUrl}`}
+                key={`${selectedProperty.value}-gallery-${index}-${imageUrl}`}
                 type="button"
                 className={`${index === activeGalleryIndex ? "thumb active" : "thumb"} ${styles.galleryThumbnailButton}`}
                 onClick={() => {

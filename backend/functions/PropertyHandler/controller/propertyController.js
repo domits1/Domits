@@ -1091,6 +1091,14 @@ export class PropertyController {
         return payload;
     }
 
+    parseOptionalWebsiteOverridePayload(payload, fieldName) {
+        if (payload === undefined) {
+            return undefined;
+        }
+
+        return this.parseWebsiteOverridePayload(payload, fieldName);
+    }
+
     isWebsiteDraftClientError(error) {
         return (
             error?.message?.startsWith("Missing propertyId") ||
@@ -1438,6 +1446,14 @@ export class PropertyController {
             const status = String(eventBody.status || "DRAFT").trim().toUpperCase();
             const contentOverrides = this.parseWebsiteOverridePayload(eventBody.contentOverrides, "contentOverrides");
             const themeOverrides = this.parseWebsiteOverridePayload(eventBody.themeOverrides, "themeOverrides");
+            const publishedContentOverrides = this.parseOptionalWebsiteOverridePayload(
+                eventBody.publishedContentOverrides,
+                "publishedContentOverrides"
+            );
+            const publishedThemeOverrides = this.parseOptionalWebsiteOverridePayload(
+                eventBody.publishedThemeOverrides,
+                "publishedThemeOverrides"
+            );
 
             if (!propertyId) {
                 return this.badRequest("Missing propertyId.");
@@ -1456,6 +1472,8 @@ export class PropertyController {
                 status,
                 contentOverrides,
                 themeOverrides,
+                publishedContentOverrides,
+                publishedThemeOverrides,
             });
 
             return {
