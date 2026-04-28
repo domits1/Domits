@@ -238,7 +238,9 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributesWithFullLocation(propertyId);
+    return await this.getFullPropertyAttributesWithFullLocation(propertyId, {
+      includeCalendarAvailability: true,
+    });
   }
 
   async getFullPropertyByBookingId(bookingId) {
@@ -371,10 +373,17 @@ export class PropertyService {
   }
 
   async getPublicCalendarAvailability(propertyId) {
-    const externalBlockedDates = await this.propertyExternalCalendarRepository.getBlockedDatesByPropertyId(propertyId);
+    const availabilitySnapshot =
+      await this.propertyExternalCalendarRepository.getAvailabilitySnapshotByPropertyId(propertyId);
 
     return {
-      externalBlockedDates: Array.isArray(externalBlockedDates) ? externalBlockedDates : [],
+      externalBlockedDates: Array.isArray(availabilitySnapshot?.externalBlockedDates)
+        ? availabilitySnapshot.externalBlockedDates
+        : [],
+      hasExternalCalendarSync: availabilitySnapshot?.hasExternalCalendarSync === true,
+      syncedSourceCount: Math.max(0, Number(availabilitySnapshot?.syncedSourceCount || 0)),
+      lastSyncAt: Number(availabilitySnapshot?.lastSyncAt || 0) || null,
+      syncSources: Array.isArray(availabilitySnapshot?.syncSources) ? availabilitySnapshot.syncSources : [],
     };
   }
 

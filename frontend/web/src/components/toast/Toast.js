@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import styles from './toast_styling.module.css'
 
-function Toast({ message, status, duration, onClose }) {
+function Toast({ message, status, duration = 3000, onClose }) {
 
     const [showToast, setShowToast] = useState(false);
 
@@ -21,7 +21,7 @@ function Toast({ message, status, duration, onClose }) {
                 clearTimeout(clearMessageTimer);
             }
         }
-    } , [message]);
+    } , [duration, message, onClose]);
 
   return (
     <div className={`${styles.Toast} ${styles[status]} ${!showToast ? styles.hidden : ''}`}>
@@ -36,10 +36,6 @@ Toast.propTypes = {
     status: PropTypes.oneOf(['success', 'error', 'warning', 'info']).isRequired,
     duration: PropTypes.number, // in milliseconds
     onClose: PropTypes.func,
-  };
-  
-  Toast.defaultProps = {
-    duration: 3000, // Default duration of 3 seconds
   };
 
 export default Toast

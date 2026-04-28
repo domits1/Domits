@@ -6,6 +6,7 @@ import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
+import { Property_Rule } from "database/models/Property_Rule";
 
 class ReservationRepository {
   // ---------
@@ -123,9 +124,11 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
-      .select(["booking.arrivaldate", "booking.departuredate"])
+
+      .select(["booking.arrivaldate", "booking.departuredate", "booking.cancellation_policy"])
       .where("booking.property_id = :property_id", { property_id: property_id })
       .andWhere("booking.createdat = :createdAt", { createdAt: createdAt })
+
       .getMany();
     if (!query) {
       throw new UnableToSearch();
@@ -164,7 +167,6 @@ class ReservationRepository {
   // Read bookings by HostID
   // ---------
   async readByHostId(host_Id) {
-    // Fetches user's property first, throws error if not found
     this.lambdaRepository = new LambdaRepository();
     const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
     const properties = propertiesOutput.map((item) => ({
@@ -173,16 +175,44 @@ class ReservationRepository {
       rate: item.rate,
       city: item.city,
       country: item.country,
+      rules: item.rules || [],
     }));
 
-    // Proceeds to send a request for every id returning their respective data
+    const client = await Database.getInstance();
+
+    const buildPropertyRules = (bookings, fallbackRules = []) => {
+      const joinedRules = bookings.flatMap((booking) => booking.rules || []);
+      const uniqueRules = joinedRules.filter(
+        (rule, index, list) =>
+          list.findIndex(
+            (candidate) => candidate?.rule === rule?.rule && String(candidate?.value) === String(rule?.value)
+          ) === index
+      );
+
+      return uniqueRules.length > 0 ? uniqueRules : fallbackRules;
+    };
+
     const results = await Promise.all(
       properties.map(async (property) => {
-        const res = await this.readByPropertyId(property.id);
+        const bookings = await client
+          .getRepository(Booking)
+          .createQueryBuilder("booking")
+          .leftJoinAndMapMany(
+            "booking.rules",
+            Property_Rule,
+            "property_rule",
+            "property_rule.property_id = booking.property_id"
+          )
+          .where("booking.property_id = :property_id", { property_id: property.id })
+          .getMany();
+
+        const rules = buildPropertyRules(bookings, property.rules || []);
+        const normalizedBookings = bookings.map(({ rules: bookingRules, ...booking }) => booking);
 
         return {
           ...property,
-          res,
+          rules,
+          res: { response: normalizedBookings },
         };
       })
     );
@@ -227,9 +257,11 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
-      .select(["booking.arrivaldate", "booking.departuredate"])
+
+      .select(["booking.arrivaldate", "booking.departuredate", "booking.cancellation_policy"])
       .where("booking.property_id = :property_id", { property_id: property_Id })
       .andWhere("booking.departuredate = :departuredate", { departuredate: departureDate })
+
       .getMany();
 
     if (!query) {
