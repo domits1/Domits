@@ -47,6 +47,76 @@ const readOverrideAvailability = (availabilityOverrides, key) => {
   return null;
 };
 
+const readRestrictionOverride = (restrictionOverrides, key) => {
+  const source =
+    restrictionOverrides && typeof restrictionOverrides === "object" ? restrictionOverrides[key] : null;
+  if (!source || typeof source !== "object") {
+    return {
+      stopSell: null,
+      closedToArrival: null,
+      closedToDeparture: null,
+      minStay: null,
+      maxStay: null,
+    };
+  }
+
+  const minStay = Number(source.minStay);
+  const maxStay = Number(source.maxStay);
+  return {
+    stopSell: source.stopSell === null || source.stopSell === undefined ? null : Boolean(source.stopSell),
+    closedToArrival:
+      source.closedToArrival === null || source.closedToArrival === undefined
+        ? null
+        : Boolean(source.closedToArrival),
+    closedToDeparture:
+      source.closedToDeparture === null || source.closedToDeparture === undefined
+        ? null
+        : Boolean(source.closedToDeparture),
+    minStay: Number.isFinite(minStay) && minStay >= 0 ? Math.trunc(minStay) : null,
+    maxStay: Number.isFinite(maxStay) && maxStay >= 0 ? Math.trunc(maxStay) : null,
+  };
+};
+
+const buildRestrictionIndicators = (restriction) => {
+  const indicators = [];
+  if (restriction.stopSell === true) {
+    indicators.push({
+      key: "stopSell",
+      label: "Stop selling this date",
+      text: "Stop",
+    });
+  }
+  if (restriction.closedToArrival === true) {
+    indicators.push({
+      key: "closedToArrival",
+      label: "No check-in on this date",
+      text: "No CI",
+    });
+  }
+  if (restriction.closedToDeparture === true) {
+    indicators.push({
+      key: "closedToDeparture",
+      label: "No check-out on this date",
+      text: "No CO",
+    });
+  }
+  if (restriction.minStay !== null) {
+    indicators.push({
+      key: "minStay",
+      label: `Minimum stay ${restriction.minStay}`,
+      text: `Min ${restriction.minStay}`,
+    });
+  }
+  if (restriction.maxStay !== null) {
+    indicators.push({
+      key: "maxStay",
+      label: `Maximum stay ${restriction.maxStay}`,
+      text: `Max ${restriction.maxStay}`,
+    });
+  }
+  return indicators;
+};
+
 const buildYearMonthViews = (year) => {
   const views = [];
   monthNames.forEach((monthName, monthIndex) => {
@@ -73,12 +143,20 @@ const getUtcTodayParts = () => {
   };
 };
 
-const buildCellAriaLabel = ({ date, displayPrice, showExternalBlockedOverlay, isSelected, isPending }) => {
+const buildCellAriaLabel = ({
+  date,
+  displayPrice,
+  showExternalBlockedOverlay,
+  isSelected,
+  isPending,
+  restrictionIndicators,
+}) => {
   const hasDisplayPrice = displayPrice !== null;
   return [
     date.toUTCString(),
     hasDisplayPrice ? `${formatEuroAmount(displayPrice)} per night` : null,
     showExternalBlockedOverlay ? "external booking" : null,
+    ...(Array.isArray(restrictionIndicators) ? restrictionIndicators.map((indicator) => indicator.label) : []),
     isSelected ? "selected" : null,
     isPending ? "pending selection" : null,
   ]
@@ -94,6 +172,7 @@ const buildDayPresentation = ({
   selectedSet,
   pendingSelectionStartKey,
   availabilityOverrides,
+  restrictionOverrides,
   availabilityRanges,
   dayPriceOverrides,
   nightlyRate,
@@ -107,6 +186,8 @@ const buildDayPresentation = ({
   const isBlocked = blockedDates.has(key);
   const isBooked = bookedSet.has(key);
   const overrideAvailability = readOverrideAvailability(availabilityOverrides, key);
+  const restrictionOverride = readRestrictionOverride(restrictionOverrides, key);
+  const restrictionIndicators = buildRestrictionIndicators(restrictionOverride);
   const isAvailable =
     !isBlocked && !isBooked && (overrideAvailability ?? isDateWithinAvailability(dateNumber, availabilityRanges));
   const isUnavailable = !isAvailable;
@@ -153,6 +234,7 @@ const buildDayPresentation = ({
       showExternalBlockedOverlay,
       isSelected,
       isPending,
+      restrictionIndicators,
     }),
     dayNumber: date.getUTCDate(),
   };
@@ -172,6 +254,7 @@ export default function CalendarGrid({
   selectedDateKeys = EMPTY_ARRAY,
   pendingSelectionStartKey = null,
   availabilityOverrides = EMPTY_OBJECT,
+  restrictionOverrides = EMPTY_OBJECT,
   priceOverrides = EMPTY_OBJECT,
   bookedDateKeys = EMPTY_SET,
   onDateSelect = null,
@@ -198,6 +281,7 @@ export default function CalendarGrid({
         selectedSet,
         pendingSelectionStartKey,
         availabilityOverrides,
+        restrictionOverrides,
         availabilityRanges,
         dayPriceOverrides,
         nightlyRate,
@@ -210,6 +294,7 @@ export default function CalendarGrid({
       selectedSet,
       pendingSelectionStartKey,
       availabilityOverrides,
+      restrictionOverrides,
       availabilityRanges,
       dayPriceOverrides,
       nightlyRate,
@@ -303,6 +388,20 @@ export default function CalendarGrid({
                   {dayPresentation.displayPrice !== null && (
                     <span className="hc-cell-price">{formatEuroAmount(dayPresentation.displayPrice)}</span>
                   )}
+
+                  {dayPresentation.restrictionIndicators.length > 0 ? (
+                    <span className="hc-cell-restrictions" aria-hidden="true">
+                      {dayPresentation.restrictionIndicators.map((indicator) => (
+                        <span
+                          key={indicator.key}
+                          className={`hc-cell-restriction-chip hc-cell-restriction-chip--${indicator.key}`}
+                          title={indicator.label}
+                        >
+                          {indicator.text}
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
                 </button>
               );
             })}
@@ -344,6 +443,9 @@ export default function CalendarGrid({
                           dayPresentation.isUnavailable &&
                           "hc-year-day--unavailable",
                         isCurrentMonth && dayPresentation.isAvailable && "hc-year-day--available",
+                        isCurrentMonth &&
+                          dayPresentation.restrictionIndicators.length > 0 &&
+                          "hc-year-day--has-restrictions",
                         isCurrentMonth && dayPresentation.isSelected && "hc-year-day--selected"
                       )}
                       aria-hidden={isOutsideMonth}
@@ -369,6 +471,10 @@ export default function CalendarGrid({
                             <span className="hc-year-day-icon hc-year-day-icon--booked" aria-hidden="true">
                               <img src={checkPng} alt="" />
                             </span>
+                          )}
+
+                          {dayPresentation.restrictionIndicators.length > 0 && (
+                            <span className="hc-year-day-restriction-dot" aria-hidden="true" />
                           )}
                         </>
                       ) : null}
@@ -409,9 +515,17 @@ CalendarGrid.propTypes = {
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string),
   pendingSelectionStartKey: PropTypes.string,
   availabilityOverrides: PropTypes.objectOf(PropTypes.bool),
+  restrictionOverrides: PropTypes.objectOf(
+    PropTypes.shape({
+      stopSell: PropTypes.bool,
+      closedToArrival: PropTypes.bool,
+      closedToDeparture: PropTypes.bool,
+      minStay: PropTypes.number,
+      maxStay: PropTypes.number,
+    })
+  ),
   priceOverrides: PropTypes.objectOf(PropTypes.number),
   bookedDateKeys: PropTypes.instanceOf(Set),
   onDateSelect: PropTypes.func,
   loadingMessage: PropTypes.string,
 };
-
