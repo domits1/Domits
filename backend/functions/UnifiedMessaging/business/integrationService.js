@@ -171,6 +171,100 @@ const formatNightlyPriceForChannexRate = (value) => {
   if (!Number.isFinite(numericValue) || numericValue <= 0) return null;
   return numericValue.toFixed(2);
 };
+const CHANNEX_SUPPORTED_RESTRICTION_FIELDS = ["min_stay_through", "max_stay"];
+const normalizeRestrictionInteger = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? Math.trunc(numericValue) : null;
+};
+const copySupportedChannexRestrictions = (source) => {
+  if (!source || typeof source !== "object" || Array.isArray(source)) return {};
+
+  const minStayThrough = normalizeRestrictionInteger(source.min_stay_through);
+  const maxStay = normalizeRestrictionInteger(source.max_stay);
+  return {
+    ...(minStayThrough !== null ? { min_stay_through: minStayThrough } : {}),
+    ...(maxStay !== null && maxStay > 0 ? { max_stay: maxStay } : {}),
+  };
+};
+const buildChannexRestrictionMapping = (restrictions) => {
+  const supportedByField = new Map();
+  const omittedRestrictions = [];
+
+  for (const restriction of Array.isArray(restrictions) ? restrictions : []) {
+    const domitsRestriction = requireStr(restriction?.restriction);
+    const value = normalizeRestrictionInteger(restriction?.value);
+    if (!domitsRestriction || value === null) continue;
+
+    if (domitsRestriction === "MinimumStay") {
+      supportedByField.set("min_stay_through", {
+        domitsRestriction,
+        channexField: "min_stay_through",
+        value,
+      });
+      continue;
+    }
+
+    if (domitsRestriction === "MaximumStay") {
+      if (value > 0) {
+        supportedByField.set("max_stay", {
+          domitsRestriction,
+          channexField: "max_stay",
+          value,
+        });
+      } else {
+        omittedRestrictions.push({
+          domitsRestriction,
+          value,
+          reason: "Domits MaximumStay values less than or equal to 0 mean no maximum, so Channex max_stay is omitted.",
+        });
+      }
+      continue;
+    }
+
+    omittedRestrictions.push({
+      domitsRestriction,
+      value,
+      reason: "No safe Domits-to-Channex restriction mapping is implemented for this restriction.",
+    });
+  }
+
+  const supportedRestrictions = Array.from(supportedByField.values()).sort((a, b) =>
+    a.channexField.localeCompare(b.channexField)
+  );
+  const channexRestrictions = supportedRestrictions.reduce(
+    (out, restriction) => ({
+      ...out,
+      [restriction.channexField]: restriction.value,
+    }),
+    {}
+  );
+
+  return {
+    channexRestrictions,
+    supportedRestrictions,
+    omittedRestrictions,
+    supportedChannexRestrictionFields: supportedRestrictions.map((restriction) => restriction.channexField),
+    omittedDomitsRestrictionNames: Array.from(
+      new Set(omittedRestrictions.map((restriction) => restriction.domitsRestriction).filter(Boolean))
+    ).sort(),
+  };
+};
+const collectChannexRestrictionFieldsFromGroups = (groups) => {
+  const fields = new Set();
+  for (const group of Array.isArray(groups) ? groups : []) {
+    for (const value of Array.isArray(group?.values) ? group.values : []) {
+      for (const field of CHANNEX_SUPPORTED_RESTRICTION_FIELDS) {
+        if (Object.prototype.hasOwnProperty.call(value || {}, field)) {
+          fields.add(field);
+        }
+      }
+    }
+  }
+
+  return Array.from(fields).sort();
+};
 const getPropertyAvailabilityWindows = async (propertyId) => {
   const client = await Database.getInstance();
   const rows = await client.query(
@@ -2633,6 +2727,7 @@ export default class IntegrationService {
           value: Number.isFinite(Number(restriction?.value)) ? Number(restriction.value) : null,
         }))
         .filter((restriction) => restriction.restriction && restriction.value !== null);
+      const restrictionMapping = buildChannexRestrictionMapping(normalizedRestrictions);
 
       const dates = buildCalendarDateRange(normalizedDateFrom, normalizedDateTo);
 
@@ -2669,7 +2764,15 @@ export default class IntegrationService {
             externalRatePlanId: ratePlanMapping.externalRatePlanId,
             date: isoDate,
             nightlyPrice: effectiveNightlyPrice,
-            restrictions: normalizedRestrictions.map((restriction) => ({
+            channexRestrictions: { ...restrictionMapping.channexRestrictions },
+            supportedRestrictions: restrictionMapping.supportedRestrictions.map((restriction) => ({ ...restriction })),
+            omittedRestrictions: restrictionMapping.omittedRestrictions.map((restriction) => ({ ...restriction })),
+            restrictions: restrictionMapping.supportedRestrictions.map((restriction) => ({
+              restriction: restriction.domitsRestriction,
+              channexField: restriction.channexField,
+              value: restriction.value,
+            })),
+            domitsRestrictions: normalizedRestrictions.map((restriction) => ({
               restriction: restriction.restriction,
               value: restriction.value,
             })),
@@ -2693,6 +2796,10 @@ export default class IntegrationService {
           calendarOverrides: overrideMap.size,
           hasBasePricing: !!pricing,
           availabilityRestrictions: normalizedRestrictions.length,
+          supportedAvailabilityRestrictions: restrictionMapping.supportedRestrictions.length,
+          supportedChannexRestrictionFields: restrictionMapping.supportedChannexRestrictionFields,
+          omittedAvailabilityRestrictions: restrictionMapping.omittedRestrictions.length,
+          omittedDomitsRestrictionNames: restrictionMapping.omittedDomitsRestrictionNames,
         },
         availabilityPreview,
         rateRestrictionPreview,
@@ -2744,7 +2851,8 @@ export default class IntegrationService {
       const notes = [
         "Availability values are currently derived from property-scoped Domits availability and fanned out across saved Channex room type mappings.",
         "Rate values are currently derived from property-scoped Domits pricing and nightly overrides, then fanned out across saved Channex rate plan mappings.",
-        "CTA/CTD, stop-sell, occupancy-based pricing, taxes, and currency fields are omitted because they are not clearly available in the current Domits ARI preview sources.",
+        "Supported Domits restrictions are mapped as MinimumStay -> Channex min_stay_through and MaximumStay -> Channex max_stay when MaximumStay is greater than 0.",
+        "stop_sell, closed_to_arrival, closed_to_departure, MinimumAdvanceReservation, MaximumNightsPerYear, PreparationTimeDays, occupancy-based pricing, taxes, and currency fields are omitted from Channex restriction payloads.",
       ];
 
       if (!preview.ready) {
@@ -2767,6 +2875,21 @@ export default class IntegrationService {
           },
           notes,
         });
+      }
+
+      const supportedRestrictionFields = Array.isArray(preview.sourceSummary?.supportedChannexRestrictionFields)
+        ? preview.sourceSummary.supportedChannexRestrictionFields
+        : [];
+      const omittedRestrictionNames = Array.isArray(preview.sourceSummary?.omittedDomitsRestrictionNames)
+        ? preview.sourceSummary.omittedDomitsRestrictionNames
+        : [];
+      if (supportedRestrictionFields.length) {
+        notes.push(`Supported Channex restriction fields present in this preview: ${supportedRestrictionFields.join(", ")}.`);
+      } else {
+        notes.push("No supported MinimumStay or positive MaximumStay values were found, so rate payload previews remain rate-only.");
+      }
+      if (omittedRestrictionNames.length) {
+        notes.push(`Omitted Domits availability restrictions in this preview: ${omittedRestrictionNames.join(", ")}.`);
       }
 
       const availabilityItems = (Array.isArray(preview.availabilityPreview) ? preview.availabilityPreview : []).map((item) => ({
@@ -2806,9 +2929,18 @@ export default class IntegrationService {
         externalRatePlanId: item.externalRatePlanId,
         date: item.date,
         nightlyPrice: item.nightlyPrice ?? null,
+        rate: formatNightlyPriceForChannexRate(item.nightlyPrice),
+        channexRestrictions: copySupportedChannexRestrictions(item.channexRestrictions),
+        supportedRestrictions: Array.isArray(item.supportedRestrictions)
+          ? item.supportedRestrictions.map((restriction) => ({ ...restriction }))
+          : [],
+        omittedRestrictions: Array.isArray(item.omittedRestrictions)
+          ? item.omittedRestrictions.map((restriction) => ({ ...restriction }))
+          : [],
         restrictions: Array.isArray(item.restrictions)
           ? item.restrictions.map((restriction) => ({
               restriction: restriction.restriction,
+              channexField: restriction.channexField,
               value: restriction.value,
             }))
           : [],
@@ -2831,6 +2963,11 @@ export default class IntegrationService {
                 .map((candidate) => ({
                   date: candidate.date,
                   nightlyPrice: candidate.nightlyPrice,
+                  rate: candidate.rate,
+                  ...copySupportedChannexRestrictions(candidate.channexRestrictions),
+                  channexRestrictions: { ...candidate.channexRestrictions },
+                  supportedRestrictions: candidate.supportedRestrictions,
+                  omittedRestrictions: candidate.omittedRestrictions,
                   restrictions: candidate.restrictions,
                 })),
             },
@@ -2842,7 +2979,7 @@ export default class IntegrationService {
         notes.push("Base property pricing is missing, so nightlyPrice may be null unless a calendar override price exists.");
       }
       if (!preview.sourceSummary?.availabilityRestrictions) {
-        notes.push("No Domits availability restrictions were found for this property, so only nightlyPrice fields are shown in rate payload previews.");
+        notes.push("No Domits availability restrictions were found for this property, so only rate fields are shown in restriction payload previews.");
       }
 
       return ok({
@@ -4369,7 +4506,7 @@ export default class IntegrationService {
       const baseNotes = [
         ...(Array.isArray(payloadPreview.notes) ? payloadPreview.notes : []),
         "Manual staging sync only. This endpoint sends rate updates through Channex restrictions and does not run a scheduler, retries, or sync-state persistence.",
-        "Current first version sends only rate values from nightlyPrice. Domits restriction name/value pairs are omitted because they are not yet mapped to Channex restriction keys with enough confidence.",
+        "Restrictions sync sends Channex rate values and adds only the supported mapped fields: min_stay_through from Domits MinimumStay and max_stay from Domits MaximumStay when greater than 0.",
       ];
       const mappingSnapshot = {
         missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
@@ -4410,14 +4547,19 @@ export default class IntegrationService {
         .map((group) => {
           const values = (Array.isArray(group.values) ? group.values : [])
             .map((value) => {
-              const rate = formatNightlyPriceForChannexRate(value?.nightlyPrice);
+              const rate = requireStr(value?.rate) || formatNightlyPriceForChannexRate(value?.nightlyPrice);
               if (!rate) return null;
+              const mappedRestrictions = {
+                ...copySupportedChannexRestrictions(value?.channexRestrictions),
+                ...copySupportedChannexRestrictions(value),
+              };
 
               return {
                 property_id: group.externalPropertyId,
                 rate_plan_id: group.externalRatePlanId,
                 date: value.date,
                 rate,
+                ...mappedRestrictions,
               };
             })
             .filter(Boolean);
@@ -4430,6 +4572,14 @@ export default class IntegrationService {
           };
         })
         .filter((group) => group.values.length > 0);
+      const sentChannexRestrictionFields = collectChannexRestrictionFieldsFromGroups(transformedPayloads);
+      if (sentChannexRestrictionFields.length) {
+        baseNotes.push(
+          `Restrictions sync included Channex restriction fields in outbound payloads: ${sentChannexRestrictionFields.join(", ")}.`
+        );
+      } else {
+        baseNotes.push("Restrictions sync outbound payloads are rate-only because no supported MinimumStay or positive MaximumStay values were available to send.");
+      }
       if (captureState) {
         captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
       }
@@ -4745,8 +4895,8 @@ export default class IntegrationService {
 
       const readiness = readinessResult.response || {};
       const baseNotes = [
-        "Manual staging orchestration only. This endpoint runs the existing availability sync first and the existing rate-only restrictions sync second.",
-        "Restrictions sync currently sends rate values only and does not yet map Domits restriction name/value pairs to Channex restriction fields.",
+        "Manual staging orchestration only. This endpoint runs the existing availability sync first and the Channex restrictions sync second.",
+        "Restrictions sync sends rate values and can include mapped min_stay_through/max_stay fields when supported Domits stay restrictions are present.",
       ];
       const mappingSnapshot = {
         missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
@@ -4854,6 +5004,9 @@ export default class IntegrationService {
       }
 
       const restrictionsResponse = restrictionsStep?.response || null;
+      for (const note of Array.isArray(restrictionsResponse?.notes) ? restrictionsResponse.notes : []) {
+        if (note && !baseNotes.includes(note)) baseNotes.push(note);
+      }
       const restrictionsCalledProvider = !!restrictionsResponse?.calledProvider;
       const restrictionsWarnings = Array.isArray(restrictionsResponse?.results)
         ? restrictionsResponse.results.some((result) => Array.isArray(result?.warnings) && result.warnings.length > 0)
@@ -5133,7 +5286,7 @@ export default class IntegrationService {
       const readiness = readinessResult.response || {};
       const baseNotes = [
         "Manual staging certification-prep runner only. This endpoint executes one availability sync and one restrictions sync for the selected full range.",
-        "Restrictions sync currently sends rate values only and does not yet map Domits restriction name/value pairs to Channex restriction fields.",
+        "Restrictions sync sends rate values and can include mapped min_stay_through/max_stay fields when supported Domits stay restrictions are present.",
       ];
       if (usingDefaultDateRange) {
         baseNotes.push(
@@ -5219,6 +5372,9 @@ export default class IntegrationService {
 
       const availabilityResponse = availabilityStep?.response || {};
       const restrictionsResponse = restrictionsStep?.response || {};
+      for (const note of Array.isArray(restrictionsResponse?.notes) ? restrictionsResponse.notes : []) {
+        if (note && !baseNotes.includes(note)) baseNotes.push(note);
+      }
       const availabilityCalledProvider = !!availabilityResponse.calledProvider;
       const restrictionsCalledProvider = !!restrictionsResponse.calledProvider;
 
