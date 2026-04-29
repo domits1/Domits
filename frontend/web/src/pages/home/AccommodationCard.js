@@ -115,150 +115,110 @@ const AccommodationCard = ({
     1,
   );
 
-  return (
-    <div className="accocard-wrapper">
-      <div className="accocard">
-        {/* CLICKABLE CONTENT */}
-        <a
-          className="accocard-content"
-          href={`/listingdetails?ID=${encodeURIComponent(propertyId)}`}
-          onClick={(e) => {
-            e.preventDefault();
-            handleCardClick(e, propertyId);
-          }}
-          aria-label={`View property ${propertyTitle}`}
-        >
-          {/* IMAGE / SWIPER */}
-          <div className="accocard-media">
-            <Swiper
-              spaceBetween={30}
-              effect="fade"
-              navigation
-              pagination={{ clickable: true }}
-              loop
-              modules={[EffectFade, Navigation, Pagination]}
-              className="mySwiper"
-            >
-              {cardImages.map((imgSrc, index) => (
-                <SwiperSlide key={imgSrc}>
-                  <img
-                    src={imgSrc}
-                    alt={`${propertyTitle} ${index + 1}`}
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-          <div className="accocard-title">
-            {accommodation.property?.title || "No title available"}
-          </div>
+return (
+  <div className="accocard-wrapper">
+    <div className="accocard">
 
-          <div className="accocard-price">
-            {formatEuroAmount(nightlyDisplayPrice)} per night
-          </div>
-
-          <div className="accocard-detail">
-            {accommodation.property?.description || "No description available"}
-          </div>
-
-          <div className="accocard-specs">
-            <BedOutlinedIcon />
-            <div>
-              {accommodation.propertyGeneralDetails?.find(
-                (item) => item.detail === "Bedrooms",
-              )?.value || 0}{" "}
-              Bedroom(s)
-            </div>
-
-            <PeopleOutlinedIcon />
-            <div>
-              {accommodation.propertyGeneralDetails?.find(
-                (item) => item.detail === "Guests",
-              )?.value || 0}{" "}
-              Guest(s)
-            </div>
-          </div>
-        </a>
-      </div>
-
-      {/* SHARE BUTTON */}
-      <button
-        type="button"
-        className="accocard-share-button"
-        onClick={handleShare}
-        aria-label="Share property"
+      <a
+        className="accocard-content"
+        href={`/listingdetails?ID=${encodeURIComponent(propertyId)}`}
+        onClick={(e) => {
+          e.preventDefault();
+          handleCardClick(e, propertyId);
+        }}
       >
-        <IosShareIcon />
-      </button>
 
-      {/* LIKE BUTTON */}
-      <button
-        type="button"
-        className="accocard-like-button"
-        onClick={handleLike}
-        aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
-      >
-        {liked ? (
-          <FavoriteIcon sx={{ color: "#ec5050" }} />
-        ) : (
-          <FavoriteBorderOutlinedIcon />
-        )}
-      </button>
+        <div className="card-img">
+          <img src={cardImages[0]} alt={propertyTitle} />
 
-      {/* POPUPS */}
-      {showPopup && (
-        <WishlistChoice
-          propertyId={propertyId}
-          activeList="My next trip"
-          show={showPopup}
-          onClose={() => setShowPopup(false)}
-          onSave={(listName) => setLikedWishlistName(listName)}
-        />
-      )}
+          <div className="rating">
+            ⭐ <span>{accommodation.property?.rating || 4.8}</span>
+          </div>
+        </div>
 
-      {showShareModal && (
-        <ShareModal
-          url={shareUrl}
-          title={accommodation.property?.title}
-          onClose={() => setShowShareModal(false)}
-        />
-      )}
+        <div className="card-body">
+          <h3>{propertyTitle}</h3>
 
-      {toast.message &&
-        ReactDOM.createPortal(
-          <Toast
-            message={toast.message}
-            status={toast.status || "info"}
-            onClose={() => setToast({ message: "", status: "" })}
-          />,
-          document.body,
-        )}
+          <p className="location">
+            {accommodation.property?.city || accommodation.property?.location || "Unknown location"}
+          </p>
+
+          <div className="info">
+            <span>
+              <BedOutlinedIcon />
+              {accommodation.propertyGeneralDetails?.find(
+                (i) => i.detail === "Bedrooms"
+              )?.value || 0} beds
+            </span>
+
+            <span>
+              <PeopleOutlinedIcon />
+              {accommodation.propertyGeneralDetails?.find(
+                (i) => i.detail === "Guests"
+              )?.value || 0} guests
+            </span>
+          </div>
+
+          <div className="divider" />
+
+          <div className="price">
+            {formatEuroAmount(nightlyDisplayPrice)}
+            <span> / night</span>
+          </div>
+        </div>
+
+      </a>
     </div>
-  );
-};
 
-AccommodationCard.propTypes = {
-  accommodation: PropTypes.shape({
-    property: PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      title: PropTypes.string,
-      description: PropTypes.string,
-    }),
-    propertyImages: PropTypes.array,
-    propertyPricing: PropTypes.shape({
-      roomRate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      cleaning: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    }),
-    propertyGeneralDetails: PropTypes.arrayOf(
-      PropTypes.shape({
-        detail: PropTypes.string,
-        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      }),
-    ),
-  }),
-  onClick: PropTypes.func.isRequired,
-  onUnlike: PropTypes.func,
-  imageVariant: PropTypes.oneOf(["thumb", "web"]),
-};
+    <button
+      type="button"
+      className="accocard-share-button"
+      onClick={handleShare}
+    >
+      <IosShareIcon />
+    </button>
+
+    <button
+      type="button"
+      className="accocard-like-button"
+      onClick={handleLike}
+    >
+      {liked ? (
+        <FavoriteIcon sx={{ color: "#ec5050" }} />
+      ) : (
+        <FavoriteBorderOutlinedIcon />
+      )}
+    </button>
+
+    {showPopup && (
+      <WishlistChoice
+        propertyId={propertyId}
+        activeList="My next trip"
+        show={showPopup}
+        onClose={() => setShowPopup(false)}
+        onSave={(listName) => setLikedWishlistName(listName)}
+      />
+    )}
+
+    {showShareModal && (
+      <ShareModal
+        url={shareUrl}
+        title={propertyTitle}
+        onClose={() => setShowShareModal(false)}
+      />
+    )}
+
+    {toast.message &&
+      ReactDOM.createPortal(
+        <Toast
+          message={toast.message}
+          status={toast.status || "info"}
+          onClose={() => setToast({ message: "", status: "" })}
+        />,
+        document.body
+      )}
+  </div>
+);
+}
 
 export default AccommodationCard;
