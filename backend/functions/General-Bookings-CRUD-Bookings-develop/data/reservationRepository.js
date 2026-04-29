@@ -12,7 +12,7 @@ class ReservationRepository {
   // ---------
   // Booking Create (auth)
   // ---------
-  async addBookingToTable(requestBody, userId, hostId, cancellationPolicy, status = "Awaiting Payment") {
+  async addBookingToTable(requestBody, userId, hostId, cancellationPolicy, status = "Awaiting Payment", bookingType = "direct") {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
@@ -38,6 +38,7 @@ class ReservationRepository {
         tempPaymentId,
         property_id: requestBody.identifiers.property_Id,
         status: status,
+        bookingtype: bookingType,
       })
       .execute();
     try {
