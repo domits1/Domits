@@ -1557,6 +1557,8 @@ const overviewTabPropTypes = {
   updateCapacityField: PropTypes.func.isRequired,
   address: propertyAddressShape.isRequired,
   updateAddressField: PropTypes.func.isRequired,
+  bookingType: PropTypes.string,
+  onBookingTypeChange: PropTypes.func,
 };
 
 const photoTabPropTypes = {

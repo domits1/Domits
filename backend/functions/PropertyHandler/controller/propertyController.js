@@ -661,6 +661,13 @@ export class PropertyController {
         return null;
     }
 
+    resolveBookingType(value) {
+        if (value === "inquiry" || value === "direct") {
+            return value;
+        }
+        return undefined;
+    }
+
     normalizeOverviewPayload(payload) {
         return {
             propertyId: payload.propertyId,
@@ -690,7 +697,7 @@ export class PropertyController {
                     ).values()
                 )
                 : undefined,
-            bookingType: payload.bookingType === "inquiry" ? "inquiry" : payload.bookingType === "direct" ? "direct" : undefined,
+            bookingType: resolveBookingType(payload.bookingType),
         };
     }
 
