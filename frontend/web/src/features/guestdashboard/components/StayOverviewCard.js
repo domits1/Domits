@@ -50,13 +50,13 @@ export const stayShape = PropTypes.shape({
 }).isRequired;
 
 function StayOverviewCard({
-  cardClassName,
+  cardClassName = "",
   title,
   stay,
   actionClassName,
   onOpenReservation,
   onMessageHost,
-  onBrowseBookings,
+  onBrowseBookings = null,
 }) {
   const metaParts = buildMetaParts(stay);
 
@@ -119,11 +119,6 @@ StayOverviewCard.propTypes = {
   onOpenReservation: PropTypes.func.isRequired,
   onMessageHost: PropTypes.func.isRequired,
   onBrowseBookings: PropTypes.func,
-};
-
-StayOverviewCard.defaultProps = {
-  cardClassName: "",
-  onBrowseBookings: null,
 };
 
 export default StayOverviewCard;

@@ -145,6 +145,12 @@
   html {
     margin-top: 90px;
   }
+
+  @media (max-width: 768px) {
+    html {
+      margin-top: 0;
+    }
+  }
   
   code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
