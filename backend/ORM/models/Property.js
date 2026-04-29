@@ -50,5 +50,10 @@ export const Property = new EntitySchema({
             },
             nullable: false
         },
+        bookingtype: {
+            type: "varchar",
+            nullable: true,
+            default: "direct",
+        },
     }
 })

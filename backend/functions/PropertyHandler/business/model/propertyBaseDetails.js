@@ -10,6 +10,7 @@ export class PropertyBaseDetails {
     status;
     createdAt;
     updatedAt;
+    bookingType;
 
     constructor(params) {
         this._id = params.id;
@@ -21,6 +22,7 @@ export class PropertyBaseDetails {
         this._status = params.status;
         this._createdAt = params.createdAt;
         this._updatedAt = params.updatedAt;
+        this.bookingType = params.bookingType || "direct";
     }
 
     set _id(id) {
