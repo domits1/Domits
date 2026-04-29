@@ -12,7 +12,6 @@ import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   getAmenityIconNode,
   getAmenityIconOptions,
-  getAmenityIconSignature,
 } from "./rendering/amenityIconRegistry";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
@@ -37,6 +36,7 @@ import {
   getCollectionTargetId,
   getImageSlotTargetId,
 } from "./websiteEditorConfig";
+import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import styles from "./WebsiteEditorPage.module.scss";
 import arrowDownIcon from "../../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../../images/arrow-up-icon.svg";
@@ -1363,83 +1363,16 @@ function WebsiteEditorPage() {
         </dialog>
       ) : null}
 
-      {iconPickerState.isOpen ? (
-        <dialog
-          open
-          className={styles.imagePickerOverlay}
-          aria-label={`Select icon for ${iconPickerState.label}`}
-          onCancel={(event) => {
-            event.preventDefault();
-            closeIconPicker();
-          }}
-          onPointerDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeIconPicker();
-            }
-          }}
-        >
-          <section className={styles.iconPickerDialog}>
-            {(() => {
-              const selectedIconAmenityId =
-                editorValues?.[iconPickerState.collectionKey]?.[iconPickerState.itemIndex]?.iconAmenityId || "";
-              const selectedIconSignature = getAmenityIconSignature(selectedIconAmenityId);
-
-              return (
-                <>
-            <div className={styles.imagePickerHeader}>
-              <div className={styles.imagePickerHeaderCopy}>
-                <p className={styles.eyebrow}>Choose icon</p>
-                <h2 className={styles.panelTitle}>{iconPickerState.label}</h2>
-              </div>
-
-              <button
-                type="button"
-                className={styles.imagePickerCloseButton}
-                onClick={closeIconPicker}
-                aria-label="Close icon picker"
-              >
-                <CloseOutlinedIcon fontSize="small" />
-              </button>
-            </div>
-
-            <div className={styles.iconPickerRail}>
-              <div className={styles.iconPickerGrid}>
-              {amenityIconOptions.map((iconOption) => {
-                const isSelected = Boolean(selectedIconSignature) && selectedIconSignature === iconOption.iconSignature;
-                const iconNode = getAmenityIconNode(iconOption.id, {
-                  className: styles.iconPickerOptionGlyph,
-                  "aria-hidden": true,
-                  focusable: "false",
-                  sx: {
-                    color: "#1f4e79",
-                    fontSize: 24,
-                    padding: 0,
-                  },
-                });
-
-                return (
-                  <button
-                    key={iconOption.id}
-                    type="button"
-                    className={`${styles.iconPickerOption} ${
-                      isSelected ? styles.iconPickerOptionActive : ""
-                    }`.trim()}
-                    onClick={() => selectIconFromPicker(iconOption.id)}
-                    aria-label={iconOption.label}
-                    title={iconOption.label}
-                  >
-                    {iconNode}
-                  </button>
-                );
-              })}
-              </div>
-            </div>
-                </>
-              );
-            })()}
-          </section>
-        </dialog>
-      ) : null}
+      <WebsiteIconPickerDialog
+        isOpen={iconPickerState.isOpen}
+        label={iconPickerState.label}
+        amenityIconOptions={amenityIconOptions}
+        selectedAmenityId={
+          editorValues?.[iconPickerState.collectionKey]?.[iconPickerState.itemIndex]?.iconAmenityId || ""
+        }
+        onSelectIcon={selectIconFromPicker}
+        onClose={closeIconPicker}
+      />
     </main>
   );
 }
