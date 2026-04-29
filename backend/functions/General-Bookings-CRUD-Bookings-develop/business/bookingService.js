@@ -70,8 +70,8 @@ class BookingService {
       event,
       authenticatedUser.sub,
       fetchedProperty.hostId,
+      cancellationPolicy,
       bookingStatus
-      cancellationPolicy
     );
 
     return { ...result, isInquiry };
