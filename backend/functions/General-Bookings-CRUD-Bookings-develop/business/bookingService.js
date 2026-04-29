@@ -53,6 +53,7 @@ class BookingService {
 
     const userEmail = authenticatedUser.email;
     const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
+    const cancellationPolicy = await this.propertyRepository.getCancellationPolicyByPropertyId(propertyId);
     const hostEmail = await getHostEmailById(fetchedProperty.hostId);
     const isInquiry = fetchedProperty.bookingType === "inquiry";
 
@@ -70,6 +71,7 @@ class BookingService {
       authenticatedUser.sub,
       fetchedProperty.hostId,
       bookingStatus
+      cancellationPolicy
     );
 
     return { ...result, isInquiry };

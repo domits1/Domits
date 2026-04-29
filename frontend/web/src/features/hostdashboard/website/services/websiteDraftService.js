@@ -19,6 +19,7 @@ const getRequiredAccessToken = () => {
 export const fetchWebsiteDrafts = async () => {
   const response = await fetch(buildWebsiteDraftsUrl(), {
     method: "GET",
+    cache: "no-store",
     headers: {
       Authorization: getRequiredAccessToken(),
     },
@@ -44,6 +45,7 @@ export const fetchWebsiteDraftByPropertyId = async (propertyId) => {
 
   const response = await fetch(buildWebsiteDraftUrl(normalizedPropertyId), {
     method: "GET",
+    cache: "no-store",
     headers: {
       Authorization: getRequiredAccessToken(),
     },
@@ -70,6 +72,8 @@ export const upsertWebsiteDraft = async ({
   status = "DRAFT",
   contentOverrides = {},
   themeOverrides = {},
+  publishedContentOverrides = undefined,
+  publishedThemeOverrides = undefined,
 }) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
@@ -83,6 +87,7 @@ export const upsertWebsiteDraft = async ({
 
   const response = await fetch(buildWebsiteDraftMutationUrl(), {
     method: "POST",
+    cache: "no-store",
     headers: {
       Authorization: getRequiredAccessToken(),
       "Content-Type": "application/json",
@@ -93,6 +98,8 @@ export const upsertWebsiteDraft = async ({
       status,
       contentOverrides,
       themeOverrides,
+      publishedContentOverrides,
+      publishedThemeOverrides,
     }),
   });
 
@@ -105,4 +112,31 @@ export const upsertWebsiteDraft = async ({
   }
 
   return response.json();
+};
+
+export const deleteWebsiteDraft = async (propertyId) => {
+  const normalizedPropertyId = String(propertyId || "").trim();
+  if (!normalizedPropertyId) {
+    throw new Error("Missing propertyId for website draft delete.");
+  }
+
+  const response = await fetch(buildWebsiteDraftMutationUrl(), {
+    method: "DELETE",
+    cache: "no-store",
+    headers: {
+      Authorization: getRequiredAccessToken(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      propertyId: normalizedPropertyId,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await getApiErrorMessage(
+      response,
+      "We could not delete this website draft."
+    );
+    throw new Error(errorMessage);
+  }
 };

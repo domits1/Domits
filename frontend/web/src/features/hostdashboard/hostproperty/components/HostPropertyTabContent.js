@@ -62,11 +62,12 @@ const CANCELLATION_POLICIES = [
   },
   {
     id: "strict",
-    name: "Strict",
-    summary: "Full refund until 30 days before check-in",
+    name: "Limited",
+    summary: "Full refund until 14 days before check-in",
     rules: [
-      "At least 30 days before check-in, they will receive a 70% refund (you will keep 30% of the booking)",
-      "Less than 30 days before check-in, they will receive no refund (you will keep 100% of the booking)",
+      "At least 14 days before check-in, they will receive 100% refund (you will keep 0% of the booking)",
+      "Between 7 and 14 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
+      "Less than 7 days before check-in, they will receive no refund (you will keep 100% of the booking)",
     ],
     important: null,
   },
