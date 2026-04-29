@@ -1,10 +1,10 @@
+function MockSecretsCommand(input = {}) {
+  this.input = input;
+}
+
 jest.mock(
   "@aws-sdk/client-secrets-manager",
   () => {
-    function MockSecretsCommand(input = {}) {
-      this.input = input;
-    }
-
     return {
       SecretsManagerClient: class {
         send() {
