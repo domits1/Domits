@@ -15,8 +15,15 @@ class ReservationController {
     // -----------
 
     async create(event){
-        try{ 
+        try{
             const returnInfo = await this.bookingService.create(event.event);
+            if (returnInfo.isInquiry) {
+                return {
+                    statusCode: 201,
+                    headers: responseHeaderJSON,
+                    response: { bookingId: returnInfo.bookingId, status: "Inquiry" },
+                };
+            }
             const paymentData = await this.paymentSerivce.create(returnInfo.hostId, returnInfo.bookingId, returnInfo.propertyId, returnInfo.dates);
             return {
                 statusCode: returnInfo.statusCode,
@@ -46,10 +53,13 @@ class ReservationController {
 
             if (body?.action === "accept-inquiry" || body?.action === "decline-inquiry") {
                 if (!body?.bookingId) throw new Error("Missing bookingId.");
-                const result = body.action === "accept-inquiry"
-                    ? await this.bookingService.acceptInquiry(body.bookingId, authToken)
-                    : await this.bookingService.declineInquiry(body.bookingId, authToken);
-                return { statusCode: 200, headers: responseHeaderJSON, response: result };
+                if (body.action === "decline-inquiry") {
+                    const result = await this.bookingService.declineInquiry(body.bookingId, authToken);
+                    return { statusCode: 200, headers: responseHeaderJSON, response: result };
+                }
+                const result = await this.bookingService.acceptInquiry(body.bookingId, authToken);
+                const paymentData = await this.paymentSerivce.create(result.hostId, result.bookingId, result.propertyId, result.dates);
+                return { statusCode: 200, headers: responseHeaderJSON, response: { ...result, stripeClientSecret: paymentData.stripeClientSecret } };
             }
 
             if (!body?.paymentid) {

@@ -55,6 +55,7 @@ class BookingService {
     const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
     const cancellationPolicy = await this.propertyRepository.getCancellationPolicyByPropertyId(propertyId);
     const hostEmail = await getHostEmailById(fetchedProperty.hostId);
+    const isInquiry = fetchedProperty.bookingType === "inquiry";
 
     const bookingInfo = {
       guests: event.general.guests,
@@ -64,12 +65,17 @@ class BookingService {
     };
     await sendEmail(userEmail, hostEmail, bookingInfo);
 
-    return await this.reservationRepository.addBookingToTable(
+    const bookingStatus = isInquiry ? "Inquiry" : "Awaiting Payment";
+    const result = await this.reservationRepository.addBookingToTable(
       event,
       authenticatedUser.sub,
       fetchedProperty.hostId,
-      cancellationPolicy
+      cancellationPolicy,
+      bookingStatus,
+      fetchedProperty.bookingType
     );
+
+    return { ...result, isInquiry };
   }
 
   parseBookingDateToMs(value, fieldName) {
@@ -185,7 +191,16 @@ class BookingService {
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
     if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
     await this.reservationRepository.updateBookingStatus(bookingId, "Awaiting Payment");
-    return { bookingId, status: "Awaiting Payment" };
+    return {
+      bookingId,
+      status: "Awaiting Payment",
+      hostId: booking.hostid,
+      propertyId: booking.property_id,
+      dates: {
+        arrivalDate: booking.arrivaldate,
+        departureDate: booking.departuredate,
+      },
+    };
   }
 
   async declineInquiry(bookingId, authToken) {
