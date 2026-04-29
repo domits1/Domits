@@ -198,6 +198,10 @@ Current implementation details:
   - `published_content_overrides_json`
   - `published_theme_overrides_json`
   These fields must exist in `main` before backend code that reads/writes published preview state is deployed.
+- Trust-card icon selection is now editable from the website editor for templates that render those cards.
+  Icon choices are sourced directly from the shared amenities registry, so newly added amenity icons automatically become available to the standalone website editor without a separate icon list.
+- The trust-card icon trigger is centered within the editable field and the icon-picker overlay now scales more safely across smaller viewports instead of behaving like a fixed desktop panel.
+- The trust-card icon picker now deduplicates repeated amenity visuals and shows one option per unique Domits icon glyph instead of repeating the same icon for multiple amenity records.
 
 ## Next phase
 The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.
