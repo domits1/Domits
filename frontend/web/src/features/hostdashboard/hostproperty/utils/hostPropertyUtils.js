@@ -715,6 +715,7 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
 
   return {
     status: property.status || "INACTIVE",
+    bookingType: property.bookingType || "direct",
     form: {
       title: property.title || "",
       subtitle: property.subtitle || "",

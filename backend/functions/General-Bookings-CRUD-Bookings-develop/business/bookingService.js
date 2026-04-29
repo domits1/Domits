@@ -55,6 +55,7 @@ class BookingService {
     const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
     const cancellationPolicy = await this.propertyRepository.getCancellationPolicyByPropertyId(propertyId);
     const hostEmail = await getHostEmailById(fetchedProperty.hostId);
+    const isInquiry = fetchedProperty.bookingType === "inquiry";
 
     const bookingInfo = {
       guests: event.general.guests,
@@ -64,12 +65,16 @@ class BookingService {
     };
     await sendEmail(userEmail, hostEmail, bookingInfo);
 
-    return await this.reservationRepository.addBookingToTable(
+    const bookingStatus = isInquiry ? "Inquiry" : "Awaiting Payment";
+    const result = await this.reservationRepository.addBookingToTable(
       event,
       authenticatedUser.sub,
       fetchedProperty.hostId,
-      cancellationPolicy
+      cancellationPolicy,
+      bookingStatus
     );
+
+    return { ...result, isInquiry };
   }
 
   parseBookingDateToMs(value, fieldName) {
