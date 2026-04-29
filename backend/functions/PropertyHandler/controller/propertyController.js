@@ -704,7 +704,7 @@ export class PropertyController {
                     ).values()
                 )
                 : undefined,
-            bookingType: resolveBookingType(payload.bookingType),
+            bookingType: this.resolveBookingType(payload.bookingType),
         };
     }
 
