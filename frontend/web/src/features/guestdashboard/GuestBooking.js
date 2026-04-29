@@ -144,7 +144,6 @@ function GuestBooking() {
         const userInfo = await Auth.currentUserInfo();
         if (!isMounted) return;
 
-        console.log("Current Logged-in Guest ID is:", userInfo?.attributes?.sub);
         setGuestId(userInfo?.attributes?.sub || null);
         setUser({
           name: userInfo?.attributes?.given_name || "",
@@ -220,7 +219,6 @@ function GuestBooking() {
 
   const handleBookingClick = (bookingItem) => {
     const bookingId = getBookingId(bookingItem);
-    console.log("Navigating with Booking ID:", bookingId);
     const propertyId = getPropertyId(bookingItem);
     if (bookingId) {
       navigate(`/guestdashboard/reservation/${encodeURIComponent(bookingId)}`);
