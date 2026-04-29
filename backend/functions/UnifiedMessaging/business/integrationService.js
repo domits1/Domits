@@ -402,25 +402,23 @@ const buildEffectiveChannexRestrictionMapping = (globalRestrictionMapping, overr
 
   if (overrideSummary.maxStay === null) {
     addGlobalRestrictionField(out, globalRestrictionMapping, "max_stay");
+  } else if (overrideSummary.maxStay > 0) {
+    out.channexRestrictions.max_stay = overrideSummary.maxStay;
+    out.supportedRestrictions.push({
+      domitsRestriction: "maxStay",
+      channexField: "max_stay",
+      value: overrideSummary.maxStay,
+      source: "calendar_override",
+    });
   } else {
-    if (overrideSummary.maxStay > 0) {
-      out.channexRestrictions.max_stay = overrideSummary.maxStay;
-      out.supportedRestrictions.push({
-        domitsRestriction: "maxStay",
-        channexField: "max_stay",
-        value: overrideSummary.maxStay,
-        source: "calendar_override",
-      });
-    } else {
-      out.omittedRestrictions.push({
-        domitsRestriction: "maxStay",
-        channexField: "max_stay",
-        value: overrideSummary.maxStay,
-        source: "calendar_override",
-        reason:
-          "Domits calendar override maxStay values less than or equal to 0 mean no maximum, so Channex max_stay is omitted.",
-      });
-    }
+    out.omittedRestrictions.push({
+      domitsRestriction: "maxStay",
+      channexField: "max_stay",
+      value: overrideSummary.maxStay,
+      source: "calendar_override",
+      reason:
+        "Domits calendar override maxStay values less than or equal to 0 mean no maximum, so Channex max_stay is omitted.",
+    });
   }
 
   out.supportedChannexRestrictionFields = Array.from(
@@ -734,6 +732,90 @@ const getCaptureState = (options) => {
   const captureState = options?.captureState;
   if (captureState && typeof captureState === "object") {
     return captureState;
+  }
+  return null;
+};
+const buildInvalidRequestEvidencePatch = (errorCode, errorMessage) => ({
+  status: "INVALID_REQUEST",
+  errors: [{ errorCode, errorMessage }],
+});
+const buildPreviewDateRangeValidationResponse = ({
+  normalizedUserId,
+  normalizedDomitsPropertyId,
+  normalizedDateFrom,
+  normalizedDateTo,
+}) => {
+  if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+  if (!normalizedDomitsPropertyId) return bad(400, { error: "Missing required query param: domitsPropertyId" });
+  if (!normalizedDateFrom) return bad(400, { error: "Invalid or missing required query param: dateFrom" });
+  if (!normalizedDateTo) return bad(400, { error: "Invalid or missing required query param: dateTo" });
+  if (normalizedDateFrom > normalizedDateTo) {
+    return bad(400, {
+      error: "dateFrom must be less than or equal to dateTo.",
+    });
+  }
+  return null;
+};
+const buildSyncDateRangeValidationFailure = ({
+  normalizedUserId,
+  normalizedDomitsPropertyId,
+  normalizedDateFrom,
+  normalizedDateTo,
+  rawDateFrom = null,
+  rawDateTo = null,
+  requireCompleteDatePair = false,
+  usingDefaultDateRange = false,
+}) => {
+  if (!normalizedUserId) {
+    return {
+      response: bad(400, { error: "Missing required query param: userId" }),
+      evidencePatch: buildInvalidRequestEvidencePatch("MISSING_USER_ID", "Missing required query param: userId"),
+    };
+  }
+  if (!normalizedDomitsPropertyId) {
+    return {
+      response: bad(400, { error: "Missing required query param: domitsPropertyId" }),
+      evidencePatch: buildInvalidRequestEvidencePatch(
+        "MISSING_DOMITS_PROPERTY_ID",
+        "Missing required query param: domitsPropertyId"
+      ),
+    };
+  }
+  if (requireCompleteDatePair && !usingDefaultDateRange && (!rawDateFrom || !rawDateTo)) {
+    const message = "Provide both dateFrom and dateTo, or omit both to use the default certification full-sync range.";
+    return {
+      response: bad(400, { error: message }),
+      evidencePatch: buildInvalidRequestEvidencePatch("CHANNEX_FULL_SYNC_PARTIAL_DATE_RANGE", message),
+    };
+  }
+  if (!normalizedDateFrom) {
+    return {
+      response: bad(400, { error: "Invalid or missing required query param: dateFrom" }),
+      evidencePatch: buildInvalidRequestEvidencePatch(
+        "INVALID_DATE_FROM",
+        "Invalid or missing required query param: dateFrom"
+      ),
+    };
+  }
+  if (!normalizedDateTo) {
+    return {
+      response: bad(400, { error: "Invalid or missing required query param: dateTo" }),
+      evidencePatch: buildInvalidRequestEvidencePatch(
+        "INVALID_DATE_TO",
+        "Invalid or missing required query param: dateTo"
+      ),
+    };
+  }
+  if (normalizedDateFrom > normalizedDateTo) {
+    return {
+      response: bad(400, {
+        error: "dateFrom must be less than or equal to dateTo.",
+      }),
+      evidencePatch: buildInvalidRequestEvidencePatch(
+        "INVALID_DATE_RANGE",
+        "dateFrom must be less than or equal to dateTo."
+      ),
+    };
   }
   return null;
 };
@@ -1115,6 +1197,156 @@ const buildRestrictionRatePayloadGroups = (restrictionRateItems) =>
       ])
     ).values()
   );
+const CHANNEX_ARI_PAYLOAD_PREVIEW_BASE_NOTES = [
+  "Availability values are currently derived from property-scoped Domits availability and fanned out across saved Channex room type mappings.",
+  "Rate values are currently derived from property-scoped Domits pricing and nightly overrides, then fanned out across saved Channex rate plan mappings.",
+  "Supported Domits restrictions are mapped as date-level minStay or global MinimumStay -> Channex min_stay_through, and date-level maxStay or global MaximumStay -> Channex max_stay when the effective value is greater than 0.",
+  "Supported date-level calendar restriction booleans are mapped as stopSell -> stop_sell, closedToArrival -> closed_to_arrival, and closedToDeparture -> closed_to_departure when explicitly true.",
+  "Date-level calendar restriction overrides take priority over global Domits availability restrictions for the same Channex field.",
+  "Explicit false values for stop_sell, closed_to_arrival, and closed_to_departure are omitted because Channex clearing semantics are not verified in this integration.",
+  "MinimumAdvanceReservation, MaximumNightsPerYear, PreparationTimeDays, occupancy-based pricing, taxes, and currency fields are omitted from Channex restriction payloads.",
+];
+const createChannexAriPayloadPreviewNotes = () => [...CHANNEX_ARI_PAYLOAD_PREVIEW_BASE_NOTES];
+const appendChannexAriPayloadPreviewNotes = (notes, preview) => {
+  const supportedRestrictionFields = Array.isArray(preview.sourceSummary?.supportedChannexRestrictionFields)
+    ? preview.sourceSummary.supportedChannexRestrictionFields
+    : [];
+  const omittedRestrictionNames = Array.isArray(preview.sourceSummary?.omittedDomitsRestrictionNames)
+    ? preview.sourceSummary.omittedDomitsRestrictionNames
+    : [];
+  if (supportedRestrictionFields.length) {
+    notes.push(`Supported Channex restriction fields present in this preview: ${supportedRestrictionFields.join(", ")}.`);
+  } else {
+    notes.push("No supported global stay restrictions or date-level calendar restriction overrides were found, so rate payload previews remain rate-only.");
+  }
+  if (omittedRestrictionNames.length) {
+    notes.push(`Omitted Domits availability restrictions in this preview: ${omittedRestrictionNames.join(", ")}.`);
+  }
+  if (!preview.sourceSummary?.hasBasePricing) {
+    notes.push("Base property pricing is missing, so nightlyPrice may be null unless a calendar override price exists.");
+  }
+  if (
+    !preview.sourceSummary?.availabilityRestrictions &&
+    !preview.sourceSummary?.calendarRestrictionOverrides
+  ) {
+    notes.push("No Domits availability restrictions or date-level calendar restriction overrides were found for this property, so only rate fields are shown in restriction payload previews.");
+  }
+};
+const buildChannexAvailabilitySyncValue = (group, value) => {
+  if (typeof value?.availability !== "boolean") {
+    const error = new Error("Availability payload preview contained a non-boolean availability value.");
+    error.code = "CHANNEX_AVAILABILITY_PREVIEW_INVALID";
+    throw error;
+  }
+
+  return {
+    property_id: group.externalPropertyId,
+    room_type_id: group.externalRoomTypeId,
+    date: value.date,
+    availability: value.availability ? 1 : 0,
+  };
+};
+const buildChannexAvailabilitySyncPayloads = (groupedPayloads) =>
+  groupedPayloads.map((group) => ({
+    externalPropertyId: group.externalPropertyId,
+    externalRoomTypeId: group.externalRoomTypeId,
+    values: (Array.isArray(group.values) ? group.values : []).map((value) =>
+      buildChannexAvailabilitySyncValue(group, value)
+    ),
+  }));
+const buildChannexRestrictionSyncValue = (group, value) => {
+  const rate = requireStr(value?.rate) || formatNightlyPriceForChannexRate(value?.nightlyPrice);
+  if (!rate) return null;
+  const mappedRestrictions = {
+    ...copySupportedChannexRestrictions(value?.channexRestrictions),
+    ...copySupportedChannexRestrictions(value),
+  };
+
+  return {
+    property_id: group.externalPropertyId,
+    rate_plan_id: group.externalRatePlanId,
+    date: value.date,
+    rate,
+    ...mappedRestrictions,
+  };
+};
+const buildChannexRestrictionSyncPayloads = (groupedPayloads) =>
+  groupedPayloads
+    .map((group) => {
+      const values = (Array.isArray(group.values) ? group.values : [])
+        .map((value) => buildChannexRestrictionSyncValue(group, value))
+        .filter(Boolean);
+
+      return {
+        externalPropertyId: group.externalPropertyId,
+        externalRoomTypeId: group.externalRoomTypeId,
+        externalRatePlanId: group.externalRatePlanId,
+        values,
+      };
+    })
+    .filter((group) => group.values.length > 0);
+const appendRestrictionSyncOutboundNotes = (notes, transformedPayloads) => {
+  const sentChannexRestrictionFields = collectChannexRestrictionFieldsFromGroups(transformedPayloads);
+  if (sentChannexRestrictionFields.length) {
+    notes.push(
+      `Restrictions sync included Channex restriction fields in outbound payloads: ${sentChannexRestrictionFields.join(", ")}.`
+    );
+  } else {
+    notes.push("Restrictions sync outbound payloads are rate-only because no supported global stay restrictions or date-level calendar restriction overrides were available to send.");
+  }
+};
+const getCapturedGroupedOutboundPayloadSnapshot = (captureState) =>
+  Array.isArray(captureState?.groupedOutboundPayloadSnapshot)
+    ? captureState.groupedOutboundPayloadSnapshot
+    : [];
+const getAriSyncOverallSuccess = ({
+  availabilityStep,
+  availabilityCalledProvider,
+  availabilityWarnings,
+  availabilityErrors,
+  restrictionsStep,
+  restrictionsCalledProvider,
+  restrictionsWarnings,
+  restrictionsErrors,
+}) =>
+  [
+    availabilityStep?.statusCode === 200,
+    availabilityCalledProvider,
+    !availabilityWarnings,
+    !availabilityErrors,
+    restrictionsStep?.statusCode === 200,
+    restrictionsCalledProvider,
+    !restrictionsWarnings,
+    !restrictionsErrors,
+  ].every(Boolean);
+const getFullSyncOverallSuccess = ({
+  availabilityStep,
+  restrictionsStep,
+  availabilityCalledProvider,
+  restrictionsCalledProvider,
+  combinedWarnings,
+  combinedErrors,
+}) =>
+  [
+    availabilityStep?.statusCode === 200,
+    restrictionsStep?.statusCode === 200,
+    availabilityCalledProvider,
+    restrictionsCalledProvider,
+    combinedWarnings.length === 0,
+    combinedErrors.length === 0,
+  ].every(Boolean);
+const createCertificationFullSyncBaseNotes = (usingDefaultDateRange) => {
+  const notes = [
+    "Manual staging certification-prep runner only. This endpoint executes one availability sync and one restrictions sync for the selected full range.",
+    "Restrictions sync sends rate values and can include mapped stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay fields when supported Domits calendar/global restrictions are present.",
+  ];
+  if (usingDefaultDateRange) {
+    notes.push(
+      `No explicit date range was supplied, so the certification full-sync used a ${CHANNEX_CERTIFICATION_FULL_SYNC_DAYS}-day UTC date range starting from today.`
+    );
+  }
+  return notes;
+};
 const normalizeEvidenceDateFilters = (dateFrom, dateTo) => {
   const normalizedFilterDateFrom = requireStr(dateFrom);
   const normalizedFilterDateTo = requireStr(dateTo);
@@ -3190,21 +3422,13 @@ export default class IntegrationService {
     const normalizedDateFrom = parseIsoDateParam(dateFrom);
     const normalizedDateTo = parseIsoDateParam(dateTo);
 
-    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
-    if (!normalizedDomitsPropertyId) {
-      return bad(400, { error: "Missing required query param: domitsPropertyId" });
-    }
-    if (!normalizedDateFrom) {
-      return bad(400, { error: "Invalid or missing required query param: dateFrom" });
-    }
-    if (!normalizedDateTo) {
-      return bad(400, { error: "Invalid or missing required query param: dateTo" });
-    }
-    if (normalizedDateFrom > normalizedDateTo) {
-      return bad(400, {
-        error: "dateFrom must be less than or equal to dateTo.",
-      });
-    }
+    const validationResponse = buildPreviewDateRangeValidationResponse({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    });
+    if (validationResponse) return validationResponse;
 
     try {
       const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
@@ -3308,21 +3532,13 @@ export default class IntegrationService {
     const normalizedDateFrom = parseIsoDateParam(dateFrom);
     const normalizedDateTo = parseIsoDateParam(dateTo);
 
-    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
-    if (!normalizedDomitsPropertyId) {
-      return bad(400, { error: "Missing required query param: domitsPropertyId" });
-    }
-    if (!normalizedDateFrom) {
-      return bad(400, { error: "Invalid or missing required query param: dateFrom" });
-    }
-    if (!normalizedDateTo) {
-      return bad(400, { error: "Invalid or missing required query param: dateTo" });
-    }
-    if (normalizedDateFrom > normalizedDateTo) {
-      return bad(400, {
-        error: "dateFrom must be less than or equal to dateTo.",
-      });
-    }
+    const validationResponse = buildPreviewDateRangeValidationResponse({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    });
+    if (validationResponse) return validationResponse;
 
     try {
       const previewResult = await this.previewChannexAri(
@@ -3336,15 +3552,7 @@ export default class IntegrationService {
       }
 
       const preview = previewResult.response || {};
-      const notes = [
-        "Availability values are currently derived from property-scoped Domits availability and fanned out across saved Channex room type mappings.",
-        "Rate values are currently derived from property-scoped Domits pricing and nightly overrides, then fanned out across saved Channex rate plan mappings.",
-        "Supported Domits restrictions are mapped as date-level minStay or global MinimumStay -> Channex min_stay_through, and date-level maxStay or global MaximumStay -> Channex max_stay when the effective value is greater than 0.",
-        "Supported date-level calendar restriction booleans are mapped as stopSell -> stop_sell, closedToArrival -> closed_to_arrival, and closedToDeparture -> closed_to_departure when explicitly true.",
-        "Date-level calendar restriction overrides take priority over global Domits availability restrictions for the same Channex field.",
-        "Explicit false values for stop_sell, closed_to_arrival, and closed_to_departure are omitted because Channex clearing semantics are not verified in this integration.",
-        "MinimumAdvanceReservation, MaximumNightsPerYear, PreparationTimeDays, occupancy-based pricing, taxes, and currency fields are omitted from Channex restriction payloads.",
-      ];
+      const notes = createChannexAriPayloadPreviewNotes();
 
       if (!preview.ready) {
         return ok({
@@ -3368,20 +3576,7 @@ export default class IntegrationService {
         });
       }
 
-      const supportedRestrictionFields = Array.isArray(preview.sourceSummary?.supportedChannexRestrictionFields)
-        ? preview.sourceSummary.supportedChannexRestrictionFields
-        : [];
-      const omittedRestrictionNames = Array.isArray(preview.sourceSummary?.omittedDomitsRestrictionNames)
-        ? preview.sourceSummary.omittedDomitsRestrictionNames
-        : [];
-      if (supportedRestrictionFields.length) {
-        notes.push(`Supported Channex restriction fields present in this preview: ${supportedRestrictionFields.join(", ")}.`);
-      } else {
-        notes.push("No supported global stay restrictions or date-level calendar restriction overrides were found, so rate payload previews remain rate-only.");
-      }
-      if (omittedRestrictionNames.length) {
-        notes.push(`Omitted Domits availability restrictions in this preview: ${omittedRestrictionNames.join(", ")}.`);
-      }
+      appendChannexAriPayloadPreviewNotes(notes, preview);
 
       const availabilityItems = (Array.isArray(preview.availabilityPreview) ? preview.availabilityPreview : []).map((item) => ({
         externalPropertyId: item.externalPropertyId,
@@ -3393,16 +3588,6 @@ export default class IntegrationService {
 
       const restrictionRateItems = buildRestrictionRateItems(preview.rateRestrictionPreview);
       const restrictionRatePayloadGroups = buildRestrictionRatePayloadGroups(restrictionRateItems);
-
-      if (!preview.sourceSummary?.hasBasePricing) {
-        notes.push("Base property pricing is missing, so nightlyPrice may be null unless a calendar override price exists.");
-      }
-      if (
-        !preview.sourceSummary?.availabilityRestrictions &&
-        !preview.sourceSummary?.calendarRestrictionOverrides
-      ) {
-        notes.push("No Domits availability restrictions or date-level calendar restriction overrides were found for this property, so only rate fields are shown in restriction payload previews.");
-      }
 
       return ok({
         channel: preview.channel || "CHANNEX",
@@ -4655,51 +4840,13 @@ export default class IntegrationService {
         options
       );
 
-    if (!normalizedUserId) {
-      return await finalize(bad(400, { error: "Missing required query param: userId" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "MISSING_USER_ID", errorMessage: "Missing required query param: userId" }],
-      });
-    }
-    if (!normalizedDomitsPropertyId) {
-      return await finalize(bad(400, { error: "Missing required query param: domitsPropertyId" }), {
-        status: "INVALID_REQUEST",
-        errors: [
-          {
-            errorCode: "MISSING_DOMITS_PROPERTY_ID",
-            errorMessage: "Missing required query param: domitsPropertyId",
-          },
-        ],
-      });
-    }
-    if (!normalizedDateFrom) {
-      return await finalize(bad(400, { error: "Invalid or missing required query param: dateFrom" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "INVALID_DATE_FROM", errorMessage: "Invalid or missing required query param: dateFrom" }],
-      });
-    }
-    if (!normalizedDateTo) {
-      return await finalize(bad(400, { error: "Invalid or missing required query param: dateTo" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "INVALID_DATE_TO", errorMessage: "Invalid or missing required query param: dateTo" }],
-      });
-    }
-    if (normalizedDateFrom > normalizedDateTo) {
-      return await finalize(
-        bad(400, {
-          error: "dateFrom must be less than or equal to dateTo.",
-        }),
-        {
-          status: "INVALID_REQUEST",
-          errors: [
-            {
-              errorCode: "INVALID_DATE_RANGE",
-              errorMessage: "dateFrom must be less than or equal to dateTo.",
-            },
-          ],
-        }
-      );
-    }
+    const validationFailure = buildSyncDateRangeValidationFailure({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    });
+    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
     try {
       const payloadPreviewResult = await this.previewChannexAriPayloads(
@@ -4805,24 +4952,7 @@ export default class IntegrationService {
         });
       }
 
-      const transformedPayloads = groupedPayloads.map((group) => ({
-        externalPropertyId: group.externalPropertyId,
-        externalRoomTypeId: group.externalRoomTypeId,
-        values: (Array.isArray(group.values) ? group.values : []).map((value) => {
-          if (typeof value?.availability !== "boolean") {
-            const error = new Error("Availability payload preview contained a non-boolean availability value.");
-            error.code = "CHANNEX_AVAILABILITY_PREVIEW_INVALID";
-            throw error;
-          }
-
-          return {
-            property_id: group.externalPropertyId,
-            room_type_id: group.externalRoomTypeId,
-            date: value.date,
-            availability: value.availability ? 1 : 0,
-          };
-        }),
-      }));
+      const transformedPayloads = buildChannexAvailabilitySyncPayloads(groupedPayloads);
       if (captureState) {
         captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
       }
@@ -4946,51 +5076,13 @@ export default class IntegrationService {
         options
       );
 
-    if (!normalizedUserId) {
-      return await finalize(bad(400, { error: "Missing required query param: userId" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "MISSING_USER_ID", errorMessage: "Missing required query param: userId" }],
-      });
-    }
-    if (!normalizedDomitsPropertyId) {
-      return await finalize(bad(400, { error: "Missing required query param: domitsPropertyId" }), {
-        status: "INVALID_REQUEST",
-        errors: [
-          {
-            errorCode: "MISSING_DOMITS_PROPERTY_ID",
-            errorMessage: "Missing required query param: domitsPropertyId",
-          },
-        ],
-      });
-    }
-    if (!normalizedDateFrom) {
-      return await finalize(bad(400, { error: "Invalid or missing required query param: dateFrom" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "INVALID_DATE_FROM", errorMessage: "Invalid or missing required query param: dateFrom" }],
-      });
-    }
-    if (!normalizedDateTo) {
-      return await finalize(bad(400, { error: "Invalid or missing required query param: dateTo" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "INVALID_DATE_TO", errorMessage: "Invalid or missing required query param: dateTo" }],
-      });
-    }
-    if (normalizedDateFrom > normalizedDateTo) {
-      return await finalize(
-        bad(400, {
-          error: "dateFrom must be less than or equal to dateTo.",
-        }),
-        {
-          status: "INVALID_REQUEST",
-          errors: [
-            {
-              errorCode: "INVALID_DATE_RANGE",
-              errorMessage: "dateFrom must be less than or equal to dateTo.",
-            },
-          ],
-        }
-      );
-    }
+    const validationFailure = buildSyncDateRangeValidationFailure({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    });
+    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
     try {
       const payloadPreviewResult = await this.previewChannexAriPayloads(
@@ -5062,43 +5154,8 @@ export default class IntegrationService {
         ? payloadPreview.restrictionRatePayloadPreview.groupedPayloads
         : [];
 
-      const transformedPayloads = groupedPayloads
-        .map((group) => {
-          const values = (Array.isArray(group.values) ? group.values : [])
-            .map((value) => {
-              const rate = requireStr(value?.rate) || formatNightlyPriceForChannexRate(value?.nightlyPrice);
-              if (!rate) return null;
-              const mappedRestrictions = {
-                ...copySupportedChannexRestrictions(value?.channexRestrictions),
-                ...copySupportedChannexRestrictions(value),
-              };
-
-              return {
-                property_id: group.externalPropertyId,
-                rate_plan_id: group.externalRatePlanId,
-                date: value.date,
-                rate,
-                ...mappedRestrictions,
-              };
-            })
-            .filter(Boolean);
-
-          return {
-            externalPropertyId: group.externalPropertyId,
-            externalRoomTypeId: group.externalRoomTypeId,
-            externalRatePlanId: group.externalRatePlanId,
-            values,
-          };
-        })
-        .filter((group) => group.values.length > 0);
-      const sentChannexRestrictionFields = collectChannexRestrictionFieldsFromGroups(transformedPayloads);
-      if (sentChannexRestrictionFields.length) {
-        baseNotes.push(
-          `Restrictions sync included Channex restriction fields in outbound payloads: ${sentChannexRestrictionFields.join(", ")}.`
-        );
-      } else {
-        baseNotes.push("Restrictions sync outbound payloads are rate-only because no supported global stay restrictions or date-level calendar restriction overrides were available to send.");
-      }
+      const transformedPayloads = buildChannexRestrictionSyncPayloads(groupedPayloads);
+      appendRestrictionSyncOutboundNotes(baseNotes, transformedPayloads);
       if (captureState) {
         captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
       }
@@ -5331,51 +5388,13 @@ export default class IntegrationService {
         options
       );
 
-    if (!normalizedUserId) {
-      return await finalize(bad(400, { error: "Missing required query param: userId" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "MISSING_USER_ID", errorMessage: "Missing required query param: userId" }],
-      });
-    }
-    if (!normalizedDomitsPropertyId) {
-      return await finalize(bad(400, { error: "Missing required query param: domitsPropertyId" }), {
-        status: "INVALID_REQUEST",
-        errors: [
-          {
-            errorCode: "MISSING_DOMITS_PROPERTY_ID",
-            errorMessage: "Missing required query param: domitsPropertyId",
-          },
-        ],
-      });
-    }
-    if (!normalizedDateFrom) {
-      return await finalize(bad(400, { error: "Invalid or missing required query param: dateFrom" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "INVALID_DATE_FROM", errorMessage: "Invalid or missing required query param: dateFrom" }],
-      });
-    }
-    if (!normalizedDateTo) {
-      return await finalize(bad(400, { error: "Invalid or missing required query param: dateTo" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "INVALID_DATE_TO", errorMessage: "Invalid or missing required query param: dateTo" }],
-      });
-    }
-    if (normalizedDateFrom > normalizedDateTo) {
-      return await finalize(
-        bad(400, {
-          error: "dateFrom must be less than or equal to dateTo.",
-        }),
-        {
-          status: "INVALID_REQUEST",
-          errors: [
-            {
-              errorCode: "INVALID_DATE_RANGE",
-              errorMessage: "dateFrom must be less than or equal to dateTo.",
-            },
-          ],
-        }
-      );
-    }
+    const validationFailure = buildSyncDateRangeValidationFailure({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    });
+    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
     try {
       const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
@@ -5477,15 +5496,16 @@ export default class IntegrationService {
         baseNotes,
       });
 
-      const overallSuccess =
-        availabilityStep?.statusCode === 200 &&
-        availabilityCalledProvider &&
-        !availabilityWarnings &&
-        !availabilityErrors &&
-        restrictionsStep?.statusCode === 200 &&
-        restrictionsCalledProvider &&
-        !restrictionsWarnings &&
-        !restrictionsErrors;
+      const overallSuccess = getAriSyncOverallSuccess({
+        availabilityStep,
+        availabilityCalledProvider,
+        availabilityWarnings,
+        availabilityErrors,
+        restrictionsStep,
+        restrictionsCalledProvider,
+        restrictionsWarnings,
+        restrictionsErrors,
+      });
 
       const response = ok({
         channel: readiness.channel || "CHANNEX",
@@ -5547,12 +5567,8 @@ export default class IntegrationService {
         overallSuccess,
         mappingSnapshot,
         groupedOutboundPayloadSnapshot: {
-          availability: Array.isArray(availabilityCaptureState.groupedOutboundPayloadSnapshot)
-            ? availabilityCaptureState.groupedOutboundPayloadSnapshot
-            : [],
-          restrictions: Array.isArray(restrictionsCaptureState?.groupedOutboundPayloadSnapshot)
-            ? restrictionsCaptureState.groupedOutboundPayloadSnapshot
-            : [],
+          availability: getCapturedGroupedOutboundPayloadSnapshot(availabilityCaptureState),
+          restrictions: getCapturedGroupedOutboundPayloadSnapshot(restrictionsCaptureState),
         },
         providerResponseSummary: {
           calledProvider: response.response.calledProvider,
@@ -5634,68 +5650,17 @@ export default class IntegrationService {
         options
       );
 
-    if (!normalizedUserId) {
-      return await finalize(bad(400, { error: "Missing required query param: userId" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "MISSING_USER_ID", errorMessage: "Missing required query param: userId" }],
-      });
-    }
-    if (!normalizedDomitsPropertyId) {
-      return await finalize(bad(400, { error: "Missing required query param: domitsPropertyId" }), {
-        status: "INVALID_REQUEST",
-        errors: [
-          {
-            errorCode: "MISSING_DOMITS_PROPERTY_ID",
-            errorMessage: "Missing required query param: domitsPropertyId",
-          },
-        ],
-      });
-    }
-    if (!usingDefaultDateRange && (!rawDateFrom || !rawDateTo)) {
-      return await finalize(
-        bad(400, {
-          error: "Provide both dateFrom and dateTo, or omit both to use the default certification full-sync range.",
-        }),
-        {
-          status: "INVALID_REQUEST",
-          errors: [
-            {
-              errorCode: "CHANNEX_FULL_SYNC_PARTIAL_DATE_RANGE",
-              errorMessage:
-                "Provide both dateFrom and dateTo, or omit both to use the default certification full-sync range.",
-            },
-          ],
-        }
-      );
-    }
-    if (!normalizedDateFrom) {
-      return await finalize(bad(400, { error: "Invalid or missing required query param: dateFrom" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "INVALID_DATE_FROM", errorMessage: "Invalid or missing required query param: dateFrom" }],
-      });
-    }
-    if (!normalizedDateTo) {
-      return await finalize(bad(400, { error: "Invalid or missing required query param: dateTo" }), {
-        status: "INVALID_REQUEST",
-        errors: [{ errorCode: "INVALID_DATE_TO", errorMessage: "Invalid or missing required query param: dateTo" }],
-      });
-    }
-    if (normalizedDateFrom > normalizedDateTo) {
-      return await finalize(
-        bad(400, {
-          error: "dateFrom must be less than or equal to dateTo.",
-        }),
-        {
-          status: "INVALID_REQUEST",
-          errors: [
-            {
-              errorCode: "INVALID_DATE_RANGE",
-              errorMessage: "dateFrom must be less than or equal to dateTo.",
-            },
-          ],
-        }
-      );
-    }
+    const validationFailure = buildSyncDateRangeValidationFailure({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+      rawDateFrom,
+      rawDateTo,
+      requireCompleteDatePair: true,
+      usingDefaultDateRange,
+    });
+    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
     try {
       const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
@@ -5720,15 +5685,7 @@ export default class IntegrationService {
       }
 
       const readiness = readinessResult.response || {};
-      const baseNotes = [
-        "Manual staging certification-prep runner only. This endpoint executes one availability sync and one restrictions sync for the selected full range.",
-        "Restrictions sync sends rate values and can include mapped stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay fields when supported Domits calendar/global restrictions are present.",
-      ];
-      if (usingDefaultDateRange) {
-        baseNotes.push(
-          `No explicit date range was supplied, so the certification full-sync used a ${CHANNEX_CERTIFICATION_FULL_SYNC_DAYS}-day UTC date range starting from today.`
-        );
-      }
+      const baseNotes = createCertificationFullSyncBaseNotes(usingDefaultDateRange);
 
       const mappingSnapshot = {
         missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
@@ -5821,13 +5778,14 @@ export default class IntegrationService {
         ),
       ]);
 
-      const overallSuccess =
-        availabilityStep?.statusCode === 200 &&
-        restrictionsStep?.statusCode === 200 &&
-        availabilityCalledProvider &&
-        restrictionsCalledProvider &&
-        combinedWarnings.length === 0 &&
-        combinedErrors.length === 0;
+      const overallSuccess = getFullSyncOverallSuccess({
+        availabilityStep,
+        restrictionsStep,
+        availabilityCalledProvider,
+        restrictionsCalledProvider,
+        combinedWarnings,
+        combinedErrors,
+      });
 
       const combinedStatus = getCombinedSyncStatus({
         overallSuccess,
@@ -5868,12 +5826,8 @@ export default class IntegrationService {
         overallSuccess,
         mappingSnapshot,
         groupedOutboundPayloadSnapshot: {
-          availability: Array.isArray(availabilityCaptureState.groupedOutboundPayloadSnapshot)
-            ? availabilityCaptureState.groupedOutboundPayloadSnapshot
-            : [],
-          restrictions: Array.isArray(restrictionsCaptureState.groupedOutboundPayloadSnapshot)
-            ? restrictionsCaptureState.groupedOutboundPayloadSnapshot
-            : [],
+          availability: getCapturedGroupedOutboundPayloadSnapshot(availabilityCaptureState),
+          restrictions: getCapturedGroupedOutboundPayloadSnapshot(restrictionsCaptureState),
         },
         providerResponseSummary: {
           calledProvider: response.response.calledProvider,
