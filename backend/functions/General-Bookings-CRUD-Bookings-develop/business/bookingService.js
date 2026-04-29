@@ -71,7 +71,8 @@ class BookingService {
       authenticatedUser.sub,
       fetchedProperty.hostId,
       cancellationPolicy,
-      bookingStatus
+      bookingStatus,
+      fetchedProperty.bookingType
     );
 
     return { ...result, isInquiry };
@@ -190,7 +191,16 @@ class BookingService {
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
     if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
     await this.reservationRepository.updateBookingStatus(bookingId, "Awaiting Payment");
-    return { bookingId, status: "Awaiting Payment" };
+    return {
+      bookingId,
+      status: "Awaiting Payment",
+      hostId: booking.hostid,
+      propertyId: booking.property_id,
+      dates: {
+        arrivalDate: booking.arrivaldate,
+        departureDate: booking.departuredate,
+      },
+    };
   }
 
   async declineInquiry(bookingId, authToken) {
