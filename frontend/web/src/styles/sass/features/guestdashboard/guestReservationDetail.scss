@@ -226,6 +226,90 @@
   font-weight: 450;
 }
 
+.cancellationPolicyCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cancellationPolicyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cancellationPolicyHeader h3 {
+  margin: 0;
+}
+
+.cancellationPolicyBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cancellationPolicyBadge--flexible {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.cancellationPolicyBadge--moderate {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.cancellationPolicyBadge--strict,
+.cancellationPolicyBadge--firm {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.cancellationPolicyBadge--default {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.cancellationPolicySummary {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #313135;
+}
+
+.cancellationPolicyToggle {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #166534;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.cancellationPolicyDetails {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cancellationPolicyDetails p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
 .policyBlock {
   border-top: 1px solid #e5e7eb;
   padding-top: 16px;
@@ -323,6 +407,11 @@
 
   .reservationTitle {
     font-size: 28px;
+  }
+
+  .cancellationPolicyHeader {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .leftPropertyCardContent {

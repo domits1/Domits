@@ -12,7 +12,8 @@ export class PropertyBaseInfoMapping {
             registrationNumber: propertyBaseInfoEntry.registrationnumber,
             status: propertyBaseInfoEntry.status,
             createdAt: propertyBaseInfoEntry.createdat,
-            updatedAt: propertyBaseInfoEntry.updatedat
+            updatedAt: propertyBaseInfoEntry.updatedat,
+            bookingType: propertyBaseInfoEntry.bookingtype || "direct",
         })
     }
 }
