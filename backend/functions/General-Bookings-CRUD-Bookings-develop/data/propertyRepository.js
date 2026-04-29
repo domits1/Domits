@@ -17,6 +17,7 @@ class PropertyRepository {
       return {
         hostId: result.hostid,
         title: result.title,
+        bookingType: result.bookingtype || "direct",
       };
     } else {
       throw new NotFoundException("Property is inactive or does not exist.");
