@@ -32,7 +32,7 @@ class ChannexBookingRevisionRepository {
         rawPayload: data.rawPayload ?? existing.rawPayload,
         acknowledgementState: data.acknowledgementState ?? existing.acknowledgementState,
         acknowledgedAt:
-          data.acknowledgedAt !== undefined ? data.acknowledgedAt : existing.acknowledgedAt,
+          data.acknowledgedAt === undefined ? existing.acknowledgedAt : data.acknowledgedAt,
         updatedAt: now,
       };
 

@@ -51,7 +51,7 @@ const readOverrideField = (source, camelField, snakeField) => {
   if (!source || typeof source !== "object") {
     return undefined;
   }
-  return source[camelField] !== undefined ? source[camelField] : source[snakeField];
+  return source[camelField] === undefined ? source[snakeField] : source[camelField];
 };
 
 const normalizeNullableBoolean = (value) => {

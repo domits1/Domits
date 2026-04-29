@@ -1,17 +1,25 @@
 jest.mock(
   "@aws-sdk/client-secrets-manager",
-  () => ({
-    SecretsManagerClient: class {
-      send() {
-        return Promise.resolve({});
+  () => {
+    class MockSecretsCommand {
+      constructor(input = {}) {
+        this.input = input;
       }
-    },
-    CreateSecretCommand: class {},
-    PutSecretValueCommand: class {},
-    GetSecretValueCommand: class {},
-    DescribeSecretCommand: class {},
-    DeleteSecretCommand: class {},
-  }),
+    }
+
+    return {
+      SecretsManagerClient: class {
+        send() {
+          return Promise.resolve({});
+        }
+      },
+      CreateSecretCommand: MockSecretsCommand,
+      PutSecretValueCommand: MockSecretsCommand,
+      GetSecretValueCommand: MockSecretsCommand,
+      DescribeSecretCommand: MockSecretsCommand,
+      DeleteSecretCommand: MockSecretsCommand,
+    };
+  },
   { virtual: true }
 );
 

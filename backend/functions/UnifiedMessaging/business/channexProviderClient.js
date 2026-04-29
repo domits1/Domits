@@ -9,7 +9,7 @@ const normalizeChannexBookingRevision = (row) => {
   const attributes = row?.attributes && typeof row.attributes === "object" ? row.attributes : {};
   const customer = attributes?.customer && typeof attributes.customer === "object" ? attributes.customer : {};
   const rooms = Array.isArray(attributes?.rooms) ? attributes.rooms : [];
-  const firstRoom = rooms.length ? rooms[0] : null;
+  const firstRoom = rooms.at(0) ?? null;
 
   return {
     revisionId,
@@ -45,6 +45,230 @@ const parseJsonSafely = (value) => {
   }
 };
 
+const getProviderStatusForHttpStatus = (httpStatus, fallbackStatus) => {
+  if (httpStatus === 401) {
+    return "UNAUTHORIZED";
+  }
+  return fallbackStatus;
+};
+
+const getPushGroupIdentity = (group, includeRatePlanId = false) => {
+  const identity = {
+    externalPropertyId: requireStr(group?.externalPropertyId),
+    externalRoomTypeId: requireStr(group?.externalRoomTypeId),
+  };
+  if (includeRatePlanId) {
+    identity.externalRatePlanId = requireStr(group?.externalRatePlanId);
+  }
+  return identity;
+};
+
+const buildRequestBody = (group) => ({
+  values: Array.isArray(group?.values) ? group.values : [],
+});
+
+const getFailedPushProviderStatus = (httpStatus, fallbackStatus) => {
+  if (httpStatus === 401) {
+    return "UNAUTHORIZED";
+  }
+  if (httpStatus === 429) {
+    return "RATE_LIMITED";
+  }
+  return fallbackStatus;
+};
+
+const buildInvalidCredentialsPushResult = (group, includeRatePlanId) => ({
+  ...getPushGroupIdentity(group, includeRatePlanId),
+  requestBody: buildRequestBody(group),
+  httpStatus: null,
+  providerStatus: "INVALID_CREDENTIALS",
+  success: false,
+  taskId: null,
+  warnings: [],
+  errorCode: "MISSING_API_KEY",
+  errorMessage: "Channex credentials must include apiKey.",
+});
+
+const buildMissingValuesPushResult = ({ group, requestBody, includeRatePlanId, errorCode, errorMessage }) => ({
+  ...getPushGroupIdentity(group, includeRatePlanId),
+  requestBody,
+  httpStatus: null,
+  providerStatus: "INVALID_REQUEST",
+  success: false,
+  taskId: null,
+  warnings: [],
+  errorCode,
+  errorMessage,
+});
+
+const buildProviderPushFailureResult = ({
+  group,
+  requestBody,
+  response,
+  parsed,
+  warnings,
+  taskIds,
+  includeRatePlanId,
+  fallbackStatus,
+  errorCodePrefix,
+  errorMessagePrefix,
+}) => ({
+  ...getPushGroupIdentity(group, includeRatePlanId),
+  requestBody,
+  httpStatus: response.status,
+  providerStatus: getFailedPushProviderStatus(response.status, fallbackStatus),
+  success: false,
+  taskId: taskIds[0] ?? null,
+  warnings,
+  errorCode:
+    parsed?.errors?.code ||
+    parsed?.error?.code ||
+    `${errorCodePrefix}_${response.status}`,
+  errorMessage:
+    parsed?.errors?.title ||
+    parsed?.error?.message ||
+    `${errorMessagePrefix} failed with status ${response.status}.`,
+});
+
+const buildProviderPushSuccessResult = ({ group, requestBody, response, warnings, taskIds, includeRatePlanId }) => ({
+  ...getPushGroupIdentity(group, includeRatePlanId),
+  requestBody,
+  httpStatus: response.status,
+  providerStatus: warnings.length ? "ACCEPTED_WITH_WARNINGS" : "SYNCED",
+  success: warnings.length === 0,
+  taskId: taskIds[0] ?? null,
+  warnings,
+  errorCode: null,
+  errorMessage: warnings.length ? "Channex accepted the request with warnings." : null,
+});
+
+const buildProviderPushExceptionResult = ({
+  group,
+  requestBody,
+  error,
+  includeRatePlanId,
+  fallbackStatus,
+  requestFailedCode,
+  requestFailedMessage,
+}) => ({
+  ...getPushGroupIdentity(group, includeRatePlanId),
+  requestBody,
+  httpStatus: null,
+  providerStatus: fallbackStatus,
+  success: false,
+  taskId: null,
+  warnings: [],
+  errorCode: error?.code || error?.name || requestFailedCode,
+  errorMessage: error?.message || requestFailedMessage,
+});
+
+const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody }) => {
+  const url = new URL(endpointPath, CHANNEX_BASE_URL);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "user-api-key": apiKey,
+    },
+    body: JSON.stringify(requestBody),
+  });
+  const rawText = await response.text();
+  const parsed = parseJsonSafely(rawText);
+  return {
+    response,
+    parsed,
+    warnings: normalizeWarnings(parsed),
+    taskIds: normalizeTaskIds(parsed),
+  };
+};
+
+const pushGroupedPayloads = async ({
+  apiKey,
+  groups,
+  endpointPath,
+  includeRatePlanId = false,
+  missingValuesCode,
+  missingValuesMessage,
+  fallbackStatus,
+  errorCodePrefix,
+  errorMessagePrefix,
+  requestFailedCode,
+  requestFailedMessage,
+}) => {
+  if (!apiKey) {
+    return {
+      success: false,
+      results: groups.map((group) => buildInvalidCredentialsPushResult(group, includeRatePlanId)),
+    };
+  }
+
+  const results = [];
+  for (const group of groups) {
+    const requestBody = buildRequestBody(group);
+    if (requestBody.values.length === 0) {
+      results.push(
+        buildMissingValuesPushResult({
+          group,
+          requestBody,
+          includeRatePlanId,
+          errorCode: missingValuesCode,
+          errorMessage: missingValuesMessage,
+        })
+      );
+      continue;
+    }
+
+    try {
+      const providerResponse = await postChannexPushRequest({ apiKey, endpointPath, requestBody });
+      if (providerResponse.response.ok) {
+        results.push(
+          buildProviderPushSuccessResult({
+            group,
+            requestBody,
+            response: providerResponse.response,
+            warnings: providerResponse.warnings,
+            taskIds: providerResponse.taskIds,
+            includeRatePlanId,
+          })
+        );
+        continue;
+      }
+
+      results.push(
+        buildProviderPushFailureResult({
+          group,
+          requestBody,
+          response: providerResponse.response,
+          parsed: providerResponse.parsed,
+          warnings: providerResponse.warnings,
+          taskIds: providerResponse.taskIds,
+          includeRatePlanId,
+          fallbackStatus,
+          errorCodePrefix,
+          errorMessagePrefix,
+        })
+      );
+    } catch (error) {
+      results.push(
+        buildProviderPushExceptionResult({
+          group,
+          requestBody,
+          error,
+          includeRatePlanId,
+          fallbackStatus,
+          requestFailedCode,
+          requestFailedMessage,
+        })
+      );
+    }
+  }
+
+  return {
+    success: results.every((result) => result.success),
+    results,
+  };
+};
+
 export default class ChannexProviderClient {
   async validateApiKey(credentials) {
     const apiKey = requireStr(credentials?.apiKey);
@@ -78,7 +302,7 @@ export default class ChannexProviderClient {
           success: false,
           canValidate: true,
           externalAccountId: null,
-          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "VALIDATION_FAILED",
+          providerStatus: getProviderStatusForHttpStatus(response.status, "VALIDATION_FAILED"),
           errorCode:
             parsed?.errors?.code ||
             parsed?.error?.code ||
@@ -142,7 +366,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           properties: [],
-          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "PROPERTY_LIST_FAILED",
+          providerStatus: getProviderStatusForHttpStatus(response.status, "PROPERTY_LIST_FAILED"),
           errorCode:
             parsed?.errors?.code ||
             parsed?.error?.code ||
@@ -242,7 +466,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           roomTypes: [],
-          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "ROOM_TYPE_LIST_FAILED",
+          providerStatus: getProviderStatusForHttpStatus(response.status, "ROOM_TYPE_LIST_FAILED"),
           errorCode:
             parsed?.errors?.code ||
             parsed?.error?.code ||
@@ -342,7 +566,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           ratePlans: [],
-          providerStatus: response.status === 401 ? "UNAUTHORIZED" : "RATE_PLAN_LIST_FAILED",
+          providerStatus: getProviderStatusForHttpStatus(response.status, "RATE_PLAN_LIST_FAILED"),
           errorCode:
             parsed?.errors?.code ||
             parsed?.error?.code ||
@@ -403,253 +627,37 @@ export default class ChannexProviderClient {
     const apiKey = requireStr(credentials?.apiKey);
     const groups = Array.isArray(groupedAvailabilityPayloads) ? groupedAvailabilityPayloads : [];
 
-    if (!apiKey) {
-      return {
-        success: false,
-        results: groups.map((group) => ({
-          externalPropertyId: requireStr(group?.externalPropertyId),
-          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-          requestBody: {
-            values: Array.isArray(group?.values) ? group.values : [],
-          },
-          httpStatus: null,
-          providerStatus: "INVALID_CREDENTIALS",
-          success: false,
-          taskId: null,
-          warnings: [],
-          errorCode: "MISSING_API_KEY",
-          errorMessage: "Channex credentials must include apiKey.",
-        })),
-      };
-    }
-
-    const results = [];
-
-    for (const group of groups) {
-      const requestBody = {
-        values: Array.isArray(group?.values) ? group.values : [],
-      };
-
-      if (!requestBody.values.length) {
-        results.push({
-          externalPropertyId: requireStr(group?.externalPropertyId),
-          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-          requestBody,
-          httpStatus: null,
-          providerStatus: "INVALID_REQUEST",
-          success: false,
-          taskId: null,
-          warnings: [],
-          errorCode: "CHANNEX_AVAILABILITY_VALUES_MISSING",
-          errorMessage: "Channex availability push requires at least one values entry.",
-        });
-        continue;
-      }
-
-      try {
-        const url = new URL("/api/v1/availability", CHANNEX_BASE_URL);
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "user-api-key": apiKey,
-          },
-          body: JSON.stringify(requestBody),
-        });
-
-        const rawText = await response.text();
-        const parsed = parseJsonSafely(rawText);
-        const warnings = normalizeWarnings(parsed);
-        const taskIds = normalizeTaskIds(parsed);
-
-        if (!response.ok) {
-          results.push({
-            externalPropertyId: requireStr(group?.externalPropertyId),
-            externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-            requestBody,
-            httpStatus: response.status,
-            providerStatus:
-              response.status === 401
-                ? "UNAUTHORIZED"
-                : response.status === 429
-                  ? "RATE_LIMITED"
-                  : "AVAILABILITY_PUSH_FAILED",
-            success: false,
-            taskId: taskIds[0] ?? null,
-            warnings,
-            errorCode:
-              parsed?.errors?.code ||
-              parsed?.error?.code ||
-              `CHANNEX_AVAILABILITY_PUSH_${response.status}`,
-            errorMessage:
-              parsed?.errors?.title ||
-              parsed?.error?.message ||
-              `Channex availability push failed with status ${response.status}.`,
-          });
-          continue;
-        }
-
-        results.push({
-          externalPropertyId: requireStr(group?.externalPropertyId),
-          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-          requestBody,
-          httpStatus: response.status,
-          providerStatus: warnings.length ? "ACCEPTED_WITH_WARNINGS" : "SYNCED",
-          success: warnings.length === 0,
-          taskId: taskIds[0] ?? null,
-          warnings,
-          errorCode: null,
-          errorMessage: warnings.length ? "Channex accepted the request with warnings." : null,
-        });
-      } catch (error) {
-        results.push({
-          externalPropertyId: requireStr(group?.externalPropertyId),
-          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-          requestBody,
-          httpStatus: null,
-          providerStatus: "AVAILABILITY_PUSH_FAILED",
-          success: false,
-          taskId: null,
-          warnings: [],
-          errorCode: error?.code || error?.name || "CHANNEX_AVAILABILITY_PUSH_REQUEST_FAILED",
-          errorMessage: error?.message || "Channex availability push request failed.",
-        });
-      }
-    }
-
-    return {
-      success: results.every((result) => result.success),
-      results,
-    };
+    return await pushGroupedPayloads({
+      apiKey,
+      groups,
+      endpointPath: "/api/v1/availability",
+      missingValuesCode: "CHANNEX_AVAILABILITY_VALUES_MISSING",
+      missingValuesMessage: "Channex availability push requires at least one values entry.",
+      fallbackStatus: "AVAILABILITY_PUSH_FAILED",
+      errorCodePrefix: "CHANNEX_AVAILABILITY_PUSH",
+      errorMessagePrefix: "Channex availability push",
+      requestFailedCode: "CHANNEX_AVAILABILITY_PUSH_REQUEST_FAILED",
+      requestFailedMessage: "Channex availability push request failed.",
+    });
   }
 
   async pushRestrictions(credentials, groupedRestrictionRatePayloads) {
     const apiKey = requireStr(credentials?.apiKey);
     const groups = Array.isArray(groupedRestrictionRatePayloads) ? groupedRestrictionRatePayloads : [];
 
-    if (!apiKey) {
-      return {
-        success: false,
-        results: groups.map((group) => ({
-          externalPropertyId: requireStr(group?.externalPropertyId),
-          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-          externalRatePlanId: requireStr(group?.externalRatePlanId),
-          requestBody: {
-            values: Array.isArray(group?.values) ? group.values : [],
-          },
-          httpStatus: null,
-          providerStatus: "INVALID_CREDENTIALS",
-          success: false,
-          taskId: null,
-          warnings: [],
-          errorCode: "MISSING_API_KEY",
-          errorMessage: "Channex credentials must include apiKey.",
-        })),
-      };
-    }
-
-    const results = [];
-
-    for (const group of groups) {
-      const requestBody = {
-        values: Array.isArray(group?.values) ? group.values : [],
-      };
-
-      if (!requestBody.values.length) {
-        results.push({
-          externalPropertyId: requireStr(group?.externalPropertyId),
-          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-          externalRatePlanId: requireStr(group?.externalRatePlanId),
-          requestBody,
-          httpStatus: null,
-          providerStatus: "INVALID_REQUEST",
-          success: false,
-          taskId: null,
-          warnings: [],
-          errorCode: "CHANNEX_RESTRICTIONS_VALUES_MISSING",
-          errorMessage: "Channex restrictions push requires at least one values entry.",
-        });
-        continue;
-      }
-
-      try {
-        const url = new URL("/api/v1/restrictions", CHANNEX_BASE_URL);
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "user-api-key": apiKey,
-          },
-          body: JSON.stringify(requestBody),
-        });
-
-        const rawText = await response.text();
-        const parsed = parseJsonSafely(rawText);
-        const warnings = normalizeWarnings(parsed);
-        const taskIds = normalizeTaskIds(parsed);
-
-        if (!response.ok) {
-          results.push({
-            externalPropertyId: requireStr(group?.externalPropertyId),
-            externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-            externalRatePlanId: requireStr(group?.externalRatePlanId),
-            requestBody,
-            httpStatus: response.status,
-            providerStatus:
-              response.status === 401
-                ? "UNAUTHORIZED"
-                : response.status === 429
-                  ? "RATE_LIMITED"
-                  : "RESTRICTIONS_PUSH_FAILED",
-            success: false,
-            taskId: taskIds[0] ?? null,
-            warnings,
-            errorCode:
-              parsed?.errors?.code ||
-              parsed?.error?.code ||
-              `CHANNEX_RESTRICTIONS_PUSH_${response.status}`,
-            errorMessage:
-              parsed?.errors?.title ||
-              parsed?.error?.message ||
-              `Channex restrictions push failed with status ${response.status}.`,
-          });
-          continue;
-        }
-
-        results.push({
-          externalPropertyId: requireStr(group?.externalPropertyId),
-          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-          externalRatePlanId: requireStr(group?.externalRatePlanId),
-          requestBody,
-          httpStatus: response.status,
-          providerStatus: warnings.length ? "ACCEPTED_WITH_WARNINGS" : "SYNCED",
-          success: warnings.length === 0,
-          taskId: taskIds[0] ?? null,
-          warnings,
-          errorCode: null,
-          errorMessage: warnings.length ? "Channex accepted the request with warnings." : null,
-        });
-      } catch (error) {
-        results.push({
-          externalPropertyId: requireStr(group?.externalPropertyId),
-          externalRoomTypeId: requireStr(group?.externalRoomTypeId),
-          externalRatePlanId: requireStr(group?.externalRatePlanId),
-          requestBody,
-          httpStatus: null,
-          providerStatus: "RESTRICTIONS_PUSH_FAILED",
-          success: false,
-          taskId: null,
-          warnings: [],
-          errorCode: error?.code || error?.name || "CHANNEX_RESTRICTIONS_PUSH_REQUEST_FAILED",
-          errorMessage: error?.message || "Channex restrictions push request failed.",
-        });
-      }
-    }
-
-    return {
-      success: results.every((result) => result.success),
-      results,
-    };
+    return await pushGroupedPayloads({
+      apiKey,
+      groups,
+      endpointPath: "/api/v1/restrictions",
+      includeRatePlanId: true,
+      missingValuesCode: "CHANNEX_RESTRICTIONS_VALUES_MISSING",
+      missingValuesMessage: "Channex restrictions push requires at least one values entry.",
+      fallbackStatus: "RESTRICTIONS_PUSH_FAILED",
+      errorCodePrefix: "CHANNEX_RESTRICTIONS_PUSH",
+      errorMessagePrefix: "Channex restrictions push",
+      requestFailedCode: "CHANNEX_RESTRICTIONS_PUSH_REQUEST_FAILED",
+      requestFailedMessage: "Channex restrictions push request failed.",
+    });
   }
 
   async listBookingRevisionFeed(credentials, { externalPropertyId } = {}) {
