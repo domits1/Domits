@@ -6,6 +6,9 @@ import "../../styles/sass/features/guestdashboard/mainDashboardGuest.scss";
 import PropertyCard from "./components/PropertyCard";
 import CheckInInstructions from "./components/CheckInInstructions";
 import HouseRules from "./components/HouseRules";
+import CancellationPolicySection, {
+  resolveGuestCancellationPolicy,
+} from "./components/CancellationPolicySection";
 import PaymentSummary from "./components/PaymentSummary";
 import BookingDetails from "./components/BookingDetails";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader";
@@ -26,7 +29,7 @@ import {
 } from "./utils/guestDashboardUtils";
 import { normalizeImageUrl, placeholderImage } from "./utils/image";
 import { resolveAccommodationImageUrl, resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
-import { parseCancellationPolicy } from "../../utils/policyDisplayUtils.js";
+import { getActiveCancellationPolicyId } from "../../utils/policyDisplayUtils.js";
 import { isValidDate, startOfDay } from "../../utils/dashboardShared";
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
@@ -210,7 +213,26 @@ const resolveStayNights = ({ arrivalDate, departureDate }) => {
 
 const buildRuleLabels = (propertyDetails) => {
   const rules = Array.isArray(propertyDetails?.rules) ? propertyDetails.rules : [];
-  return rules.map((ruleEntry) => formatRuleLabel(ruleEntry)).filter(Boolean);
+  return rules
+    .filter((ruleEntry) => !String(ruleEntry?.rule || "").startsWith("CancellationPolicy:"))
+    .map((ruleEntry) => formatRuleLabel(ruleEntry))
+    .filter(Boolean);
+};
+
+const resolveReservationCancellationPolicy = ({ booking, propertyDetails }) => {
+  const snapshotPolicy =
+    booking?.cancellation_policy ||
+    booking?.cancellationPolicy ||
+    propertyDetails?.reservation?.cancellation_policy ||
+    propertyDetails?.reservation?.cancellationPolicy ||
+    "";
+
+  if (snapshotPolicy) {
+    return resolveGuestCancellationPolicy(snapshotPolicy);
+  }
+
+  const fallbackPolicyId = getActiveCancellationPolicyId(propertyDetails?.rules || []);
+  return fallbackPolicyId ? resolveGuestCancellationPolicy(fallbackPolicyId) : null;
 };
 
 const buildReservationContent = ({ isPageLoading, pageError, reservation, handleMessageHost }) => {
@@ -258,7 +280,9 @@ const buildReservationContent = ({ isPageLoading, pageError, reservation, handle
           </div>
 
           <div className="reservationRight">
-            <HouseRules rules={reservation.rules} cancellationPolicy={parseCancellationPolicy(reservation.rules)} />
+            <CancellationPolicySection policy={reservation.cancellationPolicy} />
+
+            <HouseRules rules={reservation.rules} />
 
             <div className="card helpCard">
               <h3>Need help?</h3>
@@ -352,6 +376,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
       nights,
       cleaningFee,
     },
+    cancellationPolicy: resolveReservationCancellationPolicy({ booking, propertyDetails }),
     rules: buildRuleLabels(propertyDetails),
     instructions: [],
   };
@@ -403,9 +428,14 @@ function ReservationDetails() {
           throw new Error("Reservation is missing a valid booking id.");
         }
 
-        const propertyDetails = await getGuestBookingPropertyDetails(bookingId);
-        if (!isMounted) {
-          return;
+        let propertyDetails = null;
+        try {
+          propertyDetails = await getGuestBookingPropertyDetails(bookingId);
+          if (!isMounted) {
+            return;
+          }
+        } catch (propertyDetailsError) {
+          console.warn("Falling back to booking-only reservation details:", propertyDetailsError);
         }
 
         setReservation(buildReservationViewModel({ booking, propertyDetails }));
