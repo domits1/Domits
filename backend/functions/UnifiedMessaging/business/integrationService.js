@@ -739,6 +739,35 @@ const buildInvalidRequestEvidencePatch = (errorCode, errorMessage) => ({
   status: "INVALID_REQUEST",
   errors: [{ errorCode, errorMessage }],
 });
+const buildChannexSyncEvidencePatch = ({
+  normalizedUserId,
+  normalizedDomitsPropertyId,
+  syncType,
+  dateFrom,
+  dateTo,
+  startedAt,
+  evidencePatch,
+  taskIdsDefault = [],
+}) => ({
+  userId: normalizedUserId,
+  integrationAccountId: evidencePatch.integrationAccountId ?? null,
+  domitsPropertyId: normalizedDomitsPropertyId,
+  syncType,
+  dateFrom,
+  dateTo,
+  startedAt,
+  finishedAt: nowMs(),
+  status: evidencePatch.status ?? "FAILED",
+  overallSuccess: evidencePatch.overallSuccess ?? false,
+  mappingSnapshot: evidencePatch.mappingSnapshot ?? null,
+  groupedOutboundPayloadSnapshot: evidencePatch.groupedOutboundPayloadSnapshot ?? null,
+  providerResponseSummary: evidencePatch.providerResponseSummary ?? null,
+  taskIds: evidencePatch.taskIds ?? taskIdsDefault,
+  warnings: evidencePatch.warnings ?? [],
+  errors: evidencePatch.errors ?? [],
+  notes: evidencePatch.notes ?? [],
+  rawDetails: evidencePatch.rawDetails ?? null,
+});
 const buildPreviewDateRangeValidationResponse = ({
   normalizedUserId,
   normalizedDomitsPropertyId,
@@ -4371,26 +4400,15 @@ export default class IntegrationService {
     const finalize = async (result, evidencePatch = {}) =>
       this.finalizeChannexSyncResult(
         result,
-        {
-          userId: normalizedUserId,
-          integrationAccountId: evidencePatch.integrationAccountId ?? null,
-          domitsPropertyId: normalizedDomitsPropertyId,
+        buildChannexSyncEvidencePatch({
+          normalizedUserId,
+          normalizedDomitsPropertyId,
           syncType: "booking_receive",
           dateFrom: null,
           dateTo: null,
           startedAt,
-          finishedAt: nowMs(),
-          status: evidencePatch.status ?? "FAILED",
-          overallSuccess: evidencePatch.overallSuccess ?? false,
-          mappingSnapshot: evidencePatch.mappingSnapshot ?? null,
-          groupedOutboundPayloadSnapshot: evidencePatch.groupedOutboundPayloadSnapshot ?? null,
-          providerResponseSummary: evidencePatch.providerResponseSummary ?? null,
-          taskIds: [],
-          warnings: evidencePatch.warnings ?? [],
-          errors: evidencePatch.errors ?? [],
-          notes: evidencePatch.notes ?? [],
-          rawDetails: evidencePatch.rawDetails ?? null,
-        },
+          evidencePatch,
+        }),
         options
       );
 
@@ -4533,26 +4551,15 @@ export default class IntegrationService {
     const finalize = async (result, evidencePatch = {}) =>
       this.finalizeChannexSyncResult(
         result,
-        {
-          userId: normalizedUserId,
-          integrationAccountId: evidencePatch.integrationAccountId ?? null,
-          domitsPropertyId: normalizedDomitsPropertyId,
+        buildChannexSyncEvidencePatch({
+          normalizedUserId,
+          normalizedDomitsPropertyId,
           syncType: "booking_ack",
           dateFrom: null,
           dateTo: null,
           startedAt,
-          finishedAt: nowMs(),
-          status: evidencePatch.status ?? "FAILED",
-          overallSuccess: evidencePatch.overallSuccess ?? false,
-          mappingSnapshot: evidencePatch.mappingSnapshot ?? null,
-          groupedOutboundPayloadSnapshot: evidencePatch.groupedOutboundPayloadSnapshot ?? null,
-          providerResponseSummary: evidencePatch.providerResponseSummary ?? null,
-          taskIds: [],
-          warnings: evidencePatch.warnings ?? [],
-          errors: evidencePatch.errors ?? [],
-          notes: evidencePatch.notes ?? [],
-          rawDetails: evidencePatch.rawDetails ?? null,
-        },
+          evidencePatch,
+        }),
         options
       );
 
@@ -4817,26 +4824,15 @@ export default class IntegrationService {
     const finalize = async (result, evidencePatch = {}) =>
       this.finalizeChannexSyncResult(
         result,
-        {
-          userId: normalizedUserId,
-          integrationAccountId: evidencePatch.integrationAccountId ?? null,
-          domitsPropertyId: normalizedDomitsPropertyId,
+        buildChannexSyncEvidencePatch({
+          normalizedUserId,
+          normalizedDomitsPropertyId,
           syncType: "availability",
           dateFrom: normalizedDateFrom ?? requireStr(dateFrom),
           dateTo: normalizedDateTo ?? requireStr(dateTo),
           startedAt,
-          finishedAt: nowMs(),
-          status: evidencePatch.status ?? "FAILED",
-          overallSuccess: evidencePatch.overallSuccess ?? false,
-          mappingSnapshot: evidencePatch.mappingSnapshot ?? null,
-          groupedOutboundPayloadSnapshot: evidencePatch.groupedOutboundPayloadSnapshot ?? null,
-          providerResponseSummary: evidencePatch.providerResponseSummary ?? null,
-          taskIds: evidencePatch.taskIds ?? [],
-          warnings: evidencePatch.warnings ?? [],
-          errors: evidencePatch.errors ?? [],
-          notes: evidencePatch.notes ?? [],
-          rawDetails: evidencePatch.rawDetails ?? null,
-        },
+          evidencePatch,
+        }),
         options
       );
 
@@ -5053,26 +5049,15 @@ export default class IntegrationService {
     const finalize = async (result, evidencePatch = {}) =>
       this.finalizeChannexSyncResult(
         result,
-        {
-          userId: normalizedUserId,
-          integrationAccountId: evidencePatch.integrationAccountId ?? null,
-          domitsPropertyId: normalizedDomitsPropertyId,
+        buildChannexSyncEvidencePatch({
+          normalizedUserId,
+          normalizedDomitsPropertyId,
           syncType: "restrictions",
           dateFrom: normalizedDateFrom ?? requireStr(dateFrom),
           dateTo: normalizedDateTo ?? requireStr(dateTo),
           startedAt,
-          finishedAt: nowMs(),
-          status: evidencePatch.status ?? "FAILED",
-          overallSuccess: evidencePatch.overallSuccess ?? false,
-          mappingSnapshot: evidencePatch.mappingSnapshot ?? null,
-          groupedOutboundPayloadSnapshot: evidencePatch.groupedOutboundPayloadSnapshot ?? null,
-          providerResponseSummary: evidencePatch.providerResponseSummary ?? null,
-          taskIds: evidencePatch.taskIds ?? [],
-          warnings: evidencePatch.warnings ?? [],
-          errors: evidencePatch.errors ?? [],
-          notes: evidencePatch.notes ?? [],
-          rawDetails: evidencePatch.rawDetails ?? null,
-        },
+          evidencePatch,
+        }),
         options
       );
 
@@ -5365,26 +5350,15 @@ export default class IntegrationService {
     const finalize = async (result, evidencePatch = {}) =>
       this.finalizeChannexSyncResult(
         result,
-        {
-          userId: normalizedUserId,
-          integrationAccountId: evidencePatch.integrationAccountId ?? null,
-          domitsPropertyId: normalizedDomitsPropertyId,
+        buildChannexSyncEvidencePatch({
+          normalizedUserId,
+          normalizedDomitsPropertyId,
           syncType: "ari",
           dateFrom: normalizedDateFrom ?? requireStr(dateFrom),
           dateTo: normalizedDateTo ?? requireStr(dateTo),
           startedAt,
-          finishedAt: nowMs(),
-          status: evidencePatch.status ?? "FAILED",
-          overallSuccess: evidencePatch.overallSuccess ?? false,
-          mappingSnapshot: evidencePatch.mappingSnapshot ?? null,
-          groupedOutboundPayloadSnapshot: evidencePatch.groupedOutboundPayloadSnapshot ?? null,
-          providerResponseSummary: evidencePatch.providerResponseSummary ?? null,
-          taskIds: evidencePatch.taskIds ?? [],
-          warnings: evidencePatch.warnings ?? [],
-          errors: evidencePatch.errors ?? [],
-          notes: evidencePatch.notes ?? [],
-          rawDetails: evidencePatch.rawDetails ?? null,
-        },
+          evidencePatch,
+        }),
         options
       );
 
@@ -5627,26 +5601,15 @@ export default class IntegrationService {
     const finalize = async (result, evidencePatch = {}) =>
       this.finalizeChannexSyncResult(
         result,
-        {
-          userId: normalizedUserId,
-          integrationAccountId: evidencePatch.integrationAccountId ?? null,
-          domitsPropertyId: normalizedDomitsPropertyId,
+        buildChannexSyncEvidencePatch({
+          normalizedUserId,
+          normalizedDomitsPropertyId,
           syncType: "certification_full",
           dateFrom: normalizedDateFrom ?? rawDateFrom,
           dateTo: normalizedDateTo ?? rawDateTo,
           startedAt,
-          finishedAt: nowMs(),
-          status: evidencePatch.status ?? "FAILED",
-          overallSuccess: evidencePatch.overallSuccess ?? false,
-          mappingSnapshot: evidencePatch.mappingSnapshot ?? null,
-          groupedOutboundPayloadSnapshot: evidencePatch.groupedOutboundPayloadSnapshot ?? null,
-          providerResponseSummary: evidencePatch.providerResponseSummary ?? null,
-          taskIds: evidencePatch.taskIds ?? [],
-          warnings: evidencePatch.warnings ?? [],
-          errors: evidencePatch.errors ?? [],
-          notes: evidencePatch.notes ?? [],
-          rawDetails: evidencePatch.rawDetails ?? null,
-        },
+          evidencePatch,
+        }),
         options
       );
 

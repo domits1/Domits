@@ -13,6 +13,35 @@ const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("
 const EMPTY_SET = new Set();
 const EMPTY_ARRAY = [];
 const EMPTY_OBJECT = {};
+const BOOLEAN_RESTRICTION_INDICATORS = [
+  {
+    field: "stopSell",
+    label: "Stop selling this date",
+    text: "Stop",
+  },
+  {
+    field: "closedToArrival",
+    label: "No check-in on this date",
+    text: "No CI",
+  },
+  {
+    field: "closedToDeparture",
+    label: "No check-out on this date",
+    text: "No CO",
+  },
+];
+const STAY_RESTRICTION_INDICATORS = [
+  {
+    field: "minStay",
+    labelPrefix: "Minimum stay",
+    textPrefix: "Min",
+  },
+  {
+    field: "maxStay",
+    labelPrefix: "Maximum stay",
+    textPrefix: "Max",
+  },
+];
 
 const toDateNumber = (date) => {
   const year = date.getUTCFullYear();
@@ -125,43 +154,17 @@ const readRestrictionOverride = (restrictionOverrides, key) => {
 
 const buildRestrictionIndicators = (restriction) => {
   const safeRestriction = restriction && typeof restriction === "object" ? restriction : {};
-  const indicators = [];
-  if (safeRestriction.stopSell === true) {
-    indicators.push({
-      key: "stopSell",
-      label: "Stop selling this date",
-      text: "Stop",
-    });
-  }
-  if (safeRestriction.closedToArrival === true) {
-    indicators.push({
-      key: "closedToArrival",
-      label: "No check-in on this date",
-      text: "No CI",
-    });
-  }
-  if (safeRestriction.closedToDeparture === true) {
-    indicators.push({
-      key: "closedToDeparture",
-      label: "No check-out on this date",
-      text: "No CO",
-    });
-  }
-  if (safeRestriction.minStay !== null && safeRestriction.minStay !== undefined) {
-    indicators.push({
-      key: "minStay",
-      label: `Minimum stay ${safeRestriction.minStay}`,
-      text: `Min ${safeRestriction.minStay}`,
-    });
-  }
-  if (safeRestriction.maxStay !== null && safeRestriction.maxStay !== undefined) {
-    indicators.push({
-      key: "maxStay",
-      label: `Maximum stay ${safeRestriction.maxStay}`,
-      text: `Max ${safeRestriction.maxStay}`,
-    });
-  }
-  return indicators;
+  const booleanIndicators = BOOLEAN_RESTRICTION_INDICATORS
+    .filter(({ field }) => safeRestriction[field] === true)
+    .map(({ field, label, text }) => ({ key: field, label, text }));
+  const stayIndicators = STAY_RESTRICTION_INDICATORS
+    .filter(({ field }) => safeRestriction[field] !== null && safeRestriction[field] !== undefined)
+    .map(({ field, labelPrefix, textPrefix }) => ({
+      key: field,
+      label: `${labelPrefix} ${safeRestriction[field]}`,
+      text: `${textPrefix} ${safeRestriction[field]}`,
+    }));
+  return [...booleanIndicators, ...stayIndicators];
 };
 
 const buildYearMonthViews = (year) => {

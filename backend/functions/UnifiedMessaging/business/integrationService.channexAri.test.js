@@ -1,23 +1,6 @@
-function MockSecretsCommand(input = {}) {
-  this.input = input;
-}
-
 jest.mock(
   "@aws-sdk/client-secrets-manager",
-  () => {
-    return {
-      SecretsManagerClient: class {
-        send() {
-          return Promise.resolve({});
-        }
-      },
-      CreateSecretCommand: MockSecretsCommand,
-      PutSecretValueCommand: MockSecretsCommand,
-      GetSecretValueCommand: MockSecretsCommand,
-      DescribeSecretCommand: MockSecretsCommand,
-      DeleteSecretCommand: MockSecretsCommand,
-    };
-  },
+  () => require("./integrationService.secretsManagerMock.js"),
   { virtual: true }
 );
 
