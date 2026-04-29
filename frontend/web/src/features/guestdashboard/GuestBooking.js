@@ -10,9 +10,7 @@ import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import { getBookingTimestamp } from "../../utils/getBookingTimestamp";
 import { timestampToDate } from "../../utils/timestampToDate";
 import { placeholderImage, normalizeImageUrl } from "./utils/image";
-import {
-  resolveAccommodationImageUrl,
-} from "../../utils/accommodationImage";
+import { resolveAccommodationImageUrl } from "../../utils/accommodationImage";
 import {
   getBookingId,
   getPaidBookings,
@@ -44,9 +42,7 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
     propertyInfo?.imageUrl ||
     resolveAccommodationImageUrl(bookingItem?.images?.[0], "thumb") ||
     resolveAccommodationImageUrl(bookingItem?.property?.images?.[0], "thumb") ||
-    normalizeImageUrl(
-      bookingItem?.propertyImage || bookingItem?.image || bookingItem?.property?.coverImage || null
-    );
+    normalizeImageUrl(bookingItem?.propertyImage || bookingItem?.image || bookingItem?.property?.coverImage || null);
   const bookingCity = propertyInfo?.city || bookingItem?.city || bookingItem?.location?.city || "Unknown city";
   const bookingStatus = String(bookingItem?.status || bookingItem?.Status || "");
   const hostName =
@@ -58,11 +54,7 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
     "";
 
   return (
-    <button
-      type="button"
-      className="guest-card-row"
-      onClick={() => handleBookingClick(bookingItem)}
-    >
+    <button type="button" className="guest-card-row" onClick={() => handleBookingClick(bookingItem)}>
       <div className="guest-booking-row-inner">
         <div className="guest-booking-row-image">
           <img
