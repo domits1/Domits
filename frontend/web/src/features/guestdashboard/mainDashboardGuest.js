@@ -8,6 +8,7 @@ import GuestSettings from "./GuestSettings";
 import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
 import ReservationDetails from "./ReservationDetails";
+import InquiryPaymentPage from "./InquiryPaymentPage";
 
 const MainDashboardGuest = () => {
   const location = useLocation();
@@ -25,6 +26,9 @@ const MainDashboardGuest = () => {
 
     if (location.pathname.startsWith("/guestdashboard/reservation/")) {
       return "ReservationDetails";
+    }
+    if (location.pathname.startsWith("/guestdashboard/pay/")) {
+      return "InquiryPayment";
     }
 
     return routeToComponentMap[location.pathname] || "Dashboard";
@@ -50,6 +54,8 @@ const MainDashboardGuest = () => {
 
       case "ReservationDetails":
         return <ReservationDetails />;
+      case "InquiryPayment":
+        return <InquiryPaymentPage />;
 
       default:
         return <GuestDashboard />;

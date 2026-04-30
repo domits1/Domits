@@ -90,6 +90,7 @@ export default function HostProperty() {
   const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("INACTIVE");
+  const [bookingType, setBookingType] = useState("direct");
   const [selectedTab, setSelectedTab] = useState("Overview");
   const [hostProperties, setHostProperties] = useState([]);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState([]);
@@ -255,6 +256,7 @@ export default function HostProperty() {
         }
         const fetchedPropertyData = extractFetchedPropertyData(data, hostPropertiesData);
         setStatus(fetchedPropertyData.status);
+        setBookingType(fetchedPropertyData.bookingType || "direct");
         setForm(fetchedPropertyData.form);
         setCapacity(fetchedPropertyData.capacity);
         setAddress(fetchedPropertyData.address);
@@ -545,6 +547,7 @@ export default function HostProperty() {
         checkInDetails,
         policyAvailabilitySettings,
         pricingForm,
+        bookingType,
       });
       setForm(normalizedForm);
       setPricingForm(normalizedPricingForm);
@@ -931,6 +934,8 @@ export default function HostProperty() {
             setPolicyAvailabilitySettings={setPolicyAvailabilitySettings}
             updatePolicyRule={updatePolicyRule}
             handleDeletePropertyClick={handleDeletePropertyClick}
+            bookingType={bookingType}
+            onBookingTypeChange={setBookingType}
             saving={isBusy}
           />
           <HostPropertyPhotoDeleteModal

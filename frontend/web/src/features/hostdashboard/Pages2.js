@@ -29,7 +29,8 @@ const NAV = [
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
-  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
