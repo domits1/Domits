@@ -36,7 +36,8 @@
 
 .host-integrations-loading,
 .host-integrations-error-banner,
-.host-integrations-success-banner {
+.host-integrations-success-banner,
+.host-integrations-warning-banner {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
@@ -53,6 +54,12 @@
   color: #166534;
   border-color: #bbf7d0;
   background: #f0fdf4;
+}
+
+.host-integrations-warning-banner {
+  color: #92400e;
+  border-color: #fde68a;
+  background: #fffbeb;
 }
 
 .host-integrations-muted {
@@ -191,7 +198,8 @@
 }
 
 .host-integrations-primary-btn,
-.host-integrations-secondary-btn {
+.host-integrations-secondary-btn,
+.host-integrations-danger-btn {
   border: 0;
   border-radius: 12px;
   padding: 11px 16px;
@@ -210,7 +218,8 @@
 }
 
 .host-integrations-primary-btn:disabled,
-.host-integrations-secondary-btn:disabled {
+.host-integrations-secondary-btn:disabled,
+.host-integrations-danger-btn:disabled {
   cursor: not-allowed;
   opacity: 0.58;
   box-shadow: none;
@@ -220,6 +229,16 @@
   background: #f3f4f6;
   color: #111827;
   border: 1px solid #d1d5db;
+}
+
+.host-integrations-danger-btn {
+  color: #ffffff;
+  background: #b91c1c;
+  box-shadow: 0 8px 20px rgba(185, 28, 28, 0.22);
+}
+
+.host-integrations-danger-btn:hover {
+  background: #991b1b;
 }
 
 .host-integrations-detail {
@@ -407,6 +426,36 @@
   color: #4b5563;
 }
 
+.channex-admin-page {
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.channex-admin-hero,
+.channex-admin-access-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.channex-admin-hero h1,
+.channex-admin-access-card h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 1.5rem + 1vw, 2.5rem);
+  line-height: 1.1;
+}
+
+.channex-admin-hero p:not(.host-integrations-eyebrow),
+.channex-admin-access-card p:not(.host-integrations-eyebrow) {
+  margin: 10px 0 0;
+  max-width: 860px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
 .channex-diagnostics {
   display: grid;
   gap: 18px;
@@ -457,10 +506,49 @@
   font-size: 19px;
 }
 
+.channex-diagnostics-card-header p {
+  margin-top: 6px;
+}
+
 .channex-diagnostics-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.channex-diagnostics-control-panel {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.channex-diagnostics-tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.channex-diagnostics-tabs button {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: #374151;
+  padding: 10px 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.channex-diagnostics-tabs button:hover,
+.channex-diagnostics-tabs button.is-active {
+  color: #166534;
+  background: #ecfdf3;
+  border-color: #bbf7d0;
 }
 
 .channex-diagnostics-detail-grid {
@@ -564,6 +652,11 @@
   gap: 10px;
   align-content: start;
   min-width: 0;
+}
+
+.channex-diagnostics-action-card h4 {
+  margin: 0;
+  font-size: 16px;
 }
 
 .channex-booking-revisions-controls {
