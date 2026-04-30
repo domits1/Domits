@@ -186,7 +186,7 @@ const fetchAcceptedBookingsByPropertyId = async (propertyId) => {
 
   if (!response.ok) return [];
   const data = await response.json();
-  return Array.isArray(data?.response) ? data.response : [];
+  return Array.isArray(data) ? data : [];
 };
 
 const ListingDetails2 = () => {
