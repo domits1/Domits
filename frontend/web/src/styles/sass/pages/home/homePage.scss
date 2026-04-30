@@ -238,7 +238,7 @@
       }
 
       p {
-        color: #444;
+        color: #2f2f2f;
       }
     }
   }
@@ -250,13 +250,15 @@
     padding: 0 20px;
 
     h2 {
-      font-size: 28px;
+      font-size: 34px;
       font-weight: 600;
+      margin-bottom: 10px;
     }
 
     p {
-      font-size: 14px;
+      font-size: 16px;
       color: white;
+      margin-bottom: 30px;
     }
   }
 
@@ -330,7 +332,7 @@
 
   span {
     color: rgba(255,255,255,0.8);
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 
@@ -340,7 +342,7 @@
   width: 100%;
   margin: 20px auto 0;
   padding: 0 4px;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   opacity: 0.85;
   transition: all 0.25s ease;
@@ -348,7 +350,7 @@
   background: none;
   border: none;
   outline: none;
-  font: inherit;
+  font: 14px;
 
   text-align: left;
 

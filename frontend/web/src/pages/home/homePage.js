@@ -165,7 +165,7 @@ const Homepage = () => {
 
  <div className="domits-accommodationGroup">
   {propertyLoading ? (
-    new Array(6).fill(null).map((_, i) => <SkeletonLoader key={`skeleton-${i}`} />)
+    new Array(6).fill(null).map(() => <SkeletonLoader key={crypto.randomUUID()} />)
   ) : (
     allAccommodations.slice(0, 3).map((property) => (
       <Link
