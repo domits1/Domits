@@ -14,7 +14,11 @@
           "reservations": "Reservations",
           "switchToGuest": "Switch to Guest",
           "switchToHost": "Switch to Host",
-          "becomeHost": "Become a host"
+          "becomeHost": "Become a host",
+          "browseHomepage": "Browse homepage",
+          "switchConfirm": "Are you sure you want to switch dashboards?",
+          "switchConfirmYes": "Yes, switch",
+          "switchConfirmNo": "Cancel"
         },
         "search": {
           "destination": "Destination",

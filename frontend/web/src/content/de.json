@@ -14,7 +14,11 @@
         "reservations": "Reservierungen",
         "switchToGuest": "Zu Gast wechseln",
         "switchToHost": "Zu Gastgeber wechseln",
-        "becomeHost": "Gastgeber werden"
+        "becomeHost": "Gastgeber werden",
+        "browseHomepage": "Startseite besuchen",
+        "switchConfirm": "Möchtest du wirklich das Dashboard wechseln?",
+        "switchConfirmYes": "Ja, wechseln",
+        "switchConfirmNo": "Abbrechen"
       },
       "search": {
         "destination": "Reiseziel",

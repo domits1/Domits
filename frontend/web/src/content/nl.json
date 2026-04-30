@@ -14,7 +14,11 @@
           "reservations": "Reserveringen",
           "switchToGuest": "Overschakelen naar gast",
           "switchToHost": "Overschakelen naar host",
-          "becomeHost": "Word gastheer"
+          "becomeHost": "Word gastheer",
+          "browseHomepage": "Startpagina bekijken",
+          "switchConfirm": "Weet je zeker dat je van dashboard wilt wisselen?",
+          "switchConfirmYes": "Ja, wisselen",
+          "switchConfirmNo": "Annuleren"
         },
         "search": {
           "destination": "Bestemming",

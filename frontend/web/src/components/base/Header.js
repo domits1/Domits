@@ -32,6 +32,7 @@ function Header({ setSearchResults, setLoading }) {
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [currentView, setCurrentView] = useState("guest");
+  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
   const hiddenSearchPaths = [
     "/",
@@ -170,11 +171,16 @@ function Header({ setSearchResults, setLoading }) {
       setFlowState({ isHost: true });
       navigate("/landing");
     } else {
-      if (currentView === "host") {
-        navigateToGuestDashboard();
-      } else {
-        navigateToHostDashboard();
-      }
+      setShowSwitchConfirm(true);
+    }
+  };
+
+  const confirmSwitch = () => {
+    setShowSwitchConfirm(false);
+    if (currentView === "host") {
+      navigateToGuestDashboard();
+    } else {
+      navigateToHostDashboard();
     }
   };
 
@@ -196,6 +202,9 @@ function Header({ setSearchResults, setLoading }) {
           </button>
           <button onClick={navigateToMessages} className="dropdownLoginButton">
             {components.user.messages}
+          </button>
+          <button onClick={() => navigate("/")} className="dropdownLoginButton">
+            {components.user.browseHomepage}
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
             {components.user.logout}
@@ -329,6 +338,21 @@ function Header({ setSearchResults, setLoading }) {
         </div>
       </nav>
       {isActiveSearchBar && <div className="search-overlay-background" />}
+      {showSwitchConfirm && (
+        <div className="switch-confirm-overlay" onClick={() => setShowSwitchConfirm(false)}>
+          <div className="switch-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <p>{components.user.switchConfirm}</p>
+            <div className="switch-confirm-buttons">
+              <button className="switch-confirm-yes" onClick={confirmSwitch}>
+                {components.user.switchConfirmYes}
+              </button>
+              <button className="switch-confirm-no" onClick={() => setShowSwitchConfirm(false)}>
+                {components.user.switchConfirmNo}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
