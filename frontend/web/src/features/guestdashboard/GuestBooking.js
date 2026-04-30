@@ -10,12 +10,11 @@ import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import { getBookingTimestamp } from "../../utils/getBookingTimestamp";
 import { timestampToDate } from "../../utils/timestampToDate";
 import { placeholderImage, normalizeImageUrl } from "./utils/image";
-import {
-  resolveAccommodationImageUrl,
-} from "../../utils/accommodationImage";
+import { resolveAccommodationImageUrl } from "../../utils/accommodationImage";
 import {
   getBookingId,
   getPaidBookings,
+  getInquiryBookings,
   getPropertyId,
   normalizeGuestBookingsResponse,
   splitBookingsByTime,
@@ -44,11 +43,11 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
     propertyInfo?.imageUrl ||
     resolveAccommodationImageUrl(bookingItem?.images?.[0], "thumb") ||
     resolveAccommodationImageUrl(bookingItem?.property?.images?.[0], "thumb") ||
-    normalizeImageUrl(
-      bookingItem?.propertyImage || bookingItem?.image || bookingItem?.property?.coverImage || null
-    );
+    normalizeImageUrl(bookingItem?.propertyImage || bookingItem?.image || bookingItem?.property?.coverImage || null);
   const bookingCity = propertyInfo?.city || bookingItem?.city || bookingItem?.location?.city || "Unknown city";
   const bookingStatus = String(bookingItem?.status || bookingItem?.Status || "");
+  const bookingType = String(bookingItem?.bookingtype ?? "direct").toLowerCase();
+  const isPaymentRequired = bookingStatus.toLowerCase() === "awaiting payment" && bookingType === "inquiry";
   const hostName =
     propertyInfo?.hostName ||
     bookingItem?.hostName ||
@@ -58,11 +57,7 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
     "";
 
   return (
-    <button
-      type="button"
-      className="guest-card-row"
-      onClick={() => handleBookingClick(bookingItem)}
-    >
+    <button type="button" className="guest-card-row" onClick={() => handleBookingClick(bookingItem)}>
       <div className="guest-booking-row-inner">
         <div className="guest-booking-row-image">
           <img
@@ -86,6 +81,9 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
 
           <div className="guest-booking-row-meta">
             <span className="guest-booking-status">{bookingStatus || "-"}</span>
+            {isPaymentRequired && (
+              <span className="guest-booking-pay-now">Pay Now →</span>
+            )}
             <span className="guest-booking-dates">{formatBookingDates(bookingItem)}</span>
           </div>
         </div>
@@ -217,6 +215,7 @@ function GuestBooking() {
   );
 
   const paidBookings = useMemo(() => getPaidBookings(bookings), [bookings]);
+  const inquiryBookings = useMemo(() => getInquiryBookings(bookings), [bookings]);
 
   useEffect(() => {
     if (!paidBookings.length) return;
@@ -228,11 +227,17 @@ function GuestBooking() {
   const handleBookingClick = (bookingItem) => {
     const bookingId = getBookingId(bookingItem);
     const propertyId = getPropertyId(bookingItem);
+    const status = String(bookingItem?.status ?? "").toLowerCase();
+    const bookingType = String(bookingItem?.bookingtype ?? "direct").toLowerCase();
+
+    if (bookingId && status === "awaiting payment" && bookingType === "inquiry") {
+      navigate(`/guestdashboard/pay/${encodeURIComponent(bookingId)}`);
+      return;
+    }
     if (bookingId) {
       navigate(`/guestdashboard/reservation/${encodeURIComponent(bookingId)}`);
       return;
     }
-
     if (propertyId) {
       navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
     }
@@ -252,7 +257,7 @@ function GuestBooking() {
         {error}
       </div>
     );
-  } else if (paidBookings.length === 0) {
+  } else if (paidBookings.length === 0 && inquiryBookings.length === 0) {
     bookingContent = (
       <div className="emptyState">
         <p>You do not have any bookings yet.</p>
@@ -262,6 +267,18 @@ function GuestBooking() {
     bookingContent = (
       <div className="guest-booking-bookingContent">
         {propLoading && <div className="guest-booking-loader-inline">Loading property details...</div>}
+
+        {inquiryBookings.length > 0 && (
+          <div className="guest-booking-summary-grid">
+            <BookingSection
+              title="Inquiries"
+              bookings={inquiryBookings}
+              emptyMessage="No inquiries."
+              propertyMap={propertyMap}
+              handleBookingClick={handleBookingClick}
+            />
+          </div>
+        )}
 
         <div className="guest-booking-summary-grid">
           <BookingSection

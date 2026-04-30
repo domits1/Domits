@@ -75,5 +75,10 @@ export const Booking = new EntitySchema({
       name: "cancellation_policy",
       nullable: true,
     },
+    bookingtype: {
+      type: "varchar",
+      nullable: true,
+      default: "direct",
+    },
   },
 });
