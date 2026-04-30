@@ -847,6 +847,26 @@ export class PropertyController {
                             entry.isAvailable,
                             "isAvailable"
                         );
+                        const stopSell = this.normalizeCalendarOverrideBoolean(
+                            entry.stopSell ?? entry.stop_sell,
+                            "stopSell"
+                        );
+                        const closedToArrival = this.normalizeCalendarOverrideBoolean(
+                            entry.closedToArrival ?? entry.closed_to_arrival,
+                            "closedToArrival"
+                        );
+                        const closedToDeparture = this.normalizeCalendarOverrideBoolean(
+                            entry.closedToDeparture ?? entry.closed_to_departure,
+                            "closedToDeparture"
+                        );
+                        const minStay = this.normalizeCalendarOverrideOptionalInteger(
+                            entry.minStay ?? entry.min_stay,
+                            "minStay"
+                        );
+                        const maxStay = this.normalizeCalendarOverrideOptionalInteger(
+                            entry.maxStay ?? entry.max_stay,
+                            "maxStay"
+                        );
 
                         return [
                             calendarDate,
@@ -854,6 +874,11 @@ export class PropertyController {
                                 calendarDate,
                                 isAvailable,
                                 nightlyPrice,
+                                stopSell,
+                                closedToArrival,
+                                closedToDeparture,
+                                minStay,
+                                maxStay,
                             },
                         ];
                     })
@@ -862,6 +887,23 @@ export class PropertyController {
         );
 
         return normalizedOverrides;
+    }
+
+    normalizeCalendarOverrideOptionalInteger(value, fieldName) {
+        if (
+            value === undefined ||
+            value === null ||
+            value === "" ||
+            (typeof value === "string" && value.trim() === "")
+        ) {
+            return null;
+        }
+
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+            throw new Error(`Calendar override ${fieldName} must be a number greater than or equal to 0.`);
+        }
+        return Math.trunc(parsed);
     }
 
     normalizeCalendarOverrideBoolean(value, fieldName) {
