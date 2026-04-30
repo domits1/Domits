@@ -58,8 +58,13 @@ class ReservationController {
                     return { statusCode: 200, headers: responseHeaderJSON, response: result };
                 }
                 const result = await this.bookingService.acceptInquiry(body.bookingId, authToken);
-                const paymentData = await this.paymentSerivce.create(result.hostId, result.bookingId, result.propertyId, result.dates);
-                return { statusCode: 200, headers: responseHeaderJSON, response: { ...result, stripeClientSecret: paymentData.stripeClientSecret } };
+                try {
+                    const paymentData = await this.paymentSerivce.create(result.hostId, result.bookingId, result.propertyId, result.dates);
+                    return { statusCode: 200, headers: responseHeaderJSON, response: { ...result, stripeClientSecret: paymentData.stripeClientSecret } };
+                } catch (stripeError) {
+                    console.error("Stripe payment intent creation failed after accept:", stripeError);
+                    return { statusCode: 200, headers: responseHeaderJSON, response: result };
+                }
             }
 
             if (!body?.paymentid) {
