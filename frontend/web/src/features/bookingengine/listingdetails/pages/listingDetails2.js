@@ -175,28 +175,34 @@ const normalizeListingProperty = (payload) => {
   };
 };
 
-const fetchAcceptedBookingsByPropertyId = async (propertyId) => {
-  const normalizedPropertyId = String(propertyId || "").trim();
-  if (!normalizedPropertyId) {
-    return [];
-  }
-
+const fetchBookingsByStatus = async (propertyId, status) => {
   const response = await fetch(BOOKINGS_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=UTF-8",
     },
     body: JSON.stringify({
-      AccoID: normalizedPropertyId,
-      Status: "Accepted",
+      AccoID: propertyId,
+      Status: status,
     }),
   });
 
-  if (!response.ok) {
-    throw new Error(`Could not fetch accepted bookings (${response.status}).`);
+  if (!response.ok) return [];
+  return parseBookingResponse(response);
+};
+
+const fetchAcceptedBookingsByPropertyId = async (propertyId) => {
+  const normalizedPropertyId = String(propertyId || "").trim();
+  if (!normalizedPropertyId) {
+    return [];
   }
 
-  return parseBookingResponse(response);
+  const [awaitingPayment, paid] = await Promise.all([
+    fetchBookingsByStatus(normalizedPropertyId, "Awaiting Payment").catch(() => []),
+    fetchBookingsByStatus(normalizedPropertyId, "Paid").catch(() => []),
+  ]);
+
+  return [...awaitingPayment, ...paid];
 };
 
 const ListingDetails2 = () => {
