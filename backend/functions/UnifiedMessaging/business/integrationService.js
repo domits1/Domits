@@ -1332,6 +1332,31 @@ const appendRestrictionSyncOutboundNotes = (notes, transformedPayloads) => {
     notes.push("Restrictions sync outbound payloads are rate-only because no supported global stay restrictions or date-level calendar restriction overrides were available to send.");
   }
 };
+const formatChannexAvailabilityProviderResult = (result) => ({
+  externalPropertyId: result.externalPropertyId ?? null,
+  externalRoomTypeId: result.externalRoomTypeId ?? null,
+  requestBody: result.requestBody ?? null,
+  providerStatus: result.providerStatus ?? null,
+  httpStatus: result.httpStatus ?? null,
+  success: !!result.success,
+  taskId: result.taskId ?? null,
+  warnings: Array.isArray(result.warnings) ? result.warnings : [],
+  errorCode: result.errorCode ?? null,
+  errorMessage: result.errorMessage ?? null,
+});
+const formatChannexRestrictionProviderResult = (result) => ({
+  externalPropertyId: result.externalPropertyId ?? null,
+  externalRoomTypeId: result.externalRoomTypeId ?? null,
+  externalRatePlanId: result.externalRatePlanId ?? null,
+  requestBody: result.requestBody ?? null,
+  providerStatus: result.providerStatus ?? null,
+  httpStatus: result.httpStatus ?? null,
+  success: !!result.success,
+  taskId: result.taskId ?? null,
+  warnings: Array.isArray(result.warnings) ? result.warnings : [],
+  errorCode: result.errorCode ?? null,
+  errorMessage: result.errorMessage ?? null,
+});
 const getCapturedGroupedOutboundPayloadSnapshot = (captureState) =>
   Array.isArray(captureState?.groupedOutboundPayloadSnapshot)
     ? captureState.groupedOutboundPayloadSnapshot
@@ -2163,26 +2188,67 @@ export default class IntegrationService {
     });
   }
 
-  async connectHolidu(body) {
+  async persistCredentialIntegrationRecord({
+    existing,
+    integrationAccountId,
+    userId,
+    channel,
+    displayName,
+    persistedState,
+    credentialsRef,
+    connectedAt,
+    updatedAt,
+  }) {
+    if (existing) {
+      return this.accounts.update(existing.id, {
+        displayName,
+        externalAccountId: persistedState.externalAccountId,
+        status: persistedState.status,
+        credentialsRef,
+        lastErrorCode: persistedState.lastErrorCode,
+        lastErrorMessage: persistedState.lastErrorMessage,
+      });
+    }
+
+    const integration = await this.accounts.create({
+      id: integrationAccountId,
+      userId,
+      channel,
+      externalAccountId: persistedState.externalAccountId,
+      displayName,
+      status: persistedState.status,
+      credentialsRef,
+      lastSuccessfulSyncAt: null,
+      lastFailedSyncAt: null,
+      lastErrorCode: persistedState.lastErrorCode,
+      lastErrorMessage: persistedState.lastErrorMessage,
+      createdAt: connectedAt,
+      updatedAt,
+    });
+
+    await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
+    await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
+    return integration;
+  }
+
+  async connectCredentialIntegration(body, config) {
     const userId = requireStr(body.userId);
-    const displayName = requireStr(body.displayName) || "Holidu";
-    const credentials = normalizeHoliduCredentials(body.credentials);
+    const displayName = requireStr(body.displayName) || config.defaultDisplayName;
+    const credentials = config.normalizeCredentials(body.credentials);
 
     if (!userId) return bad(400, { error: "Missing required field: userId" });
-    if (!credentials || !hasHoliduRequiredCredentialFields(credentials)) {
+    if (!credentials || !config.hasRequiredCredentialFields(credentials)) {
       return bad(400, {
-        error: "Holidu credentials must include apiKey, or both clientId and clientSecret.",
+        error: config.invalidCredentialsError,
       });
     }
 
     try {
-      // Multi-account support for Holidu is intentionally deferred for now.
-      // Reuse the user's existing HOLIDU integration row instead of creating additional accounts.
-      const existing = await this.accounts.findByUserIdAndChannel(userId, "HOLIDU");
+      const existing = await this.accounts.findByUserIdAndChannel(userId, config.channel);
       const integrationAccountId = existing?.id || randomUUID();
       const connectedAt = existing?.createdAt || nowMs();
       const updatedAt = nowMs();
-      const secretPayload = buildHoliduSecretPayload({
+      const secretPayload = config.buildSecretPayload({
         credentials,
         connectedAt,
         updatedAt,
@@ -2190,7 +2256,7 @@ export default class IntegrationService {
 
       let credentialsRef;
       try {
-        credentialsRef = await this.holiduCredentialStore.ensureSecret({
+        credentialsRef = await config.credentialStore.ensureSecret({
           userId,
           integrationAccountId,
           payload: secretPayload,
@@ -2198,19 +2264,19 @@ export default class IntegrationService {
       } catch (error) {
         const details = describeLocalError(error);
         return bad(503, {
-          error: "Failed to store Holidu credentials in Secrets Manager.",
-          errorCode: "HOLIDU_SECRET_STORE_FAILED",
+          error: config.secretStoreError,
+          errorCode: config.secretStoreErrorCode,
           details,
         });
       }
 
       const validationAttemptedAt = nowMs();
-      const validationResult = await this.holiduProviderClient.validateAccount(credentials);
-      const providerValidation = buildHoliduProviderValidationRecord(validationResult, validationAttemptedAt);
-      const persistedState = deriveHoliduPersistedState(validationResult);
+      const validationResult = await config.validateProvider(credentials);
+      const providerValidation = config.buildProviderValidationRecord(validationResult, validationAttemptedAt);
+      const persistedState = config.derivePersistedState(validationResult);
 
       try {
-        await this.holiduCredentialStore.writeSecret(credentialsRef, {
+        await config.credentialStore.writeSecret(credentialsRef, {
           ...secretPayload,
           updatedAt: validationAttemptedAt,
           providerValidation,
@@ -2218,195 +2284,172 @@ export default class IntegrationService {
       } catch (error) {
         const details = describeLocalError(error);
         return bad(503, {
-          error: "Holidu credentials were stored, but provider validation metadata could not be persisted.",
-          errorCode: "HOLIDU_SECRET_UPDATE_FAILED",
+          error: config.secretUpdateError,
+          errorCode: config.secretUpdateErrorCode,
           details,
         });
       }
 
       let integration;
       try {
-        if (existing) {
-          integration = await this.accounts.update(existing.id, {
-            displayName,
-            externalAccountId: persistedState.externalAccountId,
-            status: persistedState.status,
-            credentialsRef,
-            lastErrorCode: persistedState.lastErrorCode,
-            lastErrorMessage: persistedState.lastErrorMessage,
-          });
-        } else {
-          integration = await this.accounts.create({
-            id: integrationAccountId,
-            userId,
-            channel: "HOLIDU",
-            externalAccountId: persistedState.externalAccountId,
-            displayName,
-            status: persistedState.status,
-            credentialsRef,
-            lastSuccessfulSyncAt: null,
-            lastFailedSyncAt: null,
-            lastErrorCode: persistedState.lastErrorCode,
-            lastErrorMessage: persistedState.lastErrorMessage,
-            createdAt: connectedAt,
-            updatedAt,
-          });
-
-          await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
-          await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
-        }
+        integration = await this.persistCredentialIntegrationRecord({
+          existing,
+          integrationAccountId,
+          userId,
+          channel: config.channel,
+          displayName,
+          persistedState,
+          credentialsRef,
+          connectedAt,
+          updatedAt,
+        });
       } catch (error) {
         const details = describeLocalError(error);
         return bad(500, {
-          error: "Holidu credentials were stored, but the integration record could not be persisted.",
-          errorCode: "HOLIDU_CONNECTION_PERSIST_FAILED",
+          error: config.connectionPersistError,
+          errorCode: config.connectionPersistErrorCode,
           details,
         });
       }
 
       return ok({
-        connected: persistedState.status === HOLIDU_STATUS.CONNECTED,
-        channel: "HOLIDU",
+        connected: persistedState.status === config.status.CONNECTED,
+        channel: config.channel,
         integration: shapeCredentialIntegrationForResponse(integration),
-        credentialsSummary: buildHoliduCredentialSummary(credentials),
-        validationMode:
-          validationResult?.canValidate === false ? "PROVIDER_VALIDATION_UNAVAILABLE" : "PROVIDER_VALIDATION",
+        credentialsSummary: config.buildCredentialSummary(credentials),
+        validationMode: config.getValidationMode(validationResult),
         validationState: persistedState.status,
         providerStatus: providerValidation.providerStatus,
-        accountPolicy: HOLIDU_ACCOUNT_POLICY,
+        accountPolicy: config.accountPolicy,
         multiAccountDeferred: true,
       });
     } catch (error) {
       const details = describeLocalError(error);
       return bad(500, {
-        error: "Unexpected Holidu connection failure.",
-        errorCode: "HOLIDU_CONNECT_FAILED",
+        error: config.unexpectedConnectError,
+        errorCode: config.unexpectedConnectErrorCode,
         details,
       });
     }
   }
 
-  async checkHoliduStatus(userId) {
+  buildCredentialStatusResponse(config, {
+    integration = null,
+    integrationAccountId = integration?.id ?? null,
+    status,
+    validationMode,
+    validationState,
+    reason,
+    externalAccountId = integration?.externalAccountId ?? null,
+    credentialsRefPresent = false,
+    secretPresent = false,
+    requiredFieldsPresent = false,
+  }) {
+    return ok({
+      channel: config.channel,
+      integrationAccountId,
+      status,
+      validationMode,
+      validationState,
+      reason,
+      displayName: integration?.displayName ?? null,
+      externalAccountId,
+      credentialsRefPresent,
+      secretPresent,
+      requiredFieldsPresent,
+    });
+  }
+
+  async checkCredentialIntegrationStatus(userId, config) {
     const normalizedUserId = requireStr(userId);
     if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "HOLIDU");
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, config.channel);
       if (!integration) {
-        return ok({
-          channel: "HOLIDU",
+        return this.buildCredentialStatusResponse(config, {
           integrationAccountId: null,
-          status: HOLIDU_STATUS.NOT_CONNECTED,
+          status: config.status.NOT_CONNECTED,
           validationMode: "LOCAL_AND_PROVIDER_STATE",
-          validationState: HOLIDU_STATUS.NOT_CONNECTED,
-          reason: "No Holidu integration row exists for this user.",
-          displayName: null,
-          externalAccountId: null,
-          credentialsRefPresent: false,
-          secretPresent: false,
-          requiredFieldsPresent: false,
+          validationState: config.status.NOT_CONNECTED,
+          reason: `No ${config.providerName} integration row exists for this user.`,
         });
       }
 
-      if (String(integration.status || "").toUpperCase() === "DISCONNECTED") {
-        return ok({
-          channel: "HOLIDU",
-          integrationAccountId: integration.id,
-          status: HOLIDU_STATUS.DISCONNECTED,
+      if (String(integration.status || "").toUpperCase() === config.status.DISCONNECTED) {
+        return this.buildCredentialStatusResponse(config, {
+          integration,
+          status: config.status.DISCONNECTED,
           validationMode: "LOCAL_AND_PROVIDER_STATE",
-          validationState: HOLIDU_STATUS.DISCONNECTED,
-          reason: "Holidu integration is disconnected in Domits and is not locally usable.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
-          credentialsRefPresent: false,
-          secretPresent: false,
-          requiredFieldsPresent: false,
+          validationState: config.status.DISCONNECTED,
+          reason: `${config.providerName} integration is disconnected in Domits and is not locally usable.`,
         });
       }
 
       const credentialsRefPresent = !!requireStr(integration.credentialsRef);
       if (!credentialsRefPresent) {
-        return ok({
-          channel: "HOLIDU",
-          integrationAccountId: integration.id,
-          status: HOLIDU_STATUS.RECONNECT_REQUIRED,
+        return this.buildCredentialStatusResponse(config, {
+          integration,
+          status: config.status.RECONNECT_REQUIRED,
           validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: HOLIDU_STATUS.RECONNECT_REQUIRED,
+          validationState: config.status.RECONNECT_REQUIRED,
           reason: "Integration row exists but credentialsRef is missing.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
           credentialsRefPresent,
-          secretPresent: false,
-          requiredFieldsPresent: false,
         });
       }
 
       let secret;
       try {
-        secret = await this.holiduCredentialStore.readSecretOrNull(integration.credentialsRef);
+        secret = await config.credentialStore.readSecretOrNull(integration.credentialsRef);
       } catch (error) {
         const details = describeLocalError(error);
-        return ok({
-          channel: "HOLIDU",
-          integrationAccountId: integration.id,
-          status: HOLIDU_STATUS.RECONNECT_REQUIRED,
+        return this.buildCredentialStatusResponse(config, {
+          integration,
+          status: config.status.RECONNECT_REQUIRED,
           validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: HOLIDU_STATUS.RECONNECT_REQUIRED,
-          reason: `Stored Holidu secret could not be read locally: ${details.message}`,
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
+          validationState: config.status.RECONNECT_REQUIRED,
+          reason: `Stored ${config.providerName} secret could not be read locally: ${details.message}`,
           credentialsRefPresent,
-          secretPresent: false,
-          requiredFieldsPresent: false,
         });
       }
 
       if (!secret || typeof secret !== "object" || Array.isArray(secret)) {
-        return ok({
-          channel: "HOLIDU",
-          integrationAccountId: integration.id,
-          status: HOLIDU_STATUS.RECONNECT_REQUIRED,
+        return this.buildCredentialStatusResponse(config, {
+          integration,
+          status: config.status.RECONNECT_REQUIRED,
           validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: HOLIDU_STATUS.RECONNECT_REQUIRED,
-          reason: "Stored Holidu secret is missing, unreadable, or malformed.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
+          validationState: config.status.RECONNECT_REQUIRED,
+          reason: `Stored ${config.providerName} secret is missing, unreadable, or malformed.`,
           credentialsRefPresent,
-          secretPresent: false,
-          requiredFieldsPresent: false,
         });
       }
 
-      const requiredFieldSummary = summarizeHoliduRequiredFields(secret);
-      if (!hasHoliduRequiredCredentialFields(secret)) {
-        return ok({
-          channel: "HOLIDU",
-          integrationAccountId: integration.id,
-          status: HOLIDU_STATUS.RECONNECT_REQUIRED,
+      const requiredFieldSummary = config.summarizeRequiredFields(secret);
+      if (!config.hasRequiredCredentialFields(secret)) {
+        return this.buildCredentialStatusResponse(config, {
+          integration,
+          status: config.status.RECONNECT_REQUIRED,
           validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: HOLIDU_STATUS.RECONNECT_REQUIRED,
-          reason: "Stored Holidu secret is present but required local credential fields are incomplete.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
+          validationState: config.status.RECONNECT_REQUIRED,
+          reason: `Stored ${config.providerName} secret is present but required local credential fields are incomplete.`,
           credentialsRefPresent,
           secretPresent: true,
           requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
         });
       }
 
-      const providerValidation = normalizeHoliduProviderValidation(secret.providerValidation);
+      const providerValidation = config.normalizeProviderValidation(secret.providerValidation);
       const normalizedStatus = String(integration.status || "").toUpperCase();
       if (
-        normalizedStatus === HOLIDU_STATUS.CONNECTED &&
-        providerValidation.validationState === HOLIDU_STATUS.CONNECTED
+        normalizedStatus === config.status.CONNECTED &&
+        providerValidation.validationState === config.status.CONNECTED
       ) {
-        return ok({
-          channel: "HOLIDU",
-          integrationAccountId: integration.id,
-          status: HOLIDU_STATUS.CONNECTED,
+        return this.buildCredentialStatusResponse(config, {
+          integration,
+          status: config.status.CONNECTED,
           validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-          validationState: HOLIDU_STATUS.CONNECTED,
-          reason: "Stored Holidu credentials are locally valid and provider validation has explicitly succeeded.",
-          displayName: integration.displayName ?? null,
+          validationState: config.status.CONNECTED,
+          reason: `Stored ${config.providerName} credentials are locally valid and provider validation has explicitly succeeded.`,
           externalAccountId: integration.externalAccountId ?? providerValidation.externalAccountId ?? null,
           credentialsRefPresent,
           secretPresent: true,
@@ -2414,15 +2457,13 @@ export default class IntegrationService {
         });
       }
 
-      if (normalizedStatus === HOLIDU_STATUS.VALIDATION_FAILED) {
-        return ok({
-          channel: "HOLIDU",
-          integrationAccountId: integration.id,
-          status: HOLIDU_STATUS.VALIDATION_FAILED,
+      if (normalizedStatus === config.status.VALIDATION_FAILED) {
+        return this.buildCredentialStatusResponse(config, {
+          integration,
+          status: config.status.VALIDATION_FAILED,
           validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-          validationState: HOLIDU_STATUS.VALIDATION_FAILED,
+          validationState: config.status.VALIDATION_FAILED,
           reason: integration.lastErrorMessage || providerValidation.errorMessage || "Provider validation failed.",
-          displayName: integration.displayName ?? null,
           externalAccountId: null,
           credentialsRefPresent,
           secretPresent: true,
@@ -2430,16 +2471,14 @@ export default class IntegrationService {
         });
       }
 
-      return ok({
-        channel: "HOLIDU",
-        integrationAccountId: integration.id,
-        status: HOLIDU_STATUS.PENDING_PROVIDER_VALIDATION,
+      return this.buildCredentialStatusResponse(config, {
+        integration,
+        status: config.status.PENDING_PROVIDER_VALIDATION,
         validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-        validationState: HOLIDU_STATUS.PENDING_PROVIDER_VALIDATION,
+        validationState: config.status.PENDING_PROVIDER_VALIDATION,
         reason:
           providerValidation.errorMessage ||
-          "Stored Holidu credentials are locally valid, but provider validation has not explicitly succeeded.",
-        displayName: integration.displayName ?? null,
+          `Stored ${config.providerName} credentials are locally valid, but provider validation has not explicitly succeeded.`,
         externalAccountId: null,
         credentialsRefPresent,
         secretPresent: true,
@@ -2448,19 +2487,20 @@ export default class IntegrationService {
     } catch (error) {
       const details = describeLocalError(error);
       return bad(500, {
-        error: "Failed to evaluate Holidu local connectivity state.",
-        errorCode: "HOLIDU_STATUS_CHECK_FAILED",
+        error: config.statusCheckError,
+        errorCode: config.statusCheckErrorCode,
         details,
       });
     }
   }
 
-  async disconnectHolidu(body) {
+  async disconnectCredentialIntegration(body, config) {
     const userId = requireStr(body.userId);
     if (!userId) return bad(400, { error: "Missing required field: userId" });
+
     try {
-      const existing = await this.accounts.findByUserIdAndChannel(userId, "HOLIDU");
-      if (!existing) return bad(404, { error: "Holidu integration not found" });
+      const existing = await this.accounts.findByUserIdAndChannel(userId, config.channel);
+      if (!existing) return bad(404, { error: config.notFoundError });
 
       let disconnected;
       try {
@@ -2468,363 +2508,144 @@ export default class IntegrationService {
       } catch (error) {
         const details = describeLocalError(error);
         return bad(500, {
-          error: "Failed to persist Holidu disconnect state in Domits.",
-          errorCode: "HOLIDU_DISCONNECT_PERSIST_FAILED",
+          error: config.disconnectPersistError,
+          errorCode: config.disconnectPersistErrorCode,
           details,
         });
       }
 
-      if (!disconnected) return bad(404, { error: "Holidu integration not found" });
+      if (!disconnected) return bad(404, { error: config.notFoundError });
 
       return ok({
         disconnected: true,
-        channel: "HOLIDU",
+        channel: config.channel,
         integrationAccountId: disconnected.id,
         status: disconnected.status,
-        message:
-          "Holidu integration disconnected in Domits. credentialsRef was cleared on the integration row; the underlying secret is not deleted by this flow.",
+        message: config.disconnectMessage,
       });
     } catch (error) {
       const details = describeLocalError(error);
       return bad(500, {
-        error: "Unexpected Holidu disconnect failure.",
-        errorCode: "HOLIDU_DISCONNECT_FAILED",
+        error: config.unexpectedDisconnectError,
+        errorCode: config.unexpectedDisconnectErrorCode,
         details,
       });
     }
   }
 
-  async connectChannex(body) {
-    const userId = requireStr(body.userId);
-    const displayName = requireStr(body.displayName) || "Channex";
-    const credentials = normalizeChannexCredentials(body.credentials);
+  getHoliduCredentialLifecycleConfig() {
+    return {
+      channel: "HOLIDU",
+      providerName: "Holidu",
+      defaultDisplayName: "Holidu",
+      status: HOLIDU_STATUS,
+      accountPolicy: HOLIDU_ACCOUNT_POLICY,
+      credentialStore: this.holiduCredentialStore,
+      normalizeCredentials: normalizeHoliduCredentials,
+      hasRequiredCredentialFields: hasHoliduRequiredCredentialFields,
+      summarizeRequiredFields: summarizeHoliduRequiredFields,
+      normalizeProviderValidation: normalizeHoliduProviderValidation,
+      buildSecretPayload: ({ credentials, connectedAt, updatedAt }) =>
+        buildHoliduSecretPayload({
+          credentials,
+          connectedAt,
+          updatedAt,
+        }),
+      validateProvider: (credentials) => this.holiduProviderClient.validateAccount(credentials),
+      buildProviderValidationRecord: buildHoliduProviderValidationRecord,
+      derivePersistedState: deriveHoliduPersistedState,
+      buildCredentialSummary: buildHoliduCredentialSummary,
+      getValidationMode: (validationResult) =>
+        validationResult?.canValidate === false ? "PROVIDER_VALIDATION_UNAVAILABLE" : "PROVIDER_VALIDATION",
+      invalidCredentialsError: "Holidu credentials must include apiKey, or both clientId and clientSecret.",
+      secretStoreError: "Failed to store Holidu credentials in Secrets Manager.",
+      secretStoreErrorCode: "HOLIDU_SECRET_STORE_FAILED",
+      secretUpdateError: "Holidu credentials were stored, but provider validation metadata could not be persisted.",
+      secretUpdateErrorCode: "HOLIDU_SECRET_UPDATE_FAILED",
+      connectionPersistError: "Holidu credentials were stored, but the integration record could not be persisted.",
+      connectionPersistErrorCode: "HOLIDU_CONNECTION_PERSIST_FAILED",
+      unexpectedConnectError: "Unexpected Holidu connection failure.",
+      unexpectedConnectErrorCode: "HOLIDU_CONNECT_FAILED",
+      statusCheckError: "Failed to evaluate Holidu local connectivity state.",
+      statusCheckErrorCode: "HOLIDU_STATUS_CHECK_FAILED",
+      notFoundError: "Holidu integration not found",
+      disconnectPersistError: "Failed to persist Holidu disconnect state in Domits.",
+      disconnectPersistErrorCode: "HOLIDU_DISCONNECT_PERSIST_FAILED",
+      unexpectedDisconnectError: "Unexpected Holidu disconnect failure.",
+      unexpectedDisconnectErrorCode: "HOLIDU_DISCONNECT_FAILED",
+      disconnectMessage:
+        "Holidu integration disconnected in Domits. credentialsRef was cleared on the integration row; the underlying secret is not deleted by this flow.",
+    };
+  }
 
-    if (!userId) return bad(400, { error: "Missing required field: userId" });
-    if (!credentials || !hasChannexRequiredCredentialFields(credentials)) {
-      return bad(400, {
-        error: "Channex credentials must include apiKey.",
-      });
-    }
+  async connectHolidu(body) {
+    return this.connectCredentialIntegration(body, this.getHoliduCredentialLifecycleConfig());
+  }
 
-    try {
-      const existing = await this.accounts.findByUserIdAndChannel(userId, "CHANNEX");
-      const integrationAccountId = existing?.id || randomUUID();
-      const connectedAt = existing?.createdAt || nowMs();
-      const updatedAt = nowMs();
-      const secretPayload = {
+  async checkHoliduStatus(userId) {
+    return this.checkCredentialIntegrationStatus(userId, this.getHoliduCredentialLifecycleConfig());
+  }
+
+  async disconnectHolidu(body) {
+    return this.disconnectCredentialIntegration(body, this.getHoliduCredentialLifecycleConfig());
+  }
+
+  getChannexCredentialLifecycleConfig() {
+    return {
+      channel: "CHANNEX",
+      providerName: "Channex",
+      defaultDisplayName: "Channex",
+      status: CHANNEX_STATUS,
+      accountPolicy: CHANNEX_ACCOUNT_POLICY,
+      credentialStore: this.channexCredentialStore,
+      normalizeCredentials: normalizeChannexCredentials,
+      hasRequiredCredentialFields: hasChannexRequiredCredentialFields,
+      summarizeRequiredFields: summarizeChannexRequiredFields,
+      normalizeProviderValidation: normalizeChannexProviderValidation,
+      buildSecretPayload: ({ credentials, connectedAt, updatedAt }) => ({
         provider: "CHANNEX",
         credentialType: "MANUAL_CONNECT",
         ...credentials,
         connectedAt,
         updatedAt,
         providerValidation: buildDefaultChannexProviderValidation(),
-      };
+      }),
+      validateProvider: (credentials) => this.channexProviderClient.validateApiKey(credentials),
+      buildProviderValidationRecord: buildChannexProviderValidationRecord,
+      derivePersistedState: deriveChannexPersistedState,
+      buildCredentialSummary: buildChannexCredentialSummary,
+      getValidationMode: () => "PROVIDER_VALIDATION",
+      invalidCredentialsError: "Channex credentials must include apiKey.",
+      secretStoreError: "Failed to store Channex credentials in Secrets Manager.",
+      secretStoreErrorCode: "CHANNEX_SECRET_STORE_FAILED",
+      secretUpdateError: "Channex credentials were stored, but provider validation metadata could not be persisted.",
+      secretUpdateErrorCode: "CHANNEX_SECRET_UPDATE_FAILED",
+      connectionPersistError: "Channex credentials were stored, but the integration record could not be persisted.",
+      connectionPersistErrorCode: "CHANNEX_CONNECTION_PERSIST_FAILED",
+      unexpectedConnectError: "Unexpected Channex connection failure.",
+      unexpectedConnectErrorCode: "CHANNEX_CONNECT_FAILED",
+      statusCheckError: "Failed to evaluate Channex local connectivity state.",
+      statusCheckErrorCode: "CHANNEX_STATUS_CHECK_FAILED",
+      notFoundError: "Channex integration not found",
+      disconnectPersistError: "Failed to persist Channex disconnect state in Domits.",
+      disconnectPersistErrorCode: "CHANNEX_DISCONNECT_PERSIST_FAILED",
+      unexpectedDisconnectError: "Unexpected Channex disconnect failure.",
+      unexpectedDisconnectErrorCode: "CHANNEX_DISCONNECT_FAILED",
+      disconnectMessage:
+        "Channex integration disconnected in Domits. credentialsRef was cleared on the integration row; the underlying secret is not deleted by this flow.",
+    };
+  }
 
-      let credentialsRef;
-      try {
-        credentialsRef = await this.channexCredentialStore.ensureSecret({
-          userId,
-          integrationAccountId,
-          payload: secretPayload,
-        });
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(503, {
-          error: "Failed to store Channex credentials in Secrets Manager.",
-          errorCode: "CHANNEX_SECRET_STORE_FAILED",
-          details,
-        });
-      }
-
-      const validationAttemptedAt = nowMs();
-      const validationResult = await this.channexProviderClient.validateApiKey(credentials);
-      const providerValidation = buildChannexProviderValidationRecord(validationResult, validationAttemptedAt);
-      const persistedState = deriveChannexPersistedState(validationResult);
-
-      try {
-        await this.channexCredentialStore.writeSecret(credentialsRef, {
-          ...secretPayload,
-          updatedAt: validationAttemptedAt,
-          providerValidation,
-        });
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(503, {
-          error: "Channex credentials were stored, but provider validation metadata could not be persisted.",
-          errorCode: "CHANNEX_SECRET_UPDATE_FAILED",
-          details,
-        });
-      }
-
-      let integration;
-      try {
-        if (existing) {
-          integration = await this.accounts.update(existing.id, {
-            displayName,
-            externalAccountId: persistedState.externalAccountId,
-            status: persistedState.status,
-            credentialsRef,
-            lastErrorCode: persistedState.lastErrorCode,
-            lastErrorMessage: persistedState.lastErrorMessage,
-          });
-        } else {
-          integration = await this.accounts.create({
-            id: integrationAccountId,
-            userId,
-            channel: "CHANNEX",
-            externalAccountId: persistedState.externalAccountId,
-            displayName,
-            status: persistedState.status,
-            credentialsRef,
-            lastSuccessfulSyncAt: null,
-            lastFailedSyncAt: null,
-            lastErrorCode: persistedState.lastErrorCode,
-            lastErrorMessage: persistedState.lastErrorMessage,
-            createdAt: connectedAt,
-            updatedAt,
-          });
-
-          await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
-          await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
-        }
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(500, {
-          error: "Channex credentials were stored, but the integration record could not be persisted.",
-          errorCode: "CHANNEX_CONNECTION_PERSIST_FAILED",
-          details,
-        });
-      }
-
-      return ok({
-        connected: persistedState.status === CHANNEX_STATUS.CONNECTED,
-        channel: "CHANNEX",
-        integration: shapeCredentialIntegrationForResponse(integration),
-        credentialsSummary: buildChannexCredentialSummary(credentials),
-        validationMode: "PROVIDER_VALIDATION",
-        validationState: persistedState.status,
-        providerStatus: providerValidation.providerStatus,
-        accountPolicy: CHANNEX_ACCOUNT_POLICY,
-        multiAccountDeferred: true,
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      return bad(500, {
-        error: "Unexpected Channex connection failure.",
-        errorCode: "CHANNEX_CONNECT_FAILED",
-        details,
-      });
-    }
+  async connectChannex(body) {
+    return this.connectCredentialIntegration(body, this.getChannexCredentialLifecycleConfig());
   }
 
   async checkChannexStatus(userId) {
-    const normalizedUserId = requireStr(userId);
-    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
-
-    try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration) {
-        return ok({
-          channel: "CHANNEX",
-          integrationAccountId: null,
-          status: CHANNEX_STATUS.NOT_CONNECTED,
-          validationMode: "LOCAL_AND_PROVIDER_STATE",
-          validationState: CHANNEX_STATUS.NOT_CONNECTED,
-          reason: "No Channex integration row exists for this user.",
-          displayName: null,
-          externalAccountId: null,
-          credentialsRefPresent: false,
-          secretPresent: false,
-          requiredFieldsPresent: false,
-        });
-      }
-
-      if (String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return ok({
-          channel: "CHANNEX",
-          integrationAccountId: integration.id,
-          status: CHANNEX_STATUS.DISCONNECTED,
-          validationMode: "LOCAL_AND_PROVIDER_STATE",
-          validationState: CHANNEX_STATUS.DISCONNECTED,
-          reason: "Channex integration is disconnected in Domits and is not locally usable.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
-          credentialsRefPresent: false,
-          secretPresent: false,
-          requiredFieldsPresent: false,
-        });
-      }
-
-      const credentialsRefPresent = !!requireStr(integration.credentialsRef);
-      if (!credentialsRefPresent) {
-        return ok({
-          channel: "CHANNEX",
-          integrationAccountId: integration.id,
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          reason: "Integration row exists but credentialsRef is missing.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
-          credentialsRefPresent,
-          secretPresent: false,
-          requiredFieldsPresent: false,
-        });
-      }
-
-      let secret;
-      try {
-        secret = await this.channexCredentialStore.readSecretOrNull(integration.credentialsRef);
-      } catch (error) {
-        const details = describeLocalError(error);
-        return ok({
-          channel: "CHANNEX",
-          integrationAccountId: integration.id,
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          reason: `Stored Channex secret could not be read locally: ${details.message}`,
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
-          credentialsRefPresent,
-          secretPresent: false,
-          requiredFieldsPresent: false,
-        });
-      }
-
-      if (!secret || typeof secret !== "object" || Array.isArray(secret)) {
-        return ok({
-          channel: "CHANNEX",
-          integrationAccountId: integration.id,
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          reason: "Stored Channex secret is missing, unreadable, or malformed.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
-          credentialsRefPresent,
-          secretPresent: false,
-          requiredFieldsPresent: false,
-        });
-      }
-
-      const requiredFieldSummary = summarizeChannexRequiredFields(secret);
-      if (!hasChannexRequiredCredentialFields(secret)) {
-        return ok({
-          channel: "CHANNEX",
-          integrationAccountId: integration.id,
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          reason: "Stored Channex secret is present but required local credential fields are incomplete.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? null,
-          credentialsRefPresent,
-          secretPresent: true,
-          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-        });
-      }
-
-      const providerValidation = normalizeChannexProviderValidation(secret.providerValidation);
-      const normalizedStatus = String(integration.status || "").toUpperCase();
-      if (
-        normalizedStatus === CHANNEX_STATUS.CONNECTED &&
-        providerValidation.validationState === CHANNEX_STATUS.CONNECTED
-      ) {
-        return ok({
-          channel: "CHANNEX",
-          integrationAccountId: integration.id,
-          status: CHANNEX_STATUS.CONNECTED,
-          validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-          validationState: CHANNEX_STATUS.CONNECTED,
-          reason: "Stored Channex credentials are locally valid and provider validation has explicitly succeeded.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: integration.externalAccountId ?? providerValidation.externalAccountId ?? null,
-          credentialsRefPresent,
-          secretPresent: true,
-          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-        });
-      }
-
-      if (normalizedStatus === CHANNEX_STATUS.VALIDATION_FAILED) {
-        return ok({
-          channel: "CHANNEX",
-          integrationAccountId: integration.id,
-          status: CHANNEX_STATUS.VALIDATION_FAILED,
-          validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-          validationState: CHANNEX_STATUS.VALIDATION_FAILED,
-          reason: integration.lastErrorMessage || providerValidation.errorMessage || "Provider validation failed.",
-          displayName: integration.displayName ?? null,
-          externalAccountId: null,
-          credentialsRefPresent,
-          secretPresent: true,
-          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-        });
-      }
-
-      return ok({
-        channel: "CHANNEX",
-        integrationAccountId: integration.id,
-        status: CHANNEX_STATUS.PENDING_PROVIDER_VALIDATION,
-        validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-        validationState: CHANNEX_STATUS.PENDING_PROVIDER_VALIDATION,
-        reason:
-          providerValidation.errorMessage ||
-          "Stored Channex credentials are locally valid, but provider validation has not explicitly succeeded.",
-        displayName: integration.displayName ?? null,
-        externalAccountId: null,
-        credentialsRefPresent,
-        secretPresent: true,
-        requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      return bad(500, {
-        error: "Failed to evaluate Channex local connectivity state.",
-        errorCode: "CHANNEX_STATUS_CHECK_FAILED",
-        details,
-      });
-    }
+    return this.checkCredentialIntegrationStatus(userId, this.getChannexCredentialLifecycleConfig());
   }
 
   async disconnectChannex(body) {
-    const userId = requireStr(body.userId);
-    if (!userId) return bad(400, { error: "Missing required field: userId" });
-
-    try {
-      const existing = await this.accounts.findByUserIdAndChannel(userId, "CHANNEX");
-      if (!existing) return bad(404, { error: "Channex integration not found" });
-
-      let disconnected;
-      try {
-        disconnected = await this.accounts.disconnect(existing.id);
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(500, {
-          error: "Failed to persist Channex disconnect state in Domits.",
-          errorCode: "CHANNEX_DISCONNECT_PERSIST_FAILED",
-          details,
-        });
-      }
-
-      if (!disconnected) return bad(404, { error: "Channex integration not found" });
-
-      return ok({
-        disconnected: true,
-        channel: "CHANNEX",
-        integrationAccountId: disconnected.id,
-        status: disconnected.status,
-        message:
-          "Channex integration disconnected in Domits. credentialsRef was cleared on the integration row; the underlying secret is not deleted by this flow.",
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      return bad(500, {
-        error: "Unexpected Channex disconnect failure.",
-        errorCode: "CHANNEX_DISCONNECT_FAILED",
-        details,
-      });
-    }
+    return this.disconnectCredentialIntegration(body, this.getChannexCredentialLifecycleConfig());
   }
 
   async listChannexProperties(userId) {
@@ -4894,189 +4715,173 @@ export default class IntegrationService {
     };
   }
 
-  async syncChannexAvailability(userId, domitsPropertyId, dateFrom, dateTo, options = {}) {
-    const startedAt = nowMs();
-    const normalizedUserId = requireStr(userId);
-    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
-    const normalizedDateFrom = parseIsoDateParam(dateFrom);
-    const normalizedDateTo = parseIsoDateParam(dateTo);
-    const captureState = getCaptureState(options);
-    const finalize = async (result, evidencePatch = {}) =>
+  createChannexSyncFinalizer({
+    normalizedUserId,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    rawDateFrom,
+    rawDateTo,
+    startedAt,
+    syncType,
+    options,
+  }) {
+    return async (result, evidencePatch = {}) =>
       this.finalizeChannexSyncResult(
         result,
         buildChannexSyncEvidencePatch({
           normalizedUserId,
           normalizedDomitsPropertyId,
-          syncType: "availability",
-          dateFrom: normalizedDateFrom ?? requireStr(dateFrom),
-          dateTo: normalizedDateTo ?? requireStr(dateTo),
+          syncType,
+          dateFrom: normalizedDateFrom ?? requireStr(rawDateFrom),
+          dateTo: normalizedDateTo ?? requireStr(rawDateTo),
           startedAt,
           evidencePatch,
         }),
         options
       );
+  }
 
-    const validationFailure = buildSyncDateRangeValidationFailure({
-      normalizedUserId,
-      normalizedDomitsPropertyId,
-      normalizedDateFrom,
-      normalizedDateTo,
+  buildChannexSyncPreviewFailureEvidencePatch(payloadPreviewResult, config) {
+    const previewResponse = payloadPreviewResult?.response || {};
+    return {
+      status: getInvalidRequestOrFailedStatus(payloadPreviewResult?.statusCode),
+      overallSuccess: false,
+      mappingSnapshot: {
+        missingMappings: Array.isArray(previewResponse.missingMappings) ? previewResponse.missingMappings : [],
+        sourceSummary: previewResponse.sourceSummary ?? null,
+      },
+      groupedOutboundPayloadSnapshot: null,
+      providerResponseSummary: null,
+      errors: [
+        {
+          errorCode: previewResponse.errorCode ?? config.previewErrorCode,
+          errorMessage: previewResponse.error ?? config.previewErrorMessage,
+          details: previewResponse.details ?? null,
+        },
+      ],
+      notes: [],
+      rawDetails: {
+        previewResult: payloadPreviewResult,
+      },
+    };
+  }
+
+  buildChannexSyncNotReadyResult({
+    payloadPreview,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    baseNotes,
+    mappingSnapshot,
+  }) {
+    const response = ok({
+      channel: payloadPreview.channel || "CHANNEX",
+      integrationAccountId: payloadPreview.integrationAccountId || null,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      dateFrom: normalizedDateFrom,
+      dateTo: normalizedDateTo,
+      ready: false,
+      calledProvider: false,
+      requestCount: 0,
+      results: [],
+      notes: baseNotes,
+      missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
     });
-    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
-    try {
-      const payloadPreviewResult = await this.previewChannexAriPayloads(
-        normalizedUserId,
-        normalizedDomitsPropertyId,
-        normalizedDateFrom,
-        normalizedDateTo
-      );
-      if (payloadPreviewResult?.statusCode !== 200) {
-        const previewResponse = payloadPreviewResult?.response || {};
-        return await finalize(payloadPreviewResult, {
-          status: getInvalidRequestOrFailedStatus(payloadPreviewResult?.statusCode),
-          overallSuccess: false,
-          mappingSnapshot: {
-            missingMappings: Array.isArray(previewResponse.missingMappings) ? previewResponse.missingMappings : [],
-            sourceSummary: previewResponse.sourceSummary ?? null,
-          },
-          groupedOutboundPayloadSnapshot: null,
-          providerResponseSummary: null,
-          errors: [
-            {
-              errorCode: previewResponse.errorCode ?? "CHANNEX_AVAILABILITY_PREVIEW_FAILED",
-              errorMessage: previewResponse.error ?? "Failed to build availability payload preview.",
-              details: previewResponse.details ?? null,
-            },
-          ],
-          notes: [],
-          rawDetails: {
-            previewResult: payloadPreviewResult,
-          },
-        });
-      }
-
-      const payloadPreview = payloadPreviewResult.response || {};
-      const baseNotes = [
-        ...(Array.isArray(payloadPreview.notes) ? payloadPreview.notes : []),
-        "Manual staging sync only. This endpoint sends availability updates directly and does not run a scheduler, retries, or sync-state persistence.",
-        "Approved temporary availability mapping rule applied: Domits availability true => 1, false => 0.",
-      ];
-      const mappingSnapshot = {
-        missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
-        sourceSummary: payloadPreview.sourceSummary ?? null,
-      };
-
-      if (!payloadPreview.ready) {
-        const response = ok({
-          channel: payloadPreview.channel || "CHANNEX",
-          integrationAccountId: payloadPreview.integrationAccountId || null,
-          domitsPropertyId: normalizedDomitsPropertyId,
-          dateFrom: normalizedDateFrom,
-          dateTo: normalizedDateTo,
-          ready: false,
-          calledProvider: false,
-          requestCount: 0,
-          results: [],
-          notes: baseNotes,
-          missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
-        });
-        return await finalize(response, {
-          integrationAccountId: payloadPreview.integrationAccountId || null,
-          status: "BLOCKED",
-          overallSuccess: false,
-          mappingSnapshot,
-          groupedOutboundPayloadSnapshot: [],
-          providerResponseSummary: { ready: false, calledProvider: false, results: [] },
-          taskIds: [],
-          warnings: [],
-          errors: [],
-          notes: baseNotes,
-          rawDetails: { payloadPreview },
-        });
-      }
-
-      const groupedPayloads = Array.isArray(payloadPreview?.availabilityPayloadPreview?.groupedPayloads)
-        ? payloadPreview.availabilityPayloadPreview.groupedPayloads
-        : [];
-
-      if (!groupedPayloads.length) {
-        const response = ok({
-          channel: payloadPreview.channel || "CHANNEX",
-          integrationAccountId: payloadPreview.integrationAccountId || null,
-          domitsPropertyId: normalizedDomitsPropertyId,
-          dateFrom: normalizedDateFrom,
-          dateTo: normalizedDateTo,
-          ready: true,
-          calledProvider: false,
-          requestCount: 0,
-          results: [],
-          notes: [...baseNotes, "No availability payload groups were generated, so nothing was sent to Channex."],
-        });
-        return await finalize(response, {
-          integrationAccountId: payloadPreview.integrationAccountId || null,
-          status: "NOOP",
-          overallSuccess: false,
-          mappingSnapshot,
-          groupedOutboundPayloadSnapshot: [],
-          providerResponseSummary: { ready: true, calledProvider: false, results: [] },
-          taskIds: [],
-          warnings: [],
-          errors: [],
-          notes: response.response.notes,
-          rawDetails: { payloadPreview },
-        });
-      }
-
-      const transformedPayloads = buildChannexAvailabilitySyncPayloads(groupedPayloads);
-      if (captureState) {
-        captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
-      }
-
-      const credentialContext = await this.resolveChannexSyncCredentialContext({
-        userId: normalizedUserId,
+    return {
+      response,
+      evidencePatch: {
+        integrationAccountId: payloadPreview.integrationAccountId || null,
+        status: "BLOCKED",
+        overallSuccess: false,
         mappingSnapshot,
-        groupedPayloads: transformedPayloads,
-        baseNotes,
-        payloadPreview,
-      });
-      if (!credentialContext.ok) {
-        return await finalize(credentialContext.response, credentialContext.evidencePatch);
-      }
-
-      const { integration, secret } = credentialContext;
-      const providerResult = await this.channexProviderClient.pushAvailability(secret, transformedPayloads);
-      const results = Array.isArray(providerResult?.results) ? providerResult.results : [];
-      const response = ok({
-        channel: "CHANNEX",
-        integrationAccountId: integration.id,
-        domitsPropertyId: normalizedDomitsPropertyId,
-        dateFrom: normalizedDateFrom,
-        dateTo: normalizedDateTo,
-        ready: true,
-        calledProvider: true,
-        requestCount: transformedPayloads.length,
-        results: results.map((result) => ({
-          externalPropertyId: result.externalPropertyId ?? null,
-          externalRoomTypeId: result.externalRoomTypeId ?? null,
-          requestBody: result.requestBody ?? null,
-          providerStatus: result.providerStatus ?? null,
-          httpStatus: result.httpStatus ?? null,
-          success: !!result.success,
-          taskId: result.taskId ?? null,
-          warnings: Array.isArray(result.warnings) ? result.warnings : [],
-          errorCode: result.errorCode ?? null,
-          errorMessage: result.errorMessage ?? null,
-        })),
+        groupedOutboundPayloadSnapshot: [],
+        providerResponseSummary: { ready: false, calledProvider: false, results: [] },
+        taskIds: [],
+        warnings: [],
+        errors: [],
         notes: baseNotes,
-      });
-      const outcome = deriveEvidenceOutcome({
-        statusCode: response.statusCode,
-        ready: response.response.ready,
-        calledProvider: response.response.calledProvider,
-        results: response.response.results,
-      });
-      return await finalize(response, {
+        rawDetails: { payloadPreview },
+      },
+    };
+  }
+
+  buildChannexSyncNoopResult({
+    payloadPreview,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    baseNotes,
+    mappingSnapshot,
+    noopNote,
+  }) {
+    const response = ok({
+      channel: payloadPreview.channel || "CHANNEX",
+      integrationAccountId: payloadPreview.integrationAccountId || null,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      dateFrom: normalizedDateFrom,
+      dateTo: normalizedDateTo,
+      ready: true,
+      calledProvider: false,
+      requestCount: 0,
+      results: [],
+      notes: [...baseNotes, noopNote],
+    });
+
+    return {
+      response,
+      evidencePatch: {
+        integrationAccountId: payloadPreview.integrationAccountId || null,
+        status: "NOOP",
+        overallSuccess: false,
+        mappingSnapshot,
+        groupedOutboundPayloadSnapshot: [],
+        providerResponseSummary: { ready: true, calledProvider: false, results: [] },
+        taskIds: [],
+        warnings: [],
+        errors: [],
+        notes: response.response.notes,
+        rawDetails: { payloadPreview },
+      },
+    };
+  }
+
+  buildChannexSyncProviderResult({
+    integration,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    baseNotes,
+    mappingSnapshot,
+    transformedPayloads,
+    providerResult,
+    formatProviderResult,
+    payloadPreview,
+  }) {
+    const results = Array.isArray(providerResult?.results) ? providerResult.results : [];
+    const response = ok({
+      channel: "CHANNEX",
+      integrationAccountId: integration.id,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      dateFrom: normalizedDateFrom,
+      dateTo: normalizedDateTo,
+      ready: true,
+      calledProvider: true,
+      requestCount: transformedPayloads.length,
+      results: results.map((result) => formatProviderResult(result)),
+      notes: baseNotes,
+    });
+    const outcome = deriveEvidenceOutcome({
+      statusCode: response.statusCode,
+      ready: response.response.ready,
+      calledProvider: response.response.calledProvider,
+      results: response.response.results,
+    });
+
+    return {
+      response,
+      evidencePatch: {
         integrationAccountId: integration.id,
         status: outcome.status,
         overallSuccess: outcome.overallSuccess,
@@ -5094,13 +4899,161 @@ export default class IntegrationService {
           payloadPreview,
           providerResult,
         },
+      },
+    };
+  }
+
+  async runChannexPreviewPayloadSync({
+    userId,
+    domitsPropertyId,
+    dateFrom,
+    dateTo,
+    options = {},
+    syncType,
+    baseNotes,
+    previewErrorCode,
+    previewErrorMessage,
+    selectGroupedPayloads,
+    buildPayloads,
+    afterBuildPayloads = null,
+    noopStage = "afterTransform",
+    isNoop,
+    noopNote,
+    providerCall,
+    formatProviderResult,
+    syncErrorCode,
+    syncErrorMessage,
+  }) {
+    const startedAt = nowMs();
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+    const normalizedDateFrom = parseIsoDateParam(dateFrom);
+    const normalizedDateTo = parseIsoDateParam(dateTo);
+    const captureState = getCaptureState(options);
+    const finalize = this.createChannexSyncFinalizer({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+      rawDateFrom: dateFrom,
+      rawDateTo: dateTo,
+      startedAt,
+      syncType,
+      options,
+    });
+
+    const validationFailure = buildSyncDateRangeValidationFailure({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    });
+    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
+
+    try {
+      const payloadPreviewResult = await this.previewChannexAriPayloads(
+        normalizedUserId,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo
+      );
+      if (payloadPreviewResult?.statusCode !== 200) {
+        return await finalize(
+          payloadPreviewResult,
+          this.buildChannexSyncPreviewFailureEvidencePatch(payloadPreviewResult, {
+            previewErrorCode,
+            previewErrorMessage,
+          })
+        );
+      }
+
+      const payloadPreview = payloadPreviewResult.response || {};
+      const notes = [...(Array.isArray(payloadPreview.notes) ? payloadPreview.notes : []), ...baseNotes];
+      const mappingSnapshot = {
+        missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
+        sourceSummary: payloadPreview.sourceSummary ?? null,
+      };
+
+      if (!payloadPreview.ready) {
+        const notReady = this.buildChannexSyncNotReadyResult({
+          payloadPreview,
+          normalizedDomitsPropertyId,
+          normalizedDateFrom,
+          normalizedDateTo,
+          baseNotes: notes,
+          mappingSnapshot,
+        });
+        return await finalize(notReady.response, notReady.evidencePatch);
+      }
+
+      const groupedPayloads = selectGroupedPayloads(payloadPreview);
+
+      if (noopStage === "beforeTransform" && isNoop({ groupedPayloads, transformedPayloads: [] })) {
+        const noop = this.buildChannexSyncNoopResult({
+          payloadPreview,
+          normalizedDomitsPropertyId,
+          normalizedDateFrom,
+          normalizedDateTo,
+          baseNotes: notes,
+          mappingSnapshot,
+          noopNote,
+        });
+        return await finalize(noop.response, noop.evidencePatch);
+      }
+
+      const transformedPayloads = buildPayloads(groupedPayloads);
+      if (typeof afterBuildPayloads === "function") {
+        afterBuildPayloads({ baseNotes: notes, transformedPayloads });
+      }
+      if (captureState) {
+        captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
+      }
+
+      if (noopStage !== "beforeTransform" && isNoop({ groupedPayloads, transformedPayloads })) {
+        const noop = this.buildChannexSyncNoopResult({
+          payloadPreview,
+          normalizedDomitsPropertyId,
+          normalizedDateFrom,
+          normalizedDateTo,
+          baseNotes: notes,
+          mappingSnapshot,
+          noopNote,
+        });
+        return await finalize(noop.response, noop.evidencePatch);
+      }
+
+      const credentialContext = await this.resolveChannexSyncCredentialContext({
+        userId: normalizedUserId,
+        mappingSnapshot,
+        groupedPayloads: transformedPayloads,
+        baseNotes: notes,
+        payloadPreview,
       });
+      if (!credentialContext.ok) {
+        return await finalize(credentialContext.response, credentialContext.evidencePatch);
+      }
+
+      const { integration, secret } = credentialContext;
+      const providerResult = await providerCall(secret, transformedPayloads);
+      const providerSyncResult = this.buildChannexSyncProviderResult({
+        integration,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        baseNotes: notes,
+        mappingSnapshot,
+        transformedPayloads,
+        providerResult,
+        formatProviderResult,
+        payloadPreview,
+      });
+      return await finalize(providerSyncResult.response, providerSyncResult.evidencePatch);
     } catch (error) {
       const details = describeLocalError(error);
       return await finalize(
         bad(500, {
-          error: "Failed to sync Channex availability.",
-          errorCode: "CHANNEX_AVAILABILITY_SYNC_FAILED",
+          error: syncErrorMessage,
+          errorCode: syncErrorCode,
           details,
         }),
         {
@@ -5108,8 +5061,8 @@ export default class IntegrationService {
           overallSuccess: false,
           errors: [
             {
-              errorCode: "CHANNEX_AVAILABILITY_SYNC_FAILED",
-              errorMessage: "Failed to sync Channex availability.",
+              errorCode: syncErrorCode,
+              errorMessage: syncErrorMessage,
               details,
             },
           ],
@@ -5119,222 +5072,65 @@ export default class IntegrationService {
     }
   }
 
-  async syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo, options = {}) {
-    const startedAt = nowMs();
-    const normalizedUserId = requireStr(userId);
-    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
-    const normalizedDateFrom = parseIsoDateParam(dateFrom);
-    const normalizedDateTo = parseIsoDateParam(dateTo);
-    const captureState = getCaptureState(options);
-    const finalize = async (result, evidencePatch = {}) =>
-      this.finalizeChannexSyncResult(
-        result,
-        buildChannexSyncEvidencePatch({
-          normalizedUserId,
-          normalizedDomitsPropertyId,
-          syncType: "restrictions",
-          dateFrom: normalizedDateFrom ?? requireStr(dateFrom),
-          dateTo: normalizedDateTo ?? requireStr(dateTo),
-          startedAt,
-          evidencePatch,
-        }),
-        options
-      );
-
-    const validationFailure = buildSyncDateRangeValidationFailure({
-      normalizedUserId,
-      normalizedDomitsPropertyId,
-      normalizedDateFrom,
-      normalizedDateTo,
+  async syncChannexAvailability(userId, domitsPropertyId, dateFrom, dateTo, options = {}) {
+    return this.runChannexPreviewPayloadSync({
+      userId,
+      domitsPropertyId,
+      dateFrom,
+      dateTo,
+      options,
+      syncType: "availability",
+      baseNotes: [
+        "Manual staging sync only. This endpoint sends availability updates directly and does not run a scheduler, retries, or sync-state persistence.",
+        "Approved temporary availability mapping rule applied: Domits availability true => 1, false => 0.",
+      ],
+      previewErrorCode: "CHANNEX_AVAILABILITY_PREVIEW_FAILED",
+      previewErrorMessage: "Failed to build availability payload preview.",
+      selectGroupedPayloads: (payloadPreview) =>
+        Array.isArray(payloadPreview?.availabilityPayloadPreview?.groupedPayloads)
+          ? payloadPreview.availabilityPayloadPreview.groupedPayloads
+          : [],
+      buildPayloads: buildChannexAvailabilitySyncPayloads,
+      noopStage: "beforeTransform",
+      isNoop: ({ groupedPayloads }) => !groupedPayloads.length,
+      noopNote: "No availability payload groups were generated, so nothing was sent to Channex.",
+      providerCall: (secret, transformedPayloads) =>
+        this.channexProviderClient.pushAvailability(secret, transformedPayloads),
+      formatProviderResult: formatChannexAvailabilityProviderResult,
+      syncErrorCode: "CHANNEX_AVAILABILITY_SYNC_FAILED",
+      syncErrorMessage: "Failed to sync Channex availability.",
     });
-    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
+  }
 
-    try {
-      const payloadPreviewResult = await this.previewChannexAriPayloads(
-        normalizedUserId,
-        normalizedDomitsPropertyId,
-        normalizedDateFrom,
-        normalizedDateTo
-      );
-      if (payloadPreviewResult?.statusCode !== 200) {
-        const previewResponse = payloadPreviewResult?.response || {};
-        return await finalize(payloadPreviewResult, {
-          status: getInvalidRequestOrFailedStatus(payloadPreviewResult?.statusCode),
-          overallSuccess: false,
-          mappingSnapshot: {
-            missingMappings: Array.isArray(previewResponse.missingMappings) ? previewResponse.missingMappings : [],
-            sourceSummary: previewResponse.sourceSummary ?? null,
-          },
-          errors: [
-            {
-              errorCode: previewResponse.errorCode ?? "CHANNEX_RESTRICTIONS_PREVIEW_FAILED",
-              errorMessage: previewResponse.error ?? "Failed to build restrictions payload preview.",
-              details: previewResponse.details ?? null,
-            },
-          ],
-          rawDetails: {
-            previewResult: payloadPreviewResult,
-          },
-        });
-      }
-
-      const payloadPreview = payloadPreviewResult.response || {};
-      const baseNotes = [
-        ...(Array.isArray(payloadPreview.notes) ? payloadPreview.notes : []),
+  async syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo, options = {}) {
+    return this.runChannexPreviewPayloadSync({
+      userId,
+      domitsPropertyId,
+      dateFrom,
+      dateTo,
+      options,
+      syncType: "restrictions",
+      baseNotes: [
         "Manual staging sync only. This endpoint sends rate updates through Channex restrictions and does not run a scheduler, retries, or sync-state persistence.",
         "Restrictions sync sends Channex rate values and can add supported mapped fields: stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay.",
-      ];
-      const mappingSnapshot = {
-        missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
-        sourceSummary: payloadPreview.sourceSummary ?? null,
-      };
-
-      if (!payloadPreview.ready) {
-        const response = ok({
-          channel: payloadPreview.channel || "CHANNEX",
-          integrationAccountId: payloadPreview.integrationAccountId || null,
-          domitsPropertyId: normalizedDomitsPropertyId,
-          dateFrom: normalizedDateFrom,
-          dateTo: normalizedDateTo,
-          ready: false,
-          calledProvider: false,
-          requestCount: 0,
-          results: [],
-          notes: baseNotes,
-          missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
-        });
-        return await finalize(response, {
-          integrationAccountId: payloadPreview.integrationAccountId || null,
-          status: "BLOCKED",
-          overallSuccess: false,
-          mappingSnapshot,
-          groupedOutboundPayloadSnapshot: [],
-          providerResponseSummary: { ready: false, calledProvider: false, results: [] },
-          notes: baseNotes,
-          rawDetails: { payloadPreview },
-        });
-      }
-
-      const groupedPayloads = Array.isArray(payloadPreview?.restrictionRatePayloadPreview?.groupedPayloads)
-        ? payloadPreview.restrictionRatePayloadPreview.groupedPayloads
-        : [];
-
-      const transformedPayloads = buildChannexRestrictionSyncPayloads(groupedPayloads);
-      appendRestrictionSyncOutboundNotes(baseNotes, transformedPayloads);
-      if (captureState) {
-        captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
-      }
-
-      if (!transformedPayloads.length) {
-        const response = ok({
-          channel: payloadPreview.channel || "CHANNEX",
-          integrationAccountId: payloadPreview.integrationAccountId || null,
-          domitsPropertyId: normalizedDomitsPropertyId,
-          dateFrom: normalizedDateFrom,
-          dateTo: normalizedDateTo,
-          ready: true,
-          calledProvider: false,
-          requestCount: 0,
-          results: [],
-          notes: [...baseNotes, "No nightlyPrice values were available to send, so nothing was posted to Channex."],
-        });
-        return await finalize(response, {
-          integrationAccountId: payloadPreview.integrationAccountId || null,
-          status: "NOOP",
-          overallSuccess: false,
-          mappingSnapshot,
-          groupedOutboundPayloadSnapshot: [],
-          providerResponseSummary: { ready: true, calledProvider: false, results: [] },
-          notes: response.response.notes,
-          rawDetails: { payloadPreview },
-        });
-      }
-
-      const credentialContext = await this.resolveChannexSyncCredentialContext({
-        userId: normalizedUserId,
-        mappingSnapshot,
-        groupedPayloads: transformedPayloads,
-        baseNotes,
-        payloadPreview,
-      });
-      if (!credentialContext.ok) {
-        return await finalize(credentialContext.response, credentialContext.evidencePatch);
-      }
-
-      const { integration, secret } = credentialContext;
-      const providerResult = await this.channexProviderClient.pushRestrictions(secret, transformedPayloads);
-      const results = Array.isArray(providerResult?.results) ? providerResult.results : [];
-      const response = ok({
-        channel: "CHANNEX",
-        integrationAccountId: integration.id,
-        domitsPropertyId: normalizedDomitsPropertyId,
-        dateFrom: normalizedDateFrom,
-        dateTo: normalizedDateTo,
-        ready: true,
-        calledProvider: true,
-        requestCount: transformedPayloads.length,
-        results: results.map((result) => ({
-          externalPropertyId: result.externalPropertyId ?? null,
-          externalRoomTypeId: result.externalRoomTypeId ?? null,
-          externalRatePlanId: result.externalRatePlanId ?? null,
-          requestBody: result.requestBody ?? null,
-          providerStatus: result.providerStatus ?? null,
-          httpStatus: result.httpStatus ?? null,
-          success: !!result.success,
-          taskId: result.taskId ?? null,
-          warnings: Array.isArray(result.warnings) ? result.warnings : [],
-          errorCode: result.errorCode ?? null,
-          errorMessage: result.errorMessage ?? null,
-        })),
-        notes: baseNotes,
-      });
-      const outcome = deriveEvidenceOutcome({
-        statusCode: response.statusCode,
-        ready: response.response.ready,
-        calledProvider: response.response.calledProvider,
-        results: response.response.results,
-      });
-      return await finalize(response, {
-        integrationAccountId: integration.id,
-        status: outcome.status,
-        overallSuccess: outcome.overallSuccess,
-        mappingSnapshot,
-        groupedOutboundPayloadSnapshot: transformedPayloads,
-        providerResponseSummary: {
-          requestCount: transformedPayloads.length,
-          results: response.response.results,
-        },
-        taskIds: collectTaskIdsFromResultList(response.response.results),
-        warnings: collectWarningsFromResultList(response.response.results),
-        errors: collectErrorsFromResultList(response.response.results),
-        notes: baseNotes,
-        rawDetails: {
-          payloadPreview,
-          providerResult,
-        },
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      return await finalize(
-        bad(500, {
-          error: "Failed to sync Channex restrictions.",
-          errorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
-          details,
-        }),
-        {
-          status: "FAILED",
-          overallSuccess: false,
-          errors: [
-            {
-              errorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
-              errorMessage: "Failed to sync Channex restrictions.",
-              details,
-            },
-          ],
-          rawDetails: { caughtError: details },
-        }
-      );
-    }
+      ],
+      previewErrorCode: "CHANNEX_RESTRICTIONS_PREVIEW_FAILED",
+      previewErrorMessage: "Failed to build restrictions payload preview.",
+      selectGroupedPayloads: (payloadPreview) =>
+        Array.isArray(payloadPreview?.restrictionRatePayloadPreview?.groupedPayloads)
+          ? payloadPreview.restrictionRatePayloadPreview.groupedPayloads
+          : [],
+      buildPayloads: buildChannexRestrictionSyncPayloads,
+      afterBuildPayloads: ({ baseNotes, transformedPayloads }) =>
+        appendRestrictionSyncOutboundNotes(baseNotes, transformedPayloads),
+      isNoop: ({ transformedPayloads }) => !transformedPayloads.length,
+      noopNote: "No nightlyPrice values were available to send, so nothing was posted to Channex.",
+      providerCall: (secret, transformedPayloads) =>
+        this.channexProviderClient.pushRestrictions(secret, transformedPayloads),
+      formatProviderResult: formatChannexRestrictionProviderResult,
+      syncErrorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
+      syncErrorMessage: "Failed to sync Channex restrictions.",
+    });
   }
 
   async runGatedChannexAriSteps({ userId, domitsPropertyId, dateFrom, dateTo, baseNotes }) {
