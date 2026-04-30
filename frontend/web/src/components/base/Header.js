@@ -339,8 +339,19 @@ function Header({ setSearchResults, setLoading }) {
       </nav>
       {isActiveSearchBar && <div className="search-overlay-background" />}
       {showSwitchConfirm && (
-        <div className="switch-confirm-overlay" onClick={() => setShowSwitchConfirm(false)}>
-          <div className="switch-confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="switch-confirm-overlay"
+          role="presentation"
+          onClick={() => setShowSwitchConfirm(false)}
+          onKeyDown={(e) => e.key === "Escape" && setShowSwitchConfirm(false)}
+        >
+          <div
+            className="switch-confirm-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <p>{currentView === "host" ? components.user.switchConfirmToGuest : components.user.switchConfirmToHost}</p>
             <div className="switch-confirm-buttons">
               <button className="switch-confirm-yes" onClick={confirmSwitch}>
