@@ -2,11 +2,12 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import ImageGallery from "../components/imageGallery";
-import PricingPerNight from "../components/pricingPerNight";
-import GeneralDetails from "../components/generalDetails";
 import AmenitiesContainer from "./amenitiesContainer";
 import Description from "../components/description";
 import RangeCalendar from "./RangeCalendar";
+import WhereYoullStay from "../components/WhereYoullStay";
+import HostSection from "../components/HostSection";
+import ReviewsSection from "../components/ReviewsSection";
 import {
   getActiveCancellationPolicyId,
   parseHouseRules,
@@ -30,6 +31,8 @@ const PropertyContainer = ({
     rules: [],
     checkIn: { checkIn: {}, checkOut: {} },
   },
+  host = {},
+  onContactHost,
   unavailableDateKeys = [],
   checkInDate = "",
   checkOutDate = "",
@@ -106,15 +109,17 @@ const PropertyContainer = ({
           propertyTitle={property?.property?.title}
           propertyId={property?.property?.id}
         />
-        <PricingPerNight pricing={property.pricing} />
-        <GeneralDetails generalDetails={property.generalDetails} />
       </section>
-      <section id="listing-about" className="listing-section-block">
+
+      <section className="listing-section-block">
         <Description description={property?.property?.description} />
+        <WhereYoullStay generalDetails={property.generalDetails} />
       </section>
+
       <section id="listing-amenities" className="listing-section-block">
         <AmenitiesContainer amenityIds={property.amenities} />
       </section>
+
       <section id="listing-availability" className="listing-section-block">
         <RangeCalendar
           unavailableDateKeys={unavailableDateKeys}
@@ -126,6 +131,24 @@ const PropertyContainer = ({
           }}
         />
       </section>
+
+      <section id="listing-host" className="listing-section-block">
+        <HostSection host={host} onContactHost={onContactHost} />
+      </section>
+
+      <section id="listing-location" className="listing-section-block">
+        <div className="location-placeholder">
+          <h3 className="location-placeholder__title">Location</h3>
+          <div className="location-placeholder__map">
+            <span className="location-placeholder__label">Map coming soon</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="listing-reviews" className="listing-section-block">
+        <ReviewsSection />
+      </section>
+
       <section id="listing-policies" className="listing-section-block">
         {cancellationPolicy && (
           <PolicySection
@@ -149,7 +172,6 @@ const PropertyContainer = ({
         {parsedPropertyRules.length > 0 && <PolicySection title="Property Rules" items={parsedPropertyRules} />}
         {parsedSafetyFeatures.length > 0 && <PolicySection title="Safety & Property" items={parsedSafetyFeatures} />}
         {checkInItems.length > 0 && <PolicySection title="Check-in / Check-out" items={checkInItems} />}
-        {/* <RulesContainer rules={property.rules} checkIn={property.checkIn} /> */}
       </section>
     </div>
   );

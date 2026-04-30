@@ -211,6 +211,7 @@ const ListingDetails2 = () => {
   const [checkOutDate, setCheckOutDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showMessageHost, setShowMessageHost] = useState(false);
 
   const unavailableDateKeys = useMemo(
     () =>
@@ -269,20 +270,27 @@ const ListingDetails2 = () => {
 
   const sectionItems = [
     { id: "photos", label: "Photos", targetId: "listing-photos" },
-    { id: "about", label: "About", targetId: "listing-about" },
     { id: "amenities", label: "Amenities", targetId: "listing-amenities" },
-    { id: "availability", label: "Availability", targetId: "listing-availability" },
+    { id: "host", label: "Host", targetId: "listing-host" },
+    { id: "location", label: "Location", targetId: "listing-location" },
+    { id: "reviews", label: "Reviews", targetId: "listing-reviews" },
     { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];
 
   return (
     <div className="listing-details">
       <SectionTabs sections={sectionItems} />
-      <Header title={property?.property?.title} />
+      <Header
+        title={property?.property?.title}
+        rating={property?.property?.rating}
+        generalDetails={property?.generalDetails}
+      />
 
       <div className="container">
         <PropertyContainer
           property={property}
+          host={host}
+          onContactHost={() => setShowMessageHost(true)}
           unavailableDateKeys={unavailableDateKeys}
           checkInDate={checkInDate}
           checkOutDate={checkOutDate}
@@ -298,6 +306,8 @@ const ListingDetails2 = () => {
           setCheckInDate={setCheckInDate}
           checkOutDate={checkOutDate}
           setCheckOutDate={setCheckOutDate}
+          showMessageHost={showMessageHost}
+          setShowMessageHost={setShowMessageHost}
         />
       </div>
     </div>

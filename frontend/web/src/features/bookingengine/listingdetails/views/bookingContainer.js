@@ -151,12 +151,13 @@ const BookingContainer = ({
   setCheckInDate = () => {},
   checkOutDate = "",
   setCheckOutDate = () => {},
+  showMessageHost = false,
+  setShowMessageHost = () => {},
 }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
 
   const handleReservePress = useHandleReservePress();
-  const [showMessageHost, setShowMessageHost] = useState(false);
   const unavailableDateSet = useMemo(
     () => buildUnavailableDateSet(unavailableDateKeys),
     [unavailableDateKeys]
@@ -250,7 +251,12 @@ const BookingContainer = ({
 
   return (
     <div className="booking-container">
-      <h3 className="booking-title">Booking details</h3>
+      <div className="booking-container__price-header">
+        <span className="booking-container__price">
+          €{Number(property?.pricing?.roomRate || 0).toFixed(0)}
+        </span>
+        <span className="booking-container__per-night">per night</span>
+      </div>
 
       <DateSelectionContainer
         checkInDate={checkInDate}
@@ -260,11 +266,9 @@ const BookingContainer = ({
         unavailableDateKeys={unavailableDateKeys}
       />
 
-      <br />
-
       <GuestSelectionContainer setAdultsParent={setAdults} setKidsParent={setKids} />
 
-      <br />
+      <Pricing pricing={property.pricing} nights={nights} />
 
       <button
         className="reserve-btn"
@@ -276,19 +280,27 @@ const BookingContainer = ({
             new Date(checkOutDate).getTime(),
             adults + kids
           );
-        }}>
+        }}
+      >
         Reserve
       </button>
 
-      <p className="note">*You won’t be charged yet</p>
+      <p className="note">You won’t be charged yet</p>
 
-      <button className="message-host-btn" disabled={!hostId} onClick={() => setShowMessageHost(true)}>
-        Message host
-      </button>
-
-      <hr />
-
-      <Pricing pricing={property.pricing} nights={nights} />
+      <div className="booking-container__trust-badges">
+        <div className="booking-container__trust-item">
+          <span className="booking-container__trust-check">✓</span>
+          Free cancellation
+        </div>
+        <div className="booking-container__trust-item">
+          <span className="booking-container__trust-check">✓</span>
+          Instant confirmation
+        </div>
+        <div className="booking-container__trust-item">
+          <span className="booking-container__trust-check">✓</span>
+          Secure payment
+        </div>
+      </div>
 
       {showMessageHost && hostId && (
         <UserProvider>
@@ -334,6 +346,8 @@ BookingContainer.propTypes = {
   setCheckInDate: PropTypes.func,
   checkOutDate: PropTypes.string,
   setCheckOutDate: PropTypes.func,
+  showMessageHost: PropTypes.bool,
+  setShowMessageHost: PropTypes.func,
 };
 
 export default BookingContainer;

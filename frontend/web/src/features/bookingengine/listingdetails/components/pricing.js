@@ -3,44 +3,38 @@ import PropTypes from "prop-types";
 import { getListingPricingBreakdown } from "../utils/pricing";
 
 const EURO_SYMBOL = "\u20AC";
-const formatEuro = (value) => `${EURO_SYMBOL}${value.toFixed(2)}`;
+const fmt = (value) => `${EURO_SYMBOL}${Number(value).toFixed(2)}`;
 
 const Pricing = ({ pricing = {}, nights = 1 }) => {
   const {
+    roomRate,
     nights: normalizedNights,
     roomSubtotal,
-    cleaningRate,
     cleaningSubtotal,
     serviceFee,
     total,
   } = getListingPricingBreakdown(pricing, nights || 1);
 
+  const rows = [
+    {
+      label: `${fmt(roomRate)} \u00D7 ${normalizedNights} night${normalizedNights !== 1 ? "s" : ""}`,
+      value: fmt(roomSubtotal),
+    },
+    { label: "Cleaning", value: fmt(cleaningSubtotal) },
+    { label: "Service fee", value: fmt(serviceFee) },
+  ];
+
   return (
     <div className="pricing-container">
-      <div className="pricing-description-and-price">
-        <div className="pricing-description">Host price</div>
-        <div className="pricing-price">{formatEuro(roomSubtotal + serviceFee)}</div>
-      </div>
-      <hr />
-      <div className="pricing-description-and-price">
-        <div className="pricing-description">
-          <strong>Cleaning fee</strong>
+      {rows.map((row) => (
+        <div key={row.label} className="pricing-row">
+          <span className="pricing-row__label">{row.label}</span>
+          <span className="pricing-row__value">{row.value}</span>
         </div>
-      </div>
-      <div className="pricing-description-and-price">
-        <div className="pricing-description">
-          {normalizedNights} night{normalizedNights > 1 ? "s" : ""} x {formatEuro(cleaningRate)} a night
-        </div>
-        <div className="pricing-price">{formatEuro(cleaningSubtotal)}</div>
-      </div>
-      <hr />
-      <div className="pricing-description-and-price">
-        <div className="pricing-description">
-          <h2>Total</h2>
-        </div>
-        <div className="pricing-price">
-          <h2>{formatEuro(total)}</h2>
-        </div>
+      ))}
+      <div className="pricing-row pricing-row--total">
+        <span className="pricing-row__label">Total</span>
+        <span className="pricing-row__value">{fmt(total)}</span>
       </div>
     </div>
   );
