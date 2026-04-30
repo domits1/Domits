@@ -95,6 +95,309 @@
   box-shadow: 0 8px 16px rgba(31, 78, 121, 0.1);
 }
 
+.kpiSection {
+  display: grid;
+  gap: 18px;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.kpiCard {
+  display: grid;
+  gap: 10px;
+  min-height: 156px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(255, 255, 255, 1)),
+    #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.kpiCardTitle {
+  margin: 0;
+  color: #334155;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.kpiCardValue {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.9rem, 1.4rem + 1vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.kpiCardLoader,
+.researchKpiCardLoader {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.kpiCardMeta {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.surfaceKpiPanel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 1)),
+    #ffffff;
+}
+
+.surfaceKpiHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.surfaceKpiHeader h3,
+.surfaceKpiHeader p {
+  margin: 0;
+}
+
+.surfaceKpiHeader h3 {
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.surfaceKpiHeader p,
+.surfaceKpiDescription {
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.surfaceKpiTabRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #eef3f8;
+}
+
+.surfaceKpiTabButton {
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  background: transparent;
+  color: #46627f;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.surfaceKpiTabButton:hover {
+  color: #153e64;
+}
+
+.surfaceKpiTabButtonActive {
+  background: #ffffff;
+  color: #153e64;
+  box-shadow: 0 8px 18px rgba(31, 78, 121, 0.12);
+}
+
+.surfaceKpiBody {
+  display: grid;
+  gap: 12px;
+}
+
+.surfaceKpiDescription {
+  margin: 0;
+}
+
+.surfaceKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.deletionReasonPanel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background: #f8fbff;
+}
+
+.deletionReasonHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.deletionReasonHeader h3,
+.deletionReasonHeader p {
+  margin: 0;
+}
+
+.deletionReasonHeader h3 {
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.deletionReasonHeader p {
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.deletionReasonList {
+  display: grid;
+  gap: 10px;
+}
+
+.deletionReasonRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 78, 121, 0.12);
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.deletionReasonRow strong {
+  color: #153e64;
+}
+
+.researchKpiPanel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 1)),
+    #ffffff;
+}
+
+.researchKpiHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.researchKpiHeader h3,
+.researchKpiHeader p {
+  margin: 0;
+}
+
+.researchKpiHeader h3 {
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.researchKpiHeader p {
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.researchKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.researchKpiCard {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.12);
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+}
+
+.researchKpiCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.researchKpiCardTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.researchKpiStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.34rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.researchKpiStatusBadgeReady {
+  background: #e7f7ee;
+  color: #1d6b44;
+}
+
+.researchKpiStatusBadgePending {
+  background: #eef3f8;
+  color: #46627f;
+}
+
+.researchKpiCardValue {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.researchKpiCriteriaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.researchKpiCriterionTag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.36rem 0.72rem;
+  background: #f1f6fb;
+  color: #1f4e79;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.researchKpiCardMeta {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
 .builderSteps {
   display: grid;
   gap: 28px;

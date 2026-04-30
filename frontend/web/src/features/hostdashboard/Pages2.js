@@ -12,6 +12,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
@@ -30,6 +31,7 @@ const NAV = [
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
   // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
