@@ -2,9 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { UserProvider } from "./hostmessages/context/AuthContext";
 import { useAuth } from "./hostmessages/hooks/useAuth";
+import ChannexDiagnosticsPanel from "./hostintegrations/ChannexDiagnosticsPanel";
 import "./hostintegrations/HostIntegrations.scss";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const CHANNEX_CERTIFICATION_USER_IDS = String(process.env.REACT_APP_CHANNEX_CERTIFICATION_USER_IDS || "")
+  .split(/[,\s;]+/)
+  .map((item) => item.trim())
+  .filter(Boolean);
 
 const WHATSAPP_CALLBACK_PATH = "/hostdashboard/integrations-marketplace/whatsapp/callback";
 const WHATSAPP_CALLBACK_URL = `${globalThis.location?.origin || ""}${WHATSAPP_CALLBACK_PATH}`;
@@ -97,6 +102,9 @@ const getConnectButtonLabel = ({ connecting, connected }) => {
   if (connected) return "Reconnect with Meta";
   return "Connect your WhatsApp Business";
 };
+
+const isChannexCertificationUser = (userId) =>
+  Boolean(userId) && CHANNEX_CERTIFICATION_USER_IDS.includes(String(userId).trim());
 
 function IntegrationCard({ integration, onManage }) {
   const connected = String(integration?.channel || "").toUpperCase() === "WHATSAPP" && !!integration?.externalAccountId;
@@ -317,6 +325,7 @@ function HostIntegrationsInner() {
 
   const selectedIntegration =
     visibleIntegrations.find((item) => String(item.id) === String(selectedIntegrationId)) || visibleIntegrations[0];
+  const showChannexDiagnostics = useMemo(() => isChannexCertificationUser(userId), [userId]);
 
   const handleStartConnect = async () => {
     setActionError("");
@@ -437,6 +446,8 @@ function HostIntegrationsInner() {
           </div>
         </div>
       ) : null}
+
+      {showChannexDiagnostics ? <ChannexDiagnosticsPanel userId={userId} /> : null}
     </main>
   );
 }
