@@ -25,6 +25,7 @@ const MIXED_RESTRICTION_VALUE = "mixed";
 const INHERIT_RESTRICTION_VALUE = "inherit";
 const TRUE_RESTRICTION_VALUE = "true";
 const FALSE_RESTRICTION_VALUE = "false";
+const EMPTY_PRICE_OVERRIDES = {};
 
 const CALENDAR_RESTRICTION_FIELDS = [
   "stopSell",
@@ -97,7 +98,7 @@ const readOverrideField = (source, camelField, snakeField) => {
   if (!source || typeof source !== "object") {
     return undefined;
   }
-  return source[camelField] !== undefined ? source[camelField] : source[snakeField];
+  return source[camelField] === undefined ? source[snakeField] : source[camelField];
 };
 
 const normalizeRestrictionOverride = (source = {}) => ({
@@ -115,15 +116,15 @@ const normalizeRestrictionOverride = (source = {}) => ({
 const hasRestrictionOverrideValue = (restriction) =>
   CALENDAR_RESTRICTION_FIELDS.some((field) => restriction?.[field] !== null && restriction?.[field] !== undefined);
 
-const hasDirtyFields = (dirtyFields) => Object.values(dirtyFields || {}).some(Boolean);
+const hasDirtyFields = (dirtyFields) => (dirtyFields ? Object.values(dirtyFields).some(Boolean) : false);
 
 const getSelectedDateKeySignature = (dateKeys) => (Array.isArray(dateKeys) ? dateKeys.join("|") : "");
 
 const mergeServerMapPreservingKeys = (serverMap, previousMap, keysToPreserve) => {
-  const next = { ...(serverMap || {}) };
-  const previous = previousMap && typeof previousMap === "object" ? previousMap : {};
+  const next = serverMap ? { ...serverMap } : {};
+  const previous = previousMap && typeof previousMap === "object" ? previousMap : null;
   (Array.isArray(keysToPreserve) ? keysToPreserve : []).forEach((key) => {
-    if (Object.hasOwn(previous, key)) {
+    if (previous && Object.hasOwn(previous, key)) {
       next[key] = previous[key];
     } else if (Object.hasOwn(next, key)) {
       delete next[key];
@@ -410,7 +411,7 @@ export const useCalendarSelection = ({
   );
 
   const selectedPropertyPriceOverrides = useMemo(
-    () => priceOverridesByPropertyId?.[selectedPropertyId] || {},
+    () => priceOverridesByPropertyId?.[selectedPropertyId] || EMPTY_PRICE_OVERRIDES,
     [priceOverridesByPropertyId, selectedPropertyId]
   );
 

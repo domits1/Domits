@@ -19,5 +19,5 @@ export const extractLastPathSegment = (path) => {
     .split("/")
     .filter(Boolean);
 
-  return parts.length ? parts[parts.length - 1] : null;
+  return parts.at(-1) ?? null;
 };

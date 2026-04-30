@@ -15,6 +15,14 @@ const DEFAULT_RESTRICTION_FORM = {
   maxStay: "",
 };
 
+const DEFAULT_RESTRICTION_MIXED_FIELDS = {
+  stopSell: false,
+  closedToArrival: false,
+  closedToDeparture: false,
+  minStay: false,
+  maxStay: false,
+};
+
 export default function SelectionCard({
   selectedCount,
   allSelectedAvailable,
@@ -34,8 +42,10 @@ export default function SelectionCard({
   const safeSelectedCount = Math.max(1, Number(selectedCount) || 1);
   const selectionLabel =
     safeSelectedCount === 1 ? "1 day selected" : `${safeSelectedCount} days selected`;
-  const safeRestrictionForm = { ...DEFAULT_RESTRICTION_FORM, ...(restrictionForm || {}) };
-  const safeMixedFields = restrictionMixedFields || {};
+  const safeRestrictionForm = restrictionForm
+    ? { ...DEFAULT_RESTRICTION_FORM, ...restrictionForm }
+    : DEFAULT_RESTRICTION_FORM;
+  const safeMixedFields = restrictionMixedFields ?? DEFAULT_RESTRICTION_MIXED_FIELDS;
 
   return (
     <section className="hc-selection-card" aria-label="Selected dates settings">
