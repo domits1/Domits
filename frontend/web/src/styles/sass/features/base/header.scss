@@ -318,7 +318,9 @@ $breakpoint-sm: 480px;
   align-items: center;
   justify-content: center;
 
-  .switch-confirm-modal {
+  dialog.switch-confirm-modal {
+    border: none;
+    margin: 0;
     background: white;
     border-radius: 14px;
     padding: 36px 32px;

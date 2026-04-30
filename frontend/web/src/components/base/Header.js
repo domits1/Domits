@@ -57,6 +57,15 @@ function Header({ setSearchResults, setLoading }) {
   }, [location]);
 
   useEffect(() => {
+    if (!showSwitchConfirm) return;
+    const handleEscape = (e) => {
+      if (e.key === "Escape") setShowSwitchConfirm(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [showSwitchConfirm]);
+
+  useEffect(() => {
     const onAuthChanged = () => {
       checkAuthentication();
     };
@@ -339,19 +348,8 @@ function Header({ setSearchResults, setLoading }) {
       </nav>
       {isActiveSearchBar && <div className="search-overlay-background" />}
       {showSwitchConfirm && (
-        <div
-          className="switch-confirm-overlay"
-          role="presentation"
-          onClick={() => setShowSwitchConfirm(false)}
-          onKeyDown={(e) => e.key === "Escape" && setShowSwitchConfirm(false)}
-        >
-          <div
-            className="switch-confirm-modal"
-            role="dialog"
-            aria-modal="true"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+        <div className="switch-confirm-overlay">
+          <dialog className="switch-confirm-modal" open>
             <p>{currentView === "host" ? components.user.switchConfirmToGuest : components.user.switchConfirmToHost}</p>
             <div className="switch-confirm-buttons">
               <button className="switch-confirm-yes" onClick={confirmSwitch}>
@@ -361,7 +359,7 @@ function Header({ setSearchResults, setLoading }) {
                 {components.user.switchConfirmNo}
               </button>
             </div>
-          </div>
+          </dialog>
         </div>
       )}
     </header>
