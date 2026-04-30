@@ -38,6 +38,7 @@ import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
+import { WEBSITE_DRAFT_DELETE_REASONS } from "./websiteDeleteReasons";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -54,14 +55,6 @@ const WORKSPACE_TAB_BUILDER = "builder";
 const WORKSPACE_TAB_WEBSITES = "websites";
 const DELETE_WEBSITE_DRAFT_STEP_REASON = "reason";
 const DELETE_WEBSITE_DRAFT_STEP_CONFIRM = "confirm";
-const WEBSITE_DRAFT_DELETE_REASONS = Object.freeze([
-  "I no longer need this website.",
-  "I built it for the wrong listing.",
-  "The imported content does not look right.",
-  "I want to try a different template.",
-  "I prefer to manage bookings without a standalone website.",
-  "Other",
-]);
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
