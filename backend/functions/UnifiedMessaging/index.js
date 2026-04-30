@@ -93,6 +93,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.listChannexSyncEvidence(event),
   },
   {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/bookings/revisions"),
+    handle: (event) => integrationController.listChannexBookingRevisions(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/receive"),
     handle: (event) => integrationController.receiveChannexBookingRevisions(event),
   },

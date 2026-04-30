@@ -171,6 +171,20 @@ class IntegrationController {
     return await this.integrationService.getLatestChannexSyncEvidenceSummary(userId, domitsPropertyId);
   }
 
+  async listChannexBookingRevisions(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const limitRaw = event.queryStringParameters?.limit;
+    const limit = limitRaw ? Number(limitRaw) : 50;
+    const includeRawPayload = String(event.queryStringParameters?.includeRawPayload || "").toLowerCase() === "true";
+
+    return await this.integrationService.listChannexBookingRevisions(userId, {
+      domitsPropertyId,
+      limit,
+      includeRawPayload,
+    });
+  }
+
   async receiveChannexBookingRevisions(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;

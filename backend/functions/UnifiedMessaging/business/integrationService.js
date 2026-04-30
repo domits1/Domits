@@ -706,6 +706,8 @@ const HOLIDU_STATUS = {
 };
 const CHANNEX_ACCOUNT_POLICY = "SINGLE_ACCOUNT_PER_USER";
 const CHANNEX_CERTIFICATION_FULL_SYNC_DAYS = 500;
+const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
+const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
 const CHANNEX_STATUS = {
   NOT_CONNECTED: "NOT_CONNECTED",
   PENDING_PROVIDER_VALIDATION: "PENDING_PROVIDER_VALIDATION",
@@ -727,6 +729,12 @@ const getInvalidRequestOrFailedStatus = (statusCode) => {
     return "INVALID_REQUEST";
   }
   return "FAILED";
+};
+const normalizePositiveLimit = (limit, defaultLimit, maxLimit) => {
+  const numericLimit = Number(limit);
+  if (!Number.isFinite(numericLimit)) return defaultLimit;
+
+  return Math.min(Math.max(Math.trunc(numericLimit), 1), maxLimit);
 };
 const getCaptureState = (options) => {
   const captureState = options?.captureState;
@@ -4099,10 +4107,10 @@ export default class IntegrationService {
     };
   }
 
-  formatPersistedChannexBookingRevision(row) {
+  formatPersistedChannexBookingRevision(row, { includeRawPayload = false } = {}) {
     if (!row || typeof row !== "object") return null;
 
-    return {
+    const formatted = {
       id: row.id,
       integrationAccountId: row.integrationAccountId ?? null,
       domitsPropertyId: row.domitsPropertyId ?? null,
@@ -4118,6 +4126,78 @@ export default class IntegrationService {
       createdAt: row.createdAt ?? null,
       updatedAt: row.updatedAt ?? null,
     };
+
+    if (includeRawPayload) {
+      formatted.rawPayload = parseStructuredEvidenceField(row.rawPayload);
+    }
+
+    return formatted;
+  }
+
+  isScopedChannexBookingRevisionRow(row, integrationAccountId, domitsPropertyId) {
+    if (!row || typeof row !== "object") return false;
+
+    return (
+      requireStr(row.integrationAccountId) === integrationAccountId &&
+      requireStr(row.domitsPropertyId) === domitsPropertyId
+    );
+  }
+
+  async listChannexBookingRevisions(
+    userId,
+    { domitsPropertyId, limit, includeRawPayload = false } = {}
+  ) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+    if (!normalizedDomitsPropertyId) {
+      return bad(400, { error: "Missing required query param: domitsPropertyId" });
+    }
+
+    try {
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      if (!integration) {
+        return bad(404, {
+          error: "Channex integration was not found for this user.",
+          errorCode: "CHANNEX_NOT_FOUND",
+        });
+      }
+
+      const safeLimit = normalizePositiveLimit(
+        limit,
+        CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT,
+        CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT
+      );
+      const rows = await this.channexBookingRevisions.listByFilters({
+        integrationAccountId: integration.id,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        limit: safeLimit,
+      });
+      const scopedRows = (Array.isArray(rows) ? rows : []).filter((row) =>
+        this.isScopedChannexBookingRevisionRow(row, integration.id, normalizedDomitsPropertyId)
+      );
+      const revisions = scopedRows
+        .map((row) => this.formatPersistedChannexBookingRevision(row, { includeRawPayload }))
+        .filter(Boolean);
+
+      return ok({
+        channel: "CHANNEX",
+        integrationAccountId: integration.id,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        limit: safeLimit,
+        count: revisions.length,
+        includeRawPayload: includeRawPayload === true,
+        revisions,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to list Channex booking revisions.",
+        errorCode: "CHANNEX_BOOKING_REVISION_LIST_FAILED",
+        details,
+      });
+    }
   }
 
   async persistChannexBookingRevision({
