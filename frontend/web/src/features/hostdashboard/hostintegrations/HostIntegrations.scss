@@ -356,7 +356,8 @@
   color: #374151;
 }
 
-.host-integrations-field input {
+.host-integrations-field input,
+.host-integrations-field select {
   width: 100%;
   border: 1px solid #d1d5db;
   border-radius: 12px;
@@ -366,7 +367,8 @@
   background: #fff;
 }
 
-.host-integrations-field input:focus {
+.host-integrations-field input:focus,
+.host-integrations-field select:focus {
   border-color: #16a34a;
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
 }
@@ -562,6 +564,55 @@
   gap: 10px;
   align-content: start;
   min-width: 0;
+}
+
+.channex-booking-revisions-controls {
+  display: flex;
+  gap: 14px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.channex-booking-revisions-limit {
+  width: min(180px, 100%);
+}
+
+.channex-booking-revisions-table-wrap {
+  overflow-x: auto;
+}
+
+.channex-booking-revisions-table {
+  min-width: 1180px;
+}
+
+.channex-booking-revisions-select {
+  width: 72px;
+}
+
+.channex-booking-revisions-raw {
+  display: grid;
+  gap: 8px;
+}
+
+.channex-booking-revisions-raw summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #374151;
+}
+
+.channex-booking-revisions-raw pre {
+  margin: 8px 0 0;
+  max-height: 260px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #111827;
+  color: #f9fafb;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 1080px) {

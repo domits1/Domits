@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
+import ChannexBookingRevisionLog from "./ChannexBookingRevisionLog";
 import {
   getChannexAriPayloadPreview,
   getChannexAriPreview,
@@ -524,6 +525,8 @@ function ChannexDiagnosticsPanel({ userId }) {
           })}
         </div>
       </section>
+
+      <ChannexBookingRevisionLog userId={userId} domitsPropertyId={domitsPropertyId} />
     </section>
   );
 }
