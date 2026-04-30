@@ -6,7 +6,9 @@ const appendParam = (params, key, value) => {
 };
 
 const buildUrl = (path, query = {}) => {
-  const url = new URL(path, UNIFIED_MESSAGING_API);
+  const normalizedBase = `${UNIFIED_MESSAGING_API.replace(/\/+$/, "")}/`;
+  const normalizedPath = String(path || "").replace(/^\/+/, "");
+  const url = new URL(normalizedPath, normalizedBase);
   Object.entries(query).forEach(([key, value]) => appendParam(url.searchParams, key, value));
   return url.toString();
 };
@@ -25,8 +27,12 @@ const readJsonOrText = async (response) => {
 const requestChannex = async (path, { method = "GET", query = {}, body } = {}) => {
   const response = await fetch(buildUrl(path, query), {
     method,
-    headers: { "Content-Type": "application/json" },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    ...(body === undefined
+      ? {}
+      : {
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }),
   });
   const data = await readJsonOrText(response);
 
