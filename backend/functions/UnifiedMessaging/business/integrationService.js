@@ -5076,30 +5076,34 @@ export default class IntegrationService {
     config,
     dateContext,
   }) {
-    const response = ok({
+    const responseBody = {
       channel: readiness.channel || "CHANNEX",
       integrationAccountId: readiness.integrationAccountId || null,
       domitsPropertyId: normalizedDomitsPropertyId,
       dateFrom: normalizedDateFrom,
       dateTo: normalizedDateTo,
-      ...(config.getBlockedResponseFieldsBeforeReady?.(dateContext) || {}),
-      ready: false,
-      ...(config.getBlockedResponseFieldsAfterReady?.(dateContext) || {}),
-      calledProvider: false,
-      steps: {
-        availability: null,
-        restrictions: null,
-      },
-      ...(config.includeCombinedFieldsInBlockedResponse
-        ? {
-            taskIds: [],
-            warnings: [],
-            errors: [],
-          }
-        : {}),
-      overallSuccess: false,
-      notes: appendMissingMappingNotes(baseNotes, readiness.missingMappings),
-    });
+    };
+    const blockedFieldsBeforeReady = config.getBlockedResponseFieldsBeforeReady?.(dateContext);
+    if (blockedFieldsBeforeReady) Object.assign(responseBody, blockedFieldsBeforeReady);
+    responseBody.ready = false;
+    const blockedFieldsAfterReady = config.getBlockedResponseFieldsAfterReady?.(dateContext);
+    if (blockedFieldsAfterReady) Object.assign(responseBody, blockedFieldsAfterReady);
+    responseBody.calledProvider = false;
+    responseBody.steps = {
+      availability: null,
+      restrictions: null,
+    };
+    if (config.includeCombinedFieldsInBlockedResponse) {
+      Object.assign(responseBody, {
+        taskIds: [],
+        warnings: [],
+        errors: [],
+      });
+    }
+    responseBody.overallSuccess = false;
+    responseBody.notes = appendMissingMappingNotes(baseNotes, readiness.missingMappings);
+
+    const response = ok(responseBody);
 
     return {
       response,
@@ -5184,13 +5188,15 @@ export default class IntegrationService {
       options,
     });
 
-    const validationFailure = buildSyncDateRangeValidationFailure({
+    const validationInput = {
       normalizedUserId,
       normalizedDomitsPropertyId,
       normalizedDateFrom,
       normalizedDateTo,
-      ...(config.getValidationFields?.(dateContext) || {}),
-    });
+    };
+    const validationFields = config.getValidationFields?.(dateContext);
+    if (validationFields) Object.assign(validationInput, validationFields);
+    const validationFailure = buildSyncDateRangeValidationFailure(validationInput);
     if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
     try {
@@ -5274,7 +5280,7 @@ export default class IntegrationService {
         ? restrictionsResponse?.integrationAccountId
         : restrictionsResponse.integrationAccountId;
 
-      const response = ok({
+      const responseBody = {
         channel: readiness.channel || "CHANNEX",
         integrationAccountId:
           availabilityResponse.integrationAccountId ??
@@ -5284,24 +5290,28 @@ export default class IntegrationService {
         domitsPropertyId: normalizedDomitsPropertyId,
         dateFrom: normalizedDateFrom,
         dateTo: normalizedDateTo,
-        ...(config.getSuccessResponseFieldsBeforeReady?.(dateContext) || {}),
-        ready: true,
-        ...(config.getSuccessResponseFieldsAfterReady?.(dateContext) || {}),
-        calledProvider,
-        steps: {
-          availability: getStepResponse(availabilityStep, availabilityResponse),
-          restrictions: getRestrictionsResponse(restrictionsStep, restrictionsResponse),
-        },
-        ...(config.includeCombinedFieldsInSuccessResponse
-          ? {
-              taskIds: combinedTaskIds,
-              warnings: combinedWarnings,
-              errors: combinedErrors,
-            }
-          : {}),
-        overallSuccess,
-        notes: baseNotes,
-      });
+      };
+      const successFieldsBeforeReady = config.getSuccessResponseFieldsBeforeReady?.(dateContext);
+      if (successFieldsBeforeReady) Object.assign(responseBody, successFieldsBeforeReady);
+      responseBody.ready = true;
+      const successFieldsAfterReady = config.getSuccessResponseFieldsAfterReady?.(dateContext);
+      if (successFieldsAfterReady) Object.assign(responseBody, successFieldsAfterReady);
+      responseBody.calledProvider = calledProvider;
+      responseBody.steps = {
+        availability: getStepResponse(availabilityStep, availabilityResponse),
+        restrictions: getRestrictionsResponse(restrictionsStep, restrictionsResponse),
+      };
+      if (config.includeCombinedFieldsInSuccessResponse) {
+        Object.assign(responseBody, {
+          taskIds: combinedTaskIds,
+          warnings: combinedWarnings,
+          errors: combinedErrors,
+        });
+      }
+      responseBody.overallSuccess = overallSuccess;
+      responseBody.notes = baseNotes;
+
+      const response = ok(responseBody);
 
       const combinedStatus = getCombinedSyncStatus({
         overallSuccess,
@@ -5310,6 +5320,16 @@ export default class IntegrationService {
         combinedWarnings,
         blockNoProviderWithErrors: !!config.blockNoProviderWithErrors,
       });
+
+      const rawDetails = {
+        readiness,
+      };
+      const rawDetailsBeforeSteps = config.getRawDetailsBeforeSteps?.(preStepContext, dateContext);
+      if (rawDetailsBeforeSteps) Object.assign(rawDetails, rawDetailsBeforeSteps);
+      rawDetails.availabilityStep = availabilityStep;
+      rawDetails.restrictionsStep = restrictionsStep;
+      const rawDetailsAfterSteps = config.getRawDetailsAfterSteps?.(dateContext);
+      if (rawDetailsAfterSteps) Object.assign(rawDetails, rawDetailsAfterSteps);
 
       return await finalize(response, {
         integrationAccountId:
@@ -5332,16 +5352,16 @@ export default class IntegrationService {
         warnings: combinedWarnings,
         errors: combinedErrors,
         notes: baseNotes,
-        rawDetails: {
-          readiness,
-          ...(config.getRawDetailsBeforeSteps?.(preStepContext, dateContext) || {}),
-          availabilityStep,
-          restrictionsStep,
-          ...(config.getRawDetailsAfterSteps?.(dateContext) || {}),
-        },
+        rawDetails,
       });
     } catch (error) {
       const details = describeLocalError(error);
+      const rawDetails = {
+        caughtError: details,
+      };
+      const caughtRawDetails = config.getCaughtRawDetails?.(dateContext);
+      if (caughtRawDetails) Object.assign(rawDetails, caughtRawDetails);
+
       return await finalize(
         bad(500, {
           error: config.catchErrorMessage,
@@ -5358,10 +5378,7 @@ export default class IntegrationService {
               details,
             },
           ],
-          rawDetails: {
-            caughtError: details,
-            ...(config.getCaughtRawDetails?.(dateContext) || {}),
-          },
+          rawDetails,
         }
       );
     }
