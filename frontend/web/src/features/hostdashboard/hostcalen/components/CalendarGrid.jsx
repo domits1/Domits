@@ -13,6 +13,35 @@ const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("
 const EMPTY_SET = new Set();
 const EMPTY_ARRAY = [];
 const EMPTY_OBJECT = {};
+const BOOLEAN_RESTRICTION_INDICATORS = [
+  {
+    field: "stopSell",
+    label: "Stop selling this date",
+    text: "Stop",
+  },
+  {
+    field: "closedToArrival",
+    label: "No check-in on this date",
+    text: "No CI",
+  },
+  {
+    field: "closedToDeparture",
+    label: "No check-out on this date",
+    text: "No CO",
+  },
+];
+const STAY_RESTRICTION_INDICATORS = [
+  {
+    field: "minStay",
+    labelPrefix: "Minimum stay",
+    textPrefix: "Min",
+  },
+  {
+    field: "maxStay",
+    labelPrefix: "Maximum stay",
+    textPrefix: "Max",
+  },
+];
 
 const toDateNumber = (date) => {
   const year = date.getUTCFullYear();
@@ -47,6 +76,97 @@ const readOverrideAvailability = (availabilityOverrides, key) => {
   return null;
 };
 
+const readOverrideField = (source, camelField, snakeField) => {
+  if (!source || typeof source !== "object") {
+    return undefined;
+  }
+  return source[camelField] === undefined ? source[snakeField] : source[camelField];
+};
+
+const normalizeNullableBoolean = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    if (value === 1) {
+      return true;
+    }
+    if (value === 0) {
+      return false;
+    }
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true" || normalized === "1") {
+      return true;
+    }
+    if (normalized === "false" || normalized === "0") {
+      return false;
+    }
+  }
+  return null;
+};
+
+const normalizeNullableStay = (value) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
+    return null;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return Math.trunc(parsed);
+};
+
+const readRestrictionOverride = (restrictionOverrides, key) => {
+  const source =
+    restrictionOverrides && typeof restrictionOverrides === "object" ? restrictionOverrides[key] : null;
+  if (!source || typeof source !== "object") {
+    return {
+      stopSell: null,
+      closedToArrival: null,
+      closedToDeparture: null,
+      minStay: null,
+      maxStay: null,
+    };
+  }
+
+  return {
+    stopSell: normalizeNullableBoolean(readOverrideField(source, "stopSell", "stop_sell")),
+    closedToArrival: normalizeNullableBoolean(
+      readOverrideField(source, "closedToArrival", "closed_to_arrival")
+    ),
+    closedToDeparture: normalizeNullableBoolean(
+      readOverrideField(source, "closedToDeparture", "closed_to_departure")
+    ),
+    minStay: normalizeNullableStay(readOverrideField(source, "minStay", "min_stay")),
+    maxStay: normalizeNullableStay(readOverrideField(source, "maxStay", "max_stay")),
+  };
+};
+
+const buildRestrictionIndicators = (restriction) => {
+  const safeRestriction = restriction && typeof restriction === "object" ? restriction : {};
+  const booleanIndicators = BOOLEAN_RESTRICTION_INDICATORS
+    .filter(({ field }) => safeRestriction[field] === true)
+    .map(({ field, label, text }) => ({ key: field, label, text }));
+  const stayIndicators = STAY_RESTRICTION_INDICATORS
+    .filter(({ field }) => safeRestriction[field] !== null && safeRestriction[field] !== undefined)
+    .map(({ field, labelPrefix, textPrefix }) => ({
+      key: field,
+      label: `${labelPrefix} ${safeRestriction[field]}`,
+      text: `${textPrefix} ${safeRestriction[field]}`,
+    }));
+  return [...booleanIndicators, ...stayIndicators];
+};
+
 const buildYearMonthViews = (year) => {
   const views = [];
   monthNames.forEach((monthName, monthIndex) => {
@@ -73,12 +193,20 @@ const getUtcTodayParts = () => {
   };
 };
 
-const buildCellAriaLabel = ({ date, displayPrice, showExternalBlockedOverlay, isSelected, isPending }) => {
+const buildCellAriaLabel = ({
+  date,
+  displayPrice,
+  showExternalBlockedOverlay,
+  isSelected,
+  isPending,
+  restrictionIndicators,
+}) => {
   const hasDisplayPrice = displayPrice !== null;
   return [
     date.toUTCString(),
     hasDisplayPrice ? `${formatEuroAmount(displayPrice)} per night` : null,
     showExternalBlockedOverlay ? "external booking" : null,
+    ...(Array.isArray(restrictionIndicators) ? restrictionIndicators.map((indicator) => indicator.label) : []),
     isSelected ? "selected" : null,
     isPending ? "pending selection" : null,
   ]
@@ -94,6 +222,7 @@ const buildDayPresentation = ({
   selectedSet,
   pendingSelectionStartKey,
   availabilityOverrides,
+  restrictionOverrides,
   availabilityRanges,
   dayPriceOverrides,
   nightlyRate,
@@ -107,6 +236,8 @@ const buildDayPresentation = ({
   const isBlocked = blockedDates.has(key);
   const isBooked = bookedSet.has(key);
   const overrideAvailability = readOverrideAvailability(availabilityOverrides, key);
+  const restrictionOverride = readRestrictionOverride(restrictionOverrides, key);
+  const restrictionIndicators = buildRestrictionIndicators(restrictionOverride);
   const isAvailable =
     !isBlocked && !isBooked && (overrideAvailability ?? isDateWithinAvailability(dateNumber, availabilityRanges));
   const isUnavailable = !isAvailable;
@@ -147,12 +278,14 @@ const buildDayPresentation = ({
     showUnavailableYearIcon: !isBlocked && !isBooked && isUnavailable,
     showBookedYearIcon: isBooked,
     displayPrice,
+    restrictionIndicators,
     cellAriaLabel: buildCellAriaLabel({
       date,
       displayPrice,
       showExternalBlockedOverlay,
       isSelected,
       isPending,
+      restrictionIndicators,
     }),
     dayNumber: date.getUTCDate(),
   };
@@ -172,6 +305,7 @@ export default function CalendarGrid({
   selectedDateKeys = EMPTY_ARRAY,
   pendingSelectionStartKey = null,
   availabilityOverrides = EMPTY_OBJECT,
+  restrictionOverrides = EMPTY_OBJECT,
   priceOverrides = EMPTY_OBJECT,
   bookedDateKeys = EMPTY_SET,
   onDateSelect = null,
@@ -198,6 +332,7 @@ export default function CalendarGrid({
         selectedSet,
         pendingSelectionStartKey,
         availabilityOverrides,
+        restrictionOverrides,
         availabilityRanges,
         dayPriceOverrides,
         nightlyRate,
@@ -210,6 +345,7 @@ export default function CalendarGrid({
       selectedSet,
       pendingSelectionStartKey,
       availabilityOverrides,
+      restrictionOverrides,
       availabilityRanges,
       dayPriceOverrides,
       nightlyRate,
@@ -250,6 +386,9 @@ export default function CalendarGrid({
           <div className="hc-calendar-grid">
             {safeGrid.flat().map((date) => {
               const dayPresentation = getDayPresentation(date, cursor);
+              const restrictionIndicators = Array.isArray(dayPresentation.restrictionIndicators)
+                ? dayPresentation.restrictionIndicators
+                : EMPTY_ARRAY;
 
               return (
                 <button
@@ -303,6 +442,20 @@ export default function CalendarGrid({
                   {dayPresentation.displayPrice !== null && (
                     <span className="hc-cell-price">{formatEuroAmount(dayPresentation.displayPrice)}</span>
                   )}
+
+                  {restrictionIndicators.length > 0 ? (
+                    <span className="hc-cell-restrictions" aria-hidden="true">
+                      {restrictionIndicators.map((indicator) => (
+                        <span
+                          key={indicator.key}
+                          className={`hc-cell-restriction-chip hc-cell-restriction-chip--${indicator.key}`}
+                          title={indicator.label}
+                        >
+                          {indicator.text}
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
                 </button>
               );
             })}
@@ -325,6 +478,9 @@ export default function CalendarGrid({
                   const dayPresentation = getDayPresentation(date, monthView.monthCursor);
                   const isOutsideMonth = dayPresentation.isOutsideMonth;
                   const isCurrentMonth = !isOutsideMonth;
+                  const restrictionIndicators = Array.isArray(dayPresentation.restrictionIndicators)
+                    ? dayPresentation.restrictionIndicators
+                    : EMPTY_ARRAY;
                   return (
                     <div
                       key={`${monthView.monthName}-${dayPresentation.key}`}
@@ -344,6 +500,9 @@ export default function CalendarGrid({
                           dayPresentation.isUnavailable &&
                           "hc-year-day--unavailable",
                         isCurrentMonth && dayPresentation.isAvailable && "hc-year-day--available",
+                        isCurrentMonth &&
+                          restrictionIndicators.length > 0 &&
+                          "hc-year-day--has-restrictions",
                         isCurrentMonth && dayPresentation.isSelected && "hc-year-day--selected"
                       )}
                       aria-hidden={isOutsideMonth}
@@ -369,6 +528,10 @@ export default function CalendarGrid({
                             <span className="hc-year-day-icon hc-year-day-icon--booked" aria-hidden="true">
                               <img src={checkPng} alt="" />
                             </span>
+                          )}
+
+                          {restrictionIndicators.length > 0 && (
+                            <span className="hc-year-day-restriction-dot" aria-hidden="true" />
                           )}
                         </>
                       ) : null}
@@ -409,9 +572,17 @@ CalendarGrid.propTypes = {
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string),
   pendingSelectionStartKey: PropTypes.string,
   availabilityOverrides: PropTypes.objectOf(PropTypes.bool),
+  restrictionOverrides: PropTypes.objectOf(
+    PropTypes.shape({
+      stopSell: PropTypes.bool,
+      closedToArrival: PropTypes.bool,
+      closedToDeparture: PropTypes.bool,
+      minStay: PropTypes.number,
+      maxStay: PropTypes.number,
+    })
+  ),
   priceOverrides: PropTypes.objectOf(PropTypes.number),
   bookedDateKeys: PropTypes.instanceOf(Set),
   onDateSelect: PropTypes.func,
   loadingMessage: PropTypes.string,
 };
-
