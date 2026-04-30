@@ -103,6 +103,11 @@ $breakpoint-sm: 480px;
       }
     }
 
+    > .personalMenuDropdown {
+      margin-left: 10px;
+      align-self: center;
+    }
+
     .headerRight {
       display: flex;
       align-items: center;
@@ -228,11 +233,11 @@ $breakpoint-sm: 480px;
 
     .header-nav {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       grid-template-areas:
-        "logo trigger"
-        "panel panel"
-        "flags flags";
+        "logo profile trigger"
+        "panel panel panel"
+        "flags flags flags";
       align-items: center;
       gap: 14px 12px;
       width: 100%;
@@ -245,6 +250,12 @@ $breakpoint-sm: 480px;
       grid-area: logo;
       margin: 0;
       padding: 0;
+    }
+
+    .header-nav > .personalMenuDropdown {
+      grid-area: profile;
+      display: inline-block;
+      justify-self: end;
     }
 
     .header-nav > .mobile-search-button {
@@ -309,6 +320,12 @@ $breakpoint-sm: 480px;
 
 }
 
+.dropdown-switch-btn {
+  @media screen and (min-width: 1251px) {
+    display: none !important;
+  }
+}
+
 .switch-confirm-overlay {
   position: fixed;
   inset: 0;
@@ -319,6 +336,7 @@ $breakpoint-sm: 480px;
   justify-content: center;
 
   dialog.switch-confirm-modal {
+    position: relative;
     border: none;
     margin: 0;
     background: white;

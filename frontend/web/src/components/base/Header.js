@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
+import ReactDOM from "react-dom";
 import logo from "../../images/logo.svg";
 import nineDots from "../../images/dots-grid.svg";
 import profile from "../../images/profile-icon.svg";
@@ -212,8 +213,8 @@ function Header({ setSearchResults, setLoading }) {
           <button onClick={navigateToMessages} className="dropdownLoginButton">
             {components.user.messages}
           </button>
-          <button onClick={() => navigate("/")} className="dropdownLoginButton">
-            {components.user.browseHomepage}
+          <button onClick={navigateToDashboard} className="dropdownLogoutButton dropdown-switch-btn">
+            {components.user.switchToGuest}
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
             {components.user.logout}
@@ -237,11 +238,16 @@ function Header({ setSearchResults, setLoading }) {
             {components.user.payments}
           </button> */}
           {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
-            Reviews 
+            Reviews
           </button> */}
           <button onClick={navigateToSettings} className="dropdownLoginButton">
             {components.user.settings}
           </button>
+          {group === "Host" && (
+            <button onClick={navigateToDashboard} className="dropdownLogoutButton dropdown-switch-btn">
+              {components.user.switchToHost}
+            </button>
+          )}
           <button onClick={handleLogout} className="dropdownLogoutButton">
             {components.user.logout}
             <img src={logoutArrow} alt="Logout Arrow" />
@@ -261,6 +267,7 @@ function Header({ setSearchResults, setLoading }) {
   };
 
   return (
+    <>
     <header className="app-header">
       <nav
         className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""}`}>
@@ -323,46 +330,48 @@ function Header({ setSearchResults, setLoading }) {
           <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
             <img src={nineDots} alt="Nine Dots" />
           </button>
-          <div className="personalMenuDropdown">
-            <button className="personalMenu" onClick={toggleDropdown}>
-              <img src={profile} alt="Profile Icon" />
-              <img src={arrowDown} alt="Dropdown Arrow" />
-            </button>
-            <div className={"personalMenuDropdownContent" + (dropdownVisible ? " show" : "")}>
-              {isLoggedIn ? (
-                renderDropdownMenu()
-              ) : (
-                <>
-                  <button onClick={navigateToLogin} className="dropdownLoginButton">
-                    {components.user.login}
-                    <img src={loginArrow} alt="Login Arrow" />
-                  </button>
-                  <button onClick={navigateToRegister} className="dropdownRegisterButton">
-                    {components.user.register}
-                  </button>
-                </>
-              )}
-            </div>
+        </div>
+        <div className="personalMenuDropdown">
+          <button className="personalMenu" onClick={toggleDropdown}>
+            <img src={profile} alt="Profile Icon" />
+            <img src={arrowDown} alt="Dropdown Arrow" />
+          </button>
+          <div className={"personalMenuDropdownContent" + (dropdownVisible ? " show" : "")}>
+            {isLoggedIn ? (
+              renderDropdownMenu()
+            ) : (
+              <>
+                <button onClick={navigateToLogin} className="dropdownLoginButton">
+                  {components.user.login}
+                  <img src={loginArrow} alt="Login Arrow" />
+                </button>
+                <button onClick={navigateToRegister} className="dropdownRegisterButton">
+                  {components.user.register}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>
       {isActiveSearchBar && <div className="search-overlay-background" />}
-      {showSwitchConfirm && (
-        <div className="switch-confirm-overlay">
-          <dialog className="switch-confirm-modal" open>
-            <p>{currentView === "host" ? components.user.switchConfirmToGuest : components.user.switchConfirmToHost}</p>
-            <div className="switch-confirm-buttons">
-              <button className="switch-confirm-yes" onClick={confirmSwitch}>
-                {components.user.switchConfirmYes}
-              </button>
-              <button className="switch-confirm-no" onClick={() => setShowSwitchConfirm(false)}>
-                {components.user.switchConfirmNo}
-              </button>
-            </div>
-          </dialog>
-        </div>
-      )}
     </header>
+    {showSwitchConfirm && ReactDOM.createPortal(
+      <div className="switch-confirm-overlay">
+        <dialog className="switch-confirm-modal" open>
+          <p>{currentView === "host" ? components.user.switchConfirmToGuest : components.user.switchConfirmToHost}</p>
+          <div className="switch-confirm-buttons">
+            <button className="switch-confirm-yes" onClick={confirmSwitch}>
+              {components.user.switchConfirmYes}
+            </button>
+            <button className="switch-confirm-no" onClick={() => setShowSwitchConfirm(false)}>
+              {components.user.switchConfirmNo}
+            </button>
+          </div>
+        </dialog>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
 
