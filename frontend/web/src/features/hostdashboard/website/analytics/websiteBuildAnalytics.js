@@ -13,12 +13,30 @@ export {
   WEBSITE_PREVIEW_READY_EVENT,
 };
 
-export const createWebsiteBuildAttemptId = () => {
-  if (globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID();
+let websiteBuildAttemptSequence = 0;
+
+const createCryptoFallbackId = () => {
+  if (typeof globalThis.crypto?.getRandomValues !== "function") {
+    return "";
   }
 
-  return `website-build-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const randomBytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(randomBytes);
+  return Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+};
+
+export const createWebsiteBuildAttemptId = () => {
+  if (globalThis.crypto?.randomUUID) {
+    return `website-build-${globalThis.crypto.randomUUID()}`;
+  }
+
+  const cryptoFallbackId = createCryptoFallbackId();
+  if (cryptoFallbackId) {
+    return `website-build-${cryptoFallbackId}`;
+  }
+
+  websiteBuildAttemptSequence += 1;
+  return `website-build-${Date.now()}-${websiteBuildAttemptSequence}`;
 };
 
 export const getBuildAttemptClock = () => {
