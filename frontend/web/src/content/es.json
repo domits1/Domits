@@ -16,7 +16,8 @@
         "switchToHost": "Cambiar a anfitrión",
         "becomeHost": "Conviértete en anfitrión",
         "browseHomepage": "Ver página de inicio",
-        "switchConfirm": "¿Estás seguro de que quieres cambiar de panel?",
+        "switchConfirmToHost": "¿Estás seguro de que quieres cambiar al panel de anfitrión?",
+        "switchConfirmToGuest": "¿Estás seguro de que quieres cambiar al panel de huésped?",
         "switchConfirmYes": "Sí, cambiar",
         "switchConfirmNo": "Cancelar"
       },

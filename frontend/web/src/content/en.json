@@ -16,7 +16,8 @@
           "switchToHost": "Switch to Host",
           "becomeHost": "Become a host",
           "browseHomepage": "Browse homepage",
-          "switchConfirm": "Are you sure you want to switch dashboards?",
+          "switchConfirmToHost": "Are you sure you want to switch to the Host dashboard?",
+          "switchConfirmToGuest": "Are you sure you want to switch to the Guest dashboard?",
           "switchConfirmYes": "Yes, switch",
           "switchConfirmNo": "Cancel"
         },

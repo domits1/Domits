@@ -341,7 +341,7 @@ function Header({ setSearchResults, setLoading }) {
       {showSwitchConfirm && (
         <div className="switch-confirm-overlay" onClick={() => setShowSwitchConfirm(false)}>
           <div className="switch-confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <p>{components.user.switchConfirm}</p>
+            <p>{currentView === "host" ? components.user.switchConfirmToGuest : components.user.switchConfirmToHost}</p>
             <div className="switch-confirm-buttons">
               <button className="switch-confirm-yes" onClick={confirmSwitch}>
                 {components.user.switchConfirmYes}

@@ -16,7 +16,8 @@
         "switchToHost": "Zu Gastgeber wechseln",
         "becomeHost": "Gastgeber werden",
         "browseHomepage": "Startseite besuchen",
-        "switchConfirm": "Möchtest du wirklich das Dashboard wechseln?",
+        "switchConfirmToHost": "Möchtest du wirklich zum Gastgeber-Dashboard wechseln?",
+        "switchConfirmToGuest": "Möchtest du wirklich zum Gast-Dashboard wechseln?",
         "switchConfirmYes": "Ja, wechseln",
         "switchConfirmNo": "Abbrechen"
       },

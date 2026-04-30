@@ -16,7 +16,8 @@
           "switchToHost": "Overschakelen naar host",
           "becomeHost": "Word gastheer",
           "browseHomepage": "Startpagina bekijken",
-          "switchConfirm": "Weet je zeker dat je van dashboard wilt wisselen?",
+          "switchConfirmToHost": "Weet je zeker dat je naar het host dashboard wilt wisselen?",
+          "switchConfirmToGuest": "Weet je zeker dat je naar het gast dashboard wilt wisselen?",
           "switchConfirmYes": "Ja, wisselen",
           "switchConfirmNo": "Annuleren"
         },
