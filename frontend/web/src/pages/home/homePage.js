@@ -1,11 +1,17 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaShieldAlt, FaUserCheck, FaHeadset, FaAward, FaTag, FaHome, FaDollarSign  } from "react-icons/fa";
 import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
-import { guarantees, hostImage, hostSection } from "./store/constants";
-import { reviews, categories as groups, buildHomepageLists, S3_URL } from "./store/constants";
+import {
+  guarantees,
+  hostImage,
+  hostSection,
+  categories as groups,
+  buildHomepageLists,
+  S3_URL
+} from "./store/constants";
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
@@ -85,11 +91,6 @@ const Homepage = () => {
     loadData();
   }, []);
 
-  const handleClick = (e, ID) => {
-    navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
-  };
-
-  const [currentIndex, setCurrentIndex] = useState(0);
   return (
   <div className="homePage-container">
     <div className="domits-homepage">
@@ -164,20 +165,18 @@ const Homepage = () => {
 
  <div className="domits-accommodationGroup">
   {propertyLoading ? (
-    Array(6).fill().map((_, i) => <SkeletonLoader key={i} />)
+    new Array(6).fill(null).map((_, i) => <SkeletonLoader key={`skeleton-${i}`} />)
   ) : (
     allAccommodations.slice(0, 3).map((property) => (
-      <motion.div
+      <Link
         key={property.property.id}
-        variants={fadeUp}
-        onClick={(e) => handleClick(e, property.property.id)}
-        style={{ cursor: "pointer" }}
+        to={`/listingdetails?ID=${encodeURIComponent(property.property.id)}`}
+        style={{ textDecoration: "none", color: "inherit" }}
       >
-        <AccommodationCard
-          accommodation={property}
-          onClick={() => {}} 
-        />
-      </motion.div>
+  <motion.div variants={fadeUp}>
+    <AccommodationCard accommodation={property} />
+  </motion.div>
+</Link>
     ))
   )}
 </div>
@@ -192,30 +191,30 @@ const Homepage = () => {
     </motion.div>
 
     <div className="regions-grid">
-      {countries.slice(0, 3).map((item, i) => (
-        <motion.div
-  className="region-card"
-  key={i}
-  variants={fadeUp}
-  onClick={() =>
-    navigate(`/search?destination=${encodeURIComponent(item.name)}`)
-  }
-  style={{ cursor: "pointer" }}
->
-  <img src={item.img} alt={item.name} />
+      {countries.slice(0, 3).map((item) => (
+     <Link
+        className="region-card"
+        key={item.name}
+        to={`/search?destination=${encodeURIComponent(item.name)}`}
+        style={{ textDecoration: "none", color: "inherit" }}
+      >
+      <img src={item.img} alt={item.name} />
 
   <div className="gallery-overlay">
     <h3>{item.name}</h3>
     <p>{item.description}</p>
     <span>200+ properties</span>
   </div>
-</motion.div>
+</Link>
       ))}
     </div>
 
-    <div className="region-footer" onClick={() => navigate("/home")} >
+    <button
+      className="region-footer"
+      onClick={() => navigate("/home")}
+    >
       Explore all countries in europe →
-    </div>
+    </button>
   </motion.div>
 
   <motion.div className="region-block light" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -225,8 +224,8 @@ const Homepage = () => {
     </motion.div>
 
     <div className="regions-grid">
-      {asiaCountries.map((item, i) => (
-        <motion.div className="region-card" key={i} variants={fadeUp}>
+      {asiaCountries.map((item) => (
+        <motion.div className="region-card" key={item.name} variants={fadeUp}>
   <Link
     to="/home"
     style={{ textDecoration: "none", color: "inherit" }}
@@ -243,9 +242,12 @@ const Homepage = () => {
       ))}
     </div>
 
-    <div className="region-footer" onClick={() => navigate("/home")} >
+    <button
+      className="region-footer"
+      onClick={() => navigate("/home")}
+    >
       Explore all countries in Asia →
-    </div>
+    </button>
   </motion.div>
 
   <motion.div className="region-block green" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -255,8 +257,8 @@ const Homepage = () => {
     </motion.div>
 
     <div className="regions-grid">
-      {caribbeanCountries.map((item, i) => (
-       <motion.div className="region-card" key={i} variants={fadeUp}>
+      {caribbeanCountries.map((item) => (
+         <motion.div className="region-card" key={item.name} variants={fadeUp}>
   <Link
     to="/home"
     style={{ textDecoration: "none", color: "inherit" }}
@@ -273,9 +275,12 @@ const Homepage = () => {
       ))}
     </div>
 
-    <div className="region-footer" onClick={() => navigate("/home")} >
+    <button
+      className="region-footer"
+      onClick={() => navigate("/home")}
+    >
       Explore all countries in the caribbean →
-    </div>
+    </button>
   </motion.div>
 
   <motion.div className="region-block light" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -285,8 +290,8 @@ const Homepage = () => {
     </motion.div>
 
     <div className="regions-grid">
-      {skiCountries.slice(0, 3).map((item, i) => (
-        <motion.div className="region-card" key={i} variants={fadeUp}>
+      {skiCountries.slice(0, 3).map((item) => (
+        <motion.div className="region-card" key={item.name} variants={fadeUp}>
   <Link
     to="/home"
     style={{ textDecoration: "none", color: "inherit" }}
@@ -303,9 +308,12 @@ const Homepage = () => {
       ))}
     </div>
 
-    <div className="region-footer" onClick={() => navigate("/home")} >
+    <button
+  className="region-footer"
+  onClick={() => navigate("/home")}
+>
       Explore all popular ski destinations →
-    </div>
+    </button>
   </motion.div>
 </div>
 
@@ -316,29 +324,29 @@ const Homepage = () => {
   </motion.div>
 
   <div className="regions-grid">
-    {seasons.slice(0, 3).map((item, i) => (
-      <motion.div
+    {seasons.slice(0, 3).map((item) => (
+      <Link
   className="region-card"
-  key={i}
-  variants={fadeUp}
-  onClick={() =>
-    navigate(`/search?destination=${encodeURIComponent(item.name)}`)
-  }
-  style={{ cursor: "pointer" }}
-> 
+  key={item.name}
+  to={`/search?destination=${encodeURIComponent(item.name)}`}
+  style={{ textDecoration: "none", color: "inherit" }}
+>
         <img src={item.img} alt={item.name} />
         <div className="gallery-overlay">
           <h3>{item.name}</h3>
           <p>{item.description || "Perfect stays"}</p>
           <span>200+ properties</span>
         </div>
-      </motion.div>
+      </Link>
     ))}
   </div>
 
-  <div className="region-footer" onClick={() => navigate("/home")} >
+  <button
+  className="region-footer"
+  onClick={() => navigate("/home")}
+>
     Explore all favorites by season →
-  </div>
+  </button>
 </motion.div>
 
 <motion.div className="region-block light" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -348,8 +356,8 @@ const Homepage = () => {
   </motion.div>
 
   <div className="regions-grid">
-    {interests.slice(0, 3).map((item, i) => (
-      <motion.div className="region-card" key={i} variants={fadeUp}>
+    {interests.slice(0, 3).map((item) => (
+      <motion.div className="region-card" key={item.name} variants={fadeUp}>
   <Link
     to="/home"
     style={{ textDecoration: "none", color: "inherit" }}
@@ -366,9 +374,12 @@ const Homepage = () => {
     ))}
   </div>
 
-  <div className="region-footer" onClick={() => navigate("/home")} >
+  <button
+  className="region-footer"
+  onClick={() => navigate("/home")}
+>
     Explore all great picks by interest →
-  </div>
+  </button>
 </motion.div>
 
 <motion.div className="region-block green" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -378,15 +389,12 @@ const Homepage = () => {
   </motion.div>
 
   <div className="regions-grid">
-    {groups.slice(0, 3).map((item, i) => (
-      <motion.div
+    {groups.slice(0, 3).map((item) => (
+      <Link
   className="region-card"
-  key={i}
-  variants={fadeUp}
-  onClick={() =>
-    navigate(`/search?destination=${encodeURIComponent(item.name)}`)
-  }
-  style={{ cursor: "pointer" }}
+  key={item.name}
+  to={`/search?destination=${encodeURIComponent(item.name)}`}
+  style={{ textDecoration: "none", color: "inherit" }}
 >
         <img src={item.img} alt={item.name} />
         <div className="gallery-overlay">
@@ -394,13 +402,16 @@ const Homepage = () => {
           <p>{item.description}</p>
           <span>200+ properties</span>
         </div>
-      </motion.div>
+      </Link>
     ))}
   </div>
 
-  <div className="region-footer" onClick={() => navigate("/home")}>
+  <button
+  className="region-footer"
+  onClick={() => navigate("/home")}
+>
     Explore all accommodations by group →
-  </div>
+  </button>
 </motion.div>
 
 <motion.div className="guarantee-section" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -408,8 +419,8 @@ const Homepage = () => {
   <motion.p variants={fadeUp}>We stand behind every stay with our commitments to you.</motion.p>
 
   <div className="guarantee-grid">
-    {guarantees.map((item, i) => (
-      <motion.div className="guarantee-card" key={i} variants={fadeUp}>
+    {guarantees.map((item) => (
+      <motion.div className="guarantee-card" key={item.title} variants={fadeUp}>
         <div className="icon">{getIcon(item.icon)}</div>
         <h3>{item.title}</h3>
         <p>{item.text}</p>
@@ -426,8 +437,8 @@ const Homepage = () => {
       <p>{hostSection.description}</p>
 
       <div className="host-features">
-        {hostSection.features.map((f, i) => (
-          <motion.div className="feature" key={i} variants={fadeUp}>
+        {hostSection.features.map((f) => (
+          <motion.div className="feature" key={f.title} variants={fadeUp}>
             <div className="icon">{getHostIcon(f.icon)}</div>
             <div>
               <h4>{f.title}</h4>
@@ -446,8 +457,8 @@ const Homepage = () => {
       <img src={hostImage.src} alt={hostImage.alt} />
 
       <div className="host-stats">
-        {hostSection.stats.map((s, i) => (
-          <div key={i}>
+        {hostSection.stats.map((s) => (
+          <div key={s.label}>
             <h3>{s.value}</h3>
             <span>{s.label}</span>
           </div>
