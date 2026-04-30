@@ -2640,54 +2640,98 @@ export default class IntegrationService {
     return this.disconnectCredentialIntegration(body, this.getChannexCredentialLifecycleConfig());
   }
 
+  async resolveUsableChannexIntegration(
+    userId,
+    {
+      requireSecret = false,
+      missingCredentialsError = "Channex integration is not locally usable. Reconnect required.",
+    } = {}
+  ) {
+    const integration = await this.accounts.findByUserIdAndChannel(userId, "CHANNEX");
+    if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
+      return {
+        ok: false,
+        response: bad(409, {
+          error: "Channex integration is not connected for this user.",
+          errorCode: "CHANNEX_NOT_CONNECTED",
+          status: getUnavailableChannexStatus(integration),
+        }),
+      };
+    }
+
+    const credentialsRef = requireStr(integration.credentialsRef);
+    if (!credentialsRef) {
+      return {
+        ok: false,
+        response: bad(409, {
+          error: missingCredentialsError,
+          errorCode: "CHANNEX_RECONNECT_REQUIRED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        }),
+      };
+    }
+
+    if (!requireSecret) {
+      return {
+        ok: true,
+        integration,
+        credentialsRef,
+        secret: null,
+      };
+    }
+
+    let secret;
+    try {
+      secret = await this.channexCredentialStore.readSecretOrNull(credentialsRef);
+    } catch (error) {
+      const details = describeLocalError(error);
+      return {
+        ok: false,
+        response: bad(409, {
+          error: "Stored Channex secret could not be read. Reconnect required.",
+          errorCode: "CHANNEX_SECRET_READ_FAILED",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+          details,
+        }),
+      };
+    }
+
+    if (
+      !secret ||
+      typeof secret !== "object" ||
+      Array.isArray(secret) ||
+      !hasChannexRequiredCredentialFields(secret)
+    ) {
+      return {
+        ok: false,
+        response: bad(409, {
+          error: "Stored Channex secret is missing, unreadable, or incomplete. Reconnect required.",
+          errorCode: "CHANNEX_SECRET_INVALID",
+          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
+        }),
+      };
+    }
+
+    return {
+      ok: true,
+      integration,
+      credentialsRef,
+      secret,
+    };
+  }
+
   async listChannexProperties(userId) {
     const normalizedUserId = requireStr(userId);
     if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId, {
+        requireSecret: true,
+        missingCredentialsError: "Channex credentials are missing. Reconnect required.",
+      });
+      if (!channexContext.ok) return channexContext.response;
 
-      const credentialsRef = requireStr(integration.credentialsRef);
-      if (!credentialsRef) {
-        return bad(409, {
-          error: "Channex credentials are missing. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
-
-      let secret;
-      try {
-        secret = await this.channexCredentialStore.readSecretOrNull(credentialsRef);
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(409, {
-          error: "Stored Channex secret could not be read. Reconnect required.",
-          errorCode: "CHANNEX_SECRET_READ_FAILED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          details,
-        });
-      }
-
-      if (
-        !secret ||
-        typeof secret !== "object" ||
-        Array.isArray(secret) ||
-        !hasChannexRequiredCredentialFields(secret)
-      ) {
-        return bad(409, {
-          error: "Stored Channex secret is missing, unreadable, or incomplete. Reconnect required.",
-          errorCode: "CHANNEX_SECRET_INVALID",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration, secret } = channexContext;
 
       const propertyListResult = await this.channexProviderClient.listProperties(secret);
       if (!propertyListResult?.success) {
@@ -2733,49 +2777,13 @@ export default class IntegrationService {
     }
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId, {
+        requireSecret: true,
+        missingCredentialsError: "Channex credentials are missing. Reconnect required.",
+      });
+      if (!channexContext.ok) return channexContext.response;
 
-      const credentialsRef = requireStr(integration.credentialsRef);
-      if (!credentialsRef) {
-        return bad(409, {
-          error: "Channex credentials are missing. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
-
-      let secret;
-      try {
-        secret = await this.channexCredentialStore.readSecretOrNull(credentialsRef);
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(409, {
-          error: "Stored Channex secret could not be read. Reconnect required.",
-          errorCode: "CHANNEX_SECRET_READ_FAILED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          details,
-        });
-      }
-
-      if (
-        !secret ||
-        typeof secret !== "object" ||
-        Array.isArray(secret) ||
-        !hasChannexRequiredCredentialFields(secret)
-      ) {
-        return bad(409, {
-          error: "Stored Channex secret is missing, unreadable, or incomplete. Reconnect required.",
-          errorCode: "CHANNEX_SECRET_INVALID",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration, secret } = channexContext;
 
       const roomTypeListResult = await this.channexProviderClient.listRoomTypes(secret, normalizedExternalPropertyId);
       if (!roomTypeListResult?.success) {
@@ -2822,49 +2830,13 @@ export default class IntegrationService {
     }
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId, {
+        requireSecret: true,
+        missingCredentialsError: "Channex credentials are missing. Reconnect required.",
+      });
+      if (!channexContext.ok) return channexContext.response;
 
-      const credentialsRef = requireStr(integration.credentialsRef);
-      if (!credentialsRef) {
-        return bad(409, {
-          error: "Channex credentials are missing. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
-
-      let secret;
-      try {
-        secret = await this.channexCredentialStore.readSecretOrNull(credentialsRef);
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(409, {
-          error: "Stored Channex secret could not be read. Reconnect required.",
-          errorCode: "CHANNEX_SECRET_READ_FAILED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-          details,
-        });
-      }
-
-      if (
-        !secret ||
-        typeof secret !== "object" ||
-        Array.isArray(secret) ||
-        !hasChannexRequiredCredentialFields(secret)
-      ) {
-        return bad(409, {
-          error: "Stored Channex secret is missing, unreadable, or incomplete. Reconnect required.",
-          errorCode: "CHANNEX_SECRET_INVALID",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration, secret } = channexContext;
 
       const ratePlanListResult = await this.channexProviderClient.listRatePlans(secret, normalizedExternalRoomTypeId);
       if (!ratePlanListResult?.success) {
@@ -2911,22 +2883,10 @@ export default class IntegrationService {
     if (!externalPropertyId) return bad(400, { error: "Missing required field: externalPropertyId" });
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
+      if (!channexContext.ok) return channexContext.response;
 
-      if (!requireStr(integration.credentialsRef)) {
-        return bad(409, {
-          error: "Channex integration is not locally usable. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration } = channexContext;
 
       const saved = await this.upsertIntegrationProperty(integration.id, {
         domitsPropertyId,
@@ -2970,22 +2930,10 @@ export default class IntegrationService {
     if (!externalRoomTypeId) return bad(400, { error: "Missing required field: externalRoomTypeId" });
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
+      if (!channexContext.ok) return channexContext.response;
 
-      if (!requireStr(integration.credentialsRef)) {
-        return bad(409, {
-          error: "Channex integration is not locally usable. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration } = channexContext;
 
       const saved = await this.roomTypes.upsert({
         integrationAccountId: integration.id,
@@ -3030,22 +2978,10 @@ export default class IntegrationService {
     if (!externalRatePlanId) return bad(400, { error: "Missing required field: externalRatePlanId" });
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
+      if (!channexContext.ok) return channexContext.response;
 
-      if (!requireStr(integration.credentialsRef)) {
-        return bad(409, {
-          error: "Channex integration is not locally usable. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration } = channexContext;
 
       const saved = await this.ratePlans.upsert({
         integrationAccountId: integration.id,
@@ -3081,22 +3017,10 @@ export default class IntegrationService {
     if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
+      if (!channexContext.ok) return channexContext.response;
 
-      if (!requireStr(integration.credentialsRef)) {
-        return bad(409, {
-          error: "Channex integration is not locally usable. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration } = channexContext;
 
       const mappings = await this.roomTypes.listByAccountId(integration.id);
 
@@ -3127,22 +3051,10 @@ export default class IntegrationService {
     if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
+      if (!channexContext.ok) return channexContext.response;
 
-      if (!requireStr(integration.credentialsRef)) {
-        return bad(409, {
-          error: "Channex integration is not locally usable. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration } = channexContext;
 
       const mappings = await this.ratePlans.listByAccountId(integration.id);
 
@@ -3179,22 +3091,10 @@ export default class IntegrationService {
     }
 
     try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
-      if (!integration || String(integration.status || "").toUpperCase() === CHANNEX_STATUS.DISCONNECTED) {
-        return bad(409, {
-          error: "Channex integration is not connected for this user.",
-          errorCode: "CHANNEX_NOT_CONNECTED",
-          status: getUnavailableChannexStatus(integration),
-        });
-      }
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
+      if (!channexContext.ok) return channexContext.response;
 
-      if (!requireStr(integration.credentialsRef)) {
-        return bad(409, {
-          error: "Channex integration is not locally usable. Reconnect required.",
-          errorCode: "CHANNEX_RECONNECT_REQUIRED",
-          status: CHANNEX_STATUS.RECONNECT_REQUIRED,
-        });
-      }
+      const { integration } = channexContext;
 
       const [propertyMappings, roomTypeMappings, ratePlanMappings] = await Promise.all([
         this.props.listByAccountId(integration.id),
