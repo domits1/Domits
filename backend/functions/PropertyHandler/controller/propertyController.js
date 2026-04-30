@@ -1152,54 +1152,61 @@ export class PropertyController {
         return Math.round(parsedValue);
     }
 
-    normalizeWebsiteAnalyticsPayload(eventType, payload) {
+    normalizeWebsiteBuildAnalyticsPayload(eventType, payload) {
         const attemptId = String(payload?.attemptId || "").trim();
         const templateKey = String(payload?.templateKey || "").trim();
+        if (!attemptId) {
+            throw new TypeError("payload.attemptId is required for website build analytics.");
+        }
 
+        const normalizedPayload = {
+            attemptId,
+        };
+
+        if (templateKey) {
+            normalizedPayload.templateKey = templateKey;
+        }
+
+        if (eventType === "WEBSITE_PREVIEW_READY" || eventType === "WEBSITE_BUILD_SUCCEEDED" || eventType === "WEBSITE_BUILD_FAILED") {
+            normalizedPayload.durationMs = this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs");
+        }
+
+        if (eventType === "WEBSITE_BUILD_FAILED") {
+            const phase = String(payload?.phase || "").trim();
+            if (phase) {
+                normalizedPayload.phase = phase;
+            }
+        }
+
+        return normalizedPayload;
+    }
+
+    normalizeWebsiteSurfaceAnalyticsPayload(payload) {
+        const surface = String(payload?.surface || "").trim().toLowerCase();
+        const viewport = String(payload?.viewport || "").trim().toLowerCase();
+
+        if (!WEBSITE_ANALYTICS_SURFACES.has(surface)) {
+            throw new TypeError("payload.surface must be 'preview' or 'live'.");
+        }
+
+        if (!WEBSITE_ANALYTICS_VIEWPORTS.has(viewport)) {
+            throw new TypeError("payload.viewport must be 'mobile' or 'desktop'.");
+        }
+
+        return {
+            surface,
+            viewport,
+            durationMs: this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs"),
+        };
+    }
+
+    normalizeWebsiteAnalyticsPayload(eventType, payload) {
         if (WEBSITE_HOST_ANALYTICS_EVENT_TYPES.has(eventType)) {
-            if (!attemptId) {
-                throw new TypeError("payload.attemptId is required for website build analytics.");
-            }
-
-            const normalizedPayload = {
-                attemptId,
-            };
-
-            if (templateKey) {
-                normalizedPayload.templateKey = templateKey;
-            }
-
-            if (eventType === "WEBSITE_PREVIEW_READY" || eventType === "WEBSITE_BUILD_SUCCEEDED" || eventType === "WEBSITE_BUILD_FAILED") {
-                normalizedPayload.durationMs = this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs");
-            }
-
-            if (eventType === "WEBSITE_BUILD_FAILED") {
-                const phase = String(payload?.phase || "").trim();
-                if (phase) {
-                    normalizedPayload.phase = phase;
-                }
-            }
-
-            return normalizedPayload;
+            return this.normalizeWebsiteBuildAnalyticsPayload(eventType, payload);
         }
 
         if (eventType === "SITE_LCP_RECORDED") {
-            const surface = String(payload?.surface || "").trim().toLowerCase();
-            const viewport = String(payload?.viewport || "").trim().toLowerCase();
-
-            if (!WEBSITE_ANALYTICS_SURFACES.has(surface)) {
-                throw new TypeError("payload.surface must be 'preview' or 'live'.");
-            }
-
-            if (!WEBSITE_ANALYTICS_VIEWPORTS.has(viewport)) {
-                throw new TypeError("payload.viewport must be 'mobile' or 'desktop'.");
-            }
-
-            return {
-                surface,
-                viewport,
-                durationMs: this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs"),
-            };
+            return this.normalizeWebsiteSurfaceAnalyticsPayload(payload);
         }
 
         throw new TypeError("Unsupported website eventType.");
@@ -1243,6 +1250,53 @@ export class PropertyController {
         } catch (error) {
             console.error("Failed to record standalone website event.", error);
         }
+    }
+
+    async recordPublicWebsiteAnalyticsEvent({ draftId, eventType, payload }) {
+        if (!draftId) {
+            return this.badRequest("Missing draftId.");
+        }
+
+        const draft = await this.standaloneSiteDraftRepository.getDraftById(draftId);
+        if (!draft || draft.status === "SUSPENDED") {
+            return {
+                statusCode: 404,
+                headers: draftResponseHeaders,
+                body: JSON.stringify({ message: "Website analytics target not found." }),
+            };
+        }
+
+        await this.standaloneSiteEventRepository.recordEvent({
+            draftId: draft.id,
+            propertyId: draft.propertyId,
+            hostId: draft.hostId,
+            eventType,
+            payload,
+        });
+
+        return null;
+    }
+
+    async recordHostWebsiteAnalyticsEvent({ event, propertyId, draftId, eventType, payload }) {
+        if (!propertyId) {
+            return this.badRequest("Missing propertyId.");
+        }
+
+        const accessToken = event.headers.Authorization || event.headers.authorization;
+        const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+        await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+        const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+
+        await this.standaloneSiteEventRepository.recordEvent({
+            draftId: existingDraft?.id || draftId || null,
+            propertyId,
+            hostId,
+            eventType,
+            payload,
+        });
+
+        return null;
     }
 
     // -------------------------
@@ -1577,56 +1631,23 @@ export class PropertyController {
             }
 
             const normalizedPayload = this.normalizeWebsiteAnalyticsPayload(eventType, payload);
-
-            if (WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES.has(eventType)) {
-                if (!draftId) {
-                    return this.badRequest("Missing draftId.");
-                }
-
-                const draft = await this.standaloneSiteDraftRepository.getDraftById(draftId);
-                if (!draft || draft.status === "SUSPENDED") {
-                    return {
-                        statusCode: 404,
-                        headers: draftResponseHeaders,
-                        body: JSON.stringify({ message: "Website analytics target not found." }),
-                    };
-                }
-
-                await this.standaloneSiteEventRepository.recordEvent({
-                    draftId: draft.id,
-                    propertyId: draft.propertyId,
-                    hostId: draft.hostId,
+            const earlyResponse = WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES.has(eventType)
+                ? await this.recordPublicWebsiteAnalyticsEvent({
+                    draftId,
+                    eventType,
+                    payload: normalizedPayload,
+                })
+                : await this.recordHostWebsiteAnalyticsEvent({
+                    event,
+                    propertyId,
+                    draftId,
                     eventType,
                     payload: normalizedPayload,
                 });
 
-                return {
-                    statusCode: 204,
-                    headers: draftResponseHeaders,
-                };
+            if (earlyResponse) {
+                return earlyResponse;
             }
-
-            if (!WEBSITE_HOST_ANALYTICS_EVENT_TYPES.has(eventType)) {
-                return this.badRequest("Unsupported website eventType.");
-            }
-
-            if (!propertyId) {
-                return this.badRequest("Missing propertyId.");
-            }
-
-            const accessToken = event.headers.Authorization || event.headers.authorization;
-            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-
-            const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
-
-            await this.standaloneSiteEventRepository.recordEvent({
-                draftId: existingDraft?.id || draftId || null,
-                propertyId,
-                hostId,
-                eventType,
-                payload: normalizedPayload,
-            });
 
             return {
                 statusCode: 204,

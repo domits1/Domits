@@ -1,3 +1,5 @@
+export { EMPTY_WEBSITE_KPIS } from "./websiteKpiFields";
+
 export const SURFACE_KPI_TAB_PREVIEW = "preview";
 export const SURFACE_KPI_TAB_LIVE = "live";
 
@@ -6,111 +8,88 @@ export const SURFACE_KPI_TAB_OPTIONS = Object.freeze([
   { id: SURFACE_KPI_TAB_LIVE, label: "Live" },
 ]);
 
-export const EMPTY_WEBSITE_KPIS = Object.freeze({
-  currentDraftCount: 0,
-  draftCreatedCount: 0,
-  draftSaveCount: 0,
-  buildStartedCount: 0,
-  buildSucceededCount: 0,
-  buildFailedCount: 0,
-  buildAbandonedCount: 0,
-  buildSuccessRate: null,
-  buildFailureRate: null,
-  buildAbandonmentRate: null,
-  timeToFirstPreviewP95: null,
-  publicPreviewViewCount: 0,
-  uniquePreviewedWebsiteCount: 0,
-  livePreviewUpdateCount: 0,
-  deletedWebsiteCount: 0,
-  lastPublicPreviewAt: 0,
-  lastLivePreviewUpdateAt: 0,
-  previewSiteLcpMobileP75: null,
-  liveSiteLcpMobileP75: null,
-  timeToPublishP95: null,
-  costPerActiveSitePerMonth: null,
-  siteLcpMobileP75: null,
-  fallbackSubdomainAvailability: null,
-  quoteToChargeMismatchRate: null,
-  bookingApiErrorRate: null,
-  bookingFunnelCompletionRate: null,
-  customDomainSetupSuccessRate: null,
-  deletionReasonBreakdown: [],
+const createResearchKpiDefinition = ({ id, criteria, valueKey, formatter, note }) => ({
+  id,
+  criteria,
+  valueKey,
+  formatter,
+  emptyValue: "Pending",
+  note,
 });
 
 const RESEARCH_KPI_DEFINITIONS = Object.freeze([
-  {
+  createResearchKpiDefinition({
     id: "time_to_publish_p95",
     criteria: ["Scalability", "User experience"],
     valueKey: "timeToPublishP95",
     formatter: (value) => `${value.toFixed(1)} min`,
-    emptyValue: "Pending",
     note:
       "Requires a real publish lifecycle with publish-requested and publish-succeeded timestamps. The current preview-link workflow is not the final publish contract.",
-  },
-  {
+  }),
+  createResearchKpiDefinition({
     id: "cost_per_active_site_per_month",
     criteria: ["Scalability", "Cost"],
     valueKey: "costPerActiveSitePerMonth",
     formatter: (value) => `EUR ${value.toFixed(2)}`,
-    emptyValue: "Pending",
     note:
       "Requires infrastructure cost allocation plus a real count of active published sites. Drafts and preview links are not enough for a defensible value.",
-  },
-  {
+  }),
+  createResearchKpiDefinition({
     id: "site_lcp_mobile_p75",
     criteria: ["Performance"],
     valueKey: "siteLcpMobileP75",
     formatter: (value) => `${value.toFixed(2)} s`,
-    emptyValue: "Pending",
     note:
       "Live mobile web-vitals telemetry still requires a real published standalone website surface. Preview LCP is tracked separately in this dashboard.",
-  },
-  {
+  }),
+  createResearchKpiDefinition({
     id: "fallback_subdomain_availability",
     criteria: ["Reliability"],
     valueKey: "fallbackSubdomainAvailability",
     formatter: (value) => `${value.toFixed(2)}%`,
-    emptyValue: "Pending",
     note:
       "Requires real fallback subdomain routing plus synthetic availability checks. Preview links do not represent subdomain uptime.",
-  },
-  {
+  }),
+  createResearchKpiDefinition({
     id: "booking_api_error_rate",
     criteria: ["Reliability", "Correctness"],
     valueKey: "bookingApiErrorRate",
     formatter: (value) => `${value.toFixed(2)}%`,
-    emptyValue: "Pending",
     note:
       "Requires the standalone booking API path to be live and instrumented. This remains a v2 metric until direct booking flow is active.",
-  },
-  {
+  }),
+  createResearchKpiDefinition({
     id: "quote_to_charge_mismatch_rate",
     criteria: ["Correctness"],
     valueKey: "quoteToChargeMismatchRate",
     formatter: (value) => `${value.toFixed(2)}%`,
-    emptyValue: "Pending",
     note:
       "Requires quote issuance and final successful charge comparison. That data does not exist until checkout and payment instrumentation is in place.",
-  },
-  {
+  }),
+  createResearchKpiDefinition({
     id: "booking_funnel_completion_rate",
     criteria: ["User experience"],
     valueKey: "bookingFunnelCompletionRate",
     formatter: (value) => `${value.toFixed(2)}%`,
-    emptyValue: "Pending",
     note:
       "Requires end-to-end funnel events from quote to completed booking. Current standalone website analytics stop at draft and preview usage.",
-  },
-  {
+  }),
+  createResearchKpiDefinition({
     id: "custom_domain_setup_success_rate",
     criteria: ["User experience"],
     valueKey: "customDomainSetupSuccessRate",
     formatter: (value) => `${value.toFixed(2)}%`,
-    emptyValue: "Pending",
     note:
       "Requires custom-domain setup flow, verification states, and success/failure events. That domain workflow is not implemented yet.",
-  },
+  }),
 ]);
+
+const createMetricCard = (id, title, value, meta) => ({
+  id,
+  title,
+  value,
+  meta,
+});
 
 export const formatKpiTimestamp = (timestamp) => {
   const parsedValue = Number(timestamp);
@@ -138,78 +117,78 @@ export const formatNullableDurationMs = (value) =>
   typeof value === "number" && Number.isFinite(value) ? `${(value / 1000).toFixed(2)} s` : "No data yet";
 
 export const buildWebsiteMetricCards = (websiteKpis) => [
-  {
-    id: "active-websites",
-    title: "Active website drafts",
-    value: websiteKpis.currentDraftCount,
-    meta: `${websiteKpis.draftCreatedCount} drafts created across Domits`,
-  },
-  {
-    id: "build-started",
-    title: "Build attempts started",
-    value: websiteKpis.buildStartedCount,
-    meta: "How often hosts pressed Build my website",
-  },
-  {
-    id: "build-succeeded",
-    title: "Successful website builds",
-    value: websiteKpis.buildSucceededCount,
-    meta: "Build attempts that reached preview and persisted a draft successfully",
-  },
-  {
-    id: "time-to-first-preview",
-    title: "Time to first preview p95",
-    value: formatNullableDurationMs(websiteKpis.timeToFirstPreviewP95),
-    meta: "95th percentile from build click until preview rendered and usable",
-  },
-  {
-    id: "build-success-rate",
-    title: "Build success rate",
-    value: formatNullablePercentage(websiteKpis.buildSuccessRate),
-    meta: "Successful website builds divided by all recorded build starts",
-  },
-  {
-    id: "build-failure-rate",
-    title: "Build failure rate",
-    value: formatNullablePercentage(websiteKpis.buildFailureRate),
-    meta: "Build attempts that ended in a recorded failure",
-  },
-  {
-    id: "build-abandonment-rate",
-    title: "Build abandonment rate",
-    value: formatNullablePercentage(websiteKpis.buildAbandonmentRate),
-    meta: `${websiteKpis.buildAbandonedCount} attempts passed the 10 minute threshold without success or failure`,
-  },
-  {
-    id: "draft-saves",
-    title: "Draft saves",
-    value: websiteKpis.draftSaveCount,
-    meta: "How often saved editor changes were recorded",
-  },
-  {
-    id: "preview-opens",
-    title: "Preview link opens",
-    value: websiteKpis.publicPreviewViewCount,
-    meta: `Last preview opened: ${formatKpiTimestamp(websiteKpis.lastPublicPreviewAt)}`,
-  },
-  {
-    id: "unique-previewed",
-    title: "Unique sites previewed",
-    value: websiteKpis.uniquePreviewedWebsiteCount,
-    meta: "Distinct website drafts opened through shared preview links",
-  },
-  {
-    id: "live-preview-updates",
-    title: "Live preview updates",
-    value: websiteKpis.livePreviewUpdateCount,
-    meta: `Last update pushed: ${formatKpiTimestamp(websiteKpis.lastLivePreviewUpdateAt)}`,
-  },
-  {
-    id: "deleted-websites",
-    title: "Deleted websites",
-    value: websiteKpis.deletedWebsiteCount,
-    meta: "Website drafts removed from the standalone website workspace",
-  },
+  createMetricCard(
+    "active-websites",
+    "Active website drafts",
+    websiteKpis.currentDraftCount,
+    `${websiteKpis.draftCreatedCount} drafts created across Domits`
+  ),
+  createMetricCard(
+    "build-started",
+    "Build attempts started",
+    websiteKpis.buildStartedCount,
+    "How often hosts pressed Build my website"
+  ),
+  createMetricCard(
+    "build-succeeded",
+    "Successful website builds",
+    websiteKpis.buildSucceededCount,
+    "Build attempts that reached preview and persisted a draft successfully"
+  ),
+  createMetricCard(
+    "time-to-first-preview",
+    "Time to first preview p95",
+    formatNullableDurationMs(websiteKpis.timeToFirstPreviewP95),
+    "95th percentile from build click until preview rendered and usable"
+  ),
+  createMetricCard(
+    "build-success-rate",
+    "Build success rate",
+    formatNullablePercentage(websiteKpis.buildSuccessRate),
+    "Successful website builds divided by all recorded build starts"
+  ),
+  createMetricCard(
+    "build-failure-rate",
+    "Build failure rate",
+    formatNullablePercentage(websiteKpis.buildFailureRate),
+    "Build attempts that ended in a recorded failure"
+  ),
+  createMetricCard(
+    "build-abandonment-rate",
+    "Build abandonment rate",
+    formatNullablePercentage(websiteKpis.buildAbandonmentRate),
+    `${websiteKpis.buildAbandonedCount} attempts passed the 10 minute threshold without success or failure`
+  ),
+  createMetricCard(
+    "draft-saves",
+    "Draft saves",
+    websiteKpis.draftSaveCount,
+    "How often saved editor changes were recorded"
+  ),
+  createMetricCard(
+    "preview-opens",
+    "Preview link opens",
+    websiteKpis.publicPreviewViewCount,
+    `Last preview opened: ${formatKpiTimestamp(websiteKpis.lastPublicPreviewAt)}`
+  ),
+  createMetricCard(
+    "unique-previewed",
+    "Unique sites previewed",
+    websiteKpis.uniquePreviewedWebsiteCount,
+    "Distinct website drafts opened through shared preview links"
+  ),
+  createMetricCard(
+    "live-preview-updates",
+    "Live preview updates",
+    websiteKpis.livePreviewUpdateCount,
+    `Last update pushed: ${formatKpiTimestamp(websiteKpis.lastLivePreviewUpdateAt)}`
+  ),
+  createMetricCard(
+    "deleted-websites",
+    "Deleted websites",
+    websiteKpis.deletedWebsiteCount,
+    "Website drafts removed from the standalone website workspace"
+  ),
 ];
 
 export const buildSurfacePerformanceCards = (websiteKpis) => ({
@@ -218,12 +197,12 @@ export const buildSurfacePerformanceCards = (websiteKpis) => ({
     description:
       "Preview LCP is captured from the public preview route when it is opened on a mobile viewport.",
     metrics: [
-      {
-        id: "preview-site-lcp-mobile-p75",
-        title: "site_lcp_mobile_p75",
-        value: formatNullableDurationMs(websiteKpis.previewSiteLcpMobileP75),
-        meta: "75th percentile Largest Contentful Paint for preview visits on mobile.",
-      },
+      createMetricCard(
+        "preview-site-lcp-mobile-p75",
+        "site_lcp_mobile_p75",
+        formatNullableDurationMs(websiteKpis.previewSiteLcpMobileP75),
+        "75th percentile Largest Contentful Paint for preview visits on mobile."
+      ),
     ],
   },
   [SURFACE_KPI_TAB_LIVE]: {
@@ -231,12 +210,12 @@ export const buildSurfacePerformanceCards = (websiteKpis) => ({
     description:
       "Live-site web-vitals remain pending until the published standalone website surface and routing are active.",
     metrics: [
-      {
-        id: "live-site-lcp-mobile-p75",
-        title: "site_lcp_mobile_p75",
-        value: formatNullableDurationMs(websiteKpis.liveSiteLcpMobileP75),
-        meta: "No live standalone site telemetry is being recorded yet.",
-      },
+      createMetricCard(
+        "live-site-lcp-mobile-p75",
+        "site_lcp_mobile_p75",
+        formatNullableDurationMs(websiteKpis.liveSiteLcpMobileP75),
+        "No live standalone site telemetry is being recorded yet."
+      ),
     ],
   },
 });

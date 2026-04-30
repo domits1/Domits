@@ -9,7 +9,6 @@ import {
   buildSurfacePerformanceCards,
   buildWebsiteMetricCards,
   EMPTY_WEBSITE_KPIS,
-  SURFACE_KPI_TAB_LIVE,
   SURFACE_KPI_TAB_OPTIONS,
   SURFACE_KPI_TAB_PREVIEW,
 } from "./websiteKpiConfig";
@@ -43,6 +42,36 @@ function WebsiteKpiDashboardPage() {
   const metricCards = buildWebsiteMetricCards(websiteKpis);
   const surfacePerformanceCards = buildSurfacePerformanceCards(websiteKpis);
   const researchKpiCards = buildResearchKpiCards(websiteKpis);
+  const hasDeletionReasons = websiteKpis.deletionReasonBreakdown.length > 0;
+
+  const renderDeletionReasonContent = () => {
+    if (isLoadingWebsiteKpis) {
+      return (
+        <div className={styles.stateCard}>
+          <PulseBarsLoader message="Loading website deletion reasons..." />
+        </div>
+      );
+    }
+
+    if (hasDeletionReasons) {
+      return (
+        <div className={styles.deletionReasonList}>
+          {websiteKpis.deletionReasonBreakdown.map((reasonEntry) => (
+            <div key={reasonEntry.reason} className={styles.deletionReasonRow}>
+              <span>{reasonEntry.reason}</span>
+              <strong>{reasonEntry.count}</strong>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <p className={styles.previewHelperText}>
+        No website deletions with selected reasons have been recorded yet.
+      </p>
+    );
+  };
 
   const renderKpiContent = () => {
     if (websiteKpisError) {
@@ -146,24 +175,7 @@ function WebsiteKpiDashboardPage() {
             <p>Counts are aggregated from the reasons selected in the standalone website delete flow.</p>
           </div>
 
-          {isLoadingWebsiteKpis ? (
-            <div className={styles.stateCard}>
-              <PulseBarsLoader message="Loading website deletion reasons..." />
-            </div>
-          ) : websiteKpis.deletionReasonBreakdown.length > 0 ? (
-            <div className={styles.deletionReasonList}>
-              {websiteKpis.deletionReasonBreakdown.map((reasonEntry) => (
-                <div key={reasonEntry.reason} className={styles.deletionReasonRow}>
-                  <span>{reasonEntry.reason}</span>
-                  <strong>{reasonEntry.count}</strong>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className={styles.previewHelperText}>
-              No website deletions with selected reasons have been recorded yet.
-            </p>
-          )}
+          {renderDeletionReasonContent()}
         </article>
       </>
     );

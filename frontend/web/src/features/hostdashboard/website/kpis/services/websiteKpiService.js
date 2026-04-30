@@ -1,6 +1,11 @@
 import { getAccessToken } from "../../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../../hostproperty/constants";
 import { getApiErrorMessage } from "../../../hostproperty/utils/hostPropertyUtils";
+import {
+  EMPTY_WEBSITE_KPIS,
+  WEBSITE_KPI_COUNT_FIELD_KEYS,
+  WEBSITE_KPI_NULLABLE_FIELD_KEYS,
+} from "../websiteKpiFields";
 
 const buildWebsiteKpisUrl = () => `${PROPERTY_API_BASE}/website/kpis`;
 
@@ -22,6 +27,9 @@ const normalizeNullableMetric = (value) => {
   const parsedValue = Number(value);
   return Number.isFinite(parsedValue) ? parsedValue : null;
 };
+
+const normalizeMetricGroup = (parsedBody, fieldKeys, normalizer) =>
+  Object.fromEntries(fieldKeys.map((fieldKey) => [fieldKey, normalizer(parsedBody?.[fieldKey])]));
 
 export const fetchWebsiteKpis = async () => {
   const response = await fetch(buildWebsiteKpisUrl(), {
@@ -51,33 +59,9 @@ export const fetchWebsiteKpis = async () => {
     : [];
 
   return {
-    currentDraftCount: normalizeNumericMetric(parsedBody?.currentDraftCount),
-    draftCreatedCount: normalizeNumericMetric(parsedBody?.draftCreatedCount),
-    draftSaveCount: normalizeNumericMetric(parsedBody?.draftSaveCount),
-    buildStartedCount: normalizeNumericMetric(parsedBody?.buildStartedCount),
-    buildSucceededCount: normalizeNumericMetric(parsedBody?.buildSucceededCount),
-    buildFailedCount: normalizeNumericMetric(parsedBody?.buildFailedCount),
-    buildAbandonedCount: normalizeNumericMetric(parsedBody?.buildAbandonedCount),
-    buildSuccessRate: normalizeNullableMetric(parsedBody?.buildSuccessRate),
-    buildFailureRate: normalizeNullableMetric(parsedBody?.buildFailureRate),
-    buildAbandonmentRate: normalizeNullableMetric(parsedBody?.buildAbandonmentRate),
-    timeToFirstPreviewP95: normalizeNullableMetric(parsedBody?.timeToFirstPreviewP95),
-    publicPreviewViewCount: normalizeNumericMetric(parsedBody?.publicPreviewViewCount),
-    uniquePreviewedWebsiteCount: normalizeNumericMetric(parsedBody?.uniquePreviewedWebsiteCount),
-    livePreviewUpdateCount: normalizeNumericMetric(parsedBody?.livePreviewUpdateCount),
-    deletedWebsiteCount: normalizeNumericMetric(parsedBody?.deletedWebsiteCount),
-    lastPublicPreviewAt: normalizeNumericMetric(parsedBody?.lastPublicPreviewAt),
-    lastLivePreviewUpdateAt: normalizeNumericMetric(parsedBody?.lastLivePreviewUpdateAt),
-    previewSiteLcpMobileP75: normalizeNullableMetric(parsedBody?.previewSiteLcpMobileP75),
-    liveSiteLcpMobileP75: normalizeNullableMetric(parsedBody?.liveSiteLcpMobileP75),
-    timeToPublishP95: normalizeNullableMetric(parsedBody?.timeToPublishP95),
-    costPerActiveSitePerMonth: normalizeNullableMetric(parsedBody?.costPerActiveSitePerMonth),
-    siteLcpMobileP75: normalizeNullableMetric(parsedBody?.siteLcpMobileP75),
-    fallbackSubdomainAvailability: normalizeNullableMetric(parsedBody?.fallbackSubdomainAvailability),
-    quoteToChargeMismatchRate: normalizeNullableMetric(parsedBody?.quoteToChargeMismatchRate),
-    bookingApiErrorRate: normalizeNullableMetric(parsedBody?.bookingApiErrorRate),
-    bookingFunnelCompletionRate: normalizeNullableMetric(parsedBody?.bookingFunnelCompletionRate),
-    customDomainSetupSuccessRate: normalizeNullableMetric(parsedBody?.customDomainSetupSuccessRate),
+    ...EMPTY_WEBSITE_KPIS,
+    ...normalizeMetricGroup(parsedBody, WEBSITE_KPI_COUNT_FIELD_KEYS, normalizeNumericMetric),
+    ...normalizeMetricGroup(parsedBody, WEBSITE_KPI_NULLABLE_FIELD_KEYS, normalizeNullableMetric),
     deletionReasonBreakdown,
   };
 };

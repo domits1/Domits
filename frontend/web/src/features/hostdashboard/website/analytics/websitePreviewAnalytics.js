@@ -36,7 +36,7 @@ export const startWebsitePreviewLcpObserver = ({ enabled, onReport }) => {
   try {
     observer = new globalThis.PerformanceObserver((entryList) => {
       const entries = entryList.getEntries();
-      const latestEntry = entries[entries.length - 1];
+      const latestEntry = entries.at(-1);
       if (latestEntry?.startTime) {
         latestLargestContentfulPaint = latestEntry.startTime;
       }

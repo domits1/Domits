@@ -34,11 +34,10 @@ WebsiteKpiMetricCard.propTypes = {
 };
 
 export function WebsiteKpiResearchCard({ researchKpiCard, isLoading }) {
-  const statusClassName = isLoading
-    ? styles.researchKpiStatusBadgePending
-    : researchKpiCard.isInstrumented
-    ? styles.researchKpiStatusBadgeReady
-    : styles.researchKpiStatusBadgePending;
+  const statusClassName =
+    isLoading || !researchKpiCard.isInstrumented
+      ? styles.researchKpiStatusBadgePending
+      : styles.researchKpiStatusBadgeReady;
 
   return (
     <article className={styles.researchKpiCard}>

@@ -1,4 +1,4 @@
-import {
+export {
   WEBSITE_BUILD_FAILED_EVENT,
   WEBSITE_BUILD_STARTED_EVENT,
   WEBSITE_BUILD_SUCCEEDED_EVENT,
@@ -6,12 +6,6 @@ import {
 } from "./websiteAnalyticsEventTypes";
 
 export const WEBSITE_BUILD_FAILURE_PHASE_PERSIST = "persist_draft";
-export {
-  WEBSITE_BUILD_FAILED_EVENT,
-  WEBSITE_BUILD_STARTED_EVENT,
-  WEBSITE_BUILD_SUCCEEDED_EVENT,
-  WEBSITE_PREVIEW_READY_EVENT,
-};
 
 let websiteBuildAttemptSequence = 0;
 
