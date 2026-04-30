@@ -585,7 +585,7 @@
 }
 
 @media (max-width: 900px) {
-  .domits-homepage {
+  .homePage-container .domits-homepage {
     .domits-popularAccommodation .domits-accommodationGroup {
       grid-template-columns: repeat(2, 1fr);
       gap: 20px;
@@ -601,16 +601,22 @@
       gap: 20px;
     }
 
+    .feature h4{
+      text-align: left;
+    } 
+
     .host-container {
       grid-template-columns: 1fr;
       text-align: center;
     }
 
-    .guarantee-section .guarantee-grid {
+    .guarantee-section {
+    .guarantee-grid {
       grid-template-columns: repeat(2, 1fr);
     }
+  }
 
-    .host-right img {
+    .host-right img{
       height: 400px;
     }
 
@@ -619,13 +625,13 @@
     }
 
     .host-stats {
-      width: 85%;
+      width: 70%;
     }
   }
 }
 
 @media (max-width: 600px) {
-  .domits-homepage {
+  .homePage-container .domits-homepage {
     .domits-searchContainer {
       height: 70vh;
       padding: 0 20px;
@@ -695,31 +701,42 @@
       grid-template-columns: 1fr;
     }
 
+    .feature h4{
+      text-align: left;
+    } 
+    
     .guarantee-section {
-      padding: 50px 20px;
+    padding: 50px 20px;
 
-      .guarantee-grid {
-        grid-template-columns: 1fr;
-        gap: 30px;
-      }
-
-      .guarantee-card:not(:last-child)::after {
-        display: none;
-      }
+    .guarantee-grid {
+      grid-template-columns: 1fr;
+      gap: 30px;
     }
 
-    .host-right img {
-      height: 320px;
-    }
-
-    .host-stats {
-      bottom: 12px;
-      width: 92%;
-      padding: 12px;
-      gap: 6px;
-
-      h3 { font-size: 14px; }
-      span { font-size: 10px; }
+    .guarantee-card:not(:last-child)::after {
+      display: none;
     }
   }
+
+  .host-right {
+    img {
+      height: 320px;
+    }
+  }
+
+  .host-stats {
+    bottom: 12px;
+    width: 92%;
+    padding: 12px;
+    gap: 6px;
+
+    h3 {
+      font-size: 14px;
+    }
+
+    span {
+      font-size: 10px;
+    }
+  }
+}
 }
