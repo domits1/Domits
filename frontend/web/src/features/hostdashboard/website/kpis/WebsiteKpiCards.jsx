@@ -9,9 +9,12 @@ export function WebsiteKpiMetricCard({
   meta,
   isLoading,
   loadingMeta = "Loading aggregated website activity...",
+  isHighlighted = false,
 }) {
+  const cardClassName = `${styles.kpiCard} ${isHighlighted ? styles.kpiCardUpdated : ""}`.trim();
+
   return (
-    <article className={styles.kpiCard}>
+    <article className={cardClassName}>
       <p className={styles.kpiCardTitle}>{title}</p>
       {isLoading ? (
         <div className={styles.kpiCardLoader}>
@@ -31,16 +34,20 @@ WebsiteKpiMetricCard.propTypes = {
   meta: PropTypes.string.isRequired,
   isLoading: PropTypes.bool.isRequired,
   loadingMeta: PropTypes.string,
+  isHighlighted: PropTypes.bool,
 };
 
-export function WebsiteKpiResearchCard({ researchKpiCard, isLoading }) {
+export function WebsiteKpiResearchCard({ researchKpiCard, isLoading, isHighlighted = false }) {
   const statusClassName =
     isLoading || !researchKpiCard.isInstrumented
       ? styles.researchKpiStatusBadgePending
       : styles.researchKpiStatusBadgeReady;
+  const cardClassName = `${styles.researchKpiCard} ${
+    isHighlighted ? styles.researchKpiCardUpdated : ""
+  }`.trim();
 
   return (
-    <article className={styles.researchKpiCard}>
+    <article className={cardClassName}>
       <div className={styles.researchKpiCardHeader}>
         <p className={styles.researchKpiCardTitle}>{researchKpiCard.id}</p>
         <span className={`${styles.researchKpiStatusBadge} ${statusClassName}`.trim()}>
@@ -83,4 +90,5 @@ WebsiteKpiResearchCard.propTypes = {
     note: PropTypes.string.isRequired,
   }).isRequired,
   isLoading: PropTypes.bool.isRequired,
+  isHighlighted: PropTypes.bool,
 };
