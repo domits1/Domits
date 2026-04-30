@@ -35,6 +35,40 @@ const formatWebsiteKpiSyncTime = (timestamp) =>
     second: "2-digit",
   }).format(new Date(timestamp));
 
+const getSyncStatusText = ({
+  websiteKpisRefreshError,
+  isRefreshingWebsiteKpis,
+  lastWebsiteKpiRefreshAt,
+}) => {
+  if (websiteKpisRefreshError) {
+    return websiteKpisRefreshError;
+  }
+
+  if (isRefreshingWebsiteKpis) {
+    return "Syncing live KPI data...";
+  }
+
+  if (lastWebsiteKpiRefreshAt > 0) {
+    return `Live updates every 60 seconds. Last synced ${formatWebsiteKpiSyncTime(
+      lastWebsiteKpiRefreshAt
+    )}`;
+  }
+
+  return "Live updates start after the first KPI response.";
+};
+
+const getRefreshButtonLabel = ({ isLoadingWebsiteKpis, isRefreshingWebsiteKpis }) => {
+  if (isLoadingWebsiteKpis) {
+    return "Loading...";
+  }
+
+  if (isRefreshingWebsiteKpis) {
+    return "Syncing...";
+  }
+
+  return "Refresh data";
+};
+
 const createCardSignatureMap = (cards) =>
   new Map(cards.map((card) => [card.id, JSON.stringify({ value: card.value, meta: card.meta })]));
 
@@ -131,8 +165,9 @@ function WebsiteKpiDashboardPage() {
     }
 
     websiteKpiRequestInFlightRef.current = true;
+    const isInitialLoad = hasLoadedWebsiteKpisRef.current === false;
 
-    if (!hasLoadedWebsiteKpisRef.current) {
+    if (isInitialLoad) {
       setIsLoadingWebsiteKpis(true);
       setWebsiteKpisError("");
     } else {
@@ -178,7 +213,9 @@ function WebsiteKpiDashboardPage() {
     } catch (error) {
       const nextErrorMessage =
         error?.message || "We could not load the standalone website KPI overview.";
-      if (!hasLoadedWebsiteKpisRef.current) {
+      const isInitialLoadError = hasLoadedWebsiteKpisRef.current === false;
+
+      if (isInitialLoadError) {
         setWebsiteKpis(EMPTY_WEBSITE_KPIS);
         setWebsiteKpisError(nextErrorMessage);
       } else {
@@ -222,9 +259,19 @@ function WebsiteKpiDashboardPage() {
     () => buildDeletionReasonRows(websiteKpis.deletionReasonBreakdown),
     [websiteKpis.deletionReasonBreakdown]
   );
+  const isInitialKpiLoad = isLoadingWebsiteKpis && hasLoadedWebsiteKpisRef.current === false;
+  const syncStatusText = getSyncStatusText({
+    websiteKpisRefreshError,
+    isRefreshingWebsiteKpis,
+    lastWebsiteKpiRefreshAt,
+  });
+  const refreshButtonLabel = getRefreshButtonLabel({
+    isLoadingWebsiteKpis,
+    isRefreshingWebsiteKpis,
+  });
 
   const renderDeletionReasonContent = () => {
-    if (isLoadingWebsiteKpis && !hasLoadedWebsiteKpisRef.current) {
+    if (isInitialKpiLoad) {
       return (
         <div className={styles.stateCard}>
           <PulseBarsLoader message="Loading website deletion reasons..." />
@@ -243,7 +290,7 @@ function WebsiteKpiDashboardPage() {
           </thead>
           <tbody>
             {deletionReasonRows.map((reasonEntry) => (
-            <tr key={reasonEntry.reason}>
+              <tr key={reasonEntry.reason}>
                 <td
                   className={
                     highlightedDeletionReasonIds.includes(reasonEntry.reason)
@@ -278,7 +325,7 @@ function WebsiteKpiDashboardPage() {
           title={metricCard.title}
           value={metricCard.value}
           meta={metricCard.meta}
-          isLoading={isLoadingWebsiteKpis && !hasLoadedWebsiteKpisRef.current}
+          isLoading={isInitialKpiLoad}
           isHighlighted={highlightedMetricIds.includes(metricCard.id)}
         />
       ))}
@@ -326,7 +373,7 @@ function WebsiteKpiDashboardPage() {
               title={surfaceMetric.title}
               value={surfaceMetric.value}
               meta={surfaceMetric.meta}
-              isLoading={isLoadingWebsiteKpis && !hasLoadedWebsiteKpisRef.current}
+              isLoading={isInitialKpiLoad}
               loadingMeta="Loading surface performance metrics..."
               isHighlighted={highlightedMetricIds.includes(surfaceMetric.id)}
             />
@@ -351,7 +398,7 @@ function WebsiteKpiDashboardPage() {
           <WebsiteKpiResearchCard
             key={researchKpiCard.id}
             researchKpiCard={researchKpiCard}
-            isLoading={isLoadingWebsiteKpis && !hasLoadedWebsiteKpisRef.current}
+            isLoading={isInitialKpiLoad}
             isHighlighted={highlightedResearchKpiIds.includes(researchKpiCard.id)}
           />
         ))}
@@ -384,33 +431,21 @@ function WebsiteKpiDashboardPage() {
     }
   };
 
-  const syncStatusText = websiteKpisRefreshError
-    ? websiteKpisRefreshError
-    : isRefreshingWebsiteKpis
-    ? "Syncing live KPI data..."
-    : lastWebsiteKpiRefreshAt > 0
-    ? `Live updates every 60 seconds. Last synced ${formatWebsiteKpiSyncTime(
-        lastWebsiteKpiRefreshAt
-      )}`
-    : "Live updates start after the first KPI response.";
-
   const renderKpiContent = () => {
     if (websiteKpisError) {
       return (
-          <div className={`${styles.stateCard} ${styles.errorState}`}>
-            <p>{websiteKpisError}</p>
-            <div className={styles.buttonRow}>
-              <button type="button" className={styles.primaryButton} onClick={() => void loadWebsiteKpis()}>
-                Try again
-              </button>
-            </div>
+        <div className={`${styles.stateCard} ${styles.errorState}`}>
+          <p>{websiteKpisError}</p>
+          <div className={styles.buttonRow}>
+            <button type="button" className={styles.primaryButton} onClick={() => void loadWebsiteKpis()}>
+              Try again
+            </button>
           </div>
-        );
+        </div>
+      );
     }
 
-    return (
-      renderSelectedKpiView()
-    );
+    return renderSelectedKpiView();
   };
 
   return (
@@ -473,11 +508,7 @@ function WebsiteKpiDashboardPage() {
                 disabled={isLoadingWebsiteKpis || isRefreshingWebsiteKpis}
               >
                 <RefreshOutlinedIcon fontSize="small" />
-                {isLoadingWebsiteKpis
-                  ? "Loading..."
-                  : isRefreshingWebsiteKpis
-                  ? "Syncing..."
-                  : "Refresh data"}
+                {refreshButtonLabel}
               </button>
             </div>
 
