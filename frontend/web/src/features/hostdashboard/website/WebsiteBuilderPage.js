@@ -706,7 +706,7 @@ function WebsiteBuilderPage() {
     });
 
     websiteBuildAttemptRef.current = nextAttempt;
-    void recordWebsiteHostAnalyticsEventSafely({
+    recordWebsiteHostAnalyticsEventSafely({
       propertyId: nextAttempt.propertyId,
       eventType: WEBSITE_BUILD_STARTED_EVENT,
       payload: {
@@ -746,7 +746,7 @@ function WebsiteBuilderPage() {
     if (websiteBuildAttemptRef.current?.attemptId === attempt.attemptId) {
       websiteBuildAttemptRef.current = null;
     }
-    void recordWebsiteHostAnalyticsEventSafely({
+    recordWebsiteHostAnalyticsEventSafely({
       propertyId: attempt.propertyId,
       draftId,
       eventType,
