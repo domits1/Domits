@@ -175,34 +175,18 @@ const normalizeListingProperty = (payload) => {
   };
 };
 
-const fetchBookingsByStatus = async (propertyId, status) => {
-  const response = await fetch(BOOKINGS_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json; charset=UTF-8",
-    },
-    body: JSON.stringify({
-      AccoID: propertyId,
-      Status: status,
-    }),
-  });
-
-  if (!response.ok) return [];
-  return parseBookingResponse(response);
-};
-
 const fetchAcceptedBookingsByPropertyId = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
-  if (!normalizedPropertyId) {
-    return [];
-  }
+  if (!normalizedPropertyId) return [];
 
-  const [awaitingPayment, paid] = await Promise.all([
-    fetchBookingsByStatus(normalizedPropertyId, "Awaiting Payment").catch(() => []),
-    fetchBookingsByStatus(normalizedPropertyId, "Paid").catch(() => []),
-  ]);
+  const response = await fetch(
+    `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=blockedDates&property_Id=${encodeURIComponent(normalizedPropertyId)}`,
+    { method: "GET" }
+  );
 
-  return [...awaitingPayment, ...paid];
+  if (!response.ok) return [];
+  const data = await response.json();
+  return Array.isArray(data?.response) ? data.response : [];
 };
 
 const ListingDetails2 = () => {
