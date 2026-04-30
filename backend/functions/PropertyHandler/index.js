@@ -29,6 +29,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/images/confirm")) {
     return controller.confirmImageUploads(event);
   }
+  if (isPath(event, "/property/website/event")) {
+    return controller.recordWebsiteAnalyticsEvent(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }

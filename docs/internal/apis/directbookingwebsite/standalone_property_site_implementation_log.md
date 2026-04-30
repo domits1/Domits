@@ -369,7 +369,7 @@ Evidence (commit(s), file(s), docs):
   - `backend/functions/PropertyHandler/controller/propertyController.js`
   - `backend/functions/PropertyHandler/index.js`
   - `backend/test/PropertyHandler/routing-unit.test.js`
-  - `frontend/web/src/features/hostdashboard/website/services/websiteKpiService.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
   - `frontend/web/src/features/hostdashboard/website/services/websiteDraftService.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
@@ -1224,8 +1224,8 @@ Open risks / Next:
 
 Evidence (commit(s), file(s), docs):
 - Files:
-  - `frontend/web/src/features/hostdashboard/website/WebsiteKpiDashboardPage.js`
-  - `frontend/web/src/features/hostdashboard/website/services/websiteKpiService.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
   - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
@@ -1254,7 +1254,64 @@ Validation:
 
 Evidence (commit(s), file(s), docs):
 - Files:
-  - `frontend/web/src/features/hostdashboard/website/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-29] Builder timing and preview-performance KPIs instrumented
+Context:
+The KPI dashboard already tracked draft saves, preview opens, live-preview updates, and deletion reasons, but it still could not answer two practical questions: how long it takes a host to get a usable first preview, and whether the preview surface itself performs acceptably on mobile.
+
+Implementation:
+- Added a dedicated website analytics ingest route:
+  - `POST /property/website/event`
+- Added explicit builder analytics events for:
+  - `WEBSITE_BUILD_STARTED`
+  - `WEBSITE_PREVIEW_READY`
+  - `WEBSITE_BUILD_SUCCEEDED`
+  - `WEBSITE_BUILD_FAILED`
+- Added public preview performance telemetry event:
+  - `SITE_LCP_RECORDED`
+- Extended KPI aggregation so the dashboard now calculates:
+  - `build_started_count`
+  - `build_succeeded_count`
+  - `build_failure_rate`
+  - `build_success_rate`
+  - `build_abandonment_rate`
+  - `time_to_first_preview_p95`
+  - `previewSiteLcpMobileP75`
+  - `liveSiteLcpMobileP75`
+- Added a dedicated `Preview / Live` surface-performance section to the KPI dashboard so preview LCP can be shown now without pretending the live published surface already exists.
+
+Decision / Rationale:
+- Server-side timestamps alone are not enough for host-perceived build timing or page-performance metrics.
+- A small, explicit event-ingest path is a better contract than inferring analytics from unrelated draft timestamps.
+- Preview and live performance must stay separated because they are different surfaces with different routing/runtime assumptions.
+
+AWS / Data impact:
+- No new Aurora columns or tables.
+- The existing `main.standalone_site_event` table is reused.
+- API Gateway must expose `POST /property/website/event` plus `OPTIONS /property/website/event`.
+- `POST /property/website/event` should remain unauthenticated at the gateway because preview-surface telemetry is posted from the public preview page, while host-originated builder events still authorize inside Lambda.
+
+Validation:
+- Backend routing tests passed.
+- Frontend production build passed.
+
+Open risks / Next:
+- `build_abandonment_rate` is derived from build starts that have no success/failure event after a time threshold, so it is a heuristic rather than a perfectly explicit user intent signal.
+- Live-site LCP remains pending until the published public surface exists and emits the same telemetry contract.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsService.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
   - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
   

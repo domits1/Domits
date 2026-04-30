@@ -71,6 +71,10 @@ What is in place:
 - Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
 - Standalone website KPIs now live on a dedicated host dashboard route instead of inside the website builder/workspace page.
 - The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
+- Standalone website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
+- The KPI dashboard now separates surface performance into `Preview` and `Live` tabs:
+  - preview mobile LCP can be measured from the public preview route
+  - live mobile LCP remains pending until a real published live-site surface exists
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -101,6 +105,12 @@ What is in place:
 - The built preview remains visible after draft persistence finishes.
 - A toast confirms when the draft is saved and ready for review.
 - Build failures are surfaced with retry controls.
+- Builder KPI instrumentation now records:
+  - build started
+  - preview rendered and usable
+  - build succeeded
+  - build failed
+  This is used to calculate time-to-first-preview p95, success rate, failure rate, and abandonment rate.
 
 ## Data flow status
 Current data path:
@@ -203,6 +213,9 @@ Current implementation details:
 - Website KPI tracking now relies on a separate standalone-owned table in `main`:
   - `standalone_site_event`
   This table must exist in `main` before the website KPI overview can load successfully in the host dashboard.
+- The standalone event stream now stores both server-side lifecycle events and client-perceived website analytics events:
+  - builder events from the host dashboard
+  - public preview mobile LCP events from the preview route
 - The dedicated website KPI dashboard now also shows the broader research KPI set explicitly:
   - `time_to_publish_p95`
   - `cost_per_active_site_per_month`
@@ -213,6 +226,13 @@ Current implementation details:
   - `booking_funnel_completion_rate`
   - `custom_domain_setup_success_rate`
   Metrics without real instrumentation are shown as pending instead of fabricated values.
+- The dedicated KPI dashboard now also exposes real build funnel metrics:
+  - `build_started_count`
+  - `build_succeeded_count`
+  - `build_success_rate`
+  - `build_failure_rate`
+  - `build_abandonment_rate`
+  - `time_to_first_preview_p95`
 - The dedicated KPI dashboard now keeps its full page shell visible on first load and renders pulse-bar loaders inside the KPI sections while aggregated data is still loading.
 
 ## Next phase

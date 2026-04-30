@@ -42,6 +42,45 @@ const toCount = (rawValue) => {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 };
 
+const toNullableNumber = (rawValue) => {
+  const parsedValue = Number(rawValue);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
+const toPercentage = (numerator, denominator) => {
+  if (!Number.isFinite(denominator) || denominator <= 0) {
+    return null;
+  }
+
+  return (Number(numerator) / denominator) * 100;
+};
+
+const getPercentile = (values, percentile) => {
+  if (!Array.isArray(values) || values.length < 1) {
+    return null;
+  }
+
+  const sortedValues = [...values]
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((left, right) => left - right);
+
+  if (sortedValues.length < 1) {
+    return null;
+  }
+
+  const clampedPercentile = Math.max(0, Math.min(100, Number(percentile)));
+  const rankIndex = Math.max(0, Math.ceil((clampedPercentile / 100) * sortedValues.length) - 1);
+  return sortedValues[Math.min(rankIndex, sortedValues.length - 1)];
+};
+
+const parseAttemptId = (payload) => String(payload?.attemptId || "").trim();
+const parseDurationMetric = (payload) => toNullableNumber(payload?.durationMs);
+const parseSurface = (payload) => String(payload?.surface || "").trim().toLowerCase();
+const parseViewport = (payload) => String(payload?.viewport || "").trim().toLowerCase();
+
+const BUILD_ABANDONMENT_WINDOW_MS = 10 * 60 * 1000;
+
 export class StandaloneSiteEventRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
@@ -86,7 +125,7 @@ export class StandaloneSiteEventRepository {
     const eventWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const queryParameters = hasHostScope ? [hostId] : [];
 
-    const [draftCountRows, eventCountRows, deleteEventRows] = await Promise.all([
+    const [draftCountRows, eventCountRows, metricEventRows] = await Promise.all([
       client.query(
         `SELECT COUNT(*)::bigint AS total
          FROM ${standaloneDraftTable}
@@ -105,10 +144,17 @@ export class StandaloneSiteEventRepository {
         queryParameters
       ),
       client.query(
-        `SELECT payload_json
+        `SELECT event_type, occurred_at, payload_json
          FROM ${standaloneEventTable}
          ${eventWhereClause}
-         ${hasHostScope ? "AND" : "WHERE"} event_type = 'WEBSITE_DELETED'`,
+         ${hasHostScope ? "AND" : "WHERE"} event_type IN (
+           'WEBSITE_DELETED',
+           'WEBSITE_BUILD_STARTED',
+           'WEBSITE_PREVIEW_READY',
+           'WEBSITE_BUILD_SUCCEEDED',
+           'WEBSITE_BUILD_FAILED',
+           'SITE_LCP_RECORDED'
+         )`,
         queryParameters
       ),
     ]);
@@ -125,17 +171,76 @@ export class StandaloneSiteEventRepository {
     );
 
     const deleteReasonCounts = new Map();
-    (Array.isArray(deleteEventRows) ? deleteEventRows : []).forEach((row) => {
+    const startedAttempts = new Map();
+    const completedAttemptIds = new Set();
+    const previewReadyDurations = [];
+    const previewMobileLcpDurations = [];
+    const liveMobileLcpDurations = [];
+
+    (Array.isArray(metricEventRows) ? metricEventRows : []).forEach((row) => {
+      const eventType = String(row.event_type || "").trim();
+      const occurredAt = toNullableNumber(row.occurred_at);
       const payload = safeParseJson(row.payload_json, {});
-      const reasons = Array.isArray(payload?.reasons) ? payload.reasons : [];
-      reasons.forEach((reason) => {
-        const normalizedReason = String(reason || "").trim();
-        if (!normalizedReason) {
+
+      if (eventType === "WEBSITE_DELETED") {
+        const reasons = Array.isArray(payload?.reasons) ? payload.reasons : [];
+        reasons.forEach((reason) => {
+          const normalizedReason = String(reason || "").trim();
+          if (!normalizedReason) {
+            return;
+          }
+
+          deleteReasonCounts.set(normalizedReason, (deleteReasonCounts.get(normalizedReason) || 0) + 1);
+        });
+        return;
+      }
+
+      if (eventType === "WEBSITE_BUILD_STARTED") {
+        const attemptId = parseAttemptId(payload);
+        if (attemptId && Number.isFinite(occurredAt)) {
+          const existingOccurredAt = startedAttempts.get(attemptId);
+          if (!Number.isFinite(existingOccurredAt) || occurredAt < existingOccurredAt) {
+            startedAttempts.set(attemptId, occurredAt);
+          }
+        }
+        return;
+      }
+
+      if (eventType === "WEBSITE_PREVIEW_READY") {
+        const durationMs = parseDurationMetric(payload);
+        if (Number.isFinite(durationMs) && durationMs > 0) {
+          previewReadyDurations.push(durationMs);
+        }
+
+        return;
+      }
+
+      if (eventType === "WEBSITE_BUILD_SUCCEEDED" || eventType === "WEBSITE_BUILD_FAILED") {
+        const attemptId = parseAttemptId(payload);
+        if (attemptId) {
+          completedAttemptIds.add(attemptId);
+        }
+        return;
+      }
+
+      if (eventType === "SITE_LCP_RECORDED") {
+        const surface = parseSurface(payload);
+        const viewport = parseViewport(payload);
+        const durationMs = parseDurationMetric(payload);
+
+        if (viewport !== "mobile" || !Number.isFinite(durationMs) || durationMs <= 0) {
           return;
         }
 
-        deleteReasonCounts.set(normalizedReason, (deleteReasonCounts.get(normalizedReason) || 0) + 1);
-      });
+        if (surface === "preview") {
+          previewMobileLcpDurations.push(durationMs);
+          return;
+        }
+
+        if (surface === "live") {
+          liveMobileLcpDurations.push(durationMs);
+        }
+      }
     });
 
     const deletionReasonBreakdown = Array.from(deleteReasonCounts.entries())
@@ -162,22 +267,56 @@ export class StandaloneSiteEventRepository {
       uniqueDrafts: 0,
       lastOccurredAt: null,
     };
+    const buildStartedMetrics = eventCounts.get("WEBSITE_BUILD_STARTED") || {
+      total: 0,
+      uniqueDrafts: 0,
+      lastOccurredAt: null,
+    };
+    const buildSucceededMetrics = eventCounts.get("WEBSITE_BUILD_SUCCEEDED") || {
+      total: 0,
+      uniqueDrafts: 0,
+      lastOccurredAt: null,
+    };
+    const buildFailedMetrics = eventCounts.get("WEBSITE_BUILD_FAILED") || {
+      total: 0,
+      uniqueDrafts: 0,
+      lastOccurredAt: null,
+    };
     const deletedWebsiteMetrics = eventCounts.get("WEBSITE_DELETED") || {
       total: 0,
       uniqueDrafts: 0,
       lastOccurredAt: null,
     };
+    const buildStartedCount = buildStartedMetrics.total;
+    const buildSucceededCount = buildSucceededMetrics.total;
+    const buildFailedCount = buildFailedMetrics.total;
+    const buildAbandonedCount = Array.from(startedAttempts.entries()).filter(
+      ([attemptId, occurredAt]) =>
+        Number.isFinite(occurredAt) &&
+        occurredAt <= Date.now() - BUILD_ABANDONMENT_WINDOW_MS &&
+        !completedAttemptIds.has(attemptId)
+    ).length;
 
     return {
       currentDraftCount: toCount(draftCountRows?.[0]?.total),
       draftCreatedCount: draftCreatedMetrics.total,
       draftSaveCount: draftSavedMetrics.total,
+      buildStartedCount,
+      buildSucceededCount,
+      buildFailedCount,
+      buildAbandonedCount,
+      buildSuccessRate: toPercentage(buildSucceededCount, buildStartedCount),
+      buildFailureRate: toPercentage(buildFailedCount, buildStartedCount),
+      buildAbandonmentRate: toPercentage(buildAbandonedCount, buildStartedCount),
+      timeToFirstPreviewP95: getPercentile(previewReadyDurations, 95),
       publicPreviewViewCount: previewMetrics.total,
       uniquePreviewedWebsiteCount: previewMetrics.uniqueDrafts,
       livePreviewUpdateCount: livePreviewUpdateMetrics.total,
       deletedWebsiteCount: deletedWebsiteMetrics.total,
       lastPublicPreviewAt: previewMetrics.lastOccurredAt,
       lastLivePreviewUpdateAt: livePreviewUpdateMetrics.lastOccurredAt,
+      previewSiteLcpMobileP75: getPercentile(previewMobileLcpDurations, 75),
+      liveSiteLcpMobileP75: getPercentile(liveMobileLcpDurations, 75),
       deletionReasonBreakdown,
     };
   }

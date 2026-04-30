@@ -11,7 +11,7 @@ import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
 import WebsiteEditorPage from "./website/WebsiteEditorPage";
-import WebsiteKpiDashboardPage from "./website/WebsiteKpiDashboardPage";
+import WebsiteKpiDashboardPage from "./website/kpis/WebsiteKpiDashboardPage";
 import HostSettings from "./HostSettings";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";

@@ -1,6 +1,6 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
-import { PROPERTY_API_BASE } from "../../hostproperty/constants";
-import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
+import { getAccessToken } from "../../../../../services/getAccessToken";
+import { PROPERTY_API_BASE } from "../../../hostproperty/constants";
+import { getApiErrorMessage } from "../../../hostproperty/utils/hostPropertyUtils";
 
 const buildWebsiteKpisUrl = () => `${PROPERTY_API_BASE}/website/kpis`;
 
@@ -54,12 +54,22 @@ export const fetchWebsiteKpis = async () => {
     currentDraftCount: normalizeNumericMetric(parsedBody?.currentDraftCount),
     draftCreatedCount: normalizeNumericMetric(parsedBody?.draftCreatedCount),
     draftSaveCount: normalizeNumericMetric(parsedBody?.draftSaveCount),
+    buildStartedCount: normalizeNumericMetric(parsedBody?.buildStartedCount),
+    buildSucceededCount: normalizeNumericMetric(parsedBody?.buildSucceededCount),
+    buildFailedCount: normalizeNumericMetric(parsedBody?.buildFailedCount),
+    buildAbandonedCount: normalizeNumericMetric(parsedBody?.buildAbandonedCount),
+    buildSuccessRate: normalizeNullableMetric(parsedBody?.buildSuccessRate),
+    buildFailureRate: normalizeNullableMetric(parsedBody?.buildFailureRate),
+    buildAbandonmentRate: normalizeNullableMetric(parsedBody?.buildAbandonmentRate),
+    timeToFirstPreviewP95: normalizeNullableMetric(parsedBody?.timeToFirstPreviewP95),
     publicPreviewViewCount: normalizeNumericMetric(parsedBody?.publicPreviewViewCount),
     uniquePreviewedWebsiteCount: normalizeNumericMetric(parsedBody?.uniquePreviewedWebsiteCount),
     livePreviewUpdateCount: normalizeNumericMetric(parsedBody?.livePreviewUpdateCount),
     deletedWebsiteCount: normalizeNumericMetric(parsedBody?.deletedWebsiteCount),
     lastPublicPreviewAt: normalizeNumericMetric(parsedBody?.lastPublicPreviewAt),
     lastLivePreviewUpdateAt: normalizeNumericMetric(parsedBody?.lastLivePreviewUpdateAt),
+    previewSiteLcpMobileP75: normalizeNullableMetric(parsedBody?.previewSiteLcpMobileP75),
+    liveSiteLcpMobileP75: normalizeNullableMetric(parsedBody?.liveSiteLcpMobileP75),
     timeToPublishP95: normalizeNullableMetric(parsedBody?.timeToPublishP95),
     costPerActiveSitePerMonth: normalizeNullableMetric(parsedBody?.costPerActiveSitePerMonth),
     siteLcpMobileP75: normalizeNullableMetric(parsedBody?.siteLcpMobileP75),

@@ -11,6 +11,10 @@
   .researchKpiGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .surfaceKpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -93,6 +97,25 @@
   }
 
   .researchKpiGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .surfaceKpiHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .surfaceKpiTabRow {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .surfaceKpiTabButton {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .surfaceKpiGrid {
     grid-template-columns: minmax(0, 1fr);
   }
 

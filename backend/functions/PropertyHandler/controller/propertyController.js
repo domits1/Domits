@@ -19,6 +19,20 @@ const draftResponseHeaders = {
     Expires: "0",
 };
 
+const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
+    "WEBSITE_BUILD_STARTED",
+    "WEBSITE_PREVIEW_READY",
+    "WEBSITE_BUILD_SUCCEEDED",
+    "WEBSITE_BUILD_FAILED",
+]);
+
+const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
+    "SITE_LCP_RECORDED",
+]);
+
+const WEBSITE_ANALYTICS_SURFACES = new Set(["preview", "live"]);
+const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "desktop"]);
+
 export class PropertyController {
 
     propertyService;
@@ -1117,13 +1131,93 @@ export class PropertyController {
         )];
     }
 
+    parseWebsiteAnalyticsPayload(payload) {
+        if (payload === undefined || payload === null) {
+            return {};
+        }
+
+        if (!this.isPlainObject(payload)) {
+            throw new TypeError("payload must be a plain object.");
+        }
+
+        return payload;
+    }
+
+    parseWebsiteAnalyticsDuration(payloadValue, fieldName) {
+        const parsedValue = Number(payloadValue);
+        if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+            throw new TypeError(`${fieldName} must be a positive number.`);
+        }
+
+        return Math.round(parsedValue);
+    }
+
+    normalizeWebsiteAnalyticsPayload(eventType, payload) {
+        const attemptId = String(payload?.attemptId || "").trim();
+        const templateKey = String(payload?.templateKey || "").trim();
+
+        if (WEBSITE_HOST_ANALYTICS_EVENT_TYPES.has(eventType)) {
+            if (!attemptId) {
+                throw new TypeError("payload.attemptId is required for website build analytics.");
+            }
+
+            const normalizedPayload = {
+                attemptId,
+            };
+
+            if (templateKey) {
+                normalizedPayload.templateKey = templateKey;
+            }
+
+            if (eventType === "WEBSITE_PREVIEW_READY" || eventType === "WEBSITE_BUILD_SUCCEEDED" || eventType === "WEBSITE_BUILD_FAILED") {
+                normalizedPayload.durationMs = this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs");
+            }
+
+            if (eventType === "WEBSITE_BUILD_FAILED") {
+                const phase = String(payload?.phase || "").trim();
+                if (phase) {
+                    normalizedPayload.phase = phase;
+                }
+            }
+
+            return normalizedPayload;
+        }
+
+        if (eventType === "SITE_LCP_RECORDED") {
+            const surface = String(payload?.surface || "").trim().toLowerCase();
+            const viewport = String(payload?.viewport || "").trim().toLowerCase();
+
+            if (!WEBSITE_ANALYTICS_SURFACES.has(surface)) {
+                throw new TypeError("payload.surface must be 'preview' or 'live'.");
+            }
+
+            if (!WEBSITE_ANALYTICS_VIEWPORTS.has(viewport)) {
+                throw new TypeError("payload.viewport must be 'mobile' or 'desktop'.");
+            }
+
+            return {
+                surface,
+                viewport,
+                durationMs: this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs"),
+            };
+        }
+
+        throw new TypeError("Unsupported website eventType.");
+    }
+
     isWebsiteDraftClientError(error) {
         return (
             error?.message?.startsWith("Missing propertyId") ||
             error?.message?.startsWith("Missing draftId") ||
+            error?.message?.startsWith("Missing eventType") ||
             error?.message?.startsWith("Missing templateKey") ||
             error?.message?.includes("must be a plain object") ||
-            error?.message?.includes("deleteReasons must be an array")
+            error?.message?.includes("deleteReasons must be an array") ||
+            error?.message?.includes("Unsupported website eventType") ||
+            error?.message?.includes("payload.attemptId") ||
+            error?.message?.includes("payload.durationMs") ||
+            error?.message?.includes("payload.surface") ||
+            error?.message?.includes("payload.viewport")
         );
     }
 
@@ -1464,6 +1558,86 @@ export class PropertyController {
                 headers: responseHeaders,
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             }
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/event
+    // -------------------------
+    async recordWebsiteAnalyticsEvent(event) {
+        try {
+            const eventBody = JSON.parse(event.body || "{}");
+            const eventType = String(eventBody.eventType || "").trim().toUpperCase();
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+            const draftId = String(eventBody.draftId || eventBody.draft || "").trim();
+            const payload = this.parseWebsiteAnalyticsPayload(eventBody.payload);
+
+            if (!eventType) {
+                return this.badRequest("Missing eventType.");
+            }
+
+            const normalizedPayload = this.normalizeWebsiteAnalyticsPayload(eventType, payload);
+
+            if (WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES.has(eventType)) {
+                if (!draftId) {
+                    return this.badRequest("Missing draftId.");
+                }
+
+                const draft = await this.standaloneSiteDraftRepository.getDraftById(draftId);
+                if (!draft || draft.status === "SUSPENDED") {
+                    return {
+                        statusCode: 404,
+                        headers: draftResponseHeaders,
+                        body: JSON.stringify({ message: "Website analytics target not found." }),
+                    };
+                }
+
+                await this.standaloneSiteEventRepository.recordEvent({
+                    draftId: draft.id,
+                    propertyId: draft.propertyId,
+                    hostId: draft.hostId,
+                    eventType,
+                    payload: normalizedPayload,
+                });
+
+                return {
+                    statusCode: 204,
+                    headers: draftResponseHeaders,
+                };
+            }
+
+            if (!WEBSITE_HOST_ANALYTICS_EVENT_TYPES.has(eventType)) {
+                return this.badRequest("Unsupported website eventType.");
+            }
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+            const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+
+            await this.standaloneSiteEventRepository.recordEvent({
+                draftId: existingDraft?.id || draftId || null,
+                propertyId,
+                hostId,
+                eventType,
+                payload: normalizedPayload,
+            });
+
+            return {
+                statusCode: 204,
+                headers: draftResponseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
         }
     }
 

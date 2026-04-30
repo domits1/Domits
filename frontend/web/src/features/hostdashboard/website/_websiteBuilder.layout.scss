@@ -149,6 +149,87 @@
   line-height: 1.55;
 }
 
+.surfaceKpiPanel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 1)),
+    #ffffff;
+}
+
+.surfaceKpiHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.surfaceKpiHeader h3,
+.surfaceKpiHeader p {
+  margin: 0;
+}
+
+.surfaceKpiHeader h3 {
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.surfaceKpiHeader p,
+.surfaceKpiDescription {
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.surfaceKpiTabRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #eef3f8;
+}
+
+.surfaceKpiTabButton {
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  background: transparent;
+  color: #46627f;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.surfaceKpiTabButton:hover {
+  color: #153e64;
+}
+
+.surfaceKpiTabButtonActive {
+  background: #ffffff;
+  color: #153e64;
+  box-shadow: 0 8px 18px rgba(31, 78, 121, 0.12);
+}
+
+.surfaceKpiBody {
+  display: grid;
+  gap: 12px;
+}
+
+.surfaceKpiDescription {
+  margin: 0;
+}
+
+.surfaceKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .deletionReasonPanel {
   display: grid;
   gap: 14px;
