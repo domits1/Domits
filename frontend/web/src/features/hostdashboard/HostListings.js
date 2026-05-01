@@ -130,8 +130,8 @@ function HostListings() {
 
   useEffect(() => {
     if (userId) {
-      void fetchVerificationStatus();
-      void fetchAccommodations();
+      fetchVerificationStatus();
+      fetchAccommodations();
     }
   }, [fetchVerificationStatus, userId]);
 

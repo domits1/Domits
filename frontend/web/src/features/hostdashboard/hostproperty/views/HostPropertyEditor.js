@@ -175,7 +175,7 @@ export default function HostProperty() {
 
   useEffect(() => {
     if (userId) {
-      void fetchVerificationStatus();
+      fetchVerificationStatus();
     }
   }, [fetchVerificationStatus, userId]);
 
