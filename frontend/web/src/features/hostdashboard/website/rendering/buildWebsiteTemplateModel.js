@@ -283,11 +283,13 @@ const buildTrustCards = ({
   return [
     {
       id: "stay-details",
+      iconAmenityId: "7",
       title: "Stay details",
       description: staySummary || "Property details are imported from the selected listing.",
     },
     {
       id: "arrival-guidelines",
+      iconAmenityId: "70",
       title: "Arrival and policies",
       description:
         policyHighlights.slice(0, MAX_FEATURED_POLICIES).join(", ") ||
@@ -296,6 +298,7 @@ const buildTrustCards = ({
     },
     {
       id: "location-context",
+      iconAmenityId: "57",
       title: "Booking context",
       description:
         joinListWithAnd([bookingSummary, locationLabel ? `located in ${locationLabel}` : ""]) ||

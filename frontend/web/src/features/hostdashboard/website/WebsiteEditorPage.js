@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
 import PropTypes from "prop-types";
@@ -10,6 +9,10 @@ import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { fetchWebsiteDraftByPropertyId, upsertWebsiteDraft } from "./services/websiteDraftService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
+import {
+  getAmenityIconNode,
+  getAmenityIconOptions,
+} from "./rendering/amenityIconRegistry";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
 import {
@@ -33,7 +36,10 @@ import {
   getCollectionTargetId,
   getImageSlotTargetId,
 } from "./websiteEditorConfig";
+import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import styles from "./WebsiteEditorPage.module.scss";
+import arrowDownIcon from "../../../images/arrow-down-icon.svg";
+import arrowUpIcon from "../../../images/arrow-up-icon.svg";
 
 const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
 
@@ -171,6 +177,65 @@ TextField.propTypes = {
   isHighlighted: PropTypes.bool,
 };
 
+function AmenityIconSelectField({
+  fieldKey,
+  label,
+  value,
+  onOpenPicker,
+  onFocus = undefined,
+  onBlur = undefined,
+  fieldRef = null,
+  isHighlighted = false,
+}) {
+  const selectedIconNode = getAmenityIconNode(value, {
+    className: styles.iconSelectionPreviewGlyph,
+    "aria-hidden": true,
+    focusable: "false",
+    sx: {
+      color: "#1f4e79",
+      fontSize: 22,
+      padding: 0,
+    },
+  });
+  return (
+    <div
+      ref={fieldRef}
+      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+    >
+      <button
+        id={`website-editor-${fieldKey}`}
+        type="button"
+        className={styles.iconSelectionTrigger}
+        onClick={onOpenPicker}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        aria-label={`Choose icon for ${label.toLowerCase()}`}
+        title={`Choose icon for ${label.toLowerCase()}`}
+      >
+        <span className={styles.iconSelectionPreviewIcon} aria-hidden="true">
+          {selectedIconNode}
+        </span>
+      </button>
+    </div>
+  );
+}
+
+AmenityIconSelectField.propTypes = {
+  fieldKey: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onOpenPicker: PropTypes.func.isRequired,
+  onFocus: PropTypes.func,
+  onBlur: PropTypes.func,
+  fieldRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({
+      current: PropTypes.any,
+    }),
+  ]),
+  isHighlighted: PropTypes.bool,
+};
+
 function CollapsibleSection({
   sectionId,
   title,
@@ -180,6 +245,8 @@ function CollapsibleSection({
   sectionRef = null,
   children,
 }) {
+  const toggleIcon = isOpen ? arrowUpIcon : arrowDownIcon;
+
   return (
     <section
       ref={sectionRef}
@@ -187,7 +254,7 @@ function CollapsibleSection({
     >
       <button
         type="button"
-        className={`${styles.sectionToggle} ${isOpen ? styles.sectionToggleOpen : ""}`.trim()}
+        className={styles.sectionToggle}
         onClick={() => onToggle(sectionId)}
         aria-expanded={isOpen}
       >
@@ -195,7 +262,12 @@ function CollapsibleSection({
           <h3 className={styles.sectionBlockTitle}>{title}</h3>
           <p className={styles.sectionBlockDescription}>{description}</p>
         </div>
-        <KeyboardArrowDownOutlinedIcon className={styles.sectionToggleIcon} />
+        <img
+          src={toggleIcon}
+          alt=""
+          aria-hidden="true"
+          className={styles.sectionToggleIcon}
+        />
       </button>
 
       <div
@@ -248,9 +320,16 @@ function WebsiteEditorPage() {
     isOpen: false,
     slot: null,
   });
+  const [iconPickerState, setIconPickerState] = useState({
+    isOpen: false,
+    collectionKey: "",
+    itemIndex: -1,
+    label: "",
+  });
   const sectionRefs = useRef({});
   const targetRefs = useRef({});
   const sectionHighlightResetTimeoutRef = useRef(null);
+  const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
 
   useEffect(() => {
     let isMounted = true;
@@ -571,8 +650,7 @@ function WebsiteEditorPage() {
     closeImagePicker();
   };
 
-  const handleCollectionFieldChange = (collectionKey, itemIndex, fieldKey) => (event) => {
-    const nextValue = event.target.value;
+  const updateCollectionFieldValue = (collectionKey, itemIndex, fieldKey, nextValue) => {
     const targetId = getCollectionTargetId(collectionKey, itemIndex);
 
     setActivePreviewTargetId(targetId);
@@ -593,6 +671,46 @@ function WebsiteEditorPage() {
         [collectionKey]: nextCollection,
       };
     });
+  };
+
+  const handleCollectionFieldChange = (collectionKey, itemIndex, fieldKey) => (event) => {
+    updateCollectionFieldValue(collectionKey, itemIndex, fieldKey, event.target.value);
+  };
+
+  const openIconPicker = (collectionKey, itemIndex, label) => {
+    if (!collectionKey || itemIndex < 0 || amenityIconOptions.length < 1) {
+      return;
+    }
+
+    setIconPickerState({
+      isOpen: true,
+      collectionKey,
+      itemIndex,
+      label,
+    });
+  };
+
+  const closeIconPicker = () => {
+    setIconPickerState({
+      isOpen: false,
+      collectionKey: "",
+      itemIndex: -1,
+      label: "",
+    });
+  };
+
+  const selectIconFromPicker = (iconAmenityId) => {
+    if (!iconPickerState.collectionKey || iconPickerState.itemIndex < 0 || !iconAmenityId) {
+      return;
+    }
+
+    updateCollectionFieldValue(
+      iconPickerState.collectionKey,
+      iconPickerState.itemIndex,
+      "iconAmenityId",
+      iconAmenityId
+    );
+    closeIconPicker();
   };
 
   const reloadDraftRecord = async () => {
@@ -700,7 +818,8 @@ function WebsiteEditorPage() {
   };
 
   useEffect(() => {
-    if (!imagePickerState.isOpen) {
+    const isOverlayOpen = imagePickerState.isOpen || iconPickerState.isOpen;
+    if (!isOverlayOpen) {
       return undefined;
     }
 
@@ -712,6 +831,11 @@ function WebsiteEditorPage() {
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
+        if (iconPickerState.isOpen) {
+          closeIconPicker();
+          return;
+        }
+
         closeImagePicker();
       }
     };
@@ -724,7 +848,7 @@ function WebsiteEditorPage() {
       }
       globalThis.removeEventListener("keydown", handleKeyDown);
     };
-  }, [imagePickerState.isOpen]);
+  }, [iconPickerState.isOpen, imagePickerState.isOpen]);
 
   const renderLoadingSection = ({ id, title, description }) => (
     <section key={id} className={styles.panelSection}>
@@ -1024,6 +1148,22 @@ function WebsiteEditorPage() {
                             <p className={styles.collectionTitle}>
                               {copyCollectionConfig.trustCards.itemLabel} {index + 1}
                             </p>
+                            {copyCollectionConfig.trustCards.supportsIconSelection ? (
+                              <AmenityIconSelectField
+                                fieldKey={`trust-card-icon-${index}`}
+                                label="Icon"
+                                value={card.iconAmenityId || ""}
+                                onOpenPicker={() =>
+                                  openIconPicker(
+                                    "trustCards",
+                                    index,
+                                    `${copyCollectionConfig.trustCards.itemLabel} ${index + 1} icon`
+                                  )
+                                }
+                                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                                onBlur={clearActivePreviewTarget}
+                              />
+                            ) : null}
                             <TextField
                               field={{ key: `trust-card-title-${index}`, label: "Title", component: "input" }}
                               value={card.title}
@@ -1222,6 +1362,17 @@ function WebsiteEditorPage() {
           </section>
         </dialog>
       ) : null}
+
+      <WebsiteIconPickerDialog
+        isOpen={iconPickerState.isOpen}
+        label={iconPickerState.label}
+        amenityIconOptions={amenityIconOptions}
+        selectedAmenityId={
+          editorValues?.[iconPickerState.collectionKey]?.[iconPickerState.itemIndex]?.iconAmenityId || ""
+        }
+        onSelectIcon={selectIconFromPicker}
+        onClose={closeIconPicker}
+      />
     </main>
   );
 }
