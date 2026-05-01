@@ -690,6 +690,10 @@ const stringifyJsonOrNull = (value) => {
 const describeLocalError = (error) => ({
   code: error?.code || error?.name || "INTERNAL_ERROR",
   message: error?.message || "Unknown error",
+  method: error?.method ?? null,
+  endpoint: error?.endpoint ?? null,
+  httpStatus: error?.status ?? error?.httpStatus ?? null,
+  responseBody: error?.responseBody ?? error?.providerResponse ?? null,
 });
 const parseStructuredEvidenceField = (value) => {
   if (value === undefined || value === null || value === "") return null;
@@ -951,6 +955,19 @@ const buildSyncDateRangeValidationFailure = ({
         "INVALID_DATE_RANGE",
         "dateFrom must be less than or equal to dateTo."
       ),
+    };
+  }
+  const totalDays = countInclusiveIsoDateRangeDays(normalizedDateFrom, normalizedDateTo);
+  if (!totalDays || totalDays > CHANNEX_CERTIFICATION_FULL_SYNC_DAYS) {
+    const message = `Channex sync date range must be ${CHANNEX_CERTIFICATION_FULL_SYNC_DAYS} days or fewer.`;
+    return {
+      response: bad(400, {
+        error: message,
+        errorCode: "CHANNEX_SYNC_RANGE_TOO_LARGE",
+        maxDays: CHANNEX_CERTIFICATION_FULL_SYNC_DAYS,
+        totalDays,
+      }),
+      evidencePatch: buildInvalidRequestEvidencePatch("CHANNEX_SYNC_RANGE_TOO_LARGE", message),
     };
   }
   return null;
@@ -1275,6 +1292,36 @@ const buildAvailabilityPayloadGroups = (availabilityItems) =>
       ])
     ).values()
   );
+const buildAvailabilityPayloadItemsFromReadiness = ({
+  dates,
+  overrideMap,
+  normalizedAvailabilityWindows,
+  readiness,
+  normalizedDomitsPropertyId,
+}) => {
+  const availabilityItems = [];
+
+  for (const isoDate of Array.isArray(dates) ? dates : []) {
+    const calendarDate = isoDateToCalendarInt(isoDate);
+    const override = overrideMap.get(isoDate) || null;
+    const isAvailableFromWindows = normalizedAvailabilityWindows.some(
+      (entry) => calendarDate >= entry.availableStartDate && calendarDate <= entry.availableEndDate
+    );
+    const effectiveAvailability = getEffectiveAvailability({ override, isAvailableFromWindows });
+
+    for (const roomTypeMapping of Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : []) {
+      availabilityItems.push({
+        domitsPropertyId: normalizedDomitsPropertyId,
+        externalPropertyId: roomTypeMapping.externalPropertyId,
+        externalRoomTypeId: roomTypeMapping.externalRoomTypeId,
+        date: isoDate,
+        availability: effectiveAvailability,
+      });
+    }
+  }
+
+  return availabilityItems;
+};
 const buildRestrictionRateItems = (rateRestrictionPreview) =>
   (Array.isArray(rateRestrictionPreview) ? rateRestrictionPreview : []).map((item) => ({
     externalPropertyId: item.externalPropertyId,
@@ -1343,6 +1390,10 @@ const CHANNEX_ARI_PAYLOAD_PREVIEW_BASE_NOTES = [
   "MinimumAdvanceReservation, MaximumNightsPerYear, PreparationTimeDays, occupancy-based pricing, taxes, and currency fields are omitted from Channex restriction payloads.",
 ];
 const createChannexAriPayloadPreviewNotes = () => [...CHANNEX_ARI_PAYLOAD_PREVIEW_BASE_NOTES];
+const createChannexAvailabilityPayloadPreviewNotes = () => [
+  "Availability sync builds only availability payloads for the selected full range.",
+  "Availability values are derived from property-scoped Domits availability and date-level availability overrides, then fanned out across saved Channex room type mappings.",
+];
 const appendChannexAriPayloadPreviewNotes = (notes, preview) => {
   const supportedRestrictionFields = Array.isArray(preview.sourceSummary?.supportedChannexRestrictionFields)
     ? preview.sourceSummary.supportedChannexRestrictionFields
@@ -1390,6 +1441,36 @@ const buildChannexAvailabilitySyncPayloads = (groupedPayloads) =>
       buildChannexAvailabilitySyncValue(group, value)
     ),
   }));
+const combineChannexAvailabilitySyncPayloadsForProvider = (groupedPayloads) => {
+  const groups = Array.isArray(groupedPayloads) ? groupedPayloads : [];
+  const values = groups.flatMap((group) => (Array.isArray(group?.values) ? group.values : []));
+  if (!values.length) return [];
+
+  const externalPropertyIds = Array.from(new Set(groups.map((group) => requireStr(group?.externalPropertyId)).filter(Boolean)));
+  return [
+    {
+      externalPropertyId: externalPropertyIds.length === 1 ? externalPropertyIds[0] : null,
+      externalRoomTypeId: null,
+      values,
+    },
+  ];
+};
+const summarizeChannexRequestBody = (requestBody) => {
+  if (!requestBody || typeof requestBody !== "object" || Array.isArray(requestBody)) return requestBody ?? null;
+  const values = Array.isArray(requestBody.values) ? requestBody.values : [];
+  if (!values.length) return requestBody;
+
+  const dates = values.map((value) => requireStr(value?.date)).filter(Boolean).sort(compareAlphabetically);
+  return {
+    valuesOmitted: true,
+    valueCount: values.length,
+    firstDate: dates[0] ?? null,
+    lastDate: dates[dates.length - 1] ?? null,
+    externalPropertyIds: Array.from(new Set(values.map((value) => requireStr(value?.property_id)).filter(Boolean))).sort(compareAlphabetically),
+    externalRoomTypeIds: Array.from(new Set(values.map((value) => requireStr(value?.room_type_id)).filter(Boolean))).sort(compareAlphabetically),
+    externalRatePlanIds: Array.from(new Set(values.map((value) => requireStr(value?.rate_plan_id)).filter(Boolean))).sort(compareAlphabetically),
+  };
+};
 const buildChannexRestrictionSyncValue = (group, value) => {
   const rate = requireStr(value?.rate) || formatNightlyPriceForChannexRate(value?.nightlyPrice);
   if (!rate) return null;
@@ -1434,7 +1515,7 @@ const appendRestrictionSyncOutboundNotes = (notes, transformedPayloads) => {
 const formatChannexAvailabilityProviderResult = (result) => ({
   externalPropertyId: result.externalPropertyId ?? null,
   externalRoomTypeId: result.externalRoomTypeId ?? null,
-  requestBody: result.requestBody ?? null,
+  requestBody: summarizeChannexRequestBody(result.requestBody),
   providerStatus: result.providerStatus ?? null,
   httpStatus: result.httpStatus ?? null,
   success: !!result.success,
@@ -3491,6 +3572,115 @@ export default class IntegrationService {
     }
   }
 
+  async previewChannexAvailabilityPayloads(userId, domitsPropertyId, dateFrom, dateTo) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+    const normalizedDateFrom = parseIsoDateParam(dateFrom);
+    const normalizedDateTo = parseIsoDateParam(dateTo);
+
+    const validationResponse = buildPreviewDateRangeValidationResponse({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    });
+    if (validationResponse) return validationResponse;
+
+    try {
+      const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
+      if (readinessResult?.statusCode !== 200) {
+        return readinessResult;
+      }
+
+      const readiness = readinessResult.response || {};
+      const notes = createChannexAvailabilityPayloadPreviewNotes();
+      if (!readiness.ready) {
+        return ok({
+          channel: readiness.channel || "CHANNEX",
+          integrationAccountId: readiness.integrationAccountId || null,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+          pagination: null,
+          ready: false,
+          missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
+          propertyMapping: readiness.propertyMapping || null,
+          roomTypeMappings: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : [],
+          ratePlanMappings: Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings : [],
+          sourceSummary: null,
+          availabilityPayloadPreview: {
+            items: [],
+            groupedPayloads: [],
+          },
+          restrictionRatePayloadPreview: {
+            items: [],
+            groupedPayloads: [],
+          },
+          notes,
+        });
+      }
+
+      const startDateInt = isoDateToCalendarInt(normalizedDateFrom);
+      const endDateInt = isoDateToCalendarInt(normalizedDateTo);
+      const [availabilityWindows, calendarOverrides] = await Promise.all([
+        getPropertyAvailabilityWindows(normalizedDomitsPropertyId),
+        getPropertyCalendarOverrides(normalizedDomitsPropertyId, startDateInt, endDateInt),
+      ]);
+
+      const normalizedAvailabilityWindows = normalizeAvailabilityWindows(availabilityWindows);
+      const overrideMap = buildCalendarOverrideMap(calendarOverrides);
+      const dates = buildCalendarDateRange(normalizedDateFrom, normalizedDateTo);
+      const availabilityItems = buildAvailabilityPayloadItemsFromReadiness({
+        dates,
+        overrideMap,
+        normalizedAvailabilityWindows,
+        readiness,
+        normalizedDomitsPropertyId,
+      }).map((item) => ({
+        externalPropertyId: item.externalPropertyId,
+        externalRoomTypeId: item.externalRoomTypeId,
+        date: item.date,
+        availability: item.availability,
+      }));
+      const availabilityPayloadGroups = buildAvailabilityPayloadGroups(availabilityItems);
+
+      return ok({
+        channel: readiness.channel || "CHANNEX",
+        integrationAccountId: readiness.integrationAccountId,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+        pagination: null,
+        ready: true,
+        missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
+        sourceSummary: {
+          propertyAvailabilityWindows: normalizedAvailabilityWindows.length,
+          calendarOverrides: overrideMap.size,
+          requestedDays: dates.length,
+          roomTypeMappings: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings.length : 0,
+          availabilityPayloadGroups: availabilityPayloadGroups.length,
+          availabilityPayloadItems: availabilityItems.length,
+        },
+        availabilityPayloadPreview: {
+          items: availabilityItems,
+          groupedPayloads: availabilityPayloadGroups,
+        },
+        restrictionRatePayloadPreview: {
+          items: [],
+          groupedPayloads: [],
+        },
+        notes,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to build Channex availability payload preview.",
+        errorCode: "CHANNEX_AVAILABILITY_PAYLOAD_PREVIEW_FAILED",
+        details,
+      });
+    }
+  }
+
   formatChannexEvidenceRow(row) {
     if (!row) return null;
 
@@ -4912,7 +5102,12 @@ export default class IntegrationService {
         notes: baseNotes,
         rawDetails: {
           payloadPreview,
-          providerResult,
+          providerResult: {
+            success: !!providerResult?.success,
+            resultCount: results.length,
+            results: response.response.results,
+            rawRequestBodiesOmitted: true,
+          },
         },
       },
     };
@@ -4928,6 +5123,7 @@ export default class IntegrationService {
     baseNotes,
     previewErrorCode,
     previewErrorMessage,
+    buildPayloadPreview = null,
     selectGroupedPayloads,
     buildPayloads,
     afterBuildPayloads = null,
@@ -4966,12 +5162,14 @@ export default class IntegrationService {
     if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
     try {
-      const payloadPreviewResult = await this.previewChannexAriPayloads(
-        normalizedUserId,
-        normalizedDomitsPropertyId,
-        normalizedDateFrom,
-        normalizedDateTo
-      );
+      const payloadPreviewResult = await (typeof buildPayloadPreview === "function"
+        ? buildPayloadPreview(normalizedUserId, normalizedDomitsPropertyId, normalizedDateFrom, normalizedDateTo)
+        : this.previewChannexAriPayloads(
+            normalizedUserId,
+            normalizedDomitsPropertyId,
+            normalizedDateFrom,
+            normalizedDateTo
+          ));
       if (payloadPreviewResult?.statusCode !== 200) {
         return await finalize(
           payloadPreviewResult,
@@ -5016,9 +5214,12 @@ export default class IntegrationService {
         return await finalize(noop.response, noop.evidencePatch);
       }
 
-      const transformedPayloads = buildPayloads(groupedPayloads);
+      let transformedPayloads = buildPayloads(groupedPayloads);
       if (typeof afterBuildPayloads === "function") {
-        afterBuildPayloads({ baseNotes: notes, transformedPayloads });
+        const nextTransformedPayloads = afterBuildPayloads({ baseNotes: notes, transformedPayloads });
+        if (Array.isArray(nextTransformedPayloads)) {
+          transformedPayloads = nextTransformedPayloads;
+        }
       }
       if (captureState) {
         captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
@@ -5101,11 +5302,21 @@ export default class IntegrationService {
       ],
       previewErrorCode: "CHANNEX_AVAILABILITY_PREVIEW_FAILED",
       previewErrorMessage: "Failed to build availability payload preview.",
+      buildPayloadPreview: (...args) => this.previewChannexAvailabilityPayloads(...args),
       selectGroupedPayloads: (payloadPreview) =>
         Array.isArray(payloadPreview?.availabilityPayloadPreview?.groupedPayloads)
           ? payloadPreview.availabilityPayloadPreview.groupedPayloads
           : [],
       buildPayloads: buildChannexAvailabilitySyncPayloads,
+      afterBuildPayloads: ({ baseNotes, transformedPayloads }) => {
+        const combinedPayloads = combineChannexAvailabilitySyncPayloadsForProvider(transformedPayloads);
+        if (combinedPayloads.length) {
+          baseNotes.push(
+            `Availability sync combined ${transformedPayloads.length} room-type payload group(s) into one Channex availability request containing ${combinedPayloads[0].values.length} values.`
+          );
+        }
+        return combinedPayloads;
+      },
       noopStage: "beforeTransform",
       isNoop: ({ groupedPayloads }) => !groupedPayloads.length,
       noopNote: "No availability payload groups were generated, so nothing was sent to Channex.",

@@ -82,7 +82,7 @@ const buildDatabaseClient = () => ({
   }),
 });
 
-const buildReadyAriTargets = () => ({
+const buildReadyAriTargets = (overrides = {}) => ({
   statusCode: 200,
   response: {
     channel: "CHANNEX",
@@ -112,6 +112,7 @@ const buildReadyAriTargets = () => ({
         status: "ACTIVE",
       },
     ],
+    ...overrides,
   },
 });
 
@@ -139,6 +140,7 @@ const createService = (overrides = {}) => {
       readSecretOrNull: jest.fn().mockResolvedValue({ apiKey: "secret" }),
     },
     channexProviderClient: {
+      pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
       pushRestrictions: jest.fn().mockResolvedValue({ results: [] }),
     },
     ...overrides,
@@ -315,6 +317,181 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         maxPageSizeDays: 60,
       }),
     });
+  });
+
+  test("availability sync supports a 500-day range and sends one combined provider request", async () => {
+    const pushAvailability = jest.fn(async (_secret, payloads) => ({
+      success: true,
+      results: [
+        {
+          externalPropertyId: "external-property-1",
+          externalRoomTypeId: null,
+          requestBody: { values: payloads[0].values },
+          providerStatus: "SYNCED",
+          httpStatus: 202,
+          success: true,
+          taskId: "task-availability-1",
+          warnings: [],
+          errorCode: null,
+          errorMessage: null,
+        },
+      ],
+    }));
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions: jest.fn().mockResolvedValue({ results: [] }),
+      },
+    });
+    service.getChannexAriTargets.mockResolvedValue(
+      buildReadyAriTargets({
+        roomTypeMappings: [
+          {
+            domitsPropertyId: "domits-property-1",
+            externalPropertyId: "external-property-1",
+            externalRoomTypeId: "room-type-1",
+            status: "ACTIVE",
+          },
+          {
+            domitsPropertyId: "domits-property-1",
+            externalPropertyId: "external-property-1",
+            externalRoomTypeId: "room-type-2",
+            status: "ACTIVE",
+          },
+        ],
+      })
+    );
+
+    const result = await service.syncChannexAvailability(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.calledProvider).toBe(true);
+    expect(result.response.requestCount).toBe(1);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    const [, transformedPayloads] = pushAvailability.mock.calls[0];
+    expect(transformedPayloads).toHaveLength(1);
+    expect(transformedPayloads[0].values).toHaveLength(1000);
+    expect(result.response.results[0].requestBody).toEqual(
+      expect.objectContaining({
+        valuesOmitted: true,
+        valueCount: 1000,
+      })
+    );
+  });
+
+  test("availability sync rejects ranges over 500 days", async () => {
+    const pushAvailability = jest.fn();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions: jest.fn().mockResolvedValue({ results: [] }),
+      },
+    });
+
+    const result = await service.syncChannexAvailability(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-06",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(400);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        errorCode: "CHANNEX_SYNC_RANGE_TOO_LARGE",
+        maxDays: 500,
+        totalDays: 501,
+      })
+    );
+    expect(pushAvailability).not.toHaveBeenCalled();
+  });
+
+  test("availability sync returns a controlled error response when the provider call throws", async () => {
+    const providerError = new Error("Provider gateway unavailable");
+    providerError.status = 503;
+    providerError.endpoint = "/api/v1/availability";
+    providerError.method = "POST";
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn().mockRejectedValue(providerError),
+        pushRestrictions: jest.fn().mockResolvedValue({ results: [] }),
+      },
+    });
+
+    const result = await service.syncChannexAvailability(
+      "user-1",
+      "domits-property-1",
+      "2026-05-01",
+      "2026-05-02",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(500);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        error: "Failed to sync Channex availability.",
+        errorCode: "CHANNEX_AVAILABILITY_SYNC_FAILED",
+        details: expect.objectContaining({
+          message: "Provider gateway unavailable",
+          httpStatus: 503,
+          endpoint: "/api/v1/availability",
+          method: "POST",
+        }),
+      })
+    );
+  });
+
+  test("availability sync still works for a small range", async () => {
+    const pushAvailability = jest.fn(async (_secret, payloads) => ({
+      success: true,
+      results: [
+        {
+          externalPropertyId: "external-property-1",
+          externalRoomTypeId: null,
+          requestBody: { values: payloads[0].values },
+          providerStatus: "SYNCED",
+          httpStatus: 202,
+          success: true,
+          taskId: "task-small-1",
+          warnings: [],
+          errorCode: null,
+          errorMessage: null,
+        },
+      ],
+    }));
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions: jest.fn().mockResolvedValue({ results: [] }),
+      },
+    });
+
+    const result = await service.syncChannexAvailability(
+      "user-1",
+      "domits-property-1",
+      "2026-05-01",
+      "2026-05-02",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.calledProvider).toBe(true);
+    expect(result.response.requestCount).toBe(1);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushAvailability.mock.calls[0][1][0].values).toHaveLength(2);
+    expect(result.response.results[0]).toEqual(
+      expect.objectContaining({
+        success: true,
+        taskId: "task-small-1",
+      })
+    );
   });
 
   test("restrictions sync sends mapped Channex restriction fields from preview payloads", async () => {
