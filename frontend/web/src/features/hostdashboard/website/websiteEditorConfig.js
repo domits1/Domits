@@ -94,6 +94,7 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
       description: "These cards drive the fast-scan content block directly below the hero.",
       itemLabel: "Card",
       count: 3,
+      supportsIconSelection: true,
     },
   },
   "trust-signals": {
@@ -102,6 +103,7 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
       description: "These cards control the reassurance stack in the trust layout.",
       itemLabel: "Card",
       count: 2,
+      supportsIconSelection: true,
     },
   },
   "experience-journey": {
