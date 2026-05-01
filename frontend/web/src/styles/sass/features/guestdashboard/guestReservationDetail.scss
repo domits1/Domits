@@ -426,6 +426,13 @@
   background: #fee2e2;
 }
 
+.dangerOutlineBtn:disabled,
+.dangerBtn:disabled,
+.secondaryBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .cancelBookingModalOverlay {
   position: fixed;
   inset: 0;
@@ -457,6 +464,12 @@
   color: #4b5563;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.cancelBookingModal .cancelBookingModalError {
+  margin-top: 14px;
+  color: #b91c1c;
+  font-weight: 500;
 }
 
 .cancelBookingModalActions {

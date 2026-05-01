@@ -14,7 +14,7 @@ import PaymentSummary from "./components/PaymentSummary";
 import BookingDetails from "./components/BookingDetails";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader";
 import useDashboardIdentity from "../../hooks/useDashboardIdentity";
-import { getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
+import { cancelGuestBooking, getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
 import {
   formatFamilyLabel,
   getArrivalDate,
@@ -236,7 +236,7 @@ const resolveReservationCancellationPolicy = ({ booking, propertyDetails }) => {
   return fallbackPolicyId ? resolveGuestCancellationPolicy(fallbackPolicyId) : null;
 };
 
-function CancelBookingModal({ isOpen, onClose, onConfirm }) {
+function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm }) {
   if (!isOpen) {
     return null;
   }
@@ -257,12 +257,18 @@ function CancelBookingModal({ isOpen, onClose, onConfirm }) {
           reservation status.
         </p>
 
+        {error && (
+          <p className="cancelBookingModalError" role="alert">
+            {error}
+          </p>
+        )}
+
         <div className="cancelBookingModalActions">
-          <button type="button" className="secondaryBtn" onClick={onClose}>
+          <button type="button" className="secondaryBtn" onClick={onClose} disabled={isSubmitting}>
             Keep booking
           </button>
-          <button type="button" className="dangerBtn" onClick={onConfirm}>
-            Yes, cancel booking
+          <button type="button" className="dangerBtn" onClick={onConfirm} disabled={isSubmitting}>
+            {isSubmitting ? "Cancelling..." : "Yes, cancel booking"}
           </button>
         </div>
       </section>
@@ -271,9 +277,15 @@ function CancelBookingModal({ isOpen, onClose, onConfirm }) {
 }
 
 CancelBookingModal.propTypes = {
+  error: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
+  isSubmitting: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
+};
+
+CancelBookingModal.defaultProps = {
+  error: "",
 };
 
 const buildReservationContent = ({
@@ -389,6 +401,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
   });
   const total = getBookingTotal(booking);
   const roomRateRaw = Number(pricing?.roomRate ?? pricing?.roomrate);
+  const bookingId = getBookingId(booking);
   const nightlyRate = resolveNightlyRate({
     roomRateRaw,
     total,
@@ -416,6 +429,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
       image: host?.profileImage || host?.image || null,
     },
     stay: {
+      bookingId,
       reservationId: getReservationNumber(booking),
       status: normalizeStayStatus(booking?.status),
       bookedDate: formatDisplayDate(bookedDate),
@@ -444,6 +458,8 @@ function ReservationDetails() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelBookingLoading, setCancelBookingLoading] = useState(false);
+  const [cancelBookingError, setCancelBookingError] = useState("");
   const { userId: guestId, loading: identityLoading, error: identityError } = useDashboardIdentity("Guest");
 
   const reservationRouteId = useMemo(() => extractReservationIdFromPath(location.pathname), [location.pathname]);
@@ -546,15 +562,39 @@ function ReservationDetails() {
   };
 
   const handleOpenCancelBooking = () => {
+    setCancelBookingError("");
     setIsCancelModalOpen(true);
   };
 
   const handleCloseCancelBooking = () => {
+    if (cancelBookingLoading) {
+      return;
+    }
+
+    setCancelBookingError("");
     setIsCancelModalOpen(false);
   };
 
-  const handleConfirmCancelBooking = () => {
-    setIsCancelModalOpen(false);
+  const handleConfirmCancelBooking = async () => {
+    const bookingId = reservation?.stay?.bookingId;
+
+    if (!bookingId) {
+      setCancelBookingError("This reservation is missing a booking id.");
+      return;
+    }
+
+    setCancelBookingLoading(true);
+    setCancelBookingError("");
+
+    try {
+      await cancelGuestBooking(bookingId);
+      setIsCancelModalOpen(false);
+    } catch (cancelError) {
+      console.error("Failed to cancel booking:", cancelError);
+      setCancelBookingError("Could not cancel this booking. Please try again.");
+    } finally {
+      setCancelBookingLoading(false);
+    }
   };
 
   const reservationContent = buildReservationContent({
@@ -576,7 +616,9 @@ function ReservationDetails() {
       </div>
 
       <CancelBookingModal
+        error={cancelBookingError}
         isOpen={isCancelModalOpen}
+        isSubmitting={cancelBookingLoading}
         onClose={handleCloseCancelBooking}
         onConfirm={handleConfirmCancelBooking}
       />
