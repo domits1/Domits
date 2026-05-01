@@ -75,6 +75,11 @@ What is in place:
 - The KPI dashboard now separates surface performance into `Preview` and `Live` tabs:
   - preview mobile LCP can be measured from the public preview route
   - live mobile LCP remains pending until a real published live-site surface exists
+- Phase 1 of the public-site lifecycle is now implemented:
+  - `main.standalone_site` stores standalone-owned published site state separately from the editor draft
+  - `main.standalone_site_domain` stores fallback-domain metadata separately from the site lifecycle record
+  - the editor can publish and unpublish the standalone site record without treating the draft row as the public website source of truth
+  - fallback-domain assignment is now visible in the editor, but public host-based routing is still a later phase
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -183,6 +188,12 @@ Current implementation details:
 - Preview workflow logic is extracted into a dedicated script module to support future dedicated preview route/new-tab flow.
 - A dedicated public preview route now exists for saved drafts and can be opened from the workspace/editor.
 - The shared preview route currently uses the draft id as the preview identifier. This is acceptable for acceptance/internal review, but should be replaced by a stronger preview token or signed-link strategy before treating preview links as production-grade public URLs.
+- The shared preview route still resolves by `draftId`, which means it remains an internal preview mechanism and not the final public live-site runtime.
+- Publishing now snapshots the currently approved live-preview state into a separate standalone site record.
+- Fallback-domain state is now tracked separately from site publication state:
+  - a site can be `PUBLISHED`
+  - while its fallback domain is still `PENDING`
+  This separation is intentional and is required for the later routing phase.
 - Shared template model is in place and reusable by additional templates.
 - Built previews are persisted as website drafts keyed by host and property.
 - Listings with an existing saved website are no longer offered again in the builder flow.

@@ -7,6 +7,8 @@ import { PropertyImageRepository } from "../data/repository/propertyImageReposit
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
 import { StandaloneSiteDraftRepository } from "../data/repository/standaloneSiteDraftRepository.js";
 import { StandaloneSiteEventRepository } from "../data/repository/standaloneSiteEventRepository.js";
+import { StandaloneSiteRepository } from "../data/repository/standaloneSiteRepository.js";
+import { StandaloneSiteDomainRepository } from "../data/repository/standaloneSiteDomainRepository.js";
 import { randomUUID } from "node:crypto";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
@@ -32,6 +34,39 @@ const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
 
 const WEBSITE_ANALYTICS_SURFACES = new Set(["preview", "live"]);
 const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "desktop"]);
+const STANDALONE_SITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
+const STANDALONE_SITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
+const STANDALONE_SITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
+const DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX = "standalone.domits.com";
+
+const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
+const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const getFallbackDomainSuffix = () => {
+    const configuredSuffix = cleanWebsiteText(process.env.STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX).toLowerCase();
+    return configuredSuffix || DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX;
+};
+const getFallbackDomainRoutingStatus = () =>
+    String(process.env.STANDALONE_SITE_FALLBACK_ROUTING_ACTIVE || "").trim().toLowerCase() === "true"
+        ? "ACTIVE"
+        : "PENDING";
+const slugifyWebsiteDomainLabel = (value) => {
+    const sanitizedValue = cleanWebsiteText(value)
+        .normalize("NFKD")
+        .replaceAll(/[^\x00-\x7F]/g, "")
+        .toLowerCase()
+        .replaceAll(/[^a-z0-9]+/g, "-")
+        .replaceAll(/^-+|-+$/g, "");
+
+    return sanitizedValue || "site";
+};
+const buildFallbackDomainLabel = (siteName, siteId) => {
+    const slugBase = slugifyWebsiteDomainLabel(siteName).slice(0, 40).replaceAll(/-+$/g, "") || "site";
+    const idSuffix = cleanWebsiteText(siteId).toLowerCase().replaceAll(/[^a-z0-9]/g, "").slice(0, 8) || "domits";
+    const combinedLabel = `${slugBase}-${idSuffix}`;
+    return combinedLabel.slice(0, 63).replaceAll(/-+$/g, "");
+};
+const buildFallbackDomain = (siteName, siteId) =>
+    `${buildFallbackDomainLabel(siteName, siteId)}.${getFallbackDomainSuffix()}`;
 
 export class PropertyController {
 
@@ -45,6 +80,8 @@ export class PropertyController {
         this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
         this.standaloneSiteDraftRepository = new StandaloneSiteDraftRepository(systemManagerRepository);
         this.standaloneSiteEventRepository = new StandaloneSiteEventRepository(systemManagerRepository);
+        this.standaloneSiteRepository = new StandaloneSiteRepository(systemManagerRepository);
+        this.standaloneSiteDomainRepository = new StandaloneSiteDomainRepository(systemManagerRepository);
     }
 
     // -------------------------
@@ -1264,6 +1301,161 @@ export class PropertyController {
         throw new TypeError("Unsupported website eventType.");
     }
 
+    normalizeStandaloneSiteStatus(status) {
+        const normalizedStatus = String(status || "").trim().toUpperCase();
+        if (!STANDALONE_SITE_PUBLIC_STATUSES.has(normalizedStatus)) {
+            throw new TypeError("website site status must be DRAFT, PREVIEW, PUBLISHED, or SUSPENDED.");
+        }
+
+        return normalizedStatus;
+    }
+
+    normalizeStandaloneSiteDomainStatus(status) {
+        const normalizedStatus = String(status || "").trim().toUpperCase();
+        if (!STANDALONE_SITE_DOMAIN_STATUSES.has(normalizedStatus)) {
+            throw new TypeError("website domain status must be PENDING, VERIFIED, ACTIVE, FAILED, or DISABLED.");
+        }
+
+        return normalizedStatus;
+    }
+
+    buildStandaloneSiteName({ draft, propertyDetails }) {
+        const draftSiteTitle = cleanWebsiteText(draft?.publishedContentOverrides?.siteTitle);
+        if (draftSiteTitle) {
+            return draftSiteTitle;
+        }
+
+        const propertyTitle = cleanWebsiteText(propertyDetails?.property?.title);
+        if (propertyTitle) {
+            return propertyTitle;
+        }
+
+        return `Website ${String(draft?.propertyId || "").slice(0, 8)}`;
+    }
+
+    ensureStandaloneSitePublishEligibility(propertyDetails) {
+        const propertyStatus = cleanWebsiteText(propertyDetails?.property?.status).toUpperCase();
+        if (propertyStatus !== "ACTIVE") {
+            throw new TypeError("Only ACTIVE listings can be published to a fallback site.");
+        }
+    }
+
+    buildStandaloneSiteSummary(site, domains = []) {
+        if (!site) {
+            return null;
+        }
+
+        const normalizedDomains = Array.isArray(domains) ? domains : [];
+        const primaryDomain = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
+        const isReachable = site.status === "PUBLISHED" && primaryDomain?.status === "ACTIVE";
+
+        return {
+            site,
+            primaryDomain,
+            domains: normalizedDomains,
+            isReachable,
+        };
+    }
+
+    async getStandaloneSiteSummaryByPropertyId(propertyId, hostId) {
+        const site = await this.standaloneSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+        if (!site) {
+            return null;
+        }
+
+        const domains = await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+        return this.buildStandaloneSiteSummary(site, domains);
+    }
+
+    async publishStandaloneSiteForDraft({ draft, hostId, propertyId }) {
+        const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
+            propertyId,
+            { includeCalendarAvailability: true }
+        );
+        this.ensureStandaloneSitePublishEligibility(propertyDetails);
+
+        const siteName = this.buildStandaloneSiteName({
+            draft,
+            propertyDetails,
+        });
+
+        const site = await this.standaloneSiteRepository.upsertSite({
+            propertyId,
+            hostId,
+            siteName,
+            primaryLocale: "en",
+            status: "PUBLISHED",
+            templateKey: draft.templateKey,
+            publishedPropertySnapshot: propertyDetails,
+            publishedContentOverrides: draft.publishedContentOverrides || {},
+            publishedThemeOverrides: draft.publishedThemeOverrides || {},
+            publishedAt: Date.now(),
+            suspendedAt: null,
+        });
+
+        const fallbackDomainStatus = this.normalizeStandaloneSiteDomainStatus(getFallbackDomainRoutingStatus());
+        const existingFallbackDomain = await this.standaloneSiteDomainRepository.getFallbackDomainBySiteId(site.id);
+        const fallbackDomain = await this.standaloneSiteDomainRepository.ensureDomain({
+            siteId: site.id,
+            domain: existingFallbackDomain?.domain || buildFallbackDomain(site.siteName, site.id),
+            domainType: STANDALONE_SITE_DOMAIN_TYPE_FALLBACK,
+            status: fallbackDomainStatus,
+            isPrimary: true,
+            verificationDetails: {
+                activationMode: "internal",
+                domainKind: "fallback",
+                routingConfigured: fallbackDomainStatus === "ACTIVE",
+                activationStatus: fallbackDomainStatus,
+                domainSuffix: getFallbackDomainSuffix(),
+            },
+        });
+
+        await this.recordStandaloneWebsiteEventSafely({
+            draftId: draft.id,
+            propertyId,
+            hostId,
+            eventType: "WEBSITE_SITE_PUBLISHED",
+            payload: {
+                templateKey: draft.templateKey,
+                siteId: site.id,
+                domain: fallbackDomain?.domain || "",
+                domainStatus: fallbackDomain?.status || fallbackDomainStatus,
+            },
+        });
+
+        return this.buildStandaloneSiteSummary(site, [fallbackDomain]);
+    }
+
+    async unpublishStandaloneSiteSummary({ site, draft, hostId, propertyId }) {
+        const nextSite = await this.standaloneSiteRepository.updateSiteStatus(site.id, "PREVIEW");
+        const fallbackDomain = await this.standaloneSiteDomainRepository.updateFallbackDomainStatus(
+            site.id,
+            "DISABLED",
+            {
+                activationMode: "internal",
+                disabledByHost: true,
+                routingConfigured: false,
+            }
+        );
+        const allDomains = fallbackDomain
+            ? [fallbackDomain]
+            : await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+
+        await this.recordStandaloneWebsiteEventSafely({
+            draftId: draft?.id || null,
+            propertyId,
+            hostId,
+            eventType: "WEBSITE_SITE_UNPUBLISHED",
+            payload: {
+                siteId: site.id,
+                domain: fallbackDomain?.domain || "",
+                domainStatus: fallbackDomain?.status || "DISABLED",
+            },
+        });
+
+        return this.buildStandaloneSiteSummary(nextSite, allDomains);
+    }
+
     isWebsiteDraftClientError(error) {
         return (
             error?.message?.startsWith("Missing propertyId") ||
@@ -1273,6 +1465,9 @@ export class PropertyController {
             error?.message?.includes("must be a plain object") ||
             error?.message?.includes("deleteReasons must be an array") ||
             error?.message?.includes("Unsupported website eventType") ||
+            error?.message?.includes("Only ACTIVE listings can be published") ||
+            error?.message?.includes("website site status must be") ||
+            error?.message?.includes("website domain status must be") ||
             error?.message?.includes("payload.attemptId") ||
             error?.message?.includes("payload.durationMs") ||
             error?.message?.includes("payload.surface") ||
@@ -1868,6 +2063,133 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/site
+    // -------------------------
+    async getWebsiteSiteByPropertyId(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const propertyId = String(event.queryStringParameters?.property || event.queryStringParameters?.propertyId || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const siteSummary = await this.getStandaloneSiteSummaryByPropertyId(propertyId, hostId);
+            if (!siteSummary) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website site record not found." }),
+                };
+            }
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/publish
+    // -------------------------
+    async publishWebsiteSite(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const draft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            if (!draft) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website draft not found." }),
+                };
+            }
+
+            const siteSummary = await this.publishStandaloneSiteForDraft({
+                draft,
+                hostId,
+                propertyId,
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/unpublish
+    // -------------------------
+    async unpublishWebsiteSite(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const site = await this.standaloneSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+            if (!site) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website site record not found." }),
+                };
+            }
+
+            const draft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const siteSummary = await this.unpublishStandaloneSiteSummary({
+                site,
+                draft,
+                hostId,
+                propertyId,
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
             return this.websiteServerError();
         }
     }

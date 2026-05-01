@@ -32,6 +32,12 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/event")) {
     return controller.recordWebsiteAnalyticsEvent(event);
   }
+  if (isPath(event, "/property/website/site/publish")) {
+    return controller.publishWebsiteSite(event);
+  }
+  if (isPath(event, "/property/website/site/unpublish")) {
+    return controller.unpublishWebsiteSite(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -80,6 +86,9 @@ const handleGet = async (event) => {
   }
   if (isPath(event, "/property/website/kpis")) {
     return controller.getWebsiteKpis(event);
+  }
+  if (isPath(event, "/property/website/site")) {
+    return controller.getWebsiteSiteByPropertyId(event);
   }
   if (isPath(event, "/property/website/draft")) {
     return controller.getWebsiteDraftByPropertyId(event);

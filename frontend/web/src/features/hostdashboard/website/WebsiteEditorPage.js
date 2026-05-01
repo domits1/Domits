@@ -3,11 +3,17 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
+import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { fetchWebsiteDraftByPropertyId, upsertWebsiteDraft } from "./services/websiteDraftService";
+import {
+  fetchWebsiteSiteByPropertyId,
+  publishWebsiteSite,
+  unpublishWebsiteSite,
+} from "./services/websiteSiteService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   getAmenityIconNode,
@@ -63,6 +69,11 @@ const getDraftPublishedThemeOverrides = (draft) =>
   draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object"
     ? draft.publishedThemeOverrides
     : {};
+
+const getPrimaryWebsiteDomain = (siteSummary) =>
+  siteSummary?.primaryDomain && typeof siteSummary.primaryDomain === "object"
+    ? siteSummary.primaryDomain
+    : null;
 
 const buildEditorValuesFromDraft = (baseModel, draft) =>
   buildWebsiteDraftEditorValues(
@@ -307,8 +318,13 @@ function WebsiteEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDiscardingChanges, setIsDiscardingChanges] = useState(false);
   const [isUpdatingLivePreview, setIsUpdatingLivePreview] = useState(false);
+  const [isPublishingSite, setIsPublishingSite] = useState(false);
+  const [isUnpublishingSite, setIsUnpublishingSite] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [highlightedTargetId, setHighlightedTargetId] = useState("");
   const [activePreviewTargetId, setActivePreviewTargetId] = useState("");
+  const [siteSummary, setSiteSummary] = useState(null);
+  const [siteSummaryError, setSiteSummaryError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
     [EDITOR_SECTION_KEYS.visibility]: false,
@@ -328,6 +344,7 @@ function WebsiteEditorPage() {
   });
   const sectionRefs = useRef({});
   const targetRefs = useRef({});
+  const actionMenuRef = useRef(null);
   const sectionHighlightResetTimeoutRef = useRef(null);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
 
@@ -337,6 +354,7 @@ function WebsiteEditorPage() {
     const loadEditorState = async () => {
       setIsLoading(true);
       setLoadError("");
+      setSiteSummaryError("");
 
       try {
         const [draft, propertyDetails] = await Promise.all([
@@ -361,9 +379,24 @@ function WebsiteEditorPage() {
           return;
         }
 
+        let nextSiteSummary = null;
+        let nextSiteSummaryError = "";
+        try {
+          nextSiteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
+        } catch (siteError) {
+          nextSiteSummaryError =
+            siteError?.message || "We could not load the public site state for this listing.";
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
         setDraftRecord(draft);
         setBaseModel(nextBaseModel);
         setEditorValues(buildWebsiteDraftEditorValues(nextPreviewModel));
+        setSiteSummary(nextSiteSummary);
+        setSiteSummaryError(nextSiteSummaryError);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -372,6 +405,7 @@ function WebsiteEditorPage() {
         setDraftRecord(null);
         setBaseModel(null);
         setEditorValues(createEmptyWebsiteDraftEditorValues());
+        setSiteSummary(null);
         setLoadError(error?.message || "We could not open this website draft.");
       } finally {
         if (isMounted) {
@@ -433,6 +467,21 @@ function WebsiteEditorPage() {
   );
 
   const isMutatingDraft = isSaving || isDiscardingChanges || isUpdatingLivePreview;
+  const isMutatingSite = isPublishingSite || isUnpublishingSite;
+  const primarySiteDomain = useMemo(() => getPrimaryWebsiteDomain(siteSummary), [siteSummary]);
+  const publicSiteStatus = siteSummary?.site?.status || "PREVIEW";
+  const fallbackDomainStatus = primarySiteDomain?.status || "Not assigned";
+  const hasPublishedSite = publicSiteStatus === "PUBLISHED";
+  const canPublishSite =
+    Boolean(draftRecord) &&
+    !isMutatingDraft &&
+    !isMutatingSite &&
+    !hasPreviewSyncPending;
+  const canUnpublishSite =
+    Boolean(siteSummary?.site?.id) &&
+    hasPublishedSite &&
+    !isMutatingDraft &&
+    !isMutatingSite;
 
   useEffect(() => {
     setExpandedSections({
@@ -759,6 +808,7 @@ function WebsiteEditorPage() {
       return;
     }
 
+    setIsActionMenuOpen(false);
     setIsDiscardingChanges(true);
 
     try {
@@ -784,6 +834,7 @@ function WebsiteEditorPage() {
       return;
     }
 
+    setIsActionMenuOpen(false);
     setIsUpdatingLivePreview(true);
 
     try {
@@ -807,6 +858,50 @@ function WebsiteEditorPage() {
     }
   };
 
+  const publishFallbackSite = async () => {
+    if (!draftRecord || !canPublishSite) {
+      return;
+    }
+
+    setIsActionMenuOpen(false);
+    setIsPublishingSite(true);
+
+    try {
+      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
+      setSiteSummary(nextSiteSummary);
+      setSiteSummaryError("");
+      toast.success(hasPublishedSite ? "Fallback site republished." : "Fallback site published.");
+    } catch (error) {
+      const errorMessage = error?.message || "We could not publish the fallback site.";
+      setSiteSummaryError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsPublishingSite(false);
+    }
+  };
+
+  const unpublishFallbackSite = async () => {
+    if (!draftRecord || !canUnpublishSite) {
+      return;
+    }
+
+    setIsActionMenuOpen(false);
+    setIsUnpublishingSite(true);
+
+    try {
+      const nextSiteSummary = await unpublishWebsiteSite(draftRecord.propertyId);
+      setSiteSummary(nextSiteSummary);
+      setSiteSummaryError("");
+      toast.success("Fallback site unpublished.");
+    } catch (error) {
+      const errorMessage = error?.message || "We could not unpublish the fallback site.";
+      setSiteSummaryError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsUnpublishingSite(false);
+    }
+  };
+
   const openWebsitePreviewLink = () => {
     const draftId = String(draftRecord?.id || "").trim();
     if (!draftId) {
@@ -814,8 +909,39 @@ function WebsiteEditorPage() {
       return;
     }
 
+    setIsActionMenuOpen(false);
     globalThis.open(buildWebsitePreviewPath(draftId), "_blank", "noopener,noreferrer");
   };
+
+  const toggleActionMenu = () => {
+    setIsActionMenuOpen((currentValue) => !currentValue);
+  };
+
+  useEffect(() => {
+    if (!isActionMenuOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target)) {
+        setIsActionMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsActionMenuOpen(false);
+      }
+    };
+
+    globalThis.document?.addEventListener("mousedown", handlePointerDown);
+    globalThis.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      globalThis.document?.removeEventListener("mousedown", handlePointerDown);
+      globalThis.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isActionMenuOpen]);
 
   useEffect(() => {
     const isOverlayOpen = imagePickerState.isOpen || iconPickerState.isOpen;
@@ -947,13 +1073,15 @@ function WebsiteEditorPage() {
               <div className={styles.heroMeta}>
                 <span className={styles.metaPill}>{draftTemplate.name}</span>
                 <span className={styles.metaPill}>{draftRecord.status || "DRAFT"}</span>
+                <span className={styles.metaPill}>Public site: {publicSiteStatus}</span>
+                <span className={styles.metaPill}>Fallback domain: {fallbackDomainStatus}</span>
                 {previewModel.location.label ? (
                   <span className={styles.metaPill}>{previewModel.location.label}</span>
                 ) : null}
               </div>
             </div>
 
-            <div className={styles.buttonRow}>
+            <div className={`${styles.buttonRow} ${styles.heroActionRow}`.trim()}>
               <button
                 type="button"
                 className={styles.secondaryButton}
@@ -962,30 +1090,118 @@ function WebsiteEditorPage() {
                 <ArrowBackIcon fontSize="small" />
                 Back to website workspace
               </button>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={openWebsitePreviewLink}
-              >
-                Open live preview
-              </button>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={() => void updateLivePreviewChanges()}
-                disabled={isMutatingDraft || !hasPreviewSyncPending}
-              >
-                {isUpdatingLivePreview ? "Updating..." : "Update live preview"}
-              </button>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={() => void discardDraftChanges()}
-                disabled={isMutatingDraft || !hasPreviewSyncPending}
-              >
-                {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
-              </button>
+              <div ref={actionMenuRef} className={styles.actionMenuContainer}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={toggleActionMenu}
+                  aria-haspopup="menu"
+                  aria-expanded={isActionMenuOpen}
+                >
+                  Update website
+                  <img
+                    src={isActionMenuOpen ? arrowUpIcon : arrowDownIcon}
+                    alt=""
+                    aria-hidden="true"
+                    className={styles.actionMenuButtonIcon}
+                  />
+                </button>
+                {isActionMenuOpen ? (
+                  <div className={styles.actionMenuList} role="menu" aria-label="Website update actions">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.actionMenuItem}
+                      onClick={openWebsitePreviewLink}
+                    >
+                      Open live preview
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.actionMenuItem}
+                      onClick={() => void updateLivePreviewChanges()}
+                      disabled={isMutatingDraft || !hasPreviewSyncPending}
+                    >
+                      {isUpdatingLivePreview ? "Updating..." : "Update live preview"}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.actionMenuItem}
+                      onClick={() => void publishFallbackSite()}
+                      disabled={!canPublishSite}
+                    >
+                      <PublicOutlinedIcon fontSize="small" />
+                      {isPublishingSite
+                        ? "Publishing..."
+                        : hasPublishedSite
+                          ? "Republish fallback site"
+                          : "Publish fallback site"}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.actionMenuItem}
+                      onClick={() => void unpublishFallbackSite()}
+                      disabled={!canUnpublishSite}
+                    >
+                      {isUnpublishingSite ? "Unpublishing..." : "Unpublish site"}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={`${styles.actionMenuItem} ${styles.actionMenuItemDestructive}`.trim()}
+                      onClick={() => void discardDraftChanges()}
+                      disabled={isMutatingDraft || !hasPreviewSyncPending}
+                    >
+                      {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
+
+            <section className={styles.publicSitePanel}>
+              <div className={styles.publicSiteHeader}>
+                <div>
+                  <h2 className={styles.publicSiteTitle}>Public site state</h2>
+                  <p className={styles.publicSiteDescription}>
+                    Publishing uses the current live preview snapshot. Draft-only edits stay out until
+                    you update live preview first.
+                  </p>
+                </div>
+                {siteSummary?.isReachable ? (
+                  <span className={styles.publicSiteReachableBadge}>Reachable</span>
+                ) : null}
+              </div>
+
+              <div className={styles.publicSiteGrid}>
+                <div className={styles.publicSiteMetric}>
+                  <span className={styles.publicSiteLabel}>Fallback domain</span>
+                  <strong className={styles.publicSiteValue}>
+                    {primarySiteDomain?.domain || "No fallback domain assigned yet"}
+                  </strong>
+                </div>
+                <div className={styles.publicSiteMetric}>
+                  <span className={styles.publicSiteLabel}>Domain activation</span>
+                  <strong className={styles.publicSiteValue}>{fallbackDomainStatus}</strong>
+                </div>
+                <div className={styles.publicSiteMetric}>
+                  <span className={styles.publicSiteLabel}>Public status</span>
+                  <strong className={styles.publicSiteValue}>{publicSiteStatus}</strong>
+                </div>
+              </div>
+
+              {siteSummaryError ? (
+                <p className={styles.publicSiteError}>{siteSummaryError}</p>
+              ) : hasPreviewSyncPending ? (
+                <p className={styles.publicSiteHint}>
+                  Update live preview first if you want the latest editor changes included in the next
+                  publish.
+                </p>
+              ) : null}
+            </section>
           </div>
 
           <div className={styles.surface}>
