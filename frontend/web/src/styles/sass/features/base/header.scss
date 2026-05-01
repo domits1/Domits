@@ -235,7 +235,7 @@ $breakpoint-sm: 480px;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto auto;
       grid-template-areas:
-        "logo profile trigger"
+        "logo trigger profile"
         "panel panel panel"
         "flags flags flags";
       align-items: center;
