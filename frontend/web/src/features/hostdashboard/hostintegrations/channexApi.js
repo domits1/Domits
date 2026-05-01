@@ -121,10 +121,32 @@ export const syncChannexAvailability = ({ userId, domitsPropertyId, dateFrom, da
     query: { userId, domitsPropertyId, dateFrom, dateTo },
   });
 
-export const syncChannexRestrictions = ({ userId, domitsPropertyId, dateFrom, dateTo }) =>
+export const syncChannexRestrictions = ({
+  userId,
+  domitsPropertyId,
+  dateFrom,
+  dateTo,
+  syncRunId,
+  requestedDateFrom,
+  requestedDateTo,
+  pageNumber,
+  totalPages,
+  pageSizeDays,
+}) =>
   requestChannex("/integrations/channex/sync/restrictions", {
     method: "POST",
-    query: { userId, domitsPropertyId, dateFrom, dateTo },
+    query: {
+      userId,
+      domitsPropertyId,
+      dateFrom,
+      dateTo,
+      syncRunId,
+      requestedDateFrom,
+      requestedDateTo,
+      pageNumber,
+      totalPages,
+      pageSizeDays,
+    },
   });
 
 export const syncChannexAri = ({ userId, domitsPropertyId, dateFrom, dateTo }) =>

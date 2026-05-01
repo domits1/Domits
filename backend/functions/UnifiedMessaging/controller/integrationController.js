@@ -1,4 +1,8 @@
 import IntegrationService from "../business/integrationService.js";
+import {
+  CHANNEX_RESTRICTIONS_SYNC_MODE,
+  CHANNEX_RESTRICTIONS_SYNC_VERSION,
+} from "../business/channexRestrictionsSyncVersion.js";
 import { extractIntegrationId, extractLastPathSegment, safeJson } from "./controllerUtils.js";
 
 class IntegrationController {
@@ -218,7 +222,38 @@ class IntegrationController {
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
     const dateFrom = event.queryStringParameters?.dateFrom || null;
     const dateTo = event.queryStringParameters?.dateTo || null;
-    return await this.integrationService.syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo);
+    const syncRunId = event.queryStringParameters?.syncRunId || null;
+    const requestedDateFrom = event.queryStringParameters?.requestedDateFrom || null;
+    const requestedDateTo = event.queryStringParameters?.requestedDateTo || null;
+    const pageNumber = event.queryStringParameters?.pageNumber || null;
+    const totalPages = event.queryStringParameters?.totalPages || null;
+    const pageSizeDays = event.queryStringParameters?.pageSizeDays || null;
+    console.info(
+      JSON.stringify({
+        event: "CHANNEX_RESTRICTIONS_SYNC_DIAGNOSTIC",
+        restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        stage: "controller_entry",
+        userId,
+        domitsPropertyId,
+        dateFrom,
+        dateTo,
+        syncRunId,
+        requestedDateFrom,
+        requestedDateTo,
+        pageNumber,
+        totalPages,
+        pageSizeDays,
+      })
+    );
+    return await this.integrationService.syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo, {
+      syncRunId,
+      requestedDateFrom,
+      requestedDateTo,
+      pageNumber,
+      totalPages,
+      pageSizeDays,
+    });
   }
 
   async syncChannexAri(event) {

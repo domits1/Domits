@@ -659,6 +659,67 @@
   font-size: 16px;
 }
 
+.channex-restrictions-sync-progress {
+  display: grid;
+  gap: 12px;
+}
+
+.channex-restrictions-sync-summary {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.channex-restrictions-sync-pages {
+  display: grid;
+  gap: 8px;
+}
+
+.channex-restrictions-sync-page {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  background: #ffffff;
+  color: #374151;
+  overflow-wrap: anywhere;
+}
+
+.channex-restrictions-sync-page strong {
+  color: #111827;
+}
+
+.channex-restrictions-sync-page.is-running {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.channex-restrictions-sync-page.is-completed {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.channex-restrictions-sync-page.is-failed {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.channex-restrictions-sync-evidence {
+  display: grid;
+  gap: 8px;
+}
+
+.channex-restrictions-sync-evidence h5 {
+  margin: 0;
+  font-size: 14px;
+}
+
 .channex-ari-preview-layout {
   display: grid;
   gap: 18px;
@@ -992,6 +1053,10 @@
   .channex-payload-current-window {
     grid-column: 1 / -1;
     order: -1;
+  }
+
+  .channex-restrictions-sync-page {
+    grid-template-columns: 1fr;
   }
 }
 

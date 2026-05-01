@@ -54,11 +54,22 @@ const getProviderStatusForHttpStatus = (httpStatus, fallbackStatus) => {
 
 const getPushGroupIdentity = (group, includeRatePlanId = false) => {
   const identity = {
+    chunkIndex: Number.isFinite(Number(group?.chunkIndex)) ? Number(group.chunkIndex) : null,
+    chunkCount: Number.isFinite(Number(group?.chunkCount)) ? Number(group.chunkCount) : null,
     externalPropertyId: requireStr(group?.externalPropertyId),
     externalRoomTypeId: requireStr(group?.externalRoomTypeId),
   };
+  if (Array.isArray(group?.externalPropertyIds)) {
+    identity.externalPropertyIds = group.externalPropertyIds.map(requireStr).filter(Boolean);
+  }
+  if (Array.isArray(group?.externalRoomTypeIds)) {
+    identity.externalRoomTypeIds = group.externalRoomTypeIds.map(requireStr).filter(Boolean);
+  }
   if (includeRatePlanId) {
     identity.externalRatePlanId = requireStr(group?.externalRatePlanId);
+    if (Array.isArray(group?.externalRatePlanIds)) {
+      identity.externalRatePlanIds = group.externalRatePlanIds.map(requireStr).filter(Boolean);
+    }
   }
   return identity;
 };
@@ -162,24 +173,46 @@ const buildProviderPushExceptionResult = ({
   errorMessage: error?.message || requestFailedMessage,
 });
 
-const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody }) => {
+const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody, requestTimeoutMs = null }) => {
   const url = new URL(endpointPath, CHANNEX_BASE_URL);
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "user-api-key": apiKey,
-    },
-    body: JSON.stringify(requestBody),
-  });
-  const rawText = await response.text();
-  const parsed = parseJsonSafely(rawText);
-  return {
-    response,
-    parsed,
-    warnings: normalizeWarnings(parsed),
-    taskIds: normalizeTaskIds(parsed),
-  };
+  const controller =
+    Number.isFinite(Number(requestTimeoutMs)) && Number(requestTimeoutMs) > 0
+      ? new AbortController()
+      : null;
+  const timeout = controller
+    ? setTimeout(() => controller.abort(), Math.trunc(Number(requestTimeoutMs)))
+    : null;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "user-api-key": apiKey,
+      },
+      body: JSON.stringify(requestBody),
+      ...(controller ? { signal: controller.signal } : {}),
+    });
+    const rawText = await response.text();
+    const parsed = parseJsonSafely(rawText);
+    return {
+      response,
+      parsed,
+      warnings: normalizeWarnings(parsed),
+      taskIds: normalizeTaskIds(parsed),
+    };
+  } catch (error) {
+    if (controller?.signal?.aborted) {
+      const timeoutError = new Error(
+        `Channex push request timed out after ${Math.trunc(Number(requestTimeoutMs))} ms.`
+      );
+      timeoutError.code = "CHANNEX_PUSH_REQUEST_TIMEOUT";
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 };
 
 const pushGroupedPayloads = async ({
@@ -194,6 +227,8 @@ const pushGroupedPayloads = async ({
   errorMessagePrefix,
   requestFailedCode,
   requestFailedMessage,
+  requestTimeoutMs = null,
+  stopOnFailure = false,
 }) => {
   if (!apiKey) {
     return {
@@ -219,7 +254,7 @@ const pushGroupedPayloads = async ({
     }
 
     try {
-      const providerResponse = await postChannexPushRequest({ apiKey, endpointPath, requestBody });
+      const providerResponse = await postChannexPushRequest({ apiKey, endpointPath, requestBody, requestTimeoutMs });
       if (providerResponse.response.ok) {
         results.push(
           buildProviderPushSuccessResult({
@@ -248,6 +283,7 @@ const pushGroupedPayloads = async ({
           errorMessagePrefix,
         })
       );
+      if (stopOnFailure) break;
     } catch (error) {
       results.push(
         buildProviderPushExceptionResult({
@@ -260,6 +296,7 @@ const pushGroupedPayloads = async ({
           requestFailedMessage,
         })
       );
+      if (stopOnFailure) break;
     }
   }
 
@@ -641,7 +678,7 @@ export default class ChannexProviderClient {
     });
   }
 
-  async pushRestrictions(credentials, groupedRestrictionRatePayloads) {
+  async pushRestrictions(credentials, groupedRestrictionRatePayloads, options = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const groups = Array.isArray(groupedRestrictionRatePayloads) ? groupedRestrictionRatePayloads : [];
 
@@ -650,6 +687,8 @@ export default class ChannexProviderClient {
       groups,
       endpointPath: "/api/v1/restrictions",
       includeRatePlanId: true,
+      requestTimeoutMs: options?.requestTimeoutMs,
+      stopOnFailure: !!options?.stopOnFailure,
       missingValuesCode: "CHANNEX_RESTRICTIONS_VALUES_MISSING",
       missingValuesMessage: "Channex restrictions push requires at least one values entry.",
       fallbackStatus: "RESTRICTIONS_PUSH_FAILED",

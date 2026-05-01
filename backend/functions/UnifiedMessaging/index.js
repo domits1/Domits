@@ -3,6 +3,10 @@ import IntegrationController from "./controller/integrationController.js";
 import IngestionController from "./controller/ingestionController.js";
 import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
 import { isChannexCertificationUserAllowed } from "./business/channexCertificationAccess.js";
+import {
+  CHANNEX_RESTRICTIONS_SYNC_MODE,
+  CHANNEX_RESTRICTIONS_SYNC_VERSION,
+} from "./business/channexRestrictionsSyncVersion.js";
 
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
@@ -62,6 +66,9 @@ const shouldRejectChannexCertificationAdminRequest = (event) => {
 
   return !isChannexCertificationUserAllowed(userId);
 };
+
+const isChannexRestrictionsSyncRequest = (method, path) =>
+  method === "POST" && String(path || "").endsWith("/integrations/channex/sync/restrictions");
 
 const createLambdaResponse = (returnedResponse) => {
   const headers = {
@@ -301,6 +308,33 @@ export const handler = async (event) => {
   const { httpMethod, path } = event;
 
   try {
+    if (isChannexRestrictionsSyncRequest(httpMethod, path)) {
+      console.info(
+        JSON.stringify({
+          event: "CHANNEX_RESTRICTIONS_SYNC_DIAGNOSTIC",
+          restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
+          restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+          stage: "handler_entry",
+          requestId: event?.requestContext?.requestId ?? null,
+          awsRequestId: event?.requestContext?.requestId ?? null,
+          method: httpMethod,
+          path,
+          queryStringParameters: {
+            userId: event?.queryStringParameters?.userId ?? null,
+            domitsPropertyId: event?.queryStringParameters?.domitsPropertyId ?? null,
+            dateFrom: event?.queryStringParameters?.dateFrom ?? null,
+            dateTo: event?.queryStringParameters?.dateTo ?? null,
+            syncRunId: event?.queryStringParameters?.syncRunId ?? null,
+            requestedDateFrom: event?.queryStringParameters?.requestedDateFrom ?? null,
+            requestedDateTo: event?.queryStringParameters?.requestedDateTo ?? null,
+            pageNumber: event?.queryStringParameters?.pageNumber ?? null,
+            totalPages: event?.queryStringParameters?.totalPages ?? null,
+            pageSizeDays: event?.queryStringParameters?.pageSizeDays ?? null,
+          },
+        })
+      );
+    }
+
     if (httpMethod === "OPTIONS") {
       return {
         statusCode: 200,
@@ -322,6 +356,34 @@ export const handler = async (event) => {
     const returnedResponse = await routeHandler(event);
     return createLambdaResponse(returnedResponse);
   } catch (error) {
+    if (isChannexRestrictionsSyncRequest(httpMethod, path)) {
+      console.error("Error in Channex restrictions sync handler:", error);
+      console.info(
+        JSON.stringify({
+          event: "CHANNEX_RESTRICTIONS_SYNC_DIAGNOSTIC",
+          restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
+          restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+          stage: "handler_catch",
+          requestId: event?.requestContext?.requestId ?? null,
+          awsRequestId: event?.requestContext?.requestId ?? null,
+          errorName: error?.name ?? null,
+          errorMessage: error?.message ?? "Unhandled Channex restrictions sync error.",
+        })
+      );
+      return createLambdaResponse({
+        statusCode: 500,
+        response: {
+          restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
+          restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+          error: "Failed to sync Channex restrictions.",
+          errorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
+          details: {
+            name: error?.name ?? null,
+            message: error?.message ?? "Unhandled Channex restrictions sync error.",
+          },
+        },
+      });
+    }
     console.error("Error in handler:", error);
     return createLambdaResponse(internalError);
   }

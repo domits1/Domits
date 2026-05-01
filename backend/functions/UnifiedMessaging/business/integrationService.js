@@ -17,6 +17,10 @@ import HoliduProviderClient from "./holiduProviderClient.js";
 import ChannexCredentialStore from "./channexCredentialStore.js";
 import ChannexProviderClient from "./channexProviderClient.js";
 import {
+  CHANNEX_RESTRICTIONS_SYNC_MODE,
+  CHANNEX_RESTRICTIONS_SYNC_VERSION,
+} from "./channexRestrictionsSyncVersion.js";
+import {
   normalizeHoliduCredentials,
   buildHoliduSecretPayload,
   buildHoliduCredentialSummary,
@@ -713,6 +717,9 @@ const CHANNEX_CERTIFICATION_FULL_SYNC_DAYS = 500;
 const CHANNEX_ARI_PAYLOAD_PREVIEW_DEFAULT_PAGE_SIZE_DAYS = 30;
 const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_PAGE_SIZE_DAYS = 60;
 const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_REQUESTED_DAYS = CHANNEX_CERTIFICATION_FULL_SYNC_DAYS + 1;
+const CHANNEX_RESTRICTIONS_SYNC_PROVIDER_CHUNK_VALUE_LIMIT = 250;
+const CHANNEX_RESTRICTIONS_SYNC_PROVIDER_REQUEST_TIMEOUT_MS = 10000;
+const CHANNEX_RESTRICTIONS_SYNC_PROVIDER_CONCURRENCY = 4;
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
 const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
 const CHANNEX_STATUS = {
@@ -749,6 +756,90 @@ const getCaptureState = (options) => {
     return captureState;
   }
   return null;
+};
+const logChannexRestrictionsSync = (stage, fields = {}) => {
+  try {
+    console.info(
+      JSON.stringify({
+        event: "CHANNEX_RESTRICTIONS_SYNC_DIAGNOSTIC",
+        restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        stage,
+        ...fields,
+      })
+    );
+  } catch {
+    console.info("CHANNEX_RESTRICTIONS_SYNC_DIAGNOSTIC", stage);
+  }
+};
+const buildChannexRestrictionsSyncResponseMetadata = (syncRunMetadata) => {
+  const metadata = syncRunMetadata && typeof syncRunMetadata === "object" ? syncRunMetadata : null;
+  return {
+    restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
+    restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+    ...(metadata
+      ? {
+          syncRunId: metadata.syncRunId ?? null,
+          requestedFullRange: metadata.requestedFullRange ?? null,
+          pageRange: metadata.pageRange ?? null,
+          pageNumber: metadata.pageNumber ?? null,
+          totalPages: metadata.totalPages ?? null,
+          pageSizeDays: metadata.pageSizeDays ?? null,
+        }
+      : {}),
+  };
+};
+const addChannexRestrictionsSyncVersion = (result, syncRunMetadata = null) => {
+  if (!result || typeof result !== "object") return result;
+  const metadata = buildChannexRestrictionsSyncResponseMetadata(syncRunMetadata);
+  const response =
+    result.response && typeof result.response === "object" && !Array.isArray(result.response)
+      ? { ...metadata, ...result.response }
+      : {
+          ...metadata,
+          value: result.response ?? null,
+        };
+
+  return {
+    ...result,
+    response,
+  };
+};
+const appendChannexSyncRunMetadataToEvidencePatch = (evidencePatch = {}, syncRunMetadata = null) => {
+  if (!syncRunMetadata || typeof syncRunMetadata !== "object") return evidencePatch;
+
+  const rawDetails =
+    evidencePatch.rawDetails && typeof evidencePatch.rawDetails === "object" && !Array.isArray(evidencePatch.rawDetails)
+      ? evidencePatch.rawDetails
+      : evidencePatch.rawDetails === undefined || evidencePatch.rawDetails === null
+        ? {}
+        : { value: evidencePatch.rawDetails };
+  const providerResponseSummary =
+    evidencePatch.providerResponseSummary &&
+    typeof evidencePatch.providerResponseSummary === "object" &&
+    !Array.isArray(evidencePatch.providerResponseSummary)
+      ? evidencePatch.providerResponseSummary
+      : evidencePatch.providerResponseSummary === undefined || evidencePatch.providerResponseSummary === null
+        ? {}
+        : { value: evidencePatch.providerResponseSummary };
+  const notes = Array.isArray(evidencePatch.notes) ? evidencePatch.notes : [];
+  const pageNote =
+    syncRunMetadata.pageNumber && syncRunMetadata.totalPages
+      ? `Frontend-paginated restrictions sync page ${syncRunMetadata.pageNumber} of ${syncRunMetadata.totalPages} for run ${syncRunMetadata.syncRunId}.`
+      : null;
+
+  return {
+    ...evidencePatch,
+    providerResponseSummary: {
+      ...providerResponseSummary,
+      syncRun: syncRunMetadata,
+    },
+    rawDetails: {
+      ...rawDetails,
+      syncRun: syncRunMetadata,
+    },
+    notes: pageNote ? [...notes, pageNote] : notes,
+  };
 };
 const buildInvalidRequestEvidencePatch = (errorCode, errorMessage) => ({
   status: "INVALID_REQUEST",
@@ -971,6 +1062,96 @@ const buildSyncDateRangeValidationFailure = ({
     };
   }
   return null;
+};
+const buildChannexRestrictionsSyncRunMetadata = (options = {}, normalizedDateFrom, normalizedDateTo) => {
+  const rawRequestedDateFrom =
+    requireStr(options.requestedDateFrom) || requireStr(options.requestedFullDateFrom) || normalizedDateFrom;
+  const rawRequestedDateTo =
+    requireStr(options.requestedDateTo) || requireStr(options.requestedFullDateTo) || normalizedDateTo;
+  const requestedDateFrom = parseIsoDateParam(rawRequestedDateFrom);
+  const requestedDateTo = parseIsoDateParam(rawRequestedDateTo);
+  const pageNumber = parsePositiveInteger(options.pageNumber);
+  const totalPages = parsePositiveInteger(options.totalPages);
+  const pageSizeDays = parsePositiveInteger(options.pageSizeDays);
+
+  if (!requestedDateFrom || !requestedDateTo) {
+    return {
+      error: bad(400, {
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        error: "Invalid requested full range for Channex restrictions sync.",
+        errorCode: "CHANNEX_RESTRICTIONS_SYNC_INVALID_REQUESTED_RANGE",
+      }),
+    };
+  }
+
+  if (requestedDateFrom > requestedDateTo) {
+    return {
+      error: bad(400, {
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        error: "requestedDateFrom must be less than or equal to requestedDateTo.",
+        errorCode: "CHANNEX_RESTRICTIONS_SYNC_INVALID_REQUESTED_RANGE",
+      }),
+    };
+  }
+
+  const requestedTotalDays = countInclusiveIsoDateRangeDays(requestedDateFrom, requestedDateTo);
+  if (!requestedTotalDays || requestedTotalDays > CHANNEX_CERTIFICATION_FULL_SYNC_DAYS) {
+    return {
+      error: bad(400, {
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        error: `Channex restrictions requested full range must be ${CHANNEX_CERTIFICATION_FULL_SYNC_DAYS} days or fewer.`,
+        errorCode: "CHANNEX_RESTRICTIONS_SYNC_REQUESTED_RANGE_TOO_LARGE",
+        maxDays: CHANNEX_CERTIFICATION_FULL_SYNC_DAYS,
+        totalDays: requestedTotalDays,
+      }),
+    };
+  }
+
+  if (
+    normalizedDateFrom &&
+    normalizedDateTo &&
+    (normalizedDateFrom < requestedDateFrom || normalizedDateTo > requestedDateTo)
+  ) {
+    return {
+      error: bad(400, {
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        error: "Restrictions sync page dateFrom/dateTo must be inside the requested full range.",
+        errorCode: "CHANNEX_RESTRICTIONS_SYNC_PAGE_OUT_OF_RANGE",
+      }),
+    };
+  }
+
+  if (pageNumber && totalPages && pageNumber > totalPages) {
+    return {
+      error: bad(400, {
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        error: "pageNumber must be less than or equal to totalPages.",
+        errorCode: "CHANNEX_RESTRICTIONS_SYNC_INVALID_PAGE_NUMBER",
+      }),
+    };
+  }
+
+  const pageTotalDays = countInclusiveIsoDateRangeDays(normalizedDateFrom, normalizedDateTo);
+
+  return {
+    metadata: {
+      restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+      syncRunId: requireStr(options.syncRunId) || null,
+      requestedFullRange: {
+        dateFrom: requestedDateFrom,
+        dateTo: requestedDateTo,
+        totalDays: requestedTotalDays,
+      },
+      pageRange: {
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+        totalDays: pageTotalDays,
+      },
+      pageNumber: pageNumber ?? null,
+      totalPages: totalPages ?? null,
+      pageSizeDays: pageSizeDays ?? null,
+    },
+  };
 };
 const withOptionalDetails = (target, details) => {
   if (details) {
@@ -1349,6 +1530,63 @@ const buildRestrictionRateItems = (rateRestrictionPreview) =>
       ? { ...item.calendarRestrictionOverride }
       : null,
   }));
+const buildRestrictionRateItemsFromReadiness = ({
+  dates,
+  overrideMap,
+  restrictionMapping,
+  pricing,
+  readiness,
+  normalizedDomitsPropertyId,
+  normalizedRestrictions,
+}) => {
+  const restrictionRateItems = [];
+  const effectiveChannexRestrictionFields = new Set();
+  const supportedCalendarRestrictionOverrideFields = new Set();
+
+  for (const isoDate of Array.isArray(dates) ? dates : []) {
+    const override = overrideMap.get(isoDate) || null;
+    const effectiveRestrictionMapping = buildEffectiveChannexRestrictionMapping(restrictionMapping, override);
+    Object.keys(effectiveRestrictionMapping.channexRestrictions).forEach((field) =>
+      effectiveChannexRestrictionFields.add(field)
+    );
+    effectiveRestrictionMapping.supportedRestrictions
+      .filter((restriction) => restriction.source === "calendar_override")
+      .forEach((restriction) => supportedCalendarRestrictionOverrideFields.add(restriction.channexField));
+
+    const effectiveNightlyPrice = getEffectiveNightlyPrice({ override, pricing, isoDate });
+
+    for (const ratePlanMapping of Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings : []) {
+      restrictionRateItems.push({
+        externalPropertyId: ratePlanMapping.externalPropertyId,
+        externalRoomTypeId: ratePlanMapping.externalRoomTypeId,
+        externalRatePlanId: ratePlanMapping.externalRatePlanId,
+        date: isoDate,
+        nightlyPrice: effectiveNightlyPrice ?? null,
+        rate: formatNightlyPriceForChannexRate(effectiveNightlyPrice),
+        channexRestrictions: copySupportedChannexRestrictions(effectiveRestrictionMapping.channexRestrictions),
+        supportedRestrictions: effectiveRestrictionMapping.supportedRestrictions.map((restriction) => ({ ...restriction })),
+        omittedRestrictions: effectiveRestrictionMapping.omittedRestrictions.map((restriction) => ({ ...restriction })),
+        restrictions: effectiveRestrictionMapping.supportedRestrictions.map((restriction) => ({
+          restriction: restriction.domitsRestriction,
+          channexField: restriction.channexField,
+          value: restriction.value,
+          source: restriction.source ?? null,
+        })),
+        domitsRestrictions: normalizedRestrictions.map((restriction) => ({
+          restriction: restriction.restriction,
+          value: restriction.value,
+        })),
+        calendarRestrictionOverride: { ...effectiveRestrictionMapping.calendarRestrictionOverride },
+      });
+    }
+  }
+
+  return {
+    restrictionRateItems,
+    supportedCalendarRestrictionOverrideFields,
+    effectiveChannexRestrictionFields,
+  };
+};
 const buildRestrictionRatePayloadGroups = (restrictionRateItems) =>
   Array.from(
     new Map(
@@ -1393,6 +1631,10 @@ const createChannexAriPayloadPreviewNotes = () => [...CHANNEX_ARI_PAYLOAD_PREVIE
 const createChannexAvailabilityPayloadPreviewNotes = () => [
   "Availability sync builds only availability payloads for the selected full range.",
   "Availability values are derived from property-scoped Domits availability and date-level availability overrides, then fanned out across saved Channex room type mappings.",
+];
+const createChannexRestrictionRatePayloadPreviewNotes = () => [
+  "Restrictions sync builds only rate/restriction payloads for the selected full range.",
+  "Rate values are derived from Domits base pricing and nightly overrides, then fanned out across saved Channex rate plan mappings.",
 ];
 const appendChannexAriPayloadPreviewNotes = (notes, preview) => {
   const supportedRestrictionFields = Array.isArray(preview.sourceSummary?.supportedChannexRestrictionFields)
@@ -1455,20 +1697,133 @@ const combineChannexAvailabilitySyncPayloadsForProvider = (groupedPayloads) => {
     },
   ];
 };
-const summarizeChannexRequestBody = (requestBody) => {
+const combineChannexRestrictionSyncPayloadsForProvider = (groupedPayloads) => {
+  const groups = Array.isArray(groupedPayloads) ? groupedPayloads : [];
+  const values = groups.flatMap((group) => (Array.isArray(group?.values) ? group.values : []));
+  if (!values.length) return [];
+
+  const roomTypeIdsByRatePlanId = new Map();
+  const propertyIdsByRatePlanId = new Map();
+  for (const group of groups) {
+    const ratePlanId = requireStr(group?.externalRatePlanId);
+    if (!ratePlanId) continue;
+
+    const roomTypeIds = roomTypeIdsByRatePlanId.get(ratePlanId) || new Set();
+    const roomTypeId = requireStr(group?.externalRoomTypeId);
+    if (roomTypeId) roomTypeIds.add(roomTypeId);
+    roomTypeIdsByRatePlanId.set(ratePlanId, roomTypeIds);
+
+    const propertyIds = propertyIdsByRatePlanId.get(ratePlanId) || new Set();
+    const propertyId = requireStr(group?.externalPropertyId);
+    if (propertyId) propertyIds.add(propertyId);
+    propertyIdsByRatePlanId.set(ratePlanId, propertyIds);
+  }
+
+  const chunks = [];
+  for (let index = 0; index < values.length; index += CHANNEX_RESTRICTIONS_SYNC_PROVIDER_CHUNK_VALUE_LIMIT) {
+    chunks.push(values.slice(index, index + CHANNEX_RESTRICTIONS_SYNC_PROVIDER_CHUNK_VALUE_LIMIT));
+  }
+
+  return chunks.map((chunkValues, index) => {
+    const externalRatePlanIds = Array.from(
+      new Set(chunkValues.map((value) => requireStr(value?.rate_plan_id)).filter(Boolean))
+    ).sort(compareAlphabetically);
+    const externalPropertyIds = Array.from(
+      new Set(
+        [
+          ...chunkValues.map((value) => requireStr(value?.property_id)),
+          ...externalRatePlanIds.flatMap((ratePlanId) => Array.from(propertyIdsByRatePlanId.get(ratePlanId) || [])),
+        ].filter(Boolean)
+      )
+    ).sort(compareAlphabetically);
+    const externalRoomTypeIds = Array.from(
+      new Set(externalRatePlanIds.flatMap((ratePlanId) => Array.from(roomTypeIdsByRatePlanId.get(ratePlanId) || [])))
+    ).sort(compareAlphabetically);
+
+    return {
+      chunkIndex: index + 1,
+      chunkCount: chunks.length,
+      externalPropertyId: externalPropertyIds.length === 1 ? externalPropertyIds[0] : null,
+      externalPropertyIds,
+      externalRoomTypeId: externalRoomTypeIds.length === 1 ? externalRoomTypeIds[0] : null,
+      externalRoomTypeIds,
+      externalRatePlanId: externalRatePlanIds.length === 1 ? externalRatePlanIds[0] : null,
+      externalRatePlanIds,
+      values: chunkValues,
+    };
+  });
+};
+const summarizeChannexRequestBody = (requestBody, metadata = {}) => {
   if (!requestBody || typeof requestBody !== "object" || Array.isArray(requestBody)) return requestBody ?? null;
   const values = Array.isArray(requestBody.values) ? requestBody.values : [];
   if (!values.length) return requestBody;
 
   const dates = values.map((value) => requireStr(value?.date)).filter(Boolean).sort(compareAlphabetically);
+  const metadataPropertyIds = [
+    metadata?.externalPropertyId,
+    ...(Array.isArray(metadata?.externalPropertyIds) ? metadata.externalPropertyIds : []),
+  ];
+  const metadataRoomTypeIds = [
+    metadata?.externalRoomTypeId,
+    ...(Array.isArray(metadata?.externalRoomTypeIds) ? metadata.externalRoomTypeIds : []),
+  ];
+  const metadataRatePlanIds = [
+    metadata?.externalRatePlanId,
+    ...(Array.isArray(metadata?.externalRatePlanIds) ? metadata.externalRatePlanIds : []),
+  ];
   return {
     valuesOmitted: true,
     valueCount: values.length,
     firstDate: dates[0] ?? null,
     lastDate: dates[dates.length - 1] ?? null,
-    externalPropertyIds: Array.from(new Set(values.map((value) => requireStr(value?.property_id)).filter(Boolean))).sort(compareAlphabetically),
-    externalRoomTypeIds: Array.from(new Set(values.map((value) => requireStr(value?.room_type_id)).filter(Boolean))).sort(compareAlphabetically),
-    externalRatePlanIds: Array.from(new Set(values.map((value) => requireStr(value?.rate_plan_id)).filter(Boolean))).sort(compareAlphabetically),
+    externalPropertyIds: Array.from(
+      new Set([...metadataPropertyIds, ...values.map((value) => requireStr(value?.property_id))].filter(Boolean))
+    ).sort(compareAlphabetically),
+    externalRoomTypeIds: Array.from(
+      new Set([...metadataRoomTypeIds, ...values.map((value) => requireStr(value?.room_type_id))].filter(Boolean))
+    ).sort(compareAlphabetically),
+    externalRatePlanIds: Array.from(
+      new Set([...metadataRatePlanIds, ...values.map((value) => requireStr(value?.rate_plan_id))].filter(Boolean))
+    ).sort(compareAlphabetically),
+  };
+};
+const summarizeChannexGroupedPayloads = (groups) =>
+  (Array.isArray(groups) ? groups : []).map((group) => ({
+    chunkIndex: group?.chunkIndex ?? undefined,
+    chunkCount: group?.chunkCount ?? undefined,
+    externalPropertyId: group?.externalPropertyId ?? null,
+    externalPropertyIds: Array.isArray(group?.externalPropertyIds) ? group.externalPropertyIds : undefined,
+    externalRoomTypeId: group?.externalRoomTypeId ?? null,
+    externalRoomTypeIds: Array.isArray(group?.externalRoomTypeIds) ? group.externalRoomTypeIds : undefined,
+    externalRatePlanId: group?.externalRatePlanId ?? null,
+    externalRatePlanIds: Array.isArray(group?.externalRatePlanIds) ? group.externalRatePlanIds : undefined,
+    requestBody: summarizeChannexRequestBody({ values: Array.isArray(group?.values) ? group.values : [] }, group),
+  }));
+const summarizePayloadPreviewForEvidence = (payloadPreview) => {
+  if (!payloadPreview || typeof payloadPreview !== "object" || Array.isArray(payloadPreview)) return payloadPreview ?? null;
+  const availability = payloadPreview.availabilityPayloadPreview || {};
+  const restrictions = payloadPreview.restrictionRatePayloadPreview || {};
+
+  return {
+    channel: payloadPreview.channel ?? null,
+    integrationAccountId: payloadPreview.integrationAccountId ?? null,
+    domitsPropertyId: payloadPreview.domitsPropertyId ?? null,
+    dateFrom: payloadPreview.dateFrom ?? null,
+    dateTo: payloadPreview.dateTo ?? null,
+    ready: payloadPreview.ready ?? null,
+    missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
+    sourceSummary: payloadPreview.sourceSummary ?? null,
+    availabilityPayloadPreview: {
+      itemCount: Array.isArray(availability.items) ? availability.items.length : 0,
+      groupCount: Array.isArray(availability.groupedPayloads) ? availability.groupedPayloads.length : 0,
+      groupedPayloads: summarizeChannexGroupedPayloads(availability.groupedPayloads),
+    },
+    restrictionRatePayloadPreview: {
+      itemCount: Array.isArray(restrictions.items) ? restrictions.items.length : 0,
+      groupCount: Array.isArray(restrictions.groupedPayloads) ? restrictions.groupedPayloads.length : 0,
+      groupedPayloads: summarizeChannexGroupedPayloads(restrictions.groupedPayloads),
+    },
+    notes: Array.isArray(payloadPreview.notes) ? payloadPreview.notes : [],
   };
 };
 const buildChannexRestrictionSyncValue = (group, value) => {
@@ -1515,7 +1870,7 @@ const appendRestrictionSyncOutboundNotes = (notes, transformedPayloads) => {
 const formatChannexAvailabilityProviderResult = (result) => ({
   externalPropertyId: result.externalPropertyId ?? null,
   externalRoomTypeId: result.externalRoomTypeId ?? null,
-  requestBody: summarizeChannexRequestBody(result.requestBody),
+  requestBody: summarizeChannexRequestBody(result.requestBody, result),
   providerStatus: result.providerStatus ?? null,
   httpStatus: result.httpStatus ?? null,
   success: !!result.success,
@@ -1525,10 +1880,14 @@ const formatChannexAvailabilityProviderResult = (result) => ({
   errorMessage: result.errorMessage ?? null,
 });
 const formatChannexRestrictionProviderResult = (result) => ({
+  chunkIndex: result.chunkIndex ?? null,
+  chunkCount: result.chunkCount ?? null,
+  endpoint: result.endpoint ?? null,
+  method: result.method ?? null,
   externalPropertyId: result.externalPropertyId ?? null,
   externalRoomTypeId: result.externalRoomTypeId ?? null,
   externalRatePlanId: result.externalRatePlanId ?? null,
-  requestBody: result.requestBody ?? null,
+  requestBody: summarizeChannexRequestBody(result.requestBody, result),
   providerStatus: result.providerStatus ?? null,
   httpStatus: result.httpStatus ?? null,
   success: !!result.success,
@@ -3681,6 +4040,132 @@ export default class IntegrationService {
     }
   }
 
+  async previewChannexRestrictionRatePayloads(userId, domitsPropertyId, dateFrom, dateTo) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+    const normalizedDateFrom = parseIsoDateParam(dateFrom);
+    const normalizedDateTo = parseIsoDateParam(dateTo);
+
+    const validationResponse = buildPreviewDateRangeValidationResponse({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    });
+    if (validationResponse) return validationResponse;
+
+    try {
+      const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
+      if (readinessResult?.statusCode !== 200) {
+        return readinessResult;
+      }
+
+      const readiness = readinessResult.response || {};
+      const notes = createChannexRestrictionRatePayloadPreviewNotes();
+      if (!readiness.ready) {
+        return ok({
+          channel: readiness.channel || "CHANNEX",
+          integrationAccountId: readiness.integrationAccountId || null,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+          pagination: null,
+          ready: false,
+          missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
+          propertyMapping: readiness.propertyMapping || null,
+          roomTypeMappings: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : [],
+          ratePlanMappings: Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings : [],
+          sourceSummary: null,
+          availabilityPayloadPreview: {
+            items: [],
+            groupedPayloads: [],
+          },
+          restrictionRatePayloadPreview: {
+            items: [],
+            groupedPayloads: [],
+          },
+          notes,
+        });
+      }
+
+      const startDateInt = isoDateToCalendarInt(normalizedDateFrom);
+      const endDateInt = isoDateToCalendarInt(normalizedDateTo);
+      const [calendarOverrides, pricing, restrictions] = await Promise.all([
+        getPropertyCalendarOverrides(normalizedDomitsPropertyId, startDateInt, endDateInt),
+        getPropertyPricing(normalizedDomitsPropertyId),
+        getPropertyAvailabilityRestrictions(normalizedDomitsPropertyId),
+      ]);
+
+      const overrideMap = buildCalendarOverrideMap(calendarOverrides);
+      const normalizedRestrictions = normalizeAvailabilityRestrictionRows(restrictions);
+      const restrictionMapping = buildChannexRestrictionMapping(normalizedRestrictions);
+      const dates = buildCalendarDateRange(normalizedDateFrom, normalizedDateTo);
+      const calendarRestrictionOverrideDates = Array.from(overrideMap.values()).filter(
+        (override) => buildCalendarRestrictionOverrideSummary(override).hasAnyValue
+      ).length;
+      const {
+        restrictionRateItems,
+        supportedCalendarRestrictionOverrideFields,
+        effectiveChannexRestrictionFields,
+      } = buildRestrictionRateItemsFromReadiness({
+        dates,
+        overrideMap,
+        restrictionMapping,
+        pricing,
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedRestrictions,
+      });
+      const restrictionRatePayloadGroups = buildRestrictionRatePayloadGroups(restrictionRateItems);
+      const sourceSummary = {
+        calendarOverrides: overrideMap.size,
+        hasBasePricing: !!pricing,
+        availabilityRestrictions: normalizedRestrictions.length,
+        supportedAvailabilityRestrictions: restrictionMapping.supportedRestrictions.length,
+        globalSupportedChannexRestrictionFields: restrictionMapping.supportedChannexRestrictionFields,
+        calendarRestrictionOverrides: calendarRestrictionOverrideDates,
+        supportedCalendarRestrictionOverrideFields: Array.from(supportedCalendarRestrictionOverrideFields).sort(compareAlphabetically),
+        supportedChannexRestrictionFields: Array.from(effectiveChannexRestrictionFields).sort(compareAlphabetically),
+        omittedAvailabilityRestrictions: restrictionMapping.omittedRestrictions.length,
+        omittedDomitsRestrictionNames: restrictionMapping.omittedDomitsRestrictionNames,
+        requestedDays: dates.length,
+        ratePlanMappings: Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings.length : 0,
+        restrictionRatePayloadGroups: restrictionRatePayloadGroups.length,
+        restrictionRatePayloadItems: restrictionRateItems.length,
+      };
+
+      appendChannexAriPayloadPreviewNotes(notes, { sourceSummary });
+
+      return ok({
+        channel: readiness.channel || "CHANNEX",
+        integrationAccountId: readiness.integrationAccountId,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+        pagination: null,
+        ready: true,
+        missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
+        sourceSummary,
+        availabilityPayloadPreview: {
+          items: [],
+          groupedPayloads: [],
+        },
+        restrictionRatePayloadPreview: {
+          items: restrictionRateItems,
+          groupedPayloads: restrictionRatePayloadGroups,
+        },
+        notes,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to build Channex restriction/rate payload preview.",
+        errorCode: "CHANNEX_RESTRICTION_RATE_PAYLOAD_PREVIEW_FAILED",
+        details,
+      });
+    }
+  }
+
   formatChannexEvidenceRow(row) {
     if (!row) return null;
 
@@ -4941,7 +5426,10 @@ export default class IntegrationService {
           dateFrom: normalizedDateFrom ?? requireStr(rawDateFrom),
           dateTo: normalizedDateTo ?? requireStr(rawDateTo),
           startedAt,
-          evidencePatch,
+          evidencePatch: appendChannexSyncRunMetadataToEvidencePatch(
+            evidencePatch,
+            options?.syncRunMetadata ?? null
+          ),
         }),
         options
       );
@@ -5063,6 +5551,7 @@ export default class IntegrationService {
     providerResult,
     formatProviderResult,
     payloadPreview,
+    summarizeEvidencePayloads = false,
   }) {
     const results = Array.isArray(providerResult?.results) ? providerResult.results : [];
     const response = ok({
@@ -5091,7 +5580,9 @@ export default class IntegrationService {
         status: outcome.status,
         overallSuccess: outcome.overallSuccess,
         mappingSnapshot,
-        groupedOutboundPayloadSnapshot: transformedPayloads,
+        groupedOutboundPayloadSnapshot: summarizeEvidencePayloads
+          ? summarizeChannexGroupedPayloads(transformedPayloads)
+          : transformedPayloads,
         providerResponseSummary: {
           requestCount: transformedPayloads.length,
           results: response.response.results,
@@ -5101,7 +5592,9 @@ export default class IntegrationService {
         errors: collectErrorsFromResultList(response.response.results),
         notes: baseNotes,
         rawDetails: {
-          payloadPreview,
+          payloadPreview: summarizeEvidencePayloads
+            ? summarizePayloadPreviewForEvidence(payloadPreview)
+            : payloadPreview,
           providerResult: {
             success: !!providerResult?.success,
             resultCount: results.length,
@@ -5134,6 +5627,9 @@ export default class IntegrationService {
     formatProviderResult,
     syncErrorCode,
     syncErrorMessage,
+    summarizeEvidencePayloads = false,
+    providerFailureStatusCode = null,
+    logContext = null,
   }) {
     const startedAt = nowMs();
     const normalizedUserId = requireStr(userId);
@@ -5162,6 +5658,15 @@ export default class IntegrationService {
     if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
     try {
+      if (logContext) {
+        logChannexRestrictionsSync("before_payload_generation", {
+          ...logContext,
+          userId: normalizedUserId,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+        });
+      }
       const payloadPreviewResult = await (typeof buildPayloadPreview === "function"
         ? buildPayloadPreview(normalizedUserId, normalizedDomitsPropertyId, normalizedDateFrom, normalizedDateTo)
         : this.previewChannexAriPayloads(
@@ -5170,6 +5675,19 @@ export default class IntegrationService {
             normalizedDateFrom,
             normalizedDateTo
           ));
+      if (logContext) {
+        logChannexRestrictionsSync("after_payload_generation", {
+          ...logContext,
+          statusCode: payloadPreviewResult?.statusCode ?? null,
+          ready: payloadPreviewResult?.response?.ready ?? null,
+          restrictionRatePayloadGroups: Array.isArray(payloadPreviewResult?.response?.restrictionRatePayloadPreview?.groupedPayloads)
+            ? payloadPreviewResult.response.restrictionRatePayloadPreview.groupedPayloads.length
+            : null,
+          restrictionRatePayloadItems: Array.isArray(payloadPreviewResult?.response?.restrictionRatePayloadPreview?.items)
+            ? payloadPreviewResult.response.restrictionRatePayloadPreview.items.length
+            : null,
+        });
+      }
       if (payloadPreviewResult?.statusCode !== 200) {
         return await finalize(
           payloadPreviewResult,
@@ -5222,7 +5740,9 @@ export default class IntegrationService {
         }
       }
       if (captureState) {
-        captureState.groupedOutboundPayloadSnapshot = transformedPayloads;
+        captureState.groupedOutboundPayloadSnapshot = summarizeEvidencePayloads
+          ? summarizeChannexGroupedPayloads(transformedPayloads)
+          : transformedPayloads;
       }
 
       if (noopStage !== "beforeTransform" && isNoop({ groupedPayloads, transformedPayloads })) {
@@ -5241,9 +5761,13 @@ export default class IntegrationService {
       const credentialContext = await this.resolveChannexSyncCredentialContext({
         userId: normalizedUserId,
         mappingSnapshot,
-        groupedPayloads: transformedPayloads,
+        groupedPayloads: summarizeEvidencePayloads
+          ? summarizeChannexGroupedPayloads(transformedPayloads)
+          : transformedPayloads,
         baseNotes: notes,
-        payloadPreview,
+        payloadPreview: summarizeEvidencePayloads
+          ? summarizePayloadPreviewForEvidence(payloadPreview)
+          : payloadPreview,
       });
       if (!credentialContext.ok) {
         return await finalize(credentialContext.response, credentialContext.evidencePatch);
@@ -5262,10 +5786,28 @@ export default class IntegrationService {
         providerResult,
         formatProviderResult,
         payloadPreview,
+        summarizeEvidencePayloads,
       });
+      if (
+        providerFailureStatusCode &&
+        resultListHasErrors(providerSyncResult.response?.response?.results)
+      ) {
+        providerSyncResult.response = bad(providerFailureStatusCode, {
+          ...providerSyncResult.response.response,
+          error: syncErrorMessage,
+          errorCode: syncErrorCode,
+        });
+      }
       return await finalize(providerSyncResult.response, providerSyncResult.evidencePatch);
     } catch (error) {
       const details = describeLocalError(error);
+      if (logContext) {
+        logChannexRestrictionsSync("service_catch", {
+          ...logContext,
+          errorCode: syncErrorCode,
+          details,
+        });
+      }
       return await finalize(
         bad(500, {
           error: syncErrorMessage,
@@ -5328,35 +5870,222 @@ export default class IntegrationService {
     });
   }
 
+  async pushChannexRestrictionChunksWithConcurrency(secret, transformedPayloads) {
+    const chunks = Array.isArray(transformedPayloads) ? transformedPayloads : [];
+    const results = [];
+    let nextIndex = 0;
+    let stopped = false;
+    const concurrency = Math.min(CHANNEX_RESTRICTIONS_SYNC_PROVIDER_CONCURRENCY, Math.max(chunks.length, 1));
+
+    const runWorker = async () => {
+      while (!stopped) {
+        const index = nextIndex;
+        nextIndex += 1;
+        if (index >= chunks.length) return;
+
+        const chunk = chunks[index];
+        logChannexRestrictionsSync("before_provider_chunk", {
+          chunkIndex: chunk?.chunkIndex ?? index + 1,
+          chunkCount: chunk?.chunkCount ?? chunks.length,
+          valueCount: Array.isArray(chunk?.values) ? chunk.values.length : 0,
+          externalRatePlanIds: Array.isArray(chunk?.externalRatePlanIds) ? chunk.externalRatePlanIds : [],
+        });
+
+        let result;
+        try {
+          const providerResult = await this.channexProviderClient.pushRestrictions(secret, [chunk], {
+            requestTimeoutMs: CHANNEX_RESTRICTIONS_SYNC_PROVIDER_REQUEST_TIMEOUT_MS,
+            stopOnFailure: true,
+          });
+          result =
+            Array.isArray(providerResult?.results) && providerResult.results.length
+              ? providerResult.results[0]
+              : {
+                  chunkIndex: chunk?.chunkIndex ?? index + 1,
+                  chunkCount: chunk?.chunkCount ?? chunks.length,
+                  externalPropertyId: chunk?.externalPropertyId ?? null,
+                  externalPropertyIds: chunk?.externalPropertyIds ?? [],
+                  externalRoomTypeId: chunk?.externalRoomTypeId ?? null,
+                  externalRoomTypeIds: chunk?.externalRoomTypeIds ?? [],
+                  externalRatePlanId: chunk?.externalRatePlanId ?? null,
+                  externalRatePlanIds: chunk?.externalRatePlanIds ?? [],
+                  requestBody: { values: Array.isArray(chunk?.values) ? chunk.values : [] },
+                  httpStatus: null,
+                  providerStatus: "RESTRICTIONS_PUSH_FAILED",
+                  success: false,
+                  taskId: null,
+                  warnings: [],
+                  errorCode: "CHANNEX_RESTRICTIONS_PUSH_EMPTY_RESULT",
+                  errorMessage: "Channex restrictions push returned no provider result.",
+                };
+        } catch (error) {
+          const details = describeLocalError(error);
+          result = {
+            chunkIndex: chunk?.chunkIndex ?? index + 1,
+            chunkCount: chunk?.chunkCount ?? chunks.length,
+            externalPropertyId: chunk?.externalPropertyId ?? null,
+            externalPropertyIds: chunk?.externalPropertyIds ?? [],
+            externalRoomTypeId: chunk?.externalRoomTypeId ?? null,
+            externalRoomTypeIds: chunk?.externalRoomTypeIds ?? [],
+            externalRatePlanId: chunk?.externalRatePlanId ?? null,
+            externalRatePlanIds: chunk?.externalRatePlanIds ?? [],
+            requestBody: { values: Array.isArray(chunk?.values) ? chunk.values : [] },
+            httpStatus: details.httpStatus,
+            endpoint: details.endpoint,
+            method: details.method,
+            providerStatus: "RESTRICTIONS_PUSH_FAILED",
+            success: false,
+            taskId: null,
+            warnings: [],
+            errorCode: details.code || "CHANNEX_RESTRICTIONS_PUSH_EXCEPTION",
+            errorMessage: details.message || "Channex restrictions push failed.",
+          };
+        }
+
+        results[index] = result;
+        logChannexRestrictionsSync("after_provider_chunk", {
+          chunkIndex: result?.chunkIndex ?? index + 1,
+          chunkCount: result?.chunkCount ?? chunks.length,
+          success: !!result?.success,
+          providerStatus: result?.providerStatus ?? null,
+          httpStatus: result?.httpStatus ?? null,
+          errorCode: result?.errorCode ?? null,
+          taskId: result?.taskId ?? null,
+        });
+
+        if (result?.success === false) {
+          stopped = true;
+        }
+      }
+    };
+
+    await Promise.all(Array.from({ length: concurrency }, () => runWorker()));
+
+    return {
+      success: results.filter(Boolean).every((result) => result.success),
+      results: results.filter(Boolean),
+    };
+  }
+
   async syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo, options = {}) {
-    return this.runChannexPreviewPayloadSync({
+    logChannexRestrictionsSync("service_entry", {
       userId,
       domitsPropertyId,
       dateFrom,
       dateTo,
-      options,
-      syncType: "restrictions",
-      baseNotes: [
-        "Manual staging sync only. This endpoint sends rate updates through Channex restrictions and does not run a scheduler, retries, or sync-state persistence.",
-        "Restrictions sync sends Channex rate values and can add supported mapped fields: stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay.",
-      ],
-      previewErrorCode: "CHANNEX_RESTRICTIONS_PREVIEW_FAILED",
-      previewErrorMessage: "Failed to build restrictions payload preview.",
-      selectGroupedPayloads: (payloadPreview) =>
-        Array.isArray(payloadPreview?.restrictionRatePayloadPreview?.groupedPayloads)
-          ? payloadPreview.restrictionRatePayloadPreview.groupedPayloads
-          : [],
-      buildPayloads: buildChannexRestrictionSyncPayloads,
-      afterBuildPayloads: ({ baseNotes, transformedPayloads }) =>
-        appendRestrictionSyncOutboundNotes(baseNotes, transformedPayloads),
-      isNoop: ({ transformedPayloads }) => !transformedPayloads.length,
-      noopNote: "No nightlyPrice values were available to send, so nothing was posted to Channex.",
-      providerCall: (secret, transformedPayloads) =>
-        this.channexProviderClient.pushRestrictions(secret, transformedPayloads),
-      formatProviderResult: formatChannexRestrictionProviderResult,
-      syncErrorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
-      syncErrorMessage: "Failed to sync Channex restrictions.",
+      syncRunId: options?.syncRunId ?? null,
+      pageNumber: options?.pageNumber ?? null,
+      totalPages: options?.totalPages ?? null,
     });
+
+    try {
+      const normalizedDateFrom = parseIsoDateParam(dateFrom);
+      const normalizedDateTo = parseIsoDateParam(dateTo);
+      const hasSyncRunOptions = [
+        options?.syncRunId,
+        options?.requestedDateFrom,
+        options?.requestedDateTo,
+        options?.requestedFullDateFrom,
+        options?.requestedFullDateTo,
+        options?.pageNumber,
+        options?.totalPages,
+        options?.pageSizeDays,
+      ].some(
+        (value) =>
+          requireStr(value) ||
+          (value !== undefined && value !== null && value !== "" && Number.isFinite(Number(value)))
+      );
+      const syncRunMetadataResult =
+        hasSyncRunOptions && normalizedDateFrom && normalizedDateTo && normalizedDateFrom <= normalizedDateTo
+          ? buildChannexRestrictionsSyncRunMetadata(options, normalizedDateFrom, normalizedDateTo)
+          : { metadata: null };
+      if (syncRunMetadataResult.error) {
+        return addChannexRestrictionsSyncVersion(syncRunMetadataResult.error, null);
+      }
+      const syncRunMetadata = syncRunMetadataResult.metadata;
+      const syncOptions = {
+        ...options,
+        syncRunMetadata,
+      };
+      const result = await this.runChannexPreviewPayloadSync({
+        userId,
+        domitsPropertyId,
+        dateFrom,
+        dateTo,
+        options: syncOptions,
+        syncType: "restrictions",
+        baseNotes: [
+          "Manual staging sync only. This endpoint sends rate updates through Channex restrictions and does not run a scheduler, retries, or sync-state persistence.",
+          "Restrictions sync sends Channex rate values and can add supported mapped fields: stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay.",
+          syncRunMetadata?.pageNumber && syncRunMetadata?.totalPages
+            ? `Frontend-paginated restrictions sync page ${syncRunMetadata.pageNumber} of ${syncRunMetadata.totalPages}.`
+            : null,
+          syncRunMetadata?.requestedFullRange
+            ? `Requested full restrictions sync range: ${syncRunMetadata.requestedFullRange.dateFrom} to ${syncRunMetadata.requestedFullRange.dateTo}.`
+            : null,
+        ].filter(Boolean),
+        previewErrorCode: "CHANNEX_RESTRICTIONS_PREVIEW_FAILED",
+        previewErrorMessage: "Failed to build restrictions payload preview.",
+        buildPayloadPreview: (...args) => this.previewChannexRestrictionRatePayloads(...args),
+        selectGroupedPayloads: (payloadPreview) =>
+          Array.isArray(payloadPreview?.restrictionRatePayloadPreview?.groupedPayloads)
+            ? payloadPreview.restrictionRatePayloadPreview.groupedPayloads
+            : [],
+        buildPayloads: buildChannexRestrictionSyncPayloads,
+        afterBuildPayloads: ({ baseNotes, transformedPayloads }) => {
+          appendRestrictionSyncOutboundNotes(baseNotes, transformedPayloads);
+          const combinedPayloads = combineChannexRestrictionSyncPayloadsForProvider(transformedPayloads);
+          if (combinedPayloads.length) {
+            baseNotes.push(
+              `Restrictions sync split ${transformedPayloads.length} rate-plan payload group(s) into ${combinedPayloads.length} Channex restrictions request chunk(s), with at most ${CHANNEX_RESTRICTIONS_SYNC_PROVIDER_CHUNK_VALUE_LIMIT} values per request.`
+            );
+            logChannexRestrictionsSync("after_chunk_planning", {
+              sourceGroupCount: transformedPayloads.length,
+              chunkCount: combinedPayloads.length,
+              chunkValueLimit: CHANNEX_RESTRICTIONS_SYNC_PROVIDER_CHUNK_VALUE_LIMIT,
+              totalValueCount: combinedPayloads.reduce(
+                (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
+                0
+              ),
+            });
+          }
+          return combinedPayloads;
+        },
+        isNoop: ({ transformedPayloads }) => !transformedPayloads.length,
+        noopNote: "No nightlyPrice values were available to send, so nothing was posted to Channex.",
+        providerCall: (secret, transformedPayloads) =>
+          this.pushChannexRestrictionChunksWithConcurrency(secret, transformedPayloads),
+        formatProviderResult: formatChannexRestrictionProviderResult,
+        syncErrorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
+        syncErrorMessage: "Failed to sync Channex restrictions.",
+        summarizeEvidencePayloads: true,
+        providerFailureStatusCode: 500,
+        logContext: {
+          action: "syncChannexRestrictions",
+          syncRunId: syncRunMetadata?.syncRunId ?? null,
+          pageNumber: syncRunMetadata?.pageNumber ?? null,
+          totalPages: syncRunMetadata?.totalPages ?? null,
+        },
+      });
+
+      return addChannexRestrictionsSyncVersion(result, syncRunMetadata);
+    } catch (error) {
+      const details = describeLocalError(error);
+      logChannexRestrictionsSync("service_outer_catch", {
+        userId,
+        domitsPropertyId,
+        dateFrom,
+        dateTo,
+        details,
+      });
+      return bad(500, {
+        restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        error: "Failed to sync Channex restrictions.",
+        errorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
+        details,
+      });
+    }
   }
 
   async runGatedChannexAriSteps({ userId, domitsPropertyId, dateFrom, dateTo, baseNotes }) {
