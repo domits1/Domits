@@ -91,7 +91,7 @@ const AccommodationCard = ({
   };
 
   const handleCardClick = (e, propertyId) => {
-    onClick(e, propertyId);
+    onClick?.(e, propertyId);
   };
 
   if (!accommodation) {
@@ -119,14 +119,12 @@ return (
   <div className="accocard-wrapper">
     <div className="accocard">
 
-      <a
-        className="accocard-content"
-        href={`/listingdetails?ID=${encodeURIComponent(propertyId)}`}
-        onClick={(e) => {
-          e.preventDefault();
-          handleCardClick(e, propertyId);
-        }}
-      >
+      <div
+  className="accocard-content"
+  onClick={(e) => handleCardClick(e, propertyId)}
+  role="button"
+  style={{ cursor: "pointer" }}
+>
 
         <div className="card-img">
           <img src={cardImages[0]} alt={propertyTitle} />
@@ -167,7 +165,7 @@ return (
           </div>
         </div>
 
-      </a>
+      </div>
     </div>
 
     <button
