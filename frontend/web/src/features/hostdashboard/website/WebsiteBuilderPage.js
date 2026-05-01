@@ -18,6 +18,17 @@ import {
   PREVIEW_STAGE,
   runWebsitePreviewBuildWorkflow,
 } from "./services/websitePreviewWorkflow";
+import { recordWebsiteHostAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
+import {
+  createWebsiteBuildAttempt,
+  getBuildAttemptDurationMs,
+  waitForNextPaint,
+  WEBSITE_BUILD_FAILED_EVENT,
+  WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
+  WEBSITE_BUILD_STARTED_EVENT,
+  WEBSITE_BUILD_SUCCEEDED_EVENT,
+  WEBSITE_PREVIEW_READY_EVENT,
+} from "./analytics/websiteBuildAnalytics";
 import {
   deleteWebsiteDraft,
   fetchWebsiteDrafts,
@@ -27,6 +38,7 @@ import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
+import { WEBSITE_DRAFT_DELETE_REASONS } from "./websiteDeleteReasons";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -43,14 +55,6 @@ const WORKSPACE_TAB_BUILDER = "builder";
 const WORKSPACE_TAB_WEBSITES = "websites";
 const DELETE_WEBSITE_DRAFT_STEP_REASON = "reason";
 const DELETE_WEBSITE_DRAFT_STEP_CONFIRM = "confirm";
-const WEBSITE_DRAFT_DELETE_REASONS = Object.freeze([
-  "I no longer need this website.",
-  "I built it for the wrong listing.",
-  "The imported content does not look right.",
-  "I want to try a different template.",
-  "I prefer to manage bookings without a standalone website.",
-  "Other",
-]);
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
@@ -486,6 +490,7 @@ function WebsiteBuilderPage() {
   const [websiteDraftDeleteStep, setWebsiteDraftDeleteStep] = useState(DELETE_WEBSITE_DRAFT_STEP_REASON);
   const [isDeletingWebsiteDraft, setIsDeletingWebsiteDraft] = useState(false);
   const previewSectionRef = useRef(null);
+  const websiteBuildAttemptRef = useRef(null);
   const navigate = useNavigate();
 
   const draftedPropertyIds = useMemo(
@@ -657,6 +662,7 @@ function WebsiteBuilderPage() {
   }, [selectedProperty, galleryImages.length]);
 
   useEffect(() => {
+    websiteBuildAttemptRef.current = null;
     setPreviewStage(PREVIEW_STAGE.idle);
     setPreviewModel(null);
     setPreviewError("");
@@ -687,6 +693,70 @@ function WebsiteBuilderPage() {
     setPreviewError("");
     setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
     setPersistWebsiteDraftError("");
+  };
+
+  const startWebsiteBuildAttempt = () => {
+    if (!selectedProperty) {
+      return null;
+    }
+
+    const nextAttempt = createWebsiteBuildAttempt({
+      propertyId: selectedProperty.value,
+      templateKey: selectedTemplateId,
+    });
+
+    websiteBuildAttemptRef.current = nextAttempt;
+    void recordWebsiteHostAnalyticsEventSafely({
+      propertyId: nextAttempt.propertyId,
+      eventType: WEBSITE_BUILD_STARTED_EVENT,
+      payload: {
+        attemptId: nextAttempt.attemptId,
+        templateKey: nextAttempt.templateKey,
+      },
+    });
+
+    return nextAttempt;
+  };
+
+  const recordPreviewReadyForBuildAttempt = async (attempt) => {
+    if (!attempt || attempt.hasPreviewReadyEvent) {
+      return;
+    }
+
+    attempt.hasPreviewReadyEvent = true;
+    const durationMs = getBuildAttemptDurationMs(attempt.startedAt);
+
+    await recordWebsiteHostAnalyticsEventSafely({
+      propertyId: attempt.propertyId,
+      eventType: WEBSITE_PREVIEW_READY_EVENT,
+      payload: {
+        attemptId: attempt.attemptId,
+        templateKey: attempt.templateKey,
+        durationMs,
+      },
+    });
+  };
+
+  const recordBuildTerminalEvent = ({ attempt, draftId = "", eventType, phase = "" }) => {
+    if (!attempt || attempt.hasTerminalEvent) {
+      return;
+    }
+
+    attempt.hasTerminalEvent = true;
+    if (websiteBuildAttemptRef.current?.attemptId === attempt.attemptId) {
+      websiteBuildAttemptRef.current = null;
+    }
+    void recordWebsiteHostAnalyticsEventSafely({
+      propertyId: attempt.propertyId,
+      draftId,
+      eventType,
+      payload: {
+        attemptId: attempt.attemptId,
+        templateKey: attempt.templateKey,
+        durationMs: getBuildAttemptDurationMs(attempt.startedAt),
+        phase,
+      },
+    });
   };
 
   const persistSelectedWebsiteDraft = async () => {
@@ -720,6 +790,7 @@ function WebsiteBuilderPage() {
       return;
     }
 
+    const buildAttempt = startWebsiteBuildAttempt();
     setPreviewStage(PREVIEW_STAGE.loading);
     setPreviewModel(null);
     setPreviewError("");
@@ -734,11 +805,31 @@ function WebsiteBuilderPage() {
 
       setPreviewModel(nextPreviewModel);
       setPreviewStage(PREVIEW_STAGE.ready);
+      await waitForNextPaint();
+      await waitForNextPaint();
+      await recordPreviewReadyForBuildAttempt(buildAttempt);
       const savedDraft = await persistSelectedWebsiteDraft();
-      if (savedDraft) {
-        toast.success("Website built and ready for review.");
+      if (!savedDraft) {
+        recordBuildTerminalEvent({
+          attempt: buildAttempt,
+          eventType: WEBSITE_BUILD_FAILED_EVENT,
+          phase: WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
+        });
+        return;
       }
+
+      recordBuildTerminalEvent({
+        attempt: buildAttempt,
+        draftId: savedDraft.id,
+        eventType: WEBSITE_BUILD_SUCCEEDED_EVENT,
+      });
+      toast.success("Website built and ready for review.");
     } catch (error) {
+      recordBuildTerminalEvent({
+        attempt: buildAttempt,
+        eventType: WEBSITE_BUILD_FAILED_EVENT,
+        phase: previewBuildPhase,
+      });
       setPreviewStage(PREVIEW_STAGE.error);
       setPreviewModel(null);
       setPreviewError(error?.message || "We could not build the selected website preview.");
@@ -895,7 +986,7 @@ function WebsiteBuilderPage() {
     setIsDeletingWebsiteDraft(true);
 
     try {
-      await deleteWebsiteDraft(propertyId);
+      await deleteWebsiteDraft(propertyId, websiteDraftDeleteReasons);
       setWebsiteDraftPreviewModels((currentPreviewModels) => {
         const nextPreviewModels = { ...currentPreviewModels };
         delete nextPreviewModels[propertyId];

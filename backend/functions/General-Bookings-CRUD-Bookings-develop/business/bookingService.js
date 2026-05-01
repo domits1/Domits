@@ -165,6 +165,12 @@ class BookingService {
           response: authToken.sub,
         };
       }
+      case "blockedDates": {
+        if (!event.event?.property_Id) {
+          throw new BadRequestException("property_Id is required.");
+        }
+        return await this.reservationRepository.getBlockedDatesByPropertyId(event.event.property_Id);
+      }
       case "getPayment": {
         const user = await this.authManager.authenticateUser(event.Authorization);
         const booking = await this.reservationRepository.getBookingById(event.event.bookingId);

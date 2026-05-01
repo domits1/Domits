@@ -29,7 +29,8 @@ const NAV = [
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
-  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
@@ -82,7 +83,11 @@ function Pages({ onNavigate }) {
         aria-hidden={!open}
       />
 
-      <nav className={`sidebar ${open ? "open" : ""}`} aria-label="Host navigation" id="host-menu">
+      <nav
+        className={`sidebar ${open ? "open" : ""}`}
+        aria-label="Host navigation"
+        id="host-menu"
+      >
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
           <ul className="menu-list">
