@@ -53,6 +53,11 @@ const getSelectedImageForSlot = (slot, editorValues) =>
   slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
 
 const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
+const buildPublishedWebsitePath = (domain, siteId = "") => {
+  const path = `/website-live/${encodeURIComponent(domain)}`;
+  const normalizedSiteId = String(siteId || "").trim();
+  return normalizedSiteId ? `${path}?siteId=${encodeURIComponent(normalizedSiteId)}` : path;
+};
 
 const getDraftWorkingContentOverrides = (draft) =>
   draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
@@ -913,6 +918,21 @@ function WebsiteEditorPage() {
     globalThis.open(buildWebsitePreviewPath(draftId), "_blank", "noopener,noreferrer");
   };
 
+  const openPublishedWebsiteLink = () => {
+    const publishedDomain = String(primarySiteDomain?.domain || "").trim();
+    if (!publishedDomain) {
+      toast.error("This website does not have a fallback domain yet.");
+      return;
+    }
+
+    setIsActionMenuOpen(false);
+    globalThis.open(
+      buildPublishedWebsitePath(publishedDomain, siteSummary?.site?.id),
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
   const toggleActionMenu = () => {
     setIsActionMenuOpen((currentValue) => !currentValue);
   };
@@ -1116,6 +1136,16 @@ function WebsiteEditorPage() {
                     >
                       Open live preview
                     </button>
+                    {hasPublishedSite && primarySiteDomain?.domain ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles.actionMenuItem}
+                        onClick={openPublishedWebsiteLink}
+                      >
+                        Open published site
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       role="menuitem"
@@ -1193,9 +1223,21 @@ function WebsiteEditorPage() {
                 </div>
               </div>
 
-              {siteSummaryError ? (
-                <p className={styles.publicSiteError}>{siteSummaryError}</p>
-              ) : hasPreviewSyncPending ? (
+              {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
+              {hasPublishedSite && primarySiteDomain?.domain ? (
+                <p className={styles.publicSiteHint}>
+                  Published site test path:{" "}
+                  <a
+                    className={styles.publicSiteLink}
+                    href={buildPublishedWebsitePath(primarySiteDomain.domain, siteSummary?.site?.id)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {primarySiteDomain.domain}
+                  </a>
+                </p>
+              ) : null}
+              {!siteSummaryError && hasPreviewSyncPending ? (
                 <p className={styles.publicSiteHint}>
                   Update live preview first if you want the latest editor changes included in the next
                   publish.

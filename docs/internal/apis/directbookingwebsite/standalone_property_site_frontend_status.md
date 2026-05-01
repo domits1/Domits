@@ -80,6 +80,13 @@ What is in place:
   - `main.standalone_site_domain` stores fallback-domain metadata separately from the site lifecycle record
   - the editor can publish and unpublish the standalone site record without treating the draft row as the public website source of truth
   - fallback-domain assignment is now visible in the editor, but public host-based routing is still a later phase
+- Phase 2 of the public runtime is now implemented:
+  - published sites can be resolved through `GET /property/website/public/resolve`
+  - published sites can be rendered through `GET /property/website/public/render`
+  - the public runtime now renders from `standalone_site.published_property_snapshot_json` plus published overrides instead of reading brochure content through the draft preview path
+  - a same-origin debug route exists at `/website-live/:domain` so hosts can test published-site rendering before real fallback-domain DNS is activated
+  - the actual standalone-host root path can now render the published site when the current hostname matches the fallback-domain suffix
+  - live mobile LCP telemetry can now be emitted from the published-site runtime instead of remaining preview-only
 
 ## Implemented page flow
 ### Step 1: Choose your listing

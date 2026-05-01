@@ -155,6 +155,17 @@
   line-height: 1.55;
 }
 
+.publicSiteLink {
+  color: #1f4e79;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.publicSiteLink:hover,
+.publicSiteLink:focus-visible {
+  text-decoration: underline;
+}
+
 .surface {
   display: grid;
   grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);

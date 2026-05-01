@@ -3,6 +3,16 @@ import { randomUUID } from "node:crypto";
 
 const DOMAIN_ALLOWED_TYPES = new Set(["FALLBACK", "CUSTOM"]);
 const DOMAIN_ALLOWED_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
+const SITE_DOMAIN_SELECT_COLUMNS = `id,
+        site_id,
+        domain,
+        domain_type,
+        status,
+        is_primary,
+        verification_details_json,
+        last_checked_at,
+        created_at,
+        updated_at`;
 
 const resolveSchemaName = (client) => {
   if (process.env.TEST === "true") {
@@ -18,6 +28,12 @@ const resolveSchemaName = (client) => {
 };
 
 const siteDomainTableName = (schemaName) => `${schemaName}.standalone_site_domain`;
+const buildSiteDomainSelectQuery = (tableName, whereClause, suffix = "") =>
+  `SELECT
+        ${SITE_DOMAIN_SELECT_COLUMNS}
+      FROM ${tableName}
+      ${whereClause}
+      ${suffix}`.trim();
 
 const safeParseJson = (rawValue, fallbackValue = {}) => {
   if (typeof rawValue !== "string" || !rawValue.trim()) {
@@ -125,21 +141,21 @@ export class StandaloneSiteDomainRepository {
     const tableName = siteDomainTableName(schemaName);
 
     const rows = await client.query(
-      `SELECT
-        id,
-        site_id,
-        domain,
-        domain_type,
-        status,
-        is_primary,
-        verification_details_json,
-        last_checked_at,
-        created_at,
-        updated_at
-      FROM ${tableName}
-      WHERE site_id = $1 AND domain_type = 'FALLBACK'
-      LIMIT 1`,
+      buildSiteDomainSelectQuery(tableName, "WHERE site_id = $1 AND domain_type = 'FALLBACK'", "LIMIT 1"),
       [siteId]
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
+  }
+
+  async getDomainByName(domain) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    const rows = await client.query(
+      buildSiteDomainSelectQuery(tableName, "WHERE domain = $1", "LIMIT 1"),
+      [String(domain || "").trim().toLowerCase()]
     );
 
     return mapSiteDomainRow(rows?.[0] || null);

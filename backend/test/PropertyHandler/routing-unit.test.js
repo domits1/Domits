@@ -33,6 +33,8 @@ const directRouteSpecs = [
   ["POST website site unpublish request", "unpublishWebsiteSite", "POST", "/property/website/site/unpublish", 200],
   ["POST website draft upsert request", "upsertWebsiteDraft", "POST", "/property/website/draft", 200],
   ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],
+  ["GET public website resolve request", "resolvePublicWebsiteSite", "GET", "/property/website/public/resolve", 200],
+  ["GET public website render request", "getPublicWebsiteRenderModel", "GET", "/property/website/public/render", 200],
   ["GET public website preview request", "getWebsitePreviewByDraftId", "GET", "/property/website/preview", 200],
   ["GET website KPI summary request", "getWebsiteKpis", "GET", "/property/website/kpis", 200],
   ["GET website site by property request", "getWebsiteSiteByPropertyId", "GET", "/property/website/site", 200],

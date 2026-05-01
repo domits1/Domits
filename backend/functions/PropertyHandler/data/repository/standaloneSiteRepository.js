@@ -4,6 +4,21 @@ import { randomUUID } from "node:crypto";
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
 const DEFAULT_SITE_LOCALE = "en";
 const EMPTY_JSON_OBJECT = "{}";
+const SITE_SELECT_COLUMNS = `id,
+        property_id,
+        host_id,
+        site_name,
+        primary_locale,
+        status,
+        template_key,
+        published_property_snapshot_json,
+        published_content_overrides_json,
+        published_theme_overrides_json,
+        preview_token_hash,
+        published_at,
+        suspended_at,
+        created_at,
+        updated_at`;
 
 const resolveSchemaName = (client) => {
   if (process.env.TEST === "true") {
@@ -19,6 +34,12 @@ const resolveSchemaName = (client) => {
 };
 
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
+const buildSiteSelectQuery = (tableName, whereClause) =>
+  `SELECT
+        ${SITE_SELECT_COLUMNS}
+      FROM ${tableName}
+      ${whereClause}
+      LIMIT 1`;
 
 const safeParseJson = (rawValue, fallbackValue = {}) => {
   if (typeof rawValue !== "string" || !rawValue.trim()) {
@@ -191,26 +212,21 @@ export class StandaloneSiteRepository {
     const tableName = siteTableName(schemaName);
 
     const rows = await client.query(
-      `SELECT
-        id,
-        property_id,
-        host_id,
-        site_name,
-        primary_locale,
-        status,
-        template_key,
-        published_property_snapshot_json,
-        published_content_overrides_json,
-        published_theme_overrides_json,
-        preview_token_hash,
-        published_at,
-        suspended_at,
-        created_at,
-        updated_at
-      FROM ${tableName}
-      WHERE property_id = $1 AND host_id = $2
-      LIMIT 1`,
+      buildSiteSelectQuery(tableName, "WHERE property_id = $1 AND host_id = $2"),
       [propertyId, hostId]
+    );
+
+    return mapSiteRow(rows?.[0] || null);
+  }
+
+  async getSiteById(siteId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+
+    const rows = await client.query(
+      buildSiteSelectQuery(tableName, "WHERE id = $1"),
+      [siteId]
     );
 
     return mapSiteRow(rows?.[0] || null);

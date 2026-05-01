@@ -78,6 +78,12 @@ const bookingEngineHandlers = {
 };
 
 const handleGet = async (event) => {
+  if (isPath(event, "/property/website/public/resolve")) {
+    return controller.resolvePublicWebsiteSite(event);
+  }
+  if (isPath(event, "/property/website/public/render")) {
+    return controller.getPublicWebsiteRenderModel(event);
+  }
   if (isPath(event, "/property/website/preview")) {
     return controller.getWebsitePreviewByDraftId(event);
   }

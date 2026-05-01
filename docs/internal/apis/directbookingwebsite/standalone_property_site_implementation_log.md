@@ -1486,3 +1486,62 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
   - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-05-01] Published-site resolver and runtime on top of standalone site/domain foundation
+Context:
+Phase 1 separated draft state from site/domain state, but the public runtime still depended on the `draftId` preview route. That meant fallback domains were tracked but not actually usable as the published-site resolution model.
+
+Implementation:
+- Added public standalone-site routes in PropertyHandler:
+  - `GET /property/website/public/resolve`
+  - `GET /property/website/public/render`
+- Added repository lookups for:
+  - `StandaloneSiteRepository.getSiteById(...)`
+  - `StandaloneSiteDomainRepository.getDomainByName(...)`
+- Added a published-site runtime page:
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicSitePage.jsx`
+- Added public runtime fetch helpers:
+  - `websitePublicSiteService.js`
+- Added same-origin debug routing:
+  - `/website-live/:domain`
+  - optional `?siteId=` support so published-site rendering can be exercised before real fallback-domain DNS is active
+- Added live-surface LCP telemetry from the published-site runtime through the existing `SITE_LCP_RECORDED` event path.
+- Added an editor link into the published-site test route so hosts can open the currently published site state without leaving the workspace guessing which URL to construct.
+
+Decision / Rationale:
+- Public live rendering now uses the published snapshot stored in `standalone_site` rather than the draft preview path.
+- Real host-based resolution still validates published-site reachability through domain status.
+- Internal debug rendering is intentionally separated from real domain activation so acceptance testing does not depend on DNS cutover timing.
+- The public API accepts the target domain explicitly from the frontend because browser API calls go to the API host, not the standalone site host. Relying on the API request `Host` header alone would be wrong in the current client-rendered architecture.
+
+AWS / Data impact:
+- New API Gateway routes required:
+  - `GET /property/website/public/resolve`
+  - `GET /property/website/public/render`
+  - corresponding `OPTIONS` routes if browser preflight is needed in the deployed environment
+- No new Aurora tables or columns were required beyond the Phase 1 site/domain foundation.
+- Existing KPI/event storage is reused; live LCP telemetry now becomes real once published-site traffic exists.
+
+Validation:
+- Backend routing unit test passed.
+- Frontend production build passed.
+
+Open risks / Next:
+- Fallback-domain DNS and public host routing still need the actual infrastructure cutover to make the live site reachable on its real hostname.
+- Custom-domain verification and activation remain a later phase.
+- The internal `/website-live/:domain?siteId=...` route is a controlled debug path, not the final public hostname strategy.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDomainRepository.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/App.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicSitePage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/services/websitePublicSiteService.js`
+  - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsService.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`

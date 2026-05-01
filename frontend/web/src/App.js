@@ -78,8 +78,10 @@ import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
+import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX = "standalone.domits.com";
 const apolloClient = new ApolloClient({
   link: new HttpLink({
     uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
@@ -97,6 +99,31 @@ function RedirectHostOnboardingCatchAll() {
   return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
 }
 
+const normalizeStandaloneHostName = (value) => {
+  const normalizedValue = String(value || "").trim().toLowerCase();
+  if (!normalizedValue) {
+    return "";
+  }
+
+  return normalizedValue.split(":")[0] || "";
+};
+
+const isStandaloneWebsiteHostName = (hostName) => {
+  const normalizedHostName = normalizeStandaloneHostName(hostName);
+  const fallbackDomainSuffix = normalizeStandaloneHostName(
+    process.env.REACT_APP_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX || DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX
+  );
+
+  if (!normalizedHostName || !fallbackDomainSuffix) {
+    return false;
+  }
+
+  return (
+    normalizedHostName === fallbackDomainSuffix ||
+    normalizedHostName.endsWith(`.${fallbackDomainSuffix}`)
+  );
+};
+
 function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -110,13 +137,17 @@ function App() {
   }, []);
 
   const currentPath = window.location.pathname;
+  const currentHostName = window.location.hostname;
   const isWebsitePreviewPath = currentPath.startsWith("/website-preview");
+  const isWebsiteLivePath = currentPath.startsWith("/website-live");
+  const isStandaloneWebsiteHost = isStandaloneWebsiteHostName(currentHostName);
+  const isStandaloneWebsiteSurface = isWebsitePreviewPath || isWebsiteLivePath || isStandaloneWebsiteHost;
 
   const renderFooter = () => {
     if (
       ["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(currentPath) ||
       currentPath.startsWith("/verify") ||
-      isWebsitePreviewPath
+      isStandaloneWebsiteSurface
     ) {
       return null;
     }
@@ -124,7 +155,7 @@ function App() {
   };
 
   const renderChatWidget = () => {
-    if (currentPath.startsWith("/verify") || isWebsitePreviewPath) {
+    if (currentPath.startsWith("/verify") || isStandaloneWebsiteSurface) {
       return null;
     }
     return <ChatWidget />;
@@ -155,12 +186,12 @@ function App() {
           <AuthProvider>
             <UserProvider>
               <div className="App" aria-busy={loading}>
-                {currentPath !== "/admin" && !isWebsitePreviewPath && (
+                {currentPath !== "/admin" && !isStandaloneWebsiteSurface && (
                   <Header setSearchResults={setSearchResults} setLoading={setLoading} />
                 )}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} />} />
-                  <Route path="/" element={<Homepage />} />
+                  <Route path="/" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/data-safety" element={<Datasafety />} />
                   <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
@@ -181,6 +212,8 @@ function App() {
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/security" element={<Security />} />
                   <Route path="/website-preview/:draftId" element={<WebsitePublicPreviewPage />} />
+                  <Route path="/website-live/:domain" element={<WebsitePublicSitePage />} />
+                  <Route path="/website-live" element={<WebsitePublicSitePage />} />
 
                   {/* Chat */}
                   {/*<Route path="/chat" element={<Chat/>}/>*/}
@@ -258,15 +291,15 @@ function App() {
                   <Route path="/hostonboarding/*" element={<RedirectHostOnboardingCatchAll />} />
 
                   {/* 404 */}
-                  <Route path="/*" element={<PageNotFound />} />
+                  <Route path="/*" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <PageNotFound />} />
                 </Routes>
                 {renderFooter()}
-                {currentPath !== "/admin" && !isWebsitePreviewPath && <MenuBar />}
+                {currentPath !== "/admin" && !isStandaloneWebsiteSurface && <MenuBar />}
                 {renderChatWidget()}
               </div>
             </UserProvider>
           </AuthProvider>
-          <Navbar />
+          {!isStandaloneWebsiteSurface ? <Navbar /> : null}
         </Router>
       </FlowContext.Provider>
     </ApolloProvider>

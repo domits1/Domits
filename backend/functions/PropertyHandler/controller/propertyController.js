@@ -67,6 +67,22 @@ const buildFallbackDomainLabel = (siteName, siteId) => {
 };
 const buildFallbackDomain = (siteName, siteId) =>
     `${buildFallbackDomainLabel(siteName, siteId)}.${getFallbackDomainSuffix()}`;
+const normalizeStandaloneSiteDomainInput = (value) => {
+    const normalizedValue = cleanWebsiteText(value).toLowerCase();
+    if (!normalizedValue) {
+        return "";
+    }
+
+    const withoutProtocol = normalizedValue.replace(/^https?:\/\//, "");
+    const hostSegment = withoutProtocol.split("/")[0] || "";
+    return hostSegment.split(":")[0] || "";
+};
+const getRequestHostHeaderValue = (headers = {}) =>
+    headers["x-forwarded-host"] ||
+    headers["X-Forwarded-Host"] ||
+    headers.host ||
+    headers.Host ||
+    "";
 
 export class PropertyController {
 
@@ -1357,6 +1373,106 @@ export class PropertyController {
         };
     }
 
+    buildPublicStandaloneSiteResolution(site, domain) {
+        const siteSummary = this.buildStandaloneSiteSummary(site, domain ? [domain] : []);
+        if (!siteSummary?.site || !siteSummary?.primaryDomain) {
+            return null;
+        }
+
+        return {
+            siteId: siteSummary.site.id,
+            propertyId: siteSummary.site.propertyId,
+            hostId: siteSummary.site.hostId,
+            templateKey: siteSummary.site.templateKey,
+            primaryLocale: siteSummary.site.primaryLocale,
+            siteName: siteSummary.site.siteName,
+            siteStatus: siteSummary.site.status,
+            publishedAt: siteSummary.site.publishedAt,
+            isReachable: siteSummary.isReachable,
+            domain: siteSummary.primaryDomain,
+        };
+    }
+
+    buildPublicStandaloneSiteRenderPayload(site, domain) {
+        const resolution = this.buildPublicStandaloneSiteResolution(site, domain);
+        if (!resolution) {
+            return null;
+        }
+
+        return {
+            resolution,
+            site: {
+                id: site.id,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                siteName: site.siteName,
+                primaryLocale: site.primaryLocale,
+                status: site.status,
+                templateKey: site.templateKey,
+                publishedAt: site.publishedAt,
+            },
+            domain,
+            propertySnapshot: site.publishedPropertySnapshot || {},
+            contentOverrides: site.publishedContentOverrides || {},
+            themeOverrides: site.publishedThemeOverrides || {},
+            renderSource: "published_site",
+        };
+    }
+
+    resolveRequestedStandaloneWebsiteDomain(event) {
+        const domainQueryValue =
+            event.queryStringParameters?.domain ||
+            event.queryStringParameters?.host ||
+            getRequestHostHeaderValue(event.headers || {});
+        return normalizeStandaloneSiteDomainInput(domainQueryValue);
+    }
+
+    async resolvePublicStandaloneSiteByDomain(domainInput) {
+        const normalizedDomain = normalizeStandaloneSiteDomainInput(domainInput);
+        if (!normalizedDomain) {
+            throw new TypeError("Missing website domain.");
+        }
+
+        const domain = await this.standaloneSiteDomainRepository.getDomainByName(normalizedDomain);
+        if (!domain) {
+            return null;
+        }
+
+        const site = await this.standaloneSiteRepository.getSiteById(domain.siteId);
+        if (!site) {
+            return null;
+        }
+
+        return { site, domain };
+    }
+
+    async getPublicRenderableStandaloneSiteById(siteId) {
+        const normalizedSiteId = cleanWebsiteText(siteId);
+        if (!normalizedSiteId) {
+            throw new TypeError("Missing website siteId.");
+        }
+
+        const site = await this.standaloneSiteRepository.getSiteById(normalizedSiteId);
+        if (!site) {
+            return null;
+        }
+
+        const domains = await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+        const primaryDomain =
+            domains.find((domainEntry) => domainEntry?.isPrimary) ||
+            domains.find((domainEntry) => Boolean(domainEntry?.domain)) ||
+            null;
+
+        return {
+            site,
+            domain: primaryDomain,
+        };
+    }
+
+    isPublicStandaloneSiteReachable(site, domain) {
+        return Boolean(site) && site.status === "PUBLISHED" && domain?.status === "ACTIVE";
+    }
+
     async getStandaloneSiteSummaryByPropertyId(propertyId, hostId) {
         const site = await this.standaloneSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
         if (!site) {
@@ -1499,29 +1615,56 @@ export class PropertyController {
         }
     }
 
-    async recordPublicWebsiteAnalyticsEvent({ draftId, eventType, payload }) {
-        if (!draftId) {
-            return this.badRequest("Missing draftId.");
+    async recordPublicWebsiteAnalyticsEvent({ draftId, siteId, domain, eventType, payload }) {
+        const normalizedDraftId = cleanWebsiteText(draftId);
+        if (normalizedDraftId) {
+            const draft = await this.standaloneSiteDraftRepository.getDraftById(normalizedDraftId);
+            if (!draft || draft.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website analytics target not found." }),
+                };
+            }
+
+            await this.standaloneSiteEventRepository.recordEvent({
+                draftId: draft.id,
+                propertyId: draft.propertyId,
+                hostId: draft.hostId,
+                eventType,
+                payload,
+            });
+
+            return null;
         }
 
-        const draft = await this.standaloneSiteDraftRepository.getDraftById(draftId);
-        if (!draft || draft.status === "SUSPENDED") {
-            return {
-                statusCode: 404,
-                headers: draftResponseHeaders,
-                body: JSON.stringify({ message: "Website analytics target not found." }),
-            };
+        const normalizedSiteId = cleanWebsiteText(siteId);
+        if (normalizedSiteId) {
+            const site = await this.standaloneSiteRepository.getSiteById(normalizedSiteId);
+            if (!site || site.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website analytics target not found." }),
+                };
+            }
+
+            await this.standaloneSiteEventRepository.recordEvent({
+                draftId: null,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                eventType,
+                payload: {
+                    ...payload,
+                    siteId: site.id,
+                    domain: normalizeStandaloneSiteDomainInput(domain),
+                },
+            });
+
+            return null;
         }
 
-        await this.standaloneSiteEventRepository.recordEvent({
-            draftId: draft.id,
-            propertyId: draft.propertyId,
-            hostId: draft.hostId,
-            eventType,
-            payload,
-        });
-
-        return null;
+        return this.badRequest("Missing website analytics target.");
     }
 
     async recordHostWebsiteAnalyticsEvent({ event, propertyId, draftId, eventType, payload }) {
@@ -1871,6 +2014,8 @@ export class PropertyController {
             const eventType = String(eventBody.eventType || "").trim().toUpperCase();
             const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
             const draftId = String(eventBody.draftId || eventBody.draft || "").trim();
+            const siteId = String(eventBody.siteId || eventBody.site || "").trim();
+            const domain = normalizeStandaloneSiteDomainInput(eventBody.domain || eventBody.host || "");
             const payload = this.parseWebsiteAnalyticsPayload(eventBody.payload);
 
             if (!eventType) {
@@ -1881,6 +2026,8 @@ export class PropertyController {
             const earlyResponse = WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES.has(eventType)
                 ? await this.recordPublicWebsiteAnalyticsEvent({
                     draftId,
+                    siteId,
+                    domain,
                     eventType,
                     payload: normalizedPayload,
                 })
@@ -2184,6 +2331,115 @@ export class PropertyController {
                 statusCode: 200,
                 headers: draftResponseHeaders,
                 body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/public/resolve
+    // -------------------------
+    async resolvePublicWebsiteSite(event) {
+        try {
+            const requestedDomain = this.resolveRequestedStandaloneWebsiteDomain(event);
+            if (!requestedDomain) {
+                return this.badRequest("Missing website domain.");
+            }
+
+            const resolutionResult = await this.resolvePublicStandaloneSiteByDomain(requestedDomain);
+            if (!resolutionResult || !this.isPublicStandaloneSiteReachable(resolutionResult.site, resolutionResult.domain)) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(this.buildPublicStandaloneSiteResolution(
+                    resolutionResult.site,
+                    resolutionResult.domain
+                )),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/public/render
+    // -------------------------
+    async getPublicWebsiteRenderModel(event) {
+        try {
+            const siteId = cleanWebsiteText(
+                event.queryStringParameters?.site ||
+                event.queryStringParameters?.siteId
+            );
+            const requestedDomain = this.resolveRequestedStandaloneWebsiteDomain(event);
+            const isInternalSiteRender = Boolean(siteId);
+
+            let resolutionResult = null;
+            if (requestedDomain) {
+                resolutionResult = await this.resolvePublicStandaloneSiteByDomain(requestedDomain);
+            } else if (siteId) {
+                resolutionResult = await this.getPublicRenderableStandaloneSiteById(siteId);
+            } else {
+                return this.badRequest("Missing website siteId or domain.");
+            }
+
+            const canRenderPublishedSite = isInternalSiteRender
+                ? Boolean(resolutionResult?.site) &&
+                    resolutionResult.site.status === "PUBLISHED" &&
+                    Boolean(resolutionResult?.domain?.domain)
+                : this.isPublicStandaloneSiteReachable(resolutionResult?.site, resolutionResult?.domain);
+
+            if (!resolutionResult || !canRenderPublishedSite) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            if (siteId && resolutionResult.site.id !== siteId) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId: resolutionResult.site.propertyId,
+                hostId: resolutionResult.site.hostId,
+                eventType: "PUBLIC_SITE_OPENED",
+                payload: {
+                    siteId: resolutionResult.site.id,
+                    domain: resolutionResult.domain?.domain || requestedDomain,
+                    templateKey: resolutionResult.site.templateKey,
+                    surface: "live",
+                },
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(this.buildPublicStandaloneSiteRenderPayload(
+                    resolutionResult.site,
+                    resolutionResult.domain
+                )),
             };
         } catch (error) {
             console.error(error);
