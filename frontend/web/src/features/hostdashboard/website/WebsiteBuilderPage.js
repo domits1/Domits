@@ -23,12 +23,14 @@ import {
   createWebsiteBuildAttempt,
   getBuildAttemptDurationMs,
   waitForNextPaint,
-  WEBSITE_BUILD_FAILED_EVENT,
   WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
+} from "./analytics/websiteBuildAnalytics";
+import {
+  WEBSITE_BUILD_FAILED_EVENT,
   WEBSITE_BUILD_STARTED_EVENT,
   WEBSITE_BUILD_SUCCEEDED_EVENT,
   WEBSITE_PREVIEW_READY_EVENT,
-} from "./analytics/websiteBuildAnalytics";
+} from "./analytics/websiteAnalyticsEventTypes";
 import {
   deleteWebsiteDraft,
   fetchWebsiteDrafts,
