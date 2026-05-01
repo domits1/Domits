@@ -22,6 +22,14 @@ import {
   createEmptyWebsiteDraftEditorValues,
   mergeWebsiteDraftContentOverrides,
 } from "./rendering/websiteDraftContentOverrides";
+import {
+  applyWebsiteDraftThemeOverrides,
+  buildWebsiteDraftThemeEditorValues,
+  buildWebsiteDraftThemeOverridePatch,
+  createEmptyWebsiteDraftThemeEditorValues,
+  mergeWebsiteDraftThemeOverrides,
+  WEBSITE_BACKGROUND_COLOR_OPTIONS,
+} from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import { announceWebsitePreviewUpdate } from "./services/websitePreviewSync";
 import {
@@ -116,6 +124,7 @@ function TextField({
   field,
   value,
   onChange,
+  onKeyDown = undefined,
   fieldRef = null,
   isHighlighted = false,
   onFocus = undefined,
@@ -135,6 +144,7 @@ function TextField({
           className={styles.textArea}
           value={value}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
         />
@@ -155,6 +165,7 @@ function TextField({
         className={styles.textInput}
         value={value}
         onChange={onChange}
+        onKeyDown={onKeyDown}
         onFocus={onFocus}
         onBlur={onBlur}
       />
@@ -175,6 +186,7 @@ TextField.propTypes = {
     }),
   ]),
   isHighlighted: PropTypes.bool,
+  onKeyDown: PropTypes.func,
 };
 
 function AmenityIconSelectField({
@@ -234,6 +246,42 @@ AmenityIconSelectField.propTypes = {
     }),
   ]),
   isHighlighted: PropTypes.bool,
+};
+
+function BackgroundColorField({ value, onSelectColor }) {
+  return (
+    <div className={styles.fieldGroup}>
+      <div className={styles.fieldLabel}>Background color</div>
+      <div className={styles.colorGrid} role="radiogroup" aria-label="Website background color">
+        {WEBSITE_BACKGROUND_COLOR_OPTIONS.map((colorOption) => {
+          const isSelected = colorOption.value === value;
+          return (
+            <button
+              key={colorOption.id}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              className={`${styles.colorSwatchButton} ${isSelected ? styles.colorSwatchButtonSelected : ""}`.trim()}
+              onClick={() => onSelectColor(colorOption.value)}
+              title={colorOption.label}
+            >
+              <span
+                className={styles.colorSwatch}
+                style={{ backgroundColor: colorOption.value }}
+                aria-hidden="true"
+              />
+              <span className={styles.colorSwatchLabel}>{colorOption.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+BackgroundColorField.propTypes = {
+  value: PropTypes.string.isRequired,
+  onSelectColor: PropTypes.func.isRequired,
 };
 
 function CollapsibleSection({
@@ -303,6 +351,7 @@ function WebsiteEditorPage() {
   const [draftRecord, setDraftRecord] = useState(null);
   const [baseModel, setBaseModel] = useState(null);
   const [editorValues, setEditorValues] = useState(createEmptyWebsiteDraftEditorValues);
+  const [themeValues, setThemeValues] = useState(createEmptyWebsiteDraftThemeEditorValues);
   const [previewViewport, setPreviewViewport] = useState("desktop");
   const [isSaving, setIsSaving] = useState(false);
   const [isDiscardingChanges, setIsDiscardingChanges] = useState(false);
@@ -311,6 +360,7 @@ function WebsiteEditorPage() {
   const [activePreviewTargetId, setActivePreviewTargetId] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
+    [EDITOR_SECTION_KEYS.theme]: false,
     [EDITOR_SECTION_KEYS.visibility]: false,
     [EDITOR_SECTION_KEYS.images]: false,
     [EDITOR_SECTION_KEYS.trustCards]: false,
@@ -352,10 +402,8 @@ function WebsiteEditorPage() {
           propertyDetails,
           summaryProperty: null,
         });
-        const nextPreviewModel = applyWebsiteDraftContentOverrides(
-          nextBaseModel,
-          getDraftWorkingContentOverrides(draft)
-        );
+        const nextThemedModel = applyWebsiteDraftThemeOverrides(nextBaseModel, getDraftThemeOverrides(draft));
+        const nextPreviewModel = applyWebsiteDraftContentOverrides(nextThemedModel, getDraftWorkingContentOverrides(draft));
 
         if (!isMounted) {
           return;
@@ -364,6 +412,7 @@ function WebsiteEditorPage() {
         setDraftRecord(draft);
         setBaseModel(nextBaseModel);
         setEditorValues(buildWebsiteDraftEditorValues(nextPreviewModel));
+        setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(draft)));
       } catch (error) {
         if (!isMounted) {
           return;
@@ -372,6 +421,7 @@ function WebsiteEditorPage() {
         setDraftRecord(null);
         setBaseModel(null);
         setEditorValues(createEmptyWebsiteDraftEditorValues());
+        setThemeValues(createEmptyWebsiteDraftThemeEditorValues());
         setLoadError(error?.message || "We could not open this website draft.");
       } finally {
         if (isMounted) {
@@ -413,23 +463,42 @@ function WebsiteEditorPage() {
     () => getDraftPublishedContentOverrides(draftRecord),
     [draftRecord]
   );
+  const themeOverridePatch = useMemo(
+    () => buildWebsiteDraftThemeOverridePatch(themeValues),
+    [themeValues]
+  );
+  const mergedThemeOverrides = useMemo(
+    () => mergeWebsiteDraftThemeOverrides(getDraftThemeOverrides(draftRecord), themeOverridePatch),
+    [draftRecord, themeOverridePatch]
+  );
+  const publishedThemeOverrides = useMemo(
+    () => getDraftPublishedThemeOverrides(draftRecord),
+    [draftRecord]
+  );
 
   const previewModel = useMemo(() => {
     if (!baseModel) {
       return null;
     }
 
-    return applyWebsiteDraftContentOverrides(baseModel, mergedContentOverrides);
-  }, [baseModel, mergedContentOverrides]);
+    const themedModel = applyWebsiteDraftThemeOverrides(baseModel, mergedThemeOverrides);
+    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides);
+  }, [baseModel, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasUnsavedChanges = useMemo(() => {
     const persistedOverrides = getDraftWorkingContentOverrides(draftRecord);
-    return JSON.stringify(mergedContentOverrides) !== JSON.stringify(persistedOverrides);
-  }, [draftRecord, mergedContentOverrides]);
+    const persistedThemeOverrides = getDraftThemeOverrides(draftRecord);
+    return (
+      JSON.stringify(mergedContentOverrides) !== JSON.stringify(persistedOverrides) ||
+      JSON.stringify(mergedThemeOverrides) !== JSON.stringify(persistedThemeOverrides)
+    );
+  }, [draftRecord, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasPreviewSyncPending = useMemo(
-    () => JSON.stringify(mergedContentOverrides) !== JSON.stringify(publishedContentOverrides),
-    [mergedContentOverrides, publishedContentOverrides]
+    () =>
+      JSON.stringify(mergedContentOverrides) !== JSON.stringify(publishedContentOverrides) ||
+      JSON.stringify(mergedThemeOverrides) !== JSON.stringify(publishedThemeOverrides),
+    [mergedContentOverrides, publishedContentOverrides, mergedThemeOverrides, publishedThemeOverrides]
   );
 
   const isMutatingDraft = isSaving || isDiscardingChanges || isUpdatingLivePreview;
@@ -437,6 +506,7 @@ function WebsiteEditorPage() {
   useEffect(() => {
     setExpandedSections({
       [EDITOR_SECTION_KEYS.common]: true,
+      [EDITOR_SECTION_KEYS.theme]: false,
       [EDITOR_SECTION_KEYS.visibility]: false,
       [EDITOR_SECTION_KEYS.images]: false,
       [EDITOR_SECTION_KEYS.trustCards]: false,
@@ -572,6 +642,13 @@ function WebsiteEditorPage() {
         ...currentValues.common,
         [fieldKey]: nextValue,
       },
+    }));
+  };
+
+  const handleThemeBackgroundColorChange = (backgroundColor) => {
+    setThemeValues((currentValues) => ({
+      ...currentValues,
+      backgroundColor,
     }));
   };
 
@@ -723,6 +800,7 @@ function WebsiteEditorPage() {
     if (baseModel) {
       setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft));
     }
+    setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(persistedDraft)));
 
     return persistedDraft;
   };
@@ -740,9 +818,9 @@ function WebsiteEditorPage() {
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
         contentOverrides: mergedContentOverrides,
-        themeOverrides: getDraftThemeOverrides(draftRecord),
+        themeOverrides: mergedThemeOverrides,
         publishedContentOverrides,
-        publishedThemeOverrides: getDraftPublishedThemeOverrides(draftRecord),
+        publishedThemeOverrides,
       });
 
       await reloadDraftRecord();
@@ -759,6 +837,16 @@ function WebsiteEditorPage() {
       return;
     }
 
+    const confirmed =
+      typeof globalThis.confirm !== "function"
+        ? true
+        : globalThis.confirm(
+            "Discard all draft-only changes and reset this editor back to the current live preview version?"
+          );
+    if (!confirmed) {
+      return;
+    }
+
     setIsDiscardingChanges(true);
 
     try {
@@ -767,7 +855,7 @@ function WebsiteEditorPage() {
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
         contentOverrides: publishedContentOverrides,
-        themeOverrides: getDraftThemeOverrides(draftRecord),
+        themeOverrides: publishedThemeOverrides,
       });
 
       await reloadDraftRecord();
@@ -792,9 +880,9 @@ function WebsiteEditorPage() {
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
         contentOverrides: mergedContentOverrides,
-        themeOverrides: getDraftThemeOverrides(draftRecord),
+        themeOverrides: mergedThemeOverrides,
         publishedContentOverrides: mergedContentOverrides,
-        publishedThemeOverrides: getDraftPublishedThemeOverrides(draftRecord),
+        publishedThemeOverrides: mergedThemeOverrides,
       });
 
       await reloadDraftRecord();
@@ -804,6 +892,21 @@ function WebsiteEditorPage() {
       toast.error(error?.message || "We could not update the live preview.");
     } finally {
       setIsUpdatingLivePreview(false);
+    }
+  };
+
+  const handleEditorFieldKeyDown = (field) => async (event) => {
+    if (field.component === "textarea") {
+      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        await saveDraftChanges();
+      }
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      await saveDraftChanges();
     }
   };
 
@@ -1010,6 +1113,7 @@ function WebsiteEditorPage() {
                         field={field}
                         value={editorValues.common[field.key]}
                         onChange={handleCommonFieldChange(field.key)}
+                        onKeyDown={handleEditorFieldKeyDown(field)}
                         fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common[field.key])}
                         isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common[field.key]}
                         onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common[field.key])}
@@ -1017,6 +1121,20 @@ function WebsiteEditorPage() {
                       />
                     ))}
                   </div>
+                </CollapsibleSection>
+
+                <CollapsibleSection
+                  sectionId={EDITOR_SECTION_KEYS.theme}
+                  title="Theme"
+                  description="Choose the background surface color used behind the website sections."
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.theme])}
+                  onToggle={toggleSection}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.theme)}
+                >
+                  <BackgroundColorField
+                    value={themeValues.backgroundColor}
+                    onSelectColor={handleThemeBackgroundColorChange}
+                  />
                 </CollapsibleSection>
 
                 {visibilityFields.length > 0 ? (
@@ -1168,6 +1286,7 @@ function WebsiteEditorPage() {
                               field={{ key: `trust-card-title-${index}`, label: "Title", component: "input" }}
                               value={card.title}
                               onChange={handleCollectionFieldChange("trustCards", index, "title")}
+                              onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
                               onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
                               onBlur={clearActivePreviewTarget}
                             />
@@ -1179,6 +1298,7 @@ function WebsiteEditorPage() {
                               }}
                               value={card.description}
                               onChange={handleCollectionFieldChange("trustCards", index, "description")}
+                              onKeyDown={handleEditorFieldKeyDown({ component: "textarea" })}
                               onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
                               onBlur={clearActivePreviewTarget}
                             />
@@ -1217,6 +1337,7 @@ function WebsiteEditorPage() {
                               field={{ key: `journey-stop-title-${index}`, label: "Title", component: "input" }}
                               value={stop.title}
                               onChange={handleCollectionFieldChange("journeyStops", index, "title")}
+                              onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
                               onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.journeyStops(index))}
                               onBlur={clearActivePreviewTarget}
                             />
@@ -1228,6 +1349,7 @@ function WebsiteEditorPage() {
                               }}
                               value={stop.description}
                               onChange={handleCollectionFieldChange("journeyStops", index, "description")}
+                              onKeyDown={handleEditorFieldKeyDown({ component: "textarea" })}
                               onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.journeyStops(index))}
                               onBlur={clearActivePreviewTarget}
                             />
@@ -1240,7 +1362,8 @@ function WebsiteEditorPage() {
                 <p className={styles.helperText}>
                   Save changes updates only this working draft. Use the actions above to push the
                   current editor state to the shared preview link or to discard everything that differs
-                  from the current live preview version.
+                  from the current live preview version. Press Enter in single-line fields to save, or
+                  use Ctrl/Cmd + Enter inside multi-line fields.
                 </p>
 
                 <div className={styles.buttonRow}>
