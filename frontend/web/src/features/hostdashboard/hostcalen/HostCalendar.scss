@@ -524,6 +524,20 @@ $accent: #2f6fed;
   outline-offset: -1px;
 }
 
+.hc-year-day--has-restrictions {
+  border-color: #0f766e;
+}
+
+.hc-year-day-restriction-dot {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #0f766e;
+}
+
 .hc-cell {
   position: relative;
   width: 100%;
@@ -679,6 +693,49 @@ $accent: #2f6fed;
   color: #4b5563;
 }
 
+.hc-cell-restrictions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.hc-cell-restriction-chip {
+  max-width: 100%;
+  border: 1px solid #99d1ca;
+  border-radius: 4px;
+  background: #ecfdf5;
+  color: #115e59;
+  padding: 2px 4px;
+  font-size: 10px;
+  line-height: 1.05;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hc-cell-restriction-chip--stopSell {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.hc-cell-restriction-chip--closedToArrival,
+.hc-cell-restriction-chip--closedToDeparture {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.hc-cell-restriction-chip--minStay,
+.hc-cell-restriction-chip--maxStay {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
 .hc-cell-badge {
   position: absolute;
   top: 6px;
@@ -730,6 +787,12 @@ $accent: #2f6fed;
 .hc-cell--selected .hc-cell-date,
 .hc-cell--selected .hc-cell-price {
   color: #ffffff;
+}
+
+.hc-cell--selected .hc-cell-restriction-chip {
+  border-color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.94);
+  color: #064e3b;
 }
 
 .hc-cell--forced-unavailable .hc-cell-date,
@@ -1940,6 +2003,60 @@ $accent: #2f6fed;
 .hc-selection-save-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.hc-selection-advanced {
+  margin: 0;
+}
+
+.hc-selection-advanced-summary {
+  cursor: pointer;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.hc-selection-advanced-summary:focus-visible {
+  outline: none;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.16);
+}
+
+.hc-selection-restrictions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.hc-restriction-field {
+  display: grid;
+  gap: 4px;
+}
+
+.hc-restriction-label {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hc-restriction-select,
+.hc-restriction-input {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  padding: 7px 9px;
+}
+
+.hc-restriction-select:focus,
+.hc-restriction-input:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.16);
 }
 
 .hc-switch {
