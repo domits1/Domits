@@ -383,8 +383,114 @@
   background: #14532d;
 }
 
+.cancelBookingCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cancelBookingCard h3 {
+  margin: 0;
+}
+
+.cancelBookingCard p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dangerOutlineBtn,
+.dangerBtn,
+.secondaryBtn {
+  width: 100%;
+  border-radius: 10px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.dangerOutlineBtn {
+  background: #ffffff;
+  border: 1px solid #dc2626;
+  color: #b91c1c;
+}
+
+.dangerOutlineBtn:hover {
+  background: #fee2e2;
+}
+
+.cancelBookingModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(17, 24, 39, 0.48);
+}
+
+.cancelBookingModal {
+  width: min(100%, 440px);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+}
+
+.cancelBookingModal h2 {
+  margin: 0 0 10px;
+  color: #111827;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.cancelBookingModal p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cancelBookingModalActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.secondaryBtn {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.secondaryBtn:hover {
+  background: #f9fafb;
+}
+
+.dangerBtn {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  color: #ffffff;
+}
+
+.dangerBtn:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
 .viewAll:focus-visible,
-.primaryBtn:focus-visible {
+.primaryBtn:focus-visible,
+.dangerOutlineBtn:focus-visible,
+.dangerBtn:focus-visible,
+.secondaryBtn:focus-visible {
   outline: 2px solid #166534;
   outline-offset: 2px;
 }
@@ -464,5 +570,9 @@
   .detailRow {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .cancelBookingModalActions {
+    flex-direction: column-reverse;
   }
 }

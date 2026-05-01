@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../../styles/sass/features/guestdashboard/guestReservationDetail.scss";
 import "../../styles/sass/features/guestdashboard/mainDashboardGuest.scss";
@@ -235,7 +236,53 @@ const resolveReservationCancellationPolicy = ({ booking, propertyDetails }) => {
   return fallbackPolicyId ? resolveGuestCancellationPolicy(fallbackPolicyId) : null;
 };
 
-const buildReservationContent = ({ isPageLoading, pageError, reservation, handleMessageHost }) => {
+function CancelBookingModal({ isOpen, onClose, onConfirm }) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="cancelBookingModalOverlay" role="presentation" onClick={onClose}>
+      <section
+        className="cancelBookingModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cancel-booking-title"
+        aria-describedby="cancel-booking-description"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 id="cancel-booking-title">Cancel booking?</h2>
+        <p id="cancel-booking-description">
+          Are you sure you want to cancel this booking? Your host will be notified and this action will update your
+          reservation status.
+        </p>
+
+        <div className="cancelBookingModalActions">
+          <button type="button" className="secondaryBtn" onClick={onClose}>
+            Keep booking
+          </button>
+          <button type="button" className="dangerBtn" onClick={onConfirm}>
+            Yes, cancel booking
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+CancelBookingModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
+
+const buildReservationContent = ({
+  isPageLoading,
+  pageError,
+  reservation,
+  handleMessageHost,
+  handleOpenCancelBooking,
+}) => {
   if (isPageLoading) {
     return (
       <div className="card reservationStateCard">
@@ -283,6 +330,14 @@ const buildReservationContent = ({ isPageLoading, pageError, reservation, handle
             <CancellationPolicySection policy={reservation.cancellationPolicy} />
 
             <HouseRules rules={reservation.rules} />
+
+            <div className="card cancelBookingCard">
+              <h3>Cancel reservation</h3>
+              <p>Review the cancellation policy above before cancelling this booking.</p>
+              <button type="button" className="dangerOutlineBtn" onClick={handleOpenCancelBooking}>
+                Cancel Booking
+              </button>
+            </div>
 
             <div className="card helpCard">
               <h3>Need help?</h3>
@@ -388,6 +443,7 @@ function ReservationDetails() {
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const { userId: guestId, loading: identityLoading, error: identityError } = useDashboardIdentity("Guest");
 
   const reservationRouteId = useMemo(() => extractReservationIdFromPath(location.pathname), [location.pathname]);
@@ -489,11 +545,24 @@ function ReservationDetails() {
     navigate("/guestdashboard/messages");
   };
 
+  const handleOpenCancelBooking = () => {
+    setIsCancelModalOpen(true);
+  };
+
+  const handleCloseCancelBooking = () => {
+    setIsCancelModalOpen(false);
+  };
+
+  const handleConfirmCancelBooking = () => {
+    setIsCancelModalOpen(false);
+  };
+
   const reservationContent = buildReservationContent({
     isPageLoading,
     pageError,
     reservation,
     handleMessageHost,
+    handleOpenCancelBooking,
   });
 
   return (
@@ -505,6 +574,12 @@ function ReservationDetails() {
 
         {reservationContent}
       </div>
+
+      <CancelBookingModal
+        isOpen={isCancelModalOpen}
+        onClose={handleCloseCancelBooking}
+        onConfirm={handleConfirmCancelBooking}
+      />
     </main>
   );
 }
