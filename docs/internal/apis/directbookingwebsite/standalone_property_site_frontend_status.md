@@ -35,7 +35,7 @@ What is in place:
 - Saved website cards display the persisted website title override when the host changes the title in the editor.
 - Saved website cards now expose both `Open editor` and `Delete permanently`, so deleting a website immediately makes its listing available again in the builder.
 - The saved website delete action is visually destructive/red and now opens an in-app confirmation overlay before deletion.
-- The saved website delete overlay now includes local-only deletion-reason checkboxes for future analytics/traceability and can be closed by clicking outside the dialog.
+- The saved website delete overlay now forwards selected deletion reasons to backend website event tracking and can be closed by clicking outside the dialog.
 - Compact saved website previews use thumbnail image variants where the property image payload provides them, reducing unnecessary image weight in `My websites`.
 - Compact saved website previews are centered on mobile cards.
 - Editor sections are now collapsible so the left-side control surface remains usable as more override fields are added.
@@ -69,6 +69,12 @@ What is in place:
 - The editor save path now explicitly preserves the current published preview overrides during a normal draft save, so `Save changes` no longer mutates the shared preview link implicitly.
 - An already-open shared preview tab now refreshes itself when the editor pushes a new live-preview update, so hosts do not need to manually reload the preview page after publishing draft changes.
 - Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
+- Standalone website KPIs now live on a dedicated host dashboard route instead of inside the website builder/workspace page.
+- The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
+- Standalone website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
+- The KPI dashboard now separates surface performance into `Preview` and `Live` tabs:
+  - preview mobile LCP can be measured from the public preview route
+  - live mobile LCP remains pending until a real published live-site surface exists
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -99,6 +105,12 @@ What is in place:
 - The built preview remains visible after draft persistence finishes.
 - A toast confirms when the draft is saved and ready for review.
 - Build failures are surfaced with retry controls.
+- Builder KPI instrumentation now records:
+  - build started
+  - preview rendered and usable
+  - build succeeded
+  - build failed
+  This is used to calculate time-to-first-preview p95, success rate, failure rate, and abandonment rate.
 
 ## Data flow status
 Current data path:
@@ -198,6 +210,34 @@ Current implementation details:
   - `published_content_overrides_json`
   - `published_theme_overrides_json`
   These fields must exist in `main` before backend code that reads/writes published preview state is deployed.
+- Website KPI tracking now relies on a separate standalone-owned table in `main`:
+  - `standalone_site_event`
+  This table must exist in `main` before the website KPI overview can load successfully in the host dashboard.
+- The standalone event stream now stores both server-side lifecycle events and client-perceived website analytics events:
+  - builder events from the host dashboard
+  - public preview mobile LCP events from the preview route
+- The dedicated website KPI dashboard now also shows the broader research KPI set explicitly:
+  - `time_to_publish_p95`
+  - `cost_per_active_site_per_month`
+  - `site_lcp_mobile_p75`
+  - `fallback_subdomain_availability`
+  - `quote_to_charge_mismatch_rate`
+  - `booking_api_error_rate`
+  - `booking_funnel_completion_rate`
+  - `custom_domain_setup_success_rate`
+  Metrics without real instrumentation are shown as pending instead of fabricated values.
+- The dedicated KPI dashboard now also exposes real build funnel metrics:
+  - `build_started_count`
+  - `build_succeeded_count`
+  - `build_success_rate`
+  - `build_failure_rate`
+  - `build_abandonment_rate`
+  - `time_to_first_preview_p95`
+- The dedicated KPI dashboard now keeps its full page shell visible on first load and renders pulse-bar loaders inside the KPI sections while aggregated data is still loading.
+- Trust-card icon selection is now editable from the website editor for templates that render those cards.
+  Icon choices are sourced directly from the shared amenities registry, so newly added amenity icons automatically become available to the standalone website editor without a separate icon list.
+- The trust-card icon trigger is centered within the editable field and the icon-picker overlay now scales more safely across smaller viewports instead of behaving like a fixed desktop panel.
+- The trust-card icon picker now deduplicates repeated amenity visuals and shows one option per unique Domits icon glyph instead of repeating the same icon for multiple amenity records.
 
 ## Next phase
 The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.
