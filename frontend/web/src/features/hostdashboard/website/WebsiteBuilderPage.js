@@ -23,12 +23,14 @@ import {
   createWebsiteBuildAttempt,
   getBuildAttemptDurationMs,
   waitForNextPaint,
-  WEBSITE_BUILD_FAILED_EVENT,
   WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
+} from "./analytics/websiteBuildAnalytics";
+import {
+  WEBSITE_BUILD_FAILED_EVENT,
   WEBSITE_BUILD_STARTED_EVENT,
   WEBSITE_BUILD_SUCCEEDED_EVENT,
   WEBSITE_PREVIEW_READY_EVENT,
-} from "./analytics/websiteBuildAnalytics";
+} from "./analytics/websiteAnalyticsEventTypes";
 import {
   deleteWebsiteDraft,
   fetchWebsiteDrafts,
@@ -283,16 +285,19 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
       trustCards: [
         {
           id: "draft-summary",
+          iconAmenityId: "7",
           title: "Draft summary",
           description: subtitle || "Saved website draft ready to continue editing.",
         },
         {
           id: "draft-location",
+          iconAmenityId: "57",
           title: "Location context",
           description: locationLabel || "Location details are attached to this saved website draft.",
         },
         {
           id: "draft-template",
+          iconAmenityId: "55",
           title: "Template state",
           description: String(draft?.templateKey || "Template selected").trim(),
         },

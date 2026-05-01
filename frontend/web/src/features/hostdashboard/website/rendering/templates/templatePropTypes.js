@@ -35,6 +35,7 @@ export const callToActionPropType = PropTypes.shape({
 
 export const copyItemPropType = PropTypes.shape({
   id: PropTypes.string.isRequired,
+  iconAmenityId: PropTypes.string,
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
 });
