@@ -328,9 +328,13 @@ export class StandaloneSiteEventRepository {
       buildFailedCount,
       buildAbandonedCount,
       buildSuccessRate: toPercentage(buildSucceededCount, buildStartedCount),
+      buildSuccessRateSampleCount: buildStartedCount,
       buildFailureRate: toPercentage(buildFailedCount, buildStartedCount),
+      buildFailureRateSampleCount: buildStartedCount,
       buildAbandonmentRate: toPercentage(buildAbandonedCount, buildStartedCount),
+      buildAbandonmentRateSampleCount: buildStartedCount,
       timeToFirstPreviewP95: getPercentile(previewReadyDurations, 95),
+      timeToFirstPreviewSampleCount: previewReadyDurations.length,
       publicPreviewViewCount: previewMetrics.total,
       uniquePreviewedWebsiteCount: previewMetrics.uniqueDrafts,
       livePreviewUpdateCount: livePreviewUpdateMetrics.total,
@@ -338,7 +342,9 @@ export class StandaloneSiteEventRepository {
       lastPublicPreviewAt: previewMetrics.lastOccurredAt,
       lastLivePreviewUpdateAt: livePreviewUpdateMetrics.lastOccurredAt,
       previewSiteLcpMobileP75: getPercentile(previewMobileLcpDurations, 75),
+      previewSiteLcpMobileSampleCount: previewMobileLcpDurations.length,
       liveSiteLcpMobileP75: getPercentile(liveMobileLcpDurations, 75),
+      liveSiteLcpMobileSampleCount: liveMobileLcpDurations.length,
       deletionReasonBreakdown,
     };
   }

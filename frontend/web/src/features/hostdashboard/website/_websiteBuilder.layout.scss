@@ -183,12 +183,33 @@
   animation: kpiCardHuePulse 1.9s ease;
 }
 
+.kpiCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .kpiCardTitle {
   margin: 0;
   color: #334155;
   font-size: 0.94rem;
   font-weight: 700;
   line-height: 1.45;
+}
+
+.kpiCardSampleBadge {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  background: #d7e7f7;
+  color: #0a2f4e;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .kpiCardValue {
@@ -425,20 +446,20 @@
   }
 
   20% {
-    border-color: rgba(14, 116, 144, 0.32);
+    border-color: rgba(8, 145, 178, 0.55);
     box-shadow:
-      0 0 0 1px rgba(20, 184, 166, 0.12),
-      0 18px 32px rgba(14, 116, 144, 0.14);
+      0 0 0 2px rgba(45, 212, 191, 0.2),
+      0 18px 36px rgba(8, 145, 178, 0.22);
     background:
-      linear-gradient(180deg, rgba(240, 253, 250, 0.98), rgba(255, 255, 255, 1)),
+      linear-gradient(180deg, rgba(220, 252, 245, 0.99), rgba(255, 255, 255, 1)),
       #ffffff;
   }
 
   60% {
-    border-color: rgba(21, 94, 117, 0.24);
+    border-color: rgba(14, 116, 144, 0.34);
     box-shadow:
-      0 0 0 1px rgba(20, 184, 166, 0.08),
-      0 14px 28px rgba(14, 116, 144, 0.09);
+      0 0 0 2px rgba(45, 212, 191, 0.14),
+      0 14px 30px rgba(8, 145, 178, 0.14);
   }
 
   100% {
@@ -458,9 +479,9 @@
   }
 
   22% {
-    background: rgba(236, 253, 245, 0.96);
-    color: #0f172a;
-    box-shadow: inset 0 0 0 1px rgba(20, 184, 166, 0.18);
+    background: rgba(204, 251, 241, 0.98);
+    color: #083344;
+    box-shadow: inset 0 0 0 2px rgba(45, 212, 191, 0.24);
   }
 
   100% {

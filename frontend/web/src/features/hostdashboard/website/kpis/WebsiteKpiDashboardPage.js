@@ -70,12 +70,25 @@ const getRefreshButtonLabel = ({ isLoadingWebsiteKpis, isRefreshingWebsiteKpis }
 };
 
 const createCardSignatureMap = (cards) =>
-  new Map(cards.map((card) => [card.id, JSON.stringify({ value: card.value, meta: card.meta })]));
+  new Map(
+    cards.map((card) => [
+      card.id,
+      JSON.stringify({ value: card.value, meta: card.meta, sampleLabel: card.sampleLabel || "" }),
+    ])
+  );
 
 const collectChangedCardIds = (previousCards, nextCards) => {
   const previousCardMap = createCardSignatureMap(previousCards);
   return nextCards
-    .filter((nextCard) => previousCardMap.get(nextCard.id) !== JSON.stringify({ value: nextCard.value, meta: nextCard.meta }))
+    .filter(
+      (nextCard) =>
+        previousCardMap.get(nextCard.id) !==
+        JSON.stringify({
+          value: nextCard.value,
+          meta: nextCard.meta,
+          sampleLabel: nextCard.sampleLabel || "",
+        })
+    )
     .map((nextCard) => nextCard.id);
 };
 
@@ -327,6 +340,7 @@ function WebsiteKpiDashboardPage() {
           meta={metricCard.meta}
           isLoading={isInitialKpiLoad}
           isHighlighted={highlightedMetricIds.includes(metricCard.id)}
+          sampleLabel={metricCard.sampleLabel}
         />
       ))}
     </div>
@@ -376,6 +390,7 @@ function WebsiteKpiDashboardPage() {
               isLoading={isInitialKpiLoad}
               loadingMeta="Loading surface performance metrics..."
               isHighlighted={highlightedMetricIds.includes(surfaceMetric.id)}
+              sampleLabel={surfaceMetric.sampleLabel}
             />
           ))}
         </div>
