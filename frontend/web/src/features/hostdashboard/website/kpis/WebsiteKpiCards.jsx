@@ -10,12 +10,16 @@ export function WebsiteKpiMetricCard({
   isLoading,
   loadingMeta = "Loading aggregated website activity...",
   isHighlighted = false,
+  sampleLabel = "",
 }) {
   const cardClassName = `${styles.kpiCard} ${isHighlighted ? styles.kpiCardUpdated : ""}`.trim();
 
   return (
     <article className={cardClassName}>
-      <p className={styles.kpiCardTitle}>{title}</p>
+      <div className={styles.kpiCardHeader}>
+        <p className={styles.kpiCardTitle}>{title}</p>
+        {sampleLabel ? <span className={styles.kpiCardSampleBadge}>{sampleLabel}</span> : null}
+      </div>
       {isLoading ? (
         <div className={styles.kpiCardLoader}>
           <PulseBarsLoader inline message="" />
@@ -35,6 +39,7 @@ WebsiteKpiMetricCard.propTypes = {
   isLoading: PropTypes.bool.isRequired,
   loadingMeta: PropTypes.string,
   isHighlighted: PropTypes.bool,
+  sampleLabel: PropTypes.string,
 };
 
 export function WebsiteKpiResearchCard({ researchKpiCard, isLoading, isHighlighted = false }) {
