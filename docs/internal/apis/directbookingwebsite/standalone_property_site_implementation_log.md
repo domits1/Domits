@@ -318,6 +318,62 @@ Open risks / Next:
 
 Evidence (commit(s), file(s), docs):
 - Acceptance verification notes:
+
+## [2026-04-24] Website KPI tracking and delete-reason analytics
+Context:
+The standalone website workspace had draft persistence and preview sharing, but no operational visibility into how hosts were using website drafts or why they removed them.
+
+Implementation:
+- Added standalone website event storage:
+  - `main.standalone_site_event`
+- Added repository-backed KPI aggregation for standalone website metrics, later split into global and host-scoped use cases.
+- Added PropertyHandler route:
+  - `GET /property/website/kpis`
+- Started recording website events for:
+  - draft creation
+  - draft save
+  - shared preview open
+  - live preview update
+  - website deletion
+- Wired selected website delete reasons from frontend into backend delete event payloads.
+- Added KPI overview cards plus deletion-reason breakdown on a dedicated host dashboard route for standalone website analytics.
+- Tightened website-specific backend 500 responses so internal error messages are no longer returned directly to the client.
+
+Decision / Rationale:
+- Website analytics should remain standalone-feature scoped rather than being mixed into existing property or platform KPI tables.
+- Event writes are best-effort; analytics must never block draft save/delete/preview flows.
+- Delete reasons are useful product signal, but they should be stored as website events instead of ad hoc frontend-only state.
+- The first KPI dashboard is platform-wide and intended for internal/admin analysis. Host-specific website analytics can later build on the same event stream with a scoped endpoint.
+
+AWS / Data impact:
+- New Aurora table required in schema `main`:
+  - `standalone_site_event`
+- Acceptance API Gateway must expose:
+  - `GET /property/website/kpis`
+  - `OPTIONS /property/website/kpis`
+- Existing website draft routes remain unchanged.
+
+Validation:
+- Backend routing unit test extended to cover `/property/website/kpis`.
+- Frontend production build and website workspace flow to be revalidated after deploy.
+
+Open risks / Next:
+- KPI data is only as complete as the currently tracked event types; future live-site/custom-domain flows should emit their own events instead of overloading draft events.
+- The KPI route depends on `main.standalone_site_event`; deploying backend/frontend before that table exists will surface KPI load failures in the dashboard.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/ORM/migrations/20260424_standalone_site_event.js`
+  - `backend/ORM/models/Standalone_Site_Event.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteDraftService.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
   - table `main.standalone_site_draft`
   - index `standalone_site_draft_property_unique`
   - API Gateway methods for `/property/website/draft(s)`
@@ -1174,6 +1230,133 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
   - `frontend/web/src/features/hostdashboard/website/websiteEditorConfig.js`
   - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+
+## [2026-04-28] Research KPI catalogue surfaced in dashboard
+Context:
+The KPI dashboard already exposed real standalone website usage metrics, but it still missed the broader KPI set defined in the research. That made implementation and evaluation drift apart.
+
+Implementation:
+- Extended the dedicated KPI dashboard UI to show the research KPI set explicitly:
+  - `time_to_publish_p95`
+  - `cost_per_active_site_per_month`
+  - `site_lcp_mobile_p75`
+  - `fallback_subdomain_availability`
+  - `quote_to_charge_mismatch_rate`
+  - `booking_api_error_rate`
+  - `booking_funnel_completion_rate`
+  - `custom_domain_setup_success_rate`
+- Added criteria tags so each KPI stays linked to the research categories.
+- Marked non-instrumented KPIs clearly as pending instead of inventing placeholder values.
+- Kept the current global usage metrics and deletion-reason analytics unchanged.
+
+Decision / Rationale:
+- The dashboard should reflect the research model honestly.
+- Showing KPI names now is useful, but only if the page makes it explicit which metrics are truly instrumented and which still require platform work.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- This slice is frontend-only and consumes the existing KPI endpoint.
+
+Validation:
+- Frontend production build passed.
+
+Open risks / Next:
+- When publish flow, public domains, performance telemetry, and booking flow are implemented, the backend KPI contract should be extended so these research KPIs can move from pending to real measured values.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-28] KPI dashboard loading state aligned with host dashboard patterns
+Context:
+The dedicated standalone website KPI dashboard already used the shared pulse-bars loader, but it still replaced too much of the page during the initial fetch. That made the page feel like a blank state instead of a stable dashboard shell with loading metrics.
+
+Implementation:
+- Kept the KPI dashboard shell visible immediately on route entry.
+- Moved the loading experience inside the KPI cards and deletion-reason panel so the page now shows pulse-bar loaders where values are still being fetched.
+- Disabled the refresh action while the initial KPI request is in flight.
+
+Decision / Rationale:
+- This matches the interaction pattern already used across host dashboard surfaces such as stats cards, calendar, and website builder flows.
+- Users should see the KPI layout immediately, with only the data points in a loading state.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- This slice is frontend-only.
+
+Validation:
+- Frontend production build passed.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-29] Builder timing and preview-performance KPIs instrumented
+Context:
+The KPI dashboard already tracked draft saves, preview opens, live-preview updates, and deletion reasons, but it still could not answer two practical questions: how long it takes a host to get a usable first preview, and whether the preview surface itself performs acceptably on mobile.
+
+Implementation:
+- Added a dedicated website analytics ingest route:
+  - `POST /property/website/event`
+- Added explicit builder analytics events for:
+  - `WEBSITE_BUILD_STARTED`
+  - `WEBSITE_PREVIEW_READY`
+  - `WEBSITE_BUILD_SUCCEEDED`
+  - `WEBSITE_BUILD_FAILED`
+- Added public preview performance telemetry event:
+  - `SITE_LCP_RECORDED`
+- Extended KPI aggregation so the dashboard now calculates:
+  - `build_started_count`
+  - `build_succeeded_count`
+  - `build_failure_rate`
+  - `build_success_rate`
+  - `build_abandonment_rate`
+  - `time_to_first_preview_p95`
+  - `previewSiteLcpMobileP75`
+  - `liveSiteLcpMobileP75`
+- Added a dedicated `Preview / Live` surface-performance section to the KPI dashboard so preview LCP can be shown now without pretending the live published surface already exists.
+
+Decision / Rationale:
+- Server-side timestamps alone are not enough for host-perceived build timing or page-performance metrics.
+- A small, explicit event-ingest path is a better contract than inferring analytics from unrelated draft timestamps.
+- Preview and live performance must stay separated because they are different surfaces with different routing/runtime assumptions.
+
+AWS / Data impact:
+- No new Aurora columns or tables.
+- The existing `main.standalone_site_event` table is reused.
+- API Gateway must expose `POST /property/website/event` plus `OPTIONS /property/website/event`.
+- `POST /property/website/event` should remain unauthenticated at the gateway because preview-surface telemetry is posted from the public preview page, while host-originated builder events still authorize inside Lambda.
+
+Validation:
+- Backend routing tests passed.
+- Frontend production build passed.
+
+Open risks / Next:
+- `build_abandonment_rate` is derived from build starts that have no success/failure event after a time threshold, so it is a heuristic rather than a perfectly explicit user intent signal.
+- Live-site LCP remains pending until the published public surface exists and emits the same telemetry contract.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsService.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
 
 ## [2026-04-29] Icon picker alignment and responsive panel scaling
 Context:

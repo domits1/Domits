@@ -27,6 +27,26 @@ export const Property_Calendar_Override = new EntitySchema({
       type: "int",
       nullable: true,
     },
+    stop_sell: {
+      type: "boolean",
+      nullable: true,
+    },
+    closed_to_arrival: {
+      type: "boolean",
+      nullable: true,
+    },
+    closed_to_departure: {
+      type: "boolean",
+      nullable: true,
+    },
+    min_stay: {
+      type: "int",
+      nullable: true,
+    },
+    max_stay: {
+      type: "int",
+      nullable: true,
+    },
     updated_at: {
       type: "bigint",
       transformer: {

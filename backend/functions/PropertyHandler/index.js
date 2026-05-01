@@ -29,6 +29,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/images/confirm")) {
     return controller.confirmImageUploads(event);
   }
+  if (isPath(event, "/property/website/event")) {
+    return controller.recordWebsiteAnalyticsEvent(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -74,6 +77,9 @@ const handleGet = async (event) => {
   }
   if (isPath(event, "/property/website/drafts")) {
     return controller.getWebsiteDrafts(event);
+  }
+  if (isPath(event, "/property/website/kpis")) {
+    return controller.getWebsiteKpis(event);
   }
   if (isPath(event, "/property/website/draft")) {
     return controller.getWebsiteDraftByPropertyId(event);

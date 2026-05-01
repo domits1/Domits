@@ -250,6 +250,12 @@ const HostReservations = () => {
               onClick={() => setActiveTab("AWAITING_PAYMENT")}>
               Awaiting payment ({count("AWAITING_PAYMENT")})
             </button>
+            <button
+              className={activeTab === "INQUIRY" ? styles.active : ""}
+              onClick={() => setActiveTab("INQUIRY")}
+            >
+              Inquiries ({count("INQUIRY")})
+            </button>
             <button className={activeTab === "FAILED" ? styles.active : ""} onClick={() => setActiveTab("FAILED")}>
               Failed ({count("FAILED")})
             </button>
