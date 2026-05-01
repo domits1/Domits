@@ -706,6 +706,9 @@ const HOLIDU_STATUS = {
 };
 const CHANNEX_ACCOUNT_POLICY = "SINGLE_ACCOUNT_PER_USER";
 const CHANNEX_CERTIFICATION_FULL_SYNC_DAYS = 500;
+const CHANNEX_ARI_PAYLOAD_PREVIEW_DEFAULT_PAGE_SIZE_DAYS = 30;
+const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_PAGE_SIZE_DAYS = 60;
+const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_REQUESTED_DAYS = CHANNEX_CERTIFICATION_FULL_SYNC_DAYS + 1;
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
 const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
 const CHANNEX_STATUS = {
@@ -792,6 +795,102 @@ const buildPreviewDateRangeValidationResponse = ({
     });
   }
   return null;
+};
+const countInclusiveIsoDateRangeDays = (dateFrom, dateTo) => {
+  const fromMs = isoDateToUtcStartMs(dateFrom);
+  const toMs = isoDateToUtcStartMs(dateTo);
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs) return null;
+  return Math.floor((toMs - fromMs) / (24 * 60 * 60 * 1000)) + 1;
+};
+const parsePositiveInteger = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) return null;
+  return parsed > 0 ? parsed : null;
+};
+const buildChannexPayloadPreviewPaginationContext = ({
+  normalizedDateFrom,
+  normalizedDateTo,
+  pageDateFrom,
+  pageSizeDays,
+}) => {
+  const totalRequestedDays = countInclusiveIsoDateRangeDays(normalizedDateFrom, normalizedDateTo);
+  if (!totalRequestedDays || totalRequestedDays > CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_REQUESTED_DAYS) {
+    return {
+      error: bad(400, {
+        error: "Requested Channex ARI payload preview range is too large.",
+        errorCode: "CHANNEX_ARI_PAYLOAD_PREVIEW_RANGE_TOO_LARGE",
+        maxRequestedDays: CHANNEX_CERTIFICATION_FULL_SYNC_DAYS,
+        totalRequestedDays,
+      }),
+    };
+  }
+
+  const normalizedPageSizeDays =
+    pageSizeDays === undefined || pageSizeDays === null || pageSizeDays === ""
+      ? CHANNEX_ARI_PAYLOAD_PREVIEW_DEFAULT_PAGE_SIZE_DAYS
+      : parsePositiveInteger(pageSizeDays);
+  if (
+    !normalizedPageSizeDays ||
+    normalizedPageSizeDays > CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_PAGE_SIZE_DAYS
+  ) {
+    return {
+      error: bad(400, {
+        error: `Invalid query param: pageSizeDays must be an integer between 1 and ${CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_PAGE_SIZE_DAYS}.`,
+        errorCode: "CHANNEX_ARI_PAYLOAD_PREVIEW_INVALID_PAGE_SIZE",
+        maxPageSizeDays: CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_PAGE_SIZE_DAYS,
+      }),
+    };
+  }
+
+  const normalizedPageDateFrom = pageDateFrom ? parseIsoDateParam(pageDateFrom) : normalizedDateFrom;
+  if (!normalizedPageDateFrom) {
+    return {
+      error: bad(400, {
+        error: "Invalid query param: pageDateFrom",
+        errorCode: "CHANNEX_ARI_PAYLOAD_PREVIEW_INVALID_PAGE_DATE_FROM",
+      }),
+    };
+  }
+  if (normalizedPageDateFrom < normalizedDateFrom || normalizedPageDateFrom > normalizedDateTo) {
+    return {
+      error: bad(400, {
+        error: "pageDateFrom must be inside the requested dateFrom/dateTo range.",
+        errorCode: "CHANNEX_ARI_PAYLOAD_PREVIEW_PAGE_OUT_OF_RANGE",
+      }),
+    };
+  }
+
+  const proposedPageDateTo = addDaysToIsoDate(normalizedPageDateFrom, normalizedPageSizeDays - 1);
+  const pageDateTo = proposedPageDateTo && proposedPageDateTo < normalizedDateTo ? proposedPageDateTo : normalizedDateTo;
+  const loadedDays = countInclusiveIsoDateRangeDays(normalizedPageDateFrom, pageDateTo) || 0;
+  const hasNextPage = pageDateTo < normalizedDateTo;
+  const nextPageDateFrom = hasNextPage ? addDaysToIsoDate(pageDateTo, 1) : null;
+  const hasPreviousPage = normalizedPageDateFrom > normalizedDateFrom;
+  const previousCandidate = addDaysToIsoDate(normalizedPageDateFrom, -normalizedPageSizeDays);
+  const previousPageDateFrom = hasPreviousPage
+    ? previousCandidate && previousCandidate > normalizedDateFrom
+      ? previousCandidate
+      : normalizedDateFrom
+    : null;
+
+  return {
+    pageDateFrom: normalizedPageDateFrom,
+    pageDateTo,
+    pagination: {
+      requestedDateFrom: normalizedDateFrom,
+      requestedDateTo: normalizedDateTo,
+      pageDateFrom: normalizedPageDateFrom,
+      pageDateTo,
+      pageSizeDays: normalizedPageSizeDays,
+      hasNextPage,
+      nextPageDateFrom,
+      hasPreviousPage,
+      previousPageDateFrom,
+      totalRequestedDays,
+      loadedDays,
+    },
+  };
 };
 const buildSyncDateRangeValidationFailure = ({
   normalizedUserId,
@@ -3284,7 +3383,7 @@ export default class IntegrationService {
     }
   }
 
-  async previewChannexAriPayloads(userId, domitsPropertyId, dateFrom, dateTo) {
+  async previewChannexAriPayloads(userId, domitsPropertyId, dateFrom, dateTo, options = {}) {
     const normalizedUserId = requireStr(userId);
     const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
     const normalizedDateFrom = parseIsoDateParam(dateFrom);
@@ -3298,12 +3397,26 @@ export default class IntegrationService {
     });
     if (validationResponse) return validationResponse;
 
+    const paginationContext = options?.paginate
+      ? buildChannexPayloadPreviewPaginationContext({
+          normalizedDateFrom,
+          normalizedDateTo,
+          pageDateFrom: options.pageDateFrom,
+          pageSizeDays: options.pageSizeDays,
+        })
+      : {
+          pageDateFrom: normalizedDateFrom,
+          pageDateTo: normalizedDateTo,
+          pagination: null,
+        };
+    if (paginationContext.error) return paginationContext.error;
+
     try {
       const previewResult = await this.previewChannexAri(
         normalizedUserId,
         normalizedDomitsPropertyId,
-        normalizedDateFrom,
-        normalizedDateTo
+        paginationContext.pageDateFrom,
+        paginationContext.pageDateTo
       );
       if (previewResult?.statusCode !== 200) {
         return previewResult;
@@ -3319,6 +3432,7 @@ export default class IntegrationService {
           domitsPropertyId: normalizedDomitsPropertyId,
           dateFrom: normalizedDateFrom,
           dateTo: normalizedDateTo,
+          pagination: paginationContext.pagination,
           ready: false,
           missingMappings: Array.isArray(preview.missingMappings) ? preview.missingMappings : [],
           sourceSummary: preview.sourceSummary ?? null,
@@ -3353,6 +3467,7 @@ export default class IntegrationService {
         domitsPropertyId: normalizedDomitsPropertyId,
         dateFrom: normalizedDateFrom,
         dateTo: normalizedDateTo,
+        pagination: paginationContext.pagination,
         ready: true,
         missingMappings: Array.isArray(preview.missingMappings) ? preview.missingMappings : [],
         sourceSummary: preview.sourceSummary ?? null,

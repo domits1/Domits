@@ -25,15 +25,23 @@ const readJsonOrText = async (response) => {
 };
 
 const requestChannex = async (path, { method = "GET", query = {}, body } = {}) => {
-  const response = await fetch(buildUrl(path, query), {
-    method,
-    ...(body === undefined
-      ? {}
-      : {
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }),
-  });
+  let response;
+  try {
+    response = await fetch(buildUrl(path, query), {
+      method,
+      ...(body === undefined
+        ? {}
+        : {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }),
+    });
+  } catch (error) {
+    const wrappedError = new Error(`${method} ${path} failed: ${error?.message || "Network request failed"}`);
+    wrappedError.endpoint = path;
+    wrappedError.method = method;
+    throw wrappedError;
+  }
   const data = await readJsonOrText(response);
 
   if (!response.ok) {
@@ -41,7 +49,12 @@ const requestChannex = async (path, { method = "GET", query = {}, body } = {}) =
       (data && typeof data === "object" && (data.error || data.message)) ||
       (typeof data === "string" ? data : "") ||
       `Channex request failed with status ${response.status}`;
-    throw new Error(message);
+    const error = new Error(`${method} ${path} failed with status ${response.status}: ${message}`);
+    error.status = response.status;
+    error.endpoint = path;
+    error.method = method;
+    error.responseBody = data;
+    throw error;
   }
 
   return data;
@@ -62,9 +75,16 @@ export const getChannexAriPreview = ({ userId, domitsPropertyId, dateFrom, dateT
     query: { userId, domitsPropertyId, dateFrom, dateTo },
   });
 
-export const getChannexAriPayloadPreview = ({ userId, domitsPropertyId, dateFrom, dateTo }) =>
+export const getChannexAriPayloadPreview = ({
+  userId,
+  domitsPropertyId,
+  dateFrom,
+  dateTo,
+  pageDateFrom,
+  pageSizeDays,
+}) =>
   requestChannex("/integrations/channex/ari-payload-preview", {
-    query: { userId, domitsPropertyId, dateFrom, dateTo },
+    query: { userId, domitsPropertyId, dateFrom, dateTo, pageDateFrom, pageSizeDays },
   });
 
 export const getLatestChannexSyncEvidence = ({ userId, domitsPropertyId }) =>

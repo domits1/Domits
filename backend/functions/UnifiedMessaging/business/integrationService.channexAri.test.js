@@ -198,6 +198,125 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     ]);
   });
 
+  test("payload preview small range works without pagination for internal callers", async () => {
+    const service = createService();
+
+    const result = await service.previewChannexAriPayloads(
+      "user-1",
+      "domits-property-1",
+      "2026-05-01",
+      "2026-05-02"
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.pagination).toBeNull();
+    expect(result.response.availabilityPayloadPreview.items).toHaveLength(2);
+    expect(result.response.restrictionRatePayloadPreview.items).toHaveLength(2);
+  });
+
+  test("paginated payload preview returns the first page for a large requested range", async () => {
+    const service = createService();
+
+    const result = await service.previewChannexAriPayloads(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-06",
+      { paginate: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.dateFrom).toBe("2026-05-24");
+    expect(result.response.dateTo).toBe("2027-10-06");
+    expect(result.response.pagination).toEqual(
+      expect.objectContaining({
+        requestedDateFrom: "2026-05-24",
+        requestedDateTo: "2027-10-06",
+        pageDateFrom: "2026-05-24",
+        pageDateTo: "2026-06-22",
+        pageSizeDays: 30,
+        loadedDays: 30,
+        totalRequestedDays: 501,
+        hasNextPage: true,
+        nextPageDateFrom: "2026-06-23",
+        hasPreviousPage: false,
+        previousPageDateFrom: null,
+      })
+    );
+    expect(result.response.availabilityPayloadPreview.items).toHaveLength(30);
+    expect(result.response.restrictionRatePayloadPreview.items).toHaveLength(30);
+  });
+
+  test("paginated payload preview can fetch a later page with a date cursor", async () => {
+    const service = createService();
+
+    const result = await service.previewChannexAriPayloads(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-06",
+      { paginate: true, pageDateFrom: "2026-06-23" }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.pagination).toEqual(
+      expect.objectContaining({
+        pageDateFrom: "2026-06-23",
+        pageDateTo: "2026-07-22",
+        hasNextPage: true,
+        nextPageDateFrom: "2026-07-23",
+        hasPreviousPage: true,
+        previousPageDateFrom: "2026-05-24",
+      })
+    );
+    expect(result.response.availabilityPayloadPreview.items[0]).toEqual(
+      expect.objectContaining({ date: "2026-06-23" })
+    );
+    expect(result.response.availabilityPayloadPreview.items.at(-1)).toEqual(
+      expect.objectContaining({ date: "2026-07-22" })
+    );
+  });
+
+  test("paginated payload preview rejects ranges beyond the supported certification span", async () => {
+    const service = createService();
+
+    const result = await service.previewChannexAriPayloads(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-07",
+      { paginate: true }
+    );
+
+    expect(result).toEqual({
+      statusCode: 400,
+      response: expect.objectContaining({
+        error: "Requested Channex ARI payload preview range is too large.",
+        errorCode: "CHANNEX_ARI_PAYLOAD_PREVIEW_RANGE_TOO_LARGE",
+      }),
+    });
+  });
+
+  test("paginated payload preview rejects invalid pageSizeDays", async () => {
+    const service = createService();
+
+    const result = await service.previewChannexAriPayloads(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-06-24",
+      { paginate: true, pageSizeDays: 999 }
+    );
+
+    expect(result).toEqual({
+      statusCode: 400,
+      response: expect.objectContaining({
+        errorCode: "CHANNEX_ARI_PAYLOAD_PREVIEW_INVALID_PAGE_SIZE",
+        maxPageSizeDays: 60,
+      }),
+    });
+  });
+
   test("restrictions sync sends mapped Channex restriction fields from preview payloads", async () => {
     const channexProviderClient = {
       pushRestrictions: jest.fn().mockResolvedValue({ results: [] }),

@@ -22,10 +22,12 @@ const SECTION_TABS = [
   { key: "bookingRevisions", label: "Booking Revisions" },
   { key: "actions", label: "Actions" },
 ];
+const PAYLOAD_PREVIEW_PAGE_SIZE_DAYS = 30;
 
 const createRequestState = () => ({
   loading: false,
   error: "",
+  errorDetails: null,
   data: null,
 });
 
@@ -38,6 +40,14 @@ const formatDateTime = (value) => {
 };
 
 const stringifyJson = (value) => JSON.stringify(value ?? null, null, 2);
+
+const normalizeChannexError = (error, fallbackMessage = "Channex request failed.") => ({
+  message: error?.message || fallbackMessage,
+  endpoint: error?.endpoint || null,
+  method: error?.method || null,
+  status: error?.status || null,
+  responseBody: error?.responseBody ?? null,
+});
 
 const renderList = (items) => {
   const safeItems = Array.isArray(items) ? items.filter(Boolean) : items ? [items] : [];
@@ -70,6 +80,113 @@ const getSupportedRestrictionFields = (ariPreview, payloadPreview) =>
 
 const getOmittedRestrictionNames = (ariPreview, payloadPreview) =>
   payloadPreview?.sourceSummary?.omittedDomitsRestrictionNames || ariPreview?.sourceSummary?.omittedDomitsRestrictionNames || [];
+
+const countPayloadGroups = (payloadSection) =>
+  Array.isArray(payloadSection?.groupedPayloads) ? payloadSection.groupedPayloads.length : 0;
+
+const countPayloadItems = (payloadSection) => (Array.isArray(payloadSection?.items) ? payloadSection.items.length : 0);
+
+const formatBooleanFlag = (value) => (value === true ? "Yes" : "No");
+
+const formatDateWindow = (values) => {
+  const dates = (Array.isArray(values) ? values : [])
+    .map((value) => value?.date)
+    .filter(Boolean)
+    .sort();
+
+  if (!dates.length) return "No dates";
+  if (dates[0] === dates[dates.length - 1]) return dates[0];
+  return `${dates[0]} to ${dates[dates.length - 1]}`;
+};
+
+const uniqueJoinedValues = (values) => {
+  const uniqueValues = Array.from(
+    new Set(
+      (Array.isArray(values) ? values : [])
+        .filter((value) => value !== undefined && value !== null && value !== "")
+        .map((value) => String(value))
+    )
+  );
+
+  return uniqueValues.length ? uniqueValues.join(", ") : "-";
+};
+
+const isoDateToUtcMs = (value) => {
+  if (!value) return null;
+  const timestamp = new Date(`${value}T00:00:00.000Z`).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+};
+
+const addDaysToIsoDate = (value, days) => {
+  const timestamp = isoDateToUtcMs(value);
+  if (!Number.isFinite(timestamp) || !Number.isFinite(Number(days))) return null;
+
+  const date = new Date(timestamp);
+  date.setUTCDate(date.getUTCDate() + Math.trunc(Number(days)));
+  return date.toISOString().slice(0, 10);
+};
+
+const getPayloadPaginationSummary = (pagination = {}) => {
+  const pageSizeDays = Number(pagination.pageSizeDays) || PAYLOAD_PREVIEW_PAGE_SIZE_DAYS;
+  const totalRequestedDays = Number(pagination.totalRequestedDays) || null;
+  const totalPages = totalRequestedDays ? Math.max(1, Math.ceil(totalRequestedDays / pageSizeDays)) : null;
+  const requestedStartMs = isoDateToUtcMs(pagination.requestedDateFrom);
+  const pageStartMs = isoDateToUtcMs(pagination.pageDateFrom);
+  const dayOffset =
+    Number.isFinite(requestedStartMs) && Number.isFinite(pageStartMs)
+      ? Math.max(0, Math.floor((pageStartMs - requestedStartMs) / (24 * 60 * 60 * 1000)))
+      : 0;
+  const currentPage = totalPages ? Math.min(totalPages, Math.floor(dayOffset / pageSizeDays) + 1) : null;
+  const lastPageDateFrom =
+    totalPages && pagination.requestedDateFrom ? addDaysToIsoDate(pagination.requestedDateFrom, (totalPages - 1) * pageSizeDays) : null;
+
+  return {
+    currentPage,
+    totalPages,
+    pageSizeDays,
+    lastPageDateFrom,
+    windowLabel:
+      pagination.pageDateFrom && pagination.pageDateTo
+        ? `${pagination.pageDateFrom} to ${pagination.pageDateTo}`
+        : "Window not loaded",
+    requestedRangeLabel:
+      pagination.requestedDateFrom && pagination.requestedDateTo
+        ? `${pagination.requestedDateFrom} to ${pagination.requestedDateTo}`
+        : "Requested range unknown",
+  };
+};
+
+const summarizeAvailabilityPayloadGroups = (groups) =>
+  (Array.isArray(groups) ? groups : []).map((group) => {
+    const values = Array.isArray(group?.values) ? group.values : [];
+    return {
+      externalPropertyId: group?.externalPropertyId || "-",
+      externalRoomTypeId: group?.externalRoomTypeId || "-",
+      dateWindow: formatDateWindow(values),
+      availableCount: values.filter((value) => value?.availability === true).length,
+      unavailableCount: values.filter((value) => value?.availability === false).length,
+      totalItems: values.length,
+      values,
+    };
+  });
+
+const summarizeRestrictionPayloadGroups = (groups) =>
+  (Array.isArray(groups) ? groups : []).map((group) => {
+    const values = Array.isArray(group?.values) ? group.values : [];
+    return {
+      externalPropertyId: group?.externalPropertyId || "-",
+      externalRoomTypeId: group?.externalRoomTypeId || "-",
+      externalRatePlanId: group?.externalRatePlanId || "-",
+      dateWindow: formatDateWindow(values),
+      stopSellCount: values.filter((value) => value?.stop_sell === true).length,
+      closedToArrivalCount: values.filter((value) => value?.closed_to_arrival === true).length,
+      closedToDepartureCount: values.filter((value) => value?.closed_to_departure === true).length,
+      minStayValues: uniqueJoinedValues(values.map((value) => value?.min_stay_through)),
+      maxStayValues: uniqueJoinedValues(values.map((value) => value?.max_stay)),
+      totalItems: values.length,
+      values,
+    };
+  });
 
 const DetailGrid = ({ items }) => (
   <dl className="channex-diagnostics-detail-grid">
@@ -146,6 +263,431 @@ MappingTable.propTypes = {
   ).isRequired,
 };
 
+const PayloadSummaryPanel = ({ title, groupCount, itemCount, dateWindow, children }) => (
+  <div className="channex-payload-summary-panel">
+    <div>
+      <h4>{title}</h4>
+      <p className="host-integrations-muted">{dateWindow}</p>
+    </div>
+    <div className="channex-payload-summary-numbers">
+      <span>
+        <strong>{groupCount}</strong>
+        groups
+      </span>
+      <span>
+        <strong>{itemCount}</strong>
+        items
+      </span>
+    </div>
+    {children}
+  </div>
+);
+
+PayloadSummaryPanel.propTypes = {
+  title: PropTypes.string.isRequired,
+  groupCount: PropTypes.number.isRequired,
+  itemCount: PropTypes.number.isRequired,
+  dateWindow: PropTypes.string.isRequired,
+  children: PropTypes.node,
+};
+
+const AvailabilityPayloadTable = ({ rows }) => (
+  <div className="channex-diagnostics-table-wrap">
+    <h4>Availability payloads</h4>
+    {rows.length ? (
+      <table className="channex-diagnostics-table channex-payload-table">
+        <thead>
+          <tr>
+            <th>External property ID</th>
+            <th>External room type ID</th>
+            <th>Date range</th>
+            <th>Available</th>
+            <th>Unavailable</th>
+            <th>Total items</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={`${row.externalPropertyId}-${row.externalRoomTypeId}`}>
+              <td>{row.externalPropertyId}</td>
+              <td>{row.externalRoomTypeId}</td>
+              <td>{row.dateWindow}</td>
+              <td>{row.availableCount}</td>
+              <td>{row.unavailableCount}</td>
+              <td>{row.totalItems}</td>
+              <td>
+                <details className="channex-payload-row-details">
+                  <summary>View dates</summary>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Available</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {row.values.map((value) => (
+                        <tr key={`${row.externalRoomTypeId}-${value.date}`}>
+                          <td>{value.date}</td>
+                          <td>{formatBooleanFlag(value.availability)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p className="host-integrations-muted">No availability payloads were generated for this page.</p>
+    )}
+  </div>
+);
+
+AvailabilityPayloadTable.propTypes = {
+  rows: PropTypes.arrayOf(
+    PropTypes.shape({
+      externalPropertyId: PropTypes.string.isRequired,
+      externalRoomTypeId: PropTypes.string.isRequired,
+      dateWindow: PropTypes.string.isRequired,
+      availableCount: PropTypes.number.isRequired,
+      unavailableCount: PropTypes.number.isRequired,
+      totalItems: PropTypes.number.isRequired,
+      values: PropTypes.array.isRequired,
+    })
+  ).isRequired,
+};
+
+const RestrictionPayloadTable = ({ rows }) => (
+  <div className="channex-diagnostics-table-wrap">
+    <h4>Rate/restriction payloads</h4>
+    {rows.length ? (
+      <table className="channex-diagnostics-table channex-payload-table">
+        <thead>
+          <tr>
+            <th>External property ID</th>
+            <th>External room type ID</th>
+            <th>External rate plan ID</th>
+            <th>Date range</th>
+            <th>Stop sell</th>
+            <th>CTA</th>
+            <th>CTD</th>
+            <th>Min stay values</th>
+            <th>Max stay values</th>
+            <th>Total items</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={`${row.externalPropertyId}-${row.externalRoomTypeId}-${row.externalRatePlanId}`}>
+              <td>{row.externalPropertyId}</td>
+              <td>{row.externalRoomTypeId}</td>
+              <td>{row.externalRatePlanId}</td>
+              <td>{row.dateWindow}</td>
+              <td>{row.stopSellCount}</td>
+              <td>{row.closedToArrivalCount}</td>
+              <td>{row.closedToDepartureCount}</td>
+              <td>{row.minStayValues}</td>
+              <td>{row.maxStayValues}</td>
+              <td>{row.totalItems}</td>
+              <td>
+                <details className="channex-payload-row-details">
+                  <summary>View dates</summary>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Rate</th>
+                        <th>Stop sell</th>
+                        <th>CTA</th>
+                        <th>CTD</th>
+                        <th>Min stay</th>
+                        <th>Max stay</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {row.values.map((value) => (
+                        <tr key={`${row.externalRatePlanId}-${value.date}`}>
+                          <td>{value.date}</td>
+                          <td>{value.rate || "-"}</td>
+                          <td>{formatBooleanFlag(value.stop_sell)}</td>
+                          <td>{formatBooleanFlag(value.closed_to_arrival)}</td>
+                          <td>{formatBooleanFlag(value.closed_to_departure)}</td>
+                          <td>{value.min_stay_through ?? "-"}</td>
+                          <td>{value.max_stay ?? "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p className="host-integrations-muted">No rate/restriction payloads were generated for this page.</p>
+    )}
+  </div>
+);
+
+RestrictionPayloadTable.propTypes = {
+  rows: PropTypes.arrayOf(
+    PropTypes.shape({
+      externalPropertyId: PropTypes.string.isRequired,
+      externalRoomTypeId: PropTypes.string.isRequired,
+      externalRatePlanId: PropTypes.string.isRequired,
+      dateWindow: PropTypes.string.isRequired,
+      stopSellCount: PropTypes.number.isRequired,
+      closedToArrivalCount: PropTypes.number.isRequired,
+      closedToDepartureCount: PropTypes.number.isRequired,
+      minStayValues: PropTypes.string.isRequired,
+      maxStayValues: PropTypes.string.isRequired,
+      totalItems: PropTypes.number.isRequired,
+      values: PropTypes.array.isRequired,
+    })
+  ).isRequired,
+};
+
+const PayloadNotesPanel = ({ payloadPreview, omittedRestrictionNames }) => {
+  const notes = Array.isArray(payloadPreview.notes) ? payloadPreview.notes.filter(Boolean) : [];
+  const sourceSummary = payloadPreview.sourceSummary || {};
+  const calendarOverrideCount = sourceSummary.calendarOverrides ?? 0;
+  const calendarRestrictionOverrideCount = sourceSummary.calendarRestrictionOverrides ?? 0;
+  const hasOmittedRestrictions = Array.isArray(omittedRestrictionNames) && omittedRestrictionNames.length > 0;
+
+  return (
+    <section className="channex-payload-notes">
+      <div>
+        <h4>Notes and warnings</h4>
+        <p className="host-integrations-muted">
+          Calendar overrides: {calendarOverrideCount}. Restriction override dates: {calendarRestrictionOverrideCount}.
+        </p>
+      </div>
+      {hasOmittedRestrictions ? (
+        <p className="host-integrations-warning-banner">
+          Omitted Domits restrictions: {omittedRestrictionNames.join(", ")}. These are intentionally omitted when no
+          safe Channex mapping exists.
+        </p>
+      ) : (
+        <p className="host-integrations-success-banner">No omitted Domits restriction warnings for this page.</p>
+      )}
+      {notes.length ? (
+        <ul className="channex-payload-note-list">
+          {notes.map((note, index) => (
+            <li key={`${note}-${index}`}>{note}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="host-integrations-muted">No warnings for this page.</p>
+      )}
+    </section>
+  );
+};
+
+PayloadNotesPanel.propTypes = {
+  payloadPreview: PropTypes.object.isRequired,
+  omittedRestrictionNames: PropTypes.array.isRequired,
+};
+
+const PayloadPreviewDetails = ({ payloadPreview, omittedRestrictionNames, onLoadPage, loading }) => {
+  const pagination = payloadPreview.pagination || {};
+  const paginationSummary = getPayloadPaginationSummary(pagination);
+  const availabilityPayload = payloadPreview.availabilityPayloadPreview || {};
+  const restrictionRatePayload = payloadPreview.restrictionRatePayloadPreview || {};
+  const availabilityRows = summarizeAvailabilityPayloadGroups(availabilityPayload.groupedPayloads);
+  const restrictionRows = summarizeRestrictionPayloadGroups(restrictionRatePayload.groupedPayloads);
+  const isFirstPage = !pagination.hasPreviousPage;
+  const isLastPage = !pagination.hasNextPage;
+
+  return (
+    <div className="channex-payload-preview">
+      <section className="channex-payload-header-panel">
+        <div className="channex-payload-title-row">
+          <div>
+            <h3>ARI payload preview</h3>
+            <p className="host-integrations-muted">Preview only. Nothing is sent to Channex from this view.</p>
+          </div>
+          <span className="channex-payload-preview-badge">Preview only</span>
+        </div>
+        <div className="channex-payload-range-grid">
+          <div>
+            <span>Requested range</span>
+            <strong>{paginationSummary.requestedRangeLabel}</strong>
+          </div>
+          <div>
+            <span>Showing</span>
+            <strong>{paginationSummary.windowLabel}</strong>
+          </div>
+          <div>
+            <span>Page</span>
+            <strong>
+              {paginationSummary.currentPage && paginationSummary.totalPages
+                ? `${paginationSummary.currentPage} of ${paginationSummary.totalPages}`
+                : "Unknown"}
+            </strong>
+          </div>
+          <div>
+            <span>Page size</span>
+            <strong>{paginationSummary.pageSizeDays} days per page</strong>
+          </div>
+          <div>
+            <span>Total requested days</span>
+            <strong>{pagination.totalRequestedDays ?? "Unknown"}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="channex-payload-pagination-panel">
+        <button
+          type="button"
+          className="host-integrations-secondary-btn"
+          disabled={isFirstPage || loading}
+          onClick={() => onLoadPage(pagination.requestedDateFrom)}
+        >
+          First page
+        </button>
+        <button
+          type="button"
+          className="host-integrations-secondary-btn"
+          disabled={isFirstPage || loading}
+          onClick={() => onLoadPage(pagination.previousPageDateFrom)}
+        >
+          Previous page
+        </button>
+        <div className="channex-payload-current-window">
+          <strong>{paginationSummary.windowLabel}</strong>
+          <span>
+            {isLastPage
+              ? "You are viewing the final page of the requested range."
+              : "More payload preview pages are available."}
+          </span>
+        </div>
+        <button
+          type="button"
+          className="host-integrations-secondary-btn"
+          disabled={isLastPage || loading}
+          onClick={() => onLoadPage(pagination.nextPageDateFrom)}
+        >
+          Next page
+        </button>
+        <button
+          type="button"
+          className="host-integrations-secondary-btn"
+          disabled={isLastPage || loading || !paginationSummary.lastPageDateFrom}
+          onClick={() => onLoadPage(paginationSummary.lastPageDateFrom)}
+        >
+          Last page
+        </button>
+      </section>
+
+      <section className="channex-payload-summary-section">
+        <p className="host-integrations-muted">
+          These counts apply only to the currently loaded page, not the full requested range.
+        </p>
+        <PayloadSummaryPanel
+          title="Availability payloads"
+          groupCount={countPayloadGroups(availabilityPayload)}
+          itemCount={countPayloadItems(availabilityPayload)}
+          dateWindow={paginationSummary.windowLabel}
+        >
+          <p className="host-integrations-muted">
+            Availability is grouped by external property and room type for the loaded page.
+          </p>
+        </PayloadSummaryPanel>
+        <PayloadSummaryPanel
+          title="Rate/restriction payloads"
+          groupCount={countPayloadGroups(restrictionRatePayload)}
+          itemCount={countPayloadItems(restrictionRatePayload)}
+          dateWindow={paginationSummary.windowLabel}
+        >
+          <p className="host-integrations-muted">
+            Rates and supported restrictions are grouped by external property, room type, and rate plan.
+          </p>
+        </PayloadSummaryPanel>
+      </section>
+
+      <PayloadNotesPanel payloadPreview={payloadPreview} omittedRestrictionNames={omittedRestrictionNames} />
+
+      <AvailabilityPayloadTable rows={availabilityRows} />
+      <RestrictionPayloadTable rows={restrictionRows} />
+
+      <section className="channex-payload-raw-section">
+        <p className="host-integrations-muted">Use raw JSON only for debugging exact API payload structure.</p>
+        <details className="channex-diagnostics-collapsible">
+          <summary>Availability raw JSON</summary>
+          <JsonBlock title="Grouped availability payloads" value={availabilityPayload.groupedPayloads} />
+        </details>
+        <details className="channex-diagnostics-collapsible">
+          <summary>Rate/restriction raw JSON</summary>
+          <JsonBlock title="Grouped restriction/rate payloads" value={restrictionRatePayload.groupedPayloads} />
+        </details>
+        <details className="channex-diagnostics-collapsible">
+          <summary>Full response/debug metadata</summary>
+          <JsonBlock title="Payload preview response" value={payloadPreview} />
+        </details>
+      </section>
+    </div>
+  );
+};
+
+PayloadPreviewDetails.propTypes = {
+  payloadPreview: PropTypes.object.isRequired,
+  omittedRestrictionNames: PropTypes.array.isRequired,
+  onLoadPage: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+};
+
+const ErrorCallout = ({ error, details }) => {
+  if (!error && !details) return null;
+
+  return (
+    <div className="host-integrations-error-banner channex-diagnostics-error-callout">
+      <strong>{details?.message || error}</strong>
+      {details?.endpoint || details?.status ? (
+        <dl>
+          {details.endpoint ? (
+            <div>
+              <dt>Endpoint</dt>
+              <dd>
+                {details.method ? `${details.method} ` : ""}
+                {details.endpoint}
+              </dd>
+            </div>
+          ) : null}
+          {details.status ? (
+            <div>
+              <dt>HTTP status</dt>
+              <dd>{details.status}</dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : null}
+      {details?.responseBody ? (
+        <details>
+          <summary>Response body</summary>
+          <pre>{stringifyJson(details.responseBody)}</pre>
+        </details>
+      ) : null}
+    </div>
+  );
+};
+
+ErrorCallout.propTypes = {
+  error: PropTypes.string,
+  details: PropTypes.shape({
+    message: PropTypes.string,
+    endpoint: PropTypes.string,
+    method: PropTypes.string,
+    status: PropTypes.number,
+    responseBody: PropTypes.any,
+  }),
+};
+
 const SectionCard = ({ title, description, actions, state, children }) => (
   <section className="channex-diagnostics-card">
     <div className="channex-diagnostics-card-header">
@@ -156,7 +698,7 @@ const SectionCard = ({ title, description, actions, state, children }) => (
       {actions ? <div className="channex-diagnostics-actions">{actions}</div> : null}
     </div>
     {state?.loading ? <p className="host-integrations-loading">Loading...</p> : null}
-    {state?.error ? <p className="host-integrations-error-banner">{state.error}</p> : null}
+    {state?.error ? <ErrorCallout error={state.error} details={state.errorDetails} /> : null}
     {children}
   </section>
 );
@@ -168,6 +710,7 @@ SectionCard.propTypes = {
   state: PropTypes.shape({
     loading: PropTypes.bool,
     error: PropTypes.string,
+    errorDetails: PropTypes.object,
   }),
   children: PropTypes.node,
 };
@@ -243,15 +786,17 @@ function ChannexDiagnosticsPanel({ userId }) {
   );
 
   const runRequest = useCallback(async ({ setState, request }) => {
-    setState({ loading: true, error: "", data: null });
+    setState({ loading: true, error: "", errorDetails: null, data: null });
     try {
       const data = await request();
-      setState({ loading: false, error: "", data });
+      setState({ loading: false, error: "", errorDetails: null, data });
       return data;
     } catch (error) {
+      const errorDetails = normalizeChannexError(error);
       setState({
         loading: false,
-        error: error?.message || "Channex request failed.",
+        error: errorDetails.message,
+        errorDetails,
         data: null,
       });
       return null;
@@ -290,10 +835,15 @@ function ChannexDiagnosticsPanel({ userId }) {
       request: () => getChannexAriPreview(baseParams),
     });
 
-  const loadPayloadPreview = () =>
+  const loadPayloadPreview = (pageDateFrom = dateFrom) =>
     runRequest({
       setState: setPayloadPreviewState,
-      request: () => getChannexAriPayloadPreview(baseParams),
+      request: () =>
+        getChannexAriPayloadPreview({
+          ...baseParams,
+          pageDateFrom,
+          pageSizeDays: PAYLOAD_PREVIEW_PAGE_SIZE_DAYS,
+        }),
     });
 
   const runManualAction = async (config) => {
@@ -448,7 +998,7 @@ function ChannexDiagnosticsPanel({ userId }) {
   );
 
   const renderAriPreview = () => (
-    <div className="channex-diagnostics-grid">
+    <div className="channex-ari-preview-layout">
       <SectionCard
         title="ARI preview"
         description="Read-only Domits source values before grouped Channex payload generation."
@@ -490,32 +1040,24 @@ function ChannexDiagnosticsPanel({ userId }) {
             type="button"
             className="host-integrations-secondary-btn"
             disabled={!userId || !hasDateRange || payloadPreviewState.loading}
-            onClick={loadPayloadPreview}
+            onClick={() => loadPayloadPreview(dateFrom)}
           >
-            {payloadPreviewState.loading ? "Loading..." : "Load ARI payload preview"}
+            {payloadPreviewState.loading ? "Loading..." : "Load ARI payload preview page"}
           </button>
         }
       >
         {payloadPreviewState.data ? (
-          <>
-            <DetailGrid
-              items={[
-                { label: "Supported restriction fields", value: renderList(supportedRestrictionFields) },
-                { label: "Omitted Domits restrictions", value: renderList(omittedRestrictionNames) },
-              ]}
-            />
-            <JsonBlock
-              title="Grouped availability payloads"
-              value={payloadPreview.availabilityPayloadPreview?.groupedPayloads}
-            />
-            <JsonBlock
-              title="Grouped restriction/rate payloads"
-              value={payloadPreview.restrictionRatePayloadPreview?.groupedPayloads}
-            />
-            <JsonBlock title="Payload preview notes" value={payloadPreview.notes} />
-          </>
+          <PayloadPreviewDetails
+            payloadPreview={payloadPreview}
+            omittedRestrictionNames={omittedRestrictionNames}
+            onLoadPage={loadPayloadPreview}
+            loading={payloadPreviewState.loading}
+          />
         ) : (
-          <p className="host-integrations-muted">Enter property and date range to preview payloads.</p>
+          <p className="host-integrations-muted">
+            Enter property and date range to preview payloads. Large ranges load in {PAYLOAD_PREVIEW_PAGE_SIZE_DAYS}-day
+            pages.
+          </p>
         )}
       </SectionCard>
     </div>

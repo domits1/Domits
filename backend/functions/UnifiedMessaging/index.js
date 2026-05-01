@@ -2,6 +2,7 @@ import MessageController from "./controller/messageController.js";
 import IntegrationController from "./controller/integrationController.js";
 import IngestionController from "./controller/ingestionController.js";
 import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
+import { isChannexCertificationUserAllowed } from "./business/channexCertificationAccess.js";
 
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
@@ -11,6 +12,35 @@ const whatsAppWebhookController = new WhatsAppWebhookController();
 const notFound = { statusCode: 404, response: "Not Found" };
 const internalError = { statusCode: 500, response: "Internal Server Error" };
 const nestedIntegrationRoutePattern = /\/integrations\/[^/]+\/.+/;
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+};
+const forbiddenChannexCertificationAdmin = {
+  statusCode: 403,
+  response: {
+    error: "FORBIDDEN",
+    message: "User is not allowed to access Channex certification admin endpoints.",
+  },
+};
+
+const protectedChannexCertificationAdminRoutes = [
+  { methods: ["GET"], pattern: /\/integrations\/channex\/status$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/ari-targets$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/ari-preview$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/ari-payload-preview$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/sync-evidence\/latest$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/sync-evidence$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/sync-evidence\/[^/]+$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/bookings\/revisions$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/availability$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/restrictions$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/ari$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/full$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/receive$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/ack$/ },
+];
 
 const pathIncludesOrEndsWith = (path, suffix) => {
   const normalizedPath = String(path || "");
@@ -18,6 +48,40 @@ const pathIncludesOrEndsWith = (path, suffix) => {
 };
 
 const hasNestedIntegrationSubroute = (path) => nestedIntegrationRoutePattern.exec(String(path || ""));
+
+const isProtectedChannexCertificationAdminRoute = (method, path) =>
+  protectedChannexCertificationAdminRoutes.some(
+    (route) => route.methods.includes(method) && route.pattern.test(String(path || ""))
+  );
+
+const shouldRejectChannexCertificationAdminRequest = (event) => {
+  if (!isProtectedChannexCertificationAdminRoute(event?.httpMethod, event?.path)) return false;
+
+  const userId = event?.queryStringParameters?.userId;
+  if (!userId) return false;
+
+  return !isChannexCertificationUserAllowed(userId);
+};
+
+const createLambdaResponse = (returnedResponse) => {
+  const headers = {
+    ...corsHeaders,
+    ...(returnedResponse?.headers || {}),
+  };
+
+  let responseBody;
+  if (returnedResponse?.rawBody === undefined) {
+    responseBody = JSON.stringify(returnedResponse?.response);
+  } else {
+    responseBody = returnedResponse.rawBody;
+  }
+
+  return {
+    statusCode: returnedResponse?.statusCode || 200,
+    headers,
+    body: responseBody,
+  };
+};
 
 const routeDefinitions = [
   {
@@ -237,48 +301,28 @@ export const handler = async (event) => {
   const { httpMethod, path } = event;
 
   try {
-    const route = `${httpMethod}:${path}`;
-    const routeHandler = findRouteHandler(httpMethod, path);
-
-    if (!routeHandler) {
+    if (httpMethod === "OPTIONS") {
       return {
-        statusCode: notFound.statusCode,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "Content-Type,Authorization",
-        },
-        body: JSON.stringify(notFound.response),
+        statusCode: 200,
+        headers: corsHeaders,
+        body: "",
       };
     }
 
-    const returnedResponse = await routeHandler(event);
-    const headers = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type,Authorization",
-      ...(returnedResponse?.headers || {}),
-    };
+    const routeHandler = findRouteHandler(httpMethod, path);
 
-    let responseBody;
-    if (returnedResponse?.rawBody === undefined) {
-      responseBody = JSON.stringify(returnedResponse?.response);
-    } else {
-      responseBody = returnedResponse.rawBody;
+    if (!routeHandler) {
+      return createLambdaResponse(notFound);
     }
 
-    return {
-      statusCode: returnedResponse?.statusCode || 200,
-      headers,
-      body: responseBody,
-    };
+    if (shouldRejectChannexCertificationAdminRequest(event)) {
+      return createLambdaResponse(forbiddenChannexCertificationAdmin);
+    }
+
+    const returnedResponse = await routeHandler(event);
+    return createLambdaResponse(returnedResponse);
   } catch (error) {
     console.error("Error in handler:", error);
-    return {
-      statusCode: internalError.statusCode,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type,Authorization",
-      },
-      body: JSON.stringify(internalError.response),
-    };
+    return createLambdaResponse(internalError);
   }
 };

@@ -129,11 +129,18 @@ class IntegrationController {
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
     const dateFrom = event.queryStringParameters?.dateFrom || null;
     const dateTo = event.queryStringParameters?.dateTo || null;
+    const pageDateFrom = event.queryStringParameters?.pageDateFrom || null;
+    const pageSizeDays = event.queryStringParameters?.pageSizeDays || null;
     return await this.integrationService.previewChannexAriPayloads(
       userId,
       domitsPropertyId,
       dateFrom,
-      dateTo
+      dateTo,
+      {
+        paginate: true,
+        pageDateFrom,
+        pageSizeDays,
+      }
     );
   }
 
