@@ -120,8 +120,8 @@ function HostListings() {
       try {
         const userInfo = await Auth.currentUserInfo();
         setUserId(userInfo?.attributes?.sub || null);
-      } catch (error) {
-        console.error("Error setting user id:", error);
+      } catch {
+        setUserId(null);
       }
     };
 
@@ -130,10 +130,10 @@ function HostListings() {
 
   useEffect(() => {
     if (userId) {
-      fetchVerificationStatus();
-      fetchAccommodations().catch(console.error);
+      void fetchVerificationStatus();
+      void fetchAccommodations();
     }
-  }, [userId]);
+  }, [fetchVerificationStatus, userId]);
 
   const fetchAccommodations = async () => {
     setIsLoading(true);
@@ -181,7 +181,7 @@ function HostListings() {
 
   const visibleListings = listingsByStatus[activeFilter] || [];
 
-  const ensureLiveEligibility = (propertyId) => {
+  const ensureLiveEligibility = () => {
     if (!userId) {
       toast.error("User is not loaded. Please refresh and try again.");
       return false;
@@ -204,7 +204,7 @@ function HostListings() {
     }
 
     if (nextStatus === "ACTIVE") {
-      const canProceed = ensureLiveEligibility(propertyId);
+      const canProceed = ensureLiveEligibility();
       if (!canProceed) {
         return;
       }

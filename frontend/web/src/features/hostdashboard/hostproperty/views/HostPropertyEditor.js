@@ -166,8 +166,8 @@ export default function HostProperty() {
       try {
         const userInfo = await Auth.currentUserInfo();
         setUserId(userInfo?.attributes?.sub || null);
-      } catch (error) {
-        console.error("Error loading user id:", error);
+      } catch {
+        setUserId(null);
       }
     };
     loadUserId();
@@ -175,9 +175,9 @@ export default function HostProperty() {
 
   useEffect(() => {
     if (userId) {
-      fetchVerificationStatus();
+      void fetchVerificationStatus();
     }
-  }, [userId]);
+  }, [fetchVerificationStatus, userId]);
 
   const amenitiesByCategory = useMemo(() => {
     return amenitiesCatalogue.reduce((categories, amenity) => {
@@ -860,8 +860,8 @@ export default function HostProperty() {
         return;
       }
       if (!liveEligibility) {
-        toast.error("You need to complete your bank details before you can publish this listing. Redirecting to verification...");
-        navigate("/verify", { state: { userId, accommodationId: propertyId } });
+        toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
+        navigate("/hostdashboard/finance");
         return;
       }
     }
