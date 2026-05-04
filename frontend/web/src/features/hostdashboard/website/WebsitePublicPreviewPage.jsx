@@ -9,12 +9,11 @@ import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
 import { fetchWebsitePreviewByDraftId } from "./services/websitePublicPreviewService";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
-  isMobilePreviewViewport,
+  getWebsiteAnalyticsViewport,
   startWebsitePreviewLcpObserver,
 } from "./analytics/websitePreviewAnalytics";
 import {
   WEBSITE_ANALYTICS_SURFACE_PREVIEW,
-  WEBSITE_ANALYTICS_VIEWPORT_MOBILE,
   WEBSITE_SITE_LCP_RECORDED_EVENT,
 } from "./analytics/websiteAnalyticsEventTypes";
 import { subscribeToWebsitePreviewUpdates } from "./services/websitePreviewSync";
@@ -103,9 +102,11 @@ function WebsitePublicPreviewPage() {
   }, [previewModel?.site?.title]);
 
   useEffect(() => {
-    if (!canRenderPreview || !draftId || !isMobilePreviewViewport()) {
+    if (!canRenderPreview || !draftId) {
       return undefined;
     }
+
+    const viewport = getWebsiteAnalyticsViewport();
 
     return startWebsitePreviewLcpObserver({
       enabled: true,
@@ -115,7 +116,7 @@ function WebsitePublicPreviewPage() {
           eventType: WEBSITE_SITE_LCP_RECORDED_EVENT,
           payload: {
             surface: WEBSITE_ANALYTICS_SURFACE_PREVIEW,
-            viewport: WEBSITE_ANALYTICS_VIEWPORT_MOBILE,
+            viewport,
             durationMs,
           },
         });
