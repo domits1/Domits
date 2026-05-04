@@ -1,3 +1,8 @@
+import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { fadeUp } from "../../pages/landingpage/utils/animations";
+
 const RegionCard = ({ item, link = "/home", useMotion = false }) => {
   const content = (
     <Link
@@ -20,3 +25,15 @@ const RegionCard = ({ item, link = "/home", useMotion = false }) => {
     content
   );
 };
+
+RegionCard.propTypes = {
+  item: PropTypes.shape({
+    img: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string,
+  }).isRequired,
+  link: PropTypes.string,
+  useMotion: PropTypes.bool,
+};
+
+export default RegionCard;
