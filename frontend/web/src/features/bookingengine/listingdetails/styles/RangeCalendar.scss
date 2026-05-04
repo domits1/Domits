@@ -239,6 +239,20 @@
   }
 }
 
+@media (max-width: 480px) {
+  .rc-panels {
+    gap: 16px;
+  }
+
+  .rc-cell {
+    min-height: 40px;
+  }
+
+  .rc-cell--head {
+    font-size: 0.75rem;
+  }
+}
+
 @media (max-width: 768px) {
   .availability-section__title {
     font-size: 1.55rem;
