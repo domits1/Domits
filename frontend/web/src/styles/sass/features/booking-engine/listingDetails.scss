@@ -1,7 +1,6 @@
 .listing-details {
     padding-top: calc(env(safe-area-inset-top, 0px) + 176px);
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
-
     width: 100%;
     max-width: 100%;
     overflow-x: clip;
@@ -197,6 +196,7 @@
     }
 
     .container {
+        text-align: start;
         position: relative;
         display: flex;
         flex-direction: row;
@@ -780,6 +780,7 @@
     .booking-container {
         background: white;
         padding: 24px;
+        text-align: start;
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
