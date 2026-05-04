@@ -23,8 +23,99 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import PropTypes from "prop-types";
 
 const contentByLanguage = { en, nl, de, es };
+
+const RegionBlock = ({
+  title,
+  subtitle,
+  items,
+  bg = "green",
+  slice,
+  linkBuilder,
+  footerText,
+  navigate,
+}) => {
+  return (
+    <motion.div
+      className={`region-block ${bg}`}
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+    >
+      <motion.div className="region-header" variants={fadeUp}>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
+      </motion.div>
+
+      <div className="regions-grid">
+        {(slice ? items.slice(0, slice) : items).map((item) => (
+          <RegionCard
+            key={item.name}
+            item={item}
+            link={linkBuilder ? linkBuilder(item) : "/home"}
+          />
+        ))}
+      </div>
+
+      <button className="region-footer" onClick={() => navigate("/home")}>
+        {footerText}
+      </button>
+    </motion.div>
+  );
+};
+
+RegionBlock.propTypes = {
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string.isRequired,
+  items: PropTypes.arrayOf(
+  PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    img: PropTypes.string,
+    description: PropTypes.string,
+  })
+).isRequired,
+  bg: PropTypes.string,
+  slice: PropTypes.number,
+  linkBuilder: PropTypes.func,
+  footerText: PropTypes.string.isRequired,
+  navigate: PropTypes.func.isRequired,
+};
+
+const RegionCard = ({ item, link = "/home", useMotion = false }) => {
+  const content = (
+    <Link
+      to={link}
+      className="region-card"
+      style={{ textDecoration: "none", color: "inherit" }}
+    >
+      <img src={item.img} alt={item.name} />
+      <div className="gallery-overlay">
+        <h3>{item.name}</h3>
+        <p>{item.description}</p>
+        <span>200+ properties</span>
+      </div>
+    </Link>
+  );
+
+  return useMotion ? (
+    <motion.div variants={fadeUp}>{content}</motion.div>
+  ) : (
+    content
+  );
+};
+
+RegionCard.propTypes = {
+  item: PropTypes.shape({
+    img: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string,
+  }).isRequired,
+  link: PropTypes.string,
+  useMotion: PropTypes.bool,
+};
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -49,68 +140,6 @@ const Homepage = () => {
   } = buildHomepageLists(homePageContent);
 
   const navigate = useNavigate();
-
-  const RegionCard = ({ item, link = "/home", useMotion = false }) => {
-    const content = (
-      <Link
-        to={link}
-        className="region-card"
-        style={{ textDecoration: "none", color: "inherit" }}
-      >
-        <img src={item.img} alt={item.name} />
-        <div className="gallery-overlay">
-          <h3>{item.name}</h3>
-          <p>{item.description}</p>
-          <span>200+ properties</span>
-        </div>
-      </Link>
-    );
-
-    return useMotion ? (
-      <motion.div variants={fadeUp}>{content}</motion.div>
-    ) : (
-      content
-    );
-  };
-
-  const RegionBlock = ({
-    title,
-    subtitle,
-    items,
-    bg = "green",
-    slice,
-    linkBuilder,
-    footerText,
-  }) => {
-    return (
-      <motion.div
-        className={`region-block ${bg}`}
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <motion.div className="region-header" variants={fadeUp}>
-          <h2>{title}</h2>
-          <p>{subtitle}</p>
-        </motion.div>
-
-        <div className="regions-grid">
-          {(slice ? items.slice(0, slice) : items).map((item) => (
-            <RegionCard
-              key={item.name}
-              item={item}
-              link={linkBuilder ? linkBuilder(item) : "/home"}
-            />
-          ))}
-        </div>
-
-        <button className="region-footer" onClick={() => navigate("/home")}>
-          {footerText}
-        </button>
-      </motion.div>
-    );
-  };
 
   const getIcon = (type) => {
     switch (type) {
@@ -234,6 +263,7 @@ const Homepage = () => {
             bg="green"
             linkBuilder={(item) => `/search?destination=${encodeURIComponent(item.name)}`}
             footerText="Explore all countries in europe →"
+            navigate={navigate}
           />
 
           <RegionBlock
@@ -242,6 +272,7 @@ const Homepage = () => {
             items={asiaCountries}
             bg="light"
             footerText="Explore all countries in Asia →"
+            navigate={navigate}
           />
 
           <RegionBlock
@@ -250,6 +281,7 @@ const Homepage = () => {
             items={caribbeanCountries}
             bg="green"
             footerText="Explore all countries in the caribbean →"
+            navigate={navigate}
           />
 
           <RegionBlock
@@ -259,6 +291,7 @@ const Homepage = () => {
             slice={3}
             bg="light"
             footerText="Explore all popular ski destinations →"
+            navigate={navigate}
           />
         </div>
 
@@ -270,6 +303,7 @@ const Homepage = () => {
           bg="green"
           linkBuilder={(item) => `/search?destination=${encodeURIComponent(item.name)}`}
           footerText="Explore all favorites by season →"
+          navigate={navigate}
         />
 
         <RegionBlock
@@ -279,6 +313,7 @@ const Homepage = () => {
           slice={3}
           bg="light"
           footerText="Explore all great picks by interest →"
+          navigate={navigate}
         />
 
         <RegionBlock
@@ -289,6 +324,7 @@ const Homepage = () => {
           bg="green"
           linkBuilder={(item) => `/search?destination=${encodeURIComponent(item.name)}`}
           footerText="Explore all accommodations by group →"
+          navigate={navigate}
         />
 
         <motion.div className="guarantee-section" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
