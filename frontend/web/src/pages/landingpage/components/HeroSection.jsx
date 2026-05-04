@@ -164,10 +164,10 @@ function HeroSection({ landingContent }) {
 
 HeroSection.propTypes = {
   landingContent: PropTypes.shape({
-    secure: PropTypes.object,
-    verified: PropTypes.object,
-    quick: PropTypes.object,
-    guarantee: PropTypes.object,
+    secure: PropTypes.string,
+    verified: PropTypes.string,
+    quick: PropTypes.string,
+    guarantee: PropTypes.string,
   }),
 };
 
