@@ -296,19 +296,20 @@ const ListingDetails2 = () => {
           checkOutDate={checkOutDate}
           setCheckInDate={setCheckInDate}
           setCheckOutDate={setCheckOutDate}
-        />
-        <BookingContainer
-          property={property}
-          host={host}
-          propertyId={id}
-          unavailableDateKeys={unavailableDateKeys}
-          checkInDate={checkInDate}
-          setCheckInDate={setCheckInDate}
-          checkOutDate={checkOutDate}
-          setCheckOutDate={setCheckOutDate}
-          showMessageHost={showMessageHost}
-          setShowMessageHost={setShowMessageHost}
-        />
+        >
+          <BookingContainer
+            property={property}
+            host={host}
+            propertyId={id}
+            unavailableDateKeys={unavailableDateKeys}
+            checkInDate={checkInDate}
+            setCheckInDate={setCheckInDate}
+            checkOutDate={checkOutDate}
+            setCheckOutDate={setCheckOutDate}
+            showMessageHost={showMessageHost}
+            setShowMessageHost={setShowMessageHost}
+          />
+        </PropertyContainer>
       </div>
     </div>
   );

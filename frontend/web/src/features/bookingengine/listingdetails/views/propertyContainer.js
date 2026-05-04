@@ -38,6 +38,7 @@ const PropertyContainer = ({
   checkOutDate = "",
   setCheckInDate,
   setCheckOutDate,
+  children,
 }) => {
   const policyRules = React.useMemo(
     () =>
@@ -110,6 +111,8 @@ const PropertyContainer = ({
           propertyId={property?.property?.id}
         />
       </section>
+
+      {children}
 
       <section className="listing-section-block">
         <Description description={property?.property?.description} />

@@ -250,12 +250,12 @@ const BookingContainer = ({
   };
 
   return (
-    <div className="booking-container">
-      <div className="booking-container__price-header">
-        <span className="booking-container__price">
+    <div className="listing-booking-card">
+      <div className="listing-booking-card__price-header">
+        <span className="listing-booking-card__price">
           €{Number(property?.pricing?.roomRate || 0).toFixed(0)}
         </span>
-        <span className="booking-container__per-night">per night</span>
+        <span className="listing-booking-card__per-night">per night</span>
       </div>
 
       <DateSelectionContainer
@@ -287,17 +287,17 @@ const BookingContainer = ({
 
       <p className="note">You won’t be charged yet</p>
 
-      <div className="booking-container__trust-badges">
-        <div className="booking-container__trust-item">
-          <span className="booking-container__trust-check">✓</span>
+      <div className="listing-booking-card__trust-badges">
+        <div className="listing-booking-card__trust-item">
+          <span className="listing-booking-card__trust-check">✓</span>
           Free cancellation
         </div>
-        <div className="booking-container__trust-item">
-          <span className="booking-container__trust-check">✓</span>
+        <div className="listing-booking-card__trust-item">
+          <span className="listing-booking-card__trust-check">✓</span>
           Instant confirmation
         </div>
-        <div className="booking-container__trust-item">
-          <span className="booking-container__trust-check">✓</span>
+        <div className="listing-booking-card__trust-item">
+          <span className="listing-booking-card__trust-check">✓</span>
           Secure payment
         </div>
       </div>
