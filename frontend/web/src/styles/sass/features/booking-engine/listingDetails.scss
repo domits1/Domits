@@ -102,7 +102,7 @@
         transition: top 0.25s ease-out;
 
         @media (max-width: 768px) {
-            top: calc(env(safe-area-inset-top, 0px) + 154px);
+            top: calc(env(safe-area-inset-top, 0px) + 0px);
             width: calc(100% - 28px);
         }
     }

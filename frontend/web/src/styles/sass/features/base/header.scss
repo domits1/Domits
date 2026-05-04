@@ -25,6 +25,14 @@ $breakpoint-sm: 480px;
   box-shadow: 0 2px 6px 0 $box-shadow-color;
   text-align: center;
   height: 90px;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out, visibility 0.25s;
+
+  &.is-faded {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+    visibility: hidden;
+  }
 
   .header-nav {
     display: flex;

@@ -47,6 +47,35 @@ function Header({ setSearchResults, setLoading }) {
 
   const components = contentByLanguage[language]?.component;
 
+  const [isScrolled, setIsScrolled] = useState(false);
+  const isListingDetails = location.pathname === "/listingdetails";
+
+  useEffect(() => {
+    if (!isListingDetails) {
+      setIsScrolled(false);
+      return undefined;
+    }
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Initial check
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [isListingDetails]);
+
+  useEffect(() => {
+    if (isScrolled) {
+      document.body.classList.add("header-scrolled");
+    } else {
+      document.body.classList.remove("header-scrolled");
+    }
+  }, [isScrolled]);
+
   useEffect(() => {
     checkAuthentication();
   }, []);
@@ -243,7 +272,7 @@ function Header({ setSearchResults, setLoading }) {
   };
 
   return (
-    <header className="app-header">
+    <header className={`app-header ${isScrolled ? "is-faded" : ""}`}>
       <nav
         className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""}`}>
         <div className="logo">

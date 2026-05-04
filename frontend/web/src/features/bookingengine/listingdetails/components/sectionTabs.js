@@ -35,6 +35,7 @@ const resolveActiveSection = (sections) => {
 const SectionTabs = ({ sections = [] }) => {
   const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
   const [indicatorStyle, setIndicatorStyle] = useState({});
+  const [isScrolled, setIsScrolled] = useState(false);
   const buttonRefs = useRef({});
 
   useEffect(() => {
@@ -44,6 +45,7 @@ const SectionTabs = ({ sections = [] }) => {
 
     const handleScroll = () => {
       setActiveSection(resolveActiveSection(sections));
+      setIsScrolled(window.scrollY > 80);
     };
 
     handleScroll();
@@ -82,7 +84,7 @@ const SectionTabs = ({ sections = [] }) => {
   }
 
   return (
-    <div className="listing-sections-shell">
+    <div className={`listing-sections-shell${isScrolled ? " is-scrolled" : ""}`}>
       <nav className="listing-sections-nav" aria-label="Listing sections">
         <div className="listing-sections-nav__track" style={indicatorStyle} />
         {sections.map((section) => (
