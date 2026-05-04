@@ -6,7 +6,11 @@ import LanguageIcon from "@mui/icons-material/Language";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 const HostSection = ({ host = {}, onContactHost }) => {
-  const name = host.givenName || host.name || "Host";
+  const firstName = host.givenName || host.given_name || "";
+  const lastName = host.familyName || host.family_name || "";
+  const name = (firstName || lastName)
+    ? `${firstName} ${lastName}`.trim()
+    : host.name || "Host";
   const avatar = host.profileImage || null;
   const bio = host.bio || host.description || null;
   const isSuperhost = host.isSuperhost || host.superhost || false;

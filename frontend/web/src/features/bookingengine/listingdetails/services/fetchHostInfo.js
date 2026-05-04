@@ -15,10 +15,20 @@ const fetchHostInfo = async (ownerId) => {
         }
         const responseData = await response.json();
         const hostData = JSON.parse(responseData.body);
-        if (Array.isArray(hostData)) {
-            return hostData[0] || {};
-        }
-        return hostData || {};
+        const raw = Array.isArray(hostData) ? hostData[0] : hostData;
+        if (!raw) return {};
+
+        const attrs = Array.isArray(raw.Attributes) ? raw.Attributes : [];
+        const getAttr = (name) => attrs.find((a) => a.Name === name)?.Value || "";
+
+        return {
+            ...raw,
+            given_name: getAttr("given_name"),
+            family_name: getAttr("family_name"),
+            name: getAttr("name"),
+            email: getAttr("email"),
+            profileImage: getAttr("picture") || getAttr("profile") || null,
+        };
     } catch {
         return {};
     }
