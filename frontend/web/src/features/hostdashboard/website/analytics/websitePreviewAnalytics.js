@@ -10,7 +10,7 @@ const getViewportWidth = () => {
   }
 
   const documentWidth = Number(globalThis.document?.documentElement?.clientWidth || 0);
-  return documentWidth > 0 ? documentWidth : 0;
+  return Math.max(0, documentWidth);
 };
 
 export const getWebsiteAnalyticsViewport = () => {
