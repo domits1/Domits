@@ -14,7 +14,51 @@ jest.mock("../ORM/index.js", () => ({
 const Database = require("../ORM/index.js").default;
 const IntegrationService = require("./integrationService.js").default;
 
-const buildDatabaseClient = () => ({
+const buildDatabaseClient = ({
+  availabilityRestrictions = [
+    {
+      id: "restriction-min",
+      property_id: "domits-property-1",
+      restriction: "MinimumStay",
+      value: 2,
+    },
+    {
+      id: "restriction-max",
+      property_id: "domits-property-1",
+      restriction: "MaximumStay",
+      value: 9,
+    },
+  ],
+  availabilityWindows = [
+    {
+      property_id: "domits-property-1",
+      availablestartdate: 20260501,
+      availableenddate: 20260502,
+    },
+  ],
+  calendarOverrides = [
+    {
+      property_id: "domits-property-1",
+      calendar_date: 20260501,
+      is_available: true,
+      nightly_price: 123,
+      stop_sell: true,
+      closed_to_arrival: true,
+      closed_to_departure: false,
+      min_stay: 4,
+      max_stay: 0,
+      updated_at: 1,
+    },
+  ],
+  pricing = [
+    {
+      property_id: "domits-property-1",
+      roomrate: 100,
+      cleaning: 0,
+      weekendrate: 120,
+    },
+  ],
+} = {}) => ({
   options: { schema: "main" },
   query: jest.fn(async (sql) => {
     const query = String(sql || "");
@@ -24,58 +68,19 @@ const buildDatabaseClient = () => ({
     }
 
     if (query.includes("property_availabilityrestriction")) {
-      return [
-        {
-          id: "restriction-min",
-          property_id: "domits-property-1",
-          restriction: "MinimumStay",
-          value: 2,
-        },
-        {
-          id: "restriction-max",
-          property_id: "domits-property-1",
-          restriction: "MaximumStay",
-          value: 9,
-        },
-      ];
+      return availabilityRestrictions;
     }
 
     if (query.includes("property_availability")) {
-      return [
-        {
-          property_id: "domits-property-1",
-          availablestartdate: 20260501,
-          availableenddate: 20260502,
-        },
-      ];
+      return availabilityWindows;
     }
 
     if (query.includes("property_calendar_override")) {
-      return [
-        {
-          property_id: "domits-property-1",
-          calendar_date: 20260501,
-          is_available: true,
-          nightly_price: 123,
-          stop_sell: true,
-          closed_to_arrival: true,
-          closed_to_departure: false,
-          min_stay: 4,
-          max_stay: 0,
-          updated_at: 1,
-        },
-      ];
+      return calendarOverrides;
     }
 
     if (query.includes("property_pricing")) {
-      return [
-        {
-          property_id: "domits-property-1",
-          roomrate: 100,
-          cleaning: 0,
-          weekendrate: 120,
-        },
-      ];
+      return pricing;
     }
 
     return [];
@@ -157,6 +162,28 @@ const waitUntil = async (predicate) => {
   }
   throw new Error("Timed out waiting for condition.");
 };
+
+const createSuccessfulRestrictionsPush = () =>
+  jest.fn(async (_secret, payloads) => ({
+    success: true,
+    results: payloads.map((payload) => ({
+      chunkIndex: payload.chunkIndex,
+      chunkCount: payload.chunkCount,
+      externalPropertyId: payload.externalPropertyId,
+      externalRoomTypeId: payload.externalRoomTypeId,
+      externalRoomTypeIds: payload.externalRoomTypeIds,
+      externalRatePlanId: payload.externalRatePlanId,
+      externalRatePlanIds: payload.externalRatePlanIds,
+      requestBody: { values: payload.values },
+      providerStatus: "SYNCED",
+      httpStatus: 202,
+      success: true,
+      taskId: `task-restrictions-${payload.chunkIndex || 1}`,
+      warnings: [],
+      errorCode: null,
+      errorMessage: null,
+    })),
+  }));
 
 describe("IntegrationService Channex ARI restriction mapping", () => {
   beforeEach(() => {
@@ -931,6 +958,196 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
           }),
         ],
       })
+    );
+  });
+
+  test("restrictions sync sends stop sell-only override when nightly price is missing", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [],
+        pricing: [],
+        calendarOverrides: [
+          {
+            property_id: "domits-property-1",
+            calendar_date: 20260524,
+            is_available: true,
+            nightly_price: null,
+            stop_sell: true,
+            closed_to_arrival: null,
+            closed_to_departure: null,
+            min_stay: null,
+            max_stay: null,
+            updated_at: 1,
+          },
+        ],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexRestrictions(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-24",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.calledProvider).toBe(true);
+    expect(result.response.requestCount).toBe(1);
+    const [, outboundPayloads] = pushRestrictions.mock.calls[0];
+    expect(outboundPayloads[0].values[0]).toEqual(
+      expect.objectContaining({
+        property_id: "external-property-1",
+        rate_plan_id: "rate-plan-1",
+        date: "2026-05-24",
+        stop_sell: true,
+      })
+    );
+    expect(outboundPayloads[0].values[0]).not.toHaveProperty("rate");
+  });
+
+  test("restrictions sync sends min and max stay-only override when nightly price is missing", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [],
+        pricing: [],
+        calendarOverrides: [
+          {
+            property_id: "domits-property-1",
+            calendar_date: 20260524,
+            is_available: true,
+            nightly_price: null,
+            stop_sell: null,
+            closed_to_arrival: null,
+            closed_to_departure: null,
+            min_stay: 3,
+            max_stay: 7,
+            updated_at: 1,
+          },
+        ],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexRestrictions(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-24",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.calledProvider).toBe(true);
+    expect(result.response.requestCount).toBe(1);
+    const [, outboundPayloads] = pushRestrictions.mock.calls[0];
+    expect(outboundPayloads[0].values[0]).toEqual(
+      expect.objectContaining({
+        property_id: "external-property-1",
+        rate_plan_id: "rate-plan-1",
+        date: "2026-05-24",
+        min_stay_through: 3,
+        max_stay: 7,
+      })
+    );
+    expect(outboundPayloads[0].values[0]).not.toHaveProperty("rate");
+  });
+
+  test("restrictions sync does not skip supported restrictions when nightly price is zero", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [],
+        pricing: [],
+        calendarOverrides: [
+          {
+            property_id: "domits-property-1",
+            calendar_date: 20260524,
+            is_available: true,
+            nightly_price: 0,
+            stop_sell: true,
+            closed_to_arrival: true,
+            closed_to_departure: true,
+            min_stay: null,
+            max_stay: null,
+            updated_at: 1,
+          },
+        ],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexRestrictions(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-24",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.calledProvider).toBe(true);
+    const [, outboundPayloads] = pushRestrictions.mock.calls[0];
+    expect(outboundPayloads[0].values[0]).toEqual(
+      expect.objectContaining({
+        date: "2026-05-24",
+        stop_sell: true,
+        closed_to_arrival: true,
+        closed_to_departure: true,
+      })
+    );
+    expect(outboundPayloads[0].values[0]).not.toHaveProperty("rate");
+  });
+
+  test("restrictions sync skips safely when no rate or supported restrictions exist", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [],
+        pricing: [],
+        calendarOverrides: [],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexRestrictions(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-24",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.calledProvider).toBe(false);
+    expect(result.response.requestCount).toBe(0);
+    expect(result.response.results).toEqual([]);
+    expect(pushRestrictions).not.toHaveBeenCalled();
+    expect(result.response.notes).toContain(
+      "No nightlyPrice values or supported restriction fields were available to send, so nothing was posted to Channex."
     );
   });
 

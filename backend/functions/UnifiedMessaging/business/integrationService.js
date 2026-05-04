@@ -229,6 +229,8 @@ const copySupportedChannexRestrictions = (source) => {
 
   return {};
 };
+const hasSupportedChannexRestrictionFields = (source) =>
+  Object.keys(copySupportedChannexRestrictions(source)).length > 0;
 const buildChannexRestrictionMapping = (restrictions) => {
   const supportedByField = new Map();
   const omittedRestrictions = [];
@@ -1828,19 +1830,20 @@ const summarizePayloadPreviewForEvidence = (payloadPreview) => {
 };
 const buildChannexRestrictionSyncValue = (group, value) => {
   const rate = requireStr(value?.rate) || formatNightlyPriceForChannexRate(value?.nightlyPrice);
-  if (!rate) return null;
   const mappedRestrictions = {
     ...copySupportedChannexRestrictions(value?.channexRestrictions),
     ...copySupportedChannexRestrictions(value),
   };
+  if (!rate && !hasSupportedChannexRestrictionFields(mappedRestrictions)) return null;
 
-  return {
+  const out = {
     property_id: group.externalPropertyId,
     rate_plan_id: group.externalRatePlanId,
     date: value.date,
-    rate,
     ...mappedRestrictions,
   };
+  if (rate) out.rate = rate;
+  return out;
 };
 const buildChannexRestrictionSyncPayloads = (groupedPayloads) =>
   groupedPayloads
@@ -6052,7 +6055,7 @@ export default class IntegrationService {
           return combinedPayloads;
         },
         isNoop: ({ transformedPayloads }) => !transformedPayloads.length,
-        noopNote: "No nightlyPrice values were available to send, so nothing was posted to Channex.",
+        noopNote: "No nightlyPrice values or supported restriction fields were available to send, so nothing was posted to Channex.",
         providerCall: (secret, transformedPayloads) =>
           this.pushChannexRestrictionChunksWithConcurrency(secret, transformedPayloads),
         formatProviderResult: formatChannexRestrictionProviderResult,
