@@ -1,4 +1,5 @@
 .listing-details {
+    box-sizing: border-box;
     padding-top: calc(env(safe-area-inset-top, 0px) + 176px);
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
     width: 100%;
@@ -11,6 +12,7 @@
     }
 
     .listing-details-header {
+        box-sizing: border-box;
         width: min(1500px, calc(100% - 32px));
         margin: 0 auto 22px;
         padding: 20px 2px 0;
@@ -93,9 +95,14 @@
         border: 1px solid #d7dde5;
         border-radius: 10px;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        &::-webkit-scrollbar { display: none; }
 
         @media (max-width: 768px) {
             top: calc(env(safe-area-inset-top, 0px) + 154px);
+            width: calc(100% - 28px);
         }
     }
 
@@ -109,7 +116,7 @@
 
         @media (max-width: 768px) {
             display: flex;
-            min-width: max-content;
+            width: max-content;
             min-height: 58px;
         }
 
@@ -200,6 +207,7 @@
     }
 
     .container {
+        box-sizing: border-box;
         text-align: start;
         position: relative;
         display: flex;
@@ -792,6 +800,7 @@
     }
 
     .booking-container {
+        box-sizing: border-box;
         background: white;
         padding: 24px;
         text-align: start;
