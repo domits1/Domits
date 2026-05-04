@@ -11,9 +11,13 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 
 const DETAIL_ICONS = {
   bedroom: <BedIcon fontSize="small" />,
+  bedrooms: <BedIcon fontSize="small" />,
   bed: <BedIcon fontSize="small" />,
+  beds: <BedIcon fontSize="small" />,
   bathroom: <BathroomIcon fontSize="small" />,
+  bathrooms: <BathroomIcon fontSize="small" />,
   bath: <BathroomIcon fontSize="small" />,
+  baths: <BathroomIcon fontSize="small" />,
   guests: <PeopleIcon fontSize="small" />,
   guest: <PeopleIcon fontSize="small" />,
   size: <StraightenIcon fontSize="small" />,
@@ -21,11 +25,12 @@ const DETAIL_ICONS = {
   workplace: <WorkIcon fontSize="small" />,
   type: <CategoryIcon fontSize="small" />,
   room: <MeetingRoomIcon fontSize="small" />,
+  rooms: <MeetingRoomIcon fontSize="small" />,
 };
 
 const getIcon = (detailLabel = "") => {
-  const key = detailLabel.toLowerCase();
-  return DETAIL_ICONS[key] ?? <CategoryIcon fontSize="small" />;
+  const key = detailLabel.toLowerCase().trim();
+  return DETAIL_ICONS[key] ?? DETAIL_ICONS[key.replace(/s$/, "")] ?? <CategoryIcon fontSize="small" />;
 };
 
 const WhereYoullStay = ({ generalDetails = [] }) => {
@@ -40,8 +45,8 @@ const WhereYoullStay = ({ generalDetails = [] }) => {
         Where you'll stay
       </h3>
       <div className="where-youll-stay__grid">
-        {generalDetails.map((item, i) => (
-          <div key={i} className="where-youll-stay__item">
+        {generalDetails.map((item) => (
+          <div key={item.detail} className="where-youll-stay__item">
             <span className="where-youll-stay__icon">{getIcon(item.detail)}</span>
             <span className="where-youll-stay__label">{item.detail}</span>
             <span className="where-youll-stay__value">{item.value}</span>
