@@ -77,6 +77,22 @@ const normalizeOptionalAvailability = (value) => {
   return Boolean(value);
 };
 
+const normalizeOptionalNonNegativeInteger = (value) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
+    return null;
+  }
+  const parsed = toInteger(value);
+  if (parsed === null || parsed < 0) {
+    return null;
+  }
+  return parsed;
+};
+
 const mapRowToOverride = (row) => ({
   propertyId: String(row?.property_id || ""),
   date: toInteger(row?.calendar_date),
@@ -88,6 +104,26 @@ const mapRowToOverride = (row) => ({
     row?.nightly_price === null || row?.nightly_price === undefined
       ? null
       : toInteger(row.nightly_price),
+  stopSell:
+    row?.stop_sell === null || row?.stop_sell === undefined
+      ? null
+      : Boolean(row.stop_sell),
+  closedToArrival:
+    row?.closed_to_arrival === null || row?.closed_to_arrival === undefined
+      ? null
+      : Boolean(row.closed_to_arrival),
+  closedToDeparture:
+    row?.closed_to_departure === null || row?.closed_to_departure === undefined
+      ? null
+      : Boolean(row.closed_to_departure),
+  minStay:
+    row?.min_stay === null || row?.min_stay === undefined
+      ? null
+      : toInteger(row.min_stay),
+  maxStay:
+    row?.max_stay === null || row?.max_stay === undefined
+      ? null
+      : toInteger(row.max_stay),
   updatedAt: toInteger(row?.updated_at),
 });
 
@@ -123,6 +159,11 @@ export class PropertyCalendarOverrideRepository {
             calendar_date,
             is_available,
             nightly_price,
+            stop_sell,
+            closed_to_arrival,
+            closed_to_departure,
+            min_stay,
+            max_stay,
             updated_at
           FROM ${tableName}
           WHERE ${where.join(" AND ")}
@@ -180,6 +221,11 @@ export class PropertyCalendarOverrideRepository {
                 calendarDate,
                 isAvailable: normalizeOptionalAvailability(override?.isAvailable),
                 nightlyPrice: normalizeOptionalPrice(override?.nightlyPrice),
+                stopSell: normalizeOptionalAvailability(override?.stopSell),
+                closedToArrival: normalizeOptionalAvailability(override?.closedToArrival),
+                closedToDeparture: normalizeOptionalAvailability(override?.closedToDeparture),
+                minStay: normalizeOptionalNonNegativeInteger(override?.minStay),
+                maxStay: normalizeOptionalNonNegativeInteger(override?.maxStay),
               },
             ];
           })
@@ -201,7 +247,15 @@ export class PropertyCalendarOverrideRepository {
     try {
       await client.transaction(async (transactionManager) => {
         for (const override of normalizedOverrides) {
-          if (override.isAvailable === null && override.nightlyPrice === null) {
+          if (
+            override.isAvailable === null &&
+            override.nightlyPrice === null &&
+            override.stopSell === null &&
+            override.closedToArrival === null &&
+            override.closedToDeparture === null &&
+            override.minStay === null &&
+            override.maxStay === null
+          ) {
             await transactionManager.query(
               `
                 DELETE FROM ${tableName}
@@ -215,13 +269,29 @@ export class PropertyCalendarOverrideRepository {
           await transactionManager.query(
             `
               INSERT INTO ${tableName}
-                (property_id, calendar_date, is_available, nightly_price, updated_at)
+                (
+                  property_id,
+                  calendar_date,
+                  is_available,
+                  nightly_price,
+                  stop_sell,
+                  closed_to_arrival,
+                  closed_to_departure,
+                  min_stay,
+                  max_stay,
+                  updated_at
+                )
               VALUES
-                ($1, $2, $3, $4, $5)
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
               ON CONFLICT (property_id, calendar_date)
               DO UPDATE SET
                 is_available = EXCLUDED.is_available,
                 nightly_price = EXCLUDED.nightly_price,
+                stop_sell = EXCLUDED.stop_sell,
+                closed_to_arrival = EXCLUDED.closed_to_arrival,
+                closed_to_departure = EXCLUDED.closed_to_departure,
+                min_stay = EXCLUDED.min_stay,
+                max_stay = EXCLUDED.max_stay,
                 updated_at = EXCLUDED.updated_at
             `,
             [
@@ -229,6 +299,11 @@ export class PropertyCalendarOverrideRepository {
               override.calendarDate,
               override.isAvailable,
               override.nightlyPrice,
+              override.stopSell,
+              override.closedToArrival,
+              override.closedToDeparture,
+              override.minStay,
+              override.maxStay,
               updatedAt,
             ]
           );

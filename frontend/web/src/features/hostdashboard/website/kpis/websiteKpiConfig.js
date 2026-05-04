@@ -25,14 +25,28 @@ const formatters = Object.freeze({
   eur: createCurrencyFormatter(),
 });
 
-const createMetricCard = ({ id, title, value, meta }) => ({ id, title, value, meta });
+const createMetricCard = ({ id, title, value, meta, sampleLabel = "" }) => ({
+  id,
+  title,
+  value,
+  meta,
+  sampleLabel,
+});
 
-const createMetricCardDefinition = (id, title, valueKey, meta, formatterKey = null) => ({
+const createMetricCardDefinition = (
+  id,
+  title,
+  valueKey,
+  meta,
+  formatterKey = null,
+  sampleLabel = ""
+) => ({
   id,
   title,
   valueKey,
   meta,
   formatterKey,
+  sampleLabel,
 });
 
 const createResearchKpiDefinition = (id, criteria, valueKey, formatterKey, note) => ({
@@ -57,6 +71,10 @@ const formatKpiValue = (value, formatterKey = null) => {
 
 const resolveMetricMeta = (meta, websiteKpis) =>
   typeof meta === "function" ? meta(websiteKpis) : meta;
+const resolveMetricSampleLabel = (sampleLabel, websiteKpis) =>
+  typeof sampleLabel === "function" ? sampleLabel(websiteKpis) : sampleLabel;
+
+const formatSampleLabel = (count) => `n=${Number(count) || 0}`;
 
 const buildMetricCardsFromDefinitions = (definitions, websiteKpis) =>
   definitions.map((definition) =>
@@ -65,6 +83,7 @@ const buildMetricCardsFromDefinitions = (definitions, websiteKpis) =>
       title: definition.title,
       value: formatKpiValue(websiteKpis[definition.valueKey], definition.formatterKey),
       meta: resolveMetricMeta(definition.meta, websiteKpis),
+      sampleLabel: resolveMetricSampleLabel(definition.sampleLabel, websiteKpis),
     })
   );
 
@@ -92,21 +111,24 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "Time to first preview p95",
     "timeToFirstPreviewP95",
     "95th percentile from build click until preview rendered and usable",
-    "secondsFromMs"
+    "secondsFromMs",
+    (websiteKpis) => formatSampleLabel(websiteKpis.timeToFirstPreviewSampleCount)
   ),
   createMetricCardDefinition(
     "build-success-rate",
     "Build success rate",
     "buildSuccessRate",
     "Successful website builds divided by all recorded build starts",
-    "percentage"
+    "percentage",
+    (websiteKpis) => formatSampleLabel(websiteKpis.buildSuccessRateSampleCount)
   ),
   createMetricCardDefinition(
     "build-failure-rate",
     "Build failure rate",
     "buildFailureRate",
     "Build attempts that ended in a recorded failure",
-    "percentage"
+    "percentage",
+    (websiteKpis) => formatSampleLabel(websiteKpis.buildFailureRateSampleCount)
   ),
   createMetricCardDefinition(
     "build-abandonment-rate",
@@ -114,7 +136,8 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "buildAbandonmentRate",
     (websiteKpis) =>
       `${websiteKpis.buildAbandonedCount} attempts passed the 10 minute threshold without success or failure`,
-    "percentage"
+    "percentage",
+    (websiteKpis) => formatSampleLabel(websiteKpis.buildAbandonmentRateSampleCount)
   ),
   createMetricCardDefinition(
     "draft-saves",
@@ -160,7 +183,8 @@ const SURFACE_PERFORMANCE_DEFINITIONS = Object.freeze({
         "site_lcp_mobile_p75",
         "previewSiteLcpMobileP75",
         "75th percentile Largest Contentful Paint for preview visits on mobile.",
-        "secondsFromMs"
+        "secondsFromMs",
+        (websiteKpis) => formatSampleLabel(websiteKpis.previewSiteLcpMobileSampleCount)
       ),
     ],
   },
@@ -174,7 +198,8 @@ const SURFACE_PERFORMANCE_DEFINITIONS = Object.freeze({
         "site_lcp_mobile_p75",
         "liveSiteLcpMobileP75",
         "No live standalone site telemetry is being recorded yet.",
-        "secondsFromMs"
+        "secondsFromMs",
+        (websiteKpis) => formatSampleLabel(websiteKpis.liveSiteLcpMobileSampleCount)
       ),
     ],
   },

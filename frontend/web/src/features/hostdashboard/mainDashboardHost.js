@@ -113,8 +113,9 @@ function MainDashboardHost() {
           <Route path="finance" element={<HostFinanceTab />} />
           <Route path="listings" element={<HostListings />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
+          <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
           <Route path="website/:propertyId" element={<WebsiteEditorPage />} />
-          <Route path="website-kpis" element={<WebsiteKpiDashboardPage />} />
+          <Route path="website-kpis" element={<Navigate to="../website/kpis" replace />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
 

@@ -6,12 +6,18 @@ export const WEBSITE_KPI_COUNT_FIELD_KEYS = Object.freeze([
   "buildSucceededCount",
   "buildFailedCount",
   "buildAbandonedCount",
+  "buildSuccessRateSampleCount",
+  "buildFailureRateSampleCount",
+  "buildAbandonmentRateSampleCount",
+  "timeToFirstPreviewSampleCount",
   "publicPreviewViewCount",
   "uniquePreviewedWebsiteCount",
   "livePreviewUpdateCount",
   "deletedWebsiteCount",
   "lastPublicPreviewAt",
   "lastLivePreviewUpdateAt",
+  "previewSiteLcpMobileSampleCount",
+  "liveSiteLcpMobileSampleCount",
 ]);
 
 export const WEBSITE_KPI_NULLABLE_FIELD_KEYS = Object.freeze([

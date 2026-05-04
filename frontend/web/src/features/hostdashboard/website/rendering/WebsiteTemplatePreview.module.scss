@@ -392,6 +392,20 @@
   gap: 6px;
 }
 
+.trustSignalsCardMetaIcon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #dce8c9;
+  color: #35511f;
+}
+
+.trustSignalsCardMetaIconGlyph {
+  display: block;
+}
+
 .trustSignalsCardMeta span {
   width: 28px;
   height: 6px;

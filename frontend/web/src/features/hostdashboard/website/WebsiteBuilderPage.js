@@ -23,12 +23,14 @@ import {
   createWebsiteBuildAttempt,
   getBuildAttemptDurationMs,
   waitForNextPaint,
-  WEBSITE_BUILD_FAILED_EVENT,
   WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
+} from "./analytics/websiteBuildAnalytics";
+import {
+  WEBSITE_BUILD_FAILED_EVENT,
   WEBSITE_BUILD_STARTED_EVENT,
   WEBSITE_BUILD_SUCCEEDED_EVENT,
   WEBSITE_PREVIEW_READY_EVENT,
-} from "./analytics/websiteBuildAnalytics";
+} from "./analytics/websiteAnalyticsEventTypes";
 import {
   deleteWebsiteDraft,
   fetchWebsiteDrafts,
@@ -38,6 +40,7 @@ import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
+import { WEBSITE_DRAFT_DELETE_REASONS } from "./websiteDeleteReasons";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -54,14 +57,6 @@ const WORKSPACE_TAB_BUILDER = "builder";
 const WORKSPACE_TAB_WEBSITES = "websites";
 const DELETE_WEBSITE_DRAFT_STEP_REASON = "reason";
 const DELETE_WEBSITE_DRAFT_STEP_CONFIRM = "confirm";
-const WEBSITE_DRAFT_DELETE_REASONS = Object.freeze([
-  "I no longer need this website.",
-  "I built it for the wrong listing.",
-  "The imported content does not look right.",
-  "I want to try a different template.",
-  "I prefer to manage bookings without a standalone website.",
-  "Other",
-]);
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
@@ -290,16 +285,19 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
       trustCards: [
         {
           id: "draft-summary",
+          iconAmenityId: "7",
           title: "Draft summary",
           description: subtitle || "Saved website draft ready to continue editing.",
         },
         {
           id: "draft-location",
+          iconAmenityId: "57",
           title: "Location context",
           description: locationLabel || "Location details are attached to this saved website draft.",
         },
         {
           id: "draft-template",
+          iconAmenityId: "55",
           title: "Template state",
           description: String(draft?.templateKey || "Template selected").trim(),
         },
@@ -713,7 +711,7 @@ function WebsiteBuilderPage() {
     });
 
     websiteBuildAttemptRef.current = nextAttempt;
-    void recordWebsiteHostAnalyticsEventSafely({
+    recordWebsiteHostAnalyticsEventSafely({
       propertyId: nextAttempt.propertyId,
       eventType: WEBSITE_BUILD_STARTED_EVENT,
       payload: {
@@ -753,7 +751,7 @@ function WebsiteBuilderPage() {
     if (websiteBuildAttemptRef.current?.attemptId === attempt.attemptId) {
       websiteBuildAttemptRef.current = null;
     }
-    void recordWebsiteHostAnalyticsEventSafely({
+    recordWebsiteHostAnalyticsEventSafely({
       propertyId: attempt.propertyId,
       draftId,
       eventType,

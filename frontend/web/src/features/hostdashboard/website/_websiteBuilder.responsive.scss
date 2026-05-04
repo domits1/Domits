@@ -64,6 +64,25 @@
     flex-direction: column;
   }
 
+  .kpiToolbar {
+    align-items: stretch;
+  }
+
+  .kpiToolbarPrimary {
+    flex-basis: auto;
+  }
+
+  .kpiViewTabRow {
+    width: 100%;
+    justify-content: space-between;
+    overflow-x: auto;
+  }
+
+  .kpiViewTabButton {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
   .selectionPreview {
     justify-items: center;
   }

@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
+import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
   TemplateAvailabilityCalendar,
@@ -56,23 +57,44 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
 
         {showTrustCards ? (
           <div className={styles.trustSignalsStack}>
-            {model.trustCards.slice(0, 2).map((card, index) => (
-              <article
-                key={card.id}
-                {...getInteractiveTargetProps(styles.trustSignalsCard, onSelectTarget, {
-                  sectionId: "trustCards",
-                  targetId: `trustCards.${index}`,
-                }, activeTargetId)}
-              >
-                <div className={styles.trustSignalsCardMeta}>
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <p className={styles.signalTitle}>{card.title}</p>
-                <p>{card.description}</p>
-              </article>
-            ))}
+            {model.trustCards.slice(0, 2).map((card, index) => {
+              const cardIcon = getAmenityIconNode(card.iconAmenityId, {
+                className: styles.trustSignalsCardMetaIconGlyph,
+                "aria-hidden": true,
+                focusable: "false",
+                sx: {
+                  color: "#54703b",
+                  fontSize: 20,
+                  padding: 0,
+                },
+              });
+
+              return (
+                <article
+                  key={card.id}
+                  {...getInteractiveTargetProps(styles.trustSignalsCard, onSelectTarget, {
+                    sectionId: "trustCards",
+                    targetId: `trustCards.${index}`,
+                  }, activeTargetId)}
+                >
+                  <div className={styles.trustSignalsCardMeta}>
+                    {cardIcon ? (
+                      <span className={styles.trustSignalsCardMetaIcon} aria-hidden="true">
+                        {cardIcon}
+                      </span>
+                    ) : (
+                      <>
+                        <span />
+                        <span />
+                        <span />
+                      </>
+                    )}
+                  </div>
+                  <p className={styles.signalTitle}>{card.title}</p>
+                  <p>{card.description}</p>
+                </article>
+              );
+            })}
           </div>
         ) : null}
 
