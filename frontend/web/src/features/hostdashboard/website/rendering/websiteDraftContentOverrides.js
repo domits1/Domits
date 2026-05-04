@@ -42,11 +42,13 @@ const mergeCopyItems = (baseItems = [], overrideItems = []) =>
     const overrideItem = overrideItems[index] || {};
     const title = cleanText(overrideItem.title);
     const description = cleanText(overrideItem.description);
+    const iconAmenityId = cleanText(overrideItem.iconAmenityId);
 
     return {
       ...baseItem,
       title: title || baseItem.title,
       description: description || baseItem.description,
+      iconAmenityId: iconAmenityId || cleanText(baseItem.iconAmenityId),
     };
   });
 
@@ -151,6 +153,7 @@ export const buildWebsiteDraftEditorValues = (model) => ({
   },
   trustCards: (Array.isArray(model?.trustCards) ? model.trustCards : []).map((card) => ({
     id: String(card?.id || card?.title || ""),
+    iconAmenityId: String(card?.iconAmenityId || ""),
     title: String(card?.title || ""),
     description: String(card?.description || ""),
   })),
@@ -232,6 +235,7 @@ const buildCopyCollectionPatch = (baseItems, editorItems) =>
   (Array.isArray(baseItems) ? baseItems : []).map((baseItem, index) => {
     const normalizedTitle = cleanText(editorItems?.[index]?.title);
     const normalizedDescription = cleanText(editorItems?.[index]?.description);
+    const normalizedIconAmenityId = cleanText(editorItems?.[index]?.iconAmenityId);
     const itemPatch = {};
 
     if (normalizedTitle && normalizedTitle !== cleanText(baseItem?.title)) {
@@ -240,6 +244,10 @@ const buildCopyCollectionPatch = (baseItems, editorItems) =>
 
     if (normalizedDescription && normalizedDescription !== cleanText(baseItem?.description)) {
       itemPatch.description = normalizedDescription;
+    }
+
+    if (normalizedIconAmenityId && normalizedIconAmenityId !== cleanText(baseItem?.iconAmenityId)) {
+      itemPatch.iconAmenityId = normalizedIconAmenityId;
     }
 
     return itemPatch;

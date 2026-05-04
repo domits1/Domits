@@ -318,6 +318,62 @@ Open risks / Next:
 
 Evidence (commit(s), file(s), docs):
 - Acceptance verification notes:
+
+## [2026-04-24] Website KPI tracking and delete-reason analytics
+Context:
+The standalone website workspace had draft persistence and preview sharing, but no operational visibility into how hosts were using website drafts or why they removed them.
+
+Implementation:
+- Added standalone website event storage:
+  - `main.standalone_site_event`
+- Added repository-backed KPI aggregation for standalone website metrics, later split into global and host-scoped use cases.
+- Added PropertyHandler route:
+  - `GET /property/website/kpis`
+- Started recording website events for:
+  - draft creation
+  - draft save
+  - shared preview open
+  - live preview update
+  - website deletion
+- Wired selected website delete reasons from frontend into backend delete event payloads.
+- Added KPI overview cards plus deletion-reason breakdown on a dedicated host dashboard route for standalone website analytics.
+- Tightened website-specific backend 500 responses so internal error messages are no longer returned directly to the client.
+
+Decision / Rationale:
+- Website analytics should remain standalone-feature scoped rather than being mixed into existing property or platform KPI tables.
+- Event writes are best-effort; analytics must never block draft save/delete/preview flows.
+- Delete reasons are useful product signal, but they should be stored as website events instead of ad hoc frontend-only state.
+- The first KPI dashboard is platform-wide and intended for internal/admin analysis. Host-specific website analytics can later build on the same event stream with a scoped endpoint.
+
+AWS / Data impact:
+- New Aurora table required in schema `main`:
+  - `standalone_site_event`
+- Acceptance API Gateway must expose:
+  - `GET /property/website/kpis`
+  - `OPTIONS /property/website/kpis`
+- Existing website draft routes remain unchanged.
+
+Validation:
+- Backend routing unit test extended to cover `/property/website/kpis`.
+- Frontend production build and website workspace flow to be revalidated after deploy.
+
+Open risks / Next:
+- KPI data is only as complete as the currently tracked event types; future live-site/custom-domain flows should emit their own events instead of overloading draft events.
+- The KPI route depends on `main.standalone_site_event`; deploying backend/frontend before that table exists will surface KPI load failures in the dashboard.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/ORM/migrations/20260424_standalone_site_event.js`
+  - `backend/ORM/models/Standalone_Site_Event.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteDraftService.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
   - table `main.standalone_site_draft`
   - index `standalone_site_draft_property_unique`
   - API Gateway methods for `/property/website/draft(s)`
@@ -1131,3 +1187,283 @@ Evidence (commit(s), file(s), docs):
   - `backend/functions/PropertyHandler/data/repository/standaloneSiteDraftRepository.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
   - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-29] Trust-card icons made editor-configurable from amenities registry
+Context:
+Quick-scan and trust-card icons were still hardcoded in the template layer. That meant hosts could not change them from the editor, and newly added amenity icons would never become selectable for standalone websites.
+
+Implementation:
+- Extended the trust-card content model with `iconAmenityId`.
+- Added icon defaults to the shared trust-card builders so existing drafts and previews still render meaningful icons.
+- Added an editor-side icon selector for templates whose trust-card sections render icons.
+- Sourced icon choices directly from the shared amenities registry instead of creating a separate website-only icon catalogue.
+- Updated the panorama and trust-signals templates to render trust-card icons from the selected amenity icon id.
+- Hardened the shared `IconWrapper` so icon overrides such as `className`, `sx`, and accessibility props are forwarded correctly.
+
+Decision / Rationale:
+- Icon choice belongs to the same editable content contract as trust-card title and description.
+- Reusing the amenities registry avoids duplication and keeps standalone website icon availability automatically aligned with the rest of Domits.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- This slice is frontend-only and persists through existing draft content overrides.
+
+Validation:
+- Frontend production build passed.
+
+Open risks / Next:
+- If a future template needs card-specific icon sizing or grouping rules that differ from the current amenity registry, those rules should be added as presentation metadata rather than introducing a second icon source of truth.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/store/iconWrapper.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/amenityIconRegistry.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/buildWebsiteTemplateModel.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/websiteDraftContentOverrides.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/templatePropTypes.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/websiteEditorConfig.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+
+## [2026-04-28] Research KPI catalogue surfaced in dashboard
+Context:
+The KPI dashboard already exposed real standalone website usage metrics, but it still missed the broader KPI set defined in the research. That made implementation and evaluation drift apart.
+
+Implementation:
+- Extended the dedicated KPI dashboard UI to show the research KPI set explicitly:
+  - `time_to_publish_p95`
+  - `cost_per_active_site_per_month`
+  - `site_lcp_mobile_p75`
+  - `fallback_subdomain_availability`
+  - `quote_to_charge_mismatch_rate`
+  - `booking_api_error_rate`
+  - `booking_funnel_completion_rate`
+  - `custom_domain_setup_success_rate`
+- Added criteria tags so each KPI stays linked to the research categories.
+- Marked non-instrumented KPIs clearly as pending instead of inventing placeholder values.
+- Kept the current global usage metrics and deletion-reason analytics unchanged.
+
+Decision / Rationale:
+- The dashboard should reflect the research model honestly.
+- Showing KPI names now is useful, but only if the page makes it explicit which metrics are truly instrumented and which still require platform work.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- This slice is frontend-only and consumes the existing KPI endpoint.
+
+Validation:
+- Frontend production build passed.
+
+Open risks / Next:
+- When publish flow, public domains, performance telemetry, and booking flow are implemented, the backend KPI contract should be extended so these research KPIs can move from pending to real measured values.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-28] KPI dashboard loading state aligned with host dashboard patterns
+Context:
+The dedicated standalone website KPI dashboard already used the shared pulse-bars loader, but it still replaced too much of the page during the initial fetch. That made the page feel like a blank state instead of a stable dashboard shell with loading metrics.
+
+Implementation:
+- Kept the KPI dashboard shell visible immediately on route entry.
+- Moved the loading experience inside the KPI cards and deletion-reason panel so the page now shows pulse-bar loaders where values are still being fetched.
+- Disabled the refresh action while the initial KPI request is in flight.
+
+Decision / Rationale:
+- This matches the interaction pattern already used across host dashboard surfaces such as stats cards, calendar, and website builder flows.
+- Users should see the KPI layout immediately, with only the data points in a loading state.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- This slice is frontend-only.
+
+Validation:
+- Frontend production build passed.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-29] Builder timing and preview-performance KPIs instrumented
+Context:
+The KPI dashboard already tracked draft saves, preview opens, live-preview updates, and deletion reasons, but it still could not answer two practical questions: how long it takes a host to get a usable first preview, and whether the preview surface itself performs acceptably on mobile.
+
+Implementation:
+- Added a dedicated website analytics ingest route:
+  - `POST /property/website/event`
+- Added explicit builder analytics events for:
+  - `WEBSITE_BUILD_STARTED`
+  - `WEBSITE_PREVIEW_READY`
+  - `WEBSITE_BUILD_SUCCEEDED`
+  - `WEBSITE_BUILD_FAILED`
+- Added public preview performance telemetry event:
+  - `SITE_LCP_RECORDED`
+- Extended KPI aggregation so the dashboard now calculates:
+  - `build_started_count`
+  - `build_succeeded_count`
+  - `build_failure_rate`
+  - `build_success_rate`
+  - `build_abandonment_rate`
+  - `time_to_first_preview_p95`
+  - `previewSiteLcpMobileP75`
+  - `liveSiteLcpMobileP75`
+- Added a dedicated `Preview / Live` surface-performance section to the KPI dashboard so preview LCP can be shown now without pretending the live published surface already exists.
+
+Decision / Rationale:
+- Server-side timestamps alone are not enough for host-perceived build timing or page-performance metrics.
+- A small, explicit event-ingest path is a better contract than inferring analytics from unrelated draft timestamps.
+- Preview and live performance must stay separated because they are different surfaces with different routing/runtime assumptions.
+
+AWS / Data impact:
+- No new Aurora columns or tables.
+- The existing `main.standalone_site_event` table is reused.
+- API Gateway must expose `POST /property/website/event` plus `OPTIONS /property/website/event`.
+- `POST /property/website/event` should remain unauthenticated at the gateway because preview-surface telemetry is posted from the public preview page, while host-originated builder events still authorize inside Lambda.
+
+Validation:
+- Backend routing tests passed.
+- Frontend production build passed.
+
+Open risks / Next:
+- `build_abandonment_rate` is derived from build starts that have no success/failure event after a time threshold, so it is a heuristic rather than a perfectly explicit user intent signal.
+- Live-site LCP remains pending until the published public surface exists and emits the same telemetry contract.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsService.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-29] Icon picker alignment and responsive panel scaling
+Context:
+The first icon-picker overlay worked functionally, but the selected icon trigger sat left-aligned inside the editor field and the overlay panel behaved too much like a fixed desktop sheet on smaller devices.
+
+Implementation:
+- Centered the selected trust-card icon trigger within its editable field.
+- Increased the preview icon touch target slightly so the control reads more like a deliberate picker trigger.
+- Switched the icon-picker dialog to tighter viewport-based sizing using `100dvh` constraints and adaptive padding.
+- Added mobile-specific sizing rules so the overlay panel and icon tiles shrink more predictably on narrow screens.
+
+Decision / Rationale:
+- The icon trigger should visually read as a single centered selection control, not as left-aligned stray content.
+- Overlay sizing must respect smaller screens without forcing desktop spacing into a constrained viewport.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- Frontend-only styling adjustment on top of the existing icon-picker flow.
+
+Validation:
+- Frontend production build passed.
+
+Open risks / Next:
+- If the icon registry grows significantly, consider grouping or lightweight filtering before increasing tile density further.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-04-29] Icon picker deduplicated by glyph and converted to viewport-safe rail
+Context:
+The first icon picker still surfaced repeated icons because it iterated over amenity records rather than unique icon glyphs, and the small-screen overlay could clip awkwardly because the scroll behavior was tied directly to the grid instead of a dedicated viewport rail.
+
+Implementation:
+- Deduplicated icon picker options by underlying Domits icon component rather than by amenity id.
+- Kept all amenity ids valid for rendering, but exposed only one representative option per unique icon glyph in the editor picker.
+- Split the picker into a horizontal scroll viewport with an inner max-content grid so narrow devices can scroll the icon set cleanly.
+- Allowed the dialog itself to scroll within viewport-safe `100dvh` bounds instead of behaving like a rigid desktop panel.
+
+Decision / Rationale:
+- Hosts should choose from unique visuals, not from a noisy list of duplicate amenity records that happen to share the same icon.
+- A dedicated scroll viewport is the more reliable pattern for responsive overlay behavior than making the grid container itself shoulder both layout and scrolling.
+
+AWS / Data impact:
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- Frontend-only refinement on top of the existing icon-picker override path.
+
+Validation:
+- Frontend production build passed.
+
+Open risks / Next:
+- If product later wants semantic groupings in the icon picker, grouping should still happen on top of the deduplicated icon catalogue rather than reintroducing repeated glyphs.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/rendering/amenityIconRegistry.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-05-04] KPI performance metrics segmented by mobile, tablet, and desktop
+Context:
+The standalone website KPI dashboard already exposed preview/live performance as a separate category, but the actual telemetry and aggregation were still biased toward mobile-only LCP. That was too narrow to support useful cross-device analysis.
+
+Implementation:
+- Expanded preview telemetry so `SITE_LCP_RECORDED` events now classify viewport as:
+  - `mobile`
+  - `tablet`
+  - `desktop`
+- Extended backend KPI aggregation to keep separate p75 and sample counts for each:
+  - preview mobile/tablet/desktop
+  - live mobile/tablet/desktop
+- Updated the KPI dashboard performance view to use nested tabs:
+  - surface: `Preview` / `Live`
+  - viewport: `Mobile` / `Tablet` / `Desktop`
+- Deliberately did not add an `All` bucket, because mixing heterogeneous viewport performance into one p75 would make the metric less honest and harder to interpret.
+
+Decision / Rationale:
+- Device class materially affects LCP. A single mixed number looks neat but hides the very variance the KPI is supposed to surface.
+- The clean model is segmentation first, aggregation second.
+
+AWS / Data impact:
+- No new Aurora table or column change.
+- No new API Gateway route.
+- Existing `/property/website/event` ingestion path now accepts `tablet` in addition to `mobile` and `desktop`.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Open risks / Next:
+- Existing historical preview telemetry remains mobile-heavy until new tablet/desktop visits are recorded.
+- Live-site viewport metrics will continue to show pending/no data until the real published live-site surface emits telemetry.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsEventTypes.js`
+  - `frontend/web/src/features/hostdashboard/website/analytics/websitePreviewAnalytics.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/kpis/websiteKpiFields.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/websiteKpiConfig.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`

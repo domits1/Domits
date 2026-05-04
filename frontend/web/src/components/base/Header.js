@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
+import ReactDOM from "react-dom";
 import logo from "../../images/logo.svg";
 import nineDots from "../../images/dots-grid.svg";
 import profile from "../../images/profile-icon.svg";
@@ -27,28 +28,28 @@ function Header({ setSearchResults, setLoading }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { setFlowState } = useContext(FlowContext);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [group, setGroup] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [currentView, setCurrentView] = useState("guest");
+  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
-  const hiddenSearchPaths = [
-    "/",
-    // Add more paths here as needed
-  ];
+  const [isScrolled, setIsScrolled] = useState(false);
+
   const { language, setLanguage } = useContext(LanguageContext);
+  const components = contentByLanguage[language]?.component;
+
+  const hiddenSearchPaths = ["/"];
+  const isListingDetails = location.pathname === "/listingdetails";
+
   const languages = [
     { code: "en", label: "English", emoji: "\uD83C\uDDEC\uD83C\uDDE7" },
     { code: "nl", label: "Nederlands", emoji: "\uD83C\uDDF3\uD83C\uDDF1" },
     { code: "de", label: "Deutsch", emoji: "\uD83C\uDDE9\uD83C\uDDEA" },
     { code: "es", label: "Español", emoji: "\uD83C\uDDEA\uD83C\uDDF8" },
   ];
-
-  const components = contentByLanguage[language]?.component;
-
-  const [isScrolled, setIsScrolled] = useState(false);
-  const isListingDetails = location.pathname === "/listingdetails";
 
   useEffect(() => {
     if (!isListingDetails) {
@@ -61,7 +62,7 @@ function Header({ setSearchResults, setLoading }) {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    handleScroll();
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -74,6 +75,10 @@ function Header({ setSearchResults, setLoading }) {
     } else {
       document.body.classList.remove("header-scrolled");
     }
+
+    return () => {
+      document.body.classList.remove("header-scrolled");
+    };
   }, [isScrolled]);
 
   useEffect(() => {
@@ -88,8 +93,10 @@ function Header({ setSearchResults, setLoading }) {
     };
 
     update();
+
     const observer = new ResizeObserver(update);
     observer.observe(header);
+
     return () => observer.disconnect();
   }, []);
 
@@ -102,37 +109,61 @@ function Header({ setSearchResults, setLoading }) {
   }, [location]);
 
   useEffect(() => {
+    if (!showSwitchConfirm) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setShowSwitchConfirm(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [showSwitchConfirm]);
+
+  useEffect(() => {
     const onAuthChanged = () => {
       checkAuthentication();
     };
+
     window.addEventListener("authChanged", onAuthChanged);
+
     return () => {
       window.removeEventListener("authChanged", onAuthChanged);
     };
   }, []);
 
-  // useEffect(() => {
-  //     // Voeg het Trustpilot-script toe
-  //     const script = document.createElement('script');
-  //     script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
-  //     script.async = true;
-  //     document.head.appendChild(script);
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      const dropdown = document.querySelector(".personalMenuDropdown");
 
-  //     // Verwijder het script bij demontage van de component
-  //     return () => {
-  //         document.head.removeChild(script);
-  //     };
-  // }, []);
+      if (dropdown && !dropdown.contains(event.target)) {
+        setDropdownVisible(false);
+      }
+    };
+
+    document.addEventListener("click", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("click", handleOutsideClick);
+    };
+  }, []);
 
   const checkAuthentication = async () => {
     try {
-      const session = await Auth.currentSession();
       const user = await Auth.currentAuthenticatedUser();
+
       setIsLoggedIn(true);
+
       const userAttributes = user.attributes;
-      setGroup(userAttributes["custom:group"]);
+      const userGroup = userAttributes["custom:group"];
+
+      setGroup(userGroup);
       setUsername(userAttributes["given_name"]);
-      setCurrentView(userAttributes["custom:group"] === "Host" ? "host" : "guest");
+      setCurrentView(userGroup === "Host" ? "host" : "guest");
     } catch (error) {
       setIsLoggedIn(false);
       console.error("Error logging in:", error);
@@ -142,58 +173,47 @@ function Header({ setSearchResults, setLoading }) {
   const handleLogout = async () => {
     try {
       await Auth.signOut();
+
       setIsLoggedIn(false);
       sessionStorage.removeItem("chatOpened");
       window.location.reload();
+
       console.log("User logged out successfully");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
-  const getDropdownElement = () => document.querySelector(".header-personal-menu-dropdown");
-  const getDropdownContentElement = () => document.querySelector(".header-personal-menu-dropdown-content");
-
-  document.addEventListener("click", function (event) {
-    const dropdown = getDropdownElement();
-    const dropdownContent = getDropdownContentElement();
-
-    if (dropdown && dropdownContent) {
-      const isClickInside = dropdown.contains(event.target);
-
-      if (!isClickInside) {
-        dropdownContent.classList.remove("show");
-      }
-    }
-  });
-
   const toggleDropdown = () => {
-    setDropdownVisible(!dropdownVisible);
+    setDropdownVisible((prev) => !prev);
   };
 
   const navigateToLogin = () => {
     navigate("/login");
   };
+
   const navigateToRegister = () => {
     navigate("/register");
   };
+
   const navigateToLanding = () => {
     navigate("/landing");
   };
-  const navigateToWhyDomits = () => {
-    navigate("/why-domits");
-  };
+
   const navigateToNinedots = () => {
     navigate("/travelinnovation");
   };
+
   const navigateToGuestDashboard = () => {
     setCurrentView("guest");
     navigate("/guestdashboard");
   };
+
   const navigateToHostDashboard = () => {
     setCurrentView("host");
     navigate("/hostdashboard");
   };
+
   const navigateToMessages = () => {
     if (currentView === "host") {
       navigate("/hostdashboard/messages");
@@ -201,12 +221,7 @@ function Header({ setSearchResults, setLoading }) {
       navigate("/guestdashboard/messages");
     }
   };
-  const navigateToPayments = () => {
-    navigate("/guestdashboard/payments");
-  };
-  const navigateToReviews = () => {
-    navigate("/guestdashboard/reviews");
-  };
+
   const navigateToSettings = () => {
     navigate("/guestdashboard/settings");
   };
@@ -216,12 +231,23 @@ function Header({ setSearchResults, setLoading }) {
       setFlowState({ isHost: true });
       navigate("/landing");
     } else {
-      if (currentView === "host") {
-        navigateToGuestDashboard();
-      } else {
-        navigateToHostDashboard();
-      }
+      setShowSwitchConfirm(true);
     }
+  };
+
+  const confirmSwitch = () => {
+    setShowSwitchConfirm(false);
+
+    if (currentView === "host") {
+      navigateToGuestDashboard();
+    } else {
+      navigateToHostDashboard();
+    }
+  };
+
+  const toggleSearchBar = (status) => {
+    setActiveSearchBar(status);
+    document.body.style.overflow = status ? "hidden" : "auto";
   };
 
   const renderDropdownMenu = () => {
@@ -231,93 +257,90 @@ function Header({ setSearchResults, setLoading }) {
           <div className="helloUsername">
             {components.user.hello} {username}!
           </div>
+
           <button onClick={navigateToHostDashboard} className="dropdownLoginButton">
             {components.user.dashboard}
           </button>
+
           <button onClick={() => navigate("/hostdashboard/calendar")} className="dropdownLoginButton">
             {components.user.calendar}
           </button>
+
           <button onClick={() => navigate("/hostdashboard/reservations")} className="dropdownLoginButton">
             {components.user.reservations}
           </button>
-          <button onClick={navigateToMessages} className="dropdownLoginButton">
-            {components.user.messages}
-          </button>
-          <button onClick={handleLogout} className="dropdownLogoutButton">
-            {components.user.logout}
-            <img src={logoutArrow} alt="Logout Arrow" />
-          </button>
-        </>
-      );
-    } else {
-      return (
-        <>
-          <div className="helloUsername">
-            {components.user.hello} {username}!
-          </div>
-          <button onClick={navigateToGuestDashboard} className="dropdownLoginButton">
-            {components.user.profile}
-          </button>
-          <button onClick={navigateToMessages} className="dropdownLoginButton">
-            {components.user.messages}
-          </button>
-          {/* <button onClick={navigateToPayments} className="dropdownLoginButton">
-            {components.user.payments}
-          </button> */}
-          {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
-            Reviews 
-          </button> */}
-          <button onClick={navigateToSettings} className="dropdownLoginButton">
-            {components.user.settings}
-          </button>
-          <button onClick={handleLogout} className="dropdownLogoutButton">
-            {components.user.logout}
-            <img src={logoutArrow} alt="Logout Arrow" />
-          </button>
-        </>
-      );
-    }
-  };
 
-  const toggleSearchBar = (status) => {
-    setActiveSearchBar(status);
-    if (status) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
+          <button onClick={navigateToMessages} className="dropdownLoginButton">
+            {components.user.messages}
+          </button>
+
+          <button onClick={navigateToDashboard} className="dropdownLogoutButton dropdown-switch-btn">
+            {components.user.switchToGuest}
+          </button>
+
+          <button onClick={handleLogout} className="dropdownLogoutButton">
+            {components.user.logout}
+            <img src={logoutArrow} alt="Logout Arrow" />
+          </button>
+        </>
+      );
     }
+
+    return (
+      <>
+        <div className="helloUsername">
+          {components.user.hello} {username}!
+        </div>
+
+        <button onClick={navigateToGuestDashboard} className="dropdownLoginButton">
+          {components.user.profile}
+        </button>
+
+        <button onClick={navigateToMessages} className="dropdownLoginButton">
+          {components.user.messages}
+        </button>
+
+        <button onClick={navigateToSettings} className="dropdownLoginButton">
+          {components.user.settings}
+        </button>
+
+        {group === "Host" && (
+          <button onClick={navigateToDashboard} className="dropdownLogoutButton dropdown-switch-btn">
+            {components.user.switchToHost}
+          </button>
+        )}
+
+        <button onClick={handleLogout} className="dropdownLogoutButton">
+          {components.user.logout}
+          <img src={logoutArrow} alt="Logout Arrow" />
+        </button>
+      </>
+    );
   };
 
   return (
-    <header className={`app-header ${isScrolled ? "is-faded" : ""}`}>
-      <nav
-        className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""}`}>
-        <div className="logo">
-          <a href="/">
-            <img src={logo} width={150} alt="Logo" />
-          </a>
-        </div>
+    <>
+      <header className={`app-header ${isScrolled ? "is-faded" : ""}`}>
+        <nav
+          className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${
+            isActiveSearchBar ? "no-scroll" : ""
+          }`}
+        >
+          <div className="logo">
+            <a href="/">
+              <img src={logo} width={150} alt="Logo" />
+            </a>
+          </div>
 
-        {!hiddenSearchPaths.includes(location.pathname) && (
-          <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} toggleBar={toggleSearchBar} />
-        )}
+          {!hiddenSearchPaths.includes(location.pathname) && (
+            <SearchBar
+              setSearchResults={setSearchResults}
+              setLoading={setLoading}
+              toggleBar={toggleSearchBar}
+            />
+          )}
 
-        <div className="language-flags-mobile">
-          {languages.map((lng) => (
-            <button
-              key={lng.code}
-              type="button"
-              aria-label={lng.label}
-              title={lng.label}
-              className={`lang-flag ${language === lng.code ? "active" : ""}`}
-              onClick={() => setLanguage(lng.code)}>
-              {lng.emoji}
-            </button>
-          ))}
-        </div>
-
-        <div className="headerRight">
-          <div className="language-flags">
+          <div className="language-flags-mobile">
             {languages.map((lng) => (
               <button
                 key={lng.code}
@@ -325,57 +348,106 @@ function Header({ setSearchResults, setLoading }) {
                 aria-label={lng.label}
                 title={lng.label}
                 className={`lang-flag ${language === lng.code ? "active" : ""}`}
-                onClick={() => setLanguage(lng.code)}>
+                onClick={() => setLanguage(lng.code)}
+              >
                 {lng.emoji}
               </button>
             ))}
           </div>
-          {!isLoggedIn ? (
-            <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-              {components.user.becomeHost}
+
+          <div className="headerRight">
+            <div className="language-flags">
+              {languages.map((lng) => (
+                <button
+                  key={lng.code}
+                  type="button"
+                  aria-label={lng.label}
+                  title={lng.label}
+                  className={`lang-flag ${language === lng.code ? "active" : ""}`}
+                  onClick={() => setLanguage(lng.code)}
+                >
+                  {lng.emoji}
+                </button>
+              ))}
+            </div>
+
+            {!isLoggedIn ? (
+              <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                {components.user.becomeHost}
+              </button>
+            ) : group === "Host" ? (
+              <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
+                {currentView === "guest" ? components.user.switchToHost : components.user.switchToGuest}
+              </button>
+            ) : (
+              <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                {components.user.becomeHost}
+              </button>
+            )}
+
+            {isLoggedIn && group === "Traveler" && (
+              <button className="headerButtons" onClick={navigateToGuestDashboard}>
+                Go to Dashboard
+              </button>
+            )}
+
+            <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
+              <img src={nineDots} alt="Nine Dots" />
             </button>
-          ) : group === "Host" ? (
-            <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
-              {currentView === "guest" ? `${components.user.switchToHost}` : `${components.user.switchToGuest}`}
-            </button>
-          ) : (
-            <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-              {components.user.becomeHost}
-            </button>
-          )}
-          {isLoggedIn && group === "Traveler" && (
-            <button className="headerButtons" onClick={navigateToGuestDashboard}>
-              Go to Dashboard
-            </button>
-          )}
-          <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
-            <img src={nineDots} alt="Nine Dots" />
-          </button>
-          <div className="personalMenuDropdown">
-            <button className="personalMenu" onClick={toggleDropdown}>
-              <img src={profile} alt="Profile Icon" />
-              <img src={arrowDown} alt="Dropdown Arrow" />
-            </button>
-            <div className={"personalMenuDropdownContent" + (dropdownVisible ? " show" : "")}>
-              {isLoggedIn ? (
-                renderDropdownMenu()
-              ) : (
-                <>
-                  <button onClick={navigateToLogin} className="dropdownLoginButton">
-                    {components.user.login}
-                    <img src={loginArrow} alt="Login Arrow" />
-                  </button>
-                  <button onClick={navigateToRegister} className="dropdownRegisterButton">
-                    {components.user.register}
-                  </button>
-                </>
-              )}
+
+            <div className="personalMenuDropdown">
+              <button className="personalMenu" onClick={toggleDropdown}>
+                <img src={profile} alt="Profile Icon" />
+                <img src={arrowDown} alt="Dropdown Arrow" />
+              </button>
+
+              <div className={"personalMenuDropdownContent" + (dropdownVisible ? " show" : "")}>
+                {isLoggedIn ? (
+                  renderDropdownMenu()
+                ) : (
+                  <>
+                    <button onClick={navigateToLogin} className="dropdownLoginButton">
+                      {components.user.login}
+                      <img src={loginArrow} alt="Login Arrow" />
+                    </button>
+
+                    <button onClick={navigateToRegister} className="dropdownRegisterButton">
+                      {components.user.register}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
-      {isActiveSearchBar && <div className="search-overlay-background" />}
-    </header>
+        </nav>
+
+        {isActiveSearchBar && <div className="search-overlay-background" />}
+      </header>
+
+      {showSwitchConfirm &&
+        ReactDOM.createPortal(
+          <div className="switch-confirm-overlay">
+            <dialog className="switch-confirm-modal" open>
+              <p>
+                {currentView === "host"
+                  ? components.user.switchConfirmToGuest
+                  : components.user.switchConfirmToHost}
+              </p>
+
+              <div className="switch-confirm-buttons">
+                <button className="switch-confirm-yes" onClick={confirmSwitch}>
+                  {components.user.switchConfirmYes}
+                </button>
+
+                <button className="switch-confirm-no" onClick={() => setShowSwitchConfirm(false)}>
+                  {components.user.switchConfirmNo}
+                </button>
+              </div>
+            </dialog>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 

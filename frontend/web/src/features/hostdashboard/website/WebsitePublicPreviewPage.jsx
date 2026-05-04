@@ -7,6 +7,15 @@ import { getWebsiteTemplateById } from "./websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
 import { fetchWebsitePreviewByDraftId } from "./services/websitePublicPreviewService";
+import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
+import {
+  getWebsiteAnalyticsViewport,
+  startWebsitePreviewLcpObserver,
+} from "./analytics/websitePreviewAnalytics";
+import {
+  WEBSITE_ANALYTICS_SURFACE_PREVIEW,
+  WEBSITE_SITE_LCP_RECORDED_EVENT,
+} from "./analytics/websiteAnalyticsEventTypes";
 import { subscribeToWebsitePreviewUpdates } from "./services/websitePreviewSync";
 import styles from "./WebsitePublicPreviewPage.module.scss";
 
@@ -82,6 +91,7 @@ function WebsitePublicPreviewPage() {
   const templateId = payload?.draft?.templateKey || "";
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
+  const canRenderPreview = !loadError && previewModel && TemplateComponent;
 
   useEffect(() => {
     if (!previewModel?.site?.title) {
@@ -90,6 +100,29 @@ function WebsitePublicPreviewPage() {
 
     document.title = `${previewModel.site.title} | Domits preview`;
   }, [previewModel?.site?.title]);
+
+  useEffect(() => {
+    if (!canRenderPreview || !draftId) {
+      return undefined;
+    }
+
+    const viewport = getWebsiteAnalyticsViewport();
+
+    return startWebsitePreviewLcpObserver({
+      enabled: true,
+      onReport: (durationMs) => {
+        void recordPublicWebsiteAnalyticsEventSafely({
+          draftId,
+          eventType: WEBSITE_SITE_LCP_RECORDED_EVENT,
+          payload: {
+            surface: WEBSITE_ANALYTICS_SURFACE_PREVIEW,
+            viewport,
+            durationMs,
+          },
+        });
+      },
+    });
+  }, [canRenderPreview, draftId, refreshVersion]);
 
   if (isLoading) {
     return (
@@ -101,7 +134,6 @@ function WebsitePublicPreviewPage() {
     );
   }
 
-  const canRenderPreview = !loadError && previewModel && TemplateComponent;
   if (canRenderPreview) {
     const shouldShowContactWidget = previewModel.visibility?.chatWidget ?? true;
 

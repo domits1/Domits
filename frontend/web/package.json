@@ -104,6 +104,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.7",
     "eslint-config-react-app": "^7.0.1",
+    "framer-motion": "^12.38.0",
     "graphql": "^16.9.0",
     "immer": "^10.0.4",
     "lucide-react": "^0.503.0",

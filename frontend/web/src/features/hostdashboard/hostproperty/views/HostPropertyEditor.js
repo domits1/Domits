@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Auth } from "aws-amplify";
+import { useSetLiveEligibility } from "../../hooks/useSetLiveEligibility";
 import ClipLoader from "react-spinners/ClipLoader";
 import styles from "../../HostProperty.module.css";
 import amenitiesCatalogue from "../../../../store/amenities";
@@ -85,11 +87,13 @@ export default function HostProperty() {
   const propertyId = params.get("ID");
   const photoInputRef = useRef(null);
 
+  const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("INACTIVE");
+  const [bookingType, setBookingType] = useState("direct");
   const [selectedTab, setSelectedTab] = useState("Overview");
   const [hostProperties, setHostProperties] = useState([]);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState([]);
@@ -154,6 +158,26 @@ export default function HostProperty() {
   const bypassUnsavedGuardRef = useRef(false);
   const pendingNavigationActionRef = useRef(null);
   const isDevelopment = process.env.NODE_ENV === "development";
+
+  const { liveEligibility, liveEligibilityLoading, fetchVerificationStatus } = useSetLiveEligibility({ userId });
+
+  useEffect(() => {
+    const loadUserId = async () => {
+      try {
+        const userInfo = await Auth.currentUserInfo();
+        setUserId(userInfo?.attributes?.sub || null);
+      } catch {
+        setUserId(null);
+      }
+    };
+    loadUserId();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchVerificationStatus();
+    }
+  }, [fetchVerificationStatus, userId]);
 
   const amenitiesByCategory = useMemo(() => {
     return amenitiesCatalogue.reduce((categories, amenity) => {
@@ -255,6 +279,7 @@ export default function HostProperty() {
         }
         const fetchedPropertyData = extractFetchedPropertyData(data, hostPropertiesData);
         setStatus(fetchedPropertyData.status);
+        setBookingType(fetchedPropertyData.bookingType || "direct");
         setForm(fetchedPropertyData.form);
         setCapacity(fetchedPropertyData.capacity);
         setAddress(fetchedPropertyData.address);
@@ -545,6 +570,7 @@ export default function HostProperty() {
         checkInDetails,
         policyAvailabilitySettings,
         pricingForm,
+        bookingType,
       });
       setForm(normalizedForm);
       setPricingForm(normalizedPricingForm);
@@ -828,6 +854,18 @@ export default function HostProperty() {
       return;
     }
 
+    if (nextStatus === "ACTIVE") {
+      if (liveEligibilityLoading) {
+        toast.info("Checking verification status. Please try again in a moment.");
+        return;
+      }
+      if (!liveEligibility) {
+        toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
+        navigate("/hostdashboard/finance");
+        return;
+      }
+    }
+
     setStatusUpdating(true);
     setError("");
     try {
@@ -931,6 +969,8 @@ export default function HostProperty() {
             setPolicyAvailabilitySettings={setPolicyAvailabilitySettings}
             updatePolicyRule={updatePolicyRule}
             handleDeletePropertyClick={handleDeletePropertyClick}
+            bookingType={bookingType}
+            onBookingTypeChange={setBookingType}
             saving={isBusy}
           />
           <HostPropertyPhotoDeleteModal

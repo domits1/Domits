@@ -12,7 +12,7 @@ class ReservationRepository {
   // ---------
   // Booking Create (auth)
   // ---------
-  async addBookingToTable(requestBody, userId, hostId, cancellationPolicy = null) {
+  async addBookingToTable(requestBody, userId, hostId, cancellationPolicy, status = "Awaiting Payment", bookingType = "direct") {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
@@ -37,8 +37,8 @@ class ReservationRepository {
         paymentid: "FAILED: ",
         tempPaymentId,
         property_id: requestBody.identifiers.property_Id,
-        status: "Awaiting Payment",
-        cancellation_policy: cancellationPolicy,
+        status: status,
+        bookingtype: bookingType,
       })
       .execute();
     try {
@@ -66,7 +66,7 @@ class ReservationRepository {
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :property_id", { property_id: propertyId })
-      .andWhere("booking.status != :failedStatus", { failedStatus: "Failed" })
+      .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: ["Failed", "Declined", "Inquiry"] })
       .andWhere("booking.arrivaldate < :departureDate", { departureDate: departureDateMs })
       .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs })
       .getCount();
@@ -273,6 +273,27 @@ class ReservationRepository {
     return {
       response: query,
       statusCode: 200,
+    };
+  }
+
+  async getBlockedDatesByPropertyId(propertyId) {
+    const client = await Database.getInstance();
+    const results = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .select(["booking.arrivaldate", "booking.departuredate"])
+      .where("booking.property_id = :propertyId", { propertyId })
+      .andWhere("booking.status NOT IN (:...excludedStatuses)", {
+        excludedStatuses: ["Failed", "Declined", "Inquiry"],
+      })
+      .getMany();
+
+    return {
+      statusCode: 200,
+      response: results.map((b) => ({
+        arrivaldate: b.arrivaldate,
+        departuredate: b.departuredate,
+      })),
     };
   }
 

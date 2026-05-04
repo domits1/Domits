@@ -111,6 +111,11 @@ $breakpoint-sm: 480px;
       }
     }
 
+    > .personalMenuDropdown {
+      margin-left: 10px;
+      align-self: center;
+    }
+
     .headerRight {
       display: flex;
       align-items: center;
@@ -236,11 +241,11 @@ $breakpoint-sm: 480px;
 
     .header-nav {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       grid-template-areas:
-        "logo trigger"
-        "panel panel"
-        "flags flags";
+        "logo trigger profile"
+        "panel panel panel"
+        "flags flags flags";
       align-items: center;
       gap: 14px 12px;
       width: 100%;
@@ -253,6 +258,12 @@ $breakpoint-sm: 480px;
       grid-area: logo;
       margin: 0;
       padding: 0;
+    }
+
+    .header-nav > .personalMenuDropdown {
+      grid-area: profile;
+      display: inline-block;
+      justify-self: end;
     }
 
     .header-nav > .mobile-search-button {
@@ -314,5 +325,71 @@ $breakpoint-sm: 480px;
     background-color: white;
     z-index: 999;
   }
-  
+
+}
+
+.dropdown-switch-btn {
+  @media screen and (min-width: 1251px) {
+    display: none !important;
+  }
+}
+
+.switch-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  dialog.switch-confirm-modal {
+    position: relative;
+    border: none;
+    margin: 0;
+    background: white;
+    border-radius: 14px;
+    padding: 36px 32px;
+    max-width: 380px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+
+    p {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 28px;
+      color: #1a1a1a;
+    }
+
+    .switch-confirm-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+
+      button {
+        padding: 10px 28px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: opacity 0.15s;
+
+        &:hover {
+          opacity: 0.85;
+        }
+      }
+
+      .switch-confirm-yes {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .switch-confirm-no {
+        background: #f0f0f0;
+        color: #333;
+      }
+    }
+  }
 }
