@@ -24,6 +24,7 @@ const SECTION_TABS = [
 ];
 const PAYLOAD_PREVIEW_PAGE_SIZE_DAYS = 30;
 const RESTRICTIONS_SYNC_PAGE_SIZE_DAYS = 30;
+const CHANNEX_CERTIFICATION_MAX_SYNC_DAYS = 500;
 
 const createRequestState = () => ({
   loading: false,
@@ -132,6 +133,37 @@ const countInclusiveDays = (startDate, endDate) => {
   const endMs = isoDateToUtcMs(endDate);
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) return null;
   return Math.floor((endMs - startMs) / (24 * 60 * 60 * 1000)) + 1;
+};
+
+const formatRangeLabel = (startDate, endDate) => (startDate && endDate ? `${startDate} -> ${endDate}` : "Not selected");
+
+const validateSelectedDateRange = (startDate, endDate) => {
+  if (!startDate || !endDate) {
+    return {
+      message: "Select both Date from and Date to before running this sync.",
+      totalDays: null,
+    };
+  }
+
+  const totalDays = countInclusiveDays(startDate, endDate);
+  if (!totalDays) {
+    return {
+      message: "Select a valid date range where Date to is on or after Date from.",
+      totalDays: null,
+    };
+  }
+
+  if (totalDays > CHANNEX_CERTIFICATION_MAX_SYNC_DAYS) {
+    return {
+      message: `The selected range is ${totalDays} days. Channex certification syncs support up to ${CHANNEX_CERTIFICATION_MAX_SYNC_DAYS} inclusive days.`,
+      totalDays,
+    };
+  }
+
+  return {
+    message: "",
+    totalDays,
+  };
 };
 
 const buildDateWindows = (startDate, endDate, pageSizeDays = RESTRICTIONS_SYNC_PAGE_SIZE_DAYS) => {
@@ -256,6 +288,33 @@ const JsonBlock = ({ title, value }) => (
 JsonBlock.propTypes = {
   title: PropTypes.string.isRequired,
   value: PropTypes.any,
+};
+
+const IdentifierList = ({ title, ids }) => {
+  const safeIds = Array.from(new Set((Array.isArray(ids) ? ids : []).filter(Boolean)));
+  if (!safeIds.length) return null;
+
+  const copyIds = async () => {
+    if (!globalThis.navigator?.clipboard?.writeText) return;
+    await globalThis.navigator.clipboard.writeText(safeIds.join("\n"));
+  };
+
+  return (
+    <div className="channex-sync-id-list">
+      <div className="channex-sync-id-list-header">
+        <h5>{title}</h5>
+        <button type="button" className="host-integrations-secondary-btn" onClick={copyIds}>
+          Copy all
+        </button>
+      </div>
+      <pre>{safeIds.join("\n")}</pre>
+    </div>
+  );
+};
+
+IdentifierList.propTypes = {
+  title: PropTypes.string.isRequired,
+  ids: PropTypes.array,
 };
 
 const MappingTable = ({ title, rows, columns }) => {
@@ -755,6 +814,9 @@ SectionCard.propTypes = {
 
 const RestrictionsSyncProgress = ({ state }) => {
   const pages = Array.isArray(state?.pages) ? state.pages : [];
+  const pageResults = Array.isArray(state?.pageResults) ? state.pageResults : [];
+  const taskIds = pageResults.flatMap((result) => (Array.isArray(result?.taskIds) ? result.taskIds : []));
+  const evidenceIds = Array.isArray(state?.evidenceIds) ? state.evidenceIds : [];
   if (!state?.loading && !pages.length && !state?.data && !state?.error) return null;
 
   return (
@@ -762,27 +824,35 @@ const RestrictionsSyncProgress = ({ state }) => {
       <div className="channex-restrictions-sync-summary">
         <DetailGrid
           items={[
-            { label: "Sync mode", value: state?.data?.restrictionsSyncMode || "frontend-paginated-v1" },
+            { label: "Workflow", value: "Selected-range restrictions/rates sync" },
             { label: "Run ID", value: state?.syncRunId || state?.data?.syncRunId || "Not started" },
             {
-              label: "Requested range",
+              label: "Selected range",
               value: state?.requestedFullRange
-                ? `${state.requestedFullRange.dateFrom} to ${state.requestedFullRange.dateTo}`
+                ? formatRangeLabel(state.requestedFullRange.dateFrom, state.requestedFullRange.dateTo)
                 : state?.data?.requestedFullRange
-                  ? `${state.data.requestedFullRange.dateFrom} to ${state.data.requestedFullRange.dateTo}`
+                  ? formatRangeLabel(state.data.requestedFullRange.dateFrom, state.data.requestedFullRange.dateTo)
                   : "Not started",
             },
-            { label: "Page size", value: `${state?.pageSizeDays || state?.data?.pageSizeDays || RESTRICTIONS_SYNC_PAGE_SIZE_DAYS} days` },
-            { label: "Completed pages", value: `${state?.completedPages || state?.data?.completedPages || 0} / ${pages.length || state?.data?.totalPages || 0}` },
             {
-              label: "Current window",
-              value: state?.currentPage ? `${state.currentPage.dateFrom} to ${state.currentPage.dateTo}` : "Not running",
+              label: "Date window size",
+              value: `${state?.pageSizeDays || state?.data?.pageSizeDays || RESTRICTIONS_SYNC_PAGE_SIZE_DAYS} days`,
             },
+            {
+              label: "Completed steps",
+              value: `${state?.completedPages || state?.data?.completedPages || 0} / ${pages.length || state?.data?.totalPages || 0}`,
+            },
+            {
+              label: "Current date window",
+              value: state?.currentPage ? formatRangeLabel(state.currentPage.dateFrom, state.currentPage.dateTo) : "Not running",
+            },
+            { label: "Successful steps", value: pages.filter((page) => page.status === "completed").length },
+            { label: "Failed steps", value: pages.filter((page) => page.status === "failed").length },
           ]}
         />
         <p className="host-integrations-muted">
-          This is one manual full-range restrictions/rates sync process split into smaller backend calls for reliability.
-          Each completed page can persist its own evidence record.
+          This runs one selected-range restrictions/rates sync. Large ranges are processed as safe date windows so progress
+          and returned IDs stay readable.
         </p>
       </div>
 
@@ -791,10 +861,10 @@ const RestrictionsSyncProgress = ({ state }) => {
           {pages.map((page) => (
             <div className={`channex-restrictions-sync-page is-${page.status || "pending"}`} key={page.pageNumber}>
               <strong>
-                Page {page.pageNumber} of {page.totalPages || pages.length}
+                Step {page.pageNumber} of {page.totalPages || pages.length}
               </strong>
               <span>
-                {page.dateFrom} to {page.dateTo}
+                {formatRangeLabel(page.dateFrom, page.dateTo)}
               </span>
               <span>{page.totalDays ? `${page.totalDays} days` : "Window"}</span>
               <span>Status: {page.status || "pending"}</span>
@@ -807,16 +877,26 @@ const RestrictionsSyncProgress = ({ state }) => {
 
       {state?.failedPage ? (
         <>
-          {state.error ? <p className="host-integrations-error-banner">{state.error}</p> : null}
-          <ErrorCallout error={state.error} details={state.failedPage.errorDetails || state.errorDetails} />
+          <p className="host-integrations-error-banner">
+            Restrictions/rates sync failed for {formatRangeLabel(state.failedPage.dateFrom, state.failedPage.dateTo)}.
+          </p>
+          <details className="channex-diagnostics-collapsible">
+            <summary>Error details</summary>
+            <ErrorCallout error={state.error} details={state.failedPage.errorDetails || state.errorDetails} />
+          </details>
         </>
       ) : null}
 
-      {Array.isArray(state?.evidenceIds) && state.evidenceIds.length ? (
-        <div className="channex-restrictions-sync-evidence">
-          <h5>Completed page evidence IDs</h5>
-          {renderList(state.evidenceIds)}
-        </div>
+      {state?.error && !state?.failedPage ? <p className="host-integrations-error-banner">{state.error}</p> : null}
+
+      <IdentifierList title="Task IDs" ids={taskIds} />
+      <IdentifierList title="Evidence IDs" ids={evidenceIds} />
+
+      {pageResults.length ? (
+        <details className="channex-diagnostics-collapsible">
+          <summary>Debug details for processed date windows</summary>
+          <JsonBlock title="Processed date windows and backend responses" value={pageResults} />
+        </details>
       ) : null}
     </div>
   );
@@ -836,6 +916,7 @@ RestrictionsSyncProgress.propTypes = {
     failedPage: PropTypes.object,
     pages: PropTypes.array,
     evidenceIds: PropTypes.array,
+    pageResults: PropTypes.array,
     data: PropTypes.object,
   }),
 };
@@ -852,7 +933,7 @@ const ACTION_CONFIG = [
   {
     key: "restrictions",
     label: "Sync restrictions/rates",
-    description: "Send mapped rate and restriction payloads for the selected date range in reliable backend page windows.",
+    description: "Send mapped rates and restrictions for the selected date range with clear step-by-step progress.",
     run: syncChannexRestrictions,
     needsDateRange: true,
     confirmMessage: "Run Channex restrictions/rates sync for this property and date range?",
@@ -901,6 +982,7 @@ function ChannexDiagnosticsPanel({ userId }) {
 
   const hasProperty = Boolean(domitsPropertyId.trim());
   const hasDateRange = hasProperty && Boolean(dateFrom) && Boolean(dateTo);
+  const selectedRangeValidation = useMemo(() => validateSelectedDateRange(dateFrom, dateTo), [dateFrom, dateTo]);
   const baseParams = useMemo(
     () => ({
       userId,
@@ -1011,6 +1093,21 @@ function ChannexDiagnosticsPanel({ userId }) {
   };
 
   const runPaginatedRestrictionsSync = async (config) => {
+    const validation = validateSelectedDateRange(dateFrom, dateTo);
+    if (validation.message) {
+      updateActionState(config.key, {
+        loading: false,
+        error: validation.message,
+        errorDetails: null,
+        data: null,
+        success: "",
+        pages: [],
+        pageResults: [],
+        evidenceIds: [],
+      });
+      return;
+    }
+
     if (config.confirmMessage && typeof globalThis.confirm === "function" && !globalThis.confirm(config.confirmMessage)) {
       return;
     }
@@ -1102,7 +1199,7 @@ function ChannexDiagnosticsPanel({ userId }) {
           ),
         }));
       } catch (error) {
-        const errorDetails = normalizeChannexError(error, "Restrictions/rates sync page failed.");
+        const errorDetails = normalizeChannexError(error, "Restrictions/rates sync date window failed.");
         const failedPage = {
           ...page,
           status: "failed",
@@ -1113,7 +1210,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         updateActionState(config.key, (previousState) => ({
           ...previousState,
           loading: false,
-          error: `Restrictions/rates sync stopped on page ${page.pageNumber} of ${pages.length}.`,
+          error: `Restrictions/rates sync failed for ${formatRangeLabel(page.dateFrom, page.dateTo)}.`,
           errorDetails,
           success: "",
           failedPage,
@@ -1137,7 +1234,7 @@ function ChannexDiagnosticsPanel({ userId }) {
       completedPages: pages.length,
       pageResults,
       evidenceIds,
-      success: `Restrictions/rates sync completed across ${pages.length} page${pages.length === 1 ? "" : "s"}.`,
+      success: "Sync restrictions/rates completed for the selected range.",
       data: {
         restrictionsSyncMode: "frontend-paginated-v1",
         syncRunId,
@@ -1383,27 +1480,42 @@ function ChannexDiagnosticsPanel({ userId }) {
         <div>
           <h3>Manual certification actions</h3>
           <p className="host-integrations-muted">
-            These actions call Channex-facing backend endpoints only after explicit confirmation.
+            These actions contact Channex only after explicit confirmation.
           </p>
         </div>
       </div>
       <div className="channex-diagnostics-action-grid">
         {ACTION_CONFIG.map((config) => {
           const state = actionStates[config.key] || {};
-          const disabled = !userId || state.loading || !hasProperty || (config.needsDateRange && !hasDateRange);
+          const disabled = config.paginatedRestrictions
+            ? !userId || state.loading || !hasProperty
+            : !userId || state.loading || !hasProperty || (config.needsDateRange && !hasDateRange);
           const actionHandler = config.paginatedRestrictions
             ? () => runPaginatedRestrictionsSync(config)
             : () => runManualAction(config);
+          const selectedRangeLabel = formatRangeLabel(dateFrom, dateTo);
 
           return (
             <div className="channex-diagnostics-action-card" key={config.key}>
               <div>
                 <h4>{config.label}</h4>
                 <p className="host-integrations-muted">{config.description}</p>
+                {config.needsDateRange ? (
+                  <dl className="channex-action-range-summary">
+                    <div>
+                      <dt>Selected range</dt>
+                      <dd>{selectedRangeLabel}</dd>
+                    </div>
+                    <div>
+                      <dt>Selected days</dt>
+                      <dd>{selectedRangeValidation.totalDays || "Not ready"}</dd>
+                    </div>
+                  </dl>
+                ) : null}
                 {config.paginatedRestrictions ? (
                   <p className="host-integrations-warning-banner">
-                    Full ranges are sent as {RESTRICTIONS_SYNC_PAGE_SIZE_DAYS}-day backend pages. The process stops on the
-                    first failed page and shows the backend response.
+                    Large ranges are processed as {RESTRICTIONS_SYNC_PAGE_SIZE_DAYS}-day date windows. The flow stops on
+                    the first failed window and shows details.
                   </p>
                 ) : null}
               </div>
@@ -1425,7 +1537,7 @@ function ChannexDiagnosticsPanel({ userId }) {
                 <ErrorCallout error={state.error} details={state.errorDetails} />
               ) : null}
               {config.paginatedRestrictions ? <RestrictionsSyncProgress state={state} /> : null}
-              {state.data ? <JsonBlock title={`${config.label} response`} value={state.data} /> : null}
+              {state.data && !config.paginatedRestrictions ? <JsonBlock title={`${config.label} response`} value={state.data} /> : null}
             </div>
           );
         })}

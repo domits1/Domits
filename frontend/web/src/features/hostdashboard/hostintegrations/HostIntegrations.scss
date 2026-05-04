@@ -643,20 +643,52 @@
 
 .channex-diagnostics-action-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
 }
 
 .channex-diagnostics-action-card {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   align-content: start;
   min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 18px;
 }
 
 .channex-diagnostics-action-card h4 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+}
+
+.channex-action-range-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.channex-action-range-summary div {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.channex-action-range-summary dt {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.channex-action-range-summary dd {
+  margin: 0;
+  font-weight: 700;
+  color: #111827;
 }
 
 .channex-restrictions-sync-progress {
@@ -718,6 +750,39 @@
 .channex-restrictions-sync-evidence h5 {
   margin: 0;
   font-size: 14px;
+}
+
+.channex-sync-id-list {
+  display: grid;
+  gap: 8px;
+}
+
+.channex-sync-id-list-header {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.channex-sync-id-list h5 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.channex-sync-id-list pre {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  user-select: text;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .channex-ari-preview-layout {
@@ -1066,6 +1131,10 @@
   }
 
   .channex-diagnostics-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .channex-action-range-summary {
     grid-template-columns: 1fr;
   }
 

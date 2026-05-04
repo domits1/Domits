@@ -80,7 +80,10 @@ describe("ChannexDiagnosticsPanel restrictions sync pagination", () => {
         totalPages: 17,
       })
     );
-    expect(await screen.findByText("Restrictions/rates sync completed across 17 pages.")).toBeTruthy();
+    expect(await screen.findByText("Sync restrictions/rates completed for the selected range.")).toBeTruthy();
+    expect(screen.getByText("Step 17 of 17")).toBeTruthy();
+    expect(screen.getAllByText(/task-17/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/evidence-17/).length).toBeGreaterThan(0);
   });
 
   test("stops on the first failed restrictions sync page", async () => {
@@ -108,8 +111,22 @@ describe("ChannexDiagnosticsPanel restrictions sync pagination", () => {
 
     await waitFor(() => expect(syncChannexRestrictions).toHaveBeenCalledTimes(2));
     expect(syncChannexRestrictions).not.toHaveBeenCalledTimes(3);
-    expect(await screen.findByText("Restrictions/rates sync stopped on page 2 of 3.")).toBeTruthy();
+    expect(await screen.findByText("Restrictions/rates sync failed for 2026-06-23 -> 2026-07-22.")).toBeTruthy();
     expect(screen.getByText("HTTP status")).toBeTruthy();
     expect(screen.getByText("500")).toBeTruthy();
+  });
+
+  test("blocks restrictions sync ranges over 500 days before sending", async () => {
+    render(<ChannexDiagnosticsPanel userId="user-1" />);
+    fillRequiredInputs({ dateTo: "2027-10-06" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Sync restrictions/rates" }));
+
+    expect(syncChannexRestrictions).not.toHaveBeenCalled();
+    expect(
+      await screen.findByText(
+        "The selected range is 501 days. Channex certification syncs support up to 500 inclusive days."
+      )
+    ).toBeTruthy();
   });
 });
