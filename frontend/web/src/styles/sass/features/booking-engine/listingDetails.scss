@@ -787,10 +787,12 @@
         flex: 0 0 400px;
         width: 400px;
         max-width: 400px;
+        height: fit-content;
+        min-height: 0;
         align-self: flex-start;
 
         position: sticky;
-        top: 20px;
+        top: 0;
 
         @media (max-width: 1100px) {
             flex-basis: 360px;
@@ -1248,7 +1250,7 @@
             align-items: center;
             justify-content: center;
             background: #e0f0e5;
-            color: #2d7a3a;
+            color: #1a5c2a;
             font-size: 1.1rem;
             font-weight: 700;
         }
@@ -1387,7 +1389,7 @@
             align-items: center;
             justify-content: center;
             background: #e0f0e5;
-            color: #2d7a3a;
+            color: #1a5c2a;
             font-size: 1.5rem;
             font-weight: 700;
         }
