@@ -702,8 +702,9 @@
                 background: #ffffff;
                 border: 1px solid #e6e6e6;
                 border-radius: 14px;
-                padding: 24px;
-                margin-top: 30px;
+                padding: 28px;
+                margin-top: 24px;
+                margin-bottom: 30px;
                 font-family: "Inter", sans-serif;
                 transition: all 0.3s ease;
 
@@ -713,7 +714,7 @@
                 }
 
                 @media (max-width: 768px) {
-                    padding: 18px;
+                    padding: 20px;
                     border-radius: 14px;
                     margin-top: 22px;
                 }
@@ -1083,7 +1084,9 @@
 }
 
 .location-placeholder {
-    padding: 28px 30px;
+    margin-top: 24px;
+    margin-bottom: 30px;
+    padding: 28px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
@@ -1111,6 +1114,8 @@
     }
 
     @media (max-width: 768px) {
+        margin-top: 18px;
+        margin-bottom: 22px;
         padding: 20px;
 
         &__map {
@@ -1120,12 +1125,16 @@
 }
 
 .reviews-section {
-    padding: 28px 30px;
+    margin-top: 24px;
+    margin-bottom: 30px;
+    padding: 28px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
 
     @media (max-width: 768px) {
+        margin-top: 18px;
+        margin-bottom: 22px;
         padding: 20px;
     }
 
@@ -1338,7 +1347,9 @@
 .host-section {
     display: flex;
     gap: 40px;
-    padding: 28px 30px;
+    margin-top: 24px;
+    margin-bottom: 30px;
+    padding: 28px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
@@ -1346,6 +1357,8 @@
     @media (max-width: 768px) {
         flex-direction: column;
         gap: 24px;
+        margin-top: 18px;
+        margin-bottom: 22px;
         padding: 20px;
     }
 
@@ -1475,14 +1488,16 @@
 }
 
 .amenities-container {
-    margin-top: 30px;
-    padding: 28px 30px 26px;
+    margin-top: 24px;
+    margin-bottom: 30px;
+    padding: 28px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
 
     @media (max-width: 768px) {
         margin-top: 18px;
+        margin-bottom: 22px;
         padding: 20px;
     }
 
@@ -1746,14 +1761,16 @@
 }
 
 .location-section {
-    margin-top: 30px;
-    padding: 28px 30px 26px;
+    margin-top: 24px;
+    margin-bottom: 30px;
+    padding: 28px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
 
     @media (max-width: 768px) {
         margin-top: 18px;
+        margin-bottom: 22px;
         padding: 20px;
     }
 
