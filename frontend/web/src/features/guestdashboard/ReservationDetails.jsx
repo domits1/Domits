@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../../styles/sass/features/guestdashboard/guestReservationDetail.scss";
@@ -237,42 +237,66 @@ const resolveReservationCancellationPolicy = ({ booking, propertyDetails }) => {
 };
 
 function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm }) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (!dialog) {
+      return;
+    }
+
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    }
+
+    if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen]);
+
   if (!isOpen) {
     return null;
   }
 
+  const handleCancel = (event) => {
+    if (isSubmitting) {
+      event.preventDefault();
+      return;
+    }
+
+    onClose();
+  };
+
   return (
-    <div className="cancelBookingModalOverlay" role="presentation" onClick={onClose}>
-      <section
-        className="cancelBookingModal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="cancel-booking-title"
-        aria-describedby="cancel-booking-description"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 id="cancel-booking-title">Cancel booking?</h2>
-        <p id="cancel-booking-description">
-          Are you sure you want to cancel this booking? Your host will be notified and this action will update your
-          reservation status.
+    <dialog
+      ref={dialogRef}
+      className="cancelBookingModal"
+      aria-labelledby="cancel-booking-title"
+      aria-describedby="cancel-booking-description"
+      onCancel={handleCancel}
+    >
+      <h2 id="cancel-booking-title">Cancel booking?</h2>
+      <p id="cancel-booking-description">
+        Are you sure you want to cancel this booking? Your host will be notified and this action will update your
+        reservation status.
+      </p>
+
+      {error && (
+        <p className="cancelBookingModalError" role="alert">
+          {error}
         </p>
+      )}
 
-        {error && (
-          <p className="cancelBookingModalError" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="cancelBookingModalActions">
-          <button type="button" className="secondaryBtn" onClick={onClose} disabled={isSubmitting}>
-            Keep booking
-          </button>
-          <button type="button" className="dangerBtn" onClick={onConfirm} disabled={isSubmitting}>
-            {isSubmitting ? "Cancelling..." : "Yes, cancel booking"}
-          </button>
-        </div>
-      </section>
-    </div>
+      <div className="cancelBookingModalActions">
+        <button type="button" className="secondaryBtn" onClick={onClose} disabled={isSubmitting}>
+          Keep booking
+        </button>
+        <button type="button" className="dangerBtn" onClick={onConfirm} disabled={isSubmitting}>
+          {isSubmitting ? "Cancelling..." : "Yes, cancel booking"}
+        </button>
+      </div>
+    </dialog>
   );
 }
 

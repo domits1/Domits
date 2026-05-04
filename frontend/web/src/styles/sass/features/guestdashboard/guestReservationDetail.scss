@@ -433,23 +433,18 @@
   opacity: 0.65;
 }
 
-.cancelBookingModalOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+.cancelBookingModal::backdrop {
   background: rgba(17, 24, 39, 0.48);
 }
 
 .cancelBookingModal {
   width: min(100%, 440px);
   background: #ffffff;
+  border: 0;
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+  margin: auto;
 }
 
 .cancelBookingModal h2 {

@@ -45,6 +45,11 @@ class ReservationController {
     // -----------
     async patch(event) {
         try {
+            const cancelBookingId = this.getCancelBookingId(event);
+            if (cancelBookingId) {
+                return this.cancelBooking(cancelBookingId);
+            }
+
             if (event?.body === undefined || event?.body === null) {
                 throw new Error("Missing request body.");
             }
@@ -92,6 +97,36 @@ class ReservationController {
                 response: error.message || "Something went wrong, please contact support."
             }
         }
+    }
+
+    getCancelBookingId(event) {
+        const pathBookingId = event?.pathParameters?.id ?? event?.pathParameters?.bookingId;
+        const path = event?.rawPath || event?.path || event?.resource || "";
+        const pathParts = path.split("/").filter(Boolean);
+        const bookingsIndex = pathParts.findIndex((part) => part === "bookings");
+        const routeBookingId = bookingsIndex >= 0 ? pathParts[bookingsIndex + 1] : "";
+        const routeAction = bookingsIndex >= 0 ? pathParts[bookingsIndex + 2] : "";
+
+        if (pathBookingId && (routeAction === "cancel" || path.endsWith("/cancel"))) {
+            return pathBookingId;
+        }
+
+        if (routeBookingId && routeAction === "cancel") {
+            return routeBookingId;
+        }
+
+        return "";
+    }
+
+    cancelBooking(bookingId) {
+        return {
+            statusCode: 501,
+            headers: responseHeaderJSON,
+            response: {
+                bookingId,
+                message: "Cancel booking route is available. Cancellation security and database update are not implemented yet.",
+            },
+        };
     }
 
     // -----------
