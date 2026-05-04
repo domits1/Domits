@@ -714,7 +714,6 @@
     }
   }
 
-  // New reviews section (two-column, with cards and next button)
   .reviews {
     width: 100%;
     display: flex;
@@ -826,7 +825,6 @@
     }
   }
 
-  // Simple three-card review layout with stars
   .reviews-simple {
     width: 100%;
     padding: 40px 0;
@@ -863,7 +861,7 @@
     }
 
     .review-card__stars {
-      color: #0D9813; // green stars
+      color: #0D9813; 
       letter-spacing: 2px;
       margin-bottom: 8px;
       font-size: 16px;
@@ -879,8 +877,6 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-
-    // removed large image; using small avatar instead
 
     .review-card__footer {
       display: flex;
