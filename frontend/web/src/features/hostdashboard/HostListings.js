@@ -120,8 +120,8 @@ function HostListings() {
       try {
         const userInfo = await Auth.currentUserInfo();
         setUserId(userInfo?.attributes?.sub || null);
-      } catch (error) {
-        console.error("Error setting user id:", error);
+      } catch {
+        setUserId(null);
       }
     };
 
@@ -131,9 +131,9 @@ function HostListings() {
   useEffect(() => {
     if (userId) {
       fetchVerificationStatus();
-      fetchAccommodations().catch(console.error);
+      fetchAccommodations();
     }
-  }, [userId]);
+  }, [fetchVerificationStatus, userId]);
 
   const fetchAccommodations = async () => {
     setIsLoading(true);
@@ -181,20 +181,18 @@ function HostListings() {
 
   const visibleListings = listingsByStatus[activeFilter] || [];
 
-  const ensureLiveEligibility = async (propertyId) => {
+  const ensureLiveEligibility = () => {
     if (!userId) {
-      throw new Error("Host user is not loaded.");
+      toast.error("User is not loaded. Please refresh and try again.");
+      return false;
     }
     if (liveEligibilityLoading) {
-      throw new Error("Checking verification status. Please try again in a moment.");
+      toast.info("Checking verification status. Please try again in a moment.");
+      return false;
     }
-    if (!liveEligibility) {
-      navigate("/verify", {
-        state: {
-          userId,
-          accommodationId: propertyId,
-        },
-      });
+    if (liveEligibilityError || !liveEligibility) {
+      toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
+      navigate("/hostdashboard/finance");
       return false;
     }
     return true;
@@ -206,7 +204,7 @@ function HostListings() {
     }
 
     if (nextStatus === "ACTIVE") {
-      const canProceed = await ensureLiveEligibility(propertyId);
+      const canProceed = ensureLiveEligibility();
       if (!canProceed) {
         return;
       }
