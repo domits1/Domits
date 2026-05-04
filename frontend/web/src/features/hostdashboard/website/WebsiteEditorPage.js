@@ -27,7 +27,9 @@ import {
   buildWebsiteDraftThemeEditorValues,
   buildWebsiteDraftThemeOverridePatch,
   createEmptyWebsiteDraftThemeEditorValues,
+  isValidWebsiteBackgroundColor,
   mergeWebsiteDraftThemeOverrides,
+  resolveWebsiteBackgroundColor,
   WEBSITE_BACKGROUND_COLOR_OPTIONS,
 } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
@@ -248,7 +250,18 @@ AmenityIconSelectField.propTypes = {
   isHighlighted: PropTypes.bool,
 };
 
-function BackgroundColorField({ value, onSelectColor }) {
+function BackgroundColorField({
+  value,
+  customValue,
+  onSelectColor,
+  onChangeCustomColor,
+  onCommitCustomColor,
+  onCustomColorKeyDown,
+}) {
+  const hasPresetSelection = WEBSITE_BACKGROUND_COLOR_OPTIONS.some(
+    (colorOption) => colorOption.value === value
+  );
+
   return (
     <div className={styles.fieldGroup}>
       <div className={styles.fieldLabel}>Background color</div>
@@ -275,13 +288,52 @@ function BackgroundColorField({ value, onSelectColor }) {
           );
         })}
       </div>
+      <div className={styles.customColorSection}>
+        <div className={styles.customColorHeader}>
+          <span className={styles.fieldLabel}>Custom color</span>
+          <p className={styles.customColorHint}>
+            Use a hex value if the preset grid is too limiting.
+          </p>
+        </div>
+        <div className={styles.customColorRow}>
+          <label
+            className={`${styles.colorPickerShell} ${hasPresetSelection ? "" : styles.colorPickerShellSelected}`.trim()}
+            aria-label="Pick a custom website background color"
+          >
+            <input
+              type="color"
+              className={styles.colorPickerInput}
+              value={resolveWebsiteBackgroundColor(value)}
+              onChange={(event) => onSelectColor(event.target.value)}
+            />
+          </label>
+          <input
+            type="text"
+            className={`${styles.textInput} ${styles.customColorInput}`}
+            value={customValue}
+            onChange={(event) => onChangeCustomColor(event.target.value)}
+            onBlur={onCommitCustomColor}
+            onKeyDown={onCustomColorKeyDown}
+            inputMode="text"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="#ffffff"
+            aria-label="Custom background color hex code"
+          />
+        </div>
+      </div>
     </div>
   );
 }
 
 BackgroundColorField.propTypes = {
   value: PropTypes.string.isRequired,
+  customValue: PropTypes.string.isRequired,
   onSelectColor: PropTypes.func.isRequired,
+  onChangeCustomColor: PropTypes.func.isRequired,
+  onCommitCustomColor: PropTypes.func.isRequired,
+  onCustomColorKeyDown: PropTypes.func.isRequired,
 };
 
 function CollapsibleSection({
@@ -646,10 +698,42 @@ function WebsiteEditorPage() {
   };
 
   const handleThemeBackgroundColorChange = (backgroundColor) => {
+    const resolvedBackgroundColor = resolveWebsiteBackgroundColor(backgroundColor);
     setThemeValues((currentValues) => ({
       ...currentValues,
-      backgroundColor,
+      backgroundColor: resolvedBackgroundColor,
+      backgroundColorInput: resolvedBackgroundColor,
     }));
+  };
+
+  const commitThemeBackgroundColorInput = () => {
+    setThemeValues((currentValues) => {
+      const hasValidCustomColor = isValidWebsiteBackgroundColor(currentValues.backgroundColorInput);
+      const nextBackgroundColor = hasValidCustomColor
+        ? resolveWebsiteBackgroundColor(currentValues.backgroundColorInput)
+        : currentValues.backgroundColor;
+
+      return {
+        ...currentValues,
+        backgroundColor: nextBackgroundColor,
+        backgroundColorInput: nextBackgroundColor,
+      };
+    });
+  };
+
+  const handleThemeBackgroundColorInputChange = (nextInputValue) => {
+    setThemeValues((currentValues) => {
+      const hasValidCustomColor = isValidWebsiteBackgroundColor(nextInputValue);
+      const nextBackgroundColor = hasValidCustomColor
+        ? resolveWebsiteBackgroundColor(nextInputValue)
+        : currentValues.backgroundColor;
+
+      return {
+        ...currentValues,
+        backgroundColor: nextBackgroundColor,
+        backgroundColorInput: nextInputValue,
+      };
+    });
   };
 
   const activatePreviewTarget = (targetId) => () => {
@@ -837,13 +921,14 @@ function WebsiteEditorPage() {
       return;
     }
 
-    const confirmed =
-      typeof globalThis.confirm !== "function"
-        ? true
-        : globalThis.confirm(
-            "Discard all draft-only changes and reset this editor back to the current live preview version?"
-          );
-    if (!confirmed) {
+    const canConfirmDiscardChanges = typeof globalThis.confirm === "function";
+    const confirmed = canConfirmDiscardChanges
+      ? globalThis.confirm(
+          "Discard all draft-only changes and reset this editor back to the current live preview version?"
+        )
+      : true;
+    const discardWasCancelled = confirmed === false;
+    if (discardWasCancelled) {
       return;
     }
 
@@ -908,6 +993,16 @@ function WebsiteEditorPage() {
       event.preventDefault();
       await saveDraftChanges();
     }
+  };
+
+  const handleThemeBackgroundColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitThemeBackgroundColorInput();
+    await saveDraftChanges();
   };
 
   const openWebsitePreviewLink = () => {
@@ -1133,7 +1228,11 @@ function WebsiteEditorPage() {
                 >
                   <BackgroundColorField
                     value={themeValues.backgroundColor}
+                    customValue={themeValues.backgroundColorInput}
                     onSelectColor={handleThemeBackgroundColorChange}
+                    onChangeCustomColor={handleThemeBackgroundColorInputChange}
+                    onCommitCustomColor={commitThemeBackgroundColorInput}
+                    onCustomColorKeyDown={handleThemeBackgroundColorInputKeyDown}
                   />
                 </CollapsibleSection>
 

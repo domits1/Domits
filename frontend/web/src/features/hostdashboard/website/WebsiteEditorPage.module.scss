@@ -286,6 +286,147 @@
   line-height: 1.5;
 }
 
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+  gap: 12px;
+}
+
+.colorSwatchButton {
+  appearance: none;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d6e1ec;
+  border-radius: 18px;
+  background: #ffffff;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.colorSwatchButton:hover {
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.colorSwatchButton:focus-visible {
+  outline: 3px solid rgba(31, 78, 121, 0.2);
+  outline-offset: 2px;
+}
+
+.colorSwatchButtonSelected {
+  border-color: rgba(31, 78, 121, 0.36);
+  background: #f7fbff;
+  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.1);
+}
+
+.colorSwatch {
+  width: 100%;
+  min-height: 54px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.colorSwatchLabel {
+  color: #153e64;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.customColorSection {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px dashed #d6e1ec;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(31, 78, 121, 0.04), transparent 36%),
+    #f8fbff;
+}
+
+.customColorHeader {
+  display: grid;
+  gap: 4px;
+}
+
+.customColorHint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.customColorRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.colorPickerShell {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  border: 1px solid #d6e1ec;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+  cursor: pointer;
+}
+
+.colorPickerShell:hover {
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.colorPickerShellSelected {
+  border-color: rgba(31, 78, 121, 0.36);
+  box-shadow:
+    0 0 0 3px rgba(31, 78, 121, 0.1),
+    0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.colorPickerInput {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.colorPickerInput::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.colorPickerInput::-webkit-color-swatch {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+}
+
+.customColorInput {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  text-transform: lowercase;
+}
+
 .iconSelectionTrigger {
   appearance: none;
   width: 100%;
@@ -788,6 +929,10 @@
   }
 
   .toggleCard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .customColorRow {
     grid-template-columns: minmax(0, 1fr);
   }
 
