@@ -77,6 +77,23 @@ function Header({ setSearchResults, setLoading }) {
   }, [isScrolled]);
 
   useEffect(() => {
+    const header = document.querySelector(".app-header");
+    if (!header) return undefined;
+
+    const update = () => {
+      document.documentElement.style.setProperty(
+        "--app-header-h",
+        `${header.getBoundingClientRect().height}px`
+      );
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     checkAuthentication();
   }, []);
 

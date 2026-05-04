@@ -102,14 +102,8 @@
         transition: top 0.25s ease-out;
 
         @media (max-width: 768px) {
-            top: calc(env(safe-area-inset-top, 0px) + 0px);
+            top: calc(env(safe-area-inset-top, 0px) + var(--app-header-h, 120px));
             width: calc(100% - 28px);
-        }
-    }
-
-    body.header-scrolled {
-        .listing-sections-shell {
-            top: env(safe-area-inset-top, 0px);
         }
     }
 
@@ -1123,6 +1117,10 @@
             }
         }
     }
+}
+
+body.header-scrolled .listing-sections-shell {
+    top: env(safe-area-inset-top, 0px);
 }
 
 .location-placeholder {
