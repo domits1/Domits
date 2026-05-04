@@ -15,8 +15,7 @@ export const buildListingDetailsUrl = (propertyId) =>
   `${API_LISTING_DETAILS_BASE}?property=${encodeURIComponent(propertyId)}`;
 export const buildBookingDetailsUrl = (bookingId) =>
   `${API_BOOKING_DETAILS_BASE}?bookingId=${encodeURIComponent(bookingId)}`;
-export const buildCancelBookingUrl = (bookingId) =>
-  `${API_BOOKINGS_BASE}/${encodeURIComponent(bookingId)}/cancel`;
+export const buildCancelBookingUrl = (bookingId) => `${API_BOOKINGS_BASE}/${encodeURIComponent(bookingId)}/cancel`;
 
 const parseJsonResponse = async (response) => {
   const responseText = await response.text().catch(() => "");
@@ -48,9 +47,7 @@ export async function getGuestBookings(guestId) {
 
   if (!response.ok) {
     const responseText = await response.text().catch(() => "");
-    throw new Error(
-      `Fetch failed: ${response.status} ${response.statusText} ${responseText}`.trim()
-    );
+    throw new Error(`Fetch failed: ${response.status} ${response.statusText} ${responseText}`.trim());
   }
 
   return parseJsonResponse(response);
@@ -66,9 +63,7 @@ export async function getGuestBookingPropertyDetails(bookingId) {
 
   if (!response.ok) {
     const responseText = await response.text().catch(() => "");
-    throw new Error(
-      `Fetch failed: ${response.status} ${response.statusText} ${responseText}`.trim()
-    );
+    throw new Error(`Fetch failed: ${response.status} ${response.statusText} ${responseText}`.trim());
   }
 
   return parseJsonResponse(response);
@@ -89,9 +84,7 @@ export async function cancelGuestBooking(bookingId) {
 
   if (!response.ok) {
     const responseText = await response.text().catch(() => "");
-    throw new Error(
-      `Cancel booking failed: ${response.status} ${response.statusText} ${responseText}`.trim()
-    );
+    throw new Error(`Cancel booking failed: ${response.status} ${response.statusText} ${responseText}`.trim());
   }
 
   return parseJsonResponse(response);
