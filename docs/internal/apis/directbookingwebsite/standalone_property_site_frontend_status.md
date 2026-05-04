@@ -73,8 +73,8 @@ What is in place:
 - The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
 - Standalone website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
 - The KPI dashboard now separates surface performance into `Preview` and `Live` tabs:
-  - preview mobile LCP can be measured from the public preview route
-  - live mobile LCP remains pending until a real published live-site surface exists
+  - preview LCP can now be measured separately for mobile, tablet, and desktop preview visits
+  - live LCP is also segmented by mobile, tablet, and desktop, but remains pending until a real published live-site surface exists
 
 ## Implemented page flow
 ### Step 1: Choose your listing
