@@ -1,4 +1,5 @@
 .editorPage {
+  --editor-sticky-top: calc(env(safe-area-inset-top, 0px) + 104px);
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
@@ -71,6 +72,7 @@
   grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
+  min-height: 0;
 }
 
 .editorPanel,
@@ -85,6 +87,28 @@
 .editorPanel,
 .previewPanel {
   padding: 24px;
+}
+
+.editorPanel {
+  position: sticky;
+  top: var(--editor-sticky-top);
+  max-height: calc(100dvh - var(--editor-sticky-top));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.editorPanel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.previewPanel {
+  position: static;
+  top: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .stateCard {
@@ -119,25 +143,27 @@
 }
 
 .editorForm {
-  display: grid;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding-bottom: 8px;
 }
 
 .panelSection {
   display: grid;
-  gap: 16px;
-  padding-top: 18px;
-  border-top: 1px solid #e2e8f0;
-  border-radius: 18px;
+  gap: 0;
+  padding-top: 0;
+  border-top: 0;
+  border-radius: 0;
   transition:
     background-color 0.24s ease,
     box-shadow 0.24s ease,
     border-color 0.24s ease;
 }
 
-.panelSection:first-of-type {
+.panelSection + .panelSection {
   padding-top: 0;
-  border-top: 0;
 }
 
 .sectionBlockHeader {
@@ -172,16 +198,20 @@
 .panelSectionBody {
   display: grid;
   grid-template-rows: 0fr;
+  margin-top: 0;
+  overflow: hidden;
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
   transition:
     grid-template-rows 0.24s ease,
-    opacity 0.24s ease;
+    opacity 0.24s ease,
+    margin-top 0.24s ease;
 }
 
 .panelSectionBodyOpen {
   grid-template-rows: 1fr;
+  margin-top: 16px;
   opacity: 1;
   pointer-events: auto;
   visibility: visible;
@@ -284,6 +314,27 @@
   color: #64748b;
   font-size: 0.88rem;
   line-height: 1.5;
+}
+
+.editorFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: 14px;
+  margin: 8px -24px 0;
+  padding: 16px 24px 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.92) 20%, #ffffff 48%);
+  border-top: 1px solid rgba(226, 232, 240, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.editorFooterText {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .colorGrid {
@@ -881,8 +932,21 @@
 }
 
 @media (max-width: 1120px) {
+  .editorPage {
+    --editor-sticky-top: calc(env(safe-area-inset-top, 0px) + 24px);
+  }
+
   .surface {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editorPanel {
+    position: static;
+    top: auto;
+    max-height: none;
+    overflow-y: visible;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
   }
 
   .heroHeader,
@@ -898,6 +962,16 @@
 
   .previewViewportButton {
     flex: 1 1 0;
+  }
+
+  .editorFooter {
+    position: static;
+    bottom: auto;
+    margin: 8px 0 0;
+    padding: 0;
+    background: transparent;
+    border-top: 0;
+    backdrop-filter: none;
   }
 }
 

@@ -95,25 +95,40 @@ const resolveSectionNode = (sectionRefEntry) => {
   return null;
 };
 
-const getViewportHeight = () => {
-  const viewportHeight = globalThis.innerHeight || globalThis.document?.documentElement?.clientHeight || 0;
-  return Math.max(0, viewportHeight);
+const getCenteredContainerScrollTop = (node, container) => {
+  if (
+    !node ||
+    !container ||
+    typeof node.getBoundingClientRect !== "function" ||
+    typeof container.getBoundingClientRect !== "function"
+  ) {
+    return null;
+  }
+
+  const containerHeight = container.clientHeight || 0;
+  if (containerHeight < 1) {
+    return null;
+  }
+
+  const nodeRect = node.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  const currentScrollTop = container.scrollTop || 0;
+  const centeredTop =
+    currentScrollTop + nodeRect.top - containerRect.top - containerHeight / 2 + nodeRect.height / 2;
+  return Math.max(0, Math.round(centeredTop));
 };
 
-const getCenteredScrollTop = (node) => {
-  if (!node || typeof node.getBoundingClientRect !== "function") {
-    return null;
+const runAfterNextPaint = (callback) => {
+  if (typeof globalThis.requestAnimationFrame === "function") {
+    globalThis.requestAnimationFrame(() => {
+      globalThis.requestAnimationFrame(() => {
+        callback();
+      });
+    });
+    return;
   }
 
-  const viewportHeight = getViewportHeight();
-  if (viewportHeight < 1) {
-    return null;
-  }
-
-  const currentScrollTop = globalThis.scrollY || globalThis.pageYOffset || 0;
-  const nodeRect = node.getBoundingClientRect();
-  const centeredTop = currentScrollTop + nodeRect.top - viewportHeight / 2 + nodeRect.height / 2;
-  return Math.max(0, Math.round(centeredTop));
+  globalThis.setTimeout(callback, 0);
 };
 
 const fieldPropTypes = PropTypes.shape({
@@ -430,6 +445,7 @@ function WebsiteEditorPage() {
   });
   const sectionRefs = useRef({});
   const targetRefs = useRef({});
+  const editorPanelRef = useRef(null);
   const sectionHighlightResetTimeoutRef = useRef(null);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
 
@@ -647,14 +663,14 @@ function WebsiteEditorPage() {
       setHighlightedTargetId("");
     }, 1800);
 
-    globalThis.setTimeout(() => {
+    runAfterNextPaint(() => {
       const targetEditorNode =
         resolveSectionNode(targetRefs.current[resolvedTargetId]) ||
         resolveSectionNode(sectionRefs.current[sectionId]);
 
-      const centeredScrollTop = getCenteredScrollTop(targetEditorNode);
-      if (centeredScrollTop !== null) {
-        globalThis.scrollTo({
+      const centeredScrollTop = getCenteredContainerScrollTop(targetEditorNode, editorPanelRef.current);
+      if (centeredScrollTop !== null && editorPanelRef.current) {
+        editorPanelRef.current.scrollTo({
           top: centeredScrollTop,
           behavior: "smooth",
         });
@@ -665,7 +681,7 @@ function WebsiteEditorPage() {
         behavior: "smooth",
         block: "center",
       });
-    }, 120);
+    });
   };
 
   const handlePreviewTargetSelect = ({ sectionId, targetId, imageSlot } = {}) => {
@@ -1079,7 +1095,7 @@ function WebsiteEditorPage() {
             </div>
 
             <div className={styles.surface}>
-              <aside className={styles.editorPanel}>
+              <aside ref={editorPanelRef} className={styles.editorPanel}>
                 <div className={styles.panelHeader}>
                   <h2 className={styles.panelTitle}>Editor</h2>
                 </div>
@@ -1187,7 +1203,7 @@ function WebsiteEditorPage() {
           </div>
 
           <div className={styles.surface}>
-            <aside className={styles.editorPanel}>
+            <aside ref={editorPanelRef} className={styles.editorPanel}>
               <div className={styles.panelHeader}>
                 <h2 className={styles.panelTitle}>Editor</h2>
               </div>
@@ -1458,23 +1474,22 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
-                <p className={styles.helperText}>
-                  Save changes updates only this working draft. Use the actions above to push the
-                  current editor state to the shared preview link or to discard everything that differs
-                  from the current live preview version. Press Enter in single-line fields to save, or
-                  use Ctrl/Cmd + Enter inside multi-line fields.
-                </p>
+                <div className={styles.editorFooter}>
+                  <p className={styles.editorFooterText}>
+                    Saves this draft only. Enter saves single-line fields; Ctrl/Cmd + Enter saves multi-line fields.
+                  </p>
 
-                <div className={styles.buttonRow}>
-                  <button
-                    type="button"
-                    className={styles.primaryButton}
-                    onClick={() => void saveDraftChanges()}
-                    disabled={isMutatingDraft || !hasUnsavedChanges}
-                  >
-                    <SaveOutlinedIcon fontSize="small" />
-                    {isSaving ? "Saving..." : "Save changes"}
-                  </button>
+                  <div className={styles.buttonRow}>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={() => void saveDraftChanges()}
+                      disabled={isMutatingDraft || !hasUnsavedChanges}
+                    >
+                      <SaveOutlinedIcon fontSize="small" />
+                      {isSaving ? "Saving..." : "Save changes"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </aside>
