@@ -121,7 +121,7 @@ function WebsitePublicPreviewPage() {
     return startWebsitePreviewLcpObserver({
       enabled: true,
       onReport: (durationMs) => {
-        void recordPublicWebsiteAnalyticsEventSafely({
+        recordPublicWebsiteAnalyticsEventSafely({
           draftId,
           eventType: WEBSITE_SITE_LCP_RECORDED_EVENT,
           payload: {
