@@ -170,6 +170,22 @@ const fieldPropTypes = PropTypes.shape({
   label: PropTypes.string.isRequired,
   component: PropTypes.oneOf(["input", "textarea"]).isRequired,
 });
+const refPropType = PropTypes.oneOfType([
+  PropTypes.func,
+  PropTypes.shape({
+    current: PropTypes.any,
+  }),
+]);
+const primarySiteDomainPropType = PropTypes.shape({
+  domain: PropTypes.string,
+  status: PropTypes.string,
+});
+const siteSummaryPropType = PropTypes.shape({
+  isReachable: PropTypes.bool,
+  site: PropTypes.shape({
+    id: PropTypes.string,
+  }),
+});
 
 function TextField({
   field,
@@ -230,12 +246,7 @@ TextField.propTypes = {
   onChange: PropTypes.func.isRequired,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
-  fieldRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({
-      current: PropTypes.any,
-    }),
-  ]),
+  fieldRef: refPropType,
   isHighlighted: PropTypes.bool,
   onKeyDown: PropTypes.func,
 };
@@ -290,12 +301,7 @@ AmenityIconSelectField.propTypes = {
   onOpenPicker: PropTypes.func.isRequired,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
-  fieldRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({
-      current: PropTypes.any,
-    }),
-  ]),
+  fieldRef: refPropType,
   isHighlighted: PropTypes.bool,
 };
 
@@ -435,12 +441,7 @@ CollapsibleSection.propTypes = {
   description: PropTypes.string.isRequired,
   isOpen: PropTypes.bool.isRequired,
   onToggle: PropTypes.func.isRequired,
-  sectionRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({
-      current: PropTypes.any,
-    }),
-  ]),
+  sectionRef: refPropType,
   children: PropTypes.node.isRequired,
 };
 
@@ -487,6 +488,11 @@ function WebsiteEditorLoadingState({ renderLoadingSection, editorPanelRef }) {
   );
 }
 
+WebsiteEditorLoadingState.propTypes = {
+  renderLoadingSection: PropTypes.func.isRequired,
+  editorPanelRef: refPropType,
+};
+
 function WebsiteEditorErrorState({ loadError, navigate }) {
   return (
     <main className="page-Host">
@@ -509,6 +515,11 @@ function WebsiteEditorErrorState({ loadError, navigate }) {
     </main>
   );
 }
+
+WebsiteEditorErrorState.propTypes = {
+  loadError: PropTypes.string,
+  navigate: PropTypes.func.isRequired,
+};
 
 function WebsiteEditorActionMenu({
   actionMenuRef,
@@ -572,7 +583,7 @@ function WebsiteEditorActionMenu({
             type="button"
             role="menuitem"
             className={styles.actionMenuItem}
-            onClick={() => void updateLivePreviewChanges()}
+            onClick={updateLivePreviewChanges}
             disabled={isMutatingDraft || !hasPreviewSyncPending}
           >
             {isUpdatingLivePreview ? "Updating..." : "Update live preview"}
@@ -581,7 +592,7 @@ function WebsiteEditorActionMenu({
             type="button"
             role="menuitem"
             className={styles.actionMenuItem}
-            onClick={() => void publishFallbackSite()}
+            onClick={publishFallbackSite}
             disabled={!canPublishSite}
           >
             <PublicOutlinedIcon fontSize="small" />
@@ -591,7 +602,7 @@ function WebsiteEditorActionMenu({
             type="button"
             role="menuitem"
             className={styles.actionMenuItem}
-            onClick={() => void unpublishFallbackSite()}
+            onClick={unpublishFallbackSite}
             disabled={!canUnpublishSite}
           >
             {isUnpublishingSite ? "Unpublishing..." : "Unpublish site"}
@@ -600,7 +611,7 @@ function WebsiteEditorActionMenu({
             type="button"
             role="menuitem"
             className={`${styles.actionMenuItem} ${styles.actionMenuItemDestructive}`.trim()}
-            onClick={() => void discardDraftChanges()}
+            onClick={discardDraftChanges}
             disabled={isMutatingDraft || !hasPreviewSyncPending}
           >
             {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
@@ -610,6 +621,28 @@ function WebsiteEditorActionMenu({
     </div>
   );
 }
+
+WebsiteEditorActionMenu.propTypes = {
+  actionMenuRef: refPropType,
+  isActionMenuOpen: PropTypes.bool.isRequired,
+  toggleActionMenu: PropTypes.func.isRequired,
+  openWebsitePreviewLink: PropTypes.func.isRequired,
+  hasPublishedSite: PropTypes.bool.isRequired,
+  primarySiteDomain: primarySiteDomainPropType,
+  openPublishedWebsiteLink: PropTypes.func.isRequired,
+  updateLivePreviewChanges: PropTypes.func.isRequired,
+  isMutatingDraft: PropTypes.bool.isRequired,
+  hasPreviewSyncPending: PropTypes.bool.isRequired,
+  isUpdatingLivePreview: PropTypes.bool.isRequired,
+  publishFallbackSite: PropTypes.func.isRequired,
+  canPublishSite: PropTypes.bool.isRequired,
+  isPublishingSite: PropTypes.bool.isRequired,
+  unpublishFallbackSite: PropTypes.func.isRequired,
+  canUnpublishSite: PropTypes.bool.isRequired,
+  isUnpublishingSite: PropTypes.bool.isRequired,
+  discardDraftChanges: PropTypes.func.isRequired,
+  isDiscardingChanges: PropTypes.bool.isRequired,
+};
 
 function WebsiteEditorPublicSitePanel({
   siteSummary,
@@ -675,6 +708,16 @@ function WebsiteEditorPublicSitePanel({
     </section>
   );
 }
+
+WebsiteEditorPublicSitePanel.propTypes = {
+  siteSummary: siteSummaryPropType,
+  primarySiteDomain: primarySiteDomainPropType,
+  publicSiteStatus: PropTypes.string.isRequired,
+  fallbackDomainStatus: PropTypes.string.isRequired,
+  siteSummaryError: PropTypes.string,
+  hasPublishedSite: PropTypes.bool.isRequired,
+  hasPreviewSyncPending: PropTypes.bool.isRequired,
+};
 
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
@@ -787,7 +830,7 @@ function WebsiteEditorPage() {
       }
     };
 
-    void loadEditorState();
+    loadEditorState();
 
     return () => {
       isMounted = false;
@@ -1825,7 +1868,7 @@ function WebsiteEditorPage() {
                     <button
                       type="button"
                       className={styles.primaryButton}
-                      onClick={() => void saveDraftChanges()}
+                      onClick={saveDraftChanges}
                       disabled={isMutatingDraft || !hasUnsavedChanges}
                     >
                       <SaveOutlinedIcon fontSize="small" />

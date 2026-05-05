@@ -72,7 +72,7 @@ const slugifyWebsiteDomainLabel = (value) => {
     let previousCharacterWasHyphen = false;
 
     for (const currentCharacter of normalizedValue) {
-        const isAsciiCharacter = currentCharacter.charCodeAt(0) <= 0x7f;
+        const isAsciiCharacter = (currentCharacter.codePointAt(0) || 0) <= 0x7f;
         if (!isAsciiCharacter) {
             continue;
         }
