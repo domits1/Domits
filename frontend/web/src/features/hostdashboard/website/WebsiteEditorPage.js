@@ -28,6 +28,16 @@ import {
   createEmptyWebsiteDraftEditorValues,
   mergeWebsiteDraftContentOverrides,
 } from "./rendering/websiteDraftContentOverrides";
+import {
+  applyWebsiteDraftThemeOverrides,
+  buildWebsiteDraftThemeEditorValues,
+  buildWebsiteDraftThemeOverridePatch,
+  createEmptyWebsiteDraftThemeEditorValues,
+  isValidWebsiteBackgroundColor,
+  mergeWebsiteDraftThemeOverrides,
+  resolveWebsiteBackgroundColor,
+  WEBSITE_BACKGROUND_COLOR_OPTIONS,
+} from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import { announceWebsitePreviewUpdate } from "./services/websitePreviewSync";
 import {
@@ -101,25 +111,58 @@ const resolveSectionNode = (sectionRefEntry) => {
   return null;
 };
 
-const getViewportHeight = () => {
-  const viewportHeight = globalThis.innerHeight || globalThis.document?.documentElement?.clientHeight || 0;
-  return Math.max(0, viewportHeight);
+const getCenteredContainerScrollTop = (node, container) => {
+  if (
+    !node ||
+    !container ||
+    typeof node.getBoundingClientRect !== "function" ||
+    typeof container.getBoundingClientRect !== "function"
+  ) {
+    return null;
+  }
+
+  const containerHeight = container.clientHeight || 0;
+  if (containerHeight < 1) {
+    return null;
+  }
+
+  const nodeRect = node.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  const currentScrollTop = container.scrollTop || 0;
+  const centeredTop =
+    currentScrollTop + nodeRect.top - containerRect.top - containerHeight / 2 + nodeRect.height / 2;
+  return Math.max(0, Math.round(centeredTop));
 };
 
-const getCenteredScrollTop = (node) => {
-  if (!node || typeof node.getBoundingClientRect !== "function") {
-    return null;
+const runAfterNextPaint = (callback) => {
+  if (typeof globalThis.requestAnimationFrame === "function") {
+    globalThis.requestAnimationFrame(() => {
+      globalThis.requestAnimationFrame(() => {
+        callback();
+      });
+    });
+    return;
   }
 
-  const viewportHeight = getViewportHeight();
-  if (viewportHeight < 1) {
-    return null;
+  globalThis.setTimeout(callback, 0);
+};
+
+const confirmDiscardDraftChanges = () => {
+  if (typeof globalThis.confirm !== "function") {
+    return true;
   }
 
-  const currentScrollTop = globalThis.scrollY || globalThis.pageYOffset || 0;
-  const nodeRect = node.getBoundingClientRect();
-  const centeredTop = currentScrollTop + nodeRect.top - viewportHeight / 2 + nodeRect.height / 2;
-  return Math.max(0, Math.round(centeredTop));
+  return globalThis.confirm(
+    "Discard all draft-only changes and reset this editor back to the current live preview version?"
+  );
+};
+
+const getPublishFallbackSiteActionLabel = (isPublishingSite, hasPublishedSite) => {
+  if (isPublishingSite) {
+    return "Publishing...";
+  }
+
+  return hasPublishedSite ? "Republish fallback site" : "Publish fallback site";
 };
 
 const fieldPropTypes = PropTypes.shape({
@@ -132,6 +175,7 @@ function TextField({
   field,
   value,
   onChange,
+  onKeyDown = undefined,
   fieldRef = null,
   isHighlighted = false,
   onFocus = undefined,
@@ -151,6 +195,7 @@ function TextField({
           className={styles.textArea}
           value={value}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
         />
@@ -171,6 +216,7 @@ function TextField({
         className={styles.textInput}
         value={value}
         onChange={onChange}
+        onKeyDown={onKeyDown}
         onFocus={onFocus}
         onBlur={onBlur}
       />
@@ -191,6 +237,7 @@ TextField.propTypes = {
     }),
   ]),
   isHighlighted: PropTypes.bool,
+  onKeyDown: PropTypes.func,
 };
 
 function AmenityIconSelectField({
@@ -252,6 +299,92 @@ AmenityIconSelectField.propTypes = {
   isHighlighted: PropTypes.bool,
 };
 
+function BackgroundColorField({
+  value,
+  customValue,
+  onSelectColor,
+  onChangeCustomColor,
+  onCommitCustomColor,
+  onCustomColorKeyDown,
+}) {
+  const hasPresetSelection = WEBSITE_BACKGROUND_COLOR_OPTIONS.some(
+    (colorOption) => colorOption.value === value
+  );
+
+  return (
+    <div className={styles.fieldGroup}>
+      <div className={styles.fieldLabel}>Background color</div>
+      <div className={styles.colorGrid} role="radiogroup" aria-label="Website background color">
+        {WEBSITE_BACKGROUND_COLOR_OPTIONS.map((colorOption) => {
+          const isSelected = colorOption.value === value;
+          return (
+            <button
+              key={colorOption.id}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              className={`${styles.colorSwatchButton} ${isSelected ? styles.colorSwatchButtonSelected : ""}`.trim()}
+              onClick={() => onSelectColor(colorOption.value)}
+              title={colorOption.label}
+            >
+              <span
+                className={styles.colorSwatch}
+                style={{ backgroundColor: colorOption.value }}
+                aria-hidden="true"
+              />
+              <span className={styles.colorSwatchLabel}>{colorOption.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className={styles.customColorSection}>
+        <div className={styles.customColorHeader}>
+          <span className={styles.fieldLabel}>Custom color</span>
+          <p className={styles.customColorHint}>
+            Use a hex value if the preset grid is too limiting.
+          </p>
+        </div>
+        <div className={styles.customColorRow}>
+          <label
+            className={`${styles.colorPickerShell} ${hasPresetSelection ? "" : styles.colorPickerShellSelected}`.trim()}
+            aria-label="Pick a custom website background color"
+          >
+            <input
+              type="color"
+              className={styles.colorPickerInput}
+              value={resolveWebsiteBackgroundColor(value)}
+              onChange={(event) => onSelectColor(event.target.value)}
+            />
+          </label>
+          <input
+            type="text"
+            className={`${styles.textInput} ${styles.customColorInput}`}
+            value={customValue}
+            onChange={(event) => onChangeCustomColor(event.target.value)}
+            onBlur={onCommitCustomColor}
+            onKeyDown={onCustomColorKeyDown}
+            inputMode="text"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="#ffffff"
+            aria-label="Custom background color hex code"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+BackgroundColorField.propTypes = {
+  value: PropTypes.string.isRequired,
+  customValue: PropTypes.string.isRequired,
+  onSelectColor: PropTypes.func.isRequired,
+  onChangeCustomColor: PropTypes.func.isRequired,
+  onCommitCustomColor: PropTypes.func.isRequired,
+  onCustomColorKeyDown: PropTypes.func.isRequired,
+};
+
 function CollapsibleSection({
   sectionId,
   title,
@@ -311,6 +444,238 @@ CollapsibleSection.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
+function WebsiteEditorLoadingState({ renderLoadingSection, editorPanelRef }) {
+  return (
+    <main className="page-Host">
+      <div className="page-Host-content">
+        <section className={styles.editorPage}>
+          <div className={styles.heroCard}>
+            <p className={styles.eyebrow}>Standalone website draft editor</p>
+            <div className={styles.heroHeader}>
+              <div>
+                <h1 className={styles.heroTitle}>Opening website editor</h1>
+                <p className={styles.heroDescription}>
+                  Imported listing data, saved overrides, and template bindings are loading into the
+                  editor surface.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.surface}>
+            <aside ref={editorPanelRef} className={styles.editorPanel}>
+              <div className={styles.panelHeader}>
+                <h2 className={styles.panelTitle}>Editor</h2>
+              </div>
+
+              <div className={styles.editorForm}>{LOADING_EDITOR_SECTIONS.map(renderLoadingSection)}</div>
+            </aside>
+
+            <section className={styles.previewPanel}>
+              <div className={`${styles.panelHeader} ${styles.previewPanelHeader}`.trim()}>
+                <h2 className={styles.panelTitle}>Live preview</h2>
+              </div>
+
+              <div className={styles.loadingPreviewCard}>
+                <PulseBarsLoader message="Loading live website preview..." />
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function WebsiteEditorErrorState({ loadError, navigate }) {
+  return (
+    <main className="page-Host">
+      <div className="page-Host-content">
+        <section className={styles.editorPage}>
+          <div className={`${styles.stateCard} ${styles.stateCardError}`}>
+            <p className={styles.errorText}>{loadError || "We could not open this website draft."}</p>
+            <div className={styles.buttonRow}>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={() => navigate("/hostdashboard/website")}
+              >
+                Back to website workspace
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function WebsiteEditorActionMenu({
+  actionMenuRef,
+  isActionMenuOpen,
+  toggleActionMenu,
+  openWebsitePreviewLink,
+  hasPublishedSite,
+  primarySiteDomain,
+  openPublishedWebsiteLink,
+  updateLivePreviewChanges,
+  isMutatingDraft,
+  hasPreviewSyncPending,
+  isUpdatingLivePreview,
+  publishFallbackSite,
+  canPublishSite,
+  isPublishingSite,
+  unpublishFallbackSite,
+  canUnpublishSite,
+  isUnpublishingSite,
+  discardDraftChanges,
+  isDiscardingChanges,
+}) {
+  return (
+    <div ref={actionMenuRef} className={styles.actionMenuContainer}>
+      <button
+        type="button"
+        className={styles.primaryButton}
+        onClick={toggleActionMenu}
+        aria-haspopup="menu"
+        aria-expanded={isActionMenuOpen}
+      >
+        <span>Update website</span>{" "}
+        <img
+          src={isActionMenuOpen ? arrowUpIcon : arrowDownIcon}
+          alt=""
+          aria-hidden="true"
+          className={styles.actionMenuButtonIcon}
+        />
+      </button>
+      {isActionMenuOpen ? (
+        <div className={styles.actionMenuList} role="menu" aria-label="Website update actions">
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.actionMenuItem}
+            onClick={openWebsitePreviewLink}
+          >
+            Open live preview
+          </button>
+          {hasPublishedSite && primarySiteDomain?.domain ? (
+            <button
+              type="button"
+              role="menuitem"
+              className={styles.actionMenuItem}
+              onClick={openPublishedWebsiteLink}
+            >
+              Open published site
+            </button>
+          ) : null}
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.actionMenuItem}
+            onClick={() => void updateLivePreviewChanges()}
+            disabled={isMutatingDraft || !hasPreviewSyncPending}
+          >
+            {isUpdatingLivePreview ? "Updating..." : "Update live preview"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.actionMenuItem}
+            onClick={() => void publishFallbackSite()}
+            disabled={!canPublishSite}
+          >
+            <PublicOutlinedIcon fontSize="small" />
+            {getPublishFallbackSiteActionLabel(isPublishingSite, hasPublishedSite)}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.actionMenuItem}
+            onClick={() => void unpublishFallbackSite()}
+            disabled={!canUnpublishSite}
+          >
+            {isUnpublishingSite ? "Unpublishing..." : "Unpublish site"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={`${styles.actionMenuItem} ${styles.actionMenuItemDestructive}`.trim()}
+            onClick={() => void discardDraftChanges()}
+            disabled={isMutatingDraft || !hasPreviewSyncPending}
+          >
+            {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function WebsiteEditorPublicSitePanel({
+  siteSummary,
+  primarySiteDomain,
+  publicSiteStatus,
+  fallbackDomainStatus,
+  siteSummaryError,
+  hasPublishedSite,
+  hasPreviewSyncPending,
+}) {
+  return (
+    <section className={styles.publicSitePanel}>
+      <div className={styles.publicSiteHeader}>
+        <div>
+          <h2 className={styles.publicSiteTitle}>Public site state</h2>
+          <p className={styles.publicSiteDescription}>
+            Publishing uses the current live preview snapshot. Draft-only edits stay out until you
+            update live preview first.
+          </p>
+        </div>
+        {siteSummary?.isReachable ? (
+          <span className={styles.publicSiteReachableBadge}>Reachable</span>
+        ) : null}
+      </div>
+
+      <div className={styles.publicSiteGrid}>
+        <div className={styles.publicSiteMetric}>
+          <span className={styles.publicSiteLabel}>Fallback domain</span>
+          <strong className={styles.publicSiteValue}>
+            {primarySiteDomain?.domain || "No fallback domain assigned yet"}
+          </strong>
+        </div>
+        <div className={styles.publicSiteMetric}>
+          <span className={styles.publicSiteLabel}>Domain activation</span>
+          <strong className={styles.publicSiteValue}>{fallbackDomainStatus}</strong>
+        </div>
+        <div className={styles.publicSiteMetric}>
+          <span className={styles.publicSiteLabel}>Public status</span>
+          <strong className={styles.publicSiteValue}>{publicSiteStatus}</strong>
+        </div>
+      </div>
+
+      {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
+      {hasPublishedSite && primarySiteDomain?.domain ? (
+        <p className={styles.publicSiteHint}>
+          Published site test path:{" "}
+          <a
+            className={styles.publicSiteLink}
+            href={buildPublishedWebsitePath(primarySiteDomain.domain, siteSummary?.site?.id)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {primarySiteDomain.domain}
+          </a>
+        </p>
+      ) : null}
+      {!siteSummaryError && hasPreviewSyncPending ? (
+        <p className={styles.publicSiteHint}>
+          Update live preview first if you want the latest editor changes included in the next
+          publish.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -319,6 +684,7 @@ function WebsiteEditorPage() {
   const [draftRecord, setDraftRecord] = useState(null);
   const [baseModel, setBaseModel] = useState(null);
   const [editorValues, setEditorValues] = useState(createEmptyWebsiteDraftEditorValues);
+  const [themeValues, setThemeValues] = useState(createEmptyWebsiteDraftThemeEditorValues);
   const [previewViewport, setPreviewViewport] = useState("desktop");
   const [isSaving, setIsSaving] = useState(false);
   const [isDiscardingChanges, setIsDiscardingChanges] = useState(false);
@@ -332,6 +698,7 @@ function WebsiteEditorPage() {
   const [siteSummaryError, setSiteSummaryError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
+    [EDITOR_SECTION_KEYS.theme]: false,
     [EDITOR_SECTION_KEYS.visibility]: false,
     [EDITOR_SECTION_KEYS.images]: false,
     [EDITOR_SECTION_KEYS.trustCards]: false,
@@ -350,6 +717,7 @@ function WebsiteEditorPage() {
   const sectionRefs = useRef({});
   const targetRefs = useRef({});
   const actionMenuRef = useRef(null);
+  const editorPanelRef = useRef(null);
   const sectionHighlightResetTimeoutRef = useRef(null);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
 
@@ -375,10 +743,8 @@ function WebsiteEditorPage() {
           propertyDetails,
           summaryProperty: null,
         });
-        const nextPreviewModel = applyWebsiteDraftContentOverrides(
-          nextBaseModel,
-          getDraftWorkingContentOverrides(draft)
-        );
+        const nextThemedModel = applyWebsiteDraftThemeOverrides(nextBaseModel, getDraftThemeOverrides(draft));
+        const nextPreviewModel = applyWebsiteDraftContentOverrides(nextThemedModel, getDraftWorkingContentOverrides(draft));
 
         if (!isMounted) {
           return;
@@ -402,6 +768,7 @@ function WebsiteEditorPage() {
         setEditorValues(buildWebsiteDraftEditorValues(nextPreviewModel));
         setSiteSummary(nextSiteSummary);
         setSiteSummaryError(nextSiteSummaryError);
+        setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(draft)));
       } catch (error) {
         if (!isMounted) {
           return;
@@ -411,6 +778,7 @@ function WebsiteEditorPage() {
         setBaseModel(null);
         setEditorValues(createEmptyWebsiteDraftEditorValues());
         setSiteSummary(null);
+        setThemeValues(createEmptyWebsiteDraftThemeEditorValues());
         setLoadError(error?.message || "We could not open this website draft.");
       } finally {
         if (isMounted) {
@@ -452,23 +820,42 @@ function WebsiteEditorPage() {
     () => getDraftPublishedContentOverrides(draftRecord),
     [draftRecord]
   );
+  const themeOverridePatch = useMemo(
+    () => buildWebsiteDraftThemeOverridePatch(themeValues),
+    [themeValues]
+  );
+  const mergedThemeOverrides = useMemo(
+    () => mergeWebsiteDraftThemeOverrides(getDraftThemeOverrides(draftRecord), themeOverridePatch),
+    [draftRecord, themeOverridePatch]
+  );
+  const publishedThemeOverrides = useMemo(
+    () => getDraftPublishedThemeOverrides(draftRecord),
+    [draftRecord]
+  );
 
   const previewModel = useMemo(() => {
     if (!baseModel) {
       return null;
     }
 
-    return applyWebsiteDraftContentOverrides(baseModel, mergedContentOverrides);
-  }, [baseModel, mergedContentOverrides]);
+    const themedModel = applyWebsiteDraftThemeOverrides(baseModel, mergedThemeOverrides);
+    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides);
+  }, [baseModel, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasUnsavedChanges = useMemo(() => {
     const persistedOverrides = getDraftWorkingContentOverrides(draftRecord);
-    return JSON.stringify(mergedContentOverrides) !== JSON.stringify(persistedOverrides);
-  }, [draftRecord, mergedContentOverrides]);
+    const persistedThemeOverrides = getDraftThemeOverrides(draftRecord);
+    return (
+      JSON.stringify(mergedContentOverrides) !== JSON.stringify(persistedOverrides) ||
+      JSON.stringify(mergedThemeOverrides) !== JSON.stringify(persistedThemeOverrides)
+    );
+  }, [draftRecord, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasPreviewSyncPending = useMemo(
-    () => JSON.stringify(mergedContentOverrides) !== JSON.stringify(publishedContentOverrides),
-    [mergedContentOverrides, publishedContentOverrides]
+    () =>
+      JSON.stringify(mergedContentOverrides) !== JSON.stringify(publishedContentOverrides) ||
+      JSON.stringify(mergedThemeOverrides) !== JSON.stringify(publishedThemeOverrides),
+    [mergedContentOverrides, publishedContentOverrides, mergedThemeOverrides, publishedThemeOverrides]
   );
 
   const isMutatingDraft = isSaving || isDiscardingChanges || isUpdatingLivePreview;
@@ -491,6 +878,7 @@ function WebsiteEditorPage() {
   useEffect(() => {
     setExpandedSections({
       [EDITOR_SECTION_KEYS.common]: true,
+      [EDITOR_SECTION_KEYS.theme]: false,
       [EDITOR_SECTION_KEYS.visibility]: false,
       [EDITOR_SECTION_KEYS.images]: false,
       [EDITOR_SECTION_KEYS.trustCards]: false,
@@ -579,14 +967,14 @@ function WebsiteEditorPage() {
       setHighlightedTargetId("");
     }, 1800);
 
-    globalThis.setTimeout(() => {
+    runAfterNextPaint(() => {
       const targetEditorNode =
         resolveSectionNode(targetRefs.current[resolvedTargetId]) ||
         resolveSectionNode(sectionRefs.current[sectionId]);
 
-      const centeredScrollTop = getCenteredScrollTop(targetEditorNode);
-      if (centeredScrollTop !== null) {
-        globalThis.scrollTo({
+      const centeredScrollTop = getCenteredContainerScrollTop(targetEditorNode, editorPanelRef.current);
+      if (centeredScrollTop !== null && editorPanelRef.current) {
+        editorPanelRef.current.scrollTo({
           top: centeredScrollTop,
           behavior: "smooth",
         });
@@ -597,7 +985,7 @@ function WebsiteEditorPage() {
         behavior: "smooth",
         block: "center",
       });
-    }, 120);
+    });
   };
 
   const handlePreviewTargetSelect = ({ sectionId, targetId, imageSlot } = {}) => {
@@ -627,6 +1015,45 @@ function WebsiteEditorPage() {
         [fieldKey]: nextValue,
       },
     }));
+  };
+
+  const handleThemeBackgroundColorChange = (backgroundColor) => {
+    const resolvedBackgroundColor = resolveWebsiteBackgroundColor(backgroundColor);
+    setThemeValues((currentValues) => ({
+      ...currentValues,
+      backgroundColor: resolvedBackgroundColor,
+      backgroundColorInput: resolvedBackgroundColor,
+    }));
+  };
+
+  const commitThemeBackgroundColorInput = () => {
+    setThemeValues((currentValues) => {
+      const hasValidCustomColor = isValidWebsiteBackgroundColor(currentValues.backgroundColorInput);
+      const nextBackgroundColor = hasValidCustomColor
+        ? resolveWebsiteBackgroundColor(currentValues.backgroundColorInput)
+        : currentValues.backgroundColor;
+
+      return {
+        ...currentValues,
+        backgroundColor: nextBackgroundColor,
+        backgroundColorInput: nextBackgroundColor,
+      };
+    });
+  };
+
+  const handleThemeBackgroundColorInputChange = (nextInputValue) => {
+    setThemeValues((currentValues) => {
+      const hasValidCustomColor = isValidWebsiteBackgroundColor(nextInputValue);
+      const nextBackgroundColor = hasValidCustomColor
+        ? resolveWebsiteBackgroundColor(nextInputValue)
+        : currentValues.backgroundColor;
+
+      return {
+        ...currentValues,
+        backgroundColor: nextBackgroundColor,
+        backgroundColorInput: nextInputValue,
+      };
+    });
   };
 
   const activatePreviewTarget = (targetId) => () => {
@@ -777,6 +1204,7 @@ function WebsiteEditorPage() {
     if (baseModel) {
       setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft));
     }
+    setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(persistedDraft)));
 
     return persistedDraft;
   };
@@ -794,9 +1222,9 @@ function WebsiteEditorPage() {
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
         contentOverrides: mergedContentOverrides,
-        themeOverrides: getDraftThemeOverrides(draftRecord),
+        themeOverrides: mergedThemeOverrides,
         publishedContentOverrides,
-        publishedThemeOverrides: getDraftPublishedThemeOverrides(draftRecord),
+        publishedThemeOverrides,
       });
 
       await reloadDraftRecord();
@@ -814,6 +1242,11 @@ function WebsiteEditorPage() {
     }
 
     setIsActionMenuOpen(false);
+    const discardWasCancelled = confirmDiscardDraftChanges() === false;
+    if (discardWasCancelled) {
+      return;
+    }
+
     setIsDiscardingChanges(true);
 
     try {
@@ -822,7 +1255,7 @@ function WebsiteEditorPage() {
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
         contentOverrides: publishedContentOverrides,
-        themeOverrides: getDraftThemeOverrides(draftRecord),
+        themeOverrides: publishedThemeOverrides,
       });
 
       await reloadDraftRecord();
@@ -848,9 +1281,9 @@ function WebsiteEditorPage() {
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
         contentOverrides: mergedContentOverrides,
-        themeOverrides: getDraftThemeOverrides(draftRecord),
+        themeOverrides: mergedThemeOverrides,
         publishedContentOverrides: mergedContentOverrides,
-        publishedThemeOverrides: getDraftPublishedThemeOverrides(draftRecord),
+        publishedThemeOverrides: mergedThemeOverrides,
       });
 
       await reloadDraftRecord();
@@ -905,6 +1338,31 @@ function WebsiteEditorPage() {
     } finally {
       setIsUnpublishingSite(false);
     }
+  };
+
+  const handleEditorFieldKeyDown = (field) => async (event) => {
+    if (field.component === "textarea") {
+      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        await saveDraftChanges();
+      }
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      await saveDraftChanges();
+    }
+  };
+
+  const handleThemeBackgroundColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitThemeBackgroundColorInput();
+    await saveDraftChanges();
   };
 
   const openWebsitePreviewLink = () => {
@@ -1009,69 +1467,11 @@ function WebsiteEditorPage() {
   );
 
   if (isLoading) {
-    return (
-      <main className="page-Host">
-        <div className="page-Host-content">
-          <section className={styles.editorPage}>
-            <div className={styles.heroCard}>
-              <p className={styles.eyebrow}>Standalone website draft editor</p>
-              <div className={styles.heroHeader}>
-                <div>
-                  <h1 className={styles.heroTitle}>Opening website editor</h1>
-                  <p className={styles.heroDescription}>
-                    Imported listing data, saved overrides, and template bindings are loading into the
-                    editor surface.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.surface}>
-              <aside className={styles.editorPanel}>
-                <div className={styles.panelHeader}>
-                  <h2 className={styles.panelTitle}>Editor</h2>
-                </div>
-
-                <div className={styles.editorForm}>{LOADING_EDITOR_SECTIONS.map(renderLoadingSection)}</div>
-              </aside>
-
-              <section className={styles.previewPanel}>
-                <div className={`${styles.panelHeader} ${styles.previewPanelHeader}`.trim()}>
-                  <h2 className={styles.panelTitle}>Live preview</h2>
-                </div>
-
-                <div className={styles.loadingPreviewCard}>
-                  <PulseBarsLoader message="Loading live website preview..." />
-                </div>
-              </section>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
+    return <WebsiteEditorLoadingState renderLoadingSection={renderLoadingSection} editorPanelRef={editorPanelRef} />;
   }
 
   if (loadError || !draftRecord || !baseModel || !previewModel) {
-    return (
-      <main className="page-Host">
-        <div className="page-Host-content">
-          <section className={styles.editorPage}>
-            <div className={`${styles.stateCard} ${styles.stateCardError}`}>
-              <p className={styles.errorText}>{loadError || "We could not open this website draft."}</p>
-              <div className={styles.buttonRow}>
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={() => navigate("/hostdashboard/website")}
-                >
-                  Back to website workspace
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
+    return <WebsiteEditorErrorState loadError={loadError} navigate={navigate} />;
   }
 
   return (
@@ -1110,144 +1510,42 @@ function WebsiteEditorPage() {
                 <ArrowBackIcon fontSize="small" />
                 Back to website workspace
               </button>
-              <div ref={actionMenuRef} className={styles.actionMenuContainer}>
-                <button
-                  type="button"
-                  className={styles.primaryButton}
-                  onClick={toggleActionMenu}
-                  aria-haspopup="menu"
-                  aria-expanded={isActionMenuOpen}
-                >
-                  Update website
-                  <img
-                    src={isActionMenuOpen ? arrowUpIcon : arrowDownIcon}
-                    alt=""
-                    aria-hidden="true"
-                    className={styles.actionMenuButtonIcon}
-                  />
-                </button>
-                {isActionMenuOpen ? (
-                  <div className={styles.actionMenuList} role="menu" aria-label="Website update actions">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles.actionMenuItem}
-                      onClick={openWebsitePreviewLink}
-                    >
-                      Open live preview
-                    </button>
-                    {hasPublishedSite && primarySiteDomain?.domain ? (
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className={styles.actionMenuItem}
-                        onClick={openPublishedWebsiteLink}
-                      >
-                        Open published site
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles.actionMenuItem}
-                      onClick={() => void updateLivePreviewChanges()}
-                      disabled={isMutatingDraft || !hasPreviewSyncPending}
-                    >
-                      {isUpdatingLivePreview ? "Updating..." : "Update live preview"}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles.actionMenuItem}
-                      onClick={() => void publishFallbackSite()}
-                      disabled={!canPublishSite}
-                    >
-                      <PublicOutlinedIcon fontSize="small" />
-                      {isPublishingSite
-                        ? "Publishing..."
-                        : hasPublishedSite
-                          ? "Republish fallback site"
-                          : "Publish fallback site"}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles.actionMenuItem}
-                      onClick={() => void unpublishFallbackSite()}
-                      disabled={!canUnpublishSite}
-                    >
-                      {isUnpublishingSite ? "Unpublishing..." : "Unpublish site"}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={`${styles.actionMenuItem} ${styles.actionMenuItemDestructive}`.trim()}
-                      onClick={() => void discardDraftChanges()}
-                      disabled={isMutatingDraft || !hasPreviewSyncPending}
-                    >
-                      {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+              <WebsiteEditorActionMenu
+                actionMenuRef={actionMenuRef}
+                isActionMenuOpen={isActionMenuOpen}
+                toggleActionMenu={toggleActionMenu}
+                openWebsitePreviewLink={openWebsitePreviewLink}
+                hasPublishedSite={hasPublishedSite}
+                primarySiteDomain={primarySiteDomain}
+                openPublishedWebsiteLink={openPublishedWebsiteLink}
+                updateLivePreviewChanges={updateLivePreviewChanges}
+                isMutatingDraft={isMutatingDraft}
+                hasPreviewSyncPending={hasPreviewSyncPending}
+                isUpdatingLivePreview={isUpdatingLivePreview}
+                publishFallbackSite={publishFallbackSite}
+                canPublishSite={canPublishSite}
+                isPublishingSite={isPublishingSite}
+                unpublishFallbackSite={unpublishFallbackSite}
+                canUnpublishSite={canUnpublishSite}
+                isUnpublishingSite={isUnpublishingSite}
+                discardDraftChanges={discardDraftChanges}
+                isDiscardingChanges={isDiscardingChanges}
+              />
             </div>
 
-            <section className={styles.publicSitePanel}>
-              <div className={styles.publicSiteHeader}>
-                <div>
-                  <h2 className={styles.publicSiteTitle}>Public site state</h2>
-                  <p className={styles.publicSiteDescription}>
-                    Publishing uses the current live preview snapshot. Draft-only edits stay out until
-                    you update live preview first.
-                  </p>
-                </div>
-                {siteSummary?.isReachable ? (
-                  <span className={styles.publicSiteReachableBadge}>Reachable</span>
-                ) : null}
-              </div>
-
-              <div className={styles.publicSiteGrid}>
-                <div className={styles.publicSiteMetric}>
-                  <span className={styles.publicSiteLabel}>Fallback domain</span>
-                  <strong className={styles.publicSiteValue}>
-                    {primarySiteDomain?.domain || "No fallback domain assigned yet"}
-                  </strong>
-                </div>
-                <div className={styles.publicSiteMetric}>
-                  <span className={styles.publicSiteLabel}>Domain activation</span>
-                  <strong className={styles.publicSiteValue}>{fallbackDomainStatus}</strong>
-                </div>
-                <div className={styles.publicSiteMetric}>
-                  <span className={styles.publicSiteLabel}>Public status</span>
-                  <strong className={styles.publicSiteValue}>{publicSiteStatus}</strong>
-                </div>
-              </div>
-
-              {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
-              {hasPublishedSite && primarySiteDomain?.domain ? (
-                <p className={styles.publicSiteHint}>
-                  Published site test path:{" "}
-                  <a
-                    className={styles.publicSiteLink}
-                    href={buildPublishedWebsitePath(primarySiteDomain.domain, siteSummary?.site?.id)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {primarySiteDomain.domain}
-                  </a>
-                </p>
-              ) : null}
-              {!siteSummaryError && hasPreviewSyncPending ? (
-                <p className={styles.publicSiteHint}>
-                  Update live preview first if you want the latest editor changes included in the next
-                  publish.
-                </p>
-              ) : null}
-            </section>
+            <WebsiteEditorPublicSitePanel
+              siteSummary={siteSummary}
+              primarySiteDomain={primarySiteDomain}
+              publicSiteStatus={publicSiteStatus}
+              fallbackDomainStatus={fallbackDomainStatus}
+              siteSummaryError={siteSummaryError}
+              hasPublishedSite={hasPublishedSite}
+              hasPreviewSyncPending={hasPreviewSyncPending}
+            />
           </div>
 
           <div className={styles.surface}>
-            <aside className={styles.editorPanel}>
+            <aside ref={editorPanelRef} className={styles.editorPanel}>
               <div className={styles.panelHeader}>
                 <h2 className={styles.panelTitle}>Editor</h2>
               </div>
@@ -1268,6 +1566,7 @@ function WebsiteEditorPage() {
                         field={field}
                         value={editorValues.common[field.key]}
                         onChange={handleCommonFieldChange(field.key)}
+                        onKeyDown={handleEditorFieldKeyDown(field)}
                         fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common[field.key])}
                         isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common[field.key]}
                         onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common[field.key])}
@@ -1275,6 +1574,24 @@ function WebsiteEditorPage() {
                       />
                     ))}
                   </div>
+                </CollapsibleSection>
+
+                <CollapsibleSection
+                  sectionId={EDITOR_SECTION_KEYS.theme}
+                  title="Theme"
+                  description="Choose the background surface color used behind the website sections."
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.theme])}
+                  onToggle={toggleSection}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.theme)}
+                >
+                  <BackgroundColorField
+                    value={themeValues.backgroundColor}
+                    customValue={themeValues.backgroundColorInput}
+                    onSelectColor={handleThemeBackgroundColorChange}
+                    onChangeCustomColor={handleThemeBackgroundColorInputChange}
+                    onCommitCustomColor={commitThemeBackgroundColorInput}
+                    onCustomColorKeyDown={handleThemeBackgroundColorInputKeyDown}
+                  />
                 </CollapsibleSection>
 
                 {visibilityFields.length > 0 ? (
@@ -1426,6 +1743,7 @@ function WebsiteEditorPage() {
                               field={{ key: `trust-card-title-${index}`, label: "Title", component: "input" }}
                               value={card.title}
                               onChange={handleCollectionFieldChange("trustCards", index, "title")}
+                              onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
                               onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
                               onBlur={clearActivePreviewTarget}
                             />
@@ -1437,6 +1755,7 @@ function WebsiteEditorPage() {
                               }}
                               value={card.description}
                               onChange={handleCollectionFieldChange("trustCards", index, "description")}
+                              onKeyDown={handleEditorFieldKeyDown({ component: "textarea" })}
                               onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
                               onBlur={clearActivePreviewTarget}
                             />
@@ -1475,6 +1794,7 @@ function WebsiteEditorPage() {
                               field={{ key: `journey-stop-title-${index}`, label: "Title", component: "input" }}
                               value={stop.title}
                               onChange={handleCollectionFieldChange("journeyStops", index, "title")}
+                              onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
                               onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.journeyStops(index))}
                               onBlur={clearActivePreviewTarget}
                             />
@@ -1486,6 +1806,7 @@ function WebsiteEditorPage() {
                               }}
                               value={stop.description}
                               onChange={handleCollectionFieldChange("journeyStops", index, "description")}
+                              onKeyDown={handleEditorFieldKeyDown({ component: "textarea" })}
                               onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.journeyStops(index))}
                               onBlur={clearActivePreviewTarget}
                             />
@@ -1495,22 +1816,22 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
-                <p className={styles.helperText}>
-                  Save changes updates only this working draft. Use the actions above to push the
-                  current editor state to the shared preview link or to discard everything that differs
-                  from the current live preview version.
-                </p>
+                <div className={styles.editorFooter}>
+                  <p className={styles.editorFooterText}>
+                    Saves this draft only. Enter saves single-line fields; Ctrl/Cmd + Enter saves multi-line fields.
+                  </p>
 
-                <div className={styles.buttonRow}>
-                  <button
-                    type="button"
-                    className={styles.primaryButton}
-                    onClick={() => void saveDraftChanges()}
-                    disabled={isMutatingDraft || !hasUnsavedChanges}
-                  >
-                    <SaveOutlinedIcon fontSize="small" />
-                    {isSaving ? "Saving..." : "Save changes"}
-                  </button>
+                  <div className={styles.buttonRow}>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={() => void saveDraftChanges()}
+                      disabled={isMutatingDraft || !hasUnsavedChanges}
+                    >
+                      <SaveOutlinedIcon fontSize="small" />
+                      {isSaving ? "Saving..." : "Save changes"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </aside>

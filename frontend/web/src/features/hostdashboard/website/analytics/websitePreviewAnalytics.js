@@ -1,14 +1,33 @@
-export const isMobilePreviewViewport = () => {
+import {
+  WEBSITE_ANALYTICS_VIEWPORT_DESKTOP,
+  WEBSITE_ANALYTICS_VIEWPORT_MOBILE,
+  WEBSITE_ANALYTICS_VIEWPORT_TABLET,
+} from "./websiteAnalyticsEventTypes";
+
+const getViewportWidth = () => {
+  if (typeof globalThis.innerWidth === "number" && globalThis.innerWidth > 0) {
+    return globalThis.innerWidth;
+  }
+
+  const documentWidth = Number(globalThis.document?.documentElement?.clientWidth || 0);
+  return Math.max(0, documentWidth);
+};
+
+export const getWebsiteAnalyticsViewport = () => {
+  const viewportWidth = getViewportWidth();
+  if (viewportWidth > 0 && viewportWidth <= 767) {
+    return WEBSITE_ANALYTICS_VIEWPORT_MOBILE;
+  }
+
+  if (viewportWidth > 0 && viewportWidth <= 1024) {
+    return WEBSITE_ANALYTICS_VIEWPORT_TABLET;
+  }
+
   if (globalThis.navigator?.userAgentData?.mobile === true) {
-    return true;
+    return WEBSITE_ANALYTICS_VIEWPORT_MOBILE;
   }
 
-  if (typeof globalThis.matchMedia === "function") {
-    return globalThis.matchMedia("(max-width: 767px)").matches;
-  }
-
-  const viewportWidth = Number(globalThis.innerWidth || 0);
-  return viewportWidth > 0 && viewportWidth <= 767;
+  return WEBSITE_ANALYTICS_VIEWPORT_DESKTOP;
 };
 
 export const startWebsitePreviewLcpObserver = ({ enabled, onReport }) => {

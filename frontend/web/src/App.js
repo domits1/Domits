@@ -127,6 +127,7 @@ const isStandaloneWebsiteHostName = (hostName) => {
 function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const currentLocation = globalThis.location || { pathname: "", hostname: "" };
 
   useEffect(() => {
     document.title = "Domits";
@@ -136,12 +137,14 @@ function App() {
     initializeUserAttributes();
   }, []);
 
-  const currentPath = window.location.pathname;
-  const currentHostName = window.location.hostname;
+  const currentPath = currentLocation.pathname;
+  const currentHostName = currentLocation.hostname;
   const isWebsitePreviewPath = currentPath.startsWith("/website-preview");
   const isWebsiteLivePath = currentPath.startsWith("/website-live");
   const isStandaloneWebsiteHost = isStandaloneWebsiteHostName(currentHostName);
   const isStandaloneWebsiteSurface = isWebsitePreviewPath || isWebsiteLivePath || isStandaloneWebsiteHost;
+  const shouldRenderStandardHeader = currentPath !== "/admin" && isStandaloneWebsiteSurface === false;
+  const shouldRenderNavbar = isStandaloneWebsiteSurface === false;
 
   const renderFooter = () => {
     if (
@@ -186,9 +189,9 @@ function App() {
           <AuthProvider>
             <UserProvider>
               <div className="App" aria-busy={loading}>
-                {currentPath !== "/admin" && !isStandaloneWebsiteSurface && (
+                {shouldRenderStandardHeader ? (
                   <Header setSearchResults={setSearchResults} setLoading={setLoading} />
-                )}
+                ) : null}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} />} />
                   <Route path="/" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
@@ -294,12 +297,12 @@ function App() {
                   <Route path="/*" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <PageNotFound />} />
                 </Routes>
                 {renderFooter()}
-                {currentPath !== "/admin" && !isStandaloneWebsiteSurface && <MenuBar />}
+                {shouldRenderStandardHeader ? <MenuBar /> : null}
                 {renderChatWidget()}
               </div>
             </UserProvider>
           </AuthProvider>
-          {!isStandaloneWebsiteSurface ? <Navbar /> : null}
+          {shouldRenderNavbar ? <Navbar /> : null}
         </Router>
       </FlowContext.Provider>
     </ApolloProvider>

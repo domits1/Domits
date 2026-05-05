@@ -33,7 +33,7 @@ const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
 ]);
 
 const WEBSITE_ANALYTICS_SURFACES = new Set(["preview", "live"]);
-const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "desktop"]);
+const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
 const STANDALONE_SITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
 const STANDALONE_SITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const STANDALONE_SITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
@@ -41,6 +41,23 @@ const DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX = "standalone.domits.com";
 
 const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
 const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const isAsciiLowercaseLetter = (value) => value >= "a" && value <= "z";
+const isAsciiDigit = (value) => value >= "0" && value <= "9";
+const isAsciiLowercaseLetterOrDigit = (value) => isAsciiLowercaseLetter(value) || isAsciiDigit(value);
+const trimRepeatedCharacterEdges = (value, character) => {
+    let startIndex = 0;
+    let endIndex = value.length;
+
+    while (startIndex < endIndex && value[startIndex] === character) {
+        startIndex += 1;
+    }
+
+    while (endIndex > startIndex && value[endIndex - 1] === character) {
+        endIndex -= 1;
+    }
+
+    return value.slice(startIndex, endIndex);
+};
 const getFallbackDomainSuffix = () => {
     const configuredSuffix = cleanWebsiteText(process.env.STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX).toLowerCase();
     return configuredSuffix || DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX;
@@ -50,20 +67,48 @@ const getFallbackDomainRoutingStatus = () =>
         ? "ACTIVE"
         : "PENDING";
 const slugifyWebsiteDomainLabel = (value) => {
-    const sanitizedValue = cleanWebsiteText(value)
-        .normalize("NFKD")
-        .replaceAll(/[^\x00-\x7F]/g, "")
-        .toLowerCase()
-        .replaceAll(/[^a-z0-9]+/g, "-")
-        .replaceAll(/^-+|-+$/g, "");
+    const normalizedValue = cleanWebsiteText(value).normalize("NFKD").toLowerCase();
+    let sanitizedValue = "";
+    let previousCharacterWasHyphen = false;
+
+    for (const currentCharacter of normalizedValue) {
+        const isAsciiCharacter = currentCharacter.charCodeAt(0) <= 0x7f;
+        if (!isAsciiCharacter) {
+            continue;
+        }
+
+        if (isAsciiLowercaseLetterOrDigit(currentCharacter)) {
+            sanitizedValue += currentCharacter;
+            previousCharacterWasHyphen = false;
+            continue;
+        }
+
+        if (!previousCharacterWasHyphen) {
+            sanitizedValue += "-";
+            previousCharacterWasHyphen = true;
+        }
+    }
+
+    sanitizedValue = trimRepeatedCharacterEdges(sanitizedValue, "-");
 
     return sanitizedValue || "site";
 };
+const normalizeStandaloneSiteIdSuffix = (value) => {
+    let sanitizedValue = "";
+
+    for (const currentCharacter of cleanWebsiteText(value).toLowerCase()) {
+        if (isAsciiLowercaseLetterOrDigit(currentCharacter)) {
+            sanitizedValue += currentCharacter;
+        }
+    }
+
+    return sanitizedValue;
+};
 const buildFallbackDomainLabel = (siteName, siteId) => {
-    const slugBase = slugifyWebsiteDomainLabel(siteName).slice(0, 40).replaceAll(/-+$/g, "") || "site";
-    const idSuffix = cleanWebsiteText(siteId).toLowerCase().replaceAll(/[^a-z0-9]/g, "").slice(0, 8) || "domits";
+    const slugBase = trimRepeatedCharacterEdges(slugifyWebsiteDomainLabel(siteName).slice(0, 40), "-") || "site";
+    const idSuffix = normalizeStandaloneSiteIdSuffix(siteId).slice(0, 8) || "domits";
     const combinedLabel = `${slugBase}-${idSuffix}`;
-    return combinedLabel.slice(0, 63).replaceAll(/-+$/g, "");
+    return trimRepeatedCharacterEdges(combinedLabel.slice(0, 63), "-");
 };
 const buildFallbackDomain = (siteName, siteId) =>
     `${buildFallbackDomainLabel(siteName, siteId)}.${getFallbackDomainSuffix()}`;
@@ -1295,7 +1340,7 @@ export class PropertyController {
         }
 
         if (!WEBSITE_ANALYTICS_VIEWPORTS.has(viewport)) {
-            throw new TypeError("payload.viewport must be 'mobile' or 'desktop'.");
+            throw new TypeError("payload.viewport must be 'mobile', 'tablet', or 'desktop'.");
         }
 
         return {

@@ -4,17 +4,17 @@ import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
   WEBSITE_ANALYTICS_SURFACE_LIVE,
-  WEBSITE_ANALYTICS_VIEWPORT_MOBILE,
   WEBSITE_SITE_LCP_RECORDED_EVENT,
 } from "./analytics/websiteAnalyticsEventTypes";
 import {
-  isMobilePreviewViewport,
+  getWebsiteAnalyticsViewport,
   startWebsitePreviewLcpObserver,
 } from "./analytics/websitePreviewAnalytics";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
+import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import {
   fetchPublicWebsiteRenderModel,
@@ -115,8 +115,9 @@ function WebsitePublicSitePage() {
       propertyDetails: renderPayload.propertySnapshot,
       summaryProperty: null,
     });
+    const themedModel = applyWebsiteDraftThemeOverrides(baseModel, renderPayload.themeOverrides || {});
 
-    return applyWebsiteDraftContentOverrides(baseModel, renderPayload.contentOverrides || {});
+    return applyWebsiteDraftContentOverrides(themedModel, renderPayload.contentOverrides || {});
   }, [renderPayload]);
 
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
@@ -134,20 +135,22 @@ function WebsitePublicSitePage() {
 
   useEffect(() => {
     const publishedSiteId = String(renderPayload?.site?.id || "").trim();
-    if (!canRenderPublishedSite || !publishedSiteId || !isMobilePreviewViewport()) {
+    if (!canRenderPublishedSite || !publishedSiteId) {
       return undefined;
     }
+
+    const viewport = getWebsiteAnalyticsViewport();
 
     return startWebsitePreviewLcpObserver({
       enabled: true,
       onReport: (durationMs) => {
-        recordPublicWebsiteAnalyticsEventSafely({
+        void recordPublicWebsiteAnalyticsEventSafely({
           siteId: publishedSiteId,
           domain: renderPayload?.domain?.domain || requestedDomain,
           eventType: WEBSITE_SITE_LCP_RECORDED_EVENT,
           payload: {
             surface: WEBSITE_ANALYTICS_SURFACE_LIVE,
-            viewport: WEBSITE_ANALYTICS_VIEWPORT_MOBILE,
+            viewport,
             durationMs,
           },
         });
@@ -167,9 +170,12 @@ function WebsitePublicSitePage() {
 
   if (canRenderPublishedSite) {
     const shouldShowContactWidget = publicModel.visibility?.chatWidget ?? true;
+    const publishedSitePageStyle = {
+      "--website-surface-background": resolveWebsiteBackgroundColor(publicModel?.theme?.backgroundColor),
+    };
 
     return (
-      <main className={styles.publicPreviewPage}>
+      <main className={styles.publicPreviewPage} style={publishedSitePageStyle}>
         <div className={styles.publicPreviewCanvas}>
           <TemplateComponent model={publicModel} />
           {shouldShowContactWidget ? <WebsiteContactWidget model={publicModel} /> : null}

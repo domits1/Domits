@@ -73,8 +73,8 @@ What is in place:
 - The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
 - Standalone website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
 - The KPI dashboard now separates surface performance into `Preview` and `Live` tabs:
-  - preview mobile LCP can be measured from the public preview route
-  - live mobile LCP remains pending until a real published live-site surface exists
+  - preview LCP can be measured separately for mobile, tablet, and desktop preview visits
+  - live LCP is also segmented by mobile, tablet, and desktop, but remains pending until a real published live-site surface exists
 - Phase 1 of the public-site lifecycle is now implemented:
   - `main.standalone_site` stores standalone-owned published site state separately from the editor draft
   - `main.standalone_site_domain` stores fallback-domain metadata separately from the site lifecycle record
@@ -86,7 +86,7 @@ What is in place:
   - the public runtime now renders from `standalone_site.published_property_snapshot_json` plus published overrides instead of reading brochure content through the draft preview path
   - a same-origin debug route exists at `/website-live/:domain` so hosts can test published-site rendering before real fallback-domain DNS is activated
   - the actual standalone-host root path can now render the published site when the current hostname matches the fallback-domain suffix
-  - live mobile LCP telemetry can now be emitted from the published-site runtime instead of remaining preview-only
+  - live LCP telemetry can now be emitted from the published-site runtime instead of remaining preview-only
 
 ## Implemented page flow
 ### Step 1: Choose your listing
