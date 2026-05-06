@@ -24,6 +24,7 @@ const KPI_STATUS_PENDING = "Not instrumented yet";
 
 const createFixedPrecisionFormatter = (suffix, scale = 1) => (value) => `${(value / scale).toFixed(2)}${suffix}`;
 const createWholeMinutesFormatter = () => (value) => `${value.toFixed(1)} min`;
+const createMinutesFromMsFormatter = () => (value) => `${(value / 60000).toFixed(1)} min`;
 const createCurrencyFormatter = () => (value) => `EUR ${value.toFixed(2)}`;
 
 const formatters = Object.freeze({
@@ -31,6 +32,7 @@ const formatters = Object.freeze({
   secondsFromMs: createFixedPrecisionFormatter(" s", 1000),
   seconds: createFixedPrecisionFormatter(" s"),
   minutes: createWholeMinutesFormatter(),
+  minutesFromMs: createMinutesFromMsFormatter(),
   eur: createCurrencyFormatter(),
 });
 
@@ -58,12 +60,13 @@ const createMetricCardDefinition = (
   sampleLabel,
 });
 
-const createResearchKpiDefinition = (id, criteria, valueKey, formatterKey, note) => ({
+const createResearchKpiDefinition = (id, criteria, valueKey, formatterKey, note, sampleLabel = "") => ({
   id,
   criteria,
   valueKey,
   formatterKey,
   note,
+  sampleLabel,
 });
 
 const createSurfaceMetricDefinition = (surface, viewport, description) =>
@@ -240,38 +243,38 @@ const SURFACE_PERFORMANCE_DEFINITIONS = Object.freeze({
   [SURFACE_KPI_TAB_LIVE]: {
     title: "Live surface performance",
     description:
-      "Live-site web-vitals remain pending until the published standalone website surface and routing are active.",
+      "Live fallback-site LCP is captured from the published standalone website surface and segmented by viewport class.",
     viewportDefinitions: {
       [PERFORMANCE_VIEWPORT_TAB_MOBILE]: {
         description:
-          "No live standalone site telemetry is being recorded yet for mobile devices.",
+          "75th percentile Largest Contentful Paint for published fallback-site visits on mobile devices.",
         metricDefinitions: [
           createSurfaceMetricDefinition(
             "live",
             PERFORMANCE_VIEWPORT_TAB_MOBILE,
-            "No live standalone site telemetry is being recorded yet for mobile devices."
+            "75th percentile Largest Contentful Paint for published fallback-site visits on mobile devices."
           ),
         ],
       },
       [PERFORMANCE_VIEWPORT_TAB_TABLET]: {
         description:
-          "No live standalone site telemetry is being recorded yet for tablet-sized viewports.",
+          "75th percentile Largest Contentful Paint for published fallback-site visits on tablet-sized viewports.",
         metricDefinitions: [
           createSurfaceMetricDefinition(
             "live",
             PERFORMANCE_VIEWPORT_TAB_TABLET,
-            "No live standalone site telemetry is being recorded yet for tablet-sized viewports."
+            "75th percentile Largest Contentful Paint for published fallback-site visits on tablet-sized viewports."
           ),
         ],
       },
       [PERFORMANCE_VIEWPORT_TAB_DESKTOP]: {
         description:
-          "No live standalone site telemetry is being recorded yet for desktop-sized viewports.",
+          "75th percentile Largest Contentful Paint for published fallback-site visits on desktop-sized viewports.",
         metricDefinitions: [
           createSurfaceMetricDefinition(
             "live",
             PERFORMANCE_VIEWPORT_TAB_DESKTOP,
-            "No live standalone site telemetry is being recorded yet for desktop-sized viewports."
+            "75th percentile Largest Contentful Paint for published fallback-site visits on desktop-sized viewports."
           ),
         ],
       },
@@ -284,8 +287,9 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     "time_to_publish_p95",
     ["Scalability", "User experience"],
     "timeToPublishP95",
-    "minutes",
-    "Requires a real publish lifecycle with publish-requested and publish-succeeded timestamps. The current preview-link workflow is not the final publish contract."
+    "minutesFromMs",
+    "Measured from publish request until the published site and fallback domain write complete.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.timeToPublishSampleCount)
   ),
   createResearchKpiDefinition(
     "cost_per_active_site_per_month",
@@ -295,18 +299,12 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     "Requires infrastructure cost allocation plus a real count of active published sites. Drafts and preview links are not enough for a defensible value."
   ),
   createResearchKpiDefinition(
-    "site_lcp_mobile_p75",
-    ["Performance"],
-    "siteLcpMobileP75",
-    "seconds",
-    "Live mobile web-vitals telemetry still requires a real published standalone website surface. Preview LCP is tracked separately in this dashboard."
-  ),
-  createResearchKpiDefinition(
     "fallback_subdomain_availability",
     ["Reliability"],
     "fallbackSubdomainAvailability",
     "percentage",
-    "Requires real fallback subdomain routing plus synthetic availability checks. Preview links do not represent subdomain uptime."
+    "Current published fallback reachability rate based on published site state plus ACTIVE fallback-domain routing status. This is not synthetic uptime yet.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.fallbackSubdomainAvailabilitySampleCount)
   ),
   createResearchKpiDefinition(
     "booking_api_error_rate",
@@ -394,5 +392,8 @@ export const buildResearchKpiCards = (websiteKpis) =>
         ? formatters[researchKpi.formatterKey](rawValue)
         : RESEARCH_KPI_EMPTY_VALUE,
       statusLabel: isInstrumented ? KPI_STATUS_READY : KPI_STATUS_PENDING,
+      sampleLabel: isInstrumented
+        ? resolveMetricSampleLabel(researchKpi.sampleLabel, websiteKpis)
+        : "",
     };
   });

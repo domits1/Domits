@@ -16,6 +16,8 @@ const resolveSchemaName = (client) => {
 
 const eventTableName = (schemaName) => `${schemaName}.standalone_site_event`;
 const draftTableName = (schemaName) => `${schemaName}.standalone_site_draft`;
+const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
+const siteDomainTableName = (schemaName) => `${schemaName}.standalone_site_domain`;
 
 const safeParseJson = (rawValue, fallbackValue = {}) => {
   if (typeof rawValue !== "string" || !rawValue.trim()) {
@@ -133,6 +135,13 @@ const trackPreviewReadyDuration = (previewReadyDurations, payload) => {
   }
 };
 
+const trackPublishDuration = (publishDurations, payload) => {
+  const durationMs = parseDurationMetric(payload);
+  if (Number.isFinite(durationMs) && durationMs > 0) {
+    publishDurations.push(durationMs);
+  }
+};
+
 const trackCompletedAttempt = (completedAttemptIds, payload) => {
   const attemptId = parseAttemptId(payload);
   if (attemptId) {
@@ -174,6 +183,7 @@ const accumulateMetricRows = (metricEventRows) => {
   const startedAttempts = new Map();
   const completedAttemptIds = new Set();
   const previewReadyDurations = [];
+  const publishDurations = [];
   const surfaceViewportDurations = createSurfaceViewportDurationBuckets();
 
   (Array.isArray(metricEventRows) ? metricEventRows : []).forEach((row) => {
@@ -190,6 +200,9 @@ const accumulateMetricRows = (metricEventRows) => {
         return;
       case "WEBSITE_PREVIEW_READY":
         trackPreviewReadyDuration(previewReadyDurations, payload);
+        return;
+      case "WEBSITE_SITE_PUBLISHED":
+        trackPublishDuration(publishDurations, payload);
         return;
       case "WEBSITE_BUILD_SUCCEEDED":
       case "WEBSITE_BUILD_FAILED":
@@ -208,6 +221,7 @@ const accumulateMetricRows = (metricEventRows) => {
     startedAttempts,
     completedAttemptIds,
     previewReadyDurations,
+    publishDurations,
     surfaceViewportDurations,
   };
 };
@@ -274,12 +288,15 @@ export class StandaloneSiteEventRepository {
     const schemaName = resolveSchemaName(client);
     const standaloneDraftTable = draftTableName(schemaName);
     const standaloneEventTable = eventTableName(schemaName);
+    const standaloneSiteTable = siteTableName(schemaName);
+    const standaloneSiteDomainTable = siteDomainTableName(schemaName);
     const hasHostScope = typeof hostId === "string" && hostId.trim().length > 0;
     const draftWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const eventWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
+    const siteWhereClause = hasHostScope ? "WHERE site.host_id = $1" : "";
     const queryParameters = hasHostScope ? [hostId] : [];
 
-    const [draftCountRows, eventCountRows, metricEventRows] = await Promise.all([
+    const [draftCountRows, eventCountRows, metricEventRows, fallbackAvailabilityRows] = await Promise.all([
       client.query(
         `SELECT COUNT(*)::bigint AS total
          FROM ${standaloneDraftTable}
@@ -305,10 +322,28 @@ export class StandaloneSiteEventRepository {
            'WEBSITE_DELETED',
            'WEBSITE_BUILD_STARTED',
            'WEBSITE_PREVIEW_READY',
+           'WEBSITE_SITE_PUBLISHED',
            'WEBSITE_BUILD_SUCCEEDED',
            'WEBSITE_BUILD_FAILED',
            'SITE_LCP_RECORDED'
          )`,
+        queryParameters
+      ),
+      client.query(
+        `SELECT
+           COUNT(DISTINCT CASE WHEN site.status = 'PUBLISHED' THEN site.id END)::bigint AS published_site_count,
+           COUNT(
+             DISTINCT CASE
+               WHEN site.status = 'PUBLISHED' AND fallback_domain.status = 'ACTIVE'
+               THEN site.id
+             END
+           )::bigint AS reachable_site_count
+         FROM ${standaloneSiteTable} site
+         LEFT JOIN ${standaloneSiteDomainTable} fallback_domain
+           ON fallback_domain.site_id = site.id
+          AND fallback_domain.domain_type = 'FALLBACK'
+          AND fallback_domain.is_primary = TRUE
+         ${siteWhereClause}`,
         queryParameters
       ),
     ]);
@@ -319,6 +354,7 @@ export class StandaloneSiteEventRepository {
       startedAttempts,
       completedAttemptIds,
       previewReadyDurations,
+      publishDurations,
       surfaceViewportDurations,
     } = accumulateMetricRows(metricEventRows);
     const deletionReasonBreakdown = buildDeletionReasonBreakdown(deleteReasonCounts);
@@ -335,6 +371,8 @@ export class StandaloneSiteEventRepository {
     const buildSucceededCount = buildSucceededMetrics.total;
     const buildFailedCount = buildFailedMetrics.total;
     const buildAbandonedCount = countAbandonedAttempts(startedAttempts, completedAttemptIds);
+    const publishedFallbackSiteCount = toCount(fallbackAvailabilityRows?.[0]?.published_site_count);
+    const reachableFallbackSiteCount = toCount(fallbackAvailabilityRows?.[0]?.reachable_site_count);
     const previewMobileLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "mobile");
     const previewTabletLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "tablet");
     const previewDesktopLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "desktop");
@@ -358,6 +396,8 @@ export class StandaloneSiteEventRepository {
       buildAbandonmentRateSampleCount: buildStartedCount,
       timeToFirstPreviewP95: getPercentile(previewReadyDurations, 95),
       timeToFirstPreviewSampleCount: previewReadyDurations.length,
+      timeToPublishP95: getPercentile(publishDurations, 95),
+      timeToPublishSampleCount: publishDurations.length,
       publicPreviewViewCount: previewMetrics.total,
       uniquePreviewedWebsiteCount: previewMetrics.uniqueDrafts,
       livePreviewUpdateCount: livePreviewUpdateMetrics.total,
@@ -376,6 +416,8 @@ export class StandaloneSiteEventRepository {
       liveSiteLcpTabletSampleCount: liveTabletLcpSummary.sampleCount,
       liveSiteLcpDesktopP75: liveDesktopLcpSummary.p75,
       liveSiteLcpDesktopSampleCount: liveDesktopLcpSummary.sampleCount,
+      fallbackSubdomainAvailability: toPercentage(reachableFallbackSiteCount, publishedFallbackSiteCount),
+      fallbackSubdomainAvailabilitySampleCount: publishedFallbackSiteCount,
       deletionReasonBreakdown,
     };
   }

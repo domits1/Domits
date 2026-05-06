@@ -1529,6 +1529,7 @@ export class PropertyController {
     }
 
     async publishStandaloneSiteForDraft({ draft, hostId, propertyId }) {
+        const publishStartedAt = Date.now();
         const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
             propertyId,
             { includeCalendarAvailability: true }
@@ -1581,6 +1582,7 @@ export class PropertyController {
                 siteId: site.id,
                 domain: fallbackDomain?.domain || "",
                 domainStatus: fallbackDomain?.status || fallbackDomainStatus,
+                durationMs: Date.now() - publishStartedAt,
             },
         });
 
