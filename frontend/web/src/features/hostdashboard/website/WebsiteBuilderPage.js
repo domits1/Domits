@@ -39,6 +39,7 @@ import {
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
+import { applyWebsiteDraftThemeOverrides } from "./rendering/websiteDraftThemeOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
 import { WEBSITE_DRAFT_DELETE_REASONS } from "./websiteDeleteReasons";
 
@@ -121,6 +122,11 @@ const getDraftPublishedContentOverrides = (draft) =>
     ? draft.publishedContentOverrides
     : {};
 
+const getDraftPublishedThemeOverrides = (draft) =>
+  draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object"
+    ? draft.publishedThemeOverrides
+    : {};
+
 const getDraftDisplayTitle = (draft, contentOverrides = getDraftContentOverrides(draft)) => {
   return (
     String(contentOverrides.siteTitle || "").trim() ||
@@ -187,6 +193,7 @@ const formatDraftUpdatedAt = (updatedAt) => {
 
 const buildDraftCardFallbackPreviewModel = (draft) => {
   const contentOverrides = getDraftPublishedContentOverrides(draft);
+  const themeOverrides = getDraftPublishedThemeOverrides(draft);
   const locationLabel = String(draft?.location || "").trim();
   const title = getDraftDisplayTitle(draft, contentOverrides);
   const subtitle = String(draft?.propertySubtitle || "").trim();
@@ -198,7 +205,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
   const normalizedGalleryImages = galleryImages.length > 0 ? galleryImages : [placeholderImage];
   const previewImages = normalizedGalleryImages.slice(0, 3);
 
-  return applyWebsiteDraftContentOverrides(
+  const themedModel = applyWebsiteDraftThemeOverrides(
     {
       source: {
         propertyId: String(draft?.propertyId || "").trim(),
@@ -334,8 +341,10 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
         chatWidget: true,
       },
     },
-    contentOverrides
+    themeOverrides
   );
+
+  return applyWebsiteDraftContentOverrides(themedModel, contentOverrides);
 };
 
 function WebsiteDraftDeleteDialog({
@@ -600,12 +609,16 @@ function WebsiteBuilderPage() {
               summaryProperty: null,
               imageVariant: "thumb",
             });
-            const thumbContentOverrides = mapImageOverridesToThumbnails(
-              getDraftPublishedContentOverrides(draft),
-              buildImageVariantMap(propertyDetails?.images)
-            );
-            const previewModel = applyWebsiteDraftContentOverrides(baseModel, thumbContentOverrides);
-            return [draft.propertyId, previewModel];
+              const thumbContentOverrides = mapImageOverridesToThumbnails(
+                getDraftPublishedContentOverrides(draft),
+                buildImageVariantMap(propertyDetails?.images)
+              );
+              const themedModel = applyWebsiteDraftThemeOverrides(
+                baseModel,
+                getDraftPublishedThemeOverrides(draft)
+              );
+              const previewModel = applyWebsiteDraftContentOverrides(themedModel, thumbContentOverrides);
+              return [draft.propertyId, previewModel];
           } catch {
             return [draft.propertyId, buildDraftCardFallbackPreviewModel(draft)];
           }

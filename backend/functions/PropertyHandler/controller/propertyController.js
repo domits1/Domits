@@ -31,7 +31,7 @@ const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
 ]);
 
 const WEBSITE_ANALYTICS_SURFACES = new Set(["preview", "live"]);
-const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "desktop"]);
+const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
 
 export class PropertyController {
 
@@ -1242,7 +1242,7 @@ export class PropertyController {
         }
 
         if (!WEBSITE_ANALYTICS_VIEWPORTS.has(viewport)) {
-            throw new TypeError("payload.viewport must be 'mobile' or 'desktop'.");
+            throw new TypeError("payload.viewport must be 'mobile', 'tablet', or 'desktop'.");
         }
 
         return {

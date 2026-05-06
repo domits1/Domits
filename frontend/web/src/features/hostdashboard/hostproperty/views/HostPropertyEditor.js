@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Auth } from "aws-amplify";
-import { useSetLiveEligibility } from "../../hooks/useSetLiveEligibility";
 import ClipLoader from "react-spinners/ClipLoader";
 import styles from "../../HostProperty.module.css";
 import amenitiesCatalogue from "../../../../store/amenities";
@@ -87,7 +85,6 @@ export default function HostProperty() {
   const propertyId = params.get("ID");
   const photoInputRef = useRef(null);
 
-  const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [preparingPhotos, setPreparingPhotos] = useState(false);
@@ -158,26 +155,6 @@ export default function HostProperty() {
   const bypassUnsavedGuardRef = useRef(false);
   const pendingNavigationActionRef = useRef(null);
   const isDevelopment = process.env.NODE_ENV === "development";
-
-  const { liveEligibility, liveEligibilityLoading, fetchVerificationStatus } = useSetLiveEligibility({ userId });
-
-  useEffect(() => {
-    const loadUserId = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        setUserId(userInfo?.attributes?.sub || null);
-      } catch {
-        setUserId(null);
-      }
-    };
-    loadUserId();
-  }, []);
-
-  useEffect(() => {
-    if (userId) {
-      fetchVerificationStatus();
-    }
-  }, [fetchVerificationStatus, userId]);
 
   const amenitiesByCategory = useMemo(() => {
     return amenitiesCatalogue.reduce((categories, amenity) => {
@@ -852,18 +829,6 @@ export default function HostProperty() {
     const nextStatus = String(nextStatusValue || "").toUpperCase();
     if (!nextStatus || nextStatus === status) {
       return;
-    }
-
-    if (nextStatus === "ACTIVE") {
-      if (liveEligibilityLoading) {
-        toast.info("Checking verification status. Please try again in a moment.");
-        return;
-      }
-      if (!liveEligibility) {
-        toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
-        navigate("/hostdashboard/finance");
-        return;
-      }
     }
 
     setStatusUpdating(true);

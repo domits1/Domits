@@ -1032,12 +1032,20 @@ font-size: 40px;
 width: 100%;
 }
 
+<<<<<<< OTAhomepage-frontend
 h1 {
+=======
+.landing h1 {
+>>>>>>> acceptance
 font-size: 40px;
 line-height: 1.2;
 }
 
+<<<<<<< OTAhomepage-frontend
 h2 {
+=======
+.landing h2 {
+>>>>>>> acceptance
 font-size: 32px;
 }
 }
@@ -1047,6 +1055,7 @@ font-size: 32px;
 padding: 40px 14px;
 }
 
+<<<<<<< OTAhomepage-frontend
 h1 {
 font-size: 32px;
 }
@@ -1057,6 +1066,18 @@ font-size: 26px;
 
 .button,
 button {
+=======
+.landing h1 {
+font-size: 32px;
+}
+
+.landing h2 {
+font-size: 26px;
+}
+
+.landing .button,
+.landing button {
+>>>>>>> acceptance
 width: 100%;
 }
 
