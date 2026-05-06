@@ -1,8 +1,8 @@
 :root {
   --gd-sidebar-w: 200px;
   --gd-z-overlay: 900;   
-  --gd-z-sidebar: 1100;  
-  --gd-z-navbar: 1300;   
+  --gd-z-sidebar: 1400;
+--gd-z-navbar: 1300;   
 
   --gd-border: 1px solid #e5e7eb;
   --gd-bg: #ffffff;
@@ -27,16 +27,20 @@
 
 .sidebar {
   position: fixed;
-  top: 0; left: 0;
-  height: 120dvh; 
+  top: 0;
+  left: 0;
+
+  height: calc(100dvh - 90px);
+
   width: var(--gd-sidebar-w);
+
+  z-index: 1400;
   background: var(--gd-bg);
   border-right: var(--gd-border);
   box-shadow: 2px 0 20px rgba(0,0,0,.08);
   transform: translateX(-100%);
   transition: transform .28s ease;
   will-change: transform;
-  z-index: var(--gd-z-sidebar);
   padding: 16px;
   display: flex;
   flex-direction: column;
