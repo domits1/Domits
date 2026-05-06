@@ -149,9 +149,10 @@ const AccommodationCard = ({
                 </SwiperSlide>
               ))}
             </Swiper>
-          </div>
-          <div className="accocard-title">
-            {accommodation.property?.title || "No title available"}
+
+            <div className="accocard-title">
+              {accommodation.property?.title || "No title available"}
+            </div>
           </div>
 
           <div className="accocard-price">
