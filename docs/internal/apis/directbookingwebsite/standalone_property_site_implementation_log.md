@@ -1421,3 +1421,49 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
   - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-05-04] KPI performance metrics segmented by mobile, tablet, and desktop
+Context:
+The standalone website KPI dashboard already exposed preview/live performance as a separate category, but the actual telemetry and aggregation were still biased toward mobile-only LCP. That was too narrow to support useful cross-device analysis.
+
+Implementation:
+- Expanded preview telemetry so `SITE_LCP_RECORDED` events now classify viewport as:
+  - `mobile`
+  - `tablet`
+  - `desktop`
+- Extended backend KPI aggregation to keep separate p75 and sample counts for each:
+  - preview mobile/tablet/desktop
+  - live mobile/tablet/desktop
+- Updated the KPI dashboard performance view to use nested tabs:
+  - surface: `Preview` / `Live`
+  - viewport: `Mobile` / `Tablet` / `Desktop`
+- Deliberately did not add an `All` bucket, because mixing heterogeneous viewport performance into one p75 would make the metric less honest and harder to interpret.
+
+Decision / Rationale:
+- Device class materially affects LCP. A single mixed number looks neat but hides the very variance the KPI is supposed to surface.
+- The clean model is segmentation first, aggregation second.
+
+AWS / Data impact:
+- No new Aurora table or column change.
+- No new API Gateway route.
+- Existing `/property/website/event` ingestion path now accepts `tablet` in addition to `mobile` and `desktop`.
+
+Validation:
+- Frontend production build passed:
+  - `react-scripts build`
+
+Open risks / Next:
+- Existing historical preview telemetry remains mobile-heavy until new tablet/desktop visits are recorded.
+- Live-site viewport metrics will continue to show pending/no data until the real published live-site surface emits telemetry.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsEventTypes.js`
+  - `frontend/web/src/features/hostdashboard/website/analytics/websitePreviewAnalytics.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/kpis/websiteKpiFields.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/websiteKpiConfig.js`
+  - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
+  - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
