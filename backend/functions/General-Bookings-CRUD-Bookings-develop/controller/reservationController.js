@@ -151,14 +151,12 @@ class ReservationController {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
+    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub);
+
     return {
-      statusCode: 200,
+      statusCode: canceled.statusCode || 200,
       headers: responseHeaderJSON,
-      response: {
-        bookingId,
-        message: "Guest authorized to cancel this booking.",
-        booking,
-      },
+      response: canceled.response,
     };
   }
 
