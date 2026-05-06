@@ -2,18 +2,12 @@
   width: 100%;
   max-width: 450px;
   margin: 1% auto 10px;
-  display: inline-block;
-  vertical-align: top;
   position: relative;
   z-index: 1;
   transition:
           transform 0.5s ease-in-out,
           opacity 0.5s ease-in-out;
 
-  @media (max-width: 1292px) {
-    display: block;
-    margin: 0 auto;
-  }
 
   &:hover {
     cursor: pointer;
@@ -111,7 +105,7 @@
 .accocard .swiper-slide img {
   width: 100%;
   height: auto;
-  aspect-ratio: 1;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: 15px;
   display: block;
@@ -150,6 +144,7 @@
 
 .accocard-price {
   font-size: 18px;
+  padding-top: 8px;
   color: var(--primary-color);
   margin-bottom: 8px;
   font-weight: 500;
@@ -167,8 +162,10 @@
 
 .accocard-specs {
   display: flex;
+  justify-content: space-between;
   flex-direction: row;
   gap: 5px;
+  padding-bottom: 16px;
 }
 
 .wishlist-modal-backdrop {
@@ -315,15 +312,6 @@
   padding: 3px 16px;
 }
 
-.accocard-price {
-  padding-top: 8px;
-}
-
-.accocard-specs {
-  padding-bottom: 16px;
-  justify-content: space-between;
-}
-
 .accocard-specs-content {
   display: flex;
   align-items: center;
@@ -361,9 +349,8 @@
 
 @media (max-width: 856px) {
   .accocard-specs {
-    justify-content: space-around;
-    align-items: center;
-    text-align: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
   }
 }
 

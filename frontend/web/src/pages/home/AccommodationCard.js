@@ -257,6 +257,8 @@ AccommodationCard.propTypes = {
   onClick: PropTypes.func,
   onUnlike: PropTypes.func,
   imageVariant: PropTypes.oneOf(["thumb", "web"]),
+  variant: PropTypes.oneOf(["homepage", "listing"]),
+  accomodation: PropTypes.object.isRequired,
 };
 
 export default AccommodationCard;
