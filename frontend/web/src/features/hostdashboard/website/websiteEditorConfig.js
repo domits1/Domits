@@ -19,6 +19,7 @@ export const COMMON_TEXT_FIELDS = Object.freeze([
 
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
+  theme: "theme",
   visibility: "visibility",
   images: "images",
   trustCards: "trustCards",
@@ -94,6 +95,7 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
       description: "These cards drive the fast-scan content block directly below the hero.",
       itemLabel: "Card",
       count: 3,
+      supportsIconSelection: true,
     },
   },
   "trust-signals": {
@@ -102,6 +104,7 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
       description: "These cards control the reassurance stack in the trust layout.",
       itemLabel: "Card",
       count: 2,
+      supportsIconSelection: true,
     },
   },
   "experience-journey": {
@@ -124,6 +127,11 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
     id: EDITOR_SECTION_KEYS.visibility,
     title: "Section visibility",
     description: "Loading which website sections can be toggled on or off.",
+  },
+  {
+    id: EDITOR_SECTION_KEYS.theme,
+    title: "Theme",
+    description: "Loading standalone website theme selections.",
   },
   {
     id: EDITOR_SECTION_KEYS.images,

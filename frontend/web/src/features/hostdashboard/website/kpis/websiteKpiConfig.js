@@ -2,10 +2,19 @@ export { EMPTY_WEBSITE_KPIS } from "./websiteKpiFields";
 
 export const SURFACE_KPI_TAB_PREVIEW = "preview";
 export const SURFACE_KPI_TAB_LIVE = "live";
+export const PERFORMANCE_VIEWPORT_TAB_MOBILE = "mobile";
+export const PERFORMANCE_VIEWPORT_TAB_TABLET = "tablet";
+export const PERFORMANCE_VIEWPORT_TAB_DESKTOP = "desktop";
 
 export const SURFACE_KPI_TAB_OPTIONS = Object.freeze([
   { id: SURFACE_KPI_TAB_PREVIEW, label: "Preview" },
   { id: SURFACE_KPI_TAB_LIVE, label: "Live" },
+]);
+
+export const PERFORMANCE_VIEWPORT_TAB_OPTIONS = Object.freeze([
+  { id: PERFORMANCE_VIEWPORT_TAB_MOBILE, label: "Mobile" },
+  { id: PERFORMANCE_VIEWPORT_TAB_TABLET, label: "Tablet" },
+  { id: PERFORMANCE_VIEWPORT_TAB_DESKTOP, label: "Desktop" },
 ]);
 
 const KPI_EMPTY_VALUE = "No data yet";
@@ -25,14 +34,28 @@ const formatters = Object.freeze({
   eur: createCurrencyFormatter(),
 });
 
-const createMetricCard = ({ id, title, value, meta }) => ({ id, title, value, meta });
+const createMetricCard = ({ id, title, value, meta, sampleLabel = "" }) => ({
+  id,
+  title,
+  value,
+  meta,
+  sampleLabel,
+});
 
-const createMetricCardDefinition = (id, title, valueKey, meta, formatterKey = null) => ({
+const createMetricCardDefinition = (
+  id,
+  title,
+  valueKey,
+  meta,
+  formatterKey = null,
+  sampleLabel = ""
+) => ({
   id,
   title,
   valueKey,
   meta,
   formatterKey,
+  sampleLabel,
 });
 
 const createResearchKpiDefinition = (id, criteria, valueKey, formatterKey, note) => ({
@@ -42,6 +65,21 @@ const createResearchKpiDefinition = (id, criteria, valueKey, formatterKey, note)
   formatterKey,
   note,
 });
+
+const createSurfaceMetricDefinition = (surface, viewport, description) =>
+  createMetricCardDefinition(
+    `${surface}-site-lcp-${viewport}-p75`,
+    "site_lcp_p75",
+    `${surface}SiteLcp${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}P75`,
+    description,
+    "secondsFromMs",
+    (websiteKpis) =>
+      formatSampleLabel(
+        websiteKpis[
+          `${surface}SiteLcp${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}SampleCount`
+        ]
+      )
+  );
 
 const formatKpiValue = (value, formatterKey = null) => {
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -57,6 +95,10 @@ const formatKpiValue = (value, formatterKey = null) => {
 
 const resolveMetricMeta = (meta, websiteKpis) =>
   typeof meta === "function" ? meta(websiteKpis) : meta;
+const resolveMetricSampleLabel = (sampleLabel, websiteKpis) =>
+  typeof sampleLabel === "function" ? sampleLabel(websiteKpis) : sampleLabel;
+
+const formatSampleLabel = (count) => `n=${Number(count) || 0}`;
 
 const buildMetricCardsFromDefinitions = (definitions, websiteKpis) =>
   definitions.map((definition) =>
@@ -65,6 +107,7 @@ const buildMetricCardsFromDefinitions = (definitions, websiteKpis) =>
       title: definition.title,
       value: formatKpiValue(websiteKpis[definition.valueKey], definition.formatterKey),
       meta: resolveMetricMeta(definition.meta, websiteKpis),
+      sampleLabel: resolveMetricSampleLabel(definition.sampleLabel, websiteKpis),
     })
   );
 
@@ -92,21 +135,24 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "Time to first preview p95",
     "timeToFirstPreviewP95",
     "95th percentile from build click until preview rendered and usable",
-    "secondsFromMs"
+    "secondsFromMs",
+    (websiteKpis) => formatSampleLabel(websiteKpis.timeToFirstPreviewSampleCount)
   ),
   createMetricCardDefinition(
     "build-success-rate",
     "Build success rate",
     "buildSuccessRate",
     "Successful website builds divided by all recorded build starts",
-    "percentage"
+    "percentage",
+    (websiteKpis) => formatSampleLabel(websiteKpis.buildSuccessRateSampleCount)
   ),
   createMetricCardDefinition(
     "build-failure-rate",
     "Build failure rate",
     "buildFailureRate",
     "Build attempts that ended in a recorded failure",
-    "percentage"
+    "percentage",
+    (websiteKpis) => formatSampleLabel(websiteKpis.buildFailureRateSampleCount)
   ),
   createMetricCardDefinition(
     "build-abandonment-rate",
@@ -114,7 +160,8 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "buildAbandonmentRate",
     (websiteKpis) =>
       `${websiteKpis.buildAbandonedCount} attempts passed the 10 minute threshold without success or failure`,
-    "percentage"
+    "percentage",
+    (websiteKpis) => formatSampleLabel(websiteKpis.buildAbandonmentRateSampleCount)
   ),
   createMetricCardDefinition(
     "draft-saves",
@@ -153,30 +200,82 @@ const SURFACE_PERFORMANCE_DEFINITIONS = Object.freeze({
   [SURFACE_KPI_TAB_PREVIEW]: {
     title: "Preview surface performance",
     description:
-      "Preview LCP is captured from the public preview route when it is opened on a mobile viewport.",
-    metricDefinitions: [
-      createMetricCardDefinition(
-        "preview-site-lcp-mobile-p75",
-        "site_lcp_mobile_p75",
-        "previewSiteLcpMobileP75",
-        "75th percentile Largest Contentful Paint for preview visits on mobile.",
-        "secondsFromMs"
-      ),
-    ],
+      "Preview LCP is captured from the public preview route and segmented by viewport class.",
+    viewportDefinitions: {
+      [PERFORMANCE_VIEWPORT_TAB_MOBILE]: {
+        description:
+          "75th percentile Largest Contentful Paint for preview visits on mobile devices.",
+        metricDefinitions: [
+          createSurfaceMetricDefinition(
+            "preview",
+            PERFORMANCE_VIEWPORT_TAB_MOBILE,
+            "75th percentile Largest Contentful Paint for preview visits on mobile devices."
+          ),
+        ],
+      },
+      [PERFORMANCE_VIEWPORT_TAB_TABLET]: {
+        description:
+          "75th percentile Largest Contentful Paint for preview visits on tablet-sized viewports.",
+        metricDefinitions: [
+          createSurfaceMetricDefinition(
+            "preview",
+            PERFORMANCE_VIEWPORT_TAB_TABLET,
+            "75th percentile Largest Contentful Paint for preview visits on tablet-sized viewports."
+          ),
+        ],
+      },
+      [PERFORMANCE_VIEWPORT_TAB_DESKTOP]: {
+        description:
+          "75th percentile Largest Contentful Paint for preview visits on desktop-sized viewports.",
+        metricDefinitions: [
+          createSurfaceMetricDefinition(
+            "preview",
+            PERFORMANCE_VIEWPORT_TAB_DESKTOP,
+            "75th percentile Largest Contentful Paint for preview visits on desktop-sized viewports."
+          ),
+        ],
+      },
+    },
   },
   [SURFACE_KPI_TAB_LIVE]: {
     title: "Live surface performance",
     description:
       "Live-site web-vitals remain pending until the published standalone website surface and routing are active.",
-    metricDefinitions: [
-      createMetricCardDefinition(
-        "live-site-lcp-mobile-p75",
-        "site_lcp_mobile_p75",
-        "liveSiteLcpMobileP75",
-        "No live standalone site telemetry is being recorded yet.",
-        "secondsFromMs"
-      ),
-    ],
+    viewportDefinitions: {
+      [PERFORMANCE_VIEWPORT_TAB_MOBILE]: {
+        description:
+          "No live standalone site telemetry is being recorded yet for mobile devices.",
+        metricDefinitions: [
+          createSurfaceMetricDefinition(
+            "live",
+            PERFORMANCE_VIEWPORT_TAB_MOBILE,
+            "No live standalone site telemetry is being recorded yet for mobile devices."
+          ),
+        ],
+      },
+      [PERFORMANCE_VIEWPORT_TAB_TABLET]: {
+        description:
+          "No live standalone site telemetry is being recorded yet for tablet-sized viewports.",
+        metricDefinitions: [
+          createSurfaceMetricDefinition(
+            "live",
+            PERFORMANCE_VIEWPORT_TAB_TABLET,
+            "No live standalone site telemetry is being recorded yet for tablet-sized viewports."
+          ),
+        ],
+      },
+      [PERFORMANCE_VIEWPORT_TAB_DESKTOP]: {
+        description:
+          "No live standalone site telemetry is being recorded yet for desktop-sized viewports.",
+        metricDefinitions: [
+          createSurfaceMetricDefinition(
+            "live",
+            PERFORMANCE_VIEWPORT_TAB_DESKTOP,
+            "No live standalone site telemetry is being recorded yet for desktop-sized viewports."
+          ),
+        ],
+      },
+    },
   },
 });
 
@@ -264,16 +363,23 @@ export const formatNullableDurationMs = (value) => formatKpiValue(value, "second
 export const buildWebsiteMetricCards = (websiteKpis) =>
   buildMetricCardsFromDefinitions(WEBSITE_METRIC_CARD_DEFINITIONS, websiteKpis);
 
-export const buildSurfacePerformanceCards = (websiteKpis) =>
+export const buildSurfacePerformanceCards = (websiteKpis, viewportTab = PERFORMANCE_VIEWPORT_TAB_MOBILE) =>
   Object.fromEntries(
-    Object.entries(SURFACE_PERFORMANCE_DEFINITIONS).map(([surfaceTab, definition]) => [
-      surfaceTab,
-      {
-        title: definition.title,
-        description: definition.description,
-        metrics: buildMetricCardsFromDefinitions(definition.metricDefinitions, websiteKpis),
-      },
-    ])
+    Object.entries(SURFACE_PERFORMANCE_DEFINITIONS).map(([surfaceTab, definition]) => {
+      const viewportDefinition =
+        definition.viewportDefinitions[viewportTab] ||
+        definition.viewportDefinitions[PERFORMANCE_VIEWPORT_TAB_MOBILE];
+
+      return [
+        surfaceTab,
+        {
+          title: definition.title,
+          description: definition.description,
+          viewportDescription: viewportDefinition.description,
+          metrics: buildMetricCardsFromDefinitions(viewportDefinition.metricDefinitions, websiteKpis),
+        },
+      ];
+    })
   );
 
 export const buildResearchKpiCards = (websiteKpis) =>

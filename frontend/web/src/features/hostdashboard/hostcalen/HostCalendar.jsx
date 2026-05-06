@@ -41,6 +41,22 @@ const selectedAvailabilityStatsShape = PropTypes.shape({
   allAvailable: PropTypes.bool.isRequired,
 });
 
+const selectionRestrictionsFormShape = PropTypes.shape({
+  stopSell: PropTypes.string.isRequired,
+  closedToArrival: PropTypes.string.isRequired,
+  closedToDeparture: PropTypes.string.isRequired,
+  minStay: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  maxStay: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+});
+
+const selectionRestrictionMixedFieldsShape = PropTypes.shape({
+  stopSell: PropTypes.bool.isRequired,
+  closedToArrival: PropTypes.bool.isRequired,
+  closedToDeparture: PropTypes.bool.isRequired,
+  minStay: PropTypes.bool.isRequired,
+  maxStay: PropTypes.bool.isRequired,
+});
+
 const normalizedPricingSettingsFormShape = PropTypes.shape({
   nightlyRate: PropTypes.number.isRequired,
   weeklyDiscountEnabled: PropTypes.bool.isRequired,
@@ -157,6 +173,12 @@ function HostCalendarSidebar({
   selectionPriceDirty,
   canSaveSelectionPrice,
   handleSaveSelectionPrice,
+  selectionRestrictionsForm,
+  selectionRestrictionMixedFields,
+  selectionRestrictionsDirty,
+  canSaveSelectionRestrictions,
+  handleSelectionRestrictionChange,
+  handleSaveSelectionRestrictions,
   sidebarMode,
   normalizedPricingSettingsForm,
   pricingSnapshot,
@@ -223,6 +245,12 @@ function HostCalendarSidebar({
         showSavePrice={selectionPriceDirty}
         canSavePrice={canSaveSelectionPrice}
         onSavePrice={handleSaveSelectionPrice}
+        restrictionForm={selectionRestrictionsForm}
+        restrictionMixedFields={selectionRestrictionMixedFields}
+        onRestrictionFieldChange={handleSelectionRestrictionChange}
+        showSaveRestrictions={selectionRestrictionsDirty}
+        canSaveRestrictions={canSaveSelectionRestrictions}
+        onSaveRestrictions={handleSaveSelectionRestrictions}
       />
     );
   }
@@ -401,6 +429,12 @@ HostCalendarSidebar.propTypes = {
   selectionPriceDirty: PropTypes.bool.isRequired,
   canSaveSelectionPrice: PropTypes.bool.isRequired,
   handleSaveSelectionPrice: PropTypes.func.isRequired,
+  selectionRestrictionsForm: selectionRestrictionsFormShape.isRequired,
+  selectionRestrictionMixedFields: selectionRestrictionMixedFieldsShape.isRequired,
+  selectionRestrictionsDirty: PropTypes.bool.isRequired,
+  canSaveSelectionRestrictions: PropTypes.bool.isRequired,
+  handleSelectionRestrictionChange: PropTypes.func.isRequired,
+  handleSaveSelectionRestrictions: PropTypes.func.isRequired,
   sidebarMode: PropTypes.string.isRequired,
   normalizedPricingSettingsForm: normalizedPricingSettingsFormShape.isRequired,
   pricingSnapshot: pricingSnapshotShape.isRequired,
@@ -528,6 +562,7 @@ export default function HostCalendar() {
 
   const {
     availabilityOverrides,
+    restrictionOverrides,
     selectedPropertyPriceOverrides,
     selectedDateKeys,
     pendingSelectionStartKey,
@@ -536,10 +571,16 @@ export default function HostCalendar() {
     selectionPriceInput,
     selectionPriceDirty,
     canSaveSelectionPrice,
+    selectionRestrictionsForm,
+    selectionRestrictionMixedFields,
+    selectionRestrictionsDirty,
+    canSaveSelectionRestrictions,
     handleDateSelect,
     handleToggleAvailability,
     handleSelectionPriceChange,
     handleSaveSelectionPrice,
+    handleSelectionRestrictionChange,
+    handleSaveSelectionRestrictions,
   } = useCalendarSelection({
     cursor,
     monthGrid,
@@ -654,6 +695,7 @@ export default function HostCalendar() {
             selectedDateKeys={selectedDateKeys}
             pendingSelectionStartKey={pendingSelectionStartKey}
             availabilityOverrides={availabilityOverrides}
+            restrictionOverrides={restrictionOverrides}
             priceOverrides={selectedPropertyPriceOverrides}
             bookedDateKeys={bookedDateKeys}
             onDateSelect={handleCalendarDateSelect}
@@ -672,6 +714,12 @@ export default function HostCalendar() {
             selectionPriceDirty={selectionPriceDirty}
             canSaveSelectionPrice={canSaveSelectionPrice}
             handleSaveSelectionPrice={handleSaveSelectionPrice}
+            selectionRestrictionsForm={selectionRestrictionsForm}
+            selectionRestrictionMixedFields={selectionRestrictionMixedFields}
+            selectionRestrictionsDirty={selectionRestrictionsDirty}
+            canSaveSelectionRestrictions={canSaveSelectionRestrictions}
+            handleSelectionRestrictionChange={handleSelectionRestrictionChange}
+            handleSaveSelectionRestrictions={handleSaveSelectionRestrictions}
             sidebarMode={sidebarMode}
             normalizedPricingSettingsForm={normalizedPricingSettingsForm}
             pricingSnapshot={pricingSnapshot}

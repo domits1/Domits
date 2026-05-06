@@ -14,7 +14,12 @@
         "reservations": "Reservas",
         "switchToGuest": "Cambiar a huésped",
         "switchToHost": "Cambiar a anfitrión",
-        "becomeHost": "Conviértete en anfitrión"
+        "becomeHost": "Conviértete en anfitrión",
+        "browseHomepage": "Ver página de inicio",
+        "switchConfirmToHost": "¿Estás seguro de que quieres cambiar al panel de anfitrión?",
+        "switchConfirmToGuest": "¿Estás seguro de que quieres cambiar al panel de huésped?",
+        "switchConfirmYes": "Sí, cambiar",
+        "switchConfirmNo": "Cancelar"
       },
       "search": {
             "destination": "Destino",

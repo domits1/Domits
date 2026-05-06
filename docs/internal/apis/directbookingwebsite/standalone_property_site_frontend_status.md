@@ -73,8 +73,8 @@ What is in place:
 - The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
 - Standalone website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
 - The KPI dashboard now separates surface performance into `Preview` and `Live` tabs:
-  - preview mobile LCP can be measured from the public preview route
-  - live mobile LCP remains pending until a real published live-site surface exists
+  - preview LCP can now be measured separately for mobile, tablet, and desktop preview visits
+  - live LCP is also segmented by mobile, tablet, and desktop, but remains pending until a real published live-site surface exists
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -234,6 +234,10 @@ Current implementation details:
   - `build_abandonment_rate`
   - `time_to_first_preview_p95`
 - The dedicated KPI dashboard now keeps its full page shell visible on first load and renders pulse-bar loaders inside the KPI sections while aggregated data is still loading.
+- Trust-card icon selection is now editable from the website editor for templates that render those cards.
+  Icon choices are sourced directly from the shared amenities registry, so newly added amenity icons automatically become available to the standalone website editor without a separate icon list.
+- The trust-card icon trigger is centered within the editable field and the icon-picker overlay now scales more safely across smaller viewports instead of behaving like a fixed desktop panel.
+- The trust-card icon picker now deduplicates repeated amenity visuals and shows one option per unique Domits icon glyph instead of repeating the same icon for multiple amenity records.
 
 ## Next phase
 The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.
