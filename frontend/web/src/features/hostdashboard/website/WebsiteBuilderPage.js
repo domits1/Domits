@@ -136,6 +136,37 @@ const getDraftDisplayTitle = (draft, contentOverrides = getDraftContentOverrides
 };
 
 const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
+const getDraftPropertyId = (draft) => String(draft?.propertyId || "").trim();
+const getWebsiteDraftPreviewCacheKey = (draft) =>
+  `${String(draft?.updatedAt || "").trim()}::${String(draft?.templateKey || "").trim()}`;
+
+const pruneWebsiteDraftPreviewModels = (previewModels, activePropertyIds) => {
+  let hasRemovedPreviewModel = false;
+  const nextPreviewModels = {};
+
+  Object.entries(previewModels || {}).forEach(([propertyId, previewModel]) => {
+    if (activePropertyIds.has(propertyId)) {
+      nextPreviewModels[propertyId] = previewModel;
+      return;
+    }
+
+    hasRemovedPreviewModel = true;
+  });
+
+  return hasRemovedPreviewModel ? nextPreviewModels : previewModels;
+};
+
+const pruneWebsiteDraftPreviewCacheKeys = (previewCacheKeys, activePropertyIds) => {
+  const nextPreviewCacheKeys = {};
+
+  Object.entries(previewCacheKeys || {}).forEach(([propertyId, previewCacheKey]) => {
+    if (activePropertyIds.has(propertyId)) {
+      nextPreviewCacheKeys[propertyId] = previewCacheKey;
+    }
+  });
+
+  return nextPreviewCacheKeys;
+};
 
 const buildImageVariantMap = (images) => {
   const imageVariantMap = new Map();
@@ -347,6 +378,28 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
   return applyWebsiteDraftContentOverrides(themedModel, contentOverrides);
 };
 
+const buildWebsiteDraftPreviewModel = async (draft) => {
+  try {
+    const propertyDetails = await fetchWebsitePropertyDetails(draft.propertyId);
+    const baseModel = buildWebsiteTemplateModel({
+      propertyDetails,
+      summaryProperty: null,
+      imageVariant: "thumb",
+    });
+    const thumbContentOverrides = mapImageOverridesToThumbnails(
+      getDraftPublishedContentOverrides(draft),
+      buildImageVariantMap(propertyDetails?.images)
+    );
+    const themedModel = applyWebsiteDraftThemeOverrides(
+      baseModel,
+      getDraftPublishedThemeOverrides(draft)
+    );
+    return applyWebsiteDraftContentOverrides(themedModel, thumbContentOverrides);
+  } catch {
+    return buildDraftCardFallbackPreviewModel(draft);
+  }
+};
+
 function WebsiteDraftDeleteDialog({
   draft = null,
   deleteReasons,
@@ -505,6 +558,7 @@ function WebsiteBuilderPage() {
   const [isDeletingWebsiteDraft, setIsDeletingWebsiteDraft] = useState(false);
   const previewSectionRef = useRef(null);
   const websiteBuildAttemptRef = useRef(null);
+  const websiteDraftPreviewCacheKeysRef = useRef({});
   const navigate = useNavigate();
 
   const draftedPropertyIds = useMemo(
@@ -589,19 +643,47 @@ function WebsiteBuilderPage() {
     let isMounted = true;
 
     const loadWebsiteDraftPreviewModels = async () => {
-      if (workspaceTab !== WORKSPACE_TAB_WEBSITES || websiteDrafts.length < 1) {
+      if (websiteDrafts.length < 1) {
         if (isMounted) {
+          websiteDraftPreviewCacheKeysRef.current = {};
           setWebsiteDraftPreviewModels({});
         }
         return;
       }
 
+      if (workspaceTab !== WORKSPACE_TAB_WEBSITES) {
+        return;
+      }
+
+      const activePropertyIds = new Set(websiteDrafts.map(getDraftPropertyId).filter(Boolean));
+      websiteDraftPreviewCacheKeysRef.current = pruneWebsiteDraftPreviewCacheKeys(
+        websiteDraftPreviewCacheKeysRef.current,
+        activePropertyIds
+      );
       if (isMounted) {
-        setWebsiteDraftPreviewModels({});
+        setWebsiteDraftPreviewModels((currentPreviewModels) =>
+          pruneWebsiteDraftPreviewModels(currentPreviewModels, activePropertyIds)
+        );
+      }
+
+      const draftsNeedingPreviewModels = websiteDrafts.filter((draft) => {
+        const propertyId = getDraftPropertyId(draft);
+        if (!propertyId) {
+          return false;
+        }
+
+        return websiteDraftPreviewCacheKeysRef.current[propertyId] !== getWebsiteDraftPreviewCacheKey(draft);
+      });
+
+      if (draftsNeedingPreviewModels.length < 1) {
+        return;
       }
 
       const previewEntries = await Promise.all(
-        websiteDrafts.map(async (draft) => {
+        draftsNeedingPreviewModels.map(async (draft) => {
+          const propertyId = getDraftPropertyId(draft);
+          const previewCacheKey = getWebsiteDraftPreviewCacheKey(draft);
+
           try {
             const propertyDetails = await fetchWebsitePropertyDetails(draft.propertyId);
             const baseModel = buildWebsiteTemplateModel({
@@ -609,18 +691,18 @@ function WebsiteBuilderPage() {
               summaryProperty: null,
               imageVariant: "thumb",
             });
-              const thumbContentOverrides = mapImageOverridesToThumbnails(
-                getDraftPublishedContentOverrides(draft),
-                buildImageVariantMap(propertyDetails?.images)
-              );
-              const themedModel = applyWebsiteDraftThemeOverrides(
-                baseModel,
-                getDraftPublishedThemeOverrides(draft)
-              );
-              const previewModel = applyWebsiteDraftContentOverrides(themedModel, thumbContentOverrides);
-              return [draft.propertyId, previewModel];
+            const thumbContentOverrides = mapImageOverridesToThumbnails(
+              getDraftPublishedContentOverrides(draft),
+              buildImageVariantMap(propertyDetails?.images)
+            );
+            const themedModel = applyWebsiteDraftThemeOverrides(
+              baseModel,
+              getDraftPublishedThemeOverrides(draft)
+            );
+            const previewModel = applyWebsiteDraftContentOverrides(themedModel, thumbContentOverrides);
+            return [propertyId, previewModel, previewCacheKey];
           } catch {
-            return [draft.propertyId, buildDraftCardFallbackPreviewModel(draft)];
+            return [propertyId, buildDraftCardFallbackPreviewModel(draft), previewCacheKey];
           }
         })
       );
@@ -629,11 +711,16 @@ function WebsiteBuilderPage() {
         return;
       }
 
-      setWebsiteDraftPreviewModels(
-        Object.fromEntries(
-          previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel])
-        )
-      );
+      websiteDraftPreviewCacheKeysRef.current = {
+        ...websiteDraftPreviewCacheKeysRef.current,
+        ...Object.fromEntries(
+          previewEntries.map(([propertyId, , previewCacheKey]) => [propertyId, previewCacheKey])
+        ),
+      };
+      setWebsiteDraftPreviewModels((currentPreviewModels) => ({
+        ...currentPreviewModels,
+        ...Object.fromEntries(previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel])),
+      }));
     };
 
     void loadWebsiteDraftPreviewModels();
@@ -991,7 +1078,7 @@ function WebsiteBuilderPage() {
   };
 
   const removeWebsiteDraft = async () => {
-    const propertyId = String(websiteDraftPendingDelete?.propertyId || "").trim();
+    const propertyId = getDraftPropertyId(websiteDraftPendingDelete);
     if (!propertyId) {
       setWebsiteDraftPendingDelete(null);
       return;
@@ -1005,6 +1092,7 @@ function WebsiteBuilderPage() {
 
     try {
       await deleteWebsiteDraft(propertyId, websiteDraftDeleteReasons);
+      delete websiteDraftPreviewCacheKeysRef.current[propertyId];
       setWebsiteDraftPreviewModels((currentPreviewModels) => {
         const nextPreviewModels = { ...currentPreviewModels };
         delete nextPreviewModels[propertyId];
