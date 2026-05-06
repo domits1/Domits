@@ -1525,9 +1525,6 @@ function WebsiteBuilderPage() {
                 ) : null}
               </div>
               <div className={styles.buttonRow}>
-                <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
-                  Back to chooser
-                </button>
                 <button
                   type="button"
                   className={styles.secondaryButton}
