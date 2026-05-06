@@ -28,6 +28,7 @@ const AccommodationCard = ({
   accommodation = null,
   onClick,
   onUnlike,
+  variant = "listing", 
   imageVariant = "thumb",
 }) => {
   const [liked, setLiked] = useState(false);
@@ -91,7 +92,9 @@ const AccommodationCard = ({
   };
 
   const handleCardClick = (e, propertyId) => {
-    onClick(e, propertyId);
+    if (typeof onClick === "function") {
+      onClick(e, propertyId);
+    }
   };
 
   if (!accommodation) {
@@ -116,9 +119,8 @@ const AccommodationCard = ({
   );
 
   return (
-    <div className="accocard-wrapper">
-      <div className="accocard">
-        {/* CLICKABLE CONTENT */}
+    <div className={`accocard-wrapper ${variant}`}>
+      <div className={`accocard ${variant}`}>
         <a
           className="accocard-content"
           href={`/listingdetails?ID=${encodeURIComponent(propertyId)}`}
@@ -128,7 +130,6 @@ const AccommodationCard = ({
           }}
           aria-label={`View property ${propertyTitle}`}
         >
-          {/* IMAGE / SWIPER */}
           <div className="accocard-media">
             <Swiper
               spaceBetween={30}
@@ -162,16 +163,16 @@ const AccommodationCard = ({
           </div>
 
           <div className="accocard-specs">
-            <BedOutlinedIcon />
-            <div>
+            <div className="accocard-specs-content">
+              <BedOutlinedIcon />
               {accommodation.propertyGeneralDetails?.find(
                 (item) => item.detail === "Bedrooms",
               )?.value || 0}{" "}
               Bedroom(s)
             </div>
-
-            <PeopleOutlinedIcon />
-            <div>
+            
+            <div className="accocard-specs-content">
+              <PeopleOutlinedIcon />
               {accommodation.propertyGeneralDetails?.find(
                 (item) => item.detail === "Guests",
               )?.value || 0}{" "}
@@ -181,7 +182,6 @@ const AccommodationCard = ({
         </a>
       </div>
 
-      {/* SHARE BUTTON */}
       <button
         type="button"
         className="accocard-share-button"
@@ -191,7 +191,6 @@ const AccommodationCard = ({
         <IosShareIcon />
       </button>
 
-      {/* LIKE BUTTON */}
       <button
         type="button"
         className="accocard-like-button"
@@ -205,7 +204,6 @@ const AccommodationCard = ({
         )}
       </button>
 
-      {/* POPUPS */}
       {showPopup && (
         <WishlistChoice
           propertyId={propertyId}
@@ -256,7 +254,7 @@ AccommodationCard.propTypes = {
       }),
     ),
   }),
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   onUnlike: PropTypes.func,
   imageVariant: PropTypes.oneOf(["thumb", "web"]),
 };

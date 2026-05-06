@@ -39,19 +39,16 @@
 }
 
 .accocard {
-  width: 100%;
-  background: #fff;
+  border-radius: 16px;
   overflow: hidden;
+  background: #fff;
+  transition: all 0.3s ease;
   position: relative;
-  border: none;
-  padding: 0;
-  text-align: left;
-  display: block;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  font: inherit;
-  color: inherit;
+}
+
+.accocard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
 .accocard:focus {
@@ -312,6 +309,28 @@
   }
 }
 
+.accocard-price,
+.accocard-detail,
+.accocard-specs {
+  padding: 3px 16px;
+}
+
+.accocard-price {
+  padding-top: 8px;
+}
+
+.accocard-specs {
+  padding-bottom: 16px;
+  justify-content: space-between;
+}
+
+.accocard-specs-content {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 15px;
+}
+
 #container {
   --listing-card-min: 300px;
   display: grid;
@@ -331,11 +350,9 @@
 
 #card-visibility {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--listing-card-min)), 1fr));
-  gap: clamp(14px, 2vw, 20px);
-  justify-content: center;
-  width: 100%;
-  min-width: 0;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 20px;
 }
 
 .full-visibility {
