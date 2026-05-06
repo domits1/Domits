@@ -1,5 +1,8 @@
 import BookingService from "../business/bookingService.js";
 import PaymentService from "../business/paymentService.js";
+import Forbidden from "../util/exception/Forbidden.js";
+import Unauthorized from "../util/exception/Unauthorized.js";
+import NotFoundException from "../util/exception/NotFoundException.js";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
 const responseHeaderJSON = responsejson;
@@ -51,7 +54,7 @@ class ReservationController {
     try {
       const cancelBookingId = this.getCancelBookingId(event);
       if (cancelBookingId) {
-        return this.cancelBooking(cancelBookingId);
+        return await this.cancelBooking(cancelBookingId, event);
       }
 
       if (event?.body === undefined || event?.body === null) {
@@ -131,14 +134,30 @@ class ReservationController {
     return "";
   }
 
-  cancelBooking(bookingId) {
+  async cancelBooking(bookingId, event) {
+    const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
+
+    if (!authToken) {
+      throw new Unauthorized("Missing Authorization header.");
+    }
+
+    const user = await this.bookingService.authManager.authenticateUser(authToken);
+    const bookingResult = await this.bookingService.reservationRepository.getBookingById(bookingId);
+    if (!bookingResult?.response) {
+      throw new NotFoundException("Booking not found.");
+    }
+    const booking = bookingResult.response;
+    if (booking.guestid !== user.sub) {
+      throw new Forbidden("Only the guest of this booking may cancel this booking.");
+    }
+
     return {
-      statusCode: 501,
+      statusCode: 200,
       headers: responseHeaderJSON,
       response: {
         bookingId,
-        message:
-          "Cancel booking route is available. Cancellation security and database update are not implemented yet.",
+        message: "Guest authorized to cancel this booking.",
+        booking,
       },
     };
   }
