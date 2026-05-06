@@ -168,6 +168,12 @@ const pruneWebsiteDraftPreviewCacheKeys = (previewCacheKeys, activePropertyIds) 
   return nextPreviewCacheKeys;
 };
 
+const buildWebsiteDraftPreviewModelMap = (previewEntries) =>
+  Object.fromEntries(previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel]));
+
+const buildWebsiteDraftPreviewCacheKeyMap = (previewEntries) =>
+  Object.fromEntries(previewEntries.map(([propertyId, , previewCacheKey]) => [propertyId, previewCacheKey]));
+
 const buildImageVariantMap = (images) => {
   const imageVariantMap = new Map();
   (Array.isArray(images) ? images : []).forEach((image) => {
@@ -694,13 +700,11 @@ function WebsiteBuilderPage() {
 
       websiteDraftPreviewCacheKeysRef.current = {
         ...websiteDraftPreviewCacheKeysRef.current,
-        ...Object.fromEntries(
-          previewEntries.map(([propertyId, , previewCacheKey]) => [propertyId, previewCacheKey])
-        ),
+        ...buildWebsiteDraftPreviewCacheKeyMap(previewEntries),
       };
       setWebsiteDraftPreviewModels((currentPreviewModels) => ({
         ...currentPreviewModels,
-        ...Object.fromEntries(previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel])),
+        ...buildWebsiteDraftPreviewModelMap(previewEntries),
       }));
     };
 
