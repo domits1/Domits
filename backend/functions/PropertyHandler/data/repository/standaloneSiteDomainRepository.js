@@ -148,6 +148,10 @@ export class StandaloneSiteDomainRepository {
     return mapSiteDomainRow(rows?.[0] || null);
   }
 
+  async getPrimaryLiveDomainBySiteId(siteId) {
+    return this.getFallbackDomainBySiteId(siteId);
+  }
+
   async getDomainByName(domain) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
@@ -259,5 +263,9 @@ export class StandaloneSiteDomainRepository {
     );
 
     return mapSiteDomainRow(rows?.[0] || null);
+  }
+
+  async updatePrimaryLiveDomainStatus(siteId, status, verificationDetails = {}) {
+    return this.updateFallbackDomainStatus(siteId, status, verificationDetails);
   }
 }

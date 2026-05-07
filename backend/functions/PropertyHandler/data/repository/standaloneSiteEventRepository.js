@@ -103,6 +103,22 @@ const buildEventCountMap = (eventCountRows) =>
   );
 
 const getEventMetrics = (eventCounts, eventType) => eventCounts.get(eventType) || EMPTY_EVENT_METRICS;
+const getMergedEventMetrics = (eventCounts, eventTypes) =>
+  (Array.isArray(eventTypes) ? eventTypes : []).reduce(
+    (mergedMetrics, eventType) => {
+      const eventMetrics = getEventMetrics(eventCounts, eventType);
+      return {
+        total: mergedMetrics.total + eventMetrics.total,
+        uniqueDrafts: Math.max(mergedMetrics.uniqueDrafts, eventMetrics.uniqueDrafts),
+        lastOccurredAt: Math.max(mergedMetrics.lastOccurredAt || 0, eventMetrics.lastOccurredAt || 0) || null,
+      };
+    },
+    {
+      total: 0,
+      uniqueDrafts: 0,
+      lastOccurredAt: null,
+    }
+  );
 
 const trackDeleteReasons = (deleteReasonCounts, payload) => {
   const reasons = Array.isArray(payload?.reasons) ? payload.reasons : [];
@@ -178,6 +194,13 @@ const trackSiteLcpMetric = (surfaceViewportDurations, payload) => {
   targetDurations.push(durationMs);
 };
 
+const trackOpenedSiteProperty = (openedSitePropertyIds, row) => {
+  const propertyId = String(row?.property_id || "").trim();
+  if (propertyId) {
+    openedSitePropertyIds.add(propertyId);
+  }
+};
+
 const accumulateMetricRows = (metricEventRows) => {
   const deleteReasonCounts = new Map();
   const startedAttempts = new Map();
@@ -185,6 +208,7 @@ const accumulateMetricRows = (metricEventRows) => {
   const previewReadyDurations = [];
   const publishDurations = [];
   const surfaceViewportDurations = createSurfaceViewportDurationBuckets();
+  const openedSitePropertyIds = new Set();
 
   (Array.isArray(metricEventRows) ? metricEventRows : []).forEach((row) => {
     const eventType = String(row.event_type || "").trim();
@@ -208,6 +232,10 @@ const accumulateMetricRows = (metricEventRows) => {
       case "WEBSITE_BUILD_FAILED":
         trackCompletedAttempt(completedAttemptIds, payload);
         return;
+      case "PUBLIC_PREVIEW_OPENED":
+      case "PUBLIC_SITE_OPENED":
+        trackOpenedSiteProperty(openedSitePropertyIds, row);
+        return;
       case "SITE_LCP_RECORDED":
         trackSiteLcpMetric(surfaceViewportDurations, payload);
         return;
@@ -223,6 +251,7 @@ const accumulateMetricRows = (metricEventRows) => {
     previewReadyDurations,
     publishDurations,
     surfaceViewportDurations,
+    openedSitePropertyIds,
   };
 };
 
@@ -246,6 +275,17 @@ const buildSurfaceViewportSummary = (surfaceViewportDurations, surface, viewport
   return {
     p75: getPercentile(durations, 75),
     sampleCount: durations.length,
+  };
+};
+
+const buildMergedViewportSummary = (surfaceViewportDurations, viewport) => {
+  const mergedDurations = WEBSITE_ANALYTICS_SURFACES.flatMap(
+    (surface) => getSurfaceViewportDurations(surfaceViewportDurations, surface, viewport) || []
+  );
+
+  return {
+    p75: getPercentile(mergedDurations, 75),
+    sampleCount: mergedDurations.length,
   };
 };
 
@@ -296,7 +336,7 @@ export class StandaloneSiteEventRepository {
     const siteWhereClause = hasHostScope ? "WHERE site.host_id = $1" : "";
     const queryParameters = hasHostScope ? [hostId] : [];
 
-    const [draftCountRows, eventCountRows, metricEventRows, fallbackAvailabilityRows] = await Promise.all([
+    const [draftCountRows, eventCountRows, metricEventRows, liveLinkAvailabilityRows] = await Promise.all([
       client.query(
         `SELECT COUNT(*)::bigint AS total
          FROM ${standaloneDraftTable}
@@ -315,7 +355,7 @@ export class StandaloneSiteEventRepository {
         queryParameters
       ),
       client.query(
-        `SELECT event_type, occurred_at, payload_json
+        `SELECT event_type, occurred_at, payload_json, property_id
          FROM ${standaloneEventTable}
          ${eventWhereClause}
          ${hasHostScope ? "AND" : "WHERE"} event_type IN (
@@ -325,6 +365,8 @@ export class StandaloneSiteEventRepository {
            'WEBSITE_SITE_PUBLISHED',
            'WEBSITE_BUILD_SUCCEEDED',
            'WEBSITE_BUILD_FAILED',
+           'PUBLIC_PREVIEW_OPENED',
+           'PUBLIC_SITE_OPENED',
            'SITE_LCP_RECORDED'
          )`,
         queryParameters
@@ -356,13 +398,21 @@ export class StandaloneSiteEventRepository {
       previewReadyDurations,
       publishDurations,
       surfaceViewportDurations,
+      openedSitePropertyIds,
     } = accumulateMetricRows(metricEventRows);
     const deletionReasonBreakdown = buildDeletionReasonBreakdown(deleteReasonCounts);
 
     const previewMetrics = getEventMetrics(eventCounts, "PUBLIC_PREVIEW_OPENED");
+    const liveSiteOpenMetrics = getMergedEventMetrics(eventCounts, [
+      "PUBLIC_PREVIEW_OPENED",
+      "PUBLIC_SITE_OPENED",
+    ]);
     const draftCreatedMetrics = getEventMetrics(eventCounts, "WEBSITE_DRAFT_CREATED");
     const draftSavedMetrics = getEventMetrics(eventCounts, "WEBSITE_DRAFT_SAVED");
-    const livePreviewUpdateMetrics = getEventMetrics(eventCounts, "LIVE_PREVIEW_UPDATED");
+    const liveSiteUpdateMetrics = getMergedEventMetrics(eventCounts, [
+      "LIVE_PREVIEW_UPDATED",
+      "LIVE_SITE_UPDATED",
+    ]);
     const buildStartedMetrics = getEventMetrics(eventCounts, "WEBSITE_BUILD_STARTED");
     const buildSucceededMetrics = getEventMetrics(eventCounts, "WEBSITE_BUILD_SUCCEEDED");
     const buildFailedMetrics = getEventMetrics(eventCounts, "WEBSITE_BUILD_FAILED");
@@ -371,14 +421,17 @@ export class StandaloneSiteEventRepository {
     const buildSucceededCount = buildSucceededMetrics.total;
     const buildFailedCount = buildFailedMetrics.total;
     const buildAbandonedCount = countAbandonedAttempts(startedAttempts, completedAttemptIds);
-    const publishedFallbackSiteCount = toCount(fallbackAvailabilityRows?.[0]?.published_site_count);
-    const reachableFallbackSiteCount = toCount(fallbackAvailabilityRows?.[0]?.reachable_site_count);
+    const publishedLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.published_site_count);
+    const reachableLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.reachable_site_count);
     const previewMobileLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "mobile");
     const previewTabletLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "tablet");
     const previewDesktopLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "desktop");
     const liveMobileLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "live", "mobile");
     const liveTabletLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "live", "tablet");
     const liveDesktopLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "live", "desktop");
+    const mergedMobileLcpSummary = buildMergedViewportSummary(surfaceViewportDurations, "mobile");
+    const mergedTabletLcpSummary = buildMergedViewportSummary(surfaceViewportDurations, "tablet");
+    const mergedDesktopLcpSummary = buildMergedViewportSummary(surfaceViewportDurations, "desktop");
 
     return {
       currentDraftCount: toCount(draftCountRows?.[0]?.total),
@@ -400,10 +453,13 @@ export class StandaloneSiteEventRepository {
       timeToPublishSampleCount: publishDurations.length,
       publicPreviewViewCount: previewMetrics.total,
       uniquePreviewedWebsiteCount: previewMetrics.uniqueDrafts,
-      livePreviewUpdateCount: livePreviewUpdateMetrics.total,
+      uniqueLiveSiteCount: openedSitePropertyIds.size,
+      liveSiteOpenCount: liveSiteOpenMetrics.total,
+      liveSiteUpdateCount: liveSiteUpdateMetrics.total,
       deletedWebsiteCount: deletedWebsiteMetrics.total,
       lastPublicPreviewAt: previewMetrics.lastOccurredAt,
-      lastLivePreviewUpdateAt: livePreviewUpdateMetrics.lastOccurredAt,
+      lastLiveSiteOpenAt: liveSiteOpenMetrics.lastOccurredAt,
+      lastLiveSiteUpdateAt: liveSiteUpdateMetrics.lastOccurredAt,
       previewSiteLcpMobileP75: previewMobileLcpSummary.p75,
       previewSiteLcpMobileSampleCount: previewMobileLcpSummary.sampleCount,
       previewSiteLcpTabletP75: previewTabletLcpSummary.p75,
@@ -416,8 +472,14 @@ export class StandaloneSiteEventRepository {
       liveSiteLcpTabletSampleCount: liveTabletLcpSummary.sampleCount,
       liveSiteLcpDesktopP75: liveDesktopLcpSummary.p75,
       liveSiteLcpDesktopSampleCount: liveDesktopLcpSummary.sampleCount,
-      fallbackSubdomainAvailability: toPercentage(reachableFallbackSiteCount, publishedFallbackSiteCount),
-      fallbackSubdomainAvailabilitySampleCount: publishedFallbackSiteCount,
+      siteLcpMobileP75: mergedMobileLcpSummary.p75,
+      siteLcpMobileSampleCount: mergedMobileLcpSummary.sampleCount,
+      siteLcpTabletP75: mergedTabletLcpSummary.p75,
+      siteLcpTabletSampleCount: mergedTabletLcpSummary.sampleCount,
+      siteLcpDesktopP75: mergedDesktopLcpSummary.p75,
+      siteLcpDesktopSampleCount: mergedDesktopLcpSummary.sampleCount,
+      fallbackSubdomainAvailability: toPercentage(reachableLiveSiteCount, publishedLiveSiteCount),
+      fallbackSubdomainAvailabilitySampleCount: publishedLiveSiteCount,
       deletionReasonBreakdown,
     };
   }

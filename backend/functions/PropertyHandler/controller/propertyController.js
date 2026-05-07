@@ -37,7 +37,7 @@ const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
 const STANDALONE_SITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
 const STANDALONE_SITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const STANDALONE_SITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
-const DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX = "standalone.domits.com";
+const DEFAULT_STANDALONE_SITE_LIVE_DOMAIN_SUFFIX = "standalone.domits.com";
 
 const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
 const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -58,11 +58,11 @@ const trimRepeatedCharacterEdges = (value, character) => {
 
     return value.slice(startIndex, endIndex);
 };
-const getFallbackDomainSuffix = () => {
+const getLiveSiteDomainSuffix = () => {
     const configuredSuffix = cleanWebsiteText(process.env.STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX).toLowerCase();
-    return configuredSuffix || DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX;
+    return configuredSuffix || DEFAULT_STANDALONE_SITE_LIVE_DOMAIN_SUFFIX;
 };
-const getFallbackDomainRoutingStatus = () =>
+const getLiveSiteRoutingStatus = () =>
     String(process.env.STANDALONE_SITE_FALLBACK_ROUTING_ACTIVE || "").trim().toLowerCase() === "true"
         ? "ACTIVE"
         : "PENDING";
@@ -104,14 +104,14 @@ const normalizeStandaloneSiteIdSuffix = (value) => {
 
     return sanitizedValue;
 };
-const buildFallbackDomainLabel = (siteName, siteId) => {
+const buildLiveSiteDomainLabel = (siteName, siteId) => {
     const slugBase = trimRepeatedCharacterEdges(slugifyWebsiteDomainLabel(siteName).slice(0, 40), "-") || "site";
     const idSuffix = normalizeStandaloneSiteIdSuffix(siteId).slice(0, 8) || "domits";
     const combinedLabel = `${slugBase}-${idSuffix}`;
     return trimRepeatedCharacterEdges(combinedLabel.slice(0, 63), "-");
 };
-const buildFallbackDomain = (siteName, siteId) =>
-    `${buildFallbackDomainLabel(siteName, siteId)}.${getFallbackDomainSuffix()}`;
+const buildLiveSiteDomain = (siteName, siteId) =>
+    `${buildLiveSiteDomainLabel(siteName, siteId)}.${getLiveSiteDomainSuffix()}`;
 const normalizeStandaloneSiteDomainInput = (value) => {
     const normalizedValue = cleanWebsiteText(value).toLowerCase();
     if (!normalizedValue) {
@@ -1397,7 +1397,7 @@ export class PropertyController {
     ensureStandaloneSitePublishEligibility(propertyDetails) {
         const propertyStatus = cleanWebsiteText(propertyDetails?.property?.status).toUpperCase();
         if (propertyStatus !== "ACTIVE") {
-            throw new TypeError("Only ACTIVE listings can be published to a fallback site.");
+            throw new TypeError("Only ACTIVE listings can be published to a live site.");
         }
     }
 
@@ -1555,20 +1555,20 @@ export class PropertyController {
             suspendedAt: null,
         });
 
-        const fallbackDomainStatus = this.normalizeStandaloneSiteDomainStatus(getFallbackDomainRoutingStatus());
-        const existingFallbackDomain = await this.standaloneSiteDomainRepository.getFallbackDomainBySiteId(site.id);
-        const fallbackDomain = await this.standaloneSiteDomainRepository.ensureDomain({
+        const liveDomainStatus = this.normalizeStandaloneSiteDomainStatus(getLiveSiteRoutingStatus());
+        const existingLiveDomain = await this.standaloneSiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const liveDomain = await this.standaloneSiteDomainRepository.ensureDomain({
             siteId: site.id,
-            domain: existingFallbackDomain?.domain || buildFallbackDomain(site.siteName, site.id),
+            domain: existingLiveDomain?.domain || buildLiveSiteDomain(site.siteName, site.id),
             domainType: STANDALONE_SITE_DOMAIN_TYPE_FALLBACK,
-            status: fallbackDomainStatus,
+            status: liveDomainStatus,
             isPrimary: true,
             verificationDetails: {
                 activationMode: "internal",
-                domainKind: "fallback",
-                routingConfigured: fallbackDomainStatus === "ACTIVE",
-                activationStatus: fallbackDomainStatus,
-                domainSuffix: getFallbackDomainSuffix(),
+                domainKind: "live",
+                routingConfigured: liveDomainStatus === "ACTIVE",
+                activationStatus: liveDomainStatus,
+                domainSuffix: getLiveSiteDomainSuffix(),
             },
         });
 
@@ -1580,18 +1580,18 @@ export class PropertyController {
             payload: {
                 templateKey: draft.templateKey,
                 siteId: site.id,
-                domain: fallbackDomain?.domain || "",
-                domainStatus: fallbackDomain?.status || fallbackDomainStatus,
+                domain: liveDomain?.domain || "",
+                domainStatus: liveDomain?.status || liveDomainStatus,
                 durationMs: Date.now() - publishStartedAt,
             },
         });
 
-        return this.buildStandaloneSiteSummary(site, [fallbackDomain]);
+        return this.buildStandaloneSiteSummary(site, [liveDomain]);
     }
 
     async unpublishStandaloneSiteSummary({ site, draft, hostId, propertyId }) {
         const nextSite = await this.standaloneSiteRepository.updateSiteStatus(site.id, "PREVIEW");
-        const fallbackDomain = await this.standaloneSiteDomainRepository.updateFallbackDomainStatus(
+        const liveDomain = await this.standaloneSiteDomainRepository.updatePrimaryLiveDomainStatus(
             site.id,
             "DISABLED",
             {
@@ -1600,8 +1600,8 @@ export class PropertyController {
                 routingConfigured: false,
             }
         );
-        const allDomains = fallbackDomain
-            ? [fallbackDomain]
+        const allDomains = liveDomain
+            ? [liveDomain]
             : await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
 
         await this.recordStandaloneWebsiteEventSafely({
@@ -1611,8 +1611,8 @@ export class PropertyController {
             eventType: "WEBSITE_SITE_UNPUBLISHED",
             payload: {
                 siteId: site.id,
-                domain: fallbackDomain?.domain || "",
-                domainStatus: fallbackDomain?.status || "DISABLED",
+                domain: liveDomain?.domain || "",
+                domainStatus: liveDomain?.status || "DISABLED",
             },
         });
 
@@ -2148,7 +2148,7 @@ export class PropertyController {
                 publishedThemeOverrides,
             });
 
-            const shouldTrackLivePreviewUpdate =
+            const shouldTrackLiveSiteUpdate =
                 publishedContentOverrides !== undefined || publishedThemeOverrides !== undefined;
 
             await this.recordStandaloneWebsiteEventSafely({
@@ -2162,12 +2162,12 @@ export class PropertyController {
                 },
             });
 
-            if (shouldTrackLivePreviewUpdate) {
+            if (shouldTrackLiveSiteUpdate) {
                 await this.recordStandaloneWebsiteEventSafely({
                     draftId: draft?.id || existingDraft?.id || null,
                     propertyId,
                     hostId,
-                    eventType: "LIVE_PREVIEW_UPDATED",
+                    eventType: "LIVE_SITE_UPDATED",
                     payload: {
                         templateKey,
                         status,

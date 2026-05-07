@@ -1,15 +1,8 @@
 export { EMPTY_WEBSITE_KPIS } from "./websiteKpiFields";
 
-export const SURFACE_KPI_TAB_PREVIEW = "preview";
-export const SURFACE_KPI_TAB_LIVE = "live";
 export const PERFORMANCE_VIEWPORT_TAB_MOBILE = "mobile";
 export const PERFORMANCE_VIEWPORT_TAB_TABLET = "tablet";
 export const PERFORMANCE_VIEWPORT_TAB_DESKTOP = "desktop";
-
-export const SURFACE_KPI_TAB_OPTIONS = Object.freeze([
-  { id: SURFACE_KPI_TAB_PREVIEW, label: "Preview" },
-  { id: SURFACE_KPI_TAB_LIVE, label: "Live" },
-]);
 
 export const PERFORMANCE_VIEWPORT_TAB_OPTIONS = Object.freeze([
   { id: PERFORMANCE_VIEWPORT_TAB_MOBILE, label: "Mobile" },
@@ -69,18 +62,16 @@ const createResearchKpiDefinition = (id, criteria, valueKey, formatterKey, note,
   sampleLabel,
 });
 
-const createSurfaceMetricDefinition = (surface, viewport, description) =>
+const createPerformanceMetricDefinition = (viewport, description) =>
   createMetricCardDefinition(
-    `${surface}-site-lcp-${viewport}-p75`,
+    `site-lcp-${viewport}-p75`,
     "site_lcp_p75",
-    `${surface}SiteLcp${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}P75`,
+    `siteLcp${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}P75`,
     description,
     "secondsFromMs",
     (websiteKpis) =>
       formatSampleLabel(
-        websiteKpis[
-          `${surface}SiteLcp${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}SampleCount`
-        ]
+        websiteKpis[`siteLcp${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}SampleCount`]
       )
   );
 
@@ -173,23 +164,23 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "How often saved editor changes were recorded"
   ),
   createMetricCardDefinition(
-    "preview-opens",
-    "Preview link opens",
-    "publicPreviewViewCount",
-    (websiteKpis) => `Last preview opened: ${formatKpiTimestamp(websiteKpis.lastPublicPreviewAt)}`
+    "unique-live-sites",
+    "Unique live sites opened",
+    "uniqueLiveSiteCount",
+    "Distinct websites opened through the Domits live link across preview-era and live-site history"
   ),
   createMetricCardDefinition(
-    "unique-previewed",
-    "Unique sites previewed",
-    "uniquePreviewedWebsiteCount",
-    "Distinct website drafts opened through shared preview links"
+    "live-site-opens",
+    "Live site opens",
+    "liveSiteOpenCount",
+    (websiteKpis) => `Last live site opened: ${formatKpiTimestamp(websiteKpis.lastLiveSiteOpenAt)}`
   ),
   createMetricCardDefinition(
-    "live-preview-updates",
-    "Live preview updates",
-    "livePreviewUpdateCount",
+    "live-site-updates",
+    "Live site updates",
+    "liveSiteUpdateCount",
     (websiteKpis) =>
-      `Last update pushed: ${formatKpiTimestamp(websiteKpis.lastLivePreviewUpdateAt)}`
+      `Last live site update: ${formatKpiTimestamp(websiteKpis.lastLiveSiteUpdateAt)}`
   ),
   createMetricCardDefinition(
     "deleted-websites",
@@ -199,85 +190,40 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
   ),
 ]);
 
-const SURFACE_PERFORMANCE_DEFINITIONS = Object.freeze({
-  [SURFACE_KPI_TAB_PREVIEW]: {
-    title: "Preview surface performance",
-    description:
-      "Preview LCP is captured from the public preview route and segmented by viewport class.",
-    viewportDefinitions: {
-      [PERFORMANCE_VIEWPORT_TAB_MOBILE]: {
-        description:
-          "75th percentile Largest Contentful Paint for preview visits on mobile devices.",
-        metricDefinitions: [
-          createSurfaceMetricDefinition(
-            "preview",
-            PERFORMANCE_VIEWPORT_TAB_MOBILE,
-            "75th percentile Largest Contentful Paint for preview visits on mobile devices."
-          ),
-        ],
-      },
-      [PERFORMANCE_VIEWPORT_TAB_TABLET]: {
-        description:
-          "75th percentile Largest Contentful Paint for preview visits on tablet-sized viewports.",
-        metricDefinitions: [
-          createSurfaceMetricDefinition(
-            "preview",
-            PERFORMANCE_VIEWPORT_TAB_TABLET,
-            "75th percentile Largest Contentful Paint for preview visits on tablet-sized viewports."
-          ),
-        ],
-      },
-      [PERFORMANCE_VIEWPORT_TAB_DESKTOP]: {
-        description:
-          "75th percentile Largest Contentful Paint for preview visits on desktop-sized viewports.",
-        metricDefinitions: [
-          createSurfaceMetricDefinition(
-            "preview",
-            PERFORMANCE_VIEWPORT_TAB_DESKTOP,
-            "75th percentile Largest Contentful Paint for preview visits on desktop-sized viewports."
-          ),
-        ],
-      },
+const PERFORMANCE_DEFINITIONS = Object.freeze({
+  title: "Website performance",
+  description:
+    "Performance combines historical preview-route telemetry and current live-site telemetry into one viewport-specific KPI series.",
+  viewportDefinitions: {
+    [PERFORMANCE_VIEWPORT_TAB_MOBILE]: {
+      description:
+        "75th percentile Largest Contentful Paint for mobile visits across the earlier preview route and the current live-site runtime.",
+      metricDefinitions: [
+        createPerformanceMetricDefinition(
+          PERFORMANCE_VIEWPORT_TAB_MOBILE,
+          "75th percentile Largest Contentful Paint for mobile visits across preview-era and live-site history."
+        ),
+      ],
     },
-  },
-  [SURFACE_KPI_TAB_LIVE]: {
-    title: "Live surface performance",
-    description:
-      "Live fallback-site LCP is captured from the published standalone website surface and segmented by viewport class.",
-    viewportDefinitions: {
-      [PERFORMANCE_VIEWPORT_TAB_MOBILE]: {
-        description:
-          "75th percentile Largest Contentful Paint for published fallback-site visits on mobile devices.",
-        metricDefinitions: [
-          createSurfaceMetricDefinition(
-            "live",
-            PERFORMANCE_VIEWPORT_TAB_MOBILE,
-            "75th percentile Largest Contentful Paint for published fallback-site visits on mobile devices."
-          ),
-        ],
-      },
-      [PERFORMANCE_VIEWPORT_TAB_TABLET]: {
-        description:
-          "75th percentile Largest Contentful Paint for published fallback-site visits on tablet-sized viewports.",
-        metricDefinitions: [
-          createSurfaceMetricDefinition(
-            "live",
-            PERFORMANCE_VIEWPORT_TAB_TABLET,
-            "75th percentile Largest Contentful Paint for published fallback-site visits on tablet-sized viewports."
-          ),
-        ],
-      },
-      [PERFORMANCE_VIEWPORT_TAB_DESKTOP]: {
-        description:
-          "75th percentile Largest Contentful Paint for published fallback-site visits on desktop-sized viewports.",
-        metricDefinitions: [
-          createSurfaceMetricDefinition(
-            "live",
-            PERFORMANCE_VIEWPORT_TAB_DESKTOP,
-            "75th percentile Largest Contentful Paint for published fallback-site visits on desktop-sized viewports."
-          ),
-        ],
-      },
+    [PERFORMANCE_VIEWPORT_TAB_TABLET]: {
+      description:
+        "75th percentile Largest Contentful Paint for tablet-sized visits across the earlier preview route and the current live-site runtime.",
+      metricDefinitions: [
+        createPerformanceMetricDefinition(
+          PERFORMANCE_VIEWPORT_TAB_TABLET,
+          "75th percentile Largest Contentful Paint for tablet-sized visits across preview-era and live-site history."
+        ),
+      ],
+    },
+    [PERFORMANCE_VIEWPORT_TAB_DESKTOP]: {
+      description:
+        "75th percentile Largest Contentful Paint for desktop-sized visits across the earlier preview route and the current live-site runtime.",
+      metricDefinitions: [
+        createPerformanceMetricDefinition(
+          PERFORMANCE_VIEWPORT_TAB_DESKTOP,
+          "75th percentile Largest Contentful Paint for desktop-sized visits across preview-era and live-site history."
+        ),
+      ],
     },
   },
 });
@@ -288,7 +234,7 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Scalability", "User experience"],
     "timeToPublishP95",
     "minutesFromMs",
-    "Measured from publish request until the published site and fallback domain write complete.",
+    "Measured from publish request until the live site and Domits live link write complete.",
     (websiteKpis) => formatSampleLabel(websiteKpis.timeToPublishSampleCount)
   ),
   createResearchKpiDefinition(
@@ -296,14 +242,14 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Scalability", "Cost"],
     "costPerActiveSitePerMonth",
     "eur",
-    "Requires infrastructure cost allocation plus a real count of active published sites. Drafts and preview links are not enough for a defensible value."
+    "Requires infrastructure cost allocation plus a real count of active published sites. Drafts and internal preview routes are not enough for a defensible value."
   ),
   createResearchKpiDefinition(
     "fallback_subdomain_availability",
     ["Reliability"],
     "fallbackSubdomainAvailability",
     "percentage",
-    "Current published fallback reachability rate based on published site state plus ACTIVE fallback-domain routing status. This is not synthetic uptime yet.",
+    "Current published live-link reachability rate based on published site state plus ACTIVE Domits link routing status. This is not synthetic uptime yet.",
     (websiteKpis) => formatSampleLabel(websiteKpis.fallbackSubdomainAvailabilitySampleCount)
   ),
   createResearchKpiDefinition(
@@ -361,24 +307,18 @@ export const formatNullableDurationMs = (value) => formatKpiValue(value, "second
 export const buildWebsiteMetricCards = (websiteKpis) =>
   buildMetricCardsFromDefinitions(WEBSITE_METRIC_CARD_DEFINITIONS, websiteKpis);
 
-export const buildSurfacePerformanceCards = (websiteKpis, viewportTab = PERFORMANCE_VIEWPORT_TAB_MOBILE) =>
-  Object.fromEntries(
-    Object.entries(SURFACE_PERFORMANCE_DEFINITIONS).map(([surfaceTab, definition]) => {
-      const viewportDefinition =
-        definition.viewportDefinitions[viewportTab] ||
-        definition.viewportDefinitions[PERFORMANCE_VIEWPORT_TAB_MOBILE];
+export const buildPerformanceCards = (websiteKpis, viewportTab = PERFORMANCE_VIEWPORT_TAB_MOBILE) => {
+  const viewportDefinition =
+    PERFORMANCE_DEFINITIONS.viewportDefinitions[viewportTab] ||
+    PERFORMANCE_DEFINITIONS.viewportDefinitions[PERFORMANCE_VIEWPORT_TAB_MOBILE];
 
-      return [
-        surfaceTab,
-        {
-          title: definition.title,
-          description: definition.description,
-          viewportDescription: viewportDefinition.description,
-          metrics: buildMetricCardsFromDefinitions(viewportDefinition.metricDefinitions, websiteKpis),
-        },
-      ];
-    })
-  );
+  return {
+    title: PERFORMANCE_DEFINITIONS.title,
+    description: PERFORMANCE_DEFINITIONS.description,
+    viewportDescription: viewportDefinition.description,
+    metrics: buildMetricCardsFromDefinitions(viewportDefinition.metricDefinitions, websiteKpis),
+  };
+};
 
 export const buildResearchKpiCards = (websiteKpis) =>
   RESEARCH_KPI_DEFINITIONS.map((researchKpi) => {
