@@ -103,6 +103,14 @@
   color: #555;
 }
 
+.eyeIcon,
+.forgotText {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .primaryBtn {
   width: 100%;
   padding: 14px;

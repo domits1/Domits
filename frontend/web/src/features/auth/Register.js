@@ -36,7 +36,6 @@ const Register = () => {
     phone: "",
   });
 
-  const [fieldErrors, setFieldErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -64,8 +63,6 @@ const Register = () => {
       password: !password,
       repeatPassword: password !== repeatPassword,
     };
-
-    setFieldErrors(errors);
 
     if (Object.values(errors).some(Boolean)) return;
 
@@ -137,9 +134,14 @@ const Register = () => {
               onChange={handleChange}
             />
 
-            <div className="eyeIcon" onClick={() => setShowPassword(!showPassword)}>
+            <button
+              type="button"
+              className="eyeIcon"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+        >
               {showPassword ? <FaEye /> : <FaEyeSlash />}
-            </div>
+            </button>
           </div>
 
           <div className="inputGroup">
@@ -151,13 +153,22 @@ const Register = () => {
               onChange={handleChange}
             />
 
-            <div className="eyeIcon" onClick={() => setShowPassword(!showPassword)}>
+            <button
+              type="button"
+              className="eyeIcon"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
               {showPassword ? <FaEye /> : <FaEyeSlash />}
-            </div>
+            </button>
           </div>
 
           <label className="hostCheckbox">
-            <input type="checkbox" checked={flowState.isHost} onChange={handleHostChange} />
+            <input
+              type="checkbox"
+              checked={flowState.isHost}
+              onChange={handleHostChange}
+            />{" "}
             Become a Host
           </label>
 

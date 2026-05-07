@@ -51,8 +51,11 @@ const Login = () => {
     setErrorMessage("");
     try {
       await Auth.signIn(formData.email, formData.password);
-      window.dispatchEvent(new Event("authChanged"));
-      redirect ? navigate(redirect) : window.location.reload();
+      globalThis.dispatchEvent(new Event("authChanged"));
+
+      redirect
+        ? navigate(redirect)
+        : globalThis.location.reload();
     } catch {
       setErrorMessage("Invalid email or password");
     }
@@ -147,16 +150,14 @@ const Login = () => {
               <div className="iconBox">
                 <FaLock />
               </div>
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="New password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-              <div className="eyeIcon" onClick={() => setShowPassword(!showPassword)}>
+              <button
+                type="button"
+                className="eyeIcon"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
                 {showPassword ? <FaEye /> : <FaEyeSlash />}
-              </div>
+              </button>
             </div>
 
             {errorMessage && <div className="error">{errorMessage}</div>}
@@ -194,9 +195,14 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                 />
-                <div className="eyeIcon" onClick={() => setShowPassword(!showPassword)}>
+                <button
+                  type="button"
+                  className="eyeIcon"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
                   {showPassword ? <FaEye /> : <FaEyeSlash />}
-                </div>
+                </button>
               </div>
 
               <div className="forgotText" onClick={() => setForgotPassword(true)}>
