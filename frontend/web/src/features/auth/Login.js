@@ -205,9 +205,13 @@ const Login = () => {
                 </button>
               </div>
 
-              <div className="forgotText" onClick={() => setForgotPassword(true)}>
+              <button
+                type="button"
+                className="forgotText"
+                onClick={() => setForgotPassword(true)}
+              >
                 Forgot password?
-              </div>
+              </button>
 
               {errorMessage && <div className="error">{errorMessage}</div>}
 
