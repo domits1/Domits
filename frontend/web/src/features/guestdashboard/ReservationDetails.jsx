@@ -7,9 +7,7 @@ import "../../styles/sass/features/guestdashboard/mainDashboardGuest.scss";
 import PropertyCard from "./components/PropertyCard";
 import CheckInInstructions from "./components/CheckInInstructions";
 import HouseRules from "./components/HouseRules";
-import CancellationPolicySection, {
-  resolveGuestCancellationPolicy,
-} from "./components/CancellationPolicySection";
+import CancellationPolicySection, { resolveGuestCancellationPolicy } from "./components/CancellationPolicySection";
 import PaymentSummary from "./components/PaymentSummary";
 import BookingDetails from "./components/BookingDetails";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader";
@@ -274,8 +272,7 @@ function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm })
       className="cancelBookingModal"
       aria-labelledby="cancel-booking-title"
       aria-describedby="cancel-booking-description"
-      onCancel={handleCancel}
-    >
+      onCancel={handleCancel}>
       <h2 id="cancel-booking-title">Cancel booking?</h2>
       <p id="cancel-booking-description">
         Are you sure you want to cancel this booking? Your host will be notified and this action will update your
@@ -367,13 +364,15 @@ const buildReservationContent = ({
 
             <HouseRules rules={reservation.rules} />
 
-            <div className="card cancelBookingCard">
-              <h3>Cancel reservation</h3>
-              <p>Review the cancellation policy above before cancelling this booking.</p>
-              <button type="button" className="dangerOutlineBtn" onClick={handleOpenCancelBooking}>
-                Cancel Booking
-              </button>
-            </div>
+            {reservation && normalizeStayStatus(reservation.stay.status) !== "Cancelled" && (
+              <div className="card cancelBookingCard">
+                <h3>Cancel reservation</h3>
+                <p>Review the cancellation policy above before cancelling this booking.</p>
+                <button type="button" className="dangerOutlineBtn" onClick={handleOpenCancelBooking}>
+                  Cancel Booking
+                </button>
+              </div>
+            )}
 
             <div className="card helpCard">
               <h3>Need help?</h3>
@@ -611,8 +610,16 @@ function ReservationDetails() {
     setCancelBookingError("");
 
     try {
-      await cancelGuestBooking(bookingId);
+      const updatedBooking = await cancelGuestBooking(bookingId);
       setIsCancelModalOpen(false);
+
+      if (updatedBooking) {
+        const updatedStatus = normalizeStayStatus(updatedBooking.status);
+        setReservation((prev) => {
+          if (!prev) return prev;
+          return { ...prev, stay: { ...prev.stay, status: updatedStatus } };
+        });
+      }
     } catch (cancelError) {
       console.error("Failed to cancel booking:", cancelError);
       setCancelBookingError("Could not cancel this booking. Please try again.");
