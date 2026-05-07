@@ -78,6 +78,8 @@ const parseAttemptId = (payload) => String(payload?.attemptId || "").trim();
 const parseDurationMetric = (payload) => toNullableNumber(payload?.durationMs);
 const parseSurface = (payload) => String(payload?.surface || "").trim().toLowerCase();
 const parseViewport = (payload) => String(payload?.viewport || "").trim().toLowerCase();
+const WEBSITE_ANALYTICS_SURFACES = Object.freeze(["preview", "live"]);
+const WEBSITE_ANALYTICS_VIEWPORTS = Object.freeze(["mobile", "tablet", "desktop"]);
 
 const BUILD_ABANDONMENT_WINDOW_MS = 10 * 60 * 1000;
 const EMPTY_EVENT_METRICS = Object.freeze({
@@ -138,23 +140,33 @@ const trackCompletedAttempt = (completedAttemptIds, payload) => {
   }
 };
 
-const trackSiteLcpMetric = (previewMobileLcpDurations, liveMobileLcpDurations, payload) => {
+const createSurfaceViewportDurationBuckets = () =>
+  Object.fromEntries(
+    WEBSITE_ANALYTICS_SURFACES.map((surface) => [
+      surface,
+      Object.fromEntries(WEBSITE_ANALYTICS_VIEWPORTS.map((viewport) => [viewport, []])),
+    ])
+  );
+
+const getSurfaceViewportDurations = (surfaceViewportDurations, surface, viewport) => {
+  if (!surfaceViewportDurations?.[surface] || !Array.isArray(surfaceViewportDurations[surface][viewport])) {
+    return null;
+  }
+
+  return surfaceViewportDurations[surface][viewport];
+};
+
+const trackSiteLcpMetric = (surfaceViewportDurations, payload) => {
   const surface = parseSurface(payload);
   const viewport = parseViewport(payload);
   const durationMs = parseDurationMetric(payload);
+  const targetDurations = getSurfaceViewportDurations(surfaceViewportDurations, surface, viewport);
 
-  if (viewport !== "mobile" || !Number.isFinite(durationMs) || durationMs <= 0) {
+  if (!targetDurations || !Number.isFinite(durationMs) || durationMs <= 0) {
     return;
   }
 
-  if (surface === "preview") {
-    previewMobileLcpDurations.push(durationMs);
-    return;
-  }
-
-  if (surface === "live") {
-    liveMobileLcpDurations.push(durationMs);
-  }
+  targetDurations.push(durationMs);
 };
 
 const accumulateMetricRows = (metricEventRows) => {
@@ -162,8 +174,7 @@ const accumulateMetricRows = (metricEventRows) => {
   const startedAttempts = new Map();
   const completedAttemptIds = new Set();
   const previewReadyDurations = [];
-  const previewMobileLcpDurations = [];
-  const liveMobileLcpDurations = [];
+  const surfaceViewportDurations = createSurfaceViewportDurationBuckets();
 
   (Array.isArray(metricEventRows) ? metricEventRows : []).forEach((row) => {
     const eventType = String(row.event_type || "").trim();
@@ -185,7 +196,7 @@ const accumulateMetricRows = (metricEventRows) => {
         trackCompletedAttempt(completedAttemptIds, payload);
         return;
       case "SITE_LCP_RECORDED":
-        trackSiteLcpMetric(previewMobileLcpDurations, liveMobileLcpDurations, payload);
+        trackSiteLcpMetric(surfaceViewportDurations, payload);
         return;
       default:
         return;
@@ -197,8 +208,7 @@ const accumulateMetricRows = (metricEventRows) => {
     startedAttempts,
     completedAttemptIds,
     previewReadyDurations,
-    previewMobileLcpDurations,
-    liveMobileLcpDurations,
+    surfaceViewportDurations,
   };
 };
 
@@ -215,6 +225,14 @@ const countAbandonedAttempts = (startedAttempts, completedAttemptIds) => {
       occurredAt <= abandonmentThreshold &&
       !completedAttemptIds.has(attemptId)
   ).length;
+};
+
+const buildSurfaceViewportSummary = (surfaceViewportDurations, surface, viewport) => {
+  const durations = getSurfaceViewportDurations(surfaceViewportDurations, surface, viewport) || [];
+  return {
+    p75: getPercentile(durations, 75),
+    sampleCount: durations.length,
+  };
 };
 
 export class StandaloneSiteEventRepository {
@@ -301,8 +319,7 @@ export class StandaloneSiteEventRepository {
       startedAttempts,
       completedAttemptIds,
       previewReadyDurations,
-      previewMobileLcpDurations,
-      liveMobileLcpDurations,
+      surfaceViewportDurations,
     } = accumulateMetricRows(metricEventRows);
     const deletionReasonBreakdown = buildDeletionReasonBreakdown(deleteReasonCounts);
 
@@ -318,6 +335,12 @@ export class StandaloneSiteEventRepository {
     const buildSucceededCount = buildSucceededMetrics.total;
     const buildFailedCount = buildFailedMetrics.total;
     const buildAbandonedCount = countAbandonedAttempts(startedAttempts, completedAttemptIds);
+    const previewMobileLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "mobile");
+    const previewTabletLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "tablet");
+    const previewDesktopLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "desktop");
+    const liveMobileLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "live", "mobile");
+    const liveTabletLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "live", "tablet");
+    const liveDesktopLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "live", "desktop");
 
     return {
       currentDraftCount: toCount(draftCountRows?.[0]?.total),
@@ -341,10 +364,18 @@ export class StandaloneSiteEventRepository {
       deletedWebsiteCount: deletedWebsiteMetrics.total,
       lastPublicPreviewAt: previewMetrics.lastOccurredAt,
       lastLivePreviewUpdateAt: livePreviewUpdateMetrics.lastOccurredAt,
-      previewSiteLcpMobileP75: getPercentile(previewMobileLcpDurations, 75),
-      previewSiteLcpMobileSampleCount: previewMobileLcpDurations.length,
-      liveSiteLcpMobileP75: getPercentile(liveMobileLcpDurations, 75),
-      liveSiteLcpMobileSampleCount: liveMobileLcpDurations.length,
+      previewSiteLcpMobileP75: previewMobileLcpSummary.p75,
+      previewSiteLcpMobileSampleCount: previewMobileLcpSummary.sampleCount,
+      previewSiteLcpTabletP75: previewTabletLcpSummary.p75,
+      previewSiteLcpTabletSampleCount: previewTabletLcpSummary.sampleCount,
+      previewSiteLcpDesktopP75: previewDesktopLcpSummary.p75,
+      previewSiteLcpDesktopSampleCount: previewDesktopLcpSummary.sampleCount,
+      liveSiteLcpMobileP75: liveMobileLcpSummary.p75,
+      liveSiteLcpMobileSampleCount: liveMobileLcpSummary.sampleCount,
+      liveSiteLcpTabletP75: liveTabletLcpSummary.p75,
+      liveSiteLcpTabletSampleCount: liveTabletLcpSummary.sampleCount,
+      liveSiteLcpDesktopP75: liveDesktopLcpSummary.p75,
+      liveSiteLcpDesktopSampleCount: liveDesktopLcpSummary.sampleCount,
       deletionReasonBreakdown,
     };
   }

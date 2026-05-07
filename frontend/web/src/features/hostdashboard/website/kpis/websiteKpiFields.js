@@ -17,7 +17,11 @@ export const WEBSITE_KPI_COUNT_FIELD_KEYS = Object.freeze([
   "lastPublicPreviewAt",
   "lastLivePreviewUpdateAt",
   "previewSiteLcpMobileSampleCount",
+  "previewSiteLcpTabletSampleCount",
+  "previewSiteLcpDesktopSampleCount",
   "liveSiteLcpMobileSampleCount",
+  "liveSiteLcpTabletSampleCount",
+  "liveSiteLcpDesktopSampleCount",
 ]);
 
 export const WEBSITE_KPI_NULLABLE_FIELD_KEYS = Object.freeze([
@@ -26,7 +30,11 @@ export const WEBSITE_KPI_NULLABLE_FIELD_KEYS = Object.freeze([
   "buildAbandonmentRate",
   "timeToFirstPreviewP95",
   "previewSiteLcpMobileP75",
+  "previewSiteLcpTabletP75",
+  "previewSiteLcpDesktopP75",
   "liveSiteLcpMobileP75",
+  "liveSiteLcpTabletP75",
+  "liveSiteLcpDesktopP75",
   "timeToPublishP95",
   "costPerActiveSitePerMonth",
   "siteLcpMobileP75",

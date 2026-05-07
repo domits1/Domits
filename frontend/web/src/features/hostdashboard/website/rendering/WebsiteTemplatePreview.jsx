@@ -4,6 +4,7 @@ import styles from "./WebsiteTemplatePreview.module.scss";
 import { getWebsiteTemplateById } from "../websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./templateRegistry";
 import WebsiteContactWidget from "./WebsiteContactWidget";
+import { resolveWebsiteBackgroundColor } from "./websiteDraftThemeOverrides";
 
 const PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   desktop: 1180,
@@ -124,6 +125,9 @@ export default function WebsiteTemplatePreview({
     transform: `scale(${scaleMetrics.scale})`,
   };
   const scaleInnerStyle = isCompactVariant ? compactInnerStyle : scaledInnerStyle;
+  const previewCanvasStyle = {
+    "--website-surface-background": resolveWebsiteBackgroundColor(model?.theme?.backgroundColor),
+  };
 
   return (
     <section
@@ -149,7 +153,7 @@ export default function WebsiteTemplatePreview({
               <div className={styles.previewBrowserTitle}>{model.site.title || "Website preview"}</div>
             </div>
 
-            <div className={styles.previewCanvas}>
+            <div className={styles.previewCanvas} style={previewCanvasStyle}>
               {TemplateComponent ? (
                 <TemplateComponent
                   model={model}
@@ -185,6 +189,9 @@ WebsiteTemplatePreview.propTypes = {
     visibility: PropTypes.shape({
       availabilityCalendar: PropTypes.bool,
       chatWidget: PropTypes.bool,
+    }),
+    theme: PropTypes.shape({
+      backgroundColor: PropTypes.string,
     }),
   }).isRequired,
   variant: PropTypes.oneOf(["default", "compact"]),
