@@ -250,6 +250,64 @@ const createEditorFieldKeyDownHandler = (field, saveDraftChanges) => async (even
   await saveDraftChanges();
 };
 
+const activatePreviewTargetId = (setActivePreviewTargetId, targetId) => {
+  setActivePreviewTargetId(String(targetId || "").trim());
+};
+
+const clearPreviewTargetResetTimeout = (previewHighlightResetTimeoutRef) => {
+  if (!previewHighlightResetTimeoutRef.current) {
+    return;
+  }
+
+  globalThis.clearTimeout(previewHighlightResetTimeoutRef.current);
+  previewHighlightResetTimeoutRef.current = null;
+};
+
+const activateTemporaryPreviewTargetId = (
+  setActivePreviewTargetId,
+  previewHighlightResetTimeoutRef,
+  targetId,
+  durationMs = 1800
+) => {
+  const normalizedTargetId = String(targetId || "").trim();
+  clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
+  setActivePreviewTargetId(normalizedTargetId);
+
+  if (!normalizedTargetId) {
+    return;
+  }
+
+  previewHighlightResetTimeoutRef.current = globalThis.setTimeout(() => {
+    setActivePreviewTargetId((currentTargetId) =>
+      currentTargetId === normalizedTargetId ? "" : currentTargetId
+    );
+    previewHighlightResetTimeoutRef.current = null;
+  }, durationMs);
+};
+
+const getPreviewTargetIdForVisibilityField = (fieldKey) => {
+  switch (String(fieldKey || "").trim()) {
+    case "topBar":
+      return EDITOR_TARGET_KEYS.common.siteTitle;
+    case "trustCards":
+      return "visibility.trustCards";
+    case "gallerySection":
+      return EDITOR_TARGET_KEYS.images.gallery(0);
+    case "amenitiesPanel":
+      return "visibility.amenitiesPanel";
+    case "availabilityCalendar":
+      return EDITOR_TARGET_KEYS.visibility("availabilityCalendar");
+    case "callToAction":
+      return EDITOR_TARGET_KEYS.common.ctaLabel;
+    case "journeyStops":
+      return "visibility.journeyStops";
+    case "chatWidget":
+      return "visibility.chatWidget";
+    default:
+      return EDITOR_TARGET_KEYS.common.heroTitle;
+  }
+};
+
 const fieldPropTypes = PropTypes.shape({
   key: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
@@ -846,6 +904,7 @@ function WebsiteEditorPage() {
   const actionMenuRef = useRef(null);
   const editorPanelRef = useRef(null);
   const sectionHighlightResetTimeoutRef = useRef(null);
+  const previewHighlightResetTimeoutRef = useRef(null);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
 
   useEffect(() => {
@@ -1024,6 +1083,8 @@ function WebsiteEditorPage() {
       if (sectionHighlightResetTimeoutRef.current) {
         globalThis.clearTimeout(sectionHighlightResetTimeoutRef.current);
       }
+
+      clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
     },
     []
   );
@@ -1121,7 +1182,7 @@ function WebsiteEditorPage() {
 
   const handleCommonFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
-    setActivePreviewTargetId(EDITOR_TARGET_KEYS.common[fieldKey] || "");
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common[fieldKey]);
     setEditorValues((currentValues) => ({
       ...currentValues,
       common: {
@@ -1132,6 +1193,7 @@ function WebsiteEditorPage() {
   };
 
   const handleThemeBackgroundColorChange = (backgroundColor) => {
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common.siteTitle);
     const resolvedBackgroundColor = resolveWebsiteBackgroundColor(backgroundColor);
     setThemeValues((currentValues) => ({
       ...currentValues,
@@ -1156,6 +1218,7 @@ function WebsiteEditorPage() {
   };
 
   const handleThemeBackgroundColorInputChange = (nextInputValue) => {
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common.siteTitle);
     setThemeValues((currentValues) => {
       const hasValidCustomColor = isValidWebsiteBackgroundColor(nextInputValue);
       const nextBackgroundColor = hasValidCustomColor
@@ -1171,15 +1234,17 @@ function WebsiteEditorPage() {
   };
 
   const activatePreviewTarget = (targetId) => () => {
-    setActivePreviewTargetId(targetId);
+    activatePreviewTargetId(setActivePreviewTargetId, targetId);
   };
 
   const clearActivePreviewTarget = () => {
+    clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
     setActivePreviewTargetId("");
   };
 
   const handleVisibilityFieldChange = (fieldKey) => (event) => {
     const nextChecked = event.target.checked;
+    const previewTargetId = getPreviewTargetIdForVisibilityField(fieldKey);
     setEditorValues((currentValues) => ({
       ...currentValues,
       visibility: {
@@ -1187,6 +1252,14 @@ function WebsiteEditorPage() {
         [fieldKey]: nextChecked,
       },
     }));
+    setActivePreviewTargetId("");
+    runAfterNextPaint(() => {
+      activateTemporaryPreviewTargetId(
+        setActivePreviewTargetId,
+        previewHighlightResetTimeoutRef,
+        previewTargetId
+      );
+    });
   };
 
   const updateImageSlotSelection = (slot, nextValue) => {
@@ -1194,6 +1267,7 @@ function WebsiteEditorPage() {
       return;
     }
 
+    activatePreviewTargetId(setActivePreviewTargetId, getImageSlotTargetId(slot));
     setEditorValues((currentValues) => {
       if (slot.kind === "hero") {
         return {
@@ -1223,6 +1297,7 @@ function WebsiteEditorPage() {
       return;
     }
 
+    activatePreviewTargetId(setActivePreviewTargetId, getImageSlotTargetId(slot));
     setImagePickerState({
       isOpen: true,
       slot,
@@ -1248,7 +1323,7 @@ function WebsiteEditorPage() {
   const updateCollectionFieldValue = (collectionKey, itemIndex, fieldKey, nextValue) => {
     const targetId = getCollectionTargetId(collectionKey, itemIndex);
 
-    setActivePreviewTargetId(targetId);
+    activatePreviewTargetId(setActivePreviewTargetId, targetId);
     setEditorValues((currentValues) => {
       const nextCollection = [...currentValues[collectionKey]];
       const currentItem = nextCollection[itemIndex];
@@ -1277,6 +1352,7 @@ function WebsiteEditorPage() {
       return;
     }
 
+    activatePreviewTargetId(setActivePreviewTargetId, getCollectionTargetId(collectionKey, itemIndex));
     setIconPickerState({
       isOpen: true,
       collectionKey,
