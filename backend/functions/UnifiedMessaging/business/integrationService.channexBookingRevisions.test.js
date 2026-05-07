@@ -39,22 +39,47 @@ const createService = ({
     credentialsRef: "channex-secret-1",
   },
   revisionRows = [buildRevisionRow()],
+  propertyMappings = [
+    {
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalPropertyName: "Test Property",
+      status: "ACTIVE",
+    },
+  ],
+  existingRevision = buildRevisionRow(),
 } = {}) => {
   const accounts = {
     findByUserIdAndChannel: jest.fn().mockResolvedValue(account),
   };
+  const props = {
+    listByAccountId: jest.fn().mockResolvedValue(propertyMappings),
+  };
   const channexBookingRevisions = {
     listByFilters: jest.fn().mockResolvedValue(revisionRows),
+    getByIntegrationAccountIdAndRevisionId: jest.fn().mockResolvedValue(existingRevision),
+    markAcknowledged: jest.fn(async (_integrationAccountId, revisionId, acknowledgedAt) =>
+      buildRevisionRow({
+        revisionId,
+        acknowledgementState: "ACKNOWLEDGED",
+        acknowledgedAt,
+      })
+    ),
   };
   const channexProviderClient = {
     listBookingRevisionFeed: jest.fn(),
     getBookingRevision: jest.fn(),
-    acknowledgeBookingRevision: jest.fn(),
+    acknowledgeBookingRevision: jest.fn().mockResolvedValue({
+      success: true,
+      providerStatus: "ACKNOWLEDGED",
+      errorCode: null,
+      errorMessage: null,
+    }),
   };
 
   const service = new IntegrationService({
     accounts,
-    props: {},
+    props,
     ratePlans: {},
     roomTypes: {},
     sync: {},
@@ -65,13 +90,16 @@ const createService = ({
     credentialStore: {},
     holiduCredentialStore: {},
     holiduProviderClient: {},
-    channexCredentialStore: {},
+    channexCredentialStore: {
+      readSecretOrNull: jest.fn().mockResolvedValue({ apiKey: "secret" }),
+    },
     channexProviderClient,
   });
 
   return {
     service,
     accounts,
+    props,
     channexBookingRevisions,
     channexProviderClient,
   };
@@ -235,6 +263,70 @@ describe("IntegrationService Channex booking revision listing", () => {
     });
 
     expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+    expect(channexProviderClient.getBookingRevision).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+});
+
+describe("IntegrationService Channex booking acknowledgement", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("acknowledges a feed-persisted revision without fetching it by ID", async () => {
+    const { service, channexBookingRevisions, channexProviderClient } = createService({
+      existingRevision: buildRevisionRow({
+        revisionId: "revision-feed-1",
+        acknowledgementState: "RECEIVED",
+        acknowledgedAt: null,
+      }),
+    });
+
+    const result = await service.acknowledgeChannexBookingRevisions(
+      "user-1",
+      "domits-property-1",
+      { revisionIds: ["revision-feed-1"] },
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.acknowledgedCount).toBe(1);
+    expect(result.response.fetchedCount).toBe(0);
+    expect(channexProviderClient.getBookingRevision).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      "revision-feed-1"
+    );
+    expect(channexBookingRevisions.markAcknowledged).toHaveBeenCalledWith(
+      "integration-account-1",
+      "revision-feed-1",
+      expect.any(Number)
+    );
+    expect(result.response.notes).toContain(
+      "Manual staging booking acknowledgement only. This endpoint uses persisted booking revisions received from the Channex feed and does not fetch the same revision by ID."
+    );
+  });
+
+  test("does not acknowledge revisions that were not received through feed first", async () => {
+    const { service, channexProviderClient } = createService({
+      existingRevision: null,
+    });
+
+    const result = await service.acknowledgeChannexBookingRevisions(
+      "user-1",
+      "domits-property-1",
+      { revisionIds: ["revision-missing"] },
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.overallSuccess).toBe(false);
+    expect(result.response.failed).toEqual([
+      expect.objectContaining({
+        revisionId: "revision-missing",
+        errorCode: "CHANNEX_BOOKING_REVISION_NOT_RECEIVED_BY_FEED",
+      }),
+    ]);
     expect(channexProviderClient.getBookingRevision).not.toHaveBeenCalled();
     expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
   });

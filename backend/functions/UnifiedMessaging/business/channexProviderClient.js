@@ -54,8 +54,6 @@ const getProviderStatusForHttpStatus = (httpStatus, fallbackStatus) => {
 
 const getPushGroupIdentity = (group, includeRatePlanId = false) => {
   const identity = {
-    chunkIndex: Number.isFinite(Number(group?.chunkIndex)) ? Number(group.chunkIndex) : null,
-    chunkCount: Number.isFinite(Number(group?.chunkCount)) ? Number(group.chunkCount) : null,
     externalPropertyId: requireStr(group?.externalPropertyId),
     externalRoomTypeId: requireStr(group?.externalRoomTypeId),
   };
@@ -173,6 +171,12 @@ const buildProviderPushExceptionResult = ({
   errorMessage: error?.message || requestFailedMessage,
 });
 
+const withPushRequestContext = (result, endpointPath) => ({
+  ...result,
+  endpoint: endpointPath,
+  method: "POST",
+});
+
 const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody, requestTimeoutMs = null }) => {
   const url = new URL(endpointPath, CHANNEX_BASE_URL);
   const controller =
@@ -233,7 +237,9 @@ const pushGroupedPayloads = async ({
   if (!apiKey) {
     return {
       success: false,
-      results: groups.map((group) => buildInvalidCredentialsPushResult(group, includeRatePlanId)),
+      results: groups.map((group) =>
+        withPushRequestContext(buildInvalidCredentialsPushResult(group, includeRatePlanId), endpointPath)
+      ),
     };
   }
 
@@ -242,13 +248,16 @@ const pushGroupedPayloads = async ({
     const requestBody = buildRequestBody(group);
     if (requestBody.values.length === 0) {
       results.push(
-        buildMissingValuesPushResult({
-          group,
-          requestBody,
-          includeRatePlanId,
-          errorCode: missingValuesCode,
-          errorMessage: missingValuesMessage,
-        })
+        withPushRequestContext(
+          buildMissingValuesPushResult({
+            group,
+            requestBody,
+            includeRatePlanId,
+            errorCode: missingValuesCode,
+            errorMessage: missingValuesMessage,
+          }),
+          endpointPath
+        )
       );
       continue;
     }
@@ -257,44 +266,53 @@ const pushGroupedPayloads = async ({
       const providerResponse = await postChannexPushRequest({ apiKey, endpointPath, requestBody, requestTimeoutMs });
       if (providerResponse.response.ok) {
         results.push(
-          buildProviderPushSuccessResult({
-            group,
-            requestBody,
-            response: providerResponse.response,
-            warnings: providerResponse.warnings,
-            taskIds: providerResponse.taskIds,
-            includeRatePlanId,
-          })
+          withPushRequestContext(
+            buildProviderPushSuccessResult({
+              group,
+              requestBody,
+              response: providerResponse.response,
+              warnings: providerResponse.warnings,
+              taskIds: providerResponse.taskIds,
+              includeRatePlanId,
+            }),
+            endpointPath
+          )
         );
         continue;
       }
 
       results.push(
-        buildProviderPushFailureResult({
-          group,
-          requestBody,
-          response: providerResponse.response,
-          parsed: providerResponse.parsed,
-          warnings: providerResponse.warnings,
-          taskIds: providerResponse.taskIds,
-          includeRatePlanId,
-          fallbackStatus,
-          errorCodePrefix,
-          errorMessagePrefix,
-        })
+        withPushRequestContext(
+          buildProviderPushFailureResult({
+            group,
+            requestBody,
+            response: providerResponse.response,
+            parsed: providerResponse.parsed,
+            warnings: providerResponse.warnings,
+            taskIds: providerResponse.taskIds,
+            includeRatePlanId,
+            fallbackStatus,
+            errorCodePrefix,
+            errorMessagePrefix,
+          }),
+          endpointPath
+        )
       );
       if (stopOnFailure) break;
     } catch (error) {
       results.push(
-        buildProviderPushExceptionResult({
-          group,
-          requestBody,
-          error,
-          includeRatePlanId,
-          fallbackStatus,
-          requestFailedCode,
-          requestFailedMessage,
-        })
+        withPushRequestContext(
+          buildProviderPushExceptionResult({
+            group,
+            requestBody,
+            error,
+            includeRatePlanId,
+            fallbackStatus,
+            requestFailedCode,
+            requestFailedMessage,
+          }),
+          endpointPath
+        )
       );
       if (stopOnFailure) break;
     }
@@ -660,7 +678,7 @@ export default class ChannexProviderClient {
     }
   }
 
-  async pushAvailability(credentials, groupedAvailabilityPayloads) {
+  async pushAvailability(credentials, groupedAvailabilityPayloads, options = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const groups = Array.isArray(groupedAvailabilityPayloads) ? groupedAvailabilityPayloads : [];
 
@@ -675,6 +693,8 @@ export default class ChannexProviderClient {
       errorMessagePrefix: "Channex availability push",
       requestFailedCode: "CHANNEX_AVAILABILITY_PUSH_REQUEST_FAILED",
       requestFailedMessage: "Channex availability push request failed.",
+      requestTimeoutMs: options?.requestTimeoutMs,
+      stopOnFailure: !!options?.stopOnFailure,
     });
   }
 

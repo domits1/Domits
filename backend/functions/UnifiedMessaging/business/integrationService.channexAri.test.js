@@ -13,6 +13,9 @@ jest.mock("../ORM/index.js", () => ({
 
 const Database = require("../ORM/index.js").default;
 const IntegrationService = require("./integrationService.js").default;
+const CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS = 8000;
+const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
+const CHANNEX_CERTIFICATION_MAX_AVAILABILITY = 1;
 
 const buildDatabaseClient = ({
   availabilityRestrictions = [
@@ -121,6 +124,60 @@ const buildReadyAriTargets = (overrides = {}) => ({
   },
 });
 
+const buildCertificationAriTargets = () =>
+  buildReadyAriTargets({
+    roomTypeMappings: [
+      {
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        externalRoomTypeId: "room-type-twin",
+        externalRoomTypeName: "Twin Room",
+        status: "ACTIVE",
+      },
+      {
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        externalRoomTypeId: "room-type-double",
+        externalRoomTypeName: "Double Room",
+        status: "ACTIVE",
+      },
+    ],
+    ratePlanMappings: [
+      {
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        externalRoomTypeId: "room-type-twin",
+        externalRatePlanId: "rate-plan-twin-bar",
+        externalRatePlanName: "Best Available Rate",
+        status: "ACTIVE",
+      },
+      {
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        externalRoomTypeId: "room-type-twin",
+        externalRatePlanId: "rate-plan-twin-bb",
+        externalRatePlanName: "Bed & Breakfast Rate",
+        status: "ACTIVE",
+      },
+      {
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        externalRoomTypeId: "room-type-double",
+        externalRatePlanId: "rate-plan-double-bar",
+        externalRatePlanName: "Best Available Rate",
+        status: "ACTIVE",
+      },
+      {
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        externalRoomTypeId: "room-type-double",
+        externalRatePlanId: "rate-plan-double-bb",
+        externalRatePlanName: "Bed & Breakfast Rate",
+        status: "ACTIVE",
+      },
+    ],
+  });
+
 const createService = (overrides = {}) => {
   const service = new IntegrationService({
     accounts: {
@@ -155,20 +212,10 @@ const createService = (overrides = {}) => {
   return service;
 };
 
-const waitUntil = async (predicate) => {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    if (predicate()) return;
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  throw new Error("Timed out waiting for condition.");
-};
-
 const createSuccessfulRestrictionsPush = () =>
   jest.fn(async (_secret, payloads) => ({
     success: true,
-    results: payloads.map((payload) => ({
-      chunkIndex: payload.chunkIndex,
-      chunkCount: payload.chunkCount,
+    results: payloads.map((payload, index) => ({
       externalPropertyId: payload.externalPropertyId,
       externalRoomTypeId: payload.externalRoomTypeId,
       externalRoomTypeIds: payload.externalRoomTypeIds,
@@ -178,12 +225,58 @@ const createSuccessfulRestrictionsPush = () =>
       providerStatus: "SYNCED",
       httpStatus: 202,
       success: true,
-      taskId: `task-restrictions-${payload.chunkIndex || 1}`,
+      taskId: `task-restrictions-${index + 1}`,
       warnings: [],
       errorCode: null,
       errorMessage: null,
     })),
   }));
+
+const createSuccessfulAvailabilityPush = () =>
+  jest.fn(async (_secret, payloads) => ({
+    success: true,
+    results: payloads.map((payload, index) => ({
+      externalPropertyId: payload.externalPropertyId,
+      externalRoomTypeId: payload.externalRoomTypeId,
+      externalRoomTypeIds: payload.externalRoomTypeIds,
+      requestBody: { values: payload.values },
+      providerStatus: "SYNCED",
+      httpStatus: 202,
+      success: true,
+      taskId: `task-availability-${index + 1}`,
+      warnings: [],
+      errorCode: null,
+      errorMessage: null,
+    })),
+  }));
+
+const expectValidChannexRestrictionProviderValues = (payloads) => {
+  for (const payload of Array.isArray(payloads) ? payloads : []) {
+    for (const value of Array.isArray(payload?.values) ? payload.values : []) {
+      Object.entries(value).forEach(([field, fieldValue]) => {
+        expect(fieldValue).not.toBeNull();
+        expect(fieldValue).not.toBeUndefined();
+        expect(fieldValue).not.toBe("");
+      });
+      if (Object.hasOwn(value, "rate")) {
+        expect(Number(value.rate)).toBeGreaterThan(0);
+      }
+      if (Object.hasOwn(value, "min_stay_through")) {
+        expect(Number.isInteger(value.min_stay_through)).toBe(true);
+        expect(value.min_stay_through).toBeGreaterThanOrEqual(1);
+      }
+      if (Object.hasOwn(value, "max_stay")) {
+        expect(Number.isInteger(value.max_stay)).toBe(true);
+        expect(value.max_stay).toBeGreaterThanOrEqual(1);
+      }
+      ["stop_sell", "closed_to_arrival", "closed_to_departure"].forEach((field) => {
+        if (Object.hasOwn(value, field)) {
+          expect(typeof value[field]).toBe("boolean");
+        }
+      });
+    }
+  }
+};
 
 describe("IntegrationService Channex ARI restriction mapping", () => {
   beforeEach(() => {
@@ -213,10 +306,10 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         rate: "123.00",
         stop_sell: true,
         closed_to_arrival: true,
+        closed_to_departure: false,
         min_stay_through: 4,
       })
     );
-    expect(payloadGroup.values[0]).not.toHaveProperty("closed_to_departure");
     expect(payloadGroup.values[0]).not.toHaveProperty("max_stay");
 
     expect(payloadGroup.values[1]).toEqual(
@@ -229,6 +322,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     );
     expect(result.response.sourceSummary.supportedChannexRestrictionFields).toEqual([
       "closed_to_arrival",
+      "closed_to_departure",
       "max_stay",
       "min_stay_through",
       "stop_sell",
@@ -529,12 +623,10 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     );
   });
 
-  test("restrictions sync supports a 500-day range and sends chunked provider requests", async () => {
+  test("restrictions sync supports a 500-day range and sends one combined provider request", async () => {
     const pushRestrictions = jest.fn(async (_secret, payloads) => ({
       success: true,
       results: payloads.map((payload, index) => ({
-        chunkIndex: payload.chunkIndex,
-        chunkCount: payload.chunkCount,
         externalPropertyId: payload.externalPropertyId,
         externalRoomTypeId: payload.externalRoomTypeId,
         externalRoomTypeIds: payload.externalRoomTypeIds,
@@ -544,7 +636,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         providerStatus: "SYNCED",
         httpStatus: 202,
         success: true,
-        taskId: `task-restrictions-${payload.chunkIndex || index + 1}`,
+        taskId: `task-restrictions-${index + 1}`,
         warnings: [],
         errorCode: null,
         errorMessage: null,
@@ -587,55 +679,246 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     );
 
     expect(result.statusCode).toBe(200);
-    expect(result.response.restrictionsSyncVersion).toBe("chunked-v2");
+    expect(result.response.restrictionsSyncVersion).toBe("single-request-v3");
     expect(result.response.calledProvider).toBe(true);
-    expect(result.response.requestCount).toBe(4);
-    expect(pushRestrictions).toHaveBeenCalledTimes(4);
+    expect(result.response.requestCount).toBe(1);
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
     expect(previewSpy).not.toHaveBeenCalled();
-    const transformedPayloads = pushRestrictions.mock.calls.map((call) => call[1][0]);
-    pushRestrictions.mock.calls.forEach((call) =>
-      expect(call[2]).toEqual(
-        expect.objectContaining({
-          requestTimeoutMs: 10000,
-          stopOnFailure: true,
-        })
-      )
-    );
-    expect(transformedPayloads).toHaveLength(4);
-    expect(transformedPayloads.flatMap((payload) => payload.values)).toHaveLength(1000);
-    expect(transformedPayloads.every((payload) => payload.values.length <= 250)).toBe(true);
-    expect(transformedPayloads.map((payload) => payload.chunkIndex)).toEqual([1, 2, 3, 4]);
-    expect(transformedPayloads.map((payload) => payload.chunkCount)).toEqual([4, 4, 4, 4]);
+    expect(pushRestrictions.mock.calls[0][2]).toEqual(expect.objectContaining({ stopOnFailure: true }));
+    const transformedPayloads = pushRestrictions.mock.calls[0][1];
+    expect(transformedPayloads).toHaveLength(1);
+    expect(transformedPayloads[0].values).toHaveLength(1000);
     expect(result.response.results[0]).toEqual(
       expect.objectContaining({
         success: true,
         taskId: "task-restrictions-1",
-        chunkIndex: 1,
-        chunkCount: 4,
         requestBody: expect.objectContaining({
           valuesOmitted: true,
-          valueCount: 250,
+          valueCount: 1000,
           firstDate: "2026-05-24",
-          lastDate: "2027-01-28",
+          lastDate: "2027-10-05",
           externalPropertyIds: ["external-property-1"],
-          externalRoomTypeIds: ["room-type-1"],
-          externalRatePlanIds: ["rate-plan-1"],
+          externalRoomTypeIds: ["room-type-1", "room-type-2"],
+          externalRatePlanIds: ["rate-plan-1", "rate-plan-2"],
         }),
       })
     );
+    expect(result.response).not.toHaveProperty("syncRunId");
+    expect(result.response).not.toHaveProperty("pageRange");
+    expect(result.response.results[0]).not.toHaveProperty("chunkIndex");
+    expect(result.response.results[0]).not.toHaveProperty("chunkCount");
   });
 
-  test("restrictions sync starts provider chunks concurrently instead of sequentially", async () => {
-    const pending = [];
-    const pushRestrictions = jest.fn(
-      (_secret, payloads) =>
-        new Promise((resolve) => {
-          pending.push({ payload: payloads[0], resolve });
-        })
-    );
+  test("full certification sync sends exactly one availability call and one restrictions/rates call", async () => {
+    const pushAvailability = jest.fn(async (_secret, payloads) => ({
+      success: true,
+      results: payloads.map((payload) => ({
+        externalPropertyId: payload.externalPropertyId,
+        externalRoomTypeId: payload.externalRoomTypeId,
+        requestBody: { values: payload.values },
+        providerStatus: "SYNCED",
+        httpStatus: 202,
+        success: true,
+        taskId: "task-availability-full",
+        warnings: [],
+        errorCode: null,
+        errorMessage: null,
+      })),
+    }));
+    const pushRestrictions = jest.fn(async (_secret, payloads) => ({
+      success: true,
+      results: payloads.map((payload) => ({
+        externalPropertyId: payload.externalPropertyId,
+        externalRoomTypeId: payload.externalRoomTypeId,
+        externalRoomTypeIds: payload.externalRoomTypeIds,
+        externalRatePlanId: payload.externalRatePlanId,
+        externalRatePlanIds: payload.externalRatePlanIds,
+        requestBody: { values: payload.values },
+        providerStatus: "SYNCED",
+        httpStatus: 202,
+        success: true,
+        taskId: "task-restrictions-full",
+        warnings: [],
+        errorCode: null,
+        errorMessage: null,
+      })),
+    }));
     const service = createService({
       channexProviderClient: {
-        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+    service.getChannexAriTargets.mockResolvedValue(
+      buildReadyAriTargets({
+        ratePlanMappings: [
+          {
+            domitsPropertyId: "domits-property-1",
+            externalPropertyId: "external-property-1",
+            externalRoomTypeId: "room-type-1",
+            externalRatePlanId: "rate-plan-1",
+            status: "ACTIVE",
+          },
+          {
+            domitsPropertyId: "domits-property-1",
+            externalPropertyId: "external-property-1",
+            externalRoomTypeId: "room-type-2",
+            externalRatePlanId: "rate-plan-2",
+            status: "ACTIVE",
+          },
+        ],
+      })
+    );
+    const payloadPreviewSpy = jest.spyOn(service, "previewChannexAriPayloads");
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.fullCertificationSyncVersion).toBe(CHANNEX_FULL_CERTIFICATION_SYNC_VERSION);
+    expect(result.response.requestCount).toBe(2);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    expect(pushAvailability.mock.calls[0][2]).toEqual(
+      expect.objectContaining({
+        requestTimeoutMs: CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS,
+        stopOnFailure: true,
+      })
+    );
+    expect(pushRestrictions.mock.calls[0][2]).toEqual(
+      expect.objectContaining({
+        requestTimeoutMs: CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS,
+        stopOnFailure: true,
+      })
+    );
+    expect(payloadPreviewSpy).not.toHaveBeenCalled();
+    expect(result.response.taskIds).toEqual(["task-availability-full", "task-restrictions-full"]);
+    expect(result.response).not.toHaveProperty("pageRange");
+    expect(result.response).not.toHaveProperty("syncRunId");
+    expect(JSON.stringify(result.response)).not.toMatch(/pageDateFrom|pageSizeDays|chunkIndex|chunkCount|syncRunId/);
+    expect(result.response.steps.availability.results[0]).not.toHaveProperty("chunkIndex");
+    expect(result.response.steps.restrictions.results[0]).not.toHaveProperty("chunkIndex");
+  });
+
+  test("full certification sync dryRun builds summarized 500-day payloads without provider calls", async () => {
+    const pushAvailability = jest.fn();
+    const pushRestrictions = jest.fn();
+    const readSecretOrNull = jest.fn();
+    const evidenceCreate = jest.fn();
+    const service = createService({
+      channexEvidence: {
+        create: evidenceCreate,
+      },
+      channexCredentialStore: {
+        readSecretOrNull,
+      },
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { dryRun: "true" }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+        stage: "dry_run_response_ready",
+        dryRun: true,
+        calledProvider: false,
+        requestCount: 0,
+        plannedRequestCount: 2,
+      })
+    );
+    expect(result.response.payloadSummaries.availability[0].requestBody).toEqual(
+      expect.objectContaining({
+        valuesOmitted: true,
+        valueCount: 500,
+        firstDate: "2026-05-24",
+        lastDate: "2027-10-05",
+      })
+    );
+    expect(result.response.payloadSummaries.restrictions[0].requestBody).toEqual(
+      expect.objectContaining({
+        valuesOmitted: true,
+        valueCount: 500,
+        firstDate: "2026-05-24",
+        lastDate: "2027-10-05",
+      })
+    );
+    expect(result.response.payloadSummaries.availability[0]).not.toHaveProperty("values");
+    expect(result.response.payloadSummaries.restrictions[0]).not.toHaveProperty("values");
+    expect(pushAvailability).not.toHaveBeenCalled();
+    expect(pushRestrictions).not.toHaveBeenCalled();
+    expect(readSecretOrNull).not.toHaveBeenCalled();
+    expect(evidenceCreate).not.toHaveBeenCalled();
+  });
+
+  test("full certification sync debug stages return controlled JSON without provider calls", async () => {
+    const pushAvailability = jest.fn();
+    const pushRestrictions = jest.fn();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { debugStage: "availabilityPayloadOnly" }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+        stage: "availability_payload_built",
+        debugStage: "availabilityPayloadOnly",
+        calledProvider: false,
+        requestCount: 0,
+      })
+    );
+    expect(result.response.payloadSummaries.availability[0].requestBody).toEqual(
+      expect.objectContaining({
+        valuesOmitted: true,
+        valueCount: 500,
+      })
+    );
+    expect(result.response.payloadSummaries.restrictions).toBeNull();
+    expect(pushAvailability).not.toHaveBeenCalled();
+    expect(pushRestrictions).not.toHaveBeenCalled();
+  });
+
+  test("full certification sync restrictions debug stage builds a summarized 500-day payload", async () => {
+    const pushAvailability = jest.fn();
+    const pushRestrictions = jest.fn();
+    const readSecretOrNull = jest.fn();
+    const evidenceCreate = jest.fn();
+    const service = createService({
+      channexEvidence: {
+        create: evidenceCreate,
+      },
+      channexCredentialStore: {
+        readSecretOrNull,
+      },
+      channexProviderClient: {
+        pushAvailability,
         pushRestrictions,
       },
     });
@@ -660,7 +943,420 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       })
     );
 
-    const resultPromise = service.syncChannexRestrictions(
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { debugStage: "restrictionsPayloadOnly" }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+        stage: "restrictions_payload_built",
+        debugStage: "restrictionsPayloadOnly",
+        calledProvider: false,
+        requestCount: 0,
+      })
+    );
+    expect(result.response.payloadSummaries.availability).toBeNull();
+    expect(result.response.payloadSummaries.restrictions[0].requestBody).toEqual(
+      expect.objectContaining({
+        valuesOmitted: true,
+        valueCount: 1000,
+        firstDate: "2026-05-24",
+        lastDate: "2027-10-05",
+        externalPropertyIds: ["external-property-1"],
+        externalRatePlanIds: ["rate-plan-1", "rate-plan-2"],
+      })
+    );
+    expect(JSON.stringify(result.response)).not.toMatch(/"values":\s*\[/);
+    expect(result.response.debug.stages.map((entry) => entry.stage)).toEqual(
+      expect.arrayContaining([
+        "load_pricing_start",
+        "load_pricing_end",
+        "load_global_restrictions_start",
+        "load_global_restrictions_end",
+        "load_calendar_overrides_start",
+        "load_calendar_overrides_end",
+        "mapping_fan_out_start",
+        "mapping_fan_out_end",
+        "value_summary_start",
+        "value_summary_end",
+      ])
+    );
+    expect(pushAvailability).not.toHaveBeenCalled();
+    expect(pushRestrictions).not.toHaveBeenCalled();
+    expect(readSecretOrNull).not.toHaveBeenCalled();
+    expect(evidenceCreate).not.toHaveBeenCalled();
+  });
+
+  test("full certification sync restrictions debug stage returns controlled empty summary when pricing and restrictions are absent", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [],
+        calendarOverrides: [],
+        pricing: [],
+      })
+    );
+    const evidenceCreate = jest.fn();
+    const service = createService({
+      channexEvidence: {
+        create: evidenceCreate,
+      },
+      channexProviderClient: {
+        pushAvailability: jest.fn(),
+        pushRestrictions: jest.fn(),
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { debugStage: "restrictionsPayloadOnly" }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        stage: "restrictions_payload_built",
+        debugStage: "restrictionsPayloadOnly",
+        calledProvider: false,
+        requestCount: 0,
+        sentChannexRestrictionFields: [],
+      })
+    );
+    expect(result.response.payloadSummaries).toEqual({
+      availability: null,
+      restrictions: [],
+    });
+    expect(evidenceCreate).not.toHaveBeenCalled();
+  });
+
+  test("full certification sync restrictions debug stage returns controlled JSON when an internal loader fails", async () => {
+    const client = buildDatabaseClient();
+    const baseQuery = client.query;
+    const pricingError = new Error("pricing query failed");
+    pricingError.code = "TEST_PRICING_QUERY_FAILED";
+    client.query = jest.fn(async (sql, params) => {
+      const query = String(sql || "");
+      if (query.includes("property_pricing")) throw pricingError;
+      return baseQuery(sql, params);
+    });
+    Database.getInstance.mockResolvedValue(client);
+    const evidenceCreate = jest.fn();
+    const service = createService({
+      channexEvidence: {
+        create: evidenceCreate,
+      },
+      channexProviderClient: {
+        pushAvailability: jest.fn(),
+        pushRestrictions: jest.fn(),
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { debugStage: "restrictionsPayloadOnly" }
+    );
+
+    expect(result.statusCode).toBe(500);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+        errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
+        errorName: "Error",
+        errorMessage: "pricing query failed",
+      })
+    );
+    expect(result.response.debug.stages.map((entry) => entry.stage)).toEqual(
+      expect.arrayContaining(["load_pricing_start", "load_pricing_failed"])
+    );
+    expect(JSON.stringify(result.response)).not.toMatch(/"values":\s*\[/);
+    expect(evidenceCreate).not.toHaveBeenCalled();
+  });
+
+  test("full certification sync restrictions payload omits non-positive min stay values before provider calls", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [
+          {
+            id: "restriction-min",
+            property_id: "domits-property-1",
+            restriction: "MinimumStay",
+            value: 2,
+          },
+          {
+            id: "restriction-max",
+            property_id: "domits-property-1",
+            restriction: "MaximumStay",
+            value: 7,
+          },
+        ],
+        calendarOverrides: [
+          {
+            property_id: "domits-property-1",
+            calendar_date: 20260530,
+            is_available: true,
+            nightly_price: 123,
+            stop_sell: null,
+            closed_to_arrival: null,
+            closed_to_departure: null,
+            min_stay: 0,
+            max_stay: null,
+            updated_at: 1,
+          },
+        ],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn(),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { skipEvidence: true, providerMode: "restrictionsOnly" }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    const outboundPayloads = pushRestrictions.mock.calls[0][1];
+    expectValidChannexRestrictionProviderValues(outboundPayloads);
+    const valueWithZeroMinStayOverride = outboundPayloads[0].values.find(
+      (value) => value.date === "2026-05-30" && value.rate_plan_id === "rate-plan-1"
+    );
+    expect(valueWithZeroMinStayOverride).toEqual(
+      expect.objectContaining({
+        date: "2026-05-30",
+        rate: "123.00",
+        max_stay: 7,
+      })
+    );
+    expect(valueWithZeroMinStayOverride).not.toHaveProperty("min_stay_through");
+    expect(JSON.stringify(outboundPayloads)).not.toMatch(/"min_stay_through":0/);
+  });
+
+  test("full certification sync restrictions payload omits invalid global min stay values", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [
+          {
+            id: "restriction-min",
+            property_id: "domits-property-1",
+            restriction: "MinimumStay",
+            value: 0,
+          },
+          {
+            id: "restriction-max",
+            property_id: "domits-property-1",
+            restriction: "MaximumStay",
+            value: 7,
+          },
+        ],
+        calendarOverrides: [],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn(),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { skipEvidence: true, providerMode: "restrictionsOnly" }
+    );
+
+    expect(result.statusCode).toBe(200);
+    const outboundPayloads = pushRestrictions.mock.calls[0][1];
+    expectValidChannexRestrictionProviderValues(outboundPayloads);
+    outboundPayloads[0].values.forEach((value) => {
+      expect(value).not.toHaveProperty("min_stay_through");
+    });
+    expect(outboundPayloads[0].values.some((value) => value.max_stay === 7)).toBe(true);
+  });
+
+  test("restrictions sync sanitizes invalid rates and restriction values before provider calls", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [
+          {
+            id: "restriction-min",
+            property_id: "domits-property-1",
+            restriction: "MinimumStay",
+            value: 0,
+          },
+          {
+            id: "restriction-max",
+            property_id: "domits-property-1",
+            restriction: "MaximumStay",
+            value: 0,
+          },
+        ],
+        calendarOverrides: [
+          {
+            property_id: "domits-property-1",
+            calendar_date: 20260524,
+            is_available: true,
+            nightly_price: 0,
+            stop_sell: true,
+            closed_to_arrival: false,
+            closed_to_departure: true,
+            min_stay: 0,
+            max_stay: 0,
+            updated_at: 1,
+          },
+        ],
+        pricing: [
+          {
+            property_id: "domits-property-1",
+            roomrate: 0,
+            cleaning: 0,
+            weekendrate: 0,
+          },
+        ],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn(),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexRestrictions(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-24",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    const outboundPayloads = pushRestrictions.mock.calls[0][1];
+    expectValidChannexRestrictionProviderValues(outboundPayloads);
+    expect(outboundPayloads[0].values[0]).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-1",
+      date: "2026-05-24",
+      stop_sell: true,
+      closed_to_arrival: false,
+      closed_to_departure: true,
+    });
+  });
+
+  test("full certification sync providerMode can isolate the availability provider call", async () => {
+    const pushAvailability = createSuccessfulAvailabilityPush();
+    const pushRestrictions = jest.fn();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { skipEvidence: true, providerMode: "availabilityOnly" }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.providerMode).toBe("availabilityOnly");
+    expect(result.response.requestCount).toBe(1);
+    expect(result.response.steps.availability).toEqual(expect.objectContaining({ calledProvider: true }));
+    expect(result.response.steps.restrictions).toBeNull();
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushRestrictions).not.toHaveBeenCalled();
+  });
+
+  test("full certification sync starts both provider calls without waiting for the first one to finish", async () => {
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    let resolveAvailability;
+    let resolveRestrictions;
+    let resolveAvailabilityStarted;
+    let resolveRestrictionsStarted;
+    const availabilityStarted = new Promise((resolve) => {
+      resolveAvailabilityStarted = resolve;
+    });
+    const restrictionsStarted = new Promise((resolve) => {
+      resolveRestrictionsStarted = resolve;
+    });
+    const pushAvailability = jest.fn((_secret, payloads) => {
+      resolveAvailabilityStarted();
+      return new Promise((providerResolve) => {
+        resolveAvailability = () =>
+          providerResolve({
+            success: true,
+            results: payloads.map((payload) => ({
+              externalPropertyId: payload.externalPropertyId,
+              externalRoomTypeId: payload.externalRoomTypeId,
+              requestBody: { values: payload.values },
+              providerStatus: "SYNCED",
+              httpStatus: 202,
+              success: true,
+              taskId: "task-availability-parallel",
+              warnings: [],
+              errorCode: null,
+              errorMessage: null,
+            })),
+          });
+      });
+    });
+    const pushRestrictions = jest.fn((_secret, payloads) => {
+      resolveRestrictionsStarted();
+      return new Promise((providerResolve) => {
+        resolveRestrictions = () =>
+          providerResolve({
+            success: true,
+            results: payloads.map((payload) => ({
+              externalPropertyId: payload.externalPropertyId,
+              externalRoomTypeId: payload.externalRoomTypeId,
+              externalRoomTypeIds: payload.externalRoomTypeIds,
+              externalRatePlanId: payload.externalRatePlanId,
+              externalRatePlanIds: payload.externalRatePlanIds,
+              requestBody: { values: payload.values },
+              providerStatus: "SYNCED",
+              httpStatus: 202,
+              success: true,
+              taskId: "task-restrictions-parallel",
+              warnings: [],
+              errorCode: null,
+              errorMessage: null,
+            })),
+          });
+      });
+    });
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const fullSyncPromise = service.syncChannexFull(
       "user-1",
       "domits-property-1",
       "2026-05-24",
@@ -668,47 +1364,184 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       { skipEvidence: true }
     );
 
-    await waitUntil(() => pushRestrictions.mock.calls.length === 4);
-    expect(pending.map((entry) => entry.payload.chunkIndex)).toEqual([1, 2, 3, 4]);
+    const startedTogether = await Promise.race([
+      Promise.all([availabilityStarted, restrictionsStarted]).then(() => true),
+      delay(75).then(() => false),
+    ]);
+    expect(startedTogether).toBe(true);
 
-    pending.forEach(({ payload, resolve }) =>
-      resolve({
-        success: true,
-        results: [
-          {
-            chunkIndex: payload.chunkIndex,
-            chunkCount: payload.chunkCount,
-            externalPropertyId: payload.externalPropertyId,
-            externalRoomTypeId: payload.externalRoomTypeId,
-            externalRoomTypeIds: payload.externalRoomTypeIds,
-            externalRatePlanId: payload.externalRatePlanId,
-            externalRatePlanIds: payload.externalRatePlanIds,
-            requestBody: { values: payload.values },
-            providerStatus: "SYNCED",
-            httpStatus: 202,
-            success: true,
-            taskId: `task-restrictions-${payload.chunkIndex}`,
-            warnings: [],
-            errorCode: null,
-            errorMessage: null,
-          },
-        ],
-      })
-    );
+    resolveAvailability();
+    resolveRestrictions();
+    const result = await fullSyncPromise;
 
-    const result = await resultPromise;
     expect(result.statusCode).toBe(200);
-    expect(result.response.requestCount).toBe(4);
-    expect(result.response.results.map((item) => item.chunkIndex)).toEqual([1, 2, 3, 4]);
+    expect(result.response.requestCount).toBe(2);
   });
 
-  test("restrictions sync returns frontend pagination metadata and persists page evidence", async () => {
+  test("full certification sync persists summarized outbound evidence", async () => {
+    const evidenceCreate = jest.fn(async (row) => row);
+    const pushAvailability = createSuccessfulAvailabilityPush();
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexEvidence: {
+        create: evidenceCreate,
+      },
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05"
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.evidencePersisted).toBe(true);
+    expect(evidenceCreate).toHaveBeenCalledTimes(1);
+    const persistedEvidence = evidenceCreate.mock.calls[0][0];
+    const groupedSnapshot = JSON.parse(persistedEvidence.groupedOutboundPayloadSnapshot);
+    expect(groupedSnapshot.availability[0].requestBody).toEqual(
+      expect.objectContaining({
+        valuesOmitted: true,
+        valueCount: 500,
+      })
+    );
+    expect(groupedSnapshot.restrictions[0].requestBody).toEqual(
+      expect.objectContaining({
+        valuesOmitted: true,
+        valueCount: 500,
+      })
+    );
+    expect(groupedSnapshot.availability[0]).not.toHaveProperty("values");
+    expect(groupedSnapshot.restrictions[0]).not.toHaveProperty("values");
+  });
+
+  test("full certification sync returns controlled JSON when one provider step fails", async () => {
+    const pushAvailability = jest.fn(async (_secret, payloads) => ({
+      success: true,
+      results: payloads.map((payload) => ({
+        endpoint: "/api/v1/availability",
+        method: "POST",
+        externalPropertyId: payload.externalPropertyId,
+        externalRoomTypeId: payload.externalRoomTypeId,
+        requestBody: { values: payload.values },
+        providerStatus: "SYNCED",
+        httpStatus: 202,
+        success: true,
+        taskId: "task-availability-full",
+        warnings: [],
+        errorCode: null,
+        errorMessage: null,
+      })),
+    }));
+    const pushRestrictions = jest.fn(async (_secret, payloads) => ({
+      success: false,
+      results: payloads.map((payload) => ({
+        endpoint: "/api/v1/restrictions",
+        method: "POST",
+        externalPropertyId: payload.externalPropertyId,
+        externalRoomTypeId: payload.externalRoomTypeId,
+        externalRoomTypeIds: payload.externalRoomTypeIds,
+        externalRatePlanId: payload.externalRatePlanId,
+        externalRatePlanIds: payload.externalRatePlanIds,
+        requestBody: { values: payload.values },
+        providerStatus: "RESTRICTIONS_PUSH_FAILED",
+        httpStatus: 504,
+        success: false,
+        taskId: null,
+        warnings: [],
+        errorCode: "CHANNEX_RESTRICTIONS_PUSH_504",
+        errorMessage: "Channex restrictions push failed with status 504.",
+      })),
+    }));
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(500);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+        errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_PROVIDER_FAILED",
+        requestCount: 2,
+        taskIds: ["task-availability-full"],
+      })
+    );
+    expect(result.response.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          errorCode: "CHANNEX_RESTRICTIONS_PUSH_504",
+          errorMessage: "Channex restrictions push failed with status 504.",
+          httpStatus: 504,
+        }),
+      ])
+    );
+  });
+
+  test("full certification sync returns controlled JSON when a provider call throws", async () => {
+    const providerError = new Error("Availability provider exploded");
+    providerError.endpoint = "/api/v1/availability";
+    providerError.method = "POST";
+    providerError.status = 503;
+    const pushAvailability = jest.fn().mockRejectedValue(providerError);
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2027-10-05",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(500);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+        stage: "provider_calls_start",
+        errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
+        errorName: "Error",
+        errorMessage: "Availability provider exploded",
+        stackSummary: expect.any(Array),
+      })
+    );
+    expect(result.response.details).toEqual(
+      expect.objectContaining({
+        endpoint: "/api/v1/availability",
+        method: "POST",
+        httpStatus: 503,
+      })
+    );
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+  });
+
+  test("restrictions sync ignores stale frontend pagination metadata and persists certification-safe evidence", async () => {
     const evidenceCreate = jest.fn(async (row) => row);
     const pushRestrictions = jest.fn(async (_secret, payloads) => ({
       success: true,
       results: payloads.map((payload) => ({
-        chunkIndex: payload.chunkIndex,
-        chunkCount: payload.chunkCount,
         externalPropertyId: payload.externalPropertyId,
         externalRoomTypeId: payload.externalRoomTypeId,
         externalRoomTypeIds: payload.externalRoomTypeIds,
@@ -718,7 +1551,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         providerStatus: "SYNCED",
         httpStatus: 202,
         success: true,
-        taskId: `task-page-${payload.chunkIndex}`,
+        taskId: "task-restrictions-stale-metadata",
         warnings: [],
         errorCode: null,
         errorMessage: null,
@@ -752,82 +1585,27 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     expect(result.statusCode).toBe(200);
     expect(result.response).toEqual(
       expect.objectContaining({
-        restrictionsSyncMode: "frontend-paginated-v1",
-        syncRunId: "sync-run-1",
-        pageNumber: 1,
-        totalPages: 17,
-        pageSizeDays: 30,
-        requestedFullRange: {
-          dateFrom: "2026-05-24",
-          dateTo: "2027-10-05",
-          totalDays: 500,
-        },
-        pageRange: {
-          dateFrom: "2026-05-24",
-          dateTo: "2026-06-22",
-          totalDays: 30,
-        },
+        restrictionsSyncMode: "single-request-v1",
+        requestCount: 1,
         evidencePersisted: true,
       })
     );
+    expect(result.response).not.toHaveProperty("syncRunId");
+    expect(result.response).not.toHaveProperty("requestedFullRange");
+    expect(result.response).not.toHaveProperty("pageRange");
+    expect(result.response).not.toHaveProperty("pageNumber");
+    expect(result.response).not.toHaveProperty("totalPages");
+    expect(result.response).not.toHaveProperty("pageSizeDays");
     expect(evidenceCreate).toHaveBeenCalledTimes(1);
     const persistedEvidence = evidenceCreate.mock.calls[0][0];
-    expect(JSON.parse(persistedEvidence.providerResponseSummary).syncRun).toEqual(
-      expect.objectContaining({
-        syncRunId: "sync-run-1",
-        pageNumber: 1,
-        totalPages: 17,
-      })
-    );
-    expect(JSON.parse(persistedEvidence.rawDetails).syncRun).toEqual(
-      expect.objectContaining({
-        requestedFullRange: expect.objectContaining({
-          totalDays: 500,
-        }),
-      })
-    );
+    expect(JSON.parse(persistedEvidence.providerResponseSummary)).not.toHaveProperty("syncRun");
+    expect(JSON.parse(persistedEvidence.rawDetails)).not.toHaveProperty("syncRun");
     expect(JSON.parse(persistedEvidence.groupedOutboundPayloadSnapshot)[0].requestBody).toEqual(
       expect.objectContaining({
         valuesOmitted: true,
         valueCount: 30,
       })
     );
-  });
-
-  test("restrictions sync rejects requested full ranges over 500 days", async () => {
-    const pushRestrictions = jest.fn();
-    const service = createService({
-      channexProviderClient: {
-        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
-        pushRestrictions,
-      },
-    });
-
-    const result = await service.syncChannexRestrictions(
-      "user-1",
-      "domits-property-1",
-      "2026-05-24",
-      "2026-06-22",
-      {
-        syncRunId: "sync-run-too-large",
-        requestedDateFrom: "2026-05-24",
-        requestedDateTo: "2027-10-06",
-        pageNumber: 1,
-        totalPages: 18,
-        pageSizeDays: 30,
-      }
-    );
-
-    expect(result.statusCode).toBe(400);
-    expect(result.response).toEqual(
-      expect.objectContaining({
-        restrictionsSyncMode: "frontend-paginated-v1",
-        errorCode: "CHANNEX_RESTRICTIONS_SYNC_REQUESTED_RANGE_TOO_LARGE",
-        maxDays: 500,
-        totalDays: 501,
-      })
-    );
-    expect(pushRestrictions).not.toHaveBeenCalled();
   });
 
   test("restrictions sync rejects ranges over 500 days", async () => {
@@ -883,25 +1661,18 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       expect.objectContaining({
         error: "Failed to sync Channex restrictions.",
         errorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
-        restrictionsSyncVersion: "chunked-v2",
-        results: [
-          expect.objectContaining({
-            success: false,
-            httpStatus: 503,
-            endpoint: "/api/v1/restrictions",
-            method: "POST",
-            errorMessage: "Provider restrictions gateway unavailable",
-            requestBody: expect.objectContaining({
-              valuesOmitted: true,
-              valueCount: 2,
-            }),
-          }),
-        ],
+        restrictionsSyncVersion: "single-request-v3",
+        details: expect.objectContaining({
+          message: "Provider restrictions gateway unavailable",
+          httpStatus: 503,
+          endpoint: "/api/v1/restrictions",
+          method: "POST",
+        }),
       })
     );
   });
 
-  test("restrictions sync returns controlled JSON when a provider chunk fails", async () => {
+  test("restrictions sync returns controlled JSON when the provider request fails", async () => {
     const service = createService({
       channexProviderClient: {
         pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
@@ -909,8 +1680,6 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
           success: false,
           results: [
             {
-              chunkIndex: payloads[0].chunkIndex,
-              chunkCount: payloads[0].chunkCount,
               externalPropertyId: payloads[0].externalPropertyId,
               externalRoomTypeId: payloads[0].externalRoomTypeId,
               externalRoomTypeIds: payloads[0].externalRoomTypeIds,
@@ -943,7 +1712,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       expect.objectContaining({
         error: "Failed to sync Channex restrictions.",
         errorCode: "CHANNEX_RESTRICTIONS_SYNC_FAILED",
-        restrictionsSyncVersion: "chunked-v2",
+        restrictionsSyncVersion: "single-request-v3",
         calledProvider: true,
         requestCount: 1,
         results: [
@@ -1155,8 +1924,6 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     const pushRestrictions = jest.fn(async (_secret, payloads) => ({
       success: true,
       results: payloads.map((payload) => ({
-        chunkIndex: payload.chunkIndex,
-        chunkCount: payload.chunkCount,
         externalPropertyId: payload.externalPropertyId,
         externalRoomTypeId: payload.externalRoomTypeId,
         externalRoomTypeIds: payload.externalRoomTypeIds,
@@ -1197,10 +1964,10 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         rate: "123.00",
         stop_sell: true,
         closed_to_arrival: true,
+        closed_to_departure: false,
         min_stay_through: 4,
       })
     );
-    expect(outboundPayloads[0].values[0]).not.toHaveProperty("closed_to_departure");
     expect(outboundPayloads[0].values[0]).not.toHaveProperty("max_stay");
     expect(outboundPayloads[0].values[1]).toEqual(
       expect.objectContaining({
@@ -1210,5 +1977,393 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         max_stay: 9,
       })
     );
+  });
+
+  test("full sync restrictions/rates includes all safely supported restriction fields when values exist", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [],
+        calendarOverrides: [
+          {
+            property_id: "domits-property-1",
+            calendar_date: 20260524,
+            is_available: true,
+            nightly_price: 123,
+            stop_sell: true,
+            closed_to_arrival: true,
+            closed_to_departure: true,
+            min_stay: 3,
+            max_stay: 7,
+            updated_at: 1,
+          },
+        ],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn(async (_secret, payloads) => ({
+          success: true,
+          results: payloads.map((payload) => ({
+            externalPropertyId: payload.externalPropertyId,
+            externalRoomTypeId: payload.externalRoomTypeId,
+            requestBody: { values: payload.values },
+            providerStatus: "SYNCED",
+            httpStatus: 202,
+            success: true,
+            taskId: "task-availability-full-fields",
+            warnings: [],
+            errorCode: null,
+            errorMessage: null,
+          })),
+        })),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-24",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestCount).toBe(2);
+    const [, outboundPayloads] = pushRestrictions.mock.calls[0];
+    expect(outboundPayloads).toHaveLength(1);
+    expect(outboundPayloads[0].values[0]).toEqual(
+      expect.objectContaining({
+        property_id: "external-property-1",
+        rate_plan_id: "rate-plan-1",
+        date: "2026-05-24",
+        rate: "123.00",
+        stop_sell: true,
+        closed_to_arrival: true,
+        closed_to_departure: true,
+        min_stay_through: 3,
+        max_stay: 7,
+      })
+    );
+    expect(outboundPayloads[0].values[0]).not.toHaveProperty("min_stay_arrival");
+  });
+
+  test("certification test cases #2 through #10 send change-only payloads", async () => {
+    const expected = {
+      "2": { provider: "restrictions", count: 1, fields: ["rate"] },
+      "3": { provider: "restrictions", count: 3, fields: ["rate"] },
+      "4": { provider: "restrictions", count: 37, fields: ["rate"] },
+      "5": { provider: "restrictions", count: 3, fields: ["min_stay_through"] },
+      "6": { provider: "restrictions", count: 3, fields: ["stop_sell"] },
+      "7": { provider: "restrictions", count: 42, fields: ["closed_to_arrival", "closed_to_departure", "max_stay", "min_stay_through"] },
+      "8": { provider: "restrictions", count: 304, fields: ["closed_to_arrival", "closed_to_departure", "min_stay_through", "rate"] },
+      "9": { provider: "availability", count: 2, fields: ["availability"] },
+      "10": { provider: "availability", count: 15, fields: ["availability"] },
+    };
+
+    for (const [testCaseId, expectation] of Object.entries(expected)) {
+      const pushAvailability = jest.fn(async (_secret, payloads) => ({
+        success: true,
+        results: payloads.map((payload) => ({
+          externalPropertyId: payload.externalPropertyId,
+          externalRoomTypeId: payload.externalRoomTypeId,
+          externalRoomTypeIds: payload.externalRoomTypeIds,
+          requestBody: { values: payload.values },
+          providerStatus: "SYNCED",
+          httpStatus: 202,
+          success: true,
+          taskId: `task-availability-${testCaseId}`,
+          warnings: [],
+          errorCode: null,
+          errorMessage: null,
+        })),
+      }));
+      const pushRestrictions = jest.fn(async (_secret, payloads) => ({
+        success: true,
+        results: payloads.map((payload) => ({
+          externalPropertyId: payload.externalPropertyId,
+          externalRoomTypeId: payload.externalRoomTypeId,
+          externalRoomTypeIds: payload.externalRoomTypeIds,
+          externalRatePlanId: payload.externalRatePlanId,
+          externalRatePlanIds: payload.externalRatePlanIds,
+          requestBody: { values: payload.values },
+          providerStatus: "SYNCED",
+          httpStatus: 202,
+          success: true,
+          taskId: `task-restrictions-${testCaseId}`,
+          warnings: [],
+          errorCode: null,
+          errorMessage: null,
+        })),
+      }));
+      const service = createService({
+        channexProviderClient: {
+          pushAvailability,
+          pushRestrictions,
+        },
+      });
+      service.getChannexAriTargets.mockResolvedValue(buildCertificationAriTargets());
+
+      const result = await service.syncChannexCertificationTestCase(
+        "user-1",
+        "domits-property-1",
+        { testCaseId },
+        { skipEvidence: true }
+      );
+
+      expect(result.statusCode).toBe(200);
+      expect(result.response.syncMode).toBe("changeUpdate");
+      expect(result.response.requestCount).toBe(1);
+      const providerMock = expectation.provider === "availability" ? pushAvailability : pushRestrictions;
+      const otherProviderMock = expectation.provider === "availability" ? pushRestrictions : pushAvailability;
+      expect(providerMock).toHaveBeenCalledTimes(1);
+      expect(otherProviderMock).not.toHaveBeenCalled();
+      const values = providerMock.mock.calls[0][1][0].values;
+      expect(values).toHaveLength(expectation.count);
+      const identifierFields =
+        expectation.provider === "availability"
+          ? ["availability", "date", "property_id", "room_type_id"]
+          : ["date", "property_id", "rate_plan_id", ...expectation.fields];
+      const allowedFields = new Set(identifierFields);
+      for (const value of values) {
+        expect(Object.keys(value).every((field) => allowedFields.has(field))).toBe(true);
+        expect(value).not.toHaveProperty("min_stay_arrival");
+        if (expectation.provider === "availability") {
+          expect(Number.isInteger(value.availability)).toBe(true);
+          expect(value.availability).toBeGreaterThanOrEqual(0);
+          expect(value.availability).toBeLessThanOrEqual(CHANNEX_CERTIFICATION_MAX_AVAILABILITY);
+        }
+      }
+    }
+  });
+
+  test("certification rate-only update does not include min or max stay", async () => {
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
+        pushRestrictions,
+      },
+    });
+    service.getChannexAriTargets.mockResolvedValue(buildCertificationAriTargets());
+
+    await service.syncChannexCertificationTestCase(
+      "user-1",
+      "domits-property-1",
+      { testCaseId: "2" },
+      { skipEvidence: true }
+    );
+
+    const value = pushRestrictions.mock.calls[0][1][0].values[0];
+    expect(value).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-twin-bar",
+      date: "2026-11-22",
+      rate: "333.00",
+    });
+  });
+
+  test("certification documented cases produce exact changed values for mixed restriction and availability cases", async () => {
+    const runCase = async (testCaseId) => {
+      const pushAvailability = createSuccessfulAvailabilityPush();
+      const pushRestrictions = createSuccessfulRestrictionsPush();
+      const service = createService({
+        channexProviderClient: {
+          pushAvailability,
+          pushRestrictions,
+        },
+      });
+      service.getChannexAriTargets.mockResolvedValue(buildCertificationAriTargets());
+
+      const result = await service.syncChannexCertificationTestCase(
+        "user-1",
+        "domits-property-1",
+        { testCaseId },
+        { skipEvidence: true }
+      );
+
+      expect(result.statusCode).toBe(200);
+      const providerMock = testCaseId === "9" || testCaseId === "10" ? pushAvailability : pushRestrictions;
+      return providerMock.mock.calls[0][1][0].values;
+    };
+
+    const case3Values = await runCase("3");
+    expect(case3Values).toEqual(
+      expect.arrayContaining([
+        {
+          property_id: "external-property-1",
+          rate_plan_id: "rate-plan-twin-bar",
+          date: "2026-11-21",
+          rate: "333.00",
+        },
+        {
+          property_id: "external-property-1",
+          rate_plan_id: "rate-plan-double-bar",
+          date: "2026-11-25",
+          rate: "444.00",
+        },
+        {
+          property_id: "external-property-1",
+          rate_plan_id: "rate-plan-double-bb",
+          date: "2026-11-29",
+          rate: "456.23",
+        },
+      ])
+    );
+
+    const case7Values = await runCase("7");
+    expect(case7Values.find((value) => value.rate_plan_id === "rate-plan-twin-bar" && value.date === "2026-11-01")).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-twin-bar",
+      date: "2026-11-01",
+      closed_to_arrival: true,
+      closed_to_departure: false,
+      max_stay: 4,
+      min_stay_through: 1,
+    });
+    expect(case7Values.find((value) => value.rate_plan_id === "rate-plan-double-bar" && value.date === "2026-11-10")).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-double-bar",
+      date: "2026-11-10",
+      closed_to_arrival: true,
+      min_stay_through: 2,
+    });
+
+    const case8Values = await runCase("8");
+    expect(case8Values.find((value) => value.rate_plan_id === "rate-plan-twin-bar" && value.date === "2026-12-01")).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-twin-bar",
+      date: "2026-12-01",
+      rate: "432.00",
+      closed_to_arrival: false,
+      closed_to_departure: false,
+      min_stay_through: 2,
+    });
+    expect(case8Values.find((value) => value.rate_plan_id === "rate-plan-double-bar" && value.date === "2027-05-01")).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-double-bar",
+      date: "2027-05-01",
+      rate: "342.00",
+      min_stay_through: 3,
+    });
+
+    const case9Values = await runCase("9");
+    expect(case9Values).toEqual(
+      expect.arrayContaining([
+        {
+          property_id: "external-property-1",
+          room_type_id: "room-type-twin",
+          date: "2026-11-21",
+          availability: 1,
+        },
+        {
+          property_id: "external-property-1",
+          room_type_id: "room-type-double",
+          date: "2026-11-25",
+          availability: 0,
+        },
+      ])
+    );
+    case9Values.forEach((value) => {
+      expect(value.availability).toBeLessThanOrEqual(CHANNEX_CERTIFICATION_MAX_AVAILABILITY);
+    });
+
+    const case10Values = await runCase("10");
+    expect(case10Values).toHaveLength(15);
+    expect(case10Values.find((value) => value.room_type_id === "room-type-twin" && value.date === "2026-11-10")).toEqual({
+      property_id: "external-property-1",
+      room_type_id: "room-type-twin",
+      date: "2026-11-10",
+      availability: 1,
+    });
+    expect(case10Values.find((value) => value.room_type_id === "room-type-double" && value.date === "2026-11-24")).toEqual({
+      property_id: "external-property-1",
+      room_type_id: "room-type-double",
+      date: "2026-11-24",
+      availability: 1,
+    });
+    case10Values.forEach((value) => {
+      expect(value.availability).toBeLessThanOrEqual(CHANNEX_CERTIFICATION_MAX_AVAILABILITY);
+    });
+  });
+
+  test("certification availability provider warnings keep overallSuccess false", async () => {
+    const pushAvailability = jest.fn(async (_secret, payloads) => ({
+      success: true,
+      results: payloads.map((payload) => ({
+        externalPropertyId: payload.externalPropertyId,
+        externalRoomTypeId: payload.externalRoomTypeId,
+        externalRoomTypeIds: payload.externalRoomTypeIds,
+        requestBody: { values: payload.values },
+        providerStatus: "ACCEPTED_WITH_WARNINGS",
+        httpStatus: 200,
+        success: true,
+        taskId: "task-availability-warning",
+        warnings: ["Provided value is greater than max availability (1). Value changes to max availability."],
+        errorCode: null,
+        errorMessage: "Channex accepted the request with warnings.",
+      })),
+    }));
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions: jest.fn(),
+      },
+    });
+    service.getChannexAriTargets.mockResolvedValue(buildCertificationAriTargets());
+
+    const result = await service.syncChannexCertificationTestCase(
+      "user-1",
+      "domits-property-1",
+      { testCaseId: "9" },
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(500);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        testCaseId: "9",
+        payloadType: "availability",
+        calledProvider: true,
+        requestCount: 1,
+        overallSuccess: false,
+        errorCode: "CHANNEX_CERTIFICATION_TEST_CASE_SYNC_FAILED",
+        taskIds: ["task-availability-warning"],
+      })
+    );
+    expect(result.response.results[0]).toEqual(
+      expect.objectContaining({
+        providerStatus: "ACCEPTED_WITH_WARNINGS",
+        httpStatus: 200,
+        warnings: ["Provided value is greater than max availability (1). Value changes to max availability."],
+      })
+    );
+  });
+
+  test("certification min stay update does not include rate unless rate changed", async () => {
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
+        pushRestrictions,
+      },
+    });
+    service.getChannexAriTargets.mockResolvedValue(buildCertificationAriTargets());
+
+    await service.syncChannexCertificationTestCase(
+      "user-1",
+      "domits-property-1",
+      { testCaseId: "5" },
+      { skipEvidence: true }
+    );
+
+    const value = pushRestrictions.mock.calls[0][1][0].values[0];
+    expect(value).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-twin-bar",
+      date: "2026-11-23",
+      min_stay_through: 3,
+    });
   });
 });

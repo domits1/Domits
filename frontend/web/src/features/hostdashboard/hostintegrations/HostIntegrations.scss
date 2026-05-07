@@ -663,6 +663,34 @@
   font-size: 18px;
 }
 
+.channex-certification-test-section {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.channex-certification-test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.channex-certification-test-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.channex-certification-test-card h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
 .channex-action-range-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -689,67 +717,6 @@
   margin: 0;
   font-weight: 700;
   color: #111827;
-}
-
-.channex-restrictions-sync-progress {
-  display: grid;
-  gap: 12px;
-}
-
-.channex-restrictions-sync-summary {
-  display: grid;
-  gap: 10px;
-  border: 1px solid #dbeafe;
-  background: #eff6ff;
-  border-radius: 12px;
-  padding: 14px;
-}
-
-.channex-restrictions-sync-pages {
-  display: grid;
-  gap: 8px;
-}
-
-.channex-restrictions-sync-page {
-  display: grid;
-  grid-template-columns: minmax(120px, 0.8fr) repeat(5, minmax(0, 1fr));
-  gap: 8px;
-  align-items: center;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px;
-  background: #ffffff;
-  color: #374151;
-  overflow-wrap: anywhere;
-}
-
-.channex-restrictions-sync-page strong {
-  color: #111827;
-}
-
-.channex-restrictions-sync-page.is-running {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-}
-
-.channex-restrictions-sync-page.is-completed {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-}
-
-.channex-restrictions-sync-page.is-failed {
-  border-color: #fecaca;
-  background: #fff5f5;
-}
-
-.channex-restrictions-sync-evidence {
-  display: grid;
-  gap: 8px;
-}
-
-.channex-restrictions-sync-evidence h5 {
-  margin: 0;
-  font-size: 14px;
 }
 
 .channex-sync-id-list {
@@ -1118,10 +1085,6 @@
   .channex-payload-current-window {
     grid-column: 1 / -1;
     order: -1;
-  }
-
-  .channex-restrictions-sync-page {
-    grid-template-columns: 1fr;
   }
 }
 

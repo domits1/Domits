@@ -126,27 +126,10 @@ export const syncChannexRestrictions = ({
   domitsPropertyId,
   dateFrom,
   dateTo,
-  syncRunId,
-  requestedDateFrom,
-  requestedDateTo,
-  pageNumber,
-  totalPages,
-  pageSizeDays,
 }) =>
   requestChannex("/integrations/channex/sync/restrictions", {
     method: "POST",
-    query: {
-      userId,
-      domitsPropertyId,
-      dateFrom,
-      dateTo,
-      syncRunId,
-      requestedDateFrom,
-      requestedDateTo,
-      pageNumber,
-      totalPages,
-      pageSizeDays,
-    },
+    query: { userId, domitsPropertyId, dateFrom, dateTo },
   });
 
 export const syncChannexAri = ({ userId, domitsPropertyId, dateFrom, dateTo }) =>
@@ -159,6 +142,13 @@ export const syncChannexFull = ({ userId, domitsPropertyId, dateFrom, dateTo }) 
   requestChannex("/integrations/channex/sync/full", {
     method: "POST",
     query: { userId, domitsPropertyId, dateFrom, dateTo },
+  });
+
+export const syncChannexCertificationTestCase = ({ userId, domitsPropertyId, testCaseId }) =>
+  requestChannex("/integrations/channex/certification/test-case", {
+    method: "POST",
+    query: { userId, domitsPropertyId },
+    body: { testCaseId },
   });
 
 export const receiveChannexBookingRevisions = ({ userId, domitsPropertyId }) =>

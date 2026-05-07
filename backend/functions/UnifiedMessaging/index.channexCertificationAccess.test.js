@@ -2,6 +2,8 @@ const mockIntegrationControllerMethods = {
   checkChannexStatus: jest.fn(),
   listChannexBookingRevisions: jest.fn(),
   syncChannexRestrictions: jest.fn(),
+  syncChannexFull: jest.fn(),
+  syncChannexCertificationTestCase: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
   acknowledgeChannexBookingRevisions: jest.fn(),
 };
@@ -137,6 +139,32 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(mockIntegrationControllerMethods.syncChannexRestrictions).not.toHaveBeenCalled();
   });
 
+  test("full sync debugPing returns before controller or guard side effects", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/sync/full",
+        query: {
+          userId: "not-allowed",
+          domitsPropertyId: "property-1",
+          dateFrom: "2026-05-01",
+          dateTo: "2026-05-02",
+          debugPing: "true",
+        },
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(parseBody(response)).toEqual({
+      ok: true,
+      route: "sync/full",
+      fullCertificationSyncVersion: "full-sync-v1",
+      stage: "debug_ping",
+    });
+    expect(mockIntegrationControllerMethods.syncChannexFull).not.toHaveBeenCalled();
+  });
+
   test("receive booking revisions endpoint is protected before side effects run", async () => {
     const response = await handler(
       buildEvent({
@@ -148,6 +176,20 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
 
     expect(response.statusCode).toBe(403);
     expect(mockIntegrationControllerMethods.receiveChannexBookingRevisions).not.toHaveBeenCalled();
+  });
+
+  test("certification test-case endpoint is protected before side effects run", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/certification/test-case",
+        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        body: JSON.stringify({ testCaseId: "2" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods.syncChannexCertificationTestCase).not.toHaveBeenCalled();
   });
 
   test("booking ack endpoint is protected before side effects run", async () => {

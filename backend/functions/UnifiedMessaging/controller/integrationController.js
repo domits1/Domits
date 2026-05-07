@@ -5,6 +5,14 @@ import {
 } from "../business/channexRestrictionsSyncVersion.js";
 import { extractIntegrationId, extractLastPathSegment, safeJson } from "./controllerUtils.js";
 
+const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
+const summarizeErrorStack = (error) =>
+  (typeof error?.stack === "string" ? error.stack : "")
+    .split("\n")
+    .slice(0, 6)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
 class IntegrationController {
   constructor() {
     this.integrationService = new IntegrationService();
@@ -222,12 +230,6 @@ class IntegrationController {
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
     const dateFrom = event.queryStringParameters?.dateFrom || null;
     const dateTo = event.queryStringParameters?.dateTo || null;
-    const syncRunId = event.queryStringParameters?.syncRunId || null;
-    const requestedDateFrom = event.queryStringParameters?.requestedDateFrom || null;
-    const requestedDateTo = event.queryStringParameters?.requestedDateTo || null;
-    const pageNumber = event.queryStringParameters?.pageNumber || null;
-    const totalPages = event.queryStringParameters?.totalPages || null;
-    const pageSizeDays = event.queryStringParameters?.pageSizeDays || null;
     console.info(
       JSON.stringify({
         event: "CHANNEX_RESTRICTIONS_SYNC_DIAGNOSTIC",
@@ -238,22 +240,9 @@ class IntegrationController {
         domitsPropertyId,
         dateFrom,
         dateTo,
-        syncRunId,
-        requestedDateFrom,
-        requestedDateTo,
-        pageNumber,
-        totalPages,
-        pageSizeDays,
       })
     );
-    return await this.integrationService.syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo, {
-      syncRunId,
-      requestedDateFrom,
-      requestedDateTo,
-      pageNumber,
-      totalPages,
-      pageSizeDays,
-    });
+    return await this.integrationService.syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo);
   }
 
   async syncChannexAri(event) {
@@ -265,11 +254,58 @@ class IntegrationController {
   }
 
   async syncChannexFull(event) {
+    try {
+      const userId = event.queryStringParameters?.userId || null;
+      const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+      const dateFrom = event.queryStringParameters?.dateFrom || null;
+      const dateTo = event.queryStringParameters?.dateTo || null;
+      const dryRun = event.queryStringParameters?.dryRun || null;
+      const providerMode = event.queryStringParameters?.providerMode || null;
+      const debugStage = event.queryStringParameters?.debugStage || null;
+      const persistEvidence = event.queryStringParameters?.persistEvidence || null;
+      console.info(
+        JSON.stringify({
+          event: "CHANNEX_FULL_CERTIFICATION_SYNC_DIAGNOSTIC",
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "controller_reached",
+          userId,
+          domitsPropertyId,
+          dateFrom,
+          dateTo,
+          dryRun,
+          providerMode,
+          debugStage,
+          persistEvidence,
+        })
+      );
+      return await this.integrationService.syncChannexFull(userId, domitsPropertyId, dateFrom, dateTo, {
+        dryRun,
+        providerMode,
+        debugStage,
+        persistEvidence,
+      });
+    } catch (error) {
+      console.error("Error in Channex full certification sync controller:", error);
+      return {
+        statusCode: 500,
+        response: {
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "controller_catch",
+          error: "Failed to run Channex certification full sync.",
+          errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_CONTROLLER_FAILED",
+          errorName: error?.name ?? null,
+          errorMessage: error?.message ?? "Unhandled Channex full certification sync controller error.",
+          stackSummary: summarizeErrorStack(error),
+        },
+      };
+    }
+  }
+
+  async syncChannexCertificationTestCase(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const dateFrom = event.queryStringParameters?.dateFrom || null;
-    const dateTo = event.queryStringParameters?.dateTo || null;
-    return await this.integrationService.syncChannexFull(userId, domitsPropertyId, dateFrom, dateTo);
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.syncChannexCertificationTestCase(userId, domitsPropertyId, body);
   }
 
   async linkChannexProperty(event) {

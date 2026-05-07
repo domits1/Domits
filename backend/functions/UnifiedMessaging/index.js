@@ -8,6 +8,7 @@ import {
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
 } from "./business/channexRestrictionsSyncVersion.js";
 
+const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
 const ingestionController = new IngestionController();
@@ -42,6 +43,7 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/restrictions$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/ari$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/full$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/certification\/test-case$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/receive$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/ack$/ },
 ];
@@ -69,6 +71,15 @@ const shouldRejectChannexCertificationAdminRequest = (event) => {
 
 const isChannexRestrictionsSyncRequest = (method, path) =>
   method === "POST" && String(path || "").endsWith("/integrations/channex/sync/restrictions");
+const isChannexFullSyncRequest = (method, path) =>
+  method === "POST" && String(path || "").endsWith("/integrations/channex/sync/full");
+const isTrueQueryParam = (value) => String(value || "").trim().toLowerCase() === "true";
+const summarizeErrorStack = (error) =>
+  (typeof error?.stack === "string" ? error.stack : "")
+    .split("\n")
+    .slice(0, 6)
+    .map((line) => line.trim())
+    .filter(Boolean);
 
 const createLambdaResponse = (returnedResponse) => {
   const headers = {
@@ -190,6 +201,11 @@ const routeDefinitions = [
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/full"),
     handle: (event) => integrationController.syncChannexFull(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").endsWith("/integrations/channex/certification/test-case"),
+    handle: (event) => integrationController.syncChannexCertificationTestCase(event),
   },
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/rate-plans"),
@@ -324,12 +340,29 @@ export const handler = async (event) => {
             domitsPropertyId: event?.queryStringParameters?.domitsPropertyId ?? null,
             dateFrom: event?.queryStringParameters?.dateFrom ?? null,
             dateTo: event?.queryStringParameters?.dateTo ?? null,
-            syncRunId: event?.queryStringParameters?.syncRunId ?? null,
-            requestedDateFrom: event?.queryStringParameters?.requestedDateFrom ?? null,
-            requestedDateTo: event?.queryStringParameters?.requestedDateTo ?? null,
-            pageNumber: event?.queryStringParameters?.pageNumber ?? null,
-            totalPages: event?.queryStringParameters?.totalPages ?? null,
-            pageSizeDays: event?.queryStringParameters?.pageSizeDays ?? null,
+          },
+        })
+      );
+    }
+    if (isChannexFullSyncRequest(httpMethod, path)) {
+      console.info(
+        JSON.stringify({
+          event: "CHANNEX_FULL_CERTIFICATION_SYNC_DIAGNOSTIC",
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "handler_entry",
+          requestId: event?.requestContext?.requestId ?? null,
+          awsRequestId: event?.requestContext?.requestId ?? null,
+          method: httpMethod,
+          path,
+          queryStringParameters: {
+            userId: event?.queryStringParameters?.userId ?? null,
+            domitsPropertyId: event?.queryStringParameters?.domitsPropertyId ?? null,
+            dateFrom: event?.queryStringParameters?.dateFrom ?? null,
+            dateTo: event?.queryStringParameters?.dateTo ?? null,
+            dryRun: event?.queryStringParameters?.dryRun ?? null,
+            providerMode: event?.queryStringParameters?.providerMode ?? null,
+            debugPing: event?.queryStringParameters?.debugPing ?? null,
+            debugStage: event?.queryStringParameters?.debugStage ?? null,
           },
         })
       );
@@ -341,6 +374,18 @@ export const handler = async (event) => {
         headers: corsHeaders,
         body: "",
       };
+    }
+
+    if (isChannexFullSyncRequest(httpMethod, path) && isTrueQueryParam(event?.queryStringParameters?.debugPing)) {
+      return createLambdaResponse({
+        statusCode: 200,
+        response: {
+          ok: true,
+          route: "sync/full",
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "debug_ping",
+        },
+      });
     }
 
     const routeHandler = findRouteHandler(httpMethod, path);
@@ -380,6 +425,37 @@ export const handler = async (event) => {
           details: {
             name: error?.name ?? null,
             message: error?.message ?? "Unhandled Channex restrictions sync error.",
+          },
+        },
+      });
+    }
+    if (isChannexFullSyncRequest(httpMethod, path)) {
+      console.error("Error in Channex full certification sync handler:", error);
+      console.info(
+        JSON.stringify({
+          event: "CHANNEX_FULL_CERTIFICATION_SYNC_DIAGNOSTIC",
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "handler_catch",
+          requestId: event?.requestContext?.requestId ?? null,
+          awsRequestId: event?.requestContext?.requestId ?? null,
+          errorName: error?.name ?? null,
+          errorMessage: error?.message ?? "Unhandled Channex full certification sync error.",
+          stackSummary: summarizeErrorStack(error),
+        })
+      );
+      return createLambdaResponse({
+        statusCode: 500,
+        response: {
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "handler_catch",
+          error: "Failed to run Channex certification full sync.",
+          errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
+          errorName: error?.name ?? null,
+          errorMessage: error?.message ?? "Unhandled Channex full certification sync error.",
+          stackSummary: summarizeErrorStack(error),
+          details: {
+            name: error?.name ?? null,
+            message: error?.message ?? "Unhandled Channex full certification sync error.",
           },
         },
       });
