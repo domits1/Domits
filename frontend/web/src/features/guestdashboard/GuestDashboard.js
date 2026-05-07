@@ -12,6 +12,7 @@ import CurrentStayCard from "./components/CurrentStayCard";
 import UpcomingStayCard from "./components/UpcomingStayCard";
 import EmptyState from "./components/EmptyState";
 import PastTrips from "./components/PastTrips";
+import CancelledTrips from "./components/CancelledTrips";
 import TripReminders from "./components/TripReminders";
 import useGuestDashboardData from "./hooks/useGuestDashboardData";
 
@@ -30,6 +31,7 @@ function GuestDashboard() {
     currentStay,
     upcomingStay,
     pastStays,
+    cancelledStays,
     reminders,
     messages,
     loading,
@@ -69,6 +71,7 @@ function GuestDashboard() {
               <>
                 {hasCurrentStay ? <CurrentStayCard stay={currentStay} /> : null}
                 {hasUpcomingStay ? <UpcomingStayCard stay={upcomingStay} /> : null}
+                {cancelledStays && cancelledStays.length > 0 ? <CancelledTrips stays={cancelledStays} /> : null}
                 {!hasCurrentStay && !hasUpcomingStay ? <EmptyState /> : null}
                 <PastTrips stays={pastStays} />
               </>
@@ -76,7 +79,11 @@ function GuestDashboard() {
           </div>
 
           <div>
-            {loading.stays ? renderLoaderCard("Trip reminders", "Loading reminders...") : <TripReminders reminders={reminders} />}
+            {loading.stays ? (
+              renderLoaderCard("Trip reminders", "Loading reminders...")
+            ) : (
+              <TripReminders reminders={reminders} />
+            )}
 
             <MessagesPanel
               messages={messages}

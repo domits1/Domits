@@ -21,6 +21,7 @@ import {
   getBookingTotal,
   getDepartureDate,
   getPaidBookings,
+  normalizeGuestBookingsResponse,
   getPropertyId,
   getReservationNumber,
   normalizeStayStatus,
@@ -510,9 +511,8 @@ function ReservationDetails() {
           return;
         }
 
-        const booking = getPaidBookings(bookingData).find((entry) =>
-          matchesReservationRoute(entry, reservationRouteId)
-        );
+        const allBookings = normalizeGuestBookingsResponse(bookingData);
+        const booking = allBookings.find((entry) => matchesReservationRoute(entry, reservationRouteId));
 
         if (!booking) {
           throw new Error("Reservation not found.");
