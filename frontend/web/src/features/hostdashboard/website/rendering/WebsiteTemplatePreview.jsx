@@ -22,6 +22,42 @@ const COMPACT_PREVIEW_VIEWPORT_WIDTH = 960;
 
 const resolveViewportWidth = (viewport) => PREVIEW_VIEWPORT_WIDTHS[viewport] || PREVIEW_VIEWPORT_WIDTHS.desktop;
 
+const scrollPreviewTargetIntoViewport = (previewTargetNode) => {
+  if (!previewTargetNode || typeof previewTargetNode.getBoundingClientRect !== "function") {
+    return;
+  }
+
+  const targetRect = previewTargetNode.getBoundingClientRect();
+  const viewportHeight = globalThis.innerHeight || 0;
+  if (viewportHeight < 1) {
+    previewTargetNode.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+    return;
+  }
+
+  const targetOffset = targetRect.top - (viewportHeight / 2 - targetRect.height / 2);
+  if (Math.abs(targetOffset) < 12) {
+    return;
+  }
+
+  if (typeof globalThis.scrollBy === "function") {
+    globalThis.scrollBy({
+      top: targetOffset,
+      behavior: "smooth",
+    });
+    return;
+  }
+
+  previewTargetNode.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+    inline: "nearest",
+  });
+};
+
 const usePreviewScaleMetrics = (viewportWidth) => {
   const scaleShellRef = useRef(null);
   const scaleInnerRef = useRef(null);
@@ -128,6 +164,17 @@ export default function WebsiteTemplatePreview({
   const previewCanvasStyle = {
     "--website-surface-background": resolveWebsiteBackgroundColor(model?.theme?.backgroundColor),
   };
+
+  useEffect(() => {
+    if (isCompactVariant || !activeTargetId || !scaleInnerRef.current) {
+      return;
+    }
+
+    const previewTargetNode = scaleInnerRef.current.querySelector(
+      `[data-preview-target-id="${activeTargetId}"]`
+    );
+    scrollPreviewTargetIntoViewport(previewTargetNode);
+  }, [activeTargetId, isCompactVariant, scaleInnerRef]);
 
   return (
     <section
