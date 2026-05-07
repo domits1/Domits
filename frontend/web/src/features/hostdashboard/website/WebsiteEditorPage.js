@@ -201,6 +201,55 @@ const getPublishLiveSiteActionLabel = (isPublishingSite) => {
   return "Publish live site";
 };
 
+const getLiveLinkStatus = ({ primarySiteDomain, hasLiveSite }) => {
+  if (primarySiteDomain?.status) {
+    return formatStatusLabel(primarySiteDomain.status);
+  }
+
+  if (hasLiveSite) {
+    return "Provisioning";
+  }
+
+  return "Not published";
+};
+
+const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) => {
+  if (targetId) {
+    return targetId;
+  }
+
+  if (imageSlot?.kind === "hero") {
+    return EDITOR_TARGET_KEYS.images.hero;
+  }
+
+  if (imageSlot?.kind === "gallery" && Number.isInteger(imageSlot.index)) {
+    return EDITOR_TARGET_KEYS.images.gallery(imageSlot.index);
+  }
+
+  if (sectionId === EDITOR_SECTION_KEYS.common) {
+    return EDITOR_TARGET_KEYS.common.heroTitle;
+  }
+
+  return "";
+};
+
+const shouldSaveEditorFieldOnKeyDown = (field, event) => {
+  if (field.component === "textarea") {
+    return event.key === "Enter" && (event.metaKey || event.ctrlKey);
+  }
+
+  return event.key === "Enter";
+};
+
+const createEditorFieldKeyDownHandler = (field, saveDraftChanges) => async (event) => {
+  if (!shouldSaveEditorFieldOnKeyDown(field, event)) {
+    return;
+  }
+
+  event.preventDefault();
+  await saveDraftChanges();
+};
+
 const fieldPropTypes = PropTypes.shape({
   key: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
@@ -944,11 +993,10 @@ function WebsiteEditorPage() {
   const liveSiteStatusValue = siteSummary?.site?.status || "";
   const hasLiveSite = String(liveSiteStatusValue || "").trim().toUpperCase() === "PUBLISHED";
   const liveSiteStatus = formatStatusLabel(liveSiteStatusValue || "PREVIEW");
-  const liveLinkStatus = primarySiteDomain?.status
-    ? formatStatusLabel(primarySiteDomain.status)
-    : hasLiveSite
-      ? "Provisioning"
-      : "Not published";
+  const liveLinkStatus = getLiveLinkStatus({
+    primarySiteDomain,
+    hasLiveSite,
+  });
   const canPublishSite =
     Boolean(draftRecord) &&
     !hasLiveSite &&
@@ -1008,26 +1056,6 @@ function WebsiteEditorPage() {
     targetRefs.current[targetId] = node;
   };
 
-  const resolvePreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) => {
-    if (targetId) {
-      return targetId;
-    }
-
-    if (imageSlot?.kind === "hero") {
-      return EDITOR_TARGET_KEYS.images.hero;
-    }
-
-    if (imageSlot?.kind === "gallery" && Number.isInteger(imageSlot.index)) {
-      return EDITOR_TARGET_KEYS.images.gallery(imageSlot.index);
-    }
-
-    if (sectionId === EDITOR_SECTION_KEYS.common) {
-      return EDITOR_TARGET_KEYS.common.heroTitle;
-    }
-
-    return "";
-  };
-
   const focusEditorTarget = ({ sectionId, targetId }) => {
     if (!sectionId) {
       return;
@@ -1036,7 +1064,7 @@ function WebsiteEditorPage() {
     openSection(sectionId);
     setHighlightedTargetId("");
 
-    const resolvedTargetId = resolvePreviewTargetId({ sectionId, targetId });
+    const resolvedTargetId = resolveEditorPreviewTargetId({ sectionId, targetId });
 
     globalThis.setTimeout(() => {
       if (resolvedTargetId) {
@@ -1077,7 +1105,8 @@ function WebsiteEditorPage() {
     if (imageSlot) {
       focusEditorTarget({
         sectionId: EDITOR_SECTION_KEYS.images,
-        targetId: targetId || resolvePreviewTargetId({ imageSlot, sectionId: EDITOR_SECTION_KEYS.images }),
+        targetId:
+          targetId || resolveEditorPreviewTargetId({ imageSlot, sectionId: EDITOR_SECTION_KEYS.images }),
       });
       globalThis.setTimeout(() => {
         openImagePicker(imageSlot);
@@ -1434,20 +1463,7 @@ function WebsiteEditorPage() {
     }
   };
 
-  const handleEditorFieldKeyDown = (field) => async (event) => {
-    if (field.component === "textarea") {
-      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        await saveDraftChanges();
-      }
-      return;
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      await saveDraftChanges();
-    }
-  };
+  const handleEditorFieldKeyDown = (field) => createEditorFieldKeyDownHandler(field, saveDraftChanges);
 
   const handleThemeBackgroundColorInputKeyDown = async (event) => {
     if (event.key !== "Enter") {
