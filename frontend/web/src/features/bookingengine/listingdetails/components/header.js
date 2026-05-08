@@ -16,8 +16,8 @@ const Header = ({ title, rating, generalDetails }) => {
             {Number(rating).toFixed(1)}
           </span>
         )}
-        {detailParts.map((part, i) => (
-          <span key={i} className="listing-details-header__detail">
+        {detailParts.map((part) => (
+          <span key={part} className="listing-details-header__detail">
             <span className="listing-details-header__dot" aria-hidden="true">·</span>
             {part}
           </span>

@@ -4,25 +4,27 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
-const GuestSelectionContainer = ({ setAdultsParent, setKidsParent }) => {
+const GuestSelectionContainer = ({ setAdultsParent, setKidsParent, maxGuests = 0 }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
   const handleAdultsChange = (event) => {
     const nextValue = Math.max(1, Number.parseInt(event.target.value, 10) || 0);
+    if (maxGuests > 0 && nextValue + kids > maxGuests) return;
     setAdults(nextValue);
     setAdultsParent(nextValue);
   };
 
   const handleKidsChange = (event) => {
     const nextValue = Math.max(0, Number.parseInt(event.target.value, 10) || 0);
+    if (maxGuests > 0 && adults + nextValue > maxGuests) return;
     setKids(nextValue);
     setKidsParent(nextValue);
   };
 
   const totalGuests = adults + kids;
-  const guestLabel = `${totalGuests} guest${totalGuests !== 1 ? "s" : ""}`;
+  const guestLabel = `${totalGuests} guest${totalGuests === 1 ? "" : "s"}`;
 
   return (
     <div className="guests-container">
@@ -43,22 +45,26 @@ const GuestSelectionContainer = ({ setAdultsParent, setKidsParent }) => {
       {expanded && (
         <div className="guests-inputs">
           <div className="guests-inputs__row">
-            <label className="guests-inputs__label">Adults</label>
+            <label className="guests-inputs__label" htmlFor="guests-adults">Adults</label>
             <input
+              id="guests-adults"
               type="number"
               className="guests-inputs__field"
               value={adults}
               min="1"
+              max={maxGuests > 0 ? maxGuests - kids : undefined}
               onChange={handleAdultsChange}
             />
           </div>
           <div className="guests-inputs__row">
-            <label className="guests-inputs__label">Kids</label>
+            <label className="guests-inputs__label" htmlFor="guests-kids">Kids</label>
             <input
+              id="guests-kids"
               type="number"
               className="guests-inputs__field"
               value={kids}
               min="0"
+              max={maxGuests > 0 ? maxGuests - adults : undefined}
               onChange={handleKidsChange}
             />
           </div>
@@ -71,6 +77,7 @@ const GuestSelectionContainer = ({ setAdultsParent, setKidsParent }) => {
 GuestSelectionContainer.propTypes = {
   setAdultsParent: PropTypes.func.isRequired,
   setKidsParent: PropTypes.func.isRequired,
+  maxGuests: PropTypes.number,
 };
 
 export default GuestSelectionContainer;

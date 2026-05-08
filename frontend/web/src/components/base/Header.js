@@ -15,14 +15,8 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
-import Hostchat from "../../features/hostdashboard/Hostchat.js";
 
-const contentByLanguage = {
-  en,
-  nl,
-  de,
-  es,
-};
+const contentByLanguage = { en, nl, de, es };
 
 function Header({ setSearchResults, setLoading }) {
   const navigate = useNavigate();
@@ -36,60 +30,79 @@ function Header({ setSearchResults, setLoading }) {
   const [currentView, setCurrentView] = useState("guest");
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => globalThis.window !== undefined && globalThis.innerWidth <= 768
+  );
+  const [listingScrollProgress, setListingScrollProgress] = useState(0);
 
   const { language, setLanguage } = useContext(LanguageContext);
   const components = contentByLanguage[language]?.component;
 
   const hiddenSearchPaths = ["/"];
   const isListingDetails = location.pathname === "/listingdetails";
+  const isMobileListingDetails = isListingDetails && isMobileViewport;
 
   const languages = [
-    { code: "en", label: "English", emoji: "\uD83C\uDDEC\uD83C\uDDE7" },
-    { code: "nl", label: "Nederlands", emoji: "\uD83C\uDDF3\uD83C\uDDF1" },
-    { code: "de", label: "Deutsch", emoji: "\uD83C\uDDE9\uD83C\uDDEA" },
-    { code: "es", label: "Español", emoji: "\uD83C\uDDEA\uD83C\uDDF8" },
+    { code: "en", label: "English", emoji: "🇬🇧" },
+    { code: "nl", label: "Nederlands", emoji: "🇳🇱" },
+    { code: "de", label: "Deutsch", emoji: "🇩🇪" },
+    { code: "es", label: "Español", emoji: "🇪🇸" },
   ];
 
   useEffect(() => {
-    if (!isListingDetails) {
-      setIsScrolled(false);
-      return undefined;
-    }
-
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+    const handleResize = () => {
+      setIsMobileViewport(globalThis.innerWidth <= 768);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
+    handleResize();
+    globalThis.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      globalThis.removeEventListener("resize", handleResize);
     };
-  }, [isListingDetails]);
+  }, []);
 
   useEffect(() => {
-    if (isScrolled) {
-      document.body.classList.add("header-scrolled");
-    } else {
-      document.body.classList.remove("header-scrolled");
+    if (isListingDetails) {
+      const handleScroll = () => {
+        if (isMobileViewport) {
+          const fadeDistance = 140;
+          const nextProgress = Math.min(Math.max(globalThis.scrollY / fadeDistance, 0), 1);
+          setListingScrollProgress(nextProgress);
+          document.body.classList.remove("header-scrolled");
+          return;
+        }
+
+        setListingScrollProgress(0);
+        document.body.classList.toggle("header-scrolled", globalThis.scrollY > 50);
+      };
+
+      globalThis.addEventListener("scroll", handleScroll, { passive: true });
+      handleScroll();
+
+      return () => {
+        globalThis.removeEventListener("scroll", handleScroll);
+        document.body.classList.remove("header-scrolled");
+      };
     }
 
-    return () => {
-      document.body.classList.remove("header-scrolled");
-    };
-  }, [isScrolled]);
+    setListingScrollProgress(0);
+    document.body.classList.remove("header-scrolled");
+    return undefined;
+  }, [isListingDetails, isMobileViewport]);
 
   useEffect(() => {
     const header = document.querySelector(".app-header");
     if (!header) return undefined;
 
     const update = () => {
-      document.documentElement.style.setProperty(
-        "--app-header-h",
-        `${header.getBoundingClientRect().height}px`
-      );
+      const headerHeight = header.offsetHeight || 0;
+      const visibleHeaderOffset = isMobileListingDetails
+        ? Math.max(headerHeight * (1 - listingScrollProgress), 0)
+        : headerHeight;
+
+      document.documentElement.style.setProperty("--app-header-h", `${headerHeight}px`);
+      document.documentElement.style.setProperty("--listing-header-offset", `${visibleHeaderOffset}px`);
     };
 
     update();
@@ -97,8 +110,13 @@ function Header({ setSearchResults, setLoading }) {
     const observer = new ResizeObserver(update);
     observer.observe(header);
 
-    return () => observer.disconnect();
-  }, []);
+    globalThis.addEventListener("resize", update);
+
+    return () => {
+      observer.disconnect();
+      globalThis.removeEventListener("resize", update);
+    };
+  }, [isMobileListingDetails, listingScrollProgress]);
 
   useEffect(() => {
     checkAuthentication();
@@ -129,10 +147,10 @@ function Header({ setSearchResults, setLoading }) {
       checkAuthentication();
     };
 
-    window.addEventListener("authChanged", onAuthChanged);
+    globalThis.addEventListener("authChanged", onAuthChanged);
 
     return () => {
-      window.removeEventListener("authChanged", onAuthChanged);
+      globalThis.removeEventListener("authChanged", onAuthChanged);
     };
   }, []);
 
@@ -176,9 +194,7 @@ function Header({ setSearchResults, setLoading }) {
 
       setIsLoggedIn(false);
       sessionStorage.removeItem("chatOpened");
-      window.location.reload();
-
-      console.log("User logged out successfully");
+      globalThis.location.reload();
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -227,11 +243,11 @@ function Header({ setSearchResults, setLoading }) {
   };
 
   const navigateToDashboard = () => {
-    if (!isLoggedIn) {
+    if (isLoggedIn) {
+      setShowSwitchConfirm(true);
+    } else {
       setFlowState({ isHost: true });
       navigate("/landing");
-    } else {
-      setShowSwitchConfirm(true);
     }
   };
 
@@ -248,6 +264,21 @@ function Header({ setSearchResults, setLoading }) {
   const toggleSearchBar = (status) => {
     setActiveSearchBar(status);
     document.body.style.overflow = status ? "hidden" : "auto";
+  };
+
+  const renderHostButton = () => {
+    if (isLoggedIn && group === "Host") {
+      return (
+        <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
+          {currentView === "guest" ? components.user.switchToHost : components.user.switchToGuest}
+        </button>
+      );
+    }
+    return (
+      <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+        {components.user.becomeHost}
+      </button>
+    );
   };
 
   const renderDropdownMenu = () => {
@@ -320,7 +351,19 @@ function Header({ setSearchResults, setLoading }) {
 
   return (
     <>
-      <header className={`app-header ${isScrolled ? "is-faded" : ""}`}>
+      <header
+        className="app-header"
+        style={
+          isMobileListingDetails
+            ? {
+                opacity: 1 - listingScrollProgress,
+                transform: `translateY(-${20 * listingScrollProgress}px)`,
+                visibility: listingScrollProgress >= 0.999 ? "hidden" : "visible",
+                pointerEvents: listingScrollProgress >= 0.999 ? "none" : "auto",
+              }
+            : undefined
+        }
+      >
         <nav
           className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${
             isActiveSearchBar ? "no-scroll" : ""
@@ -371,19 +414,7 @@ function Header({ setSearchResults, setLoading }) {
               ))}
             </div>
 
-            {!isLoggedIn ? (
-              <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                {components.user.becomeHost}
-              </button>
-            ) : group === "Host" ? (
-              <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
-                {currentView === "guest" ? components.user.switchToHost : components.user.switchToGuest}
-              </button>
-            ) : (
-              <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                {components.user.becomeHost}
-              </button>
-            )}
+            {renderHostButton()}
 
             {isLoggedIn && group === "Traveler" && (
               <button className="headerButtons" onClick={navigateToGuestDashboard}>

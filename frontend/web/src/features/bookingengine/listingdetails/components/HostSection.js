@@ -50,13 +50,15 @@ const HostSection = ({ host = {}, onContactHost }) => {
 
         {bio && <p className="host-section__bio">{bio}</p>}
 
-        <button
-          type="button"
-          className="host-section__contact-btn"
-          onClick={onContactHost}
-        >
-          Contact host
-        </button>
+        {onContactHost && (
+          <button
+            type="button"
+            className="host-section__contact-btn"
+            onClick={onContactHost}
+          >
+            Contact host
+          </button>
+        )}
       </div>
 
       <div className="host-section__stats">

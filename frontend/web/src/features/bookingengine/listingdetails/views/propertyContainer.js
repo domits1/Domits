@@ -71,6 +71,7 @@ const PropertyContainer = ({
     () => getActiveCancellationPolicyId(property?.rules || []) || getActiveCancellationPolicyId(policyRules),
     [property?.rules, policyRules]
   );
+  const hasAmenities = Array.isArray(property?.amenities) && property.amenities.length > 0;
   const fallbackCancellationPolicy = React.useMemo(() => {
     if (property?.cancellationPolicy) {
       return parseCancellationPolicyString(property.cancellationPolicy);
@@ -114,68 +115,84 @@ const PropertyContainer = ({
 
       {children}
 
-      <section className="listing-section-block">
-        <Description description={property?.property?.description} />
-        <WhereYoullStay generalDetails={property.generalDetails} />
-      </section>
+      <div className="listing-details-content-stack">
+        <section className="listing-section-block">
+          <Description description={property?.property?.description} />
+        </section>
 
-      <section id="listing-amenities" className="listing-section-block">
-        <AmenitiesContainer amenityIds={property.amenities} />
-      </section>
+        <section className="listing-section-block">
+          <WhereYoullStay generalDetails={property.generalDetails} />
+        </section>
 
-      <section id="listing-availability" className="listing-section-block">
-        <RangeCalendar
-          unavailableDateKeys={unavailableDateKeys}
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
-            setCheckInDate(nextCheckInDate);
-            setCheckOutDate(nextCheckOutDate);
-          }}
-        />
-      </section>
-
-      <section id="listing-host" className="listing-section-block">
-        <HostSection host={host} onContactHost={onContactHost} />
-      </section>
-
-      <section id="listing-location" className="listing-section-block">
-        <div className="location-placeholder">
-          <h3 className="location-placeholder__title">Location</h3>
-          <div className="location-placeholder__map">
-            <span className="location-placeholder__label">Map coming soon</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="listing-reviews" className="listing-section-block">
-        <ReviewsSection />
-      </section>
-
-      <section id="listing-policies" className="listing-section-block">
-        {cancellationPolicy && (
-          <PolicySection
-            title="Cancellation Policy"
-            items={[
-              {
-                summary: cancellationPolicy.summary,
-                badge: cancellationPolicy.type
-                  ? {
-                      label: cancellationPolicy.type,
-                      color: cancellationPolicy.color,
-                    }
-                  : null,
-              },
-              ...(cancellationPolicy.details || []),
-            ]}
-            expandable={true}
-          />
+        {hasAmenities && (
+          <section id="listing-amenities" className="listing-section-block">
+            <AmenitiesContainer amenityIds={property.amenities} />
+          </section>
         )}
-        {parsedHouseRules.length > 0 && <PolicySection title="House Rules" items={parsedHouseRules} />}
-        {parsedPropertyRules.length > 0 && <PolicySection title="Property Rules" items={parsedPropertyRules} />}
-        {parsedSafetyFeatures.length > 0 && <PolicySection title="Safety & Property" items={parsedSafetyFeatures} />}
-        {checkInItems.length > 0 && <PolicySection title="Check-in / Check-out" items={checkInItems} />}
-      </section>
+
+        <section id="listing-availability" className="listing-section-block">
+          <RangeCalendar
+            unavailableDateKeys={unavailableDateKeys}
+            checkInDate={checkInDate}
+            checkOutDate={checkOutDate}
+            onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
+              setCheckInDate(nextCheckInDate);
+              setCheckOutDate(nextCheckOutDate);
+            }}
+          />
+        </section>
+
+        <section id="listing-host" className="listing-section-block">
+          <HostSection host={host} onContactHost={onContactHost} />
+        </section>
+
+        <section id="listing-location" className="listing-section-block">
+          <div className="location-placeholder">
+            <h3 className="location-placeholder__title">Location</h3>
+            <div className="location-placeholder__map">
+              <span className="location-placeholder__label">Map coming soon</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="listing-reviews" className="listing-section-block">
+          <ReviewsSection
+            reviews={property?.reviews || []}
+            overallRating={property?.property?.rating ?? null}
+            totalReviews={
+              property?.property?.reviewCount ||
+              property?.property?.totalReviews ||
+              (property?.reviews?.length ?? 0)
+            }
+            categoryScores={property?.categoryScores || {}}
+          />
+        </section>
+
+        <section id="listing-policies" className="listing-section-block">
+          {cancellationPolicy && (
+            <PolicySection
+              title="Cancellation Policy"
+              items={[
+                {
+                  summary: cancellationPolicy.summary,
+                  badge: cancellationPolicy.type
+                    ? {
+                        label: cancellationPolicy.type,
+                        color: cancellationPolicy.color,
+                      }
+                    : null,
+                },
+                ...(cancellationPolicy.details || []),
+              ]}
+              expandable={true}
+            />
+          )}
+          {parsedHouseRules.length > 0 && <PolicySection title="House Rules" items={parsedHouseRules} />}
+          {parsedPropertyRules.length > 0 && <PolicySection title="Property Rules" items={parsedPropertyRules} />}
+          {parsedSafetyFeatures.length > 0 && <PolicySection title="Safety & Property" items={parsedSafetyFeatures} />}
+          {checkInItems.length > 0 && <PolicySection title="Check-in / Check-out" items={checkInItems} />}
+        </section>
+      </div>
     </div>
   );
 };
@@ -208,6 +225,9 @@ PropertyContainer.propTypes = {
       }),
     }),
   }),
+  host: PropTypes.object,
+  onContactHost: PropTypes.func,
+  children: PropTypes.node,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
   checkInDate: PropTypes.string,
   checkOutDate: PropTypes.string,

@@ -9,6 +9,11 @@ import {
   hasUnavailableDateInStayRange,
   isUnavailableDate,
 } from "../utils/dateAvailability";
+import {
+  getActiveCancellationPolicyId,
+  parseCancellationPolicyString,
+  parseCancellationPolicy,
+} from "../../../../utils/policyDisplayUtils";
 
 import { UserProvider } from "../../../hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../../hostdashboard/hostmessages/context/webSocketContext";
@@ -169,6 +174,21 @@ const BookingContainer = ({
   const hostImage = host?.profileImage || null;
   const resolvedPropertyId = propertyId || property?.property?.id || property?.property?.ID || null;
 
+  const maxGuests = Number(
+    property?.property?.maxGuests ||
+    property?.policyRules?.maxGuests ||
+    property?.policyRules?.MaxGuests ||
+    0
+  );
+
+  const cancellationPolicy = useMemo(() => {
+    const rules = property?.rules || [];
+    const policyId = getActiveCancellationPolicyId(rules) || getActiveCancellationPolicyId(property?.policyRules || {});
+    if (policyId) return parseCancellationPolicyString(policyId);
+    if (property?.cancellationPolicy) return parseCancellationPolicyString(property.cancellationPolicy);
+    return parseCancellationPolicy(rules);
+  }, [property?.rules, property?.policyRules, property?.cancellationPolicy]);
+
   useEffect(() => {
     if (!showMessageHost) return;
 
@@ -176,7 +196,7 @@ const BookingContainer = ({
     const prevOverflow = body.style.overflow;
     const prevPaddingRight = body.style.paddingRight;
 
-    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollBarWidth = globalThis.innerWidth - document.documentElement.clientWidth;
     body.style.overflow = "hidden";
     if (scrollBarWidth > 0) body.style.paddingRight = `${scrollBarWidth}px`;
 
@@ -266,7 +286,7 @@ const BookingContainer = ({
         unavailableDateKeys={unavailableDateKeys}
       />
 
-      <GuestSelectionContainer setAdultsParent={setAdults} setKidsParent={setKids} />
+      <GuestSelectionContainer setAdultsParent={setAdults} setKidsParent={setKids} maxGuests={maxGuests} />
 
       <Pricing pricing={property.pricing} nights={nights} />
 
@@ -288,17 +308,16 @@ const BookingContainer = ({
       <p className="note">You won’t be charged yet</p>
 
       <div className="listing-booking-card__trust-badges">
+        {cancellationPolicy && (
+          <div className="listing-booking-card__trust-item">
+            <span className="listing-booking-card__trust-check">✓</span>{" "}{cancellationPolicy.type} cancellation
+          </div>
+        )}
         <div className="listing-booking-card__trust-item">
-          <span className="listing-booking-card__trust-check">✓</span>
-          Free cancellation
+          <span className="listing-booking-card__trust-check">✓</span>{" "}Instant confirmation
         </div>
         <div className="listing-booking-card__trust-item">
-          <span className="listing-booking-card__trust-check">✓</span>
-          Instant confirmation
-        </div>
-        <div className="listing-booking-card__trust-item">
-          <span className="listing-booking-card__trust-check">✓</span>
-          Secure payment
+          <span className="listing-booking-card__trust-check">✓</span>{" "}Secure payment
         </div>
       </div>
 
@@ -328,11 +347,18 @@ MessageHostModalInner.propTypes = {
 BookingContainer.propTypes = {
   property: PropTypes.shape({
     pricing: PropTypes.object,
+    rules: PropTypes.array,
+    cancellationPolicy: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    policyRules: PropTypes.shape({
+      maxGuests: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      MaxGuests: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
     property: PropTypes.shape({
       hostId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       hostID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       ID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      maxGuests: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     }),
   }).isRequired,
   host: PropTypes.shape({

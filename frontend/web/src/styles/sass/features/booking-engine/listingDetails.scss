@@ -102,8 +102,12 @@
         transition: top 0.25s ease-out;
 
         @media (max-width: 768px) {
-            top: calc(env(safe-area-inset-top, 0px) + var(--app-header-h, 120px));
+            position: sticky;
+            top: calc(env(safe-area-inset-top, 0px) + var(--listing-header-offset, var(--app-header-h, 120px)));
+            left: auto;
+            transform: none;
             width: calc(100% - 28px);
+            margin: 0 auto 22px;
         }
     }
 
@@ -250,6 +254,16 @@
                 scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 170px);
             }
 
+            .listing-details-content-stack {
+                grid-column: 1;
+                display: grid;
+                gap: 24px;
+
+                @media (max-width: 768px) {
+                    gap: 20px;
+                }
+            }
+
             .listing-section-block--photos {
                 grid-column: 1 / span 2;
                 margin-bottom: 24px;
@@ -257,11 +271,6 @@
                 @media (max-width: 768px) {
                     margin-bottom: 14px;
                 }
-            }
-
-            .image-section {
-                position: relative;
-                width: 100%;
             }
 
             .listing-booking-card {
@@ -568,6 +577,7 @@
 
             .image-section {
                 position: relative;
+                width: 100%;
 
                 .image-gallery {
                     display: grid;
@@ -844,9 +854,8 @@
             }
 
             .description-container {
-                margin-top: 24px;
-                margin-bottom: 30px;
-                padding: 28px;
+                margin: 0;
+                padding: 30px;
                 border: 1px solid #d7dde5;
                 border-radius: 8px;
                 background: #fff;
@@ -928,7 +937,6 @@
 
                 @media (max-width: 768px) {
                     padding: 20px;
-                    margin-bottom: 22px;
 
                     .description-header {
                         margin-bottom: 14px;
@@ -941,9 +949,8 @@
             }
 
             .where-youll-stay {
-                margin-top: 24px;
-                margin-bottom: 30px;
-                padding: 28px 30px;
+                margin: 0;
+                padding: 30px;
                 border: 1px solid #d7dde5;
                 border-radius: 8px;
                 background: #fff;
@@ -1030,7 +1037,6 @@
 
                 @media (max-width: 768px) {
                     padding: 20px;
-                    margin-bottom: 22px;
 
                     &__title {
                         font-size: 1.1rem;
@@ -1043,9 +1049,8 @@
                 background: #ffffff;
                 border: 1px solid #e6e6e6;
                 border-radius: 14px;
-                padding: 28px;
-                margin-top: 24px;
-                margin-bottom: 30px;
+                padding: 30px;
+                margin: 0;
                 font-family: "Inter", sans-serif;
                 transition: all 0.3s ease;
 
@@ -1057,7 +1062,6 @@
                 @media (max-width: 768px) {
                     padding: 20px;
                     border-radius: 14px;
-                    margin-top: 22px;
                 }
             }
 
@@ -1124,8 +1128,7 @@ body.header-scrolled .listing-sections-shell {
 }
 
 .location-placeholder {
-    margin-top: 24px;
-    margin-bottom: 30px;
+    margin: 0;
     padding: 28px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
@@ -1165,16 +1168,13 @@ body.header-scrolled .listing-sections-shell {
 }
 
 .reviews-section {
-    margin-top: 24px;
-    margin-bottom: 30px;
-    padding: 28px;
+    margin: 0;
+    padding: 30px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
 
     @media (max-width: 768px) {
-        margin-top: 18px;
-        margin-bottom: 22px;
         padding: 20px;
     }
 
@@ -1387,9 +1387,8 @@ body.header-scrolled .listing-sections-shell {
 .host-section {
     display: flex;
     gap: 40px;
-    margin-top: 24px;
-    margin-bottom: 30px;
-    padding: 28px;
+    margin: 0;
+    padding: 30px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
@@ -1397,8 +1396,6 @@ body.header-scrolled .listing-sections-shell {
     @media (max-width: 768px) {
         flex-direction: column;
         gap: 24px;
-        margin-top: 18px;
-        margin-bottom: 22px;
         padding: 20px;
     }
 
@@ -1528,9 +1525,8 @@ body.header-scrolled .listing-sections-shell {
 }
 
 .amenities-container {
-    margin-top: 24px;
-    margin-bottom: 30px;
-    padding: 28px;
+    margin: 0;
+    padding: 30px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;

@@ -280,7 +280,11 @@ const ListingDetails2 = () => {
         <PropertyContainer
           property={property}
           host={host}
-          onContactHost={() => setShowMessageHost(true)}
+          onContactHost={
+            (property?.property?.hostId || property?.property?.hostID)
+              ? () => setShowMessageHost(true)
+              : undefined
+          }
           unavailableDateKeys={unavailableDateKeys}
           checkInDate={checkInDate}
           checkOutDate={checkOutDate}

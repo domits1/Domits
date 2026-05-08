@@ -1,7 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 
-const SCROLL_OFFSET = 190;
+const resolveScrollOffset = () => {
+  if (globalThis.window === undefined) {
+    return 190;
+  }
+
+  if (globalThis.innerWidth > 768) {
+    return 190;
+  }
+
+  const rootStyles = globalThis.getComputedStyle(document.documentElement);
+  const headerHeight = Number.parseFloat(rootStyles.getPropertyValue("--app-header-h")) || 90;
+  const headerOffset = Number.parseFloat(rootStyles.getPropertyValue("--listing-header-offset")) || headerHeight;
+
+  return headerOffset + 24;
+};
+
 const ACTIVE_SECTION_THRESHOLD = 210;
 
 const scrollToSection = (sectionId) => {
@@ -10,8 +25,8 @@ const scrollToSection = (sectionId) => {
     return;
   }
 
-  const top = window.scrollY + target.getBoundingClientRect().top - SCROLL_OFFSET;
-  window.scrollTo({ top, behavior: "smooth" });
+  const top = globalThis.scrollY + target.getBoundingClientRect().top - resolveScrollOffset();
+  globalThis.scrollTo({ top, behavior: "smooth" });
 };
 
 const resolveActiveSection = (sections) => {
@@ -35,8 +50,29 @@ const resolveActiveSection = (sections) => {
 const SectionTabs = ({ sections = [] }) => {
   const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
   const [indicatorStyle, setIndicatorStyle] = useState({});
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => globalThis.window !== undefined && globalThis.innerWidth <= 768
+  );
   const [isScrolled, setIsScrolled] = useState(false);
   const buttonRefs = useRef({});
+
+  useEffect(() => {
+    const handleResize = () => {
+      const nextIsMobileViewport = globalThis.innerWidth <= 768;
+      setIsMobileViewport(nextIsMobileViewport);
+
+      if (nextIsMobileViewport) {
+        setIsScrolled(false);
+      }
+    };
+
+    handleResize();
+    globalThis.addEventListener("resize", handleResize);
+
+    return () => {
+      globalThis.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     if (!sections.length) {
@@ -45,18 +81,18 @@ const SectionTabs = ({ sections = [] }) => {
 
     const handleScroll = () => {
       setActiveSection(resolveActiveSection(sections));
-      setIsScrolled(window.scrollY > 80);
+      setIsScrolled(!isMobileViewport && globalThis.scrollY > 80);
     };
 
     handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
+    globalThis.addEventListener("scroll", handleScroll, { passive: true });
+    globalThis.addEventListener("resize", handleScroll);
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
+      globalThis.removeEventListener("scroll", handleScroll);
+      globalThis.removeEventListener("resize", handleScroll);
     };
-  }, [sections]);
+  }, [isMobileViewport, sections]);
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -72,10 +108,10 @@ const SectionTabs = ({ sections = [] }) => {
     };
 
     updateIndicator();
-    window.addEventListener("resize", updateIndicator);
+    globalThis.addEventListener("resize", updateIndicator);
 
     return () => {
-      window.removeEventListener("resize", updateIndicator);
+      globalThis.removeEventListener("resize", updateIndicator);
     };
   }, [activeSection, sections]);
 

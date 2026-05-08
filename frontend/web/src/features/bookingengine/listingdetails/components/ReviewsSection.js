@@ -89,14 +89,14 @@ const ReviewsSection = ({
       {hasCategories && (
         <div className="reviews-section__categories">
           {CATEGORY_LABELS.map(({ key, label }) =>
-            categoryScores[key] != null ? (
+            categoryScores[key] == null ? null : (
               <div key={key} className="reviews-section__category-pill">
                 <span className="reviews-section__category-label">{label}</span>
                 <span className="reviews-section__category-score">
                   {Number(categoryScores[key]).toFixed(1)}
                 </span>
               </div>
-            ) : null
+            )
           )}
         </div>
       )}
