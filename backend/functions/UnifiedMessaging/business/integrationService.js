@@ -179,12 +179,15 @@ const formatNightlyPriceForChannexRate = (value) => {
   if (!Number.isFinite(numericValue) || numericValue <= 0) return null;
   return numericValue.toFixed(2);
 };
-const CHANNEX_SUPPORTED_RESTRICTION_FIELDS = [
+const CHANNEX_BOOLEAN_RESTRICTION_FIELDS = [
   "closed_to_arrival",
   "closed_to_departure",
+  "stop_sell",
+];
+const CHANNEX_SUPPORTED_RESTRICTION_FIELDS = [
+  ...CHANNEX_BOOLEAN_RESTRICTION_FIELDS,
   "max_stay",
   "min_stay_through",
-  "stop_sell",
 ];
 const normalizeRestrictionInteger = (value) => {
   if (value === undefined || value === null || value === "") return null;
@@ -351,7 +354,24 @@ const addBooleanCalendarRestrictionField = ({
     });
   }
 };
-const buildEffectiveChannexRestrictionMapping = (globalRestrictionMapping, override) => {
+const addSnapshotBooleanRestrictionDefaults = (out) => {
+  for (const channexField of CHANNEX_BOOLEAN_RESTRICTION_FIELDS) {
+    if (Object.hasOwn(out.channexRestrictions, channexField)) continue;
+
+    out.channexRestrictions[channexField] = false;
+    out.supportedRestrictions.push({
+      domitsRestriction: channexField,
+      channexField,
+      value: false,
+      source: "full_sync_snapshot_default",
+    });
+  }
+};
+const buildEffectiveChannexRestrictionMapping = (
+  globalRestrictionMapping,
+  override,
+  options = {}
+) => {
   const overrideSummary = buildCalendarRestrictionOverrideSummary(override);
   const out = {
     channexRestrictions: {},
@@ -389,6 +409,10 @@ const buildEffectiveChannexRestrictionMapping = (globalRestrictionMapping, overr
     domitsRestriction: "closedToDeparture",
     channexField: "closed_to_departure",
   });
+
+  if (options.includeSnapshotBooleanRestrictions) {
+    addSnapshotBooleanRestrictionDefaults(out);
+  }
 
   if (overrideSummary.minStay === null) {
     addGlobalRestrictionField(out, globalRestrictionMapping, "min_stay_through");
@@ -1452,6 +1476,7 @@ const buildRestrictionRateItemsFromReadiness = ({
   readiness,
   normalizedDomitsPropertyId,
   normalizedRestrictions,
+  includeSnapshotBooleanRestrictions = false,
 }) => {
   const restrictionRateItems = [];
   const effectiveChannexRestrictionFields = new Set();
@@ -1459,7 +1484,9 @@ const buildRestrictionRateItemsFromReadiness = ({
 
   for (const isoDate of Array.isArray(dates) ? dates : []) {
     const override = overrideMap.get(isoDate) || null;
-    const effectiveRestrictionMapping = buildEffectiveChannexRestrictionMapping(restrictionMapping, override);
+    const effectiveRestrictionMapping = buildEffectiveChannexRestrictionMapping(restrictionMapping, override, {
+      includeSnapshotBooleanRestrictions,
+    });
     Object.keys(effectiveRestrictionMapping.channexRestrictions).forEach((field) =>
       effectiveChannexRestrictionFields.add(field)
     );
@@ -1658,6 +1685,21 @@ const combineChannexRestrictionSyncPayloadsForProvider = (groupedPayloads) => {
     },
   ];
 };
+const summarizeChannexBooleanRestrictionCounts = (values) => {
+  const counts = {};
+  for (const field of CHANNEX_BOOLEAN_RESTRICTION_FIELDS) {
+    counts[field] = { true: 0, false: 0 };
+  }
+
+  for (const value of Array.isArray(values) ? values : []) {
+    for (const field of CHANNEX_BOOLEAN_RESTRICTION_FIELDS) {
+      if (!Object.hasOwn(value || {}, field) || typeof value[field] !== "boolean") continue;
+      counts[field][value[field] ? "true" : "false"] += 1;
+    }
+  }
+
+  return counts;
+};
 const summarizeChannexRequestBody = (requestBody, metadata = {}) => {
   if (!requestBody || typeof requestBody !== "object" || Array.isArray(requestBody)) return requestBody ?? null;
   const values = Array.isArray(requestBody.values) ? requestBody.values : [];
@@ -1676,6 +1718,10 @@ const summarizeChannexRequestBody = (requestBody, metadata = {}) => {
     metadata?.externalRatePlanId,
     ...(Array.isArray(metadata?.externalRatePlanIds) ? metadata.externalRatePlanIds : []),
   ];
+  const booleanRestrictionCounts = summarizeChannexBooleanRestrictionCounts(values);
+  const hasBooleanRestrictionValues = Object.values(booleanRestrictionCounts).some(
+    (fieldCounts) => fieldCounts.true > 0 || fieldCounts.false > 0
+  );
   return {
     valuesOmitted: true,
     valueCount: values.length,
@@ -1690,6 +1736,7 @@ const summarizeChannexRequestBody = (requestBody, metadata = {}) => {
     externalRatePlanIds: Array.from(
       new Set([...metadataRatePlanIds, ...values.map((value) => requireStr(value?.rate_plan_id))].filter(Boolean))
     ).sort(compareAlphabetically),
+    ...(hasBooleanRestrictionValues ? { booleanRestrictionCounts } : {}),
   };
 };
 const summarizeChannexGroupedPayloads = (groups) =>
@@ -6147,6 +6194,7 @@ export default class IntegrationService {
       readiness,
       normalizedDomitsPropertyId,
       normalizedRestrictions,
+      includeSnapshotBooleanRestrictions: true,
     });
     const restrictionRateGroupedPayloads = buildRestrictionRatePayloadGroups(restrictionRateItems);
     const restrictionProviderPayloads = combineChannexRestrictionSyncPayloadsForProvider(
@@ -6263,6 +6311,7 @@ export default class IntegrationService {
       readiness,
       normalizedDomitsPropertyId,
       normalizedRestrictions,
+      includeSnapshotBooleanRestrictions: true,
     });
     mark("mapping_fan_out_end", {
       itemCount: restrictionRateItems.length,

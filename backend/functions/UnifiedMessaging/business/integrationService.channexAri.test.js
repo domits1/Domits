@@ -993,7 +993,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     expect(evidenceCreate).not.toHaveBeenCalled();
   });
 
-  test("full certification sync restrictions debug stage returns controlled empty summary when pricing and restrictions are absent", async () => {
+  test("full certification sync restrictions debug stage summarizes false boolean snapshots when pricing and restrictions are absent", async () => {
     Database.getInstance.mockResolvedValue(
       buildDatabaseClient({
         availabilityRestrictions: [],
@@ -1027,13 +1027,23 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         debugStage: "restrictionsPayloadOnly",
         calledProvider: false,
         requestCount: 0,
-        sentChannexRestrictionFields: [],
+        sentChannexRestrictionFields: ["closed_to_arrival", "closed_to_departure", "stop_sell"],
       })
     );
-    expect(result.response.payloadSummaries).toEqual({
-      availability: null,
-      restrictions: [],
-    });
+    expect(result.response.payloadSummaries.availability).toBeNull();
+    expect(result.response.payloadSummaries.restrictions[0].requestBody).toEqual(
+      expect.objectContaining({
+        valuesOmitted: true,
+        valueCount: 500,
+        firstDate: "2026-05-24",
+        lastDate: "2027-10-05",
+        booleanRestrictionCounts: {
+          closed_to_arrival: { true: 0, false: 500 },
+          closed_to_departure: { true: 0, false: 500 },
+          stop_sell: { true: 0, false: 500 },
+        },
+      })
+    );
     expect(evidenceCreate).not.toHaveBeenCalled();
   });
 
@@ -2049,6 +2059,109 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     expect(outboundPayloads[0].values[0]).not.toHaveProperty("min_stay_arrival");
   });
 
+  test("full sync snapshot sends explicit false values for Channex boolean restrictions", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [],
+        calendarOverrides: [],
+      })
+    );
+    const pushAvailability = createSuccessfulAvailabilityPush();
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-24",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestCount).toBe(2);
+    const [, outboundPayloads] = pushRestrictions.mock.calls[0];
+    expect(outboundPayloads[0].values[0]).toEqual(
+      expect.objectContaining({
+        property_id: "external-property-1",
+        rate_plan_id: "rate-plan-1",
+        date: "2026-05-24",
+        closed_to_arrival: false,
+        closed_to_departure: false,
+        stop_sell: false,
+      })
+    );
+    expect(result.response.payloadSummaries.restrictions[0].requestBody.booleanRestrictionCounts).toEqual({
+      closed_to_arrival: { true: 0, false: 1 },
+      closed_to_departure: { true: 0, false: 1 },
+      stop_sell: { true: 0, false: 1 },
+    });
+  });
+
+  test("full sync snapshot summarizes true and false Channex boolean restriction values", async () => {
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityRestrictions: [],
+        calendarOverrides: [
+          {
+            property_id: "domits-property-1",
+            calendar_date: 20260524,
+            is_available: true,
+            nightly_price: 123,
+            stop_sell: true,
+            closed_to_arrival: true,
+            closed_to_departure: true,
+            min_stay: null,
+            max_stay: null,
+            updated_at: 1,
+          },
+        ],
+      })
+    );
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: createSuccessfulAvailabilityPush(),
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-25",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    const [, outboundPayloads] = pushRestrictions.mock.calls[0];
+    expect(outboundPayloads[0].values.find((value) => value.date === "2026-05-24")).toEqual(
+      expect.objectContaining({
+        closed_to_arrival: true,
+        closed_to_departure: true,
+        stop_sell: true,
+      })
+    );
+    expect(outboundPayloads[0].values.find((value) => value.date === "2026-05-25")).toEqual(
+      expect.objectContaining({
+        closed_to_arrival: false,
+        closed_to_departure: false,
+        stop_sell: false,
+      })
+    );
+    expect(result.response.payloadSummaries.restrictions[0].requestBody.booleanRestrictionCounts).toEqual({
+      closed_to_arrival: { true: 1, false: 1 },
+      closed_to_departure: { true: 1, false: 1 },
+      stop_sell: { true: 1, false: 1 },
+    });
+  });
+
   test("certification test cases #2 through #10 send change-only payloads", async () => {
     const expected = {
       "2": { provider: "restrictions", count: 1, fields: ["rate"] },
@@ -2162,6 +2275,39 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       date: "2026-11-22",
       rate: "333.00",
     });
+  });
+
+  test("certification change-only update keeps changed boolean false and omits unrelated fields", async () => {
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
+        pushRestrictions,
+      },
+    });
+    service.getChannexAriTargets.mockResolvedValue(buildCertificationAriTargets());
+
+    const result = await service.syncChannexCertificationTestCase(
+      "user-1",
+      "domits-property-1",
+      { testCaseId: "7" },
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    const values = pushRestrictions.mock.calls[0][1][0].values;
+    const value = values.find((item) => item.rate_plan_id === "rate-plan-twin-bar" && item.date === "2026-11-01");
+    expect(value).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-twin-bar",
+      date: "2026-11-01",
+      closed_to_arrival: true,
+      closed_to_departure: false,
+      max_stay: 4,
+      min_stay_through: 1,
+    });
+    expect(value).not.toHaveProperty("rate");
+    expect(value).not.toHaveProperty("stop_sell");
   });
 
   test("certification documented cases produce exact changed values for mixed restriction and availability cases", async () => {
