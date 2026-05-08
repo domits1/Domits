@@ -229,7 +229,7 @@ function GuestBooking() {
     const combined = [...paidBookings, ...cancelledBookings];
     if (!combined.length) return;
 
-    const ids = Array.from(new Set(combined.map(getPropertyId).filter(Boolean)));
+    const ids = Array.from(new Set(combined.map((b) => getPropertyId(b)).filter(Boolean)));
     if (ids.length) fetchPropertyDetails(ids);
   }, [paidBookings, cancelledBookings, fetchPropertyDetails]);
 

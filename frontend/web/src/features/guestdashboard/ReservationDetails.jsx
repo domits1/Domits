@@ -365,7 +365,7 @@ const buildReservationContent = ({
 
             <HouseRules rules={reservation.rules} />
 
-            {reservation && normalizeStayStatus(reservation.stay.status) !== "Cancelled" && (
+            {normalizeStayStatus(reservation.stay.status) !== "Cancelled" && (
               <div className="card cancelBookingCard">
                 <h3>Cancel reservation</h3>
                 <p>Review the cancellation policy above before cancelling this booking.</p>

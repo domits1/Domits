@@ -33,6 +33,7 @@ CancelledTripItem.propTypes = {
     image: PropTypes.string,
     name: PropTypes.string,
     dates: PropTypes.string,
+    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
 };
 
