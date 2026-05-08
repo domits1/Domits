@@ -257,20 +257,12 @@
             .listing-details-content-stack {
                 grid-column: 1;
                 display: grid;
-                gap: 24px;
-
-                @media (max-width: 768px) {
-                    gap: 20px;
-                }
+                gap: 20px;
             }
 
             .listing-section-block--photos {
                 grid-column: 1 / span 2;
-                margin-bottom: 24px;
-
-                @media (max-width: 768px) {
-                    margin-bottom: 14px;
-                }
+                margin-bottom: 20px;
             }
 
             .listing-booking-card {
@@ -283,7 +275,7 @@
 
                 box-sizing: border-box;
                 background: white;
-                padding: 24px;
+                padding: 20px;
                 text-align: start;
                 border-radius: 10px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -855,7 +847,7 @@
 
             .description-container {
                 margin: 0;
-                padding: 30px;
+                padding: 20px;
                 border: 1px solid #d7dde5;
                 border-radius: 8px;
                 background: #fff;
@@ -950,7 +942,7 @@
 
             .where-youll-stay {
                 margin: 0;
-                padding: 30px;
+                padding: 20px;
                 border: 1px solid #d7dde5;
                 border-radius: 8px;
                 background: #fff;
@@ -1049,7 +1041,7 @@
                 background: #ffffff;
                 border: 1px solid #e6e6e6;
                 border-radius: 14px;
-                padding: 30px;
+                padding: 20px;
                 margin: 0;
                 font-family: "Inter", sans-serif;
                 transition: all 0.3s ease;
@@ -1169,7 +1161,7 @@ body.header-scrolled .listing-sections-shell {
 
 .reviews-section {
     margin: 0;
-    padding: 30px;
+    padding: 20px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
@@ -1388,7 +1380,7 @@ body.header-scrolled .listing-sections-shell {
     display: flex;
     gap: 40px;
     margin: 0;
-    padding: 30px;
+    padding: 20px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
@@ -1526,7 +1518,7 @@ body.header-scrolled .listing-sections-shell {
 
 .amenities-container {
     margin: 0;
-    padding: 30px;
+    padding: 20px;
     border: 1px solid #d7dde5;
     border-radius: 8px;
     background: #fff;
