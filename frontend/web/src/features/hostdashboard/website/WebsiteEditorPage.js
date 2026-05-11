@@ -39,8 +39,11 @@ import {
   WEBSITE_BACKGROUND_COLOR_OPTIONS,
 } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
-import { announceWebsitePreviewUpdate } from "./services/websitePreviewSync";
-import { announceWebsiteLiveSiteUpdate } from "./services/websitePreviewSync";
+import {
+  announceWebsiteLiveSiteUpdate,
+  announceWebsitePreviewUpdate,
+} from "./services/websitePreviewSync";
+import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
 import {
   COMMON_TEXT_FIELDS,
   EDITOR_SECTION_KEYS,
@@ -62,24 +65,6 @@ const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
 
 const getSelectedImageForSlot = (slot, editorValues) =>
   slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
-
-const buildPublishedWebsitePath = (domain, siteId = "") => {
-  const path = `/website-live/${encodeURIComponent(domain)}`;
-  const normalizedSiteId = String(siteId || "").trim();
-  return normalizedSiteId ? `${path}?siteId=${encodeURIComponent(normalizedSiteId)}` : path;
-};
-const buildPublishedWebsiteHref = (domain, siteId = "", domainStatus = "") => {
-  const normalizedDomain = String(domain || "").trim().toLowerCase();
-  if (!normalizedDomain) {
-    return "";
-  }
-
-  if (String(domainStatus || "").trim().toUpperCase() === "ACTIVE") {
-    return `https://${normalizedDomain}`;
-  }
-
-  return buildPublishedWebsitePath(normalizedDomain, siteId);
-};
 
 const normalizeUiErrorMessage = (message, fallbackMessage) => {
   const normalizedMessage = String(message || "").trim();
