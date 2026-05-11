@@ -4,17 +4,23 @@ import styles from "../WebsiteTemplatePreview.module.scss";
 import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 
 export const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
+  const targetId = target?.targetId || "";
+
   if (!onSelectTarget) {
-    return { className };
+    return {
+      className,
+      "data-preview-target-id": targetId || undefined,
+    };
   }
 
-  const isActiveTarget = target?.targetId && target.targetId === activeTargetId;
+  const isActiveTarget = targetId && targetId === activeTargetId;
   const handleActivate = () => onSelectTarget(target);
 
   return {
     className: `${className} ${styles.previewInteractiveTarget} ${
       isActiveTarget ? styles.previewInteractiveTargetActive : ""
     }`.trim(),
+    "data-preview-target-id": targetId || undefined,
     role: "button",
     tabIndex: 0,
     onClick: handleActivate,
@@ -26,6 +32,13 @@ export const getInteractiveTargetProps = (className, onSelectTarget, target, act
     },
   };
 };
+
+export const getPreviewTargetMarkerProps = (className, targetId, activeTargetId = "") => ({
+  className: `${className} ${styles.previewInteractiveTarget} ${
+    targetId && targetId === activeTargetId ? styles.previewInteractiveTargetActive : ""
+  }`.trim(),
+  "data-preview-target-id": targetId || undefined,
+});
 
 export function TemplateTopBar({ model, onSelectTarget = undefined, activeTargetId = "", children }) {
   return (

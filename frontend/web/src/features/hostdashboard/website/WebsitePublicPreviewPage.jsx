@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
+import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
@@ -22,6 +23,14 @@ import styles from "./WebsitePublicPreviewPage.module.scss";
 const getDraftPublishedContentOverrides = (draft) => {
   if (draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object") {
     return draft.publishedContentOverrides;
+  }
+
+  return {};
+};
+
+const getDraftPublishedThemeOverrides = (draft) => {
+  if (draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object") {
+    return draft.publishedThemeOverrides;
   }
 
   return {};
@@ -84,8 +93,9 @@ function WebsitePublicPreviewPage() {
       propertyDetails: payload.propertyDetails,
       summaryProperty: null,
     });
+    const themedModel = applyWebsiteDraftThemeOverrides(baseModel, getDraftPublishedThemeOverrides(payload.draft));
 
-    return applyWebsiteDraftContentOverrides(baseModel, getDraftPublishedContentOverrides(payload.draft));
+    return applyWebsiteDraftContentOverrides(themedModel, getDraftPublishedContentOverrides(payload.draft));
   }, [payload]);
 
   const templateId = payload?.draft?.templateKey || "";
@@ -111,7 +121,7 @@ function WebsitePublicPreviewPage() {
     return startWebsitePreviewLcpObserver({
       enabled: true,
       onReport: (durationMs) => {
-        void recordPublicWebsiteAnalyticsEventSafely({
+        recordPublicWebsiteAnalyticsEventSafely({
           draftId,
           eventType: WEBSITE_SITE_LCP_RECORDED_EVENT,
           payload: {
@@ -136,9 +146,12 @@ function WebsitePublicPreviewPage() {
 
   if (canRenderPreview) {
     const shouldShowContactWidget = previewModel.visibility?.chatWidget ?? true;
+    const publicPreviewPageStyle = {
+      "--website-surface-background": resolveWebsiteBackgroundColor(previewModel?.theme?.backgroundColor),
+    };
 
     return (
-      <main className={styles.publicPreviewPage}>
+      <main className={styles.publicPreviewPage} style={publicPreviewPageStyle}>
         <div className={styles.publicPreviewCanvas}>
           <TemplateComponent model={previewModel} />
           {shouldShowContactWidget ? <WebsiteContactWidget model={previewModel} /> : null}
