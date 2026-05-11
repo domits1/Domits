@@ -33,8 +33,10 @@ export const UserProvider = ({ children }) => {
         checkUser();
     }, []);
 
+    const hasRole = (allowedRoles) => allowedRoles.includes(role);
+
     return (
-        <UserContext.Provider value={{ user, role, isLoading }}>
+        <UserContext.Provider value={{ user, role, isLoading, hasRole }}>
             {children}
         </UserContext.Provider>
     );
