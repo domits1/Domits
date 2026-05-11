@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 
 const resolveScrollOffset = () => {
-  if (globalThis.window === undefined) {
+  if (typeof globalThis.window === "undefined") {
     return 190;
   }
 
@@ -51,7 +51,7 @@ const SectionTabs = ({ sections = [] }) => {
   const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
   const [indicatorStyle, setIndicatorStyle] = useState({});
   const [isMobileViewport, setIsMobileViewport] = useState(
-    () => globalThis.window !== undefined && globalThis.innerWidth <= 768
+    () => typeof globalThis.window !== "undefined" && globalThis.innerWidth <= 768
   );
   const buttonRefs = useRef({});
 

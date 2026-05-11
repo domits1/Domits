@@ -17,7 +17,7 @@ const Pricing = ({ pricing = {}, nights = 1 }) => {
 
   const rows = [
     {
-      label: `${fmt(roomRate)} \u00D7 ${normalizedNights} night${normalizedNights !== 1 ? "s" : ""}`,
+      label: `${fmt(roomRate)} \u00D7 ${normalizedNights} night${normalizedNights === 1 ? "" : "s"}`,
       value: fmt(roomSubtotal),
     },
     { label: "Cleaning", value: fmt(cleaningSubtotal) },
