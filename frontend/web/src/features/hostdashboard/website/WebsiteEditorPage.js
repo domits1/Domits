@@ -40,6 +40,7 @@ import {
 } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import { announceWebsitePreviewUpdate } from "./services/websitePreviewSync";
+import { announceWebsiteLiveSiteUpdate } from "./services/websitePreviewSync";
 import {
   COMMON_TEXT_FIELDS,
   EDITOR_SECTION_KEYS,
@@ -1484,6 +1485,10 @@ function WebsiteEditorPage() {
       const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
+      announceWebsiteLiveSiteUpdate({
+        siteId: nextSiteSummary?.site?.id,
+        domain: nextSiteSummary?.primaryDomain?.domain,
+      });
       toast.success("Live site updated.");
     } catch (error) {
       const errorMessage = error?.message || "We could not update the live site.";
@@ -1507,6 +1512,10 @@ function WebsiteEditorPage() {
       const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
+      announceWebsiteLiveSiteUpdate({
+        siteId: nextSiteSummary?.site?.id,
+        domain: nextSiteSummary?.primaryDomain?.domain,
+      });
       toast.success("Live site published.");
     } catch (error) {
       const errorMessage = error?.message || "We could not publish the live site.";
@@ -1529,6 +1538,10 @@ function WebsiteEditorPage() {
       const nextSiteSummary = await unpublishWebsiteSite(draftRecord.propertyId);
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
+      announceWebsiteLiveSiteUpdate({
+        siteId: nextSiteSummary?.site?.id,
+        domain: nextSiteSummary?.primaryDomain?.domain,
+      });
       toast.success("Live site unpublished.");
     } catch (error) {
       const errorMessage = error?.message || "We could not unpublish the live site.";

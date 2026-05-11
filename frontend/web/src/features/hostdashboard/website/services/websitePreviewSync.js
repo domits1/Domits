@@ -1,4 +1,5 @@
 const WEBSITE_PREVIEW_SYNC_STORAGE_KEY = "domits.websitePreview.updated";
+const WEBSITE_LIVE_SITE_SYNC_STORAGE_KEY = "domits.websiteLiveSite.updated";
 
 const parsePreviewSyncPayload = (rawValue) => {
   if (typeof rawValue !== "string" || !rawValue.trim()) {
@@ -53,6 +54,65 @@ export const subscribeToWebsitePreviewUpdates = (draftId, onPreviewUpdate) => {
     }
 
     onPreviewUpdate(payload);
+  };
+
+  globalThis.addEventListener("storage", handleStorage);
+
+  return () => {
+    globalThis.removeEventListener("storage", handleStorage);
+  };
+};
+
+export const announceWebsiteLiveSiteUpdate = ({ siteId = "", domain = "" } = {}) => {
+  const normalizedSiteId = String(siteId || "").trim();
+  const normalizedDomain = String(domain || "").trim().toLowerCase();
+
+  if ((!normalizedSiteId && !normalizedDomain) || !globalThis.localStorage) {
+    return;
+  }
+
+  try {
+    globalThis.localStorage.setItem(
+      WEBSITE_LIVE_SITE_SYNC_STORAGE_KEY,
+      JSON.stringify({
+        siteId: normalizedSiteId,
+        domain: normalizedDomain,
+        updatedAt: Date.now(),
+      })
+    );
+  } catch {
+    // Ignore localStorage failures; live-site updates still persist server-side.
+  }
+};
+
+export const subscribeToWebsiteLiveSiteUpdates = (
+  { siteId = "", domain = "" } = {},
+  onLiveSiteUpdate
+) => {
+  const normalizedSiteId = String(siteId || "").trim();
+  const normalizedDomain = String(domain || "").trim().toLowerCase();
+
+  if ((!normalizedSiteId && !normalizedDomain) || typeof onLiveSiteUpdate !== "function") {
+    return () => {};
+  }
+
+  const handleStorage = (event) => {
+    if (event.key !== WEBSITE_LIVE_SITE_SYNC_STORAGE_KEY) {
+      return;
+    }
+
+    const payload = parsePreviewSyncPayload(event.newValue);
+    if (!payload) {
+      return;
+    }
+
+    const matchesSiteId = normalizedSiteId && payload.siteId === normalizedSiteId;
+    const matchesDomain = normalizedDomain && payload.domain === normalizedDomain;
+    if (!matchesSiteId && !matchesDomain) {
+      return;
+    }
+
+    onLiveSiteUpdate(payload);
   };
 
   globalThis.addEventListener("storage", handleStorage);
