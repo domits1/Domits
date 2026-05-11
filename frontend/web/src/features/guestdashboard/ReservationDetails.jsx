@@ -287,10 +287,10 @@ function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm })
       )}
 
       <div className="cancelBookingModalActions">
-        <button type="button" className="secondaryBtn" onClick={onClose} disabled={isSubmitting}>
+        <button type="button" className="secondaryBtn modalActionBtn" onClick={onClose} disabled={isSubmitting}>
           Keep booking
         </button>
-        <button type="button" className="dangerBtn" onClick={onConfirm} disabled={isSubmitting}>
+        <button type="button" className="dangerBtn modalActionBtn" onClick={onConfirm} disabled={isSubmitting}>
           {isSubmitting ? "Cancelling..." : "Yes, cancel booking"}
         </button>
       </div>
