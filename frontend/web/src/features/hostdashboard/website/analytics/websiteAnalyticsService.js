@@ -50,6 +50,8 @@ export const recordWebsiteHostAnalyticsEvent = async ({
 
 export const recordPublicWebsiteAnalyticsEvent = async ({
   draftId,
+  siteId = "",
+  domain = "",
   eventType,
   payload = {},
 }) => {
@@ -57,6 +59,8 @@ export const recordPublicWebsiteAnalyticsEvent = async ({
     authorization: "",
     body: {
       draftId,
+      siteId,
+      domain,
       eventType,
       payload,
     },
@@ -75,6 +79,6 @@ export const recordPublicWebsiteAnalyticsEventSafely = async (eventInput) => {
   try {
     await recordPublicWebsiteAnalyticsEvent(eventInput);
   } catch {
-    // Public preview telemetry is best-effort only.
+    // Public website telemetry is best-effort only.
   }
 };
