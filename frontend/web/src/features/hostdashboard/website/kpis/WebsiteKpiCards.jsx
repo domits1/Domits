@@ -54,7 +54,12 @@ export function WebsiteKpiResearchCard({ researchKpiCard, isLoading, isHighlight
   return (
     <article className={cardClassName}>
       <div className={styles.researchKpiCardHeader}>
-        <p className={styles.researchKpiCardTitle}>{researchKpiCard.id}</p>
+        <div>
+          <p className={styles.researchKpiCardTitle}>{researchKpiCard.id}</p>
+          {researchKpiCard.sampleLabel ? (
+            <span className={styles.kpiCardSampleBadge}>{researchKpiCard.sampleLabel}</span>
+          ) : null}
+        </div>
         <span className={`${styles.researchKpiStatusBadge} ${statusClassName}`.trim()}>
           {isLoading ? "Loading" : researchKpiCard.statusLabel}
         </span>
@@ -93,6 +98,7 @@ WebsiteKpiResearchCard.propTypes = {
     statusLabel: PropTypes.string.isRequired,
     value: PropTypes.string.isRequired,
     note: PropTypes.string.isRequired,
+    sampleLabel: PropTypes.string,
   }).isRequired,
   isLoading: PropTypes.bool.isRequired,
   isHighlighted: PropTypes.bool,
