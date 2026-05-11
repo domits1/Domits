@@ -4,7 +4,7 @@ import { PropertyGeneralDetailRepository } from "../../functions/PropertyHandler
 import { Property_General_Detail } from "../../ORM/models/Property_General_Detail.js";
 import { getPropertyObject } from "./events/propertyObject.js";
 
-const randomUuidMock = jest.fn();
+const mockRandomUuid = jest.fn();
 
 jest.mock("database", () => ({
   __esModule: true,
@@ -14,7 +14,7 @@ jest.mock("database", () => ({
 }));
 
 jest.mock("node:crypto", () => ({
-  randomUUID: (...args) => randomUuidMock(...args),
+  randomUUID: (...args) => mockRandomUuid(...args),
 }));
 
 describe("PropertyGeneralDetailRepository", () => {
@@ -37,8 +37,8 @@ describe("PropertyGeneralDetailRepository", () => {
   let client;
 
   beforeEach(() => {
-    randomUuidMock.mockReset();
-    randomUuidMock.mockReturnValue("generated-detail-id");
+    mockRandomUuid.mockReset();
+    mockRandomUuid.mockReturnValue("generated-detail-id");
 
     insertBuilder = {
       insert: jest.fn().mockReturnThis(),
@@ -160,7 +160,7 @@ describe("PropertyGeneralDetailRepository", () => {
       { detail: "Bathrooms", value: -2.4 },
     ]);
 
-    expect(randomUuidMock).toHaveBeenCalled();
+    expect(mockRandomUuid).toHaveBeenCalled();
     expect(insertBuilder.insert).toHaveBeenCalled();
     expect(insertBuilder.into).toHaveBeenCalledWith(Property_General_Detail);
     expect(insertBuilder.values).toHaveBeenCalledWith({

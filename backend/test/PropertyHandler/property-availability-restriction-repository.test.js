@@ -5,7 +5,7 @@ import { Property_Availability_Restriction } from "../../ORM/models/Property_Ava
 import { Availability_Restrictions } from "../../ORM/models/Availability_Restrictions.js";
 import { getPropertyObject } from "./events/propertyObject.js";
 
-const randomUuidMock = jest.fn();
+const mockRandomUuid = jest.fn();
 
 jest.mock("database", () => ({
   __esModule: true,
@@ -15,7 +15,7 @@ jest.mock("database", () => ({
 }));
 
 jest.mock("node:crypto", () => ({
-  randomUUID: (...args) => randomUuidMock(...args),
+  randomUUID: (...args) => mockRandomUuid(...args),
 }));
 
 describe("PropertyAvailabilityRestrictionRepository", () => {
@@ -40,8 +40,8 @@ describe("PropertyAvailabilityRestrictionRepository", () => {
   let transactionManager;
 
   beforeEach(() => {
-    randomUuidMock.mockReset();
-    randomUuidMock
+    mockRandomUuid.mockReset();
+    mockRandomUuid
       .mockReturnValueOnce("generated-restriction-1")
       .mockReturnValueOnce("generated-restriction-2")
       .mockReturnValue("generated-restriction-3");

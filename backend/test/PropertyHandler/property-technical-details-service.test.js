@@ -1,13 +1,26 @@
-import { describe, it, expect, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { PropertyService } from "../../functions/PropertyHandler/business/service/propertyService.js";
 import { DatabaseException } from "../../functions/PropertyHandler/util/exception/DatabaseException.js";
 import { getPropertyObject } from "./events/propertyObject.js";
 
 describe("PropertyService technical details flow", () => {
   const technicalDetails = getPropertyObject().propertyTechnicalDetails;
+  const mockPropertyRuleRepository = {
+    getRulesByPropertyId: jest.fn(),
+  };
+
+  const createService = () =>
+    Object.assign(Object.create(PropertyService.prototype), {
+      propertyRuleRepository: mockPropertyRuleRepository,
+    });
+
+  beforeEach(() => {
+    mockPropertyRuleRepository.getRulesByPropertyId.mockReset();
+    mockPropertyRuleRepository.getRulesByPropertyId.mockResolvedValue([]);
+  });
 
   it("delegates createTechnicalDetails to the technical detail repository", async () => {
-    const service = Object.create(PropertyService.prototype);
+    const service = createService();
     service.propertyTechnicalDetailRepository = {
       create: jest.fn().mockResolvedValue(technicalDetails),
     };
@@ -17,7 +30,7 @@ describe("PropertyService technical details flow", () => {
   });
 
   it("throws when createTechnicalDetails does not get a stored result back", async () => {
-    const service = Object.create(PropertyService.prototype);
+    const service = createService();
     service.propertyTechnicalDetailRepository = {
       create: jest.fn().mockResolvedValue(null),
     };
@@ -26,7 +39,7 @@ describe("PropertyService technical details flow", () => {
   });
 
   it("delegates getTechnicalDetails to the technical detail repository", async () => {
-    const service = Object.create(PropertyService.prototype);
+    const service = createService();
     service.propertyTechnicalDetailRepository = {
       getTechnicalDetailsByPropertyId: jest.fn().mockResolvedValue(technicalDetails),
     };
@@ -36,7 +49,7 @@ describe("PropertyService technical details flow", () => {
   });
 
   it("creates technical details during property creation for Boat properties", async () => {
-    const service = Object.create(PropertyService.prototype);
+    const service = createService();
     const property = {
       ...getPropertyObject(),
       propertyType: {
@@ -65,7 +78,7 @@ describe("PropertyService technical details flow", () => {
   });
 
   it("does not create technical details during property creation for non-Boat/Camper properties", async () => {
-    const service = Object.create(PropertyService.prototype);
+    const service = createService();
     const property = {
       ...getPropertyObject(),
       propertyType: {
@@ -93,7 +106,7 @@ describe("PropertyService technical details flow", () => {
   });
 
   it("includes technical details in full property reads for Camper properties", async () => {
-    const service = Object.create(PropertyService.prototype);
+    const service = createService();
 
     service.getBasePropertyInfo = jest.fn().mockResolvedValue({ id: "prop-1" });
     service.getAmenities = jest.fn().mockResolvedValue([]);
@@ -118,7 +131,7 @@ describe("PropertyService technical details flow", () => {
   });
 
   it("does not load technical details in full property reads for non-Boat/Camper properties", async () => {
-    const service = Object.create(PropertyService.prototype);
+    const service = createService();
 
     service.getBasePropertyInfo = jest.fn().mockResolvedValue({ id: "prop-1" });
     service.getAmenities = jest.fn().mockResolvedValue([]);
