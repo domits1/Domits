@@ -31,7 +31,7 @@ function Header({ setSearchResults, setLoading }) {
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(
-    () => typeof globalThis.window !== "undefined" && globalThis.innerWidth <= 768
+    () => globalThis.window !== undefined && globalThis.innerWidth <= 768
   );
   const [listingScrollProgress, setListingScrollProgress] = useState(0);
 
