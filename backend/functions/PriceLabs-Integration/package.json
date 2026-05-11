@@ -1,0 +1,12 @@
+{
+  "name": "pricelabs-integration",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "PriceLabs dynamic pricing integration for Domits",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-ssm": "^3.0.0",
+    "typeorm": "^0.3.20",
+    "pg": "^8.11.0"
+  }
+}
