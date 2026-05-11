@@ -19,6 +19,7 @@ export const COMMON_TEXT_FIELDS = Object.freeze([
 
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
+  theme: "theme",
   visibility: "visibility",
   images: "images",
   trustCards: "trustCards",
@@ -126,6 +127,11 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
     id: EDITOR_SECTION_KEYS.visibility,
     title: "Section visibility",
     description: "Loading which website sections can be toggled on or off.",
+  },
+  {
+    id: EDITOR_SECTION_KEYS.theme,
+    title: "Theme",
+    description: "Loading standalone website theme selections.",
   },
   {
     id: EDITOR_SECTION_KEYS.images,

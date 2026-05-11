@@ -1032,12 +1032,12 @@ font-size: 40px;
 width: 100%;
 }
 
-h1 {
+.landing h1 {
 font-size: 40px;
 line-height: 1.2;
 }
 
-h2 {
+.landing h2 {
 font-size: 32px;
 }
 }
@@ -1047,16 +1047,16 @@ font-size: 32px;
 padding: 40px 14px;
 }
 
-h1 {
+.landing h1 {
 font-size: 32px;
 }
 
-h2 {
+.landing h2 {
 font-size: 26px;
 }
 
-.button,
-button {
+.landing .button,
+.landing button {
 width: 100%;
 }
 

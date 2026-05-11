@@ -14,10 +14,6 @@ const getViewportWidth = () => {
 };
 
 export const getWebsiteAnalyticsViewport = () => {
-  if (globalThis.navigator?.userAgentData?.mobile === true) {
-    return WEBSITE_ANALYTICS_VIEWPORT_MOBILE;
-  }
-
   const viewportWidth = getViewportWidth();
   if (viewportWidth > 0 && viewportWidth <= 767) {
     return WEBSITE_ANALYTICS_VIEWPORT_MOBILE;
@@ -25,6 +21,10 @@ export const getWebsiteAnalyticsViewport = () => {
 
   if (viewportWidth > 0 && viewportWidth <= 1024) {
     return WEBSITE_ANALYTICS_VIEWPORT_TABLET;
+  }
+
+  if (globalThis.navigator?.userAgentData?.mobile === true) {
+    return WEBSITE_ANALYTICS_VIEWPORT_MOBILE;
   }
 
   return WEBSITE_ANALYTICS_VIEWPORT_DESKTOP;
