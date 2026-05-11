@@ -4,14 +4,68 @@ import { DatabaseException } from "../../functions/PropertyHandler/util/exceptio
 import { getPropertyObject } from "./events/propertyObject.js";
 
 describe("PropertyService technical details flow", () => {
-  const technicalDetails = getPropertyObject().propertyTechnicalDetails;
+  const propertyId = "prop-1";
+  const propertyObject = getPropertyObject();
+  const technicalDetails = propertyObject.propertyTechnicalDetails;
   const mockPropertyRuleRepository = {
     getRulesByPropertyId: jest.fn(),
   };
+  const createResolvedMock = (value = undefined) => jest.fn().mockResolvedValue(value);
 
-  const createService = () =>
-    Object.assign(Object.create(PropertyService.prototype), {
-      propertyRuleRepository: mockPropertyRuleRepository,
+  const createService = (overrides = {}) =>
+    Object.assign(
+      Object.create(PropertyService.prototype),
+      {
+        propertyRuleRepository: mockPropertyRuleRepository,
+      },
+      overrides
+    );
+
+  const createBaseProperty = (propertyType, overrides = {}) => ({
+    ...propertyObject,
+    propertyType: {
+      ...propertyObject.propertyType,
+      property_type: propertyType,
+    },
+    ...overrides,
+  });
+
+  const mockCreateFlow = (service, overrides = {}) =>
+    Object.assign(service, {
+      createBasePropertyInfo: createResolvedMock(),
+      createAmenities: createResolvedMock(),
+      createAvailability: createResolvedMock(),
+      createCheckIn: createResolvedMock(),
+      createGeneralDetail: createResolvedMock(),
+      createLocation: createResolvedMock(),
+      createPricing: createResolvedMock(),
+      createRules: createResolvedMock(),
+      createPropertyType: createResolvedMock(),
+      createAvailabilityRestrictions: createResolvedMock(),
+      createPropertyTestStatus: createResolvedMock(),
+      createImages: createResolvedMock(),
+      createTechnicalDetails: createResolvedMock(),
+      ...overrides,
+    });
+
+  const mockFullPropertyReadData = (service, overrides = {}) =>
+    Object.assign(service, {
+      getBasePropertyInfo: createResolvedMock({ id: propertyId }),
+      getAmenities: createResolvedMock([]),
+      getAvailability: createResolvedMock([]),
+      getAvailabilityRestrictions: createResolvedMock([]),
+      getCheckIn: createResolvedMock({}),
+      getGeneralDetails: createResolvedMock([]),
+      getImages: createResolvedMock([]),
+      getLocation: createResolvedMock({}),
+      getFullLocation: createResolvedMock({}),
+      getPricing: createResolvedMock({}),
+      getRules: createResolvedMock([]),
+      getPropertyType: createResolvedMock({ property_type: "House" }),
+      getPropertyTestStatus: createResolvedMock({}),
+      getTechnicalDetails: createResolvedMock(technicalDetails),
+      getPublicCalendarAvailability: createResolvedMock({}),
+      ...overrides,
     });
 
   beforeEach(() => {
@@ -41,35 +95,17 @@ describe("PropertyService technical details flow", () => {
   it("delegates getTechnicalDetails to the technical detail repository", async () => {
     const service = createService();
     service.propertyTechnicalDetailRepository = {
-      getTechnicalDetailsByPropertyId: jest.fn().mockResolvedValue(technicalDetails),
+      getTechnicalDetailsByPropertyId: createResolvedMock(technicalDetails),
     };
 
-    await expect(service.getTechnicalDetails("prop-1")).resolves.toEqual(technicalDetails);
-    expect(service.propertyTechnicalDetailRepository.getTechnicalDetailsByPropertyId).toHaveBeenCalledWith("prop-1");
+    await expect(service.getTechnicalDetails(propertyId)).resolves.toEqual(technicalDetails);
+    expect(service.propertyTechnicalDetailRepository.getTechnicalDetailsByPropertyId).toHaveBeenCalledWith(propertyId);
   });
 
   it("creates technical details during property creation for Boat properties", async () => {
     const service = createService();
-    const property = {
-      ...getPropertyObject(),
-      propertyType: {
-        property_type: "Boat",
-      },
-    };
-
-    service.createBasePropertyInfo = jest.fn().mockResolvedValue();
-    service.createAmenities = jest.fn().mockResolvedValue();
-    service.createAvailability = jest.fn().mockResolvedValue();
-    service.createCheckIn = jest.fn().mockResolvedValue();
-    service.createGeneralDetail = jest.fn().mockResolvedValue();
-    service.createLocation = jest.fn().mockResolvedValue();
-    service.createPricing = jest.fn().mockResolvedValue();
-    service.createRules = jest.fn().mockResolvedValue();
-    service.createPropertyType = jest.fn().mockResolvedValue();
-    service.createAvailabilityRestrictions = jest.fn().mockResolvedValue();
-    service.createPropertyTestStatus = jest.fn().mockResolvedValue();
-    service.createImages = jest.fn().mockResolvedValue();
-    service.createTechnicalDetails = jest.fn().mockResolvedValue();
+    const property = createBaseProperty("Boat");
+    mockCreateFlow(service);
 
     await service.create(property, { skipImages: true });
 
@@ -79,26 +115,8 @@ describe("PropertyService technical details flow", () => {
 
   it("does not create technical details during property creation for non-Boat/Camper properties", async () => {
     const service = createService();
-    const property = {
-      ...getPropertyObject(),
-      propertyType: {
-        property_type: "House",
-      },
-    };
-
-    service.createBasePropertyInfo = jest.fn().mockResolvedValue();
-    service.createAmenities = jest.fn().mockResolvedValue();
-    service.createAvailability = jest.fn().mockResolvedValue();
-    service.createCheckIn = jest.fn().mockResolvedValue();
-    service.createGeneralDetail = jest.fn().mockResolvedValue();
-    service.createLocation = jest.fn().mockResolvedValue();
-    service.createPricing = jest.fn().mockResolvedValue();
-    service.createRules = jest.fn().mockResolvedValue();
-    service.createPropertyType = jest.fn().mockResolvedValue();
-    service.createAvailabilityRestrictions = jest.fn().mockResolvedValue();
-    service.createPropertyTestStatus = jest.fn().mockResolvedValue();
-    service.createImages = jest.fn().mockResolvedValue();
-    service.createTechnicalDetails = jest.fn().mockResolvedValue();
+    const property = createBaseProperty("House");
+    mockCreateFlow(service);
 
     await service.create(property, { skipImages: true });
 
@@ -107,49 +125,23 @@ describe("PropertyService technical details flow", () => {
 
   it("includes technical details in full property reads for Camper properties", async () => {
     const service = createService();
+    mockFullPropertyReadData(service, {
+      getPropertyType: createResolvedMock({ property_type: "Camper" }),
+    });
 
-    service.getBasePropertyInfo = jest.fn().mockResolvedValue({ id: "prop-1" });
-    service.getAmenities = jest.fn().mockResolvedValue([]);
-    service.getAvailability = jest.fn().mockResolvedValue([]);
-    service.getAvailabilityRestrictions = jest.fn().mockResolvedValue([]);
-    service.getCheckIn = jest.fn().mockResolvedValue({});
-    service.getGeneralDetails = jest.fn().mockResolvedValue([]);
-    service.getImages = jest.fn().mockResolvedValue([]);
-    service.getLocation = jest.fn().mockResolvedValue({});
-    service.getFullLocation = jest.fn().mockResolvedValue({});
-    service.getPricing = jest.fn().mockResolvedValue({});
-    service.getRules = jest.fn().mockResolvedValue([]);
-    service.getPropertyType = jest.fn().mockResolvedValue({ property_type: "Camper" });
-    service.getPropertyTestStatus = jest.fn().mockResolvedValue({});
-    service.getTechnicalDetails = jest.fn().mockResolvedValue(technicalDetails);
-    service.getPublicCalendarAvailability = jest.fn().mockResolvedValue({});
+    const result = await service.getFullPropertyAttributesInternal(propertyId, false);
 
-    const result = await service.getFullPropertyAttributesInternal("prop-1", false);
-
-    expect(service.getTechnicalDetails).toHaveBeenCalledWith("prop-1");
+    expect(service.getTechnicalDetails).toHaveBeenCalledWith(propertyId);
     expect(result.technicalDetails).toEqual(technicalDetails);
   });
 
   it("does not load technical details in full property reads for non-Boat/Camper properties", async () => {
     const service = createService();
+    mockFullPropertyReadData(service, {
+      getTechnicalDetails: jest.fn(),
+    });
 
-    service.getBasePropertyInfo = jest.fn().mockResolvedValue({ id: "prop-1" });
-    service.getAmenities = jest.fn().mockResolvedValue([]);
-    service.getAvailability = jest.fn().mockResolvedValue([]);
-    service.getAvailabilityRestrictions = jest.fn().mockResolvedValue([]);
-    service.getCheckIn = jest.fn().mockResolvedValue({});
-    service.getGeneralDetails = jest.fn().mockResolvedValue([]);
-    service.getImages = jest.fn().mockResolvedValue([]);
-    service.getLocation = jest.fn().mockResolvedValue({});
-    service.getFullLocation = jest.fn().mockResolvedValue({});
-    service.getPricing = jest.fn().mockResolvedValue({});
-    service.getRules = jest.fn().mockResolvedValue([]);
-    service.getPropertyType = jest.fn().mockResolvedValue({ property_type: "House" });
-    service.getPropertyTestStatus = jest.fn().mockResolvedValue({});
-    service.getTechnicalDetails = jest.fn();
-    service.getPublicCalendarAvailability = jest.fn().mockResolvedValue({});
-
-    const result = await service.getFullPropertyAttributesInternal("prop-1", false);
+    const result = await service.getFullPropertyAttributesInternal(propertyId, false);
 
     expect(service.getTechnicalDetails).not.toHaveBeenCalled();
     expect(result.technicalDetails).toBeNull();
