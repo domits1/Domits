@@ -1,6 +1,6 @@
 .listing-details {
     box-sizing: border-box;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 176px);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 54px);
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
     width: 100%;
     max-width: 100%;
@@ -1115,9 +1115,6 @@
     }
 }
 
-body.header-scrolled .listing-sections-shell {
-    top: env(safe-area-inset-top, 0px);
-}
 
 .location-placeholder {
     margin: 0;
