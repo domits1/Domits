@@ -108,7 +108,7 @@ const ReviewsSection = ({
               <ReviewCard key={review.id || i} review={review} />
             ))}
           </div>
-          {totalReviews > 2 && (
+          {totalReviews > 2 && onShowAll && (
             <button
               type="button"
               className="reviews-section__show-all-btn"

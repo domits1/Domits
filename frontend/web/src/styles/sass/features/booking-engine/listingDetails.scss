@@ -1116,7 +1116,7 @@
 }
 
 
-.location-placeholder {
+.listing-details .location-placeholder {
     margin: 0;
     padding: 28px;
     border: 1px solid #d7dde5;
@@ -1156,7 +1156,7 @@
     }
 }
 
-.reviews-section {
+.listing-details .reviews-section {
     margin: 0;
     padding: 20px;
     border: 1px solid #d7dde5;
@@ -1373,7 +1373,7 @@
     }
 }
 
-.host-section {
+.listing-details .host-section {
     display: flex;
     gap: 40px;
     margin: 0;
@@ -1513,7 +1513,7 @@
     color: red;
 }
 
-.amenities-container {
+.listing-details .amenities-container {
     margin: 0;
     padding: 20px;
     border: 1px solid #d7dde5;

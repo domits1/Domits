@@ -53,17 +53,11 @@ const SectionTabs = ({ sections = [] }) => {
   const [isMobileViewport, setIsMobileViewport] = useState(
     () => globalThis.window !== undefined && globalThis.innerWidth <= 768
   );
-  const [isScrolled, setIsScrolled] = useState(false);
   const buttonRefs = useRef({});
 
   useEffect(() => {
     const handleResize = () => {
-      const nextIsMobileViewport = globalThis.innerWidth <= 768;
-      setIsMobileViewport(nextIsMobileViewport);
-
-      if (nextIsMobileViewport) {
-        setIsScrolled(false);
-      }
+      setIsMobileViewport(globalThis.innerWidth <= 768);
     };
 
     handleResize();
@@ -81,7 +75,6 @@ const SectionTabs = ({ sections = [] }) => {
 
     const handleScroll = () => {
       setActiveSection(resolveActiveSection(sections));
-      setIsScrolled(!isMobileViewport && globalThis.scrollY > 80);
     };
 
     handleScroll();
@@ -120,7 +113,7 @@ const SectionTabs = ({ sections = [] }) => {
   }
 
   return (
-    <div className={`listing-sections-shell${isScrolled ? " is-scrolled" : ""}`}>
+    <div className="listing-sections-shell">
       <nav className="listing-sections-nav" aria-label="Listing sections">
         <div className="listing-sections-nav__track" style={indicatorStyle} />
         {sections.map((section) => (

@@ -8,8 +8,6 @@ import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
 
-const BOOKINGS_API_URL =
-  "https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const startOfUtcDay = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -72,28 +70,6 @@ const buildAcceptedBookingDateKeys = (bookings) => {
   });
 
   return Array.from(blockedDateKeys);
-};
-
-const parseBookingResponse = async (response) => {
-  const payload = await response.json();
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
-  if (Array.isArray(payload?.body)) {
-    return payload.body;
-  }
-
-  if (typeof payload?.body === "string") {
-    try {
-      const parsed = JSON.parse(payload.body);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  return [];
 };
 
 const toPlainObject = (value) => (value && typeof value === "object" ? value : {});
@@ -258,9 +234,11 @@ const ListingDetails2 = () => {
     );
   }
 
+  const hasAmenities = Array.isArray(property?.amenities) && property.amenities.length > 0;
+
   const sectionItems = [
     { id: "photos", label: "Photos", targetId: "listing-photos" },
-    { id: "amenities", label: "Amenities", targetId: "listing-amenities" },
+    ...(hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
     { id: "host", label: "Host", targetId: "listing-host" },
     { id: "location", label: "Location", targetId: "listing-location" },
     { id: "reviews", label: "Reviews", targetId: "listing-reviews" },
