@@ -13,6 +13,7 @@ import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
 import WebsiteEditorPage from "./website/WebsiteEditorPage";
 import WebsiteKpiDashboardPage from "./website/kpis/WebsiteKpiDashboardPage";
 import HostSettings from "./HostSettings";
+import HostTeam from "./HostTeam";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
@@ -118,6 +119,7 @@ function MainDashboardHost() {
           <Route path="website-kpis" element={<Navigate to="../website/kpis" replace />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
+          <Route path="settings/team" element={<HostTeam />} />
 
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>
