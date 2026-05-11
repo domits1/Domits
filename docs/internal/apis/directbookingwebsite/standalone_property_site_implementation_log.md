@@ -1422,6 +1422,130 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
   - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
 
+## [2026-05-01] Standalone site/domain foundation for real publication lifecycle
+Context:
+The standalone website implementation still relied on `standalone_site_draft` plus a `draftId` preview route. That was acceptable for internal previewing, but it was not a real public site lifecycle and it had no separate domain model.
+
+Implementation:
+- Added Aurora migration and ORM models for:
+  - `main.standalone_site`
+  - `main.standalone_site_domain`
+- Added backend repositories:
+  - `StandaloneSiteRepository`
+  - `StandaloneSiteDomainRepository`
+- Added PropertyHandler routes:
+  - `GET /property/website/site`
+  - `POST /property/website/site/publish`
+  - `POST /property/website/site/unpublish`
+- Added editor integration so the host can:
+  - inspect standalone site state
+  - inspect fallback-domain state
+  - publish the current approved live-preview snapshot into a standalone site record
+  - unpublish that standalone site record again
+- Kept the existing draft and preview flow intact:
+  - `Save changes` still affects only the working draft
+  - `Update live preview` still updates the shared preview snapshot
+  - `Publish fallback site` now consumes that approved preview snapshot rather than raw unsaved draft edits
+
+Decision / Rationale:
+- Draft state, site lifecycle state, and domain lifecycle state are separate concerns and must not be stored in one record.
+- Publishing is blocked while preview-sync is pending, because allowing stale public publishes would be operator-hostile and brittle.
+- Fallback-domain state is intentionally independent from site publication state, so a site can be `PUBLISHED` while routing is still `PENDING`.
+
+AWS / Data impact:
+- New Aurora tables required in schema `main`:
+  - `standalone_site`
+  - `standalone_site_domain`
+- New API Gateway routes required:
+  - `GET /property/website/site`
+  - `POST /property/website/site/publish`
+  - `POST /property/website/site/unpublish`
+  - corresponding `OPTIONS` routes if browser preflight is needed in the deployed environment
+- No existing standalone draft columns were removed or repurposed.
+
+Validation:
+- Backend routing unit test passed.
+- Frontend production build passed.
+
+Open risks / Next:
+- Fallback domains are now tracked, but host-based public resolution is not implemented yet.
+- The public site still resolves through `draftId` preview, so fallback/custom domains are not reachable until the public resolver/runtime phase is added.
+- Custom-domain verification, certificate handling, and host-header routing remain later phases.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/ORM/migrations/20260501_standalone_site_foundation.js`
+  - `backend/ORM/models/Standalone_Site.js`
+  - `backend/ORM/models/Standalone_Site_Domain.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDomainRepository.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteSiteService.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
+## [2026-05-01] Published-site resolver and runtime on top of standalone site/domain foundation
+Context:
+Phase 1 separated draft state from site/domain state, but the public runtime still depended on the `draftId` preview route. That meant fallback domains were tracked but not actually usable as the published-site resolution model.
+
+Implementation:
+- Added public standalone-site routes in PropertyHandler:
+  - `GET /property/website/public/resolve`
+  - `GET /property/website/public/render`
+- Added repository lookups for:
+  - `StandaloneSiteRepository.getSiteById(...)`
+  - `StandaloneSiteDomainRepository.getDomainByName(...)`
+- Added a published-site runtime page:
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicSitePage.jsx`
+- Added public runtime fetch helpers:
+  - `websitePublicSiteService.js`
+- Added same-origin debug routing:
+  - `/website-live/:domain`
+  - optional `?siteId=` support so published-site rendering can be exercised before real fallback-domain DNS is active
+- Added live-surface LCP telemetry from the published-site runtime through the existing `SITE_LCP_RECORDED` event path.
+- Added an editor link into the published-site test route so hosts can open the currently published site state without leaving the workspace guessing which URL to construct.
+
+Decision / Rationale:
+- Public live rendering now uses the published snapshot stored in `standalone_site` rather than the draft preview path.
+- Real host-based resolution still validates published-site reachability through domain status.
+- Internal debug rendering is intentionally separated from real domain activation so acceptance testing does not depend on DNS cutover timing.
+- The public API accepts the target domain explicitly from the frontend because browser API calls go to the API host, not the standalone site host. Relying on the API request `Host` header alone would be wrong in the current client-rendered architecture.
+
+AWS / Data impact:
+- New API Gateway routes required:
+  - `GET /property/website/public/resolve`
+  - `GET /property/website/public/render`
+  - corresponding `OPTIONS` routes if browser preflight is needed in the deployed environment
+- No new Aurora tables or columns were required beyond the Phase 1 site/domain foundation.
+- Existing KPI/event storage is reused; live LCP telemetry now becomes real once published-site traffic exists.
+
+Validation:
+- Backend routing unit test passed.
+- Frontend production build passed.
+
+Open risks / Next:
+- Fallback-domain DNS and public host routing still need the actual infrastructure cutover to make the live site reachable on its real hostname.
+- Custom-domain verification and activation remain a later phase.
+- The internal `/website-live/:domain?siteId=...` route is a controlled debug path, not the final public hostname strategy.
+
+Evidence (commit(s), file(s), docs):
+- Files:
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDomainRepository.js`
+  - `backend/functions/PropertyHandler/controller/propertyController.js`
+  - `backend/functions/PropertyHandler/index.js`
+  - `backend/test/PropertyHandler/routing-unit.test.js`
+  - `frontend/web/src/App.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicSitePage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/services/websitePublicSiteService.js`
+  - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsService.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+
 ## [2026-05-04] KPI performance metrics segmented by mobile, tablet, and desktop
 Context:
 The standalone website KPI dashboard already exposed preview/live performance as a separate category, but the actual telemetry and aggregation were still biased toward mobile-only LCP. That was too narrow to support useful cross-device analysis.

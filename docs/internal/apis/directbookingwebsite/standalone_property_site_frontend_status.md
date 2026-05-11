@@ -73,8 +73,20 @@ What is in place:
 - The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
 - Standalone website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
 - The KPI dashboard now separates surface performance into `Preview` and `Live` tabs:
-  - preview LCP can now be measured separately for mobile, tablet, and desktop preview visits
+  - preview LCP can be measured separately for mobile, tablet, and desktop preview visits
   - live LCP is also segmented by mobile, tablet, and desktop, but remains pending until a real published live-site surface exists
+- Phase 1 of the public-site lifecycle is now implemented:
+  - `main.standalone_site` stores standalone-owned published site state separately from the editor draft
+  - `main.standalone_site_domain` stores fallback-domain metadata separately from the site lifecycle record
+  - the editor can publish and unpublish the standalone site record without treating the draft row as the public website source of truth
+  - fallback-domain assignment is now visible in the editor, but public host-based routing is still a later phase
+- Phase 2 of the public runtime is now implemented:
+  - published sites can be resolved through `GET /property/website/public/resolve`
+  - published sites can be rendered through `GET /property/website/public/render`
+  - the public runtime now renders from `standalone_site.published_property_snapshot_json` plus published overrides instead of reading brochure content through the draft preview path
+  - a same-origin debug route exists at `/website-live/:domain` so hosts can test published-site rendering before real fallback-domain DNS is activated
+  - the actual standalone-host root path can now render the published site when the current hostname matches the fallback-domain suffix
+  - live LCP telemetry can now be emitted from the published-site runtime instead of remaining preview-only
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -183,6 +195,12 @@ Current implementation details:
 - Preview workflow logic is extracted into a dedicated script module to support future dedicated preview route/new-tab flow.
 - A dedicated public preview route now exists for saved drafts and can be opened from the workspace/editor.
 - The shared preview route currently uses the draft id as the preview identifier. This is acceptable for acceptance/internal review, but should be replaced by a stronger preview token or signed-link strategy before treating preview links as production-grade public URLs.
+- The shared preview route still resolves by `draftId`, which means it remains an internal preview mechanism and not the final public live-site runtime.
+- Publishing now snapshots the currently approved live-preview state into a separate standalone site record.
+- Fallback-domain state is now tracked separately from site publication state:
+  - a site can be `PUBLISHED`
+  - while its fallback domain is still `PENDING`
+  This separation is intentional and is required for the later routing phase.
 - Shared template model is in place and reusable by additional templates.
 - Built previews are persisted as website drafts keyed by host and property.
 - Listings with an existing saved website are no longer offered again in the builder flow.
