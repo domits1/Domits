@@ -1,0 +1,22 @@
+{
+  "name": "roompricegenie-integration",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "RoomPriceGenie dynamic pricing integration for Domits",
+  "main": "index.js",
+  "scripts": {
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.812.0",
+    "@aws-sdk/client-secrets-manager": "^3.812.0",
+    "@aws-sdk/client-ssm": "^3.812.0",
+    "@aws-sdk/dsql-signer": "^3.812.0",
+    "typeorm": "^0.3.24",
+    "pg": "^8.16.0",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

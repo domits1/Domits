@@ -1,0 +1,152 @@
+<svg viewBox="0 0 700 620" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>RoomPriceGenie integratie — data flow diagram</title>
+  <desc>Stap-voor-stap data flow tussen host, Domits frontend, Domits backend (AWS Lambda), AWS Secrets Manager, en RoomPriceGenie API</desc>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#888"/>
+    </marker>
+    <marker id="arr-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#3CB750"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#378ADD"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="620" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="350" y="34" text-anchor="middle" font-size="15" font-weight="600" fill="#1a1a2e" font-family="system-ui, sans-serif">RoomPriceGenie × Domits — Data Flow</text>
+
+  <!-- Legend -->
+  <rect x="16" y="46" width="240" height="60" rx="7" fill="#F8F9FA" stroke="#E2E6EA" stroke-width="0.5"/>
+  <text x="26" y="64" font-size="11" fill="#888" font-family="system-ui, sans-serif" font-weight="500">LEGENDA</text>
+  <line x1="26" y1="76" x2="56" y2="76" stroke="#3CB750" stroke-width="2" marker-end="url(#arr-green)"/>
+  <text x="62" y="80" font-size="11" fill="#555" font-family="system-ui, sans-serif">Host / Domits actie</text>
+  <line x1="26" y1="94" x2="56" y2="94" stroke="#378ADD" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr-blue)"/>
+  <text x="62" y="98" font-size="11" fill="#555" font-family="system-ui, sans-serif">RPG → Domits (webhook)</text>
+
+  <!-- KOLOM HEADERS -->
+  <text x="70" y="126" text-anchor="middle" font-size="11" font-weight="500" fill="#3CB750" font-family="system-ui, sans-serif">HOST</text>
+  <text x="230" y="126" text-anchor="middle" font-size="11" font-weight="500" fill="#3CB750" font-family="system-ui, sans-serif">DOMITS FRONTEND</text>
+  <text x="390" y="126" text-anchor="middle" font-size="11" font-weight="500" fill="#555" font-family="system-ui, sans-serif">DOMITS BACKEND</text>
+  <text x="560" y="126" text-anchor="middle" font-size="11" font-weight="500" fill="#378ADD" font-family="system-ui, sans-serif">ROOMPRICEGENIE</text>
+
+  <!-- Kolom achtergronden -->
+  <rect x="20" y="132" width="100" height="474" rx="6" fill="#F0FDF4" stroke="#C6EEC9" stroke-width="0.5"/>
+  <rect x="178" y="132" width="104" height="474" rx="6" fill="#F0FDF4" stroke="#C6EEC9" stroke-width="0.5"/>
+  <rect x="330" y="132" width="120" height="474" rx="6" fill="#F8F9FA" stroke="#E2E6EA" stroke-width="0.5"/>
+  <rect x="500" y="132" width="120" height="474" rx="6" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="0.5"/>
+
+  <!-- STAP 1 -->
+  <text x="350" y="154" text-anchor="middle" font-size="10" fill="#aaa" font-family="system-ui, sans-serif">① ONBOARDING</text>
+  <line x1="20" y1="158" x2="680" y2="158" stroke="#E2E6EA" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <rect x="30" y="165" width="80" height="40" rx="6" fill="#fff" stroke="#C6EEC9" stroke-width="1"/>
+  <text x="70" y="181" text-anchor="middle" font-size="10" fill="#166534" font-family="system-ui, sans-serif" font-weight="500">RPG account</text>
+  <text x="70" y="195" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">krijgt credentials</text>
+
+  <line x1="110" y1="185" x2="494" y2="185" stroke="#3CB750" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <rect x="255" y="173" width="120" height="18" rx="4" fill="#F0FDF4"/>
+  <text x="315" y="186" text-anchor="middle" font-size="9" fill="#166534" font-family="system-ui, sans-serif">Technical Kickoff Call</text>
+
+  <rect x="510" y="165" width="100" height="40" rx="6" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+  <text x="560" y="181" text-anchor="middle" font-size="10" fill="#1D4ED8" font-family="system-ui, sans-serif" font-weight="500">Verstrekt</text>
+  <text x="560" y="195" text-anchor="middle" font-size="9" fill="#1D4ED8" font-family="system-ui, sans-serif">client_id / secret</text>
+
+  <!-- STAP 2 -->
+  <text x="350" y="225" text-anchor="middle" font-size="10" fill="#aaa" font-family="system-ui, sans-serif">② VERBINDEN</text>
+  <line x1="20" y1="229" x2="680" y2="229" stroke="#E2E6EA" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <rect x="30" y="237" width="80" height="40" rx="6" fill="#fff" stroke="#C6EEC9" stroke-width="1"/>
+  <text x="70" y="253" text-anchor="middle" font-size="10" fill="#166534" font-family="system-ui, sans-serif" font-weight="500">Vult connect</text>
+  <text x="70" y="267" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">formulier in</text>
+
+  <line x1="110" y1="257" x2="172" y2="257" stroke="#3CB750" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <rect x="186" y="237" width="88" height="40" rx="6" fill="#fff" stroke="#C6EEC9" stroke-width="1"/>
+  <text x="230" y="253" text-anchor="middle" font-size="10" fill="#166534" font-family="system-ui, sans-serif" font-weight="500">POST /connect</text>
+  <text x="230" y="267" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">Lambda call</text>
+
+  <line x1="274" y1="257" x2="324" y2="257" stroke="#3CB750" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <rect x="338" y="237" width="104" height="40" rx="6" fill="#fff" stroke="#E2E6EA" stroke-width="1"/>
+  <text x="390" y="253" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui, sans-serif" font-weight="500">Token ophalen</text>
+  <text x="390" y="267" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">+ opslaan Secrets Mgr</text>
+
+  <line x1="442" y1="257" x2="494" y2="257" stroke="#3CB750" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <rect x="510" y="237" width="100" height="40" rx="6" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+  <text x="560" y="253" text-anchor="middle" font-size="10" fill="#1D4ED8" font-family="system-ui, sans-serif" font-weight="500">POST /token</text>
+  <text x="560" y="267" text-anchor="middle" font-size="9" fill="#1D4ED8" font-family="system-ui, sans-serif">JWT access token</text>
+
+  <!-- STAP 3 -->
+  <text x="350" y="300" text-anchor="middle" font-size="10" fill="#aaa" font-family="system-ui, sans-serif">③ DATA PUSH (DOMITS → RPG)</text>
+  <line x1="20" y1="304" x2="680" y2="304" stroke="#E2E6EA" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <rect x="30" y="312" width="80" height="40" rx="6" fill="#fff" stroke="#C6EEC9" stroke-width="1"/>
+  <text x="70" y="328" text-anchor="middle" font-size="10" fill="#166534" font-family="system-ui, sans-serif" font-weight="500">Klikt "Push</text>
+  <text x="70" y="342" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">data to RPG"</text>
+
+  <line x1="110" y1="332" x2="172" y2="332" stroke="#3CB750" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <rect x="186" y="312" width="88" height="40" rx="6" fill="#fff" stroke="#C6EEC9" stroke-width="1"/>
+  <text x="230" y="328" text-anchor="middle" font-size="10" fill="#166534" font-family="system-ui, sans-serif" font-weight="500">POST /availability</text>
+  <text x="230" y="342" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">POST /rates</text>
+
+  <line x1="274" y1="332" x2="324" y2="332" stroke="#3CB750" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <rect x="338" y="312" width="104" height="40" rx="6" fill="#fff" stroke="#E2E6EA" stroke-width="1"/>
+  <text x="390" y="328" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui, sans-serif" font-weight="500">Haalt data op</text>
+  <text x="390" y="342" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">DB → RPG formaat</text>
+
+  <line x1="442" y1="332" x2="494" y2="332" stroke="#3CB750" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <rect x="510" y="312" width="100" height="40" rx="6" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+  <text x="560" y="328" text-anchor="middle" font-size="10" fill="#1D4ED8" font-family="system-ui, sans-serif" font-weight="500">POST /event</text>
+  <text x="560" y="342" text-anchor="middle" font-size="9" fill="#1D4ED8" font-family="system-ui, sans-serif">availability + rates</text>
+
+  <!-- STAP 4 -->
+  <text x="350" y="374" text-anchor="middle" font-size="10" fill="#aaa" font-family="system-ui, sans-serif">④ ANALYSE (intern bij RPG)</text>
+  <line x1="20" y1="378" x2="680" y2="378" stroke="#E2E6EA" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <rect x="510" y="386" width="100" height="50" rx="6" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+  <text x="560" y="404" text-anchor="middle" font-size="10" fill="#1D4ED8" font-family="system-ui, sans-serif" font-weight="500">Prijsalgoritme</text>
+  <text x="560" y="418" text-anchor="middle" font-size="9" fill="#1D4ED8" font-family="system-ui, sans-serif">bezetting, seizoen,</text>
+  <text x="560" y="430" text-anchor="middle" font-size="9" fill="#1D4ED8" font-family="system-ui, sans-serif">marktdata</text>
+
+  <!-- STAP 5 -->
+  <text x="350" y="455" text-anchor="middle" font-size="10" fill="#aaa" font-family="system-ui, sans-serif">⑤ PRIJSAANBEVELING (RPG → DOMITS)</text>
+  <line x1="20" y1="459" x2="680" y2="459" stroke="#E2E6EA" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <rect x="510" y="467" width="100" height="40" rx="6" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+  <text x="560" y="483" text-anchor="middle" font-size="10" fill="#1D4ED8" font-family="system-ui, sans-serif" font-weight="500">Stuurt aanbeveling</text>
+  <text x="560" y="497" text-anchor="middle" font-size="9" fill="#1D4ED8" font-family="system-ui, sans-serif">rates.update event</text>
+
+  <line x1="510" y1="487" x2="448" y2="487" stroke="#378ADD" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-blue)"/>
+
+  <rect x="338" y="467" width="104" height="40" rx="6" fill="#fff" stroke="#E2E6EA" stroke-width="1"/>
+  <text x="390" y="483" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui, sans-serif" font-weight="500">Slaat prijs op</text>
+  <text x="390" y="497" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">Calendar_Override tabel</text>
+
+  <!-- STAP 6 -->
+  <text x="350" y="527" text-anchor="middle" font-size="10" fill="#aaa" font-family="system-ui, sans-serif">⑥ GAST BOEKT</text>
+  <line x1="20" y1="531" x2="680" y2="531" stroke="#E2E6EA" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <rect x="338" y="539" width="104" height="40" rx="6" fill="#fff" stroke="#E2E6EA" stroke-width="1"/>
+  <text x="390" y="555" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui, sans-serif" font-weight="500">Dynamische prijs</text>
+  <text x="390" y="569" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">getoond bij boeking</text>
+
+  <line x1="338" y1="559" x2="280" y2="559" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="186" y="539" width="88" height="40" rx="6" fill="#fff" stroke="#C6EEC9" stroke-width="1"/>
+  <text x="230" y="555" text-anchor="middle" font-size="10" fill="#166534" font-family="system-ui, sans-serif" font-weight="500">Toont RPG-prijs</text>
+  <text x="230" y="569" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">in boekingsflow</text>
+
+  <line x1="186" y1="559" x2="116" y2="559" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="30" y="539" width="80" height="40" rx="6" fill="#fff" stroke="#C6EEC9" stroke-width="1"/>
+  <text x="70" y="555" text-anchor="middle" font-size="10" fill="#166534" font-family="system-ui, sans-serif" font-weight="500">Gast ziet</text>
+  <text x="70" y="569" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui, sans-serif">optimale prijs</text>
+</svg>
