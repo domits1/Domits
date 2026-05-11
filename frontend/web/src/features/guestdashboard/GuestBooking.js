@@ -18,6 +18,7 @@ import {
   getPropertyId,
   normalizeGuestBookingsResponse,
   splitBookingsByTime,
+  normalizeStayStatus,
 } from "./utils/guestDashboardUtils";
 
 const formatBookingDates = (bookingItem) => {
@@ -81,9 +82,7 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
 
           <div className="guest-booking-row-meta">
             <span className="guest-booking-status">{bookingStatus || "-"}</span>
-            {isPaymentRequired && (
-              <span className="guest-booking-pay-now">Pay Now →</span>
-            )}
+            {isPaymentRequired && <span className="guest-booking-pay-now">Pay Now →</span>}
             <span className="guest-booking-dates">{formatBookingDates(bookingItem)}</span>
           </div>
         </div>
@@ -214,15 +213,25 @@ function GuestBooking() {
     [propertyMap]
   );
 
-  const paidBookings = useMemo(() => getPaidBookings(bookings), [bookings]);
+  const cancelledBookings = useMemo(
+    () => bookings.filter((b) => normalizeStayStatus(b?.status) === "Cancelled"),
+    [bookings]
+  );
+
+  const paidBookings = useMemo(
+    () => getPaidBookings(bookings).filter((b) => normalizeStayStatus(b?.status) !== "Cancelled"),
+    [bookings]
+  );
+
   const inquiryBookings = useMemo(() => getInquiryBookings(bookings), [bookings]);
 
   useEffect(() => {
-    if (!paidBookings.length) return;
+    const combined = [...paidBookings, ...cancelledBookings];
+    if (!combined.length) return;
 
-    const ids = Array.from(new Set(paidBookings.map(getPropertyId).filter(Boolean)));
+    const ids = Array.from(new Set(combined.map((b) => getPropertyId(b)).filter(Boolean)));
     if (ids.length) fetchPropertyDetails(ids);
-  }, [paidBookings, fetchPropertyDetails]);
+  }, [paidBookings, cancelledBookings, fetchPropertyDetails]);
 
   const handleBookingClick = (bookingItem) => {
     const bookingId = getBookingId(bookingItem);
@@ -295,6 +304,15 @@ function GuestBooking() {
             emptyMessage="You do not have any upcoming bookings yet."
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
+          />
+
+          <BookingSection
+            title="Cancelled Bookings"
+            bookings={cancelledBookings}
+            emptyMessage="You do not have any cancelled bookings yet."
+            propertyMap={propertyMap}
+            handleBookingClick={handleBookingClick}
+            extraClassName="guest-card--cancelled"
           />
 
           <BookingSection

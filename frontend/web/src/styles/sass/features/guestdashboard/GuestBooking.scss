@@ -284,6 +284,21 @@ $text-muted: #6b7280;
     }
   }
 
+  .guest-card--cancelled {
+    .guest-card-header {
+      background: #f8fafc;
+      color: $text;
+    }
+
+    &::before {
+      background: transparent;
+    }
+
+    @media (min-width: 901px) {
+      justify-self: stretch;
+    }
+  }
+
   .guest-card--past .guest-card-body {
     max-height: 360px;
     overflow-y: auto;

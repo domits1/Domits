@@ -123,6 +123,33 @@ p {
   cursor: pointer;
 }
 
+.card.guest-card--cancelled {
+  background: #fff;
+  border-color: #eaeaea;
+
+  .cardHeader {
+    background: #f8fafc;
+    color: #111827;
+  }
+
+  .pastList {
+    margin-top: 10px;
+  }
+
+  .pastItem {
+    background: transparent;
+    border: 1px solid #eee;
+    color: #111827;
+  }
+
+  button {
+    background: transparent;
+    color: inherit;
+    border: none;
+    padding: 0;
+  }
+}
+
 .mainGrid > div:last-child .card {
   margin-bottom: 16px;
 }
@@ -303,10 +330,10 @@ p {
 }
 
 .upcomingCard .stayInnerCard {
-  min-height: 220px;   
+  min-height: 220px;
 }
 
-.upcomingCard{
+.upcomingCard {
   margin-bottom: 30px;
 }
 
@@ -340,7 +367,8 @@ p {
   line-height: 1.25;
 }
 
-.stayActions, .stayActionsSecondary {
+.stayActions,
+.stayActionsSecondary {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
