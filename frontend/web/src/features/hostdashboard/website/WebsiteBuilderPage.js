@@ -141,6 +141,18 @@ const buildPublishedWebsitePath = (domain, siteId = "") => {
   const normalizedSiteId = String(siteId || "").trim();
   return normalizedSiteId ? `${path}?siteId=${encodeURIComponent(normalizedSiteId)}` : path;
 };
+const buildPublishedWebsiteHref = (domain, siteId = "", domainStatus = "") => {
+  const normalizedDomain = String(domain || "").trim().toLowerCase();
+  if (!normalizedDomain) {
+    return "";
+  }
+
+  if (String(domainStatus || "").trim().toUpperCase() === "ACTIVE") {
+    return `https://${normalizedDomain}`;
+  }
+
+  return buildPublishedWebsitePath(normalizedDomain, siteId);
+};
 
 const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
 const getDraftPropertyId = (draft) => String(draft?.propertyId || "").trim();
@@ -1039,6 +1051,7 @@ function WebsiteBuilderPage() {
     try {
       const siteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
       const liveDomain = String(siteSummary?.primaryDomain?.domain || "").trim();
+      const liveDomainStatus = String(siteSummary?.primaryDomain?.status || "").trim();
       const siteId = String(siteSummary?.site?.id || "").trim();
       const siteStatus = String(siteSummary?.site?.status || "").trim().toUpperCase();
 
@@ -1048,7 +1061,7 @@ function WebsiteBuilderPage() {
       }
 
       globalThis.open(
-        buildPublishedWebsitePath(liveDomain, siteId),
+        buildPublishedWebsiteHref(liveDomain, siteId, liveDomainStatus),
         "_blank",
         "noopener,noreferrer"
       );

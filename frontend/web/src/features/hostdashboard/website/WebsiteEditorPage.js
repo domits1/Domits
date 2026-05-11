@@ -68,6 +68,18 @@ const buildPublishedWebsitePath = (domain, siteId = "") => {
   const normalizedSiteId = String(siteId || "").trim();
   return normalizedSiteId ? `${path}?siteId=${encodeURIComponent(normalizedSiteId)}` : path;
 };
+const buildPublishedWebsiteHref = (domain, siteId = "", domainStatus = "") => {
+  const normalizedDomain = String(domain || "").trim().toLowerCase();
+  if (!normalizedDomain) {
+    return "";
+  }
+
+  if (String(domainStatus || "").trim().toUpperCase() === "ACTIVE") {
+    return `https://${normalizedDomain}`;
+  }
+
+  return buildPublishedWebsitePath(normalizedDomain, siteId);
+};
 
 const normalizeUiErrorMessage = (message, fallbackMessage) => {
   const normalizedMessage = String(message || "").trim();
@@ -830,7 +842,11 @@ function WebsiteEditorPublicSitePanel({
           Live site URL:{" "}
           <a
             className={styles.publicSiteLink}
-            href={buildPublishedWebsitePath(primarySiteDomain.domain, siteSummary?.site?.id)}
+            href={buildPublishedWebsiteHref(
+              primarySiteDomain.domain,
+              siteSummary?.site?.id,
+              primarySiteDomain.status
+            )}
             target="_blank"
             rel="noreferrer"
           >
@@ -1573,7 +1589,11 @@ function WebsiteEditorPage() {
 
     setIsActionMenuOpen(false);
     globalThis.open(
-      buildPublishedWebsitePath(publishedDomain, siteSummary?.site?.id),
+      buildPublishedWebsiteHref(
+        publishedDomain,
+        siteSummary?.site?.id,
+        primarySiteDomain?.status
+      ),
       "_blank",
       "noopener,noreferrer"
     );
