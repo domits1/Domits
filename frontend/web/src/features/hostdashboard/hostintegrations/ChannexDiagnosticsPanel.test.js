@@ -19,6 +19,7 @@ const ChannexDiagnosticsPanel = require("./ChannexDiagnosticsPanel").default;
 const {
   getChannexStatus,
   syncChannexCertificationTestCase,
+  syncChannexFull,
   syncChannexRestrictions,
 } = require("./channexApi");
 
@@ -130,5 +131,31 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     });
     expect(await screen.findByText("Certification test #2 completed.")).toBeTruthy();
     expect(screen.getAllByText(/task-case-2/).length).toBeGreaterThan(0);
+  });
+
+  test("runs full/certification sync from the admin actions UI", async () => {
+    syncChannexFull.mockResolvedValue({
+      requestCount: 2,
+      overallSuccess: true,
+      taskIds: ["task-availability-full", "task-restrictions-full"],
+      warnings: [],
+      errors: [],
+    });
+
+    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    fillRequiredInputs();
+
+    fireEvent.click(screen.getByRole("button", { name: "Full/certification sync" }));
+
+    await waitFor(() => expect(syncChannexFull).toHaveBeenCalledTimes(1));
+    expect(syncChannexFull).toHaveBeenCalledWith({
+      userId: "user-1",
+      domitsPropertyId: "domits-property-1",
+      dateFrom: "2026-05-24",
+      dateTo: "2027-10-05",
+    });
+    expect(await screen.findByText("Full/certification sync completed.")).toBeTruthy();
+    expect(screen.getAllByText(/task-availability-full/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/task-restrictions-full/).length).toBeGreaterThan(0);
   });
 });

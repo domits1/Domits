@@ -53,6 +53,7 @@ export default function WebsiteContactWidget({ model }) {
       <button
         type="button"
         className={styles.visitorChatLauncher}
+        data-preview-target-id="visibility.chatWidget"
         onClick={() => setIsOpen(true)}
         aria-label="Contact host"
       >
@@ -63,7 +64,11 @@ export default function WebsiteContactWidget({ model }) {
   }
 
   return (
-    <aside className={styles.visitorChatPanel} aria-label="Contact host widget">
+    <aside
+      className={styles.visitorChatPanel}
+      data-preview-target-id="visibility.chatWidget"
+      aria-label="Contact host widget"
+    >
       <div className={styles.visitorChatHeader}>
         <div>
           <p className={styles.visitorChatEyebrow}>Host contact</p>

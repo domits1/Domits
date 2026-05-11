@@ -10,6 +10,7 @@ import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import CreditCardIcon from "@mui/icons-material/AccountBalanceWallet";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
+import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -34,7 +35,8 @@ const NAV = [
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
-  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
   {
     key: "ChannexCertification",
     label: "Channex Certification",

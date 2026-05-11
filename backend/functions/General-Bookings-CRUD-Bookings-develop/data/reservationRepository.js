@@ -276,6 +276,27 @@ class ReservationRepository {
     };
   }
 
+  async getBlockedDatesByPropertyId(propertyId) {
+    const client = await Database.getInstance();
+    const results = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .select(["booking.arrivaldate", "booking.departuredate"])
+      .where("booking.property_id = :propertyId", { propertyId })
+      .andWhere("booking.status NOT IN (:...excludedStatuses)", {
+        excludedStatuses: ["Failed", "Declined", "Inquiry"],
+      })
+      .getMany();
+
+    return {
+      statusCode: 200,
+      response: results.map((b) => ({
+        arrivaldate: b.arrivaldate,
+        departuredate: b.departuredate,
+      })),
+    };
+  }
+
   async getBookingById(id) {
     const client = await Database.getInstance();
     const query = await client

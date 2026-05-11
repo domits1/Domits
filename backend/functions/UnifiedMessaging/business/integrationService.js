@@ -7869,7 +7869,11 @@ export default class IntegrationService {
       const combinedErrors = dedupeByJson(providerSteps.flatMap((item) => item.errors));
       const requestCount = providerSteps.reduce((sum, item) => sum + item.requestCount, 0);
       const calledProvider = requestCount > 0;
-      const overallSuccess = calledProvider && combinedErrors.length === 0 && providerSteps.every((item) => item.success);
+      const overallSuccess =
+        calledProvider &&
+        combinedWarnings.length === 0 &&
+        combinedErrors.length === 0 &&
+        providerSteps.every((item) => item.success);
       const responseBody = {
         ...this.buildChannexFullSyncBaseResponse({
           readiness,

@@ -805,6 +805,49 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     expect(result.response.steps.restrictions.results[0]).not.toHaveProperty("chunkIndex");
   });
 
+  test("full certification sync provider warnings keep overallSuccess false", async () => {
+    const pushAvailability = jest.fn(async (_secret, payloads) => ({
+      success: true,
+      results: payloads.map((payload) => ({
+        externalPropertyId: payload.externalPropertyId,
+        externalRoomTypeId: payload.externalRoomTypeId,
+        externalRoomTypeIds: payload.externalRoomTypeIds,
+        requestBody: { values: payload.values },
+        providerStatus: "ACCEPTED_WITH_WARNINGS",
+        httpStatus: 200,
+        success: true,
+        taskId: "task-availability-warning",
+        warnings: ["Provided value was accepted with warnings."],
+        errorCode: null,
+        errorMessage: null,
+      })),
+    }));
+    const pushRestrictions = createSuccessfulRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-05-24",
+      "2026-05-24",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestCount).toBe(2);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    expect(result.response.overallSuccess).toBe(false);
+    expect(result.response.warnings).toEqual(["Provided value was accepted with warnings."]);
+    expect(result.response.errors).toEqual([]);
+    expect(result.response.taskIds).toEqual(["task-availability-warning", "task-restrictions-1"]);
+  });
+
   test("full certification sync dryRun builds summarized 500-day payloads without provider calls", async () => {
     const pushAvailability = jest.fn();
     const pushRestrictions = jest.fn();

@@ -2,7 +2,12 @@
   min-height: 100vh;
   background:
     radial-gradient(circle at top left, rgba(31, 78, 121, 0.08), transparent 30%),
-    linear-gradient(180deg, #f8fbff 0%, #ffffff 42%, #f7fbff 100%);
+    linear-gradient(
+      180deg,
+      var(--website-surface-background, #f8fbff) 0%,
+      #ffffff 42%,
+      var(--website-surface-background, #f8fbff) 100%
+    );
   color: #0f172a;
 }
 
