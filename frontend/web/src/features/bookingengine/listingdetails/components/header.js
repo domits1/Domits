@@ -31,7 +31,10 @@ Header.propTypes = {
   title: PropTypes.string,
   rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   generalDetails: PropTypes.arrayOf(
-    PropTypes.shape({ detail: PropTypes.string, value: PropTypes.string })
+    PropTypes.shape({
+      detail: PropTypes.string,
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })
   ),
 };
 

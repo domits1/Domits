@@ -61,7 +61,7 @@ WhereYoullStay.propTypes = {
   generalDetails: PropTypes.arrayOf(
     PropTypes.shape({
       detail: PropTypes.string,
-      value: PropTypes.string,
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     })
   ),
 };

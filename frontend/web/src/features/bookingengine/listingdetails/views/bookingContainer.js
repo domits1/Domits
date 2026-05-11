@@ -170,7 +170,11 @@ const BookingContainer = ({
   const nights = useMemo(() => calculateNights(checkInDate, checkOutDate), [checkInDate, checkOutDate]);
 
   const hostId = property?.property?.hostId || property?.property?.hostID || null;
-  const hostName = host?.givenName || host?.name || "Host";
+  const hostFirstName = host?.givenName || host?.given_name || "";
+  const hostLastName = host?.familyName || host?.family_name || "";
+  const hostName = hostFirstName || hostLastName
+    ? `${hostFirstName} ${hostLastName}`.trim()
+    : host?.name || "Host";
   const hostImage = host?.profileImage || null;
   const resolvedPropertyId = propertyId || property?.property?.id || property?.property?.ID || null;
 
