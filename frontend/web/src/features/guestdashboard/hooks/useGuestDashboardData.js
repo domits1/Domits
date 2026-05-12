@@ -2,23 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 
 import useFetchContacts from "../../hostdashboard/hostmessages/hooks/useFetchContacts";
 import useDashboardIdentity from "../../../hooks/useDashboardIdentity";
-import {
-  getGuestBookings,
-} from "../services/bookingAPI";
+import { getGuestBookings } from "../services/bookingAPI";
 import {
   getArrivalDate,
   getBookingId,
   getBookingTotal,
   getDepartureDate,
   getPaidBookings,
+  normalizeGuestBookingsResponse,
   getPropertyId,
   getReservationNumber,
   normalizeStayStatus,
 } from "../utils/guestDashboardUtils";
 import { normalizeImageUrl, placeholderImage } from "../utils/image";
-import {
-  resolveAccommodationImageUrl,
-} from "../../../utils/accommodationImage";
+import { resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
 import { fetchPropertySummaries } from "../services/propertySummaryService";
 import {
   buildRecentMessages,
@@ -39,6 +36,7 @@ const INITIAL_DATA = {
   currentStay: null,
   upcomingStay: null,
   pastStays: [],
+  cancelledStays: [],
   reminders: [],
   messages: [],
 };
@@ -90,9 +88,7 @@ const buildTripReminders = ({ currentStay, upcomingStay, today }) => {
   }
 
   if (upcomingStay?.name && upcomingStay?.arrivalDate) {
-    reminders.push(
-      `${upcomingStay.name} starts ${SHORT_DATE_FORMATTER.format(upcomingStay.arrivalDate)}`
-    );
+    reminders.push(`${upcomingStay.name} starts ${SHORT_DATE_FORMATTER.format(upcomingStay.arrivalDate)}`);
   }
 
   return reminders.slice(0, 3);
@@ -157,9 +153,7 @@ const buildStayRecord = ({ booking, arrivalDate, departureDate, propertySummary 
   const fallbackImage =
     resolveAccommodationImageUrl(booking?.images?.[0], "thumb") ||
     resolveAccommodationImageUrl(booking?.property?.images?.[0], "thumb") ||
-    normalizeImageUrl(
-      booking?.propertyImage || booking?.image || booking?.property?.coverImage || null
-    ) ||
+    normalizeImageUrl(booking?.propertyImage || booking?.image || booking?.property?.coverImage || null) ||
     placeholderImage;
 
   return {
@@ -177,8 +171,7 @@ const buildStayRecord = ({ booking, arrivalDate, departureDate, propertySummary 
     total: getBookingTotal(booking),
     status: normalizeStayStatus(booking?.status),
     hostName:
-      propertySummary?.hostName ||
-      safeString(booking?.hostname || booking?.hostName || booking?.host?.name, ""),
+      propertySummary?.hostName || safeString(booking?.hostname || booking?.hostName || booking?.host?.name, ""),
     hostImage: propertySummary?.hostImage || null,
   };
 };
@@ -215,6 +208,19 @@ export default function useGuestDashboardData() {
           return;
         }
 
+        const allBookings = normalizeGuestBookingsResponse(bookingData);
+        const cancelledRaw = allBookings.filter((booking) => normalizeStayStatus(booking?.status) === "Cancelled");
+        const cancelledEntries = cancelledRaw.map((booking) => ({
+          booking,
+          arrivalDate: getArrivalDate(booking),
+          departureDate: getDepartureDate(booking),
+        }));
+        cancelledEntries.sort((left, right) => {
+          const leftTime = left.departureDate?.getTime() ?? 0;
+          const rightTime = right.departureDate?.getTime() ?? 0;
+          return rightTime - leftTime;
+        });
+
         const paidBookings = getPaidBookings(bookingData);
         const { currentBookings, upcomingBookings, pastBookings } = classifyBookings(paidBookings);
 
@@ -222,33 +228,40 @@ export default function useGuestDashboardData() {
           currentBookings[0],
           upcomingBookings[0],
           ...pastBookings.slice(0, 3),
+          ...cancelledEntries.slice(0, 3),
         ].filter(Boolean);
 
-        const propertySummaries = await fetchPropertySummaries(
-          visibleBookings.map(({ booking }) => getPropertyId(booking))
+        const propertyIds = Array.from(
+          new Set(visibleBookings.map(({ booking }) => getPropertyId(booking)).filter(Boolean))
         );
+        const propertySummaries = await fetchPropertySummaries(propertyIds);
 
         if (!isMounted) {
           return;
         }
 
-        const currentStay =
-          currentBookings[0]
-            ? buildStayRecord({
-                ...currentBookings[0],
-                propertySummary: propertySummaries[getPropertyId(currentBookings[0].booking)],
-              })
-            : null;
+        const currentStay = currentBookings[0]
+          ? buildStayRecord({
+              ...currentBookings[0],
+              propertySummary: propertySummaries[getPropertyId(currentBookings[0].booking)],
+            })
+          : null;
 
-        const upcomingStay =
-          upcomingBookings[0]
-            ? buildStayRecord({
-                ...upcomingBookings[0],
-                propertySummary: propertySummaries[getPropertyId(upcomingBookings[0].booking)],
-              })
-            : null;
+        const upcomingStay = upcomingBookings[0]
+          ? buildStayRecord({
+              ...upcomingBookings[0],
+              propertySummary: propertySummaries[getPropertyId(upcomingBookings[0].booking)],
+            })
+          : null;
 
         const pastStays = pastBookings.slice(0, 3).map((entry) =>
+          buildStayRecord({
+            ...entry,
+            propertySummary: propertySummaries[getPropertyId(entry.booking)],
+          })
+        );
+
+        const cancelledStays = cancelledEntries.slice(0, 3).map((entry) =>
           buildStayRecord({
             ...entry,
             propertySummary: propertySummaries[getPropertyId(entry.booking)],
@@ -266,6 +279,7 @@ export default function useGuestDashboardData() {
           currentStay,
           upcomingStay,
           pastStays,
+          cancelledStays,
           reminders: buildTripReminders({
             currentStay,
             upcomingStay,

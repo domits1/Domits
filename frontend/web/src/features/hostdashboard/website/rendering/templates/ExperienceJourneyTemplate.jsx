@@ -4,6 +4,7 @@ import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
+  getPreviewTargetMarkerProps,
   TemplateAvailabilityCalendar,
   TemplateHeroCopy,
   TemplateSoftCallout,
@@ -52,7 +53,13 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
       </section>
 
       {showJourneyStops ? (
-        <section className={styles.experienceJourneyStack}>
+        <section
+          {...getPreviewTargetMarkerProps(
+            styles.experienceJourneyStack,
+            "visibility.journeyStops",
+            activeTargetId
+          )}
+        >
           {model.journeyStops.slice(0, 3).map((stop, index) => {
             const imageUrl = model.gallery.images[index] || model.media.heroImage;
             const isReversed = index % 2 === 1;
@@ -108,7 +115,13 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
 
           <div className={styles.experienceFooter}>
             {showAmenitiesPanel ? (
-              <div className={styles.amenityList}>
+              <div
+                {...getPreviewTargetMarkerProps(
+                  styles.amenityList,
+                  "visibility.amenitiesPanel",
+                  activeTargetId
+                )}
+              >
                 {model.amenities.featured.slice(0, 4).map((amenity) => {
                   const amenityIcon = getAmenityIconNode(amenity.id, {
                     className: styles.amenityRowIconGlyph,

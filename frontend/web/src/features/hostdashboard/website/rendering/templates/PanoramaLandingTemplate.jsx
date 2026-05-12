@@ -4,6 +4,7 @@ import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
+  getPreviewTargetMarkerProps,
   TemplateAvailabilityCalendar,
   TemplateHeroCopy,
   TemplateTopBar,
@@ -75,7 +76,13 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       </section>
 
       {showTrustCards ? (
-        <section className={styles.panoramaFeatureGrid}>
+        <section
+          {...getPreviewTargetMarkerProps(
+            styles.panoramaFeatureGrid,
+            "visibility.trustCards",
+            activeTargetId
+          )}
+        >
           {model.trustCards.map((card, index) => {
             const cardIcon = getAmenityIconNode(card.iconAmenityId, {
               className: styles.panoramaFeatureIconGlyph,
@@ -141,7 +148,13 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
             ) : null}
 
             {showAmenitiesPanel ? (
-              <div className={styles.amenityPanel}>
+              <div
+                {...getPreviewTargetMarkerProps(
+                  styles.amenityPanel,
+                  "visibility.amenitiesPanel",
+                  activeTargetId
+                )}
+              >
                 <p className={styles.panelTitle}>Featured amenities</p>
                 <div className={styles.amenityChipGrid}>
                   {model.amenities.featured.slice(0, 6).map((amenity) => {
