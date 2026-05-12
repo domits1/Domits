@@ -57,58 +57,11 @@ class ReservationController {
         return await this.cancelBooking(cancelBookingId, event);
       }
 
-      if (event?.body === undefined || event?.body === null) {
-        throw new Error("Missing request body.");
-      }
-      const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+      const body = this.getPatchBody(event);
       const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
+      const actionResponse = await this.handlePatchAction(body, event, authToken);
 
-      if (body?.action === "cancel-booking") {
-        if (!body?.bookingId) throw new Error("Missing bookingId.");
-        return await this.cancelBooking(body.bookingId, event);
-      }
-
-      if (body?.action === "accept-inquiry" || body?.action === "decline-inquiry") {
-        if (!body?.bookingId) throw new Error("Missing bookingId.");
-        if (body.action === "decline-inquiry") {
-          const result = await this.bookingService.declineInquiry(body.bookingId, authToken);
-          return { statusCode: 200, headers: responseHeaderJSON, response: result };
-        }
-        const result = await this.bookingService.acceptInquiry(body.bookingId, authToken);
-        try {
-          const paymentData = await this.paymentSerivce.create(
-            result.hostId,
-            result.bookingId,
-            result.propertyId,
-            result.dates
-          );
-          return {
-            statusCode: 200,
-            headers: responseHeaderJSON,
-            response: { ...result, stripeClientSecret: paymentData.stripeClientSecret },
-          };
-        } catch (stripeError) {
-          console.error("Stripe payment intent creation failed after accept:", stripeError);
-          return { statusCode: 200, headers: responseHeaderJSON, response: result };
-        }
-      }
-
-      if (!body?.paymentid) {
-        throw new Error("Missing paymentid.");
-      }
-      let confirmed;
-      if (body?.failedpayment) {
-        confirmed = await this.bookingService.failPayment(body.paymentid);
-      } else {
-        confirmed = await this.bookingService.confirmPayment(body.paymentid);
-      }
-      return {
-        statusCode: 200,
-        headers: responseHeaderJSON,
-        response: {
-          paymentConfirmed: confirmed,
-        },
-      };
+      return actionResponse || await this.handlePaymentPatch(body);
     } catch (error) {
       console.error(error);
       return {
@@ -117,6 +70,72 @@ class ReservationController {
         response: error.message || "Something went wrong, please contact support.",
       };
     }
+  }
+
+  getPatchBody(event) {
+    if (event?.body === undefined || event?.body === null) {
+      throw new Error("Missing request body.");
+    }
+
+    return typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+  }
+
+  async handlePatchAction(body, event, authToken) {
+    if (body?.action === "cancel-booking") {
+      if (!body?.bookingId) throw new Error("Missing bookingId.");
+      return await this.cancelBooking(body.bookingId, event);
+    }
+
+    if (body?.action === "decline-inquiry") {
+      if (!body?.bookingId) throw new Error("Missing bookingId.");
+      const result = await this.bookingService.declineInquiry(body.bookingId, authToken);
+      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    }
+
+    if (body?.action === "accept-inquiry") {
+      if (!body?.bookingId) throw new Error("Missing bookingId.");
+      return await this.acceptInquiry(body.bookingId, authToken);
+    }
+
+    return null;
+  }
+
+  async acceptInquiry(bookingId, authToken) {
+    const result = await this.bookingService.acceptInquiry(bookingId, authToken);
+    try {
+      const paymentData = await this.paymentSerivce.create(
+        result.hostId,
+        result.bookingId,
+        result.propertyId,
+        result.dates
+      );
+      return {
+        statusCode: 200,
+        headers: responseHeaderJSON,
+        response: { ...result, stripeClientSecret: paymentData.stripeClientSecret },
+      };
+    } catch (stripeError) {
+      console.error("Stripe payment intent creation failed after accept:", stripeError);
+      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    }
+  }
+
+  async handlePaymentPatch(body) {
+    if (!body?.paymentid) {
+      throw new Error("Missing paymentid.");
+    }
+
+    const confirmed = body?.failedpayment
+      ? await this.bookingService.failPayment(body.paymentid)
+      : await this.bookingService.confirmPayment(body.paymentid);
+
+    return {
+      statusCode: 200,
+      headers: responseHeaderJSON,
+      response: {
+        paymentConfirmed: confirmed,
+      },
+    };
   }
 
   getCancelBookingId(event) {
