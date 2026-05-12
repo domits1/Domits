@@ -39,7 +39,11 @@ import {
   WEBSITE_BACKGROUND_COLOR_OPTIONS,
 } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
-import { announceWebsitePreviewUpdate } from "./services/websitePreviewSync";
+import {
+  announceWebsiteLiveSiteUpdate,
+  announceWebsitePreviewUpdate,
+} from "./services/websitePreviewSync";
+import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
 import {
   COMMON_TEXT_FIELDS,
   EDITOR_SECTION_KEYS,
@@ -61,12 +65,6 @@ const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
 
 const getSelectedImageForSlot = (slot, editorValues) =>
   slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
-
-const buildPublishedWebsitePath = (domain, siteId = "") => {
-  const path = `/website-live/${encodeURIComponent(domain)}`;
-  const normalizedSiteId = String(siteId || "").trim();
-  return normalizedSiteId ? `${path}?siteId=${encodeURIComponent(normalizedSiteId)}` : path;
-};
 
 const normalizeUiErrorMessage = (message, fallbackMessage) => {
   const normalizedMessage = String(message || "").trim();
@@ -829,7 +827,11 @@ function WebsiteEditorPublicSitePanel({
           Live site URL:{" "}
           <a
             className={styles.publicSiteLink}
-            href={buildPublishedWebsitePath(primarySiteDomain.domain, siteSummary?.site?.id)}
+            href={buildPublishedWebsiteHref(
+              primarySiteDomain.domain,
+              siteSummary?.site?.id,
+              primarySiteDomain.status
+            )}
             target="_blank"
             rel="noreferrer"
           >
@@ -1484,6 +1486,10 @@ function WebsiteEditorPage() {
       const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
+      announceWebsiteLiveSiteUpdate({
+        siteId: nextSiteSummary?.site?.id,
+        domain: nextSiteSummary?.primaryDomain?.domain,
+      });
       toast.success("Live site updated.");
     } catch (error) {
       const errorMessage = error?.message || "We could not update the live site.";
@@ -1507,6 +1513,10 @@ function WebsiteEditorPage() {
       const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
+      announceWebsiteLiveSiteUpdate({
+        siteId: nextSiteSummary?.site?.id,
+        domain: nextSiteSummary?.primaryDomain?.domain,
+      });
       toast.success("Live site published.");
     } catch (error) {
       const errorMessage = error?.message || "We could not publish the live site.";
@@ -1529,6 +1539,10 @@ function WebsiteEditorPage() {
       const nextSiteSummary = await unpublishWebsiteSite(draftRecord.propertyId);
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
+      announceWebsiteLiveSiteUpdate({
+        siteId: nextSiteSummary?.site?.id,
+        domain: nextSiteSummary?.primaryDomain?.domain,
+      });
       toast.success("Live site unpublished.");
     } catch (error) {
       const errorMessage = error?.message || "We could not unpublish the live site.";
@@ -1560,7 +1574,11 @@ function WebsiteEditorPage() {
 
     setIsActionMenuOpen(false);
     globalThis.open(
-      buildPublishedWebsitePath(publishedDomain, siteSummary?.site?.id),
+      buildPublishedWebsiteHref(
+        publishedDomain,
+        siteSummary?.site?.id,
+        primarySiteDomain?.status
+      ),
       "_blank",
       "noopener,noreferrer"
     );

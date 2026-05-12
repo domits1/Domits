@@ -84,6 +84,7 @@ const WEBSITE_ANALYTICS_SURFACES = Object.freeze(["preview", "live"]);
 const WEBSITE_ANALYTICS_VIEWPORTS = Object.freeze(["mobile", "tablet", "desktop"]);
 
 const BUILD_ABANDONMENT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_REASONABLE_SITE_PUBLISH_DURATION_MS = 30 * 60 * 1000;
 const EMPTY_EVENT_METRICS = Object.freeze({
   total: 0,
   uniqueDrafts: 0,
@@ -153,7 +154,11 @@ const trackPreviewReadyDuration = (previewReadyDurations, payload) => {
 
 const trackPublishDuration = (publishDurations, payload) => {
   const durationMs = parseDurationMetric(payload);
-  if (Number.isFinite(durationMs) && durationMs > 0) {
+  if (
+    Number.isFinite(durationMs) &&
+    durationMs > 0 &&
+    durationMs <= MAX_REASONABLE_SITE_PUBLISH_DURATION_MS
+  ) {
     publishDurations.push(durationMs);
   }
 };

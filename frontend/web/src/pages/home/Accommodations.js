@@ -163,6 +163,7 @@ const Accommodations = ({ searchResults }) => {
                     accommodation={accommodation}
                     onClick={handleClick}
                     imageVariant="web"
+                    variant="listing"
                   />
                 );
               })

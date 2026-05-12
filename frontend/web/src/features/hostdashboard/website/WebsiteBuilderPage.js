@@ -43,6 +43,7 @@ import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftConte
 import { applyWebsiteDraftThemeOverrides } from "./rendering/websiteDraftThemeOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
 import { WEBSITE_DRAFT_DELETE_REASONS } from "./websiteDeleteReasons";
+import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -134,12 +135,6 @@ const getDraftDisplayTitle = (draft, contentOverrides = getDraftContentOverrides
     String(draft?.propertyTitle || "").trim() ||
     "Untitled listing website"
   );
-};
-
-const buildPublishedWebsitePath = (domain, siteId = "") => {
-  const path = `/website-live/${encodeURIComponent(domain)}`;
-  const normalizedSiteId = String(siteId || "").trim();
-  return normalizedSiteId ? `${path}?siteId=${encodeURIComponent(normalizedSiteId)}` : path;
 };
 
 const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
@@ -1039,6 +1034,7 @@ function WebsiteBuilderPage() {
     try {
       const siteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
       const liveDomain = String(siteSummary?.primaryDomain?.domain || "").trim();
+      const liveDomainStatus = String(siteSummary?.primaryDomain?.status || "").trim();
       const siteId = String(siteSummary?.site?.id || "").trim();
       const siteStatus = String(siteSummary?.site?.status || "").trim().toUpperCase();
 
@@ -1048,7 +1044,7 @@ function WebsiteBuilderPage() {
       }
 
       globalThis.open(
-        buildPublishedWebsitePath(liveDomain, siteId),
+        buildPublishedWebsiteHref(liveDomain, siteId, liveDomainStatus),
         "_blank",
         "noopener,noreferrer"
       );
