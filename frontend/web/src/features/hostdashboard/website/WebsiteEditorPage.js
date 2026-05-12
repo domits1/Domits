@@ -1682,16 +1682,6 @@ function WebsiteEditorPage() {
                   the Domits live link.
                 </p>
               </div>
-
-              <div className={styles.heroMeta}>
-                <span className={styles.metaPill}>{draftTemplate.name}</span>
-                <span className={styles.metaPill}>{draftRecord.status || "DRAFT"}</span>
-                <span className={styles.metaPill}>Publication: {liveSiteStatus}</span>
-                <span className={styles.metaPill}>Link status: {liveLinkStatus}</span>
-                {previewModel.location.label ? (
-                  <span className={styles.metaPill}>{previewModel.location.label}</span>
-                ) : null}
-              </div>
             </div>
 
             <div className={`${styles.buttonRow} ${styles.heroActionRow}`.trim()}>
@@ -2030,7 +2020,13 @@ function WebsiteEditorPage() {
 
             <section className={styles.previewPanel}>
               <div className={`${styles.panelHeader} ${styles.previewPanelHeader}`.trim()}>
-                <h2 className={styles.panelTitle}>Website preview</h2>
+                <div className={styles.previewPanelHeaderCopy}>
+                  <div className={styles.previewPanelTitleRow}>
+                    <h2 className={styles.panelTitle}>Website preview</h2>
+                    <span className={styles.metaPill}>{draftTemplate.name}</span>
+                    <span className={styles.metaPill}>{draftRecord.status || "DRAFT"}</span>
+                  </div>
+                </div>
                 <div className={styles.previewViewportControls} role="tablist" aria-label="Preview viewport">
                   {PREVIEW_VIEWPORT_OPTIONS.map(({ id, label, Icon }) => (
                     <button

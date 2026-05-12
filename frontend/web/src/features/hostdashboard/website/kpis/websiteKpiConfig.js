@@ -343,6 +343,18 @@ export const buildPerformanceCards = (websiteKpis, viewportTab = PERFORMANCE_VIE
   };
 };
 
+const resolveResearchKpiValue = ({ hasNumericValue, rawValue, formatterKey, hasSamples }) => {
+  if (hasNumericValue) {
+    return formatters[formatterKey](rawValue);
+  }
+
+  if (hasSamples) {
+    return "No valid samples";
+  }
+
+  return RESEARCH_KPI_EMPTY_VALUE;
+};
+
 export const buildResearchKpiCards = (websiteKpis) =>
   RESEARCH_KPI_DEFINITIONS.map((researchKpi) => {
     const rawValue = websiteKpis[researchKpi.valueKey];
@@ -354,11 +366,12 @@ export const buildResearchKpiCards = (websiteKpis) =>
     return {
       ...researchKpi,
       isInstrumented,
-      value: hasNumericValue
-        ? formatters[researchKpi.formatterKey](rawValue)
-        : hasSamples
-          ? "No valid samples"
-          : RESEARCH_KPI_EMPTY_VALUE,
+      value: resolveResearchKpiValue({
+        hasNumericValue,
+        rawValue,
+        formatterKey: researchKpi.formatterKey,
+        hasSamples,
+      }),
       statusLabel: isInstrumented ? KPI_STATUS_READY : KPI_STATUS_PENDING,
       sampleLabel: isInstrumented
         ? resolveMetricSampleLabel(researchKpi.sampleLabel, websiteKpis)

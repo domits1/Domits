@@ -229,6 +229,19 @@
   gap: 16px;
 }
 
+.previewPanelHeaderCopy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.previewPanelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .panelTitle {
   margin: 0;
   font-size: 1.18rem;
@@ -1144,10 +1157,6 @@
 }
 
 @media (max-width: 860px) {
-  .heroMeta {
-    width: 100%;
-  }
-
   .actionMenuContainer {
     margin-left: 0;
     width: 100%;
