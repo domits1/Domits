@@ -20,6 +20,7 @@ import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
 } from "./services/websitePublicSiteService";
+import { subscribeToWebsiteLiveSiteUpdates } from "./services/websitePreviewSync";
 import styles from "./WebsitePublicPreviewPage.module.scss";
 
 const normalizeWebsiteDomain = (value) => {
@@ -39,6 +40,7 @@ function WebsitePublicSitePage() {
   const [renderPayload, setRenderPayload] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [refreshVersion, setRefreshVersion] = useState(0);
 
   const requestedDomain = useMemo(() => {
     const routeRequestedDomain = normalizeWebsiteDomain(routeDomain);
@@ -104,7 +106,7 @@ function WebsitePublicSitePage() {
     return () => {
       isMounted = false;
     };
-  }, [requestedDomain, requestedSiteId]);
+  }, [requestedDomain, requestedSiteId, refreshVersion]);
 
   const publicModel = useMemo(() => {
     if (!renderPayload?.propertySnapshot) {
@@ -124,6 +126,23 @@ function WebsitePublicSitePage() {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
+
+  const resolvedSiteId = String(renderPayload?.site?.id || resolution?.siteId || requestedSiteId || "").trim();
+  const resolvedDomain = normalizeWebsiteDomain(
+    renderPayload?.domain?.domain || resolution?.domain?.domain || requestedDomain
+  );
+
+  useEffect(() => {
+    return subscribeToWebsiteLiveSiteUpdates(
+      {
+        siteId: resolvedSiteId,
+        domain: resolvedDomain,
+      },
+      () => {
+        setRefreshVersion((currentVersion) => currentVersion + 1);
+      }
+    );
+  }, [resolvedDomain, resolvedSiteId]);
 
   useEffect(() => {
     if (!publicModel?.site?.title) {
@@ -156,7 +175,7 @@ function WebsitePublicSitePage() {
         });
       },
     });
-  }, [canRenderPublishedSite, renderPayload, requestedDomain]);
+  }, [canRenderPublishedSite, renderPayload, requestedDomain, refreshVersion]);
 
   if (isLoading) {
     return (
