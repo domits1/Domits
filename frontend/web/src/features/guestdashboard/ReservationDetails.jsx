@@ -348,9 +348,9 @@ const buildReservationContent = ({
         </div>
 
         {isCancelledReservation && (
-          <div className="reservationCancelledBanner" role="status">
+          <output className="reservationCancelledBanner">
             This reservation has been cancelled.
-          </div>
+          </output>
         )}
 
         <div className="reservationPage">
