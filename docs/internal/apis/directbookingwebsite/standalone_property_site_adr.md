@@ -6,6 +6,9 @@ Proposed
 ## Date
 2026-03-20
 
+## Last Updated
+2026-05-11
+
 ## Context
 Domits wants to let a host turn one PMS listing into one standalone property website without creating a separate frontend project or duplicating PMS business logic. The standalone website must keep descriptive page content fast to render and stable for design customization, while still remaining correctly aligned with PMS-controlled pricing, availability, and bookings.
 
@@ -31,16 +34,16 @@ Domits will design v1 of standalone property sites with these decisions locked:
    - publish status
    - fallback domain mapping
    - analytics events
-5. V1 is the foundation release. It includes:
-   - property detail rendering
-   - template selection and branding
-   - preview and publish flow
-   - fallback domain
-   - server-side availability and quote
+5. The currently implemented foundation includes:
+   - property detail rendering from published standalone snapshots
+   - template selection and draft preview flow
+   - standalone site publish and unpublish flow
+   - fallback-domain generation plus separate domain state
+   - published live-site render APIs and runtime
    - analytics and observability baseline
 6. V1 explicitly does not include payment checkout, booking creation, or public confirmation flow.
-7. V2 extends the v1 foundation with checkout, booking creation, confirmation, quote revalidation on booking, and idempotency enforcement.
-8. Quote calculation is server-side only.
+7. The next extension after the current foundation adds authoritative quote APIs, then later checkout, booking creation, confirmation, quote revalidation on booking, and idempotency enforcement.
+8. When quote calculation is introduced, it must be server-side only.
 9. Site status is independent from PMS property listing status.
 10. V1 ships with fallback Domits subdomains only. Custom domains are designed now and implemented later.
 11. Public render uses standalone-owned published content snapshots and assets. PMS descriptive content is imported at publish time or explicit refresh time, not read live on every page request.
@@ -53,7 +56,7 @@ Domits will design v1 of standalone property sites with these decisions locked:
 ### Positive
 - Prevents deployment sprawl and template drift.
 - Keeps public page render fast and independent from live PMS descriptive-content latency.
-- Makes public quote correctness enforceable on the server.
+- Keeps the path clear for later server-side quote correctness without redesigning site ownership or routing.
 - Keeps the first release narrow enough to harden routing, data ownership, and publish flows before adding money-sensitive booking logic.
 - Keeps template work focused on rendering and UX rather than business rules.
 - Supports future custom domains and booking flow without redesigning ownership boundaries.
@@ -63,7 +66,7 @@ Domits will design v1 of standalone property sites with these decisions locked:
 - Publish and refresh flows must import descriptive PMS content into standalone snapshots correctly.
 - Snapshot freshness and republish behavior need explicit policy and observability.
 - Preview, publish, and domain lifecycle need explicit standalone tables instead of piggybacking on existing property status.
-- Direct booking is not delivered in the first foundation release.
+- Direct booking is still not delivered in the current foundation release.
 
 ## Rejected alternatives
 
