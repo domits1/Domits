@@ -84,6 +84,14 @@ const normalizeJsonObject = (value) => {
   return "{}";
 };
 
+const normalizeOptionalBoolean = (value) => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return Boolean(value);
+};
+
 const mapSiteDomainRow = (row) => {
   if (!row) {
     return null;
@@ -150,6 +158,23 @@ export class StandaloneSiteDomainRepository {
 
   async getPrimaryLiveDomainBySiteId(siteId) {
     return this.getFallbackDomainBySiteId(siteId);
+  }
+
+  async getCustomDomainBySiteId(siteId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    const rows = await client.query(
+      buildSiteDomainSelectQuery(
+        tableName,
+        "WHERE site_id = $1 AND domain_type = 'CUSTOM'",
+        "ORDER BY created_at DESC LIMIT 1"
+      ),
+      [siteId]
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
   }
 
   async getDomainByName(domain) {
@@ -267,5 +292,228 @@ export class StandaloneSiteDomainRepository {
 
   async updatePrimaryLiveDomainStatus(siteId, status, verificationDetails = {}) {
     return this.updateFallbackDomainStatus(siteId, status, verificationDetails);
+  }
+
+  async upsertCustomDomainForSite({
+    siteId,
+    domain,
+    status,
+    isPrimary = false,
+    verificationDetails = {},
+    lastCheckedAt = Date.now(),
+  }) {
+    const existingCustomDomain = await this.getCustomDomainBySiteId(siteId);
+    if (!existingCustomDomain) {
+      return this.ensureDomain({
+        siteId,
+        domain,
+        domainType: "CUSTOM",
+        status,
+        isPrimary,
+        verificationDetails,
+        lastCheckedAt,
+      });
+    }
+
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const normalizedDomain = String(domain || "").trim().toLowerCase();
+    const normalizedStatus = normalizeDomainStatus(status);
+    const now = Date.now();
+
+    const rows = await client.query(
+      `UPDATE ${tableName}
+      SET
+        domain = $2,
+        status = $3,
+        is_primary = $4,
+        verification_details_json = $5,
+        last_checked_at = $6,
+        updated_at = $6
+      WHERE id = $1
+      RETURNING
+        id,
+        site_id,
+        domain,
+        domain_type,
+        status,
+        is_primary,
+        verification_details_json,
+        last_checked_at,
+        created_at,
+        updated_at`,
+      [
+        existingCustomDomain.id,
+        normalizedDomain,
+        normalizedStatus,
+        Boolean(isPrimary),
+        normalizeJsonObject(verificationDetails),
+        lastCheckedAt === null || lastCheckedAt === undefined ? now : Number(lastCheckedAt),
+      ]
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
+  }
+
+  async updateDomainById(domainId, { status, isPrimary, verificationDetails, lastCheckedAt = Date.now() } = {}) {
+    const normalizedDomainId = String(domainId || "").trim();
+    if (!normalizedDomainId) {
+      throw new TypeError("website domain id is required.");
+    }
+
+    const nextStatus = status === undefined ? undefined : normalizeDomainStatus(status);
+    const nextIsPrimary = normalizeOptionalBoolean(isPrimary);
+    const hasVerificationDetails = verificationDetails !== undefined;
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const now = lastCheckedAt === null || lastCheckedAt === undefined ? Date.now() : Number(lastCheckedAt);
+    const updateAssignments = ["last_checked_at = $2", "updated_at = $2"];
+    const params = [normalizedDomainId, now];
+    let nextParamIndex = params.length + 1;
+
+    if (nextStatus !== undefined) {
+      updateAssignments.push(`status = $${nextParamIndex}`);
+      params.push(nextStatus);
+      nextParamIndex += 1;
+    }
+
+    if (nextIsPrimary !== undefined) {
+      updateAssignments.push(`is_primary = $${nextParamIndex}`);
+      params.push(nextIsPrimary);
+      nextParamIndex += 1;
+    }
+
+    if (hasVerificationDetails) {
+      updateAssignments.push(`verification_details_json = $${nextParamIndex}`);
+      params.push(normalizeJsonObject(verificationDetails));
+      nextParamIndex += 1;
+    }
+
+    const rows = await client.query(
+      `UPDATE ${tableName}
+      SET
+        ${updateAssignments.join(",\n        ")}
+      WHERE id = $1
+      RETURNING
+        id,
+        site_id,
+        domain,
+        domain_type,
+        status,
+        is_primary,
+        verification_details_json,
+        last_checked_at,
+        created_at,
+        updated_at`,
+      params
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
+  }
+
+  async setOnlyPrimaryDomain(siteId, primaryDomainId) {
+    const normalizedSiteId = String(siteId || "").trim();
+    const normalizedPrimaryDomainId = String(primaryDomainId || "").trim();
+    if (!normalizedSiteId || !normalizedPrimaryDomainId) {
+      throw new TypeError("website siteId and primaryDomainId are required.");
+    }
+
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const now = Date.now();
+
+    await client.query(
+      `UPDATE ${tableName}
+      SET
+        is_primary = CASE WHEN id = $2 THEN TRUE ELSE FALSE END,
+        updated_at = $3
+      WHERE site_id = $1`,
+      [normalizedSiteId, normalizedPrimaryDomainId, now]
+    );
+  }
+
+  async disableCustomDomainBySiteId(siteId, verificationDetails = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const now = Date.now();
+
+    const rows = await client.query(
+      `UPDATE ${tableName}
+      SET
+        status = 'DISABLED',
+        is_primary = false,
+        verification_details_json = $2,
+        last_checked_at = $3,
+        updated_at = $3
+      WHERE site_id = $1 AND domain_type = 'CUSTOM'
+      RETURNING
+        id,
+        site_id,
+        domain,
+        domain_type,
+        status,
+        is_primary,
+        verification_details_json,
+        last_checked_at,
+        created_at,
+        updated_at`,
+      [siteId, normalizeJsonObject(verificationDetails), now]
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
+  }
+
+  async verifyCustomDomainBySiteId(siteId, verificationDetails = {}) {
+    const existingCustomDomain = await this.getCustomDomainBySiteId(siteId);
+    if (!existingCustomDomain) {
+      return null;
+    }
+
+    return this.updateDomainById(existingCustomDomain.id, {
+      status: "VERIFIED",
+      isPrimary: false,
+      verificationDetails,
+    });
+  }
+
+  async activateCustomDomainBySiteId(siteId, verificationDetails = {}) {
+    const customDomain = await this.getCustomDomainBySiteId(siteId);
+    if (!customDomain) {
+      return null;
+    }
+
+    const activeCustomDomain = await this.updateDomainById(customDomain.id, {
+      status: "ACTIVE",
+      isPrimary: true,
+      verificationDetails,
+    });
+    await this.setOnlyPrimaryDomain(siteId, customDomain.id);
+
+    return activeCustomDomain;
+  }
+
+  async deactivateCustomDomainBySiteId(siteId, verificationDetails = {}) {
+    const customDomain = await this.getCustomDomainBySiteId(siteId);
+    const fallbackDomain = await this.getFallbackDomainBySiteId(siteId);
+    if (!customDomain || !fallbackDomain) {
+      return null;
+    }
+
+    const nextCustomDomain = await this.updateDomainById(customDomain.id, {
+      status: "VERIFIED",
+      isPrimary: false,
+      verificationDetails,
+    });
+    await this.updateDomainById(fallbackDomain.id, {
+      isPrimary: true,
+      verificationDetails: fallbackDomain.verificationDetails,
+    });
+    await this.setOnlyPrimaryDomain(siteId, fallbackDomain.id);
+
+    return nextCustomDomain;
   }
 }

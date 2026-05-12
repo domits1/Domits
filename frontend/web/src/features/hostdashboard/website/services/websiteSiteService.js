@@ -1,50 +1,14 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
-import { PROPERTY_API_BASE } from "../../hostproperty/constants";
-import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
+import {
+  buildAuthorizedWebsiteHostHeaders,
+  buildWebsiteHostApiUrl,
+  getWebsiteHostApiErrorMessage,
+} from "./websiteHostApi";
+import { normalizeWebsiteSiteSummary } from "./websiteSiteSummary";
 
 const buildWebsiteSiteUrl = (propertyId) =>
-  `${PROPERTY_API_BASE}/website/site?property=${encodeURIComponent(propertyId)}`;
-const buildWebsiteSitePublishUrl = () => `${PROPERTY_API_BASE}/website/site/publish`;
-const buildWebsiteSiteUnpublishUrl = () => `${PROPERTY_API_BASE}/website/site/unpublish`;
-
-const getRequiredAccessToken = () => {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be signed in to manage website publishing.");
-  }
-
-  return accessToken;
-};
-
-const buildAuthorizedHeaders = (contentType = null) => {
-  const headers = {
-    Authorization: getRequiredAccessToken(),
-  };
-
-  if (contentType) {
-    headers["Content-Type"] = contentType;
-  }
-
-  return headers;
-};
-
-const normalizeWebsiteSiteSummary = (payload) => {
-  if (!payload || typeof payload !== "object") {
-    return null;
-  }
-
-  const site = payload.site && typeof payload.site === "object" ? payload.site : null;
-  const primaryDomain =
-    payload.primaryDomain && typeof payload.primaryDomain === "object" ? payload.primaryDomain : null;
-  const domains = Array.isArray(payload.domains) ? payload.domains : [];
-
-  return {
-    site,
-    primaryDomain,
-    domains,
-    isReachable: Boolean(payload.isReachable),
-  };
-};
+  `${buildWebsiteHostApiUrl("/website/site")}?property=${encodeURIComponent(propertyId)}`;
+const buildWebsiteSitePublishUrl = () => buildWebsiteHostApiUrl("/website/site/publish");
+const buildWebsiteSiteUnpublishUrl = () => buildWebsiteHostApiUrl("/website/site/unpublish");
 
 export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
@@ -55,7 +19,9 @@ export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   const response = await fetch(buildWebsiteSiteUrl(normalizedPropertyId), {
     method: "GET",
     cache: "no-store",
-    headers: buildAuthorizedHeaders(),
+    headers: buildAuthorizedWebsiteHostHeaders({
+      unauthorizedMessage: "You must be signed in to manage website publishing.",
+    }),
   });
 
   if (response.status === 404) {
@@ -63,7 +29,7 @@ export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   }
 
   if (!response.ok) {
-    const errorMessage = await getApiErrorMessage(
+    const errorMessage = await getWebsiteHostApiErrorMessage(
       response,
       "We could not load the standalone site status for this listing."
     );
@@ -82,14 +48,17 @@ export const publishWebsiteSite = async (propertyId) => {
   const response = await fetch(buildWebsiteSitePublishUrl(), {
     method: "POST",
     cache: "no-store",
-    headers: buildAuthorizedHeaders("application/json"),
+    headers: buildAuthorizedWebsiteHostHeaders({
+      contentType: "application/json",
+      unauthorizedMessage: "You must be signed in to manage website publishing.",
+    }),
     body: JSON.stringify({
       propertyId: normalizedPropertyId,
     }),
   });
 
   if (!response.ok) {
-    const errorMessage = await getApiErrorMessage(
+    const errorMessage = await getWebsiteHostApiErrorMessage(
       response,
       "We could not publish the standalone site for this listing."
     );
@@ -108,14 +77,17 @@ export const unpublishWebsiteSite = async (propertyId) => {
   const response = await fetch(buildWebsiteSiteUnpublishUrl(), {
     method: "POST",
     cache: "no-store",
-    headers: buildAuthorizedHeaders("application/json"),
+    headers: buildAuthorizedWebsiteHostHeaders({
+      contentType: "application/json",
+      unauthorizedMessage: "You must be signed in to manage website publishing.",
+    }),
     body: JSON.stringify({
       propertyId: normalizedPropertyId,
     }),
   });
 
   if (!response.ok) {
-    const errorMessage = await getApiErrorMessage(
+    const errorMessage = await getWebsiteHostApiErrorMessage(
       response,
       "We could not unpublish the standalone site for this listing."
     );

@@ -9,6 +9,7 @@ import { StandaloneSiteDraftRepository } from "../data/repository/standaloneSite
 import { StandaloneSiteEventRepository } from "../data/repository/standaloneSiteEventRepository.js";
 import { StandaloneSiteRepository } from "../data/repository/standaloneSiteRepository.js";
 import { StandaloneSiteDomainRepository } from "../data/repository/standaloneSiteDomainRepository.js";
+import { StandaloneSiteCustomDomainService } from "../business/service/standaloneSiteCustomDomainService.js";
 import { randomUUID } from "node:crypto";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
@@ -143,6 +144,11 @@ export class PropertyController {
         this.standaloneSiteEventRepository = new StandaloneSiteEventRepository(systemManagerRepository);
         this.standaloneSiteRepository = new StandaloneSiteRepository(systemManagerRepository);
         this.standaloneSiteDomainRepository = new StandaloneSiteDomainRepository(systemManagerRepository);
+        this.standaloneSiteCustomDomainService = new StandaloneSiteCustomDomainService({
+            standaloneSiteRepository: this.standaloneSiteRepository,
+            standaloneSiteDomainRepository: this.standaloneSiteDomainRepository,
+            getManagedDomainSuffix: getLiveSiteDomainSuffix,
+        });
     }
 
     // -------------------------
@@ -1401,20 +1407,7 @@ export class PropertyController {
     }
 
     buildStandaloneSiteSummary(site, domains = []) {
-        if (!site) {
-            return null;
-        }
-
-        const normalizedDomains = Array.isArray(domains) ? domains : [];
-        const primaryDomain = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
-        const isReachable = site.status === "PUBLISHED" && primaryDomain?.status === "ACTIVE";
-
-        return {
-            site,
-            primaryDomain,
-            domains: normalizedDomains,
-            isReachable,
-        };
+        return this.standaloneSiteCustomDomainService.buildSiteSummary(site, domains);
     }
 
     buildPublicStandaloneSiteResolution(site, domain) {
@@ -1556,12 +1549,13 @@ export class PropertyController {
 
         const liveDomainStatus = this.normalizeStandaloneSiteDomainStatus(getLiveSiteRoutingStatus());
         const existingLiveDomain = await this.standaloneSiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const existingCustomDomain = await this.standaloneSiteDomainRepository.getCustomDomainBySiteId(site.id);
         const liveDomain = await this.standaloneSiteDomainRepository.ensureDomain({
             siteId: site.id,
             domain: existingLiveDomain?.domain || buildLiveSiteDomain(site.siteName, site.id),
             domainType: STANDALONE_SITE_DOMAIN_TYPE_FALLBACK,
             status: liveDomainStatus,
-            isPrimary: true,
+            isPrimary: existingCustomDomain?.isPrimary !== true,
             verificationDetails: {
                 activationMode: "internal",
                 domainKind: "live",
@@ -1585,11 +1579,21 @@ export class PropertyController {
             },
         });
 
-        return this.buildStandaloneSiteSummary(site, [liveDomain]);
+        const allDomains = await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+        return this.buildStandaloneSiteSummary(site, allDomains.length > 0 ? allDomains : [liveDomain]);
     }
 
     async unpublishStandaloneSiteSummary({ site, draft, hostId, propertyId }) {
         const nextSite = await this.standaloneSiteRepository.updateSiteStatus(site.id, "PREVIEW");
+        const customDomain = await this.standaloneSiteDomainRepository.getCustomDomainBySiteId(site.id);
+        if (String(customDomain?.status || "").trim().toUpperCase() === "ACTIVE") {
+            await this.standaloneSiteDomainRepository.deactivateCustomDomainBySiteId(site.id, {
+                ...(customDomain?.verificationDetails || {}),
+                activationStatus: "DEACTIVATED_BY_UNPUBLISH",
+                deactivatedAt: Date.now(),
+                nextAction: "Republish the site and activate the custom domain again after final checks are complete.",
+            });
+        }
         const liveDomain = await this.standaloneSiteDomainRepository.updatePrimaryLiveDomainStatus(
             site.id,
             "DISABLED",
@@ -1599,9 +1603,7 @@ export class PropertyController {
                 routingConfigured: false,
             }
         );
-        const allDomains = liveDomain
-            ? [liveDomain]
-            : await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+        const allDomains = await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
 
         await this.recordStandaloneWebsiteEventSafely({
             draftId: draft?.id || null,
@@ -1624,12 +1626,18 @@ export class PropertyController {
             error?.message?.startsWith("Missing draftId") ||
             error?.message?.startsWith("Missing eventType") ||
             error?.message?.startsWith("Missing templateKey") ||
+            error?.message?.startsWith("Custom domain") ||
+            error?.message?.startsWith("Request a custom domain before") ||
+            error?.message?.startsWith("Recheck the custom domain before activating it.") ||
+            error?.message?.startsWith("Publish the live site before requesting a custom domain.") ||
+            error?.message?.startsWith("Publish the live site before managing a custom domain.") ||
             error?.message?.includes("must be a plain object") ||
             error?.message?.includes("deleteReasons must be an array") ||
             error?.message?.includes("Unsupported website eventType") ||
             error?.message?.includes("Listing data could not be loaded for this live site.") ||
             error?.message?.includes("website site status must be") ||
             error?.message?.includes("website domain status must be") ||
+            error?.message?.includes("subdomain like stay.example.com") ||
             error?.message?.includes("payload.attemptId") ||
             error?.message?.includes("payload.durationMs") ||
             error?.message?.includes("payload.surface") ||
@@ -2377,6 +2385,197 @@ export class PropertyController {
                 statusCode: 200,
                 headers: draftResponseHeaders,
                 body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/domain/custom/recheck
+    // -------------------------
+    async recheckWebsiteCustomDomain(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const customDomainRequest = await this.standaloneSiteCustomDomainService.recheckCustomDomain({
+                propertyId,
+                hostId,
+            });
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId,
+                hostId,
+                eventType: "WEBSITE_CUSTOM_DOMAIN_RECHECKED",
+                payload: {
+                    siteId: customDomainRequest.site.id,
+                    domain: customDomainRequest.customDomain?.domain || "",
+                    domainStatus: customDomainRequest.customDomain?.status || "VERIFIED",
+                },
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(customDomainRequest.siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/domain/custom/activate
+    // -------------------------
+    async activateWebsiteCustomDomain(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const customDomainRequest = await this.standaloneSiteCustomDomainService.activateCustomDomain({
+                propertyId,
+                hostId,
+            });
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId,
+                hostId,
+                eventType: "WEBSITE_CUSTOM_DOMAIN_ACTIVATED",
+                payload: {
+                    siteId: customDomainRequest.site.id,
+                    domain: customDomainRequest.customDomain?.domain || "",
+                    domainStatus: customDomainRequest.customDomain?.status || "ACTIVE",
+                },
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(customDomainRequest.siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/domain/custom/deactivate
+    // -------------------------
+    async deactivateWebsiteCustomDomain(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const customDomainRequest = await this.standaloneSiteCustomDomainService.deactivateCustomDomain({
+                propertyId,
+                hostId,
+            });
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId,
+                hostId,
+                eventType: "WEBSITE_CUSTOM_DOMAIN_DEACTIVATED",
+                payload: {
+                    siteId: customDomainRequest.site.id,
+                    domain: customDomainRequest.customDomain?.domain || "",
+                    domainStatus: customDomainRequest.customDomain?.status || "VERIFIED",
+                },
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(customDomainRequest.siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/domain/custom
+    // -------------------------
+    async requestWebsiteCustomDomain(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+            const domain = String(eventBody.domain || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            if (!domain) {
+                return this.badRequest("Custom domain is required.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const customDomainRequest = await this.standaloneSiteCustomDomainService.requestCustomDomain({
+                propertyId,
+                hostId,
+                requestedDomain: domain,
+            });
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId,
+                hostId,
+                eventType: "WEBSITE_CUSTOM_DOMAIN_REQUESTED",
+                payload: {
+                    siteId: customDomainRequest.site.id,
+                    domain: customDomainRequest.customDomain?.domain || domain,
+                    fallbackDomain: customDomainRequest.fallbackDomain?.domain || "",
+                    domainStatus: customDomainRequest.customDomain?.status || "PENDING",
+                },
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(customDomainRequest.siteSummary),
             };
         } catch (error) {
             console.error(error);

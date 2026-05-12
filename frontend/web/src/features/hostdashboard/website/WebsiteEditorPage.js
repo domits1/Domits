@@ -14,6 +14,12 @@ import {
   publishWebsiteSite,
   unpublishWebsiteSite,
 } from "./services/websiteSiteService";
+import {
+  activateWebsiteCustomDomain,
+  deactivateWebsiteCustomDomain,
+  recheckWebsiteCustomDomain,
+  requestWebsiteCustomDomain,
+} from "./services/websiteCustomDomainService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   getAmenityIconNode,
@@ -57,6 +63,14 @@ import {
   getImageSlotTargetId,
 } from "./websiteEditorConfig";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
+import WebsiteCustomDomainDialog from "./custom-domain/WebsiteCustomDomainDialog";
+import {
+  getCustomDomainStatusLabel,
+  getCustomWebsiteDomain,
+  getFallbackWebsiteDomain,
+  isCustomDomainActive,
+  isCustomDomainVerified,
+} from "./custom-domain/websiteCustomDomainModel";
 import styles from "./WebsiteEditorPage.module.scss";
 import arrowDownIcon from "../../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../../images/arrow-up-icon.svg";
@@ -669,6 +683,9 @@ function WebsiteEditorActionMenu({
   hasLiveSite,
   primarySiteDomain,
   openLiveWebsiteLink,
+  openCustomDomainDialog,
+  canManageCustomDomain,
+  customDomainActionLabel,
   updateLiveSiteChanges,
   isMutatingDraft,
   hasLiveSyncPending,
@@ -709,6 +726,17 @@ function WebsiteEditorActionMenu({
               onClick={openLiveWebsiteLink}
             >
               Open live site
+            </button>
+          ) : null}
+          {hasLiveSite ? (
+            <button
+              type="button"
+              role="menuitem"
+              className={styles.actionMenuItem}
+              onClick={openCustomDomainDialog}
+              disabled={!canManageCustomDomain}
+            >
+              {customDomainActionLabel}
             </button>
           ) : null}
           {hasLiveSite ? (
@@ -766,6 +794,9 @@ WebsiteEditorActionMenu.propTypes = {
   hasLiveSite: PropTypes.bool.isRequired,
   primarySiteDomain: primarySiteDomainPropType,
   openLiveWebsiteLink: PropTypes.func.isRequired,
+  openCustomDomainDialog: PropTypes.func.isRequired,
+  canManageCustomDomain: PropTypes.bool.isRequired,
+  customDomainActionLabel: PropTypes.string.isRequired,
   updateLiveSiteChanges: PropTypes.func.isRequired,
   isMutatingDraft: PropTypes.bool.isRequired,
   hasLiveSyncPending: PropTypes.bool.isRequired,
@@ -783,8 +814,11 @@ WebsiteEditorActionMenu.propTypes = {
 function WebsiteEditorPublicSitePanel({
   siteSummary,
   primarySiteDomain,
+  fallbackSiteDomain,
+  customDomain,
   liveSiteStatus,
   liveLinkStatus,
+  customDomainStatusLabel,
   siteSummaryError,
   hasLiveSite,
   hasLiveSyncPending,
@@ -806,9 +840,15 @@ function WebsiteEditorPublicSitePanel({
 
       <div className={styles.publicSiteGrid}>
         <div className={styles.publicSiteMetric}>
+          <span className={styles.publicSiteLabel}>Primary public host</span>
+          <strong className={styles.publicSiteValue}>
+            {primarySiteDomain?.domain || fallbackSiteDomain?.domain || "Available after first publish"}
+          </strong>
+        </div>
+        <div className={styles.publicSiteMetric}>
           <span className={styles.publicSiteLabel}>Domits live link</span>
           <strong className={styles.publicSiteValue}>
-            {primarySiteDomain?.domain || "Available after first publish"}
+            {fallbackSiteDomain?.domain || "Available after first publish"}
           </strong>
         </div>
         <div className={styles.publicSiteMetric}>
@@ -819,29 +859,52 @@ function WebsiteEditorPublicSitePanel({
           <span className={styles.publicSiteLabel}>Publication status</span>
           <strong className={styles.publicSiteValue}>{liveSiteStatus}</strong>
         </div>
+        <div className={styles.publicSiteMetric}>
+          <span className={styles.publicSiteLabel}>Custom domain</span>
+          <strong className={styles.publicSiteValue}>
+            {customDomain?.domain || "Not requested yet"}
+          </strong>
+        </div>
       </div>
 
       {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
-      {hasLiveSite && primarySiteDomain?.domain ? (
+      {hasLiveSite && fallbackSiteDomain?.domain ? (
         <p className={styles.publicSiteHint}>
           Live site URL:{" "}
           <a
             className={styles.publicSiteLink}
             href={buildPublishedWebsiteHref(
-              primarySiteDomain.domain,
+              fallbackSiteDomain.domain,
               siteSummary?.site?.id,
-              primarySiteDomain.status
+              fallbackSiteDomain.status
             )}
             target="_blank"
             rel="noreferrer"
           >
-            {primarySiteDomain.domain}
+            {fallbackSiteDomain.domain}
           </a>
+        </p>
+      ) : null}
+      {!siteSummaryError && customDomain?.domain ? (
+        <p className={styles.publicSiteHint}>
+          Custom domain status: <strong>{customDomainStatusLabel}</strong>. The Domits live link stays
+          online until activation is ready.
+        </p>
+      ) : null}
+      {!siteSummaryError && isCustomDomainActive(customDomain) ? (
+        <p className={styles.publicSiteHint}>
+          Open live site now prefers the active custom domain. The Domits live link remains available as
+          a fallback.
         </p>
       ) : null}
       {!siteSummaryError && hasLiveSite && hasLiveSyncPending ? (
         <p className={styles.publicSiteHint}>
           Update the live site to push the latest editor changes to the public website.
+        </p>
+      ) : null}
+      {!siteSummaryError && hasLiveSite && !customDomain?.domain ? (
+        <p className={styles.publicSiteHint}>
+          Use the website action menu to start a custom domain request for this published site.
         </p>
       ) : null}
       {!siteSummaryError && !hasLiveSite ? (
@@ -856,8 +919,11 @@ function WebsiteEditorPublicSitePanel({
 WebsiteEditorPublicSitePanel.propTypes = {
   siteSummary: siteSummaryPropType,
   primarySiteDomain: primarySiteDomainPropType,
+  fallbackSiteDomain: primarySiteDomainPropType,
+  customDomain: primarySiteDomainPropType,
   liveSiteStatus: PropTypes.string.isRequired,
   liveLinkStatus: PropTypes.string.isRequired,
+  customDomainStatusLabel: PropTypes.string.isRequired,
   siteSummaryError: PropTypes.string,
   hasLiveSite: PropTypes.bool.isRequired,
   hasLiveSyncPending: PropTypes.bool.isRequired,
@@ -878,7 +944,13 @@ function WebsiteEditorPage() {
   const [isUpdatingLiveSite, setIsUpdatingLiveSite] = useState(false);
   const [isPublishingSite, setIsPublishingSite] = useState(false);
   const [isUnpublishingSite, setIsUnpublishingSite] = useState(false);
+  const [isSavingCustomDomain, setIsSavingCustomDomain] = useState(false);
+  const [isRecheckingCustomDomain, setIsRecheckingCustomDomain] = useState(false);
+  const [isActivatingCustomDomain, setIsActivatingCustomDomain] = useState(false);
+  const [isDeactivatingCustomDomain, setIsDeactivatingCustomDomain] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [isCustomDomainDialogOpen, setIsCustomDomainDialogOpen] = useState(false);
+  const [customDomainInput, setCustomDomainInput] = useState("");
   const [highlightedTargetId, setHighlightedTargetId] = useState("");
   const [activePreviewTargetId, setActivePreviewTargetId] = useState("");
   const [siteSummary, setSiteSummary] = useState(null);
@@ -1049,8 +1121,16 @@ function WebsiteEditorPage() {
   );
 
   const isMutatingDraft = isSaving || isDiscardingChanges || isUpdatingLiveSite;
-  const isMutatingSite = isPublishingSite || isUnpublishingSite;
+  const isMutatingSite =
+    isPublishingSite ||
+    isUnpublishingSite ||
+    isSavingCustomDomain ||
+    isRecheckingCustomDomain ||
+    isActivatingCustomDomain ||
+    isDeactivatingCustomDomain;
   const primarySiteDomain = useMemo(() => getPrimaryWebsiteDomain(siteSummary), [siteSummary]);
+  const fallbackSiteDomain = useMemo(() => getFallbackWebsiteDomain(siteSummary), [siteSummary]);
+  const customDomain = useMemo(() => getCustomWebsiteDomain(siteSummary), [siteSummary]);
   const liveSiteStatusValue = siteSummary?.site?.status || "";
   const hasLiveSite = String(liveSiteStatusValue || "").trim().toUpperCase() === "PUBLISHED";
   const liveSiteStatus = formatStatusLabel(liveSiteStatusValue || "PREVIEW");
@@ -1058,6 +1138,10 @@ function WebsiteEditorPage() {
     primarySiteDomain,
     hasLiveSite,
   });
+  const customDomainStatusLabel = getCustomDomainStatusLabel(customDomain, formatStatusLabel);
+  const customDomainActionLabel = customDomain?.domain
+    ? "Review custom domain setup"
+    : "Set up custom domain";
   const canPublishSite =
     Boolean(draftRecord) &&
     !hasLiveSite &&
@@ -1068,6 +1152,28 @@ function WebsiteEditorPage() {
     hasLiveSite &&
     !isMutatingDraft &&
     !isMutatingSite;
+  const canManageCustomDomain = hasLiveSite && !isMutatingDraft && !isMutatingSite;
+  const canSaveCustomDomainRequest =
+    hasLiveSite &&
+    !isMutatingDraft &&
+    !isMutatingSite &&
+    (!customDomain?.domain || !isCustomDomainActive(customDomain));
+  const canRecheckCustomDomain =
+    canManageCustomDomain &&
+    Boolean(customDomain?.domain) &&
+    !isCustomDomainActive(customDomain);
+  const canActivateCustomDomain =
+    canManageCustomDomain &&
+    Boolean(customDomain?.domain) &&
+    isCustomDomainVerified(customDomain);
+  const canDeactivateCustomDomain =
+    canManageCustomDomain &&
+    Boolean(customDomain?.domain) &&
+    isCustomDomainActive(customDomain);
+
+  useEffect(() => {
+    setCustomDomainInput(String(customDomain?.domain || ""));
+  }, [customDomain?.domain]);
 
   useEffect(() => {
     setExpandedSections({
@@ -1553,6 +1659,129 @@ function WebsiteEditorPage() {
     }
   };
 
+  const openCustomDomainDialog = () => {
+    if (!hasLiveSite) {
+      toast.error("Publish the live site before requesting a custom domain.");
+      return;
+    }
+
+    setCustomDomainInput(String(customDomain?.domain || ""));
+    setIsActionMenuOpen(false);
+    setIsCustomDomainDialogOpen(true);
+  };
+
+  const closeCustomDomainDialog = () => {
+    if (isSavingCustomDomain) {
+      return;
+    }
+
+    setIsCustomDomainDialogOpen(false);
+  };
+
+  const submitCustomDomainRequest = async (event) => {
+    event.preventDefault();
+    if (!draftRecord || !hasLiveSite || isSavingCustomDomain) {
+      return;
+    }
+
+    setIsSavingCustomDomain(true);
+
+    try {
+      const nextSiteSummary = await requestWebsiteCustomDomain({
+        propertyId: draftRecord.propertyId,
+        domain: customDomainInput,
+      });
+      const nextCustomDomain = getCustomWebsiteDomain(nextSiteSummary);
+      setSiteSummary(nextSiteSummary);
+      setSiteSummaryError("");
+      setCustomDomainInput(String(nextCustomDomain?.domain || ""));
+      toast.success("Custom domain request saved.");
+    } catch (error) {
+      const errorMessage = error?.message || "We could not save this custom domain request.";
+      setSiteSummaryError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsSavingCustomDomain(false);
+    }
+  };
+
+  const recheckCustomDomain = async () => {
+    if (!draftRecord || !canRecheckCustomDomain) {
+      return;
+    }
+
+    setIsRecheckingCustomDomain(true);
+
+    try {
+      const nextSiteSummary = await recheckWebsiteCustomDomain(draftRecord.propertyId);
+      const nextCustomDomain = getCustomWebsiteDomain(nextSiteSummary);
+      setSiteSummary(nextSiteSummary);
+      setSiteSummaryError("");
+      setCustomDomainInput(String(nextCustomDomain?.domain || ""));
+      toast.success("Custom domain rechecked.");
+    } catch (error) {
+      const errorMessage = error?.message || "We could not recheck this custom domain.";
+      setSiteSummaryError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsRecheckingCustomDomain(false);
+    }
+  };
+
+  const activateCustomDomain = async () => {
+    if (!draftRecord || !canActivateCustomDomain) {
+      return;
+    }
+
+    setIsActivatingCustomDomain(true);
+
+    try {
+      const nextSiteSummary = await activateWebsiteCustomDomain(draftRecord.propertyId);
+      const nextCustomDomain = getCustomWebsiteDomain(nextSiteSummary);
+      setSiteSummary(nextSiteSummary);
+      setSiteSummaryError("");
+      setCustomDomainInput(String(nextCustomDomain?.domain || ""));
+      announceWebsiteLiveSiteUpdate({
+        siteId: nextSiteSummary?.site?.id,
+        domain: nextSiteSummary?.primaryDomain?.domain,
+      });
+      toast.success("Custom domain activated.");
+    } catch (error) {
+      const errorMessage = error?.message || "We could not activate this custom domain.";
+      setSiteSummaryError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsActivatingCustomDomain(false);
+    }
+  };
+
+  const deactivateCustomDomain = async () => {
+    if (!draftRecord || !canDeactivateCustomDomain) {
+      return;
+    }
+
+    setIsDeactivatingCustomDomain(true);
+
+    try {
+      const nextSiteSummary = await deactivateWebsiteCustomDomain(draftRecord.propertyId);
+      const nextCustomDomain = getCustomWebsiteDomain(nextSiteSummary);
+      setSiteSummary(nextSiteSummary);
+      setSiteSummaryError("");
+      setCustomDomainInput(String(nextCustomDomain?.domain || ""));
+      announceWebsiteLiveSiteUpdate({
+        siteId: nextSiteSummary?.site?.id,
+        domain: nextSiteSummary?.primaryDomain?.domain,
+      });
+      toast.success("Custom domain deactivated.");
+    } catch (error) {
+      const errorMessage = error?.message || "We could not deactivate this custom domain.";
+      setSiteSummaryError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsDeactivatingCustomDomain(false);
+    }
+  };
+
   const handleEditorFieldKeyDown = (field) => createEditorFieldKeyDownHandler(field, saveDraftChanges);
 
   const handleThemeBackgroundColorInputKeyDown = async (event) => {
@@ -1615,7 +1844,7 @@ function WebsiteEditorPage() {
   }, [isActionMenuOpen]);
 
   useEffect(() => {
-    const isOverlayOpen = imagePickerState.isOpen || iconPickerState.isOpen;
+    const isOverlayOpen = imagePickerState.isOpen || iconPickerState.isOpen || isCustomDomainDialogOpen;
     if (!isOverlayOpen) {
       return undefined;
     }
@@ -1628,6 +1857,11 @@ function WebsiteEditorPage() {
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
+        if (isCustomDomainDialogOpen) {
+          closeCustomDomainDialog();
+          return;
+        }
+
         if (iconPickerState.isOpen) {
           closeIconPicker();
           return;
@@ -1645,7 +1879,7 @@ function WebsiteEditorPage() {
       }
       globalThis.removeEventListener("keydown", handleKeyDown);
     };
-  }, [iconPickerState.isOpen, imagePickerState.isOpen]);
+  }, [iconPickerState.isOpen, imagePickerState.isOpen, isCustomDomainDialogOpen]);
 
   const renderLoadingSection = ({ id, title, description }) => (
     <section key={id} className={styles.panelSection}>
@@ -1710,6 +1944,9 @@ function WebsiteEditorPage() {
                 hasLiveSite={hasLiveSite}
                 primarySiteDomain={primarySiteDomain}
                 openLiveWebsiteLink={openLiveWebsiteLink}
+                openCustomDomainDialog={openCustomDomainDialog}
+                canManageCustomDomain={canManageCustomDomain}
+                customDomainActionLabel={customDomainActionLabel}
                 updateLiveSiteChanges={updateLiveSiteChanges}
                 isMutatingDraft={isMutatingDraft}
                 hasLiveSyncPending={hasLiveSyncPending}
@@ -1728,8 +1965,11 @@ function WebsiteEditorPage() {
             <WebsiteEditorPublicSitePanel
               siteSummary={siteSummary}
               primarySiteDomain={primarySiteDomain}
+              fallbackSiteDomain={fallbackSiteDomain}
+              customDomain={customDomain}
               liveSiteStatus={liveSiteStatus}
               liveLinkStatus={liveLinkStatus}
+              customDomainStatusLabel={customDomainStatusLabel}
               siteSummaryError={siteSummaryError}
               hasLiveSite={hasLiveSite}
               hasLiveSyncPending={hasLiveSyncPending}
@@ -2143,6 +2383,28 @@ function WebsiteEditorPage() {
         }
         onSelectIcon={selectIconFromPicker}
         onClose={closeIconPicker}
+      />
+
+      <WebsiteCustomDomainDialog
+        isOpen={isCustomDomainDialogOpen}
+        onClose={closeCustomDomainDialog}
+        onSubmit={submitCustomDomainRequest}
+        onRecheck={recheckCustomDomain}
+        onActivate={activateCustomDomain}
+        onDeactivate={deactivateCustomDomain}
+        domainValue={customDomainInput}
+        onDomainChange={setCustomDomainInput}
+        isSaving={isSavingCustomDomain}
+        isRechecking={isRecheckingCustomDomain}
+        isActivating={isActivatingCustomDomain}
+        isDeactivating={isDeactivatingCustomDomain}
+        canSaveRequest={canSaveCustomDomainRequest}
+        canRecheck={canRecheckCustomDomain}
+        canActivate={canActivateCustomDomain}
+        canDeactivate={canDeactivateCustomDomain}
+        customDomain={customDomain}
+        fallbackDomain={String(fallbackSiteDomain?.domain || "").trim()}
+        customDomainStatusLabel={customDomainStatusLabel}
       />
     </main>
   );

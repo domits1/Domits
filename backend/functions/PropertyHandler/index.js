@@ -38,6 +38,18 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/site/unpublish")) {
     return controller.unpublishWebsiteSite(event);
   }
+  if (isPath(event, "/property/website/site/domain/custom")) {
+    return controller.requestWebsiteCustomDomain(event);
+  }
+  if (isPath(event, "/property/website/site/domain/custom/recheck")) {
+    return controller.recheckWebsiteCustomDomain(event);
+  }
+  if (isPath(event, "/property/website/site/domain/custom/activate")) {
+    return controller.activateWebsiteCustomDomain(event);
+  }
+  if (isPath(event, "/property/website/site/domain/custom/deactivate")) {
+    return controller.deactivateWebsiteCustomDomain(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }

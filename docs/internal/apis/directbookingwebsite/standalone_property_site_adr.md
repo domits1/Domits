@@ -4,7 +4,7 @@
 Proposed
 
 ## Date
-2026-03-20
+2026-05-12
 
 ## Context
 Domits wants to let a host turn one PMS listing into one standalone property website without creating a separate frontend project or duplicating PMS business logic. The standalone website must keep descriptive page content fast to render and stable for design customization, while still remaining correctly aligned with PMS-controlled pricing, availability, and bookings.
@@ -42,7 +42,7 @@ Domits will design v1 of standalone property sites with these decisions locked:
 7. V2 extends the v1 foundation with checkout, booking creation, confirmation, quote revalidation on booking, and idempotency enforcement.
 8. Quote calculation is server-side only.
 9. Site status is independent from PMS property listing status.
-10. V1 ships with fallback Domits subdomains only. Custom domains are designed now and implemented later.
+10. The first live-site rollout ships with fallback Domits subdomains first. Custom-domain lifecycle state can be added on the same domain model without redesigning site ownership, but provider-backed verification and automation remain a later infrastructure phase.
 11. Public render uses standalone-owned published content snapshots and assets. PMS descriptive content is imported at publish time or explicit refresh time, not read live on every page request.
 12. V1 uses English as the only supported primary site language. Full multilingual support and host-selectable locales are later.
 13. Tooling stays aligned with the current Domits stack rather than introducing per-template stacks or a second rendering platform.
@@ -79,8 +79,8 @@ Rejected because a host must be able to keep a property live in PMS while pausin
 ### Live PMS descriptive reads on every public render in v1
 Rejected because they add avoidable latency, couple public render availability to PMS read health, and block a clean published-content model for standalone site presentation.
 
-### Shipping custom domains in the first implementation
-Rejected because fallback subdomains are sufficient for v1 rollout and custom domains add operational complexity that is better designed now and implemented after the foundation is stable.
+### Shipping provider-backed custom domains in the first implementation
+Rejected because fallback subdomains are sufficient for the first live rollout and provider-backed custom domains add operational complexity that is better layered onto the stable site/domain foundation after the fallback runtime exists.
 
 ### Treating booking as frontend-owned logic
 Rejected because checkout and booking are money-sensitive flows and must be revalidated server-side against PMS-controlled availability and pricing.
@@ -89,3 +89,4 @@ Rejected because checkout and booking are money-sensitive flows and must be reva
 Implementation details, SQL, public API examples, Mermaid diagrams, risk tables, and KPI design are defined in:
 
 - [Standalone Property Site Design Pack](./standalone_property_site_design_pack.md)
+- [Standalone Property Site Custom Domain](./standalone_property_site_custom_domain.md)

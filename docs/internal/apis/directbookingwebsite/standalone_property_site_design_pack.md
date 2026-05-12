@@ -8,7 +8,7 @@ This document defines the v1 design pack for Domits standalone property sites. I
 
 **Status:** Proposed
 
-**Last Updated:** 2026-03-20
+**Last Updated:** 2026-05-12
 
 **Related Architecture Decision:** [ADR - Standalone Property Site V1](./standalone_property_site_adr.md)
 
@@ -23,7 +23,7 @@ V1 foundation includes:
 - PMS as the live source of truth for pricing, availability, and bookings
 - standalone-owned site config, published content snapshots, and publish state
 - fallback Domits subdomain in v1
-- custom domains designed now, implemented later
+- custom-domain lifecycle state now exists; provider-backed verification and automation remain later
 - first-party analytics events for KPI reporting
 - baked published page content for public render after publish
 - live PMS reads only for quote pricing and availability
@@ -93,7 +93,7 @@ V1 does not include:
 - arbitrary CSS injection
 - full multilingual SEO platform
 - public host chat
-- custom domain implementation
+- provider-backed custom domain implementation
 
 ### Delivery sequencing
 Delivery is staged so v1 stays foundation-first:
@@ -111,7 +111,7 @@ Delivery is staged so v1 stays foundation-first:
   - booking source attribution
   - quote revalidation and idempotency enforcement
 - Later phase beyond v2:
-  - custom domains
+  - provider-backed custom domains
   - advanced multilingual support
   - multi-property websites
   - visual builder capabilities

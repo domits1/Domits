@@ -6,6 +6,9 @@ This document tracks the current implementation status of the host-side standalo
 Historical iteration log:
 - `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
 
+Custom-domain reference:
+- `docs/internal/apis/directbookingwebsite/standalone_property_site_custom_domain.md`
+
 ## Current status
 The builder is no longer only a setup shell. It now builds a real in-dashboard preview from selected listing data for the first three templates and persists per-host website drafts.
 
@@ -87,6 +90,12 @@ What is in place:
   - a same-origin debug route exists at `/website-live/:domain` so hosts can test published-site rendering before real fallback-domain DNS is activated
   - the actual standalone-host root path can now render the published site when the current hostname matches the fallback-domain suffix
   - live LCP telemetry can now be emitted from the published-site runtime instead of remaining preview-only
+- Phase 3 of domain management is now partially implemented:
+  - hosts can request a custom domain from the dedicated website editor
+  - custom-domain request state is stored separately from the fallback domain
+  - hosts can manually recheck, activate, and deactivate the custom domain lifecycle in the editor
+  - `Open live site` now follows the current primary domain once a custom domain becomes active
+  - provider-backed verification and hosting automation are still pending
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -263,12 +272,10 @@ The next high-priority phase is extending the dedicated draft editor, not adding
 Required next steps:
 - Expand section-level/content override coverage further into template-specific headings and branding/theme controls.
 - Introduce image reordering / richer media management beyond the current slot reassignment approach.
-- Add publish/unpublish state transitions and domain management hooks on top of stored drafts.
 - Add preview URL strategy (in-page now, dedicated preview route/new tab later).
 - Harden preview URL strategy before production publish:
   - add token rotation or preview-token hashing if draft UUID links are not considered sufficient
-  - add publish/unpublish state transitions
-  - add domain management hooks
+  - add provider-backed custom-domain verification and hosting automation
 
 ## Additional implementation note
 - The Website route still exists in the frontend.
