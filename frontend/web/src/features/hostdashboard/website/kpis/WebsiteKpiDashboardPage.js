@@ -7,13 +7,11 @@ import { WebsiteKpiMetricCard, WebsiteKpiResearchCard } from "./WebsiteKpiCards"
 import { WEBSITE_DRAFT_DELETE_REASONS } from "../websiteDeleteReasons";
 import {
   buildResearchKpiCards,
-  buildSurfacePerformanceCards,
+  buildPerformanceCards,
   buildWebsiteMetricCards,
   EMPTY_WEBSITE_KPIS,
   PERFORMANCE_VIEWPORT_TAB_MOBILE,
   PERFORMANCE_VIEWPORT_TAB_OPTIONS,
-  SURFACE_KPI_TAB_OPTIONS,
-  SURFACE_KPI_TAB_PREVIEW,
 } from "./websiteKpiConfig";
 import styles from "../WebsiteBuilderPage.module.scss";
 
@@ -125,14 +123,10 @@ const collectChangedDeletionReasonIds = (previousBreakdown, nextBreakdown) => {
 
 const collectChangedKpiIds = (previousWebsiteKpis, nextWebsiteKpis) => {
   const previousSurfaceCards = PERFORMANCE_VIEWPORT_TAB_OPTIONS.flatMap(({ id }) =>
-    Object.values(buildSurfacePerformanceCards(previousWebsiteKpis, id)).flatMap(
-      (surfaceCardGroup) => surfaceCardGroup.metrics
-    )
+    buildPerformanceCards(previousWebsiteKpis, id).metrics
   );
   const nextSurfaceCards = PERFORMANCE_VIEWPORT_TAB_OPTIONS.flatMap(({ id }) =>
-    Object.values(buildSurfacePerformanceCards(nextWebsiteKpis, id)).flatMap(
-      (surfaceCardGroup) => surfaceCardGroup.metrics
-    )
+    buildPerformanceCards(nextWebsiteKpis, id).metrics
   );
   const previousMetricCards = [
     ...buildWebsiteMetricCards(previousWebsiteKpis),
@@ -170,7 +164,6 @@ function WebsiteKpiDashboardPage() {
   const [websiteKpisError, setWebsiteKpisError] = useState("");
   const [websiteKpisRefreshError, setWebsiteKpisRefreshError] = useState("");
   const [lastWebsiteKpiRefreshAt, setLastWebsiteKpiRefreshAt] = useState(0);
-  const [surfaceKpiTab, setSurfaceKpiTab] = useState(SURFACE_KPI_TAB_PREVIEW);
   const [performanceViewportTab, setPerformanceViewportTab] = useState(PERFORMANCE_VIEWPORT_TAB_MOBILE);
   const [kpiViewTab, setKpiViewTab] = useState(KPI_VIEW_TAB_OVERVIEW);
   const [highlightedMetricIds, setHighlightedMetricIds] = useState([]);
@@ -275,7 +268,7 @@ function WebsiteKpiDashboardPage() {
   }, []);
 
   const metricCards = buildWebsiteMetricCards(websiteKpis);
-  const surfacePerformanceCards = buildSurfacePerformanceCards(websiteKpis, performanceViewportTab);
+  const performanceCards = buildPerformanceCards(websiteKpis, performanceViewportTab);
   const researchKpiCards = buildResearchKpiCards(websiteKpis);
   const deletionReasonRows = useMemo(
     () => buildDeletionReasonRows(websiteKpis.deletionReasonBreakdown),
@@ -359,37 +352,13 @@ function WebsiteKpiDashboardPage() {
     <article className={styles.surfaceKpiPanel}>
       <div className={styles.surfaceKpiHeader}>
         <div>
-          <h3>{surfacePerformanceCards[surfaceKpiTab].title}</h3>
-          <p>Performance KPIs are separated by surface because preview and live do not share the same runtime path.</p>
-        </div>
-
-        <div className={styles.surfaceKpiTabRow} role="tablist" aria-label="Website surface KPI tabs">
-          {SURFACE_KPI_TAB_OPTIONS.map(({ id, label }) => {
-            const surfaceTab = id;
-            const isActiveTab = surfaceKpiTab === surfaceTab;
-            return (
-              <button
-                key={surfaceTab}
-                type="button"
-                role="tab"
-                aria-selected={isActiveTab}
-                className={`${styles.surfaceKpiTabButton} ${
-                  isActiveTab ? styles.surfaceKpiTabButtonActive : ""
-                }`.trim()}
-                onClick={() => setSurfaceKpiTab(surfaceTab)}
-              >
-                {label}
-              </button>
-            );
-          })}
+          <h3>{performanceCards.title}</h3>
+          <p>{performanceCards.description}</p>
         </div>
       </div>
 
       <div className={styles.surfaceKpiBody}>
         <div className={styles.surfaceKpiViewportSection}>
-          <p className={styles.surfaceKpiDescription}>
-            {surfacePerformanceCards[surfaceKpiTab].description}
-          </p>
           <div className={styles.surfaceKpiTabRow} role="tablist" aria-label="Website viewport KPI tabs">
             {PERFORMANCE_VIEWPORT_TAB_OPTIONS.map(({ id, label }) => {
               const isActiveTab = performanceViewportTab === id;
@@ -411,10 +380,10 @@ function WebsiteKpiDashboardPage() {
           </div>
         </div>
         <p className={styles.surfaceKpiDescription}>
-          {surfacePerformanceCards[surfaceKpiTab].viewportDescription}
+          {performanceCards.viewportDescription}
         </p>
         <div className={styles.surfaceKpiGrid}>
-          {surfacePerformanceCards[surfaceKpiTab].metrics.map((surfaceMetric) => (
+          {performanceCards.metrics.map((surfaceMetric) => (
             <WebsiteKpiMetricCard
               key={surfaceMetric.id}
               title={surfaceMetric.title}

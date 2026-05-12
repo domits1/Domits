@@ -32,6 +32,12 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/event")) {
     return controller.recordWebsiteAnalyticsEvent(event);
   }
+  if (isPath(event, "/property/website/site/publish")) {
+    return controller.publishWebsiteSite(event);
+  }
+  if (isPath(event, "/property/website/site/unpublish")) {
+    return controller.unpublishWebsiteSite(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -72,6 +78,12 @@ const bookingEngineHandlers = {
 };
 
 const handleGet = async (event) => {
+  if (isPath(event, "/property/website/public/resolve")) {
+    return controller.resolvePublicWebsiteSite(event);
+  }
+  if (isPath(event, "/property/website/public/render")) {
+    return controller.getPublicWebsiteRenderModel(event);
+  }
   if (isPath(event, "/property/website/preview")) {
     return controller.getWebsitePreviewByDraftId(event);
   }
@@ -80,6 +92,9 @@ const handleGet = async (event) => {
   }
   if (isPath(event, "/property/website/kpis")) {
     return controller.getWebsiteKpis(event);
+  }
+  if (isPath(event, "/property/website/site")) {
+    return controller.getWebsiteSiteByPropertyId(event);
   }
   if (isPath(event, "/property/website/draft")) {
     return controller.getWebsiteDraftByPropertyId(event);
