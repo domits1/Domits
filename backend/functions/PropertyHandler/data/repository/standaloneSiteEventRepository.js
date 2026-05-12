@@ -18,6 +18,11 @@ const eventTableName = (schemaName) => `${schemaName}.standalone_site_event`;
 const draftTableName = (schemaName) => `${schemaName}.standalone_site_draft`;
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
 const siteDomainTableName = (schemaName) => `${schemaName}.standalone_site_domain`;
+const propertyPricingTableName = (schemaName) => `${schemaName}.property_pricing`;
+const STANDALONE_SITE_MONTHLY_FIXED_COST_EUR = Number(process.env.STANDALONE_SITE_MONTHLY_FIXED_COST_EUR);
+const STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR = Number(
+  process.env.STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR
+);
 
 const safeParseJson = (rawValue, fallbackValue = {}) => {
   if (typeof rawValue !== "string" || !rawValue.trim()) {
@@ -57,6 +62,8 @@ const toPercentage = (numerator, denominator) => {
   return (Number(numerator) / denominator) * 100;
 };
 
+const PRICE_COMPARISON_EPSILON = 0.0001;
+
 const getPercentile = (values, percentile) => {
   if (!Array.isArray(values) || values.length < 1) {
     return null;
@@ -90,6 +97,71 @@ const EMPTY_EVENT_METRICS = Object.freeze({
   uniqueDrafts: 0,
   lastOccurredAt: null,
 });
+
+const extractSnapshotRoomRate = (snapshot) =>
+  toNullableNumber(snapshot?.pricing?.roomRate ?? snapshot?.pricing?.roomrate);
+
+const areComparablePricesEqual = (left, right) =>
+  Number.isFinite(left) &&
+  Number.isFinite(right) &&
+  Math.abs(Number(left) - Number(right)) < PRICE_COMPARISON_EPSILON;
+
+const summarizePublishedPriceAlignment = (publishedPriceRows) => {
+  let comparableSiteCount = 0;
+  let mismatchCount = 0;
+
+  (Array.isArray(publishedPriceRows) ? publishedPriceRows : []).forEach((row) => {
+    const snapshot = safeParseJson(row?.published_property_snapshot_json, {});
+    const publishedRoomRate = extractSnapshotRoomRate(snapshot);
+    const currentRoomRate = toNullableNumber(row?.roomrate);
+
+    if (!Number.isFinite(publishedRoomRate) || !Number.isFinite(currentRoomRate)) {
+      return;
+    }
+
+    comparableSiteCount += 1;
+    if (!areComparablePricesEqual(publishedRoomRate, currentRoomRate)) {
+      mismatchCount += 1;
+    }
+  });
+
+  return {
+    comparableSiteCount,
+    mismatchRate: toPercentage(mismatchCount, comparableSiteCount),
+  };
+};
+
+const resolveStandaloneSiteMonthlyCostInputs = () => {
+  const fixedMonthlyCostEur = Number.isFinite(STANDALONE_SITE_MONTHLY_FIXED_COST_EUR)
+    ? STANDALONE_SITE_MONTHLY_FIXED_COST_EUR
+    : null;
+  const variableCostPerSiteEur = Number.isFinite(STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR)
+    ? STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR
+    : null;
+
+  return {
+    fixedMonthlyCostEur,
+    variableCostPerSiteEur,
+  };
+};
+
+const calculateCostPerActiveSitePerMonth = (activePublishedSiteCount) => {
+  if (!Number.isFinite(activePublishedSiteCount) || activePublishedSiteCount <= 0) {
+    return null;
+  }
+
+  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveStandaloneSiteMonthlyCostInputs();
+  if (!Number.isFinite(fixedMonthlyCostEur) && !Number.isFinite(variableCostPerSiteEur)) {
+    return null;
+  }
+
+  const fixedPerSiteCost = Number.isFinite(fixedMonthlyCostEur)
+    ? fixedMonthlyCostEur / activePublishedSiteCount
+    : 0;
+  const variablePerSiteCost = Number.isFinite(variableCostPerSiteEur) ? variableCostPerSiteEur : 0;
+
+  return fixedPerSiteCost + variablePerSiteCost;
+};
 
 const buildEventCountMap = (eventCountRows) =>
   new Map(
@@ -335,13 +407,15 @@ export class StandaloneSiteEventRepository {
     const standaloneEventTable = eventTableName(schemaName);
     const standaloneSiteTable = siteTableName(schemaName);
     const standaloneSiteDomainTable = siteDomainTableName(schemaName);
+    const propertyPricingTable = propertyPricingTableName(schemaName);
     const hasHostScope = typeof hostId === "string" && hostId.trim().length > 0;
     const draftWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const eventWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const siteWhereClause = hasHostScope ? "WHERE site.host_id = $1" : "";
     const queryParameters = hasHostScope ? [hostId] : [];
 
-    const [draftCountRows, eventCountRows, metricEventRows, liveLinkAvailabilityRows] = await Promise.all([
+    const [draftCountRows, eventCountRows, metricEventRows, liveLinkAvailabilityRows, publishedPriceRows] =
+      await Promise.all([
       client.query(
         `SELECT COUNT(*)::bigint AS total
          FROM ${standaloneDraftTable}
@@ -393,6 +467,19 @@ export class StandaloneSiteEventRepository {
          ${siteWhereClause}`,
         queryParameters
       ),
+      client.query(
+        `SELECT
+           site.id,
+           site.property_id,
+           site.published_property_snapshot_json,
+           pricing.roomrate
+         FROM ${standaloneSiteTable} site
+         LEFT JOIN ${propertyPricingTable} pricing
+           ON pricing.property_id = site.property_id
+         ${siteWhereClause}
+         ${hasHostScope ? "AND" : "WHERE"} site.status = 'PUBLISHED'`,
+        queryParameters
+      ),
     ]);
 
     const eventCounts = buildEventCountMap(eventCountRows);
@@ -428,6 +515,8 @@ export class StandaloneSiteEventRepository {
     const buildAbandonedCount = countAbandonedAttempts(startedAttempts, completedAttemptIds);
     const publishedLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.published_site_count);
     const reachableLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.reachable_site_count);
+    const publishedPriceAlignmentSummary = summarizePublishedPriceAlignment(publishedPriceRows);
+    const costPerActiveSitePerMonth = calculateCostPerActiveSitePerMonth(publishedLiveSiteCount);
     const previewMobileLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "mobile");
     const previewTabletLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "tablet");
     const previewDesktopLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "desktop");
@@ -456,6 +545,10 @@ export class StandaloneSiteEventRepository {
       timeToFirstPreviewSampleCount: previewReadyDurations.length,
       timeToPublishP95: getPercentile(publishDurations, 95),
       timeToPublishSampleCount: publishDurations.length,
+      costPerActiveSitePerMonth,
+      costPerActiveSitePerMonthSampleCount: Number.isFinite(costPerActiveSitePerMonth)
+        ? publishedLiveSiteCount
+        : 0,
       publicPreviewViewCount: previewMetrics.total,
       uniquePreviewedWebsiteCount: previewMetrics.uniqueDrafts,
       uniqueLiveSiteCount: openedSitePropertyIds.size,
@@ -485,6 +578,8 @@ export class StandaloneSiteEventRepository {
       siteLcpDesktopSampleCount: mergedDesktopLcpSummary.sampleCount,
       fallbackSubdomainAvailability: toPercentage(reachableLiveSiteCount, publishedLiveSiteCount),
       fallbackSubdomainAvailabilitySampleCount: publishedLiveSiteCount,
+      quoteToChargeMismatchRate: publishedPriceAlignmentSummary.mismatchRate,
+      quoteToChargeMismatchSampleCount: publishedPriceAlignmentSummary.comparableSiteCount,
       deletionReasonBreakdown,
     };
   }

@@ -264,7 +264,9 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Scalability", "Cost"],
     "costPerActiveSitePerMonth",
     "eur",
-    "Requires infrastructure cost allocation plus a real count of active published sites. Drafts and internal preview routes are not enough for a defensible value."
+    "Calculated from configured monthly standalone-site cost inputs plus the current count of published live sites. This is a configured operating-cost proxy, not an AWS billing API feed.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.costPerActiveSitePerMonthSampleCount),
+    "costPerActiveSitePerMonthSampleCount"
   ),
   createResearchKpiDefinition(
     "fallback_subdomain_availability",
@@ -287,7 +289,9 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Correctness"],
     "quoteToChargeMismatchRate",
     "percentage",
-    "Requires quote issuance and final successful charge comparison. That data does not exist until checkout and payment instrumentation is in place."
+    "Current proxy compares the published live-site room rate snapshot against the current PMS base room rate. A true quote-to-charge comparison still requires standalone quote, checkout, and payment instrumentation.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.quoteToChargeMismatchSampleCount),
+    "quoteToChargeMismatchSampleCount"
   ),
   createResearchKpiDefinition(
     "booking_funnel_completion_rate",

@@ -43,7 +43,7 @@ import {
   announceWebsiteLiveSiteUpdate,
   announceWebsitePreviewUpdate,
 } from "./services/websitePreviewSync";
-import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
+import { buildPublishedWebsiteHref, buildWebsitePreviewPath } from "./websitePublicSiteLinks";
 import {
   COMMON_TEXT_FIELDS,
   EDITOR_SECTION_KEYS,
@@ -209,6 +209,37 @@ const getLiveLinkStatus = ({ primarySiteDomain, hasLiveSite }) => {
   }
 
   return "Not published";
+};
+
+const resolvePublicSiteLinkPresentation = ({
+  hasLiveSite,
+  primarySiteDomain,
+  siteSummary,
+  draftId,
+}) => {
+  const normalizedDraftId = String(draftId || "").trim();
+  const hasPreviewLink = Boolean(normalizedDraftId);
+
+  if (hasLiveSite) {
+    return {
+      primaryLinkLabel: "Domits live link",
+      primaryLinkValue: primarySiteDomain?.domain || "Available after first publish",
+      secondaryLinkHref: primarySiteDomain?.domain
+        ? buildPublishedWebsiteHref(primarySiteDomain.domain, siteSummary?.site?.id, primarySiteDomain.status)
+        : "",
+      secondaryLinkCopy: "Live site URL",
+      secondaryLinkText: primarySiteDomain?.domain || "",
+    };
+  }
+
+  const previewPath = hasPreviewLink ? buildWebsitePreviewPath(normalizedDraftId) : "";
+  return {
+    primaryLinkLabel: "Internal preview link",
+    primaryLinkValue: previewPath || "Available after first save",
+    secondaryLinkHref: previewPath,
+    secondaryLinkCopy: "Preview URL",
+    secondaryLinkText: previewPath,
+  };
 };
 
 const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) => {
@@ -788,7 +819,16 @@ function WebsiteEditorPublicSitePanel({
   siteSummaryError,
   hasLiveSite,
   hasLiveSyncPending,
+  draftId,
 }) {
+  const { primaryLinkLabel, primaryLinkValue, secondaryLinkHref, secondaryLinkCopy, secondaryLinkText } =
+    resolvePublicSiteLinkPresentation({
+      hasLiveSite,
+      primarySiteDomain,
+      siteSummary,
+      draftId,
+    });
+
   return (
     <section className={styles.publicSitePanel}>
       <div className={styles.publicSiteHeader}>
@@ -806,10 +846,8 @@ function WebsiteEditorPublicSitePanel({
 
       <div className={styles.publicSiteGrid}>
         <div className={styles.publicSiteMetric}>
-          <span className={styles.publicSiteLabel}>Domits live link</span>
-          <strong className={styles.publicSiteValue}>
-            {primarySiteDomain?.domain || "Available after first publish"}
-          </strong>
+          <span className={styles.publicSiteLabel}>{primaryLinkLabel}</span>
+          <strong className={styles.publicSiteValue}>{primaryLinkValue}</strong>
         </div>
         <div className={styles.publicSiteMetric}>
           <span className={styles.publicSiteLabel}>Link status</span>
@@ -822,20 +860,16 @@ function WebsiteEditorPublicSitePanel({
       </div>
 
       {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
-      {hasLiveSite && primarySiteDomain?.domain ? (
+      {secondaryLinkHref ? (
         <p className={styles.publicSiteHint}>
-          Live site URL:{" "}
+          {secondaryLinkCopy}:{" "}
           <a
             className={styles.publicSiteLink}
-            href={buildPublishedWebsiteHref(
-              primarySiteDomain.domain,
-              siteSummary?.site?.id,
-              primarySiteDomain.status
-            )}
+            href={secondaryLinkHref}
             target="_blank"
             rel="noreferrer"
           >
-            {primarySiteDomain.domain}
+            {secondaryLinkText}
           </a>
         </p>
       ) : null}
@@ -861,6 +895,7 @@ WebsiteEditorPublicSitePanel.propTypes = {
   siteSummaryError: PropTypes.string,
   hasLiveSite: PropTypes.bool.isRequired,
   hasLiveSyncPending: PropTypes.bool.isRequired,
+  draftId: PropTypes.string,
 };
 
 function WebsiteEditorPage() {
@@ -1723,6 +1758,7 @@ function WebsiteEditorPage() {
               siteSummaryError={siteSummaryError}
               hasLiveSite={hasLiveSite}
               hasLiveSyncPending={hasLiveSyncPending}
+              draftId={draftRecord?.id || ""}
             />
           </div>
 
