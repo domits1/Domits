@@ -34,6 +34,23 @@ const normalizeWebsiteDomain = (value) => {
   return hostSegment.split(":")[0] || "";
 };
 
+const resolveFallbackPropertyId = ({ resolution, renderPayload }) => {
+  const candidateValues = [
+    resolution?.propertyId,
+    renderPayload?.resolution?.propertyId,
+    renderPayload?.propertySnapshot?.property?.id,
+    renderPayload?.propertySnapshot?.property?.ID,
+    renderPayload?.propertySnapshot?.id,
+    renderPayload?.propertySnapshot?.ID,
+  ];
+
+  const normalizedPropertyId = candidateValues
+    .map((value) => String(value || "").trim())
+    .find(Boolean);
+
+  return normalizedPropertyId || "";
+};
+
 function WebsitePublicSitePage() {
   const { domain: routeDomain = "" } = useParams();
   const [resolution, setResolution] = useState(null);
@@ -131,6 +148,14 @@ function WebsitePublicSitePage() {
   const resolvedDomain = normalizeWebsiteDomain(
     renderPayload?.domain?.domain || resolution?.domain?.domain || requestedDomain
   );
+  const fallbackPropertyId = useMemo(
+    () => resolveFallbackPropertyId({ resolution, renderPayload }),
+    [renderPayload, resolution]
+  );
+  const recoveryHref = fallbackPropertyId
+    ? `/listingdetails?ID=${encodeURIComponent(fallbackPropertyId)}`
+    : "/home";
+  const recoveryLabel = fallbackPropertyId ? "View listing on Domits" : "Browse stays on Domits";
 
   useEffect(() => {
     return subscribeToWebsiteLiveSiteUpdates(
@@ -209,6 +234,17 @@ function WebsitePublicSitePage() {
         <p className={styles.publicPreviewEyebrow}>Published website</p>
         <h1>{template?.name || "Published website unavailable"}</h1>
         <p>{loadError || "This published website is not available."}</p>
+        <div className={styles.publicPreviewActionRow}>
+          <button
+            type="button"
+            className={styles.publicPreviewActionButton}
+            onClick={() => {
+              globalThis.location.assign(recoveryHref);
+            }}
+          >
+            {recoveryLabel}
+          </button>
+        </div>
       </section>
     </main>
   );
