@@ -36,12 +36,14 @@ import {
   fetchWebsiteDrafts,
   upsertWebsiteDraft,
 } from "./services/websiteDraftService";
+import { fetchWebsiteSiteByPropertyId } from "./services/websiteSiteService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides } from "./rendering/websiteDraftThemeOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
 import { WEBSITE_DRAFT_DELETE_REASONS } from "./websiteDeleteReasons";
+import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -1023,14 +1025,33 @@ function WebsiteBuilderPage() {
     navigate(`/hostdashboard/website/${propertyId}`);
   };
 
-  const openWebsiteDraftPreview = (draft) => {
-    const draftId = String(draft?.id || "").trim();
-    if (!draftId) {
-      toast.error("This website does not have a preview link yet.");
+  const openWebsiteDraftLiveSite = async (draft) => {
+    const propertyId = String(draft?.propertyId || "").trim();
+    if (!propertyId) {
       return;
     }
 
-    globalThis.open(buildWebsitePreviewPath(draftId), "_blank", "noopener,noreferrer");
+    try {
+      const siteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
+      const liveDomain = String(siteSummary?.primaryDomain?.domain || "").trim();
+      const liveDomainStatus = String(siteSummary?.primaryDomain?.status || "").trim();
+      const siteId = String(siteSummary?.site?.id || "").trim();
+      const siteStatus = String(siteSummary?.site?.status || "").trim().toUpperCase();
+
+      if (!liveDomain || siteStatus !== "PUBLISHED") {
+        toast.error("Publish this website from the editor before opening the live site.");
+        return;
+      }
+
+      globalThis.open(
+        buildPublishedWebsiteHref(liveDomain, siteId, liveDomainStatus),
+        "_blank",
+        "noopener,noreferrer"
+      );
+    } catch (error) {
+      toast.error(error?.message || "We could not open the live site for this website.");
+      return;
+    }
   };
 
   const openWebsiteDraftDeleteDialog = (draft) => {
@@ -1170,7 +1191,7 @@ function WebsiteBuilderPage() {
       return (
         <div className={styles.stateCard}>
           <p>
-            You do not have any saved website drafts yet. Build a preview from the builder tab and the
+            You do not have any saved website drafts yet. Build a website from the builder tab and the
             draft will appear here.
           </p>
         </div>
@@ -1211,9 +1232,9 @@ function WebsiteBuilderPage() {
                     <button
                       type="button"
                       className={styles.secondaryButton}
-                      onClick={() => openWebsiteDraftPreview(draft)}
+                      onClick={() => void openWebsiteDraftLiveSite(draft)}
                     >
-                      Open live preview
+                      Open live site
                     </button>
                     <button
                       type="button"
