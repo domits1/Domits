@@ -63,6 +63,11 @@ class ReservationController {
       const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
       const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
 
+      if (body?.action === "cancel-booking") {
+        if (!body?.bookingId) throw new Error("Missing bookingId.");
+        return await this.cancelBooking(body.bookingId, event);
+      }
+
       if (body?.action === "accept-inquiry" || body?.action === "decline-inquiry") {
         if (!body?.bookingId) throw new Error("Missing bookingId.");
         if (body.action === "decline-inquiry") {
