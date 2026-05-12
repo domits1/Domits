@@ -98,7 +98,7 @@
     .domits-searchContainer {
       background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), var(--villa-background);
       background-size: cover;
-      background-position: center;
+      background-position: bottom center;
       height: 87vh;
       display: flex;
       flex-direction: column;
@@ -113,13 +113,18 @@
       align-items: center;
       gap: 13px;
       color: #fff;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
     }
 
     .domits-searchText {
+      text-wrap: balance;
+      color: #fff;
       font-size: clamp(2.75rem, 5vw, 4.75rem);
       font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: 1.05;
       margin: 0;
+      max-width: 720px;
     }
 
     .domits-searchSubtitle {
