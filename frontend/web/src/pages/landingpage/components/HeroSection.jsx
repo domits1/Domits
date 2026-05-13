@@ -11,9 +11,34 @@ import vrboLogo from "../../../images/vrbo-logo.svg";
 import domitsLogo from "../../../images/domits-logo.svg";
 import heroImage from "../../../images/hero-image.svg";
 import checkIcon from "../../../images/check-icon.svg";
+import { Auth } from "aws-amplify";
 
-function HeroSection({ landingContent }) {
+function HeroSection({ landingContent, isAuthenticated, group }) {
   const navigate = useNavigate();
+  const handleStartHosting = async () => {
+  if (!isAuthenticated) {
+    navigate("/register");
+    return;
+  }
+
+  if (group !== "Host") {
+    try {
+      const user = await Auth.currentAuthenticatedUser();
+
+      await Auth.updateUserAttributes(user, {
+        "custom:group": "Host",
+      });
+
+      navigate("/hostonboarding");
+    } catch (error) {
+      console.error(error);
+    }
+
+    return;
+  }
+
+  navigate("/hostonboarding");
+};
 
   return (
     <section className="hero">
@@ -46,7 +71,7 @@ function HeroSection({ landingContent }) {
           <motion.div className="hero__actions" variants={fadeUp}>
             <motion.button
               className="btn btn--primary"
-              onClick={() => navigate("/register")}
+              onClick={handleStartHosting}
               whileHover={{ scale: 1.05 }}
             >
               Start Hosting →

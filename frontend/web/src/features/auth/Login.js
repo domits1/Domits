@@ -30,18 +30,21 @@ const Login = () => {
   const inputRef = useRef([]);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        const group = user.attributes["custom:group"];
+  const checkAuth = async () => {
+    try {
+      const user = await Auth.currentAuthenticatedUser();
 
-        if (group === "Host") navigate("/hostdashboard");
-        else navigate("/guestdashboard");
-      } catch {}
-    };
+      if (redirect) return;
 
-    checkAuth();
-  }, [navigate]);
+      const group = user.attributes["custom:group"];
+
+      if (group === "Host") navigate("/hostdashboard");
+      else navigate("/guestdashboard");
+    } catch {}
+  };
+
+  checkAuth();
+}, [navigate, redirect]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

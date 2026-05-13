@@ -2,9 +2,35 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
+import { Auth } from "aws-amplify";
 
-function CtaSection() {
+function CtaSection({ isAuthenticated, group }) {
   const navigate = useNavigate();
+
+  const handleStartHosting = async () => {
+  if (!isAuthenticated) {
+    navigate("/register");
+    return;
+  }
+
+  if (group !== "Host") {
+    try {
+      const user = await Auth.currentAuthenticatedUser();
+
+      await Auth.updateUserAttributes(user, {
+        "custom:group": "Host",
+      });
+
+      navigate("/hostonboarding");
+    } catch (error) {
+      console.error(error);
+    }
+
+    return;
+  }
+
+  navigate("/hostonboarding");
+};
 
   return (
     <motion.section
@@ -31,7 +57,7 @@ function CtaSection() {
 
         <motion.button
           className="btn btn--primary"
-          onClick={() => navigate("/hostonboarding")}
+          onClick={handleStartHosting}
           variants={fadeUp}
           whileHover={{ scale: 1.07 }}
           whileTap={{ scale: 0.97 }}
