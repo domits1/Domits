@@ -5,7 +5,7 @@ const buildWebsiteAnalyticsUrl = () => `${PROPERTY_API_BASE}/website/event`;
 
 const getOptionalAccessToken = () => getAccessToken();
 
-const postWebsiteAnalyticsEvent = async ({ authorization, body }) => {
+const postWebsiteAnalyticsEvent = async ({ authorization, body, keepalive = false }) => {
   const headers = {
     "Content-Type": "application/json",
   };
@@ -17,6 +17,8 @@ const postWebsiteAnalyticsEvent = async ({ authorization, body }) => {
   const response = await fetch(buildWebsiteAnalyticsUrl(), {
     method: "POST",
     cache: "no-store",
+    mode: "cors",
+    keepalive,
     headers,
     body: JSON.stringify(body),
   });
@@ -50,13 +52,18 @@ export const recordWebsiteHostAnalyticsEvent = async ({
 
 export const recordPublicWebsiteAnalyticsEvent = async ({
   draftId,
+  siteId = "",
+  domain = "",
   eventType,
   payload = {},
 }) => {
   await postWebsiteAnalyticsEvent({
     authorization: "",
+    keepalive: true,
     body: {
       draftId,
+      siteId,
+      domain,
       eventType,
       payload,
     },
@@ -75,6 +82,6 @@ export const recordPublicWebsiteAnalyticsEventSafely = async (eventInput) => {
   try {
     await recordPublicWebsiteAnalyticsEvent(eventInput);
   } catch {
-    // Public preview telemetry is best-effort only.
+    // Public website telemetry is best-effort only.
   }
 };

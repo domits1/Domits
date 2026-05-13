@@ -128,25 +128,43 @@ function Landing() {
   return (
     <main className="landing">
 
-      <HeroSection landingContent={landingContent} />
+      <div id="hero">
+        <HeroSection landingContent={landingContent} />
+      </div>
 
-      <StepsSection landingContent={landingContent} />
+      <div id="steps">
+        <StepsSection landingContent={landingContent} />
+      </div>
 
-      <WhySection />
+      <div id="why">
+        <WhySection />
+      </div>
 
-      <ChecklistSection />
+      <div id="checklist">
+        <ChecklistSection />
+      </div>
 
-      <RegisterSection />
+      <div id="register">
+        <RegisterSection />
+      </div>
 
-      <TestimonialsSection />
+       <div id="testimonials">
+         <TestimonialsSection />
+      </div>
 
-      <FeaturesSection />
+      <div id="features">
+        <FeaturesSection />
+      </div>
 
-      <FaqSection faqs={faqs} toggleOpen={toggleOpen} />
+      <div id="faq">
+        <FaqSection faqs={faqs} toggleOpen={toggleOpen} />
+      </div>
 
-      <CtaSection />
+      <div id="cta">
+        <CtaSection />
+      </div>
 
-      <section className="contact-section">
+      <section id="contact" className="contact-section">
         <div className="contact-section__container">
 
           <div className="contact-section__left">
