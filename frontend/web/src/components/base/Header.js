@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
+import ReactDOM from "react-dom";
 import logo from "../../images/logo.svg";
 import nineDots from "../../images/dots-grid.svg";
 import profile from "../../images/profile-icon.svg";
@@ -15,6 +16,16 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 import Hostchat from "../../features/hostdashboard/Hostchat.js";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animations.js";
+import {
+  FiGlobe,
+  FiZap,
+  FiCompass,
+  FiCheckSquare,
+  FiHelpCircle,
+  FiMail
+} from "react-icons/fi";
 
 const contentByLanguage = {
   en,
@@ -32,6 +43,7 @@ function Header({ setSearchResults, setLoading }) {
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [currentView, setCurrentView] = useState("guest");
+  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
   const hiddenSearchPaths = [
     "/",
@@ -54,6 +66,15 @@ function Header({ setSearchResults, setLoading }) {
   useEffect(() => {
     setDropdownVisible(false);
   }, [location]);
+
+  useEffect(() => {
+    if (!showSwitchConfirm) return;
+    const handleEscape = (e) => {
+      if (e.key === "Escape") setShowSwitchConfirm(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [showSwitchConfirm]);
 
   useEffect(() => {
     const onAuthChanged = () => {
@@ -93,6 +114,26 @@ function Header({ setSearchResults, setLoading }) {
     }
   };
 
+  const scrollToSection = (id) => {
+  const element = document.getElementById(id);
+
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  } else {
+    navigate("/landing");
+
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      el?.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+  }
+
+  setAppsMenuOpen(false);
+};
+
   const handleLogout = async () => {
     try {
       await Auth.signOut();
@@ -121,6 +162,8 @@ function Header({ setSearchResults, setLoading }) {
     }
   });
 
+  const [appsMenuOpen, setAppsMenuOpen] = useState(false);
+
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
   };
@@ -136,9 +179,6 @@ function Header({ setSearchResults, setLoading }) {
   };
   const navigateToWhyDomits = () => {
     navigate("/why-domits");
-  };
-  const navigateToNinedots = () => {
-    navigate("/travelinnovation");
   };
   const navigateToGuestDashboard = () => {
     setCurrentView("guest");
@@ -170,11 +210,16 @@ function Header({ setSearchResults, setLoading }) {
       setFlowState({ isHost: true });
       navigate("/landing");
     } else {
-      if (currentView === "host") {
-        navigateToGuestDashboard();
-      } else {
-        navigateToHostDashboard();
-      }
+      setShowSwitchConfirm(true);
+    }
+  };
+
+  const confirmSwitch = () => {
+    setShowSwitchConfirm(false);
+    if (currentView === "host") {
+      navigateToGuestDashboard();
+    } else {
+      navigateToHostDashboard();
     }
   };
 
@@ -197,6 +242,9 @@ function Header({ setSearchResults, setLoading }) {
           <button onClick={navigateToMessages} className="dropdownLoginButton">
             {components.user.messages}
           </button>
+          <button onClick={navigateToDashboard} className="dropdownLogoutButton dropdown-switch-btn">
+            {components.user.switchToGuest}
+          </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
             {components.user.logout}
             <img src={logoutArrow} alt="Logout Arrow" />
@@ -215,15 +263,20 @@ function Header({ setSearchResults, setLoading }) {
           <button onClick={navigateToMessages} className="dropdownLoginButton">
             {components.user.messages}
           </button>
-          <button onClick={navigateToPayments} className="dropdownLoginButton">
+          {/* <button onClick={navigateToPayments} className="dropdownLoginButton">
             {components.user.payments}
-          </button>
+          </button> */}
           {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
-            Reviews 
+            Reviews
           </button> */}
           <button onClick={navigateToSettings} className="dropdownLoginButton">
             {components.user.settings}
           </button>
+          {group === "Host" && (
+            <button onClick={navigateToDashboard} className="dropdownLogoutButton dropdown-switch-btn">
+              {components.user.switchToHost}
+            </button>
+          )}
           <button onClick={handleLogout} className="dropdownLogoutButton">
             {components.user.logout}
             <img src={logoutArrow} alt="Logout Arrow" />
@@ -243,6 +296,7 @@ function Header({ setSearchResults, setLoading }) {
   };
 
   return (
+    <>
     <header className="app-header">
       <nav
         className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""}`}>
@@ -302,34 +356,91 @@ function Header({ setSearchResults, setLoading }) {
               Go to Dashboard
             </button>
           )}
-          <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
+          <button
+             className="headerButtons nineDotsButton"
+              onClick={() => setAppsMenuOpen((prev) => !prev)}
+          >
             <img src={nineDots} alt="Nine Dots" />
           </button>
-          <div className="personalMenuDropdown">
-            <button className="personalMenu" onClick={toggleDropdown}>
-              <img src={profile} alt="Profile Icon" />
-              <img src={arrowDown} alt="Dropdown Arrow" />
-            </button>
-            <div className={"personalMenuDropdownContent" + (dropdownVisible ? " show" : "")}>
-              {isLoggedIn ? (
-                renderDropdownMenu()
-              ) : (
-                <>
-                  <button onClick={navigateToLogin} className="dropdownLoginButton">
-                    {components.user.login}
-                    <img src={loginArrow} alt="Login Arrow" />
-                  </button>
-                  <button onClick={navigateToRegister} className="dropdownRegisterButton">
-                    {components.user.register}
-                  </button>
-                </>
-              )}
-            </div>
+
+          {appsMenuOpen && (
+            <motion.div
+              className="appsDropdown"
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+         >
+            <motion.div
+              className="appsGrid"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+          >
+            {[
+              { id: "why", label: "Why Domits", icon: <FiGlobe /> },
+              { id: "features", label: "Features", icon: <FiZap /> },
+              { id: "steps", label: "Steps", icon: <FiCompass /> },
+              { id: "checklist", label: "Checklist", icon: <FiCheckSquare /> },
+              { id: "faq", label: "FAQ", icon: <FiHelpCircle /> },
+              { id: "contact", label: "Contact", icon: <FiMail /> },
+            ].map((item) => (
+            
+                <motion.button
+                  key={item.id}
+                  className="appItem"
+                  variants={fadeUp}
+                  onClick={() => scrollToSection(item.id)}
+                >
+                  <span className="appIcon">{item.icon}</span>
+                  <span className="appLabel">{item.label}</span>
+                </motion.button>
+            ))}
+            </motion.div>
+        </motion.div>
+        )}
+        </div>
+        <div className="personalMenuDropdown">
+          <button className="personalMenu" onClick={toggleDropdown}>
+            <img src={profile} alt="Profile Icon" />
+            <img src={arrowDown} alt="Dropdown Arrow" />
+          </button>
+          <div className={"personalMenuDropdownContent" + (dropdownVisible ? " show" : "")}>
+            {isLoggedIn ? (
+              renderDropdownMenu()
+            ) : (
+              <>
+                <button onClick={navigateToLogin} className="dropdownLoginButton">
+                  {components.user.login}
+                  <img src={loginArrow} alt="Login Arrow" />
+                </button>
+                <button onClick={navigateToRegister} className="dropdownRegisterButton">
+                  {components.user.register}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>
       {isActiveSearchBar && <div className="search-overlay-background" />}
     </header>
+    {showSwitchConfirm && ReactDOM.createPortal(
+      <div className="switch-confirm-overlay">
+        <dialog className="switch-confirm-modal" open>
+          <p>{currentView === "host" ? components.user.switchConfirmToGuest : components.user.switchConfirmToHost}</p>
+          <div className="switch-confirm-buttons">
+            <button className="switch-confirm-yes" onClick={confirmSwitch}>
+              {components.user.switchConfirmYes}
+            </button>
+            <button className="switch-confirm-no" onClick={() => setShowSwitchConfirm(false)}>
+              {components.user.switchConfirmNo}
+            </button>
+          </div>
+        </dialog>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
 

@@ -1,5 +1,5 @@
 import "./styles/sass/app.scss";
-import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
+import { ApolloClient, ApolloProvider, HttpLink, InMemoryCache } from "@apollo/client";
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
@@ -77,8 +77,20 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
+import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
+import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX = "standalone.domits.com";
+const apolloClient = new ApolloClient({
+  link: new HttpLink({
+    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
+    headers: {
+      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",
+    },
+  }),
+  cache: new InMemoryCache(),
+});
 Modal.setAppElement("#root");
 
 function RedirectHostOnboardingCatchAll() {
@@ -87,18 +99,35 @@ function RedirectHostOnboardingCatchAll() {
   return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
 }
 
+const normalizeStandaloneHostName = (value) => {
+  const normalizedValue = String(value || "").trim().toLowerCase();
+  if (!normalizedValue) {
+    return "";
+  }
+
+  return normalizedValue.split(":")[0] || "";
+};
+
+const isStandaloneWebsiteHostName = (hostName) => {
+  const normalizedHostName = normalizeStandaloneHostName(hostName);
+  const fallbackDomainSuffix = normalizeStandaloneHostName(
+    process.env.REACT_APP_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX || DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX
+  );
+
+  if (!normalizedHostName || !fallbackDomainSuffix) {
+    return false;
+  }
+
+  return (
+    normalizedHostName === fallbackDomainSuffix ||
+    normalizedHostName.endsWith(`.${fallbackDomainSuffix}`)
+  );
+};
+
 function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Apollo Client
-  const client = new ApolloClient({
-    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
-    cache: new InMemoryCache(),
-    headers: {
-      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
-    },
-  });
+  const currentLocation = globalThis.location || { pathname: "", hostname: "" };
 
   useEffect(() => {
     document.title = "Domits";
@@ -108,12 +137,20 @@ function App() {
     initializeUserAttributes();
   }, []);
 
-  const currentPath = window.location.pathname;
+  const currentPath = currentLocation.pathname;
+  const currentHostName = currentLocation.hostname;
+  const isWebsitePreviewPath = currentPath.startsWith("/website-preview");
+  const isWebsiteLivePath = currentPath.startsWith("/website-live");
+  const isStandaloneWebsiteHost = isStandaloneWebsiteHostName(currentHostName);
+  const isStandaloneWebsiteSurface = isWebsitePreviewPath || isWebsiteLivePath || isStandaloneWebsiteHost;
+  const shouldRenderStandardHeader = currentPath !== "/admin" && isStandaloneWebsiteSurface === false;
+  const shouldRenderNavbar = isStandaloneWebsiteSurface === false;
 
   const renderFooter = () => {
     if (
       ["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(currentPath) ||
-      currentPath.startsWith("/verify")
+      currentPath.startsWith("/verify") ||
+      isStandaloneWebsiteSurface
     ) {
       return null;
     }
@@ -121,7 +158,7 @@ function App() {
   };
 
   const renderChatWidget = () => {
-    if (currentPath.startsWith("/verify")) {
+    if (currentPath.startsWith("/verify") || isStandaloneWebsiteSurface) {
       return null;
     }
     return <ChatWidget />;
@@ -130,7 +167,7 @@ function App() {
   const [flowState, setFlowState] = useState({ isHost: false });
 
   return (
-    <ApolloProvider client={client}>
+    <ApolloProvider client={apolloClient}>
       {" "}
       {/* ApolloProvider */}
       <ToastContainer
@@ -152,10 +189,12 @@ function App() {
           <AuthProvider>
             <UserProvider>
               <div className="App" aria-busy={loading}>
-                {currentPath !== "/admin" && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
+                {shouldRenderStandardHeader ? (
+                  <Header setSearchResults={setSearchResults} setLoading={setLoading} />
+                ) : null}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} />} />
-                  <Route path="/" element={<Homepage />} />
+                  <Route path="/" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/data-safety" element={<Datasafety />} />
                   <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
@@ -175,6 +214,9 @@ function App() {
                   <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/security" element={<Security />} />
+                  <Route path="/website-preview/:draftId" element={<WebsitePublicPreviewPage />} />
+                  <Route path="/website-live/:domain" element={<WebsitePublicSitePage />} />
+                  <Route path="/website-live" element={<WebsitePublicSitePage />} />
 
                   {/* Chat */}
                   {/*<Route path="/chat" element={<Chat/>}/>*/}
@@ -252,15 +294,15 @@ function App() {
                   <Route path="/hostonboarding/*" element={<RedirectHostOnboardingCatchAll />} />
 
                   {/* 404 */}
-                  <Route path="/*" element={<PageNotFound />} />
+                  <Route path="/*" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <PageNotFound />} />
                 </Routes>
                 {renderFooter()}
-                {currentPath !== "/admin" && <MenuBar />}
+                {shouldRenderStandardHeader ? <MenuBar /> : null}
                 {renderChatWidget()}
               </div>
             </UserProvider>
           </AuthProvider>
-          <Navbar />
+          {shouldRenderNavbar ? <Navbar /> : null}
         </Router>
       </FlowContext.Provider>
     </ApolloProvider>

@@ -62,11 +62,12 @@ const CANCELLATION_POLICIES = [
   },
   {
     id: "strict",
-    name: "Strict",
-    summary: "Full refund until 30 days before check-in",
+    name: "Limited",
+    summary: "Full refund until 14 days before check-in",
     rules: [
-      "At least 30 days before check-in, they will receive a 70% refund (you will keep 30% of the booking)",
-      "Less than 30 days before check-in, they will receive no refund (you will keep 100% of the booking)",
+      "At least 14 days before check-in, they will receive 100% refund (you will keep 0% of the booking)",
+      "Between 7 and 14 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
+      "Less than 7 days before check-in, they will receive no refund (you will keep 100% of the booking)",
     ],
     important: null,
   },
@@ -231,6 +232,8 @@ function HostPropertyOverviewTab(props) {
     updateCapacityField,
     address,
     updateAddressField,
+    bookingType,
+    onBookingTypeChange,
   } = props;
   const renderCapacityCounter = ({ key, label }) => (
     <div key={key} className={styles.counterItem}>
@@ -280,6 +283,19 @@ function HostPropertyOverviewTab(props) {
         value={form.subtitle}
         onChange={(event) => updateField("subtitle", event.target.value)}
       />
+
+      <div className={styles.field}>
+        <label htmlFor="booking-type">Booking type</label>
+        <select
+          id="booking-type"
+          className={styles.input}
+          value={bookingType || "direct"}
+          onChange={(event) => onBookingTypeChange(event.target.value)}
+        >
+          <option value="direct">Direct booking (guest pays immediately)</option>
+          <option value="inquiry">Inquiry first (host reviews before payment)</option>
+        </select>
+      </div>
 
       <div className={styles.sectionDivider} />
 
@@ -1542,6 +1558,8 @@ const overviewTabPropTypes = {
   updateCapacityField: PropTypes.func.isRequired,
   address: propertyAddressShape.isRequired,
   updateAddressField: PropTypes.func.isRequired,
+  bookingType: PropTypes.string,
+  onBookingTypeChange: PropTypes.func,
 };
 
 const photoTabPropTypes = {

@@ -4,24 +4,58 @@
 Working baseline with active frontend implementation checkpoints
 
 ## Last Updated
-2026-04-10
+2026-05-11
 
 ## Current Implementation Checkpoint
-The host-dashboard website builder now includes a real preview build pipeline for the first three templates.
+The current foundation now covers both the host-side draft workflow and a separate published live-site lifecycle.
 
 Implemented in frontend:
 - listing selection remains sourced from `hostDashboard/all`
 - selected-listing detail fetch for preview is sourced from `hostDashboard/single`
 - detail payload is mapped into one shared website template model before rendering
 - real preview rendering is available for Panorama Landing, Trust Signals, and Experience Journey
-- preview workflow orchestration is extracted to a dedicated script module for future migration to a dedicated preview route/tab
+- internal preview workflow remains available at `/website-preview/:draftId`
 - amenity icons are rendered from the shared amenity catalog by amenity ID in implemented templates
 - built preview drafts are persisted per host and property via dedicated website draft APIs
-- workspace now has a `My websites` tab with reopen-in-builder support
+- workspace now has a `My websites` tab with dedicated editor-page entry
+- dedicated draft editor page exists for controlled text overrides, visibility toggles, and image-slot selection on saved drafts
+- image-slot reassignment in the editor now uses a visual picker overlay with thumbnail navigation and explicit confirm-select behavior
+- standalone site publication now writes into:
+  - `main.standalone_site`
+  - `main.standalone_site_domain`
+  - `main.standalone_site_event`
+- host-side publish lifecycle now uses:
+  - `GET /property/website/site`
+  - `POST /property/website/site/publish`
+  - `POST /property/website/site/unpublish`
+  - `GET /property/website/public/resolve`
+  - `GET /property/website/public/render`
+- the published-site runtime is reachable through:
+  - a same-origin debug route at `/website-live/:domain`
+  - host-based fallback-domain rendering once the configured suffix is routed
+- the builder/editor now expose `Open live site` and `Update live site`
+- acceptance AWS rollout has been proven for draft persistence and live-site foundation after:
+  - creating `main.standalone_site_draft`
+  - creating `main.standalone_site`
+  - creating `main.standalone_site_domain`
+  - creating `main.standalone_site_event`
+  - adding the unique `property_id` index required by `ON CONFLICT`
+  - adding the `host_id` index for the intended host-scoped draft access path
+  - exposing `/property/website/draft(s)` and `/property/website/site*` in API Gateway
+  - fixing CORS preflight on the new website routes
+- host property detail fetch for the website flow now includes calendar availability payload for:
+  - imported external blocked dates
+  - iCal sync presence and source count
+  - last sync timestamp when available
+- the shared website model now includes availability snapshot data and implemented templates render that as a read-only calendar section
+- compact `My websites` previews were tightened so thumbnail scaling no longer leaves large empty vertical space
 
 Not yet implemented:
-- draft detail editing flow for section/content overrides
-- publish-state lifecycle and domain linking workflow on top of draft records
+- richer template-specific heading/branding controls beyond the current override surface
+- clean fallback-domain routing on the real hostname in acceptance/production infra
+- frontend build-time fallback-domain env alignment in deployment hosting
+- custom-domain activation flow
+- public quote API, checkout, and booking creation
 
 ## Purpose
 This document captures the current plan of approach for the standalone website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.
@@ -67,19 +101,19 @@ V1 foundation includes:
   - location
   - house rules
 - published render content baked into the standalone site at publish or refresh time
-- availability check and price calculation
 - template choice
 - site name
 - logo and favicon
 - publish and unpublish
 - live and draft status
+- fallback-domain generation and live-site runtime
 - English as the first and only site language in v1
 - tooling choices aligned with the current Domits stack
 
 Implementation detail for this baseline:
 - descriptive page content such as title, description, photos, amenities, location, and house rules is imported from PMS into standalone-owned published data
 - public page render uses that published standalone snapshot
-- pricing and availability remain live PMS reads through server-side quote APIs
+- PMS-backed availability snapshot import is implemented in the current foundation. Authoritative server-side quote calculation for standalone guest traffic is designed, but not yet exposed as a live standalone public API.
 
 V2 extends this base with:
 
@@ -251,7 +285,8 @@ Analyze:
 Current implementation direction:
 - descriptive property content is imported from PMS into standalone-owned published data at publish or refresh time
 - public render uses that standalone snapshot
-- quote pricing and availability remain live PMS reads
+- editor and live-site availability visualization use imported calendar snapshot data
+- PMS-backed availability snapshot import is implemented in the current foundation. Authoritative server-side quote calculation for standalone guest traffic is designed, but not yet exposed as a live standalone public API.
 
 #### 5.6 Security and isolation
 Analyze:
@@ -309,7 +344,7 @@ Include:
 #### 6.7 Lifecycle and states
 Include:
 - publish and unpublish flow
-- state diagram such as draft to preview to published to unpublished
+- state diagram such as working draft plus internal preview route, alongside published site and domain state
 
 ### 7. Validation And Evaluation
 
@@ -318,11 +353,12 @@ Use the current KPI set as baseline:
 - time_to_publish_p95
 - quote_to_charge_mismatch_rate
 - booking_api_error_rate
-- site_lcp_mobile_p75
 - cost_per_active_site_per_month
 - fallback_subdomain_availability
 - custom_domain_setup_success_rate
 - booking_funnel_completion_rate
+
+Performance should be documented as viewport-specific `site_lcp_p75` metrics in the Performance tab rather than as a separate `site_lcp_mobile_p75` research card.
 
 For reporting, make clear which KPIs are foundation-release KPIs and which become meaningful only once v2 booking flows are enabled.
 

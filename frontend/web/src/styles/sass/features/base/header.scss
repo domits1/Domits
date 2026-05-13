@@ -1,309 +1,559 @@
-// Variables
 $primary-color: var(--primary-color);
-$header-padding: 20px 50px 5px 50px;
-$button-padding: 12px;
-$button-font-size: 18px;
-$button-radius: 10px;
-$box-shadow-color: #0d1a2626;
-$hover-background: #3fb3663a;
-$breakpoint-lg: 1250px;
-$breakpoint-md: 768px;
-$breakpoint-sm: 480px;
 
-// Header Styling
 .app-header {
   position: fixed;
   top: 0;
   left: 0;
-  display: flex;
-  align-items: center;
+  right: 0;
+  z-index: 1200;
   width: 100%;
   max-width: 100vw;
-  box-sizing: border-box;
-  z-index: 1000;
-  background: white;
-  box-shadow: 0 2px 6px 0 $box-shadow-color;
-  text-align: center;
   height: 90px;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(13, 26, 38, 0.15);
+  box-sizing: border-box;
 
   .header-nav {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    width: calc(100% - 40px);
-    max-width: 100%;
-    box-sizing: border-box;
-    min-height: 100%;
+    width: 100%;
     margin: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    min-width: 0;
+  }
 
-    & > :nth-child(1) {
-      flex: 0 1 auto; 
-      
-      @media screen and (max-width: $breakpoint-lg) {          
-        flex: 1; 
+  .logo {
+    flex-shrink: 0;
+
+    img {
+      display: block;
+    }
+  }
+
+  .search-bar-main-container {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .headerRight {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .language-flags,
+  .language-flags-mobile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .lang-flag {
+      background: transparent;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+
+      &.active {
+        border-color: #3fb366;
+      }
+
+      &:hover {
+        background: #f7f7f7;
       }
     }
+  }
 
-    & > :nth-child(2) {
-      flex: 1; 
-      
-      @media screen and (max-width: $breakpoint-lg) {          
-        flex: 0 1 auto; 
-        margin-left: auto; 
-      }
+  .language-flags-mobile {
+    display: none;
+  }
+
+  .headerButtons,
+  .personalMenu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+
+  .headerButtons {
+    background: #f5f5f5;
+
+    &:hover {
+      background: #ececec;
     }
+  }
 
-    & > :nth-child(3) {
-      flex: 0 1 auto; 
-      margin-left: auto; 
+  .personalMenu {
+    background: $primary-color;
+    color: #fff;
+    gap: 10px;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  .mobile-search-button {
+    display: none;
+  }
+
+  .search-overlay-background {
+    position: fixed;
+    inset: 90px 0 0 0;
+    background: #fff;
+    z-index: 999;
+  }
+}
+
+.headerRight .dropdown-switch-btn {
+  display: none !important;
+}
+
+.personalMenuDropdown {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 1300;
+}
+
+.personalMenuDropdownContent {
+  display: none;
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 230px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  z-index: 5000;
+}
+
+.personalMenuDropdownContent.show {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.helloUsername {
+  padding: 10px 14px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.dropdownLoginButton,
+.dropdownRegisterButton,
+.dropdownLogoutButton {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 12px 14px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 15px;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &:hover {
+    background: #f3f3f3;
+  }
+}
+
+.dropdown-switch-btn {
+  display: flex !important;
+}
+
+.switch-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.switch-confirm-modal {
+  position: relative;
+  z-index: 100000;
+  border: none;
+  margin: 0;
+  padding: 36px 32px;
+  max-width: 420px;
+  width: min(90vw, 420px);
+  background: white;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+
+  p {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 28px;
+    color: #1a1a1a;
+  }
+}
+
+.switch-confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+
+  button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
+
+.switch-confirm-yes {
+  background: var(--primary-color);
+  color: white;
+}
+
+.switch-confirm-no {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.appsDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 20px;
+  background-color: #efefef;
+  border-radius: 16px;
+  padding: 18px;
+  width: 260px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  z-index: 9999;
+}
+
+.appsDropdown::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  right: 107px;
+  width: 16px;
+  height: 16px;
+  background-color: #efefef;
+  transform: rotate(45deg);
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.appsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.appItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.appItem:hover {
+  background-color: #e4e4e4;
+}
+
+.appIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #e8f5e9;
+  font-size: 20px;
+  color: #2e7d32;
+  margin-bottom: 6px;
+}
+
+.appItem:hover .appIcon {
+  background: #d4edda;
+}
+
+.appLabel {
+  font-size: 13px;
+  font-weight: 550;
+  color: #1d1d1d;
+}
+
+html {
+  scroll-padding-top: 100px;
+}
+
+@media screen and (max-width: 1150px) {
+  .app-header {
+    padding: 12px 18px;
+    min-height: 90px;
+    height: auto;
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 0;
+      width: 100%;
     }
 
     .logo {
-      @media screen and (max-width: $breakpoint-lg) {
-        margin: 0 1vw 0 -4vw;
-      }
-
-      @media screen and (max-width: $breakpoint-md) {
-        padding-top: 2vh;
-      }
+      margin-right: auto;
     }
 
-    // Mobile flag language picker (hidden on desktop)
-    .language-flags-mobile {
-      visibility: hidden;
-      opacity: 0;
-      display: none;
-      transition: opacity 0.3s ease-in-out;
+    .mobile-search-button,
+    .personalMenuDropdown {
+      flex-shrink: 0;
+    }
 
-      @media screen and (max-width: $breakpoint-lg) {
-        visibility: visible;
-        opacity: 1;
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        align-items: center;
-        width: auto;
-        margin: 0 auto;
-      }
+    .search-bar-main-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
 
-      .lang-flag {
-        background: transparent;
-        border: 1px solid #d0d5dd;
-        border-radius: 8px;
-        padding: 6px 8px;
-        font-size: 18px; // emoji size
-        line-height: 1;
-        cursor: pointer;
+    .search-bar {
+      width: 90%;
+      max-width: 700px;
+    }
 
-        &.active {
-          outline: 2px solid #3fb366;
-          outline-offset: 1px;
-        }
+    .mobile-search-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      border: 1px solid #e5e5e5;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      cursor: pointer;
+
+      svg {
+        font-size: 20px;
       }
     }
 
     .headerRight {
+      display: none;
+    }
+
+    .personalMenuDropdown {
       display: flex;
       align-items: center;
-      gap: 10px;
-
-      @media screen and (max-width: $breakpoint-lg) {
-        margin-left: 3vw;
-        display: none;
-      }
-
-      @media screen and (max-width: $breakpoint-md) {
-        flex-direction: row;
-        justify-content: center;
-        width: 69%;
-        margin-top: 20px;
-      }
-
-      @media screen and (max-width: $breakpoint-md) {
-        display: none;
-      }
-
-      @media screen and (max-width: $breakpoint-sm) {
-        flex-direction: column;
-        align-items: center;
-      }
-    }
-
-    // Desktop flag language picker
-    .language-flags {
-      display: flex;
-      gap: 8px;
-
-      .lang-flag {
-        background: transparent;
-        border: 1px solid #d0d5dd;
-        border-radius: 8px;
-        padding: 6px 8px;
-        font-size: 18px; // emoji size
-        line-height: 1;
-        cursor: pointer;
-
-        &.active {
-          outline: 2px solid #3fb366;
-          outline-offset: 1px;
-        }
-      }
-    }
-
-    .headerButtons,
-    .personalMenu {
-      color: black;
-      text-align: center;
-      padding: $button-padding;
-      font-size: $button-font-size;
-      border-radius: $button-radius;
-      display: inline-flex;
-      cursor: pointer;
-      width: auto;
-      box-shadow: 0 0 5px hsl(0 0% 78%);
       justify-content: center;
+    }
 
-      &:hover {
-        background: $hover-background;
-        padding: $button-padding;
-      }
-
-      @media screen and (max-width: $breakpoint-md) {
-        width: 100%;
-        margin-top: 10px;
-        justify-content: center;
-      }
-
-      @media screen and (max-width: $breakpoint-sm) {
-        width: 100%;
-        margin-top: 10px;
-        justify-content: center;
-      }
+    .language-flags,
+    .language-flags-mobile {
+      display: none;
     }
 
     .personalMenu {
-      border: none;
-      background-color: $primary-color;
-      gap: 10px;
-      display: flex;
-
-      &:hover {
-        opacity: 90%;
-      }
-
-      @media screen and (max-width: $breakpoint-lg) {
-        margin-left: -15%;
-      }
-    }
-
-    .headerHostButton,
-    .headerButtons {
-      border: none;
-      box-shadow: none;
-
-      &.headerHostButton {
-        @media screen and (max-width: $breakpoint-lg) {
-          margin-left: -15%;
-          font-size: 13px;
-        }
-      }
-    }
-
-    .helloUsername {
-      margin-bottom: 10px;
-      font-size: 18px;
-      font-weight: 400;
-      line-height: 24px;
-      word-wrap: break-word;
+      margin: 0;
+      padding: 10px 14px;
     }
   }
+}
 
-  @media screen and (max-width: $breakpoint-md) {
-    height: auto;
-    min-height: 96px;
-    padding: 16px 16px 18px;
-    overflow: visible;
+@media screen and (max-width: 768px) {
+  body {
+    padding-top: 120px !important;
+  }
+
+  .app-header {
+    padding: 12px 14px;
+    min-height: 120px;
 
     .header-nav {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: 1fr auto auto;
       grid-template-areas:
-        "logo trigger"
-        "panel panel"
-        "flags flags";
+        "logo search profile"
+        "flags flags flags";
       align-items: center;
-      gap: 14px 12px;
-      width: 100%;
-      min-height: auto;
-      margin: 0;
-      padding: 0;
+      gap: 14px 10px;
     }
 
-    .header-nav > .logo {
+    .logo {
       grid-area: logo;
-      margin: 0;
-      padding: 0;
     }
 
-    .header-nav > .mobile-search-button {
-      grid-area: trigger;
+    .mobile-search-button {
+      grid-area: search;
+      width: 44px;
+      height: 44px;
+    }
+
+    .personalMenuDropdown {
+      grid-area: profile;
       justify-self: end;
-      margin: 0 0.25rem 0 0;
     }
 
-    .header-nav > .search-bar-main-container {
-      grid-area: panel;
-      display: flex;
-      justify-content: center;
-      width: 100% !important;
-      max-width: 100% !important;
-      justify-self: center;
-      margin: 0 !important;
-      margin-left: 0 !important;
-      padding: 0 !important;
-      transform: none !important;
-    }
-
-    .header-nav > .search-bar-main-container .search-bar-main {
-      width: min(100%, calc(100vw - 2.5rem)) !important;
-      max-width: 25.5rem !important;
-      margin: 0 !important;
-    }
-
-    .header-nav > .language-flags-mobile {
-      grid-area: flags;
-      width: 100%;
-      justify-content: center;
-      margin: 0;
-    }
-
-    .header-nav > .headerRight {
+    .language-flags {
       display: none;
     }
-  }
 
-  @media screen and (max-width: $breakpoint-lg) {
-    .App,
-    .header-nav {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: white;
+    .language-flags-mobile {
+      display: flex;
+      grid-area: flags;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .personalMenu {
+      padding: 10px;
+      border-radius: 14px;
+    }
+
+    .personalMenuDropdownContent {
+      right: 0;
+      min-width: 220px;
     }
   }
+}
 
-  @media screen and (max-width: $breakpoint-md) {
-    padding: 16px 16px 18px;
+@media screen and (max-width: 480px) {
+  .app-header {
+    padding: 10px 12px;
+
+    .header-nav {
+      gap: 10px 8px;
+    }
+
+    .mobile-search-button {
+      width: 42px;
+      height: 42px;
+    }
+
+    .language-flags-mobile {
+      gap: 6px;
+
+      .lang-flag {
+        padding: 5px 7px;
+        font-size: 14px;
+      }
+    }
   }
-  .search-overlay-background {
-    position: fixed;
-    top: 80px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: white;
-    z-index: 999;
-  }
-  
+}
+
+.appsDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 20px;
+
+  background-color: #efefef;
+  border-radius: 16px;
+  padding: 18px;
+
+  width: 260px;
+
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  z-index: 9999;
+}
+
+.appsDropdown::before {
+  content: "";
+  position: absolute;
+
+  top: -9px;             
+  right: 127px;          
+
+  width: 16px;
+  height: 16px;
+
+  background-color: #efefef; 
+
+  transform: rotate(45deg);  
+
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.appsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.appItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.appItem:hover {
+  background-color: #e4e4e4;
+}
+
+.appIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+
+  border-radius: 10px;
+  background: #e8f5e9; 
+
+  font-size: 20px;
+  color: #2e7d32;
+
+  margin-bottom: 6px;
+}
+
+.appItem:hover .appIcon {
+  background: #d4edda;
+}
+
+.appLabel {
+  font-size: 13px;
+  font-weight: 550;
+  color: #1d1d1d;
+}
+
+html {
+  scroll-padding-top: 100px; 
 }

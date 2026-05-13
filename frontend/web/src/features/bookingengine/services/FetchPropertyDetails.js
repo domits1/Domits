@@ -26,11 +26,14 @@ const FetchPropertyDetails = async (propertyId, checkInDate, checkOutDate) => {
       country: accommodationData.location.country,
       differenceInDays: differenceInDays,
       hostId: accommodationData.property.hostId,
+      bookingType: accommodationData.property.bookingType || "direct",
       testStatus: accommodationData.propertyTestStatus.isTest,
+      rules: accommodationData.rules || [],
     };
   } catch (error) {
-    console.error("Unable to fetch property data.", error);
-    throw new NotFoundException("Tried to request property data, but failed. Please contact the devs.");
+    throw new NotFoundException(
+      `Tried to request property data, but failed. Please contact the devs. Original error: ${error.message}`
+    );
   }
 };
 

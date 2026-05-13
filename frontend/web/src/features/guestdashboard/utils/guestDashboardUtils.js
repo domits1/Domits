@@ -177,6 +177,15 @@ export const getPaidBookings = (bookingData) =>
     (booking) => String(booking?.status ?? booking?.Status ?? "").toLowerCase() === "paid"
   );
 
+export const getInquiryBookings = (bookingData) =>
+  normalizeGuestBookingsResponse(bookingData).filter((booking) => {
+    const status = String(booking?.status ?? booking?.Status ?? "").toLowerCase();
+    const bookingType = String(booking?.bookingtype ?? booking?.bookingType ?? "direct").toLowerCase();
+    if (status === "inquiry" || status === "declined") return true;
+    if (status === "awaiting payment" && bookingType === "inquiry") return true;
+    return false;
+  });
+
 export const normalizeStayStatus = (value) => {
   const normalized = String(value || "").trim().toLowerCase();
 

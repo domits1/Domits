@@ -4,14 +4,25 @@ import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
 import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
+import Forbidden from "../util/exception/Forbidden.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
+import { Property_Rule } from "database/models/Property_Rule";
+
+const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 
 class ReservationRepository {
   // ---------
   // Booking Create (auth)
   // ---------
-  async addBookingToTable(requestBody, userId, hostId) {
+  async addBookingToTable(
+    requestBody,
+    userId,
+    hostId,
+    cancellationPolicy,
+    status = "Awaiting Payment",
+    bookingType = "direct"
+  ) {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
@@ -36,7 +47,8 @@ class ReservationRepository {
         paymentid: "FAILED: ",
         tempPaymentId,
         property_id: requestBody.identifiers.property_Id,
-        status: "Awaiting Payment",
+        status: status,
+        bookingtype: bookingType,
       })
       .execute();
     try {
@@ -64,7 +76,7 @@ class ReservationRepository {
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :property_id", { property_id: propertyId })
-      .andWhere("booking.status != :failedStatus", { failedStatus: "Failed" })
+      .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: NON_BLOCKING_BOOKING_STATUSES })
       .andWhere("booking.arrivaldate < :departureDate", { departureDate: departureDateMs })
       .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs })
       .getCount();
@@ -123,9 +135,11 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
-      .select(["booking.arrivaldate", "booking.departuredate"])
+
+      .select(["booking.arrivaldate", "booking.departuredate", "booking.cancellation_policy"])
       .where("booking.property_id = :property_id", { property_id: property_id })
       .andWhere("booking.createdat = :createdAt", { createdAt: createdAt })
+
       .getMany();
     if (!query) {
       throw new UnableToSearch();
@@ -164,7 +178,6 @@ class ReservationRepository {
   // Read bookings by HostID
   // ---------
   async readByHostId(host_Id) {
-    // Fetches user's property first, throws error if not found
     this.lambdaRepository = new LambdaRepository();
     const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
     const properties = propertiesOutput.map((item) => ({
@@ -173,16 +186,44 @@ class ReservationRepository {
       rate: item.rate,
       city: item.city,
       country: item.country,
+      rules: item.rules || [],
     }));
 
-    // Proceeds to send a request for every id returning their respective data
+    const client = await Database.getInstance();
+
+    const buildPropertyRules = (bookings, fallbackRules = []) => {
+      const joinedRules = bookings.flatMap((booking) => booking.rules || []);
+      const uniqueRules = joinedRules.filter(
+        (rule, index, list) =>
+          list.findIndex(
+            (candidate) => candidate?.rule === rule?.rule && String(candidate?.value) === String(rule?.value)
+          ) === index
+      );
+
+      return uniqueRules.length > 0 ? uniqueRules : fallbackRules;
+    };
+
     const results = await Promise.all(
       properties.map(async (property) => {
-        const res = await this.readByPropertyId(property.id);
+        const bookings = await client
+          .getRepository(Booking)
+          .createQueryBuilder("booking")
+          .leftJoinAndMapMany(
+            "booking.rules",
+            Property_Rule,
+            "property_rule",
+            "property_rule.property_id = booking.property_id"
+          )
+          .where("booking.property_id = :property_id", { property_id: property.id })
+          .getMany();
+
+        const rules = buildPropertyRules(bookings, property.rules || []);
+        const normalizedBookings = bookings.map(({ rules: bookingRules, ...booking }) => booking);
 
         return {
           ...property,
-          res,
+          rules,
+          res: { response: normalizedBookings },
         };
       })
     );
@@ -227,9 +268,11 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
-      .select(["booking.arrivaldate", "booking.departuredate"])
+
+      .select(["booking.arrivaldate", "booking.departuredate", "booking.cancellation_policy"])
       .where("booking.property_id = :property_id", { property_id: property_Id })
       .andWhere("booking.departuredate = :departuredate", { departuredate: departureDate })
+
       .getMany();
 
     if (!query) {
@@ -240,6 +283,27 @@ class ReservationRepository {
     return {
       response: query,
       statusCode: 200,
+    };
+  }
+
+  async getBlockedDatesByPropertyId(propertyId) {
+    const client = await Database.getInstance();
+    const results = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .select(["booking.arrivaldate", "booking.departuredate"])
+      .where("booking.property_id = :propertyId", { propertyId })
+      .andWhere("booking.status NOT IN (:...excludedStatuses)", {
+        excludedStatuses: NON_BLOCKING_BOOKING_STATUSES,
+      })
+      .getMany();
+
+    return {
+      statusCode: 200,
+      response: results.map((b) => ({
+        arrivaldate: b.arrivaldate,
+        departuredate: b.departuredate,
+      })),
     };
   }
 
@@ -296,6 +360,37 @@ class ReservationRepository {
     }
     return {
       response: query,
+      statusCode: 200,
+    };
+  }
+
+  async cancelBookingByGuest(id, guestId) {
+    const client = await Database.getInstance();
+
+    const existing = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.id = :id", { id })
+      .getOne();
+
+    if (!existing) {
+      throw new NotFoundException("Booking not found.");
+    }
+
+    if (existing.guestid !== guestId) {
+      throw new Forbidden("Only the guest of this booking may cancel this booking.");
+    }
+
+    await client.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute();
+
+    const updated = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.id = :id", { id })
+      .getOne();
+
+    return {
+      response: updated,
       statusCode: 200,
     };
   }

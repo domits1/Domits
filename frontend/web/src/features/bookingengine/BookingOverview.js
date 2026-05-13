@@ -17,7 +17,7 @@ import IosShareIcon from "@mui/icons-material/IosShare";
 import ShareModal from "./components/ShareModal";
 import publicKeys from "../../utils/const/publicKeys.json";
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
-import { parseCancellationPolicy } from "../../utils/policyDisplayUtils.js";
+import CancellationPolicySection from "./CancellationPolicySection";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 
@@ -43,8 +43,9 @@ const BookingOverview = () => {
   const guests = searchParams.get("guests");
   const showAuthenticationPrompt = !isAuthenticated;
   const isTestBooking = Boolean(bookingDetails?.testStatus);
-  const shouldShowConfirmButton = !hideButton && !isTestBooking;
-  const shouldShowCheckout = !isTestBooking && Boolean(showCheckout && stripeClientSecret && bookingId);
+  const isInquiryListing = pricingObject?.bookingType === "inquiry";
+  const shouldShowConfirmButton = !hideButton && !isTestBooking && !isInquiryListing;
+  const shouldShowCheckout = !isTestBooking && !isInquiryListing && Boolean(showCheckout && stripeClientSecret && bookingId);
 
   useEffect(() => {
     const fetchAccommodation = async () => {
@@ -63,7 +64,6 @@ const BookingOverview = () => {
           checkOutDate,
           guests,
           testStatus: Boolean(retrievedPricingObject?.testStatus),
-          cancellationPolicy: parseCancellationPolicy(retrievedPricingObject?.rules || []),
         };
 
         setBookingDetails(retrievedBookingDetails);
@@ -171,6 +171,47 @@ const BookingOverview = () => {
     navigate(`/listingdetails?ID=${propertyId}`);
   };
 
+  const handleRequestToBook = async () => {
+    try {
+      setIsProcessing(true);
+      setLoading(true);
+      const authToken = getAccessToken();
+      if (!authToken) {
+        setError("Missing authentication token. Try refreshing the page.");
+        return;
+      }
+      const event = {
+        identifiers: { property_Id: propertyId },
+        general: {
+          guests: Number.parseFloat(bookingDetails.guests),
+          latePayment: false,
+          arrivalDate: Number.parseFloat(bookingDetails.checkInDate),
+          departureDate: Number.parseFloat(bookingDetails.checkOutDate),
+          guestName: userName,
+        },
+      };
+      const request = await fetch("https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings", {
+        method: "POST",
+        body: JSON.stringify(event),
+        headers: {
+          Authorization: authToken,
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      });
+      if (!request.ok) {
+        throw new Error(`HTTP error! Status: ${request.status}`);
+      }
+      const response = await request.json();
+      navigate(`/bookingconfirmationoverview?bookingId=${response.bookingId}&status=inquiry`);
+    } catch (error) {
+      console.error("Error sending inquiry:", error);
+      setError("Unable to send your inquiry. Please try again later.");
+    } finally {
+      setLoading(false);
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <main className="booking-container" style={{ cursor: isProcessing ? "wait" : "default" }}>
       {error && <div className="error-message">{error}</div>}
@@ -215,6 +256,8 @@ const BookingOverview = () => {
             </div>
           </div>
 
+          <CancellationPolicySection rules={pricingObject?.rules} />
+
           {showAuthenticationPrompt ? (
             <div>
               <h2>Please Register or Log In to Continue</h2>
@@ -232,6 +275,11 @@ const BookingOverview = () => {
               {shouldShowConfirmButton && (
                 <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading}>
                   {loading ? "Loading..." : "Confirm & Pay"}
+                </button>
+              )}
+              {isInquiryListing && !hideButton && (
+                <button type="button" className="confirm-pay-button" onClick={handleRequestToBook} disabled={loading}>
+                  {loading ? "Sending..." : "Request to Book"}
                 </button>
               )}
               {isTestBooking && (
