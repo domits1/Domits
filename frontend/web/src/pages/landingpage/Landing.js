@@ -128,7 +128,10 @@ function Landing() {
   return (
     <main className="landing">
 
-      <HeroSection landingContent={landingContent} />
+      <HeroSection 
+        landingContent={landingContent}
+        isAuthenticated={isAuthenticated}
+      />
 
       <StepsSection landingContent={landingContent} />
 
@@ -144,7 +147,7 @@ function Landing() {
 
       <FaqSection faqs={faqs} toggleOpen={toggleOpen} />
 
-      <CtaSection />
+      <CtaSection isAuthenticated={isAuthenticated} />
 
       <section className="contact-section">
         <div className="contact-section__container">

@@ -12,7 +12,7 @@ import domitsLogo from "../../../images/domits-logo.svg";
 import heroImage from "../../../images/hero-image.svg";
 import checkIcon from "../../../images/check-icon.svg";
 
-function HeroSection({ landingContent }) {
+function HeroSection({ landingContent, isAuthenticated }) {
   const navigate = useNavigate();
 
   return (
@@ -46,7 +46,13 @@ function HeroSection({ landingContent }) {
           <motion.div className="hero__actions" variants={fadeUp}>
             <motion.button
               className="btn btn--primary"
-              onClick={() => navigate("/register")}
+              onClick={() =>
+                navigate(
+                  isAuthenticated
+                  ? "/hostdashboard/hostonboarding"
+                  : "/register"
+                )
+              }
               whileHover={{ scale: 1.05 }}
             >
               Start Hosting →

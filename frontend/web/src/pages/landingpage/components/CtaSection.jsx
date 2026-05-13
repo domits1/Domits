@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 
-function CtaSection() {
+function CtaSection({ isAuthenticated }) {
   const navigate = useNavigate();
 
   return (
@@ -31,7 +31,13 @@ function CtaSection() {
 
         <motion.button
           className="btn btn--primary"
-          onClick={() => navigate("/hostonboarding")}
+          onClick={() =>
+            navigate(
+              isAuthenticated
+                ? "/hostdashboard/hostonboarding"
+                : "/register"
+            )
+          }
           variants={fadeUp}
           whileHover={{ scale: 1.07 }}
           whileTap={{ scale: 0.97 }}
