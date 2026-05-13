@@ -6,7 +6,6 @@ import { sendTeamInviteEmail } from "../emailService.js";
 import { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } from "@aws-sdk/client-cognito-identity-provider";
 import Database from "database";
 
-// Requires IAM permission: cognito-idp:AdminUpdateUserAttributes on user pool eu-north-1_mPxNhvSFX
 const cognitoClient = new CognitoIdentityProviderClient({ region: "eu-north-1" });
 const USER_POOL_ID = "eu-north-1_mPxNhvSFX";
 
@@ -81,7 +80,7 @@ export class Service {
                 UserAttributes: [{ Name: "custom:group", Value: invite.role }],
             }));
         } catch (error) {
-            console.error("Failed to update Cognito role:", error);
+
         }
 
         return { message: "Invite accepted. You now have access to the host's properties." };
