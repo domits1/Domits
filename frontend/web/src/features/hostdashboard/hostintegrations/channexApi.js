@@ -5,9 +5,23 @@ const appendParam = (params, key, value) => {
   params.set(key, String(value));
 };
 
+const removeTrailingSlashes = (value) => {
+  const text = String(value || "");
+  let endIndex = text.length;
+  while (endIndex > 0 && text[endIndex - 1] === "/") endIndex -= 1;
+  return text.slice(0, endIndex);
+};
+
+const removeLeadingSlashes = (value) => {
+  const text = String(value || "");
+  let startIndex = 0;
+  while (startIndex < text.length && text[startIndex] === "/") startIndex += 1;
+  return text.slice(startIndex);
+};
+
 const buildUrl = (path, query = {}) => {
-  const normalizedBase = `${UNIFIED_MESSAGING_API.replace(/\/+$/, "")}/`;
-  const normalizedPath = String(path || "").replace(/^\/+/, "");
+  const normalizedBase = `${removeTrailingSlashes(UNIFIED_MESSAGING_API)}/`;
+  const normalizedPath = removeLeadingSlashes(path);
   const url = new URL(normalizedPath, normalizedBase);
   Object.entries(query).forEach(([key, value]) => appendParam(url.searchParams, key, value));
   return url.toString();

@@ -90,6 +90,34 @@ const buildDatabaseClient = ({
   }),
 });
 
+const buildRoomTypeMapping = (externalRoomTypeId = "room-type-1", overrides = {}) => ({
+  domitsPropertyId: "domits-property-1",
+  externalPropertyId: "external-property-1",
+  externalRoomTypeId,
+  status: "ACTIVE",
+  ...overrides,
+});
+
+const buildRatePlanMapping = (
+  externalRoomTypeId = "room-type-1",
+  externalRatePlanId = "rate-plan-1",
+  overrides = {}
+) => ({
+  domitsPropertyId: "domits-property-1",
+  externalPropertyId: "external-property-1",
+  externalRoomTypeId,
+  externalRatePlanId,
+  status: "ACTIVE",
+  ...overrides,
+});
+
+const buildTwoRoomTypeMappings = () => [buildRoomTypeMapping("room-type-1"), buildRoomTypeMapping("room-type-2")];
+
+const buildTwoRatePlanMappings = () => [
+  buildRatePlanMapping("room-type-1", "rate-plan-1"),
+  buildRatePlanMapping("room-type-2", "rate-plan-2"),
+];
+
 const buildReadyAriTargets = (overrides = {}) => ({
   statusCode: 200,
   response: {
@@ -103,23 +131,8 @@ const buildReadyAriTargets = (overrides = {}) => ({
       externalPropertyId: "external-property-1",
       status: "ACTIVE",
     },
-    roomTypeMappings: [
-      {
-        domitsPropertyId: "domits-property-1",
-        externalPropertyId: "external-property-1",
-        externalRoomTypeId: "room-type-1",
-        status: "ACTIVE",
-      },
-    ],
-    ratePlanMappings: [
-      {
-        domitsPropertyId: "domits-property-1",
-        externalPropertyId: "external-property-1",
-        externalRoomTypeId: "room-type-1",
-        externalRatePlanId: "rate-plan-1",
-        status: "ACTIVE",
-      },
-    ],
+    roomTypeMappings: [buildRoomTypeMapping()],
+    ratePlanMappings: [buildRatePlanMapping()],
     ...overrides,
   },
 });
@@ -212,43 +225,66 @@ const createService = (overrides = {}) => {
   return service;
 };
 
-const createSuccessfulRestrictionsPush = () =>
+const resolveProviderResultOverrides = (overrides, payload, index) =>
+  typeof overrides === "function" ? overrides(payload, index) : overrides;
+
+const buildAvailabilityProviderResult = (payload, overrides = {}) => ({
+  externalPropertyId: payload.externalPropertyId,
+  externalRoomTypeId: payload.externalRoomTypeId,
+  externalRoomTypeIds: payload.externalRoomTypeIds,
+  requestBody: { values: payload.values },
+  providerStatus: "SYNCED",
+  httpStatus: 202,
+  success: true,
+  taskId: "task-availability-1",
+  warnings: [],
+  errorCode: null,
+  errorMessage: null,
+  ...overrides,
+});
+
+const buildRestrictionsProviderResult = (payload, overrides = {}) => ({
+  externalPropertyId: payload.externalPropertyId,
+  externalRoomTypeId: payload.externalRoomTypeId,
+  externalRoomTypeIds: payload.externalRoomTypeIds,
+  externalRatePlanId: payload.externalRatePlanId,
+  externalRatePlanIds: payload.externalRatePlanIds,
+  requestBody: { values: payload.values },
+  providerStatus: "SYNCED",
+  httpStatus: 202,
+  success: true,
+  taskId: "task-restrictions-1",
+  warnings: [],
+  errorCode: null,
+  errorMessage: null,
+  ...overrides,
+});
+
+const createAvailabilityPush = ({ success = true, resultOverrides } = {}) =>
   jest.fn(async (_secret, payloads) => ({
-    success: true,
-    results: payloads.map((payload, index) => ({
-      externalPropertyId: payload.externalPropertyId,
-      externalRoomTypeId: payload.externalRoomTypeId,
-      externalRoomTypeIds: payload.externalRoomTypeIds,
-      externalRatePlanId: payload.externalRatePlanId,
-      externalRatePlanIds: payload.externalRatePlanIds,
-      requestBody: { values: payload.values },
-      providerStatus: "SYNCED",
-      httpStatus: 202,
-      success: true,
-      taskId: `task-restrictions-${index + 1}`,
-      warnings: [],
-      errorCode: null,
-      errorMessage: null,
-    })),
+    success,
+    results: payloads.map((payload, index) =>
+      buildAvailabilityProviderResult(payload, {
+        taskId: `task-availability-${index + 1}`,
+        ...resolveProviderResultOverrides(resultOverrides, payload, index),
+      })
+    ),
   }));
 
-const createSuccessfulAvailabilityPush = () =>
+const createRestrictionsPush = ({ success = true, resultOverrides } = {}) =>
   jest.fn(async (_secret, payloads) => ({
-    success: true,
-    results: payloads.map((payload, index) => ({
-      externalPropertyId: payload.externalPropertyId,
-      externalRoomTypeId: payload.externalRoomTypeId,
-      externalRoomTypeIds: payload.externalRoomTypeIds,
-      requestBody: { values: payload.values },
-      providerStatus: "SYNCED",
-      httpStatus: 202,
-      success: true,
-      taskId: `task-availability-${index + 1}`,
-      warnings: [],
-      errorCode: null,
-      errorMessage: null,
-    })),
+    success,
+    results: payloads.map((payload, index) =>
+      buildRestrictionsProviderResult(payload, {
+        taskId: `task-restrictions-${index + 1}`,
+        ...resolveProviderResultOverrides(resultOverrides, payload, index),
+      })
+    ),
   }));
+
+const createSuccessfulRestrictionsPush = () => createRestrictionsPush();
+
+const createSuccessfulAvailabilityPush = () => createAvailabilityPush();
 
 const expectValidChannexRestrictionProviderValues = (payloads) => {
   for (const payload of Array.isArray(payloads) ? payloads : []) {
@@ -449,23 +485,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("availability sync supports a 500-day range and sends one combined provider request", async () => {
-    const pushAvailability = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: [
-        {
-          externalPropertyId: "external-property-1",
-          externalRoomTypeId: null,
-          requestBody: { values: payloads[0].values },
-          providerStatus: "SYNCED",
-          httpStatus: 202,
-          success: true,
-          taskId: "task-availability-1",
-          warnings: [],
-          errorCode: null,
-          errorMessage: null,
-        },
-      ],
-    }));
+    const pushAvailability = createSuccessfulAvailabilityPush();
     const service = createService({
       channexProviderClient: {
         pushAvailability,
@@ -474,20 +494,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     });
     service.getChannexAriTargets.mockResolvedValue(
       buildReadyAriTargets({
-        roomTypeMappings: [
-          {
-            domitsPropertyId: "domits-property-1",
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-1",
-            status: "ACTIVE",
-          },
-          {
-            domitsPropertyId: "domits-property-1",
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-2",
-            status: "ACTIVE",
-          },
-        ],
+        roomTypeMappings: buildTwoRoomTypeMappings(),
       })
     );
 
@@ -578,23 +585,9 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("availability sync still works for a small range", async () => {
-    const pushAvailability = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: [
-        {
-          externalPropertyId: "external-property-1",
-          externalRoomTypeId: null,
-          requestBody: { values: payloads[0].values },
-          providerStatus: "SYNCED",
-          httpStatus: 202,
-          success: true,
-          taskId: "task-small-1",
-          warnings: [],
-          errorCode: null,
-          errorMessage: null,
-        },
-      ],
-    }));
+    const pushAvailability = createAvailabilityPush({
+      resultOverrides: { taskId: "task-small-1" },
+    });
     const service = createService({
       channexProviderClient: {
         pushAvailability,
@@ -624,24 +617,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("restrictions sync supports a 500-day range and sends one combined provider request", async () => {
-    const pushRestrictions = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: payloads.map((payload, index) => ({
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        externalRoomTypeIds: payload.externalRoomTypeIds,
-        externalRatePlanId: payload.externalRatePlanId,
-        externalRatePlanIds: payload.externalRatePlanIds,
-        requestBody: { values: payload.values },
-        providerStatus: "SYNCED",
-        httpStatus: 202,
-        success: true,
-        taskId: `task-restrictions-${index + 1}`,
-        warnings: [],
-        errorCode: null,
-        errorMessage: null,
-      })),
-    }));
+    const pushRestrictions = createSuccessfulRestrictionsPush();
     const service = createService({
       channexProviderClient: {
         pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
@@ -650,22 +626,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     });
     service.getChannexAriTargets.mockResolvedValue(
       buildReadyAriTargets({
-        ratePlanMappings: [
-          {
-            domitsPropertyId: "domits-property-1",
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-1",
-            externalRatePlanId: "rate-plan-1",
-            status: "ACTIVE",
-          },
-          {
-            domitsPropertyId: "domits-property-1",
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-2",
-            externalRatePlanId: "rate-plan-2",
-            status: "ACTIVE",
-          },
-        ],
+        ratePlanMappings: buildTwoRatePlanMappings(),
       })
     );
     const previewSpy = jest.spyOn(service, "previewChannexAriPayloads");
@@ -710,39 +671,12 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("full certification sync sends exactly one availability call and one restrictions/rates call", async () => {
-    const pushAvailability = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: payloads.map((payload) => ({
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        requestBody: { values: payload.values },
-        providerStatus: "SYNCED",
-        httpStatus: 202,
-        success: true,
-        taskId: "task-availability-full",
-        warnings: [],
-        errorCode: null,
-        errorMessage: null,
-      })),
-    }));
-    const pushRestrictions = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: payloads.map((payload) => ({
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        externalRoomTypeIds: payload.externalRoomTypeIds,
-        externalRatePlanId: payload.externalRatePlanId,
-        externalRatePlanIds: payload.externalRatePlanIds,
-        requestBody: { values: payload.values },
-        providerStatus: "SYNCED",
-        httpStatus: 202,
-        success: true,
-        taskId: "task-restrictions-full",
-        warnings: [],
-        errorCode: null,
-        errorMessage: null,
-      })),
-    }));
+    const pushAvailability = createAvailabilityPush({
+      resultOverrides: { taskId: "task-availability-full" },
+    });
+    const pushRestrictions = createRestrictionsPush({
+      resultOverrides: { taskId: "task-restrictions-full" },
+    });
     const service = createService({
       channexProviderClient: {
         pushAvailability,
@@ -751,22 +685,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     });
     service.getChannexAriTargets.mockResolvedValue(
       buildReadyAriTargets({
-        ratePlanMappings: [
-          {
-            domitsPropertyId: "domits-property-1",
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-1",
-            externalRatePlanId: "rate-plan-1",
-            status: "ACTIVE",
-          },
-          {
-            domitsPropertyId: "domits-property-1",
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-2",
-            externalRatePlanId: "rate-plan-2",
-            status: "ACTIVE",
-          },
-        ],
+        ratePlanMappings: buildTwoRatePlanMappings(),
       })
     );
     const payloadPreviewSpy = jest.spyOn(service, "previewChannexAriPayloads");
@@ -806,22 +725,14 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("full certification sync provider warnings keep overallSuccess false", async () => {
-    const pushAvailability = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: payloads.map((payload) => ({
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        externalRoomTypeIds: payload.externalRoomTypeIds,
-        requestBody: { values: payload.values },
+    const pushAvailability = createAvailabilityPush({
+      resultOverrides: {
         providerStatus: "ACCEPTED_WITH_WARNINGS",
         httpStatus: 200,
-        success: true,
         taskId: "task-availability-warning",
         warnings: ["Provided value was accepted with warnings."],
-        errorCode: null,
-        errorMessage: null,
-      })),
-    }));
+      },
+    });
     const pushRestrictions = createSuccessfulRestrictionsPush();
     const service = createService({
       channexProviderClient: {
@@ -967,22 +878,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     });
     service.getChannexAriTargets.mockResolvedValue(
       buildReadyAriTargets({
-        ratePlanMappings: [
-          {
-            domitsPropertyId: "domits-property-1",
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-1",
-            externalRatePlanId: "rate-plan-1",
-            status: "ACTIVE",
-          },
-          {
-            domitsPropertyId: "domits-property-1",
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-2",
-            externalRatePlanId: "rate-plan-2",
-            status: "ACTIVE",
-          },
-        ],
+        ratePlanMappings: buildTwoRatePlanMappings(),
       })
     );
 
@@ -1474,34 +1370,18 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("full certification sync returns controlled JSON when one provider step fails", async () => {
-    const pushAvailability = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: payloads.map((payload) => ({
+    const pushAvailability = createAvailabilityPush({
+      resultOverrides: {
         endpoint: "/api/v1/availability",
         method: "POST",
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        requestBody: { values: payload.values },
-        providerStatus: "SYNCED",
-        httpStatus: 202,
-        success: true,
         taskId: "task-availability-full",
-        warnings: [],
-        errorCode: null,
-        errorMessage: null,
-      })),
-    }));
-    const pushRestrictions = jest.fn(async (_secret, payloads) => ({
+      },
+    });
+    const pushRestrictions = createRestrictionsPush({
       success: false,
-      results: payloads.map((payload) => ({
+      resultOverrides: {
         endpoint: "/api/v1/restrictions",
         method: "POST",
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        externalRoomTypeIds: payload.externalRoomTypeIds,
-        externalRatePlanId: payload.externalRatePlanId,
-        externalRatePlanIds: payload.externalRatePlanIds,
-        requestBody: { values: payload.values },
         providerStatus: "RESTRICTIONS_PUSH_FAILED",
         httpStatus: 504,
         success: false,
@@ -1509,8 +1389,8 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         warnings: [],
         errorCode: "CHANNEX_RESTRICTIONS_PUSH_504",
         errorMessage: "Channex restrictions push failed with status 504.",
-      })),
-    }));
+      },
+    });
     const service = createService({
       channexProviderClient: {
         pushAvailability,
@@ -1592,24 +1472,9 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
 
   test("restrictions sync ignores stale frontend pagination metadata and persists certification-safe evidence", async () => {
     const evidenceCreate = jest.fn(async (row) => row);
-    const pushRestrictions = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: payloads.map((payload) => ({
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        externalRoomTypeIds: payload.externalRoomTypeIds,
-        externalRatePlanId: payload.externalRatePlanId,
-        externalRatePlanIds: payload.externalRatePlanIds,
-        requestBody: { values: payload.values },
-        providerStatus: "SYNCED",
-        httpStatus: 202,
-        success: true,
-        taskId: "task-restrictions-stale-metadata",
-        warnings: [],
-        errorCode: null,
-        errorMessage: null,
-      })),
-    }));
+    const pushRestrictions = createRestrictionsPush({
+      resultOverrides: { taskId: "task-restrictions-stale-metadata" },
+    });
     const service = createService({
       channexEvidence: {
         create: evidenceCreate,
@@ -1729,26 +1594,18 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     const service = createService({
       channexProviderClient: {
         pushAvailability: jest.fn().mockResolvedValue({ results: [] }),
-        pushRestrictions: jest.fn(async (_secret, payloads) => ({
+        pushRestrictions: createRestrictionsPush({
           success: false,
-          results: [
-            {
-              externalPropertyId: payloads[0].externalPropertyId,
-              externalRoomTypeId: payloads[0].externalRoomTypeId,
-              externalRoomTypeIds: payloads[0].externalRoomTypeIds,
-              externalRatePlanId: payloads[0].externalRatePlanId,
-              externalRatePlanIds: payloads[0].externalRatePlanIds,
-              requestBody: { values: payloads[0].values },
-              providerStatus: "RESTRICTIONS_PUSH_FAILED",
-              httpStatus: 504,
-              success: false,
-              taskId: null,
-              warnings: [],
-              errorCode: "CHANNEX_RESTRICTIONS_PUSH_504",
-              errorMessage: "Channex restrictions push failed with status 504.",
-            },
-          ],
-        })),
+          resultOverrides: {
+            providerStatus: "RESTRICTIONS_PUSH_FAILED",
+            httpStatus: 504,
+            success: false,
+            taskId: null,
+            warnings: [],
+            errorCode: "CHANNEX_RESTRICTIONS_PUSH_504",
+            errorMessage: "Channex restrictions push failed with status 504.",
+          },
+        }),
       },
     });
 
@@ -1974,24 +1831,9 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("restrictions sync sends mapped Channex restriction fields from preview payloads", async () => {
-    const pushRestrictions = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: payloads.map((payload) => ({
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        externalRoomTypeIds: payload.externalRoomTypeIds,
-        externalRatePlanId: payload.externalRatePlanId,
-        externalRatePlanIds: payload.externalRatePlanIds,
-        requestBody: { values: payload.values },
-        providerStatus: "SYNCED",
-        httpStatus: 202,
-        success: true,
-        taskId: "task-restrictions-mapping",
-        warnings: [],
-        errorCode: null,
-        errorMessage: null,
-      })),
-    }));
+    const pushRestrictions = createRestrictionsPush({
+      resultOverrides: { taskId: "task-restrictions-mapping" },
+    });
     const channexProviderClient = {
       pushRestrictions,
     };
@@ -2055,21 +1897,9 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     const pushRestrictions = createSuccessfulRestrictionsPush();
     const service = createService({
       channexProviderClient: {
-        pushAvailability: jest.fn(async (_secret, payloads) => ({
-          success: true,
-          results: payloads.map((payload) => ({
-            externalPropertyId: payload.externalPropertyId,
-            externalRoomTypeId: payload.externalRoomTypeId,
-            requestBody: { values: payload.values },
-            providerStatus: "SYNCED",
-            httpStatus: 202,
-            success: true,
-            taskId: "task-availability-full-fields",
-            warnings: [],
-            errorCode: null,
-            errorMessage: null,
-          })),
-        })),
+        pushAvailability: createAvailabilityPush({
+          resultOverrides: { taskId: "task-availability-full-fields" },
+        }),
         pushRestrictions,
       },
     });
@@ -2219,40 +2049,12 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     };
 
     for (const [testCaseId, expectation] of Object.entries(expected)) {
-      const pushAvailability = jest.fn(async (_secret, payloads) => ({
-        success: true,
-        results: payloads.map((payload) => ({
-          externalPropertyId: payload.externalPropertyId,
-          externalRoomTypeId: payload.externalRoomTypeId,
-          externalRoomTypeIds: payload.externalRoomTypeIds,
-          requestBody: { values: payload.values },
-          providerStatus: "SYNCED",
-          httpStatus: 202,
-          success: true,
-          taskId: `task-availability-${testCaseId}`,
-          warnings: [],
-          errorCode: null,
-          errorMessage: null,
-        })),
-      }));
-      const pushRestrictions = jest.fn(async (_secret, payloads) => ({
-        success: true,
-        results: payloads.map((payload) => ({
-          externalPropertyId: payload.externalPropertyId,
-          externalRoomTypeId: payload.externalRoomTypeId,
-          externalRoomTypeIds: payload.externalRoomTypeIds,
-          externalRatePlanId: payload.externalRatePlanId,
-          externalRatePlanIds: payload.externalRatePlanIds,
-          requestBody: { values: payload.values },
-          providerStatus: "SYNCED",
-          httpStatus: 202,
-          success: true,
-          taskId: `task-restrictions-${testCaseId}`,
-          warnings: [],
-          errorCode: null,
-          errorMessage: null,
-        })),
-      }));
+      const pushAvailability = createAvailabilityPush({
+        resultOverrides: { taskId: `task-availability-${testCaseId}` },
+      });
+      const pushRestrictions = createRestrictionsPush({
+        resultOverrides: { taskId: `task-restrictions-${testCaseId}` },
+      });
       const service = createService({
         channexProviderClient: {
           pushAvailability,
@@ -2478,22 +2280,15 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("certification availability provider warnings keep overallSuccess false", async () => {
-    const pushAvailability = jest.fn(async (_secret, payloads) => ({
-      success: true,
-      results: payloads.map((payload) => ({
-        externalPropertyId: payload.externalPropertyId,
-        externalRoomTypeId: payload.externalRoomTypeId,
-        externalRoomTypeIds: payload.externalRoomTypeIds,
-        requestBody: { values: payload.values },
+    const pushAvailability = createAvailabilityPush({
+      resultOverrides: {
         providerStatus: "ACCEPTED_WITH_WARNINGS",
         httpStatus: 200,
-        success: true,
         taskId: "task-availability-warning",
         warnings: ["Provided value is greater than max availability (1). Value changes to max availability."],
-        errorCode: null,
         errorMessage: "Channex accepted the request with warnings.",
-      })),
-    }));
+      },
+    });
     const service = createService({
       channexProviderClient: {
         pushAvailability,

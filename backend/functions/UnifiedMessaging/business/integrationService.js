@@ -987,11 +987,11 @@ const buildChannexPayloadPreviewPaginationContext = ({
   const nextPageDateFrom = hasNextPage ? addDaysToIsoDate(pageDateTo, 1) : null;
   const hasPreviousPage = normalizedPageDateFrom > normalizedDateFrom;
   const previousCandidate = addDaysToIsoDate(normalizedPageDateFrom, -normalizedPageSizeDays);
-  const previousPageDateFrom = hasPreviousPage
-    ? previousCandidate && previousCandidate > normalizedDateFrom
-      ? previousCandidate
-      : normalizedDateFrom
-    : null;
+  let previousPageDateFrom = null;
+  if (hasPreviousPage) {
+    previousPageDateFrom = normalizedDateFrom;
+    if (previousCandidate && previousCandidate > normalizedDateFrom) previousPageDateFrom = previousCandidate;
+  }
 
   return {
     pageDateFrom: normalizedPageDateFrom,
@@ -7115,7 +7115,7 @@ export default class IntegrationService {
 
       return await finalize(
         bad(500, {
-          ...(config.getCaughtResponseFields?.(dateContext) || {}),
+          ...(config.getCaughtResponseFields?.(dateContext) ?? undefined),
           error: config.catchErrorMessage,
           errorCode: config.catchErrorCode,
           details,
@@ -7383,7 +7383,7 @@ export default class IntegrationService {
               dryRun,
               providerMode,
               debugStage,
-              ...(readinessResult?.response || {}),
+              ...(readinessResult?.response ?? undefined),
             },
           },
           {
@@ -7818,7 +7818,7 @@ export default class IntegrationService {
                 providerMode,
                 stage: "credentials_load_failed",
               }),
-              ...(credentialContext.response?.response || {}),
+              ...(credentialContext.response?.response ?? undefined),
               ready: true,
               calledProvider: false,
               requestCount: 0,
