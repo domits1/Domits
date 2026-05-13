@@ -1,6 +1,11 @@
 const CHANNEX_BASE_URL = process.env.CHANNEX_BASE_URL || "https://staging.channex.io";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+const normalizeNonNegativeInteger = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 ? Math.trunc(numeric) : null;
+};
 const normalizeWarnings = (parsed) => (Array.isArray(parsed?.meta?.warnings) ? parsed.meta.warnings : []);
 const normalizeTaskIds = (parsed) =>
   Array.isArray(parsed?.data) ? parsed.data.map((item) => requireStr(item?.id)).filter(Boolean) : [];
@@ -548,14 +553,20 @@ export default class ChannexProviderClient {
         .map((row) => {
           const externalRoomTypeId = requireStr(row?.id);
           if (!externalRoomTypeId) return null;
+          const attributes = row?.attributes || {};
 
           return {
             externalRoomTypeId,
             externalRoomTypeName:
-              requireStr(row?.attributes?.title) ||
-              requireStr(row?.attributes?.name) ||
+              requireStr(attributes?.title) ||
+              requireStr(attributes?.name) ||
               null,
-            roomTypeStatus: requireStr(row?.attributes?.state) || null,
+            roomTypeStatus: requireStr(attributes?.state) || null,
+            countOfRooms: normalizeNonNegativeInteger(
+              attributes?.count_of_rooms ??
+              attributes?.countOfRooms ??
+              attributes?.count
+            ),
           };
         })
         .filter(Boolean);

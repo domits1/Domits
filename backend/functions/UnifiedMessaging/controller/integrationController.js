@@ -1,4 +1,5 @@
 import IntegrationService from "../business/integrationService.js";
+import ChannexBookingAvailabilityBridge from "../business/channexBookingAvailabilityBridge.js";
 import {
   CHANNEX_RESTRICTIONS_SYNC_MODE,
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
@@ -6,6 +7,12 @@ import {
 import { extractIntegrationId, extractLastPathSegment, safeJson } from "./controllerUtils.js";
 
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
+const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+const getHeader = (headers, name) => {
+  const expected = String(name || "").toLowerCase();
+  const match = Object.entries(headers || {}).find(([key]) => String(key || "").toLowerCase() === expected);
+  return match?.[1] ?? null;
+};
 const summarizeErrorStack = (error) =>
   (typeof error?.stack === "string" ? error.stack : "")
     .split("\n")
@@ -14,8 +21,12 @@ const summarizeErrorStack = (error) =>
     .filter(Boolean);
 
 class IntegrationController {
-  constructor() {
-    this.integrationService = new IntegrationService();
+  constructor({
+    integrationService = new IntegrationService(),
+    channexBookingAvailabilityBridge = new ChannexBookingAvailabilityBridge(),
+  } = {}) {
+    this.integrationService = integrationService;
+    this.channexBookingAvailabilityBridge = channexBookingAvailabilityBridge;
   }
 
   async createIntegration(event) {
@@ -223,6 +234,29 @@ class IntegrationController {
     const dateFrom = event.queryStringParameters?.dateFrom || null;
     const dateTo = event.queryStringParameters?.dateTo || null;
     return await this.integrationService.syncChannexAvailability(userId, domitsPropertyId, dateFrom, dateTo);
+  }
+
+  async syncChannexBookingAvailability(event) {
+    const expectedToken = requireStr(process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN);
+    const providedToken = requireStr(getHeader(event?.headers, "x-domits-internal-token"));
+    const allowWithoutToken = process.env.TEST === "true" && !expectedToken;
+
+    if (!allowWithoutToken && (!expectedToken || providedToken !== expectedToken)) {
+      return {
+        statusCode: 403,
+        response: {
+          error: "FORBIDDEN",
+          message: "Invalid internal booking availability sync token.",
+        },
+      };
+    }
+
+    const body = safeJson(event.body) || {};
+    const evidence = await this.channexBookingAvailabilityBridge.syncAvailabilityForBookingChange(body);
+    return {
+      statusCode: 200,
+      response: evidence,
+    };
   }
 
   async syncChannexRestrictions(event) {

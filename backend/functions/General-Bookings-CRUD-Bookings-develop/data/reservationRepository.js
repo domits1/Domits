@@ -67,17 +67,22 @@ class ReservationRepository {
     };
   }
 
-  async assertNoBookingConflict({ propertyId, arrivalDateMs, departureDateMs }) {
+  async assertNoBookingConflict({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId = null }) {
     const client = await Database.getInstance();
 
-    const conflictCount = await client
+    const query = client
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :property_id", { property_id: propertyId })
       .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: ["Failed", "Declined", "Inquiry"] })
       .andWhere("booking.arrivaldate < :departureDate", { departureDate: departureDateMs })
-      .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs })
-      .getCount();
+      .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs });
+
+    if (excludeBookingId) {
+      query.andWhere("booking.id != :excludeBookingId", { excludeBookingId });
+    }
+
+    const conflictCount = await query.getCount();
 
     if (conflictCount > 0) {
       throw new ConflictException("Selected dates are no longer available.");
@@ -356,6 +361,24 @@ class ReservationRepository {
         statusCode: 204,
       };
     }
+    return {
+      response: query,
+      statusCode: 200,
+    };
+  }
+
+  async updateBookingDates(id, arrivalDateMs, departureDateMs) {
+    const client = await Database.getInstance();
+    const query = await client
+      .createQueryBuilder()
+      .update(Booking)
+      .set({
+        arrivaldate: parseFloat(arrivalDateMs),
+        departuredate: parseFloat(departureDateMs),
+      })
+      .where("id = :id", { id })
+      .execute();
+
     return {
       response: query,
       statusCode: 200,

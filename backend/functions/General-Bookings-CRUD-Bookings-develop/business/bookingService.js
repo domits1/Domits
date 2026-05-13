@@ -4,6 +4,7 @@ import GetParamsModel from "./model/getParamsModel.js";
 import AuthManager from "../auth/authManager.js";
 import sendEmail from "./sendEmail.js";
 import Forbidden from "../util/exception/Forbidden.js";
+import Unauthorized from "../util/exception/Unauthorized.js";
 import TypeException from "../util/exception/TypeException.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
@@ -13,16 +14,60 @@ import CognitoRepository from "../data/cognitoRepository.js";
 import PropertyRepository from "../data/propertyRepository.js";
 import getHostEmailById from "./getHostEmailById.js";
 import ExternalCalendarService from "./externalCalendarService.js";
+import ChannexBookingAvailabilityClient from "./channexBookingAvailabilityClient.js";
+
+const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+
+const getBookingId = (booking) =>
+  requireStr(booking?.id) || requireStr(booking?.bookingId) || requireStr(booking?.booking_id);
+
+const getPropertyId = (booking) =>
+  requireStr(booking?.property_id) || requireStr(booking?.propertyId) || requireStr(booking?.domitsPropertyId);
+
+const createLocalChannexAvailabilityEvidence = ({ booking, trigger, skipped, reason, errors = [] }) => ({
+  bookingId: getBookingId(booking) ?? null,
+  trigger,
+  syncType: "booking-availability",
+  domitsPropertyId: getPropertyId(booking) ?? null,
+  channexPropertyId: null,
+  externalRoomTypeId: null,
+  countOfRooms: null,
+  countOfRoomsSource: null,
+  affectedDateRange: { dateFrom: null, dateTo: null },
+  affectedDates: [],
+  availabilityValuesSent: [],
+  requestCount: 0,
+  taskIds: [],
+  warnings: [],
+  errors,
+  overallSuccess: false,
+  skipped,
+  reason,
+});
 
 class BookingService {
-  constructor() {
-    this.reservationRepository = new ReservationRepository();
-    this.stripeRepository = new StripeRepository();
-    this.cognitoRepository = new CognitoRepository();
-    this.propertyRepository = new PropertyRepository();
-    this.authManager = new AuthManager();
-    this.getParamsModel = new GetParamsModel();
-    this.externalCalendarService = new ExternalCalendarService();
+  constructor({
+    reservationRepository = new ReservationRepository(),
+    stripeRepository = new StripeRepository(),
+    cognitoRepository = new CognitoRepository(),
+    propertyRepository = new PropertyRepository(),
+    authManager = new AuthManager(),
+    getParamsModel = new GetParamsModel(),
+    externalCalendarService = new ExternalCalendarService(),
+    channexBookingAvailabilityClient = new ChannexBookingAvailabilityClient(),
+    sendEmailFn = sendEmail,
+    getHostEmailByIdFn = getHostEmailById,
+  } = {}) {
+    this.reservationRepository = reservationRepository;
+    this.stripeRepository = stripeRepository;
+    this.cognitoRepository = cognitoRepository;
+    this.propertyRepository = propertyRepository;
+    this.authManager = authManager;
+    this.getParamsModel = getParamsModel;
+    this.externalCalendarService = externalCalendarService;
+    this.channexBookingAvailabilityClient = channexBookingAvailabilityClient;
+    this.sendEmail = sendEmailFn;
+    this.getHostEmailById = getHostEmailByIdFn;
   }
 
   async create(event) {
@@ -54,7 +99,7 @@ class BookingService {
     const userEmail = authenticatedUser.email;
     const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
     const cancellationPolicy = await this.propertyRepository.getCancellationPolicyByPropertyId(propertyId);
-    const hostEmail = await getHostEmailById(fetchedProperty.hostId);
+    const hostEmail = await this.getHostEmailById(fetchedProperty.hostId);
     const isInquiry = fetchedProperty.bookingType === "inquiry";
 
     const bookingInfo = {
@@ -63,7 +108,7 @@ class BookingService {
       arriveDate: event.general.arrivalDate,
       departureDate: event.general.departureDate,
     };
-    await sendEmail(userEmail, hostEmail, bookingInfo);
+    await this.sendEmail(userEmail, hostEmail, bookingInfo);
 
     const bookingStatus = isInquiry ? "Inquiry" : "Awaiting Payment";
     const result = await this.reservationRepository.addBookingToTable(
@@ -75,7 +120,31 @@ class BookingService {
       fetchedProperty.bookingType
     );
 
-    return { ...result, isInquiry };
+    if (bookingStatus !== "Awaiting Payment") {
+      return { ...result, isInquiry };
+    }
+
+    const bookingAfter = {
+      id: result.bookingId,
+      property_id: propertyId,
+      hostid: fetchedProperty.hostId,
+      guestid: authenticatedUser.sub,
+      arrivaldate: arrivalDateMs,
+      departuredate: departureDateMs,
+      status: bookingStatus,
+      bookingtype: fetchedProperty.bookingType,
+    };
+    const channexAvailabilitySync = await this.syncChannexBookingAvailabilityIfEnabled({
+      userId: fetchedProperty.hostId,
+      bookingAfter,
+      trigger: "BOOKING_CREATED",
+    });
+
+    return {
+      ...result,
+      isInquiry,
+      ...(channexAvailabilitySync === undefined ? {} : { channexAvailabilitySync }),
+    };
   }
 
   parseBookingDateToMs(value, fieldName) {
@@ -218,6 +287,121 @@ class BookingService {
     if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
     await this.reservationRepository.updateBookingStatus(bookingId, "Declined");
     return { bookingId, status: "Declined" };
+  }
+
+  isChannexBookingAvailabilitySyncEnabled() {
+    return String(process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED || "").trim().toLowerCase() === "true";
+  }
+
+  async syncChannexBookingAvailabilityIfEnabled({
+    userId,
+    bookingBefore = null,
+    bookingAfter = null,
+    trigger,
+    includeDisabledEvidence = false,
+  }) {
+    const referenceBooking = bookingAfter || bookingBefore || {};
+    if (!this.isChannexBookingAvailabilitySyncEnabled()) {
+      return includeDisabledEvidence
+        ? createLocalChannexAvailabilityEvidence({
+          booking: referenceBooking,
+          trigger,
+          skipped: true,
+          reason: "CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED",
+        })
+        : undefined;
+    }
+
+    try {
+      return await this.channexBookingAvailabilityClient.syncAvailabilityForBookingChange({
+        userId,
+        bookingBefore,
+        bookingAfter,
+        trigger,
+      });
+    } catch (error) {
+      return createLocalChannexAvailabilityEvidence({
+        booking: referenceBooking,
+        trigger,
+        skipped: false,
+        reason: "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED",
+        errors: [
+          {
+            code: error?.code || error?.name || "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED",
+            message: error?.message || "Channex booking availability sync failed.",
+            httpStatus: error?.statusCode ?? null,
+          },
+        ],
+      });
+    }
+  }
+
+  async modifyBookingDates(bookingId, arrivalDate, departureDate, authToken) {
+    const normalizedBookingId = requireStr(bookingId);
+    if (!normalizedBookingId) {
+      throw new BadRequestException("bookingId is required.");
+    }
+    if (!authToken) {
+      throw new Unauthorized("Missing Authorization header.");
+    }
+
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+
+    const bookingBefore = bookingResult.response;
+    if (bookingBefore.hostid !== user.sub) {
+      throw new Forbidden("Only the host may modify this booking.");
+    }
+
+    const arrivalDateMs = this.parseBookingDateToMs(arrivalDate, "arrivalDate");
+    const departureDateMs = this.parseBookingDateToMs(departureDate, "departureDate");
+    if (departureDateMs <= arrivalDateMs) {
+      throw new BadRequestException("departureDate must be after arrivalDate.");
+    }
+
+    const propertyId = getPropertyId(bookingBefore);
+    if (!propertyId) {
+      throw new BadRequestException("Booking is missing property_id.");
+    }
+
+    await this.reservationRepository.assertNoBookingConflict({
+      propertyId,
+      arrivalDateMs,
+      departureDateMs,
+      excludeBookingId: normalizedBookingId,
+    });
+
+    await this.externalCalendarService.ensureNoExternalConflict({
+      propertyId,
+      arrivalMs: arrivalDateMs,
+      departureMs: departureDateMs,
+      excludeBookingId: normalizedBookingId,
+    });
+
+    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs);
+
+    const updatedBookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
+    const bookingAfter = updatedBookingResult?.response || {
+      ...bookingBefore,
+      arrivaldate: arrivalDateMs,
+      departuredate: departureDateMs,
+    };
+
+    const channexAvailabilitySync = await this.syncChannexBookingAvailabilityIfEnabled({
+      userId: bookingAfter.hostid,
+      bookingBefore,
+      bookingAfter,
+      trigger: "BOOKING_MODIFIED",
+      includeDisabledEvidence: true,
+    });
+
+    return {
+      booking: bookingAfter,
+      bookingBefore,
+      bookingAfter,
+      channexAvailabilitySync,
+    };
   }
 
   async verifyEventDataTypes(event) {

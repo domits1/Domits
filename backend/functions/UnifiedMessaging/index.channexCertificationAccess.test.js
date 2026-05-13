@@ -3,6 +3,7 @@ const mockIntegrationControllerMethods = {
   listChannexBookingRevisions: jest.fn(),
   syncChannexRestrictions: jest.fn(),
   syncChannexFull: jest.fn(),
+  syncChannexBookingAvailability: jest.fn(),
   syncChannexCertificationTestCase: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
   acknowledgeChannexBookingRevisions: jest.fn(),

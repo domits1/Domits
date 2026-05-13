@@ -19,7 +19,7 @@ const internalError = { statusCode: 500, response: "Internal Server Error" };
 const nestedIntegrationRoutePattern = /\/integrations\/[^/]+\/.+/;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type,Authorization",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,x-domits-internal-token",
   "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
 };
 const forbiddenChannexCertificationAdmin = {
@@ -185,6 +185,11 @@ const routeDefinitions = [
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/ack"),
     handle: (event) => integrationController.acknowledgeChannexBookingRevisions(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").endsWith("/integrations/channex/booking-availability/sync"),
+    handle: (event) => integrationController.syncChannexBookingAvailability(event),
   },
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/availability"),

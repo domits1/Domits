@@ -8,9 +8,9 @@ import responsejson from "../util/const/responseheader.json" with { type: "json"
 const responseHeaderJSON = responsejson;
 
 class ReservationController {
-  constructor() {
-    this.bookingService = new BookingService();
-    this.paymentSerivce = new PaymentService();
+  constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
+    this.bookingService = bookingService;
+    this.paymentSerivce = paymentService;
   }
   // -----------
   // POST
@@ -35,7 +35,10 @@ class ReservationController {
       return {
         statusCode: returnInfo.statusCode,
         headers: responseHeaderJSON,
-        response: paymentData,
+        response:
+          returnInfo.channexAvailabilitySync === undefined
+            ? paymentData
+            : { ...paymentData, channexAvailabilitySync: returnInfo.channexAvailabilitySync },
       };
     } catch (error) {
       console.error(error);
@@ -95,6 +98,19 @@ class ReservationController {
     if (body?.action === "accept-inquiry") {
       if (!body?.bookingId) throw new Error("Missing bookingId.");
       return await this.acceptInquiry(body.bookingId, authToken);
+    }
+
+    if (body?.action === "modify-booking-dates") {
+      if (!body?.bookingId) throw new Error("Missing bookingId.");
+      if (!body?.arrivalDate) throw new Error("Missing arrivalDate.");
+      if (!body?.departureDate) throw new Error("Missing departureDate.");
+      const result = await this.bookingService.modifyBookingDates(
+        body.bookingId,
+        body.arrivalDate,
+        body.departureDate,
+        authToken
+      );
+      return { statusCode: 200, headers: responseHeaderJSON, response: result };
     }
 
     return null;
