@@ -16,6 +16,16 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 import Hostchat from "../../features/hostdashboard/Hostchat.js";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animations.js";
+import {
+  FiGlobe,
+  FiZap,
+  FiCompass,
+  FiCheckSquare,
+  FiHelpCircle,
+  FiMail
+} from "react-icons/fi";
 
 const contentByLanguage = {
   en,
@@ -104,6 +114,26 @@ function Header({ setSearchResults, setLoading }) {
     }
   };
 
+  const scrollToSection = (id) => {
+  const element = document.getElementById(id);
+
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  } else {
+    navigate("/landing");
+
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      el?.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+  }
+
+  setAppsMenuOpen(false);
+};
+
   const handleLogout = async () => {
     try {
       await Auth.signOut();
@@ -132,6 +162,8 @@ function Header({ setSearchResults, setLoading }) {
     }
   });
 
+  const [appsMenuOpen, setAppsMenuOpen] = useState(false);
+
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
   };
@@ -147,9 +179,6 @@ function Header({ setSearchResults, setLoading }) {
   };
   const navigateToWhyDomits = () => {
     navigate("/why-domits");
-  };
-  const navigateToNinedots = () => {
-    navigate("/travelinnovation");
   };
   const navigateToGuestDashboard = () => {
     setCurrentView("guest");
@@ -327,9 +356,49 @@ function Header({ setSearchResults, setLoading }) {
               Go to Dashboard
             </button>
           )}
-          <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
+          <button
+             className="headerButtons nineDotsButton"
+              onClick={() => setAppsMenuOpen((prev) => !prev)}
+          >
             <img src={nineDots} alt="Nine Dots" />
           </button>
+
+          {appsMenuOpen && (
+            <motion.div
+              className="appsDropdown"
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+         >
+            <motion.div
+              className="appsGrid"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+          >
+            {[
+              { id: "why", label: "Why Domits", icon: <FiGlobe /> },
+              { id: "features", label: "Features", icon: <FiZap /> },
+              { id: "steps", label: "Steps", icon: <FiCompass /> },
+              { id: "checklist", label: "Checklist", icon: <FiCheckSquare /> },
+              { id: "faq", label: "FAQ", icon: <FiHelpCircle /> },
+              { id: "contact", label: "Contact", icon: <FiMail /> },
+            ].map((item) => (
+            
+                <motion.button
+                  key={item.id}
+                  className="appItem"
+                  variants={fadeUp}
+                  onClick={() => scrollToSection(item.id)}
+                >
+                  <span className="appIcon">{item.icon}</span>
+                  <span className="appLabel">{item.label}</span>
+                </motion.button>
+            ))}
+            </motion.div>
+        </motion.div>
+        )}
         </div>
         <div className="personalMenuDropdown">
           <button className="personalMenu" onClick={toggleDropdown}>
