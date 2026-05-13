@@ -51,17 +51,19 @@ const scheduleReportAfterPaint = (callback) => {
   globalThis.setTimeout(callback, 0);
 };
 
+const createDeferredReadyCallback = (onReady) => () => {
+  scheduleReportAfterPaint(() => {
+    onReady(getCurrentPerformanceTimestamp());
+  });
+};
+
 const attachImageReadyFallback = (fallbackTargetNode, onReady) => {
-  if (!fallbackTargetNode || fallbackTargetNode.tagName !== "IMG") {
+  if (fallbackTargetNode?.tagName !== "IMG") {
     return undefined;
   }
 
   const imageNode = fallbackTargetNode;
-  const triggerReady = () => {
-    scheduleReportAfterPaint(() => {
-      onReady(getCurrentPerformanceTimestamp());
-    });
-  };
+  const triggerReady = createDeferredReadyCallback(onReady);
 
   if (imageNode.complete && imageNode.naturalWidth > 0) {
     triggerReady();
@@ -78,11 +80,7 @@ const attachImageReadyFallback = (fallbackTargetNode, onReady) => {
 };
 
 const attachDocumentReadyFallback = (onReady) => {
-  const triggerReady = () => {
-    scheduleReportAfterPaint(() => {
-      onReady(getCurrentPerformanceTimestamp());
-    });
-  };
+  const triggerReady = createDeferredReadyCallback(onReady);
 
   if (globalThis.document?.readyState === "complete") {
     triggerReady();
