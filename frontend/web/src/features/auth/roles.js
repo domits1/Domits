@@ -1,7 +1,6 @@
 export const ROLES = {
   ADMIN: "Admin",
   HOST: "Host",
-  CO_HOST: "Co-Host",
   GENERAL_MANAGER: "General Manager",
   RESERVATION_MANAGER: "Reservation Manager",
   GUEST_EXPERIENCE_MANAGER: "Guest Experience Manager",
@@ -16,7 +15,6 @@ export const ROLES = {
 export const HOST_ROLES = [
   ROLES.ADMIN,
   ROLES.HOST,
-  ROLES.CO_HOST,
   ROLES.GENERAL_MANAGER,
   ROLES.RESERVATION_MANAGER,
   ROLES.GUEST_EXPERIENCE_MANAGER,

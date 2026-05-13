@@ -8,7 +8,7 @@ const HostTeam = () => {
     const [host, setHost] = useState({ name: "", email: "", phone: "", picture: "" });
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
-    const [inviteRole, setInviteRole] = useState("Co-Host / Property Operations Manager");
+    const [inviteRole, setInviteRole] = useState("Property Operations Manager");
     const [inviteSent, setInviteSent] = useState(false);
 
     useEffect(() => {
@@ -136,7 +136,7 @@ const HostTeam = () => {
                                         value={inviteRole}
                                         onChange={(e) => setInviteRole(e.target.value)}
                                     >
-                                        <option value="Co-Host / Property Operations Manager">Co-Host / Property Operations Manager</option>
+                                        <option value="Property Operations Manager">Property Operations Manager</option>
                                     </select>
                                 </label>
                                 <div className="team-modal-actions">
