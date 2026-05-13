@@ -42,8 +42,9 @@ import { getWebsiteTemplateById } from "./websiteTemplates";
 import {
   announceWebsiteLiveSiteUpdate,
   announceWebsitePreviewUpdate,
+  WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE,
 } from "./services/websitePreviewSync";
-import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
+import { buildPublishedWebsiteHref, buildWebsitePreviewPath } from "./websitePublicSiteLinks";
 import {
   COMMON_TEXT_FIELDS,
   EDITOR_SECTION_KEYS,
@@ -199,6 +200,29 @@ const getPublishLiveSiteActionLabel = (isPublishingSite) => {
   return "Publish live site";
 };
 
+const getWebsiteActionMenuButtonLabel = ({ hasLiveSite, isPublishingSite, isUpdatingLiveSite }) => {
+  if (!hasLiveSite) {
+    return isPublishingSite ? "Publishing website..." : "Publish website";
+  }
+
+  return isUpdatingLiveSite ? "Updating website..." : "Update website";
+};
+
+const resolveWindowTargetOrigin = (href) => {
+  const normalizedHref = String(href || "").trim();
+  const baseOrigin = globalThis.location?.origin || "";
+
+  if (!normalizedHref) {
+    return baseOrigin;
+  }
+
+  try {
+    return new URL(normalizedHref, baseOrigin).origin;
+  } catch {
+    return baseOrigin;
+  }
+};
+
 const getLiveLinkStatus = ({ primarySiteDomain, hasLiveSite }) => {
   if (primarySiteDomain?.status) {
     return formatStatusLabel(primarySiteDomain.status);
@@ -209,6 +233,37 @@ const getLiveLinkStatus = ({ primarySiteDomain, hasLiveSite }) => {
   }
 
   return "Not published";
+};
+
+const resolvePublicSiteLinkPresentation = ({
+  hasLiveSite,
+  primarySiteDomain,
+  siteSummary,
+  draftId,
+}) => {
+  const normalizedDraftId = String(draftId || "").trim();
+  const hasPreviewLink = Boolean(normalizedDraftId);
+
+  if (hasLiveSite) {
+    return {
+      primaryLinkLabel: "Domits live link",
+      primaryLinkValue: primarySiteDomain?.domain || "Available after first publish",
+      secondaryLinkHref: primarySiteDomain?.domain
+        ? buildPublishedWebsiteHref(primarySiteDomain.domain, siteSummary?.site?.id, primarySiteDomain.status)
+        : "",
+      secondaryLinkCopy: "Live site URL",
+      secondaryLinkText: primarySiteDomain?.domain || "",
+    };
+  }
+
+  const previewPath = hasPreviewLink ? buildWebsitePreviewPath(normalizedDraftId) : "";
+  return {
+    primaryLinkLabel: "Internal preview link",
+    primaryLinkValue: previewPath || "Available after first save",
+    secondaryLinkHref: previewPath,
+    secondaryLinkCopy: "Preview URL",
+    secondaryLinkText: previewPath,
+  };
 };
 
 const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) => {
@@ -682,6 +737,12 @@ function WebsiteEditorActionMenu({
   discardDraftChanges,
   isDiscardingChanges,
 }) {
+  const actionMenuButtonLabel = getWebsiteActionMenuButtonLabel({
+    hasLiveSite,
+    isPublishingSite,
+    isUpdatingLiveSite,
+  });
+
   return (
     <div ref={actionMenuRef} className={styles.actionMenuContainer}>
       <button
@@ -691,70 +752,75 @@ function WebsiteEditorActionMenu({
         aria-haspopup="menu"
         aria-expanded={isActionMenuOpen}
       >
-        <span>Update website</span>{" "}
+        <span>{actionMenuButtonLabel}</span>{" "}
         <img
-          src={isActionMenuOpen ? arrowUpIcon : arrowDownIcon}
+          src={arrowDownIcon}
           alt=""
           aria-hidden="true"
-          className={styles.actionMenuButtonIcon}
+          className={`${styles.actionMenuButtonIcon} ${
+            isActionMenuOpen ? styles.actionMenuButtonIconOpen : ""
+          }`.trim()}
         />
       </button>
-      {isActionMenuOpen ? (
-        <div className={styles.actionMenuList} role="menu" aria-label="Website update actions">
-          {hasLiveSite && primarySiteDomain?.domain ? (
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.actionMenuItem}
-              onClick={openLiveWebsiteLink}
-            >
-              Open live site
-            </button>
-          ) : null}
-          {hasLiveSite ? (
-            <>
-              <button
-                type="button"
-                role="menuitem"
-                className={styles.actionMenuItem}
-                onClick={updateLiveSiteChanges}
-                disabled={isMutatingDraft || !hasLiveSyncPending}
-              >
-                {isUpdatingLiveSite ? "Updating..." : "Update live site"}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className={styles.actionMenuItem}
-                onClick={unpublishLiveSite}
-                disabled={!canUnpublishSite}
-              >
-                {isUnpublishingSite ? "Unpublishing..." : "Unpublish site"}
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.actionMenuItem}
-              onClick={publishLiveSite}
-              disabled={!canPublishSite}
-            >
-              <PublicOutlinedIcon fontSize="small" />
-              {getPublishLiveSiteActionLabel(isPublishingSite)}
-            </button>
-          )}
+      <div
+        className={`${styles.actionMenuList} ${isActionMenuOpen ? styles.actionMenuListOpen : ""}`.trim()}
+        role="menu"
+        aria-label="Website update actions"
+        aria-hidden={!isActionMenuOpen}
+      >
+        {hasLiveSite && primarySiteDomain?.domain ? (
           <button
             type="button"
             role="menuitem"
-            className={`${styles.actionMenuItem} ${styles.actionMenuItemDestructive}`.trim()}
-            onClick={discardDraftChanges}
-            disabled={isMutatingDraft || !hasLiveSyncPending}
+            className={styles.actionMenuItem}
+            onClick={openLiveWebsiteLink}
           >
-            {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
+            Open live site
           </button>
-        </div>
-      ) : null}
+        ) : null}
+        {hasLiveSite ? (
+          <>
+            <button
+              type="button"
+              role="menuitem"
+              className={styles.actionMenuItem}
+              onClick={updateLiveSiteChanges}
+              disabled={isMutatingDraft || !hasLiveSyncPending}
+            >
+              {isUpdatingLiveSite ? "Updating..." : "Update live site"}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className={styles.actionMenuItem}
+              onClick={unpublishLiveSite}
+              disabled={!canUnpublishSite}
+            >
+              {isUnpublishingSite ? "Unpublishing..." : "Unpublish site"}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.actionMenuItem}
+            onClick={publishLiveSite}
+            disabled={!canPublishSite}
+          >
+            <PublicOutlinedIcon fontSize="small" />
+            {getPublishLiveSiteActionLabel(isPublishingSite)}
+          </button>
+        )}
+        <button
+          type="button"
+          role="menuitem"
+          className={`${styles.actionMenuItem} ${styles.actionMenuItemDestructive}`.trim()}
+          onClick={discardDraftChanges}
+          disabled={isMutatingDraft || !hasLiveSyncPending}
+        >
+          {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -788,7 +854,15 @@ function WebsiteEditorPublicSitePanel({
   siteSummaryError,
   hasLiveSite,
   hasLiveSyncPending,
+  draftId,
 }) {
+  const { primaryLinkLabel, primaryLinkValue, secondaryLinkHref } = resolvePublicSiteLinkPresentation({
+    hasLiveSite,
+    primarySiteDomain,
+    siteSummary,
+    draftId,
+  });
+
   return (
     <section className={styles.publicSitePanel}>
       <div className={styles.publicSiteHeader}>
@@ -806,10 +880,19 @@ function WebsiteEditorPublicSitePanel({
 
       <div className={styles.publicSiteGrid}>
         <div className={styles.publicSiteMetric}>
-          <span className={styles.publicSiteLabel}>Domits live link</span>
-          <strong className={styles.publicSiteValue}>
-            {primarySiteDomain?.domain || "Available after first publish"}
-          </strong>
+          <span className={styles.publicSiteLabel}>{primaryLinkLabel}</span>
+          {secondaryLinkHref ? (
+            <a
+              className={`${styles.publicSiteLink} ${styles.publicSiteValueLink}`.trim()}
+              href={secondaryLinkHref}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <strong className={styles.publicSiteValue}>{primaryLinkValue}</strong>
+            </a>
+          ) : (
+            <strong className={styles.publicSiteValue}>{primaryLinkValue}</strong>
+          )}
         </div>
         <div className={styles.publicSiteMetric}>
           <span className={styles.publicSiteLabel}>Link status</span>
@@ -822,23 +905,6 @@ function WebsiteEditorPublicSitePanel({
       </div>
 
       {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
-      {hasLiveSite && primarySiteDomain?.domain ? (
-        <p className={styles.publicSiteHint}>
-          Live site URL:{" "}
-          <a
-            className={styles.publicSiteLink}
-            href={buildPublishedWebsiteHref(
-              primarySiteDomain.domain,
-              siteSummary?.site?.id,
-              primarySiteDomain.status
-            )}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {primarySiteDomain.domain}
-          </a>
-        </p>
-      ) : null}
       {!siteSummaryError && hasLiveSite && hasLiveSyncPending ? (
         <p className={styles.publicSiteHint}>
           Update the live site to push the latest editor changes to the public website.
@@ -861,6 +927,7 @@ WebsiteEditorPublicSitePanel.propTypes = {
   siteSummaryError: PropTypes.string,
   hasLiveSite: PropTypes.bool.isRequired,
   hasLiveSyncPending: PropTypes.bool.isRequired,
+  draftId: PropTypes.string,
 };
 
 function WebsiteEditorPage() {
@@ -905,6 +972,8 @@ function WebsiteEditorPage() {
   const targetRefs = useRef({});
   const actionMenuRef = useRef(null);
   const editorPanelRef = useRef(null);
+  const openedLiveSiteWindowRef = useRef(null);
+  const openedLiveSiteWindowOriginRef = useRef("");
   const sectionHighlightResetTimeoutRef = useRef(null);
   const previewHighlightResetTimeoutRef = useRef(null);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
@@ -1490,6 +1559,7 @@ function WebsiteEditorPage() {
         siteId: nextSiteSummary?.site?.id,
         domain: nextSiteSummary?.primaryDomain?.domain,
       });
+      notifyOpenedLiveSiteWindow(nextSiteSummary);
       toast.success("Live site updated.");
     } catch (error) {
       const errorMessage = error?.message || "We could not update the live site.";
@@ -1517,6 +1587,7 @@ function WebsiteEditorPage() {
         siteId: nextSiteSummary?.site?.id,
         domain: nextSiteSummary?.primaryDomain?.domain,
       });
+      notifyOpenedLiveSiteWindow(nextSiteSummary);
       toast.success("Live site published.");
     } catch (error) {
       const errorMessage = error?.message || "We could not publish the live site.";
@@ -1543,6 +1614,7 @@ function WebsiteEditorPage() {
         siteId: nextSiteSummary?.site?.id,
         domain: nextSiteSummary?.primaryDomain?.domain,
       });
+      notifyOpenedLiveSiteWindow(nextSiteSummary);
       toast.success("Live site unpublished.");
     } catch (error) {
       const errorMessage = error?.message || "We could not unpublish the live site.";
@@ -1573,14 +1645,38 @@ function WebsiteEditorPage() {
     }
 
     setIsActionMenuOpen(false);
-    globalThis.open(
-      buildPublishedWebsiteHref(
-        publishedDomain,
-        siteSummary?.site?.id,
-        primarySiteDomain?.status
-      ),
-      "_blank",
-      "noopener,noreferrer"
+    const publishedWebsiteHref = buildPublishedWebsiteHref(
+      publishedDomain,
+      siteSummary?.site?.id,
+      primarySiteDomain?.status
+    );
+    const openedLiveSiteWindow = globalThis.open(publishedWebsiteHref, "_blank", "noopener,noreferrer");
+
+    openedLiveSiteWindowRef.current = openedLiveSiteWindow;
+    openedLiveSiteWindowOriginRef.current = openedLiveSiteWindow
+      ? resolveWindowTargetOrigin(publishedWebsiteHref)
+      : "";
+  };
+
+  const notifyOpenedLiveSiteWindow = (nextSiteSummary) => {
+    if (!openedLiveSiteWindowRef.current || openedLiveSiteWindowRef.current.closed) {
+      openedLiveSiteWindowOriginRef.current = "";
+      return;
+    }
+
+    const targetOrigin = String(openedLiveSiteWindowOriginRef.current || "").trim();
+    if (!targetOrigin) {
+      return;
+    }
+
+    openedLiveSiteWindowRef.current.postMessage(
+      {
+        type: WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE,
+        siteId: nextSiteSummary?.site?.id || "",
+        domain: nextSiteSummary?.primaryDomain?.domain || "",
+        updatedAt: Date.now(),
+      },
+      targetOrigin
     );
   };
 
@@ -1723,6 +1819,7 @@ function WebsiteEditorPage() {
               siteSummaryError={siteSummaryError}
               hasLiveSite={hasLiveSite}
               hasLiveSyncPending={hasLiveSyncPending}
+              draftId={draftRecord?.id || ""}
             />
           </div>
 
