@@ -116,7 +116,7 @@ const HostTeam = () => {
             </section>
 
             {showInviteModal && (
-                <div className="team-modal-overlay" role="presentation">
+                <div className="team-modal-overlay">
                     <dialog className="team-modal" open aria-modal="true" aria-labelledby="invite-modal-title">
                         <h3 id="invite-modal-title">Invite team member</h3>
                         {inviteSent ? (
