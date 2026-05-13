@@ -6,6 +6,9 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { PropertyImageRepository } from "../data/repository/propertyImageRepository.js";
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
 import { StandaloneSiteDraftRepository } from "../data/repository/standaloneSiteDraftRepository.js";
+import { StandaloneSiteEventRepository } from "../data/repository/standaloneSiteEventRepository.js";
+import { StandaloneSiteRepository } from "../data/repository/standaloneSiteRepository.js";
+import { StandaloneSiteDomainRepository } from "../data/repository/standaloneSiteDomainRepository.js";
 import { randomUUID } from "node:crypto";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
@@ -18,6 +21,114 @@ const draftResponseHeaders = {
     Expires: "0",
 };
 
+const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
+    "WEBSITE_BUILD_STARTED",
+    "WEBSITE_PREVIEW_READY",
+    "WEBSITE_BUILD_SUCCEEDED",
+    "WEBSITE_BUILD_FAILED",
+]);
+
+const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
+    "SITE_LCP_RECORDED",
+]);
+
+const WEBSITE_ANALYTICS_SURFACES = new Set(["preview", "live"]);
+const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
+const STANDALONE_SITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
+const STANDALONE_SITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
+const STANDALONE_SITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
+const DEFAULT_STANDALONE_SITE_LIVE_DOMAIN_SUFFIX = "standalone.domits.com";
+
+const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
+const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const isAsciiLowercaseLetter = (value) => value >= "a" && value <= "z";
+const isAsciiDigit = (value) => value >= "0" && value <= "9";
+const isAsciiLowercaseLetterOrDigit = (value) => isAsciiLowercaseLetter(value) || isAsciiDigit(value);
+const trimRepeatedCharacterEdges = (value, character) => {
+    let startIndex = 0;
+    let endIndex = value.length;
+
+    while (startIndex < endIndex && value[startIndex] === character) {
+        startIndex += 1;
+    }
+
+    while (endIndex > startIndex && value[endIndex - 1] === character) {
+        endIndex -= 1;
+    }
+
+    return value.slice(startIndex, endIndex);
+};
+const getLiveSiteDomainSuffix = () => {
+    const configuredSuffix = cleanWebsiteText(process.env.STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX).toLowerCase();
+    return configuredSuffix || DEFAULT_STANDALONE_SITE_LIVE_DOMAIN_SUFFIX;
+};
+const getLiveSiteRoutingStatus = () =>
+    String(process.env.STANDALONE_SITE_FALLBACK_ROUTING_ACTIVE || "").trim().toLowerCase() === "true"
+        ? "ACTIVE"
+        : "PENDING";
+const slugifyWebsiteDomainLabel = (value) => {
+    const normalizedValue = cleanWebsiteText(value).normalize("NFKD").toLowerCase();
+    let sanitizedValue = "";
+    let previousCharacterWasHyphen = false;
+
+    for (const currentCharacter of normalizedValue) {
+        const isAsciiCharacter = (currentCharacter.codePointAt(0) || 0) <= 0x7f;
+        if (!isAsciiCharacter) {
+            continue;
+        }
+
+        if (isAsciiLowercaseLetterOrDigit(currentCharacter)) {
+            sanitizedValue += currentCharacter;
+            previousCharacterWasHyphen = false;
+            continue;
+        }
+
+        if (!previousCharacterWasHyphen) {
+            sanitizedValue += "-";
+            previousCharacterWasHyphen = true;
+        }
+    }
+
+    sanitizedValue = trimRepeatedCharacterEdges(sanitizedValue, "-");
+
+    return sanitizedValue || "site";
+};
+const normalizeStandaloneSiteIdSuffix = (value) => {
+    let sanitizedValue = "";
+
+    for (const currentCharacter of cleanWebsiteText(value).toLowerCase()) {
+        if (isAsciiLowercaseLetterOrDigit(currentCharacter)) {
+            sanitizedValue += currentCharacter;
+        }
+    }
+
+    return sanitizedValue;
+};
+const buildLiveSiteDomainLabel = (siteName, siteId) => {
+    const slugBase = trimRepeatedCharacterEdges(slugifyWebsiteDomainLabel(siteName).slice(0, 40), "-") || "site";
+    const idSuffix = normalizeStandaloneSiteIdSuffix(siteId).slice(0, 8) || "domits";
+    const combinedLabel = `${slugBase}-${idSuffix}`;
+    return trimRepeatedCharacterEdges(combinedLabel.slice(0, 63), "-");
+};
+const buildLiveSiteDomain = (siteName, siteId) =>
+    `${buildLiveSiteDomainLabel(siteName, siteId)}.${getLiveSiteDomainSuffix()}`;
+const normalizeStandaloneSiteDomainInput = (value) => {
+    const normalizedValue = cleanWebsiteText(value).toLowerCase();
+    if (!normalizedValue) {
+        return "";
+    }
+
+    const withoutProtocol = normalizedValue.replace(/^https?:\/\//, "");
+    const hostSegment = withoutProtocol.split("/")[0] || "";
+    return hostSegment.split(":")[0] || "";
+};
+const getRequestHostHeaderValue = (headers = {}) =>
+    headers["x-forwarded-host"] ||
+    headers["X-Forwarded-Host"] ||
+    headers.host ||
+    headers.Host ||
+    "";
+
 export class PropertyController {
 
     propertyService;
@@ -29,6 +140,9 @@ export class PropertyController {
         this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
         this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
         this.standaloneSiteDraftRepository = new StandaloneSiteDraftRepository(systemManagerRepository);
+        this.standaloneSiteEventRepository = new StandaloneSiteEventRepository(systemManagerRepository);
+        this.standaloneSiteRepository = new StandaloneSiteRepository(systemManagerRepository);
+        this.standaloneSiteDomainRepository = new StandaloneSiteDomainRepository(systemManagerRepository);
     }
 
     // -------------------------
@@ -363,6 +477,7 @@ export class PropertyController {
                     checkIn: normalizedOverviewPayload.checkIn,
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
+                    bookingType: normalizedOverviewPayload.bookingType,
                 }
             );
 
@@ -483,6 +598,7 @@ export class PropertyController {
             checkIn: body.checkIn,
             amenities: body.amenities,
             rules: body.rules,
+            bookingType: body.bookingType,
         };
     }
 
@@ -666,6 +782,13 @@ export class PropertyController {
         return null;
     }
 
+    resolveBookingType(value) {
+        if (value === "inquiry" || value === "direct") {
+            return value;
+        }
+        return undefined;
+    }
+
     normalizeOverviewPayload(payload) {
         return {
             propertyId: payload.propertyId,
@@ -695,6 +818,7 @@ export class PropertyController {
                     ).values()
                 )
                 : undefined,
+            bookingType: this.resolveBookingType(payload.bookingType),
         };
     }
 
@@ -821,6 +945,26 @@ export class PropertyController {
                             entry.isAvailable,
                             "isAvailable"
                         );
+                        const stopSell = this.normalizeCalendarOverrideBoolean(
+                            entry.stopSell ?? entry.stop_sell,
+                            "stopSell"
+                        );
+                        const closedToArrival = this.normalizeCalendarOverrideBoolean(
+                            entry.closedToArrival ?? entry.closed_to_arrival,
+                            "closedToArrival"
+                        );
+                        const closedToDeparture = this.normalizeCalendarOverrideBoolean(
+                            entry.closedToDeparture ?? entry.closed_to_departure,
+                            "closedToDeparture"
+                        );
+                        const minStay = this.normalizeCalendarOverrideOptionalInteger(
+                            entry.minStay ?? entry.min_stay,
+                            "minStay"
+                        );
+                        const maxStay = this.normalizeCalendarOverrideOptionalInteger(
+                            entry.maxStay ?? entry.max_stay,
+                            "maxStay"
+                        );
 
                         return [
                             calendarDate,
@@ -828,6 +972,11 @@ export class PropertyController {
                                 calendarDate,
                                 isAvailable,
                                 nightlyPrice,
+                                stopSell,
+                                closedToArrival,
+                                closedToDeparture,
+                                minStay,
+                                maxStay,
                             },
                         ];
                     })
@@ -836,6 +985,23 @@ export class PropertyController {
         );
 
         return normalizedOverrides;
+    }
+
+    normalizeCalendarOverrideOptionalInteger(value, fieldName) {
+        if (
+            value === undefined ||
+            value === null ||
+            value === "" ||
+            (typeof value === "string" && value.trim() === "")
+        ) {
+            return null;
+        }
+
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+            throw new Error(`Calendar override ${fieldName} must be a number greater than or equal to 0.`);
+        }
+        return Math.trunc(parsed);
     }
 
     normalizeCalendarOverrideBoolean(value, fieldName) {
@@ -1099,12 +1265,375 @@ export class PropertyController {
         return this.parseWebsiteOverridePayload(payload, fieldName);
     }
 
+    parseWebsiteDeleteReasons(payload) {
+        if (payload === undefined || payload === null) {
+            return [];
+        }
+
+        if (!Array.isArray(payload)) {
+            throw new TypeError("deleteReasons must be an array.");
+        }
+
+        return [...new Set(
+            payload
+                .map((reason) => String(reason || "").trim())
+                .filter(Boolean)
+        )];
+    }
+
+    parseWebsiteAnalyticsPayload(payload) {
+        if (payload === undefined || payload === null) {
+            return {};
+        }
+
+        if (!this.isPlainObject(payload)) {
+            throw new TypeError("payload must be a plain object.");
+        }
+
+        return payload;
+    }
+
+    parseWebsiteAnalyticsDuration(payloadValue, fieldName) {
+        const parsedValue = Number(payloadValue);
+        if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+            throw new TypeError(`${fieldName} must be a positive number.`);
+        }
+
+        return Math.round(parsedValue);
+    }
+
+    normalizeWebsiteBuildAnalyticsPayload(eventType, payload) {
+        const attemptId = String(payload?.attemptId || "").trim();
+        const templateKey = String(payload?.templateKey || "").trim();
+        if (!attemptId) {
+            throw new TypeError("payload.attemptId is required for website build analytics.");
+        }
+
+        const normalizedPayload = {
+            attemptId,
+        };
+
+        if (templateKey) {
+            normalizedPayload.templateKey = templateKey;
+        }
+
+        if (eventType === "WEBSITE_PREVIEW_READY" || eventType === "WEBSITE_BUILD_SUCCEEDED" || eventType === "WEBSITE_BUILD_FAILED") {
+            normalizedPayload.durationMs = this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs");
+        }
+
+        if (eventType === "WEBSITE_BUILD_FAILED") {
+            const phase = String(payload?.phase || "").trim();
+            if (phase) {
+                normalizedPayload.phase = phase;
+            }
+        }
+
+        return normalizedPayload;
+    }
+
+    normalizeWebsiteSurfaceAnalyticsPayload(payload) {
+        const surface = String(payload?.surface || "").trim().toLowerCase();
+        const viewport = String(payload?.viewport || "").trim().toLowerCase();
+
+        if (!WEBSITE_ANALYTICS_SURFACES.has(surface)) {
+            throw new TypeError("payload.surface must be 'preview' or 'live'.");
+        }
+
+        if (!WEBSITE_ANALYTICS_VIEWPORTS.has(viewport)) {
+            throw new TypeError("payload.viewport must be 'mobile', 'tablet', or 'desktop'.");
+        }
+
+        return {
+            surface,
+            viewport,
+            durationMs: this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs"),
+        };
+    }
+
+    normalizeWebsiteAnalyticsPayload(eventType, payload) {
+        if (WEBSITE_HOST_ANALYTICS_EVENT_TYPES.has(eventType)) {
+            return this.normalizeWebsiteBuildAnalyticsPayload(eventType, payload);
+        }
+
+        if (eventType === "SITE_LCP_RECORDED") {
+            return this.normalizeWebsiteSurfaceAnalyticsPayload(payload);
+        }
+
+        throw new TypeError("Unsupported website eventType.");
+    }
+
+    normalizeStandaloneSiteStatus(status) {
+        const normalizedStatus = String(status || "").trim().toUpperCase();
+        if (!STANDALONE_SITE_PUBLIC_STATUSES.has(normalizedStatus)) {
+            throw new TypeError("website site status must be DRAFT, PREVIEW, PUBLISHED, or SUSPENDED.");
+        }
+
+        return normalizedStatus;
+    }
+
+    normalizeStandaloneSiteDomainStatus(status) {
+        const normalizedStatus = String(status || "").trim().toUpperCase();
+        if (!STANDALONE_SITE_DOMAIN_STATUSES.has(normalizedStatus)) {
+            throw new TypeError("website domain status must be PENDING, VERIFIED, ACTIVE, FAILED, or DISABLED.");
+        }
+
+        return normalizedStatus;
+    }
+
+    buildStandaloneSiteName({ draft, propertyDetails }) {
+        const draftSiteTitle = cleanWebsiteText(draft?.publishedContentOverrides?.siteTitle);
+        if (draftSiteTitle) {
+            return draftSiteTitle;
+        }
+
+        const propertyTitle = cleanWebsiteText(propertyDetails?.property?.title);
+        if (propertyTitle) {
+            return propertyTitle;
+        }
+
+        return `Website ${String(draft?.propertyId || "").slice(0, 8)}`;
+    }
+
+    ensureStandaloneSitePublishEligibility(propertyDetails) {
+        if (!propertyDetails?.property || this.isPlainObject(propertyDetails.property) === false) {
+            throw new TypeError("Listing data could not be loaded for this live site.");
+        }
+    }
+
+    buildStandaloneSiteSummary(site, domains = []) {
+        if (!site) {
+            return null;
+        }
+
+        const normalizedDomains = Array.isArray(domains) ? domains : [];
+        const primaryDomain = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
+        const isReachable = site.status === "PUBLISHED" && primaryDomain?.status === "ACTIVE";
+
+        return {
+            site,
+            primaryDomain,
+            domains: normalizedDomains,
+            isReachable,
+        };
+    }
+
+    buildPublicStandaloneSiteResolution(site, domain) {
+        const siteSummary = this.buildStandaloneSiteSummary(site, domain ? [domain] : []);
+        if (!siteSummary?.site || !siteSummary?.primaryDomain) {
+            return null;
+        }
+
+        return {
+            siteId: siteSummary.site.id,
+            propertyId: siteSummary.site.propertyId,
+            hostId: siteSummary.site.hostId,
+            templateKey: siteSummary.site.templateKey,
+            primaryLocale: siteSummary.site.primaryLocale,
+            siteName: siteSummary.site.siteName,
+            siteStatus: siteSummary.site.status,
+            publishedAt: siteSummary.site.publishedAt,
+            isReachable: siteSummary.isReachable,
+            domain: siteSummary.primaryDomain,
+        };
+    }
+
+    buildPublicStandaloneSiteRenderPayload(site, domain) {
+        const resolution = this.buildPublicStandaloneSiteResolution(site, domain);
+        if (!resolution) {
+            return null;
+        }
+
+        return {
+            resolution,
+            site: {
+                id: site.id,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                siteName: site.siteName,
+                primaryLocale: site.primaryLocale,
+                status: site.status,
+                templateKey: site.templateKey,
+                publishedAt: site.publishedAt,
+            },
+            domain,
+            propertySnapshot: site.publishedPropertySnapshot || {},
+            contentOverrides: site.publishedContentOverrides || {},
+            themeOverrides: site.publishedThemeOverrides || {},
+            renderSource: "published_site",
+        };
+    }
+
+    resolveRequestedStandaloneWebsiteDomain(event) {
+        const domainQueryValue =
+            event.queryStringParameters?.domain ||
+            event.queryStringParameters?.host ||
+            getRequestHostHeaderValue(event.headers || {});
+        return normalizeStandaloneSiteDomainInput(domainQueryValue);
+    }
+
+    async resolvePublicStandaloneSiteByDomain(domainInput) {
+        const normalizedDomain = normalizeStandaloneSiteDomainInput(domainInput);
+        if (!normalizedDomain) {
+            throw new TypeError("Missing website domain.");
+        }
+
+        const domain = await this.standaloneSiteDomainRepository.getDomainByName(normalizedDomain);
+        if (!domain) {
+            return null;
+        }
+
+        const site = await this.standaloneSiteRepository.getSiteById(domain.siteId);
+        if (!site) {
+            return null;
+        }
+
+        return { site, domain };
+    }
+
+    async getPublicRenderableStandaloneSiteById(siteId) {
+        const normalizedSiteId = cleanWebsiteText(siteId);
+        if (!normalizedSiteId) {
+            throw new TypeError("Missing website siteId.");
+        }
+
+        const site = await this.standaloneSiteRepository.getSiteById(normalizedSiteId);
+        if (!site) {
+            return null;
+        }
+
+        const domains = await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+        const primaryDomain =
+            domains.find((domainEntry) => domainEntry?.isPrimary) ||
+            domains.find((domainEntry) => Boolean(domainEntry?.domain)) ||
+            null;
+
+        return {
+            site,
+            domain: primaryDomain,
+        };
+    }
+
+    isPublicStandaloneSiteReachable(site, domain) {
+        return Boolean(site) && site.status === "PUBLISHED" && domain?.status === "ACTIVE";
+    }
+
+    async getStandaloneSiteSummaryByPropertyId(propertyId, hostId) {
+        const site = await this.standaloneSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+        if (!site) {
+            return null;
+        }
+
+        const domains = await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+        return this.buildStandaloneSiteSummary(site, domains);
+    }
+
+    async publishStandaloneSiteForDraft({ draft, hostId, propertyId }) {
+        const publishStartedAt = Date.now();
+        const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
+            propertyId,
+            { includeCalendarAvailability: true }
+        );
+        this.ensureStandaloneSitePublishEligibility(propertyDetails);
+
+        const siteName = this.buildStandaloneSiteName({
+            draft,
+            propertyDetails,
+        });
+
+        const site = await this.standaloneSiteRepository.upsertSite({
+            propertyId,
+            hostId,
+            siteName,
+            primaryLocale: "en",
+            status: "PUBLISHED",
+            templateKey: draft.templateKey,
+            publishedPropertySnapshot: propertyDetails,
+            publishedContentOverrides: draft.publishedContentOverrides || {},
+            publishedThemeOverrides: draft.publishedThemeOverrides || {},
+            publishedAt: Date.now(),
+            suspendedAt: null,
+        });
+
+        const liveDomainStatus = this.normalizeStandaloneSiteDomainStatus(getLiveSiteRoutingStatus());
+        const existingLiveDomain = await this.standaloneSiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const liveDomain = await this.standaloneSiteDomainRepository.ensureDomain({
+            siteId: site.id,
+            domain: existingLiveDomain?.domain || buildLiveSiteDomain(site.siteName, site.id),
+            domainType: STANDALONE_SITE_DOMAIN_TYPE_FALLBACK,
+            status: liveDomainStatus,
+            isPrimary: true,
+            verificationDetails: {
+                activationMode: "internal",
+                domainKind: "live",
+                routingConfigured: liveDomainStatus === "ACTIVE",
+                activationStatus: liveDomainStatus,
+                domainSuffix: getLiveSiteDomainSuffix(),
+            },
+        });
+
+        await this.recordStandaloneWebsiteEventSafely({
+            draftId: draft.id,
+            propertyId,
+            hostId,
+            eventType: "WEBSITE_SITE_PUBLISHED",
+            payload: {
+                templateKey: draft.templateKey,
+                siteId: site.id,
+                domain: liveDomain?.domain || "",
+                domainStatus: liveDomain?.status || liveDomainStatus,
+                durationMs: Date.now() - publishStartedAt,
+            },
+        });
+
+        return this.buildStandaloneSiteSummary(site, [liveDomain]);
+    }
+
+    async unpublishStandaloneSiteSummary({ site, draft, hostId, propertyId }) {
+        const nextSite = await this.standaloneSiteRepository.updateSiteStatus(site.id, "PREVIEW");
+        const liveDomain = await this.standaloneSiteDomainRepository.updatePrimaryLiveDomainStatus(
+            site.id,
+            "DISABLED",
+            {
+                activationMode: "internal",
+                disabledByHost: true,
+                routingConfigured: false,
+            }
+        );
+        const allDomains = liveDomain
+            ? [liveDomain]
+            : await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+
+        await this.recordStandaloneWebsiteEventSafely({
+            draftId: draft?.id || null,
+            propertyId,
+            hostId,
+            eventType: "WEBSITE_SITE_UNPUBLISHED",
+            payload: {
+                siteId: site.id,
+                domain: liveDomain?.domain || "",
+                domainStatus: liveDomain?.status || "DISABLED",
+            },
+        });
+
+        return this.buildStandaloneSiteSummary(nextSite, allDomains);
+    }
+
     isWebsiteDraftClientError(error) {
         return (
             error?.message?.startsWith("Missing propertyId") ||
             error?.message?.startsWith("Missing draftId") ||
+            error?.message?.startsWith("Missing eventType") ||
             error?.message?.startsWith("Missing templateKey") ||
-            error?.message?.includes("must be a plain object")
+            error?.message?.includes("must be a plain object") ||
+            error?.message?.includes("deleteReasons must be an array") ||
+            error?.message?.includes("Unsupported website eventType") ||
+            error?.message?.includes("Listing data could not be loaded for this live site.") ||
+            error?.message?.includes("website site status must be") ||
+            error?.message?.includes("website domain status must be") ||
+            error?.message?.includes("payload.attemptId") ||
+            error?.message?.includes("payload.durationMs") ||
+            error?.message?.includes("payload.surface") ||
+            error?.message?.includes("payload.viewport")
         );
     }
 
@@ -1114,6 +1643,96 @@ export class PropertyController {
             headers: responseHeaders,
             body: JSON.stringify({ message }),
         };
+    }
+
+    websiteServerError(message = "We could not complete this website request. Please try again.") {
+        return {
+            statusCode: 500,
+            headers: draftResponseHeaders,
+            body: JSON.stringify({ message }),
+        };
+    }
+
+    async recordStandaloneWebsiteEventSafely(eventInput) {
+        try {
+            await this.standaloneSiteEventRepository.recordEvent(eventInput);
+        } catch (error) {
+            console.error("Failed to record standalone website event.", error);
+        }
+    }
+
+    async recordPublicWebsiteAnalyticsEvent({ draftId, siteId, domain, eventType, payload }) {
+        const normalizedDraftId = cleanWebsiteText(draftId);
+        if (normalizedDraftId) {
+            const draft = await this.standaloneSiteDraftRepository.getDraftById(normalizedDraftId);
+            if (!draft || draft.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website analytics target not found." }),
+                };
+            }
+
+            await this.standaloneSiteEventRepository.recordEvent({
+                draftId: draft.id,
+                propertyId: draft.propertyId,
+                hostId: draft.hostId,
+                eventType,
+                payload,
+            });
+
+            return null;
+        }
+
+        const normalizedSiteId = cleanWebsiteText(siteId);
+        if (normalizedSiteId) {
+            const site = await this.standaloneSiteRepository.getSiteById(normalizedSiteId);
+            if (!site || site.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website analytics target not found." }),
+                };
+            }
+
+            await this.standaloneSiteEventRepository.recordEvent({
+                draftId: null,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                eventType,
+                payload: {
+                    ...payload,
+                    siteId: site.id,
+                    domain: normalizeStandaloneSiteDomainInput(domain),
+                },
+            });
+
+            return null;
+        }
+
+        return this.badRequest("Missing website analytics target.");
+    }
+
+    async recordHostWebsiteAnalyticsEvent({ event, propertyId, draftId, eventType, payload }) {
+        if (!propertyId) {
+            return this.badRequest("Missing propertyId.");
+        }
+
+        const accessToken = event.headers.Authorization || event.headers.authorization;
+        const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+        await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+        const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+
+        await this.standaloneSiteEventRepository.recordEvent({
+            draftId: existingDraft?.id || draftId || null,
+            propertyId,
+            hostId,
+            eventType,
+            payload,
+        });
+
+        return null;
     }
 
     // -------------------------
@@ -1433,6 +2052,57 @@ export class PropertyController {
     }
 
     // -------------------------
+    // POST /property/website/event
+    // -------------------------
+    async recordWebsiteAnalyticsEvent(event) {
+        try {
+            const eventBody = JSON.parse(event.body || "{}");
+            const eventType = String(eventBody.eventType || "").trim().toUpperCase();
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+            const draftId = String(eventBody.draftId || eventBody.draft || "").trim();
+            const siteId = String(eventBody.siteId || eventBody.site || "").trim();
+            const domain = normalizeStandaloneSiteDomainInput(eventBody.domain || eventBody.host || "");
+            const payload = this.parseWebsiteAnalyticsPayload(eventBody.payload);
+
+            if (!eventType) {
+                return this.badRequest("Missing eventType.");
+            }
+
+            const normalizedPayload = this.normalizeWebsiteAnalyticsPayload(eventType, payload);
+            const earlyResponse = WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES.has(eventType)
+                ? await this.recordPublicWebsiteAnalyticsEvent({
+                    draftId,
+                    siteId,
+                    domain,
+                    eventType,
+                    payload: normalizedPayload,
+                })
+                : await this.recordHostWebsiteAnalyticsEvent({
+                    event,
+                    propertyId,
+                    draftId,
+                    eventType,
+                    payload: normalizedPayload,
+                });
+
+            if (earlyResponse) {
+                return earlyResponse;
+            }
+
+            return {
+                statusCode: 204,
+                headers: draftResponseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
     // POST /property/website/draft
     // -------------------------
     async upsertWebsiteDraft(event) {
@@ -1464,6 +2134,7 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
 
             const draft = await this.standaloneSiteDraftRepository.upsertDraft({
                 hostId,
@@ -1476,6 +2147,33 @@ export class PropertyController {
                 publishedThemeOverrides,
             });
 
+            const shouldTrackLiveSiteUpdate =
+                publishedContentOverrides !== undefined || publishedThemeOverrides !== undefined;
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: draft?.id || existingDraft?.id || null,
+                propertyId,
+                hostId,
+                eventType: existingDraft ? "WEBSITE_DRAFT_SAVED" : "WEBSITE_DRAFT_CREATED",
+                payload: {
+                    templateKey,
+                    status,
+                },
+            });
+
+            if (shouldTrackLiveSiteUpdate) {
+                await this.recordStandaloneWebsiteEventSafely({
+                    draftId: draft?.id || existingDraft?.id || null,
+                    propertyId,
+                    hostId,
+                    eventType: "LIVE_SITE_UPDATED",
+                    payload: {
+                        templateKey,
+                        status,
+                    },
+                });
+            }
+
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
@@ -1486,11 +2184,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            };
+            return this.websiteServerError();
         }
     }
 
@@ -1509,11 +2203,7 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            };
+            return this.websiteServerError();
         }
     }
 
@@ -1546,11 +2236,263 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/kpis
+    // -------------------------
+    async getWebsiteKpis(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const summary = await this.standaloneSiteEventRepository.getGlobalKpiSummary();
+
             return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(summary),
             };
+        } catch (error) {
+            console.error(error);
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/site
+    // -------------------------
+    async getWebsiteSiteByPropertyId(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const propertyId = String(event.queryStringParameters?.property || event.queryStringParameters?.propertyId || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const siteSummary = await this.getStandaloneSiteSummaryByPropertyId(propertyId, hostId);
+            if (!siteSummary) {
+                return {
+                    statusCode: 200,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify(null),
+                };
+            }
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/publish
+    // -------------------------
+    async publishWebsiteSite(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const draft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            if (!draft) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website draft not found." }),
+                };
+            }
+
+            const siteSummary = await this.publishStandaloneSiteForDraft({
+                draft,
+                hostId,
+                propertyId,
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/unpublish
+    // -------------------------
+    async unpublishWebsiteSite(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const site = await this.standaloneSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+            if (!site) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website site record not found." }),
+                };
+            }
+
+            const draft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const siteSummary = await this.unpublishStandaloneSiteSummary({
+                site,
+                draft,
+                hostId,
+                propertyId,
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/public/resolve
+    // -------------------------
+    async resolvePublicWebsiteSite(event) {
+        try {
+            const requestedDomain = this.resolveRequestedStandaloneWebsiteDomain(event);
+            if (!requestedDomain) {
+                return this.badRequest("Missing website domain.");
+            }
+
+            const resolutionResult = await this.resolvePublicStandaloneSiteByDomain(requestedDomain);
+            if (!resolutionResult || !this.isPublicStandaloneSiteReachable(resolutionResult.site, resolutionResult.domain)) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(this.buildPublicStandaloneSiteResolution(
+                    resolutionResult.site,
+                    resolutionResult.domain
+                )),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/public/render
+    // -------------------------
+    async getPublicWebsiteRenderModel(event) {
+        try {
+            const siteId = cleanWebsiteText(
+                event.queryStringParameters?.site ||
+                event.queryStringParameters?.siteId
+            );
+            const requestedDomain = this.resolveRequestedStandaloneWebsiteDomain(event);
+            const isInternalSiteRender = Boolean(siteId);
+
+            let resolutionResult = null;
+            if (requestedDomain) {
+                resolutionResult = await this.resolvePublicStandaloneSiteByDomain(requestedDomain);
+            } else if (siteId) {
+                resolutionResult = await this.getPublicRenderableStandaloneSiteById(siteId);
+            } else {
+                return this.badRequest("Missing website siteId or domain.");
+            }
+
+            const canRenderPublishedSite = isInternalSiteRender
+                ? Boolean(resolutionResult?.site) &&
+                    resolutionResult.site.status === "PUBLISHED" &&
+                    Boolean(resolutionResult?.domain?.domain)
+                : this.isPublicStandaloneSiteReachable(resolutionResult?.site, resolutionResult?.domain);
+
+            if (!resolutionResult || !canRenderPublishedSite) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            if (siteId && resolutionResult.site.id !== siteId) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId: resolutionResult.site.propertyId,
+                hostId: resolutionResult.site.hostId,
+                eventType: "PUBLIC_SITE_OPENED",
+                payload: {
+                    siteId: resolutionResult.site.id,
+                    domain: resolutionResult.domain?.domain || requestedDomain,
+                    templateKey: resolutionResult.site.templateKey,
+                    surface: "live",
+                },
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(this.buildPublicStandaloneSiteRenderPayload(
+                    resolutionResult.site,
+                    resolutionResult.domain
+                )),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
         }
     }
 
@@ -1583,6 +2525,16 @@ export class PropertyController {
                 { includeCalendarAvailability: true }
             );
 
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: draft.id,
+                propertyId: draft.propertyId,
+                hostId: draft.hostId,
+                eventType: "PUBLIC_PREVIEW_OPENED",
+                payload: {
+                    templateKey: draft.templateKey,
+                },
+            });
+
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
@@ -1596,11 +2548,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            };
+            return this.websiteServerError();
         }
     }
 
@@ -1613,24 +2561,37 @@ export class PropertyController {
             const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
             const eventBody = JSON.parse(event.body || "{}");
             const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+            const deleteReasons = this.parseWebsiteDeleteReasons(eventBody.deleteReasons);
 
             if (!propertyId) {
                 return this.badRequest("Missing propertyId.");
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
             await this.standaloneSiteDraftRepository.deleteDraftByPropertyIdAndHostId(propertyId, hostId);
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: existingDraft?.id || null,
+                propertyId,
+                hostId,
+                eventType: "WEBSITE_DELETED",
+                payload: {
+                    templateKey: existingDraft?.templateKey || "",
+                    reasons: deleteReasons,
+                },
+            });
+
             return {
                 statusCode: 204,
                 headers: responseHeaders,
             };
         } catch (error) {
             console.error(error);
-            return {
-                statusCode: error.statusCode || 500,
-                headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            };
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
         }
     }
 

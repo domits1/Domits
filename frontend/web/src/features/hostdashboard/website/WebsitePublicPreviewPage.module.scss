@@ -2,7 +2,12 @@
   min-height: 100vh;
   background:
     radial-gradient(circle at top left, rgba(31, 78, 121, 0.08), transparent 30%),
-    linear-gradient(180deg, #f8fbff 0%, #ffffff 42%, #f7fbff 100%);
+    linear-gradient(
+      180deg,
+      var(--website-surface-background, #f8fbff) 0%,
+      #ffffff 42%,
+      var(--website-surface-background, #f8fbff) 100%
+    );
   color: #0f172a;
 }
 
@@ -60,8 +65,43 @@
   text-transform: uppercase;
 }
 
+.publicPreviewActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.publicPreviewActionButton {
+  appearance: none;
+  border: 1px solid rgba(31, 78, 121, 0.18);
+  border-radius: 14px;
+  padding: 0.82rem 1.05rem;
+  background: #1f4e79;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.publicPreviewActionButton:hover,
+.publicPreviewActionButton:focus-visible {
+  background: #163a5b;
+  box-shadow: 0 12px 24px rgba(31, 78, 121, 0.2);
+  transform: translateY(-1px);
+}
+
 @media (max-width: 720px) {
   .publicPreviewCanvas {
     padding: 12px;
+  }
+
+  .publicPreviewActionButton {
+    width: 100%;
+    justify-content: center;
   }
 }

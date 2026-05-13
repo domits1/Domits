@@ -18,15 +18,32 @@ import {
   PREVIEW_STAGE,
   runWebsitePreviewBuildWorkflow,
 } from "./services/websitePreviewWorkflow";
+import { recordWebsiteHostAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
+import {
+  createWebsiteBuildAttempt,
+  getBuildAttemptDurationMs,
+  waitForNextPaint,
+  WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
+} from "./analytics/websiteBuildAnalytics";
+import {
+  WEBSITE_BUILD_FAILED_EVENT,
+  WEBSITE_BUILD_STARTED_EVENT,
+  WEBSITE_BUILD_SUCCEEDED_EVENT,
+  WEBSITE_PREVIEW_READY_EVENT,
+} from "./analytics/websiteAnalyticsEventTypes";
 import {
   deleteWebsiteDraft,
   fetchWebsiteDrafts,
   upsertWebsiteDraft,
 } from "./services/websiteDraftService";
+import { fetchWebsiteSiteByPropertyId } from "./services/websiteSiteService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
+import { applyWebsiteDraftThemeOverrides } from "./rendering/websiteDraftThemeOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
+import { WEBSITE_DRAFT_DELETE_REASONS } from "./websiteDeleteReasons";
+import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
 
 const EMPTY_SELECTION = "";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
@@ -43,14 +60,6 @@ const WORKSPACE_TAB_BUILDER = "builder";
 const WORKSPACE_TAB_WEBSITES = "websites";
 const DELETE_WEBSITE_DRAFT_STEP_REASON = "reason";
 const DELETE_WEBSITE_DRAFT_STEP_CONFIRM = "confirm";
-const WEBSITE_DRAFT_DELETE_REASONS = Object.freeze([
-  "I no longer need this website.",
-  "I built it for the wrong listing.",
-  "The imported content does not look right.",
-  "I want to try a different template.",
-  "I prefer to manage bookings without a standalone website.",
-  "Other",
-]);
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
@@ -115,6 +124,11 @@ const getDraftPublishedContentOverrides = (draft) =>
     ? draft.publishedContentOverrides
     : {};
 
+const getDraftPublishedThemeOverrides = (draft) =>
+  draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object"
+    ? draft.publishedThemeOverrides
+    : {};
+
 const getDraftDisplayTitle = (draft, contentOverrides = getDraftContentOverrides(draft)) => {
   return (
     String(contentOverrides.siteTitle || "").trim() ||
@@ -124,6 +138,43 @@ const getDraftDisplayTitle = (draft, contentOverrides = getDraftContentOverrides
 };
 
 const buildWebsitePreviewPath = (draftId) => `/website-preview/${encodeURIComponent(draftId)}`;
+const getDraftPropertyId = (draft) => String(draft?.propertyId || "").trim();
+const getWebsiteDraftPreviewCacheKey = (draft) =>
+  `${String(draft?.updatedAt || "").trim()}::${String(draft?.templateKey || "").trim()}`;
+
+const pruneWebsiteDraftPreviewModels = (previewModels, activePropertyIds) => {
+  let hasRemovedPreviewModel = false;
+  const nextPreviewModels = {};
+
+  Object.entries(previewModels || {}).forEach(([propertyId, previewModel]) => {
+    if (activePropertyIds.has(propertyId)) {
+      nextPreviewModels[propertyId] = previewModel;
+      return;
+    }
+
+    hasRemovedPreviewModel = true;
+  });
+
+  return hasRemovedPreviewModel ? nextPreviewModels : previewModels;
+};
+
+const pruneWebsiteDraftPreviewCacheKeys = (previewCacheKeys, activePropertyIds) => {
+  const nextPreviewCacheKeys = {};
+
+  Object.entries(previewCacheKeys || {}).forEach(([propertyId, previewCacheKey]) => {
+    if (activePropertyIds.has(propertyId)) {
+      nextPreviewCacheKeys[propertyId] = previewCacheKey;
+    }
+  });
+
+  return nextPreviewCacheKeys;
+};
+
+const buildWebsiteDraftPreviewModelMap = (previewEntries) =>
+  Object.fromEntries(previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel]));
+
+const buildWebsiteDraftPreviewCacheKeyMap = (previewEntries) =>
+  Object.fromEntries(previewEntries.map(([propertyId, , previewCacheKey]) => [propertyId, previewCacheKey]));
 
 const buildImageVariantMap = (images) => {
   const imageVariantMap = new Map();
@@ -181,6 +232,7 @@ const formatDraftUpdatedAt = (updatedAt) => {
 
 const buildDraftCardFallbackPreviewModel = (draft) => {
   const contentOverrides = getDraftPublishedContentOverrides(draft);
+  const themeOverrides = getDraftPublishedThemeOverrides(draft);
   const locationLabel = String(draft?.location || "").trim();
   const title = getDraftDisplayTitle(draft, contentOverrides);
   const subtitle = String(draft?.propertySubtitle || "").trim();
@@ -192,7 +244,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
   const normalizedGalleryImages = galleryImages.length > 0 ? galleryImages : [placeholderImage];
   const previewImages = normalizedGalleryImages.slice(0, 3);
 
-  return applyWebsiteDraftContentOverrides(
+  const themedModel = applyWebsiteDraftThemeOverrides(
     {
       source: {
         propertyId: String(draft?.propertyId || "").trim(),
@@ -279,16 +331,19 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
       trustCards: [
         {
           id: "draft-summary",
+          iconAmenityId: "7",
           title: "Draft summary",
           description: subtitle || "Saved website draft ready to continue editing.",
         },
         {
           id: "draft-location",
+          iconAmenityId: "57",
           title: "Location context",
           description: locationLabel || "Location details are attached to this saved website draft.",
         },
         {
           id: "draft-template",
+          iconAmenityId: "55",
           title: "Template state",
           description: String(draft?.templateKey || "Template selected").trim(),
         },
@@ -325,8 +380,39 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
         chatWidget: true,
       },
     },
-    contentOverrides
+    themeOverrides
   );
+
+  return applyWebsiteDraftContentOverrides(themedModel, contentOverrides);
+};
+
+const buildWebsiteDraftPreviewModel = async (draft) => {
+  try {
+    const propertyDetails = await fetchWebsitePropertyDetails(draft.propertyId);
+    const baseModel = buildWebsiteTemplateModel({
+      propertyDetails,
+      summaryProperty: null,
+      imageVariant: "thumb",
+    });
+    const thumbContentOverrides = mapImageOverridesToThumbnails(
+      getDraftPublishedContentOverrides(draft),
+      buildImageVariantMap(propertyDetails?.images)
+    );
+    const themedModel = applyWebsiteDraftThemeOverrides(
+      baseModel,
+      getDraftPublishedThemeOverrides(draft)
+    );
+    return applyWebsiteDraftContentOverrides(themedModel, thumbContentOverrides);
+  } catch {
+    return buildDraftCardFallbackPreviewModel(draft);
+  }
+};
+
+const buildWebsiteDraftPreviewEntry = async (draft) => {
+  const propertyId = getDraftPropertyId(draft);
+  const previewModel = await buildWebsiteDraftPreviewModel(draft);
+  const previewCacheKey = getWebsiteDraftPreviewCacheKey(draft);
+  return [propertyId, previewModel, previewCacheKey];
 };
 
 function WebsiteDraftDeleteDialog({
@@ -486,6 +572,8 @@ function WebsiteBuilderPage() {
   const [websiteDraftDeleteStep, setWebsiteDraftDeleteStep] = useState(DELETE_WEBSITE_DRAFT_STEP_REASON);
   const [isDeletingWebsiteDraft, setIsDeletingWebsiteDraft] = useState(false);
   const previewSectionRef = useRef(null);
+  const websiteBuildAttemptRef = useRef(null);
+  const websiteDraftPreviewCacheKeysRef = useRef({});
   const navigate = useNavigate();
 
   const draftedPropertyIds = useMemo(
@@ -570,47 +658,56 @@ function WebsiteBuilderPage() {
     let isMounted = true;
 
     const loadWebsiteDraftPreviewModels = async () => {
-      if (workspaceTab !== WORKSPACE_TAB_WEBSITES || websiteDrafts.length < 1) {
+      if (websiteDrafts.length < 1) {
         if (isMounted) {
+          websiteDraftPreviewCacheKeysRef.current = {};
           setWebsiteDraftPreviewModels({});
         }
         return;
       }
 
-      if (isMounted) {
-        setWebsiteDraftPreviewModels({});
+      if (workspaceTab !== WORKSPACE_TAB_WEBSITES) {
+        return;
       }
 
-      const previewEntries = await Promise.all(
-        websiteDrafts.map(async (draft) => {
-          try {
-            const propertyDetails = await fetchWebsitePropertyDetails(draft.propertyId);
-            const baseModel = buildWebsiteTemplateModel({
-              propertyDetails,
-              summaryProperty: null,
-              imageVariant: "thumb",
-            });
-            const thumbContentOverrides = mapImageOverridesToThumbnails(
-              getDraftPublishedContentOverrides(draft),
-              buildImageVariantMap(propertyDetails?.images)
-            );
-            const previewModel = applyWebsiteDraftContentOverrides(baseModel, thumbContentOverrides);
-            return [draft.propertyId, previewModel];
-          } catch {
-            return [draft.propertyId, buildDraftCardFallbackPreviewModel(draft)];
-          }
-        })
+      const activePropertyIds = new Set(websiteDrafts.map(getDraftPropertyId).filter(Boolean));
+      websiteDraftPreviewCacheKeysRef.current = pruneWebsiteDraftPreviewCacheKeys(
+        websiteDraftPreviewCacheKeysRef.current,
+        activePropertyIds
       );
+      if (isMounted) {
+        setWebsiteDraftPreviewModels((currentPreviewModels) =>
+          pruneWebsiteDraftPreviewModels(currentPreviewModels, activePropertyIds)
+        );
+      }
+
+      const draftsNeedingPreviewModels = websiteDrafts.filter((draft) => {
+        const propertyId = getDraftPropertyId(draft);
+        if (!propertyId) {
+          return false;
+        }
+
+        return websiteDraftPreviewCacheKeysRef.current[propertyId] !== getWebsiteDraftPreviewCacheKey(draft);
+      });
+
+      if (draftsNeedingPreviewModels.length < 1) {
+        return;
+      }
+
+      const previewEntries = await Promise.all(draftsNeedingPreviewModels.map(buildWebsiteDraftPreviewEntry));
 
       if (!isMounted) {
         return;
       }
 
-      setWebsiteDraftPreviewModels(
-        Object.fromEntries(
-          previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel])
-        )
-      );
+      websiteDraftPreviewCacheKeysRef.current = {
+        ...websiteDraftPreviewCacheKeysRef.current,
+        ...buildWebsiteDraftPreviewCacheKeyMap(previewEntries),
+      };
+      setWebsiteDraftPreviewModels((currentPreviewModels) => ({
+        ...currentPreviewModels,
+        ...buildWebsiteDraftPreviewModelMap(previewEntries),
+      }));
     };
 
     void loadWebsiteDraftPreviewModels();
@@ -657,6 +754,7 @@ function WebsiteBuilderPage() {
   }, [selectedProperty, galleryImages.length]);
 
   useEffect(() => {
+    websiteBuildAttemptRef.current = null;
     setPreviewStage(PREVIEW_STAGE.idle);
     setPreviewModel(null);
     setPreviewError("");
@@ -687,6 +785,70 @@ function WebsiteBuilderPage() {
     setPreviewError("");
     setPreviewBuildPhase(PREVIEW_BUILD_STEPS[0].key);
     setPersistWebsiteDraftError("");
+  };
+
+  const startWebsiteBuildAttempt = () => {
+    if (!selectedProperty) {
+      return null;
+    }
+
+    const nextAttempt = createWebsiteBuildAttempt({
+      propertyId: selectedProperty.value,
+      templateKey: selectedTemplateId,
+    });
+
+    websiteBuildAttemptRef.current = nextAttempt;
+    recordWebsiteHostAnalyticsEventSafely({
+      propertyId: nextAttempt.propertyId,
+      eventType: WEBSITE_BUILD_STARTED_EVENT,
+      payload: {
+        attemptId: nextAttempt.attemptId,
+        templateKey: nextAttempt.templateKey,
+      },
+    });
+
+    return nextAttempt;
+  };
+
+  const recordPreviewReadyForBuildAttempt = async (attempt) => {
+    if (!attempt || attempt.hasPreviewReadyEvent) {
+      return;
+    }
+
+    attempt.hasPreviewReadyEvent = true;
+    const durationMs = getBuildAttemptDurationMs(attempt.startedAt);
+
+    await recordWebsiteHostAnalyticsEventSafely({
+      propertyId: attempt.propertyId,
+      eventType: WEBSITE_PREVIEW_READY_EVENT,
+      payload: {
+        attemptId: attempt.attemptId,
+        templateKey: attempt.templateKey,
+        durationMs,
+      },
+    });
+  };
+
+  const recordBuildTerminalEvent = ({ attempt, draftId = "", eventType, phase = "" }) => {
+    if (!attempt || attempt.hasTerminalEvent) {
+      return;
+    }
+
+    attempt.hasTerminalEvent = true;
+    if (websiteBuildAttemptRef.current?.attemptId === attempt.attemptId) {
+      websiteBuildAttemptRef.current = null;
+    }
+    recordWebsiteHostAnalyticsEventSafely({
+      propertyId: attempt.propertyId,
+      draftId,
+      eventType,
+      payload: {
+        attemptId: attempt.attemptId,
+        templateKey: attempt.templateKey,
+        durationMs: getBuildAttemptDurationMs(attempt.startedAt),
+        phase,
+      },
+    });
   };
 
   const persistSelectedWebsiteDraft = async () => {
@@ -720,6 +882,7 @@ function WebsiteBuilderPage() {
       return;
     }
 
+    const buildAttempt = startWebsiteBuildAttempt();
     setPreviewStage(PREVIEW_STAGE.loading);
     setPreviewModel(null);
     setPreviewError("");
@@ -734,11 +897,31 @@ function WebsiteBuilderPage() {
 
       setPreviewModel(nextPreviewModel);
       setPreviewStage(PREVIEW_STAGE.ready);
+      await waitForNextPaint();
+      await waitForNextPaint();
+      await recordPreviewReadyForBuildAttempt(buildAttempt);
       const savedDraft = await persistSelectedWebsiteDraft();
-      if (savedDraft) {
-        toast.success("Website built and ready for review.");
+      if (!savedDraft) {
+        recordBuildTerminalEvent({
+          attempt: buildAttempt,
+          eventType: WEBSITE_BUILD_FAILED_EVENT,
+          phase: WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
+        });
+        return;
       }
+
+      recordBuildTerminalEvent({
+        attempt: buildAttempt,
+        draftId: savedDraft.id,
+        eventType: WEBSITE_BUILD_SUCCEEDED_EVENT,
+      });
+      toast.success("Website built and ready for review.");
     } catch (error) {
+      recordBuildTerminalEvent({
+        attempt: buildAttempt,
+        eventType: WEBSITE_BUILD_FAILED_EVENT,
+        phase: previewBuildPhase,
+      });
       setPreviewStage(PREVIEW_STAGE.error);
       setPreviewModel(null);
       setPreviewError(error?.message || "We could not build the selected website preview.");
@@ -842,14 +1025,33 @@ function WebsiteBuilderPage() {
     navigate(`/hostdashboard/website/${propertyId}`);
   };
 
-  const openWebsiteDraftPreview = (draft) => {
-    const draftId = String(draft?.id || "").trim();
-    if (!draftId) {
-      toast.error("This website does not have a preview link yet.");
+  const openWebsiteDraftLiveSite = async (draft) => {
+    const propertyId = String(draft?.propertyId || "").trim();
+    if (!propertyId) {
       return;
     }
 
-    globalThis.open(buildWebsitePreviewPath(draftId), "_blank", "noopener,noreferrer");
+    try {
+      const siteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
+      const liveDomain = String(siteSummary?.primaryDomain?.domain || "").trim();
+      const liveDomainStatus = String(siteSummary?.primaryDomain?.status || "").trim();
+      const siteId = String(siteSummary?.site?.id || "").trim();
+      const siteStatus = String(siteSummary?.site?.status || "").trim().toUpperCase();
+
+      if (!liveDomain || siteStatus !== "PUBLISHED") {
+        toast.error("Publish this website from the editor before opening the live site.");
+        return;
+      }
+
+      globalThis.open(
+        buildPublishedWebsiteHref(liveDomain, siteId, liveDomainStatus),
+        "_blank",
+        "noopener,noreferrer"
+      );
+    } catch (error) {
+      toast.error(error?.message || "We could not open the live site for this website.");
+      return;
+    }
   };
 
   const openWebsiteDraftDeleteDialog = (draft) => {
@@ -882,7 +1084,7 @@ function WebsiteBuilderPage() {
   };
 
   const removeWebsiteDraft = async () => {
-    const propertyId = String(websiteDraftPendingDelete?.propertyId || "").trim();
+    const propertyId = getDraftPropertyId(websiteDraftPendingDelete);
     if (!propertyId) {
       setWebsiteDraftPendingDelete(null);
       return;
@@ -895,7 +1097,8 @@ function WebsiteBuilderPage() {
     setIsDeletingWebsiteDraft(true);
 
     try {
-      await deleteWebsiteDraft(propertyId);
+      await deleteWebsiteDraft(propertyId, websiteDraftDeleteReasons);
+      delete websiteDraftPreviewCacheKeysRef.current[propertyId];
       setWebsiteDraftPreviewModels((currentPreviewModels) => {
         const nextPreviewModels = { ...currentPreviewModels };
         delete nextPreviewModels[propertyId];
@@ -988,7 +1191,7 @@ function WebsiteBuilderPage() {
       return (
         <div className={styles.stateCard}>
           <p>
-            You do not have any saved website drafts yet. Build a preview from the builder tab and the
+            You do not have any saved website drafts yet. Build a website from the builder tab and the
             draft will appear here.
           </p>
         </div>
@@ -1029,9 +1232,9 @@ function WebsiteBuilderPage() {
                     <button
                       type="button"
                       className={styles.secondaryButton}
-                      onClick={() => openWebsiteDraftPreview(draft)}
+                      onClick={() => void openWebsiteDraftLiveSite(draft)}
                     >
-                      Open live preview
+                      Open live site
                     </button>
                     <button
                       type="button"
@@ -1343,9 +1546,6 @@ function WebsiteBuilderPage() {
                 ) : null}
               </div>
               <div className={styles.buttonRow}>
-                <button type="button" className={styles.secondaryButton} onClick={resetPreviewState}>
-                  Back to chooser
-                </button>
                 <button
                   type="button"
                   className={styles.secondaryButton}

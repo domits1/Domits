@@ -1,12 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
-import HomeIcon from "@mui/icons-material/Home";
-import EventIcon from "@mui/icons-material/Event";
-import { GiAirplaneArrival } from "react-icons/gi";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
+  getPreviewTargetMarkerProps,
   TemplateAvailabilityCalendar,
   TemplateHeroCopy,
   TemplateTopBar,
@@ -23,23 +21,6 @@ import {
   templateInteractionPropTypes,
   visibilityPropType,
 } from "./templatePropTypes";
-
-const PANORAMA_CARD_ICONS = Object.freeze({
-  "stay-details": {
-    Icon: HomeIcon,
-    glyphClassName: "",
-  },
-  "arrival-guidelines": {
-    Icon: GiAirplaneArrival,
-    glyphClassName: styles.panoramaFeatureIconGlyphLarge,
-  },
-  "location-context": {
-    Icon: EventIcon,
-    glyphClassName: "",
-  },
-});
-
-const getPanoramaCardIcon = (cardId) => PANORAMA_CARD_ICONS[cardId] || null;
 
 export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
@@ -95,10 +76,24 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       </section>
 
       {showTrustCards ? (
-        <section className={styles.panoramaFeatureGrid}>
+        <section
+          {...getPreviewTargetMarkerProps(
+            styles.panoramaFeatureGrid,
+            "visibility.trustCards",
+            activeTargetId
+          )}
+        >
           {model.trustCards.map((card, index) => {
-            const iconConfig = getPanoramaCardIcon(card.id);
-            const IconComponent = iconConfig?.Icon || null;
+            const cardIcon = getAmenityIconNode(card.iconAmenityId, {
+              className: styles.panoramaFeatureIconGlyph,
+              "aria-hidden": true,
+              focusable: "false",
+              sx: {
+                color: "#3d6128",
+                fontSize: 30,
+                padding: 0,
+              },
+            });
 
             return (
               <article
@@ -108,15 +103,9 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
                   targetId: `trustCards.${index}`,
                 }, activeTargetId)}
               >
-                {IconComponent ? (
-                  <span className={styles.panoramaFeatureIcon} aria-hidden="true">
-                    <IconComponent
-                      className={`${styles.panoramaFeatureIconGlyph} ${iconConfig.glyphClassName || ""}`.trim()}
-                    />
-                  </span>
-                ) : (
-                  <span className={styles.panoramaFeatureIcon} aria-hidden="true" />
-                )}
+                <span className={styles.panoramaFeatureIcon} aria-hidden="true">
+                  {cardIcon}
+                </span>
                 <p className={styles.panoramaFeatureTitle}>{card.title}</p>
                 <p className={styles.panoramaFeatureDescription}>{card.description}</p>
               </article>
@@ -159,7 +148,13 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
             ) : null}
 
             {showAmenitiesPanel ? (
-              <div className={styles.amenityPanel}>
+              <div
+                {...getPreviewTargetMarkerProps(
+                  styles.amenityPanel,
+                  "visibility.amenitiesPanel",
+                  activeTargetId
+                )}
+              >
                 <p className={styles.panelTitle}>Featured amenities</p>
                 <div className={styles.amenityChipGrid}>
                   {model.amenities.featured.slice(0, 6).map((amenity) => {

@@ -422,6 +422,11 @@ CREATE TABLE IF NOT EXISTS main.property_calendar_override (
   calendar_date BIGINT NOT NULL,
   is_available BOOLEAN,
   nightly_price INTEGER,
+  stop_sell BOOLEAN,
+  closed_to_arrival BOOLEAN,
+  closed_to_departure BOOLEAN,
+  min_stay INTEGER,
+  max_stay INTEGER,
   updated_at BIGINT NOT NULL,
   PRIMARY KEY (property_id, calendar_date)
 );

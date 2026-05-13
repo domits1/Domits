@@ -125,7 +125,8 @@ export class PropertyService {
       propertyId,
       title,
       resolvedSubtitle,
-      description
+      description,
+      updates?.bookingType
     );
     if (!updatedProperty) {
       throw new DatabaseException("Something went wrong while updating the property overview.");

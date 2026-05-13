@@ -4,6 +4,7 @@ import styles from "./WebsiteTemplatePreview.module.scss";
 import { getWebsiteTemplateById } from "../websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./templateRegistry";
 import WebsiteContactWidget from "./WebsiteContactWidget";
+import { resolveWebsiteBackgroundColor } from "./websiteDraftThemeOverrides";
 
 const PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   desktop: 1180,
@@ -20,6 +21,42 @@ const COMPACT_PREVIEW_MAX_HEIGHT = 228;
 const COMPACT_PREVIEW_VIEWPORT_WIDTH = 960;
 
 const resolveViewportWidth = (viewport) => PREVIEW_VIEWPORT_WIDTHS[viewport] || PREVIEW_VIEWPORT_WIDTHS.desktop;
+
+const scrollPreviewTargetIntoViewport = (previewTargetNode) => {
+  if (!previewTargetNode || typeof previewTargetNode.getBoundingClientRect !== "function") {
+    return;
+  }
+
+  const targetRect = previewTargetNode.getBoundingClientRect();
+  const viewportHeight = globalThis.innerHeight || 0;
+  if (viewportHeight < 1) {
+    previewTargetNode.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+    return;
+  }
+
+  const targetOffset = targetRect.top - (viewportHeight / 2 - targetRect.height / 2);
+  if (Math.abs(targetOffset) < 12) {
+    return;
+  }
+
+  if (typeof globalThis.scrollBy === "function") {
+    globalThis.scrollBy({
+      top: targetOffset,
+      behavior: "smooth",
+    });
+    return;
+  }
+
+  previewTargetNode.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+    inline: "nearest",
+  });
+};
 
 const usePreviewScaleMetrics = (viewportWidth) => {
   const scaleShellRef = useRef(null);
@@ -124,6 +161,20 @@ export default function WebsiteTemplatePreview({
     transform: `scale(${scaleMetrics.scale})`,
   };
   const scaleInnerStyle = isCompactVariant ? compactInnerStyle : scaledInnerStyle;
+  const previewCanvasStyle = {
+    "--website-surface-background": resolveWebsiteBackgroundColor(model?.theme?.backgroundColor),
+  };
+
+  useEffect(() => {
+    if (isCompactVariant || !activeTargetId || !scaleInnerRef.current) {
+      return;
+    }
+
+    const previewTargetNode = scaleInnerRef.current.querySelector(
+      `[data-preview-target-id="${activeTargetId}"]`
+    );
+    scrollPreviewTargetIntoViewport(previewTargetNode);
+  }, [activeTargetId, isCompactVariant, scaleInnerRef]);
 
   return (
     <section
@@ -149,7 +200,7 @@ export default function WebsiteTemplatePreview({
               <div className={styles.previewBrowserTitle}>{model.site.title || "Website preview"}</div>
             </div>
 
-            <div className={styles.previewCanvas}>
+            <div className={styles.previewCanvas} style={previewCanvasStyle}>
               {TemplateComponent ? (
                 <TemplateComponent
                   model={model}
@@ -185,6 +236,9 @@ WebsiteTemplatePreview.propTypes = {
     visibility: PropTypes.shape({
       availabilityCalendar: PropTypes.bool,
       chatWidget: PropTypes.bool,
+    }),
+    theme: PropTypes.shape({
+      backgroundColor: PropTypes.string,
     }),
   }).isRequired,
   variant: PropTypes.oneOf(["default", "compact"]),

@@ -33,6 +33,110 @@ const routeDefinitions = [
     handle: (event) => integrationController.startWhatsAppConnect(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/holidu/connect"),
+    handle: (event) => integrationController.connectHolidu(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/connect"),
+    handle: (event) => integrationController.connectChannex(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/holidu/status"),
+    handle: (event) => integrationController.checkHoliduStatus(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/status"),
+    handle: (event) => integrationController.checkChannexStatus(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/properties"),
+    handle: (event) => integrationController.listChannexProperties(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/room-types"),
+    handle: (event) => integrationController.listChannexRoomTypes(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/linked-room-types"),
+    handle: (event) => integrationController.listLinkedChannexRoomTypes(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/rate-plans"),
+    handle: (event) => integrationController.listChannexRatePlans(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/linked-rate-plans"),
+    handle: (event) => integrationController.listLinkedChannexRatePlans(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/ari-targets"),
+    handle: (event) => integrationController.getChannexAriTargets(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/ari-preview"),
+    handle: (event) => integrationController.previewChannexAri(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/ari-payload-preview"),
+    handle: (event) => integrationController.previewChannexAriPayloads(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/sync-evidence/latest"),
+    handle: (event) => integrationController.getLatestChannexSyncEvidenceSummary(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && /\/integrations\/channex\/sync-evidence\/[^/]+$/.test(String(path || "")),
+    handle: (event) => integrationController.getChannexSyncEvidence(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/sync-evidence"),
+    handle: (event) => integrationController.listChannexSyncEvidence(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/receive"),
+    handle: (event) => integrationController.receiveChannexBookingRevisions(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/ack"),
+    handle: (event) => integrationController.acknowledgeChannexBookingRevisions(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/availability"),
+    handle: (event) => integrationController.syncChannexAvailability(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/restrictions"),
+    handle: (event) => integrationController.syncChannexRestrictions(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/ari"),
+    handle: (event) => integrationController.syncChannexAri(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/full"),
+    handle: (event) => integrationController.syncChannexFull(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/rate-plans"),
+    handle: (event) => integrationController.linkChannexRatePlan(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/room-types"),
+    handle: (event) => integrationController.linkChannexRoomType(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/properties"),
+    handle: (event) => integrationController.linkChannexProperty(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/holidu/disconnect"),
+    handle: (event) => integrationController.disconnectHolidu(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/disconnect"),
+    handle: (event) => integrationController.disconnectChannex(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/connect/complete"),
     handle: (event) => integrationController.completeWhatsAppConnect(event),
   },

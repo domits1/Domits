@@ -24,7 +24,8 @@ export class PropertyRepository {
                 hostid: property.hostId,
                 status: property.status,
                 createdat: property.createdAt,
-                updatedat: 0
+                updatedat: 0,
+                bookingtype: property.bookingType || "direct",
             })
             .execute();
         const result = await this.getPropertyById(property.id);
@@ -122,17 +123,21 @@ export class PropertyRepository {
         );
     }
 
-    async updatePropertyOverview(propertyId, title, subtitle, description) {
+    async updatePropertyOverview(propertyId, title, subtitle, description, bookingType = undefined) {
         const client = await Database.getInstance();
+        const updateFields = {
+            title: title,
+            subtitle: subtitle,
+            description: description,
+            updatedat: Date.now(),
+        };
+        if (bookingType !== undefined) {
+            updateFields.bookingtype = bookingType;
+        }
         await client
             .createQueryBuilder()
             .update(Property)
-            .set({
-                title: title,
-                subtitle: subtitle,
-                description: description,
-                updatedat: Date.now(),
-            })
+            .set(updateFields)
             .where("id = :id", { id: propertyId })
             .execute();
 
