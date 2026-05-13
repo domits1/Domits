@@ -61,7 +61,7 @@ function HeroSection({ landingContent, isAuthenticated }) {
             <motion.button
               className="btn btn--secondary"
               onClick={() =>
-                document.querySelector(".steps")?.scrollIntoView({ behavior: "smooth" })
+                document.getElementById("steps")?.scrollIntoView({behavior: "smooth",})
               }
               whileHover={{ scale: 1.05 }}
             >

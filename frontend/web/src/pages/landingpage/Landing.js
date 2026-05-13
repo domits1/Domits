@@ -27,6 +27,7 @@ function Landing() {
   const landingContent = contentByLanguage[language]?.landing;
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [faqs, setFaqs] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -78,14 +79,23 @@ function Landing() {
     ]);
   }, [landingContent]);
 
-  const checkAuthentication = async () => {
-    try {
-      await Auth.currentAuthenticatedUser();
+    const checkAuthentication = async () => {
+  try {
+    const user = await Auth.currentAuthenticatedUser({
+      bypassCache: true,
+    });
+
+    if (user) {
       setIsAuthenticated(true);
-    } catch {
+    } else {
       setIsAuthenticated(false);
     }
-  };
+  } catch (error) {
+    setIsAuthenticated(false);
+  } finally {
+    setAuthChecked(true);
+  }
+};
 
   const toggleOpen = (index) => {
     setFaqs((prev) =>
@@ -97,8 +107,15 @@ function Landing() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (feedbackMessage) setFeedbackMessage("");
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (feedbackMessage) {
+      setFeedbackMessage("");
+    }
   };
 
   const resetForm = () => {
@@ -115,6 +132,7 @@ function Landing() {
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
+
     await handleContactFormSubmission(
       formData,
       setIsSubmitting,
@@ -123,12 +141,13 @@ function Landing() {
     );
   };
 
-  if (!landingContent) return null;
+  if (!landingContent || !authChecked) {
+    return null;
+  }
 
   return (
     <main className="landing">
-
-      <HeroSection 
+      <HeroSection
         landingContent={landingContent}
         isAuthenticated={isAuthenticated}
       />
@@ -149,8 +168,8 @@ function Landing() {
         <RegisterSection />
       </div>
 
-       <div id="testimonials">
-         <TestimonialsSection />
+      <div id="testimonials">
+        <TestimonialsSection />
       </div>
 
       <div id="features">
@@ -165,21 +184,23 @@ function Landing() {
 
       <section id="contact" className="contact-section">
         <div className="contact-section__container">
-
           <div className="contact-section__left">
             <h2>
-              More than software.<br />
+              More than software.
+              <br />
               A dedicated partner.
             </h2>
 
             <p>
-              Our team is here to answer your questions, discuss your property's potential, and help you get started on the path to effortless rental income.
+              Our team is here to answer your questions, discuss your
+              property's potential, and help you get started on the path to
+              effortless rental income.
             </p>
 
             <div className="contact-section__info">
-
               <div className="contact-item">
                 <div className="icon">✉</div>
+
                 <div>
                   <span>Email us</span>
                   <strong>teamdomits@gmail.com</strong>
@@ -188,6 +209,7 @@ function Landing() {
 
               <div className="contact-item">
                 <div className="icon">☎</div>
+
                 <div>
                   <span>Call us</span>
                   <strong>Available 24/7</strong>
@@ -196,12 +218,17 @@ function Landing() {
 
               <div className="contact-item">
                 <div className="icon">📍</div>
+
                 <div>
                   <span>Visit us</span>
-                  <strong>Kinderhuissingel 6-K<br />2013 AS, Haarlem</strong>
+
+                  <strong>
+                    Kinderhuissingel 6-K
+                    <br />
+                    2013 AS, Haarlem
+                  </strong>
                 </div>
               </div>
-
             </div>
           </div>
 
@@ -215,10 +242,8 @@ function Landing() {
               onSubmit={handleContactSubmit}
             />
           </div>
-
         </div>
       </section>
-
     </main>
   );
 }
