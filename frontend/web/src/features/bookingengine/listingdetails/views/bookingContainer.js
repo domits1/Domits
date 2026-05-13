@@ -44,12 +44,11 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
 
     const findThreadIdForListing = (threads) => {
       const list = Array.isArray(threads) ? threads : [];
-      const matches = list.filter((t) => {
-        const isMatch =
+      const matches = list.filter(
+        (t) =>
           ((t?.hostId === hostId && t?.guestId === userId) || (t?.hostId === userId && t?.guestId === hostId)) &&
-          String(t?.propertyId || "") === String(propertyId || "");
-        return isMatch;
-      });
+          String(t?.propertyId || "") === String(propertyId || "")
+      );
 
       if (!matches.length) return null;
 
@@ -73,7 +72,10 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
           headers: { "Content-Type": "application/json" },
         });
 
-        if (!res.ok) throw new Error(`threads fetch failed ${res.status}`);
+        if (!res.ok) {
+          if (!cancelled) setResolvedThreadId(null);
+          return;
+        }
 
         const threads = await res.json();
         const found = findThreadIdForListing(threads);
@@ -161,6 +163,8 @@ const BookingContainer = ({
 }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
+  const [showMobileStickyBar, setShowMobileStickyBar] = useState(false);
+  const bookingCardRef = useRef(null);
 
   const handleReservePress = useHandleReservePress();
   const unavailableDateSet = useMemo(
@@ -209,6 +213,30 @@ const BookingContainer = ({
       body.style.paddingRight = prevPaddingRight;
     };
   }, [showMessageHost]);
+
+  useEffect(() => {
+    const updateStickyBarVisibility = () => {
+      const bookingCard = bookingCardRef.current;
+      const isMobile = globalThis.innerWidth <= 768;
+
+      if (!bookingCard || !isMobile) {
+        setShowMobileStickyBar(false);
+        return;
+      }
+
+      const cardBottom = bookingCard.getBoundingClientRect().bottom;
+      setShowMobileStickyBar(cardBottom < globalThis.innerHeight - 24);
+    };
+
+    updateStickyBarVisibility();
+    globalThis.addEventListener("scroll", updateStickyBarVisibility, { passive: true });
+    globalThis.addEventListener("resize", updateStickyBarVisibility);
+
+    return () => {
+      globalThis.removeEventListener("scroll", updateStickyBarVisibility);
+      globalThis.removeEventListener("resize", updateStickyBarVisibility);
+    };
+  }, []);
 
   useEffect(() => {
     if (!checkInDate) {
@@ -273,8 +301,17 @@ const BookingContainer = ({
     setCheckOutDate(value);
   };
 
+  const handleReserveClick = () => {
+    handleReservePress(
+      property.property.id,
+      new Date(checkInDate).getTime(),
+      new Date(checkOutDate).getTime(),
+      adults + kids
+    );
+  };
+
   return (
-    <div className="listing-booking-card">
+    <div className="listing-booking-card" ref={bookingCardRef}>
       <div className="listing-booking-card__price-header">
         <span className="listing-booking-card__price">
           €{Number(property?.pricing?.roomRate || 0).toFixed(0)}
@@ -297,14 +334,7 @@ const BookingContainer = ({
       <button
         className="reserve-btn"
         disabled={adults < 1 || nights < 1}
-        onClick={() => {
-          handleReservePress(
-            property.property.id,
-            new Date(checkInDate).getTime(),
-            new Date(checkOutDate).getTime(),
-            adults + kids
-          );
-        }}
+        onClick={handleReserveClick}
       >
         Reserve
       </button>
@@ -323,6 +353,36 @@ const BookingContainer = ({
         <div className="listing-booking-card__trust-item">
           <span className="listing-booking-card__trust-check">✓</span>{" "}Secure payment
         </div>
+      </div>
+
+      <div
+        className={`listing-booking-card__mobile-sticky${
+          showMobileStickyBar ? " listing-booking-card__mobile-sticky--visible" : ""
+        }`}
+      >
+        <div className="listing-booking-card__mobile-sticky-price">
+          <span className="listing-booking-card__price">
+            €{Number(property?.pricing?.roomRate || 0).toFixed(0)}
+          </span>
+          <span className="listing-booking-card__per-night">per night</span>
+        </div>
+
+        <DateSelectionContainer
+          className="date-container--mobile-sticky"
+          checkInDate={checkInDate}
+          setCheckInDate={handleCheckInDateChange}
+          checkOutDate={checkOutDate}
+          setCheckOutDate={handleCheckOutDateChange}
+          unavailableDateKeys={unavailableDateKeys}
+        />
+
+        <button
+          className="reserve-btn listing-booking-card__mobile-sticky-reserve"
+          disabled={adults < 1 || nights < 1}
+          onClick={handleReserveClick}
+        >
+          Reserve
+        </button>
       </div>
 
       {showMessageHost && hostId && (

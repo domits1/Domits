@@ -176,6 +176,20 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
             ×
           </button>
 
+          <button
+            type="button"
+            className="nav-side-zone left"
+            onClick={prevImage}
+            aria-label="Previous image"
+          />
+
+          <button
+            type="button"
+            className="nav-side-zone right"
+            onClick={nextImage}
+            aria-label="Next image"
+          />
+
           <div className="overlay-center-wrapper">
             <button
               type="button"

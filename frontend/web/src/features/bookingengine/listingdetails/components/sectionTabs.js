@@ -53,6 +53,7 @@ const SectionTabs = ({ sections = [] }) => {
   const [isMobileViewport, setIsMobileViewport] = useState(
     () => globalThis.window !== undefined && globalThis.innerWidth <= 768
   );
+  const shellRef = useRef(null);
   const buttonRefs = useRef({});
 
   useEffect(() => {
@@ -108,12 +109,30 @@ const SectionTabs = ({ sections = [] }) => {
     };
   }, [activeSection, sections]);
 
+  useEffect(() => {
+    if (!isMobileViewport) {
+      return;
+    }
+
+    const activeButton = buttonRefs.current[activeSection];
+    const shell = shellRef.current;
+    if (!activeButton || !shell) {
+      return;
+    }
+
+    const nextScrollLeft = activeButton.offsetLeft - shell.clientWidth / 2 + activeButton.offsetWidth / 2;
+    shell.scrollTo({
+      left: Math.max(0, nextScrollLeft),
+      behavior: "smooth",
+    });
+  }, [activeSection, isMobileViewport]);
+
   if (!sections.length) {
     return null;
   }
 
   return (
-    <div className="listing-sections-shell">
+    <div className="listing-sections-shell" ref={shellRef}>
       <nav className="listing-sections-nav" aria-label="Listing sections">
         <div className="listing-sections-nav__track" style={indicatorStyle} />
         {sections.map((section) => (
