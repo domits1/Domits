@@ -23,6 +23,18 @@ const STANDALONE_SITE_MONTHLY_FIXED_COST_EUR = Number(process.env.STANDALONE_SIT
 const STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR = Number(
   process.env.STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR
 );
+const STANDALONE_SITE_USAGE_WINDOW_DAYS = Number(process.env.STANDALONE_SITE_USAGE_WINDOW_DAYS || 30);
+const STANDALONE_SITE_COST_PER_BUILD_ATTEMPT_EUR = Number(
+  process.env.STANDALONE_SITE_COST_PER_BUILD_ATTEMPT_EUR
+);
+const STANDALONE_SITE_COST_PER_DRAFT_SAVE_EUR = Number(process.env.STANDALONE_SITE_COST_PER_DRAFT_SAVE_EUR);
+const STANDALONE_SITE_COST_PER_LIVE_SYNC_EUR = Number(process.env.STANDALONE_SITE_COST_PER_LIVE_SYNC_EUR);
+const STANDALONE_SITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR = Number(
+  process.env.STANDALONE_SITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR
+);
+const STANDALONE_SITE_COST_PER_PUBLIC_SITE_OPEN_EUR = Number(
+  process.env.STANDALONE_SITE_COST_PER_PUBLIC_SITE_OPEN_EUR
+);
 
 const safeParseJson = (rawValue, fallbackValue = {}) => {
   if (typeof rawValue !== "string" || !rawValue.trim()) {
@@ -145,22 +157,81 @@ const resolveStandaloneSiteMonthlyCostInputs = () => {
   };
 };
 
-const calculateCostPerActiveSitePerMonth = (activePublishedSiteCount) => {
+const resolveStandaloneSiteUsageCostInputs = () => ({
+  buildAttemptCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_BUILD_ATTEMPT_EUR)
+    ? STANDALONE_SITE_COST_PER_BUILD_ATTEMPT_EUR
+    : 0,
+  draftSaveCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_DRAFT_SAVE_EUR)
+    ? STANDALONE_SITE_COST_PER_DRAFT_SAVE_EUR
+    : 0,
+  liveSyncCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_LIVE_SYNC_EUR)
+    ? STANDALONE_SITE_COST_PER_LIVE_SYNC_EUR
+    : 0,
+  publicPreviewOpenCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR)
+    ? STANDALONE_SITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR
+    : 0,
+  publicSiteOpenCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_PUBLIC_SITE_OPEN_EUR)
+    ? STANDALONE_SITE_COST_PER_PUBLIC_SITE_OPEN_EUR
+    : 0,
+});
+
+const hasConfiguredStandaloneSiteUsageCosts = () => {
+  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveStandaloneSiteMonthlyCostInputs();
+  const usageInputs = resolveStandaloneSiteUsageCostInputs();
+
+  return (
+    Number.isFinite(fixedMonthlyCostEur) ||
+    Number.isFinite(variableCostPerSiteEur) ||
+    Object.values(usageInputs).some((value) => Number.isFinite(value) && value > 0)
+  );
+};
+
+const buildRecentUsageCountMap = (recentUsageRows) =>
+  new Map(
+    (Array.isArray(recentUsageRows) ? recentUsageRows : []).map((row) => [
+      String(row.event_type || "").trim(),
+      toCount(row.total),
+    ])
+  );
+
+const getRecentUsageCount = (recentUsageCounts, eventType) => toCount(recentUsageCounts.get(eventType));
+
+const calculateUsageWeightedCostPerActiveSitePerMonth = ({
+  activePublishedSiteCount,
+  recentUsageCounts,
+}) => {
   if (!Number.isFinite(activePublishedSiteCount) || activePublishedSiteCount <= 0) {
     return null;
   }
 
-  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveStandaloneSiteMonthlyCostInputs();
-  if (!Number.isFinite(fixedMonthlyCostEur) && !Number.isFinite(variableCostPerSiteEur)) {
+  if (!hasConfiguredStandaloneSiteUsageCosts()) {
     return null;
   }
 
-  const fixedPerSiteCost = Number.isFinite(fixedMonthlyCostEur)
-    ? fixedMonthlyCostEur / activePublishedSiteCount
-    : 0;
-  const variablePerSiteCost = Number.isFinite(variableCostPerSiteEur) ? variableCostPerSiteEur : 0;
+  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveStandaloneSiteMonthlyCostInputs();
+  const {
+    buildAttemptCostEur,
+    draftSaveCostEur,
+    liveSyncCostEur,
+    publicPreviewOpenCostEur,
+    publicSiteOpenCostEur,
+  } = resolveStandaloneSiteUsageCostInputs();
 
-  return fixedPerSiteCost + variablePerSiteCost;
+  const monthlyFixedCost = Number.isFinite(fixedMonthlyCostEur) ? fixedMonthlyCostEur : 0;
+  const monthlyVariableCost = Number.isFinite(variableCostPerSiteEur)
+    ? variableCostPerSiteEur * activePublishedSiteCount
+    : 0;
+  const recentUsageCost =
+    getRecentUsageCount(recentUsageCounts, "WEBSITE_BUILD_STARTED") * buildAttemptCostEur +
+    getRecentUsageCount(recentUsageCounts, "WEBSITE_DRAFT_SAVED") * draftSaveCostEur +
+    (
+      getRecentUsageCount(recentUsageCounts, "WEBSITE_SITE_PUBLISHED") +
+      getRecentUsageCount(recentUsageCounts, "LIVE_SITE_UPDATED")
+    ) * liveSyncCostEur +
+    getRecentUsageCount(recentUsageCounts, "PUBLIC_PREVIEW_OPENED") * publicPreviewOpenCostEur +
+    getRecentUsageCount(recentUsageCounts, "PUBLIC_SITE_OPENED") * publicSiteOpenCostEur;
+
+  return (monthlyFixedCost + monthlyVariableCost + recentUsageCost) / activePublishedSiteCount;
 };
 
 const buildEventCountMap = (eventCountRows) =>
@@ -413,8 +484,23 @@ export class StandaloneSiteEventRepository {
     const eventWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const siteWhereClause = hasHostScope ? "WHERE site.host_id = $1" : "";
     const queryParameters = hasHostScope ? [hostId] : [];
+    const usageWindowDays = Number.isFinite(STANDALONE_SITE_USAGE_WINDOW_DAYS) && STANDALONE_SITE_USAGE_WINDOW_DAYS > 0
+      ? Math.round(STANDALONE_SITE_USAGE_WINDOW_DAYS)
+      : 30;
+    const usageWindowStartedAt = Date.now() - usageWindowDays * 24 * 60 * 60 * 1000;
+    const recentUsageWhereClause = hasHostScope
+      ? "WHERE host_id = $1 AND occurred_at >= $2"
+      : "WHERE occurred_at >= $1";
+    const recentUsageParameters = hasHostScope ? [hostId, usageWindowStartedAt] : [usageWindowStartedAt];
 
-    const [draftCountRows, eventCountRows, metricEventRows, liveLinkAvailabilityRows, publishedPriceRows] =
+    const [
+      draftCountRows,
+      eventCountRows,
+      metricEventRows,
+      liveLinkAvailabilityRows,
+      publishedPriceRows,
+      recentUsageRows,
+    ] =
       await Promise.all([
       client.query(
         `SELECT COUNT(*)::bigint AS total
@@ -480,6 +566,23 @@ export class StandaloneSiteEventRepository {
          ${hasHostScope ? "AND" : "WHERE"} site.status = 'PUBLISHED'`,
         queryParameters
       ),
+      client.query(
+        `SELECT
+           event_type,
+           COUNT(*)::bigint AS total
+         FROM ${standaloneEventTable}
+         ${recentUsageWhereClause}
+         AND event_type IN (
+           'WEBSITE_BUILD_STARTED',
+           'WEBSITE_DRAFT_SAVED',
+           'WEBSITE_SITE_PUBLISHED',
+           'LIVE_SITE_UPDATED',
+           'PUBLIC_PREVIEW_OPENED',
+           'PUBLIC_SITE_OPENED'
+         )
+         GROUP BY event_type`,
+        recentUsageParameters
+      ),
     ]);
 
     const eventCounts = buildEventCountMap(eventCountRows);
@@ -515,8 +618,12 @@ export class StandaloneSiteEventRepository {
     const buildAbandonedCount = countAbandonedAttempts(startedAttempts, completedAttemptIds);
     const publishedLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.published_site_count);
     const reachableLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.reachable_site_count);
+    const recentUsageCounts = buildRecentUsageCountMap(recentUsageRows);
     const publishedPriceAlignmentSummary = summarizePublishedPriceAlignment(publishedPriceRows);
-    const costPerActiveSitePerMonth = calculateCostPerActiveSitePerMonth(publishedLiveSiteCount);
+    const costPerActiveSitePerMonth = calculateUsageWeightedCostPerActiveSitePerMonth({
+      activePublishedSiteCount: publishedLiveSiteCount,
+      recentUsageCounts,
+    });
     const previewMobileLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "mobile");
     const previewTabletLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "tablet");
     const previewDesktopLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "desktop");

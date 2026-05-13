@@ -5,7 +5,7 @@ const buildWebsiteAnalyticsUrl = () => `${PROPERTY_API_BASE}/website/event`;
 
 const getOptionalAccessToken = () => getAccessToken();
 
-const postWebsiteAnalyticsEvent = async ({ authorization, body }) => {
+const postWebsiteAnalyticsEvent = async ({ authorization, body, keepalive = false }) => {
   const headers = {
     "Content-Type": "application/json",
   };
@@ -17,6 +17,8 @@ const postWebsiteAnalyticsEvent = async ({ authorization, body }) => {
   const response = await fetch(buildWebsiteAnalyticsUrl(), {
     method: "POST",
     cache: "no-store",
+    mode: "cors",
+    keepalive,
     headers,
     body: JSON.stringify(body),
   });
@@ -57,6 +59,7 @@ export const recordPublicWebsiteAnalyticsEvent = async ({
 }) => {
   await postWebsiteAnalyticsEvent({
     authorization: "",
+    keepalive: true,
     body: {
       draftId,
       siteId,

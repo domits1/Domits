@@ -264,7 +264,7 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Scalability", "Cost"],
     "costPerActiveSitePerMonth",
     "eur",
-    "Calculated from configured monthly standalone-site cost inputs plus the current count of published live sites. This is a configured operating-cost proxy, not an AWS billing API feed.",
+    "Calculated from configured monthly standalone-site cost inputs, active published site count, and recent website usage events. This is a usage-weighted operating-cost proxy, not an AWS billing API feed.",
     (websiteKpis) => formatSampleLabel(websiteKpis.costPerActiveSitePerMonthSampleCount),
     "costPerActiveSitePerMonthSampleCount"
   ),

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
@@ -20,8 +20,14 @@ import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
 } from "./services/websitePublicSiteService";
-import { subscribeToWebsiteLiveSiteUpdates } from "./services/websitePreviewSync";
+import {
+  subscribeToWebsiteLiveSiteUpdates,
+  WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE,
+} from "./services/websitePreviewSync";
 import styles from "./WebsitePublicPreviewPage.module.scss";
+
+const LIVE_SITE_REFRESH_RETRY_INTERVAL_MS = 2000;
+const LIVE_SITE_REFRESH_WINDOW_MS = 8000;
 
 const normalizeWebsiteDomain = (value) => {
   const normalizedValue = String(value || "").trim().toLowerCase();
@@ -58,6 +64,9 @@ function WebsitePublicSitePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [refreshVersion, setRefreshVersion] = useState(0);
+  const refreshRetryIntervalRef = useRef(null);
+  const refreshRetryTimeoutRef = useRef(null);
+  const hasPendingRefreshHintRef = useRef(false);
 
   const requestedDomain = useMemo(() => {
     const routeRequestedDomain = normalizeWebsiteDomain(routeDomain);
@@ -157,17 +166,92 @@ function WebsitePublicSitePage() {
     : "/home";
   const recoveryLabel = fallbackPropertyId ? "View listing on Domits" : "Browse stays on Domits";
 
+  const clearRefreshRetryWindow = () => {
+    if (refreshRetryIntervalRef.current) {
+      globalThis.clearInterval(refreshRetryIntervalRef.current);
+      refreshRetryIntervalRef.current = null;
+    }
+
+    if (refreshRetryTimeoutRef.current) {
+      globalThis.clearTimeout(refreshRetryTimeoutRef.current);
+      refreshRetryTimeoutRef.current = null;
+    }
+  };
+
+  const triggerPublishedSiteRefresh = () => {
+    setRefreshVersion((currentVersion) => currentVersion + 1);
+  };
+
+  const startRefreshRetryWindow = () => {
+    clearRefreshRetryWindow();
+
+    if (globalThis.document?.visibilityState === "hidden") {
+      hasPendingRefreshHintRef.current = true;
+      return;
+    }
+
+    hasPendingRefreshHintRef.current = false;
+    triggerPublishedSiteRefresh();
+
+    refreshRetryIntervalRef.current = globalThis.setInterval(() => {
+      triggerPublishedSiteRefresh();
+    }, LIVE_SITE_REFRESH_RETRY_INTERVAL_MS);
+
+    refreshRetryTimeoutRef.current = globalThis.setTimeout(() => {
+      clearRefreshRetryWindow();
+    }, LIVE_SITE_REFRESH_WINDOW_MS);
+  };
+
   useEffect(() => {
-    return subscribeToWebsiteLiveSiteUpdates(
+    const unsubscribeStorage = subscribeToWebsiteLiveSiteUpdates(
       {
         siteId: resolvedSiteId,
         domain: resolvedDomain,
       },
       () => {
-        setRefreshVersion((currentVersion) => currentVersion + 1);
+        startRefreshRetryWindow();
       }
     );
+
+    const handleMessage = (event) => {
+      const payload = event?.data;
+      if (!payload || payload.type !== WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE) {
+        return;
+      }
+
+      const payloadSiteId = String(payload.siteId || "").trim();
+      const payloadDomain = normalizeWebsiteDomain(payload.domain);
+      const matchesSiteId = resolvedSiteId && payloadSiteId === resolvedSiteId;
+      const matchesDomain = resolvedDomain && payloadDomain === resolvedDomain;
+      if (!matchesSiteId && !matchesDomain) {
+        return;
+      }
+
+      startRefreshRetryWindow();
+    };
+
+    const handleVisibilityChange = () => {
+      if (globalThis.document?.visibilityState === "visible" && hasPendingRefreshHintRef.current) {
+        startRefreshRetryWindow();
+      }
+    };
+
+    globalThis.addEventListener("message", handleMessage);
+    globalThis.document?.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      unsubscribeStorage();
+      clearRefreshRetryWindow();
+      globalThis.removeEventListener("message", handleMessage);
+      globalThis.document?.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [resolvedDomain, resolvedSiteId]);
+
+  useEffect(() => {
+    return () => {
+      clearRefreshRetryWindow();
+    };
+  }, []);
 
   useEffect(() => {
     if (!publicModel?.site?.title) {

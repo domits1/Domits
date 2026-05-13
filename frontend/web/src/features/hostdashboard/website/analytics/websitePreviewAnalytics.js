@@ -66,7 +66,7 @@ export const startWebsitePreviewLcpObserver = ({ enabled, onReport }) => {
     return undefined;
   }
 
-  const fallbackTimerId = globalThis.setTimeout(reportLargestContentfulPaint, 5000);
+  const fallbackTimerId = globalThis.setTimeout(reportLargestContentfulPaint, 3000);
   const handlePageHide = () => {
     reportLargestContentfulPaint();
   };
