@@ -18,6 +18,17 @@ const KPI_STATUS_PENDING = "Not instrumented yet";
 const createFixedPrecisionFormatter = (suffix, scale = 1) => (value) => `${(value / scale).toFixed(2)}${suffix}`;
 const createWholeMinutesFormatter = () => (value) => `${value.toFixed(1)} min`;
 const createMinutesFromMsFormatter = () => (value) => `${(value / 60000).toFixed(1)} min`;
+const createAdaptiveDurationFromMsFormatter = () => (value) => {
+  if (!Number.isFinite(value)) {
+    return KPI_EMPTY_VALUE;
+  }
+
+  if (value < 60000) {
+    return `${(value / 1000).toFixed(2)} s`;
+  }
+
+  return `${(value / 60000).toFixed(1)} min`;
+};
 const createCurrencyFormatter = () => (value) => `EUR ${value.toFixed(2)}`;
 
 const formatters = Object.freeze({
@@ -26,6 +37,7 @@ const formatters = Object.freeze({
   seconds: createFixedPrecisionFormatter(" s"),
   minutes: createWholeMinutesFormatter(),
   minutesFromMs: createMinutesFromMsFormatter(),
+  durationFromMs: createAdaptiveDurationFromMsFormatter(),
   eur: createCurrencyFormatter(),
 });
 
@@ -53,13 +65,22 @@ const createMetricCardDefinition = (
   sampleLabel,
 });
 
-const createResearchKpiDefinition = (id, criteria, valueKey, formatterKey, note, sampleLabel = "") => ({
+const createResearchKpiDefinition = (
+  id,
+  criteria,
+  valueKey,
+  formatterKey,
+  note,
+  sampleLabel = "",
+  sampleCountKey = ""
+) => ({
   id,
   criteria,
   valueKey,
   formatterKey,
   note,
   sampleLabel,
+  sampleCountKey,
 });
 
 const createPerformanceMetricDefinition = (viewport, description) =>
@@ -233,16 +254,19 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     "time_to_publish_p95",
     ["Scalability", "User experience"],
     "timeToPublishP95",
-    "minutesFromMs",
-    "Measured from publish request until the live site and Domits live link write complete.",
-    (websiteKpis) => formatSampleLabel(websiteKpis.timeToPublishSampleCount)
+    "durationFromMs",
+    "Measured from publish request until the live site and Domits live link write complete. This reflects backend publish latency, not DNS propagation.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.timeToPublishSampleCount),
+    "timeToPublishSampleCount"
   ),
   createResearchKpiDefinition(
     "cost_per_active_site_per_month",
     ["Scalability", "Cost"],
     "costPerActiveSitePerMonth",
     "eur",
-    "Requires infrastructure cost allocation plus a real count of active published sites. Drafts and internal preview routes are not enough for a defensible value."
+    "Calculated from configured monthly standalone-site cost inputs, active published site count, and recent website usage events. This is a usage-weighted operating-cost proxy, not an AWS billing API feed.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.costPerActiveSitePerMonthSampleCount),
+    "costPerActiveSitePerMonthSampleCount"
   ),
   createResearchKpiDefinition(
     "fallback_subdomain_availability",
@@ -250,7 +274,8 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     "fallbackSubdomainAvailability",
     "percentage",
     "Current published live-link reachability rate based on published site state plus ACTIVE Domits link routing status. This is not synthetic uptime yet.",
-    (websiteKpis) => formatSampleLabel(websiteKpis.fallbackSubdomainAvailabilitySampleCount)
+    (websiteKpis) => formatSampleLabel(websiteKpis.fallbackSubdomainAvailabilitySampleCount),
+    "fallbackSubdomainAvailabilitySampleCount"
   ),
   createResearchKpiDefinition(
     "booking_api_error_rate",
@@ -264,7 +289,9 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Correctness"],
     "quoteToChargeMismatchRate",
     "percentage",
-    "Requires quote issuance and final successful charge comparison. That data does not exist until checkout and payment instrumentation is in place."
+    "Current proxy compares the published live-site room rate snapshot against the current PMS base room rate. A true quote-to-charge comparison still requires standalone quote, checkout, and payment instrumentation.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.quoteToChargeMismatchSampleCount),
+    "quoteToChargeMismatchSampleCount"
   ),
   createResearchKpiDefinition(
     "booking_funnel_completion_rate",
@@ -320,17 +347,35 @@ export const buildPerformanceCards = (websiteKpis, viewportTab = PERFORMANCE_VIE
   };
 };
 
+const resolveResearchKpiValue = ({ hasNumericValue, rawValue, formatterKey, hasSamples }) => {
+  if (hasNumericValue) {
+    return formatters[formatterKey](rawValue);
+  }
+
+  if (hasSamples) {
+    return "No valid samples";
+  }
+
+  return RESEARCH_KPI_EMPTY_VALUE;
+};
+
 export const buildResearchKpiCards = (websiteKpis) =>
   RESEARCH_KPI_DEFINITIONS.map((researchKpi) => {
     const rawValue = websiteKpis[researchKpi.valueKey];
-    const isInstrumented = typeof rawValue === "number" && Number.isFinite(rawValue);
+    const sampleCount = Number(websiteKpis[researchKpi.sampleCountKey] || 0);
+    const hasSamples = Number.isFinite(sampleCount) && sampleCount > 0;
+    const hasNumericValue = typeof rawValue === "number" && Number.isFinite(rawValue);
+    const isInstrumented = hasNumericValue || hasSamples;
 
     return {
       ...researchKpi,
       isInstrumented,
-      value: isInstrumented
-        ? formatters[researchKpi.formatterKey](rawValue)
-        : RESEARCH_KPI_EMPTY_VALUE,
+      value: resolveResearchKpiValue({
+        hasNumericValue,
+        rawValue,
+        formatterKey: researchKpi.formatterKey,
+        hasSamples,
+      }),
       statusLabel: isInstrumented ? KPI_STATUS_READY : KPI_STATUS_PENDING,
       sampleLabel: isInstrumented
         ? resolveMetricSampleLabel(researchKpi.sampleLabel, websiteKpis)

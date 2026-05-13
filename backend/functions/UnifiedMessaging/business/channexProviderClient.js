@@ -1,6 +1,11 @@
 const CHANNEX_BASE_URL = process.env.CHANNEX_BASE_URL || "https://staging.channex.io";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+const normalizeNonNegativeInteger = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 ? Math.trunc(numeric) : null;
+};
 const normalizeWarnings = (parsed) => (Array.isArray(parsed?.meta?.warnings) ? parsed.meta.warnings : []);
 const normalizeTaskIds = (parsed) =>
   Array.isArray(parsed?.data) ? parsed.data.map((item) => requireStr(item?.id)).filter(Boolean) : [];
@@ -57,8 +62,17 @@ const getPushGroupIdentity = (group, includeRatePlanId = false) => {
     externalPropertyId: requireStr(group?.externalPropertyId),
     externalRoomTypeId: requireStr(group?.externalRoomTypeId),
   };
+  if (Array.isArray(group?.externalPropertyIds)) {
+    identity.externalPropertyIds = group.externalPropertyIds.map(requireStr).filter(Boolean);
+  }
+  if (Array.isArray(group?.externalRoomTypeIds)) {
+    identity.externalRoomTypeIds = group.externalRoomTypeIds.map(requireStr).filter(Boolean);
+  }
   if (includeRatePlanId) {
     identity.externalRatePlanId = requireStr(group?.externalRatePlanId);
+    if (Array.isArray(group?.externalRatePlanIds)) {
+      identity.externalRatePlanIds = group.externalRatePlanIds.map(requireStr).filter(Boolean);
+    }
   }
   return identity;
 };
@@ -162,24 +176,52 @@ const buildProviderPushExceptionResult = ({
   errorMessage: error?.message || requestFailedMessage,
 });
 
-const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody }) => {
+const withPushRequestContext = (result, endpointPath) => ({
+  ...result,
+  endpoint: endpointPath,
+  method: "POST",
+});
+
+const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody, requestTimeoutMs = null }) => {
   const url = new URL(endpointPath, CHANNEX_BASE_URL);
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "user-api-key": apiKey,
-    },
-    body: JSON.stringify(requestBody),
-  });
-  const rawText = await response.text();
-  const parsed = parseJsonSafely(rawText);
-  return {
-    response,
-    parsed,
-    warnings: normalizeWarnings(parsed),
-    taskIds: normalizeTaskIds(parsed),
-  };
+  const controller =
+    Number.isFinite(Number(requestTimeoutMs)) && Number(requestTimeoutMs) > 0
+      ? new AbortController()
+      : null;
+  const timeout = controller
+    ? setTimeout(() => controller.abort(), Math.trunc(Number(requestTimeoutMs)))
+    : null;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "user-api-key": apiKey,
+      },
+      body: JSON.stringify(requestBody),
+      ...(controller ? { signal: controller.signal } : {}),
+    });
+    const rawText = await response.text();
+    const parsed = parseJsonSafely(rawText);
+    return {
+      response,
+      parsed,
+      warnings: normalizeWarnings(parsed),
+      taskIds: normalizeTaskIds(parsed),
+    };
+  } catch (error) {
+    if (controller?.signal?.aborted) {
+      const timeoutError = new Error(
+        `Channex push request timed out after ${Math.trunc(Number(requestTimeoutMs))} ms.`
+      );
+      timeoutError.code = "CHANNEX_PUSH_REQUEST_TIMEOUT";
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 };
 
 const pushGroupedPayloads = async ({
@@ -194,11 +236,15 @@ const pushGroupedPayloads = async ({
   errorMessagePrefix,
   requestFailedCode,
   requestFailedMessage,
+  requestTimeoutMs = null,
+  stopOnFailure = false,
 }) => {
   if (!apiKey) {
     return {
       success: false,
-      results: groups.map((group) => buildInvalidCredentialsPushResult(group, includeRatePlanId)),
+      results: groups.map((group) =>
+        withPushRequestContext(buildInvalidCredentialsPushResult(group, includeRatePlanId), endpointPath)
+      ),
     };
   }
 
@@ -207,59 +253,73 @@ const pushGroupedPayloads = async ({
     const requestBody = buildRequestBody(group);
     if (requestBody.values.length === 0) {
       results.push(
-        buildMissingValuesPushResult({
-          group,
-          requestBody,
-          includeRatePlanId,
-          errorCode: missingValuesCode,
-          errorMessage: missingValuesMessage,
-        })
+        withPushRequestContext(
+          buildMissingValuesPushResult({
+            group,
+            requestBody,
+            includeRatePlanId,
+            errorCode: missingValuesCode,
+            errorMessage: missingValuesMessage,
+          }),
+          endpointPath
+        )
       );
       continue;
     }
 
     try {
-      const providerResponse = await postChannexPushRequest({ apiKey, endpointPath, requestBody });
+      const providerResponse = await postChannexPushRequest({ apiKey, endpointPath, requestBody, requestTimeoutMs });
       if (providerResponse.response.ok) {
         results.push(
-          buildProviderPushSuccessResult({
-            group,
-            requestBody,
-            response: providerResponse.response,
-            warnings: providerResponse.warnings,
-            taskIds: providerResponse.taskIds,
-            includeRatePlanId,
-          })
+          withPushRequestContext(
+            buildProviderPushSuccessResult({
+              group,
+              requestBody,
+              response: providerResponse.response,
+              warnings: providerResponse.warnings,
+              taskIds: providerResponse.taskIds,
+              includeRatePlanId,
+            }),
+            endpointPath
+          )
         );
         continue;
       }
 
       results.push(
-        buildProviderPushFailureResult({
-          group,
-          requestBody,
-          response: providerResponse.response,
-          parsed: providerResponse.parsed,
-          warnings: providerResponse.warnings,
-          taskIds: providerResponse.taskIds,
-          includeRatePlanId,
-          fallbackStatus,
-          errorCodePrefix,
-          errorMessagePrefix,
-        })
+        withPushRequestContext(
+          buildProviderPushFailureResult({
+            group,
+            requestBody,
+            response: providerResponse.response,
+            parsed: providerResponse.parsed,
+            warnings: providerResponse.warnings,
+            taskIds: providerResponse.taskIds,
+            includeRatePlanId,
+            fallbackStatus,
+            errorCodePrefix,
+            errorMessagePrefix,
+          }),
+          endpointPath
+        )
       );
+      if (stopOnFailure) break;
     } catch (error) {
       results.push(
-        buildProviderPushExceptionResult({
-          group,
-          requestBody,
-          error,
-          includeRatePlanId,
-          fallbackStatus,
-          requestFailedCode,
-          requestFailedMessage,
-        })
+        withPushRequestContext(
+          buildProviderPushExceptionResult({
+            group,
+            requestBody,
+            error,
+            includeRatePlanId,
+            fallbackStatus,
+            requestFailedCode,
+            requestFailedMessage,
+          }),
+          endpointPath
+        )
       );
+      if (stopOnFailure) break;
     }
   }
 
@@ -493,14 +553,20 @@ export default class ChannexProviderClient {
         .map((row) => {
           const externalRoomTypeId = requireStr(row?.id);
           if (!externalRoomTypeId) return null;
+          const attributes = row?.attributes || {};
 
           return {
             externalRoomTypeId,
             externalRoomTypeName:
-              requireStr(row?.attributes?.title) ||
-              requireStr(row?.attributes?.name) ||
+              requireStr(attributes?.title) ||
+              requireStr(attributes?.name) ||
               null,
-            roomTypeStatus: requireStr(row?.attributes?.state) || null,
+            roomTypeStatus: requireStr(attributes?.state) || null,
+            countOfRooms: normalizeNonNegativeInteger(
+              attributes?.count_of_rooms ??
+              attributes?.countOfRooms ??
+              attributes?.count
+            ),
           };
         })
         .filter(Boolean);
@@ -623,7 +689,7 @@ export default class ChannexProviderClient {
     }
   }
 
-  async pushAvailability(credentials, groupedAvailabilityPayloads) {
+  async pushAvailability(credentials, groupedAvailabilityPayloads, options = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const groups = Array.isArray(groupedAvailabilityPayloads) ? groupedAvailabilityPayloads : [];
 
@@ -638,10 +704,12 @@ export default class ChannexProviderClient {
       errorMessagePrefix: "Channex availability push",
       requestFailedCode: "CHANNEX_AVAILABILITY_PUSH_REQUEST_FAILED",
       requestFailedMessage: "Channex availability push request failed.",
+      requestTimeoutMs: options?.requestTimeoutMs,
+      stopOnFailure: !!options?.stopOnFailure,
     });
   }
 
-  async pushRestrictions(credentials, groupedRestrictionRatePayloads) {
+  async pushRestrictions(credentials, groupedRestrictionRatePayloads, options = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const groups = Array.isArray(groupedRestrictionRatePayloads) ? groupedRestrictionRatePayloads : [];
 
@@ -650,6 +718,8 @@ export default class ChannexProviderClient {
       groups,
       endpointPath: "/api/v1/restrictions",
       includeRatePlanId: true,
+      requestTimeoutMs: options?.requestTimeoutMs,
+      stopOnFailure: !!options?.stopOnFailure,
       missingValuesCode: "CHANNEX_RESTRICTIONS_VALUES_MISSING",
       missingValuesMessage: "Channex restrictions push requires at least one values entry.",
       fallbackStatus: "RESTRICTIONS_PUSH_FAILED",
