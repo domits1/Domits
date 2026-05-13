@@ -9,7 +9,6 @@ import { updateInquiryStatus } from "./services/reservationService.js";
 import { calculateTotalPayment } from "./utils/reservationCalculations.js";
 import { usePagination } from "./hooks/usePagination.js";
 import { FiSearch } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
 
 const normalizeStatus = (status) => {
   if (!status) return "";
@@ -119,7 +118,6 @@ const HostReservations = () => {
           setBookings([]);
           return;
         }
-
         const flat = mapReservations(data);
         setBookings(flat);
       } catch (error) {
@@ -164,31 +162,11 @@ const HostReservations = () => {
     }
 
     return result.sort((a, b) => {
-      if (!sortField) {
-        const da = new Date(a.arrivaldate || 0);
-        const db = new Date(b.arrivaldate || 0);
-        return da - db;
-      }
-
-      let valueA, valueB;
-
-      if (sortField === "dates") {
-        valueA = new Date(a.arrivaldate || 0);
-        valueB = new Date(b.arrivaldate || 0);
-      }
-
-      if (sortField === "booked") {
-        valueA = new Date(a.createdat || 0);
-        valueB = new Date(b.createdat || 0);
-      }
-
-      if (!valueA || !valueB) return 0;
-
-      return sortDirection === "asc"
-        ? valueA - valueB
-       : valueB - valueA;
+      const da = new Date(a.arrivaldate || 0);
+      const db = new Date(b.arrivaldate || 0);
+      return da - db;
     });
-  }, [bookings, activeTab, search, range, sortField, sortDirection]);
+  }, [bookings, activeTab, search, range]);
 
   const count = (type) => {
     if (type === "ALL") {
