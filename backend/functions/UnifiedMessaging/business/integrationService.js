@@ -233,6 +233,48 @@ const copySupportedChannexRestrictions = (source) => {
 };
 const hasSupportedChannexRestrictionFields = (source) =>
   Object.keys(copySupportedChannexRestrictions(source)).length > 0;
+const addChannexRestrictionMappingEntry = ({ supportedByField, omittedRestrictions, domitsRestriction, value }) => {
+  if (domitsRestriction === "MinimumStay") {
+    if (value > 0) {
+      supportedByField.set("min_stay_through", {
+        domitsRestriction,
+        channexField: "min_stay_through",
+        value,
+      });
+      return;
+    }
+    omittedRestrictions.push({
+      domitsRestriction,
+      value,
+      reason:
+        "Domits MinimumStay values less than or equal to 0 are not valid Channex min_stay_through values, so the field is omitted.",
+    });
+    return;
+  }
+
+  if (domitsRestriction === "MaximumStay") {
+    if (value > 0) {
+      supportedByField.set("max_stay", {
+        domitsRestriction,
+        channexField: "max_stay",
+        value,
+      });
+      return;
+    }
+    omittedRestrictions.push({
+      domitsRestriction,
+      value,
+      reason: "Domits MaximumStay values less than or equal to 0 mean no maximum, so Channex max_stay is omitted.",
+    });
+    return;
+  }
+
+  omittedRestrictions.push({
+    domitsRestriction,
+    value,
+    reason: "No safe Domits-to-Channex restriction mapping is implemented for this restriction.",
+  });
+};
 const buildChannexRestrictionMapping = (restrictions) => {
   const supportedByField = new Map();
   const omittedRestrictions = [];
@@ -242,45 +284,11 @@ const buildChannexRestrictionMapping = (restrictions) => {
     const value = normalizeRestrictionInteger(restriction?.value);
     if (!domitsRestriction || value === null) continue;
 
-    if (domitsRestriction === "MinimumStay") {
-      if (value > 0) {
-        supportedByField.set("min_stay_through", {
-          domitsRestriction,
-          channexField: "min_stay_through",
-          value,
-        });
-      } else {
-        omittedRestrictions.push({
-          domitsRestriction,
-          value,
-          reason:
-            "Domits MinimumStay values less than or equal to 0 are not valid Channex min_stay_through values, so the field is omitted.",
-        });
-      }
-      continue;
-    }
-
-    if (domitsRestriction === "MaximumStay") {
-      if (value > 0) {
-        supportedByField.set("max_stay", {
-          domitsRestriction,
-          channexField: "max_stay",
-          value,
-        });
-      } else {
-        omittedRestrictions.push({
-          domitsRestriction,
-          value,
-          reason: "Domits MaximumStay values less than or equal to 0 mean no maximum, so Channex max_stay is omitted.",
-        });
-      }
-      continue;
-    }
-
-    omittedRestrictions.push({
+    addChannexRestrictionMappingEntry({
+      supportedByField,
+      omittedRestrictions,
       domitsRestriction,
       value,
-      reason: "No safe Domits-to-Channex restriction mapping is implemented for this restriction.",
     });
   }
 
@@ -2055,6 +2063,77 @@ const normalizeCertificationAvailabilityValue = (value) => {
   if (!Number.isFinite(numericValue)) return null;
 
   return Math.max(0, Math.min(CHANNEX_CERTIFICATION_MAX_AVAILABILITY, Math.trunc(numericValue)));
+};
+const getCertificationRoomLabel = (roomKey) => CHANNEX_CERTIFICATION_ROOM_TARGETS[roomKey]?.label ?? roomKey;
+const getCertificationRatePlanLabel = (ratePlanKey) =>
+  CHANNEX_CERTIFICATION_RATE_TARGETS[ratePlanKey]?.label ?? ratePlanKey;
+const getCertificationUpdateDateTarget = (update) => update.date || `${update.dateFrom || "?"} to ${update.dateTo || "?"}`;
+const buildCertificationPayloadUpdate = ({ readiness, testCase, update }) => {
+  const roomLabel = getCertificationRoomLabel(update.room);
+  const roomMapping = findCertificationRoomMapping(readiness, update.room);
+  if (!roomMapping) {
+    return {
+      failure: {
+        target: roomLabel,
+        errorCode: "CHANNEX_CERTIFICATION_ROOM_MAPPING_MISSING",
+        errorMessage: `Missing Channex room type mapping for ${roomLabel}.`,
+      },
+    };
+  }
+
+  const dates = getCertificationUpdateDates(update);
+  const dateTarget = getCertificationUpdateDateTarget(update);
+  if (!dates.length) {
+    return {
+      failure: {
+        target: dateTarget,
+        errorCode: "CHANNEX_CERTIFICATION_TEST_INVALID_DATE_RANGE",
+        errorMessage: "Certification test case update has an invalid date range.",
+      },
+    };
+  }
+
+  if (testCase.payloadType === "availability") {
+    const availability = normalizeCertificationAvailabilityValue(update.availability);
+    if (availability === null) {
+      return {
+        failure: {
+          target: `${roomLabel} / ${dateTarget}`,
+          errorCode: "CHANNEX_CERTIFICATION_TEST_INVALID_AVAILABILITY",
+          errorMessage: "Certification availability update has an invalid availability value.",
+        },
+      };
+    }
+    return {
+      values: dates.map((date) => ({
+        property_id: roomMapping.externalPropertyId,
+        room_type_id: roomMapping.externalRoomTypeId,
+        date,
+        availability,
+      })),
+    };
+  }
+
+  const ratePlanLabel = getCertificationRatePlanLabel(update.ratePlan);
+  const ratePlanMapping = findCertificationRatePlanMapping(readiness, roomMapping, update.ratePlan);
+  if (!ratePlanMapping) {
+    return {
+      failure: {
+        target: `${roomLabel} / ${ratePlanLabel}`,
+        errorCode: "CHANNEX_CERTIFICATION_RATE_PLAN_MAPPING_MISSING",
+        errorMessage: `Missing Channex rate plan mapping for ${roomLabel} / ${ratePlanLabel}.`,
+      },
+    };
+  }
+
+  return {
+    values: dates.map((date) => ({
+      property_id: ratePlanMapping.externalPropertyId,
+      rate_plan_id: ratePlanMapping.externalRatePlanId,
+      date,
+      ...update.fields,
+    })),
+  };
 };
 const collectChannexValueDateRange = (values) => {
   const dates = (Array.isArray(values) ? values : []).map((value) => requireStr(value?.date)).filter(Boolean).sort(compareAlphabetically);
@@ -5726,6 +5805,92 @@ export default class IntegrationService {
     };
   }
 
+  logChannexPreviewPayloadSyncStage(stage, logContext, fields = {}) {
+    if (!logContext) return;
+    logChannexRestrictionsSync(stage, {
+      ...logContext,
+      ...fields,
+    });
+  }
+
+  async resolveChannexPreviewPayloadResult({
+    buildPayloadPreview,
+    normalizedUserId,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+  }) {
+    if (typeof buildPayloadPreview === "function") {
+      return await buildPayloadPreview(
+        normalizedUserId,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo
+      );
+    }
+
+    return await this.previewChannexAriPayloads(
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo
+    );
+  }
+
+  logChannexPreviewPayloadGenerated(logContext, payloadPreviewResult) {
+    this.logChannexPreviewPayloadSyncStage("after_payload_generation", logContext, {
+      statusCode: payloadPreviewResult?.statusCode ?? null,
+      ready: payloadPreviewResult?.response?.ready ?? null,
+      restrictionRatePayloadGroups: Array.isArray(
+        payloadPreviewResult?.response?.restrictionRatePayloadPreview?.groupedPayloads
+      )
+        ? payloadPreviewResult.response.restrictionRatePayloadPreview.groupedPayloads.length
+        : null,
+      restrictionRatePayloadItems: Array.isArray(payloadPreviewResult?.response?.restrictionRatePayloadPreview?.items)
+        ? payloadPreviewResult.response.restrictionRatePayloadPreview.items.length
+        : null,
+    });
+  }
+
+  buildChannexPreviewPayloadSyncMetadata(payloadPreview, baseNotes) {
+    return {
+      notes: [...(Array.isArray(payloadPreview.notes) ? payloadPreview.notes : []), ...baseNotes],
+      mappingSnapshot: {
+        missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
+        sourceSummary: payloadPreview.sourceSummary ?? null,
+      },
+    };
+  }
+
+  buildChannexPreviewSyncPayloads({ groupedPayloads, buildPayloads, afterBuildPayloads, notes }) {
+    const transformedPayloads = buildPayloads(groupedPayloads);
+    if (typeof afterBuildPayloads !== "function") return transformedPayloads;
+
+    const nextTransformedPayloads = afterBuildPayloads({ baseNotes: notes, transformedPayloads });
+    return Array.isArray(nextTransformedPayloads) ? nextTransformedPayloads : transformedPayloads;
+  }
+
+  captureChannexPreviewSyncPayloads({ captureState, summarizeEvidencePayloads, transformedPayloads }) {
+    if (!captureState) return;
+    captureState.groupedOutboundPayloadSnapshot = summarizeEvidencePayloads
+      ? summarizeChannexGroupedPayloads(transformedPayloads)
+      : transformedPayloads;
+  }
+
+  applyChannexPreviewProviderFailureStatus({
+    providerSyncResult,
+    providerFailureStatusCode,
+    syncErrorCode,
+    syncErrorMessage,
+  }) {
+    if (!providerFailureStatusCode || !resultListHasErrors(providerSyncResult.response?.response?.results)) return;
+    providerSyncResult.response = bad(providerFailureStatusCode, {
+      ...providerSyncResult.response.response,
+      error: syncErrorMessage,
+      errorCode: syncErrorCode,
+    });
+  }
+
   async runChannexPreviewPayloadSync({
     userId,
     domitsPropertyId,
@@ -5778,36 +5943,20 @@ export default class IntegrationService {
     if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
     try {
-      if (logContext) {
-        logChannexRestrictionsSync("before_payload_generation", {
-          ...logContext,
-          userId: normalizedUserId,
-          domitsPropertyId: normalizedDomitsPropertyId,
-          dateFrom: normalizedDateFrom,
-          dateTo: normalizedDateTo,
-        });
-      }
-      const payloadPreviewResult = await (typeof buildPayloadPreview === "function"
-        ? buildPayloadPreview(normalizedUserId, normalizedDomitsPropertyId, normalizedDateFrom, normalizedDateTo)
-        : this.previewChannexAriPayloads(
-            normalizedUserId,
-            normalizedDomitsPropertyId,
-            normalizedDateFrom,
-            normalizedDateTo
-          ));
-      if (logContext) {
-        logChannexRestrictionsSync("after_payload_generation", {
-          ...logContext,
-          statusCode: payloadPreviewResult?.statusCode ?? null,
-          ready: payloadPreviewResult?.response?.ready ?? null,
-          restrictionRatePayloadGroups: Array.isArray(payloadPreviewResult?.response?.restrictionRatePayloadPreview?.groupedPayloads)
-            ? payloadPreviewResult.response.restrictionRatePayloadPreview.groupedPayloads.length
-            : null,
-          restrictionRatePayloadItems: Array.isArray(payloadPreviewResult?.response?.restrictionRatePayloadPreview?.items)
-            ? payloadPreviewResult.response.restrictionRatePayloadPreview.items.length
-            : null,
-        });
-      }
+      this.logChannexPreviewPayloadSyncStage("before_payload_generation", logContext, {
+        userId: normalizedUserId,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+      });
+      const payloadPreviewResult = await this.resolveChannexPreviewPayloadResult({
+        buildPayloadPreview,
+        normalizedUserId,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+      });
+      this.logChannexPreviewPayloadGenerated(logContext, payloadPreviewResult);
       if (payloadPreviewResult?.statusCode !== 200) {
         return await finalize(
           payloadPreviewResult,
@@ -5819,11 +5968,7 @@ export default class IntegrationService {
       }
 
       const payloadPreview = payloadPreviewResult.response || {};
-      const notes = [...(Array.isArray(payloadPreview.notes) ? payloadPreview.notes : []), ...baseNotes];
-      const mappingSnapshot = {
-        missingMappings: Array.isArray(payloadPreview.missingMappings) ? payloadPreview.missingMappings : [],
-        sourceSummary: payloadPreview.sourceSummary ?? null,
-      };
+      const { notes, mappingSnapshot } = this.buildChannexPreviewPayloadSyncMetadata(payloadPreview, baseNotes);
 
       if (!payloadPreview.ready) {
         const notReady = this.buildChannexSyncNotReadyResult({
@@ -5852,18 +5997,17 @@ export default class IntegrationService {
         return await finalize(noop.response, noop.evidencePatch);
       }
 
-      let transformedPayloads = buildPayloads(groupedPayloads);
-      if (typeof afterBuildPayloads === "function") {
-        const nextTransformedPayloads = afterBuildPayloads({ baseNotes: notes, transformedPayloads });
-        if (Array.isArray(nextTransformedPayloads)) {
-          transformedPayloads = nextTransformedPayloads;
-        }
-      }
-      if (captureState) {
-        captureState.groupedOutboundPayloadSnapshot = summarizeEvidencePayloads
-          ? summarizeChannexGroupedPayloads(transformedPayloads)
-          : transformedPayloads;
-      }
+      const transformedPayloads = this.buildChannexPreviewSyncPayloads({
+        groupedPayloads,
+        buildPayloads,
+        afterBuildPayloads,
+        notes,
+      });
+      this.captureChannexPreviewSyncPayloads({
+        captureState,
+        summarizeEvidencePayloads,
+        transformedPayloads,
+      });
 
       if (noopStage !== "beforeTransform" && isNoop({ groupedPayloads, transformedPayloads })) {
         const noop = this.buildChannexSyncNoopResult({
@@ -5908,26 +6052,19 @@ export default class IntegrationService {
         payloadPreview,
         summarizeEvidencePayloads,
       });
-      if (
-        providerFailureStatusCode &&
-        resultListHasErrors(providerSyncResult.response?.response?.results)
-      ) {
-        providerSyncResult.response = bad(providerFailureStatusCode, {
-          ...providerSyncResult.response.response,
-          error: syncErrorMessage,
-          errorCode: syncErrorCode,
-        });
-      }
+      this.applyChannexPreviewProviderFailureStatus({
+        providerSyncResult,
+        providerFailureStatusCode,
+        syncErrorCode,
+        syncErrorMessage,
+      });
       return await finalize(providerSyncResult.response, providerSyncResult.evidencePatch);
     } catch (error) {
       const details = describeLocalError(error);
-      if (logContext) {
-        logChannexRestrictionsSync("service_catch", {
-          ...logContext,
-          errorCode: syncErrorCode,
-          details,
-        });
-      }
+      this.logChannexPreviewPayloadSyncStage("service_catch", logContext, {
+        errorCode: syncErrorCode,
+        details,
+      });
       return await finalize(
         bad(500, {
           error: syncErrorMessage,
@@ -6464,71 +6601,9 @@ export default class IntegrationService {
     const values = [];
 
     for (const update of Array.isArray(testCase?.updates) ? testCase.updates : []) {
-      const roomMapping = findCertificationRoomMapping(readiness, update.room);
-      if (!roomMapping) {
-        failures.push({
-          target: CHANNEX_CERTIFICATION_ROOM_TARGETS[update.room]?.label ?? update.room,
-          errorCode: "CHANNEX_CERTIFICATION_ROOM_MAPPING_MISSING",
-          errorMessage: `Missing Channex room type mapping for ${CHANNEX_CERTIFICATION_ROOM_TARGETS[update.room]?.label ?? update.room}.`,
-        });
-        continue;
-      }
-
-      const dates = getCertificationUpdateDates(update);
-      if (!dates.length) {
-        failures.push({
-          target: update.date || `${update.dateFrom || "?"} to ${update.dateTo || "?"}`,
-          errorCode: "CHANNEX_CERTIFICATION_TEST_INVALID_DATE_RANGE",
-          errorMessage: "Certification test case update has an invalid date range.",
-        });
-        continue;
-      }
-
-      if (testCase.payloadType === "availability") {
-        const availability = normalizeCertificationAvailabilityValue(update.availability);
-        if (availability === null) {
-          failures.push({
-            target: `${CHANNEX_CERTIFICATION_ROOM_TARGETS[update.room]?.label ?? update.room} / ${
-              update.date || `${update.dateFrom || "?"} to ${update.dateTo || "?"}`
-            }`,
-            errorCode: "CHANNEX_CERTIFICATION_TEST_INVALID_AVAILABILITY",
-            errorMessage: "Certification availability update has an invalid availability value.",
-          });
-          continue;
-        }
-        for (const date of dates) {
-          values.push({
-            property_id: roomMapping.externalPropertyId,
-            room_type_id: roomMapping.externalRoomTypeId,
-            date,
-            availability,
-          });
-        }
-        continue;
-      }
-
-      const ratePlanMapping = findCertificationRatePlanMapping(readiness, roomMapping, update.ratePlan);
-      if (!ratePlanMapping) {
-        failures.push({
-          target: `${CHANNEX_CERTIFICATION_ROOM_TARGETS[update.room]?.label ?? update.room} / ${
-            CHANNEX_CERTIFICATION_RATE_TARGETS[update.ratePlan]?.label ?? update.ratePlan
-          }`,
-          errorCode: "CHANNEX_CERTIFICATION_RATE_PLAN_MAPPING_MISSING",
-          errorMessage: `Missing Channex rate plan mapping for ${
-            CHANNEX_CERTIFICATION_ROOM_TARGETS[update.room]?.label ?? update.room
-          } / ${CHANNEX_CERTIFICATION_RATE_TARGETS[update.ratePlan]?.label ?? update.ratePlan}.`,
-        });
-        continue;
-      }
-
-      for (const date of dates) {
-        values.push({
-          property_id: ratePlanMapping.externalPropertyId,
-          rate_plan_id: ratePlanMapping.externalRatePlanId,
-          date,
-          ...update.fields,
-        });
-      }
+      const updateResult = buildCertificationPayloadUpdate({ readiness, testCase, update });
+      if (updateResult.failure) failures.push(updateResult.failure);
+      if (Array.isArray(updateResult.values)) values.push(...updateResult.values);
     }
 
     if (failures.length) {
@@ -6909,6 +6984,128 @@ export default class IntegrationService {
     };
   }
 
+  buildChannexMultiStepValidationInput({
+    normalizedUserId,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    dateContext,
+    config,
+  }) {
+    const validationInput = {
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+    };
+    const validationFields = config.getValidationFields?.(dateContext);
+    if (validationFields) Object.assign(validationInput, validationFields);
+    return validationInput;
+  }
+
+  buildChannexMultiStepSuccessResponseBody({
+    readiness,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    dateContext,
+    config,
+    availabilityStep,
+    restrictionsStep,
+    availabilityResponse,
+    restrictionsResponse,
+    restrictionsIntegrationAccountId,
+    getRestrictionsResponse,
+    calledProvider,
+    combinedRequestCount,
+    combinedTaskIds,
+    combinedWarnings,
+    combinedErrors,
+    overallSuccess,
+    baseNotes,
+  }) {
+    const responseBody = {
+      channel: readiness.channel || "CHANNEX",
+      integrationAccountId:
+        availabilityResponse.integrationAccountId ??
+        restrictionsIntegrationAccountId ??
+        readiness.integrationAccountId ??
+        null,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      dateFrom: normalizedDateFrom,
+      dateTo: normalizedDateTo,
+    };
+    const successFieldsBeforeReady = config.getSuccessResponseFieldsBeforeReady?.(dateContext);
+    if (successFieldsBeforeReady) Object.assign(responseBody, successFieldsBeforeReady);
+    responseBody.ready = true;
+    const successFieldsAfterReady = config.getSuccessResponseFieldsAfterReady?.(dateContext);
+    if (successFieldsAfterReady) Object.assign(responseBody, successFieldsAfterReady);
+    responseBody.calledProvider = calledProvider;
+    responseBody.steps = {
+      availability: getStepResponse(availabilityStep, availabilityResponse),
+      restrictions: getRestrictionsResponse(restrictionsStep, restrictionsResponse),
+    };
+    if (config.includeCombinedFieldsInSuccessResponse) {
+      Object.assign(responseBody, {
+        requestCount: combinedRequestCount,
+        taskIds: combinedTaskIds,
+        warnings: combinedWarnings,
+        errors: combinedErrors,
+      });
+    }
+    responseBody.overallSuccess = overallSuccess;
+    responseBody.notes = baseNotes;
+    return responseBody;
+  }
+
+  buildChannexMultiStepResponse({ responseBody, combinedErrors, config }) {
+    if (!config.providerFailureStatusCode || !combinedErrors.length) return ok(responseBody);
+    return bad(config.providerFailureStatusCode, {
+      ...responseBody,
+      error: config.providerFailureMessage ?? config.catchErrorMessage,
+      errorCode: config.providerFailureCode ?? config.catchErrorCode,
+    });
+  }
+
+  buildChannexMultiStepRestrictionsContext({ config, restrictionsResponse }) {
+    return {
+      getRestrictionsResponse: config.restrictionsOptional ? getOptionalStepResponse : getStepResponse,
+      getRestrictionsSummary: config.restrictionsOptional ? getOptionalStepSummary : getStepSummary,
+      restrictionsIntegrationAccountId: config.restrictionsOptional
+        ? restrictionsResponse?.integrationAccountId
+        : restrictionsResponse.integrationAccountId,
+    };
+  }
+
+  buildChannexMultiStepRawDetails({
+    readiness,
+    config,
+    preStepContext,
+    dateContext,
+    availabilityStep,
+    restrictionsStep,
+  }) {
+    const rawDetails = {
+      readiness,
+    };
+    const rawDetailsBeforeSteps = config.getRawDetailsBeforeSteps?.(preStepContext, dateContext);
+    if (rawDetailsBeforeSteps) Object.assign(rawDetails, rawDetailsBeforeSteps);
+    rawDetails.availabilityStep = availabilityStep;
+    rawDetails.restrictionsStep = restrictionsStep;
+    const rawDetailsAfterSteps = config.getRawDetailsAfterSteps?.(dateContext);
+    if (rawDetailsAfterSteps) Object.assign(rawDetails, rawDetailsAfterSteps);
+    return rawDetails;
+  }
+
+  buildChannexMultiStepCaughtRawDetails({ config, dateContext, details }) {
+    const rawDetails = {
+      caughtError: details,
+    };
+    const caughtRawDetails = config.getCaughtRawDetails?.(dateContext);
+    if (caughtRawDetails) Object.assign(rawDetails, caughtRawDetails);
+    return rawDetails;
+  }
+
   async runChannexMultiStepSync({ userId, domitsPropertyId, dateFrom, dateTo, options, config }) {
     const startedAt = nowMs();
     const normalizedUserId = requireStr(userId);
@@ -6927,14 +7124,14 @@ export default class IntegrationService {
       options,
     });
 
-    const validationInput = {
+    const validationInput = this.buildChannexMultiStepValidationInput({
       normalizedUserId,
       normalizedDomitsPropertyId,
       normalizedDateFrom,
       normalizedDateTo,
-    };
-    const validationFields = config.getValidationFields?.(dateContext);
-    if (validationFields) Object.assign(validationInput, validationFields);
+      dateContext,
+      config,
+    });
     const validationFailure = buildSyncDateRangeValidationFailure(validationInput);
     if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
 
@@ -7016,52 +7213,37 @@ export default class IntegrationService {
       const combinedRequestCount =
         getStepRequestCount(availabilityStep, availabilityResponse) +
         getStepRequestCount(restrictionsStep, restrictionsResponse);
-      const getRestrictionsResponse = config.restrictionsOptional ? getOptionalStepResponse : getStepResponse;
-      const getRestrictionsSummary = config.restrictionsOptional ? getOptionalStepSummary : getStepSummary;
-      const restrictionsIntegrationAccountId = config.restrictionsOptional
-        ? restrictionsResponse?.integrationAccountId
-        : restrictionsResponse.integrationAccountId;
+      const {
+        getRestrictionsResponse,
+        getRestrictionsSummary,
+        restrictionsIntegrationAccountId,
+      } = this.buildChannexMultiStepRestrictionsContext({
+        config,
+        restrictionsResponse,
+      });
 
-      const responseBody = {
-        channel: readiness.channel || "CHANNEX",
-        integrationAccountId:
-          availabilityResponse.integrationAccountId ??
-          restrictionsIntegrationAccountId ??
-          readiness.integrationAccountId ??
-          null,
-        domitsPropertyId: normalizedDomitsPropertyId,
-        dateFrom: normalizedDateFrom,
-        dateTo: normalizedDateTo,
-      };
-      const successFieldsBeforeReady = config.getSuccessResponseFieldsBeforeReady?.(dateContext);
-      if (successFieldsBeforeReady) Object.assign(responseBody, successFieldsBeforeReady);
-      responseBody.ready = true;
-      const successFieldsAfterReady = config.getSuccessResponseFieldsAfterReady?.(dateContext);
-      if (successFieldsAfterReady) Object.assign(responseBody, successFieldsAfterReady);
-      responseBody.calledProvider = calledProvider;
-      responseBody.steps = {
-        availability: getStepResponse(availabilityStep, availabilityResponse),
-        restrictions: getRestrictionsResponse(restrictionsStep, restrictionsResponse),
-      };
-      if (config.includeCombinedFieldsInSuccessResponse) {
-        Object.assign(responseBody, {
-          requestCount: combinedRequestCount,
-          taskIds: combinedTaskIds,
-          warnings: combinedWarnings,
-          errors: combinedErrors,
-        });
-      }
-      responseBody.overallSuccess = overallSuccess;
-      responseBody.notes = baseNotes;
-
-      const response =
-        config.providerFailureStatusCode && combinedErrors.length
-          ? bad(config.providerFailureStatusCode, {
-              ...responseBody,
-              error: config.providerFailureMessage ?? config.catchErrorMessage,
-              errorCode: config.providerFailureCode ?? config.catchErrorCode,
-            })
-          : ok(responseBody);
+      const responseBody = this.buildChannexMultiStepSuccessResponseBody({
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        dateContext,
+        config,
+        availabilityStep,
+        restrictionsStep,
+        availabilityResponse,
+        restrictionsResponse,
+        restrictionsIntegrationAccountId,
+        getRestrictionsResponse,
+        calledProvider,
+        combinedRequestCount,
+        combinedTaskIds,
+        combinedWarnings,
+        combinedErrors,
+        overallSuccess,
+        baseNotes,
+      });
+      const response = this.buildChannexMultiStepResponse({ responseBody, combinedErrors, config });
 
       const combinedStatus = getCombinedSyncStatus({
         overallSuccess,
@@ -7071,15 +7253,14 @@ export default class IntegrationService {
         blockNoProviderWithErrors: !!config.blockNoProviderWithErrors,
       });
 
-      const rawDetails = {
+      const rawDetails = this.buildChannexMultiStepRawDetails({
         readiness,
-      };
-      const rawDetailsBeforeSteps = config.getRawDetailsBeforeSteps?.(preStepContext, dateContext);
-      if (rawDetailsBeforeSteps) Object.assign(rawDetails, rawDetailsBeforeSteps);
-      rawDetails.availabilityStep = availabilityStep;
-      rawDetails.restrictionsStep = restrictionsStep;
-      const rawDetailsAfterSteps = config.getRawDetailsAfterSteps?.(dateContext);
-      if (rawDetailsAfterSteps) Object.assign(rawDetails, rawDetailsAfterSteps);
+        config,
+        preStepContext,
+        dateContext,
+        availabilityStep,
+        restrictionsStep,
+      });
 
       return await finalize(response, {
         integrationAccountId:
@@ -7107,11 +7288,7 @@ export default class IntegrationService {
       });
     } catch (error) {
       const details = describeLocalError(error);
-      const rawDetails = {
-        caughtError: details,
-      };
-      const caughtRawDetails = config.getCaughtRawDetails?.(dateContext);
-      if (caughtRawDetails) Object.assign(rawDetails, caughtRawDetails);
+      const rawDetails = this.buildChannexMultiStepCaughtRawDetails({ config, dateContext, details });
 
       return await finalize(
         bad(500, {
@@ -7160,6 +7337,843 @@ export default class IntegrationService {
         restrictionsOptional: true,
         catchErrorCode: "CHANNEX_ARI_SYNC_FAILED",
         catchErrorMessage: "Failed to run combined Channex ARI sync.",
+      },
+    });
+  }
+
+  async finalizeInvalidChannexFullSyncOptions({
+    providerMode,
+    rawProviderMode,
+    debugStage,
+    rawDebugStage,
+    dryRun,
+    stageLog,
+    finalize,
+  }) {
+    if (!providerMode) {
+      return await finalize(
+        bad(400, {
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "validation_failed",
+          error: "Invalid query param: providerMode.",
+          errorCode: "CHANNEX_FULL_SYNC_INVALID_PROVIDER_MODE",
+          supportedProviderModes: Array.from(CHANNEX_FULL_SYNC_PROVIDER_MODES),
+        }),
+        {
+          status: "INVALID_REQUEST",
+          overallSuccess: false,
+          errors: [
+            {
+              errorCode: "CHANNEX_FULL_SYNC_INVALID_PROVIDER_MODE",
+              errorMessage: "Invalid query param: providerMode.",
+            },
+          ],
+          rawDetails: { dryRun, providerMode: rawProviderMode ?? null, debugStage, stageLog },
+        }
+      );
+    }
+
+    if (debugStage === "INVALID") {
+      return await finalize(
+        bad(400, {
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "validation_failed",
+          error: "Invalid query param: debugStage.",
+          errorCode: "CHANNEX_FULL_SYNC_INVALID_DEBUG_STAGE",
+          supportedDebugStages: Array.from(CHANNEX_FULL_SYNC_DEBUG_STAGES),
+        }),
+        {
+          status: "INVALID_REQUEST",
+          overallSuccess: false,
+          errors: [
+            {
+              errorCode: "CHANNEX_FULL_SYNC_INVALID_DEBUG_STAGE",
+              errorMessage: "Invalid query param: debugStage.",
+            },
+          ],
+          rawDetails: { dryRun, providerMode, debugStage: rawDebugStage ?? null, stageLog },
+        }
+      );
+    }
+
+    return null;
+  }
+
+  async finalizeChannexFullSyncDateValidationFailure({
+    validationFailure,
+    dryRun,
+    providerMode,
+    debugStage,
+    usingDefaultDateRange,
+    stageLog,
+    mark,
+    finalize,
+  }) {
+    if (!validationFailure) return null;
+    mark("validation_failed", {
+      errorCode: validationFailure.evidencePatch?.errors?.[0]?.errorCode ?? null,
+    });
+    return await finalize(
+      {
+        ...validationFailure.response,
+        response: {
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "validation_failed",
+          dryRun,
+          providerMode,
+          debugStage,
+          ...validationFailure.response.response,
+        },
+      },
+      {
+        ...validationFailure.evidencePatch,
+        rawDetails: {
+          dryRun,
+          providerMode,
+          debugStage,
+          usedDefaultDateRange: usingDefaultDateRange,
+          stageLog,
+        },
+      }
+    );
+  }
+
+  async finalizeChannexFullSyncEarlyDebugStage({
+    debugStage,
+    dryRun,
+    providerMode,
+    normalizedUserId,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    stageLog,
+    mark,
+    finalize,
+  }) {
+    if (debugStage === "validateOnly") {
+      return await finalize(
+        ok({
+          ok: true,
+          route: "sync/full",
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "validation_passed",
+          debugStage,
+          dryRun,
+          providerMode,
+          userId: normalizedUserId,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+          selectedDays: countInclusiveIsoDateRangeDays(normalizedDateFrom, normalizedDateTo),
+          calledProvider: false,
+          requestCount: 0,
+          debug: { stages: stageLog },
+        }),
+        {
+          status: "DEBUG",
+          overallSuccess: true,
+          rawDetails: { debugStage, dryRun, providerMode, stageLog },
+        }
+      );
+    }
+
+    if (debugStage === "evidenceOnly") {
+      mark("evidence_only_response_ready");
+      return await finalize(
+        ok({
+          ok: true,
+          route: "sync/full",
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "evidence_only_response_ready",
+          debugStage,
+          dryRun,
+          providerMode,
+          userId: normalizedUserId,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          dateFrom: normalizedDateFrom,
+          dateTo: normalizedDateTo,
+          calledProvider: false,
+          requestCount: 0,
+          debug: { stages: stageLog },
+        }),
+        {
+          status: "DEBUG",
+          overallSuccess: true,
+          notes: ["debugStage=evidenceOnly: persisted a minimal full-sync debug evidence record only."],
+          rawDetails: { debugStage, dryRun, providerMode, stageLog },
+        }
+      );
+    }
+
+    return null;
+  }
+
+  buildChannexFullSyncNotes({ usingDefaultDateRange, dryRun, debugStage, providerMode }) {
+    const baseNotes = createCertificationFullSyncBaseNotes(usingDefaultDateRange);
+    baseNotes.push(
+      `Full certification sync runtime marker: ${CHANNEX_FULL_CERTIFICATION_SYNC_VERSION}.`,
+      `Real non-debug full sync sends exactly one availability request and one rates/restrictions request to Channex when both payloads contain values.`,
+      `Provider requests use a controlled ${CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS} ms timeout so slow Channex responses return JSON instead of hanging the API request.`
+    );
+    if (dryRun) {
+      baseNotes.push("dryRun=true: payloads are built and summarized, but no Channex provider request is sent.");
+    }
+    if (debugStage) {
+      baseNotes.push(`debugStage=${debugStage}: endpoint returns after the requested diagnostic stage.`);
+    }
+    if (providerMode !== "both") {
+      baseNotes.push(`providerMode=${providerMode}: only the selected provider step is executed for live isolation.`);
+    }
+    return baseNotes;
+  }
+
+  async loadChannexFullSyncReadinessContext({
+    normalizedUserId,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    usingDefaultDateRange,
+    dryRun,
+    providerMode,
+    debugStage,
+    stageLog,
+    mark,
+    finalize,
+  }) {
+    const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
+    if (readinessResult?.statusCode !== 200) {
+      mark("mappings_failed", { statusCode: readinessResult?.statusCode ?? null });
+      return {
+        finalized: await finalize(
+          {
+            ...readinessResult,
+            response: {
+              fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+              stage: "mappings_failed",
+              dryRun,
+              providerMode,
+              debugStage,
+              ...(readinessResult?.response ?? undefined),
+            },
+          },
+          {
+            ...this.buildChannexAriTargetsFailureEvidencePatch(readinessResult),
+            rawDetails: {
+              readinessResult,
+              dryRun,
+              providerMode,
+              debugStage,
+              stageLog,
+            },
+          }
+        ),
+      };
+    }
+
+    const readiness = readinessResult.response || {};
+    const mappingSnapshot = this.buildChannexMultiStepMappingSnapshot(readiness);
+    const baseNotes = this.buildChannexFullSyncNotes({ usingDefaultDateRange, dryRun, debugStage, providerMode });
+    mark("mappings_loaded", {
+      ready: !!readiness.ready,
+      integrationAccountId: readiness.integrationAccountId ?? null,
+      roomTypeMappingCount: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings.length : 0,
+      ratePlanMappingCount: Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings.length : 0,
+    });
+
+    return { readiness, mappingSnapshot, baseNotes };
+  }
+
+  async finalizeChannexFullSyncMappingsOnlyDebug({
+    debugStage,
+    readiness,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    usingDefaultDateRange,
+    dryRun,
+    providerMode,
+    mappingSnapshot,
+    baseNotes,
+    stageLog,
+    finalize,
+  }) {
+    if (debugStage !== "mappingsOnly") return null;
+    return await finalize(
+      ok({
+        ...this.buildChannexFullSyncBaseResponse({
+          readiness,
+          normalizedDomitsPropertyId,
+          normalizedDateFrom,
+          normalizedDateTo,
+          usingDefaultDateRange,
+          dryRun,
+          providerMode,
+          stage: "mappings_loaded",
+        }),
+        ok: true,
+        debugStage,
+        ready: !!readiness.ready,
+        calledProvider: false,
+        requestCount: 0,
+        mappingSnapshot,
+        missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
+        debug: { stages: stageLog },
+      }),
+      {
+        integrationAccountId: readiness.integrationAccountId ?? null,
+        status: "DEBUG",
+        overallSuccess: true,
+        mappingSnapshot,
+        notes: baseNotes,
+        rawDetails: { debugStage, dryRun, providerMode, stageLog },
+      }
+    );
+  }
+
+  async finalizeBlockedChannexFullSyncReadiness({
+    readiness,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    usingDefaultDateRange,
+    dryRun,
+    providerMode,
+    debugStage,
+    mappingSnapshot,
+    baseNotes,
+    dateContext,
+    stageLog,
+    finalize,
+  }) {
+    if (readiness.ready) return null;
+    const blocked = this.buildBlockedChannexMultiStepSyncResult({
+      readiness,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+      baseNotes,
+      mappingSnapshot,
+      config: {
+        includeCombinedFieldsInBlockedResponse: true,
+        getBlockedResponseFieldsBeforeReady: () => ({
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "mappings_loaded",
+          usedDefaultDateRange: usingDefaultDateRange,
+          dryRun,
+          providerMode,
+          debugStage,
+        }),
+        getBlockedResponseFieldsAfterReady: () => ({ blocked: true }),
+      },
+      dateContext,
+    });
+    return await finalize(blocked.response, {
+      ...blocked.evidencePatch,
+      rawDetails: {
+        readiness: {
+          ready: readiness.ready,
+          missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
+        },
+        dryRun,
+        providerMode,
+        debugStage,
+        stageLog,
+      },
+    });
+  }
+
+  async finalizeChannexFullSyncPayloadOnlyDebug({
+    debugStage,
+    readiness,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    usingDefaultDateRange,
+    dryRun,
+    providerMode,
+    mappingSnapshot,
+    baseNotes,
+    stageLog,
+    mark,
+    finalize,
+  }) {
+    if (debugStage === "availabilityPayloadOnly") {
+      mark("before_availability_payload_generation");
+      const availabilityPayloadContext = await this.buildChannexFullSyncAvailabilityPayloadContext({
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+      });
+      mark("availability_payload_built", {
+        itemCount: availabilityPayloadContext.availabilityItems.length,
+        sourceGroupCount: availabilityPayloadContext.availabilityGroupedPayloads.length,
+        requestCount: availabilityPayloadContext.availabilityProviderPayloads.length,
+        valueCount: availabilityPayloadContext.availabilityProviderPayloads.reduce(
+          (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
+          0
+        ),
+      });
+      return await finalize(
+        ok({
+          ...this.buildChannexFullSyncBaseResponse({
+            readiness,
+            normalizedDomitsPropertyId,
+            normalizedDateFrom,
+            normalizedDateTo,
+            usingDefaultDateRange,
+            dryRun,
+            providerMode,
+            stage: "availability_payload_built",
+          }),
+          ok: true,
+          debugStage,
+          ready: true,
+          calledProvider: false,
+          requestCount: 0,
+          payloadSummaries: {
+            availability: availabilityPayloadContext.availabilityPayloadSummary,
+            restrictions: null,
+          },
+          debug: {
+            payloadsOmitted: true,
+            stages: stageLog,
+          },
+        }),
+        {
+          integrationAccountId: readiness.integrationAccountId ?? null,
+          status: "DEBUG",
+          overallSuccess: true,
+          mappingSnapshot,
+          groupedOutboundPayloadSnapshot: {
+            availability: availabilityPayloadContext.availabilityPayloadSummary,
+            restrictions: null,
+          },
+          notes: baseNotes,
+          rawDetails: { debugStage, dryRun, providerMode, payloadsOmitted: true, stageLog },
+        }
+      );
+    }
+
+    if (debugStage !== "restrictionsPayloadOnly") return null;
+    mark("before_restrictions_payload_generation");
+    const restrictionsPayloadContext = await this.buildChannexFullSyncRestrictionsPayloadContext({
+      readiness,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom,
+      normalizedDateTo,
+      markStage: mark,
+    });
+    mark("restrictions_payload_built", {
+      itemCount: restrictionsPayloadContext.restrictionRateItems.length,
+      sourceGroupCount: restrictionsPayloadContext.restrictionRateGroupedPayloads.length,
+      requestCount: restrictionsPayloadContext.restrictionProviderPayloads.length,
+      valueCount: restrictionsPayloadContext.restrictionProviderPayloads.reduce(
+        (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
+        0
+      ),
+      sentChannexRestrictionFields: restrictionsPayloadContext.sentChannexRestrictionFields,
+    });
+    return await finalize(
+      ok({
+        ...this.buildChannexFullSyncBaseResponse({
+          readiness,
+          normalizedDomitsPropertyId,
+          normalizedDateFrom,
+          normalizedDateTo,
+          usingDefaultDateRange,
+          dryRun,
+          providerMode,
+          stage: "restrictions_payload_built",
+        }),
+        ok: true,
+        debugStage,
+        ready: true,
+        calledProvider: false,
+        requestCount: 0,
+        payloadSummaries: {
+          availability: null,
+          restrictions: restrictionsPayloadContext.restrictionsPayloadSummary,
+        },
+        sentChannexRestrictionFields: restrictionsPayloadContext.sentChannexRestrictionFields,
+        debug: {
+          payloadsOmitted: true,
+          stages: stageLog,
+        },
+      }),
+      {
+        integrationAccountId: readiness.integrationAccountId ?? null,
+        status: "DEBUG",
+        overallSuccess: true,
+        mappingSnapshot,
+        groupedOutboundPayloadSnapshot: {
+          availability: null,
+          restrictions: restrictionsPayloadContext.restrictionsPayloadSummary,
+        },
+        notes: baseNotes,
+        rawDetails: { debugStage, dryRun, providerMode, payloadsOmitted: true, stageLog },
+      }
+    );
+  }
+
+  markChannexFullSyncPayloadContextBuilt({ payloadContext, availabilityPayloads, restrictionPayloads, baseNotes, mark }) {
+    mark("availability_payload_built", {
+      itemCount: payloadContext.availabilityItems.length,
+      sourceGroupCount: payloadContext.availabilityGroupedPayloads.length,
+      requestCount: availabilityPayloads.length,
+      valueCount: availabilityPayloads.reduce(
+        (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
+        0
+      ),
+    });
+    mark("restrictions_payload_built", {
+      itemCount: payloadContext.restrictionRateItems.length,
+      sourceGroupCount: payloadContext.restrictionRateGroupedPayloads.length,
+      requestCount: restrictionPayloads.length,
+      valueCount: restrictionPayloads.reduce(
+        (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
+        0
+      ),
+      sentChannexRestrictionFields: payloadContext.sentChannexRestrictionFields,
+    });
+    if (payloadContext.sentChannexRestrictionFields.length) {
+      baseNotes.push(
+        `Full sync rates/restrictions payload includes supported Channex fields when values exist: ${payloadContext.sentChannexRestrictionFields.join(", ")}.`
+      );
+      return;
+    }
+    baseNotes.push(
+      "Full sync rates/restrictions payload is rate-only because no supported restriction values were available in the selected range."
+    );
+  }
+
+  async finalizeChannexFullSyncPreProviderResult({
+    providerPlan,
+    payloadSummaries,
+    readiness,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    usingDefaultDateRange,
+    dryRun,
+    providerMode,
+    mappingSnapshot,
+    baseNotes,
+    stageLog,
+    mark,
+    finalize,
+  }) {
+    const emptyPlanItems = providerPlan.filter((item) => !Array.isArray(item.payloads) || item.payloads.length === 0);
+    if (emptyPlanItems.length) {
+      mark("payload_validation_failed", {
+        missingSteps: emptyPlanItems.map((item) => item.step),
+      });
+      const errors = emptyPlanItems.map((item) => ({
+        errorCode: `CHANNEX_FULL_SYNC_${item.step.toUpperCase()}_PAYLOAD_EMPTY`,
+        errorMessage: item.emptyReason,
+      }));
+      const response = bad(409, {
+        ...this.buildChannexFullSyncBaseResponse({
+          readiness,
+          normalizedDomitsPropertyId,
+          normalizedDateFrom,
+          normalizedDateTo,
+          usingDefaultDateRange,
+          dryRun,
+          providerMode,
+          stage: "payload_validation_failed",
+        }),
+        ready: true,
+        blocked: true,
+        calledProvider: false,
+        requestCount: 0,
+        plannedRequestCount: providerPlan.length,
+        taskIds: [],
+        warnings: [],
+        errors,
+        payloadSummaries,
+        overallSuccess: false,
+        notes: baseNotes,
+        debug: {
+          payloadsOmitted: true,
+          stages: stageLog,
+        },
+      });
+      return await finalize(response, {
+        integrationAccountId: readiness.integrationAccountId ?? null,
+        status: "BLOCKED",
+        overallSuccess: false,
+        mappingSnapshot,
+        groupedOutboundPayloadSnapshot: payloadSummaries,
+        providerResponseSummary: {
+          calledProvider: false,
+          requestCount: 0,
+          plannedRequestCount: providerPlan.length,
+          dryRun,
+          providerMode,
+        },
+        taskIds: [],
+        warnings: [],
+        errors,
+        notes: baseNotes,
+        rawDetails: {
+          dryRun,
+          providerMode,
+          payloadsOmitted: true,
+          stageLog,
+        },
+      });
+    }
+
+    if (!dryRun) return null;
+    mark("dry_run_response_ready", { plannedRequestCount: providerPlan.length });
+    const response = ok({
+      ...this.buildChannexFullSyncBaseResponse({
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
+        stage: "dry_run_response_ready",
+      }),
+      ready: true,
+      blocked: false,
+      calledProvider: false,
+      requestCount: 0,
+      plannedRequestCount: providerPlan.length,
+      taskIds: [],
+      warnings: [],
+      errors: [],
+      payloadSummaries,
+      steps: {
+        availability: null,
+        restrictions: null,
+      },
+      overallSuccess: true,
+      notes: baseNotes,
+      debug: {
+        payloadsOmitted: true,
+        stages: stageLog,
+      },
+    });
+    return await finalize(response, {
+      integrationAccountId: readiness.integrationAccountId ?? null,
+      status: "DRY_RUN",
+      overallSuccess: true,
+      mappingSnapshot,
+      groupedOutboundPayloadSnapshot: payloadSummaries,
+      providerResponseSummary: {
+        calledProvider: false,
+        requestCount: 0,
+        plannedRequestCount: providerPlan.length,
+        dryRun: true,
+        providerMode,
+      },
+      taskIds: [],
+      warnings: [],
+      errors: [],
+      notes: baseNotes,
+      rawDetails: {
+        dryRun: true,
+        providerMode,
+        payloadsOmitted: true,
+        stageLog,
+      },
+    });
+  }
+
+  async finalizeChannexFullSyncCredentialFailure({
+    credentialContext,
+    readiness,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    usingDefaultDateRange,
+    dryRun,
+    providerMode,
+    payloadSummaries,
+    stageLog,
+    mark,
+    finalize,
+  }) {
+    if (credentialContext.ok) return null;
+    mark("credentials_load_failed", {
+      statusCode: credentialContext.response?.statusCode ?? null,
+    });
+    return await finalize(
+      {
+        ...credentialContext.response,
+        response: {
+          ...this.buildChannexFullSyncBaseResponse({
+            readiness,
+            normalizedDomitsPropertyId,
+            normalizedDateFrom,
+            normalizedDateTo,
+            usingDefaultDateRange,
+            dryRun,
+            providerMode,
+            stage: "credentials_load_failed",
+          }),
+          ...(credentialContext.response?.response ?? undefined),
+          ready: true,
+          calledProvider: false,
+          requestCount: 0,
+          payloadSummaries,
+          debug: {
+            payloadsOmitted: true,
+            stages: stageLog,
+          },
+        },
+      },
+      {
+        ...credentialContext.evidencePatch,
+        groupedOutboundPayloadSnapshot: payloadSummaries,
+        rawDetails: {
+          dryRun,
+          providerMode,
+          payloadsOmitted: true,
+          stageLog,
+        },
+      }
+    );
+  }
+
+  buildChannexFullSyncStepSummary(step) {
+    if (!step) return null;
+    return {
+      calledProvider: step.calledProvider,
+      requestCount: step.requestCount,
+      taskIds: step.taskIds,
+      warnings: step.warnings,
+      errors: step.errors,
+    };
+  }
+
+  async finalizeChannexFullSyncProviderSteps({
+    providerPlan,
+    credentialContext,
+    readiness,
+    normalizedDomitsPropertyId,
+    normalizedDateFrom,
+    normalizedDateTo,
+    usingDefaultDateRange,
+    dryRun,
+    providerMode,
+    payloadSummaries,
+    mappingSnapshot,
+    baseNotes,
+    stageLog,
+    mark,
+    finalize,
+  }) {
+    mark("credentials_loaded", {
+      integrationAccountId: credentialContext.integration?.id ?? null,
+    });
+    mark("provider_calls_start", {
+      requestCount: providerPlan.length,
+    });
+    const providerSteps = await Promise.all(
+      providerPlan.map((item) =>
+        this.callChannexFullSyncProviderStep({
+          step: item.step,
+          secret: credentialContext.secret,
+          payloads: item.payloads,
+        })
+      )
+    );
+    mark("provider_calls_complete", {
+      requestCount: providerSteps.reduce((sum, item) => sum + item.requestCount, 0),
+      taskIds: dedupeByJson(providerSteps.flatMap((item) => item.taskIds)),
+    });
+
+    const availabilityStep = providerSteps.find((item) => item.step === "availability") ?? null;
+    const restrictionsStep = providerSteps.find((item) => item.step === "restrictions") ?? null;
+    const combinedTaskIds = dedupeByJson(providerSteps.flatMap((item) => item.taskIds));
+    const combinedWarnings = dedupeByJson(providerSteps.flatMap((item) => item.warnings));
+    const combinedErrors = dedupeByJson(providerSteps.flatMap((item) => item.errors));
+    const requestCount = providerSteps.reduce((sum, item) => sum + item.requestCount, 0);
+    const calledProvider = requestCount > 0;
+    const overallSuccess =
+      calledProvider &&
+      combinedWarnings.length === 0 &&
+      combinedErrors.length === 0 &&
+      providerSteps.every((item) => item.success);
+    const responseStage = combinedErrors.length ? "provider_completed_with_errors" : "response_ready";
+    const responseBody = {
+      ...this.buildChannexFullSyncBaseResponse({
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
+        stage: responseStage,
+      }),
+      ready: true,
+      blocked: false,
+      calledProvider,
+      requestCount,
+      taskIds: combinedTaskIds,
+      warnings: combinedWarnings,
+      errors: combinedErrors,
+      payloadSummaries,
+      steps: {
+        availability: availabilityStep,
+        restrictions: restrictionsStep,
+      },
+      overallSuccess,
+      notes: baseNotes,
+      debug: {
+        payloadsOmitted: true,
+        stages: stageLog,
+      },
+    };
+    const response = combinedErrors.length
+      ? bad(500, {
+          ...responseBody,
+          error: "Channex certification full sync provider step failed.",
+          errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_PROVIDER_FAILED",
+        })
+      : ok(responseBody);
+
+    return await finalize(response, {
+      integrationAccountId: credentialContext.integration.id,
+      status: getCombinedSyncStatus({
+        overallSuccess,
+        providerCalled: calledProvider,
+        combinedErrors,
+        combinedWarnings,
+        blockNoProviderWithErrors: true,
+      }),
+      overallSuccess,
+      mappingSnapshot,
+      groupedOutboundPayloadSnapshot: payloadSummaries,
+      providerResponseSummary: {
+        calledProvider,
+        requestCount,
+        dryRun,
+        providerMode,
+        steps: {
+          availability: this.buildChannexFullSyncStepSummary(availabilityStep),
+          restrictions: this.buildChannexFullSyncStepSummary(restrictionsStep),
+        },
+      },
+      taskIds: combinedTaskIds,
+      warnings: combinedWarnings,
+      errors: combinedErrors,
+      notes: baseNotes,
+      rawDetails: {
+        dryRun,
+        providerMode,
+        payloadsOmitted: true,
+        stageLog,
+        providerResultSummaries: providerSteps.map((item) => ({
+          step: item.step,
+          ...item.providerResultSummary,
+        })),
       },
     });
   }
@@ -7229,51 +8243,16 @@ export default class IntegrationService {
 
     mark("service_entry");
 
-    if (!providerMode) {
-      return await finalize(
-        bad(400, {
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-          stage: "validation_failed",
-          error: "Invalid query param: providerMode.",
-          errorCode: "CHANNEX_FULL_SYNC_INVALID_PROVIDER_MODE",
-          supportedProviderModes: Array.from(CHANNEX_FULL_SYNC_PROVIDER_MODES),
-        }),
-        {
-          status: "INVALID_REQUEST",
-          overallSuccess: false,
-          errors: [
-            {
-              errorCode: "CHANNEX_FULL_SYNC_INVALID_PROVIDER_MODE",
-              errorMessage: "Invalid query param: providerMode.",
-            },
-          ],
-          rawDetails: { dryRun, providerMode: options?.providerMode ?? null, debugStage, stageLog },
-        }
-      );
-    }
-
-    if (debugStage === "INVALID") {
-      return await finalize(
-        bad(400, {
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-          stage: "validation_failed",
-          error: "Invalid query param: debugStage.",
-          errorCode: "CHANNEX_FULL_SYNC_INVALID_DEBUG_STAGE",
-          supportedDebugStages: Array.from(CHANNEX_FULL_SYNC_DEBUG_STAGES),
-        }),
-        {
-          status: "INVALID_REQUEST",
-          overallSuccess: false,
-          errors: [
-            {
-              errorCode: "CHANNEX_FULL_SYNC_INVALID_DEBUG_STAGE",
-              errorMessage: "Invalid query param: debugStage.",
-            },
-          ],
-          rawDetails: { dryRun, providerMode, debugStage: options?.debugStage ?? null, stageLog },
-        }
-      );
-    }
+    const invalidOptionResult = await this.finalizeInvalidChannexFullSyncOptions({
+      providerMode,
+      rawProviderMode: options?.providerMode,
+      debugStage,
+      rawDebugStage: options?.debugStage,
+      dryRun,
+      stageLog,
+      finalize,
+    });
+    if (invalidOptionResult) return invalidOptionResult;
 
     const validationFailure = buildSyncDateRangeValidationFailure({
       normalizedUserId,
@@ -7285,333 +8264,102 @@ export default class IntegrationService {
       requireCompleteDatePair: true,
       usingDefaultDateRange,
     });
-    if (validationFailure) {
-      mark("validation_failed", {
-        errorCode: validationFailure.evidencePatch?.errors?.[0]?.errorCode ?? null,
-      });
-      return await finalize(
-        {
-          ...validationFailure.response,
-          response: {
-            fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-            stage: "validation_failed",
-            dryRun,
-            providerMode,
-            debugStage,
-            ...validationFailure.response.response,
-          },
-        },
-        {
-          ...validationFailure.evidencePatch,
-          rawDetails: {
-            dryRun,
-            providerMode,
-            debugStage,
-            usedDefaultDateRange: usingDefaultDateRange,
-            stageLog,
-          },
-        }
-      );
-    }
+    const validationResult = await this.finalizeChannexFullSyncDateValidationFailure({
+      validationFailure,
+      dryRun,
+      providerMode,
+      debugStage,
+      usingDefaultDateRange,
+      stageLog,
+      mark,
+      finalize,
+    });
+    if (validationResult) return validationResult;
 
     try {
       mark("validation_passed", {
         selectedDays: countInclusiveIsoDateRangeDays(normalizedDateFrom, normalizedDateTo),
       });
-      if (debugStage === "validateOnly") {
-        return await finalize(
-          ok({
-            ok: true,
-            route: "sync/full",
-            fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-            stage: "validation_passed",
-            debugStage,
-            dryRun,
-            providerMode,
-            userId: normalizedUserId,
-            domitsPropertyId: normalizedDomitsPropertyId,
-            dateFrom: normalizedDateFrom,
-            dateTo: normalizedDateTo,
-            selectedDays: countInclusiveIsoDateRangeDays(normalizedDateFrom, normalizedDateTo),
-            calledProvider: false,
-            requestCount: 0,
-            debug: { stages: stageLog },
-          }),
-          {
-            status: "DEBUG",
-            overallSuccess: true,
-            rawDetails: { debugStage, dryRun, providerMode, stageLog },
-          }
-        );
-      }
-      if (debugStage === "evidenceOnly") {
-        mark("evidence_only_response_ready");
-        return await finalize(
-          ok({
-            ok: true,
-            route: "sync/full",
-            fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-            stage: "evidence_only_response_ready",
-            debugStage,
-            dryRun,
-            providerMode,
-            userId: normalizedUserId,
-            domitsPropertyId: normalizedDomitsPropertyId,
-            dateFrom: normalizedDateFrom,
-            dateTo: normalizedDateTo,
-            calledProvider: false,
-            requestCount: 0,
-            debug: { stages: stageLog },
-          }),
-          {
-            status: "DEBUG",
-            overallSuccess: true,
-            notes: ["debugStage=evidenceOnly: persisted a minimal full-sync debug evidence record only."],
-            rawDetails: { debugStage, dryRun, providerMode, stageLog },
-          }
-        );
-      }
-      const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
-      if (readinessResult?.statusCode !== 200) {
-        mark("mappings_failed", { statusCode: readinessResult?.statusCode ?? null });
-        return await finalize(
-          {
-            ...readinessResult,
-            response: {
-              fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-              stage: "mappings_failed",
-              dryRun,
-              providerMode,
-              debugStage,
-              ...(readinessResult?.response ?? undefined),
-            },
-          },
-          {
-            ...this.buildChannexAriTargetsFailureEvidencePatch(readinessResult),
-            rawDetails: {
-              readinessResult,
-              dryRun,
-              providerMode,
-              debugStage,
-              stageLog,
-            },
-          }
-        );
-      }
-
-      const readiness = readinessResult.response || {};
-      const mappingSnapshot = this.buildChannexMultiStepMappingSnapshot(readiness);
-      const baseNotes = createCertificationFullSyncBaseNotes(usingDefaultDateRange);
-      baseNotes.push(
-        `Full certification sync runtime marker: ${CHANNEX_FULL_CERTIFICATION_SYNC_VERSION}.`,
-        `Real non-debug full sync sends exactly one availability request and one rates/restrictions request to Channex when both payloads contain values.`,
-        `Provider requests use a controlled ${CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS} ms timeout so slow Channex responses return JSON instead of hanging the API request.`
-      );
-      if (dryRun) {
-        baseNotes.push("dryRun=true: payloads are built and summarized, but no Channex provider request is sent.");
-      }
-      if (debugStage) {
-        baseNotes.push(`debugStage=${debugStage}: endpoint returns after the requested diagnostic stage.`);
-      }
-      if (providerMode !== "both") {
-        baseNotes.push(`providerMode=${providerMode}: only the selected provider step is executed for live isolation.`);
-      }
-
-      mark("mappings_loaded", {
-        ready: !!readiness.ready,
-        integrationAccountId: readiness.integrationAccountId ?? null,
-        roomTypeMappingCount: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings.length : 0,
-        ratePlanMappingCount: Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings.length : 0,
+      const earlyDebugResult = await this.finalizeChannexFullSyncEarlyDebugStage({
+        debugStage,
+        dryRun,
+        providerMode,
+        normalizedUserId,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        stageLog,
+        mark,
+        finalize,
       });
+      if (earlyDebugResult) return earlyDebugResult;
 
-      if (debugStage === "mappingsOnly") {
-        return await finalize(
-          ok({
-            ...this.buildChannexFullSyncBaseResponse({
-              readiness,
-              normalizedDomitsPropertyId,
-              normalizedDateFrom,
-              normalizedDateTo,
-              usingDefaultDateRange,
-              dryRun,
-              providerMode,
-              stage: "mappings_loaded",
-            }),
-            ok: true,
-            debugStage,
-            ready: !!readiness.ready,
-            calledProvider: false,
-            requestCount: 0,
-            mappingSnapshot,
-            missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
-            debug: { stages: stageLog },
-          }),
-          {
-            integrationAccountId: readiness.integrationAccountId ?? null,
-            status: "DEBUG",
-            overallSuccess: true,
-            mappingSnapshot,
-            notes: baseNotes,
-            rawDetails: { debugStage, dryRun, providerMode, stageLog },
-          }
-        );
-      }
+      const readinessContext = await this.loadChannexFullSyncReadinessContext({
+        normalizedUserId,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
+        debugStage,
+        stageLog,
+        mark,
+        finalize,
+      });
+      if (readinessContext.finalized) return readinessContext.finalized;
 
-      if (!readiness.ready) {
-        const blocked = this.buildBlockedChannexMultiStepSyncResult({
-          readiness,
-          normalizedDomitsPropertyId,
-          normalizedDateFrom,
-          normalizedDateTo,
-          baseNotes,
-          mappingSnapshot,
-          config: {
-            includeCombinedFieldsInBlockedResponse: true,
-            getBlockedResponseFieldsBeforeReady: () => ({
-              fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-              stage: "mappings_loaded",
-              usedDefaultDateRange: usingDefaultDateRange,
-              dryRun,
-              providerMode,
-              debugStage,
-            }),
-            getBlockedResponseFieldsAfterReady: () => ({ blocked: true }),
-          },
-          dateContext,
-        });
-        return await finalize(blocked.response, {
-          ...blocked.evidencePatch,
-          rawDetails: {
-            readiness: {
-              ready: readiness.ready,
-              missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
-            },
-            dryRun,
-            providerMode,
-            debugStage,
-            stageLog,
-          },
-        });
-      }
+      const { readiness, mappingSnapshot, baseNotes } = readinessContext;
 
-      if (debugStage === "availabilityPayloadOnly") {
-        mark("before_availability_payload_generation");
-        const availabilityPayloadContext = await this.buildChannexFullSyncAvailabilityPayloadContext({
-          readiness,
-          normalizedDomitsPropertyId,
-          normalizedDateFrom,
-          normalizedDateTo,
-        });
-        mark("availability_payload_built", {
-          itemCount: availabilityPayloadContext.availabilityItems.length,
-          sourceGroupCount: availabilityPayloadContext.availabilityGroupedPayloads.length,
-          requestCount: availabilityPayloadContext.availabilityProviderPayloads.length,
-          valueCount: availabilityPayloadContext.availabilityProviderPayloads.reduce(
-            (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
-            0
-          ),
-        });
-        return await finalize(
-          ok({
-            ...this.buildChannexFullSyncBaseResponse({
-              readiness,
-              normalizedDomitsPropertyId,
-              normalizedDateFrom,
-              normalizedDateTo,
-              usingDefaultDateRange,
-              dryRun,
-              providerMode,
-              stage: "availability_payload_built",
-            }),
-            ok: true,
-            debugStage,
-            ready: true,
-            calledProvider: false,
-            requestCount: 0,
-            payloadSummaries: {
-              availability: availabilityPayloadContext.availabilityPayloadSummary,
-              restrictions: null,
-            },
-            debug: {
-              payloadsOmitted: true,
-              stages: stageLog,
-            },
-          }),
-          {
-            integrationAccountId: readiness.integrationAccountId ?? null,
-            status: "DEBUG",
-            overallSuccess: true,
-            mappingSnapshot,
-            groupedOutboundPayloadSnapshot: {
-              availability: availabilityPayloadContext.availabilityPayloadSummary,
-              restrictions: null,
-            },
-            notes: baseNotes,
-            rawDetails: { debugStage, dryRun, providerMode, payloadsOmitted: true, stageLog },
-          }
-        );
-      }
+      const mappingsOnlyResult = await this.finalizeChannexFullSyncMappingsOnlyDebug({
+        debugStage,
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
+        mappingSnapshot,
+        baseNotes,
+        stageLog,
+        finalize,
+      });
+      if (mappingsOnlyResult) return mappingsOnlyResult;
 
-      if (debugStage === "restrictionsPayloadOnly") {
-        mark("before_restrictions_payload_generation");
-        const restrictionsPayloadContext = await this.buildChannexFullSyncRestrictionsPayloadContext({
-          readiness,
-          normalizedDomitsPropertyId,
-          normalizedDateFrom,
-          normalizedDateTo,
-          markStage: mark,
-        });
-        mark("restrictions_payload_built", {
-          itemCount: restrictionsPayloadContext.restrictionRateItems.length,
-          sourceGroupCount: restrictionsPayloadContext.restrictionRateGroupedPayloads.length,
-          requestCount: restrictionsPayloadContext.restrictionProviderPayloads.length,
-          valueCount: restrictionsPayloadContext.restrictionProviderPayloads.reduce(
-            (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
-            0
-          ),
-          sentChannexRestrictionFields: restrictionsPayloadContext.sentChannexRestrictionFields,
-        });
-        return await finalize(
-          ok({
-            ...this.buildChannexFullSyncBaseResponse({
-              readiness,
-              normalizedDomitsPropertyId,
-              normalizedDateFrom,
-              normalizedDateTo,
-              usingDefaultDateRange,
-              dryRun,
-              providerMode,
-              stage: "restrictions_payload_built",
-            }),
-            ok: true,
-            debugStage,
-            ready: true,
-            calledProvider: false,
-            requestCount: 0,
-            payloadSummaries: {
-              availability: null,
-              restrictions: restrictionsPayloadContext.restrictionsPayloadSummary,
-            },
-            sentChannexRestrictionFields: restrictionsPayloadContext.sentChannexRestrictionFields,
-            debug: {
-              payloadsOmitted: true,
-              stages: stageLog,
-            },
-          }),
-          {
-            integrationAccountId: readiness.integrationAccountId ?? null,
-            status: "DEBUG",
-            overallSuccess: true,
-            mappingSnapshot,
-            groupedOutboundPayloadSnapshot: {
-              availability: null,
-              restrictions: restrictionsPayloadContext.restrictionsPayloadSummary,
-            },
-            notes: baseNotes,
-            rawDetails: { debugStage, dryRun, providerMode, payloadsOmitted: true, stageLog },
-          }
-        );
-      }
+      const blockedReadinessResult = await this.finalizeBlockedChannexFullSyncReadiness({
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
+        debugStage,
+        mappingSnapshot,
+        baseNotes,
+        dateContext,
+        stageLog,
+        finalize,
+      });
+      if (blockedReadinessResult) return blockedReadinessResult;
+
+      const payloadOnlyResult = await this.finalizeChannexFullSyncPayloadOnlyDebug({
+        debugStage,
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
+        mappingSnapshot,
+        baseNotes,
+        stageLog,
+        mark,
+        finalize,
+      });
+      if (payloadOnlyResult) return payloadOnlyResult;
 
       mark("before_payload_generation");
       const payloadContext = await this.buildChannexFullSyncPayloadContext({
@@ -7627,162 +8375,36 @@ export default class IntegrationService {
         restrictions: payloadContext.restrictionsPayloadSummary,
       };
 
-      mark("availability_payload_built", {
-        itemCount: payloadContext.availabilityItems.length,
-        sourceGroupCount: payloadContext.availabilityGroupedPayloads.length,
-        requestCount: availabilityPayloads.length,
-        valueCount: availabilityPayloads.reduce(
-          (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
-          0
-        ),
+      this.markChannexFullSyncPayloadContextBuilt({
+        payloadContext,
+        availabilityPayloads,
+        restrictionPayloads,
+        baseNotes,
+        mark,
       });
-      mark("restrictions_payload_built", {
-        itemCount: payloadContext.restrictionRateItems.length,
-        sourceGroupCount: payloadContext.restrictionRateGroupedPayloads.length,
-        requestCount: restrictionPayloads.length,
-        valueCount: restrictionPayloads.reduce(
-          (sum, payload) => sum + (Array.isArray(payload?.values) ? payload.values.length : 0),
-          0
-        ),
-        sentChannexRestrictionFields: payloadContext.sentChannexRestrictionFields,
-      });
-
-      if (payloadContext.sentChannexRestrictionFields.length) {
-        baseNotes.push(
-          `Full sync rates/restrictions payload includes supported Channex fields when values exist: ${payloadContext.sentChannexRestrictionFields.join(", ")}.`
-        );
-      }
-      if (!payloadContext.sentChannexRestrictionFields.length) {
-        baseNotes.push(
-          "Full sync rates/restrictions payload is rate-only because no supported restriction values were available in the selected range."
-        );
-      }
 
       const providerPlan = this.buildChannexFullSyncProviderPlan({
         providerMode,
         availabilityPayloads,
         restrictionPayloads,
       });
-      const emptyPlanItems = providerPlan.filter((item) => !Array.isArray(item.payloads) || item.payloads.length === 0);
-      if (emptyPlanItems.length) {
-        mark("payload_validation_failed", {
-          missingSteps: emptyPlanItems.map((item) => item.step),
-        });
-        const errors = emptyPlanItems.map((item) => ({
-          errorCode: `CHANNEX_FULL_SYNC_${item.step.toUpperCase()}_PAYLOAD_EMPTY`,
-          errorMessage: item.emptyReason,
-        }));
-        const response = bad(409, {
-          ...this.buildChannexFullSyncBaseResponse({
-            readiness,
-            normalizedDomitsPropertyId,
-            normalizedDateFrom,
-            normalizedDateTo,
-            usingDefaultDateRange,
-            dryRun,
-            providerMode,
-            stage: "payload_validation_failed",
-          }),
-          ready: true,
-          blocked: true,
-          calledProvider: false,
-          requestCount: 0,
-          plannedRequestCount: providerPlan.length,
-          taskIds: [],
-          warnings: [],
-          errors,
-          payloadSummaries,
-          overallSuccess: false,
-          notes: baseNotes,
-          debug: {
-            payloadsOmitted: true,
-            stages: stageLog,
-          },
-        });
-        return await finalize(response, {
-          integrationAccountId: readiness.integrationAccountId ?? null,
-          status: "BLOCKED",
-          overallSuccess: false,
-          mappingSnapshot,
-          groupedOutboundPayloadSnapshot: payloadSummaries,
-          providerResponseSummary: {
-            calledProvider: false,
-            requestCount: 0,
-            plannedRequestCount: providerPlan.length,
-            dryRun,
-            providerMode,
-          },
-          taskIds: [],
-          warnings: [],
-          errors,
-          notes: baseNotes,
-          rawDetails: {
-            dryRun,
-            providerMode,
-            payloadsOmitted: true,
-            stageLog,
-          },
-        });
-      }
-
-      if (dryRun) {
-        mark("dry_run_response_ready", { plannedRequestCount: providerPlan.length });
-        const response = ok({
-          ...this.buildChannexFullSyncBaseResponse({
-            readiness,
-            normalizedDomitsPropertyId,
-            normalizedDateFrom,
-            normalizedDateTo,
-            usingDefaultDateRange,
-            dryRun,
-            providerMode,
-            stage: "dry_run_response_ready",
-          }),
-          ready: true,
-          blocked: false,
-          calledProvider: false,
-          requestCount: 0,
-          plannedRequestCount: providerPlan.length,
-          taskIds: [],
-          warnings: [],
-          errors: [],
-          payloadSummaries,
-          steps: {
-            availability: null,
-            restrictions: null,
-          },
-          overallSuccess: true,
-          notes: baseNotes,
-          debug: {
-            payloadsOmitted: true,
-            stages: stageLog,
-          },
-        });
-        return await finalize(response, {
-          integrationAccountId: readiness.integrationAccountId ?? null,
-          status: "DRY_RUN",
-          overallSuccess: true,
-          mappingSnapshot,
-          groupedOutboundPayloadSnapshot: payloadSummaries,
-          providerResponseSummary: {
-            calledProvider: false,
-            requestCount: 0,
-            plannedRequestCount: providerPlan.length,
-            dryRun: true,
-            providerMode,
-          },
-          taskIds: [],
-          warnings: [],
-          errors: [],
-          notes: baseNotes,
-          rawDetails: {
-            dryRun: true,
-            providerMode,
-            payloadsOmitted: true,
-            stageLog,
-          },
-        });
-      }
+      const preProviderResult = await this.finalizeChannexFullSyncPreProviderResult({
+        providerPlan,
+        payloadSummaries,
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
+        mappingSnapshot,
+        baseNotes,
+        stageLog,
+        mark,
+        finalize,
+      });
+      if (preProviderResult) return preProviderResult;
 
       mark("credentials_load_start");
       const credentialContext = await this.resolveChannexSyncCredentialContext({
@@ -7800,170 +8422,38 @@ export default class IntegrationService {
           payloadsOmitted: true,
         },
       });
-      if (!credentialContext.ok) {
-        mark("credentials_load_failed", {
-          statusCode: credentialContext.response?.statusCode ?? null,
-        });
-        return await finalize(
-          {
-            ...credentialContext.response,
-            response: {
-              ...this.buildChannexFullSyncBaseResponse({
-                readiness,
-                normalizedDomitsPropertyId,
-                normalizedDateFrom,
-                normalizedDateTo,
-                usingDefaultDateRange,
-                dryRun,
-                providerMode,
-                stage: "credentials_load_failed",
-              }),
-              ...(credentialContext.response?.response ?? undefined),
-              ready: true,
-              calledProvider: false,
-              requestCount: 0,
-              payloadSummaries,
-              debug: {
-                payloadsOmitted: true,
-                stages: stageLog,
-              },
-            },
-          },
-          {
-            ...credentialContext.evidencePatch,
-            groupedOutboundPayloadSnapshot: payloadSummaries,
-            rawDetails: {
-              dryRun,
-              providerMode,
-              payloadsOmitted: true,
-              stageLog,
-            },
-          }
-        );
-      }
-
-      mark("credentials_loaded", {
-        integrationAccountId: credentialContext.integration?.id ?? null,
-      });
-      mark("provider_calls_start", {
-        requestCount: providerPlan.length,
-      });
-      const providerSteps = await Promise.all(
-        providerPlan.map((item) =>
-          this.callChannexFullSyncProviderStep({
-            step: item.step,
-            secret: credentialContext.secret,
-            payloads: item.payloads,
-          })
-        )
-      );
-      mark("provider_calls_complete", {
-        requestCount: providerSteps.reduce((sum, item) => sum + item.requestCount, 0),
-        taskIds: dedupeByJson(providerSteps.flatMap((item) => item.taskIds)),
-      });
-
-      const availabilityStep = providerSteps.find((item) => item.step === "availability") ?? null;
-      const restrictionsStep = providerSteps.find((item) => item.step === "restrictions") ?? null;
-      const combinedTaskIds = dedupeByJson(providerSteps.flatMap((item) => item.taskIds));
-      const combinedWarnings = dedupeByJson(providerSteps.flatMap((item) => item.warnings));
-      const combinedErrors = dedupeByJson(providerSteps.flatMap((item) => item.errors));
-      const requestCount = providerSteps.reduce((sum, item) => sum + item.requestCount, 0);
-      const calledProvider = requestCount > 0;
-      const overallSuccess =
-        calledProvider &&
-        combinedWarnings.length === 0 &&
-        combinedErrors.length === 0 &&
-        providerSteps.every((item) => item.success);
-      const responseBody = {
-        ...this.buildChannexFullSyncBaseResponse({
-          readiness,
-          normalizedDomitsPropertyId,
-          normalizedDateFrom,
-          normalizedDateTo,
-          usingDefaultDateRange,
-          dryRun,
-          providerMode,
-          stage: combinedErrors.length ? "provider_completed_with_errors" : "response_ready",
-        }),
-        ready: true,
-        blocked: false,
-        calledProvider,
-        requestCount,
-        taskIds: combinedTaskIds,
-        warnings: combinedWarnings,
-        errors: combinedErrors,
+      const credentialFailureResult = await this.finalizeChannexFullSyncCredentialFailure({
+        credentialContext,
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
         payloadSummaries,
-        steps: {
-          availability: availabilityStep,
-          restrictions: restrictionsStep,
-        },
-        overallSuccess,
-        notes: baseNotes,
-        debug: {
-          payloadsOmitted: true,
-          stages: stageLog,
-        },
-      };
-      const response = combinedErrors.length
-        ? bad(500, {
-            ...responseBody,
-            error: "Channex certification full sync provider step failed.",
-            errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_PROVIDER_FAILED",
-          })
-        : ok(responseBody);
+        stageLog,
+        mark,
+        finalize,
+      });
+      if (credentialFailureResult) return credentialFailureResult;
 
-      return await finalize(response, {
-        integrationAccountId: credentialContext.integration.id,
-        status: getCombinedSyncStatus({
-          overallSuccess,
-          providerCalled: calledProvider,
-          combinedErrors,
-          combinedWarnings,
-          blockNoProviderWithErrors: true,
-        }),
-        overallSuccess,
+      return await this.finalizeChannexFullSyncProviderSteps({
+        providerPlan,
+        credentialContext,
+        readiness,
+        normalizedDomitsPropertyId,
+        normalizedDateFrom,
+        normalizedDateTo,
+        usingDefaultDateRange,
+        dryRun,
+        providerMode,
+        payloadSummaries,
         mappingSnapshot,
-        groupedOutboundPayloadSnapshot: payloadSummaries,
-        providerResponseSummary: {
-          calledProvider,
-          requestCount,
-          dryRun,
-          providerMode,
-          steps: {
-            availability: availabilityStep
-              ? {
-                  calledProvider: availabilityStep.calledProvider,
-                  requestCount: availabilityStep.requestCount,
-                  taskIds: availabilityStep.taskIds,
-                  warnings: availabilityStep.warnings,
-                  errors: availabilityStep.errors,
-                }
-              : null,
-            restrictions: restrictionsStep
-              ? {
-                  calledProvider: restrictionsStep.calledProvider,
-                  requestCount: restrictionsStep.requestCount,
-                  taskIds: restrictionsStep.taskIds,
-                  warnings: restrictionsStep.warnings,
-                  errors: restrictionsStep.errors,
-                }
-              : null,
-          },
-        },
-        taskIds: combinedTaskIds,
-        warnings: combinedWarnings,
-        errors: combinedErrors,
-        notes: baseNotes,
-        rawDetails: {
-          dryRun,
-          providerMode,
-          payloadsOmitted: true,
-          stageLog,
-          providerResultSummaries: providerSteps.map((item) => ({
-            step: item.step,
-            ...item.providerResultSummary,
-          })),
-        },
+        baseNotes,
+        stageLog,
+        mark,
+        finalize,
       });
     } catch (error) {
       const errorDetails = buildChannexFullSyncErrorDetails(stage, error);

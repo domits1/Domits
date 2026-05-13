@@ -26,6 +26,36 @@ const pluralizeRevision = (count) => `${count} booking revision${count === 1 ? "
 
 const getRevisionRowKey = (revision, revisionId, index) =>
   revision?.id || revisionId || `${revision?.externalReservationId || "revision"}-${index}`;
+const getSelectableRevisionIds = (nextRevisions) =>
+  new Set(
+    nextRevisions
+      .filter((revision) => revision?.revisionId && isAcknowledged(revision.acknowledgementState) === false)
+      .map((revision) => revision.revisionId)
+  );
+const toggleRevisionIdSelection = (current, revisionId) => {
+  if (current.includes(revisionId)) return current.filter((value) => value !== revisionId);
+  return [...current, revisionId];
+};
+const getRevisionLogUiState = ({
+  userId,
+  propertyId,
+  loading,
+  ackLoading,
+  selectedRevisionIds,
+  hasLoaded,
+  revisions,
+  listError,
+}) => {
+  const hasPropertyContext = Boolean(userId && propertyId);
+  const isIdle = loading === false && ackLoading === false;
+  return {
+    canLoad: hasPropertyContext && isIdle,
+    canAcknowledge: selectedRevisionIds.length > 0 && hasPropertyContext && isIdle,
+    shouldShowMissingContext: hasPropertyContext === false,
+    shouldShowEmptyState: hasLoaded && revisions.length === 0 && loading === false && listError === "",
+    shouldShowInitialState: hasLoaded === false,
+  };
+};
 
 function RevisionRawPayloadCell({ rawPayload }) {
   const hasRawPayload = rawPayload !== undefined && rawPayload !== null;
@@ -93,6 +123,91 @@ RevisionRow.propTypes = {
   onToggleRevisionSelection: PropTypes.func.isRequired,
 };
 
+function RevisionMessages({
+  shouldShowMissingContext,
+  listSuccess,
+  ackSuccess,
+  listError,
+  ackError,
+  shouldShowEmptyState,
+  shouldShowInitialState,
+}) {
+  return (
+    <>
+      {shouldShowMissingContext ? (
+        <p className="host-integrations-muted">Enter a Domits property ID before loading booking revisions.</p>
+      ) : null}
+      {listSuccess ? <p className="host-integrations-success-banner">{listSuccess}</p> : null}
+      {ackSuccess ? <p className="host-integrations-success-banner">{ackSuccess}</p> : null}
+      {listError ? <p className="host-integrations-error-banner">{listError}</p> : null}
+      {ackError ? <p className="host-integrations-error-banner">{ackError}</p> : null}
+
+      {shouldShowEmptyState ? (
+        <p className="host-integrations-muted">No Channex booking revisions were returned.</p>
+      ) : null}
+      {shouldShowInitialState ? (
+        <p className="host-integrations-muted">Booking revisions are loaded only after an explicit button click.</p>
+      ) : null}
+    </>
+  );
+}
+
+RevisionMessages.propTypes = {
+  shouldShowMissingContext: PropTypes.bool.isRequired,
+  listSuccess: PropTypes.string.isRequired,
+  ackSuccess: PropTypes.string.isRequired,
+  listError: PropTypes.string.isRequired,
+  ackError: PropTypes.string.isRequired,
+  shouldShowEmptyState: PropTypes.bool.isRequired,
+  shouldShowInitialState: PropTypes.bool.isRequired,
+};
+
+function RevisionTable({ revisions, includeRawPayload, selectedRevisionIdSet, onToggleRevisionSelection }) {
+  if (!revisions.length) return null;
+
+  return (
+    <div className="channex-diagnostics-table-wrap channex-booking-revisions-table-wrap">
+      <table className="channex-diagnostics-table channex-booking-revisions-table">
+        <thead>
+          <tr>
+            <th className="channex-booking-revisions-select">Select</th>
+            <th>Revision ID</th>
+            <th>External reservation ID</th>
+            <th>Status</th>
+            <th>Arrival</th>
+            <th>Departure</th>
+            <th>Guest summary</th>
+            <th>Ack state</th>
+            <th>Acknowledged</th>
+            <th>Created</th>
+            <th>Updated</th>
+            {includeRawPayload ? <th>Internal diagnostic data</th> : null}
+          </tr>
+        </thead>
+        <tbody>
+          {revisions.map((revision, index) => (
+            <RevisionRow
+              key={getRevisionRowKey(revision, revision?.revisionId || "", index)}
+              revision={revision}
+              index={index}
+              includeRawPayload={includeRawPayload}
+              selectedRevisionIdSet={selectedRevisionIdSet}
+              onToggleRevisionSelection={onToggleRevisionSelection}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+RevisionTable.propTypes = {
+  revisions: PropTypes.arrayOf(PropTypes.object).isRequired,
+  includeRawPayload: PropTypes.bool.isRequired,
+  selectedRevisionIdSet: PropTypes.instanceOf(Set).isRequired,
+  onToggleRevisionSelection: PropTypes.func.isRequired,
+};
+
 function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [includeRawPayload, setIncludeRawPayload] = useState(false);
@@ -109,21 +224,19 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
 
   const propertyId = String(domitsPropertyId || "").trim();
   const selectedRevisionIdSet = useMemo(() => new Set(selectedRevisionIds), [selectedRevisionIds]);
-  const hasPropertyContext = Boolean(userId && propertyId);
-  const isIdle = loading === false && ackLoading === false;
-  const canLoad = hasPropertyContext && isIdle;
-  const canAcknowledge = selectedRevisionIds.length > 0 && hasPropertyContext && isIdle;
-  const shouldShowMissingContext = hasPropertyContext === false;
-  const shouldShowEmptyState = hasLoaded && revisions.length === 0 && loading === false && listError === "";
-  const shouldShowInitialState = hasLoaded === false;
+  const uiState = getRevisionLogUiState({
+    userId,
+    propertyId,
+    loading,
+    ackLoading,
+    selectedRevisionIds,
+    hasLoaded,
+    revisions,
+    listError,
+  });
 
   const pruneSelectedRevisionIds = (nextRevisions) => {
-    const selectableRevisionIds = new Set(
-      nextRevisions
-        .filter((revision) => revision?.revisionId && isAcknowledged(revision.acknowledgementState) === false)
-        .map((revision) => revision.revisionId)
-    );
-
+    const selectableRevisionIds = getSelectableRevisionIds(nextRevisions);
     setSelectedRevisionIds((current) => current.filter((revisionId) => selectableRevisionIds.has(revisionId)));
   };
 
@@ -163,14 +276,11 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
   };
 
   const toggleRevisionSelection = (revisionId) => {
-    setSelectedRevisionIds((current) => {
-      if (current.includes(revisionId)) return current.filter((value) => value !== revisionId);
-      return [...current, revisionId];
-    });
+    setSelectedRevisionIds((current) => toggleRevisionIdSelection(current, revisionId));
   };
 
   const acknowledgeSelectedRevisions = async () => {
-    if (canAcknowledge === false) return;
+    if (uiState.canAcknowledge === false) return;
 
     const revisionIdsToAcknowledge = [...selectedRevisionIds];
     setAckLoading(true);
@@ -220,7 +330,7 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
           <button
             type="button"
             className="host-integrations-secondary-btn"
-            disabled={canLoad === false}
+            disabled={uiState.canLoad === false}
             onClick={() => loadRevisions(false)}
           >
             {loadingMode === "plain" ? "Loading..." : "Load booking revisions"}
@@ -228,7 +338,7 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
           <button
             type="button"
             className="host-integrations-secondary-btn"
-            disabled={canLoad === false}
+            disabled={uiState.canLoad === false}
             onClick={() => loadRevisions(true)}
           >
             {loadingMode === "raw" ? "Loading raw..." : "Load with raw payload"}
@@ -236,7 +346,7 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
           <button
             type="button"
             className="host-integrations-primary-btn"
-            disabled={canAcknowledge === false}
+            disabled={uiState.canAcknowledge === false}
             onClick={acknowledgeSelectedRevisions}
           >
             {ackLoading ? "Acknowledging..." : "Acknowledge selected revisions"}
@@ -244,55 +354,22 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
         </div>
       </div>
 
-      {shouldShowMissingContext ? (
-        <p className="host-integrations-muted">Enter a Domits property ID before loading booking revisions.</p>
-      ) : null}
-      {listSuccess ? <p className="host-integrations-success-banner">{listSuccess}</p> : null}
-      {ackSuccess ? <p className="host-integrations-success-banner">{ackSuccess}</p> : null}
-      {listError ? <p className="host-integrations-error-banner">{listError}</p> : null}
-      {ackError ? <p className="host-integrations-error-banner">{ackError}</p> : null}
+      <RevisionMessages
+        shouldShowMissingContext={uiState.shouldShowMissingContext}
+        listSuccess={listSuccess}
+        ackSuccess={ackSuccess}
+        listError={listError}
+        ackError={ackError}
+        shouldShowEmptyState={uiState.shouldShowEmptyState}
+        shouldShowInitialState={uiState.shouldShowInitialState}
+      />
 
-      {shouldShowEmptyState ? (
-        <p className="host-integrations-muted">No Channex booking revisions were returned.</p>
-      ) : null}
-      {shouldShowInitialState ? (
-        <p className="host-integrations-muted">Booking revisions are loaded only after an explicit button click.</p>
-      ) : null}
-
-      {revisions.length ? (
-        <div className="channex-diagnostics-table-wrap channex-booking-revisions-table-wrap">
-          <table className="channex-diagnostics-table channex-booking-revisions-table">
-            <thead>
-              <tr>
-                <th className="channex-booking-revisions-select">Select</th>
-                <th>Revision ID</th>
-                <th>External reservation ID</th>
-                <th>Status</th>
-                <th>Arrival</th>
-                <th>Departure</th>
-                <th>Guest summary</th>
-                <th>Ack state</th>
-                <th>Acknowledged</th>
-                <th>Created</th>
-                <th>Updated</th>
-                {includeRawPayload ? <th>Internal diagnostic data</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {revisions.map((revision, index) => (
-                <RevisionRow
-                  key={getRevisionRowKey(revision, revision?.revisionId || "", index)}
-                  revision={revision}
-                  index={index}
-                  includeRawPayload={includeRawPayload}
-                  selectedRevisionIdSet={selectedRevisionIdSet}
-                  onToggleRevisionSelection={toggleRevisionSelection}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+      <RevisionTable
+        revisions={revisions}
+        includeRawPayload={includeRawPayload}
+        selectedRevisionIdSet={selectedRevisionIdSet}
+        onToggleRevisionSelection={toggleRevisionSelection}
+      />
     </section>
   );
 }
