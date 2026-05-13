@@ -24,6 +24,75 @@ const stringifyJson = (value) => JSON.stringify(value ?? null, null, 2);
 
 const pluralizeRevision = (count) => `${count} booking revision${count === 1 ? "" : "s"}`;
 
+const getRevisionRowKey = (revision, revisionId, index) =>
+  revision?.id || revisionId || `${revision?.externalReservationId || "revision"}-${index}`;
+
+function RevisionRawPayloadCell({ rawPayload }) {
+  const hasRawPayload = rawPayload !== undefined && rawPayload !== null;
+
+  return (
+    <td>
+      {hasRawPayload ? (
+        <details className="channex-booking-revisions-raw">
+          <summary>Raw payload</summary>
+          <pre>{stringifyJson(rawPayload)}</pre>
+        </details>
+      ) : (
+        <span className="host-integrations-muted">No raw payload returned.</span>
+      )}
+    </td>
+  );
+}
+
+RevisionRawPayloadCell.propTypes = {
+  rawPayload: PropTypes.oneOfType([
+    PropTypes.array,
+    PropTypes.bool,
+    PropTypes.number,
+    PropTypes.object,
+    PropTypes.string,
+  ]),
+};
+
+function RevisionRow({ revision, index, includeRawPayload, selectedRevisionIdSet, onToggleRevisionSelection }) {
+  const revisionId = revision?.revisionId || "";
+  const acknowledged = isAcknowledged(revision?.acknowledgementState);
+  const selectable = Boolean(revisionId) && acknowledged === false;
+
+  return (
+    <tr>
+      <td>
+        <input
+          type="checkbox"
+          aria-label={`Select Channex revision ${revisionId || index + 1}`}
+          checked={revisionId ? selectedRevisionIdSet.has(revisionId) : false}
+          disabled={selectable === false}
+          onChange={() => onToggleRevisionSelection(revisionId)}
+        />
+      </td>
+      <td>{renderValue(revisionId)}</td>
+      <td>{renderValue(revision?.externalReservationId)}</td>
+      <td>{renderValue(revision?.bookingStatus)}</td>
+      <td>{renderValue(revision?.arrivalDate)}</td>
+      <td>{renderValue(revision?.departureDate)}</td>
+      <td>{renderValue(revision?.guestSummary)}</td>
+      <td>{renderValue(revision?.acknowledgementState)}</td>
+      <td>{formatDateTime(revision?.acknowledgedAt)}</td>
+      <td>{formatDateTime(revision?.createdAt)}</td>
+      <td>{formatDateTime(revision?.updatedAt)}</td>
+      {includeRawPayload ? <RevisionRawPayloadCell rawPayload={revision?.rawPayload} /> : null}
+    </tr>
+  );
+}
+
+RevisionRow.propTypes = {
+  revision: PropTypes.object,
+  index: PropTypes.number.isRequired,
+  includeRawPayload: PropTypes.bool.isRequired,
+  selectedRevisionIdSet: PropTypes.instanceOf(Set).isRequired,
+  onToggleRevisionSelection: PropTypes.func.isRequired,
+};
+
 function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [includeRawPayload, setIncludeRawPayload] = useState(false);
@@ -40,13 +109,18 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
 
   const propertyId = String(domitsPropertyId || "").trim();
   const selectedRevisionIdSet = useMemo(() => new Set(selectedRevisionIds), [selectedRevisionIds]);
-  const canLoad = Boolean(userId && propertyId) && !loading && !ackLoading;
-  const canAcknowledge = selectedRevisionIds.length > 0 && Boolean(userId && propertyId) && !loading && !ackLoading;
+  const hasPropertyContext = Boolean(userId && propertyId);
+  const isIdle = loading === false && ackLoading === false;
+  const canLoad = hasPropertyContext && isIdle;
+  const canAcknowledge = selectedRevisionIds.length > 0 && hasPropertyContext && isIdle;
+  const shouldShowMissingContext = hasPropertyContext === false;
+  const shouldShowEmptyState = hasLoaded && revisions.length === 0 && loading === false && listError === "";
+  const shouldShowInitialState = hasLoaded === false;
 
   const pruneSelectedRevisionIds = (nextRevisions) => {
     const selectableRevisionIds = new Set(
       nextRevisions
-        .filter((revision) => revision?.revisionId && !isAcknowledged(revision.acknowledgementState))
+        .filter((revision) => revision?.revisionId && isAcknowledged(revision.acknowledgementState) === false)
         .map((revision) => revision.revisionId)
     );
 
@@ -89,13 +163,14 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
   };
 
   const toggleRevisionSelection = (revisionId) => {
-    setSelectedRevisionIds((current) =>
-      current.includes(revisionId) ? current.filter((value) => value !== revisionId) : [...current, revisionId]
-    );
+    setSelectedRevisionIds((current) => {
+      if (current.includes(revisionId)) return current.filter((value) => value !== revisionId);
+      return [...current, revisionId];
+    });
   };
 
   const acknowledgeSelectedRevisions = async () => {
-    if (!canAcknowledge) return;
+    if (canAcknowledge === false) return;
 
     const revisionIdsToAcknowledge = [...selectedRevisionIds];
     setAckLoading(true);
@@ -145,7 +220,7 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
           <button
             type="button"
             className="host-integrations-secondary-btn"
-            disabled={!canLoad}
+            disabled={canLoad === false}
             onClick={() => loadRevisions(false)}
           >
             {loadingMode === "plain" ? "Loading..." : "Load booking revisions"}
@@ -153,7 +228,7 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
           <button
             type="button"
             className="host-integrations-secondary-btn"
-            disabled={!canLoad}
+            disabled={canLoad === false}
             onClick={() => loadRevisions(true)}
           >
             {loadingMode === "raw" ? "Loading raw..." : "Load with raw payload"}
@@ -161,7 +236,7 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
           <button
             type="button"
             className="host-integrations-primary-btn"
-            disabled={!canAcknowledge}
+            disabled={canAcknowledge === false}
             onClick={acknowledgeSelectedRevisions}
           >
             {ackLoading ? "Acknowledging..." : "Acknowledge selected revisions"}
@@ -169,7 +244,7 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
         </div>
       </div>
 
-      {!userId || !propertyId ? (
+      {shouldShowMissingContext ? (
         <p className="host-integrations-muted">Enter a Domits property ID before loading booking revisions.</p>
       ) : null}
       {listSuccess ? <p className="host-integrations-success-banner">{listSuccess}</p> : null}
@@ -177,10 +252,10 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
       {listError ? <p className="host-integrations-error-banner">{listError}</p> : null}
       {ackError ? <p className="host-integrations-error-banner">{ackError}</p> : null}
 
-      {hasLoaded && !revisions.length && !loading && !listError ? (
+      {shouldShowEmptyState ? (
         <p className="host-integrations-muted">No Channex booking revisions were returned.</p>
       ) : null}
-      {!hasLoaded ? (
+      {shouldShowInitialState ? (
         <p className="host-integrations-muted">Booking revisions are loaded only after an explicit button click.</p>
       ) : null}
 
@@ -204,48 +279,16 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
               </tr>
             </thead>
             <tbody>
-              {revisions.map((revision, index) => {
-                const revisionId = revision?.revisionId || "";
-                const acknowledged = isAcknowledged(revision?.acknowledgementState);
-                const selectable = Boolean(revisionId) && !acknowledged;
-                const rowKey = revision?.id || revisionId || `${revision?.externalReservationId || "revision"}-${index}`;
-
-                return (
-                  <tr key={rowKey}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        aria-label={`Select Channex revision ${revisionId || index + 1}`}
-                        checked={revisionId ? selectedRevisionIdSet.has(revisionId) : false}
-                        disabled={!selectable}
-                        onChange={() => toggleRevisionSelection(revisionId)}
-                      />
-                    </td>
-                    <td>{renderValue(revisionId)}</td>
-                    <td>{renderValue(revision?.externalReservationId)}</td>
-                    <td>{renderValue(revision?.bookingStatus)}</td>
-                    <td>{renderValue(revision?.arrivalDate)}</td>
-                    <td>{renderValue(revision?.departureDate)}</td>
-                    <td>{renderValue(revision?.guestSummary)}</td>
-                    <td>{renderValue(revision?.acknowledgementState)}</td>
-                    <td>{formatDateTime(revision?.acknowledgedAt)}</td>
-                    <td>{formatDateTime(revision?.createdAt)}</td>
-                    <td>{formatDateTime(revision?.updatedAt)}</td>
-                    {includeRawPayload ? (
-                      <td>
-                        {revision?.rawPayload === undefined || revision?.rawPayload === null ? (
-                          <span className="host-integrations-muted">No raw payload returned.</span>
-                        ) : (
-                          <details className="channex-booking-revisions-raw">
-                            <summary>Raw payload</summary>
-                            <pre>{stringifyJson(revision.rawPayload)}</pre>
-                          </details>
-                        )}
-                      </td>
-                    ) : null}
-                  </tr>
-                );
-              })}
+              {revisions.map((revision, index) => (
+                <RevisionRow
+                  key={getRevisionRowKey(revision, revision?.revisionId || "", index)}
+                  revision={revision}
+                  index={index}
+                  includeRawPayload={includeRawPayload}
+                  selectedRevisionIdSet={selectedRevisionIdSet}
+                  onToggleRevisionSelection={toggleRevisionSelection}
+                />
+              ))}
             </tbody>
           </table>
         </div>

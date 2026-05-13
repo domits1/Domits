@@ -36,6 +36,7 @@ const CERTIFICATION_TEST_CASES = [
   { id: "9", title: "Single Date Availability Update", payloadType: "Availability" },
   { id: "10", title: "Multiple Date Availability Update", payloadType: "Availability" },
 ];
+const compareAlphabetically = (left, right) => String(left).localeCompare(String(right));
 
 const createRequestState = () => ({
   loading: false,
@@ -63,7 +64,12 @@ const normalizeChannexError = (error, fallbackMessage = "Channex request failed.
 });
 
 const renderList = (items) => {
-  const safeItems = Array.isArray(items) ? items.filter(Boolean) : items ? [items] : [];
+  let safeItems = [];
+  if (Array.isArray(items)) {
+    safeItems = items.filter(Boolean);
+  } else if (items) {
+    safeItems = [items];
+  }
   if (!safeItems.length) return <span className="host-integrations-muted">None</span>;
 
   return (
@@ -105,11 +111,11 @@ const formatDateWindow = (values) => {
   const dates = (Array.isArray(values) ? values : [])
     .map((value) => value?.date)
     .filter(Boolean)
-    .sort();
+    .sort(compareAlphabetically);
 
   if (!dates.length) return "No dates";
-  if (dates[0] === dates[dates.length - 1]) return dates[0];
-  return `${dates[0]} to ${dates[dates.length - 1]}`;
+  if (dates[0] === dates.at(-1)) return dates[0];
+  return `${dates[0]} to ${dates.at(-1)}`;
 };
 
 const uniqueJoinedValues = (values) => {
@@ -117,11 +123,17 @@ const uniqueJoinedValues = (values) => {
     new Set(
       (Array.isArray(values) ? values : [])
         .filter((value) => value !== undefined && value !== null && value !== "")
-        .map((value) => String(value))
+        .map(String)
     )
   );
 
   return uniqueValues.length ? uniqueValues.join(", ") : "-";
+};
+
+const getTaskIdsFromState = (state) => {
+  if (Array.isArray(state.data?.taskIds)) return state.data.taskIds;
+  if (Array.isArray(state.data?.results)) return state.data.results.map((result) => result?.taskId).filter(Boolean);
+  return [];
 };
 
 const isoDateToUtcMs = (value) => {
@@ -349,12 +361,10 @@ const PayloadSummaryPanel = ({ title, groupCount, itemCount, dateWindow, childre
     </div>
     <div className="channex-payload-summary-numbers">
       <span>
-        <strong>{groupCount}</strong>
-        groups
+        <strong>{groupCount}</strong> groups
       </span>
       <span>
-        <strong>{itemCount}</strong>
-        items
+        <strong>{itemCount}</strong> items
       </span>
     </div>
     {children}
@@ -1245,11 +1255,7 @@ function ChannexDiagnosticsPanel({ userId }) {
           const state = actionStates[config.key] || {};
           const disabled = !userId || state.loading || !hasProperty || (config.needsDateRange && !hasDateRange);
           const selectedRangeLabel = formatRangeLabel(dateFrom, dateTo);
-          const taskIds = Array.isArray(state.data?.taskIds)
-            ? state.data.taskIds
-            : Array.isArray(state.data?.results)
-              ? state.data.results.map((result) => result?.taskId).filter(Boolean)
-              : [];
+          const taskIds = getTaskIdsFromState(state);
 
           return (
             <div className="channex-diagnostics-action-card" key={config.key}>
@@ -1303,11 +1309,7 @@ function ChannexDiagnosticsPanel({ userId }) {
           {CERTIFICATION_TEST_CASES.map((testCase) => {
             const key = `certification-case-${testCase.id}`;
             const state = actionStates[key] || {};
-            const taskIds = Array.isArray(state.data?.taskIds)
-              ? state.data.taskIds
-              : Array.isArray(state.data?.results)
-                ? state.data.results.map((result) => result?.taskId).filter(Boolean)
-                : [];
+            const taskIds = getTaskIdsFromState(state);
 
             return (
               <div className="channex-certification-test-card" key={testCase.id}>

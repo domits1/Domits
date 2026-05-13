@@ -16,7 +16,6 @@ const whatsAppWebhookController = new WhatsAppWebhookController();
 
 const notFound = { statusCode: 404, response: "Not Found" };
 const internalError = { statusCode: 500, response: "Internal Server Error" };
-const nestedIntegrationRoutePattern = /\/integrations\/[^/]+\/.+/;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type,Authorization,x-domits-internal-token",
@@ -53,7 +52,16 @@ const pathIncludesOrEndsWith = (path, suffix) => {
   return normalizedPath.endsWith(suffix) || normalizedPath.includes(suffix);
 };
 
-const hasNestedIntegrationSubroute = (path) => nestedIntegrationRoutePattern.exec(String(path || ""));
+const hasNestedIntegrationSubroute = (path) => {
+  const normalizedPath = String(path || "");
+  const integrationPrefixIndex = normalizedPath.indexOf("/integrations/");
+  if (integrationPrefixIndex === -1) return false;
+
+  const integrationNameStart = integrationPrefixIndex + "/integrations/".length;
+  const nestedSlashIndex = normalizedPath.indexOf("/", integrationNameStart);
+
+  return nestedSlashIndex > integrationNameStart && nestedSlashIndex < normalizedPath.length - 1;
+};
 
 const isProtectedChannexCertificationAdminRoute = (method, path) =>
   protectedChannexCertificationAdminRoutes.some(

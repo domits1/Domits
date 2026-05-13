@@ -33,9 +33,9 @@ class ReservationRepository {
       .into(Booking)
       .values({
         id: id,
-        arrivaldate: parseFloat(arrivalDate),
+        arrivaldate: Number.parseFloat(arrivalDate),
         createdat: date,
-        departuredate: parseFloat(departureDate),
+        departuredate: Number.parseFloat(departureDate),
         guestid: userId,
         hostid: hostId,
         hostname: "WIP-Host",
@@ -373,8 +373,8 @@ class ReservationRepository {
       .createQueryBuilder()
       .update(Booking)
       .set({
-        arrivaldate: parseFloat(arrivalDateMs),
-        departuredate: parseFloat(departureDateMs),
+        arrivaldate: Number.parseFloat(arrivalDateMs),
+        departuredate: Number.parseFloat(departureDateMs),
       })
       .where("id = :id", { id })
       .execute();

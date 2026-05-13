@@ -4,6 +4,7 @@ jest.mock("@aws-sdk/client-lambda", () => ({
 }));
 
 const originalTestEnv = process.env.TEST;
+const hadTestEnv = Object.hasOwn(process.env, "TEST");
 process.env.TEST = "true";
 
 const BookingService = require("../../functions/General-Bookings-CRUD-Bookings-develop/business/bookingService.js").default;
@@ -111,21 +112,22 @@ const buildService = ({
 
 describe("BookingService Channex booking availability hooks", () => {
   const originalFlag = process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED;
+  const hadOriginalFlag = Object.hasOwn(process.env, "CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED");
 
   afterEach(() => {
-    if (originalFlag === undefined) {
-      delete process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED;
-    } else {
+    if (hadOriginalFlag) {
       process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED = originalFlag;
+    } else {
+      delete process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED;
     }
     jest.clearAllMocks();
   });
 
   afterAll(() => {
-    if (originalTestEnv === undefined) {
-      delete process.env.TEST;
-    } else {
+    if (hadTestEnv) {
       process.env.TEST = originalTestEnv;
+    } else {
+      delete process.env.TEST;
     }
   });
 

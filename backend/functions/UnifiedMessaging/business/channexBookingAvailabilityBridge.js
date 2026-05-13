@@ -128,7 +128,7 @@ export const getAffectedDateKeysForBookingChange = ({ bookingBefore, bookingAfte
 const getAffectedRangeMs = (affectedDates) => {
   if (!affectedDates.length) return { fromMs: null, toMs: null };
   const firstMs = new Date(`${affectedDates[0]}T00:00:00.000Z`).getTime();
-  const lastMs = new Date(`${affectedDates[affectedDates.length - 1]}T00:00:00.000Z`).getTime();
+  const lastMs = new Date(`${affectedDates.at(-1)}T00:00:00.000Z`).getTime();
   return {
     fromMs: firstMs,
     toMs: lastMs + DAY_MS,
@@ -207,10 +207,16 @@ const summarizeRequestValues = (values) => ({
   valuesOmitted: true,
   valueCount: Array.isArray(values) ? values.length : 0,
   firstDate: Array.isArray(values) && values.length ? values[0]?.date ?? null : null,
-  lastDate: Array.isArray(values) && values.length ? values[values.length - 1]?.date ?? null : null,
+  lastDate: Array.isArray(values) && values.length ? values.at(-1)?.date ?? null : null,
   externalPropertyIds: Array.from(new Set((Array.isArray(values) ? values : []).map((value) => value?.property_id).filter(Boolean))),
   externalRoomTypeIds: Array.from(new Set((Array.isArray(values) ? values : []).map((value) => value?.room_type_id).filter(Boolean))),
 });
+
+const getEvidenceStatus = (evidence) => {
+  if (evidence.overallSuccess) return "SUCCESS";
+  if (evidence.skipped) return "BLOCKED";
+  return "FAILED";
+};
 
 const createBaseEvidence = ({ bookingId, trigger, domitsPropertyId, affectedDates }) => ({
   bookingId: bookingId ?? null,
@@ -223,7 +229,7 @@ const createBaseEvidence = ({ bookingId, trigger, domitsPropertyId, affectedDate
   countOfRoomsSource: null,
   affectedDateRange: {
     dateFrom: affectedDates[0] ?? null,
-    dateTo: affectedDates[affectedDates.length - 1] ?? null,
+    dateTo: affectedDates.at(-1) ?? null,
   },
   affectedDates,
   availabilityValuesSent: [],
@@ -369,7 +375,7 @@ export default class ChannexBookingAvailabilityBridge {
         dateTo: evidence.affectedDateRange?.dateTo ?? null,
         startedAt: now,
         finishedAt: now,
-        status: evidence.overallSuccess ? "SUCCESS" : evidence.skipped ? "BLOCKED" : "FAILED",
+        status: getEvidenceStatus(evidence),
         overallSuccess: !!evidence.overallSuccess,
         mappingSnapshot: stringifyJsonOrNull({
           channexPropertyId: evidence.channexPropertyId,

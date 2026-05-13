@@ -19,9 +19,13 @@ const {
 } = require("./channexBookingAvailabilityBridge.js");
 const Database = require("../ORM/index.js").default;
 
+const DOMITS_PROPERTY_ID = "domits-property-1";
+const EXTERNAL_PROPERTY_ID = "external-property-1";
+const EXTERNAL_ROOM_TYPE_ID = "room-type-1";
+
 const buildBooking = (overrides = {}) => ({
   id: "booking-1",
-  property_id: "domits-property-1",
+  property_id: DOMITS_PROPERTY_ID,
   hostid: "host-1",
   arrivaldate: "2026-06-01",
   departuredate: "2026-06-03",
@@ -29,36 +33,39 @@ const buildBooking = (overrides = {}) => ({
   ...overrides,
 });
 
+const buildPropertyMapping = (overrides = {}) => ({
+  domitsPropertyId: DOMITS_PROPERTY_ID,
+  externalPropertyId: EXTERNAL_PROPERTY_ID,
+  status: "ACTIVE",
+  ...overrides,
+});
+
+const buildRoomTypeMapping = (overrides = {}) => ({
+  domitsPropertyId: DOMITS_PROPERTY_ID,
+  externalPropertyId: EXTERNAL_PROPERTY_ID,
+  externalRoomTypeId: EXTERNAL_ROOM_TYPE_ID,
+  status: "ACTIVE",
+  ...overrides,
+});
+
+const buildProviderResult = (overrides = {}) => ({
+  externalPropertyId: EXTERNAL_PROPERTY_ID,
+  externalRoomTypeId: EXTERNAL_ROOM_TYPE_ID,
+  success: true,
+  taskId: "task-1",
+  warnings: [],
+  ...overrides,
+});
+
 const buildBridge = ({
-  propertyMappings = [
-    {
-      domitsPropertyId: "domits-property-1",
-      externalPropertyId: "external-property-1",
-      status: "ACTIVE",
-    },
-  ],
-  roomTypeMappings = [
-    {
-      domitsPropertyId: "domits-property-1",
-      externalPropertyId: "external-property-1",
-      externalRoomTypeId: "room-type-1",
-      status: "ACTIVE",
-    },
-  ],
+  propertyMappings = [buildPropertyMapping()],
+  roomTypeMappings = [buildRoomTypeMapping()],
   countOfRooms = 1,
   includeRoomTypeCount = true,
   activeBookings = [buildBooking()],
   providerResult = {
     success: true,
-    results: [
-      {
-        externalPropertyId: "external-property-1",
-        externalRoomTypeId: "room-type-1",
-        success: true,
-        taskId: "task-1",
-        warnings: [],
-      },
-    ],
+    results: [buildProviderResult()],
   },
 } = {}) => {
   const fakes = {
@@ -89,7 +96,7 @@ const buildBridge = ({
         success: true,
         roomTypes: [
           {
-            externalRoomTypeId: "room-type-1",
+            externalRoomTypeId: EXTERNAL_ROOM_TYPE_ID,
             ...(includeRoomTypeCount ? { countOfRooms } : {}),
           },
         ],
@@ -157,7 +164,7 @@ describe("ChannexBookingAvailabilityBridge", () => {
     const query = jest.fn().mockResolvedValue([
       {
         id: "booking-2",
-        property_id: "domits-property-1",
+        property_id: DOMITS_PROPERTY_ID,
         arrivaldate: "2026-06-01",
         departuredate: "2026-06-03",
         status: "Paid",
@@ -170,7 +177,7 @@ describe("ChannexBookingAvailabilityBridge", () => {
 
     const repository = new ChannexBookingAvailabilityRepository();
     const rows = await repository.listActiveBookingsOverlappingRange(
-      "domits-property-1",
+      DOMITS_PROPERTY_ID,
       Date.parse("2026-06-01T00:00:00.000Z"),
       Date.parse("2026-06-04T00:00:00.000Z"),
       "booking-1"
@@ -179,7 +186,7 @@ describe("ChannexBookingAvailabilityBridge", () => {
     expect(query.mock.calls[0][0]).toContain("LOWER(status) IN ($4, $5)");
     expect(query.mock.calls[0][0]).toContain("AND id <> $6");
     expect(query.mock.calls[0][1]).toEqual([
-      "domits-property-1",
+      DOMITS_PROPERTY_ID,
       Date.parse("2026-06-01T00:00:00.000Z"),
       Date.parse("2026-06-04T00:00:00.000Z"),
       "awaiting payment",
@@ -218,18 +225,18 @@ describe("ChannexBookingAvailabilityBridge", () => {
     expect(fakes.channexProviderClient.syncChannexFull).not.toHaveBeenCalled();
     expect(fakes.channexProviderClient.pushAvailability.mock.calls[0][1]).toEqual([
       {
-        externalPropertyId: "external-property-1",
-        externalRoomTypeId: "room-type-1",
+        externalPropertyId: EXTERNAL_PROPERTY_ID,
+        externalRoomTypeId: EXTERNAL_ROOM_TYPE_ID,
         values: [
           {
-            property_id: "external-property-1",
-            room_type_id: "room-type-1",
+            property_id: EXTERNAL_PROPERTY_ID,
+            room_type_id: EXTERNAL_ROOM_TYPE_ID,
             date: "2026-06-01",
             availability: 0,
           },
           {
-            property_id: "external-property-1",
-            room_type_id: "room-type-1",
+            property_id: EXTERNAL_PROPERTY_ID,
+            room_type_id: EXTERNAL_ROOM_TYPE_ID,
             date: "2026-06-02",
             availability: 1,
           },
@@ -240,9 +247,9 @@ describe("ChannexBookingAvailabilityBridge", () => {
       bookingId: "booking-1",
       trigger: "BOOKING_CREATED",
       syncType: "booking-availability",
-      domitsPropertyId: "domits-property-1",
-      channexPropertyId: "external-property-1",
-      externalRoomTypeId: "room-type-1",
+      domitsPropertyId: DOMITS_PROPERTY_ID,
+      channexPropertyId: EXTERNAL_PROPERTY_ID,
+      externalRoomTypeId: EXTERNAL_ROOM_TYPE_ID,
       countOfRooms: 2,
       countOfRoomsSource: "CHANNEX_ROOM_TYPE",
       requestCount: 1,
@@ -303,18 +310,10 @@ describe("ChannexBookingAvailabilityBridge", () => {
   test("multiple room type mappings skip as ambiguous without provider call", async () => {
     const { bridge, fakes } = buildBridge({
       roomTypeMappings: [
-        {
-          domitsPropertyId: "domits-property-1",
-          externalPropertyId: "external-property-1",
-          externalRoomTypeId: "room-type-1",
-          status: "ACTIVE",
-        },
-        {
-          domitsPropertyId: "domits-property-1",
-          externalPropertyId: "external-property-1",
+        buildRoomTypeMapping(),
+        buildRoomTypeMapping({
           externalRoomTypeId: "room-type-2",
-          status: "ACTIVE",
-        },
+        }),
       ],
     });
 
@@ -354,13 +353,10 @@ describe("ChannexBookingAvailabilityBridge", () => {
       providerResult: {
         success: true,
         results: [
-          {
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-1",
-            success: true,
+          buildProviderResult({
             taskId: "task-warning",
             warnings: ["provider warning"],
-          },
+          }),
         ],
       },
     });
@@ -381,15 +377,13 @@ describe("ChannexBookingAvailabilityBridge", () => {
       providerResult: {
         success: false,
         results: [
-          {
-            externalPropertyId: "external-property-1",
-            externalRoomTypeId: "room-type-1",
+          buildProviderResult({
             success: false,
             errorCode: "CHANNEX_AVAILABILITY_PUSH_500",
             errorMessage: "Provider failed.",
             httpStatus: 500,
             warnings: [],
-          },
+          }),
         ],
       },
     });
@@ -403,8 +397,8 @@ describe("ChannexBookingAvailabilityBridge", () => {
     expect(evidence.overallSuccess).toBe(false);
     expect(evidence.errors).toEqual([
       {
-        externalPropertyId: "external-property-1",
-        externalRoomTypeId: "room-type-1",
+        externalPropertyId: EXTERNAL_PROPERTY_ID,
+        externalRoomTypeId: EXTERNAL_ROOM_TYPE_ID,
         errorCode: "CHANNEX_AVAILABILITY_PUSH_500",
         errorMessage: "Provider failed.",
         httpStatus: 500,

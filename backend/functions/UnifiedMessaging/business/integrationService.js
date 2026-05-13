@@ -1726,7 +1726,7 @@ const summarizeChannexRequestBody = (requestBody, metadata = {}) => {
     valuesOmitted: true,
     valueCount: values.length,
     firstDate: dates[0] ?? null,
-    lastDate: dates[dates.length - 1] ?? null,
+    lastDate: dates.at(-1) ?? null,
     externalPropertyIds: Array.from(
       new Set([...metadataPropertyIds, ...values.map((value) => requireStr(value?.property_id))].filter(Boolean))
     ).sort(compareAlphabetically),
@@ -2024,7 +2024,7 @@ const CHANNEX_CERTIFICATION_TEST_CASES = {
 const normalizeCertificationName = (value) =>
   String(value || "")
     .toLowerCase()
-    .replace(/&/g, "and")
+    .replaceAll("&", "and")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 const findCertificationRoomMapping = (readiness, roomKey) => {
@@ -2060,7 +2060,7 @@ const collectChannexValueDateRange = (values) => {
   const dates = (Array.isArray(values) ? values : []).map((value) => requireStr(value?.date)).filter(Boolean).sort(compareAlphabetically);
   return {
     dateFrom: dates[0] ?? null,
-    dateTo: dates[dates.length - 1] ?? null,
+    dateTo: dates.at(-1) ?? null,
   };
 };
 const formatCertificationTestCaseId = (value) => {

@@ -83,6 +83,21 @@ class ReservationController {
     return typeof event.body === "string" ? JSON.parse(event.body) : event.body;
   }
 
+  requirePatchField(body, fieldName) {
+    if (!body?.[fieldName]) throw new Error(`Missing ${fieldName}.`);
+    return body[fieldName];
+  }
+
+  async handleModifyBookingDatesAction(body, authToken) {
+    const result = await this.bookingService.modifyBookingDates(
+      this.requirePatchField(body, "bookingId"),
+      this.requirePatchField(body, "arrivalDate"),
+      this.requirePatchField(body, "departureDate"),
+      authToken
+    );
+    return { statusCode: 200, headers: responseHeaderJSON, response: result };
+  }
+
   async handlePatchAction(body, event, authToken) {
     if (body?.action === "cancel-booking") {
       if (!body?.bookingId) throw new Error("Missing bookingId.");
@@ -101,16 +116,7 @@ class ReservationController {
     }
 
     if (body?.action === "modify-booking-dates") {
-      if (!body?.bookingId) throw new Error("Missing bookingId.");
-      if (!body?.arrivalDate) throw new Error("Missing arrivalDate.");
-      if (!body?.departureDate) throw new Error("Missing departureDate.");
-      const result = await this.bookingService.modifyBookingDates(
-        body.bookingId,
-        body.arrivalDate,
-        body.departureDate,
-        authToken
-      );
-      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+      return await this.handleModifyBookingDatesAction(body, authToken);
     }
 
     return null;
