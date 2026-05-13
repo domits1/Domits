@@ -6,7 +6,7 @@ import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftConte
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
-import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
+import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { fetchWebsitePreviewByDraftId } from "./services/websitePublicPreviewService";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
@@ -102,6 +102,7 @@ function WebsitePublicPreviewPage() {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPreview = !loadError && previewModel && TemplateComponent;
+  const isPanoramaTemplate = templateId === "panorama-landing";
 
   useEffect(() => {
     if (!previewModel?.site?.title) {
@@ -145,16 +146,23 @@ function WebsitePublicPreviewPage() {
   }
 
   if (canRenderPreview) {
-    const shouldShowContactWidget = previewModel.visibility?.chatWidget ?? true;
     const publicPreviewPageStyle = {
       "--website-surface-background": resolveWebsiteBackgroundColor(previewModel?.theme?.backgroundColor),
     };
 
     return (
       <main className={styles.publicPreviewPage} style={publicPreviewPageStyle}>
-        <div className={styles.publicPreviewCanvas}>
-          <TemplateComponent model={previewModel} />
-          {shouldShowContactWidget ? <WebsiteContactWidget model={previewModel} /> : null}
+        <div
+          className={`${styles.publicPreviewCanvas} ${
+            isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
+          }`.trim()}
+        >
+          <WebsiteTemplateSurface
+            templateId={templateId}
+            model={previewModel}
+            showContactWidget={previewModel.visibility?.chatWidget ?? true}
+            showBrowserChrome={false}
+          />
         </div>
       </main>
     );

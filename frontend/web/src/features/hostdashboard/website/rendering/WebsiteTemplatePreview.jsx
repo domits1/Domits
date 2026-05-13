@@ -128,6 +128,79 @@ UnsupportedTemplatePreview.propTypes = {
   templateName: PropTypes.string.isRequired,
 };
 
+export function WebsiteTemplateSurface({
+  templateId,
+  model,
+  showContactWidget = true,
+  showBrowserChrome = true,
+  browserTitle = "",
+  onSelectTarget,
+  activeTargetId = "",
+}) {
+  const template = getWebsiteTemplateById(templateId);
+  const TemplateComponent = getWebsiteTemplateRenderer(template.id);
+  const previewCanvasStyle = {
+    "--website-surface-background": resolveWebsiteBackgroundColor(model?.theme?.backgroundColor),
+  };
+
+  return (
+    <div className={styles.previewBrowser}>
+      {showBrowserChrome ? (
+        <div className={styles.previewBrowserBar}>
+          <div className={styles.previewBrowserDots} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className={styles.previewBrowserTitle}>{browserTitle || model.site.title || "Website preview"}</div>
+        </div>
+      ) : null}
+
+      <div className={styles.previewCanvas} style={previewCanvasStyle}>
+        {TemplateComponent ? (
+          <TemplateComponent
+            model={model}
+            onSelectTarget={onSelectTarget}
+            activeTargetId={activeTargetId}
+          />
+        ) : (
+          <UnsupportedTemplatePreview templateName={template.name} />
+        )}
+        {showContactWidget ? <WebsiteContactWidget model={model} /> : null}
+      </div>
+    </div>
+  );
+}
+
+WebsiteTemplateSurface.propTypes = {
+  templateId: PropTypes.string.isRequired,
+  model: PropTypes.shape({
+    source: PropTypes.shape({
+      hostId: PropTypes.string,
+      propertyId: PropTypes.string,
+    }),
+    site: PropTypes.shape({
+      title: PropTypes.string,
+      templateReadyTitle: PropTypes.string,
+    }).isRequired,
+    location: PropTypes.shape({
+      label: PropTypes.string,
+    }).isRequired,
+    visibility: PropTypes.shape({
+      availabilityCalendar: PropTypes.bool,
+      chatWidget: PropTypes.bool,
+    }),
+    theme: PropTypes.shape({
+      backgroundColor: PropTypes.string,
+    }),
+  }).isRequired,
+  showContactWidget: PropTypes.bool,
+  showBrowserChrome: PropTypes.bool,
+  browserTitle: PropTypes.string,
+  onSelectTarget: PropTypes.func,
+  activeTargetId: PropTypes.string,
+};
+
 export default function WebsiteTemplatePreview({
   templateId,
   model,
@@ -136,8 +209,6 @@ export default function WebsiteTemplatePreview({
   onSelectTarget,
   activeTargetId = "",
 }) {
-  const template = getWebsiteTemplateById(templateId);
-  const TemplateComponent = getWebsiteTemplateRenderer(template.id);
   const isCompactVariant = variant === "compact";
   const showContactWidget = !isCompactVariant && model.visibility?.chatWidget !== false;
   const viewportWidth = isCompactVariant
@@ -161,9 +232,6 @@ export default function WebsiteTemplatePreview({
     transform: `scale(${scaleMetrics.scale})`,
   };
   const scaleInnerStyle = isCompactVariant ? compactInnerStyle : scaledInnerStyle;
-  const previewCanvasStyle = {
-    "--website-surface-background": resolveWebsiteBackgroundColor(model?.theme?.backgroundColor),
-  };
 
   useEffect(() => {
     if (isCompactVariant || !activeTargetId || !scaleInnerRef.current) {
@@ -190,28 +258,16 @@ export default function WebsiteTemplatePreview({
           className={styles.previewScaleInner}
           style={scaleInnerStyle}
         >
-          <div className={`${styles.previewBrowser} ${isCompactVariant ? styles.previewBrowserCompact : ""}`.trim()}>
-            <div className={styles.previewBrowserBar}>
-              <div className={styles.previewBrowserDots} aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </div>
-              <div className={styles.previewBrowserTitle}>{model.site.title || "Website preview"}</div>
-            </div>
-
-            <div className={styles.previewCanvas} style={previewCanvasStyle}>
-              {TemplateComponent ? (
-                <TemplateComponent
-                  model={model}
-                  onSelectTarget={onSelectTarget}
-                  activeTargetId={activeTargetId}
-                />
-              ) : (
-                <UnsupportedTemplatePreview templateName={template.name} />
-              )}
-              {showContactWidget ? <WebsiteContactWidget model={model} /> : null}
-            </div>
+          <div className={isCompactVariant ? styles.previewBrowserCompact : ""}>
+            <WebsiteTemplateSurface
+              templateId={templateId}
+              model={model}
+              showContactWidget={showContactWidget}
+              showBrowserChrome
+              browserTitle={model.site.title || "Website preview"}
+              onSelectTarget={onSelectTarget}
+              activeTargetId={activeTargetId}
+            />
           </div>
         </div>
       </div>

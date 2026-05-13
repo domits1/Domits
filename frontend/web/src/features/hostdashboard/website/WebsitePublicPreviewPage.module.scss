@@ -17,6 +17,12 @@
   padding: clamp(16px, 3vw, 36px);
 }
 
+.publicPreviewCanvasWide {
+  width: 100%;
+  max-width: none;
+  padding: clamp(12px, 2vw, 24px);
+}
+
 .publicPreviewStatePage {
   min-height: 100vh;
   display: grid;

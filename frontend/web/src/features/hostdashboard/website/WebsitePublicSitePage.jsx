@@ -11,8 +11,8 @@ import {
   startWebsitePreviewLcpObserver,
 } from "./analytics/websitePreviewAnalytics";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
-import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
+import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
@@ -152,6 +152,7 @@ function WebsitePublicSitePage() {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
+  const isPanoramaTemplate = templateId === "panorama-landing";
 
   const resolvedSiteId = String(renderPayload?.site?.id || resolution?.siteId || requestedSiteId || "").trim();
   const resolvedDomain = normalizeWebsiteDomain(
@@ -297,16 +298,23 @@ function WebsitePublicSitePage() {
   }
 
   if (canRenderPublishedSite) {
-    const shouldShowContactWidget = publicModel.visibility?.chatWidget ?? true;
     const publishedSitePageStyle = {
       "--website-surface-background": resolveWebsiteBackgroundColor(publicModel?.theme?.backgroundColor),
     };
 
     return (
       <main className={styles.publicPreviewPage} style={publishedSitePageStyle}>
-        <div className={styles.publicPreviewCanvas}>
-          <TemplateComponent model={publicModel} />
-          {shouldShowContactWidget ? <WebsiteContactWidget model={publicModel} /> : null}
+        <div
+          className={`${styles.publicPreviewCanvas} ${
+            isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
+          }`.trim()}
+        >
+          <WebsiteTemplateSurface
+            templateId={templateId}
+            model={publicModel}
+            showContactWidget={publicModel.visibility?.chatWidget ?? true}
+            showBrowserChrome={false}
+          />
         </div>
       </main>
     );

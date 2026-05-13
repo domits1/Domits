@@ -207,6 +207,7 @@
 }
 
 .templateTopBarNav span,
+.templateTopBarNav a,
 .templateTopBarMeta span {
   display: inline-flex;
   align-items: center;
@@ -218,23 +219,350 @@
   font-weight: 700;
 }
 
-.panoramaIntro,
+.templateTopBarNav a {
+  text-decoration: none;
+}
+
+.panoramaEditorialHero {
+  display: grid;
+  gap: 20px;
+}
+
+.panoramaHeroBackdropShell {
+  position: relative;
+  min-height: 580px;
+  border-radius: 30px;
+  overflow: hidden;
+  border: 1px solid rgba(123, 101, 65, 0.18);
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
+  background: #111827;
+}
+
+.panoramaHeroBackdrop {
+  width: 100%;
+  height: 100%;
+  min-height: 580px;
+  display: block;
+  object-fit: cover;
+}
+
+.panoramaHeroOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.74)),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.12));
+}
+
+.panoramaHeroInner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  padding: clamp(24px, 4vw, 46px);
+}
+
+.panoramaHeroCopyBlock {
+  display: grid;
+  gap: 16px;
+  max-width: min(680px, 100%);
+}
+
+.panoramaHeroEyebrow,
+.panoramaHeroHeadline,
+.panoramaHeroBlurb {
+  margin: 0;
+  color: #f8f4ed;
+}
+
+.panoramaHeroEyebrow {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(248, 244, 237, 0.72);
+}
+
+.panoramaHeroHeadline {
+  font-size: clamp(2.35rem, 1.8rem + 2vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.panoramaHeroBlurb {
+  max-width: 56ch;
+  color: rgba(248, 244, 237, 0.86);
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+.panoramaHeroActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.panoramaHeroPrimaryAction,
+.panoramaHeroSecondaryMeta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 50px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.panoramaHeroPrimaryAction {
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0.88rem 1.12rem;
+  background: rgba(255, 248, 237, 0.96);
+  color: #1a2232;
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.22);
+}
+
+.panoramaHeroPrimaryAction strong,
+.panoramaHeroPrimaryAction span,
+.panoramaHeroSecondaryMeta {
+  color: inherit;
+}
+
+.panoramaHeroPrimaryAction span {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.panoramaHeroSecondaryMeta {
+  padding: 0.82rem 1.02rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8f4ed;
+  backdrop-filter: blur(8px);
+}
+
+.panoramaTrustRail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.panoramaTrustCard {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(123, 101, 65, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 244, 237, 0.96));
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+}
+
+.panoramaTrustCardIcon {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(191, 165, 122, 0.16);
+}
+
+.panoramaTrustCardCopy {
+  display: grid;
+  gap: 6px;
+}
+
+.panoramaTrustCardTitle,
+.panoramaTrustCardDescription {
+  margin: 0;
+}
+
+.panoramaTrustCardTitle {
+  color: #0f172a;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.panoramaTrustCardDescription {
+  color: #475569;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.panoramaResidenceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.92fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.panoramaResidenceCopy,
+.panoramaResidenceVisualColumn,
+.panoramaInfoStack {
+  display: grid;
+  gap: 16px;
+}
+
+.panoramaResidenceImage {
+  width: 100%;
+  min-height: 420px;
+  display: block;
+  object-fit: cover;
+  border-radius: 24px;
+  border: 1px solid rgba(123, 101, 65, 0.12);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.09);
+}
+
+.panoramaResidenceMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.panoramaGalleryMosaic {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.panoramaGalleryTile {
+  width: 100%;
+  min-height: 220px;
+  display: block;
+  object-fit: cover;
+  border-radius: 22px;
+  border: 1px solid rgba(123, 101, 65, 0.12);
+}
+
+.panoramaGalleryTileLarge {
+  grid-column: span 2;
+  grid-row: span 2;
+  min-height: 452px;
+}
+
+.panoramaDetailsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(260px, 0.88fr);
+  gap: 18px;
+}
+
+.panoramaAmenityGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.panoramaAmenityCard {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(123, 101, 65, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 244, 237, 0.9));
+}
+
+.panoramaAmenityCard strong,
+.panoramaAmenityCard span {
+  margin: 0;
+}
+
+.panoramaAmenityCard strong {
+  color: #0f172a;
+}
+
+.panoramaAmenityCard span {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.panoramaAmenityIcon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(191, 165, 122, 0.16);
+}
+
+.panoramaAmenityIconGlyph {
+  width: 18px;
+  height: 18px;
+}
+
+.panoramaJourneyGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.panoramaJourneyCard {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 220px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(123, 101, 65, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(191, 165, 122, 0.16), transparent 34%),
+    #ffffff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
+}
+
+.panoramaJourneyIndex {
+  color: #b08c56;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.panoramaJourneyTitle,
+.panoramaJourneyDescription {
+  margin: 0;
+}
+
+.panoramaJourneyTitle {
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.panoramaJourneyDescription {
+  color: #475569;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.panoramaAvailabilityShell,
+.panoramaClosingShell {
+  display: grid;
+}
+
+.panoramaClosingCallout {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 26px;
+  border: 1px solid rgba(123, 101, 65, 0.16);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 237, 0.98), rgba(255, 255, 255, 0.98)),
+    #ffffff;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.06);
+}
+
+.panoramaClosingCallout strong {
+  color: #0f172a;
+}
+
 .trustSignalsIntro,
 .experienceIntro {
   display: grid;
   justify-items: start;
-}
-
-.panoramaIntroCopy {
-  display: grid;
-  gap: 12px;
-  width: 100%;
-  max-width: none;
-}
-
-.panoramaIntroCopy .heroDescription {
-  width: 100%;
-  max-width: none;
 }
 
 .experienceIntroCopy {
@@ -243,14 +571,6 @@
   max-width: 62ch;
 }
 
-.panoramaHeroCard {
-  position: relative;
-  display: grid;
-  gap: 0;
-  padding-bottom: 14px;
-}
-
-.panoramaHeroImage,
 .trustSignalsHeroImage,
 .experienceJourneyVisual {
   width: 100%;
@@ -260,104 +580,6 @@
   border: 1px solid rgba(31, 78, 121, 0.12);
 }
 
-.panoramaHeroImage {
-  min-height: 340px;
-  box-shadow: 0 22px 42px rgba(15, 23, 42, 0.08);
-}
-
-.panoramaSearchStub {
-  position: relative;
-  z-index: 1;
-  justify-self: center;
-  margin-top: -24px;
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  align-items: center;
-  min-height: 48px;
-  padding: 0.78rem 1rem;
-  border-radius: 999px;
-  border: 1px solid rgba(31, 78, 121, 0.14);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
-  text-align: center;
-}
-
-.panoramaSearchStub strong {
-  color: #0f172a;
-}
-
-.panoramaSearchStub span {
-  color: #64748b;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.panoramaFeatureGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.panoramaFeatureCard {
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 10px;
-  padding: 18px 16px;
-  border-radius: 20px;
-  border: 1px solid rgba(31, 78, 121, 0.12);
-  background: rgba(249, 252, 246, 0.92);
-  text-align: center;
-}
-
-.panoramaFeatureIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: #f4f7fb;
-  color: #1f2937;
-  box-sizing: border-box;
-  flex-shrink: 0;
-}
-
-.panoramaFeatureIconGlyph {
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
-  line-height: 1;
-}
-
-.panoramaFeatureIconGlyphLarge {
-  width: 28px;
-  height: 28px;
-  font-size: 28px;
-}
-
-.panoramaFeatureIconGlyph path {
-  vector-effect: non-scaling-stroke;
-}
-
-.panoramaFeatureTitle,
-.panoramaFeatureDescription {
-  margin: 0;
-  line-height: 1.6;
-}
-
-.panoramaFeatureTitle {
-  color: #0f172a;
-  font-weight: 800;
-}
-
-.panoramaFeatureDescription {
-  color: #475569;
-}
-
-.panoramaFeatureDescription,
 .heroDescription,
 .signalCard p,
 .trustSignalsCard p,
@@ -967,8 +1189,14 @@
 }
 
 @media (max-width: 920px) {
-  .panoramaFeatureGrid,
+  .panoramaTrustRail,
+  .panoramaJourneyGrid,
   .experienceFooter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaResidenceGrid,
+  .panoramaDetailsGrid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -993,9 +1221,22 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .panoramaHeroBackdropShell,
   .heroVisual,
   .tallImage {
     min-height: 280px;
+  }
+
+  .panoramaHeroBackdrop {
+    min-height: 280px;
+  }
+
+  .panoramaGalleryMosaic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panoramaGalleryTileLarge {
+    grid-column: span 2;
   }
 }
 
@@ -1013,12 +1254,18 @@
     justify-content: flex-start;
   }
 
+  .panoramaHeroCopyBlock {
+    gap: 14px;
+  }
+
   .statGrid,
   .journeyGrid,
+  .panoramaResidenceMetaGrid,
   .heroBannerMeta {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .panoramaAmenityGrid,
   .galleryStrip,
   .galleryColumn {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1057,10 +1304,18 @@
     font-size: 1.42rem;
   }
 
-  .panoramaFeatureGrid {
+  .panoramaHeroHeadline {
+    font-size: 2rem;
+  }
+
+  .panoramaHeroActionRow,
+  .panoramaTrustCard {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .panoramaAmenityGrid,
+  .panoramaGalleryMosaic,
+  .panoramaJourneyGrid,
   .galleryStrip,
   .galleryColumn {
     grid-template-columns: minmax(0, 1fr);
