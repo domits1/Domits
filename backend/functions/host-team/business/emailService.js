@@ -32,7 +32,6 @@ Het Domits Team`
             FunctionName: "EmailNotificationService",
             Payload: JSON.stringify(payload),
         }));
-    } catch (error) {
-        console.error("Failed to send invite email:", error);
+    } catch {
     }
 };

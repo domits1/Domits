@@ -18,12 +18,10 @@ export const UserProvider = ({ children }) => {
                     setUser(userInfo);
                     setRole(userInfo.attributes['custom:group']);
                 } else {
-                    console.error('User role attribute missing, handling as guest');
                     setUser(userInfo);
                     setRole('Traveler');
                 }
-            } catch (error) {
-                console.error("Error fetching user's role:", error);
+            } catch {
                 setUser(null);
                 setRole(null);
             } finally {
