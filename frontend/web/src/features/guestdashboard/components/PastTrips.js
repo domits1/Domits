@@ -31,7 +31,7 @@ function PastTrips({ stays = [] }) {
   const navigate = useNavigate();
 
   return (
-    <div className="card">
+    <div className="card guest-card--past-trips">
       <div className="cardHeader">
         <h2>Past trips</h2>
         <button

@@ -10,6 +10,14 @@ Use it to trace what was implemented, when it was implemented, why decisions wer
 - Every entry should include date, scope, key files, validation, and rollout impact.
 - Use absolute dates (`YYYY-MM-DD`).
 
+## Terminology note (2026-05-11)
+- Older entries use `live preview` for the earlier shared published-preview flow.
+- The current runtime model is:
+  - internal draft preview at `/website-preview/:draftId`
+  - published live-site rendering through `standalone_site` + `standalone_site_domain`
+  - same-origin debug route at `/website-live/:domain`
+- When reading older entries, treat `live preview` as the predecessor of the current `live site` lifecycle.
+
 ## Entry Template
 ```
 ## [YYYY-MM-DD] <short title>

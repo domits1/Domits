@@ -1395,9 +1395,8 @@ export class PropertyController {
     }
 
     ensureStandaloneSitePublishEligibility(propertyDetails) {
-        const propertyStatus = cleanWebsiteText(propertyDetails?.property?.status).toUpperCase();
-        if (propertyStatus !== "ACTIVE") {
-            throw new TypeError("Only ACTIVE listings can be published to a live site.");
+        if (!propertyDetails?.property || this.isPlainObject(propertyDetails.property) === false) {
+            throw new TypeError("Listing data could not be loaded for this live site.");
         }
     }
 
@@ -1628,7 +1627,7 @@ export class PropertyController {
             error?.message?.includes("must be a plain object") ||
             error?.message?.includes("deleteReasons must be an array") ||
             error?.message?.includes("Unsupported website eventType") ||
-            error?.message?.includes("Only ACTIVE listings can be published") ||
+            error?.message?.includes("Listing data could not be loaded for this live site.") ||
             error?.message?.includes("website site status must be") ||
             error?.message?.includes("website domain status must be") ||
             error?.message?.includes("payload.attemptId") ||
@@ -2278,9 +2277,9 @@ export class PropertyController {
             const siteSummary = await this.getStandaloneSiteSummaryByPropertyId(propertyId, hostId);
             if (!siteSummary) {
                 return {
-                    statusCode: 404,
+                    statusCode: 200,
                     headers: draftResponseHeaders,
-                    body: JSON.stringify({ message: "Website site record not found." }),
+                    body: JSON.stringify(null),
                 };
             }
 

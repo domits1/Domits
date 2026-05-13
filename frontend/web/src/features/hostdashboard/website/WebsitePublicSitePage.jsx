@@ -20,6 +20,7 @@ import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
 } from "./services/websitePublicSiteService";
+import { subscribeToWebsiteLiveSiteUpdates } from "./services/websitePreviewSync";
 import styles from "./WebsitePublicPreviewPage.module.scss";
 
 const normalizeWebsiteDomain = (value) => {
@@ -33,12 +34,30 @@ const normalizeWebsiteDomain = (value) => {
   return hostSegment.split(":")[0] || "";
 };
 
+const resolveFallbackPropertyId = ({ resolution, renderPayload }) => {
+  const candidateValues = [
+    resolution?.propertyId,
+    renderPayload?.resolution?.propertyId,
+    renderPayload?.propertySnapshot?.property?.id,
+    renderPayload?.propertySnapshot?.property?.ID,
+    renderPayload?.propertySnapshot?.id,
+    renderPayload?.propertySnapshot?.ID,
+  ];
+
+  const normalizedPropertyId = candidateValues
+    .map((value) => String(value || "").trim())
+    .find(Boolean);
+
+  return normalizedPropertyId || "";
+};
+
 function WebsitePublicSitePage() {
   const { domain: routeDomain = "" } = useParams();
   const [resolution, setResolution] = useState(null);
   const [renderPayload, setRenderPayload] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [refreshVersion, setRefreshVersion] = useState(0);
 
   const requestedDomain = useMemo(() => {
     const routeRequestedDomain = normalizeWebsiteDomain(routeDomain);
@@ -104,7 +123,7 @@ function WebsitePublicSitePage() {
     return () => {
       isMounted = false;
     };
-  }, [requestedDomain, requestedSiteId]);
+  }, [requestedDomain, requestedSiteId, refreshVersion]);
 
   const publicModel = useMemo(() => {
     if (!renderPayload?.propertySnapshot) {
@@ -124,6 +143,31 @@ function WebsitePublicSitePage() {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
+
+  const resolvedSiteId = String(renderPayload?.site?.id || resolution?.siteId || requestedSiteId || "").trim();
+  const resolvedDomain = normalizeWebsiteDomain(
+    renderPayload?.domain?.domain || resolution?.domain?.domain || requestedDomain
+  );
+  const fallbackPropertyId = useMemo(
+    () => resolveFallbackPropertyId({ resolution, renderPayload }),
+    [renderPayload, resolution]
+  );
+  const recoveryHref = fallbackPropertyId
+    ? `/listingdetails?ID=${encodeURIComponent(fallbackPropertyId)}`
+    : "/home";
+  const recoveryLabel = fallbackPropertyId ? "View listing on Domits" : "Browse stays on Domits";
+
+  useEffect(() => {
+    return subscribeToWebsiteLiveSiteUpdates(
+      {
+        siteId: resolvedSiteId,
+        domain: resolvedDomain,
+      },
+      () => {
+        setRefreshVersion((currentVersion) => currentVersion + 1);
+      }
+    );
+  }, [resolvedDomain, resolvedSiteId]);
 
   useEffect(() => {
     if (!publicModel?.site?.title) {
@@ -156,7 +200,7 @@ function WebsitePublicSitePage() {
         });
       },
     });
-  }, [canRenderPublishedSite, renderPayload, requestedDomain]);
+  }, [canRenderPublishedSite, renderPayload, requestedDomain, refreshVersion]);
 
   if (isLoading) {
     return (
@@ -190,6 +234,17 @@ function WebsitePublicSitePage() {
         <p className={styles.publicPreviewEyebrow}>Published website</p>
         <h1>{template?.name || "Published website unavailable"}</h1>
         <p>{loadError || "This published website is not available."}</p>
+        <div className={styles.publicPreviewActionRow}>
+          <button
+            type="button"
+            className={styles.publicPreviewActionButton}
+            onClick={() => {
+              globalThis.location.assign(recoveryHref);
+            }}
+          >
+            {recoveryLabel}
+          </button>
+        </div>
       </section>
     </main>
   );
