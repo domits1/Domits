@@ -4,6 +4,7 @@ import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
+  getPreviewTargetMarkerProps,
   TemplateAvailabilityCalendar,
   TemplateHeroCopy,
   TemplateSoftCallout,
@@ -56,7 +57,13 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
         />
 
         {showTrustCards ? (
-          <div className={styles.trustSignalsStack}>
+          <div
+            {...getPreviewTargetMarkerProps(
+              styles.trustSignalsStack,
+              "visibility.trustCards",
+              activeTargetId
+            )}
+          >
             {model.trustCards.slice(0, 2).map((card, index) => {
               const cardIcon = getAmenityIconNode(card.iconAmenityId, {
                 className: styles.trustSignalsCardMetaIconGlyph,

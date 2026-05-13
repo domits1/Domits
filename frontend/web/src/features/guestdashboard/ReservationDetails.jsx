@@ -1,19 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import "../../styles/sass/features/guestdashboard/guestReservationDetail.scss";
 import "../../styles/sass/features/guestdashboard/mainDashboardGuest.scss";
 
 import PropertyCard from "./components/PropertyCard";
 import CheckInInstructions from "./components/CheckInInstructions";
 import HouseRules from "./components/HouseRules";
-import CancellationPolicySection, {
-  resolveGuestCancellationPolicy,
-} from "./components/CancellationPolicySection";
+import CancellationPolicySection, { resolveGuestCancellationPolicy } from "./components/CancellationPolicySection";
 import PaymentSummary from "./components/PaymentSummary";
 import BookingDetails from "./components/BookingDetails";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader";
 import useDashboardIdentity from "../../hooks/useDashboardIdentity";
-import { getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
+import { cancelGuestBooking, getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
 import {
   formatFamilyLabel,
   getArrivalDate,
@@ -22,6 +22,7 @@ import {
   getBookingTotal,
   getDepartureDate,
   getPaidBookings,
+  normalizeGuestBookingsResponse,
   getPropertyId,
   getReservationNumber,
   normalizeStayStatus,
@@ -235,7 +236,88 @@ const resolveReservationCancellationPolicy = ({ booking, propertyDetails }) => {
   return fallbackPolicyId ? resolveGuestCancellationPolicy(fallbackPolicyId) : null;
 };
 
-const buildReservationContent = ({ isPageLoading, pageError, reservation, handleMessageHost }) => {
+function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm }) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (!dialog) {
+      return;
+    }
+
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    }
+
+    if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  const handleCancel = (event) => {
+    if (isSubmitting) {
+      event.preventDefault();
+      return;
+    }
+
+    onClose();
+  };
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="cancelBookingModal"
+      aria-labelledby="cancel-booking-title"
+      aria-describedby="cancel-booking-description"
+      onCancel={handleCancel}>
+      <h2 id="cancel-booking-title">Cancel booking?</h2>
+      <p id="cancel-booking-description">
+        Are you sure you want to cancel this booking? Your host will be notified and this action will update your
+        reservation status.
+      </p>
+
+      {error && (
+        <p className="cancelBookingModalError" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="cancelBookingModalActions">
+        <button type="button" className="secondaryBtn modalActionBtn" onClick={onClose} disabled={isSubmitting}>
+          Keep booking
+        </button>
+        <button type="button" className="dangerBtn modalActionBtn" onClick={onConfirm} disabled={isSubmitting}>
+          {isSubmitting ? "Cancelling..." : "Yes, cancel booking"}
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
+CancelBookingModal.propTypes = {
+  error: PropTypes.string,
+  isOpen: PropTypes.bool.isRequired,
+  isSubmitting: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
+
+CancelBookingModal.defaultProps = {
+  error: "",
+};
+
+const buildReservationContent = ({
+  isPageLoading,
+  pageError,
+  reservation,
+  handleMessageHost,
+  handleOpenCancelBooking,
+}) => {
   if (isPageLoading) {
     return (
       <div className="card reservationStateCard">
@@ -254,12 +336,22 @@ const buildReservationContent = ({ isPageLoading, pageError, reservation, handle
   }
 
   if (reservation) {
+    const isCancelledReservation = normalizeStayStatus(reservation.stay.status) === "Cancelled";
+
     return (
       <>
         <div className="reservationHeader">
           <h1 className="reservationTitle">{reservation.property.title}</h1>
-          <span className="confirmed reservationStatus">{reservation.stay.status}</span>
+          <span className={`reservationStatus ${isCancelledReservation ? "cancelled" : "confirmed"}`}>
+            {isCancelledReservation ? "Cancelled" : reservation.stay.status}
+          </span>
         </div>
+
+        {isCancelledReservation && (
+          <output className="reservationCancelledBanner">
+            This reservation has been cancelled.
+          </output>
+        )}
 
         <div className="reservationPage">
           <div className="reservationLeft">
@@ -283,6 +375,16 @@ const buildReservationContent = ({ isPageLoading, pageError, reservation, handle
             <CancellationPolicySection policy={reservation.cancellationPolicy} />
 
             <HouseRules rules={reservation.rules} />
+
+            {normalizeStayStatus(reservation.stay.status) !== "Cancelled" && (
+              <div className="card cancelBookingCard">
+                <h3>Cancel reservation</h3>
+                <p>Review the cancellation policy above before cancelling this booking.</p>
+                <button type="button" className="dangerOutlineBtn" onClick={handleOpenCancelBooking}>
+                  Cancel Booking
+                </button>
+              </div>
+            )}
 
             <div className="card helpCard">
               <h3>Need help?</h3>
@@ -334,6 +436,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
   });
   const total = getBookingTotal(booking);
   const roomRateRaw = Number(pricing?.roomRate ?? pricing?.roomrate);
+  const bookingId = getBookingId(booking);
   const nightlyRate = resolveNightlyRate({
     roomRateRaw,
     total,
@@ -361,6 +464,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
       image: host?.profileImage || host?.image || null,
     },
     stay: {
+      bookingId,
       reservationId: getReservationNumber(booking),
       status: normalizeStayStatus(booking?.status),
       bookedDate: formatDisplayDate(bookedDate),
@@ -388,6 +492,9 @@ function ReservationDetails() {
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelBookingLoading, setCancelBookingLoading] = useState(false);
+  const [cancelBookingError, setCancelBookingError] = useState("");
   const { userId: guestId, loading: identityLoading, error: identityError } = useDashboardIdentity("Guest");
 
   const reservationRouteId = useMemo(() => extractReservationIdFromPath(location.pathname), [location.pathname]);
@@ -415,9 +522,8 @@ function ReservationDetails() {
           return;
         }
 
-        const booking = getPaidBookings(bookingData).find((entry) =>
-          matchesReservationRoute(entry, reservationRouteId)
-        );
+        const allBookings = normalizeGuestBookingsResponse(bookingData);
+        const booking = allBookings.find((entry) => matchesReservationRoute(entry, reservationRouteId));
 
         if (!booking) {
           throw new Error("Reservation not found.");
@@ -489,11 +595,58 @@ function ReservationDetails() {
     navigate("/guestdashboard/messages");
   };
 
+  const handleOpenCancelBooking = () => {
+    setCancelBookingError("");
+    setIsCancelModalOpen(true);
+  };
+
+  const handleCloseCancelBooking = () => {
+    if (cancelBookingLoading) {
+      return;
+    }
+
+    setCancelBookingError("");
+    setIsCancelModalOpen(false);
+  };
+
+  const handleConfirmCancelBooking = async () => {
+    const bookingId = reservation?.stay?.bookingId;
+
+    if (!bookingId) {
+      setCancelBookingError("This reservation is missing a booking id.");
+      return;
+    }
+
+    setCancelBookingLoading(true);
+    setCancelBookingError("");
+
+    try {
+      const updatedBooking = await cancelGuestBooking(bookingId);
+      setIsCancelModalOpen(false);
+
+      if (updatedBooking) {
+        const updatedStatus = normalizeStayStatus(updatedBooking.status);
+        setReservation((prev) => {
+          if (!prev) return prev;
+          return { ...prev, stay: { ...prev.stay, status: updatedStatus } };
+        });
+      }
+
+      toast.success("Reservation cancelled.");
+    } catch (cancelError) {
+      console.error("Failed to cancel booking:", cancelError);
+      setCancelBookingError("Could not cancel this booking. Please try again.");
+    } finally {
+      setCancelBookingLoading(false);
+    }
+  };
+
   const reservationContent = buildReservationContent({
     isPageLoading,
     pageError,
     reservation,
     handleMessageHost,
+    handleOpenCancelBooking,
   });
 
   return (
@@ -505,6 +658,14 @@ function ReservationDetails() {
 
         {reservationContent}
       </div>
+
+      <CancelBookingModal
+        error={cancelBookingError}
+        isOpen={isCancelModalOpen}
+        isSubmitting={cancelBookingLoading}
+        onClose={handleCloseCancelBooking}
+        onConfirm={handleConfirmCancelBooking}
+      />
     </main>
   );
 }

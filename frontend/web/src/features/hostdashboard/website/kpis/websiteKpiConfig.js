@@ -1,11 +1,13 @@
 export { EMPTY_WEBSITE_KPIS } from "./websiteKpiFields";
 
-export const SURFACE_KPI_TAB_PREVIEW = "preview";
-export const SURFACE_KPI_TAB_LIVE = "live";
+export const PERFORMANCE_VIEWPORT_TAB_MOBILE = "mobile";
+export const PERFORMANCE_VIEWPORT_TAB_TABLET = "tablet";
+export const PERFORMANCE_VIEWPORT_TAB_DESKTOP = "desktop";
 
-export const SURFACE_KPI_TAB_OPTIONS = Object.freeze([
-  { id: SURFACE_KPI_TAB_PREVIEW, label: "Preview" },
-  { id: SURFACE_KPI_TAB_LIVE, label: "Live" },
+export const PERFORMANCE_VIEWPORT_TAB_OPTIONS = Object.freeze([
+  { id: PERFORMANCE_VIEWPORT_TAB_MOBILE, label: "Mobile" },
+  { id: PERFORMANCE_VIEWPORT_TAB_TABLET, label: "Tablet" },
+  { id: PERFORMANCE_VIEWPORT_TAB_DESKTOP, label: "Desktop" },
 ]);
 
 const KPI_EMPTY_VALUE = "No data yet";
@@ -15,6 +17,18 @@ const KPI_STATUS_PENDING = "Not instrumented yet";
 
 const createFixedPrecisionFormatter = (suffix, scale = 1) => (value) => `${(value / scale).toFixed(2)}${suffix}`;
 const createWholeMinutesFormatter = () => (value) => `${value.toFixed(1)} min`;
+const createMinutesFromMsFormatter = () => (value) => `${(value / 60000).toFixed(1)} min`;
+const createAdaptiveDurationFromMsFormatter = () => (value) => {
+  if (!Number.isFinite(value)) {
+    return KPI_EMPTY_VALUE;
+  }
+
+  if (value < 60000) {
+    return `${(value / 1000).toFixed(2)} s`;
+  }
+
+  return `${(value / 60000).toFixed(1)} min`;
+};
 const createCurrencyFormatter = () => (value) => `EUR ${value.toFixed(2)}`;
 
 const formatters = Object.freeze({
@@ -22,6 +36,8 @@ const formatters = Object.freeze({
   secondsFromMs: createFixedPrecisionFormatter(" s", 1000),
   seconds: createFixedPrecisionFormatter(" s"),
   minutes: createWholeMinutesFormatter(),
+  minutesFromMs: createMinutesFromMsFormatter(),
+  durationFromMs: createAdaptiveDurationFromMsFormatter(),
   eur: createCurrencyFormatter(),
 });
 
@@ -49,13 +65,36 @@ const createMetricCardDefinition = (
   sampleLabel,
 });
 
-const createResearchKpiDefinition = (id, criteria, valueKey, formatterKey, note) => ({
+const createResearchKpiDefinition = (
   id,
   criteria,
   valueKey,
   formatterKey,
   note,
+  sampleLabel = "",
+  sampleCountKey = ""
+) => ({
+  id,
+  criteria,
+  valueKey,
+  formatterKey,
+  note,
+  sampleLabel,
+  sampleCountKey,
 });
+
+const createPerformanceMetricDefinition = (viewport, description) =>
+  createMetricCardDefinition(
+    `site-lcp-${viewport}-p75`,
+    "site_lcp_p75",
+    `siteLcp${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}P75`,
+    description,
+    "secondsFromMs",
+    (websiteKpis) =>
+      formatSampleLabel(
+        websiteKpis[`siteLcp${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}SampleCount`]
+      )
+  );
 
 const formatKpiValue = (value, formatterKey = null) => {
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -146,23 +185,23 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "How often saved editor changes were recorded"
   ),
   createMetricCardDefinition(
-    "preview-opens",
-    "Preview link opens",
-    "publicPreviewViewCount",
-    (websiteKpis) => `Last preview opened: ${formatKpiTimestamp(websiteKpis.lastPublicPreviewAt)}`
+    "unique-live-sites",
+    "Unique live sites opened",
+    "uniqueLiveSiteCount",
+    "Distinct websites opened through the Domits live link across preview-era and live-site history"
   ),
   createMetricCardDefinition(
-    "unique-previewed",
-    "Unique sites previewed",
-    "uniquePreviewedWebsiteCount",
-    "Distinct website drafts opened through shared preview links"
+    "live-site-opens",
+    "Live site opens",
+    "liveSiteOpenCount",
+    (websiteKpis) => `Last live site opened: ${formatKpiTimestamp(websiteKpis.lastLiveSiteOpenAt)}`
   ),
   createMetricCardDefinition(
-    "live-preview-updates",
-    "Live preview updates",
-    "livePreviewUpdateCount",
+    "live-site-updates",
+    "Live site updates",
+    "liveSiteUpdateCount",
     (websiteKpis) =>
-      `Last update pushed: ${formatKpiTimestamp(websiteKpis.lastLivePreviewUpdateAt)}`
+      `Last live site update: ${formatKpiTimestamp(websiteKpis.lastLiveSiteUpdateAt)}`
   ),
   createMetricCardDefinition(
     "deleted-websites",
@@ -172,36 +211,41 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
   ),
 ]);
 
-const SURFACE_PERFORMANCE_DEFINITIONS = Object.freeze({
-  [SURFACE_KPI_TAB_PREVIEW]: {
-    title: "Preview surface performance",
-    description:
-      "Preview LCP is captured from the public preview route when it is opened on a mobile viewport.",
-    metricDefinitions: [
-      createMetricCardDefinition(
-        "preview-site-lcp-mobile-p75",
-        "site_lcp_mobile_p75",
-        "previewSiteLcpMobileP75",
-        "75th percentile Largest Contentful Paint for preview visits on mobile.",
-        "secondsFromMs",
-        (websiteKpis) => formatSampleLabel(websiteKpis.previewSiteLcpMobileSampleCount)
-      ),
-    ],
-  },
-  [SURFACE_KPI_TAB_LIVE]: {
-    title: "Live surface performance",
-    description:
-      "Live-site web-vitals remain pending until the published standalone website surface and routing are active.",
-    metricDefinitions: [
-      createMetricCardDefinition(
-        "live-site-lcp-mobile-p75",
-        "site_lcp_mobile_p75",
-        "liveSiteLcpMobileP75",
-        "No live standalone site telemetry is being recorded yet.",
-        "secondsFromMs",
-        (websiteKpis) => formatSampleLabel(websiteKpis.liveSiteLcpMobileSampleCount)
-      ),
-    ],
+const PERFORMANCE_DEFINITIONS = Object.freeze({
+  title: "Website performance",
+  description:
+    "Performance combines historical preview-route telemetry and current live-site telemetry into one viewport-specific KPI series.",
+  viewportDefinitions: {
+    [PERFORMANCE_VIEWPORT_TAB_MOBILE]: {
+      description:
+        "75th percentile Largest Contentful Paint for mobile visits across the earlier preview route and the current live-site runtime.",
+      metricDefinitions: [
+        createPerformanceMetricDefinition(
+          PERFORMANCE_VIEWPORT_TAB_MOBILE,
+          "75th percentile Largest Contentful Paint for mobile visits across preview-era and live-site history."
+        ),
+      ],
+    },
+    [PERFORMANCE_VIEWPORT_TAB_TABLET]: {
+      description:
+        "75th percentile Largest Contentful Paint for tablet-sized visits across the earlier preview route and the current live-site runtime.",
+      metricDefinitions: [
+        createPerformanceMetricDefinition(
+          PERFORMANCE_VIEWPORT_TAB_TABLET,
+          "75th percentile Largest Contentful Paint for tablet-sized visits across preview-era and live-site history."
+        ),
+      ],
+    },
+    [PERFORMANCE_VIEWPORT_TAB_DESKTOP]: {
+      description:
+        "75th percentile Largest Contentful Paint for desktop-sized visits across the earlier preview route and the current live-site runtime.",
+      metricDefinitions: [
+        createPerformanceMetricDefinition(
+          PERFORMANCE_VIEWPORT_TAB_DESKTOP,
+          "75th percentile Largest Contentful Paint for desktop-sized visits across preview-era and live-site history."
+        ),
+      ],
+    },
   },
 });
 
@@ -210,29 +254,28 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     "time_to_publish_p95",
     ["Scalability", "User experience"],
     "timeToPublishP95",
-    "minutes",
-    "Requires a real publish lifecycle with publish-requested and publish-succeeded timestamps. The current preview-link workflow is not the final publish contract."
+    "durationFromMs",
+    "Measured from publish request until the live site and Domits live link write complete. This reflects backend publish latency, not DNS propagation.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.timeToPublishSampleCount),
+    "timeToPublishSampleCount"
   ),
   createResearchKpiDefinition(
     "cost_per_active_site_per_month",
     ["Scalability", "Cost"],
     "costPerActiveSitePerMonth",
     "eur",
-    "Requires infrastructure cost allocation plus a real count of active published sites. Drafts and preview links are not enough for a defensible value."
-  ),
-  createResearchKpiDefinition(
-    "site_lcp_mobile_p75",
-    ["Performance"],
-    "siteLcpMobileP75",
-    "seconds",
-    "Live mobile web-vitals telemetry still requires a real published standalone website surface. Preview LCP is tracked separately in this dashboard."
+    "Calculated from configured monthly standalone-site cost inputs, active published site count, and recent website usage events. This is a usage-weighted operating-cost proxy, not an AWS billing API feed.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.costPerActiveSitePerMonthSampleCount),
+    "costPerActiveSitePerMonthSampleCount"
   ),
   createResearchKpiDefinition(
     "fallback_subdomain_availability",
     ["Reliability"],
     "fallbackSubdomainAvailability",
     "percentage",
-    "Requires real fallback subdomain routing plus synthetic availability checks. Preview links do not represent subdomain uptime."
+    "Current published live-link reachability rate based on published site state plus ACTIVE Domits link routing status. This is not synthetic uptime yet.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.fallbackSubdomainAvailabilitySampleCount),
+    "fallbackSubdomainAvailabilitySampleCount"
   ),
   createResearchKpiDefinition(
     "booking_api_error_rate",
@@ -246,7 +289,9 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Correctness"],
     "quoteToChargeMismatchRate",
     "percentage",
-    "Requires quote issuance and final successful charge comparison. That data does not exist until checkout and payment instrumentation is in place."
+    "Current proxy compares the published live-site room rate snapshot against the current PMS base room rate. A true quote-to-charge comparison still requires standalone quote, checkout, and payment instrumentation.",
+    (websiteKpis) => formatSampleLabel(websiteKpis.quoteToChargeMismatchSampleCount),
+    "quoteToChargeMismatchSampleCount"
   ),
   createResearchKpiDefinition(
     "booking_funnel_completion_rate",
@@ -289,29 +334,51 @@ export const formatNullableDurationMs = (value) => formatKpiValue(value, "second
 export const buildWebsiteMetricCards = (websiteKpis) =>
   buildMetricCardsFromDefinitions(WEBSITE_METRIC_CARD_DEFINITIONS, websiteKpis);
 
-export const buildSurfacePerformanceCards = (websiteKpis) =>
-  Object.fromEntries(
-    Object.entries(SURFACE_PERFORMANCE_DEFINITIONS).map(([surfaceTab, definition]) => [
-      surfaceTab,
-      {
-        title: definition.title,
-        description: definition.description,
-        metrics: buildMetricCardsFromDefinitions(definition.metricDefinitions, websiteKpis),
-      },
-    ])
-  );
+export const buildPerformanceCards = (websiteKpis, viewportTab = PERFORMANCE_VIEWPORT_TAB_MOBILE) => {
+  const viewportDefinition =
+    PERFORMANCE_DEFINITIONS.viewportDefinitions[viewportTab] ||
+    PERFORMANCE_DEFINITIONS.viewportDefinitions[PERFORMANCE_VIEWPORT_TAB_MOBILE];
+
+  return {
+    title: PERFORMANCE_DEFINITIONS.title,
+    description: PERFORMANCE_DEFINITIONS.description,
+    viewportDescription: viewportDefinition.description,
+    metrics: buildMetricCardsFromDefinitions(viewportDefinition.metricDefinitions, websiteKpis),
+  };
+};
+
+const resolveResearchKpiValue = ({ hasNumericValue, rawValue, formatterKey, hasSamples }) => {
+  if (hasNumericValue) {
+    return formatters[formatterKey](rawValue);
+  }
+
+  if (hasSamples) {
+    return "No valid samples";
+  }
+
+  return RESEARCH_KPI_EMPTY_VALUE;
+};
 
 export const buildResearchKpiCards = (websiteKpis) =>
   RESEARCH_KPI_DEFINITIONS.map((researchKpi) => {
     const rawValue = websiteKpis[researchKpi.valueKey];
-    const isInstrumented = typeof rawValue === "number" && Number.isFinite(rawValue);
+    const sampleCount = Number(websiteKpis[researchKpi.sampleCountKey] || 0);
+    const hasSamples = Number.isFinite(sampleCount) && sampleCount > 0;
+    const hasNumericValue = typeof rawValue === "number" && Number.isFinite(rawValue);
+    const isInstrumented = hasNumericValue || hasSamples;
 
     return {
       ...researchKpi,
       isInstrumented,
-      value: isInstrumented
-        ? formatters[researchKpi.formatterKey](rawValue)
-        : RESEARCH_KPI_EMPTY_VALUE,
+      value: resolveResearchKpiValue({
+        hasNumericValue,
+        rawValue,
+        formatterKey: researchKpi.formatterKey,
+        hasSamples,
+      }),
       statusLabel: isInstrumented ? KPI_STATUS_READY : KPI_STATUS_PENDING,
+      sampleLabel: isInstrumented
+        ? resolveMetricSampleLabel(researchKpi.sampleLabel, websiteKpis)
+        : "",
     };
   });

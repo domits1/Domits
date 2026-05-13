@@ -4,15 +4,25 @@ import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
 import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
+import Forbidden from "../util/exception/Forbidden.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
+
+const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 
 class ReservationRepository {
   // ---------
   // Booking Create (auth)
   // ---------
-  async addBookingToTable(requestBody, userId, hostId, cancellationPolicy, status = "Awaiting Payment", bookingType = "direct") {
+  async addBookingToTable(
+    requestBody,
+    userId,
+    hostId,
+    cancellationPolicy,
+    status = "Awaiting Payment",
+    bookingType = "direct"
+  ) {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
@@ -66,7 +76,7 @@ class ReservationRepository {
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :property_id", { property_id: propertyId })
-      .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: ["Failed", "Declined", "Inquiry"] })
+      .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: NON_BLOCKING_BOOKING_STATUSES })
       .andWhere("booking.arrivaldate < :departureDate", { departureDate: departureDateMs })
       .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs })
       .getCount();
@@ -284,7 +294,7 @@ class ReservationRepository {
       .select(["booking.arrivaldate", "booking.departuredate"])
       .where("booking.property_id = :propertyId", { propertyId })
       .andWhere("booking.status NOT IN (:...excludedStatuses)", {
-        excludedStatuses: ["Failed", "Declined", "Inquiry"],
+        excludedStatuses: NON_BLOCKING_BOOKING_STATUSES,
       })
       .getMany();
 
@@ -350,6 +360,37 @@ class ReservationRepository {
     }
     return {
       response: query,
+      statusCode: 200,
+    };
+  }
+
+  async cancelBookingByGuest(id, guestId) {
+    const client = await Database.getInstance();
+
+    const existing = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.id = :id", { id })
+      .getOne();
+
+    if (!existing) {
+      throw new NotFoundException("Booking not found.");
+    }
+
+    if (existing.guestid !== guestId) {
+      throw new Forbidden("Only the guest of this booking may cancel this booking.");
+    }
+
+    await client.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute();
+
+    const updated = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.id = :id", { id })
+      .getOne();
+
+    return {
+      response: updated,
       statusCode: 200,
     };
   }

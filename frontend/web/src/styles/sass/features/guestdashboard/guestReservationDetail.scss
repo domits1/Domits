@@ -17,6 +17,39 @@
   flex-shrink: 0;
 }
 
+.reservationStatus.confirmed {
+  font-size: 17px;
+  font-weight: 700;
+  padding: 11px 22px;
+  border-radius: 11px;
+}
+
+.reservationStatus.cancelled {
+  display: inline-block;
+  width: fit-content;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 11px 22px;
+  border-radius: 11px;
+  margin-bottom: 5px;
+}
+
+.reservationCancelledBanner {
+  width: 100%;
+  box-sizing: border-box;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-left: 5px solid #dc2626;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin: -6px 0 20px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
 .reservationPage {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
@@ -383,8 +416,133 @@
   background: #14532d;
 }
 
+.cancelBookingCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cancelBookingCard h3 {
+  margin: 0;
+}
+
+.cancelBookingCard p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dangerOutlineBtn,
+.dangerBtn,
+.secondaryBtn {
+  width: 100%;
+  border-radius: 10px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.dangerOutlineBtn {
+  background: #ffffff;
+  border: 1px solid #dc2626;
+  color: #b91c1c;
+}
+
+.dangerOutlineBtn:hover {
+  background: #fee2e2;
+}
+
+.dangerOutlineBtn:disabled,
+.dangerBtn:disabled,
+.secondaryBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.cancelBookingModal::backdrop {
+  background: rgba(17, 24, 39, 0.48);
+}
+
+.cancelBookingModal {
+  width: min(100%, 440px);
+  background: #ffffff;
+  border: 0;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+  margin: auto;
+}
+
+.cancelBookingModal h2 {
+  margin: 0 0 10px;
+  color: #111827;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.cancelBookingModal p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cancelBookingModal .cancelBookingModalError {
+  margin-top: 14px;
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.cancelBookingModalActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.cancelBookingModalActions .modalActionBtn {
+  width: auto;
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 15px;
+  padding: 14px;
+  box-sizing: border-box;
+  text-align: center;
+  margin: 0;
+}
+
+.secondaryBtn {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.secondaryBtn:hover {
+  background: #f9fafb;
+}
+
+.dangerBtn {
+  background: #dc2626;
+  border: 1px solid transparent;
+  color: #ffffff;
+}
+
+.dangerBtn:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
 .viewAll:focus-visible,
-.primaryBtn:focus-visible {
+.primaryBtn:focus-visible,
+.dangerOutlineBtn:focus-visible,
+.dangerBtn:focus-visible,
+.secondaryBtn:focus-visible {
   outline: 2px solid #166534;
   outline-offset: 2px;
 }
@@ -464,5 +622,11 @@
   .detailRow {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .cancelBookingModalActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 16px;
   }
 }

@@ -6,10 +6,22 @@ const controller = new ReservationController();
 const eventparser = new ParseEvent();
 const responseHeaders = responsejson;
 
+const getHttpMethod = (event) => event?.httpMethod || event?.requestContext?.http?.method;
+
 export const handler = async (event) => {
   let returnedResponse = {};
+  const httpMethod = getHttpMethod(event);
+
+  if (httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: responseHeaders,
+      body: "",
+    };
+  }
+
   let parsedEvent = await eventparser.handleEvent(event);
-  switch(event.httpMethod){
+  switch(httpMethod){
     case "POST":
       returnedResponse = await controller.create(parsedEvent);
       break;

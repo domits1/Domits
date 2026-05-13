@@ -1,13 +1,16 @@
 # Standalone Property Site Frontend Status
 
 ## Purpose
-This document tracks the current implementation status of the host-side standalone website builder in the frontend. It captures what is production-real now, what is preview-only, and what the next phase must cover.
+This document tracks the current implementation status of the host-side standalone website builder and published-site runtime in the frontend. It captures what is implemented now, what remains internal-preview-only, and what the next phase must cover.
 
 Historical iteration log:
 - `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
 
 ## Current status
-The builder is no longer only a setup shell. It now builds a real in-dashboard preview from selected listing data for the first three templates and persists per-host website drafts.
+The feature is no longer only a setup shell. It now covers three connected surfaces:
+- in-dashboard builder preview for first-pass setup
+- persisted draft editing for host-owned websites
+- a separate published live-site lifecycle backed by `standalone_site` and `standalone_site_domain`
 
 What is in place:
 - A dedicated website builder page with a step-based flow.
@@ -54,27 +57,45 @@ What is in place:
 - The website-side calendar payload is now enriched with the same iCal source/block data used by the host calendar sync flow, which keeps the website calendar snapshot closer to the PMS/calendar tab.
 - The website-side calendar payload now also merges PMS unavailable date overrides from the existing calendar override endpoint, so grey blocked days can appear alongside imported external bookings.
 - Implemented templates now render a read-only availability snapshot card using the shared website model.
-- Acceptance AWS wiring has been validated far enough for draft save/list behavior:
+- Acceptance AWS wiring has been validated far enough for draft save/list behavior and the live-site foundation:
   - Aurora `main.standalone_site_draft`
+  - Aurora `main.standalone_site`
+  - Aurora `main.standalone_site_domain`
+  - Aurora `main.standalone_site_event`
   - API Gateway `/property/website/draft` and `/property/website/drafts`
+  - API Gateway `/property/website/site`, `/property/website/site/publish`, `/property/website/site/unpublish`
+  - API Gateway `/property/website/public/resolve` and `/property/website/public/render`
   - CORS preflight on the new website routes
 - Draft save/read now explicitly bypasses cache and the editor performs a read-after-write refresh to avoid stale draft payloads after saving.
 - Building a website now keeps the Step 3 preview visible while the draft is saved, then shows a toast that the website is ready for review.
-- A first public preview route exists at `/website-preview/:draftId`; it renders the saved draft through the real template instead of the dashboard preview frame.
-- Saved website cards and the editor expose `Open live preview` actions that open the draft preview link in a new tab.
-- Draft editing and shared preview state are now deliberately separated:
+- An internal preview route exists at `/website-preview/:draftId`; it renders the saved draft through the real template instead of the dashboard preview frame.
+- Saved website cards and the editor now expose `Open live site` actions.
+- Draft editing and published live-site state are now deliberately separated:
   - `Save changes` updates only the working draft
-  - `Update live preview` pushes the current draft state to the shared preview link
-  - `Discard all changes` resets the working draft back to the currently published preview state
-- The editor save path now explicitly preserves the current published preview overrides during a normal draft save, so `Save changes` no longer mutates the shared preview link implicitly.
-- An already-open shared preview tab now refreshes itself when the editor pushes a new live-preview update, so hosts do not need to manually reload the preview page after publishing draft changes.
+  - `Update live site` pushes the current draft state into the published standalone site snapshot
+  - `Discard all changes` resets the working draft back to the currently published draft snapshot
+- The editor save path now explicitly preserves the current published draft snapshot during a normal draft save, so `Save changes` no longer mutates the published live site implicitly.
+- An already-open live-site tab now refreshes itself when the editor pushes a new live-site update, so hosts do not need to manually reload the published page after updating it.
 - Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
 - Standalone website KPIs now live on a dedicated host dashboard route instead of inside the website builder/workspace page.
 - The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
 - Standalone website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
-- The KPI dashboard now separates surface performance into `Preview` and `Live` tabs:
-  - preview mobile LCP can be measured from the public preview route
-  - live mobile LCP remains pending until a real published live-site surface exists
+- The KPI dashboard now keeps performance in one viewport-specific panel:
+  - mobile, tablet, and desktop LCP are shown as separate viewport slices
+  - each viewport combines earlier preview-route history with current live-site telemetry where available
+- Phase 1 of the public-site lifecycle is now implemented:
+  - `main.standalone_site` stores standalone-owned published site state separately from the editor draft
+  - `main.standalone_site_domain` stores fallback-domain metadata separately from the site lifecycle record
+  - the editor can publish and unpublish the standalone site record without treating the draft row as the public website source of truth
+  - fallback-domain assignment is now visible in the editor
+- Phase 2 of the public runtime is now implemented:
+  - published sites can be resolved through `GET /property/website/public/resolve`
+  - published sites can be rendered through `GET /property/website/public/render`
+  - the public runtime now renders from `standalone_site.published_property_snapshot_json` plus published overrides instead of reading brochure content through the draft preview path
+  - a same-origin debug route exists at `/website-live/:domain` so hosts can test published-site rendering before real fallback-domain DNS is activated
+  - the actual standalone-host root path can now render the published site when the current hostname matches the fallback-domain suffix
+  - live LCP telemetry can now be emitted from the published-site runtime instead of remaining preview-only
+  - when the primary domain status is `ACTIVE`, host actions should open the clean hostname directly; otherwise the UI falls back to the same-origin debug route
 
 ## Implemented page flow
 ### Step 1: Choose your listing
@@ -129,7 +150,7 @@ Calendar data path:
   - PMS unavailable override dates
   - iCal sync state
   - sync metadata
-- Live quote requests remain the authoritative check before a guest can proceed.
+- PMS-backed availability snapshot import is implemented in the current foundation. Authoritative server-side quote calculation for standalone guest traffic is designed, but not yet exposed as a live standalone public API.
 
 ## Template implementation status
 Templates available in chooser:
@@ -180,9 +201,15 @@ Current implementation details:
 ## What is done now
 - Setup and selection flow is complete.
 - Real preview pipeline exists for the first three templates.
-- Preview workflow logic is extracted into a dedicated script module to support future dedicated preview route/new-tab flow.
-- A dedicated public preview route now exists for saved drafts and can be opened from the workspace/editor.
-- The shared preview route currently uses the draft id as the preview identifier. This is acceptable for acceptance/internal review, but should be replaced by a stronger preview token or signed-link strategy before treating preview links as production-grade public URLs.
+- Preview workflow logic is extracted into a dedicated script module and the internal preview route remains available for draft review.
+- A dedicated public preview route now exists for saved drafts and can be opened from the workspace/editor for internal review.
+- The shared preview route currently uses the draft id as the preview identifier. This is acceptable for acceptance/internal review, but should be replaced by a stronger preview token or signed-link strategy before treating preview URLs as production-grade private links.
+- The shared preview route still resolves by `draftId`, which means it remains an internal preview mechanism and not the final public live-site runtime.
+- Publishing now snapshots the currently approved draft state into a separate standalone site record.
+- Fallback-domain state is now tracked separately from site publication state:
+  - a site can be `PUBLISHED`
+  - while its fallback domain is still `PENDING`
+  This separation is intentional and is required for the later routing phase.
 - Shared template model is in place and reusable by additional templates.
 - Built previews are persisted as website drafts keyed by host and property.
 - Listings with an existing saved website are no longer offered again in the builder flow.
@@ -206,20 +233,20 @@ Current implementation details:
   - missing unique index on `property_id` caused `ON CONFLICT` failure
   - missing `host_id` index had to be added separately for the intended draft-by-host access path
   - missing/incomplete CORS on website draft routes blocked browser fetches
-- Published preview state now relies on separate standalone-owned fields in `main.standalone_site_draft`:
+- Published draft state now relies on separate standalone-owned fields in `main.standalone_site_draft`:
   - `published_content_overrides_json`
   - `published_theme_overrides_json`
-  These fields must exist in `main` before backend code that reads/writes published preview state is deployed.
+  These fields must exist in `main` before backend code that reads/writes published draft state is deployed.
 - Website KPI tracking now relies on a separate standalone-owned table in `main`:
   - `standalone_site_event`
   This table must exist in `main` before the website KPI overview can load successfully in the host dashboard.
 - The standalone event stream now stores both server-side lifecycle events and client-perceived website analytics events:
   - builder events from the host dashboard
-  - public preview mobile LCP events from the preview route
+  - preview-route LCP events
+  - published live-site LCP events
 - The dedicated website KPI dashboard now also shows the broader research KPI set explicitly:
   - `time_to_publish_p95`
   - `cost_per_active_site_per_month`
-  - `site_lcp_mobile_p75`
   - `fallback_subdomain_availability`
   - `quote_to_charge_mismatch_rate`
   - `booking_api_error_rate`
@@ -240,17 +267,16 @@ Current implementation details:
 - The trust-card icon picker now deduplicates repeated amenity visuals and shows one option per unique Domits icon glyph instead of repeating the same icon for multiple amenity records.
 
 ## Next phase
-The next high-priority phase is extending the dedicated draft editor, not adding more long-term behavior into the builder page.
+The next high-priority phase is aligning the published-site runtime with real hosted fallback domains and then extending that foundation toward custom domains.
 
 Required next steps:
 - Expand section-level/content override coverage further into template-specific headings and branding/theme controls.
 - Introduce image reordering / richer media management beyond the current slot reassignment approach.
-- Add publish/unpublish state transitions and domain management hooks on top of stored drafts.
-- Add preview URL strategy (in-page now, dedicated preview route/new tab later).
-- Harden preview URL strategy before production publish:
+- Finish fallback-domain infrastructure activation so `*.direct.domits.com` resolves to the published live site.
+- Add custom-domain management on top of the existing `standalone_site_domain` model.
+- Harden the internal preview URL strategy before broader production use:
   - add token rotation or preview-token hashing if draft UUID links are not considered sufficient
-  - add publish/unpublish state transitions
-  - add domain management hooks
+  - keep the preview route clearly separate from published live-site routing
 
 ## Additional implementation note
 - The Website route still exists in the frontend.

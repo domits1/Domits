@@ -1,4 +1,5 @@
 .editorPage {
+  --editor-sticky-top: calc(env(safe-area-inset-top, 0px) + 104px);
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
@@ -66,11 +67,122 @@
   font-weight: 700;
 }
 
+.publicSitePanel {
+  display: grid;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(31, 78, 121, 0.12);
+  background:
+    linear-gradient(135deg, rgba(31, 78, 121, 0.06), rgba(255, 255, 255, 0.96)),
+    #ffffff;
+}
+
+.publicSiteHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.publicSiteTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.publicSiteDescription {
+  margin: 6px 0 0;
+  max-width: 72ch;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.publicSiteReachableBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.publicSiteGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.publicSiteMetric {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid #dbe5ef;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.publicSiteLabel {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1f4e79;
+}
+
+.publicSiteValue {
+  color: #0f172a;
+  font-size: 0.96rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.publicSiteError {
+  margin: 0;
+  color: #991b1b;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.publicSiteHint {
+  margin: 0;
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.publicSiteLink {
+  color: #1f4e79;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.publicSiteValueLink {
+  align-self: flex-start;
+  color: #1f4e79;
+  display: inline-block;
+}
+
+.publicSiteValueLink .publicSiteValue {
+  color: inherit;
+}
+
+.publicSiteLink:hover,
+.publicSiteLink:focus-visible {
+  text-decoration: underline;
+}
+
 .surface {
   display: grid;
   grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
+  min-height: 0;
 }
 
 .editorPanel,
@@ -85,6 +197,28 @@
 .editorPanel,
 .previewPanel {
   padding: 24px;
+}
+
+.editorPanel {
+  position: sticky;
+  top: var(--editor-sticky-top);
+  max-height: calc(100dvh - var(--editor-sticky-top));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.editorPanel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.previewPanel {
+  position: static;
+  top: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .stateCard {
@@ -105,6 +239,19 @@
   gap: 16px;
 }
 
+.previewPanelHeaderCopy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.previewPanelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .panelTitle {
   margin: 0;
   font-size: 1.18rem;
@@ -119,25 +266,27 @@
 }
 
 .editorForm {
-  display: grid;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding-bottom: 8px;
 }
 
 .panelSection {
   display: grid;
-  gap: 16px;
-  padding-top: 18px;
-  border-top: 1px solid #e2e8f0;
-  border-radius: 18px;
+  gap: 0;
+  padding-top: 0;
+  border-top: 0;
+  border-radius: 0;
   transition:
     background-color 0.24s ease,
     box-shadow 0.24s ease,
     border-color 0.24s ease;
 }
 
-.panelSection:first-of-type {
+.panelSection + .panelSection {
   padding-top: 0;
-  border-top: 0;
 }
 
 .sectionBlockHeader {
@@ -172,16 +321,20 @@
 .panelSectionBody {
   display: grid;
   grid-template-rows: 0fr;
+  margin-top: 0;
+  overflow: hidden;
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
   transition:
     grid-template-rows 0.24s ease,
-    opacity 0.24s ease;
+    opacity 0.24s ease,
+    margin-top 0.24s ease;
 }
 
 .panelSectionBodyOpen {
   grid-template-rows: 1fr;
+  margin-top: 16px;
   opacity: 1;
   pointer-events: auto;
   visibility: visible;
@@ -284,6 +437,168 @@
   color: #64748b;
   font-size: 0.88rem;
   line-height: 1.5;
+}
+
+.editorFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: 14px;
+  margin: 8px -24px 0;
+  padding: 16px 24px 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.92) 20%, #ffffff 48%);
+  border-top: 1px solid rgba(226, 232, 240, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.editorFooterText {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+  gap: 12px;
+}
+
+.colorSwatchButton {
+  appearance: none;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d6e1ec;
+  border-radius: 18px;
+  background: #ffffff;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.colorSwatchButton:hover {
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.colorSwatchButton:focus-visible {
+  outline: 3px solid rgba(31, 78, 121, 0.2);
+  outline-offset: 2px;
+}
+
+.colorSwatchButtonSelected {
+  border-color: rgba(31, 78, 121, 0.36);
+  background: #f7fbff;
+  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.1);
+}
+
+.colorSwatch {
+  width: 100%;
+  min-height: 54px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.colorSwatchLabel {
+  color: #153e64;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.customColorSection {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px dashed #d6e1ec;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(31, 78, 121, 0.04), transparent 36%),
+    #f8fbff;
+}
+
+.customColorHeader {
+  display: grid;
+  gap: 4px;
+}
+
+.customColorHint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.customColorRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.colorPickerShell {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  border: 1px solid #d6e1ec;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+  cursor: pointer;
+}
+
+.colorPickerShell:hover {
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.colorPickerShellSelected {
+  border-color: rgba(31, 78, 121, 0.36);
+  box-shadow:
+    0 0 0 3px rgba(31, 78, 121, 0.1),
+    0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.colorPickerInput {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.colorPickerInput::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.colorPickerInput::-webkit-color-swatch {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+}
+
+.customColorInput {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  text-transform: lowercase;
 }
 
 .iconSelectionTrigger {
@@ -640,6 +955,95 @@
   gap: 12px;
 }
 
+.heroActionRow {
+  align-items: flex-start;
+}
+
+.actionMenuContainer {
+  position: relative;
+  display: inline-flex;
+  margin-left: auto;
+}
+
+.actionMenuButtonIcon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  filter: brightness(0) saturate(100%) invert(100%);
+  transition: transform 0.2s ease;
+}
+
+.actionMenuButtonIconOpen {
+  transform: rotate(180deg);
+}
+
+.actionMenuList {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 8;
+  min-width: 260px;
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background: #ffffff;
+  box-shadow: 0 22px 36px rgba(15, 23, 42, 0.16);
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.actionMenuListOpen {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.actionMenuItem {
+  appearance: none;
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0.9rem 1rem;
+  background: transparent;
+  color: #153e64;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.actionMenuItem:hover:not(:disabled) {
+  background: #eaf2fb;
+}
+
+.actionMenuItem:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.actionMenuItemDestructive {
+  color: #991b1b;
+}
+
+.actionMenuItemDestructive:hover:not(:disabled) {
+  background: #fff1f2;
+}
+
 .primaryButton,
 .secondaryButton {
   appearance: none;
@@ -740,8 +1144,21 @@
 }
 
 @media (max-width: 1120px) {
+  .editorPage {
+    --editor-sticky-top: calc(env(safe-area-inset-top, 0px) + 24px);
+  }
+
   .surface {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editorPanel {
+    position: static;
+    top: auto;
+    max-height: none;
+    overflow-y: visible;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
   }
 
   .heroHeader,
@@ -758,11 +1175,36 @@
   .previewViewportButton {
     flex: 1 1 0;
   }
+
+  .editorFooter {
+    position: static;
+    bottom: auto;
+    margin: 8px 0 0;
+    padding: 0;
+    background: transparent;
+    border-top: 0;
+    backdrop-filter: none;
+  }
 }
 
 @media (max-width: 860px) {
-  .heroMeta {
+  .actionMenuContainer {
+    margin-left: 0;
     width: 100%;
+  }
+
+  .actionMenuContainer > .primaryButton {
+    width: 100%;
+  }
+
+  .actionMenuList {
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
+
+  .publicSiteGrid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .previewViewportControls {
@@ -788,6 +1230,10 @@
   }
 
   .toggleCard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .customColorRow {
     grid-template-columns: minmax(0, 1fr);
   }
 
