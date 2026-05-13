@@ -14,36 +14,21 @@ import CognitoRepository from "../data/cognitoRepository.js";
 import PropertyRepository from "../data/propertyRepository.js";
 import getHostEmailById from "./getHostEmailById.js";
 import ExternalCalendarService from "./externalCalendarService.js";
-import ChannexBookingAvailabilityClient from "./channexBookingAvailabilityClient.js";
+import ChannexBookingAvailabilityClient, {
+  CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED,
+  CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
+  createBookingAvailabilityFallbackEvidence,
+} from "./channexBookingAvailabilityClient.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
-
-const getBookingId = (booking) =>
-  requireStr(booking?.id) || requireStr(booking?.bookingId) || requireStr(booking?.booking_id);
+const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
+const BOOKING_STATUS_INQUIRY = "Inquiry";
+const BOOKING_STATUS_PAID = "Paid";
+const TRIGGER_BOOKING_CREATED = "BOOKING_CREATED";
+const TRIGGER_BOOKING_MODIFIED = "BOOKING_MODIFIED";
 
 const getPropertyId = (booking) =>
   requireStr(booking?.property_id) || requireStr(booking?.propertyId) || requireStr(booking?.domitsPropertyId);
-
-const createLocalChannexAvailabilityEvidence = ({ booking, trigger, skipped, reason, errors = [] }) => ({
-  bookingId: getBookingId(booking) ?? null,
-  trigger,
-  syncType: "booking-availability",
-  domitsPropertyId: getPropertyId(booking) ?? null,
-  channexPropertyId: null,
-  externalRoomTypeId: null,
-  countOfRooms: null,
-  countOfRoomsSource: null,
-  affectedDateRange: { dateFrom: null, dateTo: null },
-  affectedDates: [],
-  availabilityValuesSent: [],
-  requestCount: 0,
-  taskIds: [],
-  warnings: [],
-  errors,
-  overallSuccess: false,
-  skipped,
-  reason,
-});
 
 class BookingService {
   constructor({
@@ -110,7 +95,7 @@ class BookingService {
     };
     await this.sendEmail(userEmail, hostEmail, bookingInfo);
 
-    const bookingStatus = isInquiry ? "Inquiry" : "Awaiting Payment";
+    const bookingStatus = isInquiry ? BOOKING_STATUS_INQUIRY : BOOKING_STATUS_AWAITING_PAYMENT;
     const result = await this.reservationRepository.addBookingToTable(
       event,
       authenticatedUser.sub,
@@ -120,7 +105,7 @@ class BookingService {
       fetchedProperty.bookingType
     );
 
-    if (bookingStatus !== "Awaiting Payment") {
+    if (bookingStatus !== BOOKING_STATUS_AWAITING_PAYMENT) {
       return { ...result, isInquiry };
     }
 
@@ -137,7 +122,7 @@ class BookingService {
     const channexAvailabilitySync = await this.syncChannexBookingAvailabilityIfEnabled({
       userId: fetchedProperty.hostId,
       bookingAfter,
-      trigger: "BOOKING_CREATED",
+      trigger: TRIGGER_BOOKING_CREATED,
     });
 
     return {
@@ -179,12 +164,12 @@ class BookingService {
 
   async confirmPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
-    if (booking.status === "Paid") {
+    if (booking.status === BOOKING_STATUS_PAID) {
       return true;
     }
     const paymentIntent = await this.stripeRepository.getPaymentIntentByPaymentId(paymentid);
     if (paymentIntent.status === "succeeded") {
-      await this.reservationRepository.updateBookingStatus(booking.id, "Paid");
+      await this.reservationRepository.updateBookingStatus(booking.id, BOOKING_STATUS_PAID);
       return true;
     } else {
       return false;
@@ -193,7 +178,7 @@ class BookingService {
 
   async failPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
-    if (booking.status === "Awaiting Payment") {
+    if (booking.status === BOOKING_STATUS_AWAITING_PAYMENT) {
       await this.reservationRepository.updateBookingStatus(booking.id, "Failed");
       return true;
     }
@@ -265,10 +250,10 @@ class BookingService {
     const booking = bookingResult.response;
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
     if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
-    await this.reservationRepository.updateBookingStatus(bookingId, "Awaiting Payment");
+    await this.reservationRepository.updateBookingStatus(bookingId, BOOKING_STATUS_AWAITING_PAYMENT);
     return {
       bookingId,
-      status: "Awaiting Payment",
+      status: BOOKING_STATUS_AWAITING_PAYMENT,
       hostId: booking.hostid,
       propertyId: booking.property_id,
       dates: {
@@ -303,12 +288,12 @@ class BookingService {
     const referenceBooking = bookingAfter || bookingBefore || {};
     if (!this.isChannexBookingAvailabilitySyncEnabled()) {
       return includeDisabledEvidence
-        ? createLocalChannexAvailabilityEvidence({
-          booking: referenceBooking,
-          trigger,
-          skipped: true,
-          reason: "CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED",
-        })
+        ? createBookingAvailabilityFallbackEvidence({
+            booking: referenceBooking,
+            trigger,
+            skipped: true,
+            reason: CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED,
+          })
         : undefined;
     }
 
@@ -320,14 +305,14 @@ class BookingService {
         trigger,
       });
     } catch (error) {
-      return createLocalChannexAvailabilityEvidence({
+      return createBookingAvailabilityFallbackEvidence({
         booking: referenceBooking,
         trigger,
         skipped: false,
-        reason: "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED",
+        reason: CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
         errors: [
           {
-            code: error?.code || error?.name || "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED",
+            code: error?.code || error?.name || CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
             message: error?.message || "Channex booking availability sync failed.",
             httpStatus: error?.statusCode ?? null,
           },
@@ -392,7 +377,7 @@ class BookingService {
       userId: bookingAfter.hostid,
       bookingBefore,
       bookingAfter,
-      trigger: "BOOKING_MODIFIED",
+      trigger: TRIGGER_BOOKING_MODIFIED,
       includeDisabledEvidence: true,
     });
 

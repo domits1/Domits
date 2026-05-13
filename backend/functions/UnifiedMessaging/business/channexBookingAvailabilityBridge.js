@@ -9,8 +9,17 @@ import ChannexCredentialStore from "./channexCredentialStore.js";
 import ChannexProviderClient from "./channexProviderClient.js";
 import { hasChannexRequiredCredentialFields } from "./channexCredentialUtils.js";
 
+const CHANNEL_CHANNEX = "CHANNEX";
+const SYNC_TYPE_BOOKING_AVAILABILITY = "booking-availability";
+const TRIGGER_BOOKING_CREATED = "BOOKING_CREATED";
+const TRIGGER_BOOKING_MODIFIED = "BOOKING_MODIFIED";
+const ROOM_TYPE_MAPPING_MISSING_REASON = "CHANNEX_ROOM_TYPE_MAPPING_MISSING";
+const ROOM_TYPE_AMBIGUOUS_REASON = "CHANNEX_ROOM_TYPE_AMBIGUOUS";
+const SYNC_FAILED_REASON = "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED";
+const COUNT_OF_ROOMS_SOURCE_CHANNEX_ROOM_TYPE = "CHANNEX_ROOM_TYPE";
+const COUNT_OF_ROOMS_SOURCE_MVP_SINGLE_UNIT = "MVP_DEFAULT_SINGLE_UNIT";
 const ACTIVE_BOOKING_STATUSES = new Set(["awaiting payment", "paid"]);
-const SUPPORTED_TRIGGERS = new Set(["BOOKING_CREATED", "BOOKING_MODIFIED"]);
+const SUPPORTED_TRIGGERS = new Set([TRIGGER_BOOKING_CREATED, TRIGGER_BOOKING_MODIFIED]);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -103,11 +112,11 @@ export const buildBookingNightDateKeys = (booking) => {
 };
 
 export const getAffectedDateKeysForBookingChange = ({ bookingBefore, bookingAfter, trigger }) => {
-  if (trigger === "BOOKING_CREATED") {
+  if (trigger === TRIGGER_BOOKING_CREATED) {
     return buildBookingNightDateKeys(bookingAfter).sort(compareAlphabetically);
   }
 
-  if (trigger === "BOOKING_MODIFIED") {
+  if (trigger === TRIGGER_BOOKING_MODIFIED) {
     return Array.from(
       new Set([...buildBookingNightDateKeys(bookingBefore), ...buildBookingNightDateKeys(bookingAfter)])
     ).sort(compareAlphabetically);
@@ -206,7 +215,7 @@ const summarizeRequestValues = (values) => ({
 const createBaseEvidence = ({ bookingId, trigger, domitsPropertyId, affectedDates }) => ({
   bookingId: bookingId ?? null,
   trigger,
-  syncType: "booking-availability",
+  syncType: SYNC_TYPE_BOOKING_AVAILABILITY,
   domitsPropertyId: domitsPropertyId ?? null,
   channexPropertyId: null,
   externalRoomTypeId: null,
@@ -320,17 +329,20 @@ export default class ChannexBookingAvailabilityBridge {
         if (countOfRooms !== null) {
           return {
             countOfRooms,
-            countOfRoomsSource: "CHANNEX_ROOM_TYPE",
+            countOfRoomsSource: COUNT_OF_ROOMS_SOURCE_CHANNEX_ROOM_TYPE,
           };
         }
       }
-    } catch {
-      // Fall through to the MVP single-unit default below.
+    } catch (error) {
+      console.warn(
+        "Channex room type count lookup failed; falling back to MVP single-unit count.",
+        describeLocalError(error)
+      );
     }
 
     return {
       countOfRooms: 1,
-      countOfRoomsSource: "MVP_DEFAULT_SINGLE_UNIT",
+      countOfRoomsSource: COUNT_OF_ROOMS_SOURCE_MVP_SINGLE_UNIT,
     };
   }
 
@@ -348,11 +360,11 @@ export default class ChannexBookingAvailabilityBridge {
     try {
       const row = {
         id: randomUUID(),
-        channel: "CHANNEX",
-        provider: "CHANNEX",
+        channel: CHANNEL_CHANNEX,
+        provider: CHANNEL_CHANNEX,
         integrationAccountId,
         domitsPropertyId: evidence.domitsPropertyId ?? null,
-        syncType: "booking-availability",
+        syncType: SYNC_TYPE_BOOKING_AVAILABILITY,
         dateFrom: evidence.affectedDateRange?.dateFrom ?? null,
         dateTo: evidence.affectedDateRange?.dateTo ?? null,
         startedAt: now,
@@ -446,7 +458,7 @@ export default class ChannexBookingAvailabilityBridge {
 
     let integration;
     try {
-      integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "CHANNEX");
+      integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, CHANNEL_CHANNEX);
       integrationAccountId = requireStr(integration?.id);
       if (!integration || String(integration.status || "").toUpperCase() === "DISCONNECTED") {
         return finish(withSkip(evidence, "CHANNEX_NOT_CONNECTED"));
@@ -483,17 +495,17 @@ export default class ChannexBookingAvailabilityBridge {
       };
 
       if (!activeRoomTypeMappings.length) {
-        return finish(withSkip(evidence, "CHANNEX_ROOM_TYPE_MAPPING_MISSING"));
+        return finish(withSkip(evidence, ROOM_TYPE_MAPPING_MISSING_REASON));
       }
 
       if (activeRoomTypeMappings.length > 1) {
-        return finish(withSkip(evidence, "CHANNEX_ROOM_TYPE_AMBIGUOUS"));
+        return finish(withSkip(evidence, ROOM_TYPE_AMBIGUOUS_REASON));
       }
 
       const roomTypeMapping = activeRoomTypeMappings[0];
       const externalRoomTypeId = requireStr(roomTypeMapping.externalRoomTypeId);
       if (!externalRoomTypeId) {
-        return finish(withSkip(evidence, "CHANNEX_ROOM_TYPE_MAPPING_MISSING"));
+        return finish(withSkip(evidence, ROOM_TYPE_MAPPING_MISSING_REASON));
       }
       evidence = {
         ...evidence,
@@ -556,7 +568,7 @@ export default class ChannexBookingAvailabilityBridge {
         errors: [describeLocalError(error)],
         overallSuccess: false,
         skipped: false,
-        reason: "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED",
+        reason: SYNC_FAILED_REASON,
       });
     }
   }

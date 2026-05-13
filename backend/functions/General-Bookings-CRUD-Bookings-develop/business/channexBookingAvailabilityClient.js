@@ -2,6 +2,9 @@ import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
 
 const REGION = process.env.AWS_REGION || "eu-north-1";
 const DEFAULT_UNIFIED_MESSAGING_FUNCTION_NAME = "UnifiedMessaging";
+export const CHANNEX_BOOKING_AVAILABILITY_SYNC_TYPE = "booking-availability";
+export const CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED = "CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED";
+export const CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED = "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED";
 
 const lambdaClient = new LambdaClient({ region: REGION });
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -12,12 +15,19 @@ const getBookingId = (booking) =>
 const getPropertyId = (booking) =>
   requireStr(booking?.property_id) || requireStr(booking?.propertyId) || requireStr(booking?.domitsPropertyId);
 
-const createFallbackEvidence = ({ payload, skipped, reason, errors = [] }) => {
-  const referenceBooking = payload?.bookingAfter || payload?.bookingBefore || {};
+export const createBookingAvailabilityFallbackEvidence = ({
+  payload = null,
+  booking = null,
+  trigger = null,
+  skipped,
+  reason,
+  errors = [],
+}) => {
+  const referenceBooking = booking || payload?.bookingAfter || payload?.bookingBefore || {};
   return {
     bookingId: getBookingId(referenceBooking) ?? null,
-    trigger: payload?.trigger ?? null,
-    syncType: "booking-availability",
+    trigger: trigger ?? payload?.trigger ?? null,
+    syncType: CHANNEX_BOOKING_AVAILABILITY_SYNC_TYPE,
     domitsPropertyId: getPropertyId(referenceBooking) ?? null,
     channexPropertyId: null,
     externalRoomTypeId: null,
@@ -60,7 +70,7 @@ export default class ChannexBookingAvailabilityClient {
   async syncAvailabilityForBookingChange(payload) {
     const internalToken = requireStr(process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN);
     if (!internalToken) {
-      return createFallbackEvidence({
+      return createBookingAvailabilityFallbackEvidence({
         payload,
         skipped: true,
         reason: "CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN_MISSING",
@@ -86,10 +96,10 @@ export default class ChannexBookingAvailabilityClient {
       const lambdaBody = parseJsonSafely(decodePayload(response?.Payload)) || {};
       const evidence = parseJsonSafely(lambdaBody?.body) || lambdaBody?.response || null;
       if (response?.FunctionError || Number(lambdaBody?.statusCode) >= 400 || !evidence) {
-        return createFallbackEvidence({
+        return createBookingAvailabilityFallbackEvidence({
           payload,
           skipped: false,
-          reason: "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED",
+          reason: CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
           errors: [
             {
               code: response?.FunctionError || lambdaBody?.statusCode || "UNIFIED_MESSAGING_ERROR",
@@ -102,10 +112,10 @@ export default class ChannexBookingAvailabilityClient {
 
       return evidence;
     } catch (error) {
-      return createFallbackEvidence({
+      return createBookingAvailabilityFallbackEvidence({
         payload,
         skipped: false,
-        reason: "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED",
+        reason: CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
         errors: [
           {
             code: error?.code || error?.name || "LAMBDA_INVOKE_FAILED",
