@@ -29,6 +29,13 @@ const HostTeam = () => {
         loadHost();
     }, []);
 
+    useEffect(() => {
+        if (!showInviteModal) return;
+        const handleEscape = (e) => { if (e.key === "Escape") setShowInviteModal(false); };
+        document.addEventListener("keydown", handleEscape);
+        return () => document.removeEventListener("keydown", handleEscape);
+    }, [showInviteModal]);
+
     const handleInvite = (e) => {
         e.preventDefault();
         if (!inviteEmail) return;
@@ -109,9 +116,9 @@ const HostTeam = () => {
             </section>
 
             {showInviteModal && (
-                <div className="team-modal-overlay" onClick={() => setShowInviteModal(false)}>
-                    <dialog className="team-modal" open onClick={(e) => e.stopPropagation()}>
-                        <h3>Invite team member</h3>
+                <div className="team-modal-overlay" role="presentation">
+                    <dialog className="team-modal" open aria-modal="true" aria-labelledby="invite-modal-title">
+                        <h3 id="invite-modal-title">Invite team member</h3>
                         {inviteSent ? (
                             <p className="team-invite-success">
                                 ✓ Invitation sent to {inviteEmail}
@@ -119,7 +126,7 @@ const HostTeam = () => {
                         ) : (
                             <form onSubmit={handleInvite}>
                                 <label className="team-modal-label">
-                                    Email address
+                                    <span>Email address</span>
                                     <input
                                         type="email"
                                         className="team-modal-input"
@@ -130,7 +137,7 @@ const HostTeam = () => {
                                     />
                                 </label>
                                 <label className="team-modal-label">
-                                    Role
+                                    <span>Role</span>
                                     <select
                                         className="team-modal-input"
                                         value={inviteRole}

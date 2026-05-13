@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Auth } from 'aws-amplify';
 
 const UserContext = createContext();
@@ -35,8 +35,13 @@ export const UserProvider = ({ children }) => {
 
     const hasRole = (allowedRoles) => allowedRoles.includes(role);
 
+    const contextValue = useMemo(
+        () => ({ user, role, isLoading, hasRole }),
+        [user, role, isLoading]
+    );
+
     return (
-        <UserContext.Provider value={{ user, role, isLoading, hasRole }}>
+        <UserContext.Provider value={contextValue}>
             {children}
         </UserContext.Provider>
     );
