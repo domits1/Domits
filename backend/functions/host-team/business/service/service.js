@@ -79,7 +79,8 @@ export class Service {
                 Username: pomUserId,
                 UserAttributes: [{ Name: "custom:group", Value: invite.role }],
             }));
-        } catch {
+        } catch (error) {
+
         }
 
         return { message: "Invite accepted. You now have access to the host's properties." };
