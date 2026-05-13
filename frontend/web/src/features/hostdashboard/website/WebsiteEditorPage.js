@@ -208,6 +208,21 @@ const getWebsiteActionMenuButtonLabel = ({ hasLiveSite, isPublishingSite, isUpda
   return isUpdatingLiveSite ? "Updating website..." : "Update website";
 };
 
+const resolveWindowTargetOrigin = (href) => {
+  const normalizedHref = String(href || "").trim();
+  const baseOrigin = globalThis.location?.origin || "";
+
+  if (!normalizedHref) {
+    return baseOrigin;
+  }
+
+  try {
+    return new URL(normalizedHref, baseOrigin).origin;
+  } catch {
+    return baseOrigin;
+  }
+};
+
 const getLiveLinkStatus = ({ primarySiteDomain, hasLiveSite }) => {
   if (primarySiteDomain?.status) {
     return formatStatusLabel(primarySiteDomain.status);
@@ -958,6 +973,7 @@ function WebsiteEditorPage() {
   const actionMenuRef = useRef(null);
   const editorPanelRef = useRef(null);
   const openedLiveSiteWindowRef = useRef(null);
+  const openedLiveSiteWindowOriginRef = useRef("");
   const sectionHighlightResetTimeoutRef = useRef(null);
   const previewHighlightResetTimeoutRef = useRef(null);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
@@ -1629,19 +1645,27 @@ function WebsiteEditorPage() {
     }
 
     setIsActionMenuOpen(false);
-    openedLiveSiteWindowRef.current = globalThis.open(
-      buildPublishedWebsiteHref(
-        publishedDomain,
-        siteSummary?.site?.id,
-        primarySiteDomain?.status
-      ),
-      "_blank",
-      "noopener,noreferrer"
+    const publishedWebsiteHref = buildPublishedWebsiteHref(
+      publishedDomain,
+      siteSummary?.site?.id,
+      primarySiteDomain?.status
     );
+    const openedLiveSiteWindow = globalThis.open(publishedWebsiteHref, "_blank", "noopener,noreferrer");
+
+    openedLiveSiteWindowRef.current = openedLiveSiteWindow;
+    openedLiveSiteWindowOriginRef.current = openedLiveSiteWindow
+      ? resolveWindowTargetOrigin(publishedWebsiteHref)
+      : "";
   };
 
   const notifyOpenedLiveSiteWindow = (nextSiteSummary) => {
     if (!openedLiveSiteWindowRef.current || openedLiveSiteWindowRef.current.closed) {
+      openedLiveSiteWindowOriginRef.current = "";
+      return;
+    }
+
+    const targetOrigin = String(openedLiveSiteWindowOriginRef.current || "").trim();
+    if (!targetOrigin) {
       return;
     }
 
@@ -1652,7 +1676,7 @@ function WebsiteEditorPage() {
         domain: nextSiteSummary?.primaryDomain?.domain || "",
         updatedAt: Date.now(),
       },
-      "*"
+      targetOrigin
     );
   };
 
