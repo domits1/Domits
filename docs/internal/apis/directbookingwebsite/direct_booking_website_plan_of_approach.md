@@ -1,4 +1,6 @@
-# Plan Of Approach - Standalone Website
+# Plan Of Approach - Direct Booking Website
+
+> Naming note: this feature is now named **Direct Booking Website**. Legacy `standalone_*` schema and migration names still appear in this document where they refer to already deployed storage objects.
 
 ## Status
 Working baseline with active frontend implementation checkpoints
@@ -20,7 +22,7 @@ Implemented in frontend:
 - workspace now has a `My websites` tab with dedicated editor-page entry
 - dedicated draft editor page exists for controlled text overrides, visibility toggles, and image-slot selection on saved drafts
 - image-slot reassignment in the editor now uses a visual picker overlay with thumbnail navigation and explicit confirm-select behavior
-- standalone site publication now writes into:
+- direct booking website publication now writes into:
   - `main.standalone_site`
   - `main.standalone_site_domain`
   - `main.standalone_site_event`
@@ -58,25 +60,25 @@ Not yet implemented:
 - public quote API, checkout, and booking creation
 
 ## Purpose
-This document captures the current plan of approach for the standalone website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.
+This document captures the current plan of approach for the direct booking website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.
 
 For chronological implementation history, see:
-- `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
+- `docs/internal/apis/directbookingwebsite/direct_booking_website_implementation_log.md`
 
 ## Core Question
-How can Domits design a template-based, one-click standalone booking website that is scalable, secure, and cost-efficient to host, while integrating correctly with availability and bookings from the Property Management System?
+How can Domits design a template-based, one-click direct booking website that is scalable, secure, and cost-efficient to host, while integrating correctly with availability and bookings from the Property Management System?
 
 ## Core Subquestions
-1. Which minimum functionality should the standalone website contain to make v1 valuable and feasible within Domits?
+1. Which minimum functionality should the direct booking website contain to make v1 valuable and feasible within Domits?
 2. Which template architecture is most suitable for reusable websites with limited but useful customization, without turning every template into a separate project?
 3. Which hosting strategy is most suitable for Domits given cost, performance, scalability, and manageability requirements?
 4. How can multi-tenant routing and domain management be designed so generated subdomains and later custom domains function reliably and scalably?
-5. How can the standalone website remain correctly aligned with availability and pricing data from the PMS, including changes, caching, and failure scenarios?
-6. Which security measures are required to realize a safe multi-tenant standalone website platform within Domits?
+5. How can the direct booking website remain correctly aligned with availability and pricing data from the PMS, including changes, caching, and failure scenarios?
+6. Which security measures are required to realize a safe multi-tenant direct booking website platform within Domits?
 7. Which KPIs are suitable for evaluating the technical and product quality of the solution?
 
 ## Broader Research Scope
-The broader research scope covers the full standalone website direction, including:
+The broader research scope covers the full direct booking website direction, including:
 
 - property detail page
 - availability check and price calculation
@@ -100,7 +102,7 @@ V1 foundation includes:
   - amenities
   - location
   - house rules
-- published render content baked into the standalone site at publish or refresh time
+- published render content baked into the direct booking website at publish or refresh time
 - template choice
 - site name
 - logo and favicon
@@ -126,19 +128,19 @@ V2 extends this base with:
 ### 1. Introduction
 
 #### 1.1 Motivation
-The host wants to increase direct revenue and reduce operational workload by receiving more bookings through an owned channel. To support this, Domits is designing a template-based, one-click standalone booking website. Hosts should be able to publish a professional website quickly while keeping availability, pricing, and bookings correctly aligned with the PMS.
+The host wants to increase direct revenue and reduce operational workload by receiving more bookings through an owned channel. To support this, Domits is designing a template-based, one-click direct booking website. Hosts should be able to publish a professional website quickly while keeping availability, pricing, and bookings correctly aligned with the PMS.
 
 #### 1.2 Assignment introduction
-The assignment focuses on designing a standalone booking website solution within Domits, based on templates that can be published with one click. The website functions as a direct booking channel and must integrate correctly with PMS data such as availability, pricing, and bookings. The research explains the choices and constraints needed to realize this in a scalable, secure, and cost-efficient way.
+The assignment focuses on designing a direct booking website solution within Domits, based on templates that can be published with one click. The website functions as a direct booking channel and must integrate correctly with PMS data such as availability, pricing, and bookings. The research explains the choices and constraints needed to realize this in a scalable, secure, and cost-efficient way.
 
 #### 1.3 Client
 Domits, together with internal stakeholders such as product and engineering, and future hosts who will use the platform.
 
 #### 1.4 Organization description
-Domits is a short-term rental platform that helps hosts manage accommodations, reservations, and communication. The platform already contains PMS functionality and is being expanded with a direct booking solution through standalone websites.
+Domits is a short-term rental platform that helps hosts manage accommodations, reservations, and communication. The platform already contains PMS functionality and is being expanded with a direct booking solution through direct booking websites.
 
 #### 1.5 Goals
-- allow hosts to publish a standalone booking website with minimal friction
+- allow hosts to publish a direct booking website with minimal friction
 - realize a template approach that supports customization without turning every template into a separate project
 - design hosting and deployment so the solution is scalable and cost-efficient
 - guarantee correct and consistent integration with availability, pricing, and booking data from the PMS
@@ -165,7 +167,7 @@ This chapter helps the reader understand the domain, terminology, and design con
 
 #### 2.2 Definitions
 - PMS: system for managing accommodations, reservations, prices, and host processes
-- standalone booking website: separate website through which guests can book directly, connected to PMS data
+- direct booking website: separate website through which guests can book directly, connected to PMS data
 - template-based website: website with predefined layout and structure plus configurable content and styling
 - one-click deployment or provisioning: automated publication without manual infrastructure steps per host
 - multi-tenancy: one platform serving multiple hosts with strict data and configuration isolation
@@ -180,7 +182,7 @@ This chapter helps the reader understand the domain, terminology, and design con
 ### 3. Problem Analysis
 
 #### 3.1 Goal and result of the research
-The goal is to design a technical and functional approach for standalone booking websites inside Domits. The intended result is a justified design consisting of architectural choices, v1 scope, and an evaluation framework with KPIs for scalability, security, cost-efficiency, and PMS correctness.
+The goal is to design a technical and functional approach for direct booking websites inside Domits. The intended result is a justified design consisting of architectural choices, v1 scope, and an evaluation framework with KPIs for scalability, security, cost-efficiency, and PMS correctness.
 
 #### 3.2 Research approach
 - requirements analysis for MVP, stakeholders, and constraints

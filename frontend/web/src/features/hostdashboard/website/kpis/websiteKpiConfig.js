@@ -265,7 +265,7 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "deleted-websites",
     "Deleted websites",
     "deletedWebsiteCount",
-    "Website drafts removed from the standalone website workspace"
+    "Website drafts removed from the direct booking website workspace"
   ),
 ]);
 
@@ -322,7 +322,7 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Scalability", "Cost"],
     "costPerActiveSitePerMonth",
     "eur",
-    "Calculated from configured monthly standalone-site cost inputs, active published site count, and recent website usage events. This is a usage-weighted operating-cost proxy, not an AWS billing API feed.",
+    "Calculated from configured monthly direct-booking-website cost inputs, active published site count, and recent website usage events. This is a usage-weighted operating-cost proxy, not an AWS billing API feed.",
     (websiteKpis) => formatSampleLabel(websiteKpis.costPerActiveSitePerMonthSampleCount),
     "costPerActiveSitePerMonthSampleCount"
   ),
@@ -340,14 +340,14 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Reliability", "Correctness"],
     "bookingApiErrorRate",
     "percentage",
-    "Requires the standalone booking API path to be live and instrumented. This remains a v2 metric until direct booking flow is active."
+    "Requires the direct booking website booking API path to be live and instrumented. This remains a v2 metric until direct booking flow is active."
   ),
   createResearchKpiDefinition(
     "quote_to_charge_mismatch_rate",
     ["Correctness"],
     "quoteToChargeMismatchRate",
     "percentage",
-    "Current proxy compares the published live-site room rate snapshot against the current PMS base room rate. A true quote-to-charge comparison still requires standalone quote, checkout, and payment instrumentation.",
+    "Current proxy compares the published live-site room rate snapshot against the current PMS base room rate. A true quote-to-charge comparison still requires direct booking website quote, checkout, and payment instrumentation.",
     (websiteKpis) => formatSampleLabel(websiteKpis.quoteToChargeMismatchSampleCount),
     "quoteToChargeMismatchSampleCount"
   ),
@@ -356,7 +356,7 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["User experience"],
     "bookingFunnelCompletionRate",
     "percentage",
-    "Requires end-to-end funnel events from quote to completed booking. Current standalone website analytics stop at draft and preview usage."
+    "Requires end-to-end funnel events from quote to completed booking. Current direct booking website analytics stop at draft and preview usage."
   ),
   createResearchKpiDefinition(
     "custom_domain_setup_success_rate",
