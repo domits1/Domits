@@ -111,7 +111,6 @@ const normalizeDirectBookingWebsiteHostName = (value) => {
 const getDirectBookingWebsiteFallbackDomainSuffix = () =>
   normalizeDirectBookingWebsiteHostName(
     process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX ||
-      process.env.REACT_APP_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX ||
       DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX
   );
 
