@@ -110,6 +110,18 @@ export class DirectBookingWebsiteDomainRepository {
     this.systemManager = systemManager;
   }
 
+  async deleteDomainsBySiteId(siteId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    await client.query(
+      `DELETE FROM ${tableName}
+      WHERE site_id = $1`,
+      [siteId]
+    );
+  }
+
   async listDomainsBySiteId(siteId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
