@@ -73,15 +73,11 @@ export class Service {
             accepted_at: Date.now(),
         });
 
-        try {
-            await cognitoClient.send(new AdminUpdateUserAttributesCommand({
-                UserPoolId: USER_POOL_ID,
-                Username: pomUserId,
-                UserAttributes: [{ Name: "custom:group", Value: invite.role }],
-            }));
-        } catch (error) {
-
-        }
+        await cognitoClient.send(new AdminUpdateUserAttributesCommand({
+            UserPoolId: USER_POOL_ID,
+            Username: pomUserId,
+            UserAttributes: [{ Name: "custom:group", Value: invite.role }],
+        }));
 
         return { message: "Invite accepted. You now have access to the host's properties." };
     }
