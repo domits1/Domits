@@ -96,6 +96,7 @@ const getPercentile = (values, percentile) => {
 };
 
 const parseAttemptId = (payload) => String(payload?.attemptId || "").trim();
+const parseFlowId = (payload) => String(payload?.flowId || "").trim();
 const parseDurationMetric = (payload) => toNullableNumber(payload?.durationMs);
 const parseSurface = (payload) => String(payload?.surface || "").trim().toLowerCase();
 const parseViewport = (payload) => String(payload?.viewport || "").trim().toLowerCase();
@@ -282,9 +283,15 @@ const trackStartedAttempt = (startedAttempts, payload, occurredAt) => {
     return;
   }
 
-  const existingOccurredAt = startedAttempts.get(attemptId);
-  if (!Number.isFinite(existingOccurredAt) || occurredAt < existingOccurredAt) {
-    startedAttempts.set(attemptId, occurredAt);
+  const flowId = parseFlowId(payload);
+  const nextAttemptState = {
+    occurredAt,
+    flowKey: flowId ? `flow:${flowId}` : `attempt:${attemptId}`,
+  };
+
+  const existingAttemptState = startedAttempts.get(attemptId);
+  if (!Number.isFinite(existingAttemptState?.occurredAt) || occurredAt < existingAttemptState.occurredAt) {
+    startedAttempts.set(attemptId, nextAttemptState);
   }
 };
 
@@ -310,6 +317,33 @@ const trackCompletedAttempt = (completedAttemptIds, payload) => {
   const attemptId = parseAttemptId(payload);
   if (attemptId) {
     completedAttemptIds.add(attemptId);
+  }
+};
+
+const trackStartedBuildFlow = (startedFlowIds, payload) => {
+  const flowId = parseFlowId(payload);
+  if (flowId) {
+    startedFlowIds.add(`flow:${flowId}`);
+  }
+};
+
+const trackAbandonedBuildFlow = (abandonedBuildFlowIds, payload) => {
+  const flowId = parseFlowId(payload);
+  if (flowId) {
+    abandonedBuildFlowIds.add(`flow:${flowId}`);
+  }
+};
+
+const trackCompletedBuildFlow = (completedBuildFlowIds, payload) => {
+  const flowId = parseFlowId(payload);
+  const attemptId = parseAttemptId(payload);
+  if (flowId) {
+    completedBuildFlowIds.add(`flow:${flowId}`);
+    return;
+  }
+
+  if (attemptId) {
+    completedBuildFlowIds.add(`attempt:${attemptId}`);
   }
 };
 
@@ -351,8 +385,11 @@ const trackOpenedSiteProperty = (openedSitePropertyIds, row) => {
 
 const accumulateMetricRows = (metricEventRows) => {
   const deleteReasonCounts = new Map();
+  const startedFlowIds = new Set();
+  const abandonedBuildFlowIds = new Set();
   const startedAttempts = new Map();
   const completedAttemptIds = new Set();
+  const completedBuildFlowIds = new Set();
   const previewReadyDurations = [];
   const publishDurations = [];
   const surfaceViewportDurations = createSurfaceViewportDurationBuckets();
@@ -370,6 +407,12 @@ const accumulateMetricRows = (metricEventRows) => {
       case "WEBSITE_BUILD_STARTED":
         trackStartedAttempt(startedAttempts, payload, occurredAt);
         return;
+      case "WEBSITE_BUILD_FLOW_STARTED":
+        trackStartedBuildFlow(startedFlowIds, payload);
+        return;
+      case "WEBSITE_BUILD_FLOW_ABANDONED":
+        trackAbandonedBuildFlow(abandonedBuildFlowIds, payload);
+        return;
       case "WEBSITE_PREVIEW_READY":
         trackPreviewReadyDuration(previewReadyDurations, payload);
         return;
@@ -379,6 +422,7 @@ const accumulateMetricRows = (metricEventRows) => {
       case "WEBSITE_BUILD_SUCCEEDED":
       case "WEBSITE_BUILD_FAILED":
         trackCompletedAttempt(completedAttemptIds, payload);
+        trackCompletedBuildFlow(completedBuildFlowIds, payload);
         return;
       case "PUBLIC_PREVIEW_OPENED":
       case "PUBLIC_SITE_OPENED":
@@ -394,8 +438,11 @@ const accumulateMetricRows = (metricEventRows) => {
 
   return {
     deleteReasonCounts,
+    startedFlowIds,
+    abandonedBuildFlowIds,
     startedAttempts,
     completedAttemptIds,
+    completedBuildFlowIds,
     previewReadyDurations,
     publishDurations,
     surfaceViewportDurations,
@@ -408,14 +455,44 @@ const buildDeletionReasonBreakdown = (deleteReasonCounts) =>
     .map(([reason, count]) => ({ reason, count }))
     .sort((left, right) => right.count - left.count || left.reason.localeCompare(right.reason));
 
-const countAbandonedAttempts = (startedAttempts, completedAttemptIds) => {
+const summarizeBuildFlowClosure = ({
+  startedFlowIds,
+  abandonedBuildFlowIds,
+  startedAttempts,
+  completedAttemptIds,
+  completedBuildFlowIds,
+}) => {
   const abandonmentThreshold = Date.now() - BUILD_ABANDONMENT_WINDOW_MS;
-  return Array.from(startedAttempts.entries()).filter(
-    ([attemptId, occurredAt]) =>
-      Number.isFinite(occurredAt) &&
-      occurredAt <= abandonmentThreshold &&
-      !completedAttemptIds.has(attemptId)
-  ).length;
+  const staleBuildFlowIds = new Set();
+
+  Array.from(startedAttempts.entries()).forEach(([attemptId, attemptState]) => {
+    const occurredAt = attemptState?.occurredAt;
+    if (!Number.isFinite(occurredAt)) {
+      return;
+    }
+
+    if (occurredAt <= abandonmentThreshold && !completedAttemptIds.has(attemptId)) {
+      staleBuildFlowIds.add(String(attemptState?.flowKey || `attempt:${attemptId}`).trim());
+    }
+  });
+
+  const maturedFlowIds = new Set([
+    ...Array.from(completedBuildFlowIds),
+    ...Array.from(abandonedBuildFlowIds),
+    ...Array.from(staleBuildFlowIds),
+  ]);
+  const abandonedFlowIds = new Set([
+    ...Array.from(abandonedBuildFlowIds),
+    ...Array.from(staleBuildFlowIds),
+  ]);
+
+  return {
+    startedFlowCount: startedFlowIds.size,
+    explicitPreBuildAbandonCount: abandonedBuildFlowIds.size,
+    staleBuildFlowCount: staleBuildFlowIds.size,
+    abandonedCount: abandonedFlowIds.size,
+    maturedCount: maturedFlowIds.size,
+  };
 };
 
 const buildSurfaceViewportSummary = (surfaceViewportDurations, surface, viewport) => {
@@ -524,6 +601,8 @@ export class StandaloneSiteEventRepository {
          FROM ${standaloneEventTable}
          ${eventWhereClause}
          ${hasHostScope ? "AND" : "WHERE"} event_type IN (
+           'WEBSITE_BUILD_FLOW_STARTED',
+           'WEBSITE_BUILD_FLOW_ABANDONED',
            'WEBSITE_DELETED',
            'WEBSITE_BUILD_STARTED',
            'WEBSITE_PREVIEW_READY',
@@ -588,8 +667,11 @@ export class StandaloneSiteEventRepository {
     const eventCounts = buildEventCountMap(eventCountRows);
     const {
       deleteReasonCounts,
+      startedFlowIds,
+      abandonedBuildFlowIds,
       startedAttempts,
       completedAttemptIds,
+      completedBuildFlowIds,
       previewReadyDurations,
       publishDurations,
       surfaceViewportDurations,
@@ -615,7 +697,14 @@ export class StandaloneSiteEventRepository {
     const buildStartedCount = buildStartedMetrics.total;
     const buildSucceededCount = buildSucceededMetrics.total;
     const buildFailedCount = buildFailedMetrics.total;
-    const buildAbandonedCount = countAbandonedAttempts(startedAttempts, completedAttemptIds);
+    const buildAttemptClosureSummary = summarizeBuildFlowClosure({
+      startedFlowIds,
+      abandonedBuildFlowIds,
+      startedAttempts,
+      completedAttemptIds,
+      completedBuildFlowIds,
+    });
+    const buildAbandonedCount = buildAttemptClosureSummary.abandonedCount;
     const publishedLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.published_site_count);
     const reachableLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.reachable_site_count);
     const recentUsageCounts = buildRecentUsageCountMap(recentUsageRows);
@@ -646,8 +735,11 @@ export class StandaloneSiteEventRepository {
       buildSuccessRateSampleCount: buildStartedCount,
       buildFailureRate: toPercentage(buildFailedCount, buildStartedCount),
       buildFailureRateSampleCount: buildStartedCount,
-      buildAbandonmentRate: toPercentage(buildAbandonedCount, buildStartedCount),
-      buildAbandonmentRateSampleCount: buildStartedCount,
+      buildAbandonmentRate: toPercentage(
+        buildAbandonedCount,
+        buildAttemptClosureSummary.maturedCount
+      ),
+      buildAbandonmentRateSampleCount: buildAttemptClosureSummary.maturedCount,
       timeToFirstPreviewP95: getPercentile(previewReadyDurations, 95),
       timeToFirstPreviewSampleCount: previewReadyDurations.length,
       timeToPublishP95: getPercentile(publishDurations, 95),

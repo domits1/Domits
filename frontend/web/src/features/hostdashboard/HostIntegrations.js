@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { UserProvider } from "./hostmessages/context/AuthContext";
 import { useAuth } from "./hostmessages/hooks/useAuth";
@@ -255,7 +255,7 @@ function HostIntegrationsInner() {
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
 
-  const fetchIntegrations = async () => {
+  const fetchIntegrations = useCallback(async () => {
     if (!userId) {
       setLoading(false);
       return;
@@ -289,11 +289,11 @@ function HostIntegrationsInner() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     fetchIntegrations();
-  }, [userId]);
+  }, [fetchIntegrations]);
 
   const visibleIntegrations = useMemo(() => {
     const whatsapp = integrations.filter((item) => item.channel === "WHATSAPP");

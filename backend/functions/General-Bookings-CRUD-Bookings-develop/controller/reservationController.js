@@ -8,9 +8,9 @@ import responsejson from "../util/const/responseheader.json" with { type: "json"
 const responseHeaderJSON = responsejson;
 
 class ReservationController {
-  constructor() {
-    this.bookingService = new BookingService();
-    this.paymentSerivce = new PaymentService();
+  constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
+    this.bookingService = bookingService;
+    this.paymentSerivce = paymentService;
   }
   // -----------
   // POST
@@ -35,7 +35,10 @@ class ReservationController {
       return {
         statusCode: returnInfo.statusCode,
         headers: responseHeaderJSON,
-        response: paymentData,
+        response:
+          returnInfo.channexAvailabilitySync === undefined
+            ? paymentData
+            : { ...paymentData, channexAvailabilitySync: returnInfo.channexAvailabilitySync },
       };
     } catch (error) {
       console.error(error);
@@ -80,6 +83,21 @@ class ReservationController {
     return typeof event.body === "string" ? JSON.parse(event.body) : event.body;
   }
 
+  requirePatchField(body, fieldName) {
+    if (!body?.[fieldName]) throw new Error(`Missing ${fieldName}.`);
+    return body[fieldName];
+  }
+
+  async handleModifyBookingDatesAction(body, authToken) {
+    const result = await this.bookingService.modifyBookingDates(
+      this.requirePatchField(body, "bookingId"),
+      this.requirePatchField(body, "arrivalDate"),
+      this.requirePatchField(body, "departureDate"),
+      authToken
+    );
+    return { statusCode: 200, headers: responseHeaderJSON, response: result };
+  }
+
   async handlePatchAction(body, event, authToken) {
     if (body?.action === "cancel-booking") {
       if (!body?.bookingId) throw new Error("Missing bookingId.");
@@ -95,6 +113,10 @@ class ReservationController {
     if (body?.action === "accept-inquiry") {
       if (!body?.bookingId) throw new Error("Missing bookingId.");
       return await this.acceptInquiry(body.bookingId, authToken);
+    }
+
+    if (body?.action === "modify-booking-dates") {
+      return await this.handleModifyBookingDatesAction(body, authToken);
     }
 
     return null;

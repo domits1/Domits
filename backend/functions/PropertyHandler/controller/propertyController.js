@@ -26,6 +26,8 @@ const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
     "WEBSITE_PREVIEW_READY",
     "WEBSITE_BUILD_SUCCEEDED",
     "WEBSITE_BUILD_FAILED",
+    "WEBSITE_BUILD_FLOW_STARTED",
+    "WEBSITE_BUILD_FLOW_ABANDONED",
 ]);
 
 const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
@@ -1265,6 +1267,34 @@ export class PropertyController {
         return this.parseWebsiteOverridePayload(payload, fieldName);
     }
 
+    parseOptionalWebsiteBuildCompletionPayload(payload) {
+        if (payload === undefined) {
+            return undefined;
+        }
+
+        if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+            throw new TypeError("buildCompletion must be a plain object.");
+        }
+
+        const attemptId = String(payload.attemptId || "").trim();
+        if (!attemptId) {
+            throw new TypeError("buildCompletion.attemptId is required.");
+        }
+
+        const flowId = String(payload.flowId || "").trim();
+        const templateKey = String(payload.templateKey || "").trim();
+        const phase = String(payload.phase || "").trim();
+        const durationMs = Number(payload.durationMs);
+
+        return {
+            attemptId,
+            flowId,
+            templateKey,
+            phase,
+            durationMs: Number.isFinite(durationMs) && durationMs > 0 ? Math.round(durationMs) : null,
+        };
+    }
+
     parseWebsiteDeleteReasons(payload) {
         if (payload === undefined || payload === null) {
             return [];
@@ -1304,7 +1334,19 @@ export class PropertyController {
 
     normalizeWebsiteBuildAnalyticsPayload(eventType, payload) {
         const attemptId = String(payload?.attemptId || "").trim();
+        const flowId = String(payload?.flowId || "").trim();
         const templateKey = String(payload?.templateKey || "").trim();
+        if (eventType === "WEBSITE_BUILD_FLOW_STARTED" || eventType === "WEBSITE_BUILD_FLOW_ABANDONED") {
+            if (!flowId) {
+                throw new TypeError("payload.flowId is required for website build flow analytics.");
+            }
+
+            return {
+                flowId,
+                ...(templateKey ? { templateKey } : {}),
+            };
+        }
+
         if (!attemptId) {
             throw new TypeError("payload.attemptId is required for website build analytics.");
         }
@@ -1312,6 +1354,10 @@ export class PropertyController {
         const normalizedPayload = {
             attemptId,
         };
+
+        if (flowId) {
+            normalizedPayload.flowId = flowId;
+        }
 
         if (templateKey) {
             normalizedPayload.templateKey = templateKey;
@@ -1630,6 +1676,7 @@ export class PropertyController {
             error?.message?.includes("Listing data could not be loaded for this live site.") ||
             error?.message?.includes("website site status must be") ||
             error?.message?.includes("website domain status must be") ||
+            error?.message?.includes("payload.flowId") ||
             error?.message?.includes("payload.attemptId") ||
             error?.message?.includes("payload.durationMs") ||
             error?.message?.includes("payload.surface") ||
@@ -2124,6 +2171,9 @@ export class PropertyController {
                 eventBody.publishedThemeOverrides,
                 "publishedThemeOverrides"
             );
+            const buildCompletion = this.parseOptionalWebsiteBuildCompletionPayload(
+                eventBody.buildCompletion
+            );
 
             if (!propertyId) {
                 return this.badRequest("Missing propertyId.");
@@ -2170,6 +2220,22 @@ export class PropertyController {
                     payload: {
                         templateKey,
                         status,
+                    },
+                });
+            }
+
+            if (buildCompletion) {
+                await this.recordStandaloneWebsiteEventSafely({
+                    draftId: draft?.id || existingDraft?.id || null,
+                    propertyId,
+                    hostId,
+                    eventType: "WEBSITE_BUILD_SUCCEEDED",
+                    payload: {
+                        attemptId: buildCompletion.attemptId,
+                        flowId: buildCompletion.flowId,
+                        templateKey: buildCompletion.templateKey || templateKey,
+                        durationMs: buildCompletion.durationMs,
+                        phase: buildCompletion.phase || "persist_draft",
                     },
                 });
             }
