@@ -26,6 +26,8 @@ const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
     "WEBSITE_PREVIEW_READY",
     "WEBSITE_BUILD_SUCCEEDED",
     "WEBSITE_BUILD_FAILED",
+    "WEBSITE_BUILD_FLOW_STARTED",
+    "WEBSITE_BUILD_FLOW_ABANDONED",
 ]);
 
 const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
@@ -1332,7 +1334,19 @@ export class PropertyController {
 
     normalizeWebsiteBuildAnalyticsPayload(eventType, payload) {
         const attemptId = String(payload?.attemptId || "").trim();
+        const flowId = String(payload?.flowId || "").trim();
         const templateKey = String(payload?.templateKey || "").trim();
+        if (eventType === "WEBSITE_BUILD_FLOW_STARTED" || eventType === "WEBSITE_BUILD_FLOW_ABANDONED") {
+            if (!flowId) {
+                throw new TypeError("payload.flowId is required for website build flow analytics.");
+            }
+
+            return {
+                flowId,
+                ...(templateKey ? { templateKey } : {}),
+            };
+        }
+
         if (!attemptId) {
             throw new TypeError("payload.attemptId is required for website build analytics.");
         }
@@ -1340,6 +1354,10 @@ export class PropertyController {
         const normalizedPayload = {
             attemptId,
         };
+
+        if (flowId) {
+            normalizedPayload.flowId = flowId;
+        }
 
         if (templateKey) {
             normalizedPayload.templateKey = templateKey;
@@ -1658,6 +1676,7 @@ export class PropertyController {
             error?.message?.includes("Listing data could not be loaded for this live site.") ||
             error?.message?.includes("website site status must be") ||
             error?.message?.includes("website domain status must be") ||
+            error?.message?.includes("payload.flowId") ||
             error?.message?.includes("payload.attemptId") ||
             error?.message?.includes("payload.durationMs") ||
             error?.message?.includes("payload.surface") ||
