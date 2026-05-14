@@ -223,8 +223,6 @@ const Login = () => {
               </button>
             </form>
 
-            <div className="divider"></div>
-
             <div className="bottomText">Don’t have an account?</div>
 
             <button className="registerBtn" onClick={handleRegisterClick}>

@@ -19,10 +19,20 @@
 .hostCheckbox {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 10px 0;
+  gap: 12px;
+
+  margin: 20px 0;
+
+  font-size: 16px;
+  color: #000;
+  cursor: pointer;
 }
 
+.hostCheckbox input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
 .strength-container {
   width: 100%;
   margin-top: 10px;

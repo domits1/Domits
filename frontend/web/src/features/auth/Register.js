@@ -210,19 +210,51 @@ const Register = () => {
     }));
   };
 
+const getPasswordRequirements = (password) => ({
+  length: password.length >= 8,
+  uppercase: /[A-Z]/.test(password),
+  number: /\d/.test(password),
+  specialChar: /[^A-Za-z0-9]/.test(password),
+});
+
+const calculateStrength = (requirements) =>
+  Object.values(requirements).filter(Boolean)
+    .length;
+
+const updateStrengthBar = (
+  strength,
+  color,
+  strengthBarRef
+) => {
+  if (!strengthBarRef.current) {
+    return;
+  }
+
+  strengthBarRef.current.style.width = `${
+    (strength / 4) * 100
+  }%`;
+
+  strengthBarRef.current.style.backgroundColor =
+    color;
+};
+
+const showStrengthContainer = (
+  strengthContainerRef
+) => {
+  if (strengthContainerRef.current) {
+    strengthContainerRef.current.style.display =
+      "block";
+  }
+};
+
 const checkPasswordStrength = (password) => {
-  const newRequirements = {
-    length: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    number: /\d/.test(password),
-    specialChar: /[^A-Za-z0-9]/.test(password),
-  };
+  const newRequirements =
+    getPasswordRequirements(password);
 
   setRequirements(newRequirements);
 
   const strength =
-    Object.values(newRequirements).filter(Boolean)
-      .length;
+    calculateStrength(newRequirements);
 
   const config = getStrengthConfig(strength);
 
@@ -235,14 +267,13 @@ const checkPasswordStrength = (password) => {
 
   setIsPasswordStrong(config.isStrong);
 
-  if (strengthBarRef.current) {
-    strengthBarRef.current.style.width = `${(strength / 4) * 100}%`;
-  }
+  updateStrengthBar(
+    strength,
+    config.color,
+    strengthBarRef
+  );
 
-  if (strengthContainerRef.current) {
-    strengthContainerRef.current.style.display =
-      "block";
-  }
+  showStrengthContainer(strengthContainerRef);
 };
 
   const handleRegisterError = (error) => {
@@ -624,8 +655,6 @@ const checkPasswordStrength = (password) => {
           >
             Sign Up
           </button>
-
-          <div className="divider"></div>
 
           <div className="bottomText">
             Already have an account?
