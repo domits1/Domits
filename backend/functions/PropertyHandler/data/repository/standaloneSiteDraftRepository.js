@@ -158,11 +158,13 @@ export class StandaloneSiteDraftRepository {
         theme_overrides_json = EXCLUDED.theme_overrides_json,
         published_content_overrides_json = COALESCE(
           EXCLUDED.published_content_overrides_json,
-          ${tableName}.published_content_overrides_json
+          ${tableName}.published_content_overrides_json,
+          EXCLUDED.content_overrides_json
         ),
         published_theme_overrides_json = COALESCE(
           EXCLUDED.published_theme_overrides_json,
-          ${tableName}.published_theme_overrides_json
+          ${tableName}.published_theme_overrides_json,
+          EXCLUDED.theme_overrides_json
         ),
         updated_at = EXCLUDED.updated_at,
         last_preview_built_at = EXCLUDED.last_preview_built_at

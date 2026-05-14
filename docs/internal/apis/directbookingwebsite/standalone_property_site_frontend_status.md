@@ -1,18 +1,23 @@
 # Standalone Property Site Frontend Status
 
 ## Purpose
+
 This document tracks the current implementation status of the host-side standalone website builder and published-site runtime in the frontend. It captures what is implemented now, what remains internal-preview-only, and what the next phase must cover.
 
 Historical iteration log:
+
 - `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
 
 ## Current status
+
 The feature is no longer only a setup shell. It now covers three connected surfaces:
+
 - in-dashboard builder preview for first-pass setup
 - persisted draft editing for host-owned websites
 - a separate published live-site lifecycle backed by `standalone_site` and `standalone_site_domain`
 
 What is in place:
+
 - A dedicated website builder page with a step-based flow.
 - Listing selection via host-owned listing options.
 - Listings that already have a saved website draft are excluded from the builder dropdown until that website is deleted.
@@ -98,7 +103,9 @@ What is in place:
   - when the primary domain status is `ACTIVE`, host actions should open the clean hostname directly; otherwise the UI falls back to the same-origin debug route
 
 ## Implemented page flow
+
 ### Step 1: Choose your listing
+
 - Listing dropdown is implemented.
 - Listings are loaded in the background using the host listing options endpoint.
 - After a listing is selected, the page shows:
@@ -110,6 +117,7 @@ What is in place:
   - button to browse the imported photos
 
 ### Step 2: Choose a website template
+
 - Template grid is implemented.
 - Templates are displayed as silhouette previews.
 - Templates can be selected.
@@ -117,6 +125,7 @@ What is in place:
 - The selected state is visually indicated.
 
 ### Step 3: Build and preview website
+
 - Clicking `Build my website` starts a real preview build workflow.
 - The UI shows phase-based loading with pulse bars:
   - importing listing details
@@ -131,10 +140,12 @@ What is in place:
   - preview rendered and usable
   - build succeeded
   - build failed
-  This is used to calculate time-to-first-preview p95, success rate, failure rate, and abandonment rate.
+    This is used to calculate time-to-first-preview p95, success rate, failure rate, and abandonment rate.
 
 ## Data flow status
+
 Current data path:
+
 - `hostDashboard/all` is used for listing selection and summary context.
 - `hostDashboard/single` is fetched only for the selected listing when preview build starts.
 - The detail payload is normalized into a canonical website content model before template rendering.
@@ -142,6 +153,7 @@ Current data path:
 This split prevents dropdown payload bloat and keeps template rendering decoupled from list-fetch logic.
 
 Calendar data path:
+
 - `hostDashboard/single` now returns `calendarAvailability` for the selected host-owned property.
 - The website model maps this into a shared availability object instead of letting each template interpret raw calendar payloads separately.
 - The website detail fetch now uses `no-store`, and the host-owned property detail response also returns no-store headers to reduce stale calendar sync snapshots.
@@ -153,7 +165,9 @@ Calendar data path:
 - PMS-backed availability snapshot import is implemented in the current foundation. Authoritative server-side quote calculation for standalone guest traffic is designed, but not yet exposed as a live standalone public API.
 
 ## Template implementation status
+
 Templates available in chooser:
+
 - Panorama Landing
 - Trust Signals
 - Experience Journey
@@ -165,11 +179,13 @@ Templates available in chooser:
 - Local Guide
 
 Real preview rendering implemented:
+
 - Panorama Landing
 - Trust Signals
 - Experience Journey
 
 Silhouette-only (not yet real-rendered):
+
 - Amenities Spotlight
 - Gallery Grid
 - Editorial Split
@@ -178,20 +194,25 @@ Silhouette-only (not yet real-rendered):
 - Local Guide
 
 Legacy hidden template kept for compatibility:
+
 - Feature Stack
 
 ## Amenity icon status
+
 - Amenity labels are mapped from selected listing detail data.
 - Amenity icons are now rendered from the shared amenity catalog by amenity ID in the implemented templates.
 - Icon fallback is safe: if an amenity icon is missing, label rendering continues.
 
 ## Animation and interaction status
+
 Animations remain aesthetic/supportive and not business-critical:
+
 - listing gallery overlay transitions
 - selected template interaction and silhouette cursor motion
 - phase-based preview build loading
 
 Current implementation details:
+
 - Templates are shown in a responsive grid.
 - Card height and silhouette dimensions were normalized for consistency.
 - Mobile and desktop layouts were tuned separately.
@@ -199,6 +220,7 @@ Current implementation details:
 - The selected template can be changed freely after listing selection.
 
 ## What is done now
+
 - Setup and selection flow is complete.
 - Real preview pipeline exists for the first three templates.
 - Preview workflow logic is extracted into a dedicated script module and the internal preview route remains available for draft review.
@@ -209,7 +231,7 @@ Current implementation details:
 - Fallback-domain state is now tracked separately from site publication state:
   - a site can be `PUBLISHED`
   - while its fallback domain is still `PENDING`
-  This separation is intentional and is required for the later routing phase.
+    This separation is intentional and is required for the later routing phase.
 - Shared template model is in place and reusable by additional templates.
 - Built previews are persisted as website drafts keyed by host and property.
 - Listings with an existing saved website are no longer offered again in the builder flow.
@@ -236,10 +258,10 @@ Current implementation details:
 - Published draft state now relies on separate standalone-owned fields in `main.standalone_site_draft`:
   - `published_content_overrides_json`
   - `published_theme_overrides_json`
-  These fields must exist in `main` before backend code that reads/writes published draft state is deployed.
+    These fields must exist in `main` before backend code that reads/writes published draft state is deployed.
 - Website KPI tracking now relies on a separate standalone-owned table in `main`:
   - `standalone_site_event`
-  This table must exist in `main` before the website KPI overview can load successfully in the host dashboard.
+    This table must exist in `main` before the website KPI overview can load successfully in the host dashboard.
 - The standalone event stream now stores both server-side lifecycle events and client-perceived website analytics events:
   - builder events from the host dashboard
   - preview-route LCP events
@@ -252,7 +274,7 @@ Current implementation details:
   - `booking_api_error_rate`
   - `booking_funnel_completion_rate`
   - `custom_domain_setup_success_rate`
-  Metrics without real instrumentation are shown as pending instead of fabricated values.
+    Metrics without real instrumentation are shown as pending instead of fabricated values.
 - The dedicated KPI dashboard now also exposes real build funnel metrics:
   - `build_started_count`
   - `build_succeeded_count`
@@ -267,9 +289,11 @@ Current implementation details:
 - The trust-card icon picker now deduplicates repeated amenity visuals and shows one option per unique Domits icon glyph instead of repeating the same icon for multiple amenity records.
 
 ## Next phase
+
 The next high-priority phase is aligning the published-site runtime with real hosted fallback domains and then extending that foundation toward custom domains.
 
 Required next steps:
+
 - Expand section-level/content override coverage further into template-specific headings and branding/theme controls.
 - Introduce image reordering / richer media management beyond the current slot reassignment approach.
 - Finish fallback-domain infrastructure activation so `*.direct.domits.com` resolves to the published live site.
@@ -279,5 +303,6 @@ Required next steps:
   - keep the preview route clearly separate from published live-site routing
 
 ## Additional implementation note
+
 - The Website route still exists in the frontend.
 - The Website tab button in the host dashboard navigation is currently commented out, so the page is hidden from the sidebar for now.

@@ -14,6 +14,24 @@ class ChannexBookingRevisionRepository {
     });
   }
 
+  async listByFilters({ integrationAccountId, domitsPropertyId, limit = 50 } = {}) {
+    if (!integrationAccountId) return [];
+
+    const client = await Database.getInstance();
+    const query = client
+      .getRepository(ChannexBookingRevision)
+      .createQueryBuilder("r")
+      .where("r.integrationAccountId = :integrationAccountId", { integrationAccountId })
+      .orderBy("r.createdAt", "DESC")
+      .limit(limit);
+
+    if (domitsPropertyId) {
+      query.andWhere("r.domitsPropertyId = :domitsPropertyId", { domitsPropertyId });
+    }
+
+    return query.getMany();
+  }
+
   async upsert(data) {
     const client = await Database.getInstance();
     const existing = await this.getByIntegrationAccountIdAndRevisionId(data.integrationAccountId, data.revisionId);
