@@ -245,6 +245,14 @@ export class PropertyDeletionRepository {
   async deletePropertyById(propertyId) {
     const client = await Database.getInstance();
     await client.transaction(async (transactionManager) => {
+      const standaloneSiteIds = await this.getScopedIds(
+        transactionManager,
+        "standalone_site",
+        ["id"],
+        ["propertyid", "property_id", "propertyId"],
+        propertyId
+      );
+
       const propertyScopedTables = [
         { tableName: "guest_favorite", propertyColumns: ["propertyid", "property_id", "propertyId"] },
         { tableName: "property_availability", propertyColumns: ["property_id"] },
@@ -289,6 +297,34 @@ export class PropertyDeletionRepository {
         transactionManager,
         "property_ical_source",
         ["property_id"],
+        propertyId
+      );
+
+      await this.deleteByScopedColumnIfExists(
+        transactionManager,
+        "standalone_site_event",
+        ["propertyid", "property_id", "propertyId"],
+        propertyId
+      );
+
+      await this.deleteByScopedColumnIfExists(
+        transactionManager,
+        "standalone_site_draft",
+        ["propertyid", "property_id", "propertyId"],
+        propertyId
+      );
+
+      await this.deleteRowsByScopedIdsIfExists(
+        transactionManager,
+        "standalone_site_domain",
+        ["siteid", "site_id", "siteId"],
+        standaloneSiteIds
+      );
+
+      await this.deleteByScopedColumnIfExists(
+        transactionManager,
+        "standalone_site",
+        ["propertyid", "property_id", "propertyId"],
         propertyId
       );
 

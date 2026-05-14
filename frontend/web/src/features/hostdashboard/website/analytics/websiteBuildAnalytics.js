@@ -19,19 +19,22 @@ const createCryptoFallbackId = () => {
   return Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 };
 
-export const createWebsiteBuildAttemptId = () => {
+const createWebsiteAnalyticsId = (prefix) => {
   if (globalThis.crypto?.randomUUID) {
-    return `website-build-${globalThis.crypto.randomUUID()}`;
+    return `${prefix}-${globalThis.crypto.randomUUID()}`;
   }
 
   const cryptoFallbackId = createCryptoFallbackId();
   if (cryptoFallbackId) {
-    return `website-build-${cryptoFallbackId}`;
+    return `${prefix}-${cryptoFallbackId}`;
   }
 
   websiteBuildAttemptSequence += 1;
-  return `website-build-${Date.now()}-${websiteBuildAttemptSequence}`;
+  return `${prefix}-${Date.now()}-${websiteBuildAttemptSequence}`;
 };
+
+export const createWebsiteBuildAttemptId = () => createWebsiteAnalyticsId("website-build");
+export const createWebsiteBuildFlowId = () => createWebsiteAnalyticsId("website-build-flow");
 
 export const getBuildAttemptClock = () => {
   if (typeof globalThis.performance?.now === "function") {
@@ -41,10 +44,11 @@ export const getBuildAttemptClock = () => {
   return Date.now();
 };
 
-export const createWebsiteBuildAttempt = ({ propertyId, templateKey }) => ({
+export const createWebsiteBuildAttempt = ({ propertyId, templateKey, flowId = "" }) => ({
   attemptId: createWebsiteBuildAttemptId(),
   propertyId,
   templateKey,
+  flowId: String(flowId || "").trim(),
   startedAt: getBuildAttemptClock(),
   hasPreviewReadyEvent: false,
   hasTerminalEvent: false,

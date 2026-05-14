@@ -2,8 +2,13 @@ import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 
 const buildWebsiteAnalyticsUrl = () => `${PROPERTY_API_BASE}/website/event`;
+const TERMINAL_EVENT_RETRY_DELAYS_MS = Object.freeze([0, 250, 1000]);
 
 const getOptionalAccessToken = () => getAccessToken();
+const waitForDelay = (delayMs) =>
+  new Promise((resolve) => {
+    globalThis.setTimeout(resolve, delayMs);
+  });
 
 const postWebsiteAnalyticsEvent = async ({ authorization, body, keepalive = false }) => {
   const headers = {
@@ -76,6 +81,28 @@ export const recordWebsiteHostAnalyticsEventSafely = async (eventInput) => {
   } catch {
     // KPI ingestion should never block host workflow.
   }
+};
+
+export const recordWebsiteHostAnalyticsEventWithRetry = async (
+  eventInput,
+  retryDelaysMs = TERMINAL_EVENT_RETRY_DELAYS_MS
+) => {
+  let lastError = null;
+
+  for (const retryDelayMs of retryDelaysMs) {
+    try {
+      if (retryDelayMs > 0) {
+        await waitForDelay(retryDelayMs);
+      }
+
+      await recordWebsiteHostAnalyticsEvent(eventInput);
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Website analytics event request failed.");
 };
 
 export const recordPublicWebsiteAnalyticsEventSafely = async (eventInput) => {

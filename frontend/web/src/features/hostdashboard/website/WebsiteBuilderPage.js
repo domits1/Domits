@@ -18,15 +18,21 @@ import {
   PREVIEW_STAGE,
   runWebsitePreviewBuildWorkflow,
 } from "./services/websitePreviewWorkflow";
-import { recordWebsiteHostAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
+import {
+  recordWebsiteHostAnalyticsEventSafely,
+  recordWebsiteHostAnalyticsEventWithRetry,
+} from "./analytics/websiteAnalyticsService";
 import {
   createWebsiteBuildAttempt,
+  createWebsiteBuildFlowId,
   getBuildAttemptDurationMs,
   waitForNextPaint,
   WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
 } from "./analytics/websiteBuildAnalytics";
 import {
   WEBSITE_BUILD_FAILED_EVENT,
+  WEBSITE_BUILD_FLOW_ABANDONED_EVENT,
+  WEBSITE_BUILD_FLOW_STARTED_EVENT,
   WEBSITE_BUILD_STARTED_EVENT,
   WEBSITE_BUILD_SUCCEEDED_EVENT,
   WEBSITE_PREVIEW_READY_EVENT,
@@ -572,6 +578,7 @@ function WebsiteBuilderPage() {
   const [websiteDraftDeleteStep, setWebsiteDraftDeleteStep] = useState(DELETE_WEBSITE_DRAFT_STEP_REASON);
   const [isDeletingWebsiteDraft, setIsDeletingWebsiteDraft] = useState(false);
   const previewSectionRef = useRef(null);
+  const websiteBuildFlowRef = useRef(null);
   const websiteBuildAttemptRef = useRef(null);
   const websiteDraftPreviewCacheKeysRef = useRef({});
   const navigate = useNavigate();
@@ -787,14 +794,102 @@ function WebsiteBuilderPage() {
     setPersistWebsiteDraftError("");
   };
 
+  const ensureWebsiteBuildFlowStarted = ({ propertyId, templateKey }) => {
+    const currentFlow = websiteBuildFlowRef.current;
+    if (currentFlow && !currentFlow.hasTerminalEvent && !currentFlow.hasAbandonEvent) {
+      return currentFlow;
+    }
+
+    const nextFlow = {
+      flowId: createWebsiteBuildFlowId(),
+      propertyId: String(propertyId || "").trim(),
+      templateKey: String(templateKey || "").trim(),
+      hasBuildStarted: false,
+      hasTerminalEvent: false,
+      hasAbandonEvent: false,
+    };
+
+    websiteBuildFlowRef.current = nextFlow;
+    recordWebsiteHostAnalyticsEventSafely({
+      propertyId: nextFlow.propertyId,
+      eventType: WEBSITE_BUILD_FLOW_STARTED_EVENT,
+      payload: {
+        flowId: nextFlow.flowId,
+        templateKey: nextFlow.templateKey,
+      },
+    });
+
+    return nextFlow;
+  };
+
+  const markBuildFlowTerminal = (flowId = "") => {
+    if (websiteBuildFlowRef.current?.flowId === flowId) {
+      websiteBuildFlowRef.current.hasTerminalEvent = true;
+    }
+  };
+
+  const recordBuildFlowAbandonmentIfNeeded = () => {
+    const currentFlow = websiteBuildFlowRef.current;
+    if (
+      !currentFlow ||
+      currentFlow.hasBuildStarted ||
+      currentFlow.hasTerminalEvent ||
+      currentFlow.hasAbandonEvent
+    ) {
+      return;
+    }
+
+    currentFlow.hasAbandonEvent = true;
+    recordWebsiteHostAnalyticsEventSafely({
+      propertyId: currentFlow.propertyId,
+      eventType: WEBSITE_BUILD_FLOW_ABANDONED_EVENT,
+      payload: {
+        flowId: currentFlow.flowId,
+        templateKey: currentFlow.templateKey,
+      },
+    });
+  };
+
+  useEffect(() => {
+    const normalizedPropertyId = String(selectedPropertyId || "").trim();
+    if (!normalizedPropertyId) {
+      return;
+    }
+
+    ensureWebsiteBuildFlowStarted({
+      propertyId: normalizedPropertyId,
+      templateKey: selectedTemplateId,
+    });
+  }, [selectedPropertyId, selectedTemplateId]);
+
+  useEffect(() => {
+    const handlePageHide = () => {
+      recordBuildFlowAbandonmentIfNeeded();
+    };
+
+    globalThis.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      globalThis.removeEventListener("pagehide", handlePageHide);
+      recordBuildFlowAbandonmentIfNeeded();
+    };
+  }, []);
+
   const startWebsiteBuildAttempt = () => {
     if (!selectedProperty) {
       return null;
     }
 
+    const currentFlow = ensureWebsiteBuildFlowStarted({
+      propertyId: selectedProperty.value,
+      templateKey: selectedTemplateId,
+    });
+    currentFlow.hasBuildStarted = true;
+
     const nextAttempt = createWebsiteBuildAttempt({
       propertyId: selectedProperty.value,
       templateKey: selectedTemplateId,
+      flowId: currentFlow.flowId,
     });
 
     websiteBuildAttemptRef.current = nextAttempt;
@@ -803,6 +898,7 @@ function WebsiteBuilderPage() {
       eventType: WEBSITE_BUILD_STARTED_EVENT,
       payload: {
         attemptId: nextAttempt.attemptId,
+        flowId: nextAttempt.flowId,
         templateKey: nextAttempt.templateKey,
       },
     });
@@ -823,13 +919,14 @@ function WebsiteBuilderPage() {
       eventType: WEBSITE_PREVIEW_READY_EVENT,
       payload: {
         attemptId: attempt.attemptId,
+        flowId: attempt.flowId,
         templateKey: attempt.templateKey,
         durationMs,
       },
     });
   };
 
-  const recordBuildTerminalEvent = ({ attempt, draftId = "", eventType, phase = "" }) => {
+  const recordBuildTerminalEvent = async ({ attempt, draftId = "", eventType, phase = "" }) => {
     if (!attempt || attempt.hasTerminalEvent) {
       return;
     }
@@ -838,20 +935,30 @@ function WebsiteBuilderPage() {
     if (websiteBuildAttemptRef.current?.attemptId === attempt.attemptId) {
       websiteBuildAttemptRef.current = null;
     }
-    recordWebsiteHostAnalyticsEventSafely({
-      propertyId: attempt.propertyId,
-      draftId,
-      eventType,
-      payload: {
-        attemptId: attempt.attemptId,
-        templateKey: attempt.templateKey,
-        durationMs: getBuildAttemptDurationMs(attempt.startedAt),
-        phase,
-      },
-    });
+    markBuildFlowTerminal(attempt.flowId);
+    if (eventType === WEBSITE_BUILD_SUCCEEDED_EVENT) {
+      return;
+    }
+
+    try {
+      await recordWebsiteHostAnalyticsEventWithRetry({
+        propertyId: attempt.propertyId,
+        draftId,
+        eventType,
+        payload: {
+          attemptId: attempt.attemptId,
+          flowId: attempt.flowId,
+          templateKey: attempt.templateKey,
+          durationMs: getBuildAttemptDurationMs(attempt.startedAt),
+          phase,
+        },
+      });
+    } catch {
+      // Terminal failure analytics should not block the builder UX.
+    }
   };
 
-  const persistSelectedWebsiteDraft = async () => {
+  const persistSelectedWebsiteDraft = async (buildAttempt = null) => {
     if (!selectedProperty) {
       return;
     }
@@ -866,6 +973,15 @@ function WebsiteBuilderPage() {
         status: "DRAFT",
         contentOverrides: {},
         themeOverrides: {},
+        buildCompletion: buildAttempt
+          ? {
+              attemptId: buildAttempt.attemptId,
+              flowId: buildAttempt.flowId,
+              templateKey: buildAttempt.templateKey,
+              durationMs: getBuildAttemptDurationMs(buildAttempt.startedAt),
+              phase: WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
+            }
+          : undefined,
       });
       await loadHostWebsiteDrafts();
       return savedDraft;
@@ -900,9 +1016,9 @@ function WebsiteBuilderPage() {
       await waitForNextPaint();
       await waitForNextPaint();
       await recordPreviewReadyForBuildAttempt(buildAttempt);
-      const savedDraft = await persistSelectedWebsiteDraft();
+      const savedDraft = await persistSelectedWebsiteDraft(buildAttempt);
       if (!savedDraft) {
-        recordBuildTerminalEvent({
+        await recordBuildTerminalEvent({
           attempt: buildAttempt,
           eventType: WEBSITE_BUILD_FAILED_EVENT,
           phase: WEBSITE_BUILD_FAILURE_PHASE_PERSIST,
@@ -910,14 +1026,14 @@ function WebsiteBuilderPage() {
         return;
       }
 
-      recordBuildTerminalEvent({
+      await recordBuildTerminalEvent({
         attempt: buildAttempt,
         draftId: savedDraft.id,
         eventType: WEBSITE_BUILD_SUCCEEDED_EVENT,
       });
       toast.success("Website built and ready for review.");
     } catch (error) {
-      recordBuildTerminalEvent({
+      await recordBuildTerminalEvent({
         attempt: buildAttempt,
         eventType: WEBSITE_BUILD_FAILED_EVENT,
         phase: previewBuildPhase,
