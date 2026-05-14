@@ -72,16 +72,13 @@ const getConfiguredEnvValue = (...envNames) => {
 };
 const getLiveSiteDomainSuffix = () => {
     const configuredSuffix = getConfiguredEnvValue(
-        "DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX",
-        "STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX"
+        "DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX"
     ).toLowerCase();
     return configuredSuffix || DEFAULT_DIRECT_BOOKING_WEBSITE_LIVE_DOMAIN_SUFFIX;
 };
 const getLiveSiteRoutingStatus = () =>
     String(
-        process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE ??
-        process.env.STANDALONE_SITE_FALLBACK_ROUTING_ACTIVE ??
-        ""
+        process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE ?? ""
     ).trim().toLowerCase() === "true"
         ? "ACTIVE"
         : "PENDING";
@@ -2652,6 +2649,13 @@ export class PropertyController {
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
             const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+
+            if (existingSite?.id) {
+                await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
+                await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);
+            }
+
             await this.directBookingWebsiteDraftRepository.deleteDraftByPropertyIdAndHostId(propertyId, hostId);
 
             await this.recordStandaloneWebsiteEventSafely({
@@ -2661,6 +2665,8 @@ export class PropertyController {
                 eventType: "WEBSITE_DELETED",
                 payload: {
                     templateKey: existingDraft?.templateKey || "",
+                    siteId: existingSite?.id || "",
+                    siteStatus: existingSite?.status || "",
                     reasons: deleteReasons,
                 },
             });
