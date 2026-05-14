@@ -17,20 +17,81 @@ import {
 import "../../styles/sass/features/auth/auth.scss";
 import "../../styles/sass/features/auth/register.scss";
 
+const generateRandomUsername = () => {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  return Array.from(
+    { length: 15 },
+    () => chars[Math.floor(Math.random() * chars.length)]
+  ).join("");
+};
+
+const getPasswordError = (
+  password,
+  isPasswordStrong
+) => {
+  if (!password) {
+    return "Password is required.";
+  }
+
+  if (!isPasswordStrong) {
+    return "Password does not meet the requirements.";
+  }
+
+  return "";
+};
+
+const getRepeatPasswordError = (
+  password,
+  repeatPassword
+) => {
+  if (!repeatPassword) {
+    return "Please confirm your password.";
+  }
+
+  if (password !== repeatPassword) {
+    return "Passwords do not match.";
+  }
+
+  return "";
+};
+
+const validateForm = (
+  formData,
+  isPasswordStrong
+) => ({
+  firstName: formData.firstName
+    ? ""
+    : "First name is required.",
+
+  lastName: formData.lastName
+    ? ""
+    : "Last name is required.",
+
+  email: formData.email
+    ? ""
+    : "Email is required.",
+
+  phone: formData.phone
+    ? ""
+    : "Phone number is required.",
+
+  password: getPasswordError(
+    formData.password,
+    isPasswordStrong
+  ),
+
+  repeatPassword: getRepeatPasswordError(
+    formData.password,
+    formData.repeatPassword
+  ),
+});
+
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { flowState, setFlowState } = useContext(FlowContext);
-
-  const generateRandomUsername = () => {
-    const chars =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-    return Array.from(
-      { length: 15 },
-      () => chars[Math.floor(Math.random() * chars.length)]
-    ).join("");
-  };
 
   const [formData, setFormData] = useState({
     email: "",
@@ -147,65 +208,6 @@ const Register = () => {
     }
   };
 
-  const getPasswordError = (password) => {
-    if (!password) {
-      return "Password is required.";
-    }
-
-    if (!isPasswordStrong) {
-      return "Password does not meet the requirements.";
-    }
-
-    return "";
-  };
-
-  const getRepeatPasswordError = (
-    password,
-    repeatPassword
-  ) => {
-    if (!repeatPassword) {
-      return "Please confirm your password.";
-    }
-
-    if (password !== repeatPassword) {
-      return "Passwords do not match.";
-    }
-
-    return "";
-  };
-
-  const validateForm = ({
-    firstName,
-    lastName,
-    email,
-    phone,
-    password,
-    repeatPassword,
-  }) => ({
-    firstName: firstName
-      ? ""
-      : "First name is required.",
-
-    lastName: lastName
-      ? ""
-      : "Last name is required.",
-
-    email: email
-      ? ""
-      : "Email is required.",
-
-    phone: phone
-      ? ""
-      : "Phone number is required.",
-
-    password: getPasswordError(password),
-
-    repeatPassword: getRepeatPasswordError(
-      password,
-      repeatPassword
-    ),
-  });
-
   const handleRegisterError = (error) => {
     if (error.code === "UsernameExistsException") {
       setFieldErrors((prev) => ({
@@ -266,7 +268,10 @@ const Register = () => {
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    const nextErrors = validateForm(formData);
+    const nextErrors = validateForm(
+      formData,
+      isPasswordStrong
+    );
 
     setFieldErrors(nextErrors);
 
@@ -592,13 +597,11 @@ const Register = () => {
           <button
             type="button"
             className="registerBtn"
-            href={`/login?redirect=${redirectToUse}`}
-            onClick={(e) => {
-              e.preventDefault();
+            onClick={() =>
               navigate(
                 `/login?redirect=${redirectToUse}`
-              );
-            }}
+              )
+            }
           >
             Login
           </button>

@@ -194,9 +194,9 @@ HeroSection.propTypes = {
     quick: PropTypes.string,
     guarantee: PropTypes.string,
   }),
-};
 
-HeroSection.propTypes = {
+  isAuthenticated: PropTypes.bool,
+
   group: PropTypes.string,
 };
 

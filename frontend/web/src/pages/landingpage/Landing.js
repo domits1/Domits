@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
@@ -27,7 +26,6 @@ function Landing() {
   const { language } = useContext(LanguageContext);
   const landingContent = contentByLanguage[language]?.landing;
 
-  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [group, setGroup] = useState("");
   const [faqs, setFaqs] = useState([]);
