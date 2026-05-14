@@ -29,7 +29,7 @@ Prefer these names:
 - `DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR`
 - `REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX`
 
-The code currently still accepts the older `STANDALONE_SITE_*` and `REACT_APP_STANDALONE_SITE_*` names as fallbacks during rollout. Those legacy names should be removed from AWS configuration after the new names are deployed and verified.
+The direct booking website runtime now expects only these `DIRECT_BOOKING_WEBSITE_*` and `REACT_APP_DIRECT_BOOKING_WEBSITE_*` names in active AWS configuration.
 
 ## Legacy compatibility names that remain intentionally
 

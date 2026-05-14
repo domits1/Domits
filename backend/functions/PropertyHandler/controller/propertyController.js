@@ -72,16 +72,13 @@ const getConfiguredEnvValue = (...envNames) => {
 };
 const getLiveSiteDomainSuffix = () => {
     const configuredSuffix = getConfiguredEnvValue(
-        "DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX",
-        "STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX"
+        "DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX"
     ).toLowerCase();
     return configuredSuffix || DEFAULT_DIRECT_BOOKING_WEBSITE_LIVE_DOMAIN_SUFFIX;
 };
 const getLiveSiteRoutingStatus = () =>
     String(
-        process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE ??
-        process.env.STANDALONE_SITE_FALLBACK_ROUTING_ACTIVE ??
-        ""
+        process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE ?? ""
     ).trim().toLowerCase() === "true"
         ? "ACTIVE"
         : "PENDING";
