@@ -7,8 +7,11 @@ import { WebsiteKpiMetricCard, WebsiteKpiResearchCard } from "./WebsiteKpiCards"
 import { WEBSITE_DRAFT_DELETE_REASONS } from "../websiteDeleteReasons";
 import {
   buildResearchKpiCards,
+  buildResearchKpiDeltaMap,
   buildPerformanceCards,
+  buildPerformanceMetricDeltaMap,
   buildWebsiteMetricCards,
+  buildWebsiteMetricDeltaMap,
   EMPTY_WEBSITE_KPIS,
   PERFORMANCE_VIEWPORT_TAB_MOBILE,
   PERFORMANCE_VIEWPORT_TAB_OPTIONS,
@@ -167,7 +170,9 @@ function WebsiteKpiDashboardPage() {
   const [performanceViewportTab, setPerformanceViewportTab] = useState(PERFORMANCE_VIEWPORT_TAB_MOBILE);
   const [kpiViewTab, setKpiViewTab] = useState(KPI_VIEW_TAB_OVERVIEW);
   const [highlightedMetricIds, setHighlightedMetricIds] = useState([]);
+  const [metricDeltaMap, setMetricDeltaMap] = useState({});
   const [highlightedResearchKpiIds, setHighlightedResearchKpiIds] = useState([]);
+  const [researchKpiDeltaMap, setResearchKpiDeltaMap] = useState({});
   const [highlightedDeletionReasonIds, setHighlightedDeletionReasonIds] = useState([]);
   const hasLoadedWebsiteKpisRef = useRef(false);
   const websiteKpiRequestInFlightRef = useRef(false);
@@ -209,8 +214,19 @@ function WebsiteKpiDashboardPage() {
           nextChangedKpiIds.deletionReasonIds.length > 0;
 
         if (hasChangedKpis) {
+          const nextMetricDeltaMap = {
+            ...buildWebsiteMetricDeltaMap(previousWebsiteKpis, nextWebsiteKpis),
+            ...buildPerformanceMetricDeltaMap(previousWebsiteKpis, nextWebsiteKpis),
+          };
+          const nextResearchKpiDeltaMap = buildResearchKpiDeltaMap(
+            previousWebsiteKpis,
+            nextWebsiteKpis
+          );
+
           setHighlightedMetricIds(nextChangedKpiIds.metricIds);
+          setMetricDeltaMap(nextMetricDeltaMap);
           setHighlightedResearchKpiIds(nextChangedKpiIds.researchIds);
+          setResearchKpiDeltaMap(nextResearchKpiDeltaMap);
           setHighlightedDeletionReasonIds(nextChangedKpiIds.deletionReasonIds);
 
           if (kpiHighlightTimeoutRef.current) {
@@ -219,7 +235,9 @@ function WebsiteKpiDashboardPage() {
 
           kpiHighlightTimeoutRef.current = globalThis.setTimeout(() => {
             setHighlightedMetricIds([]);
+            setMetricDeltaMap({});
             setHighlightedResearchKpiIds([]);
+            setResearchKpiDeltaMap({});
             setHighlightedDeletionReasonIds([]);
             kpiHighlightTimeoutRef.current = null;
           }, WEBSITE_KPI_HIGHLIGHT_DURATION_MS);
@@ -343,6 +361,7 @@ function WebsiteKpiDashboardPage() {
           isLoading={isInitialKpiLoad}
           isHighlighted={highlightedMetricIds.includes(metricCard.id)}
           sampleLabel={metricCard.sampleLabel}
+          deltaLabel={metricDeltaMap[metricCard.id] || ""}
         />
       ))}
     </div>
@@ -393,6 +412,7 @@ function WebsiteKpiDashboardPage() {
               loadingMeta="Loading surface performance metrics..."
               isHighlighted={highlightedMetricIds.includes(surfaceMetric.id)}
               sampleLabel={surfaceMetric.sampleLabel}
+              deltaLabel={metricDeltaMap[surfaceMetric.id] || ""}
             />
           ))}
         </div>
@@ -417,6 +437,7 @@ function WebsiteKpiDashboardPage() {
             researchKpiCard={researchKpiCard}
             isLoading={isInitialKpiLoad}
             isHighlighted={highlightedResearchKpiIds.includes(researchKpiCard.id)}
+            deltaLabel={researchKpiDeltaMap[researchKpiCard.id] || ""}
           />
         ))}
       </div>
