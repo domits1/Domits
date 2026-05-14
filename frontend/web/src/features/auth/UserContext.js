@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Auth } from 'aws-amplify';
 
 const UserContext = createContext();
@@ -18,12 +18,10 @@ export const UserProvider = ({ children }) => {
                     setUser(userInfo);
                     setRole(userInfo.attributes['custom:group']);
                 } else {
-                    console.error('User role attribute missing, handling as guest');
                     setUser(userInfo);
                     setRole('Traveler');
                 }
-            } catch (error) {
-                console.error("Error fetching user's role:", error);
+            } catch {
                 setUser(null);
                 setRole(null);
             } finally {
@@ -33,8 +31,15 @@ export const UserProvider = ({ children }) => {
         checkUser();
     }, []);
 
+    const hasRole = (allowedRoles) => allowedRoles.includes(role);
+
+    const contextValue = useMemo(
+        () => ({ user, role, isLoading, hasRole }),
+        [user, role, isLoading]
+    );
+
     return (
-        <UserContext.Provider value={{ user, role, isLoading }}>
+        <UserContext.Provider value={contextValue}>
             {children}
         </UserContext.Provider>
     );

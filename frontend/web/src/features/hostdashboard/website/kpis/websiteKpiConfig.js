@@ -14,6 +14,7 @@ const KPI_EMPTY_VALUE = "No data yet";
 const RESEARCH_KPI_EMPTY_VALUE = "Pending";
 const KPI_STATUS_READY = "Instrumented";
 const KPI_STATUS_PENDING = "Not instrumented yet";
+const KPI_DELTA_EPSILON = 0.0001;
 
 const createFixedPrecisionFormatter = (suffix, scale = 1) => (value) => `${(value / scale).toFixed(2)}${suffix}`;
 const createWholeMinutesFormatter = () => (value) => `${value.toFixed(1)} min`;
@@ -40,6 +41,11 @@ const formatters = Object.freeze({
   durationFromMs: createAdaptiveDurationFromMsFormatter(),
   eur: createCurrencyFormatter(),
 });
+
+const formatSignedValue = (rawValue, formatter) => {
+  const sign = rawValue > 0 ? "+" : "-";
+  return `${sign}${formatter(Math.abs(rawValue))}`;
+};
 
 const createMetricCard = ({ id, title, value, meta, sampleLabel = "" }) => ({
   id,
@@ -115,6 +121,16 @@ const resolveMetricSampleLabel = (sampleLabel, websiteKpis) =>
 
 const formatSampleLabel = (count) => `n=${Number(count) || 0}`;
 
+const formatNumericDeltaValue = (rawValue) => {
+  const sign = rawValue > 0 ? "+" : "-";
+  const absoluteValue = Math.abs(rawValue);
+  if (Number.isInteger(absoluteValue)) {
+    return `${sign}${absoluteValue}`;
+  }
+
+  return `${sign}${absoluteValue.toFixed(2)}`;
+};
+
 const buildMetricCardsFromDefinitions = (definitions, websiteKpis) =>
   definitions.map((definition) =>
     createMetricCard({
@@ -124,6 +140,48 @@ const buildMetricCardsFromDefinitions = (definitions, websiteKpis) =>
       meta: resolveMetricMeta(definition.meta, websiteKpis),
       sampleLabel: resolveMetricSampleLabel(definition.sampleLabel, websiteKpis),
     })
+  );
+
+const buildDeltaMapFromDefinitions = (definitions, previousWebsiteKpis, nextWebsiteKpis) =>
+  Object.fromEntries(
+    definitions
+      .map((definition) => {
+        const previousValue = previousWebsiteKpis[definition.valueKey];
+        const nextValue = nextWebsiteKpis[definition.valueKey];
+
+        if (!Number.isFinite(previousValue) || !Number.isFinite(nextValue)) {
+          return null;
+        }
+
+        const rawDelta = nextValue - previousValue;
+        if (Math.abs(rawDelta) < KPI_DELTA_EPSILON) {
+          return null;
+        }
+
+        if (!definition.formatterKey) {
+          return [definition.id, formatNumericDeltaValue(rawDelta)];
+        }
+
+        switch (definition.formatterKey) {
+          case "percentage":
+            return [definition.id, formatSignedValue(rawDelta, formatters.percentage)];
+          case "secondsFromMs":
+            return [definition.id, formatSignedValue(rawDelta, formatters.secondsFromMs)];
+          case "seconds":
+            return [definition.id, formatSignedValue(rawDelta, formatters.seconds)];
+          case "minutes":
+            return [definition.id, formatSignedValue(rawDelta, formatters.minutes)];
+          case "minutesFromMs":
+            return [definition.id, formatSignedValue(rawDelta, formatters.minutesFromMs)];
+          case "durationFromMs":
+            return [definition.id, formatSignedValue(rawDelta, formatters.durationFromMs)];
+          case "eur":
+            return [definition.id, formatSignedValue(rawDelta, formatters.eur)];
+          default:
+            return [definition.id, formatNumericDeltaValue(rawDelta)];
+        }
+      })
+      .filter(Boolean)
   );
 
 const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
@@ -157,7 +215,7 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "build-success-rate",
     "Build success rate",
     "buildSuccessRate",
-    "Successful website builds divided by all recorded build starts",
+    "Successful website builds divided by all recorded build starts. Abandonment is tracked separately.",
     "percentage",
     (websiteKpis) => formatSampleLabel(websiteKpis.buildSuccessRateSampleCount)
   ),
@@ -165,7 +223,7 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "build-failure-rate",
     "Build failure rate",
     "buildFailureRate",
-    "Build attempts that ended in a recorded failure",
+    "Recorded build failures divided by all recorded build starts. Abandonment is tracked separately.",
     "percentage",
     (websiteKpis) => formatSampleLabel(websiteKpis.buildFailureRateSampleCount)
   ),
@@ -174,7 +232,7 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "Build abandonment rate",
     "buildAbandonmentRate",
     (websiteKpis) =>
-      `${websiteKpis.buildAbandonedCount} attempts passed the 10 minute threshold without success or failure`,
+      `${websiteKpis.buildAbandonedCount} builder flows were abandoned separately from explicit build success or failure`,
     "percentage",
     (websiteKpis) => formatSampleLabel(websiteKpis.buildAbandonmentRateSampleCount)
   ),
@@ -207,7 +265,7 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "deleted-websites",
     "Deleted websites",
     "deletedWebsiteCount",
-    "Website drafts removed from the standalone website workspace"
+    "Website drafts removed from the direct booking website workspace"
   ),
 ]);
 
@@ -264,7 +322,7 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Scalability", "Cost"],
     "costPerActiveSitePerMonth",
     "eur",
-    "Calculated from configured monthly standalone-site cost inputs, active published site count, and recent website usage events. This is a usage-weighted operating-cost proxy, not an AWS billing API feed.",
+    "Calculated from configured monthly direct-booking-website cost inputs, active published site count, and recent website usage events. This is a usage-weighted operating-cost proxy, not an AWS billing API feed.",
     (websiteKpis) => formatSampleLabel(websiteKpis.costPerActiveSitePerMonthSampleCount),
     "costPerActiveSitePerMonthSampleCount"
   ),
@@ -282,14 +340,14 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["Reliability", "Correctness"],
     "bookingApiErrorRate",
     "percentage",
-    "Requires the standalone booking API path to be live and instrumented. This remains a v2 metric until direct booking flow is active."
+    "Requires the direct booking website booking API path to be live and instrumented. This remains a v2 metric until direct booking flow is active."
   ),
   createResearchKpiDefinition(
     "quote_to_charge_mismatch_rate",
     ["Correctness"],
     "quoteToChargeMismatchRate",
     "percentage",
-    "Current proxy compares the published live-site room rate snapshot against the current PMS base room rate. A true quote-to-charge comparison still requires standalone quote, checkout, and payment instrumentation.",
+    "Current proxy compares the published live-site room rate snapshot against the current PMS base room rate. A true quote-to-charge comparison still requires direct booking website quote, checkout, and payment instrumentation.",
     (websiteKpis) => formatSampleLabel(websiteKpis.quoteToChargeMismatchSampleCount),
     "quoteToChargeMismatchSampleCount"
   ),
@@ -298,7 +356,7 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
     ["User experience"],
     "bookingFunnelCompletionRate",
     "percentage",
-    "Requires end-to-end funnel events from quote to completed booking. Current standalone website analytics stop at draft and preview usage."
+    "Requires end-to-end funnel events from quote to completed booking. Current direct booking website analytics stop at draft and preview usage."
   ),
   createResearchKpiDefinition(
     "custom_domain_setup_success_rate",
@@ -334,6 +392,13 @@ export const formatNullableDurationMs = (value) => formatKpiValue(value, "second
 export const buildWebsiteMetricCards = (websiteKpis) =>
   buildMetricCardsFromDefinitions(WEBSITE_METRIC_CARD_DEFINITIONS, websiteKpis);
 
+export const buildWebsiteMetricDeltaMap = (previousWebsiteKpis, nextWebsiteKpis) =>
+  buildDeltaMapFromDefinitions(
+    WEBSITE_METRIC_CARD_DEFINITIONS,
+    previousWebsiteKpis,
+    nextWebsiteKpis
+  );
+
 export const buildPerformanceCards = (websiteKpis, viewportTab = PERFORMANCE_VIEWPORT_TAB_MOBILE) => {
   const viewportDefinition =
     PERFORMANCE_DEFINITIONS.viewportDefinitions[viewportTab] ||
@@ -346,6 +411,16 @@ export const buildPerformanceCards = (websiteKpis, viewportTab = PERFORMANCE_VIE
     metrics: buildMetricCardsFromDefinitions(viewportDefinition.metricDefinitions, websiteKpis),
   };
 };
+
+export const buildPerformanceMetricDeltaMap = (previousWebsiteKpis, nextWebsiteKpis) =>
+  buildDeltaMapFromDefinitions(
+    PERFORMANCE_VIEWPORT_TAB_OPTIONS.flatMap(({ id }) => {
+      const viewportDefinition = PERFORMANCE_DEFINITIONS.viewportDefinitions[id];
+      return viewportDefinition ? viewportDefinition.metricDefinitions : [];
+    }),
+    previousWebsiteKpis,
+    nextWebsiteKpis
+  );
 
 const resolveResearchKpiValue = ({ hasNumericValue, rawValue, formatterKey, hasSamples }) => {
   if (hasNumericValue) {
@@ -382,3 +457,10 @@ export const buildResearchKpiCards = (websiteKpis) =>
         : "",
     };
   });
+
+export const buildResearchKpiDeltaMap = (previousWebsiteKpis, nextWebsiteKpis) =>
+  buildDeltaMapFromDefinitions(
+    RESEARCH_KPI_DEFINITIONS,
+    previousWebsiteKpis,
+    nextWebsiteKpis
+  );
