@@ -129,6 +129,10 @@
 
 .registerBtn {
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
   padding: 14px;
   background: #f5f5f5;
   color: #000;

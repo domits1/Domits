@@ -23,10 +23,12 @@ const Register = () => {
   const { flowState, setFlowState } = useContext(FlowContext);
 
   const generateRandomUsername = () => {
-    const chars = String.fromCharCode(...Array(127).keys()).slice(33);
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-    return Array.from({ length: 15 }, () =>
-      chars[Math.floor(Math.random() * chars.length)]
+    return Array.from(
+      { length: 15 },
+      () => chars[Math.floor(Math.random() * chars.length)]
     ).join("");
   };
 
@@ -98,11 +100,22 @@ const Register = () => {
     }));
   };
 
+  const setStrengthUI = (color, text) => {
+    if (strengthBarRef.current) {
+      strengthBarRef.current.style.backgroundColor = color;
+    }
+
+    if (strengthTextRef.current) {
+      strengthTextRef.current.textContent = text;
+      strengthTextRef.current.style.color = color;
+    }
+  };
+
   const checkPasswordStrength = (password) => {
     const newRequirements = {
       length: password.length >= 8,
       uppercase: /[A-Z]/.test(password),
-      number: /[0-9]/.test(password),
+      number: /\d/.test(password),
       specialChar: /[^A-Za-z0-9]/.test(password),
     };
 
@@ -134,61 +147,90 @@ const Register = () => {
     }
   };
 
-  const setStrengthUI = (color, text) => {
-    if (strengthBarRef.current) {
-      strengthBarRef.current.style.backgroundColor = color;
+  const getPasswordError = (password) => {
+    if (!password) {
+      return "Password is required.";
     }
 
-    if (strengthTextRef.current) {
-      strengthTextRef.current.textContent = text;
-      strengthTextRef.current.style.color = color;
+    if (!isPasswordStrong) {
+      return "Password does not meet the requirements.";
     }
+
+    return "";
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const getRepeatPasswordError = (
+    password,
+    repeatPassword
+  ) => {
+    if (!repeatPassword) {
+      return "Please confirm your password.";
+    }
 
+    if (password !== repeatPassword) {
+      return "Passwords do not match.";
+    }
+
+    return "";
+  };
+
+  const validateForm = ({
+    firstName,
+    lastName,
+    email,
+    phone,
+    password,
+    repeatPassword,
+  }) => ({
+    firstName: firstName
+      ? ""
+      : "First name is required.",
+
+    lastName: lastName
+      ? ""
+      : "Last name is required.",
+
+    email: email
+      ? ""
+      : "Email is required.",
+
+    phone: phone
+      ? ""
+      : "Phone number is required.",
+
+    password: getPasswordError(password),
+
+    repeatPassword: getRepeatPasswordError(
+      password,
+      repeatPassword
+    ),
+  });
+
+  const handleRegisterError = (error) => {
+    if (error.code === "UsernameExistsException") {
+      setFieldErrors((prev) => ({
+        ...prev,
+        email:
+          "An account with this email already exists.",
+      }));
+
+      return;
+    }
+
+    setErrorMessage(
+      error.message || "An unexpected error occurred"
+    );
+  };
+
+  const registerUser = async () => {
     const {
       email,
       password,
-      repeatPassword,
       firstName,
       lastName,
       phone,
       username,
     } = formData;
-
-    const nextErrors = {
-      firstName: !firstName
-        ? "First name is required."
-        : "",
-      lastName: !lastName
-        ? "Last name is required."
-        : "",
-      email: !email
-        ? "Email is required."
-        : "",
-      phone: !phone
-        ? "Phone number is required."
-        : "",
-      password: !password
-        ? "Password is required."
-        : !isPasswordStrong
-        ? "Password does not meet the requirements."
-        : "",
-      repeatPassword: !repeatPassword
-        ? "Please confirm your password."
-        : password !== repeatPassword
-        ? "Passwords do not match."
-        : "",
-    };
-
-    setFieldErrors(nextErrors);
-
-    if (Object.values(nextErrors).some(Boolean)) {
-      setPasswordShake(true);
-      return;
-    }
 
     try {
       const groupName = flowState.isHost
@@ -217,18 +259,23 @@ const Register = () => {
         },
       });
     } catch (error) {
-      if (error.code === "UsernameExistsException") {
-        setFieldErrors((prev) => ({
-          ...prev,
-          email:
-            "An account with this email already exists.",
-        }));
-      } else {
-        setErrorMessage(
-          error.message || "An unexpected error occurred"
-        );
-      }
+      handleRegisterError(error);
     }
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+    const nextErrors = validateForm(formData);
+
+    setFieldErrors(nextErrors);
+
+    if (Object.values(nextErrors).some(Boolean)) {
+      setPasswordShake(true);
+      return;
+    }
+
+    await registerUser();
   };
 
   return (
@@ -454,9 +501,9 @@ const Register = () => {
             <div className="requirements">
               <label
                 className={
-                  !requirements.length
-                    ? "requirement-error"
-                    : ""
+                  requirements.length
+                    ? ""
+                    : "requirement-error"
                 }
               >
                 <input
@@ -464,14 +511,14 @@ const Register = () => {
                   checked={requirements.length}
                   readOnly
                 />
-                At least 8 characters
+                <span>At least 8 characters</span>
               </label>
 
               <label
                 className={
-                  !requirements.uppercase
-                    ? "requirement-error"
-                    : ""
+                  requirements.uppercase
+                    ? ""
+                    : "requirement-error"
                 }
               >
                 <input
@@ -479,14 +526,14 @@ const Register = () => {
                   checked={requirements.uppercase}
                   readOnly
                 />
-                At least 1 uppercase letter
+                <span>At least 1 uppercase letter</span>
               </label>
 
               <label
                 className={
-                  !requirements.number
-                    ? "requirement-error"
-                    : ""
+                  requirements.number
+                    ? ""
+                    : "requirement-error"
                 }
               >
                 <input
@@ -494,14 +541,14 @@ const Register = () => {
                   checked={requirements.number}
                   readOnly
                 />
-                At least 1 number
+                <span>At least 1 number</span>
               </label>
 
               <label
                 className={
-                  !requirements.specialChar
-                    ? "requirement-error"
-                    : ""
+                  requirements.specialChar
+                    ? ""
+                    : "requirement-error"
                 }
               >
                 <input
@@ -509,7 +556,7 @@ const Register = () => {
                   checked={requirements.specialChar}
                   readOnly
                 />
-                At least 1 special character
+                <span>At least 1 special character</span>
               </label>
             </div>
           </div>
@@ -539,19 +586,22 @@ const Register = () => {
           <div className="divider"></div>
 
           <div className="bottomText">
-  Already have an account?
-</div>
+            Already have an account?
+          </div>
 
-<a
-  className="registerBtn"
-  href={`/login?redirect=${redirectToUse}`}
-  onClick={(e) => {
-    e.preventDefault();
-    navigate(`/login?redirect=${redirectToUse}`);
-  }}
->
-  Login
-</a>
+          <button
+            type="button"
+            className="registerBtn"
+            href={`/login?redirect=${redirectToUse}`}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate(
+                `/login?redirect=${redirectToUse}`
+              );
+            }}
+          >
+            Login
+          </button>
         </form>
       </div>
     </div>

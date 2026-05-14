@@ -92,23 +92,6 @@ function Landing() {
   }
 };
 
-  const updateUserGroup = async () => {
-  try {
-    const user = await Auth.currentAuthenticatedUser();
-
-    let result = await Auth.updateUserAttributes(user, {
-      "custom:group": "Host",
-    });
-
-    if (result === "SUCCESS") {
-      setGroup("Host");
-      navigate("/hostdashboard");
-    }
-  } catch (error) {
-    console.error(error);
-  }
-};
-
   const toggleOpen = (index) => {
     setFaqs((prev) =>
       prev.map((faq, i) =>

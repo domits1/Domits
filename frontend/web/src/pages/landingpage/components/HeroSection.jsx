@@ -196,4 +196,8 @@ HeroSection.propTypes = {
   }),
 };
 
+HeroSection.propTypes = {
+  group: PropTypes.string,
+};
+
 export default HeroSection;
