@@ -17,34 +17,6 @@ import {
 import "../../styles/sass/features/auth/auth.scss";
 import "../../styles/sass/features/auth/register.scss";
 
-const PASSWORD_STRENGTH_CONFIG = {
-  0: {
-    color: "red",
-    text: "Bad",
-    isStrong: false,
-  },
-  1: {
-    color: "red",
-    text: "Bad",
-    isStrong: false,
-  },
-  2: {
-    color: "orange",
-    text: "Weak",
-    isStrong: false,
-  },
-  3: {
-    color: "#088f08",
-    text: "Strong",
-    isStrong: true,
-  },
-  4: {
-    color: "green",
-    text: "Very Strong",
-    isStrong: true,
-  },
-};
-
 const generateRandomUsername = () => {
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -116,30 +88,6 @@ const validateForm = (
   ),
 });
 
-const PasswordToggleButton = ({
-  showPassword,
-  setShowPassword,
-}) => (
-  <button
-    type="button"
-    className="eyeIcon"
-    onClick={() =>
-      setShowPassword(!showPassword)
-    }
-    aria-label={
-      showPassword
-        ? "Hide password"
-        : "Show password"
-    }
-  >
-    {showPassword ? (
-      <FaEye />
-    ) : (
-      <FaEyeSlash />
-    )}
-  </button>
-);
-
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -171,101 +119,20 @@ const Register = () => {
     specialChar: false,
   });
 
-  const [isPasswordStrong, setIsPasswordStrong] =
-    useState(false);
-
-  const [passwordShake, setPasswordShake] =
-    useState(false);
-
-  const [errorMessage, setErrorMessage] =
-    useState("");
-
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [isPasswordStrong, setIsPasswordStrong] = useState(false);
+  const [passwordShake, setPasswordShake] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const strengthBarRef = useRef(null);
   const strengthTextRef = useRef(null);
   const strengthContainerRef = useRef(null);
 
-  const queryRedirect = new URLSearchParams(
-    location.search
-  ).get("redirect");
+  const queryRedirect = new URLSearchParams(location.search).get("redirect");
 
   const redirectToUse =
     queryRedirect ||
-    encodeURIComponent(
-      location.pathname + location.search
-    );
-
-  const setStrengthUI = (color, text) => {
-    if (strengthBarRef.current) {
-      strengthBarRef.current.style.backgroundColor =
-        color;
-    }
-
-    if (strengthTextRef.current) {
-      strengthTextRef.current.textContent = text;
-      strengthTextRef.current.style.color = color;
-    }
-  };
-
-  const calculatePasswordRequirements = (
-    password
-  ) => ({
-    length: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    number: /\d/.test(password),
-    specialChar:
-      /[^A-Za-z0-9]/.test(password),
-  });
-
-  const updateStrengthBar = (strength) => {
-    if (!strengthBarRef.current) {
-      return;
-    }
-
-    strengthBarRef.current.style.width = `${
-      (strength / 4) * 100
-    }%`;
-
-    const config =
-      PASSWORD_STRENGTH_CONFIG[strength];
-
-    setStrengthUI(
-      config.color,
-      config.text
-    );
-
-    setIsPasswordStrong(
-      config.isStrong
-    );
-  };
-
-  const showStrengthContainer = () => {
-    if (strengthContainerRef.current) {
-      strengthContainerRef.current.style.display =
-        "block";
-    }
-  };
-
-  const checkPasswordStrength = (
-    password
-  ) => {
-    const newRequirements =
-      calculatePasswordRequirements(
-        password
-      );
-
-    setRequirements(newRequirements);
-
-    const strength = Object.values(
-      newRequirements
-    ).filter(Boolean).length;
-
-    updateStrengthBar(strength);
-
-    showStrengthContainer();
-  };
+    encodeURIComponent(location.pathname + location.search);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -294,11 +161,85 @@ const Register = () => {
     }));
   };
 
+  const setStrengthUI = (color, text) => {
+    if (strengthBarRef.current) {
+      strengthBarRef.current.style.backgroundColor = color;
+    }
+
+    if (strengthTextRef.current) {
+      strengthTextRef.current.textContent = text;
+      strengthTextRef.current.style.color = color;
+    }
+  };
+
+  const getStrengthConfig = (strength) => {
+  if (strength < 2) {
+    return {
+      color: "red",
+      text: "Bad",
+      isStrong: false,
+    };
+  }
+
+  if (strength === 2) {
+    return {
+      color: "orange",
+      text: "Weak",
+      isStrong: false,
+    };
+  }
+
+  if (strength === 3) {
+    return {
+      color: "#088f08",
+      text: "Strong",
+      isStrong: true,
+    };
+  }
+
+  return {
+    color: "green",
+    text: "Very Strong",
+    isStrong: true,
+  };
+};
+
+  const checkPasswordStrength = (password) => {
+  const newRequirements = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    number: /\d/.test(password),
+    specialChar: /[^A-Za-z0-9]/.test(password),
+  };
+
+  setRequirements(newRequirements);
+
+  const strength =
+    Object.values(newRequirements).filter(Boolean).length;
+
+  const strengthConfig =
+    getStrengthConfig(strength);
+
+  setStrengthUI(
+    strengthConfig.color,
+    strengthConfig.text
+  );
+
+  setIsPasswordStrong(
+    strengthConfig.isStrong
+  );
+
+  if (strengthBarRef.current) {
+    strengthBarRef.current.style.width = `${(strength / 4) * 100}%`;
+  }
+
+  if (strengthContainerRef.current) {
+    strengthContainerRef.current.style.display = "block";
+  }
+};
+
   const handleRegisterError = (error) => {
-    if (
-      error.code ===
-      "UsernameExistsException"
-    ) {
+    if (error.code === "UsernameExistsException") {
       setFieldErrors((prev) => ({
         ...prev,
         email:
@@ -309,8 +250,7 @@ const Register = () => {
     }
 
     setErrorMessage(
-      error.message ||
-        "An unexpected error occurred"
+      error.message || "An unexpected error occurred"
     );
   };
 
@@ -325,10 +265,9 @@ const Register = () => {
     } = formData;
 
     try {
-      const groupName =
-        flowState.isHost
-          ? "Host"
-          : "Traveler";
+      const groupName = flowState.isHost
+        ? "Host"
+        : "Traveler";
 
       await Auth.signUp({
         username: email,
@@ -338,10 +277,9 @@ const Register = () => {
           "custom:username": username,
           given_name: firstName,
           family_name: lastName,
-          phone_number:
-            phone.startsWith("+")
-              ? phone
-              : `+${phone}`,
+          phone_number: phone.startsWith("+")
+            ? phone
+            : `+${phone}`,
         },
       });
 
@@ -367,9 +305,7 @@ const Register = () => {
 
     setFieldErrors(nextErrors);
 
-    if (
-      Object.values(nextErrors).some(Boolean)
-    ) {
+    if (Object.values(nextErrors).some(Boolean)) {
       setPasswordShake(true);
       return;
     }
@@ -380,9 +316,7 @@ const Register = () => {
   return (
     <div className="authPage">
       <div className="authCard">
-        <h2 className="title">
-          Create account
-        </h2>
+        <h2 className="title">Create account</h2>
 
         <form onSubmit={onSubmit}>
           <div className="inputGroup">
@@ -395,10 +329,9 @@ const Register = () => {
               placeholder="First name"
               onChange={handleChange}
               style={{
-                borderColor:
-                  fieldErrors.firstName
-                    ? "red"
-                    : "",
+                borderColor: fieldErrors.firstName
+                  ? "red"
+                  : "",
               }}
             />
           </div>
@@ -419,10 +352,9 @@ const Register = () => {
               placeholder="Last name"
               onChange={handleChange}
               style={{
-                borderColor:
-                  fieldErrors.lastName
-                    ? "red"
-                    : "",
+                borderColor: fieldErrors.lastName
+                  ? "red"
+                  : "",
               }}
             />
           </div>
@@ -444,10 +376,9 @@ const Register = () => {
               placeholder="Email"
               onChange={handleChange}
               style={{
-                borderColor:
-                  fieldErrors.email
-                    ? "red"
-                    : "",
+                borderColor: fieldErrors.email
+                  ? "red"
+                  : "",
               }}
             />
           </div>
@@ -472,10 +403,9 @@ const Register = () => {
                 required: true,
               }}
               inputStyle={{
-                borderColor:
-                  fieldErrors.phone
-                    ? "red"
-                    : "",
+                borderColor: fieldErrors.phone
+                  ? "red"
+                  : "",
               }}
               onChange={(phone) =>
                 setFormData((prev) => ({
@@ -499,33 +429,41 @@ const Register = () => {
 
             <input
               className={`${
-                passwordShake
-                  ? "inputShake"
-                  : ""
+                passwordShake ? "inputShake" : ""
               }`}
-              type={
-                showPassword
-                  ? "text"
-                  : "password"
-              }
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Password"
               onChange={handleChange}
-              onFocus={showStrengthContainer}
+              onFocus={() =>
+                (strengthContainerRef.current.style.display =
+                  "block")
+              }
               style={{
-                borderColor:
-                  fieldErrors.password
-                    ? "red"
-                    : "",
+                borderColor: fieldErrors.password
+                  ? "red"
+                  : "",
               }}
             />
 
-            <PasswordToggleButton
-              showPassword={showPassword}
-              setShowPassword={
-                setShowPassword
+            <button
+              type="button"
+              className="eyeIcon"
+              onClick={() =>
+                setShowPassword(!showPassword)
               }
-            />
+              aria-label={
+                showPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
+            >
+              {showPassword ? (
+                <FaEye />
+              ) : (
+                <FaEyeSlash />
+              )}
+            </button>
           </div>
 
           {fieldErrors.password && (
@@ -541,39 +479,42 @@ const Register = () => {
 
             <input
               className={`${
-                passwordShake
-                  ? "inputShake"
-                  : ""
+                passwordShake ? "inputShake" : ""
               }`}
-              type={
-                showPassword
-                  ? "text"
-                  : "password"
-              }
+              type={showPassword ? "text" : "password"}
               name="repeatPassword"
               placeholder="Repeat password"
               onChange={handleChange}
               style={{
-                borderColor:
-                  fieldErrors.repeatPassword
-                    ? "red"
-                    : "",
+                borderColor: fieldErrors.repeatPassword
+                  ? "red"
+                  : "",
               }}
             />
 
-            <PasswordToggleButton
-              showPassword={showPassword}
-              setShowPassword={
-                setShowPassword
+            <button
+              type="button"
+              className="eyeIcon"
+              onClick={() =>
+                setShowPassword(!showPassword)
               }
-            />
+              aria-label={
+                showPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
+            >
+              {showPassword ? (
+                <FaEye />
+              ) : (
+                <FaEyeSlash />
+              )}
+            </button>
           </div>
 
           {fieldErrors.repeatPassword && (
             <div className="fieldError">
-              {
-                fieldErrors.repeatPassword
-              }
+              {fieldErrors.repeatPassword}
             </div>
           )}
 
@@ -602,15 +543,10 @@ const Register = () => {
               >
                 <input
                   type="checkbox"
-                  checked={
-                    requirements.length
-                  }
+                  checked={requirements.length}
                   readOnly
                 />
-
-                <span>
-                  At least 8 characters
-                </span>
+                <span>At least 8 characters</span>
               </label>
 
               <label
@@ -622,16 +558,10 @@ const Register = () => {
               >
                 <input
                   type="checkbox"
-                  checked={
-                    requirements.uppercase
-                  }
+                  checked={requirements.uppercase}
                   readOnly
                 />
-
-                <span>
-                  At least 1 uppercase
-                  letter
-                </span>
+                <span>At least 1 uppercase letter</span>
               </label>
 
               <label
@@ -643,15 +573,10 @@ const Register = () => {
               >
                 <input
                   type="checkbox"
-                  checked={
-                    requirements.number
-                  }
+                  checked={requirements.number}
                   readOnly
                 />
-
-                <span>
-                  At least 1 number
-                </span>
+                <span>At least 1 number</span>
               </label>
 
               <label
@@ -663,16 +588,10 @@ const Register = () => {
               >
                 <input
                   type="checkbox"
-                  checked={
-                    requirements.specialChar
-                  }
+                  checked={requirements.specialChar}
                   readOnly
                 />
-
-                <span>
-                  At least 1 special
-                  character
-                </span>
+                <span>At least 1 special character</span>
               </label>
             </div>
           </div>
@@ -683,8 +602,7 @@ const Register = () => {
               checked={flowState.isHost}
               onChange={handleHostChange}
             />
-
-            Become a Host
+            <span>Become a Host</span>
           </label>
 
           {errorMessage && (
