@@ -89,10 +89,10 @@ export const recordWebsiteHostAnalyticsEventWithRetry = async (
 ) => {
   let lastError = null;
 
-  for (let index = 0; index < retryDelaysMs.length; index += 1) {
+  for (const retryDelayMs of retryDelaysMs) {
     try {
-      if (retryDelaysMs[index] > 0) {
-        await waitForDelay(retryDelaysMs[index]);
+      if (retryDelayMs > 0) {
+        await waitForDelay(retryDelayMs);
       }
 
       await recordWebsiteHostAnalyticsEvent(eventInput);
