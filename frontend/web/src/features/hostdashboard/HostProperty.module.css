@@ -2262,6 +2262,22 @@
   box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.1);
 }
 
+.checkinSelectError {
+  border-color: #c62828;
+}
+
+.checkinSelectError:focus {
+  border-color: #c62828;
+  box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.12);
+}
+
+.checkinFieldError {
+  margin: 0;
+  color: #c62828;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .checkinToggleRow {
   display: inline-flex;
   align-items: center;

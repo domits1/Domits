@@ -43,6 +43,8 @@ import {
   buildPricingSnapshot,
   createPendingPhotoFromFile,
   extractFetchedPropertyData,
+  getCheckInOutTimeValidationError,
+  getLateCheckInOutTimeValidationErrors,
   normalizeAmenityIds,
   normalizeCapacityValue,
   resolveDeletePhotoErrorMessage,
@@ -204,6 +206,16 @@ export default function HostProperty() {
     () => buildPolicyEditorSnapshot(policyRules, checkInDetails, policyAvailabilitySettings),
     [policyRules, checkInDetails, policyAvailabilitySettings]
   );
+  const checkInOutTimeError = useMemo(
+    () => getCheckInOutTimeValidationError(checkInDetails),
+    [checkInDetails]
+  );
+  const lateCheckInOutTimeErrors = useMemo(
+    () => getLateCheckInOutTimeValidationErrors(checkInDetails),
+    [checkInDetails]
+  );
+  const policyTimeValidationError =
+    checkInOutTimeError || lateCheckInOutTimeErrors.checkIn || lateCheckInOutTimeErrors.checkOut;
   const pricingSnapshot = useMemo(
     () => buildPricingSnapshot(pricingForm),
     [pricingForm]
@@ -504,6 +516,11 @@ export default function HostProperty() {
 
   const saveOverview = async () => {
     if (saving || preparingPhotos) {
+      return;
+    }
+    if (selectedTab === "Policies" && policyTimeValidationError) {
+      setError(policyTimeValidationError);
+      toast.error(policyTimeValidationError);
       return;
     }
     setSaving(true);
@@ -861,7 +878,9 @@ export default function HostProperty() {
     }
   };
 
-  const canSaveChanges = resolveCanSaveChanges(selectedTab, pendingPhotos.length, hasPhotoOrderChanges);
+  const canSaveChanges =
+    resolveCanSaveChanges(selectedTab, pendingPhotos.length, hasPhotoOrderChanges) &&
+    !(selectedTab === "Policies" && policyTimeValidationError);
   const handleBackToListings = () => requestNavigation(navigate.bind(null, "/hostdashboard/listings"));
 
   return (
