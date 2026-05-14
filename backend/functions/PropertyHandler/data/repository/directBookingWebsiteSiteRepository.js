@@ -110,7 +110,7 @@ const mapSiteRow = (row) => {
   };
 };
 
-export class StandaloneSiteRepository {
+export class DirectBookingWebsiteSiteRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
   }

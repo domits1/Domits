@@ -245,7 +245,7 @@ function WebsiteKpiDashboardPage() {
       }
     } catch (error) {
       const nextErrorMessage =
-        error?.message || "We could not load the standalone website KPI overview.";
+        error?.message || "We could not load the direct booking website KPI overview.";
       const isInitialLoadError = hasLoadedWebsiteKpisRef.current === false;
 
       if (isInitialLoadError) {
@@ -448,7 +448,7 @@ function WebsiteKpiDashboardPage() {
     <article className={styles.deletionReasonPanel}>
       <div className={styles.deletionReasonHeader}>
         <h3>Website deletion reasons</h3>
-        <p>Counts are aggregated from the reasons selected in the standalone website delete flow.</p>
+        <p>Counts are aggregated from the reasons selected in the direct booking website delete flow.</p>
       </div>
 
       {renderDeletionReasonContent()}
@@ -491,10 +491,10 @@ function WebsiteKpiDashboardPage() {
       <div className="page-Host-content">
         <section className={`${styles.websitePage} ${styles.websitePageWide}`.trim()}>
           <div className={styles.heroCard}>
-            <p className={styles.eyebrow}>Standalone website analytics</p>
+            <p className={styles.eyebrow}>Direct Booking Website analytics</p>
             <h1 className={styles.heroTitle}>Direct Booking Website KPI dashboard</h1>
             <p className={styles.heroDescription}>
-              This dashboard shows aggregated standalone website activity across Domits. It is intended
+              This dashboard shows aggregated direct booking website activity across Domits. It is intended
               for internal analysis of draft usage, preview behaviour, publishing behaviour, and deletion
               patterns.
             </p>
@@ -510,7 +510,7 @@ function WebsiteKpiDashboardPage() {
               </div>
               <p>
                 Metrics on this page are global. They are not filtered to one host or one property, so
-                the overview reflects overall standalone website usage across the platform.
+                the overview reflects overall direct booking website usage across the platform.
               </p>
             </div>
 
