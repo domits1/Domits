@@ -74,6 +74,7 @@ export const upsertWebsiteDraft = async ({
   themeOverrides = {},
   publishedContentOverrides = undefined,
   publishedThemeOverrides = undefined,
+  buildCompletion = undefined,
 }) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
@@ -100,6 +101,7 @@ export const upsertWebsiteDraft = async ({
       themeOverrides,
       publishedContentOverrides,
       publishedThemeOverrides,
+      buildCompletion,
     }),
   });
 

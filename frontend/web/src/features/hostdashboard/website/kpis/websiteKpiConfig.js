@@ -215,7 +215,7 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "build-success-rate",
     "Build success rate",
     "buildSuccessRate",
-    "Successful website builds divided by all recorded build starts",
+    "Successful website builds divided by all recorded build starts. Abandonment is tracked separately.",
     "percentage",
     (websiteKpis) => formatSampleLabel(websiteKpis.buildSuccessRateSampleCount)
   ),
@@ -223,7 +223,7 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "build-failure-rate",
     "Build failure rate",
     "buildFailureRate",
-    "Build attempts that ended in a recorded failure",
+    "Recorded build failures divided by all recorded build starts. Abandonment is tracked separately.",
     "percentage",
     (websiteKpis) => formatSampleLabel(websiteKpis.buildFailureRateSampleCount)
   ),
@@ -232,7 +232,7 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "Build abandonment rate",
     "buildAbandonmentRate",
     (websiteKpis) =>
-      `${websiteKpis.buildAbandonedCount} attempts passed the 10 minute threshold without success or failure`,
+      `${websiteKpis.buildAbandonedCount} builder flows were abandoned separately from explicit build success or failure`,
     "percentage",
     (websiteKpis) => formatSampleLabel(websiteKpis.buildAbandonmentRateSampleCount)
   ),
