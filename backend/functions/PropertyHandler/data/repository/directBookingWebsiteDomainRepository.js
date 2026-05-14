@@ -84,6 +84,8 @@ const normalizeJsonObject = (value) => {
   return "{}";
 };
 
+const normalizeTimestamp = (value) => (value == null ? null : Number(value));
+
 const mapSiteDomainRow = (row) => {
   if (!row) {
     return null;
@@ -97,14 +99,13 @@ const mapSiteDomainRow = (row) => {
     status: String(row.status),
     isPrimary: Boolean(row.is_primary),
     verificationDetails: safeParseJson(row.verification_details_json, {}),
-    lastCheckedAt:
-      row.last_checked_at === null || row.last_checked_at === undefined ? null : Number(row.last_checked_at),
+    lastCheckedAt: normalizeTimestamp(row.last_checked_at),
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
 };
 
-export class StandaloneSiteDomainRepository {
+export class DirectBookingWebsiteDomainRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
   }
@@ -224,7 +225,7 @@ export class StandaloneSiteDomainRepository {
         normalizedStatus,
         Boolean(isPrimary),
         normalizeJsonObject(verificationDetails),
-        lastCheckedAt === null || lastCheckedAt === undefined ? null : Number(lastCheckedAt),
+        normalizeTimestamp(lastCheckedAt),
         now,
         now,
       ]
