@@ -5,10 +5,10 @@ import { SystemManagerRepository } from "../data/repository/systemManagerReposit
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { PropertyImageRepository } from "../data/repository/propertyImageRepository.js";
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
-import { StandaloneSiteDraftRepository } from "../data/repository/standaloneSiteDraftRepository.js";
-import { StandaloneSiteEventRepository } from "../data/repository/standaloneSiteEventRepository.js";
-import { StandaloneSiteRepository } from "../data/repository/standaloneSiteRepository.js";
-import { StandaloneSiteDomainRepository } from "../data/repository/standaloneSiteDomainRepository.js";
+import { DirectBookingWebsiteDraftRepository } from "../data/repository/directBookingWebsiteDraftRepository.js";
+import { DirectBookingWebsiteEventRepository } from "../data/repository/directBookingWebsiteEventRepository.js";
+import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
+import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
 import { randomUUID } from "node:crypto";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
@@ -34,10 +34,10 @@ const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
 
 const WEBSITE_ANALYTICS_SURFACES = new Set(["preview", "live"]);
 const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
-const STANDALONE_SITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
-const STANDALONE_SITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
-const STANDALONE_SITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
-const DEFAULT_STANDALONE_SITE_LIVE_DOMAIN_SUFFIX = "standalone.domits.com";
+const DIRECT_BOOKING_WEBSITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
+const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
+const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
+const DEFAULT_DIRECT_BOOKING_WEBSITE_LIVE_DOMAIN_SUFFIX = "direct.domits.com";
 
 const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
 const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -58,12 +58,29 @@ const trimRepeatedCharacterEdges = (value, character) => {
 
     return value.slice(startIndex, endIndex);
 };
+const getConfiguredEnvValue = (...envNames) => {
+    for (const envName of envNames) {
+        const configuredValue = cleanWebsiteText(process.env[envName]);
+        if (configuredValue) {
+            return configuredValue;
+        }
+    }
+
+    return "";
+};
 const getLiveSiteDomainSuffix = () => {
-    const configuredSuffix = cleanWebsiteText(process.env.STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX).toLowerCase();
-    return configuredSuffix || DEFAULT_STANDALONE_SITE_LIVE_DOMAIN_SUFFIX;
+    const configuredSuffix = getConfiguredEnvValue(
+        "DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX",
+        "STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX"
+    ).toLowerCase();
+    return configuredSuffix || DEFAULT_DIRECT_BOOKING_WEBSITE_LIVE_DOMAIN_SUFFIX;
 };
 const getLiveSiteRoutingStatus = () =>
-    String(process.env.STANDALONE_SITE_FALLBACK_ROUTING_ACTIVE || "").trim().toLowerCase() === "true"
+    String(
+        process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE ??
+        process.env.STANDALONE_SITE_FALLBACK_ROUTING_ACTIVE ??
+        ""
+    ).trim().toLowerCase() === "true"
         ? "ACTIVE"
         : "PENDING";
 const slugifyWebsiteDomainLabel = (value) => {
@@ -93,7 +110,7 @@ const slugifyWebsiteDomainLabel = (value) => {
 
     return sanitizedValue || "site";
 };
-const normalizeStandaloneSiteIdSuffix = (value) => {
+const normalizeDirectBookingWebsiteIdSuffix = (value) => {
     let sanitizedValue = "";
 
     for (const currentCharacter of cleanWebsiteText(value).toLowerCase()) {
@@ -106,13 +123,13 @@ const normalizeStandaloneSiteIdSuffix = (value) => {
 };
 const buildLiveSiteDomainLabel = (siteName, siteId) => {
     const slugBase = trimRepeatedCharacterEdges(slugifyWebsiteDomainLabel(siteName).slice(0, 40), "-") || "site";
-    const idSuffix = normalizeStandaloneSiteIdSuffix(siteId).slice(0, 8) || "domits";
+    const idSuffix = normalizeDirectBookingWebsiteIdSuffix(siteId).slice(0, 8) || "domits";
     const combinedLabel = `${slugBase}-${idSuffix}`;
     return trimRepeatedCharacterEdges(combinedLabel.slice(0, 63), "-");
 };
 const buildLiveSiteDomain = (siteName, siteId) =>
     `${buildLiveSiteDomainLabel(siteName, siteId)}.${getLiveSiteDomainSuffix()}`;
-const normalizeStandaloneSiteDomainInput = (value) => {
+const normalizeDirectBookingWebsiteDomainInput = (value) => {
     const normalizedValue = cleanWebsiteText(value).toLowerCase();
     if (!normalizedValue) {
         return "";
@@ -139,10 +156,10 @@ export class PropertyController {
         this.propertyService = new PropertyService(dynamoDbClient, systemManagerRepository);
         this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
         this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
-        this.standaloneSiteDraftRepository = new StandaloneSiteDraftRepository(systemManagerRepository);
-        this.standaloneSiteEventRepository = new StandaloneSiteEventRepository(systemManagerRepository);
-        this.standaloneSiteRepository = new StandaloneSiteRepository(systemManagerRepository);
-        this.standaloneSiteDomainRepository = new StandaloneSiteDomainRepository(systemManagerRepository);
+        this.directBookingWebsiteDraftRepository = new DirectBookingWebsiteDraftRepository(systemManagerRepository);
+        this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
+        this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
+        this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
     }
 
     // -------------------------
@@ -1362,25 +1379,25 @@ export class PropertyController {
         throw new TypeError("Unsupported website eventType.");
     }
 
-    normalizeStandaloneSiteStatus(status) {
+    normalizeDirectBookingWebsiteStatus(status) {
         const normalizedStatus = String(status || "").trim().toUpperCase();
-        if (!STANDALONE_SITE_PUBLIC_STATUSES.has(normalizedStatus)) {
+        if (!DIRECT_BOOKING_WEBSITE_PUBLIC_STATUSES.has(normalizedStatus)) {
             throw new TypeError("website site status must be DRAFT, PREVIEW, PUBLISHED, or SUSPENDED.");
         }
 
         return normalizedStatus;
     }
 
-    normalizeStandaloneSiteDomainStatus(status) {
+    normalizeDirectBookingWebsiteDomainStatus(status) {
         const normalizedStatus = String(status || "").trim().toUpperCase();
-        if (!STANDALONE_SITE_DOMAIN_STATUSES.has(normalizedStatus)) {
+        if (!DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES.has(normalizedStatus)) {
             throw new TypeError("website domain status must be PENDING, VERIFIED, ACTIVE, FAILED, or DISABLED.");
         }
 
         return normalizedStatus;
     }
 
-    buildStandaloneSiteName({ draft, propertyDetails }) {
+    buildDirectBookingWebsiteName({ draft, propertyDetails }) {
         const draftSiteTitle = cleanWebsiteText(draft?.publishedContentOverrides?.siteTitle);
         if (draftSiteTitle) {
             return draftSiteTitle;
@@ -1394,13 +1411,13 @@ export class PropertyController {
         return `Website ${String(draft?.propertyId || "").slice(0, 8)}`;
     }
 
-    ensureStandaloneSitePublishEligibility(propertyDetails) {
+    ensureDirectBookingWebsitePublishEligibility(propertyDetails) {
         if (!propertyDetails?.property || this.isPlainObject(propertyDetails.property) === false) {
             throw new TypeError("Listing data could not be loaded for this live site.");
         }
     }
 
-    buildStandaloneSiteSummary(site, domains = []) {
+    buildDirectBookingWebsiteSummary(site, domains = []) {
         if (!site) {
             return null;
         }
@@ -1417,8 +1434,8 @@ export class PropertyController {
         };
     }
 
-    buildPublicStandaloneSiteResolution(site, domain) {
-        const siteSummary = this.buildStandaloneSiteSummary(site, domain ? [domain] : []);
+    buildPublicDirectBookingWebsiteResolution(site, domain) {
+        const siteSummary = this.buildDirectBookingWebsiteSummary(site, domain ? [domain] : []);
         if (!siteSummary?.site || !siteSummary?.primaryDomain) {
             return null;
         }
@@ -1437,8 +1454,8 @@ export class PropertyController {
         };
     }
 
-    buildPublicStandaloneSiteRenderPayload(site, domain) {
-        const resolution = this.buildPublicStandaloneSiteResolution(site, domain);
+    buildPublicDirectBookingWebsiteRenderPayload(site, domain) {
+        const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
         }
@@ -1468,21 +1485,21 @@ export class PropertyController {
             event.queryStringParameters?.domain ||
             event.queryStringParameters?.host ||
             getRequestHostHeaderValue(event.headers || {});
-        return normalizeStandaloneSiteDomainInput(domainQueryValue);
+        return normalizeDirectBookingWebsiteDomainInput(domainQueryValue);
     }
 
-    async resolvePublicStandaloneSiteByDomain(domainInput) {
-        const normalizedDomain = normalizeStandaloneSiteDomainInput(domainInput);
+    async resolvePublicDirectBookingWebsiteByDomain(domainInput) {
+        const normalizedDomain = normalizeDirectBookingWebsiteDomainInput(domainInput);
         if (!normalizedDomain) {
             throw new TypeError("Missing website domain.");
         }
 
-        const domain = await this.standaloneSiteDomainRepository.getDomainByName(normalizedDomain);
+        const domain = await this.directBookingWebsiteDomainRepository.getDomainByName(normalizedDomain);
         if (!domain) {
             return null;
         }
 
-        const site = await this.standaloneSiteRepository.getSiteById(domain.siteId);
+        const site = await this.directBookingWebsiteSiteRepository.getSiteById(domain.siteId);
         if (!site) {
             return null;
         }
@@ -1490,18 +1507,18 @@ export class PropertyController {
         return { site, domain };
     }
 
-    async getPublicRenderableStandaloneSiteById(siteId) {
+    async getPublicRenderableDirectBookingWebsiteById(siteId) {
         const normalizedSiteId = cleanWebsiteText(siteId);
         if (!normalizedSiteId) {
             throw new TypeError("Missing website siteId.");
         }
 
-        const site = await this.standaloneSiteRepository.getSiteById(normalizedSiteId);
+        const site = await this.directBookingWebsiteSiteRepository.getSiteById(normalizedSiteId);
         if (!site) {
             return null;
         }
 
-        const domains = await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+        const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
         const primaryDomain =
             domains.find((domainEntry) => domainEntry?.isPrimary) ||
             domains.find((domainEntry) => Boolean(domainEntry?.domain)) ||
@@ -1513,34 +1530,34 @@ export class PropertyController {
         };
     }
 
-    isPublicStandaloneSiteReachable(site, domain) {
+    isPublicDirectBookingWebsiteReachable(site, domain) {
         return Boolean(site) && site.status === "PUBLISHED" && domain?.status === "ACTIVE";
     }
 
-    async getStandaloneSiteSummaryByPropertyId(propertyId, hostId) {
-        const site = await this.standaloneSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+    async getDirectBookingWebsiteSummaryByPropertyId(propertyId, hostId) {
+        const site = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
         if (!site) {
             return null;
         }
 
-        const domains = await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
-        return this.buildStandaloneSiteSummary(site, domains);
+        const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        return this.buildDirectBookingWebsiteSummary(site, domains);
     }
 
-    async publishStandaloneSiteForDraft({ draft, hostId, propertyId }) {
+    async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId }) {
         const publishStartedAt = Date.now();
         const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
             propertyId,
             { includeCalendarAvailability: true }
         );
-        this.ensureStandaloneSitePublishEligibility(propertyDetails);
+        this.ensureDirectBookingWebsitePublishEligibility(propertyDetails);
 
-        const siteName = this.buildStandaloneSiteName({
+        const siteName = this.buildDirectBookingWebsiteName({
             draft,
             propertyDetails,
         });
 
-        const site = await this.standaloneSiteRepository.upsertSite({
+        const site = await this.directBookingWebsiteSiteRepository.upsertSite({
             propertyId,
             hostId,
             siteName,
@@ -1554,12 +1571,12 @@ export class PropertyController {
             suspendedAt: null,
         });
 
-        const liveDomainStatus = this.normalizeStandaloneSiteDomainStatus(getLiveSiteRoutingStatus());
-        const existingLiveDomain = await this.standaloneSiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
-        const liveDomain = await this.standaloneSiteDomainRepository.ensureDomain({
+        const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(getLiveSiteRoutingStatus());
+        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const liveDomain = await this.directBookingWebsiteDomainRepository.ensureDomain({
             siteId: site.id,
             domain: existingLiveDomain?.domain || buildLiveSiteDomain(site.siteName, site.id),
-            domainType: STANDALONE_SITE_DOMAIN_TYPE_FALLBACK,
+            domainType: DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK,
             status: liveDomainStatus,
             isPrimary: true,
             verificationDetails: {
@@ -1585,12 +1602,12 @@ export class PropertyController {
             },
         });
 
-        return this.buildStandaloneSiteSummary(site, [liveDomain]);
+        return this.buildDirectBookingWebsiteSummary(site, [liveDomain]);
     }
 
-    async unpublishStandaloneSiteSummary({ site, draft, hostId, propertyId }) {
-        const nextSite = await this.standaloneSiteRepository.updateSiteStatus(site.id, "PREVIEW");
-        const liveDomain = await this.standaloneSiteDomainRepository.updatePrimaryLiveDomainStatus(
+    async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
+        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatus(site.id, "PREVIEW");
+        const liveDomain = await this.directBookingWebsiteDomainRepository.updatePrimaryLiveDomainStatus(
             site.id,
             "DISABLED",
             {
@@ -1601,7 +1618,7 @@ export class PropertyController {
         );
         const allDomains = liveDomain
             ? [liveDomain]
-            : await this.standaloneSiteDomainRepository.listDomainsBySiteId(site.id);
+            : await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
 
         await this.recordStandaloneWebsiteEventSafely({
             draftId: draft?.id || null,
@@ -1615,7 +1632,7 @@ export class PropertyController {
             },
         });
 
-        return this.buildStandaloneSiteSummary(nextSite, allDomains);
+        return this.buildDirectBookingWebsiteSummary(nextSite, allDomains);
     }
 
     isWebsiteDraftClientError(error) {
@@ -1655,16 +1672,16 @@ export class PropertyController {
 
     async recordStandaloneWebsiteEventSafely(eventInput) {
         try {
-            await this.standaloneSiteEventRepository.recordEvent(eventInput);
+            await this.directBookingWebsiteEventRepository.recordEvent(eventInput);
         } catch (error) {
-            console.error("Failed to record standalone website event.", error);
+            console.error("Failed to record direct booking website event.", error);
         }
     }
 
     async recordPublicWebsiteAnalyticsEvent({ draftId, siteId, domain, eventType, payload }) {
         const normalizedDraftId = cleanWebsiteText(draftId);
         if (normalizedDraftId) {
-            const draft = await this.standaloneSiteDraftRepository.getDraftById(normalizedDraftId);
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftById(normalizedDraftId);
             if (!draft || draft.status === "SUSPENDED") {
                 return {
                     statusCode: 404,
@@ -1673,7 +1690,7 @@ export class PropertyController {
                 };
             }
 
-            await this.standaloneSiteEventRepository.recordEvent({
+            await this.directBookingWebsiteEventRepository.recordEvent({
                 draftId: draft.id,
                 propertyId: draft.propertyId,
                 hostId: draft.hostId,
@@ -1686,7 +1703,7 @@ export class PropertyController {
 
         const normalizedSiteId = cleanWebsiteText(siteId);
         if (normalizedSiteId) {
-            const site = await this.standaloneSiteRepository.getSiteById(normalizedSiteId);
+            const site = await this.directBookingWebsiteSiteRepository.getSiteById(normalizedSiteId);
             if (!site || site.status === "SUSPENDED") {
                 return {
                     statusCode: 404,
@@ -1695,7 +1712,7 @@ export class PropertyController {
                 };
             }
 
-            await this.standaloneSiteEventRepository.recordEvent({
+            await this.directBookingWebsiteEventRepository.recordEvent({
                 draftId: null,
                 propertyId: site.propertyId,
                 hostId: site.hostId,
@@ -1703,7 +1720,7 @@ export class PropertyController {
                 payload: {
                     ...payload,
                     siteId: site.id,
-                    domain: normalizeStandaloneSiteDomainInput(domain),
+                    domain: normalizeDirectBookingWebsiteDomainInput(domain),
                 },
             });
 
@@ -1722,9 +1739,9 @@ export class PropertyController {
         const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
         await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
 
-        const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+        const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
 
-        await this.standaloneSiteEventRepository.recordEvent({
+        await this.directBookingWebsiteEventRepository.recordEvent({
             draftId: existingDraft?.id || draftId || null,
             propertyId,
             hostId,
@@ -2061,7 +2078,7 @@ export class PropertyController {
             const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
             const draftId = String(eventBody.draftId || eventBody.draft || "").trim();
             const siteId = String(eventBody.siteId || eventBody.site || "").trim();
-            const domain = normalizeStandaloneSiteDomainInput(eventBody.domain || eventBody.host || "");
+            const domain = normalizeDirectBookingWebsiteDomainInput(eventBody.domain || eventBody.host || "");
             const payload = this.parseWebsiteAnalyticsPayload(eventBody.payload);
 
             if (!eventType) {
@@ -2134,9 +2151,9 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
 
-            const draft = await this.standaloneSiteDraftRepository.upsertDraft({
+            const draft = await this.directBookingWebsiteDraftRepository.upsertDraft({
                 hostId,
                 propertyId,
                 templateKey,
@@ -2195,7 +2212,7 @@ export class PropertyController {
         try {
             const accessToken = event.headers.Authorization || event.headers.authorization;
             const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
-            const drafts = await this.standaloneSiteDraftRepository.listDraftsByHostId(hostId);
+            const drafts = await this.directBookingWebsiteDraftRepository.listDraftsByHostId(hostId);
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
@@ -2220,7 +2237,7 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            const draft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
             if (!draft) {
                 return {
                     statusCode: 404,
@@ -2247,7 +2264,7 @@ export class PropertyController {
         try {
             const accessToken = event.headers.Authorization || event.headers.authorization;
             await this.authManager.authorizeGroupRequest(accessToken, "Host");
-            const summary = await this.standaloneSiteEventRepository.getGlobalKpiSummary();
+            const summary = await this.directBookingWebsiteEventRepository.getGlobalKpiSummary();
 
             return {
                 statusCode: 200,
@@ -2274,7 +2291,7 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            const siteSummary = await this.getStandaloneSiteSummaryByPropertyId(propertyId, hostId);
+            const siteSummary = await this.getDirectBookingWebsiteSummaryByPropertyId(propertyId, hostId);
             if (!siteSummary) {
                 return {
                     statusCode: 200,
@@ -2312,7 +2329,7 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            const draft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
             if (!draft) {
                 return {
                     statusCode: 404,
@@ -2321,7 +2338,7 @@ export class PropertyController {
                 };
             }
 
-            const siteSummary = await this.publishStandaloneSiteForDraft({
+            const siteSummary = await this.publishDirectBookingWebsiteForDraft({
                 draft,
                 hostId,
                 propertyId,
@@ -2356,7 +2373,7 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            const site = await this.standaloneSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+            const site = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
             if (!site) {
                 return {
                     statusCode: 404,
@@ -2365,8 +2382,8 @@ export class PropertyController {
                 };
             }
 
-            const draft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
-            const siteSummary = await this.unpublishStandaloneSiteSummary({
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const siteSummary = await this.unpublishDirectBookingWebsiteSummary({
                 site,
                 draft,
                 hostId,
@@ -2397,8 +2414,8 @@ export class PropertyController {
                 return this.badRequest("Missing website domain.");
             }
 
-            const resolutionResult = await this.resolvePublicStandaloneSiteByDomain(requestedDomain);
-            if (!resolutionResult || !this.isPublicStandaloneSiteReachable(resolutionResult.site, resolutionResult.domain)) {
+            const resolutionResult = await this.resolvePublicDirectBookingWebsiteByDomain(requestedDomain);
+            if (!resolutionResult || !this.isPublicDirectBookingWebsiteReachable(resolutionResult.site, resolutionResult.domain)) {
                 return {
                     statusCode: 404,
                     headers: draftResponseHeaders,
@@ -2409,7 +2426,7 @@ export class PropertyController {
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
-                body: JSON.stringify(this.buildPublicStandaloneSiteResolution(
+                body: JSON.stringify(this.buildPublicDirectBookingWebsiteResolution(
                     resolutionResult.site,
                     resolutionResult.domain
                 )),
@@ -2437,9 +2454,9 @@ export class PropertyController {
 
             let resolutionResult = null;
             if (requestedDomain) {
-                resolutionResult = await this.resolvePublicStandaloneSiteByDomain(requestedDomain);
+                resolutionResult = await this.resolvePublicDirectBookingWebsiteByDomain(requestedDomain);
             } else if (siteId) {
-                resolutionResult = await this.getPublicRenderableStandaloneSiteById(siteId);
+                resolutionResult = await this.getPublicRenderableDirectBookingWebsiteById(siteId);
             } else {
                 return this.badRequest("Missing website siteId or domain.");
             }
@@ -2448,7 +2465,7 @@ export class PropertyController {
                 ? Boolean(resolutionResult?.site) &&
                     resolutionResult.site.status === "PUBLISHED" &&
                     Boolean(resolutionResult?.domain?.domain)
-                : this.isPublicStandaloneSiteReachable(resolutionResult?.site, resolutionResult?.domain);
+                : this.isPublicDirectBookingWebsiteReachable(resolutionResult?.site, resolutionResult?.domain);
 
             if (!resolutionResult || !canRenderPublishedSite) {
                 return {
@@ -2482,7 +2499,7 @@ export class PropertyController {
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
-                body: JSON.stringify(this.buildPublicStandaloneSiteRenderPayload(
+                body: JSON.stringify(this.buildPublicDirectBookingWebsiteRenderPayload(
                     resolutionResult.site,
                     resolutionResult.domain
                 )),
@@ -2511,7 +2528,7 @@ export class PropertyController {
                 return this.badRequest("Missing draftId.");
             }
 
-            const draft = await this.standaloneSiteDraftRepository.getDraftById(draftId);
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftById(draftId);
             if (!draft || draft.status === "SUSPENDED") {
                 return {
                     statusCode: 404,
@@ -2568,8 +2585,8 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            const existingDraft = await this.standaloneSiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
-            await this.standaloneSiteDraftRepository.deleteDraftByPropertyIdAndHostId(propertyId, hostId);
+            const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            await this.directBookingWebsiteDraftRepository.deleteDraftByPropertyIdAndHostId(propertyId, hostId);
 
             await this.recordStandaloneWebsiteEventSafely({
                 draftId: existingDraft?.id || null,

@@ -1,4 +1,6 @@
-# ADR - Standalone Property Site V1
+# ADR - Direct Booking Website V1
+
+> Naming note: this feature is now named **Direct Booking Website**. Any remaining `standalone_*` mentions below should be read as legacy storage or historical architecture terminology, not the current feature name.
 
 ## Status
 Proposed
@@ -10,16 +12,16 @@ Proposed
 2026-05-11
 
 ## Context
-Domits wants to let a host turn one PMS listing into one standalone property website without creating a separate frontend project or duplicating PMS business logic. The standalone website must keep descriptive page content fast to render and stable for design customization, while still remaining correctly aligned with PMS-controlled pricing, availability, and bookings.
+Domits wants to let a host turn one PMS listing into one standalone property website without creating a separate frontend project or duplicating PMS business logic. The direct booking website must keep descriptive page content fast to render and stable for design customization, while still remaining correctly aligned with PMS-controlled pricing, availability, and bookings.
 
 The current web booking flow still performs important availability and pricing work in the browser. That is not acceptable for a serious public standalone product. The standalone layer needs its own explicit data model, public API contract, rollout plan, and security model.
 
 The broader research direction covers the full direct-booking journey, including booking funnel and confirmation. However, the implementation-ready v1 must stay intentionally small so Domits can establish a clean base that can be extended in v2 without redesigning ownership boundaries, routing, or security fundamentals.
 
 ## Decision
-Domits will design v1 of standalone property sites with these decisions locked:
+Domits will design v1 of direct booking websites with these decisions locked:
 
-1. One standalone site maps to one PMS property.
+1. One direct booking website maps to one PMS property.
 2. The standalone frontend is a single multi-tenant runtime and single deployment, not one deployment per site or per template.
 3. PMS remains the upstream source for descriptive property-content import and the live source of truth for pricing, availability, and bookings.
 4. The standalone layer owns site-specific configuration and published render data:
@@ -37,7 +39,7 @@ Domits will design v1 of standalone property sites with these decisions locked:
 5. The currently implemented foundation includes:
    - property detail rendering from published standalone snapshots
    - template selection and draft preview flow
-   - standalone site publish and unpublish flow
+   - direct booking website publish and unpublish flow
    - fallback-domain generation plus separate domain state
    - published live-site render APIs and runtime
    - analytics and observability baseline
@@ -77,10 +79,10 @@ Rejected because it creates deployment sprawl, version drift, inconsistent secur
 Rejected because it is vulnerable to stale state, timezone bugs, host header mixups, and quote mismatch incidents.
 
 ### Coupling site status to PMS property status
-Rejected because a host must be able to keep a property live in PMS while pausing or previewing a standalone site independently.
+Rejected because a host must be able to keep a property live in PMS while pausing or previewing a direct booking website independently.
 
 ### Live PMS descriptive reads on every public render in v1
-Rejected because they add avoidable latency, couple public render availability to PMS read health, and block a clean published-content model for standalone site presentation.
+Rejected because they add avoidable latency, couple public render availability to PMS read health, and block a clean published-content model for direct booking website presentation.
 
 ### Shipping custom domains in the first implementation
 Rejected because fallback subdomains are sufficient for v1 rollout and custom domains add operational complexity that is better designed now and implemented after the foundation is stable.
@@ -91,4 +93,4 @@ Rejected because checkout and booking are money-sensitive flows and must be reva
 ## Follow-up
 Implementation details, SQL, public API examples, Mermaid diagrams, risk tables, and KPI design are defined in:
 
-- [Standalone Property Site Design Pack](./standalone_property_site_design_pack.md)
+- [Direct Booking Website Design Pack](./direct_booking_website_design_pack.md)
