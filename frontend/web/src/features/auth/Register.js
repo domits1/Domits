@@ -88,6 +88,55 @@ const validateForm = (
   ),
 });
 
+const getStrengthConfig = (strength) => {
+  const configs = {
+    0: {
+      color: "red",
+      text: "Bad",
+      isStrong: false,
+    },
+    1: {
+      color: "red",
+      text: "Bad",
+      isStrong: false,
+    },
+    2: {
+      color: "orange",
+      text: "Weak",
+      isStrong: false,
+    },
+    3: {
+      color: "#088f08",
+      text: "Strong",
+      isStrong: true,
+    },
+    4: {
+      color: "green",
+      text: "Very Strong",
+      isStrong: true,
+    },
+  };
+
+  return configs[strength];
+};
+
+const setStrengthUI = (
+  strengthBarRef,
+  strengthTextRef,
+  color,
+  text
+) => {
+  if (strengthBarRef.current) {
+    strengthBarRef.current.style.backgroundColor =
+      color;
+  }
+
+  if (strengthTextRef.current) {
+    strengthTextRef.current.textContent = text;
+    strengthTextRef.current.style.color = color;
+  }
+};
+
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -161,50 +210,7 @@ const Register = () => {
     }));
   };
 
-  const setStrengthUI = (color, text) => {
-    if (strengthBarRef.current) {
-      strengthBarRef.current.style.backgroundColor = color;
-    }
-
-    if (strengthTextRef.current) {
-      strengthTextRef.current.textContent = text;
-      strengthTextRef.current.style.color = color;
-    }
-  };
-
-  const getStrengthConfig = (strength) => {
-  if (strength < 2) {
-    return {
-      color: "red",
-      text: "Bad",
-      isStrong: false,
-    };
-  }
-
-  if (strength === 2) {
-    return {
-      color: "orange",
-      text: "Weak",
-      isStrong: false,
-    };
-  }
-
-  if (strength === 3) {
-    return {
-      color: "#088f08",
-      text: "Strong",
-      isStrong: true,
-    };
-  }
-
-  return {
-    color: "green",
-    text: "Very Strong",
-    isStrong: true,
-  };
-};
-
-  const checkPasswordStrength = (password) => {
+const checkPasswordStrength = (password) => {
   const newRequirements = {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
@@ -215,26 +221,27 @@ const Register = () => {
   setRequirements(newRequirements);
 
   const strength =
-    Object.values(newRequirements).filter(Boolean).length;
+    Object.values(newRequirements).filter(Boolean)
+      .length;
 
-  const strengthConfig =
-    getStrengthConfig(strength);
+  const config = getStrengthConfig(strength);
 
   setStrengthUI(
-    strengthConfig.color,
-    strengthConfig.text
+    strengthBarRef,
+    strengthTextRef,
+    config.color,
+    config.text
   );
 
-  setIsPasswordStrong(
-    strengthConfig.isStrong
-  );
+  setIsPasswordStrong(config.isStrong);
 
   if (strengthBarRef.current) {
     strengthBarRef.current.style.width = `${(strength / 4) * 100}%`;
   }
 
   if (strengthContainerRef.current) {
-    strengthContainerRef.current.style.display = "block";
+    strengthContainerRef.current.style.display =
+      "block";
   }
 };
 
