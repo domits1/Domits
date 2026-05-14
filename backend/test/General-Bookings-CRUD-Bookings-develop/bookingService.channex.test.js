@@ -311,4 +311,50 @@ describe("BookingService Channex booking availability hooks", () => {
       "Bearer host-token"
     );
   });
+
+  test("modify-booking-dates returns a JSON-safe response after successful side effects", async () => {
+    const bookingBefore = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      arrivaldate: BigInt(Date.parse("2026-06-01T00:00:00.000Z")),
+      departuredate: BigInt(Date.parse("2026-06-03T00:00:00.000Z")),
+      status: "Paid",
+    };
+    const bookingAfter = {
+      ...bookingBefore,
+      arrivaldate: BigInt(Date.parse("2026-06-04T00:00:00.000Z")),
+      departuredate: BigInt(Date.parse("2026-06-06T00:00:00.000Z")),
+    };
+    const modifyBookingDates = jest.fn().mockResolvedValue({
+      booking: bookingAfter,
+      bookingBefore,
+      bookingAfter,
+      channexAvailabilitySync: buildEvidence({
+        trigger: "BOOKING_MODIFIED",
+        countOfRooms: BigInt(1),
+      }),
+    });
+    const controller = new ReservationController({
+      bookingService: {
+        modifyBookingDates,
+      },
+      paymentService: {},
+    });
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer host-token" },
+      body: JSON.stringify({
+        action: "modify-booking-dates",
+        bookingId: "booking-1",
+        arrivalDate: "2026-06-04",
+        departureDate: "2026-06-06",
+      }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(() => JSON.stringify(response.response)).not.toThrow();
+    expect(response.response.booking.arrivaldate).toBe(Date.parse("2026-06-04T00:00:00.000Z"));
+    expect(response.response.channexAvailabilitySync.countOfRooms).toBe(1);
+  });
 });

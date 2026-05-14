@@ -1,4 +1,7 @@
+import { getAccessToken } from "../../../services/getAccessToken";
+
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const BOOKINGS_API_URL = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings";
 
 const appendParam = (params, key, value) => {
   if (value === undefined || value === null || value === "") return;
@@ -66,6 +69,49 @@ const requestChannex = async (path, { method = "GET", query = {}, body } = {}) =
     const error = new Error(`${method} ${path} failed with status ${response.status}: ${message}`);
     error.status = response.status;
     error.endpoint = path;
+    error.method = method;
+    error.responseBody = data;
+    throw error;
+  }
+
+  return data;
+};
+
+const requestBooking = async ({ method = "PATCH", body } = {}) => {
+  const token = getAccessToken();
+  if (!token) {
+    const error = new Error("Sign in before modifying booking dates.");
+    error.endpoint = BOOKINGS_API_URL;
+    error.method = method;
+    throw error;
+  }
+
+  let response;
+  try {
+    response = await fetch(BOOKINGS_API_URL, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    const wrappedError = new Error(`${method} /bookings failed: ${error?.message || "Network request failed"}`);
+    wrappedError.endpoint = BOOKINGS_API_URL;
+    wrappedError.method = method;
+    throw wrappedError;
+  }
+  const data = await readJsonOrText(response);
+
+  if (!response.ok) {
+    const message =
+      (data && typeof data === "object" && (data.error || data.message)) ||
+      (typeof data === "string" ? data : "") ||
+      `Booking request failed with status ${response.status}`;
+    const error = new Error(`${method} /bookings failed with status ${response.status}: ${message}`);
+    error.status = response.status;
+    error.endpoint = BOOKINGS_API_URL;
     error.method = method;
     error.responseBody = data;
     throw error;
@@ -190,5 +236,16 @@ export const listChannexBookingRevisions = ({
       domitsPropertyId,
       limit,
       includeRawPayload: includeRawPayload === true ? "true" : undefined,
+    },
+  });
+
+export const modifyBookingDates = ({ bookingId, arrivalDate, departureDate }) =>
+  requestBooking({
+    method: "PATCH",
+    body: {
+      action: "modify-booking-dates",
+      bookingId,
+      arrivalDate,
+      departureDate,
     },
   });

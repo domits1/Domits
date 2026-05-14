@@ -7,6 +7,30 @@ import NotFoundException from "../util/exception/NotFoundException.js";
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
 const responseHeaderJSON = responsejson;
 
+const normalizeJsonNumber = (value) => {
+  const numeric = Number(value);
+  return Number.isSafeInteger(numeric) ? numeric : String(value);
+};
+
+const toJsonSafeResponse = (value) => {
+  const seen = new WeakSet();
+
+  return JSON.parse(
+    JSON.stringify(value, (_key, nestedValue) => {
+      if (typeof nestedValue === "bigint") {
+        return normalizeJsonNumber(nestedValue);
+      }
+
+      if (nestedValue && typeof nestedValue === "object") {
+        if (seen.has(nestedValue)) return undefined;
+        seen.add(nestedValue);
+      }
+
+      return nestedValue;
+    })
+  );
+};
+
 class ReservationController {
   constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
     this.bookingService = bookingService;
@@ -95,7 +119,7 @@ class ReservationController {
       this.requirePatchField(body, "departureDate"),
       authToken
     );
-    return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    return { statusCode: 200, headers: responseHeaderJSON, response: toJsonSafeResponse(result) };
   }
 
   async handlePatchAction(body, event, authToken) {

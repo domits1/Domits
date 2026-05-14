@@ -7,6 +7,7 @@ import {
   getChannexAriTargets,
   getChannexStatus,
   getLatestChannexSyncEvidence,
+  modifyBookingDates,
   receiveChannexBookingRevisions,
   syncChannexAri,
   syncChannexAvailability,
@@ -25,6 +26,11 @@ const SECTION_TABS = [
 ];
 const PAYLOAD_PREVIEW_PAGE_SIZE_DAYS = 30;
 const CHANNEX_CERTIFICATION_MAX_SYNC_DAYS = 500;
+const MODIFY_BOOKING_DEMO_DEFAULTS = {
+  bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
+  arrivalDate: "2026-06-04",
+  departureDate: "2026-06-06",
+};
 const CERTIFICATION_TEST_CASES = [
   { id: "2", title: "Single Date Update for Single Rate", payloadType: "Rates" },
   { id: "3", title: "Single Date Update for Multiple Rates", payloadType: "Rates" },
@@ -187,6 +193,27 @@ const validateSelectedDateRange = (startDate, endDate) => {
     message: "",
     totalDays,
   };
+};
+
+const normalizeModifyBookingForm = (form) => ({
+  bookingId: String(form?.bookingId || "").trim(),
+  arrivalDate: String(form?.arrivalDate || "").trim(),
+  departureDate: String(form?.departureDate || "").trim(),
+});
+
+const validateModifyBookingForm = (form) => {
+  const payload = normalizeModifyBookingForm(form);
+  if (!payload.bookingId || !payload.arrivalDate || !payload.departureDate) {
+    return "Enter booking ID, new arrival date, and new departure date.";
+  }
+
+  const arrivalMs = isoDateToUtcMs(payload.arrivalDate);
+  const departureMs = isoDateToUtcMs(payload.departureDate);
+  if (!Number.isFinite(arrivalMs) || !Number.isFinite(departureMs) || departureMs <= arrivalMs) {
+    return "Select a valid booking date range where departure is after arrival.";
+  }
+
+  return "";
 };
 
 const getPayloadPaginationSummary = (pagination = {}) => {
@@ -860,6 +887,8 @@ function ChannexDiagnosticsPanel({ userId }) {
   const [ariPreviewState, setAriPreviewState] = useState(createRequestState);
   const [payloadPreviewState, setPayloadPreviewState] = useState(createRequestState);
   const [actionStates, setActionStates] = useState({});
+  const [modifyBookingForm, setModifyBookingForm] = useState(MODIFY_BOOKING_DEMO_DEFAULTS);
+  const [modifyBookingState, setModifyBookingState] = useState(createRequestState);
 
   const hasProperty = Boolean(domitsPropertyId.trim());
   const hasDateRange = hasProperty && Boolean(dateFrom) && Boolean(dateTo);
@@ -1014,6 +1043,46 @@ function ChannexDiagnosticsPanel({ userId }) {
         errorDetails,
         data: null,
         success: "",
+      });
+    }
+  };
+
+  const updateModifyBookingForm = (field, value) => {
+    setModifyBookingForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
+
+  const handleModifyBookingDates = async (event) => {
+    event.preventDefault();
+    const validationMessage = validateModifyBookingForm(modifyBookingForm);
+    if (validationMessage) {
+      setModifyBookingState({
+        loading: false,
+        error: validationMessage,
+        errorDetails: null,
+        data: null,
+      });
+      return;
+    }
+
+    const payload = normalizeModifyBookingForm(modifyBookingForm);
+    setModifyBookingState({ loading: true, error: "", errorDetails: null, data: null });
+
+    try {
+      const data = await modifyBookingDates(payload);
+      setModifyBookingState({ loading: false, error: "", errorDetails: null, data });
+      if (userId && hasProperty) {
+        await loadLatestEvidence();
+      }
+    } catch (error) {
+      const errorDetails = normalizeChannexError(error, "Booking date modification failed.");
+      setModifyBookingState({
+        loading: false,
+        error: errorDetails.message,
+        errorDetails,
+        data: null,
       });
     }
   };
@@ -1295,6 +1364,59 @@ function ChannexDiagnosticsPanel({ userId }) {
             </div>
           );
         })}
+      </div>
+      <div className="channex-certification-test-section">
+        <div className="channex-diagnostics-card-header">
+          <div>
+            <h3>Modify booking dates</h3>
+            <p className="host-integrations-muted">
+              Internal demo action for changing an existing booking date range and showing Channex availability sync evidence.
+            </p>
+          </div>
+        </div>
+        <form className="channex-diagnostics-action-card" onSubmit={handleModifyBookingDates}>
+          <div className="host-integrations-field-grid">
+            <label className="host-integrations-field">
+              <span>Booking ID</span>
+              <input
+                value={modifyBookingForm.bookingId}
+                onChange={(event) => updateModifyBookingForm("bookingId", event.target.value)}
+                placeholder="7434e9b5-a4d1-4aab-9f8a-27a5a42299b0"
+                disabled={modifyBookingState.loading}
+              />
+            </label>
+            <label className="host-integrations-field">
+              <span>New arrival date</span>
+              <input
+                type="date"
+                value={modifyBookingForm.arrivalDate}
+                onChange={(event) => updateModifyBookingForm("arrivalDate", event.target.value)}
+                disabled={modifyBookingState.loading}
+              />
+            </label>
+            <label className="host-integrations-field">
+              <span>New departure date</span>
+              <input
+                type="date"
+                value={modifyBookingForm.departureDate}
+                onChange={(event) => updateModifyBookingForm("departureDate", event.target.value)}
+                disabled={modifyBookingState.loading}
+              />
+            </label>
+          </div>
+          <button type="submit" className="host-integrations-primary-btn" disabled={modifyBookingState.loading}>
+            {modifyBookingState.loading ? "Modifying..." : "Modify booking dates"}
+          </button>
+          {modifyBookingState.data ? <p className="host-integrations-success-banner">Booking dates modified.</p> : null}
+          {modifyBookingState.error ? (
+            <ErrorCallout error={modifyBookingState.error} details={modifyBookingState.errorDetails} />
+          ) : null}
+          <IdentifierList title="Channex task IDs" ids={modifyBookingState.data?.channexAvailabilitySync?.taskIds} />
+          {modifyBookingState.data?.channexAvailabilitySync ? (
+            <JsonBlock title="Channex availability sync" value={modifyBookingState.data.channexAvailabilitySync} />
+          ) : null}
+          {modifyBookingState.data ? <JsonBlock title="Modify booking response" value={modifyBookingState.data} /> : null}
+        </form>
       </div>
       <div className="channex-certification-test-section">
         <div className="channex-diagnostics-card-header">

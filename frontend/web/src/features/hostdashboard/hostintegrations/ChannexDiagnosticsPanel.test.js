@@ -7,6 +7,7 @@ jest.mock("./channexApi", () => ({
   getChannexAriTargets: jest.fn(),
   getChannexStatus: jest.fn(),
   getLatestChannexSyncEvidence: jest.fn(),
+  modifyBookingDates: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
   syncChannexAri: jest.fn(),
   syncChannexAvailability: jest.fn(),
@@ -17,7 +18,9 @@ jest.mock("./channexApi", () => ({
 
 const ChannexDiagnosticsPanel = require("./ChannexDiagnosticsPanel").default;
 const {
+  getLatestChannexSyncEvidence,
   getChannexStatus,
+  modifyBookingDates,
   syncChannexCertificationTestCase,
   syncChannexFull,
   syncChannexRestrictions,
@@ -41,6 +44,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     jest.clearAllMocks();
     jest.spyOn(globalThis, "confirm").mockReturnValue(true);
     getChannexStatus.mockResolvedValue({ status: "CONNECTED" });
+    getLatestChannexSyncEvidence.mockResolvedValue({ item: null });
   });
 
   afterEach(() => {
@@ -157,5 +161,53 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     expect(await screen.findByText("Full/certification sync completed.")).toBeTruthy();
     expect(screen.getAllByText(/task-availability-full/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/task-restrictions-full/).length).toBeGreaterThan(0);
+  });
+
+  test("modifies booking dates from the admin actions UI", async () => {
+    modifyBookingDates.mockResolvedValue({
+      booking: {
+        id: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
+        arrivaldate: 1780531200000,
+        departuredate: 1780704000000,
+      },
+      channexAvailabilitySync: {
+        syncType: "booking-availability",
+        taskIds: ["task-booking-availability"],
+        overallSuccess: true,
+      },
+    });
+
+    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    fillRequiredInputs();
+
+    fireEvent.click(screen.getByRole("button", { name: "Modify booking dates" }));
+
+    await waitFor(() => expect(modifyBookingDates).toHaveBeenCalledTimes(1));
+    expect(modifyBookingDates).toHaveBeenCalledWith({
+      bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
+      arrivalDate: "2026-06-04",
+      departureDate: "2026-06-06",
+    });
+    expect(getLatestChannexSyncEvidence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        domitsPropertyId: "domits-property-1",
+      })
+    );
+    expect(await screen.findByText("Booking dates modified.")).toBeTruthy();
+    expect(screen.getAllByText(/task-booking-availability/).length).toBeGreaterThan(0);
+  });
+
+  test("requires booking modify fields before sending", async () => {
+    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    fillRequiredInputs();
+
+    fireEvent.change(screen.getByLabelText("Booking ID"), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Modify booking dates" }));
+
+    expect(modifyBookingDates).not.toHaveBeenCalled();
+    expect(await screen.findByText("Enter booking ID, new arrival date, and new departure date.")).toBeTruthy();
   });
 });
