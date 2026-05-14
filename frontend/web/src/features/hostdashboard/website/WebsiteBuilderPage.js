@@ -843,6 +843,7 @@ function WebsiteBuilderPage() {
     recordWebsiteHostAnalyticsEventSafely({
       propertyId: currentFlow.propertyId,
       eventType: WEBSITE_BUILD_FLOW_ABANDONED_EVENT,
+      keepalive: true,
       payload: {
         flowId: currentFlow.flowId,
         templateKey: currentFlow.templateKey,

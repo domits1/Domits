@@ -38,6 +38,7 @@ export const recordWebsiteHostAnalyticsEvent = async ({
   draftId = "",
   eventType,
   payload = {},
+  keepalive = false,
 }) => {
   const authorization = getOptionalAccessToken();
   if (!authorization) {
@@ -46,6 +47,7 @@ export const recordWebsiteHostAnalyticsEvent = async ({
 
   await postWebsiteAnalyticsEvent({
     authorization,
+    keepalive,
     body: {
       propertyId,
       draftId,
