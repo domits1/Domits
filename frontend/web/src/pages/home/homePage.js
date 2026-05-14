@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
 import { FaShieldAlt, FaUserCheck, FaHeadset, FaAward, FaTag, FaHome, FaDollarSign } from "react-icons/fa";
 import { SearchBar } from "../../components/base/SearchBar";
@@ -94,6 +95,7 @@ const Homepage = () => {
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
   const { language } = useContext(LanguageContext);
   const homePageContent = contentByLanguage[language]?.homepage;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const {
     countries,
@@ -108,6 +110,19 @@ const Homepage = () => {
   } = buildHomepageLists(homePageContent);
 
   const navigate = useNavigate();
+  
+  useEffect(() => {
+  checkAuthentication();
+}, []);
+
+const checkAuthentication = async () => {
+  try {
+    await Auth.currentAuthenticatedUser();
+    setIsAuthenticated(true);
+  } catch {
+    setIsAuthenticated(false);
+  }
+};
 
   const getIcon = (type) => {
     switch (type) {
@@ -336,9 +351,16 @@ const Homepage = () => {
                 ))}
               </div>
 
-              <button className="host-btn">
+              <button className="host-btn" onClick={() => {
+                if (isAuthenticated) {
+                  navigate("/hostdashboard/hostonboarding");
+                } else {
+                  navigate("/login");
+                }
+              }}
+              >
                 {hostSection.button}
-              </button>
+            </button>
             </motion.div>
 
             <motion.div className="host-right" variants={fadeUp}>

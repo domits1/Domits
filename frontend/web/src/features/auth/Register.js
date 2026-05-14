@@ -179,9 +179,7 @@ const Register = () => {
 
   const queryRedirect = new URLSearchParams(location.search).get("redirect");
 
-  const redirectToUse =
-    queryRedirect ||
-    encodeURIComponent(location.pathname + location.search);
+  const redirectToUse = queryRedirect || "/";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -664,9 +662,7 @@ const checkPasswordStrength = (password) => {
             type="button"
             className="registerBtn"
             onClick={() =>
-              navigate(
-                `/login?redirect=${redirectToUse}`
-              )
+              navigate("/login")
             }
           >
             Login
