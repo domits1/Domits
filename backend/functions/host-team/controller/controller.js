@@ -32,7 +32,7 @@ export class Controller {
     async removeMember(event) {
         try {
             const { userId } = await this.authManager.getUser(event.headers?.Authorization);
-            const memberId = event.pathParameters?.memberId || event.path?.split("/").pop();
+            const memberId = event.queryStringParameters?.id;
             const result = await this.service.removeMember(userId, memberId);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
