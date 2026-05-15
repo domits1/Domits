@@ -142,6 +142,27 @@ UnsupportedTemplatePreview.propTypes = {
   templateName: PropTypes.string.isRequired,
 };
 
+const websiteTemplatePreviewModelPropType = PropTypes.shape({
+  source: PropTypes.shape({
+    hostId: PropTypes.string,
+    propertyId: PropTypes.string,
+  }),
+  site: PropTypes.shape({
+    title: PropTypes.string,
+    templateReadyTitle: PropTypes.string,
+  }).isRequired,
+  location: PropTypes.shape({
+    label: PropTypes.string,
+  }).isRequired,
+  visibility: PropTypes.shape({
+    availabilityCalendar: PropTypes.bool,
+    chatWidget: PropTypes.bool,
+  }),
+  theme: PropTypes.shape({
+    backgroundColor: PropTypes.string,
+  }),
+}).isRequired;
+
 export function WebsiteTemplateSurface({
   templateId,
   model,
@@ -199,26 +220,7 @@ export function WebsiteTemplateSurface({
 
 WebsiteTemplateSurface.propTypes = {
   templateId: PropTypes.string.isRequired,
-  model: PropTypes.shape({
-    source: PropTypes.shape({
-      hostId: PropTypes.string,
-      propertyId: PropTypes.string,
-    }),
-    site: PropTypes.shape({
-      title: PropTypes.string,
-      templateReadyTitle: PropTypes.string,
-    }).isRequired,
-    location: PropTypes.shape({
-      label: PropTypes.string,
-    }).isRequired,
-    visibility: PropTypes.shape({
-      availabilityCalendar: PropTypes.bool,
-      chatWidget: PropTypes.bool,
-    }),
-    theme: PropTypes.shape({
-      backgroundColor: PropTypes.string,
-    }),
-  }).isRequired,
+  model: websiteTemplatePreviewModelPropType,
   showContactWidget: PropTypes.bool,
   showBrowserChrome: PropTypes.bool,
   enableScrollReveal: PropTypes.bool,
@@ -304,26 +306,7 @@ export default function WebsiteTemplatePreview({
 
 WebsiteTemplatePreview.propTypes = {
   templateId: PropTypes.string.isRequired,
-  model: PropTypes.shape({
-    source: PropTypes.shape({
-      hostId: PropTypes.string,
-      propertyId: PropTypes.string,
-    }),
-    site: PropTypes.shape({
-      title: PropTypes.string,
-      templateReadyTitle: PropTypes.string,
-    }).isRequired,
-    location: PropTypes.shape({
-      label: PropTypes.string,
-    }).isRequired,
-    visibility: PropTypes.shape({
-      availabilityCalendar: PropTypes.bool,
-      chatWidget: PropTypes.bool,
-    }),
-    theme: PropTypes.shape({
-      backgroundColor: PropTypes.string,
-    }),
-  }).isRequired,
+  model: websiteTemplatePreviewModelPropType,
   variant: PropTypes.oneOf(["default", "compact"]),
   viewport: PropTypes.oneOf(["desktop", "tablet", "mobile"]),
   showBrowserChrome: PropTypes.bool,
