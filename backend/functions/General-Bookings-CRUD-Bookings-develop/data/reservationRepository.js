@@ -9,6 +9,8 @@ import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
 
+const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
+
 class ReservationRepository {
   // ---------
   // Booking Create (auth)
@@ -74,7 +76,7 @@ class ReservationRepository {
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :property_id", { property_id: propertyId })
-      .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: ["Failed", "Declined", "Inquiry"] })
+      .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: NON_BLOCKING_BOOKING_STATUSES })
       .andWhere("booking.arrivaldate < :departureDate", { departureDate: departureDateMs })
       .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs });
 
@@ -297,7 +299,7 @@ class ReservationRepository {
       .select(["booking.arrivaldate", "booking.departuredate"])
       .where("booking.property_id = :propertyId", { propertyId })
       .andWhere("booking.status NOT IN (:...excludedStatuses)", {
-        excludedStatuses: ["Failed", "Declined", "Inquiry"],
+        excludedStatuses: NON_BLOCKING_BOOKING_STATUSES,
       })
       .getMany();
 

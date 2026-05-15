@@ -81,7 +81,7 @@ import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePu
 import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
-const DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX = "standalone.domits.com";
+const DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com";
 const apolloClient = new ApolloClient({
   link: new HttpLink({
     uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
@@ -99,7 +99,7 @@ function RedirectHostOnboardingCatchAll() {
   return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
 }
 
-const normalizeStandaloneHostName = (value) => {
+const normalizeDirectBookingWebsiteHostName = (value) => {
   const normalizedValue = String(value || "").trim().toLowerCase();
   if (!normalizedValue) {
     return "";
@@ -108,11 +108,15 @@ const normalizeStandaloneHostName = (value) => {
   return normalizedValue.split(":")[0] || "";
 };
 
-const isStandaloneWebsiteHostName = (hostName) => {
-  const normalizedHostName = normalizeStandaloneHostName(hostName);
-  const fallbackDomainSuffix = normalizeStandaloneHostName(
-    process.env.REACT_APP_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX || DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX
+const getDirectBookingWebsiteFallbackDomainSuffix = () =>
+  normalizeDirectBookingWebsiteHostName(
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX ||
+      DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX
   );
+
+const isDirectBookingWebsiteHostName = (hostName) => {
+  const normalizedHostName = normalizeDirectBookingWebsiteHostName(hostName);
+  const fallbackDomainSuffix = getDirectBookingWebsiteFallbackDomainSuffix();
 
   if (!normalizedHostName || !fallbackDomainSuffix) {
     return false;
@@ -141,16 +145,16 @@ function App() {
   const currentHostName = currentLocation.hostname;
   const isWebsitePreviewPath = currentPath.startsWith("/website-preview");
   const isWebsiteLivePath = currentPath.startsWith("/website-live");
-  const isStandaloneWebsiteHost = isStandaloneWebsiteHostName(currentHostName);
-  const isStandaloneWebsiteSurface = isWebsitePreviewPath || isWebsiteLivePath || isStandaloneWebsiteHost;
-  const shouldRenderStandardHeader = currentPath !== "/admin" && isStandaloneWebsiteSurface === false;
-  const shouldRenderNavbar = isStandaloneWebsiteSurface === false;
+  const isDirectBookingWebsiteHost = isDirectBookingWebsiteHostName(currentHostName);
+  const isDirectBookingWebsiteSurface = isWebsitePreviewPath || isWebsiteLivePath || isDirectBookingWebsiteHost;
+  const shouldRenderStandardHeader = currentPath !== "/admin" && isDirectBookingWebsiteSurface === false;
+  const shouldRenderNavbar = isDirectBookingWebsiteSurface === false;
 
   const renderFooter = () => {
     if (
       ["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(currentPath) ||
       currentPath.startsWith("/verify") ||
-      isStandaloneWebsiteSurface
+      isDirectBookingWebsiteSurface
     ) {
       return null;
     }
@@ -158,7 +162,7 @@ function App() {
   };
 
   const renderChatWidget = () => {
-    if (currentPath.startsWith("/verify") || isStandaloneWebsiteSurface) {
+    if (currentPath.startsWith("/verify") || isDirectBookingWebsiteSurface) {
       return null;
     }
     return <ChatWidget />;
@@ -194,7 +198,7 @@ function App() {
                 ) : null}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} />} />
-                  <Route path="/" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
+                  <Route path="/" element={isDirectBookingWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/data-safety" element={<Datasafety />} />
                   <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
@@ -294,7 +298,7 @@ function App() {
                   <Route path="/hostonboarding/*" element={<RedirectHostOnboardingCatchAll />} />
 
                   {/* 404 */}
-                  <Route path="/*" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <PageNotFound />} />
+                  <Route path="/*" element={isDirectBookingWebsiteHost ? <WebsitePublicSitePage /> : <PageNotFound />} />
                 </Routes>
                 {renderFooter()}
                 {shouldRenderStandardHeader ? <MenuBar /> : null}
