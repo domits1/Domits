@@ -26,6 +26,10 @@ export const handler = async (event) => {
             return await controller.acceptInvite(event);
         }
 
+        if (method === "GET" && path.endsWith("/memberships")) {
+            return await controller.getMemberships(event);
+        }
+
         if (method === "GET") {
             return await controller.getTeamMembers(event);
         }
