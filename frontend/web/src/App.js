@@ -79,6 +79,7 @@ import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
 import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
+import AcceptInvite from "./features/hostdashboard/AcceptInvite";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 const DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX = "standalone.domits.com";
@@ -278,6 +279,7 @@ function App() {
                     }
                   />
 
+                  <Route path="/team/accept" element={<AcceptInvite />} />
                   <Route path="/stripe/callback" element={<StripeCallback />} />
 
                   {/* Career, Policies, and Terms */}
