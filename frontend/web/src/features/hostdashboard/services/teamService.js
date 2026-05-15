@@ -23,6 +23,15 @@ export const inviteTeamMember = async (email, role) => {
     return response.json();
 };
 
+export const fetchMemberships = async () => {
+    const response = await fetch(`${TEAM_API_URL}/memberships`, {
+        method: "GET",
+        headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch memberships: ${response.status}`);
+    return response.json();
+};
+
 export const removeTeamMember = async (memberId) => {
     const response = await fetch(`${TEAM_API_URL}?id=${memberId}`, {
         method: "DELETE",

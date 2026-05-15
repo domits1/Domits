@@ -20,6 +20,12 @@ export class Repository {
             .findOne({ where: { invite_token: token } });
     }
 
+    async findByMemberId(dataSource, userId) {
+        return await dataSource
+            .getRepository(Team_Member)
+            .find({ where: { member_user_id: userId, status: "active" } });
+    }
+
     async findByHostAndEmail(dataSource, hostId, email) {
         return await dataSource
             .getRepository(Team_Member)
