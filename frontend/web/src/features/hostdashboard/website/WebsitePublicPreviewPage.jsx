@@ -20,7 +20,11 @@ import {
 import { subscribeToWebsitePreviewUpdates } from "./services/websitePreviewSync";
 import styles from "./WebsitePublicPreviewPage.module.scss";
 
-const getDraftPublishedContentOverrides = (draft) => {
+const getDraftPreviewContentOverrides = (draft) => {
+  if (draft?.contentOverrides && typeof draft.contentOverrides === "object") {
+    return draft.contentOverrides;
+  }
+
   if (draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object") {
     return draft.publishedContentOverrides;
   }
@@ -28,7 +32,11 @@ const getDraftPublishedContentOverrides = (draft) => {
   return {};
 };
 
-const getDraftPublishedThemeOverrides = (draft) => {
+const getDraftPreviewThemeOverrides = (draft) => {
+  if (draft?.themeOverrides && typeof draft.themeOverrides === "object") {
+    return draft.themeOverrides;
+  }
+
   if (draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object") {
     return draft.publishedThemeOverrides;
   }
@@ -93,9 +101,9 @@ function WebsitePublicPreviewPage() {
       propertyDetails: payload.propertyDetails,
       summaryProperty: null,
     });
-    const themedModel = applyWebsiteDraftThemeOverrides(baseModel, getDraftPublishedThemeOverrides(payload.draft));
+    const themedModel = applyWebsiteDraftThemeOverrides(baseModel, getDraftPreviewThemeOverrides(payload.draft));
 
-    return applyWebsiteDraftContentOverrides(themedModel, getDraftPublishedContentOverrides(payload.draft));
+    return applyWebsiteDraftContentOverrides(themedModel, getDraftPreviewContentOverrides(payload.draft));
   }, [payload]);
 
   const templateId = payload?.draft?.templateKey || "";
@@ -149,19 +157,22 @@ function WebsitePublicPreviewPage() {
     const publicPreviewPageStyle = {
       "--website-surface-background": resolveWebsiteBackgroundColor(previewModel?.theme?.backgroundColor),
     };
+    const publicPreviewPageClassName = `${styles.publicPreviewPage} ${
+      isPanoramaTemplate ? styles.publicPreviewPagePanorama : ""
+    }`.trim();
+    const publicPreviewCanvasClassName = `${styles.publicPreviewCanvas} ${
+      isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
+    } ${isPanoramaTemplate ? styles.publicPreviewCanvasFlush : ""}`.trim();
 
     return (
-      <main className={styles.publicPreviewPage} style={publicPreviewPageStyle}>
-        <div
-          className={`${styles.publicPreviewCanvas} ${
-            isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
-          }`.trim()}
-        >
+      <main className={publicPreviewPageClassName} style={publicPreviewPageStyle}>
+        <div className={publicPreviewCanvasClassName}>
           <WebsiteTemplateSurface
             templateId={templateId}
             model={previewModel}
             showContactWidget={previewModel.visibility?.chatWidget ?? true}
             showBrowserChrome={false}
+            enableScrollReveal={isPanoramaTemplate}
           />
         </div>
       </main>

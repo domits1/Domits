@@ -150,6 +150,22 @@ function App() {
   const shouldRenderStandardHeader = currentPath !== "/admin" && isDirectBookingWebsiteSurface === false;
   const shouldRenderNavbar = isDirectBookingWebsiteSurface === false;
 
+  useEffect(() => {
+    const documentElement = globalThis.document?.documentElement;
+    const body = globalThis.document?.body;
+    if (!documentElement || !body) {
+      return undefined;
+    }
+
+    documentElement.classList.toggle("directBookingWebsiteSurfaceHtml", isDirectBookingWebsiteSurface);
+    body.classList.toggle("directBookingWebsiteSurfaceBody", isDirectBookingWebsiteSurface);
+
+    return () => {
+      documentElement.classList.remove("directBookingWebsiteSurfaceHtml");
+      body.classList.remove("directBookingWebsiteSurfaceBody");
+    };
+  }, [isDirectBookingWebsiteSurface]);
+
   const renderFooter = () => {
     if (
       ["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(currentPath) ||

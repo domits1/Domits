@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "./WebsiteTemplatePreview.module.scss";
+import motionStyles from "./animations/WebsiteTemplateMotion.module.scss";
+import { useWebsiteScrollReveal } from "./animations/useWebsiteScrollReveal";
 import { getWebsiteTemplateById } from "../websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./templateRegistry";
 import WebsiteContactWidget from "./WebsiteContactWidget";
@@ -11,6 +13,11 @@ const PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   tablet: 834,
   mobile: 390,
 });
+const TEMPLATE_PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
+  "panorama-landing": Object.freeze({
+    desktop: 1440,
+  }),
+});
 
 const DEFAULT_SCALE_METRICS = Object.freeze({
   scale: 1,
@@ -20,7 +27,14 @@ const COMPACT_PREVIEW_WIDTH = 184;
 const COMPACT_PREVIEW_MAX_HEIGHT = 228;
 const COMPACT_PREVIEW_VIEWPORT_WIDTH = 960;
 
-const resolveViewportWidth = (viewport) => PREVIEW_VIEWPORT_WIDTHS[viewport] || PREVIEW_VIEWPORT_WIDTHS.desktop;
+const resolveViewportWidth = (viewport, templateId) => {
+  const templateViewportWidths = TEMPLATE_PREVIEW_VIEWPORT_WIDTHS[templateId];
+  if (templateViewportWidths?.[viewport]) {
+    return templateViewportWidths[viewport];
+  }
+
+  return PREVIEW_VIEWPORT_WIDTHS[viewport] || PREVIEW_VIEWPORT_WIDTHS.desktop;
+};
 
 const scrollPreviewTargetIntoViewport = (previewTargetNode) => {
   if (!previewTargetNode || typeof previewTargetNode.getBoundingClientRect !== "function") {
@@ -133,12 +147,17 @@ export function WebsiteTemplateSurface({
   model,
   showContactWidget = true,
   showBrowserChrome = true,
+  enableScrollReveal = false,
   browserTitle = "",
   onSelectTarget,
   activeTargetId = "",
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
+  const previewCanvasRef = useWebsiteScrollReveal({
+    enabled: enableScrollReveal,
+    deps: [templateId, model],
+  });
   const previewCanvasStyle = {
     "--website-surface-background": resolveWebsiteBackgroundColor(model?.theme?.backgroundColor),
   };
@@ -156,7 +175,13 @@ export function WebsiteTemplateSurface({
         </div>
       ) : null}
 
-      <div className={styles.previewCanvas} style={previewCanvasStyle}>
+      <div
+        ref={previewCanvasRef}
+        className={`${styles.previewCanvas} ${
+          enableScrollReveal ? motionStyles.previewCanvasAnimated : ""
+        }`.trim()}
+        style={previewCanvasStyle}
+      >
         {TemplateComponent ? (
           <TemplateComponent
             model={model}
@@ -196,6 +221,7 @@ WebsiteTemplateSurface.propTypes = {
   }).isRequired,
   showContactWidget: PropTypes.bool,
   showBrowserChrome: PropTypes.bool,
+  enableScrollReveal: PropTypes.bool,
   browserTitle: PropTypes.string,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
@@ -206,6 +232,7 @@ export default function WebsiteTemplatePreview({
   model,
   variant = "default",
   viewport = "desktop",
+  showBrowserChrome = false,
   onSelectTarget,
   activeTargetId = "",
 }) {
@@ -213,7 +240,7 @@ export default function WebsiteTemplatePreview({
   const showContactWidget = !isCompactVariant && model.visibility?.chatWidget !== false;
   const viewportWidth = isCompactVariant
     ? COMPACT_PREVIEW_VIEWPORT_WIDTH
-    : resolveViewportWidth(viewport);
+    : resolveViewportWidth(viewport, templateId);
   const { scaleShellRef, scaleInnerRef, scaleMetrics } = usePreviewScaleMetrics(viewportWidth);
   const compactScale = COMPACT_PREVIEW_WIDTH / viewportWidth;
   const previewHeight = scaleMetrics.height ? `${scaleMetrics.height}px` : undefined;
@@ -263,7 +290,7 @@ export default function WebsiteTemplatePreview({
               templateId={templateId}
               model={model}
               showContactWidget={showContactWidget}
-              showBrowserChrome
+              showBrowserChrome={showBrowserChrome}
               browserTitle={model.site.title || "Website preview"}
               onSelectTarget={onSelectTarget}
               activeTargetId={activeTargetId}
@@ -299,6 +326,7 @@ WebsiteTemplatePreview.propTypes = {
   }).isRequired,
   variant: PropTypes.oneOf(["default", "compact"]),
   viewport: PropTypes.oneOf(["desktop", "tablet", "mobile"]),
+  showBrowserChrome: PropTypes.bool,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
 };

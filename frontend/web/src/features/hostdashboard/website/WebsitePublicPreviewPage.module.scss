@@ -11,6 +11,10 @@
   color: #0f172a;
 }
 
+.publicPreviewPagePanorama {
+  background: var(--website-surface-background, #f8fbff);
+}
+
 .publicPreviewCanvas {
   width: min(100%, 1440px);
   margin: 0 auto;
@@ -21,6 +25,10 @@
   width: 100%;
   max-width: none;
   padding: clamp(12px, 2vw, 24px);
+}
+
+.publicPreviewCanvasFlush {
+  padding: 0;
 }
 
 .publicPreviewStatePage {
@@ -124,6 +132,10 @@
 @media (max-width: 720px) {
   .publicPreviewCanvas {
     padding: 12px;
+  }
+
+  .publicPreviewCanvasFlush {
+    padding: 0;
   }
 
   .publicPreviewActionButton {

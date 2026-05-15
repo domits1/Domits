@@ -1487,9 +1487,7 @@ function WebsiteEditorPage() {
 
     const nextDraft = await reloadDraftRecord();
 
-    if (syncPublishedState) {
-      announceWebsitePreviewUpdate(nextDraft?.id || draftRecord.id);
-    }
+    announceWebsitePreviewUpdate(nextDraft?.id || draftRecord.id);
 
     return nextDraft;
   };

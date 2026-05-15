@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
+import { getScrollRevealProps } from "../animations/scrollRevealProps";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
@@ -121,14 +122,16 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
   return (
     <article className={styles.templateSite}>
       {showTopBar ? (
-        <TemplateTopBar model={model} onSelectTarget={onSelectTarget} activeTargetId={activeTargetId}>
-          <div className={styles.templateTopBarNav}>
-            {PANORAMA_NAV_ITEMS.map((item) => renderPanoramaNavItem(item, Boolean(onSelectTarget)))}
-          </div>
-        </TemplateTopBar>
+        <div {...getScrollRevealProps(0)}>
+          <TemplateTopBar model={model} onSelectTarget={onSelectTarget} activeTargetId={activeTargetId}>
+            <div className={styles.templateTopBarNav}>
+              {PANORAMA_NAV_ITEMS.map((item) => renderPanoramaNavItem(item, Boolean(onSelectTarget)))}
+            </div>
+          </TemplateTopBar>
+        </div>
       ) : null}
 
-      <section id="overview" className={styles.panoramaEditorialHero}>
+      <section id="overview" className={styles.panoramaEditorialHero} {...getScrollRevealProps(60)}>
         <div className={styles.panoramaHeroBackdropShell}>
           <img
             {...getInteractiveTargetProps(styles.panoramaHeroBackdrop, onSelectTarget, {
@@ -195,6 +198,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               "visibility.trustCards",
               activeTargetId
             )}
+            {...getScrollRevealProps(120)}
           >
             {featuredTrustCards.map((card, index) => {
               const cardIcon = getAmenityIconNode(card.iconAmenityId, {
@@ -228,7 +232,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
         ) : null}
       </section>
 
-      <section id="about" className={styles.sectionCard}>
+        <section id="about" className={styles.sectionCard} {...getScrollRevealProps(80)}>
         <div className={styles.sectionHeading}>
           <p className={styles.sectionEyebrow}>The residence</p>
           <h2>Designed to present the stay with clarity and confidence</h2>
@@ -280,7 +284,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       </section>
 
       {showGallerySection && gallerySlots.length > 0 ? (
-        <section id="gallery" className={styles.sectionCard}>
+        <section id="gallery" className={styles.sectionCard} {...getScrollRevealProps(100)}>
           <div className={styles.sectionHeading}>
             <p className={styles.sectionEyebrow}>Gallery</p>
             <h2>A more editorial presentation of the property</h2>
@@ -307,7 +311,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       ) : null}
 
       {(showAmenitiesPanel || featuredPolicies.length > 0) ? (
-        <section id="features" className={styles.sectionCard}>
+        <section id="features" className={styles.sectionCard} {...getScrollRevealProps(120)}>
           <div className={styles.sectionHeading}>
             <p className={styles.sectionEyebrow}>Amenities</p>
             <h2>Useful stay details without losing the premium presentation</h2>
@@ -372,7 +376,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       ) : null}
 
       {showJourneyStops && featuredJourneyStops.length > 0 ? (
-        <section id="lifestyle" className={styles.sectionCard}>
+        <section id="lifestyle" className={styles.sectionCard} {...getScrollRevealProps(140)}>
           <div className={styles.sectionHeading}>
             <p className={styles.sectionEyebrow}>The stay</p>
             <h2>From first impression to arrival, the flow stays easy to follow</h2>
@@ -403,7 +407,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       ) : null}
 
       {showAvailabilityCalendar ? (
-        <section id="availability" className={styles.panoramaAvailabilityShell}>
+        <section id="availability" className={styles.panoramaAvailabilityShell} {...getScrollRevealProps(160)}>
           <TemplateAvailabilityCalendar
             model={model}
             onSelectTarget={onSelectTarget}
@@ -413,7 +417,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       ) : null}
 
       {showCallToAction ? (
-        <section id="contact" className={styles.panoramaClosingShell}>
+        <section id="contact" className={styles.panoramaClosingShell} {...getScrollRevealProps(180)}>
           <TemplateSoftCallout
             className={styles.panoramaClosingCallout}
             model={model}

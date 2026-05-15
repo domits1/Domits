@@ -336,19 +336,22 @@ function WebsitePublicSitePage() {
     const publishedSitePageStyle = {
       "--website-surface-background": resolveWebsiteBackgroundColor(publicModel?.theme?.backgroundColor),
     };
+    const publicPreviewPageClassName = `${styles.publicPreviewPage} ${
+      isPanoramaTemplate ? styles.publicPreviewPagePanorama : ""
+    }`.trim();
+    const publicPreviewCanvasClassName = `${styles.publicPreviewCanvas} ${
+      isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
+    } ${isPanoramaTemplate ? styles.publicPreviewCanvasFlush : ""}`.trim();
 
     return (
-      <main className={styles.publicPreviewPage} style={publishedSitePageStyle}>
-        <div
-          className={`${styles.publicPreviewCanvas} ${
-            isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
-          }`.trim()}
-        >
+      <main className={publicPreviewPageClassName} style={publishedSitePageStyle}>
+        <div className={publicPreviewCanvasClassName}>
           <WebsiteTemplateSurface
             templateId={templateId}
             model={publicModel}
             showContactWidget={publicModel.visibility?.chatWidget ?? true}
             showBrowserChrome={false}
+            enableScrollReveal={isPanoramaTemplate}
           />
         </div>
       </main>
