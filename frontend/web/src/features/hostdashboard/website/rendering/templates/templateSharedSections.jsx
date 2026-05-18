@@ -40,7 +40,13 @@ export const getPreviewTargetMarkerProps = (className, targetId, activeTargetId 
   "data-preview-target-id": targetId || undefined,
 });
 
-export function TemplateTopBar({ model, onSelectTarget = undefined, activeTargetId = "", children }) {
+export function TemplateTopBar({
+  model,
+  onSelectTarget = undefined,
+  activeTargetId = "",
+  showMark = true,
+  children,
+}) {
   return (
     <div
       {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
@@ -49,7 +55,7 @@ export function TemplateTopBar({ model, onSelectTarget = undefined, activeTarget
       }, activeTargetId)}
     >
       <div className={styles.templateTopBarBrand}>
-        <span className={styles.templateTopBarMark} aria-hidden="true" />
+        {showMark ? <span className={styles.templateTopBarMark} aria-hidden="true" /> : null}
         <span>{model.site.title}</span>
       </div>
       {children}
@@ -65,6 +71,7 @@ TemplateTopBar.propTypes = {
   }).isRequired,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  showMark: PropTypes.bool,
   children: PropTypes.node.isRequired,
 };
 

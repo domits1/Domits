@@ -200,6 +200,8 @@ const runAfterNextPaint = (callback) => {
   globalThis.setTimeout(callback, 0);
 };
 
+const EDITOR_TARGET_FOCUS_MAX_ATTEMPTS = 8;
+
 const confirmDiscardDraftChanges = () => {
   if (typeof globalThis.confirm !== "function") {
     return true;
@@ -1163,6 +1165,7 @@ function WebsiteEditorPage() {
   const openedLiveSiteWindowOriginRef = useRef("");
   const sectionHighlightResetTimeoutRef = useRef(null);
   const previewHighlightResetTimeoutRef = useRef(null);
+  const editorTargetFocusRequestRef = useRef(0);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
 
   useEffect(() => {
@@ -1378,6 +1381,24 @@ function WebsiteEditorPage() {
     targetRefs.current[targetId] = node;
   };
 
+  const scrollEditorNodeIntoView = (node) => {
+    const centeredScrollTop = getCenteredContainerScrollTop(node, editorPanelRef.current);
+    if (centeredScrollTop !== null && editorPanelRef.current) {
+      editorPanelRef.current.scrollTo({
+        top: centeredScrollTop,
+        behavior: "smooth",
+      });
+      return true;
+    }
+
+    node?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    return Boolean(node);
+  };
+
   const focusEditorTarget = ({ sectionId, targetId }) => {
     if (!sectionId) {
       return;
@@ -1387,9 +1408,11 @@ function WebsiteEditorPage() {
     setHighlightedTargetId("");
 
     const resolvedTargetId = resolveEditorPreviewTargetId({ sectionId, targetId });
+    const focusRequestId = editorTargetFocusRequestRef.current + 1;
+    editorTargetFocusRequestRef.current = focusRequestId;
 
     globalThis.setTimeout(() => {
-      if (resolvedTargetId) {
+      if (resolvedTargetId && editorTargetFocusRequestRef.current === focusRequestId) {
         setHighlightedTargetId(resolvedTargetId);
       }
     }, 0);
@@ -1399,27 +1422,36 @@ function WebsiteEditorPage() {
     }
 
     sectionHighlightResetTimeoutRef.current = globalThis.setTimeout(() => {
-      setHighlightedTargetId("");
+      if (editorTargetFocusRequestRef.current === focusRequestId) {
+        setHighlightedTargetId("");
+      }
     }, 1800);
 
-    runAfterNextPaint(() => {
-      const targetEditorNode =
-        resolveSectionNode(targetRefs.current[resolvedTargetId]) ||
-        resolveSectionNode(sectionRefs.current[sectionId]);
-
-      const centeredScrollTop = getCenteredContainerScrollTop(targetEditorNode, editorPanelRef.current);
-      if (centeredScrollTop !== null && editorPanelRef.current) {
-        editorPanelRef.current.scrollTo({
-          top: centeredScrollTop,
-          behavior: "smooth",
-        });
+    const attemptFocus = (attemptIndex = 0) => {
+      if (editorTargetFocusRequestRef.current !== focusRequestId) {
         return;
       }
 
-      targetEditorNode?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+      const targetEditorNode = resolvedTargetId
+        ? resolveSectionNode(targetRefs.current[resolvedTargetId])
+        : null;
+      if (targetEditorNode) {
+        scrollEditorNodeIntoView(targetEditorNode);
+        return;
+      }
+
+      if (attemptIndex >= EDITOR_TARGET_FOCUS_MAX_ATTEMPTS) {
+        scrollEditorNodeIntoView(resolveSectionNode(sectionRefs.current[sectionId]));
+        return;
+      }
+
+      runAfterNextPaint(() => {
+        attemptFocus(attemptIndex + 1);
       });
+    };
+
+    runAfterNextPaint(() => {
+      attemptFocus();
     });
   };
 

@@ -368,7 +368,12 @@ const renderPanoramaTopBar = ({ model, onSelectTarget, activeTargetId, isTopBarS
       isTopBarSolid ? styles.panoramaTopBarShellSolid : styles.panoramaTopBarShellTransparent
     }`.trim()}
   >
-    <TemplateTopBar model={model} onSelectTarget={onSelectTarget} activeTargetId={activeTargetId}>
+    <TemplateTopBar
+      model={model}
+      onSelectTarget={onSelectTarget}
+      activeTargetId={activeTargetId}
+      showMark={false}
+    >
       <div className={styles.templateTopBarNav}>
         {navItems.map((item) => renderPanoramaNavItem(item, Boolean(onSelectTarget)))}
       </div>
