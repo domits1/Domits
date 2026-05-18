@@ -17,7 +17,7 @@ import {
   isPropertyInAnyWishlist,
 } from "../../../guestdashboard/services/wishlistService";
 
-const ImageGallery = ({ images, propertyTitle, propertyId }) => {
+const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -264,7 +264,7 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
 };
 
 ImageGallery.propTypes = {
-  images: PropTypes.array.isRequired,
+  images: PropTypes.array,
   propertyTitle: PropTypes.string,
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };

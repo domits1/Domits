@@ -168,8 +168,8 @@ const BookingContainer = ({
   const [localShowMessageHost, setLocalShowMessageHost] = useState(false);
   const bookingCardRef = useRef(null);
 
-  const showMessageHost = showMessageHostProp !== undefined ? showMessageHostProp : localShowMessageHost;
-  const setShowMessageHost = setShowMessageHostProp !== undefined ? setShowMessageHostProp : setLocalShowMessageHost;
+  const showMessageHost = showMessageHostProp === undefined ? localShowMessageHost : showMessageHostProp;
+  const setShowMessageHost = setShowMessageHostProp === undefined ? setLocalShowMessageHost : setShowMessageHostProp;
 
   const handleReservePress = useHandleReservePress();
   const unavailableDateSet = useMemo(
@@ -364,7 +364,7 @@ const BookingContainer = ({
       )}
 
       <div className="listing-booking-card__trust-badges">
-        {cancellationPolicy && cancellationPolicy.type && (
+        {cancellationPolicy?.type && (
           <div className="listing-booking-card__trust-item">
             <span className="listing-booking-card__trust-check">✓</span>{" "}{cancellationPolicy.type} cancellation
           </div>
