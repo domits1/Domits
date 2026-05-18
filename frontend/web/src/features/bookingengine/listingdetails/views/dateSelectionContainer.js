@@ -10,7 +10,6 @@ const DateSelectionContainer = ({
   setCheckOutDate = () => {},
   unavailableDateKeys = [],
   className = "",
-  popperFixed = false,
 }) => {
   const containerClassName = className ? `date-container ${className}` : "date-container";
 
@@ -20,7 +19,6 @@ const DateSelectionContainer = ({
         checkInDate={checkInDate}
         setCheckInDate={setCheckInDate}
         unavailableDateKeys={unavailableDateKeys}
-        popperFixed={popperFixed}
       />
 
       <CheckOut
@@ -28,7 +26,6 @@ const DateSelectionContainer = ({
         setCheckOutDate={setCheckOutDate}
         checkInDate={checkInDate}
         unavailableDateKeys={unavailableDateKeys}
-        popperFixed={popperFixed}
       />
     </div>
   );
@@ -41,7 +38,6 @@ DateSelectionContainer.propTypes = {
   setCheckOutDate: PropTypes.func,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
   className: PropTypes.string,
-  popperFixed: PropTypes.bool,
 };
 
 export default DateSelectionContainer;

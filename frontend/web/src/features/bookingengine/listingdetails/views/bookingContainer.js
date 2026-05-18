@@ -315,7 +315,6 @@ const BookingContainer = ({
     setCheckOutDate: handleCheckOutDateChange,
     unavailableDateKeys,
     className: "date-container--mobile-sticky",
-    popperFixed: true,
   };
 
   const handleReserveClick = () => {

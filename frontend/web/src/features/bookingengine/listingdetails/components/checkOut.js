@@ -10,21 +10,20 @@ import {
   toDateKey,
 } from "../utils/dateAvailability";
 
-const CheckOut = ({
-  checkOutDate = "",
-  setCheckOutDate = () => {},
-  checkInDate = "",
-  unavailableDateKeys = [],
-  popperFixed = false,
-}) => {
+const fixedPopperProps = { strategy: "fixed" };
+
+const CheckOut = ({ checkOutDate = "", setCheckOutDate = () => {}, checkInDate = "", unavailableDateKeys = [] }) => {
   const minCheckOutDate = checkInDate ? addDaysToDateKey(checkInDate, 1) : getFutureDateKey(2);
+
   const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
+
   const selectedCheckOutDate = normalizeDateValue(checkOutDate);
   const selectedCheckInDate = normalizeDateValue(checkInDate);
 
   return (
     <div className="date-box">
       <p className="label">Check out</p>
+
       <div className="date-picker-field">
         <DatePicker
           selected={selectedCheckOutDate}
@@ -42,9 +41,10 @@ const CheckOut = ({
           dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
           dateFormat="yyyy-MM-dd"
           placeholderText="YYYY-MM-DD"
-          popperPlacement={popperFixed ? "top-start" : undefined}
-          popperProps={popperFixed ? { strategy: "fixed" } : undefined}
+          portalId="datepicker-portal"
+          popperProps={fixedPopperProps}
         />
+
         <span className="date-picker-icon" aria-hidden="true">
           <FaCalendarAlt />
         </span>
@@ -58,7 +58,6 @@ CheckOut.propTypes = {
   setCheckOutDate: PropTypes.func,
   checkInDate: PropTypes.string,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
-  popperFixed: PropTypes.bool,
 };
 
 export default CheckOut;

@@ -1,3 +1,9 @@
+#datepicker-portal {
+    .react-datepicker-popper {
+        z-index: 1200;
+    }
+}
+
 .listing-details {
     box-sizing: border-box;
     padding-top: calc(env(safe-area-inset-top, 0px) + 54px);
@@ -399,13 +405,10 @@
                     align-items: stretch;
                     border: 1px solid #d7dde5;
                     border-radius: 10px;
-                    overflow: hidden;
                     margin-bottom: 10px;
 
                     @media (max-width: 768px) {
                         flex-direction: column;
-                        overflow: visible;
-                        clip-path: inset(0 round 10px);
                     }
 
                     .date-box {
