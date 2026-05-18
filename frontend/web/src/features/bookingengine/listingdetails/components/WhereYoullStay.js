@@ -45,8 +45,8 @@ const WhereYoullStay = ({ generalDetails = [] }) => {
         Where you'll stay
       </h3>
       <div className="where-youll-stay__grid">
-        {generalDetails.map((item, index) => (
-          <div key={`${item.detail}-${index}`} className="where-youll-stay__item">
+        {generalDetails.map((item) => (
+          <div key={`${item.detail}-${item.value}`} className="where-youll-stay__item">
             <span className="where-youll-stay__icon">{getIcon(item.detail)}</span>
             <span className="where-youll-stay__label">{item.detail}</span>
             <span className="where-youll-stay__value">{item.value}</span>

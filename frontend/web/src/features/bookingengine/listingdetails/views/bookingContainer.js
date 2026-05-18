@@ -73,7 +73,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
         });
 
         if (!res.ok) {
-          console.warn(`threads fetch failed ${res.status}`);
+          console.warn(`Threads fetch failed: ${res.status}`);
           if (!cancelled) setResolvedThreadId(null);
           return;
         }
