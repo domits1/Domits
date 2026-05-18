@@ -2,6 +2,35 @@
     .react-datepicker-popper {
         z-index: 1200;
     }
+
+    @media (max-width: 480px) {
+        .react-datepicker-popper {
+            margin-left: 8px;
+        }
+
+        .react-datepicker {
+            font-size: 0.75rem;
+        }
+
+        .react-datepicker__header {
+            padding: 4px 0;
+        }
+
+        .react-datepicker__current-month {
+            font-size: 0.8rem;
+        }
+
+        .react-datepicker__month {
+            margin: 0.3rem;
+        }
+
+        .react-datepicker__day-name,
+        .react-datepicker__day {
+            width: 1.2rem;
+            line-height: 1.3rem;
+            margin: 0.1rem;
+        }
+    }
 }
 
 .listing-details {
