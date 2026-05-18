@@ -20,9 +20,9 @@ const Pricing = ({ pricing = {}, nights = 1 }) => {
       label: `${fmt(roomRate)} \u00D7 ${normalizedNights} night${normalizedNights === 1 ? "" : "s"}`,
       value: fmt(roomSubtotal),
     },
-    { label: "Cleaning", value: fmt(cleaningSubtotal) },
-    { label: "Service fee", value: fmt(serviceFee) },
-  ];
+    { label: "Cleaning", value: fmt(cleaningSubtotal), amount: Number(cleaningSubtotal) },
+    { label: "Service fee", value: fmt(serviceFee), amount: Number(serviceFee) },
+  ].filter((row) => row.amount === undefined || row.amount > 0);
 
   return (
     <div className="pricing-container">

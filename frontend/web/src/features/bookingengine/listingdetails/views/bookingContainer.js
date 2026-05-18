@@ -73,6 +73,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
         });
 
         if (!res.ok) {
+          console.warn(`threads fetch failed ${res.status}`);
           if (!cancelled) setResolvedThreadId(null);
           return;
         }
@@ -229,10 +230,12 @@ const BookingContainer = ({
     };
 
     updateStickyBarVisibility();
+    const frameId = globalThis.requestAnimationFrame(updateStickyBarVisibility);
     globalThis.addEventListener("scroll", updateStickyBarVisibility, { passive: true });
     globalThis.addEventListener("resize", updateStickyBarVisibility);
 
     return () => {
+      globalThis.cancelAnimationFrame(frameId);
       globalThis.removeEventListener("scroll", updateStickyBarVisibility);
       globalThis.removeEventListener("resize", updateStickyBarVisibility);
     };
@@ -302,8 +305,13 @@ const BookingContainer = ({
   };
 
   const handleReserveClick = () => {
+    const selectedPropertyId = property?.property?.id || property?.property?.ID;
+    if (!selectedPropertyId) {
+      return;
+    }
+
     handleReservePress(
-      property.property.id,
+      selectedPropertyId,
       new Date(checkInDate).getTime(),
       new Date(checkOutDate).getTime(),
       adults + kids
@@ -341,8 +349,18 @@ const BookingContainer = ({
 
       <p className="note">You won’t be charged yet</p>
 
+      {hostId && (
+        <button
+          type="button"
+          className="listing-booking-card__message-host"
+          onClick={() => setShowMessageHost(true)}
+        >
+          Message host
+        </button>
+      )}
+
       <div className="listing-booking-card__trust-badges">
-        {cancellationPolicy && (
+        {cancellationPolicy?.type && (
           <div className="listing-booking-card__trust-item">
             <span className="listing-booking-card__trust-check">✓</span>{" "}{cancellationPolicy.type} cancellation
           </div>
@@ -367,14 +385,9 @@ const BookingContainer = ({
           <span className="listing-booking-card__per-night">per night</span>
         </div>
 
-        <DateSelectionContainer
-          className="date-container--mobile-sticky"
-          checkInDate={checkInDate}
-          setCheckInDate={handleCheckInDateChange}
-          checkOutDate={checkOutDate}
-          setCheckOutDate={handleCheckOutDateChange}
-          unavailableDateKeys={unavailableDateKeys}
-        />
+        <span className="listing-booking-card__mobile-sticky-dates">
+          {checkInDate && checkOutDate ? `${checkInDate} - ${checkOutDate}` : "Select dates above"}
+        </span>
 
         <button
           className="reserve-btn listing-booking-card__mobile-sticky-reserve"

@@ -23,11 +23,11 @@ const fetchHostInfo = async (ownerId) => {
 
         return {
             ...raw,
-            given_name: getAttr("given_name"),
-            family_name: getAttr("family_name"),
-            name: getAttr("name"),
-            email: getAttr("email"),
-            profileImage: getAttr("picture") || getAttr("profile") || null,
+            given_name: getAttr("given_name") || raw.given_name || "",
+            family_name: getAttr("family_name") || raw.family_name || "",
+            name: getAttr("name") || raw.name || "",
+            email: getAttr("email") || raw.email || "",
+            profileImage: getAttr("picture") || getAttr("profile") || raw.profileImage || null,
         };
     } catch {
         return {};

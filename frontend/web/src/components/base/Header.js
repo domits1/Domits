@@ -28,6 +28,7 @@ function Header({ setSearchResults, setLoading }) {
   const [group, setGroup] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [appsMenuOpen, setAppsMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState("guest");
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
@@ -125,6 +126,7 @@ function Header({ setSearchResults, setLoading }) {
 
   useEffect(() => {
     setDropdownVisible(false);
+    setAppsMenuOpen(false);
   }, [location]);
 
   useEffect(() => {
@@ -158,9 +160,14 @@ function Header({ setSearchResults, setLoading }) {
   useEffect(() => {
     const handleOutsideClick = (event) => {
       const dropdown = document.querySelector(".personalMenuDropdown");
+      const appsMenu = document.querySelector(".nineDotsMenuWrapper");
 
       if (dropdown && !dropdown.contains(event.target)) {
         setDropdownVisible(false);
+      }
+
+      if (appsMenu && !appsMenu.contains(event.target)) {
+        setAppsMenuOpen(false);
       }
     };
 
@@ -218,7 +225,12 @@ function Header({ setSearchResults, setLoading }) {
   };
 
   const navigateToNinedots = () => {
-    navigate("/travelinnovation");
+    setAppsMenuOpen((prev) => !prev);
+  };
+
+  const navigateFromAppsMenu = (path) => {
+    navigate(path);
+    setAppsMenuOpen(false);
   };
 
   const navigateToGuestDashboard = () => {
@@ -416,9 +428,35 @@ function Header({ setSearchResults, setLoading }) {
               </button>
             )}
 
-            <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
-              <img src={nineDots} alt="Nine Dots" />
-            </button>
+            <div className="nineDotsMenuWrapper">
+              <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
+                <img src={nineDots} alt="Nine Dots" />
+              </button>
+
+              {appsMenuOpen && (
+                <div className="appsDropdown">
+                  <div className="appsGrid">
+                    {[
+                      { id: "innovation", label: "Innovation lab", path: "/travelinnovation" },
+                      { id: "why", label: "Why Domits", path: "/travelinnovation#why" },
+                      { id: "features", label: "Features", path: "/travelinnovation#features" },
+                      { id: "steps", label: "Steps", path: "/travelinnovation#steps" },
+                      { id: "faq", label: "FAQ", path: "/travelinnovation#faq" },
+                      { id: "contact", label: "Contact", path: "/travelinnovation#contact" },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        className="appItem"
+                        type="button"
+                        onClick={() => navigateFromAppsMenu(item.path)}
+                      >
+                        <span className="appLabel">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="personalMenuDropdown">
               <button className="personalMenu" onClick={toggleDropdown}>
