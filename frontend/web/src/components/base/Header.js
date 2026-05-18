@@ -16,6 +16,7 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import { createNavigationHandlers } from "./navigationHandlers";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -201,47 +202,22 @@ function Header({ setSearchResults, setLoading }) {
     }
   };
 
-  const toggleDropdown = () => {
-    setDropdownVisible((prev) => !prev);
-  };
-
-  const navigateToLogin = () => {
-    navigate("/login");
-  };
-
-  const navigateToRegister = () => {
-    navigate("/register");
-  };
-
-  const navigateToLanding = () => {
-    navigate("/landing");
-  };
-
-  const navigateToNinedots = () => {
-    navigate("/travelinnovation");
-  };
-
-  const navigateToGuestDashboard = () => {
-    setCurrentView("guest");
-    navigate("/guestdashboard");
-  };
-
-  const navigateToHostDashboard = () => {
-    setCurrentView("host");
-    navigate("/hostdashboard");
-  };
-
-  const navigateToMessages = () => {
-    if (currentView === "host") {
-      navigate("/hostdashboard/messages");
-    } else {
-      navigate("/guestdashboard/messages");
-    }
-  };
-
-  const navigateToSettings = () => {
-    navigate("/guestdashboard/settings");
-  };
+  const {
+    toggleDropdown,
+    navigateToLogin,
+    navigateToRegister,
+    navigateToLanding,
+    navigateToNinedots,
+    navigateToGuestDashboard,
+    navigateToHostDashboard,
+    navigateToMessages,
+    navigateToSettings,
+  } = createNavigationHandlers({
+    navigate,
+    currentView,
+    setCurrentView,
+    setDropdownVisible,
+  });
 
   const navigateToDashboard = () => {
     if (isLoggedIn) {
