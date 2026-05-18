@@ -167,7 +167,7 @@ const matchesTaskFilters = (
 };
 
 const HostPropertyCare = () => {
-    const { managedHostId, isPurelyPOM } = useEffectiveHostId();
+    const { effectiveHostId, managedHostId, isPurelyPOM } = useEffectiveHostId();
 
     const [taskContext, setTaskContext] = useState('own');
     const asHostId = taskContext === 'managed' ? managedHostId : null;
@@ -378,8 +378,9 @@ const HostPropertyCare = () => {
     }, [tasks, filters, timeView]);
 
     useEffect(() => {
-        fetchHostTaskPropertyOptions().then(setPropertyOptions);
-    }, []);
+        const hostIdForOptions = asHostId ?? effectiveHostId;
+        fetchHostTaskPropertyOptions(hostIdForOptions).then(setPropertyOptions);
+    }, [asHostId, effectiveHostId]);
     
     const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
