@@ -229,7 +229,6 @@ const BookingContainer = ({
       setShowMobileStickyBar(cardBottom < globalThis.innerHeight - 24);
     };
 
-    updateStickyBarVisibility();
     const frameId = globalThis.requestAnimationFrame(updateStickyBarVisibility);
     globalThis.addEventListener("scroll", updateStickyBarVisibility, { passive: true });
     globalThis.addEventListener("resize", updateStickyBarVisibility);

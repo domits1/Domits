@@ -22,7 +22,7 @@ const Pricing = ({ pricing = {}, nights = 1 }) => {
     },
     { label: "Cleaning", value: fmt(cleaningSubtotal), amount: Number(cleaningSubtotal) },
     { label: "Service fee", value: fmt(serviceFee), amount: Number(serviceFee) },
-  ].filter((row) => row.amount === undefined || row.amount > 0);
+  ].filter((row) => row.amount === undefined || (Number.isFinite(row.amount) && row.amount > 0));
 
   return (
     <div className="pricing-container">
