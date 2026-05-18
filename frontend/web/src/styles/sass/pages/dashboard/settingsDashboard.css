@@ -852,3 +852,56 @@ dialog.team-modal h3 {
         text-align: center;
     }
 }
+
+/* ─── Accept invite page ─────────────────────────────────────────────────── */
+
+.accept-invite-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #f9fafb;
+}
+
+.accept-invite-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: min(480px, 100%);
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.accept-invite-card h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 12px;
+}
+
+.accept-invite-card p {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+.accept-invite-btn {
+    display: inline-block;
+    background: #15803d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+
+.accept-invite-btn:hover {
+    background: #166534;
+}
