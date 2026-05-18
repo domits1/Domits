@@ -17,6 +17,9 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 import { createNavigationHandlers } from "./navigationHandlers";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animations.js";
+import { FiGlobe, FiZap, FiCompass, FiCheckSquare, FiHelpCircle, FiMail } from "react-icons/fi";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -36,6 +39,7 @@ function Header({ setSearchResults, setLoading }) {
     () => globalThis.window !== undefined && globalThis.innerWidth <= 768
   );
   const [listingScrollProgress, setListingScrollProgress] = useState(0);
+  const [appsMenuOpen, setAppsMenuOpen] = useState(false);
 
   const { language, setLanguage } = useContext(LanguageContext);
   const components = contentByLanguage[language]?.component;
@@ -207,7 +211,6 @@ function Header({ setSearchResults, setLoading }) {
     navigateToLogin,
     navigateToRegister,
     navigateToLanding,
-    navigateToNinedots,
     navigateToGuestDashboard,
     navigateToHostDashboard,
     navigateToMessages,
@@ -236,6 +239,21 @@ function Header({ setSearchResults, setLoading }) {
     } else {
       navigateToHostDashboard();
     }
+  };
+
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      navigate("/landing");
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+
+    setAppsMenuOpen(false);
   };
 
   const toggleSearchBar = (status) => {
@@ -392,9 +410,45 @@ function Header({ setSearchResults, setLoading }) {
               </button>
             )}
 
-            <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
+            <button className="headerButtons nineDotsButton" onClick={() => setAppsMenuOpen((prev) => !prev)}>
               <img src={nineDots} alt="Nine Dots" />
             </button>
+
+            {appsMenuOpen && (
+              <motion.div
+                className="appsDropdown"
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+              >
+                <motion.div
+                  className="appsGrid"
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {[
+                    { id: "why", label: "Why Domits", icon: <FiGlobe /> },
+                    { id: "features", label: "Features", icon: <FiZap /> },
+                    { id: "steps", label: "Steps", icon: <FiCompass /> },
+                    { id: "checklist", label: "Checklist", icon: <FiCheckSquare /> },
+                    { id: "faq", label: "FAQ", icon: <FiHelpCircle /> },
+                    { id: "contact", label: "Contact", icon: <FiMail /> },
+                  ].map((item) => (
+                    <motion.button
+                      key={item.id}
+                      className="appItem"
+                      variants={fadeUp}
+                      onClick={() => scrollToSection(item.id)}
+                    >
+                      <span className="appIcon">{item.icon}</span>
+                      <span className="appLabel">{item.label}</span>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              </motion.div>
+            )}
 
             <div className="personalMenuDropdown">
               <button className="personalMenu" onClick={toggleDropdown}>

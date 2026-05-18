@@ -159,13 +159,17 @@ const BookingContainer = ({
   setCheckInDate = () => {},
   checkOutDate = "",
   setCheckOutDate = () => {},
-  showMessageHost = false,
-  setShowMessageHost = () => {},
+  showMessageHost: showMessageHostProp,
+  setShowMessageHost: setShowMessageHostProp,
 }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
   const [showMobileStickyBar, setShowMobileStickyBar] = useState(false);
+  const [localShowMessageHost, setLocalShowMessageHost] = useState(false);
   const bookingCardRef = useRef(null);
+
+  const showMessageHost = showMessageHostProp !== undefined ? showMessageHostProp : localShowMessageHost;
+  const setShowMessageHost = setShowMessageHostProp !== undefined ? setShowMessageHostProp : setLocalShowMessageHost;
 
   const handleReservePress = useHandleReservePress();
   const unavailableDateSet = useMemo(
