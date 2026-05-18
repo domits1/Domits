@@ -185,6 +185,161 @@
   line-height: 1.2;
 }
 
+.panoramaCalendarCard {
+  display: grid;
+  gap: clamp(24px, 2.8vw, 36px);
+  justify-items: center;
+  padding: clamp(28px, 4vw, 54px) clamp(18px, 3vw, 30px) clamp(22px, 3vw, 34px);
+  border-radius: 32px;
+  border: 1px solid rgba(197, 181, 151, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 249, 0.92), rgba(255, 255, 255, 0.9)),
+    #fbf8f2;
+}
+
+.panoramaCalendarIntro {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  width: min(100%, 620px);
+  text-align: center;
+}
+
+.panoramaCalendarEyebrow,
+.panoramaCalendarTitle,
+.panoramaCalendarDescription,
+.panoramaCalendarMonthTitle {
+  margin: 0;
+}
+
+.panoramaCalendarEyebrow {
+  color: #b78a42;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.panoramaCalendarTitle,
+.panoramaCalendarMonthTitle {
+  color: #1e3150;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-weight: 500;
+}
+
+.panoramaCalendarTitle {
+  font-size: clamp(2rem, 1.45rem + 1.5vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.panoramaCalendarDivider {
+  width: 64px;
+  height: 1px;
+  background: rgba(183, 138, 66, 0.65);
+}
+
+.panoramaCalendarDescription {
+  color: #7b8798;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.panoramaCalendarMonths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  width: min(100%, 900px);
+}
+
+.panoramaCalendarMonthCard {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  padding: 28px 24px 26px;
+  border: 1px solid rgba(208, 197, 178, 0.74);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.panoramaCalendarMonthTitle {
+  text-align: center;
+  font-size: clamp(1.4rem, 1.1rem + 0.5vw, 1.8rem);
+}
+
+.panoramaCalendarWeekdays,
+.panoramaCalendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.panoramaCalendarWeekdays {
+  gap: 10px 8px;
+}
+
+.panoramaCalendarGrid {
+  gap: 4px;
+}
+
+.panoramaCalendarWeekday {
+  text-align: center;
+  color: #7b8798;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.panoramaCalendarCell {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  color: #1e3150;
+}
+
+.panoramaCalendarCellReserved {
+  background: #e6e5e2;
+}
+
+.panoramaCalendarCellPlaceholder {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.panoramaCalendarCellDay {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.panoramaCalendarLegend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  color: #60708a;
+  font-size: 0.82rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.panoramaCalendarLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panoramaCalendarLegendSwatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(208, 197, 178, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.panoramaCalendarLegendSwatchReserved {
+  border-color: #e6e5e2;
+  background: #e6e5e2;
+}
+
 @media (max-width: 720px) {
   .calendarCard {
     padding: 16px;
@@ -198,5 +353,31 @@
 
   .calendarCellStatus {
     font-size: 0.5rem;
+  }
+
+  .panoramaCalendarCard {
+    padding: 22px 14px 20px;
+    border-radius: 24px;
+  }
+
+  .panoramaCalendarMonths {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaCalendarMonthCard {
+    padding: 22px 14px 20px;
+  }
+
+  .panoramaCalendarWeekday,
+  .panoramaCalendarLegend {
+    letter-spacing: 0.14em;
+  }
+
+  .panoramaCalendarCell {
+    min-height: 32px;
+  }
+
+  .panoramaCalendarCellDay {
+    font-size: 0.92rem;
   }
 }

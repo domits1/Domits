@@ -1,3 +1,12 @@
+import {
+  DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
+  DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
+  DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_TITLE,
+  resolveWebsiteContactAccentColor,
+  resolveWebsiteContactBackgroundColor,
+} from "./websiteContactSectionConfig";
+
 const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "siteTitle",
   "heroEyebrow",
@@ -5,6 +14,12 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "heroDescription",
   "ctaLabel",
   "ctaNote",
+  "contactTitle",
+  "contactDescription",
+  "contactAccentColor",
+  "contactBackgroundColor",
+  "contactAvatarImage",
+  "contactButtonLabel",
   "visibility",
   "heroImage",
   "galleryImages",
@@ -20,6 +35,7 @@ const VISIBILITY_KEYS = Object.freeze([
   "availabilityCalendar",
   "callToAction",
   "journeyStops",
+  "contactSection",
   "chatWidget",
 ]);
 
@@ -73,6 +89,13 @@ export const createEmptyWebsiteDraftEditorValues = () => ({
     ctaLabel: "",
     ctaNote: "",
   },
+  contact: {
+    title: "",
+    description: "",
+    avatarImage: "",
+    accentColor: DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
+    backgroundColor: DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
+  },
   visibility: VISIBILITY_KEYS.reduce(
     (visibilityMap, visibilityKey) => ({
       ...visibilityMap,
@@ -95,6 +118,13 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
   const heroDescription = cleanText(overrides.heroDescription);
   const ctaLabel = cleanText(overrides.ctaLabel);
   const ctaNote = cleanText(overrides.ctaNote);
+  const contactTitle = cleanText(overrides.contactTitle);
+  const contactDescription = cleanText(overrides.contactDescription);
+  const contactAvatarImage = cleanText(overrides.contactAvatarImage);
+  const contactAccentColorOverride = cleanText(overrides.contactAccentColor);
+  const contactAccentColor = resolveWebsiteContactAccentColor(contactAccentColorOverride);
+  const contactBackgroundColorOverride = cleanText(overrides.contactBackgroundColor);
+  const contactBackgroundColor = resolveWebsiteContactBackgroundColor(contactBackgroundColorOverride);
   const heroImage = cleanText(overrides.heroImage);
   const mergedGalleryImages = mergeGalleryImages(model?.gallery?.images, overrides.galleryImages);
   const mergedVisibility = mergeVisibility(model?.visibility, overrides.visibility);
@@ -131,6 +161,21 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
       label: ctaLabel || model.callToAction.label,
       note: ctaNote || model.callToAction.note,
     },
+    contactSection: {
+      ...(model?.contactSection && typeof model.contactSection === "object" ? model.contactSection : {}),
+      title: contactTitle || model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE,
+      description:
+        contactDescription ||
+        model?.contactSection?.description ||
+        DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+      avatarImage: contactAvatarImage || model?.contactSection?.avatarImage || "",
+      accentColor: contactAccentColorOverride
+        ? contactAccentColor
+        : model?.contactSection?.accentColor || DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
+      backgroundColor: contactBackgroundColorOverride
+        ? contactBackgroundColor
+        : model?.contactSection?.backgroundColor || DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
+    },
     trustCards: mergedTrustCards,
     journeyStops: mergedJourneyStops,
     visibility: mergedVisibility,
@@ -145,6 +190,13 @@ export const buildWebsiteDraftEditorValues = (model) => ({
     heroDescription: String(model?.hero?.description || ""),
     ctaLabel: String(model?.callToAction?.label || ""),
     ctaNote: String(model?.callToAction?.note || ""),
+  },
+  contact: {
+    title: String(model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE),
+    description: String(model?.contactSection?.description || DEFAULT_WEBSITE_CONTACT_DESCRIPTION),
+    avatarImage: String(model?.contactSection?.avatarImage || ""),
+    accentColor: resolveWebsiteContactAccentColor(model?.contactSection?.accentColor),
+    backgroundColor: resolveWebsiteContactBackgroundColor(model?.contactSection?.backgroundColor),
   },
   visibility: mergeVisibility({}, model?.visibility),
   images: {
@@ -194,6 +246,31 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
     patchKey: "ctaNote",
     editorValue: (editorValues) => editorValues?.common?.ctaNote,
     baseValue: (baseModel) => baseModel?.callToAction?.note,
+  },
+  {
+    patchKey: "contactTitle",
+    editorValue: (editorValues) => editorValues?.contact?.title,
+    baseValue: (baseModel) => baseModel?.contactSection?.title,
+  },
+  {
+    patchKey: "contactDescription",
+    editorValue: (editorValues) => editorValues?.contact?.description,
+    baseValue: (baseModel) => baseModel?.contactSection?.description,
+  },
+  {
+    patchKey: "contactAvatarImage",
+    editorValue: (editorValues) => editorValues?.contact?.avatarImage,
+    baseValue: (baseModel) => baseModel?.contactSection?.avatarImage,
+  },
+  {
+    patchKey: "contactAccentColor",
+    editorValue: (editorValues) => resolveWebsiteContactAccentColor(editorValues?.contact?.accentColor),
+    baseValue: (baseModel) => resolveWebsiteContactAccentColor(baseModel?.contactSection?.accentColor),
+  },
+  {
+    patchKey: "contactBackgroundColor",
+    editorValue: (editorValues) => resolveWebsiteContactBackgroundColor(editorValues?.contact?.backgroundColor),
+    baseValue: (baseModel) => resolveWebsiteContactBackgroundColor(baseModel?.contactSection?.backgroundColor),
   },
   {
     patchKey: "heroImage",

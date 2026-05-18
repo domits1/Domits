@@ -15,6 +15,7 @@ import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
+import { attachWebsiteHostProfile } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
@@ -135,6 +136,13 @@ function WebsitePublicSitePage() {
             siteId: nextResolution?.siteId,
             domain: requestedDomain,
           });
+        }
+
+        if (nextRenderPayload?.propertySnapshot) {
+          nextRenderPayload = {
+            ...nextRenderPayload,
+            propertySnapshot: await attachWebsiteHostProfile(nextRenderPayload.propertySnapshot),
+          };
         }
 
         if (!isMounted) {

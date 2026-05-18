@@ -46,7 +46,6 @@ import {
 } from "./services/websitePreviewSync";
 import { buildPublishedWebsiteHref, buildWebsitePreviewPath } from "./websitePublicSiteLinks";
 import {
-  COMMON_TEXT_FIELDS,
   EDITOR_SECTION_KEYS,
   EDITOR_TARGET_KEYS,
   LOADING_EDITOR_SECTIONS,
@@ -54,9 +53,15 @@ import {
   TEMPLATE_COPY_COLLECTION_CONFIG,
   TEMPLATE_IMAGE_SLOT_MAP,
   TEMPLATE_VISIBILITY_FIELD_MAP,
+  getCommonTextFields,
+  getContactSectionFields,
   getCollectionTargetId,
   getImageSlotTargetId,
 } from "./websiteEditorConfig";
+import {
+  resolveWebsiteContactAccentColor,
+  resolveWebsiteContactBackgroundColor,
+} from "./rendering/websiteContactSectionConfig";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import styles from "./WebsiteEditorPage.module.scss";
 import arrowDownIcon from "../../../images/arrow-down-icon.svg";
@@ -75,6 +80,19 @@ const normalizeUiErrorMessage = (message, fallbackMessage) => {
 
   return normalizedMessage;
 };
+
+const readImageFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    if (!file) {
+      reject(new Error("Select an image first."));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("We could not read that image file."));
+    reader.readAsDataURL(file);
+  });
 
 const formatStatusLabel = (status) => {
   const normalizedStatus = String(status || "").trim().toUpperCase();
@@ -283,6 +301,10 @@ const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) =
     return EDITOR_TARGET_KEYS.common.heroTitle;
   }
 
+  if (sectionId === EDITOR_SECTION_KEYS.contact) {
+    return EDITOR_TARGET_KEYS.contact.title;
+  }
+
   return "";
 };
 
@@ -354,6 +376,8 @@ const getPreviewTargetIdForVisibilityField = (fieldKey) => {
       return EDITOR_TARGET_KEYS.common.ctaLabel;
     case "journeyStops":
       return "visibility.journeyStops";
+    case "contactSection":
+      return EDITOR_TARGET_KEYS.contact.backgroundColor;
     case "chatWidget":
       return "visibility.chatWidget";
     default:
@@ -445,6 +469,168 @@ TextField.propTypes = {
   fieldRef: refPropType,
   isHighlighted: PropTypes.bool,
   onKeyDown: PropTypes.func,
+};
+
+function ContactColorField({
+  label,
+  hint,
+  value,
+  placeholder,
+  resolveColorValue,
+  inputAriaLabel,
+  onSelectColor,
+  onChangeInput,
+  onCommitInput,
+  onInputKeyDown,
+  fieldRef = null,
+  isHighlighted = false,
+  onFocus = undefined,
+  onBlur = undefined,
+}) {
+  return (
+    <div
+      ref={fieldRef}
+      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+    >
+      <div className={styles.customColorSection}>
+        <div className={styles.customColorHeader}>
+          <span className={styles.fieldLabel}>{label}</span>
+          <p className={styles.customColorHint}>{hint}</p>
+        </div>
+
+        <div className={styles.customColorRow}>
+          <label className={`${styles.colorPickerShell} ${styles.colorPickerShellSelected}`.trim()}>
+            <input
+              type="color"
+              className={styles.colorPickerInput}
+              value={resolveColorValue(value)}
+              onChange={(event) => onSelectColor(event.target.value)}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </label>
+          <input
+            type="text"
+            className={`${styles.textInput} ${styles.customColorInput}`.trim()}
+            value={value}
+            onChange={(event) => onChangeInput(event.target.value)}
+            onBlur={() => {
+              onCommitInput();
+              onBlur?.();
+            }}
+            onFocus={onFocus}
+            onKeyDown={onInputKeyDown}
+            inputMode="text"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder={placeholder}
+            aria-label={inputAriaLabel}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ContactColorField.propTypes = {
+  label: PropTypes.string.isRequired,
+  hint: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  placeholder: PropTypes.string.isRequired,
+  resolveColorValue: PropTypes.func.isRequired,
+  inputAriaLabel: PropTypes.string.isRequired,
+  onSelectColor: PropTypes.func.isRequired,
+  onChangeInput: PropTypes.func.isRequired,
+  onCommitInput: PropTypes.func.isRequired,
+  onInputKeyDown: PropTypes.func.isRequired,
+  fieldRef: refPropType,
+  isHighlighted: PropTypes.bool,
+  onFocus: PropTypes.func,
+  onBlur: PropTypes.func,
+};
+
+function ContactImageField({
+  inputId,
+  value,
+  fallbackImage = "",
+  onChangeFile,
+  onReset,
+  fieldRef = null,
+  isHighlighted = false,
+  onFocus = undefined,
+  onBlur = undefined,
+}) {
+  const previewImage = String(value || fallbackImage || "").trim();
+  const hasOverride = Boolean(String(value || "").trim());
+  const handleActivate = () => {
+    onFocus?.();
+  };
+
+  return (
+    <div
+      ref={fieldRef}
+      className={`${styles.imageSlotCard} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+    >
+      <div className={styles.imageSlotPreview}>
+        {previewImage ? (
+          <img src={previewImage} alt="" aria-hidden="true" className={styles.imageSlotPreviewImage} />
+        ) : (
+          <span className={styles.imageSlotPreviewEmpty}>No image selected</span>
+        )}
+      </div>
+
+      <div className={styles.imageSlotMeta}>
+        <div className={styles.fieldGroup}>
+          <span className={styles.fieldLabel}>Profile photo</span>
+          <span className={styles.helperText}>
+            {hasOverride
+              ? "Custom uploaded image active for this footer."
+              : "Using the current host profile picture from Domits."}
+          </span>
+        </div>
+
+        <div className={styles.buttonRow}>
+          <input
+            id={inputId}
+            hidden
+            type="file"
+            accept="image/*"
+            onChange={onChangeFile}
+            onFocus={onFocus}
+            onBlur={onBlur}
+          />
+          <label htmlFor={inputId} className={styles.secondaryButton} onClick={handleActivate}>
+            Upload image
+          </label>
+          {hasOverride ? (
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => {
+                handleActivate();
+                onReset();
+              }}
+            >
+              Use host photo
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ContactImageField.propTypes = {
+  inputId: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  fallbackImage: PropTypes.string,
+  onChangeFile: PropTypes.func.isRequired,
+  onReset: PropTypes.func.isRequired,
+  onFocus: PropTypes.func,
+  onBlur: PropTypes.func,
+  fieldRef: refPropType,
+  isHighlighted: PropTypes.bool,
 };
 
 function AmenityIconSelectField({
@@ -952,6 +1138,7 @@ function WebsiteEditorPage() {
   const [siteSummaryError, setSiteSummaryError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
+    [EDITOR_SECTION_KEYS.contact]: false,
     [EDITOR_SECTION_KEYS.theme]: false,
     [EDITOR_SECTION_KEYS.visibility]: false,
     [EDITOR_SECTION_KEYS.images]: false,
@@ -1054,6 +1241,8 @@ function WebsiteEditorPage() {
   }, [propertyId]);
 
   const draftTemplate = getWebsiteTemplateById(draftRecord?.templateKey);
+  const commonTextFields = getCommonTextFields(draftRecord?.templateKey);
+  const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
@@ -1141,6 +1330,7 @@ function WebsiteEditorPage() {
   useEffect(() => {
     setExpandedSections({
       [EDITOR_SECTION_KEYS.common]: true,
+      [EDITOR_SECTION_KEYS.contact]: false,
       [EDITOR_SECTION_KEYS.theme]: false,
       [EDITOR_SECTION_KEYS.visibility]: false,
       [EDITOR_SECTION_KEYS.images]: false,
@@ -1259,6 +1449,132 @@ function WebsiteEditorPage() {
       common: {
         ...currentValues.common,
         [fieldKey]: nextValue,
+      },
+    }));
+  };
+
+  const handleContactFieldChange = (fieldKey) => (event) => {
+    const nextValue = event.target.value;
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        [fieldKey]: nextValue,
+      },
+    }));
+  };
+
+  const updateContactColorField = (fieldKey, resolveColor) => (nextValue) => {
+    const resolvedColor = resolveColor(nextValue);
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        [fieldKey]: resolvedColor,
+      },
+    }));
+  };
+
+  const updateContactColorInputField = (fieldKey) => (nextInputValue) => {
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        [fieldKey]: nextInputValue,
+      },
+    }));
+  };
+
+  const commitContactColorInput = (fieldKey, resolveColor) => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        [fieldKey]: resolveColor(currentValues?.contact?.[fieldKey]),
+      },
+    }));
+  };
+
+  const createContactColorInputKeyDownHandler = (fieldKey, resolveColor) => async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitContactColorInput(fieldKey, resolveColor);
+    await saveDraftChanges();
+  };
+
+  const handleContactAccentColorChange = (accentColor) => {
+    updateContactColorField("accentColor", resolveWebsiteContactAccentColor)(accentColor);
+  };
+
+  const handleContactAccentColorInputChange = (nextInputValue) => {
+    updateContactColorInputField("accentColor")(nextInputValue);
+  };
+
+  const commitContactAccentColorInput = () => {
+    commitContactColorInput("accentColor", resolveWebsiteContactAccentColor);
+  };
+
+  const handleContactAccentColorInputKeyDown = createContactColorInputKeyDownHandler(
+    "accentColor",
+    resolveWebsiteContactAccentColor
+  );
+
+  const handleContactBackgroundColorChange = (backgroundColor) => {
+    updateContactColorField("backgroundColor", resolveWebsiteContactBackgroundColor)(backgroundColor);
+  };
+
+  const handleContactBackgroundColorInputChange = (nextInputValue) => {
+    updateContactColorInputField("backgroundColor")(nextInputValue);
+  };
+
+  const commitContactBackgroundColorInput = () => {
+    commitContactColorInput("backgroundColor", resolveWebsiteContactBackgroundColor);
+  };
+
+  const handleContactBackgroundColorInputKeyDown = createContactColorInputKeyDownHandler(
+    "backgroundColor",
+    resolveWebsiteContactBackgroundColor
+  );
+
+  const handleContactImageFileChange = async (event) => {
+    const nextFile = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!nextFile) {
+      return;
+    }
+
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact.avatarImage);
+
+    try {
+      const nextAvatarImage = await readImageFileAsDataUrl(nextFile);
+      setEditorValues((currentValues) => ({
+        ...currentValues,
+        contact: {
+          ...currentValues.contact,
+          avatarImage: nextAvatarImage,
+        },
+      }));
+    } catch (error) {
+      toast.error(
+        normalizeUiErrorMessage(error?.message, "We could not upload that image for the contact footer.")
+      );
+    }
+  };
+
+  const handleContactImageReset = () => {
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact.avatarImage);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        avatarImage: "",
       },
     }));
   };
@@ -1837,7 +2153,7 @@ function WebsiteEditorPage() {
                   sectionRef={setSectionRef(EDITOR_SECTION_KEYS.common)}
                 >
                   <div className={styles.fieldStack}>
-                    {COMMON_TEXT_FIELDS.map((field) => (
+                    {commonTextFields.map((field) => (
                       <TextField
                         key={field.key}
                         field={field}
@@ -2038,6 +2354,79 @@ function WebsiteEditorPage() {
                             />
                           </div>
                         ))}
+                    </div>
+                  </CollapsibleSection>
+                ) : null}
+
+                {contactSectionFields.length > 0 ? (
+                  <CollapsibleSection
+                    sectionId={EDITOR_SECTION_KEYS.contact}
+                    title="Contact footer"
+                    description="Adjust the footer copy, profile photo override, and surface colors for the panorama contact section."
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.contact])}
+                    onToggle={toggleSection}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.contact)}
+                  >
+                    <div className={styles.fieldStack}>
+                      {contactSectionFields.map((field) => (
+                        <TextField
+                          key={field.key}
+                          field={{ key: `contact-${field.key}`, label: field.label, component: field.component }}
+                          value={editorValues.contact[field.key]}
+                          onChange={handleContactFieldChange(field.key)}
+                          onKeyDown={handleEditorFieldKeyDown(field)}
+                          fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact[field.key])}
+                          isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact[field.key]}
+                          onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact[field.key])}
+                          onBlur={clearActivePreviewTarget}
+                        />
+                      ))}
+
+                      <ContactImageField
+                        inputId="website-editor-contact-avatar-upload"
+                        value={editorValues.contact.avatarImage}
+                        fallbackImage={previewModel.host?.profileImage || ""}
+                        onChangeFile={handleContactImageFileChange}
+                        onReset={handleContactImageReset}
+                        fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact.avatarImage)}
+                        isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact.avatarImage}
+                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact.avatarImage)}
+                        onBlur={clearActivePreviewTarget}
+                      />
+
+                      <ContactColorField
+                        label="Footer color"
+                        hint="Controls the main surface color behind the contact footer."
+                        value={editorValues.contact.backgroundColor}
+                        placeholder="#1b2436"
+                        resolveColorValue={resolveWebsiteContactBackgroundColor}
+                        inputAriaLabel="Contact footer background color"
+                        onSelectColor={handleContactBackgroundColorChange}
+                        onChangeInput={handleContactBackgroundColorInputChange}
+                        onCommitInput={commitContactBackgroundColorInput}
+                        onInputKeyDown={handleContactBackgroundColorInputKeyDown}
+                        fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact.backgroundColor)}
+                        isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact.backgroundColor}
+                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact.backgroundColor)}
+                        onBlur={clearActivePreviewTarget}
+                      />
+
+                      <ContactColorField
+                        label="Accent color"
+                        hint="Used for the eyebrow, avatar ring, and section highlights."
+                        value={editorValues.contact.accentColor}
+                        placeholder="#f5e5cb"
+                        resolveColorValue={resolveWebsiteContactAccentColor}
+                        inputAriaLabel="Contact footer accent color"
+                        onSelectColor={handleContactAccentColorChange}
+                        onChangeInput={handleContactAccentColorInputChange}
+                        onCommitInput={commitContactAccentColorInput}
+                        onInputKeyDown={handleContactAccentColorInputKeyDown}
+                        fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact.accentColor)}
+                        isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact.accentColor}
+                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact.accentColor)}
+                        onBlur={clearActivePreviewTarget}
+                      />
                     </div>
                   </CollapsibleSection>
                 ) : null}

@@ -116,10 +116,14 @@ export function TemplateAvailabilityCalendar({
   model,
   onSelectTarget = undefined,
   activeTargetId = "",
+  variant = "default",
+  propertyTitle = "",
 }) {
   return (
     <AvailabilityCalendarPreview
       availability={model.availability}
+      variant={variant}
+      propertyTitle={propertyTitle}
       interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
         sectionId: "visibility",
         targetId: "visibility.availabilityCalendar",
@@ -134,6 +138,8 @@ TemplateAvailabilityCalendar.propTypes = {
   }).isRequired,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  variant: PropTypes.oneOf(["default", "panorama"]),
+  propertyTitle: PropTypes.string,
 };
 
 export function TemplateSoftCallout({

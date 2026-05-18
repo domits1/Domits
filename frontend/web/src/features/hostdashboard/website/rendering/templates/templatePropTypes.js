@@ -21,7 +21,11 @@ export const galleryPropType = PropTypes.shape({
 export const availabilityPropType = PropTypes.shape({
   externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  blockedDateCount: PropTypes.number,
+  unavailableDateCount: PropTypes.number,
   syncSummary: PropTypes.string,
+  externalBlockedSummary: PropTypes.string,
+  unavailableDateSummary: PropTypes.string,
   blockedDateSummary: PropTypes.string,
   lastSyncLabel: PropTypes.string,
   nextBlockedLabel: PropTypes.string,
@@ -31,6 +35,20 @@ export const availabilityPropType = PropTypes.shape({
 export const callToActionPropType = PropTypes.shape({
   label: PropTypes.string.isRequired,
   note: PropTypes.string,
+});
+
+export const hostPropType = PropTypes.shape({
+  name: PropTypes.string.isRequired,
+  profileImage: PropTypes.string,
+  initial: PropTypes.string,
+});
+
+export const contactSectionPropType = PropTypes.shape({
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  accentColor: PropTypes.string,
+  backgroundColor: PropTypes.string,
+  avatarImage: PropTypes.string,
 });
 
 export const copyItemPropType = PropTypes.shape({
@@ -54,6 +72,7 @@ export const visibilityPropType = PropTypes.shape({
   availabilityCalendar: PropTypes.bool,
   callToAction: PropTypes.bool,
   journeyStops: PropTypes.bool,
+  contactSection: PropTypes.bool,
   chatWidget: PropTypes.bool,
 });
 

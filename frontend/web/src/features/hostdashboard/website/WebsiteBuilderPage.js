@@ -45,6 +45,12 @@ import {
 import { fetchWebsiteSiteByPropertyId } from "./services/websiteSiteService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
+import {
+  DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
+  DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
+  DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_TITLE,
+} from "./rendering/websiteContactSectionConfig";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides } from "./rendering/websiteDraftThemeOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";
@@ -258,6 +264,12 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
         status: String(draft?.propertyStatus || draft?.status || "DRAFT").trim(),
         locale: "en",
       },
+      host: {
+        name: String(draft?.hostName || draft?.hostGivenName || "Host").trim() || "Host",
+        profileImage: "",
+        initial:
+          String(draft?.hostName || draft?.hostGivenName || "H").trim().charAt(0).toUpperCase() || "H",
+      },
       site: {
         title,
         subtitle,
@@ -375,6 +387,13 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
         label: "Open editor",
         note: "Saved website draft ready for continued editing.",
       },
+      contactSection: {
+        title: DEFAULT_WEBSITE_CONTACT_TITLE,
+        description: DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+        accentColor: DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
+        backgroundColor: DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
+        avatarImage: "",
+      },
       visibility: {
         topBar: true,
         trustCards: true,
@@ -383,6 +402,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
         availabilityCalendar: true,
         callToAction: true,
         journeyStops: true,
+        contactSection: true,
         chatWidget: true,
       },
     },

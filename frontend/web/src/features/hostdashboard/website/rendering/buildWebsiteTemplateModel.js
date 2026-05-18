@@ -1,6 +1,14 @@
 import amenitiesCatalog from "../../../../store/amenities";
 import { placeholderImage, resolveAccommodationImageUrls } from "../../../../utils/accommodationImage";
 import { AMENITY_CATEGORY_ORDER, POLICY_RULE_CONFIG } from "../../hostproperty/constants";
+import {
+  DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
+  DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
+  DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_TITLE,
+  resolveWebsiteContactAccentColor,
+  resolveWebsiteContactBackgroundColor,
+} from "./websiteContactSectionConfig";
 
 const DEFAULT_LOCALE = "en";
 const MAX_FEATURED_AMENITIES = 6;
@@ -127,6 +135,31 @@ const buildLocationLabel = (location, summaryProperty) => {
   }
 
   return cleanText(summaryProperty?.location);
+};
+
+const buildHostDetails = (propertyDetails, summaryProperty) => {
+  const hostProfile =
+    propertyDetails?.hostProfile && typeof propertyDetails.hostProfile === "object"
+      ? propertyDetails.hostProfile
+      : propertyDetails?.host && typeof propertyDetails.host === "object"
+        ? propertyDetails.host
+        : {};
+
+  const name = cleanText(
+    hostProfile?.givenName ||
+      hostProfile?.name ||
+      hostProfile?.fullName ||
+      summaryProperty?.hostName ||
+      summaryProperty?.host?.givenName ||
+      "Host"
+  );
+  const profileImage = cleanText(hostProfile?.profileImage || hostProfile?.picture || hostProfile?.image);
+
+  return {
+    name: name || "Host",
+    profileImage,
+    initial: (name || "H").charAt(0).toUpperCase(),
+  };
 };
 
 const buildAmenityItems = (amenities) => {
@@ -443,6 +476,14 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   const previewImages = galleryImages.slice(0, 3);
   const featuredGalleryImages = galleryImages.slice(0, MAX_FEATURED_GALLERY_IMAGES);
   const locationLabel = buildLocationLabel(propertyDetails?.location, summaryProperty);
+  const hostId = cleanText(
+    property.hostId ||
+      property.host_id ||
+      propertyDetails?.hostProfile?.userId ||
+      propertyDetails?.host?.userId ||
+      summaryProperty?.hostId
+  );
+  const host = buildHostDetails(propertyDetails, summaryProperty);
 
   const title = cleanText(property.title || summaryProperty?.title || summaryProperty?.label || "Untitled listing");
   const subtitle = cleanText(property.subtitle);
@@ -475,10 +516,11 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   return {
     source: {
       propertyId: cleanText(property.id || summaryProperty?.value),
-      hostId: cleanText(property.hostId || property.host_id || summaryProperty?.hostId),
+      hostId,
       status: cleanText(property.status || summaryProperty?.status || "INACTIVE"),
       locale: DEFAULT_LOCALE,
     },
+    host,
     site: {
       title,
       subtitle,
@@ -577,6 +619,13 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       label: "Check live availability",
       note: "Live pricing and availability stay server-side and are checked on quote request.",
     },
+    contactSection: {
+      title: DEFAULT_WEBSITE_CONTACT_TITLE,
+      description: DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+      accentColor: resolveWebsiteContactAccentColor(DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR),
+      backgroundColor: resolveWebsiteContactBackgroundColor(DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR),
+      avatarImage: "",
+    },
     visibility: {
       topBar: true,
       trustCards: true,
@@ -585,6 +634,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       availabilityCalendar: true,
       callToAction: true,
       journeyStops: true,
+      contactSection: true,
       chatWidget: true,
     },
   };

@@ -8,7 +8,7 @@ export const PREVIEW_VIEWPORT_OPTIONS = Object.freeze([
   { id: "mobile", label: "Mobile", Icon: SmartphoneOutlinedIcon },
 ]);
 
-export const COMMON_TEXT_FIELDS = Object.freeze([
+const BASE_COMMON_TEXT_FIELDS = Object.freeze([
   { key: "siteTitle", label: "Website title", component: "input" },
   { key: "heroEyebrow", label: "Hero eyebrow", component: "input" },
   { key: "heroTitle", label: "Hero title", component: "input" },
@@ -17,8 +17,14 @@ export const COMMON_TEXT_FIELDS = Object.freeze([
   { key: "ctaNote", label: "CTA note", component: "textarea" },
 ]);
 
+const PANORAMA_CONTACT_FIELDS = Object.freeze([
+  { key: "title", label: "Section title", component: "input" },
+  { key: "description", label: "Section description", component: "textarea" },
+]);
+
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
+  contact: "contact",
   theme: "theme",
   visibility: "visibility",
   images: "images",
@@ -34,6 +40,13 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     heroDescription: "common.heroDescription",
     ctaLabel: "common.ctaLabel",
     ctaNote: "common.ctaNote",
+  },
+  contact: {
+    title: "contact.title",
+    description: "contact.description",
+    avatarImage: "contact.avatarImage",
+    accentColor: "contact.accentColor",
+    backgroundColor: "contact.backgroundColor",
   },
   visibility: (fieldKey) => `visibility.${fieldKey}`,
   images: {
@@ -52,6 +65,7 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
     { key: "gallerySection", label: "Show gallery section", description: "Controls the imported photo strip in the lower content block." },
     { key: "amenitiesPanel", label: "Show amenities panel", description: "Controls the featured amenities panel in the lower content block." },
     { key: "availabilityCalendar", label: "Show availability calendar", description: "Controls the imported availability snapshot section." },
+    { key: "contactSection", label: "Show contact footer", description: "Controls the contact footer section at the bottom of the page." },
     { key: "chatWidget", label: "Show chat widget", description: "Shows the visitor contact widget on the website." },
   ],
   "trust-signals": [
@@ -139,6 +153,18 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
     description: "Loading imported listing photos and template image slot mappings.",
   },
 ]);
+
+export const getCommonTextFields = (templateKey) => {
+  return BASE_COMMON_TEXT_FIELDS;
+};
+
+export const getContactSectionFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_CONTACT_FIELDS;
+  }
+
+  return [];
+};
 
 export const getCollectionTargetId = (collectionKey, itemIndex) => {
   if (collectionKey === EDITOR_SECTION_KEYS.trustCards) {

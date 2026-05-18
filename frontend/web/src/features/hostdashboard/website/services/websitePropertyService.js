@@ -1,5 +1,9 @@
 import { getAccessToken } from "../../../../services/getAccessToken";
 import { dbListIcalSources } from "../../../../utils/icalRetrieveHost";
+import {
+  fetchUserProfileById,
+  getEmptyUserProfile,
+} from "../../services/fetchUserProfileById";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
 
@@ -8,6 +12,7 @@ const buildSinglePropertyUrl = (propertyId) =>
 const buildCalendarOverridesUrl = (propertyId) =>
   `${PROPERTY_API_BASE}/calendar/overrides?propertyId=${encodeURIComponent(propertyId)}`;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const HOST_PROFILE_PROMISE_CACHE = new Map();
 
 const normalizeTimestamp = (value) => {
   if (value == null || value === "") {
@@ -40,6 +45,55 @@ const normalizeOverrideDateKey = (value) => {
 
   const stringValue = String(value || "").trim();
   return DATE_KEY_PATTERN.test(stringValue) ? stringValue : "";
+};
+
+const normalizeHostId = (value) => String(value || "").trim();
+
+const resolveWebsiteHostId = (propertyDetails, summaryProperty = null) =>
+  [
+    propertyDetails?.hostProfile?.userId,
+    propertyDetails?.hostProfile?.sub,
+    propertyDetails?.host?.userId,
+    propertyDetails?.host?.sub,
+    propertyDetails?.property?.hostId,
+    propertyDetails?.property?.host_id,
+    summaryProperty?.hostId,
+  ]
+    .map((value) => normalizeHostId(value))
+    .find(Boolean) || "";
+
+const normalizeWebsiteHostProfile = (hostProfile, fallbackHostId = "") => {
+  const normalizedHostId =
+    normalizeHostId(hostProfile?.userId || hostProfile?.sub) || normalizeHostId(fallbackHostId) || null;
+  const normalizedGivenName = String(hostProfile?.givenName || hostProfile?.name || "").trim();
+  const normalizedProfileImage = String(
+    hostProfile?.profileImage || hostProfile?.picture || hostProfile?.image || ""
+  ).trim();
+
+  return {
+    ...getEmptyUserProfile(normalizedHostId),
+    givenName: normalizedGivenName || null,
+    profileImage: normalizedProfileImage || null,
+    userId: normalizedHostId,
+  };
+};
+
+const fetchWebsiteHostProfile = async (hostId) => {
+  const normalizedHostId = normalizeHostId(hostId);
+  if (!normalizedHostId) {
+    return getEmptyUserProfile(null);
+  }
+
+  if (!HOST_PROFILE_PROMISE_CACHE.has(normalizedHostId)) {
+    HOST_PROFILE_PROMISE_CACHE.set(
+      normalizedHostId,
+      fetchUserProfileById(normalizedHostId)
+        .then((hostProfile) => normalizeWebsiteHostProfile(hostProfile, normalizedHostId))
+        .catch(() => getEmptyUserProfile(normalizedHostId))
+    );
+  }
+
+  return HOST_PROFILE_PROMISE_CACHE.get(normalizedHostId);
 };
 
 const normalizeUnavailableDates = (overridesPayload) =>
@@ -102,6 +156,24 @@ const mergeWebsiteCalendarAvailability = (propertyDetails, calendarSourcesPayloa
   };
 };
 
+export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty = null) => {
+  const normalizedPropertyDetails =
+    propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
+  const hostId = resolveWebsiteHostId(normalizedPropertyDetails, summaryProperty);
+
+  if (normalizedPropertyDetails.hostProfile && typeof normalizedPropertyDetails.hostProfile === "object") {
+    return {
+      ...normalizedPropertyDetails,
+      hostProfile: normalizeWebsiteHostProfile(normalizedPropertyDetails.hostProfile, hostId),
+    };
+  }
+
+  return {
+    ...normalizedPropertyDetails,
+    hostProfile: await fetchWebsiteHostProfile(hostId),
+  };
+};
+
 export const fetchWebsitePropertyDetails = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
@@ -130,6 +202,7 @@ export const fetchWebsitePropertyDetails = async (propertyId) => {
   }
 
   const propertyDetails = await response.json();
+  let nextPropertyDetails = propertyDetails;
 
   try {
     const [calendarSourcesPayload, overridesPayload] = await Promise.all([
@@ -149,8 +222,13 @@ export const fetchWebsitePropertyDetails = async (propertyId) => {
         })
         .catch(() => null),
     ]);
-    return mergeWebsiteCalendarAvailability(propertyDetails, calendarSourcesPayload, overridesPayload);
-  } catch {
-    return propertyDetails;
-  }
+
+    nextPropertyDetails = mergeWebsiteCalendarAvailability(
+      propertyDetails,
+      calendarSourcesPayload,
+      overridesPayload
+    );
+  } catch {}
+
+  return attachWebsiteHostProfile(nextPropertyDetails);
 };
