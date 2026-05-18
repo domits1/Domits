@@ -229,6 +229,7 @@ const BookingContainer = ({
       setShowMobileStickyBar(cardBottom < globalThis.innerHeight - 24);
     };
 
+    updateStickyBarVisibility();
     const frameId = globalThis.requestAnimationFrame(updateStickyBarVisibility);
     globalThis.addEventListener("scroll", updateStickyBarVisibility, { passive: true });
     globalThis.addEventListener("resize", updateStickyBarVisibility);
@@ -359,7 +360,7 @@ const BookingContainer = ({
       )}
 
       <div className="listing-booking-card__trust-badges">
-        {cancellationPolicy?.type && (
+        {cancellationPolicy && cancellationPolicy.type && (
           <div className="listing-booking-card__trust-item">
             <span className="listing-booking-card__trust-check">✓</span>{" "}{cancellationPolicy.type} cancellation
           </div>

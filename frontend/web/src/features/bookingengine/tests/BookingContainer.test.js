@@ -18,7 +18,7 @@ jest.mock("../listingdetails/utils/dateAvailability", () => ({
 jest.mock("../../../utils/policyDisplayUtils", () => ({
   getActiveCancellationPolicyId: jest.fn(() => null),
   parseCancellationPolicyString: jest.fn(() => null),
-  parseCancellationPolicy: jest.fn(() => ({ summary: "Policy summary" })),
+  parseCancellationPolicy: jest.fn(() => ({ type: undefined, summary: "Policy summary" })),
 }));
 
 describe("BookingContainer", () => {
