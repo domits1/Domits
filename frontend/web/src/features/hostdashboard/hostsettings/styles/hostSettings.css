@@ -99,6 +99,11 @@
     line-height: 1.5;
 }
 
+.host-settings-card-chevron {
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
 .host-settings-back {
     display: inline-flex;
     align-items: center;
