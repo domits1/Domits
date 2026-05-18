@@ -105,19 +105,29 @@ const fetchListingsByHostId = async ({ hostId, token }) => {
     return Array.isArray(data) ? data : [];
 };
 
-const fetchHostOwnedListings = async () => {
+const fetchHostOwnedListings = async (effectiveHostId) => {
     const token = getAccessToken();
     if (!token) {
         throw new Error("You must be signed in to load your listings.");
     }
 
-    const hostId = getCognitoUserId();
+    const ownId = getCognitoUserId();
+    const isPOM = effectiveHostId && effectiveHostId !== ownId;
+
+    if (isPOM) {
+        const fallbackListings = await fetchListingsByHostId({ hostId: effectiveHostId, token });
+        if (fallbackListings !== null) {
+            return fallbackListings;
+        }
+        return [];
+    }
+
     const primaryResult = await fetchListingsFromHostDashboard(token);
     if (primaryResult.listings !== null) {
         return primaryResult.listings;
     }
 
-    const fallbackListings = await fetchListingsByHostId({ hostId, token });
+    const fallbackListings = await fetchListingsByHostId({ hostId: ownId, token });
     if (fallbackListings !== null) {
         return fallbackListings;
     }
@@ -125,14 +135,14 @@ const fetchHostOwnedListings = async () => {
     throw new Error("Failed to load your properties.");
 };
 
-export const fetchHostPropertySelectOptions = async () => {
-    const listings = await fetchHostOwnedListings();
+export const fetchHostPropertySelectOptions = async (effectiveHostId) => {
+    const listings = await fetchHostOwnedListings(effectiveHostId);
     return normalizePropertySelectOptions(listings);
 };
 
-export const fetchHostTaskPropertyOptions = async () => {
+export const fetchHostTaskPropertyOptions = async (effectiveHostId) => {
     try {
-        const propertyOptions = await fetchHostPropertySelectOptions();
+        const propertyOptions = await fetchHostPropertySelectOptions(effectiveHostId);
         return propertyOptions.map(({ value, label }) => ({ id: value, label }));
     } catch {
         return [];

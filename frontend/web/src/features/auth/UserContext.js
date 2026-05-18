@@ -10,6 +10,7 @@ export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
     const [isPOM, setIsPOM] = useState(false);
+    const [memberships, setMemberships] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -32,9 +33,11 @@ export const UserProvider = ({ children }) => {
         };
         const checkMemberships = async () => {
             try {
-                const memberships = await fetchMemberships();
-                setIsPOM(memberships.length > 0);
+                const result = await fetchMemberships();
+                setMemberships(Array.isArray(result) ? result : []);
+                setIsPOM(Array.isArray(result) && result.length > 0);
             } catch {
+                setMemberships([]);
                 setIsPOM(false);
             }
         };
@@ -45,8 +48,8 @@ export const UserProvider = ({ children }) => {
     const hasRole = (allowedRoles) => allowedRoles.includes(role);
 
     const contextValue = useMemo(
-        () => ({ user, role, isPOM, isLoading, hasRole }),
-        [user, role, isPOM, isLoading]
+        () => ({ user, role, isPOM, memberships, isLoading, hasRole }),
+        [user, role, isPOM, memberships, isLoading]
     );
 
     return (

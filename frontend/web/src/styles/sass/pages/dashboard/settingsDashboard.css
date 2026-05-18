@@ -888,6 +888,13 @@ dialog.team-modal h3 {
     line-height: 1.5;
 }
 
+.accept-invite-card .accept-invite-btn {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
 .accept-invite-btn {
     display: inline-block;
     background: #15803d;
@@ -904,4 +911,15 @@ dialog.team-modal h3 {
 
 .accept-invite-btn:hover {
     background: #166534;
+}
+
+.accept-invite-btn--secondary {
+    background: transparent;
+    color: #15803d;
+    border: 1.5px solid #15803d;
+    margin-top: 8px;
+}
+
+.accept-invite-btn--secondary:hover {
+    background: #f0fdf4;
 }

@@ -13,6 +13,7 @@ const HostTeam = () => {
     const [inviteRole, setInviteRole] = useState("Property Operations Manager");
     const [inviteSent, setInviteSent] = useState(false);
     const [inviteError, setInviteError] = useState("");
+    const [loadError, setLoadError] = useState(false);
 
     useEffect(() => {
         const loadHost = async () => {
@@ -35,7 +36,7 @@ const HostTeam = () => {
     useEffect(() => {
         fetchTeamMembers()
             .then(setMembers)
-            .catch(() => {});
+            .catch(() => setLoadError(true));
     }, []);
 
     useEffect(() => {
@@ -135,7 +136,11 @@ const HostTeam = () => {
                     </button>
                 </div>
 
-                {members.length === 0 ? (
+                {loadError ? (
+                    <div className="team-empty-state">
+                        <p>Failed to load team members. Please refresh the page.</p>
+                    </div>
+                ) : members.length === 0 ? (
                     <div className="team-empty-state">
                         <p>No additional team members yet. Invite a co-host to get started.</p>
                     </div>
