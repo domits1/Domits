@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import ReactDOM from "react-dom";
+import PropTypes from "prop-types";
 import logo from "../../images/logo.svg";
 import nineDots from "../../images/dots-grid.svg";
 import profile from "../../images/profile-icon.svg";
@@ -188,26 +189,6 @@ function Header({ setSearchResults, setLoading }) {
     }
   };
 
-  const scrollToSection = (id) => {
-  const element = document.getElementById(id);
-
-  if (element) {
-    element.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  } else {
-    navigate("/landing");
-
-    setTimeout(() => {
-      const el = document.getElementById(id);
-      el?.scrollIntoView({ behavior: "smooth" });
-    }, 300);
-  }
-
-  setAppsMenuOpen(false);
-};
-
   const handleLogout = async () => {
     try {
       await Auth.signOut();
@@ -236,8 +217,6 @@ function Header({ setSearchResults, setLoading }) {
     }
   });
 
-  const [appsMenuOpen, setAppsMenuOpen] = useState(false);
-
   const toggleDropdown = () => {
     setDropdownVisible((prev) => !prev);
   };
@@ -258,9 +237,6 @@ function Header({ setSearchResults, setLoading }) {
     navigate("/travelinnovation");
   };
 
-  const navigateToWhyDomits = () => {
-    navigate("/why-domits");
-  };
   const navigateToGuestDashboard = () => {
     setCurrentView("guest");
     navigate("/guestdashboard");
@@ -451,84 +427,6 @@ function Header({ setSearchResults, setLoading }) {
                   onClick={() => setLanguage(lng.code)}
                 >
                   {lng.emoji}
-          {!isLoggedIn ? (
-            <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-              {components.user.becomeHost}
-            </button>
-          ) : group === "Host" ? (
-            <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
-              {currentView === "guest" ? `${components.user.switchToHost}` : `${components.user.switchToGuest}`}
-            </button>
-          ) : (
-            <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-              {components.user.becomeHost}
-            </button>
-          )}
-          {isLoggedIn && group === "Traveler" && (
-            <button className="headerButtons" onClick={navigateToGuestDashboard}>
-              Go to Dashboard
-            </button>
-          )}
-          <button
-             className="headerButtons nineDotsButton"
-              onClick={() => setAppsMenuOpen((prev) => !prev)}
-          >
-            <img src={nineDots} alt="Nine Dots" />
-          </button>
-
-          {appsMenuOpen && (
-            <motion.div
-              className="appsDropdown"
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-         >
-            <motion.div
-              className="appsGrid"
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-          >
-            {[
-              { id: "why", label: "Why Domits", icon: <FiGlobe /> },
-              { id: "features", label: "Features", icon: <FiZap /> },
-              { id: "steps", label: "Steps", icon: <FiCompass /> },
-              { id: "checklist", label: "Checklist", icon: <FiCheckSquare /> },
-              { id: "faq", label: "FAQ", icon: <FiHelpCircle /> },
-              { id: "contact", label: "Contact", icon: <FiMail /> },
-            ].map((item) => (
-            
-                <motion.button
-                  key={item.id}
-                  className="appItem"
-                  variants={fadeUp}
-                  onClick={() => scrollToSection(item.id)}
-                >
-                  <span className="appIcon">{item.icon}</span>
-                  <span className="appLabel">{item.label}</span>
-                </motion.button>
-            ))}
-            </motion.div>
-        </motion.div>
-        )}
-        </div>
-        <div className="personalMenuDropdown">
-          <button className="personalMenu" onClick={toggleDropdown}>
-            <img src={profile} alt="Profile Icon" />
-            <img src={arrowDown} alt="Dropdown Arrow" />
-          </button>
-          <div className={"personalMenuDropdownContent" + (dropdownVisible ? " show" : "")}>
-            {isLoggedIn ? (
-              renderDropdownMenu()
-            ) : (
-              <>
-                <button onClick={navigateToLogin} className="dropdownLoginButton">
-                  {components.user.login}
-                  <img src={loginArrow} alt="Login Arrow" />
-                </button>
-                <button onClick={navigateToRegister} className="dropdownRegisterButton">
-                  {components.user.register}
                 </button>
               ))}
             </div>
@@ -600,5 +498,10 @@ function Header({ setSearchResults, setLoading }) {
     </>
   );
 }
+
+Header.propTypes = {
+  setSearchResults: PropTypes.func.isRequired,
+  setLoading: PropTypes.func.isRequired,
+};
 
 export default Header;
