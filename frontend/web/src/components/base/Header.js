@@ -267,6 +267,21 @@ function Header({ setSearchResults, setLoading }) {
     document.body.style.overflow = status ? "hidden" : "auto";
   };
 
+  const renderLanguageFlags = () => {
+    return languages.map((lng) => (
+      <button
+        key={lng.code}
+        type="button"
+        aria-label={lng.label}
+        title={lng.label}
+        className={`lang-flag ${language === lng.code ? "active" : ""}`}
+        onClick={() => setLanguage(lng.code)}
+      >
+        {lng.emoji}
+      </button>
+    ));
+  };
+
   const renderHostButton = () => {
     if (isLoggedIn && group === "Host") {
       return (
@@ -385,34 +400,12 @@ function Header({ setSearchResults, setLoading }) {
           )}
 
           <div className="language-flags-mobile">
-            {languages.map((lng) => (
-              <button
-                key={lng.code}
-                type="button"
-                aria-label={lng.label}
-                title={lng.label}
-                className={`lang-flag ${language === lng.code ? "active" : ""}`}
-                onClick={() => setLanguage(lng.code)}
-              >
-                {lng.emoji}
-              </button>
-            ))}
+            {renderLanguageFlags()}
           </div>
 
           <div className="headerRight">
             <div className="language-flags">
-              {languages.map((lng) => (
-                <button
-                  key={lng.code}
-                  type="button"
-                  aria-label={lng.label}
-                  title={lng.label}
-                  className={`lang-flag ${language === lng.code ? "active" : ""}`}
-                  onClick={() => setLanguage(lng.code)}
-                >
-                  {lng.emoji}
-                </button>
-              ))}
+              {renderLanguageFlags()}
             </div>
 
             {renderHostButton()}
