@@ -12,7 +12,7 @@ $primary-color: var(--primary-color);
   display: flex;
   align-items: center;
   background: #fff;
-  box-shadow: 0 2px 6px #0d1a2626;
+  box-shadow: 0 2px 6px rgba(13, 26, 38, 0.15);
   box-sizing: border-box;
   transition: opacity 0.25s ease-out, transform 0.25s ease-out, visibility 0.25s;
 
@@ -252,6 +252,10 @@ $primary-color: var(--primary-color);
   z-index: 9999;
 }
 
+.nineDotsMenuWrapper {
+  position: relative;
+}
+
 .appsDropdown::before {
   content: "";
   position: absolute;
@@ -273,8 +277,9 @@ $primary-color: var(--primary-color);
 
 .appItem {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   border-radius: 12px;
