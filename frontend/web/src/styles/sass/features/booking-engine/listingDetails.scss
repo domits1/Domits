@@ -404,6 +404,8 @@
 
                     @media (max-width: 768px) {
                         flex-direction: column;
+                        overflow: visible;
+                        clip-path: inset(0 round 10px);
                     }
 
                     .date-box {
@@ -470,6 +472,10 @@
 
                         .react-datepicker-popper {
                             z-index: 40;
+
+                            @media (max-width: 768px) {
+                                z-index: 1100;
+                            }
                         }
 
                         .react-datepicker__day.booking-picker-day--today,

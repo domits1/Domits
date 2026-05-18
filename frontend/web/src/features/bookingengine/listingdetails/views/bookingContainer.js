@@ -308,6 +308,15 @@ const BookingContainer = ({
     setCheckOutDate(value);
   };
 
+  const mobileStickyDateProps = {
+    checkInDate,
+    setCheckInDate: handleCheckInDateChange,
+    checkOutDate,
+    setCheckOutDate: handleCheckOutDateChange,
+    unavailableDateKeys,
+    className: "date-container--mobile-sticky",
+  };
+
   const handleReserveClick = () => {
     const selectedPropertyId = property?.property?.id || property?.property?.ID;
     if (!selectedPropertyId) {
@@ -389,9 +398,7 @@ const BookingContainer = ({
           <span className="listing-booking-card__per-night">per night</span>
         </div>
 
-        <span className="listing-booking-card__mobile-sticky-dates">
-          {checkInDate && checkOutDate ? `${checkInDate} - ${checkOutDate}` : "Select dates above"}
-        </span>
+        <DateSelectionContainer {...mobileStickyDateProps} />
 
         <button
           className="reserve-btn listing-booking-card__mobile-sticky-reserve"
