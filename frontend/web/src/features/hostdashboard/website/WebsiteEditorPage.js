@@ -169,6 +169,35 @@ const getCenteredContainerScrollTop = (node, container) => {
   return Math.max(0, Math.round(centeredTop));
 };
 
+const forwardEditorBoundaryScroll = (event) => {
+  const editorPanelNode = event?.currentTarget;
+  if (!editorPanelNode || typeof editorPanelNode.scrollTop !== "number") {
+    return;
+  }
+
+  const deltaY = Number(event.deltaY || 0);
+  if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.01) {
+    return;
+  }
+
+  const scrollTop = editorPanelNode.scrollTop || 0;
+  const clientHeight = editorPanelNode.clientHeight || 0;
+  const scrollHeight = editorPanelNode.scrollHeight || 0;
+  const canScrollInternally = scrollHeight - clientHeight > 1;
+  const isAtTop = scrollTop <= 0;
+  const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+  if (!canScrollInternally || (deltaY < 0 && isAtTop) || (deltaY > 0 && isAtBottom)) {
+    event.preventDefault();
+    if (typeof globalThis.scrollBy === "function") {
+      globalThis.scrollBy({
+        top: deltaY,
+        behavior: "auto",
+      });
+    }
+  }
+};
+
 const runAfterNextPaint = (callback) => {
   if (typeof globalThis.requestAnimationFrame === "function") {
     globalThis.requestAnimationFrame(() => {
@@ -641,7 +670,7 @@ CollapsibleSection.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-function WebsiteEditorLoadingState({ renderLoadingSection, editorPanelRef }) {
+function WebsiteEditorLoadingState({ renderLoadingSection, editorPanelRef, onEditorPanelWheel }) {
   return (
     <main className="page-Host">
       <div className="page-Host-content">
@@ -660,7 +689,7 @@ function WebsiteEditorLoadingState({ renderLoadingSection, editorPanelRef }) {
           </div>
 
           <div className={styles.surface}>
-            <aside ref={editorPanelRef} className={styles.editorPanel}>
+            <aside ref={editorPanelRef} className={styles.editorPanel} onWheel={onEditorPanelWheel}>
               <div className={styles.panelHeader}>
                 <h2 className={styles.panelTitle}>Editor</h2>
               </div>
@@ -687,6 +716,7 @@ function WebsiteEditorLoadingState({ renderLoadingSection, editorPanelRef }) {
 WebsiteEditorLoadingState.propTypes = {
   renderLoadingSection: PropTypes.func.isRequired,
   editorPanelRef: refPropType,
+  onEditorPanelWheel: PropTypes.func,
 };
 
 function WebsiteEditorErrorState({ loadError, navigate }) {
@@ -1487,9 +1517,7 @@ function WebsiteEditorPage() {
 
     const nextDraft = await reloadDraftRecord();
 
-    if (syncPublishedState) {
-      announceWebsitePreviewUpdate(nextDraft?.id || draftRecord.id);
-    }
+    announceWebsitePreviewUpdate(nextDraft?.id || draftRecord.id);
 
     return nextDraft;
   };
@@ -1756,7 +1784,13 @@ function WebsiteEditorPage() {
   );
 
   if (isLoading) {
-    return <WebsiteEditorLoadingState renderLoadingSection={renderLoadingSection} editorPanelRef={editorPanelRef} />;
+    return (
+      <WebsiteEditorLoadingState
+        renderLoadingSection={renderLoadingSection}
+        editorPanelRef={editorPanelRef}
+        onEditorPanelWheel={forwardEditorBoundaryScroll}
+      />
+    );
   }
 
   if (loadError || !draftRecord || !baseModel || !previewModel) {
@@ -1824,7 +1858,7 @@ function WebsiteEditorPage() {
           </div>
 
           <div className={styles.surface}>
-            <aside ref={editorPanelRef} className={styles.editorPanel}>
+            <aside ref={editorPanelRef} className={styles.editorPanel} onWheel={forwardEditorBoundaryScroll}>
               <div className={styles.panelHeader}>
                 <h2 className={styles.panelTitle}>Editor</h2>
               </div>

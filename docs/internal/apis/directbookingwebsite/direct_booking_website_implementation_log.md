@@ -1,8 +1,10 @@
-# Standalone Property Site - Implementation Log (Append-Only)
+# Direct Booking Website - Implementation Log (Append-Only)
+
+> Naming note: this log keeps historical references intact, including legacy `standalone_*` storage names and older commit messages, because it is append-only history for the Direct Booking Website feature.
 
 ## Purpose
 
-This file is the chronological implementation log for the standalone website feature.  
+This file is the chronological implementation log for the direct booking website feature.  
 Use it to trace what was implemented, when it was implemented, why decisions were made, and what changed in AWS/data flow.
 
 ## Rules
@@ -39,12 +41,12 @@ Evidence (commit(s), file(s), docs):
 ## [2026-03-19] Website builder foundation and selection flow
 
 Context:
-Start of standalone website builder direction in host dashboard.
+Start of direct booking website builder direction in host dashboard.
 
 Implementation:
 
 - Added initial builder flow with listing selection and template direction.
-- Added/updated core design documentation for standalone site architecture baseline.
+- Added/updated core design documentation for direct booking website architecture baseline.
 
 Decision / Rationale:
 
@@ -257,7 +259,7 @@ Open risks / Next:
 Evidence (commit(s), file(s), docs):
 
 - `318751eda`, `0b95601f7`
-- Docs: `standalone_property_site_frontend_status.md`, `standalone_property_site_plan_of_approach.md`
+- Docs: `direct_booking_website_frontend_status.md`, `direct_booking_website_plan_of_approach.md`
 
 ## [2026-04-13] Persisted website drafts + host workspace overview
 
@@ -308,15 +310,15 @@ Evidence (commit(s), file(s), docs):
 - Files:
   - `backend/ORM/migrations/20260410_standalone_site_draft.js`
   - `backend/ORM/models/Standalone_Site_Draft.js`
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDraftRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteDraftRepository.js`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
   - `backend/functions/PropertyHandler/index.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
   - `frontend/web/src/features/hostdashboard/website/services/websiteDraftService.js`
 - Docs:
   - `standalone_site_draft_aws_rollout.md`
-  - `standalone_property_site_frontend_status.md`
-  - `standalone_property_site_plan_of_approach.md`
+  - `direct_booking_website_frontend_status.md`
+  - `direct_booking_website_plan_of_approach.md`
 
 ## [2026-04-13] Sonar cleanup after persistence additions
 
@@ -378,7 +380,7 @@ Implementation:
 
 Decision / Rationale:
 
-- Keep standalone website persistence isolated in standalone-owned storage instead of mixing website state into existing `property_*` tables.
+- Keep direct booking website persistence isolated in standalone-owned storage instead of mixing website state into existing `property_*` tables.
 - The builder page is now a valid entry point, but not the long-term editing surface.
 
 AWS / Data impact:
@@ -404,13 +406,13 @@ Evidence (commit(s), file(s), docs):
 ## [2026-04-24] Website KPI tracking and delete-reason analytics
 
 Context:
-The standalone website workspace had draft persistence and preview sharing, but no operational visibility into how hosts were using website drafts or why they removed them.
+The direct booking website workspace had draft persistence and preview sharing, but no operational visibility into how hosts were using website drafts or why they removed them.
 
 Implementation:
 
-- Added standalone website event storage:
+- Added direct booking website event storage:
   - `main.standalone_site_event`
-- Added repository-backed KPI aggregation for standalone website metrics, later split into global and host-scoped use cases.
+- Added repository-backed KPI aggregation for direct booking website metrics, later split into global and host-scoped use cases.
 - Added PropertyHandler route:
   - `GET /property/website/kpis`
 - Started recording website events for:
@@ -420,7 +422,7 @@ Implementation:
   - live preview update
   - website deletion
 - Wired selected website delete reasons from frontend into backend delete event payloads.
-- Added KPI overview cards plus deletion-reason breakdown on a dedicated host dashboard route for standalone website analytics.
+- Added KPI overview cards plus deletion-reason breakdown on a dedicated host dashboard route for direct booking website analytics.
 - Tightened website-specific backend 500 responses so internal error messages are no longer returned directly to the client.
 
 Decision / Rationale:
@@ -454,7 +456,7 @@ Evidence (commit(s), file(s), docs):
 - Files:
   - `backend/ORM/migrations/20260424_standalone_site_event.js`
   - `backend/ORM/models/Standalone_Site_Event.js`
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteEventRepository.js`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
   - `backend/functions/PropertyHandler/index.js`
   - `backend/test/PropertyHandler/routing-unit.test.js`
@@ -524,8 +526,8 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
   - `frontend/web/src/features/hostdashboard/mainDashboardHost.js`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
-  - `standalone_property_site_plan_of_approach.md`
+  - `direct_booking_website_frontend_status.md`
+  - `direct_booking_website_plan_of_approach.md`
 
 ## [2026-04-14] Editor override expansion + scaled preview cards
 
@@ -588,8 +590,8 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
-  - `standalone_property_site_plan_of_approach.md`
+  - `direct_booking_website_frontend_status.md`
+  - `direct_booking_website_plan_of_approach.md`
 
 ## [2026-04-15] Draft persistence hardening for editor saves
 
@@ -600,7 +602,7 @@ Implementation:
 
 - Added `cache: "no-store"` to website draft list/read/write fetches in the frontend draft service.
 - Changed editor save flow to perform a read-after-write fetch of the draft after a successful upsert.
-- Added no-store response headers on standalone website draft controller responses so API/cache layers do not hand the frontend stale payloads.
+- Added no-store response headers on direct booking website draft controller responses so API/cache layers do not hand the frontend stale payloads.
 
 Decision / Rationale:
 
@@ -625,7 +627,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-15] Editor feedback cleanup and compact media selection
 
@@ -670,7 +672,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-15] Editor navigation and collapsible control surface
 
@@ -714,7 +716,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-15] Calendar availability import, compact preview cleanup, and visual image picker
 
@@ -794,13 +796,13 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
-  - `standalone_property_site_plan_of_approach.md`
+  - `direct_booking_website_frontend_status.md`
+  - `direct_booking_website_plan_of_approach.md`
 
 ## [2026-04-17] Builder availability guard, calendar-sync hardening, and editor interaction polish
 
 Context:
-The standalone website feature had three remaining product-quality gaps:
+The direct booking website feature had three remaining product-quality gaps:
 
 - the builder still offered listings that already had a saved website attached
 - the website-side calendar snapshot could drift from the PMS/iCal sync state seen in the host calendar tab
@@ -861,7 +863,7 @@ Evidence (commit(s), file(s), docs):
   - `backend/functions/PropertyHandler/controller/propertyController.js`
   - `backend/functions/PropertyHandler/data/repository/propertyExternalCalendarRepository.js`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-17] Workspace deletion flow, desktop compact previews, and host-calendar enrichment fallback
 
@@ -914,12 +916,12 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.module.scss`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-17] Website calendar parity for PMS blocked dates
 
 Context:
-The website-side availability snapshot already showed imported external bookings, but it still missed PMS-side unavailable override dates that were visible in the host calendar tab. That made the standalone website calendar under-report blocked dates.
+The website-side availability snapshot already showed imported external bookings, but it still missed PMS-side unavailable override dates that were visible in the host calendar tab. That made the direct booking website calendar under-report blocked dates.
 
 Implementation:
 
@@ -964,7 +966,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.module.scss`
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-20] Calendar preview to visibility-toggle targeting
 
@@ -1004,7 +1006,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-20] Availability calendar visibility toggle
 
@@ -1047,7 +1049,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-20] Website title and hero eyebrow binding fixes
 
@@ -1084,7 +1086,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-20] Saved website deletion confirmation overlay
 
@@ -1120,12 +1122,12 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-20] Visitor contact widget and workspace destructive-action polish
 
 Context:
-The workspace delete action was visually too neutral, and standalone website previews needed an early contact-widget surface so visitors can message the host from a generated website.
+The workspace delete action was visually too neutral, and direct booking website previews needed an early contact-widget surface so visitors can message the host from a generated website.
 
 Implementation:
 
@@ -1171,7 +1173,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteContactWidget.jsx`
   - `frontend/web/src/features/hostdashboard/website/services/websiteContactService.js`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
+  - `direct_booking_website_frontend_status.md`
 
 ## [2026-04-20] Public draft preview link and editor-to-preview feedback
 
@@ -1235,7 +1237,7 @@ Evidence (commit(s), file(s), docs):
 
 - Files:
   - `backend/functions/PropertyHandler/controller/propertyController.js`
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDraftRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteDraftRepository.js`
   - `backend/functions/PropertyHandler/index.js`
   - `backend/test/PropertyHandler/routing-unit.test.js`
   - `frontend/web/src/App.js`
@@ -1250,8 +1252,8 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/TrustSignalsTemplate.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/templates/ExperienceJourneyTemplate.jsx`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
-  - `standalone_property_site_implementation_log.md`
+  - `direct_booking_website_frontend_status.md`
+  - `direct_booking_website_implementation_log.md`
 
 ## [2026-04-21] Workspace delete-reason dialog and compact thumbnail optimization
 
@@ -1299,8 +1301,8 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
   - `frontend/web/src/features/hostdashboard/website/rendering/buildWebsiteTemplateModel.js`
 - Docs:
-  - `standalone_property_site_frontend_status.md`
-  - `standalone_property_site_implementation_log.md`
+  - `direct_booking_website_frontend_status.md`
+  - `direct_booking_website_implementation_log.md`
 
 ## [2026-04-24] Draft state split from shared preview state
 
@@ -1309,7 +1311,7 @@ Saving draft edits and publishing preview-link updates were previously collapsin
 
 Implementation:
 
-- Added published preview state fields to standalone website draft storage:
+- Added published preview state fields to direct booking website draft storage:
   - `published_content_overrides_json`
   - `published_theme_overrides_json`
 - Updated the draft repository and PropertyHandler controller to read/write those fields explicitly.
@@ -1350,13 +1352,13 @@ Open risks / Next:
 Evidence (commit(s), file(s), docs):
 
 - Files:
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDraftRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteDraftRepository.js`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
   - `backend/ORM/migrations/20260424_standalone_site_published_state.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
   - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
   - `frontend/web/src/features/hostdashboard/website/services/websitePreviewSync.js`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
   - table `main.standalone_site_draft`
   - index `standalone_site_draft_property_unique`
   - API Gateway methods for `/property/website/draft(s)`
@@ -1398,14 +1400,14 @@ Open risks / Next:
 Evidence (commit(s), file(s), docs):
 
 - Files:
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDraftRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteDraftRepository.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
 
 ## [2026-04-29] Trust-card icons made editor-configurable from amenities registry
 
 Context:
-Quick-scan and trust-card icons were still hardcoded in the template layer. That meant hosts could not change them from the editor, and newly added amenity icons would never become selectable for standalone websites.
+Quick-scan and trust-card icons were still hardcoded in the template layer. That meant hosts could not change them from the editor, and newly added amenity icons would never become selectable for direct booking websites.
 
 Implementation:
 
@@ -1419,7 +1421,7 @@ Implementation:
 Decision / Rationale:
 
 - Icon choice belongs to the same editable content contract as trust-card title and description.
-- Reusing the amenities registry avoids duplication and keeps standalone website icon availability automatically aligned with the rest of Domits.
+- Reusing the amenities registry avoids duplication and keeps direct booking website icon availability automatically aligned with the rest of Domits.
 
 AWS / Data impact:
 
@@ -1455,7 +1457,7 @@ Evidence (commit(s), file(s), docs):
 ## [2026-04-28] Research KPI catalogue surfaced in dashboard
 
 Context:
-The KPI dashboard already exposed real standalone website usage metrics, but it still missed the broader KPI set defined in the research. That made implementation and evaluation drift apart.
+The KPI dashboard already exposed real direct booking website usage metrics, but it still missed the broader KPI set defined in the research. That made implementation and evaluation drift apart.
 
 Implementation:
 
@@ -1499,12 +1501,12 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.responsive.scss`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
 
 ## [2026-04-28] KPI dashboard loading state aligned with host dashboard patterns
 
 Context:
-The dedicated standalone website KPI dashboard already used the shared pulse-bars loader, but it still replaced too much of the page during the initial fetch. That made the page feel like a blank state instead of a stable dashboard shell with loading metrics.
+The dedicated direct booking website KPI dashboard already used the shared pulse-bars loader, but it still replaced too much of the page during the initial fetch. That made the page feel like a blank state instead of a stable dashboard shell with loading metrics.
 
 Implementation:
 
@@ -1533,7 +1535,7 @@ Evidence (commit(s), file(s), docs):
 - Files:
   - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
 
 ## [2026-04-29] Builder timing and preview-performance KPIs instrumented
 
@@ -1590,14 +1592,14 @@ Evidence (commit(s), file(s), docs):
 - Files:
   - `backend/functions/PropertyHandler/index.js`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteEventRepository.js`
   - `backend/test/PropertyHandler/routing-unit.test.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteBuilderPage.js`
   - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
   - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
   - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsService.js`
   - `frontend/web/src/features/hostdashboard/website/kpis/services/websiteKpiService.js`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
 
 ## [2026-04-29] Icon picker alignment and responsive panel scaling
 
@@ -1635,7 +1637,7 @@ Evidence (commit(s), file(s), docs):
 
 - Files:
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
 
 ## [2026-04-29] Icon picker deduplicated by glyph and converted to viewport-safe rail
 
@@ -1675,12 +1677,12 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/amenityIconRegistry.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
 
-## [2026-05-01] Standalone site/domain foundation for real publication lifecycle
+## [2026-05-01] Direct Booking Website/domain foundation for real publication lifecycle
 
 Context:
-The standalone website implementation still relied on `standalone_site_draft` plus a `draftId` preview route. That was acceptable for internal previewing, but it was not a real public site lifecycle and it had no separate domain model.
+The direct booking website implementation still relied on `standalone_site_draft` plus a `draftId` preview route. That was acceptable for internal previewing, but it was not a real public site lifecycle and it had no separate domain model.
 
 Implementation:
 
@@ -1688,17 +1690,17 @@ Implementation:
   - `main.standalone_site`
   - `main.standalone_site_domain`
 - Added backend repositories:
-  - `StandaloneSiteRepository`
-  - `StandaloneSiteDomainRepository`
+  - `DirectBookingWebsiteSiteRepository`
+  - `DirectBookingWebsiteDomainRepository`
 - Added PropertyHandler routes:
   - `GET /property/website/site`
   - `POST /property/website/site/publish`
   - `POST /property/website/site/unpublish`
 - Added editor integration so the host can:
-  - inspect standalone site state
+  - inspect direct booking website state
   - inspect fallback-domain state
-  - publish the current approved live-preview snapshot into a standalone site record
-  - unpublish that standalone site record again
+  - publish the current approved live-preview snapshot into a direct booking website record
+  - unpublish that direct booking website record again
 - Kept the existing draft and preview flow intact:
   - `Save changes` still affects only the working draft
   - `Update live preview` still updates the shared preview snapshot
@@ -1739,17 +1741,17 @@ Evidence (commit(s), file(s), docs):
   - `backend/ORM/migrations/20260501_standalone_site_foundation.js`
   - `backend/ORM/models/Standalone_Site.js`
   - `backend/ORM/models/Standalone_Site_Domain.js`
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteRepository.js`
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDomainRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteSiteRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteDomainRepository.js`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
   - `backend/functions/PropertyHandler/index.js`
   - `backend/test/PropertyHandler/routing-unit.test.js`
   - `frontend/web/src/features/hostdashboard/website/services/websiteSiteService.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
 
-## [2026-05-01] Published-site resolver and runtime on top of standalone site/domain foundation
+## [2026-05-01] Published-site resolver and runtime on top of direct booking website/domain foundation
 
 Context:
 Phase 1 separated draft state from site/domain state, but the public runtime still depended on the `draftId` preview route. That meant fallback domains were tracked but not actually usable as the published-site resolution model.
@@ -1760,8 +1762,8 @@ Implementation:
   - `GET /property/website/public/resolve`
   - `GET /property/website/public/render`
 - Added repository lookups for:
-  - `StandaloneSiteRepository.getSiteById(...)`
-  - `StandaloneSiteDomainRepository.getDomainByName(...)`
+  - `DirectBookingWebsiteSiteRepository.getSiteById(...)`
+  - `DirectBookingWebsiteDomainRepository.getDomainByName(...)`
 - Added a published-site runtime page:
   - `frontend/web/src/features/hostdashboard/website/WebsitePublicSitePage.jsx`
 - Added public runtime fetch helpers:
@@ -1777,7 +1779,7 @@ Decision / Rationale:
 - Public live rendering now uses the published snapshot stored in `standalone_site` rather than the draft preview path.
 - Real host-based resolution still validates published-site reachability through domain status.
 - Internal debug rendering is intentionally separated from real domain activation so acceptance testing does not depend on DNS cutover timing.
-- The public API accepts the target domain explicitly from the frontend because browser API calls go to the API host, not the standalone site host. Relying on the API request `Host` header alone would be wrong in the current client-rendered architecture.
+- The public API accepts the target domain explicitly from the frontend because browser API calls go to the API host, not the direct booking website host. Relying on the API request `Host` header alone would be wrong in the current client-rendered architecture.
 
 AWS / Data impact:
 
@@ -1802,8 +1804,8 @@ Open risks / Next:
 Evidence (commit(s), file(s), docs):
 
 - Files:
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteRepository.js`
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteDomainRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteSiteRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteDomainRepository.js`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
   - `backend/functions/PropertyHandler/index.js`
   - `backend/test/PropertyHandler/routing-unit.test.js`
@@ -1813,12 +1815,12 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/analytics/websiteAnalyticsService.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
   - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
-  - `docs/internal/apis/directbookingwebsite/standalone_property_site_frontend_status.md`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
 
 ## [2026-05-04] KPI performance metrics segmented by mobile, tablet, and desktop
 
 Context:
-The standalone website KPI dashboard already exposed preview/live performance as a separate category, but the actual telemetry and aggregation were still biased toward mobile-only LCP. That was too narrow to support useful cross-device analysis.
+The direct booking website KPI dashboard already exposed preview/live performance as a separate category, but the actual telemetry and aggregation were still biased toward mobile-only LCP. That was too narrow to support useful cross-device analysis.
 
 Implementation:
 
@@ -1866,4 +1868,4 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/kpis/WebsiteKpiDashboardPage.js`
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
-  - `backend/functions/PropertyHandler/data/repository/standaloneSiteEventRepository.js`
+  - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteEventRepository.js`

@@ -11,11 +11,10 @@ import {
   startWebsitePreviewLcpObserver,
 } from "./analytics/websitePreviewAnalytics";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
-import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
+import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
-import { getWebsiteTemplateById } from "./websiteTemplates";
 import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
@@ -40,6 +39,21 @@ const normalizeWebsiteDomain = (value) => {
   return hostSegment.split(":")[0] || "";
 };
 
+const formatWebsiteTitleFromDomain = (domain) => {
+  const normalizedDomain = normalizeWebsiteDomain(domain);
+  const domainLabel = normalizedDomain.split(".")[0] || "";
+  if (!domainLabel) {
+    return "";
+  }
+
+  const cleanedLabel = domainLabel.replace(/-[a-f0-9]{8,12}$/i, "");
+  return cleanedLabel
+    .split("-")
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+};
+
 const resolveFallbackPropertyId = ({ resolution, renderPayload }) => {
   const candidateValues = [
     resolution?.propertyId,
@@ -55,6 +69,23 @@ const resolveFallbackPropertyId = ({ resolution, renderPayload }) => {
     .find(Boolean);
 
   return normalizedPropertyId || "";
+};
+
+const resolveUnavailableWebsiteTitle = ({ renderPayload, resolution, requestedDomain }) => {
+  const candidateTitles = [
+    renderPayload?.site?.siteName,
+    resolution?.siteName,
+    renderPayload?.propertySnapshot?.site?.title,
+    renderPayload?.propertySnapshot?.property?.title,
+    renderPayload?.propertySnapshot?.property?.name,
+  ];
+
+  const resolvedTitle = candidateTitles.map((value) => String(value || "").trim()).find(Boolean);
+  if (resolvedTitle) {
+    return resolvedTitle;
+  }
+
+  return formatWebsiteTitleFromDomain(requestedDomain) || "Published website unavailable";
 };
 
 function WebsitePublicSitePage() {
@@ -149,9 +180,9 @@ function WebsitePublicSitePage() {
   }, [renderPayload]);
 
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
-  const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
+  const isPanoramaTemplate = templateId === "panorama-landing";
 
   const resolvedSiteId = String(renderPayload?.site?.id || resolution?.siteId || requestedSiteId || "").trim();
   const resolvedDomain = normalizeWebsiteDomain(
@@ -165,6 +196,11 @@ function WebsitePublicSitePage() {
     ? `/listingdetails?ID=${encodeURIComponent(fallbackPropertyId)}`
     : "/home";
   const recoveryLabel = fallbackPropertyId ? "View listing on Domits" : "Browse stays on Domits";
+  const unavailableWebsiteTitle = resolveUnavailableWebsiteTitle({
+    renderPayload,
+    resolution,
+    requestedDomain: resolvedDomain || requestedDomain,
+  });
 
   const clearRefreshRetryWindow = () => {
     if (refreshRetryIntervalRef.current) {
@@ -297,16 +333,26 @@ function WebsitePublicSitePage() {
   }
 
   if (canRenderPublishedSite) {
-    const shouldShowContactWidget = publicModel.visibility?.chatWidget ?? true;
     const publishedSitePageStyle = {
       "--website-surface-background": resolveWebsiteBackgroundColor(publicModel?.theme?.backgroundColor),
     };
+    const publicPreviewPageClassName = `${styles.publicPreviewPage} ${
+      isPanoramaTemplate ? styles.publicPreviewPagePanorama : ""
+    }`.trim();
+    const publicPreviewCanvasClassName = `${styles.publicPreviewCanvas} ${
+      isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
+    } ${isPanoramaTemplate ? styles.publicPreviewCanvasFlush : ""}`.trim();
 
     return (
-      <main className={styles.publicPreviewPage} style={publishedSitePageStyle}>
-        <div className={styles.publicPreviewCanvas}>
-          <TemplateComponent model={publicModel} />
-          {shouldShowContactWidget ? <WebsiteContactWidget model={publicModel} /> : null}
+      <main className={publicPreviewPageClassName} style={publishedSitePageStyle}>
+        <div className={publicPreviewCanvasClassName}>
+          <WebsiteTemplateSurface
+            templateId={templateId}
+            model={publicModel}
+            showContactWidget={publicModel.visibility?.chatWidget ?? true}
+            showBrowserChrome={false}
+            enableScrollReveal={isPanoramaTemplate}
+          />
         </div>
       </main>
     );
@@ -316,8 +362,8 @@ function WebsitePublicSitePage() {
     <main className={styles.publicPreviewStatePage}>
       <section className={`${styles.publicPreviewStateCard} ${styles.publicPreviewErrorCard}`.trim()}>
         <p className={styles.publicPreviewEyebrow}>Published website</p>
-        <h1>{template?.name || "Published website unavailable"}</h1>
-        <p>{loadError || "This published website is not available."}</p>
+        <h1 className={styles.publicPreviewErrorTitle}>{unavailableWebsiteTitle}</h1>
+        <p className={styles.publicPreviewErrorCopy}>{loadError || "This published website is not available."}</p>
         <div className={styles.publicPreviewActionRow}>
           <button
             type="button"
