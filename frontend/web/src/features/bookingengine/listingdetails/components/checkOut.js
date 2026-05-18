@@ -15,6 +15,7 @@ const CheckOut = ({
   setCheckOutDate = () => {},
   checkInDate = "",
   unavailableDateKeys = [],
+  popperFixed = false,
 }) => {
   const minCheckOutDate = checkInDate ? addDaysToDateKey(checkInDate, 1) : getFutureDateKey(2);
   const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
@@ -41,6 +42,8 @@ const CheckOut = ({
           dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
           dateFormat="yyyy-MM-dd"
           placeholderText="YYYY-MM-DD"
+          popperPlacement={popperFixed ? "top-start" : undefined}
+          popperProps={popperFixed ? { strategy: "fixed" } : undefined}
         />
         <span className="date-picker-icon" aria-hidden="true">
           <FaCalendarAlt />
@@ -55,6 +58,7 @@ CheckOut.propTypes = {
   setCheckOutDate: PropTypes.func,
   checkInDate: PropTypes.string,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  popperFixed: PropTypes.bool,
 };
 
 export default CheckOut;
