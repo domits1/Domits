@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
-import { getScrollRevealProps } from "../animations/scrollRevealProps";
+import { getScrollRevealProps } from "../animations/scrollRevealProps.js";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
