@@ -1,3 +1,38 @@
+#datepicker-portal {
+    .react-datepicker-popper {
+        z-index: 1200;
+    }
+
+    @media (max-width: 480px) {
+        .react-datepicker-popper {
+            margin-left: 8px;
+        }
+
+        .react-datepicker {
+            font-size: 0.75rem;
+        }
+
+        .react-datepicker__header {
+            padding: 4px 0;
+        }
+
+        .react-datepicker__current-month {
+            font-size: 0.8rem;
+        }
+
+        .react-datepicker__month {
+            margin: 0.3rem;
+        }
+
+        .react-datepicker__day-name,
+        .react-datepicker__day {
+            width: 1.2rem;
+            line-height: 1.3rem;
+            margin: 0.1rem;
+        }
+    }
+}
+
 .listing-details {
     box-sizing: border-box;
     padding-top: calc(env(safe-area-inset-top, 0px) + 54px);
@@ -7,8 +42,8 @@
     overflow-x: clip;
 
     @media (max-width: 768px) {
-        padding-top: calc(env(safe-area-inset-top, 0px) + 70px);
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+        padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 280px);
     }
 
     .listing-details-header {
@@ -235,6 +270,7 @@
 
         .property-container {
             flex: 1;
+            min-width: 0;
             width: 100%;
             display: grid;
             grid-template-columns: 1fr 400px;
@@ -342,12 +378,62 @@
                     flex-shrink: 0;
                 }
 
+                &__mobile-sticky {
+                    display: none;
+                }
+
+                @media (max-width: 768px) {
+                    &__mobile-sticky {
+                        position: fixed;
+                        left: 0;
+                        right: 0;
+                        bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+                        display: grid;
+                        gap: 10px;
+                        padding: 12px 14px;
+                        background: #fff;
+                        border-top: 1px solid #d7dde5;
+                        box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.12);
+                        z-index: 1000;
+                        transform: translateY(110%);
+                        transition: transform 0.22s ease;
+                    }
+
+                    &__mobile-sticky--visible {
+                        transform: translateY(0);
+                    }
+
+                    &__mobile-sticky-price {
+                        display: flex;
+                        align-items: baseline;
+                        gap: 6px;
+                    }
+
+                    &__mobile-sticky-dates {
+                        font-size: 0.85rem;
+                        color: #333;
+                    }
+
+                    &__mobile-sticky .listing-booking-card__price {
+                        font-size: 1.25rem;
+                    }
+
+                    &__mobile-sticky .listing-booking-card__per-night {
+                        font-size: 0.85rem;
+                    }
+
+                    &__mobile-sticky-reserve {
+                        margin-top: 0;
+                        min-height: 44px;
+                        font-weight: 700;
+                    }
+                }
+
                 .date-container {
                     display: flex;
                     align-items: stretch;
                     border: 1px solid #d7dde5;
                     border-radius: 10px;
-                    overflow: hidden;
                     margin-bottom: 10px;
 
                     @media (max-width: 768px) {
@@ -418,6 +504,10 @@
 
                         .react-datepicker-popper {
                             z-index: 40;
+
+                            @media (max-width: 768px) {
+                                z-index: 1100;
+                            }
                         }
 
                         .react-datepicker__day.booking-picker-day--today,
@@ -426,6 +516,36 @@
                             border-radius: 0.3rem;
                             color: #16388c;
                             font-weight: 700;
+                        }
+                    }
+                }
+
+                @media (max-width: 768px) {
+                    .date-container--mobile-sticky {
+                        flex-direction: row;
+                        margin-bottom: 0;
+                        overflow: visible;
+
+                        .date-box {
+                            padding: 8px 10px;
+
+                            &:first-child {
+                                border-right: 1px solid #d7dde5;
+                                border-bottom: none;
+                            }
+
+                            .label {
+                                font-size: 10px;
+                                margin-bottom: 3px;
+                            }
+
+                            .inputField {
+                                font-size: 0.82rem;
+                            }
+
+                            .react-datepicker-popper {
+                                z-index: 1100;
+                            }
                         }
                     }
                 }
@@ -523,6 +643,18 @@
                     color: #777;
                     text-align: center;
                     margin: 8px 0 0;
+                }
+
+                &__message-host {
+                    width: 100%;
+                    margin-top: 10px;
+                    padding: 10px 12px;
+                    border: 1px solid #d7dde5;
+                    border-radius: 10px;
+                    background: #fff;
+                    color: #1a1a1a;
+                    font-size: 14px;
+                    cursor: pointer;
                 }
 
                 .pricing-container {

@@ -36,7 +36,8 @@
 
 .host-integrations-loading,
 .host-integrations-error-banner,
-.host-integrations-success-banner {
+.host-integrations-success-banner,
+.host-integrations-warning-banner {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
@@ -53,6 +54,18 @@
   color: #166534;
   border-color: #bbf7d0;
   background: #f0fdf4;
+}
+
+.host-integrations-warning-banner {
+  color: #92400e;
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.host-integrations-muted {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
 }
 
 .host-integrations-grid {
@@ -185,7 +198,8 @@
 }
 
 .host-integrations-primary-btn,
-.host-integrations-secondary-btn {
+.host-integrations-secondary-btn,
+.host-integrations-danger-btn {
   border: 0;
   border-radius: 12px;
   padding: 11px 16px;
@@ -203,10 +217,28 @@
   background: #166534;
 }
 
+.host-integrations-primary-btn:disabled,
+.host-integrations-secondary-btn:disabled,
+.host-integrations-danger-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
+}
+
 .host-integrations-secondary-btn {
   background: #f3f4f6;
   color: #111827;
   border: 1px solid #d1d5db;
+}
+
+.host-integrations-danger-btn {
+  color: #ffffff;
+  background: #b91c1c;
+  box-shadow: 0 8px 20px rgba(185, 28, 28, 0.22);
+}
+
+.host-integrations-danger-btn:hover {
+  background: #991b1b;
 }
 
 .host-integrations-detail {
@@ -343,7 +375,8 @@
   color: #374151;
 }
 
-.host-integrations-field input {
+.host-integrations-field input,
+.host-integrations-field select {
   width: 100%;
   border: 1px solid #d1d5db;
   border-radius: 12px;
@@ -353,7 +386,8 @@
   background: #fff;
 }
 
-.host-integrations-field input:focus {
+.host-integrations-field input:focus,
+.host-integrations-field select:focus {
   border-color: #16a34a;
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
 }
@@ -392,15 +426,701 @@
   color: #4b5563;
 }
 
+.channex-admin-page {
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.channex-admin-hero,
+.channex-admin-access-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.channex-admin-hero h1,
+.channex-admin-access-card h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 1.5rem + 1vw, 2.5rem);
+  line-height: 1.1;
+}
+
+.channex-admin-hero p:not(.host-integrations-eyebrow),
+.channex-admin-access-card p:not(.host-integrations-eyebrow) {
+  margin: 10px 0 0;
+  max-width: 860px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.channex-diagnostics {
+  display: grid;
+  gap: 18px;
+}
+
+.channex-diagnostics-header,
+.channex-diagnostics-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.channex-diagnostics-header h2 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.channex-diagnostics-header p {
+  margin: 8px 0 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.channex-diagnostics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.channex-diagnostics-card {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.channex-diagnostics-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.channex-diagnostics-card-header h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.channex-diagnostics-card-header p {
+  margin-top: 6px;
+}
+
+.channex-diagnostics-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.channex-diagnostics-control-panel {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.channex-diagnostics-tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.channex-diagnostics-tabs button {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: #374151;
+  padding: 10px 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.channex-diagnostics-tabs button:hover,
+.channex-diagnostics-tabs button.is-active {
+  color: #166534;
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+}
+
+.channex-diagnostics-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.channex-diagnostics-detail-grid div {
+  min-width: 0;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.channex-diagnostics-detail-grid dt {
+  margin: 0 0 5px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.channex-diagnostics-detail-grid dd {
+  margin: 0;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.channex-diagnostics-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #111827;
+}
+
+.channex-diagnostics-json-block {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.channex-diagnostics-json-block h4,
+.channex-diagnostics-table-wrap h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.channex-diagnostics-json-block pre {
+  margin: 0;
+  max-height: 340px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #111827;
+  color: #f9fafb;
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.channex-diagnostics-table-wrap {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.channex-diagnostics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.channex-diagnostics-table th,
+.channex-diagnostics-table td {
+  border: 1px solid #e5e7eb;
+  padding: 9px 10px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.channex-diagnostics-table th {
+  background: #f8fafc;
+  font-weight: 800;
+  color: #374151;
+}
+
+.channex-diagnostics-action-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.channex-diagnostics-action-card {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 18px;
+}
+
+.channex-diagnostics-action-card h4 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.channex-certification-test-section {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.channex-certification-test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.channex-certification-test-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.channex-certification-test-card h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.channex-action-range-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.channex-action-range-summary div {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.channex-action-range-summary dt {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.channex-action-range-summary dd {
+  margin: 0;
+  font-weight: 700;
+  color: #111827;
+}
+
+.channex-sync-id-list {
+  display: grid;
+  gap: 8px;
+}
+
+.channex-sync-id-list-header {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.channex-sync-id-list h5 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.channex-sync-id-list pre {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  user-select: text;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.channex-ari-preview-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.channex-diagnostics-error-callout {
+  display: grid;
+  gap: 10px;
+}
+
+.channex-diagnostics-error-callout strong {
+  display: block;
+}
+
+.channex-diagnostics-error-callout dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.channex-diagnostics-error-callout div {
+  display: grid;
+  gap: 4px;
+}
+
+.channex-diagnostics-error-callout dt {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.channex-diagnostics-error-callout dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.channex-diagnostics-error-callout summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.channex-diagnostics-error-callout pre {
+  margin: 8px 0 0;
+  max-height: 220px;
+  overflow: auto;
+  border-radius: 12px;
+  background: #111827;
+  color: #f9fafb;
+  padding: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.channex-payload-preview {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.channex-payload-header-panel,
+.channex-payload-pagination-panel,
+.channex-payload-summary-section,
+.channex-payload-notes,
+.channex-payload-raw-section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 16px;
+}
+
+.channex-payload-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.channex-payload-title-row h3 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.channex-payload-preview-badge {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.channex-payload-range-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.channex-payload-range-grid div {
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.channex-payload-range-grid span {
+  display: block;
+  margin-bottom: 5px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.channex-payload-range-grid strong {
+  display: block;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.channex-payload-pagination-panel {
+  grid-template-columns: auto auto minmax(220px, 1fr) auto auto;
+  align-items: center;
+  background: #ffffff;
+}
+
+.channex-payload-current-window {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+
+.channex-payload-current-window strong {
+  color: #111827;
+}
+
+.channex-payload-current-window span {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.channex-payload-summary-section {
+  background: #ffffff;
+}
+
+.channex-payload-summary-panel {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+  background: #f9fafb;
+}
+
+.channex-payload-summary-panel h4,
+.channex-payload-notes h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.channex-payload-summary-panel > .host-integrations-muted {
+  grid-column: 1 / -1;
+}
+
+.channex-payload-summary-numbers {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.channex-payload-summary-numbers span {
+  display: grid;
+  min-width: 82px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.channex-payload-summary-numbers strong {
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.channex-payload-note-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.channex-payload-preview .channex-diagnostics-table-wrap {
+  overflow-x: auto;
+}
+
+.channex-payload-table {
+  min-width: 1100px;
+}
+
+.channex-payload-row-details {
+  min-width: 180px;
+}
+
+.channex-payload-row-details summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #166534;
+}
+
+.channex-payload-row-details table {
+  margin-top: 10px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.channex-payload-row-details th,
+.channex-payload-row-details td {
+  border: 1px solid #e5e7eb;
+  padding: 7px 8px;
+}
+
+.channex-payload-row-details th {
+  background: #f8fafc;
+}
+
+.channex-diagnostics-collapsible {
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.channex-diagnostics-collapsible summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #374151;
+}
+
+.channex-diagnostics-collapsible .channex-diagnostics-json-block {
+  margin-top: 12px;
+}
+
+.channex-booking-revisions-controls {
+  display: flex;
+  gap: 14px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.channex-booking-revisions-limit {
+  width: min(180px, 100%);
+}
+
+.channex-booking-revisions-table-wrap {
+  overflow-x: auto;
+}
+
+.channex-booking-revisions-table {
+  min-width: 1180px;
+}
+
+.channex-booking-revisions-select {
+  width: 72px;
+}
+
+.channex-booking-revisions-raw {
+  display: grid;
+  gap: 8px;
+}
+
+.channex-booking-revisions-raw summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #374151;
+}
+
+.channex-booking-revisions-raw pre {
+  margin: 8px 0 0;
+  max-height: 260px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #111827;
+  color: #f9fafb;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1080px) {
   .host-integrations-grid {
     grid-template-columns: 1fr;
+  }
+
+  .channex-diagnostics-grid,
+  .channex-diagnostics-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .channex-payload-range-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .channex-payload-pagination-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .channex-payload-current-window {
+    grid-column: 1 / -1;
+    order: -1;
   }
 }
 
 @media (max-width: 640px) {
   .host-integrations-field-grid {
     grid-template-columns: 1fr;
+  }
+
+  .channex-diagnostics-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .channex-action-range-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .channex-payload-title-row,
+  .channex-payload-summary-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .channex-payload-title-row {
+    display: grid;
+  }
+
+  .channex-payload-range-grid,
+  .channex-payload-pagination-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .channex-payload-summary-numbers {
+    justify-content: stretch;
+  }
+
+  .channex-payload-summary-numbers span {
+    min-width: 0;
   }
 
   .host-integrations-number-card {

@@ -10,15 +10,15 @@ const GuestSelectionContainer = ({ setAdultsParent, setKidsParent, maxGuests = 0
   const [expanded, setExpanded] = useState(false);
 
   const handleAdultsChange = (event) => {
-    const nextValue = Math.max(1, Number.parseInt(event.target.value, 10) || 0);
-    if (maxGuests > 0 && nextValue + kids > maxGuests) return;
+    const parsedValue = Math.max(1, Number.parseInt(event.target.value, 10) || 0);
+    const nextValue = maxGuests > 0 ? Math.min(parsedValue, Math.max(1, maxGuests - kids)) : parsedValue;
     setAdults(nextValue);
     setAdultsParent(nextValue);
   };
 
   const handleKidsChange = (event) => {
-    const nextValue = Math.max(0, Number.parseInt(event.target.value, 10) || 0);
-    if (maxGuests > 0 && adults + nextValue > maxGuests) return;
+    const parsedValue = Math.max(0, Number.parseInt(event.target.value, 10) || 0);
+    const nextValue = maxGuests > 0 ? Math.min(parsedValue, Math.max(0, maxGuests - adults)) : parsedValue;
     setKids(nextValue);
     setKidsParent(nextValue);
   };

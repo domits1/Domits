@@ -74,12 +74,16 @@ export async function cancelGuestBooking(bookingId) {
     throw new Error("Booking id is required to cancel a booking.");
   }
 
-  const response = await fetch(buildCancelBookingUrl(bookingId), {
+  const response = await fetch(API_BOOKINGS_BASE, {
     method: "PATCH",
     headers: {
       Authorization: await getAccessToken(),
       "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      action: "cancel-booking",
+      bookingId,
+    }),
   });
 
   if (!response.ok) {

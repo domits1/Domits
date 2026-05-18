@@ -10,20 +10,20 @@ import {
   toDateKey,
 } from "../utils/dateAvailability";
 
-const CheckOut = ({
-  checkOutDate = "",
-  setCheckOutDate = () => {},
-  checkInDate = "",
-  unavailableDateKeys = [],
-}) => {
+const fixedPopperProps = { strategy: "fixed" };
+
+const CheckOut = ({ checkOutDate = "", setCheckOutDate = () => {}, checkInDate = "", unavailableDateKeys = [] }) => {
   const minCheckOutDate = checkInDate ? addDaysToDateKey(checkInDate, 1) : getFutureDateKey(2);
+
   const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
+
   const selectedCheckOutDate = normalizeDateValue(checkOutDate);
   const selectedCheckInDate = normalizeDateValue(checkInDate);
 
   return (
     <div className="date-box">
       <p className="label">Check out</p>
+
       <div className="date-picker-field">
         <DatePicker
           selected={selectedCheckOutDate}
@@ -41,7 +41,10 @@ const CheckOut = ({
           dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
           dateFormat="yyyy-MM-dd"
           placeholderText="YYYY-MM-DD"
+          portalId="datepicker-portal"
+          popperProps={fixedPopperProps}
         />
+
         <span className="date-picker-icon" aria-hidden="true">
           <FaCalendarAlt />
         </span>

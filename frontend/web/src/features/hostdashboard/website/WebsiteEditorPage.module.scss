@@ -162,6 +162,16 @@
   text-decoration: none;
 }
 
+.publicSiteValueLink {
+  align-self: flex-start;
+  color: #1f4e79;
+  display: inline-block;
+}
+
+.publicSiteValueLink .publicSiteValue {
+  color: inherit;
+}
+
 .publicSiteLink:hover,
 .publicSiteLink:focus-visible {
   text-decoration: underline;
@@ -227,6 +237,19 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+}
+
+.previewPanelHeaderCopy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.previewPanelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .panelTitle {
@@ -947,6 +970,11 @@
   height: 14px;
   display: block;
   filter: brightness(0) saturate(100%) invert(100%);
+  transition: transform 0.2s ease;
+}
+
+.actionMenuButtonIconOpen {
+  transform: rotate(180deg);
 }
 
 .actionMenuList {
@@ -962,6 +990,22 @@
   border: 1px solid rgba(31, 78, 121, 0.14);
   background: #ffffff;
   box-shadow: 0 22px 36px rgba(15, 23, 42, 0.16);
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.actionMenuListOpen {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .actionMenuItem {
@@ -1144,10 +1188,6 @@
 }
 
 @media (max-width: 860px) {
-  .heroMeta {
-    width: 100%;
-  }
-
   .actionMenuContainer {
     margin-left: 0;
     width: 100%;

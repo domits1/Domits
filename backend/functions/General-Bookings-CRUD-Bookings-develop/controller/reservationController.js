@@ -8,9 +8,9 @@ import responsejson from "../util/const/responseheader.json" with { type: "json"
 const responseHeaderJSON = responsejson;
 
 class ReservationController {
-  constructor() {
-    this.bookingService = new BookingService();
-    this.paymentSerivce = new PaymentService();
+  constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
+    this.bookingService = bookingService;
+    this.paymentSerivce = paymentService;
   }
   // -----------
   // POST
@@ -35,7 +35,10 @@ class ReservationController {
       return {
         statusCode: returnInfo.statusCode,
         headers: responseHeaderJSON,
-        response: paymentData,
+        response:
+          returnInfo.channexAvailabilitySync === undefined
+            ? paymentData
+            : { ...paymentData, channexAvailabilitySync: returnInfo.channexAvailabilitySync },
       };
     } catch (error) {
       console.error(error);
@@ -57,53 +60,11 @@ class ReservationController {
         return await this.cancelBooking(cancelBookingId, event);
       }
 
-      if (event?.body === undefined || event?.body === null) {
-        throw new Error("Missing request body.");
-      }
-      const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+      const body = this.getPatchBody(event);
       const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
+      const actionResponse = await this.handlePatchAction(body, event, authToken);
 
-      if (body?.action === "accept-inquiry" || body?.action === "decline-inquiry") {
-        if (!body?.bookingId) throw new Error("Missing bookingId.");
-        if (body.action === "decline-inquiry") {
-          const result = await this.bookingService.declineInquiry(body.bookingId, authToken);
-          return { statusCode: 200, headers: responseHeaderJSON, response: result };
-        }
-        const result = await this.bookingService.acceptInquiry(body.bookingId, authToken);
-        try {
-          const paymentData = await this.paymentSerivce.create(
-            result.hostId,
-            result.bookingId,
-            result.propertyId,
-            result.dates
-          );
-          return {
-            statusCode: 200,
-            headers: responseHeaderJSON,
-            response: { ...result, stripeClientSecret: paymentData.stripeClientSecret },
-          };
-        } catch (stripeError) {
-          console.error("Stripe payment intent creation failed after accept:", stripeError);
-          return { statusCode: 200, headers: responseHeaderJSON, response: result };
-        }
-      }
-
-      if (!body?.paymentid) {
-        throw new Error("Missing paymentid.");
-      }
-      let confirmed;
-      if (body?.failedpayment) {
-        confirmed = await this.bookingService.failPayment(body.paymentid);
-      } else {
-        confirmed = await this.bookingService.confirmPayment(body.paymentid);
-      }
-      return {
-        statusCode: 200,
-        headers: responseHeaderJSON,
-        response: {
-          paymentConfirmed: confirmed,
-        },
-      };
+      return actionResponse || await this.handlePaymentPatch(body);
     } catch (error) {
       console.error(error);
       return {
@@ -112,6 +73,91 @@ class ReservationController {
         response: error.message || "Something went wrong, please contact support.",
       };
     }
+  }
+
+  getPatchBody(event) {
+    if (event?.body === undefined || event?.body === null) {
+      throw new Error("Missing request body.");
+    }
+
+    return typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+  }
+
+  requirePatchField(body, fieldName) {
+    if (!body?.[fieldName]) throw new Error(`Missing ${fieldName}.`);
+    return body[fieldName];
+  }
+
+  async handleModifyBookingDatesAction(body, authToken) {
+    const result = await this.bookingService.modifyBookingDates(
+      this.requirePatchField(body, "bookingId"),
+      this.requirePatchField(body, "arrivalDate"),
+      this.requirePatchField(body, "departureDate"),
+      authToken
+    );
+    return { statusCode: 200, headers: responseHeaderJSON, response: result };
+  }
+
+  async handlePatchAction(body, event, authToken) {
+    if (body?.action === "cancel-booking") {
+      if (!body?.bookingId) throw new Error("Missing bookingId.");
+      return await this.cancelBooking(body.bookingId, event);
+    }
+
+    if (body?.action === "decline-inquiry") {
+      if (!body?.bookingId) throw new Error("Missing bookingId.");
+      const result = await this.bookingService.declineInquiry(body.bookingId, authToken);
+      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    }
+
+    if (body?.action === "accept-inquiry") {
+      if (!body?.bookingId) throw new Error("Missing bookingId.");
+      return await this.acceptInquiry(body.bookingId, authToken);
+    }
+
+    if (body?.action === "modify-booking-dates") {
+      return await this.handleModifyBookingDatesAction(body, authToken);
+    }
+
+    return null;
+  }
+
+  async acceptInquiry(bookingId, authToken) {
+    const result = await this.bookingService.acceptInquiry(bookingId, authToken);
+    try {
+      const paymentData = await this.paymentSerivce.create(
+        result.hostId,
+        result.bookingId,
+        result.propertyId,
+        result.dates
+      );
+      return {
+        statusCode: 200,
+        headers: responseHeaderJSON,
+        response: { ...result, stripeClientSecret: paymentData.stripeClientSecret },
+      };
+    } catch (stripeError) {
+      console.error("Stripe payment intent creation failed after accept:", stripeError);
+      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    }
+  }
+
+  async handlePaymentPatch(body) {
+    if (!body?.paymentid) {
+      throw new Error("Missing paymentid.");
+    }
+
+    const confirmed = body?.failedpayment
+      ? await this.bookingService.failPayment(body.paymentid)
+      : await this.bookingService.confirmPayment(body.paymentid);
+
+    return {
+      statusCode: 200,
+      headers: responseHeaderJSON,
+      response: {
+        paymentConfirmed: confirmed,
+      },
+    };
   }
 
   getCancelBookingId(event) {

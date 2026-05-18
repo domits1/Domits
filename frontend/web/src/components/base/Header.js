@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import ReactDOM from "react-dom";
+import PropTypes from "prop-types";
 import logo from "../../images/logo.svg";
 import nineDots from "../../images/dots-grid.svg";
 import profile from "../../images/profile-icon.svg";
@@ -15,6 +16,10 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import { createNavigationHandlers } from "./navigationHandlers";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animations.js";
+import { FiGlobe, FiZap, FiCompass, FiCheckSquare, FiHelpCircle, FiMail } from "react-icons/fi";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -31,9 +36,10 @@ function Header({ setSearchResults, setLoading }) {
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(
-    () => globalThis.window !== undefined && globalThis.innerWidth <= 768
+    () => globalThis.innerWidth <= 768
   );
   const [listingScrollProgress, setListingScrollProgress] = useState(0);
+  const [appsMenuOpen, setAppsMenuOpen] = useState(false);
 
   const { language, setLanguage } = useContext(LanguageContext);
   const components = contentByLanguage[language]?.component;
@@ -200,47 +206,21 @@ function Header({ setSearchResults, setLoading }) {
     }
   };
 
-  const toggleDropdown = () => {
-    setDropdownVisible((prev) => !prev);
-  };
-
-  const navigateToLogin = () => {
-    navigate("/login");
-  };
-
-  const navigateToRegister = () => {
-    navigate("/register");
-  };
-
-  const navigateToLanding = () => {
-    navigate("/landing");
-  };
-
-  const navigateToNinedots = () => {
-    navigate("/travelinnovation");
-  };
-
-  const navigateToGuestDashboard = () => {
-    setCurrentView("guest");
-    navigate("/guestdashboard");
-  };
-
-  const navigateToHostDashboard = () => {
-    setCurrentView("host");
-    navigate("/hostdashboard");
-  };
-
-  const navigateToMessages = () => {
-    if (currentView === "host") {
-      navigate("/hostdashboard/messages");
-    } else {
-      navigate("/guestdashboard/messages");
-    }
-  };
-
-  const navigateToSettings = () => {
-    navigate("/guestdashboard/settings");
-  };
+  const {
+    toggleDropdown,
+    navigateToLogin,
+    navigateToRegister,
+    navigateToLanding,
+    navigateToGuestDashboard,
+    navigateToHostDashboard,
+    navigateToMessages,
+    navigateToSettings,
+  } = createNavigationHandlers({
+    navigate,
+    currentView,
+    setCurrentView,
+    setDropdownVisible,
+  });
 
   const navigateToDashboard = () => {
     if (isLoggedIn) {
@@ -261,9 +241,39 @@ function Header({ setSearchResults, setLoading }) {
     }
   };
 
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      navigate("/landing");
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+
+    setAppsMenuOpen(false);
+  };
+
   const toggleSearchBar = (status) => {
     setActiveSearchBar(status);
     document.body.style.overflow = status ? "hidden" : "auto";
+  };
+
+  const renderLanguageFlags = () => {
+    return languages.map((lng) => (
+      <button
+        key={lng.code}
+        type="button"
+        aria-label={lng.label}
+        title={lng.label}
+        className={`lang-flag ${language === lng.code ? "active" : ""}`}
+        onClick={() => setLanguage(lng.code)}
+      >
+        {lng.emoji}
+      </button>
+    ));
   };
 
   const renderHostButton = () => {
@@ -384,34 +394,12 @@ function Header({ setSearchResults, setLoading }) {
           )}
 
           <div className="language-flags-mobile">
-            {languages.map((lng) => (
-              <button
-                key={lng.code}
-                type="button"
-                aria-label={lng.label}
-                title={lng.label}
-                className={`lang-flag ${language === lng.code ? "active" : ""}`}
-                onClick={() => setLanguage(lng.code)}
-              >
-                {lng.emoji}
-              </button>
-            ))}
+            {renderLanguageFlags()}
           </div>
 
           <div className="headerRight">
             <div className="language-flags">
-              {languages.map((lng) => (
-                <button
-                  key={lng.code}
-                  type="button"
-                  aria-label={lng.label}
-                  title={lng.label}
-                  className={`lang-flag ${language === lng.code ? "active" : ""}`}
-                  onClick={() => setLanguage(lng.code)}
-                >
-                  {lng.emoji}
-                </button>
-              ))}
+              {renderLanguageFlags()}
             </div>
 
             {renderHostButton()}
@@ -422,9 +410,45 @@ function Header({ setSearchResults, setLoading }) {
               </button>
             )}
 
-            <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
+            <button className="headerButtons nineDotsButton" onClick={() => setAppsMenuOpen((prev) => !prev)}>
               <img src={nineDots} alt="Nine Dots" />
             </button>
+
+            {appsMenuOpen && (
+              <motion.div
+                className="appsDropdown"
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+              >
+                <motion.div
+                  className="appsGrid"
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {[
+                    { id: "why", label: "Why Domits", icon: <FiGlobe /> },
+                    { id: "features", label: "Features", icon: <FiZap /> },
+                    { id: "steps", label: "Steps", icon: <FiCompass /> },
+                    { id: "checklist", label: "Checklist", icon: <FiCheckSquare /> },
+                    { id: "faq", label: "FAQ", icon: <FiHelpCircle /> },
+                    { id: "contact", label: "Contact", icon: <FiMail /> },
+                  ].map((item) => (
+                    <motion.button
+                      key={item.id}
+                      className="appItem"
+                      variants={fadeUp}
+                      onClick={() => scrollToSection(item.id)}
+                    >
+                      <span className="appIcon">{item.icon}</span>
+                      <span className="appLabel">{item.label}</span>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              </motion.div>
+            )}
 
             <div className="personalMenuDropdown">
               <button className="personalMenu" onClick={toggleDropdown}>
@@ -481,5 +505,10 @@ function Header({ setSearchResults, setLoading }) {
     </>
   );
 }
+
+Header.propTypes = {
+  setSearchResults: PropTypes.func.isRequired,
+  setLoading: PropTypes.func.isRequired,
+};
 
 export default Header;
