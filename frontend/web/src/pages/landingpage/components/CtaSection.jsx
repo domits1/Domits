@@ -10,18 +10,13 @@ function CtaSection({ isAuthenticated, group }) {
   const navigate = useNavigate();
   const { setFlowState } = useContext(FlowContext);
 
-  const handleStartHosting = async () => {
-    try {
-      await startHostingFlow({
-        isAuthenticated,
-        group,
-        navigate,
-        setFlowState,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const handleStartHosting = () =>
+    startHostingFlow({
+      isAuthenticated,
+      group,
+      navigate,
+      setFlowState,
+    });
 
   return (
     <motion.section

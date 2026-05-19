@@ -18,18 +18,13 @@ function RegisterSection({ isAuthenticated, group }) {
   const navigate = useNavigate();
   const { setFlowState } = useContext(FlowContext);
 
-  const handleRegisterProperty = async () => {
-    try {
-      await startHostingFlow({
-        isAuthenticated,
-        group,
-        navigate,
-        setFlowState,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const handleRegisterProperty = () =>
+    startHostingFlow({
+      isAuthenticated,
+      group,
+      navigate,
+      setFlowState,
+    });
 
   return (
     <motion.section

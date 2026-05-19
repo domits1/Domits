@@ -1,4 +1,5 @@
 import { Auth } from "aws-amplify";
+import { toast } from "react-toastify";
 
 export const HOST_ONBOARDING_PATH = "/hostonboarding";
 const HOST_ONBOARDING_REDIRECT = encodeURIComponent(HOST_ONBOARDING_PATH);
@@ -16,22 +17,29 @@ export const startHostingFlow = async ({
   setFlowState,
   unauthenticatedPath = getHostRegisterPath(),
 }) => {
-  if (!isAuthenticated) {
-    if (typeof setFlowState === "function") {
-      setFlowState({ isHost: true });
+  try {
+    if (!isAuthenticated) {
+      if (typeof setFlowState === "function") {
+        setFlowState({ isHost: true });
+      }
+
+      navigate(unauthenticatedPath);
+      return;
     }
 
-    navigate(unauthenticatedPath);
-    return;
+    if (group !== "Host") {
+      const user = await Auth.currentAuthenticatedUser();
+
+      await Auth.updateUserAttributes(user, {
+        "custom:group": "Host",
+      });
+    }
+
+    navigate(HOST_ONBOARDING_PATH);
+  } catch (error) {
+    toast.error(
+      error?.message ||
+        "We could not start hosting right now. Please try again."
+    );
   }
-
-  if (group !== "Host") {
-    const user = await Auth.currentAuthenticatedUser();
-
-    await Auth.updateUserAttributes(user, {
-      "custom:group": "Host",
-    });
-  }
-
-  navigate(HOST_ONBOARDING_PATH);
 };

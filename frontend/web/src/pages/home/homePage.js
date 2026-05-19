@@ -131,19 +131,14 @@ const Homepage = () => {
     }
   };
 
-  const handleHostButtonClick = async () => {
-    try {
-      await startHostingFlow({
-        isAuthenticated,
-        group,
-        navigate,
-        setFlowState,
-        unauthenticatedPath: getHostLoginPath(),
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const handleHostButtonClick = () =>
+    startHostingFlow({
+      isAuthenticated,
+      group,
+      navigate,
+      setFlowState,
+      unauthenticatedPath: getHostLoginPath(),
+    });
 
   const getIcon = (type) => {
     switch (type) {
