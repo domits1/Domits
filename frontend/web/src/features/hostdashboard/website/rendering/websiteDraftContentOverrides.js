@@ -110,6 +110,20 @@ const joinListWithAnd = (items = []) => {
   return `${safeItems.slice(0, -1).join(", ")}, and ${safeItems.at(-1)}`;
 };
 
+const resolveContactAvatarImageValue = (avatarMode, avatarImage) => {
+  const normalizedAvatarImage = cleanText(avatarImage);
+  const fallbackMode = normalizedAvatarImage
+    ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+    : WEBSITE_CONTACT_AVATAR_MODE_HOST;
+  const normalizedAvatarMode = resolveWebsiteContactAvatarMode(avatarMode, fallbackMode);
+
+  if (normalizedAvatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM) {
+    return normalizedAvatarImage;
+  }
+
+  return "";
+};
+
 const normalizeAmenityItem = (amenity, index) => {
   const id = cleanText(amenity?.id) || `website-amenity-${index + 1}`;
   const label = cleanText(amenity?.label) || DEFAULT_WEBSITE_AMENITY_LABEL;
@@ -391,21 +405,15 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
   {
     patchKey: "contactAvatarImage",
     editorValue: (editorValues) =>
-      resolveWebsiteContactAvatarMode(
+      resolveContactAvatarImageValue(
         editorValues?.contact?.avatarMode,
-        WEBSITE_CONTACT_AVATAR_MODE_HOST
-      ) === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-        ? editorValues?.contact?.avatarImage
-        : "",
+        editorValues?.contact?.avatarImage
+      ),
     baseValue: (baseModel) =>
-      resolveWebsiteContactAvatarMode(
+      resolveContactAvatarImageValue(
         baseModel?.contactSection?.avatarMode,
-        cleanText(baseModel?.contactSection?.avatarImage)
-          ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-          : WEBSITE_CONTACT_AVATAR_MODE_HOST
-      ) === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-        ? baseModel?.contactSection?.avatarImage
-        : "",
+        baseModel?.contactSection?.avatarImage
+      ),
   },
   {
     patchKey: "contactAccentColor",
@@ -524,7 +532,11 @@ const buildAmenitiesIconColorPatch = (editorValues, baseModel, templateKey = "")
     templateKey
   );
 
-  return normalizedEditorColor !== normalizedBaseColor ? normalizedEditorColor : null;
+  if (normalizedEditorColor === normalizedBaseColor) {
+    return null;
+  }
+
+  return normalizedEditorColor;
 };
 
 export const buildWebsiteDraftOverridePatch = (editorValues, baseModel, templateKey = "") => {

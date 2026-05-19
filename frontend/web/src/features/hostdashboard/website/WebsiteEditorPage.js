@@ -640,6 +640,71 @@ ContactColorField.propTypes = {
   onBlur: PropTypes.func,
 };
 
+const resolveContactImagePreview = ({
+  normalizedMode,
+  normalizedValue,
+  normalizedFallbackImage,
+}) => {
+  if (normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM) {
+    return normalizedValue;
+  }
+
+  if (normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_HOST) {
+    return normalizedFallbackImage;
+  }
+
+  return "";
+};
+
+const resolveContactImageHelperText = ({
+  hasCustomImage,
+  isUsingInitials,
+  hasProfilePhoto,
+}) => {
+  if (hasCustomImage) {
+    return "Custom uploaded image active for this footer.";
+  }
+
+  if (isUsingInitials) {
+    return "The footer will use the host initial instead of a profile image.";
+  }
+
+  if (hasProfilePhoto) {
+    return "Using the current host profile picture from Domits.";
+  }
+
+  return "No host profile picture is available, so the footer will use initials.";
+};
+
+const buildContactImageFieldState = ({ mode, value, fallbackImage }) => {
+  const normalizedMode = resolveWebsiteContactAvatarMode(mode, WEBSITE_CONTACT_AVATAR_MODE_HOST);
+  const normalizedValue = String(value || "").trim();
+  const normalizedFallbackImage = String(fallbackImage || "").trim();
+  const hasProfilePhoto = Boolean(normalizedFallbackImage);
+  const isUsingInitials =
+    normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_INITIALS ||
+    (normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_HOST && !hasProfilePhoto);
+  const previewImage = resolveContactImagePreview({
+    normalizedMode,
+    normalizedValue,
+    normalizedFallbackImage,
+  });
+  const hasCustomImage =
+    normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM && Boolean(normalizedValue);
+
+  return {
+    normalizedMode,
+    hasProfilePhoto,
+    isUsingInitials,
+    previewImage,
+    helperText: resolveContactImageHelperText({
+      hasCustomImage,
+      isUsingInitials,
+      hasProfilePhoto,
+    }),
+  };
+};
+
 function ContactImageField({
   mode = WEBSITE_CONTACT_AVATAR_MODE_HOST,
   inputId,
@@ -653,25 +718,21 @@ function ContactImageField({
   onFocus = undefined,
   onBlur = undefined,
 }) {
-  const normalizedMode = resolveWebsiteContactAvatarMode(mode, WEBSITE_CONTACT_AVATAR_MODE_HOST);
-  const hasProfilePhoto = Boolean(String(fallbackImage || "").trim());
-  const isUsingInitials =
-    normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_INITIALS ||
-    (normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_HOST && !hasProfilePhoto);
-  const previewImage =
-    normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-      ? String(value || "").trim()
-      : normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_HOST
-        ? String(fallbackImage || "").trim()
-        : "";
-  const hasCustomImage = normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM && Boolean(String(value || "").trim());
-  const helperText = hasCustomImage
-    ? "Custom uploaded image active for this footer."
-    : isUsingInitials
-      ? "The footer will use the host initial instead of a profile image."
-      : hasProfilePhoto
-        ? "Using the current host profile picture from Domits."
-        : "No host profile picture is available, so the footer will use initials.";
+  const {
+    normalizedMode,
+    hasProfilePhoto,
+    isUsingInitials,
+    previewImage,
+    helperText,
+  } = buildContactImageFieldState({
+    mode,
+    value,
+    fallbackImage,
+  });
+  const previewFallbackLabel = isUsingInitials ? "Using host initials" : "No image selected";
+  const showUseProfilePhotoButton =
+    hasProfilePhoto && normalizedMode !== WEBSITE_CONTACT_AVATAR_MODE_HOST;
+  const showUseInitialsButton = isUsingInitials === false;
   const fileInputRef = useRef(null);
   const activateField = () => {
     onFocus?.();
@@ -690,9 +751,7 @@ function ContactImageField({
         {previewImage ? (
           <img src={previewImage} alt="" aria-hidden="true" className={styles.imageSlotPreviewImage} />
         ) : (
-          <span className={styles.imageSlotPreviewEmpty}>
-            {isUsingInitials ? "Using host initials" : "No image selected"}
-          </span>
+          <span className={styles.imageSlotPreviewEmpty}>{previewFallbackLabel}</span>
         )}
       </div>
 
@@ -722,7 +781,7 @@ function ContactImageField({
           >
             Upload image
           </button>
-          {hasProfilePhoto && normalizedMode !== WEBSITE_CONTACT_AVATAR_MODE_HOST ? (
+          {showUseProfilePhotoButton ? (
             <button
               type="button"
               className={styles.secondaryButton}
@@ -736,7 +795,7 @@ function ContactImageField({
               Use profile photo
             </button>
           ) : null}
-          {!isUsingInitials ? (
+          {showUseInitialsButton ? (
             <button
               type="button"
               className={styles.secondaryButton}

@@ -745,8 +745,17 @@
   background: transparent;
 }
 
+.panoramaAmenitiesModalBackdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
 .panoramaAmenitiesModal {
   position: relative;
+  z-index: 1;
   width: min(940px, 100%);
   max-height: min(82vh, 900px);
   overflow-y: auto;

@@ -377,12 +377,14 @@ function PanoramaAmenitiesModal({ amenities, amenityIconColor, onClose }) {
         event.preventDefault();
         onClose();
       }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
-      }}
     >
+      <button
+        type="button"
+        className={styles.panoramaAmenitiesModalBackdrop}
+        onClick={onClose}
+        aria-label="Close amenities panel"
+        tabIndex={-1}
+      />
       <div className={styles.panoramaAmenitiesModal}>
         <button
           type="button"
@@ -796,12 +798,12 @@ const renderPanoramaContactSection = ({
       ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
       : WEBSITE_CONTACT_AVATAR_MODE_HOST
   );
-  const hostProfileImage =
-    avatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-      ? String(model.contactSection?.avatarImage || "").trim()
-      : avatarMode === WEBSITE_CONTACT_AVATAR_MODE_HOST
-        ? String(model.host?.profileImage || "").trim()
-        : "";
+  let hostProfileImage = "";
+  if (avatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM) {
+    hostProfileImage = String(model.contactSection?.avatarImage || "").trim();
+  } else if (avatarMode === WEBSITE_CONTACT_AVATAR_MODE_HOST) {
+    hostProfileImage = String(model.host?.profileImage || "").trim();
+  }
   const accentColor = resolveWebsiteContactAccentColor(model.contactSection?.accentColor);
   const backgroundColor = resolveWebsiteContactBackgroundColor(model.contactSection?.backgroundColor);
   const contactSectionStyle = {
