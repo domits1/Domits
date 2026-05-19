@@ -16,6 +16,7 @@ import HostSettings from "./HostSettings";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
+import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
 
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -111,6 +112,7 @@ function MainDashboardHost() {
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
 
           <Route path="finance" element={<HostFinanceTab />} />
+          <Route path="pricelabs" element={<HostPriceLabs />} />
           <Route path="listings" element={<HostListings />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />

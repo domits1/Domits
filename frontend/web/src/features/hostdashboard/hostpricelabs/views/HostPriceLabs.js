@@ -31,8 +31,8 @@ function HostPriceLabs() {
   }
 
   const handleConnect = async (email) => {
-    await connect(email);
-    setShowConnectForm(false);
+    const success = await connect(email);
+    if (success) setShowConnectForm(false);
   };
 
   const isConnected = status?.connected;

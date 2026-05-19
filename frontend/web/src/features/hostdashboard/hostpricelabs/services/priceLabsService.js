@@ -1,10 +1,10 @@
-import { fetchAuthSession } from "aws-amplify/auth";
+import { Auth } from "aws-amplify";
 
 const BASE = process.env.REACT_APP_API_URL || "";
 
 async function authHeaders() {
-  const session = await fetchAuthSession();
-  const token   = session.tokens?.accessToken?.toString();
+  const session = await Auth.currentSession();
+  const token   = session.getAccessToken().getJwtToken();
   return {
     "Content-Type":  "application/json",
     "Authorization": `Bearer ${token}`,

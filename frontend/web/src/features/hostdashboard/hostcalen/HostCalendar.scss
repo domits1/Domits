@@ -2275,3 +2275,43 @@ $accent: #2f6fed;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ── Dynamic Pricing Card ──────────────────────────────────────────────────── */
+.hc-dynamic-pricing-card {
+  border-left: 3px solid #3CB750;
+}
+
+.hc-dynamic-pricing-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.hc-dynamic-pricing-amount {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.hc-dynamic-pricing-apply-btn {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: #3CB750;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.hc-dynamic-pricing-apply-btn:hover {
+  background: #33a446;
+}
