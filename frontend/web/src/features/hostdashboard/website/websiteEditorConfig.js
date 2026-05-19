@@ -1,6 +1,7 @@
 import LaptopMacOutlinedIcon from "@mui/icons-material/LaptopMacOutlined";
 import TabletMacOutlinedIcon from "@mui/icons-material/TabletMacOutlined";
 import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
+import { MAX_WEBSITE_CONFIGURABLE_AMENITIES } from "./rendering/websiteAmenitiesConfig";
 
 export const PREVIEW_VIEWPORT_OPTIONS = Object.freeze([
   { id: "desktop", label: "Desktop", Icon: LaptopMacOutlinedIcon },
@@ -24,6 +25,7 @@ const PANORAMA_CONTACT_FIELDS = Object.freeze([
 
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
+  amenities: "amenities",
   contact: "contact",
   theme: "theme",
   visibility: "visibility",
@@ -41,6 +43,7 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     ctaLabel: "common.ctaLabel",
     ctaNote: "common.ctaNote",
   },
+  amenities: (index) => `amenities.${index}`,
   contact: {
     title: "contact.title",
     description: "contact.description",
@@ -111,6 +114,15 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
       count: 3,
       supportsIconSelection: true,
     },
+    amenities: {
+      title: "Amenities",
+      description:
+        "Choose which amenities appear first on the website. The first items lead the amenities section and the full list.",
+      itemLabel: "Amenity",
+      maxCount: MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+      supportsIconSelection: true,
+      placement: "afterTrustCards",
+    },
   },
   "trust-signals": {
     trustCards: {
@@ -127,6 +139,15 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
       description: "These stops control the step-by-step narrative in the experience layout.",
       itemLabel: "Stop",
       count: 3,
+    },
+    amenities: {
+      title: "Amenities",
+      description:
+        "Choose which amenities appear first in the footer recap. The first items lead the visible list.",
+      itemLabel: "Amenity",
+      maxCount: MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+      supportsIconSelection: true,
+      placement: "afterJourneyStops",
     },
   },
 });
@@ -167,6 +188,10 @@ export const getContactSectionFields = (templateKey) => {
 };
 
 export const getCollectionTargetId = (collectionKey, itemIndex) => {
+  if (collectionKey === EDITOR_SECTION_KEYS.amenities) {
+    return EDITOR_TARGET_KEYS.amenities(itemIndex);
+  }
+
   if (collectionKey === EDITOR_SECTION_KEYS.trustCards) {
     return EDITOR_TARGET_KEYS.trustCards(itemIndex);
   }

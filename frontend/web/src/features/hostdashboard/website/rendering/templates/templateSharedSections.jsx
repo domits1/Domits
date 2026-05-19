@@ -14,7 +14,10 @@ export const getInteractiveTargetProps = (className, onSelectTarget, target, act
   }
 
   const isActiveTarget = targetId && targetId === activeTargetId;
-  const handleActivate = () => onSelectTarget(target);
+  const handleActivate = (event) => {
+    event?.stopPropagation?.();
+    onSelectTarget(target);
+  };
 
   return {
     className: `${className} ${styles.previewInteractiveTarget} ${
@@ -27,7 +30,7 @@ export const getInteractiveTargetProps = (className, onSelectTarget, target, act
     onKeyDown: (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        handleActivate();
+        handleActivate(event);
       }
     },
   };

@@ -116,14 +116,13 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
           <div className={styles.experienceFooter}>
             {showAmenitiesPanel ? (
               <div
-                {...getPreviewTargetMarkerProps(
-                  styles.amenityList,
-                  "visibility.amenitiesPanel",
-                  activeTargetId
-                )}
+                {...getInteractiveTargetProps(styles.amenityList, onSelectTarget, {
+                  sectionId: "amenities",
+                  targetId: "visibility.amenitiesPanel",
+                }, activeTargetId)}
               >
-                {model.amenities.featured.slice(0, 4).map((amenity) => {
-                  const amenityIcon = getAmenityIconNode(amenity.id, {
+                {model.amenities.featured.slice(0, 4).map((amenity, index) => {
+                  const amenityIcon = getAmenityIconNode(amenity.iconAmenityId || amenity.id, {
                     className: styles.amenityRowIconGlyph,
                     "aria-hidden": true,
                     focusable: "false",
@@ -135,7 +134,13 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
                   });
 
                   return (
-                    <div key={amenity.id} className={styles.amenityRow}>
+                    <div
+                      key={amenity.id}
+                      {...getInteractiveTargetProps(styles.amenityRow, onSelectTarget, {
+                        sectionId: "amenities",
+                        targetId: `amenities.${index}`,
+                      }, activeTargetId)}
+                    >
                       <div className={styles.amenityRowPrimary}>
                         {amenityIcon ? <span className={styles.amenityRowIcon}>{amenityIcon}</span> : null}
                         <strong>{amenity.label}</strong>

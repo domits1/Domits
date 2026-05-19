@@ -30,8 +30,8 @@ import {
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
 } from "../websiteContactSectionConfig";
+import { MAX_WEBSITE_CONFIGURABLE_AMENITIES } from "../websiteAmenitiesConfig";
 
-const MAX_PANORAMA_AMENITIES = 10;
 const PANORAMA_TOP_BAR_SOLID_THRESHOLD_PX = 24;
 const PANORAMA_TOP_BAR_SELECTOR = "[data-panorama-top-bar]";
 const PANORAMA_TOP_BAR_SCROLL_OFFSET_PX = 18;
@@ -166,9 +166,9 @@ const buildPanoramaViewState = (model) => ({
   heroStats: Array.isArray(model.stay?.stats) ? model.stay.stats.slice(0, 4) : [],
   featuredTrustCards: Array.isArray(model.trustCards) ? model.trustCards.slice(0, 3) : [],
   featuredAmenities: Array.isArray(model.amenities?.all) && model.amenities.all.length > 0
-    ? model.amenities.all.slice(0, MAX_PANORAMA_AMENITIES)
+    ? model.amenities.all.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES)
     : Array.isArray(model.amenities?.featured)
-      ? model.amenities.featured.slice(0, MAX_PANORAMA_AMENITIES)
+      ? model.amenities.featured.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES)
       : [],
   featuredJourneyStops: Array.isArray(model.journeyStops) ? model.journeyStops.slice(0, 3) : [],
   residenceMeta: [
@@ -326,7 +326,7 @@ function PanoramaAmenitiesModal({ amenities, onClose }) {
 
               <div className={styles.panoramaAmenitiesModalItems}>
                 {categoryAmenities.map((amenity) => {
-                  const amenityIcon = getAmenityIconNode(amenity.id, {
+                  const amenityIcon = getAmenityIconNode(amenity.iconAmenityId || amenity.id, {
                     className: styles.panoramaAmenitiesModalItemIconGlyph,
                     "aria-hidden": true,
                     focusable: "false",
@@ -598,7 +598,14 @@ const renderPanoramaDetailsSection = ({
   }
 
   return (
-    <section id="features" className={styles.panoramaAmenitiesSection} {...getScrollRevealProps(120)}>
+    <section
+      id="features"
+      {...getInteractiveTargetProps(styles.panoramaAmenitiesSection, onSelectTarget, {
+        sectionId: "amenities",
+        targetId: "visibility.amenitiesPanel",
+      }, activeTargetId)}
+      {...getScrollRevealProps(120)}
+    >
       <div className={styles.panoramaAmenityIntro}>
         <p className={styles.panoramaAmenityEyebrow}>Amenities</p>
         <h2 className={styles.panoramaAmenityTitle}>Every Detail Considered</h2>
@@ -606,8 +613,8 @@ const renderPanoramaDetailsSection = ({
       </div>
 
       <div className={styles.panoramaAmenityGrid}>
-        {featuredAmenities.map((amenity) => {
-          const amenityIcon = getAmenityIconNode(amenity.id, {
+        {featuredAmenities.map((amenity, index) => {
+          const amenityIcon = getAmenityIconNode(amenity.iconAmenityId || amenity.id, {
             className: styles.panoramaAmenityIconGlyph,
             "aria-hidden": true,
             focusable: "false",
@@ -621,9 +628,10 @@ const renderPanoramaDetailsSection = ({
           return (
             <div
               key={amenity.id}
+              data-panorama-amenity-card="true"
               {...getInteractiveTargetProps(styles.panoramaAmenityCard, onSelectTarget, {
-                sectionId: "visibility",
-                targetId: "visibility.amenitiesPanel",
+                sectionId: "amenities",
+                targetId: `amenities.${index}`,
               }, activeTargetId)}
             >
               <span className={styles.panoramaAmenityIcon}>
@@ -639,8 +647,12 @@ const renderPanoramaDetailsSection = ({
         <div className={styles.panoramaAmenityActions}>
           <button
             type="button"
+            data-panorama-amenities-show-all="true"
             className={styles.panoramaAmenityShowAllButton}
-            onClick={onShowAllAmenities}
+            onClick={(event) => {
+              event.stopPropagation();
+              onShowAllAmenities();
+            }}
           >
             Show all
           </button>

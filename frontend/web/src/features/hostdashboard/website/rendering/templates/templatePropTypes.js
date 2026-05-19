@@ -60,6 +60,7 @@ export const copyItemPropType = PropTypes.shape({
 
 export const amenityPropType = PropTypes.shape({
   id: PropTypes.string.isRequired,
+  iconAmenityId: PropTypes.string,
   label: PropTypes.string.isRequired,
   category: PropTypes.string,
 });

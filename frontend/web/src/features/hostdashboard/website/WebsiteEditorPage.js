@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import DeleteIcon from "@mui/icons-material/Delete";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
@@ -62,12 +63,35 @@ import {
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
 } from "./rendering/websiteContactSectionConfig";
+import {
+  DEFAULT_WEBSITE_AMENITY_LABEL,
+  MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+  WEBSITE_AMENITY_FALLBACK_CATEGORY,
+} from "./rendering/websiteAmenitiesConfig";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import styles from "./WebsiteEditorPage.module.scss";
 import arrowDownIcon from "../../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../../images/arrow-up-icon.svg";
 
 const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
+const buildWebsiteAmenityItemId = (collectionSize) => {
+  if (globalThis.crypto?.randomUUID) {
+    return `website-amenity-${globalThis.crypto.randomUUID()}`;
+  }
+
+  return `website-amenity-${Date.now()}-${collectionSize + 1}`;
+};
+
+const createAmenityEditorItem = (amenityIconOptions, collectionSize) => {
+  const defaultIconOption = amenityIconOptions[0] || null;
+
+  return {
+    id: buildWebsiteAmenityItemId(collectionSize),
+    iconAmenityId: String(defaultIconOption?.id || ""),
+    label: DEFAULT_WEBSITE_AMENITY_LABEL,
+    category: String(defaultIconOption?.category || WEBSITE_AMENITY_FALLBACK_CATEGORY),
+  };
+};
 
 const getSelectedImageForSlot = (slot, editorValues) =>
   slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
@@ -330,6 +354,10 @@ const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) =
 
   if (sectionId === EDITOR_SECTION_KEYS.common) {
     return EDITOR_TARGET_KEYS.common.heroTitle;
+  }
+
+  if (sectionId === EDITOR_SECTION_KEYS.amenities) {
+    return EDITOR_TARGET_KEYS.amenities(0);
   }
 
   if (sectionId === EDITOR_SECTION_KEYS.contact) {
@@ -1277,6 +1305,8 @@ function WebsiteEditorPage() {
   const commonTextFields = getCommonTextFields(draftRecord?.templateKey);
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
+  const amenitiesVisibilityField = visibilityFields.find((field) => field.key === "amenitiesPanel") || null;
+  const standaloneVisibilityFields = visibilityFields.filter((field) => field.key !== "amenitiesPanel");
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
   const importedImageOptions = useMemo(() => {
@@ -1363,6 +1393,7 @@ function WebsiteEditorPage() {
   useEffect(() => {
     setExpandedSections({
       [EDITOR_SECTION_KEYS.common]: true,
+      [EDITOR_SECTION_KEYS.amenities]: false,
       [EDITOR_SECTION_KEYS.contact]: false,
       [EDITOR_SECTION_KEYS.theme]: false,
       [EDITOR_SECTION_KEYS.visibility]: false,
@@ -1824,6 +1855,39 @@ function WebsiteEditorPage() {
       return;
     }
 
+    if (iconPickerState.collectionKey === EDITOR_SECTION_KEYS.amenities) {
+      const selectedIconOption = amenityIconOptions.find(
+        (iconOption) => String(iconOption.id || "") === String(iconAmenityId || "")
+      );
+      activatePreviewTargetId(
+        setActivePreviewTargetId,
+        EDITOR_TARGET_KEYS.amenities(iconPickerState.itemIndex)
+      );
+      setEditorValues((currentValues) => {
+        const nextAmenities = [...currentValues.amenities];
+        const currentAmenity = nextAmenities[iconPickerState.itemIndex];
+        if (!currentAmenity) {
+          return currentValues;
+        }
+
+        nextAmenities[iconPickerState.itemIndex] = {
+          ...currentAmenity,
+          iconAmenityId,
+          category:
+            String(selectedIconOption?.category || "").trim() ||
+            currentAmenity.category ||
+            WEBSITE_AMENITY_FALLBACK_CATEGORY,
+        };
+
+        return {
+          ...currentValues,
+          amenities: nextAmenities,
+        };
+      });
+      closeIconPicker();
+      return;
+    }
+
     updateCollectionFieldValue(
       iconPickerState.collectionKey,
       iconPickerState.itemIndex,
@@ -1831,6 +1895,98 @@ function WebsiteEditorPage() {
       iconAmenityId
     );
     closeIconPicker();
+  };
+
+  const moveCollectionItem = (collectionKey, itemIndex, nextIndex) => {
+    if (!collectionKey || itemIndex === nextIndex || itemIndex < 0 || nextIndex < 0) {
+      return;
+    }
+
+    const nextTargetId = getCollectionTargetId(collectionKey, nextIndex);
+    activatePreviewTargetId(setActivePreviewTargetId, nextTargetId);
+    setEditorValues((currentValues) => {
+      const currentCollection = Array.isArray(currentValues[collectionKey]) ? currentValues[collectionKey] : [];
+      if (nextIndex >= currentCollection.length || itemIndex >= currentCollection.length) {
+        return currentValues;
+      }
+
+      const nextCollection = [...currentCollection];
+      const [movedItem] = nextCollection.splice(itemIndex, 1);
+      nextCollection.splice(nextIndex, 0, movedItem);
+
+      return {
+        ...currentValues,
+        [collectionKey]: nextCollection,
+      };
+    });
+  };
+
+  const renderVisibilityFieldCard = (field) => {
+    const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
+    const inputId = `website-editor-visibility-${field.key}`;
+    const labelId = `website-editor-visibility-${field.key}-label`;
+    const descriptionId = `website-editor-visibility-${field.key}-description`;
+
+    return (
+      <label
+        key={field.key}
+        ref={setTargetRef(visibilityTargetId)}
+        htmlFor={inputId}
+        className={`${styles.toggleCard} ${
+          highlightedTargetId === visibilityTargetId ? styles.editorTargetHighlighted : ""
+        }`.trim()}
+      >
+        <div className={styles.toggleCopy}>
+          <span id={labelId} className={styles.toggleLabel}>{field.label}</span>
+          <span id={descriptionId} className={styles.toggleDescription}>{field.description}</span>
+        </div>
+        <input
+          id={inputId}
+          type="checkbox"
+          className={styles.toggleInput}
+          checked={Boolean(editorValues.visibility[field.key])}
+          onChange={handleVisibilityFieldChange(field.key)}
+          aria-labelledby={labelId}
+          aria-describedby={descriptionId}
+        />
+      </label>
+    );
+  };
+
+  const addAmenityItem = () => {
+    const nextAmenityIndex = editorValues.amenities.length;
+    if (nextAmenityIndex >= MAX_WEBSITE_CONFIGURABLE_AMENITIES) {
+      return;
+    }
+
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.amenities(nextAmenityIndex));
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenities: [...currentValues.amenities, createAmenityEditorItem(amenityIconOptions, currentValues.amenities.length)],
+    }));
+
+    runAfterNextPaint(() => {
+      focusEditorTarget({
+        sectionId: EDITOR_SECTION_KEYS.amenities,
+        targetId: EDITOR_TARGET_KEYS.amenities(nextAmenityIndex),
+      });
+    });
+  };
+
+  const removeAmenityItem = (itemIndex) => {
+    activatePreviewTargetId(setActivePreviewTargetId, "visibility.amenitiesPanel");
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenities: currentValues.amenities.filter((_, currentIndex) => currentIndex !== itemIndex),
+    }));
+  };
+
+  const moveAmenityItemUp = (itemIndex) => {
+    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex - 1);
+  };
+
+  const moveAmenityItemDown = (itemIndex) => {
+    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex + 1);
   };
 
   const reloadDraftRecord = async () => {
@@ -2002,6 +2158,124 @@ function WebsiteEditorPage() {
   };
 
   const handleEditorFieldKeyDown = (field) => createEditorFieldKeyDownHandler(field, saveDraftChanges);
+
+  const renderAmenitiesEditorSection = (placement) => {
+    const amenitiesConfig = copyCollectionConfig.amenities;
+    if (!amenitiesConfig || amenitiesConfig.placement !== placement) {
+      return null;
+    }
+
+    const canAddAmenity = editorValues.amenities.length < amenitiesConfig.maxCount;
+
+    return (
+      <CollapsibleSection
+        sectionId={EDITOR_SECTION_KEYS.amenities}
+        title={amenitiesConfig.title}
+        description={amenitiesConfig.description}
+        isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.amenities])}
+        onToggle={toggleSection}
+        sectionRef={setSectionRef(EDITOR_SECTION_KEYS.amenities)}
+      >
+        {amenitiesVisibilityField ? (
+          <div className={styles.toggleStack}>
+            {renderVisibilityFieldCard(amenitiesVisibilityField)}
+          </div>
+        ) : null}
+
+        <div className={styles.collectionStack}>
+          {editorValues.amenities.map((amenity, index) => {
+            const amenityTargetId = EDITOR_TARGET_KEYS.amenities(index);
+
+            return (
+              <div
+                key={amenity.id}
+                ref={setTargetRef(amenityTargetId)}
+                className={`${styles.collectionCard} ${
+                  highlightedTargetId === amenityTargetId ? styles.editorTargetHighlighted : ""
+                }`.trim()}
+              >
+                <p className={styles.collectionTitle}>
+                  {amenitiesConfig.itemLabel} {index + 1}
+                </p>
+                {amenitiesConfig.supportsIconSelection ? (
+                  <AmenityIconSelectField
+                    fieldKey={`amenity-icon-${index}`}
+                    label={`${amenitiesConfig.itemLabel} ${index + 1}`}
+                    value={amenity.iconAmenityId || amenity.id || ""}
+                    onOpenPicker={() =>
+                      openIconPicker(
+                        EDITOR_SECTION_KEYS.amenities,
+                        index,
+                        `${amenitiesConfig.itemLabel} ${index + 1} icon`
+                      )
+                    }
+                    onFocus={activatePreviewTarget(amenityTargetId)}
+                    onBlur={clearActivePreviewTarget}
+                  />
+                ) : null}
+                <TextField
+                  field={{ key: `amenity-label-${index}`, label: "Name", component: "input" }}
+                  value={amenity.label}
+                  onChange={handleCollectionFieldChange(EDITOR_SECTION_KEYS.amenities, index, "label")}
+                  onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
+                  onFocus={activatePreviewTarget(amenityTargetId)}
+                  onBlur={clearActivePreviewTarget}
+                />
+                <div className={styles.collectionActionRow}>
+                  <button
+                    type="button"
+                    className={`${styles.secondaryButton} ${styles.collectionActionButton} ${styles.collectionActionMoveButton}`.trim()}
+                    onClick={() => moveAmenityItemUp(index)}
+                    disabled={index < 1}
+                    onFocus={activatePreviewTarget(amenityTargetId)}
+                    onBlur={clearActivePreviewTarget}
+                  >
+                    Move up
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.secondaryButton} ${styles.collectionActionButton} ${styles.collectionActionMoveButton}`.trim()}
+                    onClick={() => moveAmenityItemDown(index)}
+                    disabled={index >= editorValues.amenities.length - 1}
+                    onFocus={activatePreviewTarget(amenityTargetId)}
+                    onBlur={clearActivePreviewTarget}
+                  >
+                    Move down
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.secondaryButton} ${styles.collectionActionButton} ${styles.collectionActionDeleteButton}`.trim()}
+                    onClick={() => removeAmenityItem(index)}
+                    aria-label={`Delete ${amenity.label || `amenity ${index + 1}`}`}
+                    title={`Delete ${amenity.label || `amenity ${index + 1}`}`}
+                    onFocus={activatePreviewTarget(amenityTargetId)}
+                    onBlur={clearActivePreviewTarget}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className={styles.collectionSectionFooter}>
+          <p className={styles.helperText}>
+            Up to {amenitiesConfig.maxCount} amenities can be configured here. Their order controls which ones appear first on the website.
+          </p>
+          {canAddAmenity ? (
+            <button
+              type="button"
+              className={`${styles.secondaryButton} ${styles.collectionAddButton}`.trim()}
+              onClick={addAmenityItem}
+            >
+              + Add amenity
+            </button>
+          ) : null}
+        </div>
+      </CollapsibleSection>
+    );
+  };
 
   const handleThemeBackgroundColorInputKeyDown = async (event) => {
     if (event.key !== "Enter") {
@@ -2255,7 +2529,7 @@ function WebsiteEditorPage() {
                   />
                 </CollapsibleSection>
 
-                {visibilityFields.length > 0 ? (
+                {standaloneVisibilityFields.length > 0 ? (
                   <CollapsibleSection
                     sectionId={EDITOR_SECTION_KEYS.visibility}
                     title="Section visibility"
@@ -2265,37 +2539,7 @@ function WebsiteEditorPage() {
                     sectionRef={setSectionRef(EDITOR_SECTION_KEYS.visibility)}
                   >
                     <div className={styles.toggleStack}>
-                      {visibilityFields.map((field) => {
-                        const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
-                        const inputId = `website-editor-visibility-${field.key}`;
-                        const labelId = `website-editor-visibility-${field.key}-label`;
-                        const descriptionId = `website-editor-visibility-${field.key}-description`;
-
-                        return (
-                          <label
-                            key={field.key}
-                            ref={setTargetRef(visibilityTargetId)}
-                            htmlFor={inputId}
-                            className={`${styles.toggleCard} ${
-                              highlightedTargetId === visibilityTargetId ? styles.editorTargetHighlighted : ""
-                            }`.trim()}
-                          >
-                            <div className={styles.toggleCopy}>
-                              <span id={labelId} className={styles.toggleLabel}>{field.label}</span>
-                              <span id={descriptionId} className={styles.toggleDescription}>{field.description}</span>
-                            </div>
-                            <input
-                              id={inputId}
-                              type="checkbox"
-                              className={styles.toggleInput}
-                              checked={Boolean(editorValues.visibility[field.key])}
-                              onChange={handleVisibilityFieldChange(field.key)}
-                              aria-labelledby={labelId}
-                              aria-describedby={descriptionId}
-                            />
-                          </label>
-                        );
-                      })}
+                      {standaloneVisibilityFields.map((field) => renderVisibilityFieldCard(field))}
                     </div>
                   </CollapsibleSection>
                 ) : null}
@@ -2426,6 +2670,8 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
+                {renderAmenitiesEditorSection("afterTrustCards")}
+
                 {contactSectionFields.length > 0 ? (
                   <CollapsibleSection
                     sectionId={EDITOR_SECTION_KEYS.contact}
@@ -2549,6 +2795,8 @@ function WebsiteEditorPage() {
                     </div>
                   </CollapsibleSection>
                 ) : null}
+
+                {renderAmenitiesEditorSection("afterJourneyStops")}
 
                 <div className={styles.editorFooter}>
                   <p className={styles.editorFooterText}>

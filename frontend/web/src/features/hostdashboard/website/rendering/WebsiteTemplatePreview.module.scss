@@ -612,8 +612,9 @@
 }
 
 .panoramaAmenityGrid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 28px clamp(18px, 2vw, 34px);
   width: min(100%, 1080px);
 }
@@ -648,9 +649,12 @@
 
 .panoramaAmenityCard {
   display: grid;
+  flex: 0 1 170px;
   justify-items: center;
   align-content: start;
   gap: 14px;
+  width: 100%;
+  max-width: 170px;
   padding: 10px 8px;
   border-radius: 24px;
   text-align: center;
@@ -1758,7 +1762,7 @@
   }
 
   .panoramaAmenityGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px 20px;
   }
 
   .panoramaAmenitiesModalItems {
@@ -1805,8 +1809,12 @@
   }
 
   .panoramaAmenityGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 22px 16px;
+  }
+
+  .panoramaAmenityCard {
+    flex-basis: 156px;
+    max-width: 156px;
   }
 
   .panoramaAmenityLabel {
@@ -1905,8 +1913,9 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .panoramaAmenityGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .panoramaAmenityCard {
+    flex-basis: min(100%, 148px);
+    max-width: 148px;
   }
 
   .panoramaAmenityShowAllButton {

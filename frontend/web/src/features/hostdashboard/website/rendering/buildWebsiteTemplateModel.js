@@ -9,9 +9,12 @@ import {
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
 } from "./websiteContactSectionConfig";
+import {
+  MAX_FEATURED_WEBSITE_AMENITIES,
+  MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+} from "./websiteAmenitiesConfig";
 
 const DEFAULT_LOCALE = "en";
-const MAX_FEATURED_AMENITIES = 6;
 const MAX_FEATURED_POLICIES = 3;
 const MAX_FEATURED_GALLERY_IMAGES = 5;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -508,8 +511,8 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   const checkInLabel = cleanText(normalizedCheckIn?.checkIn?.from);
   const checkOutLabel = cleanText(normalizedCheckIn?.checkOut?.till || normalizedCheckIn?.checkOut?.from);
 
-  const amenities = buildAmenityItems(propertyDetails?.amenities);
-  const featuredAmenities = amenities.slice(0, MAX_FEATURED_AMENITIES);
+  const amenities = buildAmenityItems(propertyDetails?.amenities).slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES);
+  const featuredAmenities = amenities.slice(0, MAX_FEATURED_WEBSITE_AMENITIES);
   const policyHighlights = buildPolicyHighlights(propertyDetails?.rules);
   const availabilitySnapshot = buildCalendarAvailability(propertyDetails?.calendarAvailability);
 

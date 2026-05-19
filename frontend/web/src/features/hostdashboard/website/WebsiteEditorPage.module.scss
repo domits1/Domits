@@ -693,6 +693,45 @@
   cursor: pointer;
 }
 
+.collectionActionRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 52px;
+  gap: 8px;
+}
+
+.collectionSectionFooter {
+  display: grid;
+  gap: 12px;
+}
+
+.collectionAddButton {
+  justify-self: flex-start;
+}
+
+.collectionActionButton {
+  width: 100%;
+  min-width: 0;
+  padding: 0.68rem 0.5rem;
+  border-radius: 13px;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.collectionActionMoveButton {
+  font-size: 0.76rem;
+}
+
+.secondaryButton.collectionActionDeleteButton {
+  background: #ef4444;
+  color: #ffffff;
+  padding-inline: 0;
+}
+
+.secondaryButton.collectionActionDeleteButton:not(:disabled):hover {
+  background: #dc2626;
+}
+
 .imageSlotGrid {
   display: grid;
   gap: 14px;

@@ -6,6 +6,12 @@ import {
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
 } from "./websiteContactSectionConfig";
+import {
+  DEFAULT_WEBSITE_AMENITY_LABEL,
+  MAX_FEATURED_WEBSITE_AMENITIES,
+  MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+  WEBSITE_AMENITY_FALLBACK_CATEGORY,
+} from "./websiteAmenitiesConfig";
 
 const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "siteTitle",
@@ -23,6 +29,7 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "visibility",
   "heroImage",
   "galleryImages",
+  "amenities",
   "trustCards",
   "journeyStops",
 ]);
@@ -77,6 +84,53 @@ const mergeGalleryImages = (baseImages = [], overrideImages = []) => {
     return overrideImage || baseImage;
   });
 };
+
+const joinListWithAnd = (items = []) => {
+  const safeItems = items.filter(Boolean);
+  if (safeItems.length < 1) {
+    return "";
+  }
+
+  if (safeItems.length === 1) {
+    return safeItems[0];
+  }
+
+  if (safeItems.length === 2) {
+    return `${safeItems[0]} and ${safeItems[1]}`;
+  }
+
+  return `${safeItems.slice(0, -1).join(", ")}, and ${safeItems[safeItems.length - 1]}`;
+};
+
+const normalizeAmenityItem = (amenity, index) => {
+  const id = cleanText(amenity?.id) || `website-amenity-${index + 1}`;
+  const label = cleanText(amenity?.label) || DEFAULT_WEBSITE_AMENITY_LABEL;
+  const category = cleanText(amenity?.category) || WEBSITE_AMENITY_FALLBACK_CATEGORY;
+  const iconAmenityId = cleanText(amenity?.iconAmenityId);
+
+  return {
+    id,
+    label,
+    category,
+    ...(iconAmenityId ? { iconAmenityId } : {}),
+  };
+};
+
+const normalizeAmenityItems = (amenities = []) =>
+  (Array.isArray(amenities) ? amenities : [])
+    .slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES)
+    .map((amenity, index) => normalizeAmenityItem(amenity, index));
+
+const buildAmenitiesSummary = (amenities = []) =>
+  joinListWithAnd(
+    amenities
+      .slice(0, 3)
+      .map((amenity) => cleanText(amenity?.label).toLowerCase())
+      .filter(Boolean)
+  );
+
+const getBaseAmenityItems = (model) => normalizeAmenityItems(model?.amenities?.all);
+
 const buildCountLabel = (imageCount) =>
   `${imageCount} imported photo${imageCount === 1 ? "" : "s"}`;
 
@@ -107,6 +161,7 @@ export const createEmptyWebsiteDraftEditorValues = () => ({
     heroImage: "",
     gallery: ["", "", ""],
   },
+  amenities: [],
   trustCards: [],
   journeyStops: [],
 });
@@ -127,6 +182,9 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
   const contactBackgroundColor = resolveWebsiteContactBackgroundColor(contactBackgroundColorOverride);
   const heroImage = cleanText(overrides.heroImage);
   const mergedGalleryImages = mergeGalleryImages(model?.gallery?.images, overrides.galleryImages);
+  const mergedAmenities = Array.isArray(overrides.amenities)
+    ? normalizeAmenityItems(overrides.amenities)
+    : getBaseAmenityItems(model);
   const mergedVisibility = mergeVisibility(model?.visibility, overrides.visibility);
   const mergedTrustCards = mergeCopyItems(model?.trustCards, overrides.trustCards);
   const mergedJourneyStops = mergeCopyItems(model?.journeyStops, overrides.journeyStops);
@@ -155,6 +213,12 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
       ...model.gallery,
       images: mergedGalleryImages,
       countLabel: buildCountLabel(mergedGalleryImages.length),
+    },
+    amenities: {
+      ...(model?.amenities && typeof model.amenities === "object" ? model.amenities : {}),
+      featured: mergedAmenities.slice(0, MAX_FEATURED_WEBSITE_AMENITIES),
+      all: mergedAmenities,
+      summary: buildAmenitiesSummary(mergedAmenities),
     },
     callToAction: {
       ...model.callToAction,
@@ -203,6 +267,12 @@ export const buildWebsiteDraftEditorValues = (model) => ({
     heroImage: String(model?.media?.heroImage || ""),
     gallery: Array.from({ length: 3 }, (_, index) => String(model?.gallery?.images?.[index] || "")),
   },
+  amenities: getBaseAmenityItems(model).map((amenity) => ({
+    id: String(amenity?.id || ""),
+    iconAmenityId: String(amenity?.iconAmenityId || ""),
+    label: String(amenity?.label || DEFAULT_WEBSITE_AMENITY_LABEL),
+    category: String(amenity?.category || WEBSITE_AMENITY_FALLBACK_CATEGORY),
+  })),
   trustCards: (Array.isArray(model?.trustCards) ? model.trustCards : []).map((card) => ({
     id: String(card?.id || card?.title || ""),
     iconAmenityId: String(card?.iconAmenityId || ""),
@@ -332,6 +402,15 @@ const buildCopyCollectionPatch = (baseItems, editorItems) =>
 
 const hasCollectionPatch = (patchItems) => patchItems.some((itemPatch) => Object.keys(itemPatch).length > 0);
 
+const buildAmenitiesPatch = (editorValues, baseModel) => {
+  const normalizedBaseAmenities = getBaseAmenityItems(baseModel);
+  const normalizedEditorAmenities = normalizeAmenityItems(editorValues?.amenities);
+
+  return JSON.stringify(normalizedEditorAmenities) !== JSON.stringify(normalizedBaseAmenities)
+    ? normalizedEditorAmenities
+    : null;
+};
+
 export const buildWebsiteDraftOverridePatch = (editorValues, baseModel) => {
   const nextPatch = {};
   TEXT_OVERRIDE_FIELDS.forEach((field) => addTextOverride(nextPatch, field, editorValues, baseModel));
@@ -344,6 +423,11 @@ export const buildWebsiteDraftOverridePatch = (editorValues, baseModel) => {
   const nextGalleryImagesPatch = buildGalleryImagesPatch(editorValues, baseModel);
   if (nextGalleryImagesPatch.some(Boolean)) {
     nextPatch.galleryImages = nextGalleryImagesPatch;
+  }
+
+  const nextAmenitiesPatch = buildAmenitiesPatch(editorValues, baseModel);
+  if (nextAmenitiesPatch !== null) {
+    nextPatch.amenities = nextAmenitiesPatch;
   }
 
   const nextTrustCardsPatch = buildCopyCollectionPatch(baseModel?.trustCards, editorValues?.trustCards);
