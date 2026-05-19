@@ -414,8 +414,14 @@ export default function useUserProfile() {
     }, [tempUser.dateOfBirth]);
 
     useEffect(() => {
-        setStripPhone(user.phone);
-    }, [user]);
+        const phone = user.phone || "";
+        const matchingCode = [...countryCodes]
+            .sort((a, b) => b.code.length - a.code.length)
+            .find(({ code }) => phone.startsWith(code));
+        const countryCode = matchingCode ? matchingCode.code : "+1";
+        setSelectedCountryCode(countryCode);
+        setStripPhone(phone.startsWith(countryCode) ? phone.slice(countryCode.length).trim() : phone.trim());
+    }, [user.phone]);
 
     return {
         user,
