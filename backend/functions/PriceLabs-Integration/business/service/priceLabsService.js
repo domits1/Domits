@@ -112,17 +112,23 @@ export class PriceLabsService {
 
     if (!properties.length) throw { status: 404, message: "No properties found for this host." };
 
+    // Fetch OTA listing IDs (e.g. Airbnb IDs, Booking.com IDs) per property
+    const otaMap = await this.repo.getOtaListingIdsByHost(hostId);
+
     const listings = properties.map((p) => ({
-      listing_id:   `${hostId}_${p.id}`,
-      user_token:   connection.pricelabs_email,
-      name:         p.unitname || p.id,
-      currency:     "EUR",
-      country:      p.country || "NL",
-      city:         p.city || "",
-      bedroom_count: p.bedrooms || 1,
+      listing_id:     `${hostId}_${p.id}`,
+      user_token:     connection.pricelabs_email,
+      name:           p.title || p.id,
+      currency:       "EUR",
+      country:        p.country || "NL",
+      city:           p.city || "",
+      bedroom_count:  p.bedrooms || 1,
       bathroom_count: p.bathrooms || 1,
-      max_guests:   p.max_guests || 2,
-      listing_type: "entire_home",
+      max_guests:     p.max_guests || 2,
+      listing_type:   "entire_home",
+      // New fields required by PriceLabs for better pricing recommendations
+      cleaning_fee:   p.cleaning_fee != null ? Number(p.cleaning_fee) : 0,
+      ota_listing_ids: otaMap[p.id] || [],
     }));
 
     await api.pushListings(token, name, listings);
@@ -177,14 +183,15 @@ export class PriceLabsService {
       listing_id:     `${hostId}_${b.property_id}`,
       user_token:     connection.pricelabs_email,
       reservation_id: b.id,
-      checkin_date:   _tsToDate(b.checkin_date),
-      checkout_date:  _tsToDate(b.checkout_date),
-      guests:         b.guest_count || 1,
+      checkin_date:   _tsToDate(b.arrivaldate),
+      checkout_date:  _tsToDate(b.departuredate),
+      guests:         b.guests || 1,
       total_cost:     b.total_price || 0,
       rental_revenue: b.nightly_revenue || 0,
       currency:       "EUR",
       status:         b.status || "confirmed",
-      channel:        b.channel || "domits",
+      // booking_source: OTA channel name (airbnb, booking.com, etc.) or "direct"
+      booking_source: b.booking_source || "direct",
     }));
 
     if (reservations.length) {
