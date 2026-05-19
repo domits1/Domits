@@ -61,6 +61,7 @@ const buildDatabaseClient = ({
       weekendrate: 120,
     },
   ],
+  bookings = [],
 } = {}) => ({
   options: { schema: "main" },
   query: jest.fn(async (sql) => {
@@ -84,6 +85,10 @@ const buildDatabaseClient = ({
 
     if (query.includes("property_pricing")) {
       return pricing;
+    }
+
+    if (query.includes('"booking"')) {
+      return bookings;
     }
 
     return [];
@@ -117,6 +122,25 @@ const buildTwoRatePlanMappings = () => [
   buildRatePlanMapping("room-type-1", "rate-plan-1"),
   buildRatePlanMapping("room-type-2", "rate-plan-2"),
 ];
+
+const buildBookingRow = ({ id = "booking-1", arrivaldate, departuredate, status } = {}) => ({
+  id,
+  property_id: "domits-property-1",
+  arrivaldate,
+  departuredate,
+  status,
+});
+
+const buildAvailableWindow = (availableStartDate, availableEndDate) => ({
+  property_id: "domits-property-1",
+  availablestartdate: availableStartDate,
+  availableenddate: availableEndDate,
+});
+
+const extractAvailabilityByDate = (pushAvailability) => {
+  const values = pushAvailability.mock.calls[0]?.[1]?.[0]?.values || [];
+  return Object.fromEntries(values.map((value) => [value.date, value.availability]));
+};
 
 const buildReadyAriTargets = (overrides = {}) => ({
   statusCode: 200,
@@ -616,6 +640,45 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     );
   });
 
+  test("availability sync sends booking-aware effective availability", async () => {
+    const pushAvailability = createAvailabilityPush();
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
+        bookings: [
+          buildBookingRow({
+            arrivaldate: "2026-06-01",
+            departuredate: "2026-06-03",
+            status: "Paid",
+          }),
+        ],
+      })
+    );
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions: jest.fn().mockResolvedValue({ results: [] }),
+      },
+    });
+
+    const result = await service.syncChannexAvailability(
+      "user-1",
+      "domits-property-1",
+      "2026-06-01",
+      "2026-06-03",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestCount).toBe(1);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(extractAvailabilityByDate(pushAvailability)).toEqual({
+      "2026-06-01": 0,
+      "2026-06-02": 0,
+      "2026-06-03": 1,
+    });
+  });
+
   test("restrictions sync supports a 500-day range and sends one combined provider request", async () => {
     const pushRestrictions = createSuccessfulRestrictionsPush();
     const service = createService({
@@ -722,6 +785,108 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     expect(JSON.stringify(result.response)).not.toMatch(/pageDateFrom|pageSizeDays|chunkIndex|chunkCount|syncRunId/);
     expect(result.response.steps.availability.results[0]).not.toHaveProperty("chunkIndex");
     expect(result.response.steps.restrictions.results[0]).not.toHaveProperty("chunkIndex");
+  });
+
+  test("full certification sync subtracts active bookings and excludes the check-out date", async () => {
+    const pushAvailability = createAvailabilityPush();
+    const pushRestrictions = createRestrictionsPush();
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
+        bookings: [
+          buildBookingRow({
+            arrivaldate: "2026-06-01",
+            departuredate: "2026-06-03",
+            status: "Paid",
+          }),
+        ],
+      })
+    );
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-06-01",
+      "2026-06-03",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestCount).toBe(2);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    expect(extractAvailabilityByDate(pushAvailability)).toEqual({
+      "2026-06-01": 0,
+      "2026-06-02": 0,
+      "2026-06-03": 1,
+    });
+  });
+
+  test("full certification sync blocks paid and awaiting payment bookings only", async () => {
+    const pushAvailability = createAvailabilityPush();
+    const pushRestrictions = createRestrictionsPush();
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityWindows: [buildAvailableWindow(20260601, 20260604)],
+        bookings: [
+          buildBookingRow({
+            id: "paid-booking",
+            arrivaldate: "2026-06-01",
+            departuredate: "2026-06-02",
+            status: "Paid",
+          }),
+          buildBookingRow({
+            id: "awaiting-payment-booking",
+            arrivaldate: "2026-06-02",
+            departuredate: "2026-06-03",
+            status: "Awaiting Payment",
+          }),
+          buildBookingRow({
+            id: "failed-booking",
+            arrivaldate: "2026-06-03",
+            departuredate: "2026-06-04",
+            status: "Failed",
+          }),
+          buildBookingRow({
+            id: "inquiry-booking",
+            arrivaldate: "2026-06-04",
+            departuredate: "2026-06-05",
+            status: "Inquiry",
+          }),
+        ],
+      })
+    );
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-06-01",
+      "2026-06-04",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestCount).toBe(2);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    expect(extractAvailabilityByDate(pushAvailability)).toEqual({
+      "2026-06-01": 0,
+      "2026-06-02": 0,
+      "2026-06-03": 1,
+      "2026-06-04": 1,
+    });
   });
 
   test("full certification sync provider warnings keep overallSuccess false", async () => {

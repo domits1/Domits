@@ -36,10 +36,15 @@ import {
   normalizeChannexProviderValidation,
   buildDefaultChannexProviderValidation,
 } from "./channexCredentialUtils.js";
+import {
+  ChannexBookingAvailabilityRepository,
+  countActiveBookingsByNight,
+} from "./channexBookingAvailabilityBridge.js";
 
 const nowMs = () => Date.now();
-const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
-const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const SIXTY_DAYS_MS = 60 * DAY_MS;
+const THREE_DAYS_MS = 3 * DAY_MS;
 const GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v22.0";
 const PLACEHOLDER_REFRESH_STATUSES = new Set([
   "NEEDS_REAL_META_TOKEN_EXCHANGE",
@@ -50,6 +55,7 @@ const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
 const CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS = 8000;
+const CHANNEX_DEFAULT_SELLABLE_UNIT_COUNT = 1;
 
 const requireStr = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
 const compareAlphabetically = (left, right) => String(left).localeCompare(String(right));
@@ -1322,6 +1328,63 @@ const normalizeAvailabilityRestrictionRows = (restrictions) =>
       value: Number.isFinite(Number(restriction?.value)) ? Number(restriction.value) : null,
     }))
     .filter((restriction) => restriction.restriction && restriction.value !== null);
+const buildEmptyAvailabilityOccupancyContext = () => ({
+  activeBookings: [],
+  activeCountsByNight: {},
+  activeBookingCount: 0,
+  activeBookingNightCount: 0,
+});
+const normalizeActiveBookingCount = (activeCountsByNight, isoDate) => {
+  const count = Number(activeCountsByNight?.[isoDate]);
+  return Number.isFinite(count) && count > 0 ? Math.trunc(count) : 0;
+};
+const buildBookingAwareAvailability = ({ baseAvailability, activeBookingCount }) => {
+  const sellableUnitCount = CHANNEX_DEFAULT_SELLABLE_UNIT_COUNT;
+  const availableUnitCount = baseAvailability
+    ? Math.max(0, sellableUnitCount - Math.max(0, activeBookingCount))
+    : 0;
+
+  return {
+    baseAvailability,
+    activeBookingCount,
+    sellableUnitCount,
+    availableUnitCount,
+    availability: availableUnitCount > 0,
+  };
+};
+const buildAvailabilityOccupancyContext = async ({ bookingAvailabilityRepository, domitsPropertyId, dates }) => {
+  const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+  const normalizedDates = (Array.isArray(dates) ? dates : []).map(parseIsoDateParam).filter(Boolean);
+  if (
+    !normalizedDomitsPropertyId ||
+    normalizedDates.length === 0 ||
+    typeof bookingAvailabilityRepository?.listActiveBookingsOverlappingRange !== "function"
+  ) {
+    return buildEmptyAvailabilityOccupancyContext();
+  }
+
+  const fromMs = isoDateToUtcStartMs(normalizedDates[0]);
+  const lastDateStartMs = isoDateToUtcStartMs(normalizedDates[normalizedDates.length - 1]);
+  if (fromMs === null || lastDateStartMs === null) {
+    return buildEmptyAvailabilityOccupancyContext();
+  }
+
+  const activeBookingRows = await bookingAvailabilityRepository.listActiveBookingsOverlappingRange(
+    normalizedDomitsPropertyId,
+    fromMs,
+    lastDateStartMs + DAY_MS
+  );
+  const activeBookings = Array.isArray(activeBookingRows) ? activeBookingRows : [];
+  const activeCountsByNight = countActiveBookingsByNight(activeBookings, normalizedDates);
+  const activeBookingNightCount = Object.values(activeCountsByNight).reduce((total, count) => total + count, 0);
+
+  return {
+    activeBookings,
+    activeCountsByNight,
+    activeBookingCount: activeBookings.length,
+    activeBookingNightCount,
+  };
+};
 const buildAriPreviewCollections = ({
   dates,
   overrideMap,
@@ -1331,6 +1394,7 @@ const buildAriPreviewCollections = ({
   readiness,
   normalizedDomitsPropertyId,
   normalizedRestrictions,
+  activeCountsByNight = {},
 }) => {
   const availabilityPreview = [];
   const rateRestrictionPreview = [];
@@ -1351,7 +1415,11 @@ const buildAriPreviewCollections = ({
     const isAvailableFromWindows = normalizedAvailabilityWindows.some(
       (entry) => calendarDate >= entry.availableStartDate && calendarDate <= entry.availableEndDate
     );
-    const effectiveAvailability = getEffectiveAvailability({ override, isAvailableFromWindows });
+    const baseAvailability = getEffectiveAvailability({ override, isAvailableFromWindows });
+    const availabilityState = buildBookingAwareAvailability({
+      baseAvailability,
+      activeBookingCount: normalizeActiveBookingCount(activeCountsByNight, isoDate),
+    });
     const effectiveNightlyPrice = getEffectiveNightlyPrice({ override, pricing, isoDate });
 
     for (const roomTypeMapping of Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : []) {
@@ -1360,7 +1428,11 @@ const buildAriPreviewCollections = ({
         externalPropertyId: roomTypeMapping.externalPropertyId,
         externalRoomTypeId: roomTypeMapping.externalRoomTypeId,
         date: isoDate,
-        availability: effectiveAvailability,
+        availability: availabilityState.availability,
+        baseAvailability: availabilityState.baseAvailability,
+        activeBookingCount: availabilityState.activeBookingCount,
+        sellableUnitCount: availabilityState.sellableUnitCount,
+        availableUnitCount: availabilityState.availableUnitCount,
       });
     }
 
@@ -1425,6 +1497,7 @@ const buildAvailabilityPayloadItemsFromReadiness = ({
   normalizedAvailabilityWindows,
   readiness,
   normalizedDomitsPropertyId,
+  activeCountsByNight = {},
 }) => {
   const availabilityItems = [];
 
@@ -1434,7 +1507,11 @@ const buildAvailabilityPayloadItemsFromReadiness = ({
     const isAvailableFromWindows = normalizedAvailabilityWindows.some(
       (entry) => calendarDate >= entry.availableStartDate && calendarDate <= entry.availableEndDate
     );
-    const effectiveAvailability = getEffectiveAvailability({ override, isAvailableFromWindows });
+    const baseAvailability = getEffectiveAvailability({ override, isAvailableFromWindows });
+    const availabilityState = buildBookingAwareAvailability({
+      baseAvailability,
+      activeBookingCount: normalizeActiveBookingCount(activeCountsByNight, isoDate),
+    });
 
     for (const roomTypeMapping of Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : []) {
       availabilityItems.push({
@@ -1442,7 +1519,11 @@ const buildAvailabilityPayloadItemsFromReadiness = ({
         externalPropertyId: roomTypeMapping.externalPropertyId,
         externalRoomTypeId: roomTypeMapping.externalRoomTypeId,
         date: isoDate,
-        availability: effectiveAvailability,
+        availability: availabilityState.availability,
+        baseAvailability: availabilityState.baseAvailability,
+        activeBookingCount: availabilityState.activeBookingCount,
+        sellableUnitCount: availabilityState.sellableUnitCount,
+        availableUnitCount: availabilityState.availableUnitCount,
       });
     }
   }
@@ -2296,6 +2377,7 @@ export default class IntegrationService {
     resLinks = new ReservationLinkRepository(),
     channexEvidence = new ChannexSyncEvidenceRepository(),
     channexBookingRevisions = new ChannexBookingRevisionRepository(),
+    bookingAvailabilityRepository = new ChannexBookingAvailabilityRepository(),
     runner = new SyncRunner(),
     credentialStore = new WhatsAppCredentialStore(),
     holiduCredentialStore = new HoliduCredentialStore(),
@@ -2311,6 +2393,7 @@ export default class IntegrationService {
     this.resLinks = resLinks;
     this.channexEvidence = channexEvidence;
     this.channexBookingRevisions = channexBookingRevisions;
+    this.bookingAvailabilityRepository = bookingAvailabilityRepository;
     this.runner = runner;
     this.credentialStore = credentialStore;
     this.holiduCredentialStore = holiduCredentialStore;
@@ -3965,6 +4048,11 @@ export default class IntegrationService {
       const restrictionMapping = buildChannexRestrictionMapping(normalizedRestrictions);
 
       const dates = buildCalendarDateRange(normalizedDateFrom, normalizedDateTo);
+      const occupancyContext = await buildAvailabilityOccupancyContext({
+        bookingAvailabilityRepository: this.bookingAvailabilityRepository,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        dates,
+      });
       const calendarRestrictionOverrideDates = Array.from(overrideMap.values()).filter(
         (override) => buildCalendarRestrictionOverrideSummary(override).hasAnyValue
       ).length;
@@ -3982,6 +4070,7 @@ export default class IntegrationService {
         readiness,
         normalizedDomitsPropertyId,
         normalizedRestrictions,
+        activeCountsByNight: occupancyContext.activeCountsByNight,
       });
 
       return ok({
@@ -4007,6 +4096,10 @@ export default class IntegrationService {
           supportedChannexRestrictionFields: Array.from(effectiveChannexRestrictionFields).sort(compareAlphabetically),
           omittedAvailabilityRestrictions: restrictionMapping.omittedRestrictions.length,
           omittedDomitsRestrictionNames: restrictionMapping.omittedDomitsRestrictionNames,
+          bookingAwareAvailability: true,
+          activeBookingCount: occupancyContext.activeBookingCount,
+          activeBookingNightCount: occupancyContext.activeBookingNightCount,
+          sellableUnitCount: CHANNEX_DEFAULT_SELLABLE_UNIT_COUNT,
         },
         availabilityPreview,
         rateRestrictionPreview,
@@ -4093,6 +4186,10 @@ export default class IntegrationService {
         externalRoomTypeId: item.externalRoomTypeId,
         date: item.date,
         availability: item.availability,
+        baseAvailability: item.baseAvailability,
+        activeBookingCount: item.activeBookingCount,
+        sellableUnitCount: item.sellableUnitCount,
+        availableUnitCount: item.availableUnitCount,
       }));
       const availabilityPayloadGroups = buildAvailabilityPayloadGroups(availabilityItems);
 
@@ -4187,17 +4284,27 @@ export default class IntegrationService {
       const normalizedAvailabilityWindows = normalizeAvailabilityWindows(availabilityWindows);
       const overrideMap = buildCalendarOverrideMap(calendarOverrides);
       const dates = buildCalendarDateRange(normalizedDateFrom, normalizedDateTo);
+      const occupancyContext = await buildAvailabilityOccupancyContext({
+        bookingAvailabilityRepository: this.bookingAvailabilityRepository,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        dates,
+      });
       const availabilityItems = buildAvailabilityPayloadItemsFromReadiness({
         dates,
         overrideMap,
         normalizedAvailabilityWindows,
         readiness,
         normalizedDomitsPropertyId,
+        activeCountsByNight: occupancyContext.activeCountsByNight,
       }).map((item) => ({
         externalPropertyId: item.externalPropertyId,
         externalRoomTypeId: item.externalRoomTypeId,
         date: item.date,
         availability: item.availability,
+        baseAvailability: item.baseAvailability,
+        activeBookingCount: item.activeBookingCount,
+        sellableUnitCount: item.sellableUnitCount,
+        availableUnitCount: item.availableUnitCount,
       }));
       const availabilityPayloadGroups = buildAvailabilityPayloadGroups(availabilityItems);
 
@@ -4217,6 +4324,10 @@ export default class IntegrationService {
           roomTypeMappings: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings.length : 0,
           availabilityPayloadGroups: availabilityPayloadGroups.length,
           availabilityPayloadItems: availabilityItems.length,
+          bookingAwareAvailability: true,
+          activeBookingCount: occupancyContext.activeBookingCount,
+          activeBookingNightCount: occupancyContext.activeBookingNightCount,
+          sellableUnitCount: CHANNEX_DEFAULT_SELLABLE_UNIT_COUNT,
         },
         availabilityPayloadPreview: {
           items: availabilityItems,
@@ -6306,6 +6417,11 @@ export default class IntegrationService {
     const overrideMap = buildCalendarOverrideMap(calendarOverrides);
     const normalizedRestrictions = normalizeAvailabilityRestrictionRows(restrictions);
     const restrictionMapping = buildChannexRestrictionMapping(normalizedRestrictions);
+    const occupancyContext = await buildAvailabilityOccupancyContext({
+      bookingAvailabilityRepository: this.bookingAvailabilityRepository,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      dates,
+    });
 
     const availabilityItems = buildAvailabilityPayloadItemsFromReadiness({
       dates,
@@ -6313,6 +6429,7 @@ export default class IntegrationService {
       normalizedAvailabilityWindows,
       readiness,
       normalizedDomitsPropertyId,
+      activeCountsByNight: occupancyContext.activeCountsByNight,
     });
     const availabilityGroupedPayloads = buildAvailabilityPayloadGroups(availabilityItems);
     const availabilityProviderPayloads = combineChannexAvailabilitySyncPayloadsForProvider(
@@ -6351,6 +6468,9 @@ export default class IntegrationService {
       ),
       effectiveChannexRestrictionFields: Array.from(effectiveChannexRestrictionFields).sort(compareAlphabetically),
       sentChannexRestrictionFields: collectChannexRestrictionFieldsFromGroups(restrictionProviderPayloads),
+      bookingAwareAvailability: true,
+      activeBookingCount: occupancyContext.activeBookingCount,
+      activeBookingNightCount: occupancyContext.activeBookingNightCount,
       availabilityPayloadSummary: summarizeChannexGroupedPayloads(availabilityProviderPayloads),
       restrictionsPayloadSummary: summarizeChannexGroupedPayloads(restrictionProviderPayloads),
     };
@@ -6369,12 +6489,18 @@ export default class IntegrationService {
       getPropertyAvailabilityWindows(normalizedDomitsPropertyId),
       getPropertyCalendarOverrides(normalizedDomitsPropertyId, startDateInt, endDateInt),
     ]);
+    const occupancyContext = await buildAvailabilityOccupancyContext({
+      bookingAvailabilityRepository: this.bookingAvailabilityRepository,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      dates,
+    });
     const availabilityItems = buildAvailabilityPayloadItemsFromReadiness({
       dates,
       overrideMap: buildCalendarOverrideMap(calendarOverrides),
       normalizedAvailabilityWindows: normalizeAvailabilityWindows(availabilityWindows),
       readiness,
       normalizedDomitsPropertyId,
+      activeCountsByNight: occupancyContext.activeCountsByNight,
     });
     const availabilityGroupedPayloads = buildAvailabilityPayloadGroups(availabilityItems);
     const availabilityProviderPayloads = combineChannexAvailabilitySyncPayloadsForProvider(
@@ -6386,6 +6512,9 @@ export default class IntegrationService {
       availabilityItems,
       availabilityGroupedPayloads,
       availabilityProviderPayloads,
+      bookingAwareAvailability: true,
+      activeBookingCount: occupancyContext.activeBookingCount,
+      activeBookingNightCount: occupancyContext.activeBookingNightCount,
       availabilityPayloadSummary: summarizeChannexGroupedPayloads(availabilityProviderPayloads),
     };
   }
