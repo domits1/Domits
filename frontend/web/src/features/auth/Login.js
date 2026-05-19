@@ -238,7 +238,7 @@ const Login = () => {
                 {isSigningIn ? (
                   <span className="buttonLoadingContent">
                     <span className="buttonSpinner" aria-hidden="true"></span>
-                    Signing in...
+                    <span>Signing in...</span>
                   </span>
                 ) : (
                   "Login"
