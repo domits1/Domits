@@ -1,4 +1,4 @@
-import { getDataSource } from "database/dataSource.js";
+import Database from "database";
 import { PriceLabs_Connection } from "database/models/PriceLabs_Connection.js";
 import { Property } from "database/models/Property.js";
 import { Property_Calendar_Override } from "database/models/Property_Calendar_Override.js";
@@ -8,7 +8,7 @@ import { ChannelReservationLink } from "database/models/unified/integrations/Cha
 
 export class Repository {
   async _ds() {
-    return getDataSource();
+    return Database.getInstance();
   }
 
 
@@ -70,7 +70,6 @@ export class Repository {
     const ds = await this._ds();
     const repo = ds.getRepository(Property_Calendar_Override);
 
-    // PriceLabs sends dates as "YYYY-MM-DD" — convert to YYYYMMDD integer
     const calendarDate = Number(String(date ?? "").replaceAll("-", ""));
     if (!calendarDate || calendarDate < 10000101 || calendarDate > 99991231) {
       console.error("[PriceLabs] Invalid date received:", date);
