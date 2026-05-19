@@ -111,13 +111,16 @@ const PersonalDataForm = ({
     showPrefFormats,
     showAuthMfa,
     authStatus,
+    breadcrumbPath,
 }) => (
     <div className="personal-data-page">
-        <nav className="personal-data-breadcrumb">
-            <Link to="/hostdashboard/settings">Settings</Link>
-            <span className="personal-data-breadcrumb-sep">/</span>
-            <span className="personal-data-breadcrumb-current">Personal Data</span>
-        </nav>
+        {breadcrumbPath && (
+            <nav className="personal-data-breadcrumb">
+                <Link to={breadcrumbPath}>Settings</Link>
+                <span className="personal-data-breadcrumb-sep">/</span>
+                <span className="personal-data-breadcrumb-current">Personal Data</span>
+            </nav>
+        )}
 
         <header className="personal-data-header">
             <h1 className="personal-data-title">Personal Information</h1>
@@ -471,6 +474,7 @@ PersonalDataForm.propTypes = {
     showPrefFormats: PropTypes.bool.isRequired,
     showAuthMfa: PropTypes.bool.isRequired,
     authStatus: authStatusShape.isRequired,
+    breadcrumbPath: PropTypes.string,
 };
 
 export default PersonalDataForm;

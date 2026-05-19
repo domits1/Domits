@@ -64,6 +64,7 @@ const HostSettingsPersonalData = () => {
             isSaving={isSaving}
             saveSuccess={saveSuccess}
             onVerifyEmail={settingsData.onSaveUserEmail}
+            breadcrumbPath="/hostdashboard/settings"
         />
     );
 };
