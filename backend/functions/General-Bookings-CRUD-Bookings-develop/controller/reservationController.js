@@ -13,7 +13,7 @@ class ReservationController {
   constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
   }
   // -----------
   // POST
@@ -208,7 +208,8 @@ class ReservationController {
       const totalPriceCents = Math.round((booking.total_price || 0) * 100);
       refundAmountCents = calculateRefundAmountCents(booking.cancellation_policy, booking.arrivaldate, totalPriceCents);
 
-      if (refundAmountCents > 0 && booking.paymentid) {
+      // Process refund with Stripe if amount > 0 and Stripe is configured
+      if (refundAmountCents > 0 && booking.paymentid && this.stripe) {
         const refund = await this.stripe.refunds.create({
           payment_intent: booking.paymentid,
           amount: refundAmountCents,
