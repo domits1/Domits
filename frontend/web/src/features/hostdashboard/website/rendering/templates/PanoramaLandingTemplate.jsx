@@ -480,10 +480,6 @@ const renderPanoramaHeroSection = ({
                 <span>{model.callToAction.note || model.stay?.nightlyRateLabel || "Direct booking website"}</span>
               </div>
             ) : null}
-
-            {model.location?.label ? (
-              <div className={styles.panoramaHeroSecondaryMeta}>{model.location.label}</div>
-            ) : null}
           </div>
         </div>
       </div>

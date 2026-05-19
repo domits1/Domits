@@ -390,8 +390,7 @@
   align-items: center;
 }
 
-.panoramaHeroPrimaryAction,
-.panoramaHeroSecondaryMeta {
+.panoramaHeroPrimaryAction {
   display: inline-flex;
   align-items: center;
   min-height: 50px;
@@ -409,8 +408,7 @@
 }
 
 .panoramaHeroPrimaryAction strong,
-.panoramaHeroPrimaryAction span,
-.panoramaHeroSecondaryMeta {
+.panoramaHeroPrimaryAction span {
   color: inherit;
 }
 
@@ -418,14 +416,6 @@
   color: #6b7280;
   font-size: 0.9rem;
   font-weight: 600;
-}
-
-.panoramaHeroSecondaryMeta {
-  padding: 0.82rem 1.02rem;
-  background: rgba(15, 23, 42, 0.56);
-  border: 1px solid rgba(248, 244, 237, 0.28);
-  color: #fdfbf7;
-  backdrop-filter: blur(8px);
 }
 
 .panoramaTrustRail {
