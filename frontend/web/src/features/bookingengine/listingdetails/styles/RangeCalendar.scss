@@ -1,11 +1,12 @@
 .availability-section {
-  margin: 0;
-  padding: 20px;
+  margin-top: 30px;
+  padding: 28px 30px 26px;
   border: 1px solid #d7dde5;
   border-radius: 8px;
   background: #fff;
 
   @media (max-width: 768px) {
+    margin-top: 18px;
     padding: 20px;
   }
 }
@@ -233,20 +234,6 @@
   .rc-panels {
     grid-template-columns: 1fr;
     gap: 28px;
-  }
-}
-
-@media (max-width: 480px) {
-  .rc-panels {
-    gap: 16px;
-  }
-
-  .rc-cell {
-    min-height: 40px;
-  }
-
-  .rc-cell--head {
-    font-size: 0.75rem;
   }
 }
 

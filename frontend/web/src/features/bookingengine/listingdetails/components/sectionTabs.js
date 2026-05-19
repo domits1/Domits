@@ -1,22 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 
-const resolveScrollOffset = () => {
-  if (globalThis.window == null) {
-    return 190;
-  }
-
-  if (globalThis.innerWidth > 768) {
-    return 190;
-  }
-
-  const rootStyles = globalThis.getComputedStyle(document.documentElement);
-  const headerHeight = Number.parseFloat(rootStyles.getPropertyValue("--app-header-h")) || 90;
-  const headerOffset = Number.parseFloat(rootStyles.getPropertyValue("--listing-header-offset")) || headerHeight;
-
-  return headerOffset + 24;
-};
-
+const SCROLL_OFFSET = 190;
 const ACTIVE_SECTION_THRESHOLD = 210;
 
 const scrollToSection = (sectionId) => {
@@ -25,8 +10,8 @@ const scrollToSection = (sectionId) => {
     return;
   }
 
-  const top = globalThis.scrollY + target.getBoundingClientRect().top - resolveScrollOffset();
-  globalThis.scrollTo({ top, behavior: "smooth" });
+  const top = window.scrollY + target.getBoundingClientRect().top - SCROLL_OFFSET;
+  window.scrollTo({ top, behavior: "smooth" });
 };
 
 const resolveActiveSection = (sections) => {
@@ -50,24 +35,7 @@ const resolveActiveSection = (sections) => {
 const SectionTabs = ({ sections = [] }) => {
   const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
   const [indicatorStyle, setIndicatorStyle] = useState({});
-  const [isMobileViewport, setIsMobileViewport] = useState(
-    () => globalThis.window != null && globalThis.innerWidth <= 768
-  );
-  const shellRef = useRef(null);
   const buttonRefs = useRef({});
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobileViewport(globalThis.innerWidth <= 768);
-    };
-
-    handleResize();
-    globalThis.addEventListener("resize", handleResize);
-
-    return () => {
-      globalThis.removeEventListener("resize", handleResize);
-    };
-  }, []);
 
   useEffect(() => {
     if (!sections.length) {
@@ -79,14 +47,14 @@ const SectionTabs = ({ sections = [] }) => {
     };
 
     handleScroll();
-    globalThis.addEventListener("scroll", handleScroll, { passive: true });
-    globalThis.addEventListener("resize", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
 
     return () => {
-      globalThis.removeEventListener("scroll", handleScroll);
-      globalThis.removeEventListener("resize", handleScroll);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
     };
-  }, [isMobileViewport, sections]);
+  }, [sections]);
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -102,37 +70,19 @@ const SectionTabs = ({ sections = [] }) => {
     };
 
     updateIndicator();
-    globalThis.addEventListener("resize", updateIndicator);
+    window.addEventListener("resize", updateIndicator);
 
     return () => {
-      globalThis.removeEventListener("resize", updateIndicator);
+      window.removeEventListener("resize", updateIndicator);
     };
   }, [activeSection, sections]);
-
-  useEffect(() => {
-    if (!isMobileViewport) {
-      return;
-    }
-
-    const activeButton = buttonRefs.current[activeSection];
-    const shell = shellRef.current;
-    if (!activeButton || !shell) {
-      return;
-    }
-
-    const nextScrollLeft = activeButton.offsetLeft - shell.clientWidth / 2 + activeButton.offsetWidth / 2;
-    shell.scrollTo({
-      left: Math.max(0, nextScrollLeft),
-      behavior: "smooth",
-    });
-  }, [activeSection, isMobileViewport]);
 
   if (!sections.length) {
     return null;
   }
 
   return (
-    <div className="listing-sections-shell" ref={shellRef}>
+    <div className="listing-sections-shell">
       <nav className="listing-sections-nav" aria-label="Listing sections">
         <div className="listing-sections-nav__track" style={indicatorStyle} />
         {sections.map((section) => (
