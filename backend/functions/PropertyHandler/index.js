@@ -65,6 +65,7 @@ const hostDashboardHandlers = {
   single: (event) => controller.getFullOwnedPropertyById(event),
   websiteDrafts: (event) => controller.getWebsiteDrafts(event),
   websiteDraft: (event) => controller.getWebsiteDraftByPropertyId(event),
+  byHostId: (event) => controller.getFullOwnedPropertiesByHostId(event),
 };
 
 const bookingEngineHandlers = {

@@ -3,7 +3,7 @@ import { PROPERTY_API_BASE } from "../hostproperty/constants";
 import { placeholderImage, resolveAccommodationImageUrls } from "../../../utils/accommodationImage";
 
 const buildFallbackListingsUrl = (hostId) => {
-    const fallbackUrl = new URL(`${PROPERTY_API_BASE}/bookingEngine/byHostId`);
+    const fallbackUrl = new URL(`${PROPERTY_API_BASE}/hostDashboard/byHostId`);
     fallbackUrl.searchParams.set("hostId", hostId);
     return fallbackUrl.toString();
 };

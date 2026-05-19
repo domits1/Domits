@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Auth } from 'aws-amplify';
 import useEffectiveHostId from '../../hooks/useEffectiveHostId';
@@ -171,6 +171,7 @@ const HostPropertyCare = () => {
 
     const [taskContext, setTaskContext] = useState('own');
     const asHostId = taskContext === 'managed' ? managedHostId : null;
+    const loadRequestRef = useRef(0);
 
     const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
@@ -436,19 +437,25 @@ const HostPropertyCare = () => {
     }, [tasks]);
 
     const loadData = async () => {
+        const requestId = ++loadRequestRef.current;
         setIsLoading(true);
-        const data = await fetchTasks({}, asHostId);
-        
-        const todayStr = new Date().toISOString().split('T')[0];
-        const processedTasks = data.map(task => {
-            if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
-                return { ...task, status: 'Overdue', priority: 'Urgent' };
-            }
-            return task;
-        });
-
-        setTasks(processedTasks);
-        setIsLoading(false);
+        try {
+            const data = await fetchTasks({}, asHostId);
+            if (requestId !== loadRequestRef.current) return;
+            const todayStr = new Date().toISOString().split('T')[0];
+            const processedTasks = data.map(task => {
+                if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
+                    return { ...task, status: 'Overdue', priority: 'Urgent' };
+                }
+                return task;
+            });
+            setTasks(processedTasks);
+        } catch {
+            if (requestId !== loadRequestRef.current) return;
+            setTasks([]);
+        } finally {
+            if (requestId === loadRequestRef.current) setIsLoading(false);
+        }
     };
 
     const handleCreateTask = async (e) => {

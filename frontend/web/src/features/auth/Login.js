@@ -70,7 +70,9 @@ const Login = () => {
         setIsAuthenticated(true);
         setGroup(userAttributes["custom:group"]);
 
-        if (userAttributes["custom:group"] === "Host") {
+        if (redirect) {
+          window.location.href = redirect;
+        } else if (userAttributes["custom:group"] === "Host") {
           navigate("/hostdashboard");
         } else if (userAttributes["custom:group"] === "Traveler") {
           navigate("/guestdashboard");
@@ -101,7 +103,7 @@ const Login = () => {
       setErrorMessage("");
       window.dispatchEvent(new Event("authChanged"));
       if (redirect) {
-        navigate(redirect);
+        window.location.href = redirect;
       } else {
         window.location.reload();
       }
