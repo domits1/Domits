@@ -1,1220 +1,853 @@
-@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;700&display=swap");
-
 .homePage-container {
   overflow: hidden;
-}
 
-.homePage-container .domits-homepage {
-  background-color: #f9f9f9;
-  position: relative;
-  z-index: auto;
-}
+  .domits-homepage {
+    background: #f9f9f9;
 
-.homePage-container .domits-homepage .accocard-content {
-  background-color: #f9f9f9;
-}
-
-.homePage-container .domits-homepage h1 {
-  color: #000;
-  margin-left: 60px;
-  margin-bottom: 20px;
-}
-
-@media (max-width: 400px) {
-  .homePage-container .domits-homepage h1 {
-    margin-left: 0;
-  }
-}
-
-.homePage-container .domits-homepage .domits-searchContainer {
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), var(--villa-background);
-  background-size: cover;
-  background-position: 70% 100%;
-  background-repeat: no-repeat;
-  width: 100vw;
-  height: 87vh;
-}
-
-.homePage-container .domits-homepage .domits-searchTextCon {
-  padding-top: 32vh;
-  color: #fff;
-  text-align: center;
+.accocard.homepage {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-  max-width: 720px;
-  margin: 0;
-  color: #fff;
-  font-size: clamp(2.75rem, 5vw, 4.75rem);
-  line-height: 1.05;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  text-wrap: balance;
-}
-
-.homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
-  max-width: 720px;
-  margin: 0;
-  color: #f6f0e4;
-  font-size: clamp(1rem, 2vw, 1.4rem);
-  line-height: 1.4;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  text-wrap: balance;
-}
-
-.homePage-container .domits-homepage .domits-searchbarCon {
-  padding-top: 1vw;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-@media (max-width: 1024px) {
-  .homePage-container .domits-homepage .domits-searchTextCon {
-    padding-inline: 24px;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .domits-searchTextCon {
-    min-height: 55vh;
-    padding-top: 0;
-    justify-content: center;
-    gap: 10px;
-  }
-  .homePage-container .domits-homepage .domits-searchbarCon {
-    display: none;
-  }
-  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-    font-size: clamp(2rem, 8vw, 3rem);
-  }
-  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
-    font-size: 1rem;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .domits-searchContainer {
-    height: 50vh;
-  }
-  .homePage-container .domits-homepage .domits-searchTextCon {
-    height: 50vh;
-    min-height: 50vh;
-    padding-top: 0;
-    padding-inline: 16px;
-    justify-content: center;
-  }
-  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-    font-size: 2rem;
-  }
-  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
-    font-size: 0.95rem;
-  }
-}
-
-.homePage-container .domits-homepage .domits-iconsContainer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f9f9f9;
-  flex-wrap: wrap;
-  height: 10vh;
-  padding: 0 4%;
-  margin-top: 20px;
-}
-
-.homePage-container .domits-homepage .domits-iconsContainerText {
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  text-align: center;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.homePage-container .domits-homepage .domits-iconsContainerText img {
-  width: 30px;
-}
-
-@media (max-width: 1020px) {
-  .homePage-container .domits-homepage .domits-iconsContainer {
-    margin-bottom: 130px;
-  }
-}
-@media (max-width: 1024px) {
-  .homePage-container .domits-homepage .domits-iconsContainer {
-    height: auto;
-  }
-  .homePage-container .domits-homepage .domits-iconsContainerText {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .domits-iconsContainer {
-    flex-direction: column;
-    gap: 15px;
-    height: auto;
-    padding: 10px 5vw;
-    margin-bottom: 50px;
-  }
-  .homePage-container .domits-homepage .domits-iconsContainer p {
-    font-size: 0.8rem;
-  }
-}
-@media (max-width: 569px) {
-  .homePage-container .domits-homepage .domits-iconsContainer {
-    margin-bottom: 40px;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .domits-iconsContainerText {
-    font-size: 1rem;
-  }
-}
-
-.homePage-container .domits-homepage .domits-popularAccommodationText h3 {
-  font-size: 2.5rem;
-  font-weight: bold;
-  text-align: center;
-  padding-left: 0;
-}
-
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .domits-popularAccommodationText h3 {
-    font-size: 2rem;
-    margin-left: 2vw;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .domits-popularAccommodationText h3 {
-    font-size: 1.5rem;
-    margin: 20px auto;
-  }
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 25px;
-  margin: 0 auto;
-  padding-bottom: 2vh;
-  flex-wrap: wrap;
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer .popup-trigger {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 260px;
-  min-height: 74px;
-  text-align: center;
-  border: 1px solid #e1e1e1;
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-size: 15px;
-  font-weight: 400;
-  font-family: "Kanit", sans-serif;
-  line-height: 1.4;
-  background-color: #fff;
-  color: #3c3c3c;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  overflow: hidden;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer .popup-header {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 44px;
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer .popup-emoji {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer .popup-title {
-  font-family: "Kanit", sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.2px;
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer .popup-trigger:hover,
-.homePage-container .domits-homepage .domits-trendingContainer .popup-trigger:focus-visible,
-.homePage-container .domits-homepage .domits-trendingContainer .popup-trigger.is-open {
-  background-color: #f5f7ff;
-  border-color: #c7d2fe;
-  color: #1f2937;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px) scale(1.02);
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer .popup-trigger:active {
-  transform: translateY(0) scale(0.98);
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer .popup-content {
-  opacity: 0;
-  max-height: 0;
-  transform: translateY(-4px);
-  width: 100%;
-  padding: 0 6px;
-  border-radius: 10px;
-  background-color: #f8fafc;
-  color: #4b5563;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.4;
-  text-align: left;
-  overflow: hidden;
-  transition: max-height 220ms ease, opacity 180ms ease, transform 180ms ease, padding 180ms ease, margin-top 180ms ease;
-}
-
-.homePage-container .domits-homepage .domits-trendingContainer .popup-trigger:hover .popup-content,
-.homePage-container .domits-homepage .domits-trendingContainer .popup-trigger:focus-visible .popup-content,
-.homePage-container .domits-homepage .domits-trendingContainer .popup-trigger.is-open .popup-content {
-  opacity: 1;
-  max-height: 220px;
-  transform: translateY(0);
-  padding: 8px 10px;
-  margin-top: 6px;
-}
-
-.homePage-container .domits-homepage .domits-accommodationGroup {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  justify-content: center;
-  align-items: start;
-  gap: clamp(16px, 2vw, 24px);
-  width: 100%;
-  max-width: 1440px;
-  min-width: 0;
-  box-sizing: border-box;
-  margin: 0 auto;
-  padding-inline: clamp(14px, 3vw, 32px);
-}
-
-.homePage-container .domits-homepage .domits-accommodationGroup .accocard-wrapper {
-  width: 100%;
-  max-width: 450px;
-  justify-self: center;
-}
-
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .domits-accommodationGroup {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-    padding-inline: clamp(12px, 4vw, 18px);
-  }
-}
-
-.homePage-container .domits-homepage .become-host-section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff;
-  padding: 4.5rem;
-  border-radius: 1rem;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
-  margin: 56px auto 0;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-.homePage-container .domits-homepage .become-host-content {
-  max-width: 350px;
-  flex: 1;
-}
-
-.homePage-container .domits-homepage .become-host-content .BH {
-  margin-left: 0;
-}
-
-.homePage-container .domits-homepage .become-host-content h1 {
-  font-size: 1.75rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-}
-
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .become-host-content h1 {
-    font-size: 1.5rem;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .become-host-content h1 {
-    font-size: 1.25rem;
-  }
-}
-
-.homePage-container .domits-homepage .become-host-content ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  color: #555;
-}
-.homePage-container .domits-homepage .become-host-content ul li {
-  margin-bottom: 0.5rem;
-}
-
-.homePage-container .domits-homepage .become-host-content button {
-  margin-top: 1rem;
-  padding: 0.5rem 1.5rem;
-  background-color: #1d4ed8;
-  color: #fff;
-  font-weight: 600;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-  transition: background 0.3s;
-}
-.homePage-container .domits-homepage .become-host-content button:hover {
-  background-color: #1e40af;
-}
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .become-host-content button {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .become-host-content button {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
-  }
-}
-@media (max-width: 1024px) {
-  .homePage-container .domits-homepage .become-host-content {
-    max-width: 100%;
-    text-align: center;
-  }
-}
-
-.homePage-container .domits-homepage .host-images {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  width: 300px;
+  display: block;
+  transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+  max-width: 100%;
   height: auto;
+  gap: 20px;
+  margin: 0 auto;
+  position: relative;
 }
 
-@media (max-width: 1024px) {
-  .homePage-container .domits-homepage .host-images {
-    flex-direction: row;
-    justify-content: center;
-    gap: 1rem;
-    width: 100%;
-    flex-wrap: wrap;
-  }
+.accocard.homepage:hover {
+  transform: scale(1);
 }
 
-.homePage-container .domits-homepage .host-image {
-  width: 180px;
-  border-radius: 0.75rem;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 1024px) {
-  .homePage-container .domits-homepage .host-image {
-    width: 160px;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .host-image {
-    width: 140px;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .host-image {
-    width: 120px;
-  }
-}
-
-.homePage-container .domits-homepage .host-image:first-child {
-  width: 220px;
-}
-@media (max-width: 1024px) {
-  .homePage-container .domits-homepage .host-image:first-child {
-    width: 200px;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .host-image:first-child {
-    width: 180px;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .host-image:first-child {
-    width: 160px;
-  }
-}
-
-.homePage-container .domits-homepage .host-image:last-child {
-  width: 270px;
-}
-@media (max-width: 1024px) {
-  .homePage-container .domits-homepage .host-image:last-child {
-    width: 250px;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage .host-image:last-child {
-    width: 230px;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .host-image:last-child {
-    width: 200px;
-  }
-}
-
-.homePage-container .domits-homepage .countries-container,
-.homePage-container .domits-homepage .asia-countries-container,
-.homePage-container .domits-homepage .caribbean-countries-container,
-.homePage-container .domits-homepage .ski-countries-container,
-.homePage-container .domits-homepage .seasons-container,
-.homePage-container .domits-homepage .interests-container,
-.homePage-container .domits-homepage .groups-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  padding: 20px;
-}
-
-@media (max-width: 767px) {
-  .homePage-container .domits-homepage .countries-container,
-  .homePage-container .domits-homepage .asia-countries-container,
-  .homePage-container .domits-homepage .caribbean-countries-container,
-  .homePage-container .domits-homepage .ski-countries-container,
-  .homePage-container .domits-homepage .seasons-container,
-  .homePage-container .domits-homepage .interests-container,
-  .homePage-container .domits-homepage .groups-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.homePage-container .domits-homepage .country-card,
-.homePage-container .domits-homepage .asia-country-card,
-.homePage-container .domits-homepage .caribbean-country-card,
-.homePage-container .domits-homepage .ski-country-card,
-.homePage-container .domits-homepage .group-card {
-  overflow: hidden;
-  text-align: left;
-}
-
-.homePage-container .domits-homepage .country-card a img,
-.homePage-container .domits-homepage .asia-country-card a img,
-.homePage-container .domits-homepage .caribbean-country-card a img,
-.homePage-container .domits-homepage .ski-country-card a img,
-.homePage-container .domits-homepage .group-card a img {
+.accocard.homepage .accocard-media {
+  position: relative;
   width: 100%;
-  height: 250px;
-  object-fit: cover;
-  border-radius: 15px;
-  padding: 0;
-}
-
-@media (max-width: 400px) {
-  .homePage-container .domits-homepage .country-card a img,
-  .homePage-container .domits-homepage .asia-country-card a img {
-    height: 150px;
-  }
-  .homePage-container .domits-homepage .group-card a img {
-    height: 140px;
-  }
-}
-
-.homePage-container .domits-homepage .country-card h3,
-.homePage-container .domits-homepage .asia-country-card h3,
-.homePage-container .domits-homepage .caribbean-country-card h3,
-.homePage-container .domits-homepage .ski-country-card h3,
-.homePage-container .domits-homepage .season-card h3,
-.homePage-container .domits-homepage .interest-card h3,
-.homePage-container .domits-homepage .group-card h3 {
-  margin: 1px;
-  color: #000;
-  font-size: 25px;
-  font-family: "Kanit", sans-serif;
-  font-weight: 400;
-}
-
-.homePage-container .domits-homepage .country-card p,
-.homePage-container .domits-homepage .asia-country-card p,
-.homePage-container .domits-homepage .caribbean-country-card p,
-.homePage-container .domits-homepage .ski-country-card p,
-.homePage-container .domits-homepage .interest-card p,
-.homePage-container .domits-homepage .group-card p {
-  margin: 1px;
-  color: #494949;
-  font-size: 15px;
-  font-family: "Kanit", sans-serif;
-  font-weight: 400;
-}
-
-.homePage-container .domits-homepage .countries-container > :nth-child(1) {
-  grid-column: span 2;
-}
-.homePage-container .domits-homepage .countries-container > :nth-child(2),
-.homePage-container .domits-homepage .countries-container > :nth-child(3) {
-  grid-column: span 1;
-}
-
-.homePage-container .domits-homepage .asia-countries-container > :nth-child(1) {
-  grid-column: span 2;
-}
-.homePage-container .domits-homepage .asia-countries-container > :nth-child(2),
-.homePage-container .domits-homepage .asia-countries-container > :nth-child(3) {
-  grid-column: span 1;
-}
-
-.homePage-container .domits-homepage .caribbean-countries-container > :nth-child(1),
-.homePage-container .domits-homepage .caribbean-countries-container > :nth-child(2) {
-  grid-column: span 1;
-}
-.homePage-container .domits-homepage .caribbean-countries-container > :nth-child(3) {
-  grid-column: span 2;
-}
-
-.homePage-container .domits-homepage .ski-countries-container > :nth-child(1),
-.homePage-container .domits-homepage .ski-countries-container > :nth-child(2),
-.homePage-container .domits-homepage .ski-countries-container > :nth-child(5),
-.homePage-container .domits-homepage .ski-countries-container > :nth-child(6) {
-  grid-column: span 1;
-}
-.homePage-container .domits-homepage .ski-countries-container > :nth-child(3),
-.homePage-container .domits-homepage .ski-countries-container > :nth-child(4) {
-  grid-column: span 2;
-}
-
-.homePage-container .domits-homepage .interests-container > :nth-child(1),
-.homePage-container .domits-homepage .interests-container > :nth-child(2),
-.homePage-container .domits-homepage .interests-container > :nth-child(4),
-.homePage-container .domits-homepage .interests-container > :nth-child(5),
-.homePage-container .domits-homepage .interests-container > :nth-child(6),
-.homePage-container .domits-homepage .interests-container > :nth-child(7) {
-  grid-column: span 1;
-}
-.homePage-container .domits-homepage .interests-container > :nth-child(3),
-.homePage-container .domits-homepage .interests-container > :nth-child(8),
-.homePage-container .domits-homepage .interests-container > :nth-child(9) {
-  grid-column: span 2;
-}
-
-.homePage-container .domits-homepage .groups-container > :nth-child(1),
-.homePage-container .domits-homepage .groups-container > :nth-child(2),
-.homePage-container .domits-homepage .groups-container > :nth-child(5),
-.homePage-container .domits-homepage .groups-container > :nth-child(6) {
-  grid-column: span 1;
-}
-.homePage-container .domits-homepage .groups-container > :nth-child(3),
-.homePage-container .domits-homepage .groups-container > :nth-child(4) {
-  grid-column: span 2;
-}
-
-.homePage-container .domits-homepage .season-card,
-.homePage-container .domits-homepage .interest-card {
   overflow: hidden;
 }
 
-.homePage-container .domits-homepage .season-card a img {
+.accocard.homepage .swiper-slide img {
   width: 100%;
-  height: 250px;
+  aspect-ratio: 1;
   object-fit: cover;
   border-radius: 15px;
-  padding: 0;
+  transition: transform 0.4s ease-in-out;
+  display: block;
 }
-@media (max-width: 767px) {
-  .homePage-container .domits-homepage .season-card a img {
-    height: 150px;
-  }
-}
-
-.homePage-container .domits-homepage .interest-card a img {
+.accocard.homepage .swiper {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
+}
+.accocard.homepage:hover .swiper-slide img {
+  transform: scale(1.05);
+}
+
+.accocard.homepage .accocard-title {
+  width: 90%;
+  background: rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(10px);
+  padding: 10px;
   border-radius: 15px;
-  padding: 0;
-}
-@media (max-width: 400px) {
-  .homePage-container .domits-homepage .interest-card {
-    height: 120px;
-  }
-  .homePage-container .domits-homepage .interest-card a img {
-    height: 120px;
-  }
-}
-
-.homePage-container .domits-homepage .small-countries-container,
-.homePage-container .domits-homepage .small-asia-countries-container,
-.homePage-container .domits-homepage .small-caribbean-countries-container {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-  padding: 20px;
+  text-align: center;
+  position: absolute;
+  bottom: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  z-index: 2;
+  transition: background 0.3s ease;
 }
 
-@media (max-width: 767px) {
-  .homePage-container .domits-homepage .small-countries-container,
-  .homePage-container .domits-homepage .small-asia-countries-container,
-  .homePage-container .domits-homepage .small-caribbean-countries-container {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.accocard.homepage:hover .accocard-title {
+  background: rgba(13, 152, 20, 0.8);
 }
 
-.homePage-container .domits-homepage .small-country-card a img,
-.homePage-container .domits-homepage .small-asia-country-card a img,
-.homePage-container .domits-homepage .small-caribbean-country-card a img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 15px;
-  padding: 0;
+.accocard.homepage .accocard-share-button,
+.accocard.homepage .accocard-like-button {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-@media (max-width: 400px) {
-  .homePage-container .domits-homepage .small-country-card a img,
-  .homePage-container .domits-homepage .small-asia-country-card a img,
-  .homePage-container .domits-homepage .small-caribbean-country-card a img {
-    height: 75px;
-  }
+.accocard.homepage:hover .accocard-share-button,
+.accocard.homepage:hover .accocard-like-button {
+  opacity: 1;
+  transform: scale(1);
 }
 
-.homePage-container .domits-homepage .small-country-card h3,
-.homePage-container .domits-homepage .small-asia-country-card h3,
-.homePage-container .domits-homepage .small-caribbean-country-card h3 {
-  font-size: 15px;
-  font-family: "Kanit", sans-serif;
+
+
+.accocard.homepage .accocard-price {
+  font-size: 16px;
+  color: var(--primary-color);
+  margin-top: 8px;
   font-weight: 500;
 }
 
-.homePage-container .domits-homepage .small-country-card p {
-  display: none;
+.accocard.homepage .accocard-detail {
+  font-size: 14px;
+  margin-top: 4px;
 }
 
-.homePage-container .review-container {
+.accocard.homepage .accocard-specs {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 40px;
-  margin-bottom: 40px;
-  padding: 15px;
-  background-color: #fff;
-  border-radius: 10px;
-  position: relative;
-  overflow: hidden;
-  font-family: "Kanit", sans-serif;
-  font-weight: 400;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
 }
+    .domits-searchContainer {
+      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), var(--villa-background);
+      background-size: cover;
+      background-position: bottom center;
+      height: 87vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
 
-@media (max-width: 480px) {
-  .homePage-container .review-container {
-    padding: 10px;
-  }
-}
+    .domits-searchTextCon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 13px;
+      color: #fff;
+      margin-bottom: 10px;
+    }
 
-.homePage-container .review-container button {
-  background-color: #d9d9d9;
-  color: #000;
-  border: 0.1px solid #000;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.homePage-container .review-container button:hover {
-  background-color: #b7b5b5;
-}
-.homePage-container .review-container button:first-of-type {
-  left: 15px;
-}
-.homePage-container .review-container button:last-of-type {
-  right: 15px;
-}
+    .domits-searchText {
+      text-wrap: balance;
+      color: #fff;
+      font-size: clamp(2.75rem, 5vw, 4.75rem);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: 1.05;
+      margin: 0;
+      max-width: 720px;
+    }
 
-.homePage-container .review-container .review-list {
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
-  justify-content: center;
-  flex-wrap: nowrap;
-}
+    .domits-searchSubtitle {
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      color: #f6f0e4;
+      margin: 0;
+    }
 
-.homePage-container .review-container .review-card {
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  text-align: center;
-  flex: 0 0 calc(33.33% - 20px);
-  margin-right: 20px;
-  width: 350px;
-  height: 400px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  box-sizing: border-box;
-}
+    .domits-searchbarCon {
+      margin-top: 10px;
+    }
 
-@media (max-width: 1024px) {
-  .homePage-container .review-container .review-card {
-    flex-basis: calc(50% - 20px);
-    width: auto;
-    height: 350px;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .review-container .review-card {
-    flex-basis: 100%;
+    .domits-iconsContainer {
+      background: #0a7d2c;
+      padding: 30px 20px;
+
+      .domits-iconsContainerText {
+        max-width: 1200px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 40px;
+        text-align: center;
+        color: #fff;
+      }
+
+      .domits-iconTextGroup {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        h4 {
+          color: #fff;
+          margin: 5px;
+        }
+
+        p {
+          color: rgba(255,255,255,0.85);
+          font-size: 14px;
+        }
+
+        .icon-circle {
+          width: 50px;
+          height: 50px;
+          background: #fff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #0a7d2c;
+
+          svg {
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
+    }
+
+    .domits-popularAccommodation {
+      width: 100%;
+      max-width: 1200px;
+      margin: 60px auto;
+      padding: 0 20px;
+      box-sizing: border-box;
+
+      h3 {
+        font-size: 28px;
+        font-weight: 650;
+        margin-bottom: 30px;      
+      }
+
+    .domits-accommodationGroup {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      width: 100%;
+    }
+
+   .domits-accommodationGroup .accocard-wrapper {
     width: 100%;
-    height: auto;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .review-container .review-card {
-    margin-right: 0;
+    max-width: 100%; 
+    margin: 0;      
+    display: block;  
+    height: 100%;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
   }
 }
 
-.homePage-container .review-container .review-card img {
-  width: 40px;
-  height: 40px;
+.accocard {
+  height: 100%;
+}
+
+.accocard-content {
+  all: unset;
+  display: block;
+  width: 100%;
+  cursor: pointer;
+}
+
+.accocard-share-button,
+.accocard-like-button {
+  position: absolute;
+  top: 12px;
+  background: #fff;
+  border: none;
   border-radius: 50%;
-  margin-bottom: 10px;
-}
-@media (max-width: 1024px) {
-  .homePage-container .review-container .review-card img {
-    width: 50px;
-    height: 50px;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .review-container .review-card img {
-    width: 45px;
-    height: 45px;
-  }
-}
-
-.homePage-container .review-container .review-location {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 5px;
-}
-.homePage-container .review-container .review-stars {
-  color: #f5c518;
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-}
-.homePage-container .review-container .review-text {
-  font-size: 0.8rem;
-  color: #333;
-  line-height: 1.5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-}
-@media (max-width: 1024px) {
-  .homePage-container .review-container .review-text {
-    font-size: 0.9rem;
-    -webkit-line-clamp: 4;
-    line-clamp: 4;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .review-container .review-text {
-    font-size: 0.8rem;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-}
-
-.homePage-container .domits-communityContainer {
-  text-align: center;
-  margin-top: 1.5rem;
-  padding-top: 4vh;
-  padding-bottom: 8vh;
-}
-
-.homePage-container .domits-communityContainer h2 {
-  font-size: 3vw;
-  font-weight: 450;
-}
-@media (max-width: 767px) {
-  .homePage-container .domits-communityContainer h2 {
-    font-size: 1.8rem;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-communityContainer h2 {
-    font-size: 1.5rem;
-  }
-}
-
-.homePage-container .domits-communityContainer p {
-  font-size: 1.5vw;
-  font-weight: 300;
-  height: 15vh;
-  text-align: left;
-  padding-left: 27.2vw;
-}
-@media (max-width: 768px) {
-  .homePage-container .domits-communityContainer p {
-    font-size: 1rem;
-    width: 85%;
-    margin: 0 auto;
-    text-align: center;
-    padding-left: 6vw;
-    height: 5vh;
-  }
-}
-
-.homePage-container .domits-communityContainer .domits-communityButtons {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
-  font-size: 1.5vw;
-  margin-top: 1.5rem;
-  gap: 8vw;
   justify-content: center;
-}
-
-.homePage-container .domits-communityContainer .domits-hostButton,
-.homePage-container .domits-communityContainer .domits-SearchButton {
-  border: none;
-  border-radius: 0.6em;
-  padding: 8px 4vw;
   cursor: pointer;
-  font-size: 0.9vw;
-  color: #fff;
-}
-.homePage-container .domits-communityContainer .domits-hostButton a,
-.homePage-container .domits-communityContainer .domits-SearchButton a {
-  text-decoration: none;
-  color: #fff;
-}
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  transition: transform 0.15s ease;
+  z-index: 2;
 
-.homePage-container .domits-communityContainer .domits-hostButton {
-  background-color: var(--secondary-color);
-}
-.homePage-container .domits-communityContainer .domits-SearchButton {
-  background-color: var(--primary-color);
-}
-
-@media (max-width: 767px) {
-  .homePage-container .domits-communityContainer .domits-hostButton,
-  .homePage-container .domits-communityContainer .domits-SearchButton {
-    font-size: 1rem;
-    padding: 10px 20px;
-    width: 80%;
-    margin: 5px auto;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-communityContainer .domits-hostButton,
-  .homePage-container .domits-communityContainer .domits-SearchButton {
-    font-size: 0.8rem;
-    padding: 8px 15px;
-  }
-}
-@media (max-width: 768px) {
-  .homePage-container .domits-communityContainer .domits-communityButtons {
-    flex-direction: column;
-    gap: 1rem;
-    margin: 10px auto;
-    padding: 2vh 3vw;
-    font-size: 1.8rem;
-  }
-}
-@media (max-width: 1024px) {
-  .homePage-container .domits-communityContainer .domits-communityButtons {
-    padding: 2vh 5vw;
-  }
-}
-@media (max-width: 480px) {
-  .homePage-container .domits-communityContainer .domits-communityButtons {
-    padding: 4vh 5vw;
+  &:hover {
+    transform: scale(1.05);
   }
 }
 
-@media (max-width: 768px) {
-  .homePage-container .domits-homepage h1 {
-    margin: 14px 16px;
+.accocard-share-button {
+  right: 52px;
+}
+
+.accocard-like-button {
+  right: 12px;
+}
+}
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.2s;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
   }
 
-  .homePage-container .domits-homepage .domits-searchContainer {
-    height: 55vh;
-    background-position: center;
-  }
-  .homePage-container .domits-homepage .domits-searchTextCon {
-    height: 55vh;
-    min-height: 55vh;
-    padding-top: 0;
-    padding-inline: 18px;
-    justify-content: center;
-    gap: 8px;
-  }
-  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-    font-size: clamp(1.9rem, 7vw, 2.6rem);
-  }
-  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
-    font-size: 0.95rem;
-  }
-  .homePage-container .domits-homepage .domits-searchbarCon {
-    display: none;
+  .card-img {
+    position: relative;
+    overflow: hidden;
+
+    img {
+      display: block;
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+    }
   }
 
-  .homePage-container .domits-homepage .domits-iconsContainer {
-    flex-direction: column;
-    height: auto;
-    gap: 12px;
-    padding: 10px 14px;
-    margin: 14px 0 28px;
+  .rating {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #fff;
+    padding: 5px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+
+    svg {
+      color: #facc15;
+    }
   }
-  .homePage-container .domits-homepage .domits-iconsContainerText {
+
+  .card-body {
+    padding: 16px;
+  }
+
+  .location {
+    font-size: 13px;
+    color: #444;
+    margin-bottom: 10px;
+  }
+
+  .info {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+    align-items: center;
+    color: #444;
+    margin-bottom: 12px;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    svg {
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .divider {
+    height: 1px;
+    background: #eee;
+    margin-bottom: 12px;
+  }
+
+  .price {
+    font-size: 20px;
+    font-weight: 600;
+
+    span {
+      font-size: 13px;
+      color: #444;
+      font-weight: 400;
+    }
+  }
+
+  .regions-wrapper {
+    margin-top: 60px;
+  }
+
+  .region-block {
+    padding: 60px 0;
+
+    &.green {
+      background: #0a7d2c;
+      color: #fff;
+
+      .region-header {
+        h2 { color: #fff; }
+        p { color: rgba(255,255,255,0.85); }
+      }
+    }
+
+    &.light {
+      background: #f9f9f9;
+      color: #000;
+
+      .region-header {
+        h2 { color: #000; }
+        p { color: #2f2f2f; }
+      }
+    }
+  }
+
+  .region-header {
+    max-width: 1200px;
+    margin: 0 auto 20px;
+    padding: 0 20px;
+
+    h2 {
+      font-size: 34px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+  }
+
+  .regions-grid {
+    max-width: 1200px;
+    margin: auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .region-block.green .region-card { aspect-ratio: 2.5 / 3; }
+  .region-block.light .region-card { aspect-ratio: 4 / 3; }
+
+  .region-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    &:hover img {
+      transform: scale(1.08);
+    }
+
+    .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 60%);
+      transition: background 0.3s ease;
+    }
+
+    &:hover .gallery-overlay {
+      background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 70%);
+    }
+
+    h3 {
+      color: #fff;
+      font-size: 18px;
+      margin: 0;
+    }
+
+    p {
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      margin: 2px 0;
+    }
+
+    span {
+      color: rgba(255,255,255,0.8);
+      font-size: 13px;
+    }
+  }
+
+  .region-footer {
+  max-width: 1200px;
+  margin: 20px auto 0;
+  padding: 0 20px;
+  display: block;
+  width: 100%;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: all 0.25s ease;
+  background: none;
+  border: none;
+  outline: none;
+  text-align: left;
+
+  &.dark {
+    color: #fff;
+  }
+
+  &:hover {
+    opacity: 1;
+    transform: translateX(6px);
+    text-decoration: underline;
+  }
+}
+
+  .region-block.green .region-footer { color: #fff; }
+  .region-block.light .region-footer { color: #000; }
+
+  .categories,
+  .groups {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 20px;
+
+    h2 { margin-bottom: 20px; }
+  }
+
+  .categories-row,
+  .group-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .category-card,
+  .group-card {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+
+    img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+
+    span {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: #fff;
+      font-weight: 500;
+    }
+  }
+
+  .guarantee-section {
+    padding: 80px 20px;
+    text-align: center;
+    background: #fff;
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #666;
+      margin-bottom: 40px;
+    }
+
+    .guarantee-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 1200px;
+      margin: 40px auto;
+      text-align: center;
+      gap: 20px;
+    }
+
+    .guarantee-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+
+      .icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #e6f4ea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+          color: #0a7d2c;
+          font-size: 22px;
+        }
+      }
+
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 12px 0 8px;
+      }
+
+      p {
+        font-size: 14px;
+        color: #555;
+        max-width: 260px;
+        line-height: 1.5;
+      }
+    }
+
+    .guarantee-card:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 10%;
+      height: 80%;
+      width: 1px;
+      background: #ddd;
+    }
+  }
+
+  .host-section {
+    background: #0a7d2c;
+    padding: 80px 20px;
+    color: #fff;
+  }
+
+  .host-container {
+    max-width: 1200px;
+    margin: auto;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    font-size: 1rem;
-  }
-  .homePage-container .domits-homepage .domits-iconsContainerText img {
-    width: 26px;
-  }
-  .homePage-container .domits-homepage .domits-iconsContainerText p {
-    font-size: 0.9rem;
+    gap: 50px;
+    align-items: flex-start;
   }
 
-  .homePage-container .domits-homepage .domits-boatText h3 {
-    font-size: 1.6rem;
-    margin: 14px auto;
+  .host-left {
+    h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    p {
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
   }
-  .homePage-container .domits-homepage .domits-trendingContainer {
+
+  .host-features {
+    display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 10px 14px;
-  }
-  .homePage-container .domits-homepage .domits-trendingContainer .popup-trigger {
-    width: 100%;
-    margin: 0;
-    font-size: 14px;
-  }
-  .homePage-container .domits-homepage .domits-trendingContainer .popup-content {
-    width: 100%;
-    max-width: none;
-  }
-  .homePage-container .domits-homepage .domits-trendingContainer .popup-trigger:hover .popup-content,
-  .homePage-container .domits-homepage .domits-trendingContainer .popup-trigger:focus-visible .popup-content,
-  .homePage-container .domits-homepage .domits-trendingContainer .popup-trigger.is-open .popup-content {
-    max-height: 320px;
-  }
-
-  .homePage-container .domits-homepage .domits-accommodationGroup {
-    margin: 0;
-    padding-inline: 14px;
-  }
-
-  .homePage-container .domits-homepage .become-host-section {
-    padding: 18px;
-    margin: 28px 14px 16px;
-    border-radius: 16px;
     gap: 16px;
-    flex-direction: column;
-    text-align: left;
-  }
-  .homePage-container .domits-homepage .become-host-content {
-    max-width: 100%;
-  }
-  .homePage-container .domits-homepage .become-host-content h1 {
-    font-size: 1.35rem;
-    margin: 0 0 10px;
-  }
-  .homePage-container .domits-homepage .become-host-content button {
-    width: 100%;
-    padding: 10px 12px;
-  }
-  .homePage-container .domits-homepage .host-images {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .homePage-container .domits-homepage .host-images .host-image,
-  .homePage-container .domits-homepage .host-images .host-image:first-child,
-  .homePage-container .domits-homepage .host-images .host-image:last-child {
-    width: calc(50% - 5px);
+    margin-bottom: 30px;
   }
 
-  .homePage-container .domits-homepage .countries-container,
-  .homePage-container .domits-homepage .asia-countries-container,
-  .homePage-container .domits-homepage .caribbean-countries-container,
-  .homePage-container .domits-homepage .ski-countries-container,
-  .homePage-container .domits-homepage .seasons-container,
-  .homePage-container .domits-homepage .interests-container,
-  .homePage-container .domits-homepage .groups-container {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 14px;
+  .feature {
+    display: flex;
+    align-items: flex-start;
     gap: 12px;
-  }
-  .homePage-container .domits-homepage .countries-container > :nth-child(n),
-  .homePage-container .domits-homepage .asia-countries-container > :nth-child(n),
-  .homePage-container .domits-homepage .caribbean-countries-container > :nth-child(n),
-  .homePage-container .domits-homepage .ski-countries-container > :nth-child(n),
-  .homePage-container .domits-homepage .interests-container > :nth-child(n),
-  .homePage-container .domits-homepage .groups-container > :nth-child(n) {
-    grid-column: auto !important;
-  }
-  .homePage-container .domits-homepage .countries-container img,
-  .homePage-container .domits-homepage .asia-countries-container img,
-  .homePage-container .domits-homepage .caribbean-countries-container img,
-  .homePage-container .domits-homepage .ski-countries-container img,
-  .homePage-container .domits-homepage .seasons-container img,
-  .homePage-container .domits-homepage .interests-container img,
-  .homePage-container .domits-homepage .groups-container img {
-    height: 150px !important;
-  }
-  .homePage-container .domits-homepage .countries-container h3,
-  .homePage-container .domits-homepage .asia-countries-container h3,
-  .homePage-container .domits-homepage .caribbean-countries-container h3,
-  .homePage-container .domits-homepage .ski-countries-container h3,
-  .homePage-container .domits-homepage .seasons-container h3,
-  .homePage-container .domits-homepage .interests-container h3,
-  .homePage-container .domits-homepage .groups-container h3 {
-    font-size: 18px !important;
-  }
-  .homePage-container .domits-homepage .countries-container p,
-  .homePage-container .domits-homepage .asia-countries-container p,
-  .homePage-container .domits-homepage .caribbean-countries-container p,
-  .homePage-container .domits-homepage .ski-countries-container p,
-  .homePage-container .domits-homepage .interests-container p,
-  .homePage-container .domits-homepage .groups-container p {
-    font-size: 13px !important;
+
+    .icon {
+      width: 40px;
+      height: 40px;
+      background: #fff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0a7d2c;
+      font-weight: bold;
+    }
+
+    h4 {
+      margin: 0;
+      font-size: 15px;
+      text-align: left;
+    }
+
+    span {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+    }
   }
 
-  .homePage-container .domits-homepage .small-countries-container,
-  .homePage-container .domits-homepage .small-asia-countries-container,
-  .homePage-container .domits-homepage .small-caribbean-countries-container {
-    grid-template-columns: repeat(3, 1fr);
-    padding: 14px;
-    gap: 12px;
-  }
-  .homePage-container .domits-homepage .small-countries-container img,
-  .homePage-container .domits-homepage .small-asia-countries-container img,
-  .homePage-container .domits-homepage .small-caribbean-countries-container img {
-    height: 90px !important;
-  }
-  .homePage-container .domits-homepage .small-countries-container h3,
-  .homePage-container .domits-homepage .small-asia-countries-container h3,
-  .homePage-container .domits-homepage .small-caribbean-countries-container h3 {
-    font-size: 13px !important;
+  .host-btn {
+    background: #fff;
+    color: #000;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover {
+      background: #f0f0f0;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
   }
 
-  .homePage-container .review-container {
-    margin: 22px 14px;
-    padding: 12px;
-  }
-  .homePage-container .review-container button {
-    width: 36px;
-    height: 36px;
-    font-size: 1.2rem;
-  }
-  .homePage-container .review-container .review-list {
-    gap: 12px;
-  }
-  .homePage-container .review-container .review-card {
-    width: 100% !important;
-    height: auto !important;
-    flex-basis: 100% !important;
-    margin-right: 0 !important;
-  }
-  .homePage-container .review-container .review-text {
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-  }
-
-  .homePage-container .domits-communityContainer {
-    padding: 20px 14px 40px;
-  }
-  .homePage-container .domits-communityContainer h2 {
-    font-size: 1.6rem;
-  }
-  .homePage-container .domits-communityContainer p {
-    padding-left: 0;
-    height: auto;
-    text-align: center;
-    width: 100%;
-    font-size: 1rem;
-  }
-  .homePage-container .domits-communityContainer .domits-communityButtons {
-    flex-direction: column;
-    gap: 12px;
-    font-size: 1rem;
-  }
-  .homePage-container .domits-communityContainer .domits-hostButton,
-  .homePage-container .domits-communityContainer .domits-SearchButton {
-    width: 100%;
-    font-size: 1rem;
-    padding: 12px 14px;
-  }
-}
-
-@media (max-width: 420px) {
-  .homePage-container .domits-homepage .domits-searchContainer {
-    height: 50vh;
-  }
-  .homePage-container .domits-homepage .domits-iconsContainerText {
-    grid-template-columns: 1fr;
-  }
-  .homePage-container .domits-homepage .small-countries-container,
-  .homePage-container .domits-homepage .small-asia-countries-container,
-  .homePage-container .domits-homepage .small-caribbean-countries-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .homePage-container .domits-homepage .domits-searchContainer {
-    height: 50vh;
-  }
-
-  .homePage-container .domits-homepage .domits-searchTextCon {
-    height: 50vh;
-    min-height: 50vh;
-    padding-top: 0;
-    padding-inline: 16px;
+  .host-right {
+    position: relative;
+    display: flex;
     justify-content: center;
+
+    img {
+      width: 100%;
+      border-radius: 20px;
+      height: 490px;
+      object-fit: cover;
+    }
   }
 
-  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-    font-size: 2rem;
+  .host-stats {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 420px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 18px;
+    gap: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+
+    div {
+      text-align: center;
+      flex: 1;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #000;
+    }
+
+    span {
+      font-size: 11px;
+      color: #555;
+    }
+  }
+}
+
+@media (max-width: 950px) {
+  .homePage-container .domits-homepage {
+    .regions-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .domits-iconsContainer .domits-iconsContainerText {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .domits-accommodationGroup {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .feature h4{
+      text-align: left;
+    } 
+
+    .host-container {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+
+    .guarantee-section {
+    .guarantee-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
-  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
-    font-size: 0.95rem;
+    .host-right img{
+      height: 400px;
+    }
+
+    .host-btn {
+      width: 100%;
+    }
+
+    .host-stats {
+      width: 70%;
+    }
   }
+}
+
+@media (max-width: 640px) {
+  .homePage-container .domits-homepage {
+
+    .domits-iconsContainer .domits-iconsContainerText { 
+      grid-template-columns: 1fr; 
+      gap: 16px; 
+    }
+
+    .feature h4{
+      text-align: left;
+    } 
+
+    .regions-grid { 
+      grid-template-columns: 1fr; 
+      justify-items: center;
+    }
+
+    .region-card {
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: 14 / 10;
+      border-radius: 12px;
+    }
+
+    .region-header,
+    .regions-grid,
+    .region-footer {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding-left: 16px;
+      padding-right: 16px;
+      box-sizing: border-box;
+    }  
+
+     .region-footer {
+        margin-top: 20px;
+     }
+
+    .guarantee-section {
+      padding: 50px 20px;
+
+    .guarantee-grid {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+
+    .guarantee-card:not(:last-child)::after {
+      display: none;
+    }
+  }
+
+  .host-right {
+    img {
+      height: 320px;
+    }
+  }
+
+  .host-stats {
+    bottom: 12px;
+    width: 92%;
+    padding: 12px;
+    gap: 6px;
+
+    h3 {
+      font-size: 14px;
+    }
+
+    span {
+      font-size: 10px;
+    }
+  }
+}
 }

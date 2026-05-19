@@ -1,30 +1,49 @@
-# Plan Of Approach - Standalone Website
+# Plan Of Approach - Direct Booking Website
+
+> Naming note: this feature is now named **Direct Booking Website**. Legacy `standalone_*` schema and migration names still appear in this document where they refer to already deployed storage objects.
 
 ## Status
 Working baseline with active frontend implementation checkpoints
 
 ## Last Updated
-2026-04-15
+2026-05-11
 
 ## Current Implementation Checkpoint
-The host-dashboard website builder now includes a real preview build pipeline for the first three templates.
+The current foundation now covers both the host-side draft workflow and a separate published live-site lifecycle.
 
 Implemented in frontend:
 - listing selection remains sourced from `hostDashboard/all`
 - selected-listing detail fetch for preview is sourced from `hostDashboard/single`
 - detail payload is mapped into one shared website template model before rendering
 - real preview rendering is available for Panorama Landing, Trust Signals, and Experience Journey
-- preview workflow orchestration is extracted to a dedicated script module for future migration to a dedicated preview route/tab
+- internal preview workflow remains available at `/website-preview/:draftId`
 - amenity icons are rendered from the shared amenity catalog by amenity ID in implemented templates
 - built preview drafts are persisted per host and property via dedicated website draft APIs
 - workspace now has a `My websites` tab with dedicated editor-page entry
 - dedicated draft editor page exists for controlled text overrides, visibility toggles, and image-slot selection on saved drafts
 - image-slot reassignment in the editor now uses a visual picker overlay with thumbnail navigation and explicit confirm-select behavior
-- acceptance AWS rollout has been proven for draft persistence after:
+- direct booking website publication now writes into:
+  - `main.standalone_site`
+  - `main.standalone_site_domain`
+  - `main.standalone_site_event`
+- host-side publish lifecycle now uses:
+  - `GET /property/website/site`
+  - `POST /property/website/site/publish`
+  - `POST /property/website/site/unpublish`
+  - `GET /property/website/public/resolve`
+  - `GET /property/website/public/render`
+- the published-site runtime is reachable through:
+  - a same-origin debug route at `/website-live/:domain`
+  - host-based fallback-domain rendering once the configured suffix is routed
+- the builder/editor now expose `Open live site` and `Update live site`
+- acceptance AWS rollout has been proven for draft persistence and live-site foundation after:
   - creating `main.standalone_site_draft`
+  - creating `main.standalone_site`
+  - creating `main.standalone_site_domain`
+  - creating `main.standalone_site_event`
   - adding the unique `property_id` index required by `ON CONFLICT`
   - adding the `host_id` index for the intended host-scoped draft access path
-  - exposing `/property/website/draft(s)` in API Gateway
+  - exposing `/property/website/draft(s)` and `/property/website/site*` in API Gateway
   - fixing CORS preflight on the new website routes
 - host property detail fetch for the website flow now includes calendar availability payload for:
   - imported external blocked dates
@@ -35,28 +54,31 @@ Implemented in frontend:
 
 Not yet implemented:
 - richer template-specific heading/branding controls beyond the current override surface
-- publish-state lifecycle and domain linking workflow on top of draft records
+- clean fallback-domain routing on the real hostname in acceptance/production infra
+- frontend build-time fallback-domain env alignment in deployment hosting
+- custom-domain activation flow
+- public quote API, checkout, and booking creation
 
 ## Purpose
-This document captures the current plan of approach for the standalone website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.
+This document captures the current plan of approach for the direct booking website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.
 
 For chronological implementation history, see:
-- `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
+- `docs/internal/apis/directbookingwebsite/direct_booking_website_implementation_log.md`
 
 ## Core Question
-How can Domits design a template-based, one-click standalone booking website that is scalable, secure, and cost-efficient to host, while integrating correctly with availability and bookings from the Property Management System?
+How can Domits design a template-based, one-click direct booking website that is scalable, secure, and cost-efficient to host, while integrating correctly with availability and bookings from the Property Management System?
 
 ## Core Subquestions
-1. Which minimum functionality should the standalone website contain to make v1 valuable and feasible within Domits?
+1. Which minimum functionality should the direct booking website contain to make v1 valuable and feasible within Domits?
 2. Which template architecture is most suitable for reusable websites with limited but useful customization, without turning every template into a separate project?
 3. Which hosting strategy is most suitable for Domits given cost, performance, scalability, and manageability requirements?
 4. How can multi-tenant routing and domain management be designed so generated subdomains and later custom domains function reliably and scalably?
-5. How can the standalone website remain correctly aligned with availability and pricing data from the PMS, including changes, caching, and failure scenarios?
-6. Which security measures are required to realize a safe multi-tenant standalone website platform within Domits?
+5. How can the direct booking website remain correctly aligned with availability and pricing data from the PMS, including changes, caching, and failure scenarios?
+6. Which security measures are required to realize a safe multi-tenant direct booking website platform within Domits?
 7. Which KPIs are suitable for evaluating the technical and product quality of the solution?
 
 ## Broader Research Scope
-The broader research scope covers the full standalone website direction, including:
+The broader research scope covers the full direct booking website direction, including:
 
 - property detail page
 - availability check and price calculation
@@ -80,20 +102,20 @@ V1 foundation includes:
   - amenities
   - location
   - house rules
-- published render content baked into the standalone site at publish or refresh time
-- availability check and price calculation
+- published render content baked into the direct booking website at publish or refresh time
 - template choice
 - site name
 - logo and favicon
 - publish and unpublish
 - live and draft status
+- fallback-domain generation and live-site runtime
 - English as the first and only site language in v1
 - tooling choices aligned with the current Domits stack
 
 Implementation detail for this baseline:
 - descriptive page content such as title, description, photos, amenities, location, and house rules is imported from PMS into standalone-owned published data
 - public page render uses that published standalone snapshot
-- pricing and availability remain live PMS reads through server-side quote APIs
+- PMS-backed availability snapshot import is implemented in the current foundation. Authoritative server-side quote calculation for standalone guest traffic is designed, but not yet exposed as a live standalone public API.
 
 V2 extends this base with:
 
@@ -106,19 +128,19 @@ V2 extends this base with:
 ### 1. Introduction
 
 #### 1.1 Motivation
-The host wants to increase direct revenue and reduce operational workload by receiving more bookings through an owned channel. To support this, Domits is designing a template-based, one-click standalone booking website. Hosts should be able to publish a professional website quickly while keeping availability, pricing, and bookings correctly aligned with the PMS.
+The host wants to increase direct revenue and reduce operational workload by receiving more bookings through an owned channel. To support this, Domits is designing a template-based, one-click direct booking website. Hosts should be able to publish a professional website quickly while keeping availability, pricing, and bookings correctly aligned with the PMS.
 
 #### 1.2 Assignment introduction
-The assignment focuses on designing a standalone booking website solution within Domits, based on templates that can be published with one click. The website functions as a direct booking channel and must integrate correctly with PMS data such as availability, pricing, and bookings. The research explains the choices and constraints needed to realize this in a scalable, secure, and cost-efficient way.
+The assignment focuses on designing a direct booking website solution within Domits, based on templates that can be published with one click. The website functions as a direct booking channel and must integrate correctly with PMS data such as availability, pricing, and bookings. The research explains the choices and constraints needed to realize this in a scalable, secure, and cost-efficient way.
 
 #### 1.3 Client
 Domits, together with internal stakeholders such as product and engineering, and future hosts who will use the platform.
 
 #### 1.4 Organization description
-Domits is a short-term rental platform that helps hosts manage accommodations, reservations, and communication. The platform already contains PMS functionality and is being expanded with a direct booking solution through standalone websites.
+Domits is a short-term rental platform that helps hosts manage accommodations, reservations, and communication. The platform already contains PMS functionality and is being expanded with a direct booking solution through direct booking websites.
 
 #### 1.5 Goals
-- allow hosts to publish a standalone booking website with minimal friction
+- allow hosts to publish a direct booking website with minimal friction
 - realize a template approach that supports customization without turning every template into a separate project
 - design hosting and deployment so the solution is scalable and cost-efficient
 - guarantee correct and consistent integration with availability, pricing, and booking data from the PMS
@@ -145,7 +167,7 @@ This chapter helps the reader understand the domain, terminology, and design con
 
 #### 2.2 Definitions
 - PMS: system for managing accommodations, reservations, prices, and host processes
-- standalone booking website: separate website through which guests can book directly, connected to PMS data
+- direct booking website: separate website through which guests can book directly, connected to PMS data
 - template-based website: website with predefined layout and structure plus configurable content and styling
 - one-click deployment or provisioning: automated publication without manual infrastructure steps per host
 - multi-tenancy: one platform serving multiple hosts with strict data and configuration isolation
@@ -160,7 +182,7 @@ This chapter helps the reader understand the domain, terminology, and design con
 ### 3. Problem Analysis
 
 #### 3.1 Goal and result of the research
-The goal is to design a technical and functional approach for standalone booking websites inside Domits. The intended result is a justified design consisting of architectural choices, v1 scope, and an evaluation framework with KPIs for scalability, security, cost-efficiency, and PMS correctness.
+The goal is to design a technical and functional approach for direct booking websites inside Domits. The intended result is a justified design consisting of architectural choices, v1 scope, and an evaluation framework with KPIs for scalability, security, cost-efficiency, and PMS correctness.
 
 #### 3.2 Research approach
 - requirements analysis for MVP, stakeholders, and constraints
@@ -265,8 +287,8 @@ Analyze:
 Current implementation direction:
 - descriptive property content is imported from PMS into standalone-owned published data at publish or refresh time
 - public render uses that standalone snapshot
-- quote pricing and availability remain live PMS reads
-- editor/preview availability visualization uses imported calendar snapshot data, but authoritative booking availability remains server-side at quote time
+- editor and live-site availability visualization use imported calendar snapshot data
+- PMS-backed availability snapshot import is implemented in the current foundation. Authoritative server-side quote calculation for standalone guest traffic is designed, but not yet exposed as a live standalone public API.
 
 #### 5.6 Security and isolation
 Analyze:
@@ -324,7 +346,7 @@ Include:
 #### 6.7 Lifecycle and states
 Include:
 - publish and unpublish flow
-- state diagram such as draft to preview to published to unpublished
+- state diagram such as working draft plus internal preview route, alongside published site and domain state
 
 ### 7. Validation And Evaluation
 
@@ -333,11 +355,12 @@ Use the current KPI set as baseline:
 - time_to_publish_p95
 - quote_to_charge_mismatch_rate
 - booking_api_error_rate
-- site_lcp_mobile_p75
 - cost_per_active_site_per_month
 - fallback_subdomain_availability
 - custom_domain_setup_success_rate
 - booking_funnel_completion_rate
+
+Performance should be documented as viewport-specific `site_lcp_p75` metrics in the Performance tab rather than as a separate `site_lcp_mobile_p75` research card.
 
 For reporting, make clear which KPIs are foundation-release KPIs and which become meaningful only once v2 booking flows are enabled.
 

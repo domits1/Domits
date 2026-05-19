@@ -1,66 +1,39 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate, useLocation } from "react-router-dom";
-import logo from "../../images/logo.svg";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import FlowContext from "../../services/FlowContext";
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
+
+import "../../styles/sass/features/auth/auth.scss";
+import "../../styles/sass/features/auth/register.scss";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const _rawRedirect = new URLSearchParams(location.search).get("redirect");
   const redirect = _rawRedirect ? decodeURIComponent(_rawRedirect) : null;
-  const [group, setGroup] = useState("");
+
   const [forgotPassword, setForgotPassword] = useState(false);
   const [confirmCode, setConfirmCode] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
   const [username, setUsername] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
   const inputRef = useRef([]);
-  const handleResendCode = () => {
-    if (formData.email === "") {
-      navigate("/register");
-    } else {
-      handlePasswordRecovery().catch((err) => {
-        console.error("Error resending code:", err);
-        setErrorMessage("Failed to resend code, please try again later.");
-      });
-    }
-  };
 
-  const submitCodeAndPassword = async () => {
-    let code = "";
-    inputRef.current.forEach((input) => {
-      code += input.value;
-    });
-
-    try {
-      const response = await forgotPasswordSubmit(username, code, formData.password);
-    } catch (err) {
-      console.error(err);
-    }
-  };
   useEffect(() => {
-    const setUserGroup = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        const userAttributes = user.attributes;
-        setGroup(userAttributes["custom:group"]);
-      } catch (error) {
-        console.error("Error setting group:", error);
-      }
-    };
-
-    setUserGroup();
-  }, []);
+  const checkAuth = async () => {
+    try {
+      const user = await Auth.currentAuthenticatedUser();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -82,19 +55,16 @@ const Login = () => {
       }
     };
 
-    checkAuth();
-  }, [navigate]);
+  checkAuth();
+}, [navigate, redirect]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSignIn = async () => {
-    if (errorMessage) {
-      setErrorMessage("");
+    if (isSigningIn) {
+      return;
     }
     const { email, password } = formData;
     try {
@@ -113,12 +83,18 @@ const Login = () => {
     }
   };
 
-  const handleSignOut = async () => {
+    setErrorMessage("");
+    setIsSigningIn(true);
     try {
-      await Auth.signOut();
-      setIsAuthenticated(false);
-    } catch (error) {
-      console.error("Error signing out:", error);
+      await Auth.signIn(formData.email, formData.password);
+      globalThis.dispatchEvent(new Event("authChanged"));
+
+      redirect
+        ? navigate(redirect)
+        : globalThis.location.reload();
+    } catch {
+      setErrorMessage("Invalid email or password");
+      setIsSigningIn(false);
     }
   };
 
@@ -128,178 +104,188 @@ const Login = () => {
   };
 
   const handleRegisterClick = () => {
-    const redirectForRegister = _rawRedirect || encodeURIComponent(location.pathname + location.search);
+    const redirectForRegister =
+      _rawRedirect || encodeURIComponent(location.pathname + location.search);
     navigate(`/register?redirect=${redirectForRegister}`);
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const setValueForForgotPassword = (value) => {
-    setForgotPassword(value);
-  };
   const handlePasswordRecovery = async () => {
-    const response = await getUserIDUsingEmail(formData.email);
-    try {
-      return await Auth.forgotPassword(response);
-    } catch (err) {
-      setErrorMsg("This user does not exist!");
-    } finally {
-      setForgotPassword(false);
-      setConfirmCode(true);
-    }
-  };
-
-  const getUserIDUsingEmail = async (email) => {
     try {
       const response = await fetch(
         "https://mncmdr9bol.execute-api.eu-north-1.amazonaws.com/default/GetUserIDUsingEmail",
         {
           method: "POST",
-          body: JSON.stringify({ email: email }),
-          headers: {
-            "Content-type": "application/json; charset=UTF-8",
-          },
+          body: JSON.stringify({ email: formData.email }),
+          headers: { "Content-type": "application/json" },
         }
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
 
       const data = await response.json();
-      if (data) {
-        setUsername(data.body);
-        return data.body;
-      }
-    } catch (error) {
-      console.error(error);
+      setUsername(data.body);
+
+      await Auth.forgotPassword(data.body);
+
+      setForgotPassword(false);
+      setConfirmCode(true);
+    } catch {
+      setErrorMsg("User not found");
     }
   };
 
-  async function forgotPasswordSubmit(username, code, newPassword) {
-    setErrorMessage("");
-    setErrorMsg("");
+  const submitCodeAndPassword = async () => {
+    let code = "";
+    inputRef.current.forEach((input) => {
+      code += input.value;
+    });
+
     try {
-      const data = await Auth.forgotPasswordSubmit(username, code, newPassword);
+      await Auth.forgotPasswordSubmit(username, code, formData.password);
+      alert("Password updated successfully");
+      setConfirmCode(false);
     } catch (err) {
       setErrorMessage(err.message);
-    } finally {
-      if (errorMessage === "") {
-        window.alert("Your password has been updated successfully! Sending you back to the login page...");
-        setConfirmCode(false);
-      }
     }
-  }
+  };
 
   return (
-    <>
-      {isAuthenticated ? (
-        <button onClick={handleSignOut}>Sign out</button>
-      ) : (
-        <main className="loginContainer">
-          {forgotPassword ? (
-            <main className="loginContainer emailSection">
-              <div className="confirmEmailTitle">Please provide your E-Mail</div>
-              <label htmlFor="email">What is your E-Mail?</label>
-              <input className="loginInput" type="email" name="email" value={formData.email} onChange={handleChange} />
-              {errorMsg && <p>{errorMsg}</p>}
-              <button type="click" className="loginButton" onClick={handlePasswordRecovery}>
-                Recover password
+    <div className="authPage">
+      <div className="authCard">
+        {forgotPassword ? (
+          <>
+            <h2 className="title">Recover Password</h2>
+
+            <div className="inputGroup">
+              <div className="iconBox">
+                <FaEnvelope />
+              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+
+            {errorMsg && <div className="error">{errorMsg}</div>}
+
+            <button className="primaryBtn" onClick={handlePasswordRecovery}>
+              Send Code
+            </button>
+
+            <button className="secondaryBtn" onClick={() => setForgotPassword(false)}>
+              Back
+            </button>
+          </>
+        ) : confirmCode ? (
+          <>
+            <h2 className="title">Reset Password</h2>
+
+            <DigitInputs amount={6} inputRef={inputRef} />
+
+            <div className="inputGroup">
+              <div className="iconBox">
+                <FaLock />
+              </div>
+              <button
+                type="button"
+                className="eyeIcon"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FaEye /> : <FaEyeSlash />}
               </button>
-              <button type="click" className="registerButtonLogin" onClick={() => setValueForForgotPassword(false)}>
-                Go back
+            </div>
+
+            {errorMessage && <div className="error">{errorMessage}</div>}
+
+            <button className="primaryBtn" onClick={submitCodeAndPassword}>
+              Confirm
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="title">Welcome back</h2>
+
+            <form onSubmit={handleSubmit}>
+              <div className="inputGroup">
+                <div className="iconBox">
+                  <FaEnvelope />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={isSigningIn}
+                />
+              </div>
+
+              <div className="inputGroup">
+                <div className="iconBox">
+                  <FaLock />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  disabled={isSigningIn}
+                />
+                <button
+                  type="button"
+                  className="eyeIcon"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  disabled={isSigningIn}
+                >
+                  {showPassword ? <FaEye /> : <FaEyeSlash />}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className="forgotText"
+                onClick={() => setForgotPassword(true)}
+                disabled={isSigningIn}
+              >
+                Forgot password?
               </button>
-            </main>
-          ) : confirmCode ? (
-            <main className="confirmEmailContainer">
-              <div className="confirmEmailTitle">Step 1: Enter your two-factor authentication code</div>
-              <div className="confirmEmailForm">
-                <div className="enter6DigitText">Enter 6 digit code sent to your email</div>
-                <DigitInputs amount={6} inputRef={inputRef} />
-                {errorMessage && <div className="errorText">{errorMessage}</div>}
-                <div className="notReceivedCodeText">
-                  Didn't received a code? Check your spam folder or let us resend a code.
-                </div>
-                <button className="resendCodeButton" type="button" onClick={handleResendCode}>
-                  Resend code
-                </button>
-              </div>
-              <div className="confirmEmailTitle">Step 2: Create a new password</div>
-              <div className="confirmEmailForm">
-                <div className="enter6DigitText">Enter your new password</div>
-                <div>
-                  <label htmlFor="password" className="passwordLabel">
-                    New password:
-                  </label>
-                  <input
-                    id="password"
-                    className="loginInput"
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                </div>
-                {errorMessage && <p>{errorMessage}</p>}
-                <button className="verifyRegisterButton" type="click" onClick={submitCodeAndPassword}>
-                  Confirm
-                </button>
-              </div>
-            </main>
-          ) : (
-            <main className="loginContainer">
-              {/* <img src={logo} alt="Logo Domits" className='loginLogo'/> */}
-              <div className="loginTitle">Good to see you again</div>
-              <div className="loginForm">
-                <form onSubmit={handleSubmit}>
-                  <label htmlFor="email">Email:</label>
-                  <br />
-                  <input
-                    id="email"
-                    className="loginInput"
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                  <br />
-                  <label htmlFor="password" className="passwordLabel">
-                    Password:
-                  </label>
-                  <br />
-                  <div className="passwordContainer">
-                    <input
-                      id="password"
-                      className="loginInput"
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                    />
-                    <button type="button" className="togglePasswordButton" onClick={togglePasswordVisibility}>
-                      {showPassword ? <FaEye /> : <FaEyeSlash />}
-                    </button>
-                  </div>
-                  <br />
-                  {errorMessage && <div className="errorText">{errorMessage}</div>}
-                  <div className="forgotPasswordText noAccountText" onClick={() => setValueForForgotPassword(true)}>
-                    I forgot my password
-                  </div>
-                  <button type="submit" className="loginButton">
-                    Login
-                  </button>
-                </form>
-                <div className="noAccountText">No account yet? Register for free!</div>
-                <button onClick={handleRegisterClick} className="registerButtonLogin">
-                  Register
-                </button>
-              </div>
-            </main>
-          )}
-        </main>
-      )}
-    </>
+
+              {errorMessage && <div className="error">{errorMessage}</div>}
+
+              <button
+                type="submit"
+                className="primaryBtn"
+                disabled={isSigningIn}
+                aria-busy={isSigningIn}
+              >
+                {isSigningIn ? (
+                  <span className="buttonLoadingContent">
+                    <span className="buttonSpinner" aria-hidden="true"></span>
+                    <span>Signing in...</span>
+                  </span>
+                ) : (
+                  "Login"
+                )}
+              </button>
+            </form>
+
+            <div className="bottomText">Don’t have an account?</div>
+
+            <button
+              className="registerBtn"
+              onClick={handleRegisterClick}
+              disabled={isSigningIn}
+            >
+              Register
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 

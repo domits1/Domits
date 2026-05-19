@@ -30,43 +30,121 @@ export const getWebsiteAnalyticsViewport = () => {
   return WEBSITE_ANALYTICS_VIEWPORT_DESKTOP;
 };
 
-export const startWebsitePreviewLcpObserver = ({ enabled, onReport }) => {
-  if (!enabled || typeof onReport !== "function") {
+const getCurrentPerformanceTimestamp = () => {
+  if (globalThis.performance && typeof globalThis.performance.now === "function") {
+    return globalThis.performance.now();
+  }
+
+  return Date.now();
+};
+
+const scheduleReportAfterPaint = (callback) => {
+  if (typeof globalThis.requestAnimationFrame === "function") {
+    globalThis.requestAnimationFrame(() => {
+      globalThis.requestAnimationFrame(() => {
+        callback();
+      });
+    });
+    return;
+  }
+
+  globalThis.setTimeout(callback, 0);
+};
+
+const createDeferredReadyCallback = (onReady) => () => {
+  scheduleReportAfterPaint(() => {
+    onReady(getCurrentPerformanceTimestamp());
+  });
+};
+
+const attachImageReadyFallback = (fallbackTargetNode, onReady) => {
+  if (fallbackTargetNode?.tagName !== "IMG") {
     return undefined;
   }
 
-  if (typeof globalThis.PerformanceObserver !== "function") {
+  const imageNode = fallbackTargetNode;
+  const triggerReady = createDeferredReadyCallback(onReady);
+
+  if (imageNode.complete && imageNode.naturalWidth > 0) {
+    triggerReady();
+    return undefined;
+  }
+
+  imageNode.addEventListener("load", triggerReady, { once: true });
+  imageNode.addEventListener("error", triggerReady, { once: true });
+
+  return () => {
+    imageNode.removeEventListener("load", triggerReady);
+    imageNode.removeEventListener("error", triggerReady);
+  };
+};
+
+const attachDocumentReadyFallback = (onReady) => {
+  const triggerReady = createDeferredReadyCallback(onReady);
+
+  if (globalThis.document?.readyState === "complete") {
+    triggerReady();
+    return undefined;
+  }
+
+  globalThis.addEventListener("load", triggerReady, { once: true });
+  return () => {
+    globalThis.removeEventListener("load", triggerReady);
+  };
+};
+
+export const startWebsitePreviewLcpObserver = ({ enabled, onReport, fallbackTargetSelector = "img" }) => {
+  if (!enabled || typeof onReport !== "function") {
     return undefined;
   }
 
   let latestLargestContentfulPaint = 0;
   let hasReported = false;
   let observer = null;
+  let removeFallbackImageListener;
+  let removeDocumentReadyFallback;
+  const fallbackTargetNode =
+    typeof globalThis.document?.querySelector === "function"
+      ? globalThis.document.querySelector(fallbackTargetSelector)
+      : null;
 
-  const reportLargestContentfulPaint = () => {
-    if (hasReported || latestLargestContentfulPaint <= 0) {
+  const reportLargestContentfulPaint = (fallbackDurationMs = 0) => {
+    if (hasReported) {
+      return;
+    }
+
+    const measuredDurationMs =
+      latestLargestContentfulPaint > 0 ? latestLargestContentfulPaint : Number(fallbackDurationMs || 0);
+    if (measuredDurationMs <= 0) {
       return;
     }
 
     hasReported = true;
-    onReport(Math.round(latestLargestContentfulPaint));
+    onReport(Math.round(measuredDurationMs));
   };
 
-  try {
-    observer = new globalThis.PerformanceObserver((entryList) => {
-      const entries = entryList.getEntries();
-      const latestEntry = entries.at(-1);
-      if (latestEntry?.startTime) {
-        latestLargestContentfulPaint = latestEntry.startTime;
-      }
-    });
+  if (typeof globalThis.PerformanceObserver === "function") {
+    try {
+      observer = new globalThis.PerformanceObserver((entryList) => {
+        const entries = entryList.getEntries();
+        const latestEntry = entries.at(-1);
+        if (latestEntry?.startTime) {
+          latestLargestContentfulPaint = latestEntry.startTime;
+        }
+      });
 
-    observer.observe({ type: "largest-contentful-paint", buffered: true });
-  } catch {
-    return undefined;
+      observer.observe({ type: "largest-contentful-paint", buffered: true });
+    } catch {
+      observer = null;
+    }
   }
 
-  const fallbackTimerId = globalThis.setTimeout(reportLargestContentfulPaint, 5000);
+  removeFallbackImageListener = attachImageReadyFallback(fallbackTargetNode, reportLargestContentfulPaint);
+  removeDocumentReadyFallback = attachDocumentReadyFallback(reportLargestContentfulPaint);
+
+  const fallbackTimerId = globalThis.setTimeout(() => {
+    reportLargestContentfulPaint(getCurrentPerformanceTimestamp());
+  }, 3000);
   const handlePageHide = () => {
     reportLargestContentfulPaint();
   };
@@ -82,6 +160,8 @@ export const startWebsitePreviewLcpObserver = ({ enabled, onReport }) => {
   return () => {
     globalThis.clearTimeout(fallbackTimerId);
     observer?.disconnect();
+    removeFallbackImageListener?.();
+    removeDocumentReadyFallback?.();
     globalThis.removeEventListener("pagehide", handlePageHide);
     globalThis.document?.removeEventListener("visibilitychange", handleVisibilityChange);
   };

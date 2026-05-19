@@ -18,6 +18,43 @@ const eventTableName = (schemaName) => `${schemaName}.standalone_site_event`;
 const draftTableName = (schemaName) => `${schemaName}.standalone_site_draft`;
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
 const siteDomainTableName = (schemaName) => `${schemaName}.standalone_site_domain`;
+const propertyPricingTableName = (schemaName) => `${schemaName}.property_pricing`;
+const getConfiguredNumberEnv = (...envNames) => {
+  for (const envName of envNames) {
+    const rawValue = process.env[envName];
+    if (rawValue === undefined || rawValue === null || String(rawValue).trim() === "") {
+      continue;
+    }
+
+    return Number(rawValue);
+  }
+
+  return Number.NaN;
+};
+const DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_BUILD_ATTEMPT_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_BUILD_ATTEMPT_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_DRAFT_SAVE_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_DRAFT_SAVE_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR"
+);
 
 const safeParseJson = (rawValue, fallbackValue = {}) => {
   if (typeof rawValue !== "string" || !rawValue.trim()) {
@@ -57,6 +94,8 @@ const toPercentage = (numerator, denominator) => {
   return (Number(numerator) / denominator) * 100;
 };
 
+const PRICE_COMPARISON_EPSILON = 0.0001;
+
 const getPercentile = (values, percentile) => {
   if (!Array.isArray(values) || values.length < 1) {
     return null;
@@ -77,6 +116,7 @@ const getPercentile = (values, percentile) => {
 };
 
 const parseAttemptId = (payload) => String(payload?.attemptId || "").trim();
+const parseFlowId = (payload) => String(payload?.flowId || "").trim();
 const parseDurationMetric = (payload) => toNullableNumber(payload?.durationMs);
 const parseSurface = (payload) => String(payload?.surface || "").trim().toLowerCase();
 const parseViewport = (payload) => String(payload?.viewport || "").trim().toLowerCase();
@@ -84,11 +124,136 @@ const WEBSITE_ANALYTICS_SURFACES = Object.freeze(["preview", "live"]);
 const WEBSITE_ANALYTICS_VIEWPORTS = Object.freeze(["mobile", "tablet", "desktop"]);
 
 const BUILD_ABANDONMENT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_REASONABLE_SITE_PUBLISH_DURATION_MS = 30 * 60 * 1000;
 const EMPTY_EVENT_METRICS = Object.freeze({
   total: 0,
   uniqueDrafts: 0,
   lastOccurredAt: null,
 });
+
+const extractSnapshotRoomRate = (snapshot) =>
+  toNullableNumber(snapshot?.pricing?.roomRate ?? snapshot?.pricing?.roomrate);
+
+const areComparablePricesEqual = (left, right) =>
+  Number.isFinite(left) &&
+  Number.isFinite(right) &&
+  Math.abs(Number(left) - Number(right)) < PRICE_COMPARISON_EPSILON;
+
+const summarizePublishedPriceAlignment = (publishedPriceRows) => {
+  let comparableSiteCount = 0;
+  let mismatchCount = 0;
+
+  (Array.isArray(publishedPriceRows) ? publishedPriceRows : []).forEach((row) => {
+    const snapshot = safeParseJson(row?.published_property_snapshot_json, {});
+    const publishedRoomRate = extractSnapshotRoomRate(snapshot);
+    const currentRoomRate = toNullableNumber(row?.roomrate);
+
+    if (!Number.isFinite(publishedRoomRate) || !Number.isFinite(currentRoomRate)) {
+      return;
+    }
+
+    comparableSiteCount += 1;
+    if (!areComparablePricesEqual(publishedRoomRate, currentRoomRate)) {
+      mismatchCount += 1;
+    }
+  });
+
+  return {
+    comparableSiteCount,
+    mismatchRate: toPercentage(mismatchCount, comparableSiteCount),
+  };
+};
+
+const resolveDirectBookingWebsiteMonthlyCostInputs = () => {
+  const fixedMonthlyCostEur = Number.isFinite(DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR)
+    ? DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR
+    : null;
+  const variableCostPerSiteEur = Number.isFinite(DIRECT_BOOKING_WEBSITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR)
+    ? DIRECT_BOOKING_WEBSITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR
+    : null;
+
+  return {
+    fixedMonthlyCostEur,
+    variableCostPerSiteEur,
+  };
+};
+
+const resolveDirectBookingWebsiteUsageCostInputs = () => ({
+  buildAttemptCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_BUILD_ATTEMPT_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_BUILD_ATTEMPT_EUR
+    : 0,
+  draftSaveCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_DRAFT_SAVE_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_DRAFT_SAVE_EUR
+    : 0,
+  liveSyncCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR
+    : 0,
+  publicPreviewOpenCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR
+    : 0,
+  publicSiteOpenCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR
+    : 0,
+});
+
+const hasConfiguredDirectBookingWebsiteUsageCosts = () => {
+  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveDirectBookingWebsiteMonthlyCostInputs();
+  const usageInputs = resolveDirectBookingWebsiteUsageCostInputs();
+
+  return (
+    Number.isFinite(fixedMonthlyCostEur) ||
+    Number.isFinite(variableCostPerSiteEur) ||
+    Object.values(usageInputs).some((value) => Number.isFinite(value) && value > 0)
+  );
+};
+
+const buildRecentUsageCountMap = (recentUsageRows) =>
+  new Map(
+    (Array.isArray(recentUsageRows) ? recentUsageRows : []).map((row) => [
+      String(row.event_type || "").trim(),
+      toCount(row.total),
+    ])
+  );
+
+const getRecentUsageCount = (recentUsageCounts, eventType) => toCount(recentUsageCounts.get(eventType));
+
+const calculateUsageWeightedCostPerActiveSitePerMonth = ({
+  activePublishedSiteCount,
+  recentUsageCounts,
+}) => {
+  if (!Number.isFinite(activePublishedSiteCount) || activePublishedSiteCount <= 0) {
+    return null;
+  }
+
+  if (!hasConfiguredDirectBookingWebsiteUsageCosts()) {
+    return null;
+  }
+
+  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveDirectBookingWebsiteMonthlyCostInputs();
+  const {
+    buildAttemptCostEur,
+    draftSaveCostEur,
+    liveSyncCostEur,
+    publicPreviewOpenCostEur,
+    publicSiteOpenCostEur,
+  } = resolveDirectBookingWebsiteUsageCostInputs();
+
+  const monthlyFixedCost = Number.isFinite(fixedMonthlyCostEur) ? fixedMonthlyCostEur : 0;
+  const monthlyVariableCost = Number.isFinite(variableCostPerSiteEur)
+    ? variableCostPerSiteEur * activePublishedSiteCount
+    : 0;
+  const recentUsageCost =
+    getRecentUsageCount(recentUsageCounts, "WEBSITE_BUILD_STARTED") * buildAttemptCostEur +
+    getRecentUsageCount(recentUsageCounts, "WEBSITE_DRAFT_SAVED") * draftSaveCostEur +
+    (
+      getRecentUsageCount(recentUsageCounts, "WEBSITE_SITE_PUBLISHED") +
+      getRecentUsageCount(recentUsageCounts, "LIVE_SITE_UPDATED")
+    ) * liveSyncCostEur +
+    getRecentUsageCount(recentUsageCounts, "PUBLIC_PREVIEW_OPENED") * publicPreviewOpenCostEur +
+    getRecentUsageCount(recentUsageCounts, "PUBLIC_SITE_OPENED") * publicSiteOpenCostEur;
+
+  return (monthlyFixedCost + monthlyVariableCost + recentUsageCost) / activePublishedSiteCount;
+};
 
 const buildEventCountMap = (eventCountRows) =>
   new Map(
@@ -138,9 +303,15 @@ const trackStartedAttempt = (startedAttempts, payload, occurredAt) => {
     return;
   }
 
-  const existingOccurredAt = startedAttempts.get(attemptId);
-  if (!Number.isFinite(existingOccurredAt) || occurredAt < existingOccurredAt) {
-    startedAttempts.set(attemptId, occurredAt);
+  const flowId = parseFlowId(payload);
+  const nextAttemptState = {
+    occurredAt,
+    flowKey: flowId ? `flow:${flowId}` : `attempt:${attemptId}`,
+  };
+
+  const existingAttemptState = startedAttempts.get(attemptId);
+  if (!Number.isFinite(existingAttemptState?.occurredAt) || occurredAt < existingAttemptState.occurredAt) {
+    startedAttempts.set(attemptId, nextAttemptState);
   }
 };
 
@@ -153,7 +324,11 @@ const trackPreviewReadyDuration = (previewReadyDurations, payload) => {
 
 const trackPublishDuration = (publishDurations, payload) => {
   const durationMs = parseDurationMetric(payload);
-  if (Number.isFinite(durationMs) && durationMs > 0) {
+  if (
+    Number.isFinite(durationMs) &&
+    durationMs > 0 &&
+    durationMs <= MAX_REASONABLE_SITE_PUBLISH_DURATION_MS
+  ) {
     publishDurations.push(durationMs);
   }
 };
@@ -162,6 +337,33 @@ const trackCompletedAttempt = (completedAttemptIds, payload) => {
   const attemptId = parseAttemptId(payload);
   if (attemptId) {
     completedAttemptIds.add(attemptId);
+  }
+};
+
+const trackStartedBuildFlow = (startedFlowIds, payload) => {
+  const flowId = parseFlowId(payload);
+  if (flowId) {
+    startedFlowIds.add(`flow:${flowId}`);
+  }
+};
+
+const trackAbandonedBuildFlow = (abandonedBuildFlowIds, payload) => {
+  const flowId = parseFlowId(payload);
+  if (flowId) {
+    abandonedBuildFlowIds.add(`flow:${flowId}`);
+  }
+};
+
+const trackCompletedBuildFlow = (completedBuildFlowIds, payload) => {
+  const flowId = parseFlowId(payload);
+  const attemptId = parseAttemptId(payload);
+  if (flowId) {
+    completedBuildFlowIds.add(`flow:${flowId}`);
+    return;
+  }
+
+  if (attemptId) {
+    completedBuildFlowIds.add(`attempt:${attemptId}`);
   }
 };
 
@@ -203,8 +405,11 @@ const trackOpenedSiteProperty = (openedSitePropertyIds, row) => {
 
 const accumulateMetricRows = (metricEventRows) => {
   const deleteReasonCounts = new Map();
+  const startedFlowIds = new Set();
+  const abandonedBuildFlowIds = new Set();
   const startedAttempts = new Map();
   const completedAttemptIds = new Set();
+  const completedBuildFlowIds = new Set();
   const previewReadyDurations = [];
   const publishDurations = [];
   const surfaceViewportDurations = createSurfaceViewportDurationBuckets();
@@ -222,6 +427,12 @@ const accumulateMetricRows = (metricEventRows) => {
       case "WEBSITE_BUILD_STARTED":
         trackStartedAttempt(startedAttempts, payload, occurredAt);
         return;
+      case "WEBSITE_BUILD_FLOW_STARTED":
+        trackStartedBuildFlow(startedFlowIds, payload);
+        return;
+      case "WEBSITE_BUILD_FLOW_ABANDONED":
+        trackAbandonedBuildFlow(abandonedBuildFlowIds, payload);
+        return;
       case "WEBSITE_PREVIEW_READY":
         trackPreviewReadyDuration(previewReadyDurations, payload);
         return;
@@ -231,6 +442,7 @@ const accumulateMetricRows = (metricEventRows) => {
       case "WEBSITE_BUILD_SUCCEEDED":
       case "WEBSITE_BUILD_FAILED":
         trackCompletedAttempt(completedAttemptIds, payload);
+        trackCompletedBuildFlow(completedBuildFlowIds, payload);
         return;
       case "PUBLIC_PREVIEW_OPENED":
       case "PUBLIC_SITE_OPENED":
@@ -246,8 +458,11 @@ const accumulateMetricRows = (metricEventRows) => {
 
   return {
     deleteReasonCounts,
+    startedFlowIds,
+    abandonedBuildFlowIds,
     startedAttempts,
     completedAttemptIds,
+    completedBuildFlowIds,
     previewReadyDurations,
     publishDurations,
     surfaceViewportDurations,
@@ -260,14 +475,44 @@ const buildDeletionReasonBreakdown = (deleteReasonCounts) =>
     .map(([reason, count]) => ({ reason, count }))
     .sort((left, right) => right.count - left.count || left.reason.localeCompare(right.reason));
 
-const countAbandonedAttempts = (startedAttempts, completedAttemptIds) => {
+const summarizeBuildFlowClosure = ({
+  startedFlowIds,
+  abandonedBuildFlowIds,
+  startedAttempts,
+  completedAttemptIds,
+  completedBuildFlowIds,
+}) => {
   const abandonmentThreshold = Date.now() - BUILD_ABANDONMENT_WINDOW_MS;
-  return Array.from(startedAttempts.entries()).filter(
-    ([attemptId, occurredAt]) =>
-      Number.isFinite(occurredAt) &&
-      occurredAt <= abandonmentThreshold &&
-      !completedAttemptIds.has(attemptId)
-  ).length;
+  const staleBuildFlowIds = new Set();
+
+  Array.from(startedAttempts.entries()).forEach(([attemptId, attemptState]) => {
+    const occurredAt = attemptState?.occurredAt;
+    if (!Number.isFinite(occurredAt)) {
+      return;
+    }
+
+    if (occurredAt <= abandonmentThreshold && !completedAttemptIds.has(attemptId)) {
+      staleBuildFlowIds.add(String(attemptState?.flowKey || `attempt:${attemptId}`).trim());
+    }
+  });
+
+  const maturedFlowIds = new Set([
+    ...Array.from(completedBuildFlowIds),
+    ...Array.from(abandonedBuildFlowIds),
+    ...Array.from(staleBuildFlowIds),
+  ]);
+  const abandonedFlowIds = new Set([
+    ...Array.from(abandonedBuildFlowIds),
+    ...Array.from(staleBuildFlowIds),
+  ]);
+
+  return {
+    startedFlowCount: startedFlowIds.size,
+    explicitPreBuildAbandonCount: abandonedBuildFlowIds.size,
+    staleBuildFlowCount: staleBuildFlowIds.size,
+    abandonedCount: abandonedFlowIds.size,
+    maturedCount: maturedFlowIds.size,
+  };
 };
 
 const buildSurfaceViewportSummary = (surfaceViewportDurations, surface, viewport) => {
@@ -289,7 +534,7 @@ const buildMergedViewportSummary = (surfaceViewportDurations, viewport) => {
   };
 };
 
-export class StandaloneSiteEventRepository {
+export class DirectBookingWebsiteEventRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
   }
@@ -326,20 +571,37 @@ export class StandaloneSiteEventRepository {
   async getKpiSummary({ hostId = null } = {}) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
-    const standaloneDraftTable = draftTableName(schemaName);
-    const standaloneEventTable = eventTableName(schemaName);
-    const standaloneSiteTable = siteTableName(schemaName);
-    const standaloneSiteDomainTable = siteDomainTableName(schemaName);
+    const directBookingWebsiteDraftTable = draftTableName(schemaName);
+    const directBookingWebsiteEventTable = eventTableName(schemaName);
+    const directBookingWebsiteSiteTable = siteTableName(schemaName);
+    const directBookingWebsiteDomainTable = siteDomainTableName(schemaName);
+    const propertyPricingTable = propertyPricingTableName(schemaName);
     const hasHostScope = typeof hostId === "string" && hostId.trim().length > 0;
     const draftWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const eventWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const siteWhereClause = hasHostScope ? "WHERE site.host_id = $1" : "";
     const queryParameters = hasHostScope ? [hostId] : [];
+    const usageWindowDays = Number.isFinite(DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS) && DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS > 0
+      ? Math.round(DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS)
+      : 30;
+    const usageWindowStartedAt = Date.now() - usageWindowDays * 24 * 60 * 60 * 1000;
+    const recentUsageWhereClause = hasHostScope
+      ? "WHERE host_id = $1 AND occurred_at >= $2"
+      : "WHERE occurred_at >= $1";
+    const recentUsageParameters = hasHostScope ? [hostId, usageWindowStartedAt] : [usageWindowStartedAt];
 
-    const [draftCountRows, eventCountRows, metricEventRows, liveLinkAvailabilityRows] = await Promise.all([
+    const [
+      draftCountRows,
+      eventCountRows,
+      metricEventRows,
+      liveLinkAvailabilityRows,
+      publishedPriceRows,
+      recentUsageRows,
+    ] =
+      await Promise.all([
       client.query(
         `SELECT COUNT(*)::bigint AS total
-         FROM ${standaloneDraftTable}
+         FROM ${directBookingWebsiteDraftTable}
          ${draftWhereClause}`,
         queryParameters
       ),
@@ -349,16 +611,18 @@ export class StandaloneSiteEventRepository {
           COUNT(*)::bigint AS total,
           COUNT(DISTINCT draft_id)::bigint AS unique_drafts,
           MAX(occurred_at) AS last_occurred_at
-         FROM ${standaloneEventTable}
+         FROM ${directBookingWebsiteEventTable}
          ${eventWhereClause}
          GROUP BY event_type`,
         queryParameters
       ),
       client.query(
         `SELECT event_type, occurred_at, payload_json, property_id
-         FROM ${standaloneEventTable}
+         FROM ${directBookingWebsiteEventTable}
          ${eventWhereClause}
          ${hasHostScope ? "AND" : "WHERE"} event_type IN (
+           'WEBSITE_BUILD_FLOW_STARTED',
+           'WEBSITE_BUILD_FLOW_ABANDONED',
            'WEBSITE_DELETED',
            'WEBSITE_BUILD_STARTED',
            'WEBSITE_PREVIEW_READY',
@@ -380,21 +644,54 @@ export class StandaloneSiteEventRepository {
                THEN site.id
              END
            )::bigint AS reachable_site_count
-         FROM ${standaloneSiteTable} site
-         LEFT JOIN ${standaloneSiteDomainTable} fallback_domain
+         FROM ${directBookingWebsiteSiteTable} site
+         LEFT JOIN ${directBookingWebsiteDomainTable} fallback_domain
            ON fallback_domain.site_id = site.id
           AND fallback_domain.domain_type = 'FALLBACK'
           AND fallback_domain.is_primary = TRUE
          ${siteWhereClause}`,
         queryParameters
       ),
+      client.query(
+        `SELECT
+           site.id,
+           site.property_id,
+           site.published_property_snapshot_json,
+           pricing.roomrate
+         FROM ${directBookingWebsiteSiteTable} site
+         LEFT JOIN ${propertyPricingTable} pricing
+           ON pricing.property_id = site.property_id
+         ${siteWhereClause}
+         ${hasHostScope ? "AND" : "WHERE"} site.status = 'PUBLISHED'`,
+        queryParameters
+      ),
+      client.query(
+        `SELECT
+           event_type,
+           COUNT(*)::bigint AS total
+         FROM ${directBookingWebsiteEventTable}
+         ${recentUsageWhereClause}
+         AND event_type IN (
+           'WEBSITE_BUILD_STARTED',
+           'WEBSITE_DRAFT_SAVED',
+           'WEBSITE_SITE_PUBLISHED',
+           'LIVE_SITE_UPDATED',
+           'PUBLIC_PREVIEW_OPENED',
+           'PUBLIC_SITE_OPENED'
+         )
+         GROUP BY event_type`,
+        recentUsageParameters
+      ),
     ]);
 
     const eventCounts = buildEventCountMap(eventCountRows);
     const {
       deleteReasonCounts,
+      startedFlowIds,
+      abandonedBuildFlowIds,
       startedAttempts,
       completedAttemptIds,
+      completedBuildFlowIds,
       previewReadyDurations,
       publishDurations,
       surfaceViewportDurations,
@@ -420,9 +717,22 @@ export class StandaloneSiteEventRepository {
     const buildStartedCount = buildStartedMetrics.total;
     const buildSucceededCount = buildSucceededMetrics.total;
     const buildFailedCount = buildFailedMetrics.total;
-    const buildAbandonedCount = countAbandonedAttempts(startedAttempts, completedAttemptIds);
+    const buildAttemptClosureSummary = summarizeBuildFlowClosure({
+      startedFlowIds,
+      abandonedBuildFlowIds,
+      startedAttempts,
+      completedAttemptIds,
+      completedBuildFlowIds,
+    });
+    const buildAbandonedCount = buildAttemptClosureSummary.abandonedCount;
     const publishedLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.published_site_count);
     const reachableLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.reachable_site_count);
+    const recentUsageCounts = buildRecentUsageCountMap(recentUsageRows);
+    const publishedPriceAlignmentSummary = summarizePublishedPriceAlignment(publishedPriceRows);
+    const costPerActiveSitePerMonth = calculateUsageWeightedCostPerActiveSitePerMonth({
+      activePublishedSiteCount: publishedLiveSiteCount,
+      recentUsageCounts,
+    });
     const previewMobileLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "mobile");
     const previewTabletLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "tablet");
     const previewDesktopLcpSummary = buildSurfaceViewportSummary(surfaceViewportDurations, "preview", "desktop");
@@ -445,12 +755,19 @@ export class StandaloneSiteEventRepository {
       buildSuccessRateSampleCount: buildStartedCount,
       buildFailureRate: toPercentage(buildFailedCount, buildStartedCount),
       buildFailureRateSampleCount: buildStartedCount,
-      buildAbandonmentRate: toPercentage(buildAbandonedCount, buildStartedCount),
-      buildAbandonmentRateSampleCount: buildStartedCount,
+      buildAbandonmentRate: toPercentage(
+        buildAbandonedCount,
+        buildAttemptClosureSummary.maturedCount
+      ),
+      buildAbandonmentRateSampleCount: buildAttemptClosureSummary.maturedCount,
       timeToFirstPreviewP95: getPercentile(previewReadyDurations, 95),
       timeToFirstPreviewSampleCount: previewReadyDurations.length,
       timeToPublishP95: getPercentile(publishDurations, 95),
       timeToPublishSampleCount: publishDurations.length,
+      costPerActiveSitePerMonth,
+      costPerActiveSitePerMonthSampleCount: Number.isFinite(costPerActiveSitePerMonth)
+        ? publishedLiveSiteCount
+        : 0,
       publicPreviewViewCount: previewMetrics.total,
       uniquePreviewedWebsiteCount: previewMetrics.uniqueDrafts,
       uniqueLiveSiteCount: openedSitePropertyIds.size,
@@ -480,6 +797,8 @@ export class StandaloneSiteEventRepository {
       siteLcpDesktopSampleCount: mergedDesktopLcpSummary.sampleCount,
       fallbackSubdomainAvailability: toPercentage(reachableLiveSiteCount, publishedLiveSiteCount),
       fallbackSubdomainAvailabilitySampleCount: publishedLiveSiteCount,
+      quoteToChargeMismatchRate: publishedPriceAlignmentSummary.mismatchRate,
+      quoteToChargeMismatchSampleCount: publishedPriceAlignmentSummary.comparableSiteCount,
       deletionReasonBreakdown,
     };
   }

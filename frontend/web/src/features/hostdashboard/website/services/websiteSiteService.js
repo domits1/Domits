@@ -65,7 +65,7 @@ export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   if (!response.ok) {
     const errorMessage = await getApiErrorMessage(
       response,
-      "We could not load the standalone site status for this listing."
+      "We could not load the direct booking website status for this listing."
     );
     throw new Error(errorMessage);
   }
@@ -91,7 +91,7 @@ export const publishWebsiteSite = async (propertyId) => {
   if (!response.ok) {
     const errorMessage = await getApiErrorMessage(
       response,
-      "We could not publish the standalone site for this listing."
+      "We could not publish the direct booking website for this listing."
     );
     throw new Error(errorMessage);
   }
@@ -117,7 +117,7 @@ export const unpublishWebsiteSite = async (propertyId) => {
   if (!response.ok) {
     const errorMessage = await getApiErrorMessage(
       response,
-      "We could not unpublish the standalone site for this listing."
+      "We could not unpublish the direct booking website for this listing."
     );
     throw new Error(errorMessage);
   }
