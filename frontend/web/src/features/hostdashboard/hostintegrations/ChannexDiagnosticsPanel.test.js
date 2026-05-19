@@ -1,5 +1,15 @@
-const React = require("react");
-const { fireEvent, render, screen, waitFor } = require("@testing-library/react");
+import React from "react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import ChannexDiagnosticsPanel from "./ChannexDiagnosticsPanel";
+import {
+  getChannexAriPreview,
+  getLatestChannexSyncEvidence,
+  getChannexStatus,
+  modifyBookingDates,
+  syncChannexCertificationTestCase,
+  syncChannexFull,
+  syncChannexRestrictions,
+} from "./channexApi";
 
 jest.mock("./channexApi", () => ({
   getChannexAriPayloadPreview: jest.fn(),
@@ -16,17 +26,7 @@ jest.mock("./channexApi", () => ({
   syncChannexRestrictions: jest.fn(),
 }));
 
-const ChannexDiagnosticsPanel = require("./ChannexDiagnosticsPanel").default;
-const {
-  getLatestChannexSyncEvidence,
-  getChannexStatus,
-  modifyBookingDates,
-  syncChannexCertificationTestCase,
-  syncChannexFull,
-  syncChannexRestrictions,
-} = require("./channexApi");
-
-const fillRequiredInputs = ({ dateTo = "2027-10-05" } = {}) => {
+const fillRequiredInputs = ({ dateTo = "2027-10-05", openActions = true } = {}) => {
   fireEvent.change(screen.getByLabelText("Domits property ID"), {
     target: { value: "domits-property-1" },
   });
@@ -36,7 +36,14 @@ const fillRequiredInputs = ({ dateTo = "2027-10-05" } = {}) => {
   fireEvent.change(screen.getByLabelText("Date to"), {
     target: { value: dateTo },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Actions" }));
+  if (openActions) {
+    fireEvent.click(screen.getByRole("button", { name: "Actions" }));
+  }
+};
+
+const renderDiagnosticsPanel = async () => {
+  render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+  await waitFor(() => expect(getChannexStatus).toHaveBeenCalledTimes(1));
 };
 
 describe("ChannexDiagnosticsPanel certification actions", () => {
@@ -59,7 +66,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
       results: [{ taskId: "task-restrictions-1" }],
     });
 
-    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    await renderDiagnosticsPanel();
     fillRequiredInputs();
 
     fireEvent.click(screen.getByRole("button", { name: "Sync restrictions/rates" }));
@@ -87,7 +94,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     };
     syncChannexRestrictions.mockRejectedValueOnce(error);
 
-    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    await renderDiagnosticsPanel();
     fillRequiredInputs({ dateTo: "2026-07-23" });
 
     fireEvent.click(screen.getByRole("button", { name: "Sync restrictions/rates" }));
@@ -99,7 +106,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
   });
 
   test("blocks restrictions sync ranges over 500 days before sending", async () => {
-    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    await renderDiagnosticsPanel();
     fillRequiredInputs({ dateTo: "2027-10-06" });
 
     fireEvent.click(screen.getByRole("button", { name: "Sync restrictions/rates" }));
@@ -112,41 +119,46 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     ).toBeTruthy();
   });
 
-  test("runs a change-only certification test case action", async () => {
-    syncChannexCertificationTestCase.mockResolvedValue({
-      testCaseId: "2",
-      testCaseName: "Single Date Update for Single Rate",
-      syncMode: "changeUpdate",
-      requestCount: 1,
-      taskIds: ["task-case-2"],
-      results: [{ taskId: "task-case-2" }],
-    });
-
-    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+  test("hides numbered certification test cases and keeps demo actions visible", async () => {
+    await renderDiagnosticsPanel();
     fillRequiredInputs();
 
-    fireEvent.click(screen.getByRole("button", { name: "Run #2" }));
-
-    await waitFor(() => expect(syncChannexCertificationTestCase).toHaveBeenCalledTimes(1));
-    expect(syncChannexCertificationTestCase).toHaveBeenCalledWith({
-      userId: "user-1",
-      domitsPropertyId: "domits-property-1",
-      testCaseId: "2",
-    });
-    expect(await screen.findByText("Certification test #2 completed.")).toBeTruthy();
-    expect(screen.getAllByText(/task-case-2/).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Sync availability" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Full/certification sync" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Modify booking dates" })).toBeTruthy();
+    expect(screen.queryByText("Change-only certification test cases")).toBeNull();
+    for (const testCaseId of ["2", "3", "4", "5", "6", "7", "8", "9", "10"]) {
+      expect(screen.queryByRole("button", { name: `Run #${testCaseId}` })).toBeNull();
+    }
+    expect(screen.queryByRole("button", { name: "Receive booking revisions" })).toBeNull();
+    expect(syncChannexCertificationTestCase).not.toHaveBeenCalled();
   });
 
   test("runs full/certification sync from the admin actions UI", async () => {
     syncChannexFull.mockResolvedValue({
       requestCount: 2,
+      calledProvider: true,
       overallSuccess: true,
       taskIds: ["task-availability-full", "task-restrictions-full"],
       warnings: [],
       errors: [],
+      steps: {
+        availability: {
+          calledProvider: true,
+          requestCount: 1,
+          success: true,
+          taskIds: ["task-availability-full"],
+        },
+        restrictions: {
+          calledProvider: true,
+          requestCount: 1,
+          success: true,
+          taskIds: ["task-restrictions-full"],
+        },
+      },
     });
 
-    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    await renderDiagnosticsPanel();
     fillRequiredInputs();
 
     fireEvent.click(screen.getByRole("button", { name: "Full/certification sync" }));
@@ -159,8 +171,77 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
       dateTo: "2027-10-05",
     });
     expect(await screen.findByText("Full/certification sync completed.")).toBeTruthy();
+    expect(screen.getByText("Full/certification sync summary")).toBeTruthy();
+    expect(screen.getByText("Full Sync provider calls: 1 availability, 1 restrictions/rates.")).toBeTruthy();
+    expect(screen.getByText("Availability call")).toBeTruthy();
+    expect(screen.getByText("Restrictions/rates call")).toBeTruthy();
+    expect(screen.getByText("Warnings")).toBeTruthy();
+    expect(screen.getByText("Errors")).toBeTruthy();
     expect(screen.getAllByText(/task-availability-full/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/task-restrictions-full/).length).toBeGreaterThan(0);
+  });
+
+  test("shows booking-aware ARI preview availability as blocked by an active booking", async () => {
+    getChannexAriPreview.mockResolvedValue({
+      sourceSummary: {
+        bookingAwareAvailability: true,
+        activeBookingNightCount: 1,
+        sellableUnitCount: 1,
+      },
+      availabilityPreview: [
+        {
+          externalRoomTypeId: "room-type-1",
+          date: "2026-06-01",
+          availability: false,
+          baseAvailability: true,
+          activeBookingCount: 1,
+          sellableUnitCount: 1,
+          availableUnitCount: 0,
+        },
+      ],
+      rateRestrictionPreview: [],
+    });
+
+    await renderDiagnosticsPanel();
+    fillRequiredInputs({ dateTo: "2026-06-01", openActions: false });
+    fireEvent.click(screen.getByRole("button", { name: "ARI Preview" }));
+    fireEvent.click(screen.getByRole("button", { name: "Load ARI preview" }));
+
+    await waitFor(() => expect(getChannexAriPreview).toHaveBeenCalledTimes(1));
+    const blockedCell = await screen.findByText("Blocked by booking");
+    const row = blockedCell.closest("tr");
+    expect(within(row).getByText("2026-06-01")).toBeTruthy();
+    expect(within(row).getByText("room-type-1")).toBeTruthy();
+    expect(within(row).getByText("Yes")).toBeTruthy();
+    expect(within(row).getByText("No")).toBeTruthy();
+    expect(within(row).getAllByText("1").length).toBeGreaterThanOrEqual(2);
+    expect(within(row).getByText("0")).toBeTruthy();
+  });
+
+  test("renders older ARI preview responses without booking-aware fields", async () => {
+    getChannexAriPreview.mockResolvedValue({
+      sourceSummary: {},
+      availabilityPreview: [
+        {
+          externalRoomTypeId: "room-type-legacy",
+          date: "2026-06-02",
+          availability: true,
+        },
+      ],
+      rateRestrictionPreview: [],
+    });
+
+    await renderDiagnosticsPanel();
+    fillRequiredInputs({ dateTo: "2026-06-02", openActions: false });
+    fireEvent.click(screen.getByRole("button", { name: "ARI Preview" }));
+    fireEvent.click(screen.getByRole("button", { name: "Load ARI preview" }));
+
+    await waitFor(() => expect(getChannexAriPreview).toHaveBeenCalledTimes(1));
+    const availableCell = await screen.findByText("Available");
+    const row = availableCell.closest("tr");
+    expect(within(row).getByText("2026-06-02")).toBeTruthy();
+    expect(within(row).getByText("room-type-legacy")).toBeTruthy();
+    expect(within(row).getByText("Yes")).toBeTruthy();
   });
 
   test("modifies booking dates from the admin actions UI", async () => {
@@ -177,7 +258,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
       },
     });
 
-    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    await renderDiagnosticsPanel();
     fillRequiredInputs();
 
     fireEvent.click(screen.getByRole("button", { name: "Modify booking dates" }));
@@ -199,7 +280,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
   });
 
   test("requires booking modify fields before sending", async () => {
-    render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    await renderDiagnosticsPanel();
     fillRequiredInputs();
 
     fireEvent.change(screen.getByLabelText("Booking ID"), {

@@ -8,10 +8,8 @@ import {
   getChannexStatus,
   getLatestChannexSyncEvidence,
   modifyBookingDates,
-  receiveChannexBookingRevisions,
   syncChannexAri,
   syncChannexAvailability,
-  syncChannexCertificationTestCase,
   syncChannexFull,
   syncChannexRestrictions,
 } from "./channexApi";
@@ -31,17 +29,6 @@ const MODIFY_BOOKING_DEMO_DEFAULTS = {
   arrivalDate: "2026-06-04",
   departureDate: "2026-06-06",
 };
-const CERTIFICATION_TEST_CASES = [
-  { id: "2", title: "Single Date Update for Single Rate", payloadType: "Rates" },
-  { id: "3", title: "Single Date Update for Multiple Rates", payloadType: "Rates" },
-  { id: "4", title: "Multiple Date Update for Multiple Rates", payloadType: "Rates" },
-  { id: "5", title: "Min Stay Update", payloadType: "Restrictions" },
-  { id: "6", title: "Stop Sell Update", payloadType: "Restrictions" },
-  { id: "7", title: "Multiple Restrictions Update", payloadType: "Restrictions" },
-  { id: "8", title: "Half-year Update", payloadType: "Rates and restrictions" },
-  { id: "9", title: "Single Date Availability Update", payloadType: "Availability" },
-  { id: "10", title: "Multiple Date Availability Update", payloadType: "Availability" },
-];
 const compareAlphabetically = (left, right) => String(left).localeCompare(String(right));
 
 const createRequestState = () => ({
@@ -111,7 +98,91 @@ const countPayloadGroups = (payloadSection) =>
 
 const countPayloadItems = (payloadSection) => (Array.isArray(payloadSection?.items) ? payloadSection.items.length : 0);
 
-const formatBooleanFlag = (value) => (value === true ? "Yes" : "No");
+const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value || {}, key);
+
+const formatBooleanFlag = (value) => {
+  if (value === true) return "Yes";
+  if (value === false) return "No";
+  return "-";
+};
+
+const formatDisplayValue = (value) => {
+  if (value === undefined || value === null || value === "") return "-";
+  if (typeof value === "boolean") return formatBooleanFlag(value);
+  return String(value);
+};
+
+const normalizeAvailabilityNumber = (value) => {
+  if (value === true || value === 1 || value === "1") return 1;
+  if (value === false || value === 0 || value === "0") return 0;
+  return null;
+};
+
+const getWarningsCount = (value) => (Array.isArray(value?.warnings) ? value.warnings.length : Number(value?.warningCount) || 0);
+
+const getErrorsCount = (value) => (Array.isArray(value?.errors) ? value.errors.length : Number(value?.errorCount) || 0);
+
+const getAvailabilityMetadataKey = ({ externalPropertyId, externalRoomTypeId, date }) =>
+  `${externalPropertyId || ""}::${externalRoomTypeId || ""}::${date || ""}`;
+
+const hasBookingAvailabilityMetadata = (item) =>
+  ["baseAvailability", "activeBookingCount", "sellableUnitCount", "availableUnitCount"].some((key) => hasOwn(item, key));
+
+const isBlockedByBooking = (item) =>
+  item?.baseAvailability === true &&
+  Number(item?.activeBookingCount) > 0 &&
+  Number(item?.availableUnitCount) === 0;
+
+const getAvailabilityStateLabel = (item) => {
+  if (isBlockedByBooking(item)) return "Blocked by booking";
+  const availability = normalizeAvailabilityNumber(item?.availability);
+  if (availability === 1) return "Available";
+  if (availability === 0) return "Unavailable";
+  return "-";
+};
+
+const buildAvailabilityMetadataIndex = (items) =>
+  new Map(
+    (Array.isArray(items) ? items : []).map((item) => [
+      getAvailabilityMetadataKey({
+        externalPropertyId: item?.externalPropertyId,
+        externalRoomTypeId: item?.externalRoomTypeId,
+        date: item?.date,
+      }),
+      item,
+    ])
+  );
+
+const enrichAvailabilityValue = (value, group, metadataIndex) => {
+  const metadata = metadataIndex.get(
+    getAvailabilityMetadataKey({
+      externalPropertyId: group?.externalPropertyId,
+      externalRoomTypeId: group?.externalRoomTypeId,
+      date: value?.date,
+    })
+  );
+  return {
+    ...value,
+    ...(metadata || {}),
+    externalPropertyId: group?.externalPropertyId || metadata?.externalPropertyId || "-",
+    externalRoomTypeId: group?.externalRoomTypeId || metadata?.externalRoomTypeId || "-",
+  };
+};
+
+const summarizeAvailabilityItems = (items) => {
+  const safeItems = Array.isArray(items) ? items : [];
+  const availabilityZeroCount = safeItems.filter((item) => normalizeAvailabilityNumber(item?.availability) === 0).length;
+  const availabilityOneCount = safeItems.filter((item) => normalizeAvailabilityNumber(item?.availability) === 1).length;
+  const blockedByBookingCount = safeItems.filter(isBlockedByBooking).length;
+
+  return {
+    totalItems: safeItems.length,
+    availabilityZeroCount,
+    availabilityOneCount,
+    blockedByBookingCount,
+    hasBookingMetadata: safeItems.some(hasBookingAvailabilityMetadata),
+  };
+};
 
 const formatDateWindow = (values) => {
   const dates = (Array.isArray(values) ? values : [])
@@ -140,6 +211,55 @@ const getTaskIdsFromState = (state) => {
   if (Array.isArray(state.data?.taskIds)) return state.data.taskIds;
   if (Array.isArray(state.data?.results)) return state.data.results.map((result) => result?.taskId).filter(Boolean);
   return [];
+};
+
+const getTaskIdsFromResult = (data) => {
+  if (Array.isArray(data?.taskIds)) return data.taskIds.filter(Boolean);
+  if (Array.isArray(data?.results)) return data.results.map((result) => result?.taskId).filter(Boolean);
+  return [];
+};
+
+const getStepTaskIds = (step) => {
+  if (Array.isArray(step?.taskIds)) return step.taskIds.filter(Boolean);
+  if (Array.isArray(step?.results)) return step.results.map((result) => result?.taskId).filter(Boolean);
+  return [];
+};
+
+const getStepStatusLabel = (step) => {
+  if (!step) return "Not returned";
+  if (step.calledProvider === false) return "Not called";
+  if (step.success === true) return "Success";
+  if (step.success === false) return "Failed";
+  return step.providerStatus || "Returned";
+};
+
+const getStepRequestCount = (step) => {
+  if (step?.requestCount !== undefined && step?.requestCount !== null) return step.requestCount;
+  return Array.isArray(step?.results) ? step.results.length : "-";
+};
+
+const getSyncResultSummary = (data, isFullSync = false) => {
+  const availabilityStep = data?.steps?.availability || null;
+  const restrictionsStep = data?.steps?.restrictions || null;
+
+  return {
+    shouldRender: Boolean(
+      data &&
+        (isFullSync ||
+          data.overallSuccess !== undefined ||
+          data.requestCount !== undefined ||
+          data.calledProvider !== undefined ||
+          getTaskIdsFromResult(data).length)
+    ),
+    overallSuccess: data?.overallSuccess,
+    requestCount: data?.requestCount,
+    calledProvider: data?.calledProvider,
+    taskIds: getTaskIdsFromResult(data),
+    warningCount: getWarningsCount(data),
+    errorCount: getErrorsCount(data),
+    availabilityStep,
+    restrictionsStep,
+  };
 };
 
 const isoDateToUtcMs = (value) => {
@@ -246,19 +366,23 @@ const getPayloadPaginationSummary = (pagination = {}) => {
   };
 };
 
-const summarizeAvailabilityPayloadGroups = (groups) =>
-  (Array.isArray(groups) ? groups : []).map((group) => {
+const summarizeAvailabilityPayloadGroups = (payloadSection) => {
+  const metadataIndex = buildAvailabilityMetadataIndex(payloadSection?.items);
+  return (Array.isArray(payloadSection?.groupedPayloads) ? payloadSection.groupedPayloads : []).map((group) => {
     const values = Array.isArray(group?.values) ? group.values : [];
+    const enrichedValues = values.map((value) => enrichAvailabilityValue(value, group, metadataIndex));
     return {
       externalPropertyId: group?.externalPropertyId || "-",
       externalRoomTypeId: group?.externalRoomTypeId || "-",
       dateWindow: formatDateWindow(values),
-      availableCount: values.filter((value) => value?.availability === true).length,
-      unavailableCount: values.filter((value) => value?.availability === false).length,
+      availableCount: enrichedValues.filter((value) => normalizeAvailabilityNumber(value?.availability) === 1).length,
+      unavailableCount: enrichedValues.filter((value) => normalizeAvailabilityNumber(value?.availability) === 0).length,
+      blockedByBookingCount: enrichedValues.filter(isBlockedByBooking).length,
       totalItems: values.length,
-      values,
+      values: enrichedValues,
     };
   });
+};
 
 const summarizeRestrictionPayloadGroups = (groups) =>
   (Array.isArray(groups) ? groups : []).map((group) => {
@@ -337,6 +461,58 @@ IdentifierList.propTypes = {
   ids: PropTypes.array,
 };
 
+const SyncResultSummary = ({ title, data, isFullSync }) => {
+  const summary = getSyncResultSummary(data, isFullSync);
+  if (!summary.shouldRender) return null;
+
+  const availabilityRequestCount = getStepRequestCount(summary.availabilityStep);
+  const restrictionsRequestCount = getStepRequestCount(summary.restrictionsStep);
+  const fullSyncCallSummary =
+    isFullSync && summary.availabilityStep && summary.restrictionsStep
+      ? `${availabilityRequestCount} availability, ${restrictionsRequestCount} restrictions/rates`
+      : null;
+
+  return (
+    <section className="channex-payload-summary-panel">
+      <div>
+        <h4>{title}</h4>
+        <p className="host-integrations-muted">Human-readable sync result before raw JSON.</p>
+      </div>
+      {fullSyncCallSummary ? (
+        <p className="host-integrations-success-banner">Full Sync provider calls: {fullSyncCallSummary}.</p>
+      ) : null}
+      <DetailGrid
+        items={[
+          { label: "Overall success", value: summary.overallSuccess === undefined ? "-" : formatBooleanFlag(summary.overallSuccess) },
+          { label: "Called provider", value: summary.calledProvider === undefined ? "-" : formatBooleanFlag(summary.calledProvider) },
+          { label: "Request count", value: summary.requestCount ?? "-" },
+          { label: "Task IDs", value: renderList(summary.taskIds) },
+          { label: "Warnings", value: summary.warningCount },
+          { label: "Errors", value: summary.errorCount },
+        ]}
+      />
+      {summary.availabilityStep || summary.restrictionsStep ? (
+        <DetailGrid
+          items={[
+            { label: "Availability call", value: getStepStatusLabel(summary.availabilityStep) },
+            { label: "Availability task ID", value: renderList(getStepTaskIds(summary.availabilityStep)) },
+            { label: "Availability requests", value: availabilityRequestCount },
+            { label: "Restrictions/rates call", value: getStepStatusLabel(summary.restrictionsStep) },
+            { label: "Restrictions/rates task ID", value: renderList(getStepTaskIds(summary.restrictionsStep)) },
+            { label: "Restrictions/rates requests", value: restrictionsRequestCount },
+          ]}
+        />
+      ) : null}
+    </section>
+  );
+};
+
+SyncResultSummary.propTypes = {
+  title: PropTypes.string.isRequired,
+  data: PropTypes.object,
+  isFullSync: PropTypes.bool,
+};
+
 const MappingTable = ({ title, rows, columns }) => {
   const safeRows = Array.isArray(rows) ? rows : [];
 
@@ -406,6 +582,95 @@ PayloadSummaryPanel.propTypes = {
   children: PropTypes.node,
 };
 
+const AvailabilityEvidenceSummary = ({ summary, providerRequestCount, taskIds }) => (
+  <dl className="channex-diagnostics-detail-grid">
+    <div>
+      <dt>Total availability items</dt>
+      <dd>{summary.totalItems}</dd>
+    </div>
+    <div>
+      <dt>Availability 0</dt>
+      <dd>{summary.availabilityZeroCount}</dd>
+    </div>
+    <div>
+      <dt>Availability 1</dt>
+      <dd>{summary.availabilityOneCount}</dd>
+    </div>
+    <div>
+      <dt>Blocked by bookings</dt>
+      <dd>{summary.hasBookingMetadata ? summary.blockedByBookingCount : "-"}</dd>
+    </div>
+    <div>
+      <dt>Provider requests</dt>
+      <dd>{providerRequestCount ?? "-"}</dd>
+    </div>
+    <div>
+      <dt>Task IDs</dt>
+      <dd>{Array.isArray(taskIds) && taskIds.length ? taskIds.join(", ") : "-"}</dd>
+    </div>
+  </dl>
+);
+
+AvailabilityEvidenceSummary.propTypes = {
+  summary: PropTypes.shape({
+    totalItems: PropTypes.number.isRequired,
+    availabilityZeroCount: PropTypes.number.isRequired,
+    availabilityOneCount: PropTypes.number.isRequired,
+    blockedByBookingCount: PropTypes.number.isRequired,
+    hasBookingMetadata: PropTypes.bool.isRequired,
+  }).isRequired,
+  providerRequestCount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  taskIds: PropTypes.array,
+};
+
+const AvailabilityEvidenceTable = ({ title, rows, emptyMessage }) => {
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  return (
+    <div className="channex-diagnostics-table-wrap">
+      <h4>{title}</h4>
+      {safeRows.length ? (
+        <table className="channex-diagnostics-table channex-payload-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Room type</th>
+              <th>Base availability</th>
+              <th>Active bookings</th>
+              <th>Sellable units</th>
+              <th>Available units</th>
+              <th>Final availability</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            {safeRows.map((row, index) => (
+              <tr key={`${row?.externalRoomTypeId || "room"}-${row?.date || index}`}>
+                <td>{formatDisplayValue(row?.date)}</td>
+                <td>{formatDisplayValue(row?.externalRoomTypeId)}</td>
+                <td>{formatDisplayValue(row?.baseAvailability)}</td>
+                <td>{formatDisplayValue(row?.activeBookingCount)}</td>
+                <td>{formatDisplayValue(row?.sellableUnitCount)}</td>
+                <td>{formatDisplayValue(row?.availableUnitCount)}</td>
+                <td>{formatBooleanFlag(row?.availability)}</td>
+                <td>{getAvailabilityStateLabel(row)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="host-integrations-muted">{emptyMessage}</p>
+      )}
+    </div>
+  );
+};
+
+AvailabilityEvidenceTable.propTypes = {
+  title: PropTypes.string.isRequired,
+  rows: PropTypes.array,
+  emptyMessage: PropTypes.string.isRequired,
+};
+
 const AvailabilityPayloadTable = ({ rows }) => (
   <div className="channex-diagnostics-table-wrap">
     <h4>Availability payloads</h4>
@@ -418,6 +683,7 @@ const AvailabilityPayloadTable = ({ rows }) => (
             <th>Date range</th>
             <th>Available</th>
             <th>Unavailable</th>
+            <th>Blocked by bookings</th>
             <th>Total items</th>
             <th>Details</th>
           </tr>
@@ -430,6 +696,7 @@ const AvailabilityPayloadTable = ({ rows }) => (
               <td>{row.dateWindow}</td>
               <td>{row.availableCount}</td>
               <td>{row.unavailableCount}</td>
+              <td>{row.blockedByBookingCount}</td>
               <td>{row.totalItems}</td>
               <td>
                 <details className="channex-payload-row-details">
@@ -438,14 +705,24 @@ const AvailabilityPayloadTable = ({ rows }) => (
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Available</th>
+                        <th>Base</th>
+                        <th>Active bookings</th>
+                        <th>Sellable units</th>
+                        <th>Available units</th>
+                        <th>Final</th>
+                        <th>State</th>
                       </tr>
                     </thead>
                     <tbody>
                       {row.values.map((value) => (
                         <tr key={`${row.externalRoomTypeId}-${value.date}`}>
                           <td>{value.date}</td>
+                          <td>{formatDisplayValue(value.baseAvailability)}</td>
+                          <td>{formatDisplayValue(value.activeBookingCount)}</td>
+                          <td>{formatDisplayValue(value.sellableUnitCount)}</td>
+                          <td>{formatDisplayValue(value.availableUnitCount)}</td>
                           <td>{formatBooleanFlag(value.availability)}</td>
+                          <td>{getAvailabilityStateLabel(value)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -470,6 +747,7 @@ AvailabilityPayloadTable.propTypes = {
       dateWindow: PropTypes.string.isRequired,
       availableCount: PropTypes.number.isRequired,
       unavailableCount: PropTypes.number.isRequired,
+      blockedByBookingCount: PropTypes.number.isRequired,
       totalItems: PropTypes.number.isRequired,
       values: PropTypes.array.isRequired,
     })
@@ -614,7 +892,8 @@ const PayloadPreviewDetails = ({ payloadPreview, omittedRestrictionNames, onLoad
   const paginationSummary = getPayloadPaginationSummary(pagination);
   const availabilityPayload = payloadPreview.availabilityPayloadPreview || {};
   const restrictionRatePayload = payloadPreview.restrictionRatePayloadPreview || {};
-  const availabilityRows = summarizeAvailabilityPayloadGroups(availabilityPayload.groupedPayloads);
+  const availabilityRows = summarizeAvailabilityPayloadGroups(availabilityPayload);
+  const availabilitySummary = summarizeAvailabilityItems(availabilityPayload.items);
   const restrictionRows = summarizeRestrictionPayloadGroups(restrictionRatePayload.groupedPayloads);
   const isFirstPage = !pagination.hasPreviousPage;
   const isLastPage = !pagination.hasNextPage;
@@ -710,9 +989,16 @@ const PayloadPreviewDetails = ({ payloadPreview, omittedRestrictionNames, onLoad
           itemCount={countPayloadItems(availabilityPayload)}
           dateWindow={paginationSummary.windowLabel}
         >
-          <p className="host-integrations-muted">
-            Availability is grouped by external property and room type for the loaded page.
-          </p>
+          <AvailabilityEvidenceSummary summary={availabilitySummary} />
+          {availabilitySummary.blockedByBookingCount > 0 ? (
+            <p className="host-integrations-warning-banner">
+              {availabilitySummary.blockedByBookingCount} availability item(s) are blocked by active Domits bookings.
+            </p>
+          ) : (
+            <p className="host-integrations-muted">
+              Availability is grouped by external property and room type for the loaded page.
+            </p>
+          )}
         </PayloadSummaryPanel>
         <PayloadSummaryPanel
           title="Rate/restriction payloads"
@@ -865,14 +1151,6 @@ const ACTION_CONFIG = [
     confirmMessage:
       "Run full/certification sync? This can send availability, rates, and restrictions to Channex for the selected date range.",
   },
-  {
-    key: "receive",
-    label: "Receive booking revisions",
-    description: "Manually poll/persist Channex booking revisions for the selected mapped property.",
-    run: receiveChannexBookingRevisions,
-    needsDateRange: false,
-    confirmMessage: "Receive Channex booking revisions for this property?",
-  },
 ];
 
 function ChannexDiagnosticsPanel({ userId }) {
@@ -1004,40 +1282,6 @@ function ChannexDiagnosticsPanel({ userId }) {
     } catch (error) {
       const errorDetails = normalizeChannexError(error, `${config.label} failed.`);
       updateActionState(config.key, {
-        loading: false,
-        error: errorDetails.message,
-        errorDetails,
-        data: null,
-        success: "",
-      });
-    }
-  };
-
-  const runCertificationTestCase = async (testCase) => {
-    const key = `certification-case-${testCase.id}`;
-    const confirmMessage = `Run Channex certification test #${testCase.id}: ${testCase.title}?`;
-    if (typeof globalThis.confirm === "function" && !globalThis.confirm(confirmMessage)) {
-      return;
-    }
-
-    updateActionState(key, { loading: true, error: "", errorDetails: null, data: null, success: "" });
-
-    try {
-      const data = await syncChannexCertificationTestCase({
-        userId,
-        domitsPropertyId: domitsPropertyId.trim(),
-        testCaseId: testCase.id,
-      });
-      updateActionState(key, {
-        loading: false,
-        error: "",
-        errorDetails: null,
-        data,
-        success: `Certification test #${testCase.id} completed.`,
-      });
-    } catch (error) {
-      const errorDetails = normalizeChannexError(error, `Certification test #${testCase.id} failed.`);
-      updateActionState(key, {
         loading: false,
         error: errorDetails.message,
         errorDetails,
@@ -1225,9 +1469,29 @@ function ChannexDiagnosticsPanel({ userId }) {
           <>
             <DetailGrid
               items={[
+                {
+                  label: "Booking-aware availability",
+                  value:
+                    ariPreview.sourceSummary?.bookingAwareAvailability === undefined
+                      ? "-"
+                      : formatBooleanFlag(ariPreview.sourceSummary.bookingAwareAvailability),
+                },
+                {
+                  label: "Active booking nights",
+                  value: ariPreview.sourceSummary?.activeBookingNightCount ?? "-",
+                },
+                {
+                  label: "Sellable units",
+                  value: ariPreview.sourceSummary?.sellableUnitCount ?? "-",
+                },
                 { label: "Supported restriction fields", value: renderList(supportedRestrictionFields) },
                 { label: "Omitted Domits restrictions", value: renderList(omittedRestrictionNames) },
               ]}
+            />
+            <AvailabilityEvidenceTable
+              title="Booking-aware availability preview"
+              rows={ariPreview.availabilityPreview}
+              emptyMessage="No availability preview rows returned."
             />
             <JsonBlock title="Source summary" value={ariPreview.sourceSummary} />
             <JsonBlock title="Availability preview" value={ariPreview.availabilityPreview} />
@@ -1301,6 +1565,11 @@ function ChannexDiagnosticsPanel({ userId }) {
               { label: "Notes", value: renderList(latestEvidence.notesSummary || latestEvidence.notes) },
             ]}
           />
+          <SyncResultSummary
+            title="Latest evidence summary"
+            data={latestEvidence.rawDetails || latestEvidence}
+            isFullSync={latestEvidence.syncType === "certification_full"}
+          />
           <JsonBlock title="Latest evidence response" value={latestEvidenceState.data} />
         </>
       ) : (
@@ -1360,7 +1629,19 @@ function ChannexDiagnosticsPanel({ userId }) {
               {state.success ? <p className="host-integrations-success-banner">{state.success}</p> : null}
               {state.error ? <ErrorCallout error={state.error} details={state.errorDetails} /> : null}
               <IdentifierList title="Task IDs" ids={taskIds} />
-              {state.data ? <JsonBlock title={`${config.label} response`} value={state.data} /> : null}
+              {state.data ? (
+                <>
+                  <SyncResultSummary
+                    title={`${config.label} summary`}
+                    data={state.data}
+                    isFullSync={config.key === "full"}
+                  />
+                  <details className="channex-diagnostics-collapsible">
+                    <summary>Raw response JSON</summary>
+                    <JsonBlock title={`${config.label} response`} value={state.data} />
+                  </details>
+                </>
+              ) : null}
             </div>
           );
         })}
@@ -1417,51 +1698,6 @@ function ChannexDiagnosticsPanel({ userId }) {
           ) : null}
           {modifyBookingState.data ? <JsonBlock title="Modify booking response" value={modifyBookingState.data} /> : null}
         </form>
-      </div>
-      <div className="channex-certification-test-section">
-        <div className="channex-diagnostics-card-header">
-          <div>
-            <h3>Change-only certification test cases</h3>
-            <p className="host-integrations-muted">
-              These actions send only the fields required by Channex certification tests #2 through #10.
-            </p>
-          </div>
-        </div>
-        <div className="channex-certification-test-grid">
-          {CERTIFICATION_TEST_CASES.map((testCase) => {
-            const key = `certification-case-${testCase.id}`;
-            const state = actionStates[key] || {};
-            const taskIds = getTaskIdsFromState(state);
-
-            return (
-              <div className="channex-certification-test-card" key={testCase.id}>
-                <div>
-                  <h4>
-                    #{testCase.id} {testCase.title}
-                  </h4>
-                  <p className="host-integrations-muted">{testCase.payloadType}. Change-only update payload.</p>
-                </div>
-                <button
-                  type="button"
-                  className="host-integrations-primary-btn"
-                  disabled={!userId || !hasProperty || state.loading}
-                  onClick={() => runCertificationTestCase(testCase)}
-                >
-                  {state.loading ? "Running..." : `Run #${testCase.id}`}
-                </button>
-                {state.success ? <p className="host-integrations-success-banner">{state.success}</p> : null}
-                {state.error ? <ErrorCallout error={state.error} details={state.errorDetails} /> : null}
-                <IdentifierList title="Task IDs" ids={taskIds} />
-                {state.data ? (
-                  <details className="channex-diagnostics-collapsible">
-                    <summary>Response details</summary>
-                    <JsonBlock title={`Certification test #${testCase.id} response`} value={state.data} />
-                  </details>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
       </div>
     </section>
   );
