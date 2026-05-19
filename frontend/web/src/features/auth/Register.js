@@ -1,21 +1,60 @@
-import React, { useState, useContext, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useContext, useRef, useState } from "react";
+import PropTypes from "prop-types";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
-import FlowContext from "../../services/FlowContext";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
+import FlowContext from "../../services/FlowContext";
+
 import {
-  FaUser,
   FaEnvelope,
-  FaLock,
-  FaPhone,
   FaEye,
   FaEyeSlash,
+  FaLock,
+  FaPhone,
+  FaUser,
 } from "react-icons/fa";
 
 import "../../styles/sass/features/auth/auth.scss";
 import "../../styles/sass/features/auth/register.scss";
+
+const PASSWORD_REQUIREMENT_ITEMS = [
+  { key: "length", label: "At least 8 characters" },
+  { key: "uppercase", label: "At least 1 uppercase letter" },
+  { key: "number", label: "At least 1 number" },
+  { key: "specialChar", label: "At least 1 special character" },
+];
+
+const FIELD_ERRORS_PROP_TYPE = PropTypes.shape({
+  firstName: PropTypes.string,
+  lastName: PropTypes.string,
+  email: PropTypes.string,
+  phone: PropTypes.string,
+  password: PropTypes.string,
+  repeatPassword: PropTypes.string,
+});
+
+const FORM_DATA_PROP_TYPE = PropTypes.shape({
+  email: PropTypes.string,
+  password: PropTypes.string,
+  repeatPassword: PropTypes.string,
+  username: PropTypes.string,
+  firstName: PropTypes.string,
+  lastName: PropTypes.string,
+  phone: PropTypes.string,
+});
+
+const REQUIREMENTS_PROP_TYPE = PropTypes.shape({
+  length: PropTypes.bool,
+  uppercase: PropTypes.bool,
+  number: PropTypes.bool,
+  specialChar: PropTypes.bool,
+});
+
+const REF_OBJECT_PROP_TYPE = PropTypes.shape({
+  current: PropTypes.any,
+});
 
 const generateRandomUsername = () => {
   const chars =
@@ -64,24 +103,19 @@ const validateForm = (
   firstName: formData.firstName
     ? ""
     : "First name is required.",
-
   lastName: formData.lastName
     ? ""
     : "Last name is required.",
-
   email: formData.email
     ? ""
     : "Email is required.",
-
   phone: formData.phone
     ? ""
     : "Phone number is required.",
-
   password: getPasswordError(
     formData.password,
     isPasswordStrong
   ),
-
   repeatPassword: getRepeatPasswordError(
     formData.password,
     formData.repeatPassword
@@ -120,6 +154,33 @@ const getStrengthConfig = (strength) => {
   return configs[strength];
 };
 
+const getPasswordRequirements = (password) => ({
+  length: password.length >= 8,
+  uppercase: /[A-Z]/.test(password),
+  number: /\d/.test(password),
+  specialChar: /[^A-Za-z0-9]/.test(password),
+});
+
+const calculateStrength = (requirements) =>
+  Object.values(requirements).filter(Boolean)
+    .length;
+
+const getInputBorderStyle = (errorMessage) => ({
+  borderColor: errorMessage ? "red" : "",
+});
+
+const getPasswordInputType = (showPassword) =>
+  showPassword ? "text" : "password";
+
+const getPasswordToggleLabel = (showPassword) =>
+  showPassword ? "Hide password" : "Show password";
+
+const getShakeClassName = (isShaking) =>
+  isShaking ? "inputShake" : "";
+
+const getRequirementClassName = (isMet) =>
+  isMet ? "" : "requirement-error";
+
 const setStrengthUI = (
   strengthBarRef,
   strengthTextRef,
@@ -136,22 +197,6 @@ const setStrengthUI = (
     strengthTextRef.current.style.color = color;
   }
 };
-
-const FieldErrorMessage = ({ message }) =>
-  message ? (
-    <div className="fieldError">{message}</div>
-  ) : null;
-
-const getPasswordRequirements = (password) => ({
-  length: password.length >= 8,
-  uppercase: /[A-Z]/.test(password),
-  number: /\d/.test(password),
-  specialChar: /[^A-Za-z0-9]/.test(password),
-});
-
-const calculateStrength = (requirements) =>
-  Object.values(requirements).filter(Boolean)
-    .length;
 
 const updateStrengthBar = (
   strength,
@@ -226,7 +271,6 @@ const handleRegisterError = (
       email:
         "An account with this email already exists.",
     }));
-
     return;
   }
 
@@ -292,10 +336,305 @@ const getLoginPath = (redirect) =>
     ? `/login?redirect=${redirect}`
     : "/login";
 
+const FieldErrorMessage = ({ message }) =>
+  message ? (
+    <div className="fieldError">{message}</div>
+  ) : null;
+
+FieldErrorMessage.propTypes = {
+  message: PropTypes.string,
+};
+
+const PasswordVisibilityButton = ({
+  showPassword,
+  onToggle,
+}) => (
+  <button
+    type="button"
+    className="eyeIcon"
+    onClick={onToggle}
+    aria-label={getPasswordToggleLabel(showPassword)}
+  >
+    {showPassword ? <FaEye /> : <FaEyeSlash />}
+  </button>
+);
+
+PasswordVisibilityButton.propTypes = {
+  showPassword: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+};
+
+const PasswordRequirements = ({
+  requirements,
+}) => (
+  <div className="requirements">
+    {PASSWORD_REQUIREMENT_ITEMS.map((item) => (
+      <label
+        key={item.key}
+        className={getRequirementClassName(
+          requirements[item.key]
+        )}
+      >
+        <input
+          type="checkbox"
+          checked={requirements[item.key]}
+          readOnly
+        />
+        <span>{item.label}</span>
+      </label>
+    ))}
+  </div>
+);
+
+PasswordRequirements.propTypes = {
+  requirements: REQUIREMENTS_PROP_TYPE.isRequired,
+};
+
+const FormInputField = ({
+  className = "inputGroup",
+  icon,
+  errorMessage,
+  children,
+}) => (
+  <>
+    <div className={className}>
+      <div className="iconBox">{icon}</div>
+      {children}
+    </div>
+    <FieldErrorMessage message={errorMessage} />
+  </>
+);
+
+FormInputField.propTypes = {
+  className: PropTypes.string,
+  icon: PropTypes.node.isRequired,
+  errorMessage: PropTypes.string,
+  children: PropTypes.node.isRequired,
+};
+
+const PasswordInputField = ({
+  name,
+  placeholder,
+  errorMessage,
+  passwordShake,
+  showPassword,
+  onChange,
+  onFocus,
+  onTogglePassword,
+}) => (
+  <FormInputField
+    icon={<FaLock />}
+    errorMessage={errorMessage}
+  >
+    <input
+      className={getShakeClassName(passwordShake)}
+      type={getPasswordInputType(showPassword)}
+      name={name}
+      placeholder={placeholder}
+      onChange={onChange}
+      onFocus={onFocus}
+      style={getInputBorderStyle(errorMessage)}
+    />
+    <PasswordVisibilityButton
+      showPassword={showPassword}
+      onToggle={onTogglePassword}
+    />
+  </FormInputField>
+);
+
+PasswordInputField.propTypes = {
+  name: PropTypes.string.isRequired,
+  placeholder: PropTypes.string.isRequired,
+  errorMessage: PropTypes.string,
+  passwordShake: PropTypes.bool.isRequired,
+  showPassword: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onFocus: PropTypes.func,
+  onTogglePassword: PropTypes.func.isRequired,
+};
+
+const RegisterForm = ({
+  formData,
+  fieldErrors,
+  requirements,
+  passwordShake,
+  showPassword,
+  isHost,
+  errorMessage,
+  strengthContainerRef,
+  strengthBarRef,
+  strengthTextRef,
+  onSubmit,
+  onFieldChange,
+  onPhoneChange,
+  onHostChange,
+  onPasswordFocus,
+  onTogglePassword,
+  onLoginClick,
+}) => (
+  <form onSubmit={onSubmit}>
+    <FormInputField
+      icon={<FaUser />}
+      errorMessage={fieldErrors.firstName}
+    >
+      <input
+        name="firstName"
+        placeholder="First name"
+        onChange={onFieldChange}
+        style={getInputBorderStyle(
+          fieldErrors.firstName
+        )}
+      />
+    </FormInputField>
+
+    <FormInputField
+      icon={<FaUser />}
+      errorMessage={fieldErrors.lastName}
+    >
+      <input
+        name="lastName"
+        placeholder="Last name"
+        onChange={onFieldChange}
+        style={getInputBorderStyle(
+          fieldErrors.lastName
+        )}
+      />
+    </FormInputField>
+
+    <FormInputField
+      icon={<FaEnvelope />}
+      errorMessage={fieldErrors.email}
+    >
+      <input
+        name="email"
+        type="email"
+        placeholder="Email"
+        onChange={onFieldChange}
+        style={getInputBorderStyle(fieldErrors.email)}
+      />
+    </FormInputField>
+
+    <FormInputField
+      className="inputGroup phoneGroup"
+      icon={<FaPhone />}
+      errorMessage={fieldErrors.phone}
+    >
+      <PhoneInput
+        country={"nl"}
+        countryCodeEditable={false}
+        value={formData.phone}
+        inputProps={{
+          name: "phone",
+          required: true,
+        }}
+        inputStyle={getInputBorderStyle(
+          fieldErrors.phone
+        )}
+        onChange={onPhoneChange}
+      />
+    </FormInputField>
+
+    <PasswordInputField
+      name="password"
+      placeholder="Password"
+      errorMessage={fieldErrors.password}
+      passwordShake={passwordShake}
+      showPassword={showPassword}
+      onChange={onFieldChange}
+      onFocus={onPasswordFocus}
+      onTogglePassword={onTogglePassword}
+    />
+
+    <PasswordInputField
+      name="repeatPassword"
+      placeholder="Repeat password"
+      errorMessage={fieldErrors.repeatPassword}
+      passwordShake={passwordShake}
+      showPassword={showPassword}
+      onChange={onFieldChange}
+      onTogglePassword={onTogglePassword}
+    />
+
+    <div
+      ref={strengthContainerRef}
+      className="strength-container"
+      style={{ display: "none" }}
+    >
+      <div
+        id="strength-bar"
+        ref={strengthBarRef}
+      ></div>
+
+      <div
+        className="strength-text"
+        ref={strengthTextRef}
+      ></div>
+
+      <PasswordRequirements
+        requirements={requirements}
+      />
+    </div>
+
+    <label className="hostCheckbox">
+      <input
+        type="checkbox"
+        checked={isHost}
+        onChange={onHostChange}
+      />
+      <span>Become a Host</span>
+    </label>
+
+    {errorMessage && (
+      <div className="error">{errorMessage}</div>
+    )}
+
+    <button
+      type="submit"
+      className="primaryBtn"
+    >
+      Sign Up
+    </button>
+
+    <div className="bottomText">
+      Already have an account?
+    </div>
+
+    <button
+      type="button"
+      className="registerBtn"
+      onClick={onLoginClick}
+    >
+      Login
+    </button>
+  </form>
+);
+
+RegisterForm.propTypes = {
+  formData: FORM_DATA_PROP_TYPE.isRequired,
+  fieldErrors: FIELD_ERRORS_PROP_TYPE.isRequired,
+  requirements: REQUIREMENTS_PROP_TYPE.isRequired,
+  passwordShake: PropTypes.bool.isRequired,
+  showPassword: PropTypes.bool.isRequired,
+  isHost: PropTypes.bool.isRequired,
+  errorMessage: PropTypes.string,
+  strengthContainerRef:
+    REF_OBJECT_PROP_TYPE.isRequired,
+  strengthBarRef: REF_OBJECT_PROP_TYPE.isRequired,
+  strengthTextRef: REF_OBJECT_PROP_TYPE.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  onFieldChange: PropTypes.func.isRequired,
+  onPhoneChange: PropTypes.func.isRequired,
+  onHostChange: PropTypes.func.isRequired,
+  onPasswordFocus: PropTypes.func.isRequired,
+  onTogglePassword: PropTypes.func.isRequired,
+  onLoginClick: PropTypes.func.isRequired,
+};
+
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { flowState, setFlowState } = useContext(FlowContext);
+  const { flowState, setFlowState } =
+    useContext(FlowContext);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -323,16 +662,22 @@ const Register = () => {
     specialChar: false,
   });
 
-  const [isPasswordStrong, setIsPasswordStrong] = useState(false);
-  const [passwordShake, setPasswordShake] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordStrong, setIsPasswordStrong] =
+    useState(false);
+  const [passwordShake, setPasswordShake] =
+    useState(false);
+  const [errorMessage, setErrorMessage] =
+    useState("");
+  const [showPassword, setShowPassword] =
+    useState(false);
 
   const strengthBarRef = useRef(null);
   const strengthTextRef = useRef(null);
   const strengthContainerRef = useRef(null);
 
-  const queryRedirect = new URLSearchParams(location.search).get("redirect");
+  const queryRedirect = new URLSearchParams(
+    location.search
+  ).get("redirect");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -361,12 +706,35 @@ const Register = () => {
     }
   };
 
+  const handlePhoneChange = (phone) => {
+    setFormData((prev) => ({
+      ...prev,
+      phone,
+    }));
+
+    if (fieldErrors.phone) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        phone: "",
+      }));
+    }
+  };
+
   const handleHostChange = (e) => {
     setFlowState((prev) => ({
       ...prev,
       isHost: e.target.checked,
     }));
   };
+
+  const handlePasswordFocus = () =>
+    showStrengthContainer(strengthContainerRef);
+
+  const handleTogglePassword = () =>
+    setShowPassword((prev) => !prev);
+
+  const handleLoginClick = () =>
+    navigate(getLoginPath(queryRedirect));
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -398,314 +766,25 @@ const Register = () => {
       <div className="authCard">
         <h2 className="title">Create account</h2>
 
-        <form onSubmit={onSubmit}>
-          <div className="inputGroup">
-            <div className="iconBox">
-              <FaUser />
-            </div>
-
-            <input
-              name="firstName"
-              placeholder="First name"
-              onChange={handleChange}
-              style={{
-                borderColor: fieldErrors.firstName
-                  ? "red"
-                  : "",
-              }}
-            />
-          </div>
-
-          <FieldErrorMessage
-            message={fieldErrors.firstName}
-          />
-
-          <div className="inputGroup">
-            <div className="iconBox">
-              <FaUser />
-            </div>
-
-            <input
-              name="lastName"
-              placeholder="Last name"
-              onChange={handleChange}
-              style={{
-                borderColor: fieldErrors.lastName
-                  ? "red"
-                  : "",
-              }}
-            />
-          </div>
-
-          <FieldErrorMessage
-            message={fieldErrors.lastName}
-          />
-
-          <div className="inputGroup">
-            <div className="iconBox">
-              <FaEnvelope />
-            </div>
-
-            <input
-              name="email"
-              type="email"
-              placeholder="Email"
-              onChange={handleChange}
-              style={{
-                borderColor: fieldErrors.email
-                  ? "red"
-                  : "",
-              }}
-            />
-          </div>
-
-          <FieldErrorMessage
-            message={fieldErrors.email}
-          />
-
-          <div className="inputGroup phoneGroup">
-            <div className="iconBox">
-              <FaPhone />
-            </div>
-
-            <PhoneInput
-              country={"nl"}
-              countryCodeEditable={false}
-              value={formData.phone}
-              inputProps={{
-                name: "phone",
-                required: true,
-              }}
-              inputStyle={{
-                borderColor: fieldErrors.phone
-                  ? "red"
-                  : "",
-              }}
-              onChange={(phone) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  phone,
-                }));
-
-                if (fieldErrors.phone) {
-                  setFieldErrors((prev) => ({
-                    ...prev,
-                    phone: "",
-                  }));
-                }
-              }}
-            />
-          </div>
-
-          <FieldErrorMessage
-            message={fieldErrors.phone}
-          />
-
-          <div className="inputGroup">
-            <div className="iconBox">
-              <FaLock />
-            </div>
-
-            <input
-              className={`${
-                passwordShake ? "inputShake" : ""
-              }`}
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              onChange={handleChange}
-              onFocus={() =>
-                showStrengthContainer(strengthContainerRef)
-              }
-              style={{
-                borderColor: fieldErrors.password
-                  ? "red"
-                  : "",
-              }}
-            />
-
-            <button
-              type="button"
-              className="eyeIcon"
-              onClick={() =>
-                setShowPassword(!showPassword)
-              }
-              aria-label={
-                showPassword
-                  ? "Hide password"
-                  : "Show password"
-              }
-            >
-              {showPassword ? (
-                <FaEye />
-              ) : (
-                <FaEyeSlash />
-              )}
-            </button>
-          </div>
-
-          <FieldErrorMessage
-            message={fieldErrors.password}
-          />
-
-          <div className="inputGroup">
-            <div className="iconBox">
-              <FaLock />
-            </div>
-
-            <input
-              className={`${
-                passwordShake ? "inputShake" : ""
-              }`}
-              type={showPassword ? "text" : "password"}
-              name="repeatPassword"
-              placeholder="Repeat password"
-              onChange={handleChange}
-              style={{
-                borderColor: fieldErrors.repeatPassword
-                  ? "red"
-                  : "",
-              }}
-            />
-
-            <button
-              type="button"
-              className="eyeIcon"
-              onClick={() =>
-                setShowPassword(!showPassword)
-              }
-              aria-label={
-                showPassword
-                  ? "Hide password"
-                  : "Show password"
-              }
-            >
-              {showPassword ? (
-                <FaEye />
-              ) : (
-                <FaEyeSlash />
-              )}
-            </button>
-          </div>
-
-          <FieldErrorMessage
-            message={fieldErrors.repeatPassword}
-          />
-
-          <div
-            ref={strengthContainerRef}
-            className="strength-container"
-            style={{ display: "none" }}
-          >
-            <div
-              id="strength-bar"
-              ref={strengthBarRef}
-            ></div>
-
-            <div
-              className="strength-text"
-              ref={strengthTextRef}
-            ></div>
-
-            <div className="requirements">
-              <label
-                className={
-                  requirements.length
-                    ? ""
-                    : "requirement-error"
-                }
-              >
-                <input
-                  type="checkbox"
-                  checked={requirements.length}
-                  readOnly
-                />
-                <span>At least 8 characters</span>
-              </label>
-
-              <label
-                className={
-                  requirements.uppercase
-                    ? ""
-                    : "requirement-error"
-                }
-              >
-                <input
-                  type="checkbox"
-                  checked={requirements.uppercase}
-                  readOnly
-                />
-                <span>At least 1 uppercase letter</span>
-              </label>
-
-              <label
-                className={
-                  requirements.number
-                    ? ""
-                    : "requirement-error"
-                }
-              >
-                <input
-                  type="checkbox"
-                  checked={requirements.number}
-                  readOnly
-                />
-                <span>At least 1 number</span>
-              </label>
-
-              <label
-                className={
-                  requirements.specialChar
-                    ? ""
-                    : "requirement-error"
-                }
-              >
-                <input
-                  type="checkbox"
-                  checked={requirements.specialChar}
-                  readOnly
-                />
-                <span>At least 1 special character</span>
-              </label>
-            </div>
-          </div>
-
-          <label className="hostCheckbox">
-            <input
-              type="checkbox"
-              checked={flowState.isHost}
-              onChange={handleHostChange}
-            />
-            <span>Become a Host</span>
-          </label>
-
-          {errorMessage && (
-            <div className="error">
-              {errorMessage}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="primaryBtn"
-          >
-            Sign Up
-          </button>
-
-          <div className="bottomText">
-            Already have an account?
-          </div>
-
-          <button
-            type="button"
-            className="registerBtn"
-            onClick={() =>
-              navigate(getLoginPath(queryRedirect))
-            }
-          >
-            Login
-          </button>
-        </form>
+        <RegisterForm
+          formData={formData}
+          fieldErrors={fieldErrors}
+          requirements={requirements}
+          passwordShake={passwordShake}
+          showPassword={showPassword}
+          isHost={flowState.isHost}
+          errorMessage={errorMessage}
+          strengthContainerRef={strengthContainerRef}
+          strengthBarRef={strengthBarRef}
+          strengthTextRef={strengthTextRef}
+          onSubmit={onSubmit}
+          onFieldChange={handleChange}
+          onPhoneChange={handlePhoneChange}
+          onHostChange={handleHostChange}
+          onPasswordFocus={handlePasswordFocus}
+          onTogglePassword={handleTogglePassword}
+          onLoginClick={handleLoginClick}
+        />
       </div>
     </div>
   );
