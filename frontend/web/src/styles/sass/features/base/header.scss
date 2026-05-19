@@ -367,7 +367,15 @@ html {
     }
 
     .headerRight {
-      display: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .language-flags,
+      .headerButtons,
+      .appsDropdown {
+        display: none;
+      }
     }
 
     .personalMenuDropdown {
