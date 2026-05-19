@@ -70,7 +70,7 @@
   }
 
   .menu-item {
-    width: 100%;                
+    width: 100%;
     width: -webkit-fill-available;
     display: grid;
     grid-template-columns: 28px 1fr;
@@ -80,6 +80,8 @@
     border-radius: 10px;
     border: var(--gd-border);
     background: var(--gd-surface);
+    color: #1b2430;
+    text-decoration: none;
     cursor: pointer;
     text-align: left;
     transition:
