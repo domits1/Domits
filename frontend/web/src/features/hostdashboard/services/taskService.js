@@ -48,7 +48,7 @@ const toBackendPayload = (taskData) => {
     return payload;
 };
 
-export const fetchTasks = async (filters = {}) => {
+export const fetchTasks = async (filters = {}, asHostId = null) => {
     const params = new URLSearchParams();
     if (filters.propertyId) params.set("propertyId", filters.propertyId);
     if (filters.status && filters.status !== "All statuses") params.set("status", filters.status);
@@ -57,6 +57,7 @@ export const fetchTasks = async (filters = {}) => {
     if (filters.search) params.set("search", filters.search);
     if (filters.sortBy) params.set("sortBy", filters.sortBy);
     if (filters.sortDir) params.set("sortDir", filters.sortDir);
+    if (asHostId) params.set("asHostId", asHostId);
 
     const url = params.toString() ? `${TASKS_API_URL}?${params}` : TASKS_API_URL;
     const response = await fetch(url, { method: "GET", headers: getHeaders() });
