@@ -26,6 +26,8 @@ import de from "../../content/de.json";
 import es from "../../content/es.json";
 import RegionCard from "./RegionCard";
 import PropTypes from "prop-types";
+import FlowContext from "../../services/FlowContext";
+import { getHostLoginPath, startHostingFlow } from "../../utils/hostFlow";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -94,8 +96,10 @@ const Homepage = () => {
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
   const { language } = useContext(LanguageContext);
+  const { setFlowState } = useContext(FlowContext);
   const homePageContent = contentByLanguage[language]?.homepage;
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [group, setGroup] = useState("");
 
   const {
     countries,
@@ -112,17 +116,34 @@ const Homepage = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-  checkAuthentication();
-}, []);
+    checkAuthentication();
+  }, []);
 
-const checkAuthentication = async () => {
-  try {
-    await Auth.currentAuthenticatedUser();
-    setIsAuthenticated(true);
-  } catch {
-    setIsAuthenticated(false);
-  }
-};
+  const checkAuthentication = async () => {
+    try {
+      const user = await Auth.currentAuthenticatedUser();
+
+      setIsAuthenticated(true);
+      setGroup(user.attributes["custom:group"] || "");
+    } catch {
+      setIsAuthenticated(false);
+      setGroup("");
+    }
+  };
+
+  const handleHostButtonClick = async () => {
+    try {
+      await startHostingFlow({
+        isAuthenticated,
+        group,
+        navigate,
+        setFlowState,
+        unauthenticatedPath: getHostLoginPath(),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const getIcon = (type) => {
     switch (type) {
@@ -351,16 +372,9 @@ const checkAuthentication = async () => {
                 ))}
               </div>
 
-              <button className="host-btn" onClick={() => {
-                if (isAuthenticated) {
-                  navigate("/hostdashboard/hostonboarding");
-                } else {
-                  navigate("/login");
-                }
-              }}
-              >
+              <button className="host-btn" onClick={handleHostButtonClick}>
                 {hostSection.button}
-            </button>
+              </button>
             </motion.div>
 
             <motion.div className="host-right" variants={fadeUp}>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
@@ -11,34 +11,25 @@ import vrboLogo from "../../../images/vrbo-logo.svg";
 import domitsLogo from "../../../images/domits-logo.svg";
 import heroImage from "../../../images/hero-image.svg";
 import checkIcon from "../../../images/check-icon.svg";
-import { Auth } from "aws-amplify";
+import FlowContext from "../../../services/FlowContext";
+import { startHostingFlow } from "../../../utils/hostFlow";
 
 function HeroSection({ landingContent, isAuthenticated, group }) {
   const navigate = useNavigate();
+  const { setFlowState } = useContext(FlowContext);
+
   const handleStartHosting = async () => {
-  if (!isAuthenticated) {
-    navigate("/register");
-    return;
-  }
-
-  if (group !== "Host") {
     try {
-      const user = await Auth.currentAuthenticatedUser();
-
-      await Auth.updateUserAttributes(user, {
-        "custom:group": "Host",
+      await startHostingFlow({
+        isAuthenticated,
+        group,
+        navigate,
+        setFlowState,
       });
-
-      navigate("/hostonboarding");
     } catch (error) {
       console.error(error);
     }
-
-    return;
-  }
-
-  navigate("/hostonboarding");
-};
+  };
 
   return (
     <section className="hero">

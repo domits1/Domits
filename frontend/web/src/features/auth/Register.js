@@ -137,6 +137,161 @@ const setStrengthUI = (
   }
 };
 
+const FieldErrorMessage = ({ message }) =>
+  message ? (
+    <div className="fieldError">{message}</div>
+  ) : null;
+
+const getPasswordRequirements = (password) => ({
+  length: password.length >= 8,
+  uppercase: /[A-Z]/.test(password),
+  number: /\d/.test(password),
+  specialChar: /[^A-Za-z0-9]/.test(password),
+});
+
+const calculateStrength = (requirements) =>
+  Object.values(requirements).filter(Boolean)
+    .length;
+
+const updateStrengthBar = (
+  strength,
+  color,
+  strengthBarRef
+) => {
+  if (!strengthBarRef.current) {
+    return;
+  }
+
+  strengthBarRef.current.style.width = `${
+    (strength / 4) * 100
+  }%`;
+
+  strengthBarRef.current.style.backgroundColor =
+    color;
+};
+
+const showStrengthContainer = (
+  strengthContainerRef
+) => {
+  if (strengthContainerRef.current) {
+    strengthContainerRef.current.style.display =
+      "block";
+  }
+};
+
+const applyPasswordStrength = ({
+  password,
+  setRequirements,
+  setIsPasswordStrong,
+  strengthBarRef,
+  strengthTextRef,
+  strengthContainerRef,
+}) => {
+  const nextRequirements =
+    getPasswordRequirements(password);
+
+  setRequirements(nextRequirements);
+
+  const strength =
+    calculateStrength(nextRequirements);
+
+  const config = getStrengthConfig(strength);
+
+  setStrengthUI(
+    strengthBarRef,
+    strengthTextRef,
+    config.color,
+    config.text
+  );
+
+  setIsPasswordStrong(config.isStrong);
+
+  updateStrengthBar(
+    strength,
+    config.color,
+    strengthBarRef
+  );
+
+  showStrengthContainer(strengthContainerRef);
+};
+
+const handleRegisterError = (
+  error,
+  setFieldErrors,
+  setErrorMessage
+) => {
+  if (error.code === "UsernameExistsException") {
+    setFieldErrors((prev) => ({
+      ...prev,
+      email:
+        "An account with this email already exists.",
+    }));
+
+    return;
+  }
+
+  setErrorMessage(
+    error.message || "An unexpected error occurred"
+  );
+};
+
+const registerUser = async ({
+  formData,
+  isHost,
+  navigate,
+  redirect,
+  setFieldErrors,
+  setErrorMessage,
+}) => {
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    phone,
+    username,
+  } = formData;
+
+  const groupName = isHost
+    ? "Host"
+    : "Traveler";
+
+  try {
+    await Auth.signUp({
+      username: email,
+      password,
+      attributes: {
+        "custom:group": groupName,
+        "custom:username": username,
+        given_name: firstName,
+        family_name: lastName,
+        phone_number: phone.startsWith("+")
+          ? phone
+          : `+${phone}`,
+      },
+    });
+
+    navigate("/confirm-email", {
+      state: {
+        email,
+        password,
+        redirect,
+      },
+    });
+  } catch (error) {
+    handleRegisterError(
+      error,
+      setFieldErrors,
+      setErrorMessage
+    );
+  }
+};
+
+const getLoginPath = (redirect) =>
+  redirect
+    ? `/login?redirect=${redirect}`
+    : "/login";
+
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -179,8 +334,6 @@ const Register = () => {
 
   const queryRedirect = new URLSearchParams(location.search).get("redirect");
 
-  const redirectToUse = queryRedirect || "/";
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -197,7 +350,14 @@ const Register = () => {
     }
 
     if (name === "password") {
-      checkPasswordStrength(value);
+      applyPasswordStrength({
+        password: value,
+        setRequirements,
+        setIsPasswordStrong,
+        strengthBarRef,
+        strengthTextRef,
+        strengthContainerRef,
+      });
     }
   };
 
@@ -206,129 +366,6 @@ const Register = () => {
       ...prev,
       isHost: e.target.checked,
     }));
-  };
-
-const getPasswordRequirements = (password) => ({
-  length: password.length >= 8,
-  uppercase: /[A-Z]/.test(password),
-  number: /\d/.test(password),
-  specialChar: /[^A-Za-z0-9]/.test(password),
-});
-
-const calculateStrength = (requirements) =>
-  Object.values(requirements).filter(Boolean)
-    .length;
-
-const updateStrengthBar = (
-  strength,
-  color,
-  strengthBarRef
-) => {
-  if (!strengthBarRef.current) {
-    return;
-  }
-
-  strengthBarRef.current.style.width = `${
-    (strength / 4) * 100
-  }%`;
-
-  strengthBarRef.current.style.backgroundColor =
-    color;
-};
-
-const showStrengthContainer = (
-  strengthContainerRef
-) => {
-  if (strengthContainerRef.current) {
-    strengthContainerRef.current.style.display =
-      "block";
-  }
-};
-
-const checkPasswordStrength = (password) => {
-  const newRequirements =
-    getPasswordRequirements(password);
-
-  setRequirements(newRequirements);
-
-  const strength =
-    calculateStrength(newRequirements);
-
-  const config = getStrengthConfig(strength);
-
-  setStrengthUI(
-    strengthBarRef,
-    strengthTextRef,
-    config.color,
-    config.text
-  );
-
-  setIsPasswordStrong(config.isStrong);
-
-  updateStrengthBar(
-    strength,
-    config.color,
-    strengthBarRef
-  );
-
-  showStrengthContainer(strengthContainerRef);
-};
-
-  const handleRegisterError = (error) => {
-    if (error.code === "UsernameExistsException") {
-      setFieldErrors((prev) => ({
-        ...prev,
-        email:
-          "An account with this email already exists.",
-      }));
-
-      return;
-    }
-
-    setErrorMessage(
-      error.message || "An unexpected error occurred"
-    );
-  };
-
-  const registerUser = async () => {
-    const {
-      email,
-      password,
-      firstName,
-      lastName,
-      phone,
-      username,
-    } = formData;
-
-    try {
-      const groupName = flowState.isHost
-        ? "Host"
-        : "Traveler";
-
-      await Auth.signUp({
-        username: email,
-        password,
-        attributes: {
-          "custom:group": groupName,
-          "custom:username": username,
-          given_name: firstName,
-          family_name: lastName,
-          phone_number: phone.startsWith("+")
-            ? phone
-            : `+${phone}`,
-        },
-      });
-
-      navigate("/confirm-email", {
-        state: {
-          email,
-          password,
-          redirect: queryRedirect,
-        },
-      });
-    } catch (error) {
-      handleRegisterError(error);
-    }
   };
 
   const onSubmit = async (e) => {
@@ -346,7 +383,14 @@ const checkPasswordStrength = (password) => {
       return;
     }
 
-    await registerUser();
+    await registerUser({
+      formData,
+      isHost: flowState.isHost,
+      navigate,
+      redirect: queryRedirect,
+      setFieldErrors,
+      setErrorMessage,
+    });
   };
 
   return (
@@ -372,11 +416,9 @@ const checkPasswordStrength = (password) => {
             />
           </div>
 
-          {fieldErrors.firstName && (
-            <div className="fieldError">
-              {fieldErrors.firstName}
-            </div>
-          )}
+          <FieldErrorMessage
+            message={fieldErrors.firstName}
+          />
 
           <div className="inputGroup">
             <div className="iconBox">
@@ -395,11 +437,9 @@ const checkPasswordStrength = (password) => {
             />
           </div>
 
-          {fieldErrors.lastName && (
-            <div className="fieldError">
-              {fieldErrors.lastName}
-            </div>
-          )}
+          <FieldErrorMessage
+            message={fieldErrors.lastName}
+          />
 
           <div className="inputGroup">
             <div className="iconBox">
@@ -419,11 +459,9 @@ const checkPasswordStrength = (password) => {
             />
           </div>
 
-          {fieldErrors.email && (
-            <div className="fieldError">
-              {fieldErrors.email}
-            </div>
-          )}
+          <FieldErrorMessage
+            message={fieldErrors.email}
+          />
 
           <div className="inputGroup phoneGroup">
             <div className="iconBox">
@@ -443,20 +481,25 @@ const checkPasswordStrength = (password) => {
                   ? "red"
                   : "",
               }}
-              onChange={(phone) =>
+              onChange={(phone) => {
                 setFormData((prev) => ({
                   ...prev,
                   phone,
-                }))
-              }
+                }));
+
+                if (fieldErrors.phone) {
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    phone: "",
+                  }));
+                }
+              }}
             />
           </div>
 
-          {fieldErrors.phone && (
-            <div className="fieldError">
-              {fieldErrors.phone}
-            </div>
-          )}
+          <FieldErrorMessage
+            message={fieldErrors.phone}
+          />
 
           <div className="inputGroup">
             <div className="iconBox">
@@ -472,8 +515,7 @@ const checkPasswordStrength = (password) => {
               placeholder="Password"
               onChange={handleChange}
               onFocus={() =>
-                (strengthContainerRef.current.style.display =
-                  "block")
+                showStrengthContainer(strengthContainerRef)
               }
               style={{
                 borderColor: fieldErrors.password
@@ -502,11 +544,9 @@ const checkPasswordStrength = (password) => {
             </button>
           </div>
 
-          {fieldErrors.password && (
-            <div className="fieldError">
-              {fieldErrors.password}
-            </div>
-          )}
+          <FieldErrorMessage
+            message={fieldErrors.password}
+          />
 
           <div className="inputGroup">
             <div className="iconBox">
@@ -548,11 +588,9 @@ const checkPasswordStrength = (password) => {
             </button>
           </div>
 
-          {fieldErrors.repeatPassword && (
-            <div className="fieldError">
-              {fieldErrors.repeatPassword}
-            </div>
-          )}
+          <FieldErrorMessage
+            message={fieldErrors.repeatPassword}
+          />
 
           <div
             ref={strengthContainerRef}
@@ -662,7 +700,7 @@ const checkPasswordStrength = (password) => {
             type="button"
             className="registerBtn"
             onClick={() =>
-              navigate("/login")
+              navigate(getLoginPath(queryRedirect))
             }
           >
             Login

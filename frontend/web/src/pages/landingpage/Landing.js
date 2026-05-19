@@ -151,7 +151,10 @@ function Landing() {
       </div>
 
       <div id="register">
-        <RegisterSection />
+        <RegisterSection
+          isAuthenticated={isAuthenticated}
+          group={group}
+        />
       </div>
 
        <div id="testimonials">
