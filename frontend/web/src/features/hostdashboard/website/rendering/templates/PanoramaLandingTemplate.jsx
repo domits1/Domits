@@ -33,7 +33,10 @@ import {
   resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
 } from "../websiteContactSectionConfig";
-import { MAX_WEBSITE_CONFIGURABLE_AMENITIES } from "../websiteAmenitiesConfig";
+import {
+  MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+  resolveWebsiteAmenityIconColor,
+} from "../websiteAmenitiesConfig";
 
 const PANORAMA_TOP_BAR_SOLID_THRESHOLD_PX = 24;
 const PANORAMA_TOP_BAR_SELECTOR = "[data-panorama-top-bar]";
@@ -158,12 +161,51 @@ const formatPanoramaAmenityCategory = (value) => {
   return PANORAMA_AMENITY_CATEGORY_LABELS[normalizedValue] || normalizedValue || "Amenities";
 };
 
+const getAmenityMatchKey = (amenity) => {
+  const normalizedId = String(amenity?.id || "").trim();
+  if (normalizedId) {
+    return normalizedId.toLowerCase();
+  }
+
+  return String(amenity?.label || "").trim().toLowerCase();
+};
+
+const mergePanoramaModalAmenities = (configuredAmenities = [], importedAmenities = []) => {
+  const normalizedConfiguredAmenities = Array.isArray(configuredAmenities) ? configuredAmenities : [];
+  const normalizedImportedAmenities = Array.isArray(importedAmenities) ? importedAmenities : [];
+  const configuredAmenityMap = new Map(
+    normalizedConfiguredAmenities
+      .map((amenity) => [getAmenityMatchKey(amenity), amenity])
+      .filter(([amenityKey]) => Boolean(amenityKey))
+  );
+  const mergedAmenities = normalizedImportedAmenities.map((amenity) => {
+    const amenityKey = getAmenityMatchKey(amenity);
+    return configuredAmenityMap.get(amenityKey) || amenity;
+  });
+  const seenAmenityKeys = new Set(mergedAmenities.map((amenity) => getAmenityMatchKey(amenity)).filter(Boolean));
+  const configuredOnlyAmenities = normalizedConfiguredAmenities.filter((amenity) => {
+    const amenityKey = getAmenityMatchKey(amenity);
+    if (!amenityKey || seenAmenityKeys.has(amenityKey)) {
+      return false;
+    }
+
+    seenAmenityKeys.add(amenityKey);
+    return true;
+  });
+
+  return [...mergedAmenities, ...configuredOnlyAmenities];
+};
+
 const buildPanoramaViewState = (model) => {
-  const allAmenities = Array.isArray(model.amenities?.all) ? model.amenities.all : [];
+  const configuredAmenities = Array.isArray(model.amenities?.all) ? model.amenities.all : [];
+  const importedAmenities = Array.isArray(model.amenities?.imported)
+    ? model.amenities.imported
+    : configuredAmenities;
+  const allAmenities = mergePanoramaModalAmenities(configuredAmenities, importedAmenities);
   let featuredAmenities = [];
 
-  if (allAmenities.length > 0) {
-    featuredAmenities = allAmenities.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES);
+  if (configuredAmenities.length > 0) {
+    featuredAmenities = configuredAmenities.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES);
   } else if (Array.isArray(model.amenities?.featured)) {
     featuredAmenities = model.amenities.featured.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES);
   }
@@ -179,6 +221,10 @@ const buildPanoramaViewState = (model) => {
     showContactSection: model.visibility?.contactSection !== false,
     gallerySlots: buildPanoramaGallerySlots(model),
     allAmenities,
+    amenityIconColor: resolveWebsiteAmenityIconColor(
+      model.amenities?.iconColor,
+      "panorama-landing"
+    ),
     heroStats: Array.isArray(model.stay?.stats) ? model.stay.stats.slice(0, 4) : [],
     featuredTrustCards: Array.isArray(model.trustCards) ? model.trustCards.slice(0, 3) : [],
     featuredAmenities,
@@ -265,7 +311,7 @@ const buildPanoramaNavItems = (viewState) =>
     ...(viewState.showContactSection ? [{ href: "#contact", label: "Contact" }] : []),
   ];
 
-function PanoramaAmenitiesModal({ amenities, onClose }) {
+function PanoramaAmenitiesModal({ amenities, amenityIconColor, onClose }) {
   const groupedAmenities = useMemo(
     () =>
       Object.entries(
@@ -351,7 +397,7 @@ function PanoramaAmenitiesModal({ amenities, onClose }) {
                     "aria-hidden": true,
                     focusable: "false",
                     sx: {
-                      color: "#6d5837",
+                      color: amenityIconColor,
                       fontSize: 18,
                       padding: 0,
                     },
@@ -378,6 +424,7 @@ function PanoramaAmenitiesModal({ amenities, onClose }) {
 
 PanoramaAmenitiesModal.propTypes = {
   amenities: PropTypes.arrayOf(amenityPropType).isRequired,
+  amenityIconColor: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
 };
 
@@ -609,6 +656,7 @@ const renderPanoramaDetailsSection = ({
   showAmenitiesPanel,
   featuredAmenities,
   allAmenities,
+  amenityIconColor,
   onSelectTarget,
   activeTargetId,
   onShowAllAmenities,
@@ -639,7 +687,7 @@ const renderPanoramaDetailsSection = ({
             "aria-hidden": true,
             focusable: "false",
             sx: {
-              color: "#c99c53",
+              color: amenityIconColor,
               fontSize: 22,
               padding: 0,
             },
@@ -852,6 +900,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
           showAmenitiesPanel: viewState.showAmenitiesPanel,
           featuredAmenities: viewState.featuredAmenities,
           allAmenities: viewState.allAmenities,
+          amenityIconColor: viewState.amenityIconColor,
           onSelectTarget,
           activeTargetId,
           onShowAllAmenities: () => setShowAmenitiesModal(true),
@@ -887,6 +936,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       {showAmenitiesModal && viewState.allAmenities.length > 0 ? (
         <PanoramaAmenitiesModal
           amenities={viewState.allAmenities}
+          amenityIconColor={viewState.amenityIconColor}
           onClose={() => setShowAmenitiesModal(false)}
         />
       ) : null}
@@ -925,6 +975,8 @@ PanoramaLandingTemplate.propTypes = {
     journeyStops: PropTypes.arrayOf(copyItemPropType).isRequired,
     gallery: galleryPropType.isRequired,
     amenities: PropTypes.shape({
+      imported: PropTypes.arrayOf(amenityPropType),
+      iconColor: PropTypes.string,
       featured: PropTypes.arrayOf(amenityPropType).isRequired,
       all: PropTypes.arrayOf(amenityPropType),
     }).isRequired,

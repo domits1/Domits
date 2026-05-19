@@ -69,7 +69,9 @@ import {
 } from "./rendering/websiteContactSectionConfig";
 import {
   DEFAULT_WEBSITE_AMENITY_LABEL,
+  getDefaultWebsiteAmenityIconColor,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+  resolveWebsiteAmenityIconColor,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "./rendering/websiteAmenitiesConfig";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
@@ -179,9 +181,10 @@ const getPrimaryWebsiteDomain = (siteSummary) =>
     ? siteSummary.primaryDomain
     : null;
 
-const buildEditorValuesFromDraft = (baseModel, draft) =>
+const buildEditorValuesFromDraft = (baseModel, draft, templateKey = "") =>
   buildWebsiteDraftEditorValues(
-    applyWebsiteDraftContentOverrides(baseModel, getDraftWorkingContentOverrides(draft))
+    applyWebsiteDraftContentOverrides(baseModel, getDraftWorkingContentOverrides(draft), templateKey),
+    templateKey
   );
 
 const resolveSectionNode = (sectionRefEntry) => {
@@ -639,6 +642,9 @@ function ContactImageField({
 }) {
   const normalizedMode = resolveWebsiteContactAvatarMode(mode, WEBSITE_CONTACT_AVATAR_MODE_HOST);
   const hasProfilePhoto = Boolean(String(fallbackImage || "").trim());
+  const isUsingInitials =
+    normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_INITIALS ||
+    (normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_HOST && !hasProfilePhoto);
   const previewImage =
     normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
       ? String(value || "").trim()
@@ -648,7 +654,7 @@ function ContactImageField({
   const hasCustomImage = normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM && Boolean(String(value || "").trim());
   const helperText = hasCustomImage
     ? "Custom uploaded image active for this footer."
-    : normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_INITIALS
+    : isUsingInitials
       ? "The footer will use the host initial instead of a profile image."
       : hasProfilePhoto
         ? "Using the current host profile picture from Domits."
@@ -672,7 +678,7 @@ function ContactImageField({
           <img src={previewImage} alt="" aria-hidden="true" className={styles.imageSlotPreviewImage} />
         ) : (
           <span className={styles.imageSlotPreviewEmpty}>
-            {normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_INITIALS ? "Using host initials" : "No image selected"}
+            {isUsingInitials ? "Using host initials" : "No image selected"}
           </span>
         )}
       </div>
@@ -717,7 +723,7 @@ function ContactImageField({
               Use profile photo
             </button>
           ) : null}
-          {normalizedMode !== WEBSITE_CONTACT_AVATAR_MODE_INITIALS ? (
+          {!isUsingInitials ? (
             <button
               type="button"
               className={styles.secondaryButton}
@@ -1284,6 +1290,7 @@ function WebsiteEditorPage() {
   const previewHighlightResetTimeoutRef = useRef(null);
   const editorTargetFocusRequestRef = useRef(0);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
+  const draftTemplateKey = String(draftRecord?.templateKey || "").trim();
 
   useEffect(() => {
     let isMounted = true;
@@ -1307,8 +1314,13 @@ function WebsiteEditorPage() {
           propertyDetails,
           summaryProperty: null,
         });
+        const nextTemplateKey = String(draft.templateKey || "").trim();
         const nextThemedModel = applyWebsiteDraftThemeOverrides(nextBaseModel, getDraftThemeOverrides(draft));
-        const nextPreviewModel = applyWebsiteDraftContentOverrides(nextThemedModel, getDraftWorkingContentOverrides(draft));
+        const nextPreviewModel = applyWebsiteDraftContentOverrides(
+          nextThemedModel,
+          getDraftWorkingContentOverrides(draft),
+          nextTemplateKey
+        );
 
         if (!isMounted) {
           return;
@@ -1331,7 +1343,7 @@ function WebsiteEditorPage() {
 
         setDraftRecord(draft);
         setBaseModel(nextBaseModel);
-        setEditorValues(buildWebsiteDraftEditorValues(nextPreviewModel));
+        setEditorValues(buildWebsiteDraftEditorValues(nextPreviewModel, nextTemplateKey));
         setSiteSummary(nextSiteSummary);
         setSiteSummaryError(nextSiteSummaryError);
         setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(draft)));
@@ -1378,8 +1390,8 @@ function WebsiteEditorPage() {
       return {};
     }
 
-    return buildWebsiteDraftOverridePatch(editorValues, baseModel);
-  }, [baseModel, editorValues]);
+    return buildWebsiteDraftOverridePatch(editorValues, baseModel, draftTemplateKey);
+  }, [baseModel, draftTemplateKey, editorValues]);
 
   const mergedContentOverrides = useMemo(
     () => mergeWebsiteDraftContentOverrides(getDraftWorkingContentOverrides(draftRecord), contentOverridePatch),
@@ -1409,8 +1421,8 @@ function WebsiteEditorPage() {
     }
 
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, mergedThemeOverrides);
-    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides);
-  }, [baseModel, mergedContentOverrides, mergedThemeOverrides]);
+    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides, draftTemplateKey);
+  }, [baseModel, draftTemplateKey, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasUnsavedChanges = useMemo(() => {
     const persistedOverrides = getDraftWorkingContentOverrides(draftRecord);
@@ -1693,6 +1705,46 @@ function WebsiteEditorPage() {
     "backgroundColor",
     resolveWebsiteContactBackgroundColor
   );
+
+  const activateAmenitiesPreviewTarget = () => {
+    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.visibility("amenitiesPanel"));
+  };
+
+  const handleAmenitiesIconColorChange = (nextColor) => {
+    activateAmenitiesPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenitiesIconColor: resolveWebsiteAmenityIconColor(nextColor, draftTemplateKey),
+    }));
+  };
+
+  const handleAmenitiesIconColorInputChange = (nextInputValue) => {
+    activateAmenitiesPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenitiesIconColor: nextInputValue,
+    }));
+  };
+
+  const commitAmenitiesIconColorInput = () => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenitiesIconColor: resolveWebsiteAmenityIconColor(
+        currentValues?.amenitiesIconColor,
+        draftTemplateKey
+      ),
+    }));
+  };
+
+  const handleAmenitiesIconColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitAmenitiesIconColorInput();
+    await saveDraftChanges();
+  };
 
   const handleContactImageFileChange = async (event) => {
     const nextFile = event.target.files?.[0];
@@ -2066,7 +2118,7 @@ function WebsiteEditorPage() {
 
     setDraftRecord(persistedDraft);
     if (baseModel) {
-      setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft));
+      setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft, draftTemplateKey));
     }
     setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(persistedDraft)));
 
@@ -2250,6 +2302,23 @@ function WebsiteEditorPage() {
             {renderVisibilityFieldCard(amenitiesVisibilityField)}
           </div>
         ) : null}
+
+        <ContactColorField
+          label="Icon color"
+          hint="Controls the amenity icon color in the featured section and full list."
+          value={editorValues.amenitiesIconColor}
+          placeholder={getDefaultWebsiteAmenityIconColor(draftTemplateKey)}
+          resolveColorValue={(value) => resolveWebsiteAmenityIconColor(value, draftTemplateKey)}
+          inputAriaLabel="Amenities icon color"
+          onSelectColor={handleAmenitiesIconColorChange}
+          onChangeInput={handleAmenitiesIconColorInputChange}
+          onCommitInput={commitAmenitiesIconColorInput}
+          onInputKeyDown={handleAmenitiesIconColorInputKeyDown}
+          fieldRef={setTargetRef(EDITOR_TARGET_KEYS.amenitiesIconColor)}
+          isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.amenitiesIconColor}
+          onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.visibility("amenitiesPanel"))}
+          onBlur={clearActivePreviewTarget}
+        />
 
         <div className={styles.collectionStack}>
           {editorValues.amenities.map((amenity, index) => {

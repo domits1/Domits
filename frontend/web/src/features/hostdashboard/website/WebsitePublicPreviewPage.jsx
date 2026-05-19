@@ -115,7 +115,11 @@ function WebsitePublicPreviewPage() {
     });
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, getDraftPreviewThemeOverrides(payload.draft));
 
-    return applyWebsiteDraftContentOverrides(themedModel, getDraftPreviewContentOverrides(payload.draft));
+    return applyWebsiteDraftContentOverrides(
+      themedModel,
+      getDraftPreviewContentOverrides(payload.draft),
+      payload?.draft?.templateKey || ""
+    );
   }, [payload]);
 
   const templateId = payload?.draft?.templateKey || "";

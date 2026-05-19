@@ -184,8 +184,12 @@ function WebsitePublicSitePage() {
     });
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, renderPayload.themeOverrides || {});
 
-    return applyWebsiteDraftContentOverrides(themedModel, renderPayload.contentOverrides || {});
-  }, [renderPayload]);
+    return applyWebsiteDraftContentOverrides(
+      themedModel,
+      renderPayload.contentOverrides || {},
+      renderPayload?.site?.templateKey || resolution?.templateKey || ""
+    );
+  }, [renderPayload, resolution?.templateKey]);
 
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);

@@ -22,6 +22,7 @@ import {
   templateInteractionPropTypes,
   visibilityPropType,
 } from "./templatePropTypes";
+import { resolveWebsiteAmenityIconColor } from "../websiteAmenitiesConfig";
 
 export default function ExperienceJourneyTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
@@ -30,6 +31,10 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
   const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
   const showCallToAction = model.visibility?.callToAction !== false;
   const showExperienceFooter = showAmenitiesPanel || showCallToAction;
+  const amenityIconColor = resolveWebsiteAmenityIconColor(
+    model.amenities?.iconColor,
+    "experience-journey"
+  );
 
   return (
     <article className={styles.templateSite}>
@@ -127,7 +132,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
                     "aria-hidden": true,
                     focusable: "false",
                     sx: {
-                      color: "#314f22",
+                      color: amenityIconColor,
                       fontSize: 18,
                       padding: 0,
                     },
@@ -175,6 +180,7 @@ ExperienceJourneyTemplate.propTypes = {
     gallery: galleryPropType.isRequired,
     media: mediaPropType.isRequired,
     amenities: PropTypes.shape({
+      iconColor: PropTypes.string,
       featured: PropTypes.arrayOf(amenityPropType).isRequired,
     }).isRequired,
     availability: availabilityPropType.isRequired,

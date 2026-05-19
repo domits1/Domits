@@ -11,8 +11,10 @@ import {
 } from "./websiteContactSectionConfig";
 import {
   DEFAULT_WEBSITE_AMENITY_LABEL,
+  getDefaultWebsiteAmenityIconColor,
   MAX_FEATURED_WEBSITE_AMENITIES,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+  resolveWebsiteAmenityIconColor,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "./websiteAmenitiesConfig";
 
@@ -33,6 +35,7 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "visibility",
   "heroImage",
   "galleryImages",
+  "amenitiesIconColor",
   "amenities",
   "trustCards",
   "journeyStops",
@@ -138,7 +141,7 @@ const getBaseAmenityItems = (model) => normalizeAmenityItems(model?.amenities?.a
 const buildCountLabel = (imageCount) =>
   `${imageCount} imported photo${imageCount === 1 ? "" : "s"}`;
 
-export const createEmptyWebsiteDraftEditorValues = () => ({
+export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
   common: {
     siteTitle: "",
     heroEyebrow: "",
@@ -166,12 +169,13 @@ export const createEmptyWebsiteDraftEditorValues = () => ({
     heroImage: "",
     gallery: ["", "", ""],
   },
+  amenitiesIconColor: getDefaultWebsiteAmenityIconColor(templateKey),
   amenities: [],
   trustCards: [],
   journeyStops: [],
 });
 
-export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
+export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templateKey = "") => {
   const siteTitle = cleanText(overrides.siteTitle);
   const heroEyebrow = cleanText(overrides.heroEyebrow);
   const heroTitle = cleanText(overrides.heroTitle);
@@ -187,6 +191,11 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
   const contactBackgroundColorOverride = cleanText(overrides.contactBackgroundColor);
   const contactBackgroundColor = resolveWebsiteContactBackgroundColor(contactBackgroundColorOverride);
   const heroImage = cleanText(overrides.heroImage);
+  const amenitiesIconColorOverride = cleanText(overrides.amenitiesIconColor);
+  const amenitiesIconColor = resolveWebsiteAmenityIconColor(
+    amenitiesIconColorOverride || model?.amenities?.iconColor,
+    templateKey
+  );
   const mergedGalleryImages = mergeGalleryImages(model?.gallery?.images, overrides.galleryImages);
   const mergedAmenities = Array.isArray(overrides.amenities)
     ? normalizeAmenityItems(overrides.amenities)
@@ -239,6 +248,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
     },
     amenities: {
       ...(model?.amenities && typeof model.amenities === "object" ? model.amenities : {}),
+      iconColor: amenitiesIconColor,
       featured: mergedAmenities.slice(0, MAX_FEATURED_WEBSITE_AMENITIES),
       all: mergedAmenities,
       summary: buildAmenitiesSummary(mergedAmenities),
@@ -270,7 +280,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
   };
 };
 
-export const buildWebsiteDraftEditorValues = (model) => ({
+export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
   common: {
     siteTitle: String(model?.site?.title || ""),
     heroEyebrow: String(model?.hero?.eyebrow || ""),
@@ -297,6 +307,7 @@ export const buildWebsiteDraftEditorValues = (model) => ({
     heroImage: String(model?.media?.heroImage || ""),
     gallery: Array.from({ length: 3 }, (_, index) => String(model?.gallery?.images?.[index] || "")),
   },
+  amenitiesIconColor: resolveWebsiteAmenityIconColor(model?.amenities?.iconColor, templateKey),
   amenities: getBaseAmenityItems(model).map((amenity) => ({
     id: String(amenity?.id || ""),
     iconAmenityId: String(amenity?.iconAmenityId || ""),
@@ -472,7 +483,20 @@ const buildAmenitiesPatch = (editorValues, baseModel) => {
   return normalizedEditorAmenities;
 };
 
-export const buildWebsiteDraftOverridePatch = (editorValues, baseModel) => {
+const buildAmenitiesIconColorPatch = (editorValues, baseModel, templateKey = "") => {
+  const normalizedEditorColor = resolveWebsiteAmenityIconColor(
+    editorValues?.amenitiesIconColor,
+    templateKey
+  );
+  const normalizedBaseColor = resolveWebsiteAmenityIconColor(
+    baseModel?.amenities?.iconColor,
+    templateKey
+  );
+
+  return normalizedEditorColor !== normalizedBaseColor ? normalizedEditorColor : null;
+};
+
+export const buildWebsiteDraftOverridePatch = (editorValues, baseModel, templateKey = "") => {
   const nextPatch = {};
   TEXT_OVERRIDE_FIELDS.forEach((field) => addTextOverride(nextPatch, field, editorValues, baseModel));
 
@@ -489,6 +513,15 @@ export const buildWebsiteDraftOverridePatch = (editorValues, baseModel) => {
   const nextAmenitiesPatch = buildAmenitiesPatch(editorValues, baseModel);
   if (nextAmenitiesPatch !== null) {
     nextPatch.amenities = nextAmenitiesPatch;
+  }
+
+  const nextAmenitiesIconColorPatch = buildAmenitiesIconColorPatch(
+    editorValues,
+    baseModel,
+    templateKey
+  );
+  if (nextAmenitiesIconColorPatch) {
+    nextPatch.amenitiesIconColor = nextAmenitiesIconColorPatch;
   }
 
   const nextTrustCardsPatch = buildCopyCollectionPatch(baseModel?.trustCards, editorValues?.trustCards);

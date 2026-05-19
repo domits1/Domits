@@ -411,7 +411,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
     themeOverrides
   );
 
-  return applyWebsiteDraftContentOverrides(themedModel, contentOverrides);
+  return applyWebsiteDraftContentOverrides(themedModel, contentOverrides, draft.templateKey);
 };
 
 const buildWebsiteDraftPreviewModel = async (draft) => {
@@ -430,7 +430,7 @@ const buildWebsiteDraftPreviewModel = async (draft) => {
       baseModel,
       getDraftPublishedThemeOverrides(draft)
     );
-    return applyWebsiteDraftContentOverrides(themedModel, thumbContentOverrides);
+    return applyWebsiteDraftContentOverrides(themedModel, thumbContentOverrides, draft.templateKey);
   } catch {
     return buildDraftCardFallbackPreviewModel(draft);
   }

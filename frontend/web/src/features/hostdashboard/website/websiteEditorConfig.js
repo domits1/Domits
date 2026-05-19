@@ -44,6 +44,7 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     ctaNote: "common.ctaNote",
   },
   amenities: (index) => `amenities.${index}`,
+  amenitiesIconColor: "amenities.iconColor",
   contact: {
     title: "contact.title",
     description: "contact.description",
