@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import useSettingsData from "../../../../hooks/useSettingsData";
 import PersonalDataForm from "../components/PersonalDataForm";
 import "../../../../styles/sass/pages/dashboard/settingsDashboard.css";
@@ -21,6 +21,9 @@ const HostSettingsPersonalData = () => {
         onSaveUserPlaceOfBirth,
         onSaveUserNationality,
     } = settingsData;
+
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     const saveAll = async () => {
         const saves = [];
@@ -45,7 +48,11 @@ const HostSettingsPersonalData = () => {
             saves.push(onSaveUserNationality());
         }
 
+        setIsSaving(true);
         await Promise.allSettled(saves);
+        setIsSaving(false);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2500);
     };
 
     return (
@@ -54,6 +61,8 @@ const HostSettingsPersonalData = () => {
             showPrefFormats={SHOW_PREF_FORMATS}
             showAuthMfa={SHOW_AUTH_MFA}
             onSaveAll={saveAll}
+            isSaving={isSaving}
+            saveSuccess={saveSuccess}
             onVerifyEmail={settingsData.onSaveUserEmail}
         />
     );

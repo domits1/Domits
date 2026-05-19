@@ -407,8 +407,17 @@
     transition: background 0.15s;
 }
 
-.pd-save-btn:hover {
+.pd-save-btn:hover:not(:disabled) {
     background: #166534;
+}
+
+.pd-save-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.pd-save-btn--saved {
+    background: #1d4ed8;
 }
 
 /* ─── Preferences / Authentication card ─────────────────────────────────── */
