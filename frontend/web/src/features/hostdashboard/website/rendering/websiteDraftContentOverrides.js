@@ -99,7 +99,7 @@ const joinListWithAnd = (items = []) => {
     return `${safeItems[0]} and ${safeItems[1]}`;
   }
 
-  return `${safeItems.slice(0, -1).join(", ")}, and ${safeItems[safeItems.length - 1]}`;
+  return `${safeItems.slice(0, -1).join(", ")}, and ${safeItems.at(-1)}`;
 };
 
 const normalizeAmenityItem = (amenity, index) => {
@@ -406,9 +406,11 @@ const buildAmenitiesPatch = (editorValues, baseModel) => {
   const normalizedBaseAmenities = getBaseAmenityItems(baseModel);
   const normalizedEditorAmenities = normalizeAmenityItems(editorValues?.amenities);
 
-  return JSON.stringify(normalizedEditorAmenities) !== JSON.stringify(normalizedBaseAmenities)
-    ? normalizedEditorAmenities
-    : null;
+  if (JSON.stringify(normalizedEditorAmenities) === JSON.stringify(normalizedBaseAmenities)) {
+    return null;
+  }
+
+  return normalizedEditorAmenities;
 };
 
 export const buildWebsiteDraftOverridePatch = (editorValues, baseModel) => {

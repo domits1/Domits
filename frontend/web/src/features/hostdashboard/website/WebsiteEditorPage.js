@@ -113,7 +113,15 @@ const readImageFileAsDataUrl = (file) =>
     }
 
     const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === "string") {
+        resolve(result);
+        return;
+      }
+
+      reject(new Error("We could not read that image file."));
+    };
     reader.onerror = () => reject(new Error("We could not read that image file."));
     reader.readAsDataURL(file);
   });
@@ -546,6 +554,8 @@ function ContactColorField({
   onFocus = undefined,
   onBlur = undefined,
 }) {
+  const colorPickerAriaLabel = `${inputAriaLabel} picker`;
+
   return (
     <div
       ref={fieldRef}
@@ -558,7 +568,7 @@ function ContactColorField({
         </div>
 
         <div className={styles.customColorRow}>
-          <label className={`${styles.colorPickerShell} ${styles.colorPickerShellSelected}`.trim()}>
+          <div className={`${styles.colorPickerShell} ${styles.colorPickerShellSelected}`.trim()}>
             <input
               type="color"
               className={styles.colorPickerInput}
@@ -566,8 +576,9 @@ function ContactColorField({
               onChange={(event) => onSelectColor(event.target.value)}
               onFocus={onFocus}
               onBlur={onBlur}
+              aria-label={colorPickerAriaLabel}
             />
-          </label>
+          </div>
           <input
             type="text"
             className={`${styles.textInput} ${styles.customColorInput}`.trim()}
@@ -622,8 +633,13 @@ function ContactImageField({
 }) {
   const previewImage = String(value || fallbackImage || "").trim();
   const hasOverride = Boolean(String(value || "").trim());
-  const handleActivate = () => {
+  const fileInputRef = useRef(null);
+  const activateField = () => {
     onFocus?.();
+  };
+  const openFilePicker = () => {
+    activateField();
+    fileInputRef.current?.click();
   };
 
   return (
@@ -651,6 +667,7 @@ function ContactImageField({
 
         <div className={styles.buttonRow}>
           <input
+            ref={fileInputRef}
             id={inputId}
             hidden
             type="file"
@@ -659,17 +676,25 @@ function ContactImageField({
             onFocus={onFocus}
             onBlur={onBlur}
           />
-          <label htmlFor={inputId} className={styles.secondaryButton} onClick={handleActivate}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={openFilePicker}
+            onFocus={onFocus}
+            onBlur={onBlur}
+          >
             Upload image
-          </label>
+          </button>
           {hasOverride ? (
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={() => {
-                handleActivate();
+                activateField();
                 onReset();
               }}
+              onFocus={onFocus}
+              onBlur={onBlur}
             >
               Use host photo
             </button>
@@ -792,17 +817,17 @@ function BackgroundColorField({
           </p>
         </div>
         <div className={styles.customColorRow}>
-          <label
+          <div
             className={`${styles.colorPickerShell} ${hasPresetSelection ? "" : styles.colorPickerShellSelected}`.trim()}
-            aria-label="Pick a custom website background color"
           >
             <input
               type="color"
               className={styles.colorPickerInput}
               value={resolveWebsiteBackgroundColor(value)}
               onChange={(event) => onSelectColor(event.target.value)}
+              aria-label="Pick a custom website background color"
             />
-          </label>
+          </div>
           <input
             type="text"
             className={`${styles.textInput} ${styles.customColorInput}`}
@@ -2185,6 +2210,8 @@ function WebsiteEditorPage() {
         <div className={styles.collectionStack}>
           {editorValues.amenities.map((amenity, index) => {
             const amenityTargetId = EDITOR_TARGET_KEYS.amenities(index);
+            const amenityDeleteSubject = amenity.label || `amenity ${index + 1}`;
+            const amenityDeleteButtonLabel = `Delete ${amenityDeleteSubject}`;
 
             return (
               <div
@@ -2246,8 +2273,8 @@ function WebsiteEditorPage() {
                     type="button"
                     className={`${styles.secondaryButton} ${styles.collectionActionButton} ${styles.collectionActionDeleteButton}`.trim()}
                     onClick={() => removeAmenityItem(index)}
-                    aria-label={`Delete ${amenity.label || `amenity ${index + 1}`}`}
-                    title={`Delete ${amenity.label || `amenity ${index + 1}`}`}
+                    aria-label={amenityDeleteButtonLabel}
+                    title={amenityDeleteButtonLabel}
                     onFocus={activatePreviewTarget(amenityTargetId)}
                     onBlur={clearActivePreviewTarget}
                   >

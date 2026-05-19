@@ -44,7 +44,10 @@ const PANORAMA_AMENITY_CATEGORY_LABELS = Object.freeze({
 
 const hexToRgbChannels = (hexColor) => {
   const normalizedHexColor = resolveWebsiteContactAccentColor(hexColor).slice(1);
-  return `${parseInt(normalizedHexColor.slice(0, 2), 16)} ${parseInt(normalizedHexColor.slice(2, 4), 16)} ${parseInt(normalizedHexColor.slice(4, 6), 16)}`;
+  const redChannel = Number.parseInt(normalizedHexColor.slice(0, 2), 16);
+  const greenChannel = Number.parseInt(normalizedHexColor.slice(2, 4), 16);
+  const blueChannel = Number.parseInt(normalizedHexColor.slice(4, 6), 16);
+  return `${redChannel} ${greenChannel} ${blueChannel}`;
 };
 
 const handlePanoramaNavItemClick = (href) => (event) => {
@@ -152,32 +155,39 @@ const formatPanoramaAmenityCategory = (value) => {
   return PANORAMA_AMENITY_CATEGORY_LABELS[normalizedValue] || normalizedValue || "Amenities";
 };
 
-const buildPanoramaViewState = (model) => ({
-  showTopBar: model.visibility?.topBar !== false,
-  showTrustCards: model.visibility?.trustCards !== false,
-  showGallerySection: model.visibility?.gallerySection !== false,
-  showAmenitiesPanel: model.visibility?.amenitiesPanel !== false,
-  showAvailabilityCalendar: model.visibility?.availabilityCalendar !== false,
-  showCallToAction: model.visibility?.callToAction !== false,
-  showJourneyStops: model.visibility?.journeyStops !== false,
-  showContactSection: model.visibility?.contactSection !== false,
-  gallerySlots: buildPanoramaGallerySlots(model),
-  allAmenities: Array.isArray(model.amenities?.all) ? model.amenities.all : [],
-  heroStats: Array.isArray(model.stay?.stats) ? model.stay.stats.slice(0, 4) : [],
-  featuredTrustCards: Array.isArray(model.trustCards) ? model.trustCards.slice(0, 3) : [],
-  featuredAmenities: Array.isArray(model.amenities?.all) && model.amenities.all.length > 0
-    ? model.amenities.all.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES)
-    : Array.isArray(model.amenities?.featured)
-      ? model.amenities.featured.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES)
-      : [],
-  featuredJourneyStops: Array.isArray(model.journeyStops) ? model.journeyStops.slice(0, 3) : [],
-  residenceMeta: [
-    model.stay?.nightlyRateLabel,
-    model.stay?.minimumStayLabel,
-    model.stay?.checkInLabel,
-    model.stay?.checkOutLabel,
-  ].filter(Boolean),
-});
+const buildPanoramaViewState = (model) => {
+  const allAmenities = Array.isArray(model.amenities?.all) ? model.amenities.all : [];
+  let featuredAmenities = [];
+
+  if (allAmenities.length > 0) {
+    featuredAmenities = allAmenities.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES);
+  } else if (Array.isArray(model.amenities?.featured)) {
+    featuredAmenities = model.amenities.featured.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES);
+  }
+
+  return {
+    showTopBar: model.visibility?.topBar !== false,
+    showTrustCards: model.visibility?.trustCards !== false,
+    showGallerySection: model.visibility?.gallerySection !== false,
+    showAmenitiesPanel: model.visibility?.amenitiesPanel !== false,
+    showAvailabilityCalendar: model.visibility?.availabilityCalendar !== false,
+    showCallToAction: model.visibility?.callToAction !== false,
+    showJourneyStops: model.visibility?.journeyStops !== false,
+    showContactSection: model.visibility?.contactSection !== false,
+    gallerySlots: buildPanoramaGallerySlots(model),
+    allAmenities,
+    heroStats: Array.isArray(model.stay?.stats) ? model.stay.stats.slice(0, 4) : [],
+    featuredTrustCards: Array.isArray(model.trustCards) ? model.trustCards.slice(0, 3) : [],
+    featuredAmenities,
+    featuredJourneyStops: Array.isArray(model.journeyStops) ? model.journeyStops.slice(0, 3) : [],
+    residenceMeta: [
+      model.stay?.nightlyRateLabel,
+      model.stay?.minimumStayLabel,
+      model.stay?.checkInLabel,
+      model.stay?.checkOutLabel,
+    ].filter(Boolean),
+  };
+};
 
 const usePanoramaTopBarSolidState = (enabled) => {
   const heroSectionRef = useRef(null);
@@ -296,14 +306,21 @@ function PanoramaAmenitiesModal({ amenities, onClose }) {
   }
 
   return createPortal(
-    <div className={styles.panoramaAmenitiesModalOverlay} onClick={onClose} role="presentation">
-      <div
-        className={styles.panoramaAmenitiesModal}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="panorama-amenities-modal-title"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <dialog
+      open
+      className={styles.panoramaAmenitiesModalOverlay}
+      aria-labelledby="panorama-amenities-modal-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className={styles.panoramaAmenitiesModal}>
         <button
           type="button"
           className={styles.panoramaAmenitiesModalCloseButton}
@@ -351,7 +368,7 @@ function PanoramaAmenitiesModal({ amenities, onClose }) {
           ))}
         </div>
       </div>
-    </div>,
+    </dialog>,
     document.body
   );
 }

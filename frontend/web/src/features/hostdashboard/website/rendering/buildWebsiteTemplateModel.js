@@ -141,12 +141,13 @@ const buildLocationLabel = (location, summaryProperty) => {
 };
 
 const buildHostDetails = (propertyDetails, summaryProperty) => {
-  const hostProfile =
-    propertyDetails?.hostProfile && typeof propertyDetails.hostProfile === "object"
-      ? propertyDetails.hostProfile
-      : propertyDetails?.host && typeof propertyDetails.host === "object"
-        ? propertyDetails.host
-        : {};
+  let hostProfile = {};
+
+  if (propertyDetails?.hostProfile && typeof propertyDetails.hostProfile === "object") {
+    hostProfile = propertyDetails.hostProfile;
+  } else if (propertyDetails?.host && typeof propertyDetails.host === "object") {
+    hostProfile = propertyDetails.host;
+  }
 
   const name = cleanText(
     hostProfile?.givenName ||

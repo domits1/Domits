@@ -296,9 +296,10 @@ function PanoramaAvailabilityCalendar({
                 const status = getCalendarCellStatus(cell);
                 const isReserved = cell.isExternalBlocked || cell.isUnavailable;
                 const isPlaceholder = !cell.isCurrentMonth;
+                const availabilityLabel = isReserved ? "Reserved" : "Available";
                 const calendarCellLabel = isPlaceholder
                   ? undefined
-                  : `${monthView.label} ${cell.dayOfMonth}, ${isReserved ? "Reserved" : "Available"}`;
+                  : `${monthView.label} ${cell.dayOfMonth}, ${availabilityLabel}`;
 
                 return (
                   <span
