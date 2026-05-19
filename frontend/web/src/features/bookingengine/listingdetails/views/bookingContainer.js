@@ -318,8 +318,7 @@ const BookingContainer = ({
   };
 
   const handleReserveClick = () => {
-    const selectedPropertyId = property?.property?.id || property?.property?.ID;
-    if (!selectedPropertyId) {
+    if (!resolvedPropertyId) {
       return;
     }
 
@@ -330,7 +329,7 @@ const BookingContainer = ({
     }
 
     handleReservePress(
-      selectedPropertyId,
+      resolvedPropertyId,
       checkInTime,
       checkOutTime,
       adults + kids
