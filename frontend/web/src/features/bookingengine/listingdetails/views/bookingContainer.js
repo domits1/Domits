@@ -318,15 +318,20 @@ const BookingContainer = ({
   };
 
   const handleReserveClick = () => {
-    const selectedPropertyId = property?.property?.id || property?.property?.ID;
-    if (!selectedPropertyId) {
+    if (!resolvedPropertyId) {
+      return;
+    }
+
+    const checkInTime = new Date(checkInDate).getTime();
+    const checkOutTime = new Date(checkOutDate).getTime();
+    if (!Number.isFinite(checkInTime) || !Number.isFinite(checkOutTime) || nights < 1) {
       return;
     }
 
     handleReservePress(
-      selectedPropertyId,
-      new Date(checkInDate).getTime(),
-      new Date(checkOutDate).getTime(),
+      resolvedPropertyId,
+      checkInTime,
+      checkOutTime,
       adults + kids
     );
   };
@@ -373,7 +378,7 @@ const BookingContainer = ({
       )}
 
       <div className="listing-booking-card__trust-badges">
-        {cancellationPolicy?.type && (
+        {cancellationPolicy?.id && (
           <div className="listing-booking-card__trust-item">
             <span className="listing-booking-card__trust-check">✓</span>{" "}{cancellationPolicy.type} cancellation
           </div>

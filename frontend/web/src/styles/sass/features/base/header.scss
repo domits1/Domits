@@ -271,7 +271,7 @@ $primary-color: var(--primary-color);
 
 .appsGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -372,7 +372,15 @@ html {
     }
 
     .headerRight {
-      display: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .language-flags,
+      .headerButtons,
+      .appsDropdown {
+        display: none;
+      }
     }
 
     .personalMenuDropdown {

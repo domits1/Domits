@@ -35,7 +35,7 @@ const ReviewCard = ({ review }) => (
         <img
           className="reviews-section__card-avatar"
           src={review.avatar}
-          alt={review.name}
+          alt={`${review.name || "Guest"} avatar`}
         />
       ) : (
         <div className="reviews-section__card-avatar reviews-section__card-avatar--placeholder">
