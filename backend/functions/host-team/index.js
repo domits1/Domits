@@ -22,8 +22,14 @@ export const handler = async (event) => {
 
         if (method === "OPTIONS") return OPTIONS_RESPONSE;
 
-        if (method === "GET" && path.endsWith("/accept")) {
+        const action = event.queryStringParameters?.action;
+
+        if (method === "GET" && action === "accept") {
             return await controller.acceptInvite(event);
+        }
+
+        if (method === "GET" && action === "memberships") {
+            return await controller.getMemberships(event);
         }
 
         if (method === "GET") {

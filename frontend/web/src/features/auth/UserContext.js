@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Auth } from 'aws-amplify';
+import { fetchMemberships } from '../hostdashboard/services/teamService';
 
 const UserContext = createContext();
 
@@ -8,7 +9,8 @@ export const useUser = () => useContext(UserContext);
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); 
+    const [isPOM, setIsPOM] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const checkUser = async () => {
@@ -28,14 +30,23 @@ export const UserProvider = ({ children }) => {
                 setIsLoading(false);
             }
         };
+        const checkMemberships = async () => {
+            try {
+                const memberships = await fetchMemberships();
+                setIsPOM(memberships.length > 0);
+            } catch {
+                setIsPOM(false);
+            }
+        };
         checkUser();
+        checkMemberships();
     }, []);
 
     const hasRole = (allowedRoles) => allowedRoles.includes(role);
 
     const contextValue = useMemo(
-        () => ({ user, role, isLoading, hasRole }),
-        [user, role, isLoading]
+        () => ({ user, role, isPOM, isLoading, hasRole }),
+        [user, role, isPOM, isLoading]
     );
 
     return (

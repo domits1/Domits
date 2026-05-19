@@ -32,7 +32,7 @@ export class Controller {
     async removeMember(event) {
         try {
             const { userId } = await this.authManager.getUser(event.headers?.Authorization);
-            const memberId = event.pathParameters?.memberId || event.path?.split("/").pop();
+            const memberId = event.queryStringParameters?.id;
             const result = await this.service.removeMember(userId, memberId);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
@@ -40,11 +40,21 @@ export class Controller {
         }
     }
 
+    async getMemberships(event) {
+        try {
+            const { userId } = await this.authManager.getUser(event.headers?.Authorization);
+            const memberships = await this.service.getMemberships(userId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(memberships) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
     async acceptInvite(event) {
         try {
-            const { userId, email } = await this.authManager.getUser(event.headers?.Authorization);
+            const { userId, email, role } = await this.authManager.getUser(event.headers?.Authorization);
             const token = event.queryStringParameters?.token;
-            const result = await this.service.acceptInvite(token, userId, email);
+            const result = await this.service.acceptInvite(token, userId, email, role);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);

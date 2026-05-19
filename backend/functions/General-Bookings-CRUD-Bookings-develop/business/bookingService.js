@@ -30,6 +30,8 @@ const TRIGGER_BOOKING_MODIFIED = "BOOKING_MODIFIED";
 const getPropertyId = (booking) =>
   requireStr(booking?.property_id) || requireStr(booking?.propertyId) || requireStr(booking?.domitsPropertyId);
 
+const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
+
 class BookingService {
   constructor({
     reservationRepository = new ReservationRepository(),
@@ -67,6 +69,9 @@ class BookingService {
     const departureDateMs = this.parseBookingDateToMs(event?.general?.departureDate, "departureDate");
     if (departureDateMs <= arrivalDateMs) {
       throw new BadRequestException("departureDate must be after arrivalDate.");
+    }
+    if (departureDateMs - arrivalDateMs < MIN_CHECK_IN_OUT_GAP_MS) {
+      throw new BadRequestException("check-in and check-out must be at least 1 hour apart.");
     }
 
     await this.reservationRepository.assertNoBookingConflict({
