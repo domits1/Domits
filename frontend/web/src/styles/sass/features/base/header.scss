@@ -14,6 +14,7 @@ $primary-color: var(--primary-color);
   background: #fff;
   box-shadow: 0 2px 6px rgba(13, 26, 38, 0.15);
   box-sizing: border-box;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out, visibility 0.25s;
 
   .header-nav {
     width: 100%;
@@ -26,26 +27,27 @@ $primary-color: var(--primary-color);
   }
 
   .logo {
-    flex-shrink: 0;
-
-    img {
-      display: block;
-    }
+    flex: 0 0 auto;
   }
 
   .search-bar-main-container {
-    flex: 1;
+    flex: 1 1 24rem;
     min-width: 0;
-    display: flex;
-    justify-content: center;
+  }
+
+  .search-bar-main {
+    width: 100%;
+    max-width: 41rem;
+    min-width: 0;
   }
 
   .headerRight {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-shrink: 0;
+    flex: 0 1 auto;
     margin-left: auto;
+    min-width: 0;
   }
 
   .language-flags,
@@ -250,6 +252,10 @@ $primary-color: var(--primary-color);
   z-index: 9999;
 }
 
+.nineDotsMenuWrapper {
+  position: relative;
+}
+
 .appsDropdown::before {
   content: "";
   position: absolute;
@@ -271,8 +277,9 @@ $primary-color: var(--primary-color);
 
 .appItem {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   border-radius: 12px;
@@ -428,8 +435,18 @@ html {
       display: flex;
       grid-area: flags;
       justify-content: center;
-      gap: 8px;
-      width: 100%;
+      width: 100% !important;
+      max-width: 100% !important;
+      justify-self: center;
+      margin: 0 !important;
+      padding: 0 !important;
+      transform: none !important;
+    }
+
+    .header-nav > .search-bar-main-container .search-bar-main {
+      width: min(100%, calc(100vw - 2.5rem)) !important;
+      max-width: 25.5rem !important;
+      margin: 0 !important;
     }
 
     .personalMenu {
@@ -466,94 +483,4 @@ html {
       }
     }
   }
-}
-
-.appsDropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 20px;
-
-  background-color: #efefef;
-  border-radius: 16px;
-  padding: 18px;
-
-  width: 260px;
-
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-
-  z-index: 9999;
-}
-
-.appsDropdown::before {
-  content: "";
-  position: absolute;
-
-  top: -9px;             
-  right: 127px;          
-
-  width: 16px;
-  height: 16px;
-
-  background-color: #efefef; 
-
-  transform: rotate(45deg);  
-
-  border-left: 1px solid rgba(0, 0, 0, 0.06);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.appsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-.appItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  border: none;
-  background: transparent;
-  border-radius: 12px;
-  padding: 12px;
-  cursor: pointer;
-
-  transition: all 0.2s ease;
-}
-
-.appItem:hover {
-  background-color: #e4e4e4;
-}
-
-.appIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 40px;
-  height: 40px;
-
-  border-radius: 10px;
-  background: #e8f5e9; 
-
-  font-size: 20px;
-  color: #2e7d32;
-
-  margin-bottom: 6px;
-}
-
-.appItem:hover .appIcon {
-  background: #d4edda;
-}
-
-.appLabel {
-  font-size: 13px;
-  font-weight: 550;
-  color: #1d1d1d;
-}
-
-html {
-  scroll-padding-top: 100px; 
 }

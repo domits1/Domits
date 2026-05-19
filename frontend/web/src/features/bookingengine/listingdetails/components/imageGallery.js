@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import IosShareIcon from "@mui/icons-material/IosShare";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
+import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
 import {
   resolveAccommodationImageUrl,
   resolveAccommodationImageKey,
@@ -16,7 +17,7 @@ import {
   isPropertyInAnyWishlist,
 } from "../../../guestdashboard/services/wishlistService";
 
-const ImageGallery = ({ images, propertyTitle, propertyId }) => {
+const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -133,6 +134,18 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
           </div>
         )}
 
+        {images.length > 0 && (
+          <button
+            type="button"
+            className="view-all-photos-btn"
+            onClick={() => openOverlayAtIndex(0)}
+            aria-label="View all photos"
+          >
+            <PhotoLibraryIcon fontSize="small" />
+            View all photos
+          </button>
+        )}
+
         <div className="small-images-container">
           {thumbs.map((img, index) => (
             <button
@@ -162,6 +175,20 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
           >
             ×
           </button>
+
+          <button
+            type="button"
+            className="nav-side-zone left"
+            onClick={prevImage}
+            aria-label="Previous image"
+          />
+
+          <button
+            type="button"
+            className="nav-side-zone right"
+            onClick={nextImage}
+            aria-label="Next image"
+          />
 
           <div className="overlay-center-wrapper">
             <button
@@ -237,7 +264,7 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
 };
 
 ImageGallery.propTypes = {
-  images: PropTypes.array.isRequired,
+  images: PropTypes.array,
   propertyTitle: PropTypes.string,
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
