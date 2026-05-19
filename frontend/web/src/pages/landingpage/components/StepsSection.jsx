@@ -15,15 +15,15 @@ function StepsSection({ landingContent }) {
       <div className="container steps__inner">
 
         <motion.div className="steps__label" variants={fadeUp}>
-  <span className="steps__line"></span>
-  <span className="steps__text">THE PROCESS</span>
-  <span className="steps__line"></span>
-</motion.div>
+          <span className="steps__line"></span>
+          <span className="steps__text">{landingContent.hosting.stepsLabel}</span>
+          <span className="steps__line"></span>
+        </motion.div>
 
         <motion.h2 className="steps__title" variants={fadeUp}>
-          Three Steps.
+          {landingContent.hosting.stepsTitleLine1}
           <br />
-          <span>Zero Friction.</span>
+          <span>{landingContent.hosting.stepsTitleSpan}</span>
         </motion.h2>
 
         <motion.div className="steps__grid" variants={staggerContainer}>

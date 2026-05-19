@@ -22,12 +22,23 @@ import { handleContactFormSubmission } from "../../services/contactService";
 
 const contentByLanguage = { en, nl, de, es };
 
+const buildFaqs = (content) => {
+  if (!content) return [];
+  return [
+    { question: content.answerTo.host.title, answer: content.answerTo.host.description, isOpen: false },
+    { question: content.answerTo.how.title, answer: content.answerTo.how.description, isOpen: false },
+    { question: content.answerTo.manage.title, answer: content.answerTo.manage.description, isOpen: false },
+    { question: content.answerTo.payout.title, answer: content.answerTo.payout.description, isOpen: false },
+    { question: content.answerTo.calendar.title, answer: content.answerTo.calendar.description, isOpen: false },
+  ];
+};
+
 function Landing() {
   const { language } = useContext(LanguageContext);
   const landingContent = contentByLanguage[language]?.landing;
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [faqs, setFaqs] = useState([]);
+  const [faqs, setFaqs] = useState(() => buildFaqs(contentByLanguage[language]?.landing));
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -48,34 +59,9 @@ function Landing() {
 
   useEffect(() => {
     if (!landingContent) return;
-
-    setFaqs([
-      {
-        question: landingContent.answerTo.host.title,
-        answer: landingContent.answerTo.host.description,
-        isOpen: false,
-      },
-      {
-        question: landingContent.answerTo.how.title,
-        answer: landingContent.answerTo.how.description,
-        isOpen: false,
-      },
-      {
-        question: landingContent.answerTo.manage.title,
-        answer: landingContent.answerTo.manage.description,
-        isOpen: false,
-      },
-      {
-        question: landingContent.answerTo.payout.title,
-        answer: landingContent.answerTo.payout.description,
-        isOpen: false,
-      },
-      {
-        question: landingContent.answerTo.calendar.title,
-        answer: landingContent.answerTo.calendar.description,
-        isOpen: false,
-      },
-    ]);
+    setFaqs((prev) =>
+      buildFaqs(landingContent).map((faq, i) => ({ ...faq, isOpen: prev[i]?.isOpen ?? false }))
+    );
   }, [landingContent]);
 
   const checkAuthentication = async () => {
@@ -137,31 +123,31 @@ function Landing() {
       </div>
 
       <div id="why">
-        <WhySection />
+        <WhySection content={landingContent.why} />
       </div>
 
       <div id="checklist">
-        <ChecklistSection />
+        <ChecklistSection content={landingContent.rentingOut} />
       </div>
 
       <div id="register">
-        <RegisterSection />
+        <RegisterSection content={landingContent.register} />
       </div>
 
        <div id="testimonials">
-         <TestimonialsSection />
+         <TestimonialsSection content={landingContent.othersSay} />
       </div>
 
       <div id="features">
-        <FeaturesSection />
+        <FeaturesSection content={landingContent.featuresSection} />
       </div>
 
       <div id="faq">
-        <FaqSection faqs={faqs} toggleOpen={toggleOpen} />
+        <FaqSection faqs={faqs} toggleOpen={toggleOpen} content={landingContent.answerTo} />
       </div>
 
       <div id="cta">
-        <CtaSection />
+        <CtaSection content={landingContent.cta} />
       </div>
 
       <section id="contact" className="contact-section">
@@ -169,12 +155,12 @@ function Landing() {
 
           <div className="contact-section__left">
             <h2>
-              More than software.<br />
-              A dedicated partner.
+              {landingContent.partnerContact.title}<br />
+              {landingContent.partnerContact.subtitle}
             </h2>
 
             <p>
-              Our team is here to answer your questions, discuss your property's potential, and help you get started on the path to effortless rental income.
+              {landingContent.partnerContact.description}
             </p>
 
             <div className="contact-section__info">
@@ -182,24 +168,24 @@ function Landing() {
               <div className="contact-item">
                 <div className="icon">✉</div>
                 <div>
-                  <span>Email us</span>
-                  <strong>teamdomits@gmail.com</strong>
+                  <span>{landingContent.partnerContact.emailLabel}</span>
+                  <strong>{landingContent.partnerContact.emailValue}</strong>
                 </div>
               </div>
 
               <div className="contact-item">
                 <div className="icon">☎</div>
                 <div>
-                  <span>Call us</span>
-                  <strong>Available 24/7</strong>
+                  <span>{landingContent.partnerContact.phoneLabel}</span>
+                  <strong>{landingContent.partnerContact.phoneValue}</strong>
                 </div>
               </div>
 
               <div className="contact-item">
                 <div className="icon">📍</div>
                 <div>
-                  <span>Visit us</span>
-                  <strong>Kinderhuissingel 6-K<br />2013 AS, Haarlem</strong>
+                  <span>{landingContent.partnerContact.addressLabel}</span>
+                  <strong>{landingContent.partnerContact.addressLine1}<br />{landingContent.partnerContact.addressLine2}</strong>
                 </div>
               </div>
 

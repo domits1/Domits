@@ -5,9 +5,9 @@ import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import {
-  guarantees,
+  buildGuarantees,
+  buildHostSection,
   hostImage,
-  hostSection,
   categories as groups,
   buildHomepageLists,
   S3_URL
@@ -93,7 +93,8 @@ const Homepage = () => {
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
   const { language } = useContext(LanguageContext);
-  const homePageContent = contentByLanguage[language]?.homepage;
+  const langContent = contentByLanguage[language];
+  const homePageContent = langContent?.homepage;
 
   const {
     countries,
@@ -106,6 +107,10 @@ const Homepage = () => {
     seasons,
     interests,
   } = buildHomepageLists(homePageContent);
+
+  const guarantees = buildGuarantees(homePageContent.features);
+  const hostSection = buildHostSection(langContent.hostSection);
+  const rb = langContent.regionBlocks;
 
   const navigate = useNavigate();
 
@@ -174,33 +179,33 @@ const Homepage = () => {
           <div className="domits-iconsContainerText">
             <motion.div className="domits-iconTextGroup" variants={fadeUp}>
               <div className="icon-circle"><FaShieldAlt /></div>
-              <h4>Secure Payments</h4>
-              <p>Your transactions are protected</p>
+              <h4>{homePageContent.features.securePayments}</h4>
+              <p>{homePageContent.features.securePaymentsDesc}</p>
             </motion.div>
 
             <motion.div className="domits-iconTextGroup" variants={fadeUp}>
               <div className="icon-circle"><FaUserCheck /></div>
-              <h4>Verified Hosts</h4>
-              <p>Every property is verified</p>
+              <h4>{homePageContent.features.verifiedGuest}</h4>
+              <p>{homePageContent.features.verifiedDesc}</p>
             </motion.div>
 
             <motion.div className="domits-iconTextGroup" variants={fadeUp}>
               <div className="icon-circle"><FaHeadset /></div>
-              <h4>Quick Support</h4>
-              <p>24/7 customer service</p>
+              <h4>{homePageContent.features.quickPhone}</h4>
+              <p>{homePageContent.features.quickSupportDesc}</p>
             </motion.div>
 
             <motion.div className="domits-iconTextGroup" variants={fadeUp}>
               <div className="icon-circle"><FaAward /></div>
-              <h4>Quality Guarantee</h4>
-              <p>Premium stays only</p>
+              <h4>{homePageContent.features.qualityGuarantee}</h4>
+              <p>{homePageContent.features.qualityDesc}</p>
             </motion.div>
           </div>
         </motion.div>
 
         <motion.div className="domits-popularAccommodation" initial="hidden" animate="visible">
           <motion.h3 variants={fadeUp} className="domits-subHead">
-            Trending Now
+            {homePageContent.sections.trendingNow}
           </motion.h3>
 
           <div className="domits-accommodationGroup">
@@ -235,81 +240,81 @@ const Homepage = () => {
 
         <div className="regions-wrapper">
           <RegionBlock
-            title="Europe"
-            subtitle="Discover luxury stays across European destinations"
+            title={rb.europe.title}
+            subtitle={rb.europe.subtitle}
             items={countries}
             slice={3}
             bg="green"
-            footerText="Explore all countries in europe →"
+            footerText={rb.europe.footer}
             navigate={navigate}
           />
 
           <RegionBlock
-            title="Asia"
-            subtitle="Explore exotic Asian retreats and modern metropolises"
+            title={rb.asia.title}
+            subtitle={rb.asia.subtitle}
             items={asiaCountries}
             bg="light"
-            footerText="Explore all countries in Asia →"
+            footerText={rb.asia.footer}
             navigate={navigate}
           />
 
           <RegionBlock
-            title="Islands in the Caribbean"
-            subtitle="Paradise awaits in these tropical havens"
+            title={rb.caribbean.title}
+            subtitle={rb.caribbean.subtitle}
             items={caribbeanCountries}
             bg="green"
-            footerText="Explore all countries in the caribbean →"
+            footerText={rb.caribbean.footer}
             navigate={navigate}
           />
 
           <RegionBlock
-            title="Popular Ski Destinations"
-            subtitle="World-class slopes and cozy mountain chalets"
+            title={rb.ski.title}
+            subtitle={rb.ski.subtitle}
             items={skiCountries}
             slice={3}
             bg="light"
-            footerText="Explore all popular ski destinations →"
+            footerText={rb.ski.footer}
             navigate={navigate}
           />
         </div>
 
         <RegionBlock
-          title="Favorites by Season"
-          subtitle="Perfect properties for every time of year"
+          title={rb.seasons.title}
+          subtitle={rb.seasons.subtitle}
           items={seasons}
           slice={3}
           bg="green"
-          footerText="Explore all favorites by season →"
+          footerText={rb.seasons.footer}
           navigate={navigate}
         />
 
         <RegionBlock
-          title="Great Picks by Interest"
-          subtitle="Find stays that match your passions"
+          title={rb.interests.title}
+          subtitle={rb.interests.subtitle}
           items={interests}
           slice={3}
           bg="light"
-          footerText="Explore all great picks by interest →"
+          footerText={rb.interests.footer}
           navigate={navigate}
         />
 
         <RegionBlock
-          title="Accommodations by Group"
-          subtitle="The perfect stay for your travel party"
+          title={rb.groups.title}
+          subtitle={rb.groups.subtitle}
           items={groups}
           slice={3}
           bg="green"
-          footerText="Explore all accommodations by group →"
+          footerText={rb.groups.footer}
           navigate={navigate}
         />
 
         <motion.div className="guarantee-section" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          <motion.h2 variants={fadeUp}>Our Guarantees, Your Peace of Mind</motion.h2>
-          <motion.p variants={fadeUp}>We stand behind every stay with our commitments to you.</motion.p>
+          <motion.h2 variants={fadeUp}>{langContent.guarantees.sectionTitle}</motion.h2>
+          <motion.p variants={fadeUp}>{langContent.guarantees.sectionSubtitle}</motion.p>
 
           <div className="guarantee-grid">
             {guarantees.map((item) => (
-              <motion.div className="guarantee-card" key={item.title} variants={fadeUp}>
+              <motion.div className="guarantee-card" key={item.icon} variants={fadeUp}>
                 <div className="icon">{getIcon(item.icon)}</div>
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
@@ -326,7 +331,7 @@ const Homepage = () => {
 
               <div className="host-features">
                 {hostSection.features.map((f) => (
-                  <motion.div className="feature" key={f.title} variants={fadeUp}>
+                  <motion.div className="feature" key={f.icon} variants={fadeUp}>
                     <div className="icon">{getHostIcon(f.icon)}</div>
                     <div>
                       <h4>{f.title}</h4>
@@ -345,8 +350,8 @@ const Homepage = () => {
               <img src={hostImage.src} alt={hostImage.alt} />
 
               <div className="host-stats">
-                {hostSection.stats.map((s) => (
-                  <div key={s.label}>
+                {hostSection.stats.map((s, i) => (
+                  <div key={i}>
                     <h3>{s.value}</h3>
                     <span>{s.label}</span>
                   </div>

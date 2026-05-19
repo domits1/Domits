@@ -108,9 +108,13 @@
       },
       "features": {
         "securePayments": "Sichere Zahlungen",
+        "securePaymentsDesc": "Ihre Transaktionen sind geschützt",
         "verifiedGuest": "Verifizierte Gäste/Gastgeber",
+        "verifiedDesc": "Jede Unterkunft ist verifiziert",
         "quickPhone": "Schneller Telefonsupport",
+        "quickSupportDesc": "24/7 Kundendienst",
         "qualityGuarantee": "Domits Qualitätsgarantie",
+        "qualityDesc": "Nur Premium-Aufenthalte",
         "bestPrice": "Bestpreisgarantie",
         "bestPriceDescription": "Wir möchten Ihnen den bestmöglichen Preis bieten. Wenn Sie anderswo ein günstigeres Angebot finden, prüfen wir es mit Ihnen und passen den Preis gegebenenfalls an.",
         "bookingGuarantee": "Buchungsgarantie für Unterkünfte",
@@ -120,6 +124,7 @@
       },
       "sections": {
         "trending": "Trendunterkünfte in diesem Monat",
+          "trendingNow": "Trending Jetzt",
         "rentBoat": "Boot für jeden Anlass mieten",
         "discoverCampers": "Schöne Wohnmobile entdecken",
         "becomeHost": {
@@ -225,6 +230,71 @@
           }
         }
       }
+    },
+    "regionBlocks": {
+      "europe": {
+        "title": "Europa",
+        "subtitle": "Entdecken Sie Luxusunterkünfte an europäischen Zielen",
+        "footer": "Alle Länder in Europa erkunden →"
+      },
+      "asia": {
+        "title": "Asien",
+        "subtitle": "Erkunden Sie exotische asiatische Rückzugsorte und moderne Metropolen",
+        "footer": "Alle Länder in Asien erkunden →"
+      },
+      "caribbean": {
+        "title": "Inseln in der Karibik",
+        "subtitle": "Paradies wartet in diesen tropischen Häfen",
+        "footer": "Alle Länder in der Karibik erkunden →"
+      },
+      "ski": {
+        "title": "Beliebte Skidestinationen",
+        "subtitle": "Weltklasse-Pisten und gemütliche Bergchalets",
+        "footer": "Alle beliebten Skidestinationen erkunden →"
+      },
+      "seasons": {
+        "title": "Favoriten nach Jahreszeit",
+        "subtitle": "Perfekte Unterkünfte für jede Zeit des Jahres",
+        "footer": "Alle Favoriten nach Jahreszeit erkunden →"
+      },
+      "interests": {
+        "title": "Top-Auswahl nach Interesse",
+        "subtitle": "Finden Sie Unterkünfte, die zu Ihren Leidenschaften passen",
+        "footer": "Alle Top-Auswahlen nach Interesse erkunden →"
+      },
+      "groups": {
+        "title": "Unterkünfte nach Gruppe",
+        "subtitle": "Die perfekte Unterkunft für Ihre Reisegruppe",
+        "footer": "Alle Unterkünfte nach Gruppe erkunden →"
+      }
+    },
+    "guarantees": {
+      "sectionTitle": "Unsere Garantien, Ihre Sicherheit",
+      "sectionSubtitle": "Wir stehen hinter jedem Aufenthalt mit unseren Verpflichtungen."
+    },
+    "hostSection": {
+      "title": "Teilen Sie Ihren Raum, verdienen Sie Premium-Einkommen",
+      "description": "Treten Sie unserer exklusiven Community von Luxus-Gastgebern bei. Listen Sie Ihre Villa, Ihr Strandhaus oder Ihre einzigartige Unterkunft und verbinden Sie sich mit Reisenden, die außergewöhnliche Erfahrungen suchen.",
+      "features": {
+        "earn": {
+          "title": "Mehr verdienen",
+          "text": "Premium-Preise für Luxusunterkünfte"
+        },
+        "infrastructure": {
+          "title": "Infrastruktur",
+          "text": "Neueste Branchenstandards"
+        },
+        "support": {
+          "title": "Expertenunterstützung",
+          "text": "Engagiertes Team, das Ihnen zum Erfolg verhilft"
+        }
+      },
+      "stats": {
+        "hosts": { "value": "500+", "label": "Aktive Gastgeber" },
+        "rating": { "value": "4.9", "label": "Durchschn. Bewertung" },
+        "earning": { "value": "€2.5k", "label": "Durchschn./Monat" }
+      },
+      "button": "Ihr Objekt inserieren"
     },
     "travelInnovationLabs": {
         "title": "Travel Innovation Labs",
@@ -596,6 +666,18 @@
         }
       },
       "landing": {
+        "hero": {
+          "badge": "Von vielen Gastgebern vertraut",
+          "titleLine1": "Ihre Immobilien.",
+          "titleLine2": "Unsere Infrastruktur.",
+          "description": "Verwandeln Sie Ihre Luxus-Ferienunterkünfte in einen Einkommensstrom, der sich selbst trägt. Mehr Einnahmen. Weniger Aufwand. Totales Vertrauen.",
+          "primaryButton": "Jetzt hosten →",
+          "secondaryButton": "So funktioniert es",
+          "stat1Label": "mehr Einnahmen",
+          "stat2Label": "weniger Aufwand",
+          "stat3Label": "Support",
+          "integratesLabel": "Nahtlose Integration mit"
+        },
         "list": "Bieten Sie Ihr",
         "house": "Haus",
         "camper": "Wohnmobil",
@@ -613,6 +695,9 @@
           "title2": "war noch nie so ",
           "easier": "einfacher",
           "subtitle": "Es sind nur 3 Schritte nötig",
+          "stepsLabel": "DER PROZESS",
+          "stepsTitleLine1": "Drei Schritte.",
+          "stepsTitleSpan": "Keine Reibung.",
           "first": {
             "one": "1.",
             "title": "Bieten Sie Ihr Objekt an",
@@ -634,7 +719,18 @@
           "domits": "Domits",
           "end": "?",
           "description": "Bei Domits sind wir nicht einfach nur eine weitere Plattform – wir bauen mit unseren Travel Innovation Labs eine zukunftsorientierte, nachhaltige Community auf. Unsere innovative Herangehensweise stellt sicher, dass Ihr Objekt sowohl für Reisende als auch für die Umwelt einen echten Mehrwert bietet. Außerdem erhalten Sie unbegrenzten Support und personalisierte, moderne Dashboards, die die Verwaltung Ihrer Inserate einfacher denn je machen. Was Domits wirklich auszeichnet, ist unser Engagement für Sie. Sie sind mehr als nur ein Kunde oder eine Zahl – uns liegt Ihr Erfolg am Herzen, und wir begleiten Sie auf jedem Schritt Ihres Weges. Hosting mit Domits bedeutet, sich auf tief verwurzelte Werte wie Gesundheit, Sicherheit und Nachhaltigkeit zu stützen und einen zukunftssicheren Pfad für Ihr Unternehmen zu ebnen.",
-          "btnHosting": "Jetzt hosten"
+          "btnHosting": "Jetzt hosten",
+          "sectionTitle": "Warum",
+          "sectionDescription": "Domits transformiert die Zukunft des Luxus-Ferienvermietungsmanagements in ein nahtloses Erlebnis. Von der Inserierung bis zur Auszahlung wird alles an einem zentralen Ort verwaltet, damit Sie sich auf Wachstum konzentrieren können.",
+          "rating": "4.9 ★",
+          "features": {
+            "pmsOta": "Domits PMS mit OTA",
+            "revenueManagement": "Ertragsmanagement",
+            "directReservations": "Direktbuchungen",
+            "financeSuite": "Finance Suite",
+            "channelManagement": "Kanalmanagement",
+            "taskAutomations": "Aufgabenautomatisierung"
+          }
         },
         "register": {
           "title": "Registrieren Sie Ihr Objekt",
@@ -664,11 +760,15 @@
           "renting": {
             "title": "Internationale Vermietung",
             "description": "Sie vermieten Ihr Ferienhaus auf einem internationalen Markt. Dies erhöht die Wahrscheinlichkeit, dass Ihr Ferienhaus vermietet wird."
-          }
+          },
+          "subtitle": "Alles, was Sie brauchen, um Ihr Objekt mit Vertrauen und Sicherheit zu vermieten.",
+          "cta": "Objekt registrieren →"
         },
         "othersSay": {
           "title": "Was andere über",
-          "domits": "Domits"
+          "domits": "Domits",
+          "hearFrom": "Hören Sie von unseren Gastgebern.",
+          "trustText": "Viele Gastgeber vertrauen Domits"
         },
         "rentingOut": {
           "title": "Ist Ihr Objekt geeignet für",
@@ -705,9 +805,62 @@
           "safety": {
             "title": "Sicherheit ✓",
             "description": "Das Objekt erfüllt die Sicherheitsstandards mit funktionierenden Rauchmeldern, gesicherten Balkonen, sicheren Spielplätzen und klaren Zugängen."
+          },
+          "cta": "Bereit, Ihr Objekt zu inserieren? Unser Team begleitet Sie bei jedem Schritt.",
+          "ctaBadge": "✔ Verifizierte Objekte erhalten 3x mehr Buchungen"
+        },
+        "featuresSection": {
+          "title": "Ergebnisorientierte",
+          "span": "Funktionen",
+          "pmsOta": {
+            "title": "Domits PMS mit OTA",
+            "description": "Ein zentralisiertes Property Management System (PMS) mit Buchungskanalintegration."
+          },
+          "directReservation": {
+            "title": "Direktbuchungs-Suite",
+            "description": "Ein Direktbuchungs-Website-Builder zur Reduzierung von OTA-Kosten und -Abhängigkeit"
+          },
+          "channelManagement": {
+            "title": "Kanalmanagement",
+            "description": "Verteilen Sie auf Kanäle wie Airbnb, Domits, Booking, Vrbo und mehr"
+          },
+          "revenueIntelligence": {
+            "title": "Ertragsintelligenz",
+            "description": "Echtzeit-Einblicke in KPIs und dynamische Preisgestaltung."
+          },
+          "financeSuite": {
+            "title": "Finance Suite",
+            "description": "Gastzahlungen, Gastgebervergütungen und Präzisionsverwaltungstools"
+          },
+          "taskAutomation": {
+            "title": "Aufgabenautomatisierung",
+            "description": "Automatisieren Sie Check-ins, Reinigungsplan und Wartungsanfragen"
           }
         },
+        "cta": {
+          "badge": "✦ Werde Teil einer Gastgeber-Community",
+          "title": "Bereit, Ihre Immobilienleistung zu steigern?",
+          "subtitle": "Beginnen Sie noch heute, mehr mit Ihren Luxus-Ferienvermietungen zu verdienen. Keine Kreditkarte erforderlich.",
+          "button": "Jetzt mit dem Hosting beginnen →",
+          "benefit1": "● Kostenloser Einstieg",
+          "benefit2": "● Keine versteckten Gebühren",
+          "benefit3": "● Jederzeit kündigen"
+        },
+        "partnerContact": {
+          "title": "Mehr als Software.",
+          "subtitle": "Ein engagierter Partner.",
+          "description": "Unser Team steht bereit, Ihre Fragen zu beantworten, das Potenzial Ihrer Immobilie zu besprechen und Ihnen den Einstieg in das mühelose Mietgeschäft zu erleichtern.",
+          "emailLabel": "E-Mail senden",
+          "emailValue": "teamdomits@gmail.com",
+          "phoneLabel": "Anrufen",
+          "phoneValue": "24/7 verfügbar",
+          "addressLabel": "Besuchen Sie uns",
+          "addressLine1": "Kinderhuissingel 6-K",
+          "addressLine2": "2013 AS, Haarlem"
+        },
         "answerTo": {
+          "faqTitle": "Antworten auf",
+          "faqSpan": "Ihre Fragen",
           "title": "Antworten auf ",
           "your": "Ihre",
           "question": "Fragen",
