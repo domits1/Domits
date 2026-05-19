@@ -4,6 +4,9 @@ export const buildPublishedWebsitePath = (domain, siteId = "") => {
   return normalizedSiteId ? `${path}?siteId=${encodeURIComponent(normalizedSiteId)}` : path;
 };
 
+export const buildWebsitePreviewPath = (draftId) =>
+  `/website-preview/${encodeURIComponent(String(draftId || "").trim())}`;
+
 export const buildPublishedWebsiteHref = (domain, siteId = "", domainStatus = "") => {
   const normalizedDomain = String(domain || "").trim().toLowerCase();
   if (!normalizedDomain) {

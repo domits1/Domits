@@ -13,10 +13,7 @@ import {
   HostPropertyTabs,
   HostPropertyUnsavedChangesModal,
 } from "../components/HostPropertyShell";
-import {
-  HostPropertyPhotoDeleteModal,
-  HostPropertyTabContent,
-} from "../components/HostPropertyTabContent";
+import { HostPropertyPhotoDeleteModal, HostPropertyTabContent } from "../components/HostPropertyTabContent";
 import {
   deletePropertyListing,
   deletePropertyPhoto,
@@ -43,6 +40,8 @@ import {
   buildPricingSnapshot,
   createPendingPhotoFromFile,
   extractFetchedPropertyData,
+  getCheckInOutTimeValidationError,
+  getLateCheckInOutTimeValidationErrors,
   normalizeAmenityIds,
   normalizeCapacityValue,
   resolveDeletePhotoErrorMessage,
@@ -180,10 +179,7 @@ export default function HostProperty() {
     () => buildDisplayedPhotos(existingPhotos, pendingPhotos, photoOrderIds),
     [existingPhotos, pendingPhotos, photoOrderIds]
   );
-  const existingPhotoIdSet = useMemo(
-    () => new Set(existingPhotos.map((photo) => photo.id)),
-    [existingPhotos]
-  );
+  const existingPhotoIdSet = useMemo(() => new Set(existingPhotos.map((photo) => photo.id)), [existingPhotos]);
   const orderedExistingPhotoIds = useMemo(
     () => photoOrderIds.filter((photoId) => existingPhotoIdSet.has(photoId)),
     [photoOrderIds, existingPhotoIdSet]
@@ -192,22 +188,20 @@ export default function HostProperty() {
     () => existingPhotos.map((photo) => photo.id).join(",") !== orderedExistingPhotoIds.join(","),
     [existingPhotos, orderedExistingPhotoIds]
   );
-  const overviewSnapshot = useMemo(
-    () => buildOverviewSnapshot(form, capacity, address),
-    [form, capacity, address]
-  );
-  const amenityIdsSnapshot = useMemo(
-    () => normalizeAmenityIds(selectedAmenityIds),
-    [selectedAmenityIds]
-  );
+  const overviewSnapshot = useMemo(() => buildOverviewSnapshot(form, capacity, address), [form, capacity, address]);
+  const amenityIdsSnapshot = useMemo(() => normalizeAmenityIds(selectedAmenityIds), [selectedAmenityIds]);
   const policyRulesSnapshot = useMemo(
     () => buildPolicyEditorSnapshot(policyRules, checkInDetails, policyAvailabilitySettings),
     [policyRules, checkInDetails, policyAvailabilitySettings]
   );
-  const pricingSnapshot = useMemo(
-    () => buildPricingSnapshot(pricingForm),
-    [pricingForm]
+  const checkInOutTimeError = useMemo(() => getCheckInOutTimeValidationError(checkInDetails), [checkInDetails]);
+  const lateCheckInOutTimeErrors = useMemo(
+    () => getLateCheckInOutTimeValidationErrors(checkInDetails),
+    [checkInDetails]
   );
+  const policyTimeValidationError =
+    checkInOutTimeError || lateCheckInOutTimeErrors.checkIn || lateCheckInOutTimeErrors.checkOut;
+  const pricingSnapshot = useMemo(() => buildPricingSnapshot(pricingForm), [pricingForm]);
   const hasOverviewChanges = savedOverviewSnapshotRef.current
     ? !areSnapshotsEqual(overviewSnapshot, savedOverviewSnapshotRef.current)
     : false;
@@ -215,7 +209,8 @@ export default function HostProperty() {
   const hasPoliciesChanges = !areSnapshotsEqual(policyRulesSnapshot, savedPolicyRulesRef.current);
   const hasPricingChanges = !areSnapshotsEqual(pricingSnapshot, savedPricingSnapshotRef.current);
   const hasPhotoChanges = pendingPhotos.length > 0 || hasPhotoOrderChanges;
-  const hasUnsavedChanges = !loading &&
+  const hasUnsavedChanges =
+    !loading &&
     (hasOverviewChanges || hasAmenitiesChanges || hasPricingChanges || hasPoliciesChanges || hasPhotoChanges);
 
   const selectedAmenityCountByCategory = useMemo(() => {
@@ -502,8 +497,42 @@ export default function HostProperty() {
     setPhotoDropTargetId(null);
   };
 
+  const updateSnapshotsForTab = (
+    selectedTab,
+    normalizedForm,
+    normalizedPricingForm,
+    normalizedCheckInDetails,
+    normalizedPolicyAvailabilitySettings
+  ) => {
+    savedOverviewSnapshotRef.current = buildOverviewSnapshot(normalizedForm, capacity, address);
+    if (selectedTab === "Amenities") {
+      savedAmenityIdsRef.current = normalizeAmenityIds(selectedAmenityIds);
+    }
+    if (selectedTab === "Pricing") {
+      savedPricingSnapshotRef.current = buildPricingSnapshot(normalizedPricingForm);
+    }
+    if (selectedTab === "Policies") {
+      if (normalizedCheckInDetails) {
+        setCheckInDetails(normalizedCheckInDetails);
+      }
+      if (normalizedPolicyAvailabilitySettings) {
+        setPolicyAvailabilitySettings(normalizedPolicyAvailabilitySettings);
+      }
+      savedPolicyRulesRef.current = buildPolicyEditorSnapshot(
+        policyRules,
+        normalizedCheckInDetails || checkInDetails,
+        normalizedPolicyAvailabilitySettings || policyAvailabilitySettings
+      );
+    }
+  };
+
   const saveOverview = async () => {
     if (saving || preparingPhotos) {
+      return;
+    }
+    if (selectedTab === "Policies" && policyTimeValidationError) {
+      setError(policyTimeValidationError);
+      toast.error(policyTimeValidationError);
       return;
     }
     setSaving(true);
@@ -558,26 +587,13 @@ export default function HostProperty() {
             : accommodation
         )
       );
-      savedOverviewSnapshotRef.current = buildOverviewSnapshot(normalizedForm, capacity, address);
-      if (selectedTab === "Amenities") {
-        savedAmenityIdsRef.current = normalizeAmenityIds(selectedAmenityIds);
-      }
-      if (selectedTab === "Pricing") {
-        savedPricingSnapshotRef.current = buildPricingSnapshot(normalizedPricingForm);
-      }
-      if (selectedTab === "Policies") {
-        if (normalizedCheckInDetails) {
-          setCheckInDetails(normalizedCheckInDetails);
-        }
-        if (normalizedPolicyAvailabilitySettings) {
-          setPolicyAvailabilitySettings(normalizedPolicyAvailabilitySettings);
-        }
-        savedPolicyRulesRef.current = buildPolicyEditorSnapshot(
-          policyRules,
-          normalizedCheckInDetails || checkInDetails,
-          normalizedPolicyAvailabilitySettings || policyAvailabilitySettings
-        );
-      }
+      updateSnapshotsForTab(
+        selectedTab,
+        normalizedForm,
+        normalizedPricingForm,
+        normalizedCheckInDetails,
+        normalizedPolicyAvailabilitySettings
+      );
       toast.success(successMessage);
     } catch (err) {
       console.error(err);
@@ -592,14 +608,17 @@ export default function HostProperty() {
   const isBusy = saving || preparingPhotos || deletingProperty || statusUpdating;
   const shouldBlockNavigation = hasUnsavedChanges && !isBusy && !deletingPhoto;
 
-  const requestNavigation = useCallback((navigationAction) => {
-    if (bypassUnsavedGuardRef.current || !shouldBlockNavigation) {
-      navigationAction();
-      return;
-    }
-    pendingNavigationActionRef.current = navigationAction;
-    setUnsavedChangesModalOpen(true);
-  }, [shouldBlockNavigation]);
+  const requestNavigation = useCallback(
+    (navigationAction) => {
+      if (bypassUnsavedGuardRef.current || !shouldBlockNavigation) {
+        navigationAction();
+        return;
+      }
+      pendingNavigationActionRef.current = navigationAction;
+      setUnsavedChangesModalOpen(true);
+    },
+    [shouldBlockNavigation]
+  );
 
   const stayOnUnsavedChanges = () => {
     pendingNavigationActionRef.current = null;
@@ -760,9 +779,7 @@ export default function HostProperty() {
 
   const toggleDeletePropertyReason = (reasonId) => {
     setSelectedDeletePropertyReasonIds((previous) =>
-      previous.includes(reasonId)
-        ? previous.filter((value) => value !== reasonId)
-        : [...previous, reasonId]
+      previous.includes(reasonId) ? previous.filter((value) => value !== reasonId) : [...previous, reasonId]
     );
   };
 
@@ -838,9 +855,7 @@ export default function HostProperty() {
       setStatus(nextStatus);
       setHostProperties((previous) =>
         previous.map((accommodation) =>
-          accommodation.id === propertyId
-            ? { ...accommodation, status: nextStatus }
-            : accommodation
+          accommodation.id === propertyId ? { ...accommodation, status: nextStatus } : accommodation
         )
       );
 
@@ -861,7 +876,9 @@ export default function HostProperty() {
     }
   };
 
-  const canSaveChanges = resolveCanSaveChanges(selectedTab, pendingPhotos.length, hasPhotoOrderChanges);
+  const canSaveChanges =
+    resolveCanSaveChanges(selectedTab, pendingPhotos.length, hasPhotoOrderChanges) &&
+    !(selectedTab === "Policies" && policyTimeValidationError);
   const handleBackToListings = () => requestNavigation(navigate.bind(null, "/hostdashboard/listings"));
 
   return (

@@ -1,5 +1,6 @@
 const WEBSITE_PREVIEW_SYNC_STORAGE_KEY = "domits.websitePreview.updated";
 const WEBSITE_LIVE_SITE_SYNC_STORAGE_KEY = "domits.websiteLiveSite.updated";
+export const WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE = "domits.websiteLiveSite.updated";
 
 const parsePreviewSyncPayload = (rawValue) => {
   if (typeof rawValue !== "string" || !rawValue.trim()) {
