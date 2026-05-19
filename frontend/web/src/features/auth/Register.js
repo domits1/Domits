@@ -26,6 +26,10 @@ const PASSWORD_REQUIREMENT_ITEMS = [
   { key: "specialChar", label: "At least 1 special character" },
 ];
 
+const USERNAME_LENGTH = 15;
+const USERNAME_CHARACTERS =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
 const FIELD_ERRORS_PROP_TYPE = PropTypes.shape({
   firstName: PropTypes.string,
   lastName: PropTypes.string,
@@ -56,13 +60,36 @@ const REF_OBJECT_PROP_TYPE = PropTypes.shape({
   current: PropTypes.any,
 });
 
-const generateRandomUsername = () => {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const getSecureRandomIndex = (upperBound) => {
+  const cryptoApi = globalThis.crypto;
 
+  if (!cryptoApi?.getRandomValues) {
+    throw new Error(
+      "Secure random generator is unavailable."
+    );
+  }
+
+  const randomValue = new Uint32Array(1);
+  const maxUint32 = 0xffffffff;
+  const maxValidValue =
+    maxUint32 - ((maxUint32 + 1) % upperBound);
+
+  do {
+    cryptoApi.getRandomValues(randomValue);
+  } while (randomValue[0] > maxValidValue);
+
+  return randomValue[0] % upperBound;
+};
+
+const generateRandomUsername = () => {
   return Array.from(
-    { length: 15 },
-    () => chars[Math.floor(Math.random() * chars.length)]
+    { length: USERNAME_LENGTH },
+    () =>
+      USERNAME_CHARACTERS[
+        getSecureRandomIndex(
+          USERNAME_CHARACTERS.length
+        )
+      ]
   ).join("");
 };
 
