@@ -50,6 +50,7 @@ import {
   DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
   DEFAULT_WEBSITE_CONTACT_TITLE,
+  WEBSITE_CONTACT_AVATAR_MODE_HOST,
 } from "./rendering/websiteContactSectionConfig";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides } from "./rendering/websiteDraftThemeOverrides";
@@ -392,6 +393,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
         description: DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
         accentColor: DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
         backgroundColor: DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
+        avatarMode: WEBSITE_CONTACT_AVATAR_MODE_HOST,
         avatarImage: "",
       },
       visibility: {

@@ -48,6 +48,7 @@ export const contactSectionPropType = PropTypes.shape({
   description: PropTypes.string,
   accentColor: PropTypes.string,
   backgroundColor: PropTypes.string,
+  avatarMode: PropTypes.string,
   avatarImage: PropTypes.string,
 });
 

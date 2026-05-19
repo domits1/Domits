@@ -3,6 +3,9 @@ import {
   DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
   DEFAULT_WEBSITE_CONTACT_TITLE,
+  WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
+  WEBSITE_CONTACT_AVATAR_MODE_HOST,
+  resolveWebsiteContactAvatarMode,
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
 } from "./websiteContactSectionConfig";
@@ -24,6 +27,7 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "contactDescription",
   "contactAccentColor",
   "contactBackgroundColor",
+  "contactAvatarMode",
   "contactAvatarImage",
   "contactButtonLabel",
   "visibility",
@@ -146,6 +150,7 @@ export const createEmptyWebsiteDraftEditorValues = () => ({
   contact: {
     title: "",
     description: "",
+    avatarMode: WEBSITE_CONTACT_AVATAR_MODE_HOST,
     avatarImage: "",
     accentColor: DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
     backgroundColor: DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
@@ -175,6 +180,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
   const ctaNote = cleanText(overrides.ctaNote);
   const contactTitle = cleanText(overrides.contactTitle);
   const contactDescription = cleanText(overrides.contactDescription);
+  const contactAvatarModeOverride = cleanText(overrides.contactAvatarMode);
   const contactAvatarImage = cleanText(overrides.contactAvatarImage);
   const contactAccentColorOverride = cleanText(overrides.contactAccentColor);
   const contactAccentColor = resolveWebsiteContactAccentColor(contactAccentColorOverride);
@@ -188,6 +194,23 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
   const mergedVisibility = mergeVisibility(model?.visibility, overrides.visibility);
   const mergedTrustCards = mergeCopyItems(model?.trustCards, overrides.trustCards);
   const mergedJourneyStops = mergeCopyItems(model?.journeyStops, overrides.journeyStops);
+  const modelContactAvatarImage = cleanText(model?.contactSection?.avatarImage);
+  const modelContactAvatarMode = resolveWebsiteContactAvatarMode(
+    model?.contactSection?.avatarMode,
+    modelContactAvatarImage ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM : WEBSITE_CONTACT_AVATAR_MODE_HOST
+  );
+  let contactAvatarMode = modelContactAvatarMode;
+
+  if (contactAvatarModeOverride) {
+    contactAvatarMode = resolveWebsiteContactAvatarMode(contactAvatarModeOverride, modelContactAvatarMode);
+  } else if (contactAvatarImage) {
+    contactAvatarMode = WEBSITE_CONTACT_AVATAR_MODE_CUSTOM;
+  }
+
+  const resolvedContactAvatarImage =
+    contactAvatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+      ? contactAvatarImage || modelContactAvatarImage
+      : "";
 
   return {
     ...model,
@@ -232,7 +255,8 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}) => {
         contactDescription ||
         model?.contactSection?.description ||
         DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
-      avatarImage: contactAvatarImage || model?.contactSection?.avatarImage || "",
+      avatarMode: contactAvatarMode,
+      avatarImage: resolvedContactAvatarImage,
       accentColor: contactAccentColorOverride
         ? contactAccentColor
         : model?.contactSection?.accentColor || DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
@@ -258,6 +282,12 @@ export const buildWebsiteDraftEditorValues = (model) => ({
   contact: {
     title: String(model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE),
     description: String(model?.contactSection?.description || DEFAULT_WEBSITE_CONTACT_DESCRIPTION),
+    avatarMode: resolveWebsiteContactAvatarMode(
+      model?.contactSection?.avatarMode,
+      cleanText(model?.contactSection?.avatarImage)
+        ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+        : WEBSITE_CONTACT_AVATAR_MODE_HOST
+    ),
     avatarImage: String(model?.contactSection?.avatarImage || ""),
     accentColor: resolveWebsiteContactAccentColor(model?.contactSection?.accentColor),
     backgroundColor: resolveWebsiteContactBackgroundColor(model?.contactSection?.backgroundColor),
@@ -328,9 +358,38 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
     baseValue: (baseModel) => baseModel?.contactSection?.description,
   },
   {
+    patchKey: "contactAvatarMode",
+    editorValue: (editorValues) =>
+      resolveWebsiteContactAvatarMode(
+        editorValues?.contact?.avatarMode,
+        WEBSITE_CONTACT_AVATAR_MODE_HOST
+      ),
+    baseValue: (baseModel) =>
+      resolveWebsiteContactAvatarMode(
+        baseModel?.contactSection?.avatarMode,
+        cleanText(baseModel?.contactSection?.avatarImage)
+          ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+          : WEBSITE_CONTACT_AVATAR_MODE_HOST
+      ),
+  },
+  {
     patchKey: "contactAvatarImage",
-    editorValue: (editorValues) => editorValues?.contact?.avatarImage,
-    baseValue: (baseModel) => baseModel?.contactSection?.avatarImage,
+    editorValue: (editorValues) =>
+      resolveWebsiteContactAvatarMode(
+        editorValues?.contact?.avatarMode,
+        WEBSITE_CONTACT_AVATAR_MODE_HOST
+      ) === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+        ? editorValues?.contact?.avatarImage
+        : "",
+    baseValue: (baseModel) =>
+      resolveWebsiteContactAvatarMode(
+        baseModel?.contactSection?.avatarMode,
+        cleanText(baseModel?.contactSection?.avatarImage)
+          ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+          : WEBSITE_CONTACT_AVATAR_MODE_HOST
+      ) === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+        ? baseModel?.contactSection?.avatarImage
+        : "",
   },
   {
     patchKey: "contactAccentColor",

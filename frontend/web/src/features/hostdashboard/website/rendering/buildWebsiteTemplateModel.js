@@ -6,6 +6,7 @@ import {
   DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
   DEFAULT_WEBSITE_CONTACT_TITLE,
+  WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
 } from "./websiteContactSectionConfig";
@@ -628,6 +629,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       description: DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
       accentColor: resolveWebsiteContactAccentColor(DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR),
       backgroundColor: resolveWebsiteContactBackgroundColor(DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR),
+      avatarMode: WEBSITE_CONTACT_AVATAR_MODE_HOST,
       avatarImage: "",
     },
     visibility: {

@@ -27,7 +27,10 @@ import {
 import {
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
   DEFAULT_WEBSITE_CONTACT_TITLE,
+  WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
+  WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
+  resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
 } from "../websiteContactSectionConfig";
 import { MAX_WEBSITE_CONFIGURABLE_AMENITIES } from "../websiteAmenitiesConfig";
@@ -725,7 +728,18 @@ const renderPanoramaContactSection = ({
     .trim()
     .charAt(0)
     .toUpperCase() || "H";
-  const hostProfileImage = String(model.contactSection?.avatarImage || model.host?.profileImage || "").trim();
+  const avatarMode = resolveWebsiteContactAvatarMode(
+    model.contactSection?.avatarMode,
+    String(model.contactSection?.avatarImage || "").trim()
+      ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+      : WEBSITE_CONTACT_AVATAR_MODE_HOST
+  );
+  const hostProfileImage =
+    avatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+      ? String(model.contactSection?.avatarImage || "").trim()
+      : avatarMode === WEBSITE_CONTACT_AVATAR_MODE_HOST
+        ? String(model.host?.profileImage || "").trim()
+        : "";
   const accentColor = resolveWebsiteContactAccentColor(model.contactSection?.accentColor);
   const backgroundColor = resolveWebsiteContactBackgroundColor(model.contactSection?.backgroundColor);
   const contactSectionStyle = {

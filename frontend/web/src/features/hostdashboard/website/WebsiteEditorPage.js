@@ -60,7 +60,11 @@ import {
   getImageSlotTargetId,
 } from "./websiteEditorConfig";
 import {
+  WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
+  WEBSITE_CONTACT_AVATAR_MODE_HOST,
+  WEBSITE_CONTACT_AVATAR_MODE_INITIALS,
   resolveWebsiteContactAccentColor,
+  resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
 } from "./rendering/websiteContactSectionConfig";
 import {
@@ -621,18 +625,34 @@ ContactColorField.propTypes = {
 };
 
 function ContactImageField({
+  mode = WEBSITE_CONTACT_AVATAR_MODE_HOST,
   inputId,
   value,
   fallbackImage = "",
   onChangeFile,
-  onReset,
+  onUseInitials,
+  onUseProfilePhoto,
   fieldRef = null,
   isHighlighted = false,
   onFocus = undefined,
   onBlur = undefined,
 }) {
-  const previewImage = String(value || fallbackImage || "").trim();
-  const hasOverride = Boolean(String(value || "").trim());
+  const normalizedMode = resolveWebsiteContactAvatarMode(mode, WEBSITE_CONTACT_AVATAR_MODE_HOST);
+  const hasProfilePhoto = Boolean(String(fallbackImage || "").trim());
+  const previewImage =
+    normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+      ? String(value || "").trim()
+      : normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_HOST
+        ? String(fallbackImage || "").trim()
+        : "";
+  const hasCustomImage = normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM && Boolean(String(value || "").trim());
+  const helperText = hasCustomImage
+    ? "Custom uploaded image active for this footer."
+    : normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_INITIALS
+      ? "The footer will use the host initial instead of a profile image."
+      : hasProfilePhoto
+        ? "Using the current host profile picture from Domits."
+        : "No host profile picture is available, so the footer will use initials.";
   const fileInputRef = useRef(null);
   const activateField = () => {
     onFocus?.();
@@ -651,18 +671,16 @@ function ContactImageField({
         {previewImage ? (
           <img src={previewImage} alt="" aria-hidden="true" className={styles.imageSlotPreviewImage} />
         ) : (
-          <span className={styles.imageSlotPreviewEmpty}>No image selected</span>
+          <span className={styles.imageSlotPreviewEmpty}>
+            {normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_INITIALS ? "Using host initials" : "No image selected"}
+          </span>
         )}
       </div>
 
       <div className={styles.imageSlotMeta}>
         <div className={styles.fieldGroup}>
           <span className={styles.fieldLabel}>Profile photo</span>
-          <span className={styles.helperText}>
-            {hasOverride
-              ? "Custom uploaded image active for this footer."
-              : "Using the current host profile picture from Domits."}
-          </span>
+          <span className={styles.helperText}>{helperText}</span>
         </div>
 
         <div className={styles.buttonRow}>
@@ -685,18 +703,32 @@ function ContactImageField({
           >
             Upload image
           </button>
-          {hasOverride ? (
+          {hasProfilePhoto && normalizedMode !== WEBSITE_CONTACT_AVATAR_MODE_HOST ? (
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={() => {
                 activateField();
-                onReset();
+                onUseProfilePhoto();
               }}
               onFocus={onFocus}
               onBlur={onBlur}
             >
-              Use host photo
+              Use profile photo
+            </button>
+          ) : null}
+          {normalizedMode !== WEBSITE_CONTACT_AVATAR_MODE_INITIALS ? (
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => {
+                activateField();
+                onUseInitials();
+              }}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            >
+              Use initials
             </button>
           ) : null}
         </div>
@@ -706,11 +738,13 @@ function ContactImageField({
 }
 
 ContactImageField.propTypes = {
+  mode: PropTypes.string,
   inputId: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
   fallbackImage: PropTypes.string,
   onChangeFile: PropTypes.func.isRequired,
-  onReset: PropTypes.func.isRequired,
+  onUseInitials: PropTypes.func.isRequired,
+  onUseProfilePhoto: PropTypes.func.isRequired,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
   fieldRef: refPropType,
@@ -1676,6 +1710,7 @@ function WebsiteEditorPage() {
         ...currentValues,
         contact: {
           ...currentValues.contact,
+          avatarMode: WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
           avatarImage: nextAvatarImage,
         },
       }));
@@ -1686,15 +1721,24 @@ function WebsiteEditorPage() {
     }
   };
 
-  const handleContactImageReset = () => {
+  const updateContactAvatarMode = (avatarMode) => {
     activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact.avatarImage);
     setEditorValues((currentValues) => ({
       ...currentValues,
       contact: {
         ...currentValues.contact,
+        avatarMode: resolveWebsiteContactAvatarMode(avatarMode, WEBSITE_CONTACT_AVATAR_MODE_HOST),
         avatarImage: "",
       },
     }));
+  };
+
+  const handleContactImageUseInitials = () => {
+    updateContactAvatarMode(WEBSITE_CONTACT_AVATAR_MODE_INITIALS);
+  };
+
+  const handleContactImageUseProfilePhoto = () => {
+    updateContactAvatarMode(WEBSITE_CONTACT_AVATAR_MODE_HOST);
   };
 
   const handleThemeBackgroundColorChange = (backgroundColor) => {
@@ -2724,11 +2768,13 @@ function WebsiteEditorPage() {
                       ))}
 
                       <ContactImageField
+                        mode={editorValues.contact.avatarMode}
                         inputId="website-editor-contact-avatar-upload"
                         value={editorValues.contact.avatarImage}
                         fallbackImage={previewModel.host?.profileImage || ""}
                         onChangeFile={handleContactImageFileChange}
-                        onReset={handleContactImageReset}
+                        onUseInitials={handleContactImageUseInitials}
+                        onUseProfilePhoto={handleContactImageUseProfilePhoto}
                         fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact.avatarImage)}
                         isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact.avatarImage}
                         onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact.avatarImage)}
