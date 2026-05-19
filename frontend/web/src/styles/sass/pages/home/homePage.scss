@@ -22,12 +22,13 @@
 .accocard.homepage .accocard-media {
   position: relative;
   width: 100%;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
 }
 
 .accocard.homepage .swiper-slide img {
   width: 100%;
-  aspect-ratio: 1;
+  height: 100%;
   object-fit: cover;
   border-radius: 15px;
   transition: transform 0.4s ease-in-out;
@@ -35,6 +36,11 @@
 }
 .accocard.homepage .swiper {
   width: 100%;
+  height: 100%;
+}
+.accocard.homepage .swiper-wrapper,
+.accocard.homepage .swiper-slide {
+  height: 100%;
 }
 .accocard.homepage:hover .swiper-slide img {
   transform: scale(1.05);
