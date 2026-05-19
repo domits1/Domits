@@ -40,13 +40,17 @@ const AcceptInvite = () => {
     }
 
     if (!user) {
+        const encodedRedirect = encodeURIComponent(`/team/accept?token=${token}`);
         return (
             <div className="accept-invite-page">
                 <div className="accept-invite-card">
                     <h2>You have been invited to a team on Domits</h2>
                     <p>Log in or create an account to accept this invitation.</p>
-                    <Link to={`/login?redirect=/team/accept?token=${token}`} className="accept-invite-btn">
+                    <Link to={`/login?redirect=${encodedRedirect}`} className="accept-invite-btn">
                         Log in to accept
+                    </Link>
+                    <Link to={`/register?redirect=${encodedRedirect}`} className="accept-invite-btn accept-invite-btn--secondary">
+                        Create account
                     </Link>
                 </div>
             </div>

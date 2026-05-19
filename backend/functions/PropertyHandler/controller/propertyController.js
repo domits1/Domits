@@ -1866,6 +1866,36 @@ export class PropertyController {
     }
 
     // -------------------------
+    // GET /property/hostDashboard/byHostId
+    // -------------------------
+    async getFullOwnedPropertiesByHostId(event) {
+        try {
+            const accessToken = event.headers.Authorization;
+            await this.authManager.getAuthorizedUser(accessToken);
+            const hostId = event.queryStringParameters?.hostId;
+            if (!hostId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("hostId query parameter is required.")
+                };
+            }
+            const properties = await this.propertyService.getFullPropertiesByHostId(hostId);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(properties)
+            };
+        } catch (error) {
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    // -------------------------
     // GET /property/hostDashboard/single
     // -------------------------
     async getFullOwnedPropertyById(event) {
