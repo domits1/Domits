@@ -145,6 +145,34 @@
   background: #46c54c;
 }
 
+.primaryBtn:disabled,
+.registerBtn:disabled,
+.forgotText:disabled,
+.eyeIcon:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.primaryBtn:disabled {
+  background: #5fc466;
+}
+
+.buttonLoadingContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.buttonSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 999px;
+  animation: authButtonSpin 0.8s linear infinite;
+}
+
 .registerBtn {
   width: 100%;
   display: flex;
@@ -190,6 +218,12 @@
   border-radius: 6px;
   margin-bottom: 10px;
   text-align: center;
+}
+
+@keyframes authButtonSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 600px) {
