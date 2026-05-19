@@ -362,7 +362,7 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId) {
+  async cancelBookingByGuest(id, guestId, refundInfo = {}) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -379,7 +379,18 @@ class ReservationRepository {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    await client.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute();
+    const updateData = { status: "Cancelled" };
+    if (refundInfo.refundedAmount !== undefined) {
+      updateData.refunded_amount = refundInfo.refundedAmount;
+    }
+    if (refundInfo.stripeRefundId) {
+      updateData.stripe_refund_id = refundInfo.stripeRefundId;
+    }
+    if (refundInfo.refundError) {
+      updateData.refund_error = refundInfo.refundError;
+    }
+
+    await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
 
     const updated = await client
       .getRepository(Booking)
