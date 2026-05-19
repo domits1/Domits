@@ -9,8 +9,6 @@ import {
   toDateKey,
 } from "../utils/dateAvailability";
 
-const fixedPopperProps = { strategy: "fixed" };
-
 const CheckIn = ({
   checkInDate = "",
   setCheckInDate = () => {},
@@ -32,8 +30,6 @@ const CheckIn = ({
           dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
           dateFormat="yyyy-MM-dd"
           placeholderText="YYYY-MM-DD"
-          portalId="datepicker-portal"
-          popperProps={fixedPopperProps}
         />
         <span className="date-picker-icon" aria-hidden="true">
           <FaCalendarAlt />

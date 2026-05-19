@@ -9,12 +9,9 @@ const DateSelectionContainer = ({
   checkOutDate = "",
   setCheckOutDate = () => {},
   unavailableDateKeys = [],
-  className = "",
 }) => {
-  const containerClassName = className ? `date-container ${className}` : "date-container";
-
   return (
-    <div className={containerClassName}>
+    <div className="date-container">
       <CheckIn
         checkInDate={checkInDate}
         setCheckInDate={setCheckInDate}
@@ -37,7 +34,6 @@ DateSelectionContainer.propTypes = {
   checkOutDate: PropTypes.string,
   setCheckOutDate: PropTypes.func,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
-  className: PropTypes.string,
 };
 
 export default DateSelectionContainer;
