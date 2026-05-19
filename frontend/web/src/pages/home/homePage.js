@@ -30,6 +30,7 @@ import FlowContext from "../../services/FlowContext";
 import { getHostLoginPath, startHostingFlow } from "../../utils/hostFlow";
 
 const contentByLanguage = { en, nl, de, es };
+const HERO_IMAGE_URL = `${S3_URL}/Images/villaHomepage.webp`;
 
 const RegionBlock = ({
   title,
@@ -181,7 +182,16 @@ const Homepage = () => {
     <div className="homePage-container">
       <div className="domits-homepage">
 
-        <div className="domits-searchContainer" style={{ "--villa-background": `url(${S3_URL}/Images/villaHomepage.webp)` }}>
+        <div className="domits-searchContainer">
+          <img
+            src={HERO_IMAGE_URL}
+            alt="Luxury holiday villa with a pool"
+            className="domits-heroImage"
+            width={1920}
+            height={1080}
+            fetchPriority="high"
+            decoding="async"
+          />
           <div className="domits-searchTextCon">
             <h1 className="domits-searchText">{homePageContent.hero.title}</h1>
             <p className="domits-searchSubtitle">{homePageContent.hero.subtitle}</p>
@@ -373,7 +383,14 @@ const Homepage = () => {
             </motion.div>
 
             <motion.div className="host-right" variants={fadeUp}>
-              <img src={hostImage.src} alt={hostImage.alt} />
+              <img
+                src={hostImage.src}
+                alt={hostImage.alt}
+                width={1200}
+                height={800}
+                loading="lazy"
+                decoding="async"
+              />
 
               <div className="host-stats">
                 {hostSection.stats.map((s) => (
