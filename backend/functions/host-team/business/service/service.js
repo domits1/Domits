@@ -54,7 +54,12 @@ export class Service {
         return { message: "Team member removed." };
     }
 
-    async acceptInvite(token, pomUserId, pomEmail) {
+    async getMemberships(userId) {
+        const dataSource = await Database.getInstance();
+        return await this.repository.findByMemberId(dataSource, userId);
+    }
+
+    async acceptInvite(token, pomUserId, pomEmail, pomRole) {
         if (!token) throw new BadRequestException("Invite token is required.");
 
         const dataSource = await Database.getInstance();
@@ -73,11 +78,13 @@ export class Service {
             accepted_at: Date.now(),
         });
 
-        await cognitoClient.send(new AdminUpdateUserAttributesCommand({
-            UserPoolId: USER_POOL_ID,
-            Username: pomUserId,
-            UserAttributes: [{ Name: "custom:group", Value: invite.role }],
-        }));
+        if (pomRole === "Traveler" || !pomRole) {
+            await cognitoClient.send(new AdminUpdateUserAttributesCommand({
+                UserPoolId: USER_POOL_ID,
+                Username: pomUserId,
+                UserAttributes: [{ Name: "custom:group", Value: invite.role }],
+            }));
+        }
 
         return { message: "Invite accepted. You now have access to the host's properties." };
     }
