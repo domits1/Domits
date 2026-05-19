@@ -378,7 +378,7 @@ const BookingContainer = ({
       )}
 
       <div className="listing-booking-card__trust-badges">
-        {cancellationPolicy?.type && (
+        {cancellationPolicy?.id && (
           <div className="listing-booking-card__trust-item">
             <span className="listing-booking-card__trust-check">✓</span>{" "}{cancellationPolicy.type} cancellation
           </div>
