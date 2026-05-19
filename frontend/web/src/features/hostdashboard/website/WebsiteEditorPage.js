@@ -99,8 +99,17 @@ const createAmenityEditorItem = (amenityIconOptions, collectionSize) => {
   };
 };
 
-const getSelectedImageForSlot = (slot, editorValues) =>
-  slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
+const getSelectedImageForSlot = (slot, editorValues) => {
+  if (slot.kind === "hero") {
+    return editorValues.images.heroImage;
+  }
+
+  if (slot.kind === "residence") {
+    return editorValues.images.residenceImage || "";
+  }
+
+  return editorValues.images.gallery[slot.index] || "";
+};
 
 const normalizeUiErrorMessage = (message, fallbackMessage) => {
   const normalizedMessage = String(message || "").trim();
@@ -361,6 +370,10 @@ const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) =
 
   if (imageSlot?.kind === "hero") {
     return EDITOR_TARGET_KEYS.images.hero;
+  }
+
+  if (imageSlot?.kind === "residence") {
+    return EDITOR_TARGET_KEYS.images.residence;
   }
 
   if (imageSlot?.kind === "gallery" && Number.isInteger(imageSlot.index)) {
@@ -1876,6 +1889,16 @@ function WebsiteEditorPage() {
           images: {
             ...currentValues.images,
             heroImage: nextValue,
+          },
+        };
+      }
+
+      if (slot.kind === "residence") {
+        return {
+          ...currentValues,
+          images: {
+            ...currentValues.images,
+            residenceImage: nextValue,
           },
         };
       }

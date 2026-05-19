@@ -139,6 +139,20 @@ const buildPanoramaGallerySlots = (model) => {
 };
 
 const buildResidenceVisual = (gallerySlots, model) => {
+  const configuredResidenceImage = String(model.media?.residenceImage || "").trim();
+  if (configuredResidenceImage) {
+    return {
+      imageUrl: configuredResidenceImage,
+      key: `${model.site.title}-residence-configured`,
+      alt: `${model.hero.title} residence view`,
+      target: {
+        sectionId: "images",
+        targetId: "images.residence",
+        imageSlot: { kind: "residence" },
+      },
+    };
+  }
+
   const firstGallerySlot = gallerySlots[0];
   if (firstGallerySlot) {
     return firstGallerySlot;

@@ -535,6 +535,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
     },
     media: {
       heroImage: galleryImages[0] || placeholderImage,
+      residenceImage: galleryImages[1] || galleryImages[0] || placeholderImage,
       galleryImages,
       previewImages,
       featuredGalleryImages,

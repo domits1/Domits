@@ -55,6 +55,7 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
   visibility: (fieldKey) => `visibility.${fieldKey}`,
   images: {
     hero: "images.hero",
+    residence: "images.residence",
     gallery: (index) => `images.gallery.${index}`,
   },
   trustCards: (index) => `trustCards.${index}`,
@@ -92,6 +93,12 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
 export const TEMPLATE_IMAGE_SLOT_MAP = Object.freeze({
   "panorama-landing": [
     { id: "panorama-hero", kind: "hero", label: "Hero image", description: "Main visual used in the top hero section." },
+    {
+      id: "panorama-residence",
+      kind: "residence",
+      label: "Residence image",
+      description: 'Image used in the "The residence" section below the hero.',
+    },
     { id: "panorama-gallery-primary", kind: "gallery", index: 0, label: "Gallery slot 1", description: "First image in the lower gallery strip." },
     { id: "panorama-gallery-secondary", kind: "gallery", index: 1, label: "Gallery slot 2", description: "Second image in the lower gallery strip." },
     { id: "panorama-gallery-tertiary", kind: "gallery", index: 2, label: "Gallery slot 3", description: "Third image in the lower gallery strip." },
@@ -207,6 +214,10 @@ export const getCollectionTargetId = (collectionKey, itemIndex) => {
 export const getImageSlotTargetId = (slot) => {
   if (slot.kind === "hero") {
     return EDITOR_TARGET_KEYS.images.hero;
+  }
+
+  if (slot.kind === "residence") {
+    return EDITOR_TARGET_KEYS.images.residence;
   }
 
   return EDITOR_TARGET_KEYS.images.gallery(slot.index);

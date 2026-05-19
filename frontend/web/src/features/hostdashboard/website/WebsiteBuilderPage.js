@@ -215,6 +215,11 @@ const mapImageOverridesToThumbnails = (contentOverrides, imageVariantMap) => {
     nextOverrides.heroImage = imageVariantMap.get(nextOverrides.heroImage) || nextOverrides.heroImage;
   }
 
+  if (nextOverrides.residenceImage) {
+    nextOverrides.residenceImage =
+      imageVariantMap.get(nextOverrides.residenceImage) || nextOverrides.residenceImage;
+  }
+
   if (Array.isArray(nextOverrides.galleryImages)) {
     nextOverrides.galleryImages = nextOverrides.galleryImages.map(
       (imageUrl) => imageVariantMap.get(imageUrl) || imageUrl
@@ -253,6 +258,9 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
     ? contentOverrides.galleryImages.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)
     : [];
   const heroImage = String(contentOverrides.heroImage || selectedGalleryImages[0] || placeholderImage).trim();
+  const residenceImage = String(
+    contentOverrides.residenceImage || selectedGalleryImages[0] || heroImage
+  ).trim();
   const galleryImages = [heroImage, ...selectedGalleryImages].filter(Boolean).slice(0, 5);
   const normalizedGalleryImages = galleryImages.length > 0 ? galleryImages : [placeholderImage];
   const previewImages = normalizedGalleryImages.slice(0, 3);
@@ -279,6 +287,7 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
       },
       media: {
         heroImage,
+        residenceImage,
         galleryImages: normalizedGalleryImages,
         previewImages,
         featuredGalleryImages: normalizedGalleryImages,

@@ -12,6 +12,7 @@ export const heroPropType = PropTypes.shape({
 
 export const mediaPropType = PropTypes.shape({
   heroImage: PropTypes.string,
+  residenceImage: PropTypes.string,
 });
 
 export const galleryPropType = PropTypes.shape({

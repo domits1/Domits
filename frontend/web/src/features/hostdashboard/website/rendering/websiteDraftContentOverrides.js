@@ -34,6 +34,7 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "contactButtonLabel",
   "visibility",
   "heroImage",
+  "residenceImage",
   "galleryImages",
   "amenitiesIconColor",
   "amenities",
@@ -167,6 +168,7 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
   ),
   images: {
     heroImage: "",
+    residenceImage: "",
     gallery: ["", "", ""],
   },
   amenitiesIconColor: getDefaultWebsiteAmenityIconColor(templateKey),
@@ -191,6 +193,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const contactBackgroundColorOverride = cleanText(overrides.contactBackgroundColor);
   const contactBackgroundColor = resolveWebsiteContactBackgroundColor(contactBackgroundColorOverride);
   const heroImage = cleanText(overrides.heroImage);
+  const residenceImage = cleanText(overrides.residenceImage);
   const amenitiesIconColorOverride = cleanText(overrides.amenitiesIconColor);
   const amenitiesIconColor = resolveWebsiteAmenityIconColor(
     amenitiesIconColorOverride || model?.amenities?.iconColor,
@@ -237,6 +240,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
     media: {
       ...model.media,
       heroImage: heroImage || model.media.heroImage,
+      residenceImage: residenceImage || model?.media?.residenceImage || model?.media?.heroImage,
       galleryImages: mergeGalleryImages(model?.media?.galleryImages, overrides.galleryImages),
       featuredGalleryImages: mergedGalleryImages,
       previewImages: mergedGalleryImages.slice(0, 3),
@@ -305,6 +309,7 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
   visibility: mergeVisibility({}, model?.visibility),
   images: {
     heroImage: String(model?.media?.heroImage || ""),
+    residenceImage: String(model?.media?.residenceImage || model?.media?.heroImage || ""),
     gallery: Array.from({ length: 3 }, (_, index) => String(model?.gallery?.images?.[index] || "")),
   },
   amenitiesIconColor: resolveWebsiteAmenityIconColor(model?.amenities?.iconColor, templateKey),
@@ -370,18 +375,18 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
   },
   {
     patchKey: "contactAvatarMode",
-    editorValue: (editorValues) =>
-      resolveWebsiteContactAvatarMode(
-        editorValues?.contact?.avatarMode,
-        WEBSITE_CONTACT_AVATAR_MODE_HOST
-      ),
+    editorValue: (editorValues, baseModel) =>
+      resolveComparableContactAvatarMode({
+        avatarMode: editorValues?.contact?.avatarMode,
+        avatarImage: editorValues?.contact?.avatarImage,
+        hasHostProfilePhoto: Boolean(cleanText(baseModel?.host?.profileImage)),
+      }),
     baseValue: (baseModel) =>
-      resolveWebsiteContactAvatarMode(
-        baseModel?.contactSection?.avatarMode,
-        cleanText(baseModel?.contactSection?.avatarImage)
-          ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-          : WEBSITE_CONTACT_AVATAR_MODE_HOST
-      ),
+      resolveComparableContactAvatarMode({
+        avatarMode: baseModel?.contactSection?.avatarMode,
+        avatarImage: baseModel?.contactSection?.avatarImage,
+        hasHostProfilePhoto: Boolean(cleanText(baseModel?.host?.profileImage)),
+      }),
   },
   {
     patchKey: "contactAvatarImage",
@@ -417,14 +422,40 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
     editorValue: (editorValues) => editorValues?.images?.heroImage,
     baseValue: (baseModel) => baseModel?.media?.heroImage,
   },
+  {
+    patchKey: "residenceImage",
+    editorValue: (editorValues) => editorValues?.images?.residenceImage,
+    baseValue: (baseModel) => baseModel?.media?.residenceImage,
+  },
 ]);
 
 const addTextOverride = (patch, field, editorValues, baseModel) => {
-  const normalizedEditorValue = cleanText(field.editorValue(editorValues));
+  const normalizedEditorValue = cleanText(field.editorValue(editorValues, baseModel));
 
   if (normalizedEditorValue && normalizedEditorValue !== cleanText(field.baseValue(baseModel))) {
     patch[field.patchKey] = normalizedEditorValue;
   }
+};
+
+const resolveComparableContactAvatarMode = ({
+  avatarMode,
+  avatarImage,
+  hasHostProfilePhoto,
+}) => {
+  const normalizedAvatarMode = resolveWebsiteContactAvatarMode(
+    avatarMode,
+    cleanText(avatarImage) ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM : WEBSITE_CONTACT_AVATAR_MODE_HOST
+  );
+
+  if (normalizedAvatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM) {
+    return WEBSITE_CONTACT_AVATAR_MODE_CUSTOM;
+  }
+
+  if (!hasHostProfilePhoto) {
+    return WEBSITE_CONTACT_AVATAR_MODE_HOST;
+  }
+
+  return normalizedAvatarMode;
 };
 
 const buildVisibilityPatch = (editorValues, baseModel) =>

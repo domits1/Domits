@@ -339,6 +339,7 @@
   background:
     linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.74)),
     linear-gradient(90deg, rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.12));
+  pointer-events: none;
 }
 
 .panoramaHeroInner {
@@ -347,12 +348,17 @@
   display: grid;
   align-items: end;
   padding: clamp(22px, 3.4vw, 42px);
+  pointer-events: none;
 }
 
 .panoramaHeroCopyBlock {
   display: grid;
   gap: 16px;
   max-width: min(720px, 100%);
+}
+
+.panoramaHeroCopyBlock > * {
+  pointer-events: auto;
 }
 
 .panoramaHeroEyebrow,
