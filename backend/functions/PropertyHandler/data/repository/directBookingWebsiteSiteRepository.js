@@ -110,9 +110,39 @@ const mapSiteRow = (row) => {
   };
 };
 
-export class StandaloneSiteRepository {
+export class DirectBookingWebsiteSiteRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
+  }
+
+  async deleteSiteByPropertyIdAndHostId(propertyId, hostId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+
+    const rows = await client.query(
+      `DELETE FROM ${tableName}
+      WHERE property_id = $1 AND host_id = $2
+      RETURNING
+        id,
+        property_id,
+        host_id,
+        site_name,
+        primary_locale,
+        status,
+        template_key,
+        published_property_snapshot_json,
+        published_content_overrides_json,
+        published_theme_overrides_json,
+        preview_token_hash,
+        published_at,
+        suspended_at,
+        created_at,
+        updated_at`,
+      [propertyId, hostId]
+    );
+
+    return mapSiteRow(rows?.[0] || null);
   }
 
   async upsertSite({

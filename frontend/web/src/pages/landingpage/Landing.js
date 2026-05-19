@@ -64,14 +64,16 @@ function Landing() {
     );
   }, [landingContent]);
 
-  const checkAuthentication = async () => {
-    try {
-      await Auth.currentAuthenticatedUser();
-      setIsAuthenticated(true);
-    } catch {
-      setIsAuthenticated(false);
-    }
-  };
+ const checkAuthentication = async () => {
+  try {
+    const user = await Auth.currentAuthenticatedUser();
+
+    setIsAuthenticated(true);
+    setGroup(user.attributes["custom:group"]);
+  } catch {
+    setIsAuthenticated(false);
+  }
+};
 
   const toggleOpen = (index) => {
     setFaqs((prev) =>
@@ -115,7 +117,10 @@ function Landing() {
     <main className="landing">
 
       <div id="hero">
-        <HeroSection landingContent={landingContent} />
+        <HeroSection landingContent={landingContent}
+         isAuthenticated={isAuthenticated}
+         group={group}
+        />
       </div>
 
       <div id="steps">

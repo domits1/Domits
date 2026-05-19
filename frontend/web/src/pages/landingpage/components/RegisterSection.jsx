@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import { ShieldCheck, FileText, CheckCircle, Banknote, Headphones, Globe } from "lucide-react";
@@ -10,6 +11,15 @@ const CARD_KEYS = ["verified", "rules", "how", "payments", "support", "renting"]
 
 function RegisterSection({ content }) {
   const navigate = useNavigate();
+  const { setFlowState } = useContext(FlowContext);
+
+  const handleRegisterProperty = () =>
+    startHostingFlow({
+      isAuthenticated,
+      group,
+      navigate,
+      setFlowState,
+    });
 
   return (
     <motion.section
@@ -45,7 +55,7 @@ function RegisterSection({ content }) {
         <motion.div className="register__cta" variants={fadeUp}>
           <button
             className="btn btn--primary"
-            onClick={() => navigate("/hostonboarding")}
+            onClick={handleRegisterProperty}
           >
             {content.cta}
           </button>

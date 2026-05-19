@@ -1,11 +1,22 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
+import FlowContext from "../../../services/FlowContext";
+import { startHostingFlow } from "../../../utils/hostFlow";
 
 function CtaSection({ content }) {
   const navigate = useNavigate();
+  const { setFlowState } = useContext(FlowContext);
+
+  const handleStartHosting = () =>
+    startHostingFlow({
+      isAuthenticated,
+      group,
+      navigate,
+      setFlowState,
+    });
 
   return (
     <motion.section
@@ -31,7 +42,7 @@ function CtaSection({ content }) {
 
         <motion.button
           className="btn btn--primary"
-          onClick={() => navigate("/hostonboarding")}
+          onClick={handleStartHosting}
           variants={fadeUp}
           whileHover={{ scale: 1.07 }}
           whileTap={{ scale: 0.97 }}

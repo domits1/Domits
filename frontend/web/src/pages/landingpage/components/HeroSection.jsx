@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
@@ -11,8 +11,10 @@ import vrboLogo from "../../../images/vrbo-logo.svg";
 import domitsLogo from "../../../images/domits-logo.svg";
 import heroImage from "../../../images/hero-image.svg";
 import checkIcon from "../../../images/check-icon.svg";
+import FlowContext from "../../../services/FlowContext";
+import { startHostingFlow } from "../../../utils/hostFlow";
 
-function HeroSection({ landingContent }) {
+function HeroSection({ landingContent, isAuthenticated, group }) {
   const navigate = useNavigate();
   const h = landingContent.hero;
 
@@ -46,7 +48,7 @@ function HeroSection({ landingContent }) {
           <motion.div className="hero__actions" variants={fadeUp}>
             <motion.button
               className="btn btn--primary"
-              onClick={() => navigate("/register")}
+              onClick={handleStartHosting}
               whileHover={{ scale: 1.05 }}
             >
               {h.primaryButton}

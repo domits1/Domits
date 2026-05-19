@@ -1,7 +1,9 @@
-# Standalone Property Site Design Pack
+# Direct Booking Website Design Pack
+
+> Naming note: this feature is now named **Direct Booking Website**. This document still references legacy `standalone_*` table and migration names where it needs to describe the deployed storage model.
 
 ## Description
-This document defines the v1 design pack for Domits standalone property sites. It is intended to be implementation-ready for another engineer without leaving core policy, interface, or rollout decisions undefined.
+This document defines the v1 design pack for Domits direct booking websites. It is intended to be implementation-ready for another engineer without leaving core policy, interface, or rollout decisions undefined.
 
 ## Metadata
 **Owner:** Product / Engineering
@@ -10,14 +12,14 @@ This document defines the v1 design pack for Domits standalone property sites. I
 
 **Last Updated:** 2026-05-11
 
-**Related Architecture Decision:** [ADR - Standalone Property Site V1](./standalone_property_site_adr.md)
+**Related Architecture Decision:** [ADR - Direct Booking Website V1](./direct_booking_website_adr.md)
 
 ## Summary
-V1 is the foundation release for standalone property sites. It is intentionally small so Domits can lay down a clean, secure, maintainable base for later iteration in v2.
+V1 is the foundation release for direct booking websites. It is intentionally small so Domits can lay down a clean, secure, maintainable base for later iteration in v2.
 
 V1 foundation includes:
 
-- one standalone site per property
+- one direct booking website per property
 - a single multi-tenant frontend runtime
 - PMS as the upstream source for descriptive property-content import
 - PMS as the upstream source for availability snapshot import
@@ -85,7 +87,7 @@ V1 includes:
   - fallback subdomain
   - publish / unpublish
 - First-party analytics events
-- Separate standalone site state model
+- Separate direct booking website state model
 - Separate domain state model for fallback subdomains
 - Publish-time import of PMS descriptive content into standalone-owned render data
 - Site language and tooling baseline:
@@ -281,7 +283,7 @@ Future only:
 | Table | Purpose |
 |------|------|
 | `main.standalone_site_draft` | working host draft plus published-draft overrides for internal preview |
-| `main.standalone_site` | published standalone site snapshot and lifecycle |
+| `main.standalone_site` | published direct booking website snapshot and lifecycle |
 | `main.standalone_site_domain` | fallback-domain record now, custom-domain record later |
 | `main.standalone_site_event` | lifecycle and KPI event stream |
 
@@ -353,7 +355,7 @@ Example when the suffix is configured as `direct.domits.com`:
 Rules:
 - `site-slug` is generated from `site_name`
 - `site-id-short` is a stable short suffix from the site ID
-- the suffix is controlled by `STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX`
+- the suffix is controlled by `DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX`
 - the fallback domain is stored in `main.standalone_site_domain`
 - the fallback domain does not auto-change when `site_name` changes
 
@@ -542,7 +544,7 @@ Rules:
 
 ### `GET /public/sites/resolve`
 
-**Purpose:** resolve incoming host to a published standalone site
+**Purpose:** resolve incoming host to a published direct booking website
 
 **Input**
 - `Host` header from the request
@@ -809,7 +811,7 @@ sequenceDiagram
     participant ContentTable as standalone_site_content
     participant ThemeTable as standalone_site_theme
 
-    Guest->>Browser: request standalone site
+    Guest->>Browser: request direct booking website
     Browser->>ResolveAPI: GET /public/sites/resolve with Host header
     ResolveAPI->>DomainTable: find domain
     DomainTable-->>ResolveAPI: site_id
@@ -1280,22 +1282,22 @@ Safe order:
 ## 15. Diagram Prompts For Another LLM
 
 ### System context diagram prompt
-Create a clean software architecture context diagram for the v1 foundation of Domits standalone property sites. Show these components and relationships: Host Dashboard, Standalone Site Admin Config, Public Standalone Site App (single multi-tenant frontend), Site Resolve API, Public Site Render API, Public Quote API, PMS Property Import API, Pricing/Availability Service, Aurora main schema, S3 asset storage, Domain/DNS layer, Analytics/KPI pipeline. Indicate PMS as the upstream source for descriptive property-content import and the live source of truth for pricing, availability, and bookings. Indicate standalone layer owns template config, published property snapshots, branding, publish state, preview, domain records, primary locale, and analytics events.
+Create a clean software architecture context diagram for the v1 foundation of Domits direct booking websites. Show these components and relationships: Host Dashboard, Standalone Site Admin Config, Public Standalone Site App (single multi-tenant frontend), Site Resolve API, Public Site Render API, Public Quote API, PMS Property Import API, Pricing/Availability Service, Aurora main schema, S3 asset storage, Domain/DNS layer, Analytics/KPI pipeline. Indicate PMS as the upstream source for descriptive property-content import and the live source of truth for pricing, availability, and bookings. Indicate standalone layer owns template config, published property snapshots, branding, publish state, preview, domain records, primary locale, and analytics events.
 
 ### ERD prompt
-Create an ERD for a standalone property site platform. Include tables: standalone_site, standalone_site_theme, standalone_site_content, standalone_site_section, standalone_site_domain, standalone_site_event, and a referenced PMS property entity. Show one standalone site per property, one-to-one theme/content, one-to-many sections/domains/events. Mark PMS-owned entities separately from standalone-owned entities. Include primary_locale and property_timezone on the site record, and property_snapshot_json on the standalone_site_content record.
+Create an ERD for a direct booking website platform. Include tables: standalone_site, standalone_site_theme, standalone_site_content, standalone_site_section, standalone_site_domain, standalone_site_event, and a referenced PMS property entity. Show one direct booking website per property, one-to-one theme/content, one-to-many sections/domains/events. Mark PMS-owned entities separately from standalone-owned entities. Include primary_locale and property_timezone on the site record, and property_snapshot_json on the standalone_site_content record.
 
 ### Publish sequence prompt
-Create a sequence diagram for publishing a Domits standalone property site. Actors: Host, Host Dashboard, Standalone Site Config API, PMS Eligibility Check, PMS Property Import API, Aurora main standalone tables, Domain Service, Preview/Public Renderer. Flow: host configures template/branding, system validates PMS property eligibility, imports descriptive PMS property content into a published snapshot, writes standalone_site config, generates fallback subdomain, sets status to PREVIEW or PUBLISHED, renderer becomes available.
+Create a sequence diagram for publishing a Domits direct booking website. Actors: Host, Host Dashboard, Standalone Site Config API, PMS Eligibility Check, PMS Property Import API, Aurora main standalone tables, Domain Service, Preview/Public Renderer. Flow: host configures template/branding, system validates PMS property eligibility, imports descriptive PMS property content into a published snapshot, writes standalone_site config, generates fallback subdomain, sets status to PREVIEW or PUBLISHED, renderer becomes available.
 
 ### Resolve host sequence prompt
-Create a sequence diagram for resolving a public request to a Domits standalone site. Actors: Guest Browser, Public Renderer, Site Resolve API, standalone_site_domain table, standalone_site table, Public Site Render API, standalone_site_content table, standalone_site_theme table. Flow: request arrives with host, resolve host to site, validate site status, load standalone site config, load published property snapshot, return render model. Include failure branches for unknown host and suspended site.
+Create a sequence diagram for resolving a public request to a Domits direct booking website. Actors: Guest Browser, Public Renderer, Site Resolve API, standalone_site_domain table, standalone_site table, Public Site Render API, standalone_site_content table, standalone_site_theme table. Flow: request arrives with host, resolve host to site, validate site status, load direct booking website config, load published property snapshot, return render model. Include failure branches for unknown host and suspended site.
 
 ### Quote sequence prompt
-Create a sequence diagram for the v1 guest quote flow on a Domits standalone site. Actors: Guest Browser, Public Renderer, Quote API, Site Config Store, PMS Availability Service, PMS Pricing Service, Analytics Event Store. Flow: guest selects dates/guests, renderer sends quote request, server resolves site and property linkage, checks availability window and restrictions live against PMS, computes authoritative price server-side, returns quote with expiry and breakdown, stores analytics event. Make clear that descriptive page content is already baked into standalone-owned published content and is not fetched from PMS in this flow.
+Create a sequence diagram for the v1 guest quote flow on a Domits direct booking website. Actors: Guest Browser, Public Renderer, Quote API, Site Config Store, PMS Availability Service, PMS Pricing Service, Analytics Event Store. Flow: guest selects dates/guests, renderer sends quote request, server resolves site and property linkage, checks availability window and restrictions live against PMS, computes authoritative price server-side, returns quote with expiry and breakdown, stores analytics event. Make clear that descriptive page content is already baked into standalone-owned published content and is not fetched from PMS in this flow.
 
 ### V2 checkout and confirmation prompt
-Create a sequence diagram for the v2 extension of Domits standalone property sites: checkout, booking creation, and confirmation. Actors: Guest Browser, Checkout API, Quote Validator, PMS Availability/Pricing Service, Payment Service, Booking API, Booking Service, Confirmation API, Analytics Event Store. Show quote revalidation before booking creation, idempotency key handling, booking source attribution as STANDALONE_SITE, confirmation token usage, and failure branch when quote becomes stale.
+Create a sequence diagram for the v2 extension of Domits direct booking websites: checkout, booking creation, and confirmation. Actors: Guest Browser, Checkout API, Quote Validator, PMS Availability/Pricing Service, Payment Service, Booking API, Booking Service, Confirmation API, Analytics Event Store. Show quote revalidation before booking creation, idempotency key handling, booking source attribution as STANDALONE_SITE, confirmation token usage, and failure branch when quote becomes stale.
 
 ### State diagram prompt
 Create a state diagram for standalone_site.status with states DRAFT, PREVIEW, PUBLISHED, SUSPENDED. Show transitions for create, preview enable, publish, unpublish, suspend, restore. Keep site status independent from PMS property listing status.
@@ -1304,16 +1306,16 @@ Create a state diagram for standalone_site.status with states DRAFT, PREVIEW, PU
 Create a state diagram for standalone_site_domain.status with states PENDING, VERIFIED, ACTIVE, FAILED, DISABLED. Show fallback subdomain activation path and a future custom-domain verification path.
 
 ### Domain lifecycle prompt
-Create a lifecycle diagram for domains in a standalone property site platform. Include generated fallback subdomain, DNS/verification step for future custom domains, activation, failure handling, and fallback-domain continuity when custom domain fails.
+Create a lifecycle diagram for domains in a direct booking website platform. Include generated fallback subdomain, DNS/verification step for future custom domains, activation, failure handling, and fallback-domain continuity when custom domain fails.
 
 ### Ownership matrix prompt
-Create a two-column ownership matrix for a standalone property site platform. Left column: PMS-owned data such as property content, images, location, amenities, pricing, availability, availability window, timezone, bookings. Right column: standalone-owned data such as template config, theme tokens, branding, publish status, preview token, domain mapping, analytics events, content overrides.
+Create a two-column ownership matrix for a direct booking website platform. Left column: PMS-owned data such as property content, images, location, amenities, pricing, availability, availability window, timezone, bookings. Right column: standalone-owned data such as template config, theme tokens, branding, publish status, preview token, domain mapping, analytics events, content overrides.
 
 ### Risk/threat matrix prompt
-Create a risk and threat matrix for Domits standalone property sites. Include stale quote, domain misconfiguration, tenant data leak, schema drift to public, cache keyed to wrong host, spoofed host header, price tampering, brute-force abuse, quote replay, CSP/XSS issues. For each, show cause, impact, mitigation, and detection.
+Create a risk and threat matrix for Domits direct booking websites. Include stale quote, domain misconfiguration, tenant data leak, schema drift to public, cache keyed to wrong host, spoofed host header, price tampering, brute-force abuse, quote replay, CSP/XSS issues. For each, show cause, impact, mitigation, and detection.
 
 ### Failure-mode table prompt
-Create a failure-mode table for Domits standalone property sites. Include: custom domain broken, pricing service unavailable, property unpublished in PMS, site published but template version missing, unknown host, stale quote. For each, show expected fallback behavior, user-facing response, logging requirement, and alerting need.
+Create a failure-mode table for Domits direct booking websites. Include: custom domain broken, pricing service unavailable, property unpublished in PMS, site published but template version missing, unknown host, stale quote. For each, show expected fallback behavior, user-facing response, logging requirement, and alerting need.
 
 ---
 
@@ -1325,7 +1327,7 @@ Create a failure-mode table for Domits standalone property sites. Include: custo
 - PMS-owned descriptive content is imported into standalone-owned published snapshots at publish or refresh time
 - fallback subdomains are in v1; custom domains are later
 - first-party event collection is the KPI source
-- one standalone site per property in v1
+- one direct booking website per property in v1
 - preview is tokenized and private
 - English is the only supported primary site language in v1; full multilingual support is later
 - implementation tooling stays aligned with the current Domits stack

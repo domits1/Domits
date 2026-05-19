@@ -1,6 +1,7 @@
 import { sendUnifiedMessage } from "../../hostmessages/services/messagingService";
 
-const VISITOR_ID_STORAGE_KEY = "domits_standalone_visitor_id";
+const DIRECT_BOOKING_WEBSITE_VISITOR_ID_STORAGE_KEY = "domits_direct_booking_website_visitor_id";
+const LEGACY_STANDALONE_VISITOR_ID_STORAGE_KEY = "domits_standalone_visitor_id";
 
 const cleanText = (value) => String(value || "").trim();
 
@@ -32,13 +33,17 @@ const getOrCreateVisitorId = () => {
     return createVisitorId();
   }
 
-  const existingVisitorId = cleanText(storage.getItem(VISITOR_ID_STORAGE_KEY));
+  const existingVisitorId = cleanText(
+    storage.getItem(DIRECT_BOOKING_WEBSITE_VISITOR_ID_STORAGE_KEY) ||
+      storage.getItem(LEGACY_STANDALONE_VISITOR_ID_STORAGE_KEY)
+  );
   if (existingVisitorId) {
+    storage.setItem(DIRECT_BOOKING_WEBSITE_VISITOR_ID_STORAGE_KEY, existingVisitorId);
     return existingVisitorId;
   }
 
   const nextVisitorId = createVisitorId();
-  storage.setItem(VISITOR_ID_STORAGE_KEY, nextVisitorId);
+  storage.setItem(DIRECT_BOOKING_WEBSITE_VISITOR_ID_STORAGE_KEY, nextVisitorId);
   return nextVisitorId;
 };
 
@@ -75,7 +80,7 @@ export const sendWebsiteContactMessage = async ({ model, name, email, message })
     guestId: visitorId,
     metadata: {
       isAutomated: false,
-      source: "STANDALONE_WEBSITE_WIDGET",
+      source: "DIRECT_BOOKING_WEBSITE_WIDGET",
       visitorName,
       visitorEmail: visitorEmail || null,
     },

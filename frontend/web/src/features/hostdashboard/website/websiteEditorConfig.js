@@ -131,7 +131,7 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
   {
     id: EDITOR_SECTION_KEYS.theme,
     title: "Theme",
-    description: "Loading standalone website theme selections.",
+    description: "Loading direct booking website theme selections.",
   },
   {
     id: EDITOR_SECTION_KEYS.images,

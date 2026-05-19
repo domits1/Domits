@@ -1692,7 +1692,7 @@ function WebsiteBuilderPage() {
             <p className={styles.eyebrow}>Standalone property website</p>
             <h1 className={styles.heroTitle}>Build your own free website for one of your listings</h1>
             <p className={styles.heroDescription}>
-              Choose one of your Domits listings to start a standalone website. We use the property
+              Choose one of your Domits listings to start a direct booking website. We use the property
               information you already manage in Domits, so the website setup begins from real listing data
               instead of manual re-entry.
             </p>
