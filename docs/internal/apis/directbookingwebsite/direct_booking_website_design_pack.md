@@ -1,42 +1,61 @@
-# Standalone Property Site Design Pack
+# Direct Booking Website Design Pack
+
+> Naming note: this feature is now named **Direct Booking Website**. This document still references legacy `standalone_*` table and migration names where it needs to describe the deployed storage model.
 
 ## Description
-This document defines the v1 design pack for Domits standalone property sites. It is intended to be implementation-ready for another engineer without leaving core policy, interface, or rollout decisions undefined.
+This document defines the v1 design pack for Domits direct booking websites. It is intended to be implementation-ready for another engineer without leaving core policy, interface, or rollout decisions undefined.
 
 ## Metadata
 **Owner:** Product / Engineering
 
-**Status:** Proposed
+**Status:** Mixed - implemented foundation plus forward design
 
-**Last Updated:** 2026-03-20
+**Last Updated:** 2026-05-11
 
-**Related Architecture Decision:** [ADR - Standalone Property Site V1](./standalone_property_site_adr.md)
+**Related Architecture Decision:** [ADR - Direct Booking Website V1](./direct_booking_website_adr.md)
 
 ## Summary
-V1 is the foundation release for standalone property sites. It is intentionally small so Domits can lay down a clean, secure, maintainable base for later iteration in v2.
+V1 is the foundation release for direct booking websites. It is intentionally small so Domits can lay down a clean, secure, maintainable base for later iteration in v2.
 
 V1 foundation includes:
 
-- one standalone site per property
+- one direct booking website per property
 - a single multi-tenant frontend runtime
 - PMS as the upstream source for descriptive property-content import
-- PMS as the live source of truth for pricing, availability, and bookings
+- PMS as the upstream source for availability snapshot import
 - standalone-owned site config, published content snapshots, and publish state
 - fallback Domits subdomain in v1
 - custom domains designed now, implemented later
 - first-party analytics events for KPI reporting
 - baked published page content for public render after publish
-- live PMS reads only for quote pricing and availability
+- internal preview route plus separate published live-site runtime
 - a target guest flow that covers property detail, availability check, and price calculation
 - an explicit language and tooling choice aligned with Domits constraints
 - no payment checkout, booking creation, or public confirmation in v1
 
 V2 extends this foundation with:
 
+- authoritative quote APIs
 - booking funnel
 - booking creation
 - public confirmation
 - booking-specific telemetry and rollout steps
+
+## Implementation Alignment Note (2026-05-11)
+The current implementation has moved beyond the older `live preview` terminology. The active runtime model is:
+
+- internal draft preview at `/website-preview/:draftId`
+- published live-site state in `main.standalone_site`
+- published domain state in `main.standalone_site_domain`
+- same-origin debug route at `/website-live/:domain`
+- host-based live-site rendering when the current hostname matches the configured fallback-domain suffix
+
+Important alignment points for the rest of this document:
+
+- The currently implemented schema uses `standalone_site`, `standalone_site_domain`, `standalone_site_draft`, and `standalone_site_event`.
+- Earlier split-table ideas such as `standalone_site_theme`, `standalone_site_content`, and `standalone_site_section` are not the current implementation.
+- Custom-domain support is not implemented yet, even though `standalone_site_domain.domain_type` already allows `CUSTOM`.
+- Quote, checkout, and booking sections later in this document remain forward design, not current runtime behavior.
 
 ---
 
@@ -64,17 +83,11 @@ V1 includes:
   - enabled sections
   - contact info
   - cancellation / policy content
-  - preview URL
+  - internal preview URL
   - fallback subdomain
   - publish / unpublish
-- Server-side quote flow:
-  - availability check
-  - pricing quote
-  - availability window validation
-  - restriction validation
-  - quote expiry metadata
 - First-party analytics events
-- Separate standalone site state model
+- Separate direct booking website state model
 - Separate domain state model for fallback subdomains
 - Publish-time import of PMS descriptive content into standalone-owned render data
 - Site language and tooling baseline:
@@ -94,17 +107,18 @@ V1 does not include:
 - full multilingual SEO platform
 - public host chat
 - custom domain implementation
+- public quote API
 
 ### Delivery sequencing
 Delivery is staged so v1 stays foundation-first:
 
 - V1 foundation:
   - property detail page
-  - preview and publish flow
+  - internal preview and publish flow
   - fallback domain
-  - server-side availability and quote
   - analytics and observability baseline
 - V2 extension:
+  - quote API
   - checkout session
   - booking creation
   - booking confirmation
@@ -180,9 +194,9 @@ flowchart LR
 
 ### Site state rules
 - Site status is independent from PMS property `ACTIVE`, `INACTIVE`, and `ARCHIVED`.
-- Publishing requires a PMS eligibility check.
+- Publishing requires listing data to be loadable for snapshot creation.
 - PMS ineligibility after publish does not silently mutate standalone records; it changes public behavior according to the failure-mode table.
-- Preview never enables later booking flows by default.
+- The current UI still uses `/website-preview/:draftId` for internal preview instead of a standalone-site `PREVIEW` runtime.
 
 ```mermaid
 stateDiagram-v2
@@ -264,150 +278,113 @@ Future only:
 
 ## 5. Data Model
 
-### Table overview
+### Current implemented table overview
 
 | Table | Purpose |
 |------|------|
-| `main.standalone_site` | core site record, property linkage, quote-facing timezone, and lifecycle |
-| `main.standalone_site_theme` | one-to-one branding tokens and asset keys |
-| `main.standalone_site_content` | one-to-one published property snapshot, overrides, and contact info |
-| `main.standalone_site_section` | enabled sections and ordering |
-| `main.standalone_site_domain` | fallback and future custom-domain mapping |
-| `main.standalone_site_event` | raw event store for KPI and auditability |
+| `main.standalone_site_draft` | working host draft plus published-draft overrides for internal preview |
+| `main.standalone_site` | published direct booking website snapshot and lifecycle |
+| `main.standalone_site_domain` | fallback-domain record now, custom-domain record later |
+| `main.standalone_site_event` | lifecycle and KPI event stream |
 
-### Proposed schema
+### Current implemented schema
 
-```sql
-CREATE TABLE IF NOT EXISTS main.standalone_site (
-  id VARCHAR(255) NOT NULL,
-  property_id VARCHAR(255) NOT NULL,
-  host_id VARCHAR(255) NOT NULL,
-  site_name VARCHAR(255) NOT NULL,
-  primary_locale VARCHAR(32) NOT NULL,
-  property_timezone VARCHAR(64) NOT NULL,
-  status VARCHAR(32) NOT NULL,
-  template_key VARCHAR(255) NOT NULL,
-  template_version VARCHAR(64) NOT NULL,
-  preview_token_hash VARCHAR(255),
-  published_at BIGINT,
-  suspended_at BIGINT,
-  created_at BIGINT NOT NULL,
-  updated_at BIGINT NOT NULL,
-  PRIMARY KEY (id)
-);
-CREATE UNIQUE INDEX ASYNC standalone_site_property_unique
-  ON main.standalone_site (property_id);
-CREATE INDEX ASYNC standalone_site_host_idx
-  ON main.standalone_site (host_id);
-CREATE INDEX ASYNC standalone_site_status_idx
-  ON main.standalone_site (status);
+`main.standalone_site_draft`
+- `id`
+- `property_id`
+- `host_id`
+- `template_key`
+- `status`
+- `content_overrides_json`
+- `theme_overrides_json`
+- `published_content_overrides_json`
+- `published_theme_overrides_json`
+- `created_at`
+- `updated_at`
+- `last_preview_built_at`
 
-CREATE TABLE IF NOT EXISTS main.standalone_site_theme (
-  site_id VARCHAR(255) NOT NULL,
-  logo_asset_key TEXT,
-  favicon_asset_key TEXT,
-  theme_tokens_json TEXT NOT NULL,
-  updated_at BIGINT NOT NULL,
-  PRIMARY KEY (site_id)
-);
+`main.standalone_site`
+- `id`
+- `property_id`
+- `host_id`
+- `site_name`
+- `primary_locale`
+- `status`
+- `template_key`
+- `published_property_snapshot_json`
+- `published_content_overrides_json`
+- `published_theme_overrides_json`
+- `preview_token_hash`
+- `published_at`
+- `suspended_at`
+- `created_at`
+- `updated_at`
 
-CREATE TABLE IF NOT EXISTS main.standalone_site_content (
-  site_id VARCHAR(255) NOT NULL,
-  property_snapshot_json TEXT NOT NULL,
-  contact_name VARCHAR(255),
-  contact_email VARCHAR(255),
-  contact_phone VARCHAR(255),
-  policy_content TEXT,
-  content_overrides_json TEXT NOT NULL,
-  updated_at BIGINT NOT NULL,
-  PRIMARY KEY (site_id)
-);
+`main.standalone_site_domain`
+- `id`
+- `site_id`
+- `domain`
+- `domain_type`
+- `status`
+- `is_primary`
+- `verification_details_json`
+- `last_checked_at`
+- `created_at`
+- `updated_at`
 
-CREATE TABLE IF NOT EXISTS main.standalone_site_section (
-  site_id VARCHAR(255) NOT NULL,
-  section_key VARCHAR(255) NOT NULL,
-  is_enabled BOOLEAN NOT NULL,
-  sort_order INTEGER NOT NULL,
-  updated_at BIGINT NOT NULL,
-  PRIMARY KEY (site_id, section_key)
-);
-CREATE INDEX ASYNC standalone_site_section_sort_idx
-  ON main.standalone_site_section (site_id, sort_order);
-
-CREATE TABLE IF NOT EXISTS main.standalone_site_domain (
-  id VARCHAR(255) NOT NULL,
-  site_id VARCHAR(255) NOT NULL,
-  domain VARCHAR(255) NOT NULL,
-  domain_type VARCHAR(32) NOT NULL,
-  status VARCHAR(32) NOT NULL,
-  is_primary BOOLEAN NOT NULL,
-  verification_details_json TEXT NOT NULL,
-  last_checked_at BIGINT,
-  created_at BIGINT NOT NULL,
-  updated_at BIGINT NOT NULL,
-  PRIMARY KEY (id)
-);
-CREATE UNIQUE INDEX ASYNC standalone_site_domain_unique
-  ON main.standalone_site_domain (domain);
-CREATE INDEX ASYNC standalone_site_domain_site_idx
-  ON main.standalone_site_domain (site_id);
-CREATE INDEX ASYNC standalone_site_domain_status_idx
-  ON main.standalone_site_domain (status);
-
-CREATE TABLE IF NOT EXISTS main.standalone_site_event (
-  id VARCHAR(255) NOT NULL,
-  site_id VARCHAR(255) NOT NULL,
-  event_type VARCHAR(255) NOT NULL,
-  session_id VARCHAR(255),
-  request_id VARCHAR(255),
-  host VARCHAR(255),
-  path TEXT,
-  quote_id VARCHAR(255),
-  property_id VARCHAR(255),
-  occurred_at BIGINT NOT NULL,
-  payload_json TEXT NOT NULL,
-  PRIMARY KEY (id)
-);
-CREATE INDEX ASYNC standalone_site_event_site_idx
-  ON main.standalone_site_event (site_id);
-CREATE INDEX ASYNC standalone_site_event_occurred_idx
-  ON main.standalone_site_event (occurred_at);
-CREATE INDEX ASYNC standalone_site_event_type_idx
-  ON main.standalone_site_event (event_type);
-```
+`main.standalone_site_event`
+- event stream for builder metrics, preview telemetry, live-site telemetry, and publish lifecycle tracking
 
 ### Data model policy
-- `property_id` is unique in `main.standalone_site`; one site per property in v1.
-- `preview_token_hash` stores only a hash, never the raw preview token.
+- `property_id` is unique in both draft and site tables; v1 still assumes one site per property.
+- Published brochure content lives in `main.standalone_site`, not in the draft row.
+- Draft-specific internal preview state still lives in `main.standalone_site_draft`.
+- `main.standalone_site_domain.domain_type` already supports `FALLBACK` and `CUSTOM`, but only fallback-domain behavior is implemented today.
 - JSON fields are stored as validated JSON strings in `TEXT` columns to stay aligned with current Domits patterns.
 - All standalone reads and writes must explicitly target `main`.
 
 ### Fallback domain generation
-V1 fallback domains use this format:
+The implemented fallback-domain label uses this format:
 
-`{site-slug}-{site-id-short}.stay.domits.com`
+`{site-slug}-{site-id-short}.{configured-fallback-suffix}`
+
+Example when the suffix is configured as `direct.domits.com`:
+
+`santorini-cliff-4f2a6c9e.direct.domits.com`
 
 Rules:
 - `site-slug` is generated from `site_name`
 - `site-id-short` is a stable short suffix from the site ID
-- fallback domain is stored in `main.standalone_site_domain`
-- fallback domain does not auto-change when `site_name` changes
+- the suffix is controlled by `DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX`
+- the fallback domain is stored in `main.standalone_site_domain`
+- the fallback domain does not auto-change when `site_name` changes
 
-### ERD
+### Current ERD
 
 ```mermaid
 erDiagram
+    PMS_PROPERTY ||--|| STANDALONE_SITE_DRAFT : seeds
     PMS_PROPERTY ||--|| STANDALONE_SITE : backs
-    STANDALONE_SITE ||--|| STANDALONE_SITE_THEME : has
-    STANDALONE_SITE ||--|| STANDALONE_SITE_CONTENT : has
-    STANDALONE_SITE ||--o{ STANDALONE_SITE_SECTION : has
     STANDALONE_SITE ||--o{ STANDALONE_SITE_DOMAIN : resolves
     STANDALONE_SITE ||--o{ STANDALONE_SITE_EVENT : records
 
     PMS_PROPERTY {
       varchar id
-      varchar title
       varchar host_id
+    }
+    STANDALONE_SITE_DRAFT {
+      varchar id PK
+      varchar property_id
+      varchar host_id
+      varchar template_key
+      varchar status
+      text content_overrides_json
+      text theme_overrides_json
+      text published_content_overrides_json
+      text published_theme_overrides_json
+      bigint created_at
+      bigint updated_at
+      bigint last_preview_built_at
     }
     STANDALONE_SITE {
       varchar id PK
@@ -415,38 +392,15 @@ erDiagram
       varchar host_id
       varchar site_name
       varchar primary_locale
-      varchar property_timezone
       varchar status
       varchar template_key
-      varchar template_version
+      text published_property_snapshot_json
+      text published_content_overrides_json
+      text published_theme_overrides_json
       varchar preview_token_hash
       bigint published_at
       bigint suspended_at
       bigint created_at
-      bigint updated_at
-    }
-    STANDALONE_SITE_THEME {
-      varchar site_id PK
-      text logo_asset_key
-      text favicon_asset_key
-      text theme_tokens_json
-      bigint updated_at
-    }
-    STANDALONE_SITE_CONTENT {
-      varchar site_id PK
-      text property_snapshot_json
-      varchar contact_name
-      varchar contact_email
-      varchar contact_phone
-      text policy_content
-      text content_overrides_json
-      bigint updated_at
-    }
-    STANDALONE_SITE_SECTION {
-      varchar site_id PK
-      varchar section_key PK
-      boolean is_enabled
-      int sort_order
       bigint updated_at
     }
     STANDALONE_SITE_DOMAIN {
@@ -465,12 +419,6 @@ erDiagram
       varchar id PK
       varchar site_id
       varchar event_type
-      varchar session_id
-      varchar request_id
-      varchar host
-      text path
-      varchar quote_id
-      varchar property_id
       bigint occurred_at
       text payload_json
     }
@@ -487,8 +435,8 @@ erDiagram
 | Data source | Must render standalone-owned published property content snapshots |
 | Theme source | Must read standalone theme tokens |
 | Sections | Must support section enable/disable and ordering |
-| CTA contract | Must expose a consistent availability and quote CTA |
-| Route contract | Must support property page and preview route in v1 |
+| CTA contract | Must expose a consistent availability / booking-intent CTA without requiring client-owned pricing logic |
+| Route contract | Must support property page, internal preview route, and published live-site route in the current foundation |
 | Language support | Must render English as the only supported primary site language in v1 and keep template copy localizable for later locales |
 | Accessibility | Must support keyboard navigation, semantic headings, contrast-safe tokens |
 | Analytics | Must emit shared standalone event names |
@@ -557,6 +505,14 @@ erDiagram
 
 ## 8. Public API Contract
 
+### Alignment note
+The current shipped APIs for public site behavior are:
+
+- `GET /property/website/public/resolve`
+- `GET /property/website/public/render`
+
+The quote, checkout, booking, and tokenized preview endpoints described later in this section remain forward design only.
+
 ### Common response rules
 - Money is returned in minor units as integers.
 - Dates are ISO date strings in the property timezone context.
@@ -588,7 +544,7 @@ Rules:
 
 ### `GET /public/sites/resolve`
 
-**Purpose:** resolve incoming host to a published standalone site
+**Purpose:** resolve incoming host to a published direct booking website
 
 **Input**
 - `Host` header from the request
@@ -603,7 +559,7 @@ Rules:
   "status": "PUBLISHED",
   "templateKey": "editorial-split",
   "templateVersion": "1.0.0",
-  "primaryDomain": "santorini-cliff-4f2a6c9e.stay.domits.com",
+  "primaryDomain": "santorini-cliff-4f2a6c9e.direct.domits.com",
   "primaryLocale": "nl-NL",
   "timezone": "Europe/Athens"
 }
@@ -635,7 +591,7 @@ Rules:
     "status": "PUBLISHED",
     "templateKey": "editorial-split",
     "templateVersion": "1.0.0",
-    "primaryDomain": "santorini-cliff-4f2a6c9e.stay.domits.com",
+    "primaryDomain": "santorini-cliff-4f2a6c9e.direct.domits.com",
     "primaryLocale": "nl-NL"
   },
   "theme": {
@@ -855,7 +811,7 @@ sequenceDiagram
     participant ContentTable as standalone_site_content
     participant ThemeTable as standalone_site_theme
 
-    Guest->>Browser: request standalone site
+    Guest->>Browser: request direct booking website
     Browser->>ResolveAPI: GET /public/sites/resolve with Host header
     ResolveAPI->>DomainTable: find domain
     DomainTable-->>ResolveAPI: site_id
@@ -1004,7 +960,7 @@ Raw events are written to `main.standalone_site_event`.
 | `time_to_publish_p95` | delta between `publish_requested` and `publish_succeeded` by site |
 | `quote_to_charge_mismatch_rate` | v2 only: compare quoted total vs final successful booking charge |
 | `booking_api_error_rate` | v2 only: booking failures divided by booking attempts |
-| `site_lcp_mobile_p75` | frontend web-vitals telemetry stored as events |
+| `site_lcp_p75_{mobile|tablet|desktop}` | frontend web-vitals telemetry stored as viewport-specific events |
 | `cost_per_active_site_per_month` | infra cost allocation divided by active published sites |
 | `fallback_subdomain_availability` | synthetic checks plus successful resolve events |
 | `custom_domain_setup_success_rate` | future domain state transitions |
@@ -1326,22 +1282,22 @@ Safe order:
 ## 15. Diagram Prompts For Another LLM
 
 ### System context diagram prompt
-Create a clean software architecture context diagram for the v1 foundation of Domits standalone property sites. Show these components and relationships: Host Dashboard, Standalone Site Admin Config, Public Standalone Site App (single multi-tenant frontend), Site Resolve API, Public Site Render API, Public Quote API, PMS Property Import API, Pricing/Availability Service, Aurora main schema, S3 asset storage, Domain/DNS layer, Analytics/KPI pipeline. Indicate PMS as the upstream source for descriptive property-content import and the live source of truth for pricing, availability, and bookings. Indicate standalone layer owns template config, published property snapshots, branding, publish state, preview, domain records, primary locale, and analytics events.
+Create a clean software architecture context diagram for the v1 foundation of Domits direct booking websites. Show these components and relationships: Host Dashboard, Standalone Site Admin Config, Public Standalone Site App (single multi-tenant frontend), Site Resolve API, Public Site Render API, Public Quote API, PMS Property Import API, Pricing/Availability Service, Aurora main schema, S3 asset storage, Domain/DNS layer, Analytics/KPI pipeline. Indicate PMS as the upstream source for descriptive property-content import and the live source of truth for pricing, availability, and bookings. Indicate standalone layer owns template config, published property snapshots, branding, publish state, preview, domain records, primary locale, and analytics events.
 
 ### ERD prompt
-Create an ERD for a standalone property site platform. Include tables: standalone_site, standalone_site_theme, standalone_site_content, standalone_site_section, standalone_site_domain, standalone_site_event, and a referenced PMS property entity. Show one standalone site per property, one-to-one theme/content, one-to-many sections/domains/events. Mark PMS-owned entities separately from standalone-owned entities. Include primary_locale and property_timezone on the site record, and property_snapshot_json on the standalone_site_content record.
+Create an ERD for a direct booking website platform. Include tables: standalone_site, standalone_site_theme, standalone_site_content, standalone_site_section, standalone_site_domain, standalone_site_event, and a referenced PMS property entity. Show one direct booking website per property, one-to-one theme/content, one-to-many sections/domains/events. Mark PMS-owned entities separately from standalone-owned entities. Include primary_locale and property_timezone on the site record, and property_snapshot_json on the standalone_site_content record.
 
 ### Publish sequence prompt
-Create a sequence diagram for publishing a Domits standalone property site. Actors: Host, Host Dashboard, Standalone Site Config API, PMS Eligibility Check, PMS Property Import API, Aurora main standalone tables, Domain Service, Preview/Public Renderer. Flow: host configures template/branding, system validates PMS property eligibility, imports descriptive PMS property content into a published snapshot, writes standalone_site config, generates fallback subdomain, sets status to PREVIEW or PUBLISHED, renderer becomes available.
+Create a sequence diagram for publishing a Domits direct booking website. Actors: Host, Host Dashboard, Standalone Site Config API, PMS Eligibility Check, PMS Property Import API, Aurora main standalone tables, Domain Service, Preview/Public Renderer. Flow: host configures template/branding, system validates PMS property eligibility, imports descriptive PMS property content into a published snapshot, writes standalone_site config, generates fallback subdomain, sets status to PREVIEW or PUBLISHED, renderer becomes available.
 
 ### Resolve host sequence prompt
-Create a sequence diagram for resolving a public request to a Domits standalone site. Actors: Guest Browser, Public Renderer, Site Resolve API, standalone_site_domain table, standalone_site table, Public Site Render API, standalone_site_content table, standalone_site_theme table. Flow: request arrives with host, resolve host to site, validate site status, load standalone site config, load published property snapshot, return render model. Include failure branches for unknown host and suspended site.
+Create a sequence diagram for resolving a public request to a Domits direct booking website. Actors: Guest Browser, Public Renderer, Site Resolve API, standalone_site_domain table, standalone_site table, Public Site Render API, standalone_site_content table, standalone_site_theme table. Flow: request arrives with host, resolve host to site, validate site status, load direct booking website config, load published property snapshot, return render model. Include failure branches for unknown host and suspended site.
 
 ### Quote sequence prompt
-Create a sequence diagram for the v1 guest quote flow on a Domits standalone site. Actors: Guest Browser, Public Renderer, Quote API, Site Config Store, PMS Availability Service, PMS Pricing Service, Analytics Event Store. Flow: guest selects dates/guests, renderer sends quote request, server resolves site and property linkage, checks availability window and restrictions live against PMS, computes authoritative price server-side, returns quote with expiry and breakdown, stores analytics event. Make clear that descriptive page content is already baked into standalone-owned published content and is not fetched from PMS in this flow.
+Create a sequence diagram for the v1 guest quote flow on a Domits direct booking website. Actors: Guest Browser, Public Renderer, Quote API, Site Config Store, PMS Availability Service, PMS Pricing Service, Analytics Event Store. Flow: guest selects dates/guests, renderer sends quote request, server resolves site and property linkage, checks availability window and restrictions live against PMS, computes authoritative price server-side, returns quote with expiry and breakdown, stores analytics event. Make clear that descriptive page content is already baked into standalone-owned published content and is not fetched from PMS in this flow.
 
 ### V2 checkout and confirmation prompt
-Create a sequence diagram for the v2 extension of Domits standalone property sites: checkout, booking creation, and confirmation. Actors: Guest Browser, Checkout API, Quote Validator, PMS Availability/Pricing Service, Payment Service, Booking API, Booking Service, Confirmation API, Analytics Event Store. Show quote revalidation before booking creation, idempotency key handling, booking source attribution as STANDALONE_SITE, confirmation token usage, and failure branch when quote becomes stale.
+Create a sequence diagram for the v2 extension of Domits direct booking websites: checkout, booking creation, and confirmation. Actors: Guest Browser, Checkout API, Quote Validator, PMS Availability/Pricing Service, Payment Service, Booking API, Booking Service, Confirmation API, Analytics Event Store. Show quote revalidation before booking creation, idempotency key handling, booking source attribution as STANDALONE_SITE, confirmation token usage, and failure branch when quote becomes stale.
 
 ### State diagram prompt
 Create a state diagram for standalone_site.status with states DRAFT, PREVIEW, PUBLISHED, SUSPENDED. Show transitions for create, preview enable, publish, unpublish, suspend, restore. Keep site status independent from PMS property listing status.
@@ -1350,28 +1306,28 @@ Create a state diagram for standalone_site.status with states DRAFT, PREVIEW, PU
 Create a state diagram for standalone_site_domain.status with states PENDING, VERIFIED, ACTIVE, FAILED, DISABLED. Show fallback subdomain activation path and a future custom-domain verification path.
 
 ### Domain lifecycle prompt
-Create a lifecycle diagram for domains in a standalone property site platform. Include generated fallback subdomain, DNS/verification step for future custom domains, activation, failure handling, and fallback-domain continuity when custom domain fails.
+Create a lifecycle diagram for domains in a direct booking website platform. Include generated fallback subdomain, DNS/verification step for future custom domains, activation, failure handling, and fallback-domain continuity when custom domain fails.
 
 ### Ownership matrix prompt
-Create a two-column ownership matrix for a standalone property site platform. Left column: PMS-owned data such as property content, images, location, amenities, pricing, availability, availability window, timezone, bookings. Right column: standalone-owned data such as template config, theme tokens, branding, publish status, preview token, domain mapping, analytics events, content overrides.
+Create a two-column ownership matrix for a direct booking website platform. Left column: PMS-owned data such as property content, images, location, amenities, pricing, availability, availability window, timezone, bookings. Right column: standalone-owned data such as template config, theme tokens, branding, publish status, preview token, domain mapping, analytics events, content overrides.
 
 ### Risk/threat matrix prompt
-Create a risk and threat matrix for Domits standalone property sites. Include stale quote, domain misconfiguration, tenant data leak, schema drift to public, cache keyed to wrong host, spoofed host header, price tampering, brute-force abuse, quote replay, CSP/XSS issues. For each, show cause, impact, mitigation, and detection.
+Create a risk and threat matrix for Domits direct booking websites. Include stale quote, domain misconfiguration, tenant data leak, schema drift to public, cache keyed to wrong host, spoofed host header, price tampering, brute-force abuse, quote replay, CSP/XSS issues. For each, show cause, impact, mitigation, and detection.
 
 ### Failure-mode table prompt
-Create a failure-mode table for Domits standalone property sites. Include: custom domain broken, pricing service unavailable, property unpublished in PMS, site published but template version missing, unknown host, stale quote. For each, show expected fallback behavior, user-facing response, logging requirement, and alerting need.
+Create a failure-mode table for Domits direct booking websites. Include: custom domain broken, pricing service unavailable, property unpublished in PMS, site published but template version missing, unknown host, stale quote. For each, show expected fallback behavior, user-facing response, logging requirement, and alerting need.
 
 ---
 
 ## 16. Assumptions And Defaults
 
 - v1 is the foundation release, intentionally kept small
-- v1 includes property detail, publish flow, fallback domain, and server-side availability and quote
+- current foundation includes property detail, publish flow, fallback domain state, and published live-site render; quote APIs are later
 - booking funnel, booking creation, and public confirmation move to v2
 - PMS-owned descriptive content is imported into standalone-owned published snapshots at publish or refresh time
 - fallback subdomains are in v1; custom domains are later
 - first-party event collection is the KPI source
-- one standalone site per property in v1
+- one direct booking website per property in v1
 - preview is tokenized and private
 - English is the only supported primary site language in v1; full multilingual support is later
 - implementation tooling stays aligned with the current Domits stack

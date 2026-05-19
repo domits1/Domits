@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import "../../styles/sass/features/guestdashboard/guestReservationDetail.scss";
 import "../../styles/sass/features/guestdashboard/mainDashboardGuest.scss";
 
@@ -335,12 +336,22 @@ const buildReservationContent = ({
   }
 
   if (reservation) {
+    const isCancelledReservation = normalizeStayStatus(reservation.stay.status) === "Cancelled";
+
     return (
       <>
         <div className="reservationHeader">
           <h1 className="reservationTitle">{reservation.property.title}</h1>
-          <span className="confirmed reservationStatus">{reservation.stay.status}</span>
+          <span className={`reservationStatus ${isCancelledReservation ? "cancelled" : "confirmed"}`}>
+            {isCancelledReservation ? "Cancelled" : reservation.stay.status}
+          </span>
         </div>
+
+        {isCancelledReservation && (
+          <output className="reservationCancelledBanner">
+            This reservation has been cancelled.
+          </output>
+        )}
 
         <div className="reservationPage">
           <div className="reservationLeft">
@@ -620,6 +631,8 @@ function ReservationDetails() {
           return { ...prev, stay: { ...prev.stay, status: updatedStatus } };
         });
       }
+
+      toast.success("Reservation cancelled.");
     } catch (cancelError) {
       console.error("Failed to cancel booking:", cancelError);
       setCancelBookingError("Could not cancel this booking. Please try again.");

@@ -43,7 +43,7 @@ export const fetchWebsiteKpis = async () => {
   if (!response.ok) {
     const errorMessage = await getApiErrorMessage(
       response,
-      "We could not load the standalone website KPI overview."
+      "We could not load the direct booking website KPI overview."
     );
     throw new Error(errorMessage);
   }

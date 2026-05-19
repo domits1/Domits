@@ -13,10 +13,12 @@ import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
 import WebsiteEditorPage from "./website/WebsiteEditorPage";
 import WebsiteKpiDashboardPage from "./website/kpis/WebsiteKpiDashboardPage";
 import HostSettings from "./HostSettings";
+import HostTeam from "./HostTeam";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
+import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
 
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -106,6 +108,7 @@ function MainDashboardHost() {
           <Route path="messages" element={<Messages dashboardType="host" />} />
           <Route path="integrations-marketplace" element={<HostIntegrations />} />
           <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />
+          <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
           <Route path="revenues" element={<HostReports />} />
 
           <Route path="tasks" element={<HostPropertyCare />} />
@@ -120,6 +123,7 @@ function MainDashboardHost() {
           <Route path="website-kpis" element={<Navigate to="../website/kpis" replace />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
+          <Route path="settings/team" element={<HostTeam />} />
 
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>

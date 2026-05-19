@@ -11,10 +11,24 @@
   color: #0f172a;
 }
 
+.publicPreviewPagePanorama {
+  background: var(--website-surface-background, #f8fbff);
+}
+
 .publicPreviewCanvas {
   width: min(100%, 1440px);
   margin: 0 auto;
   padding: clamp(16px, 3vw, 36px);
+}
+
+.publicPreviewCanvasWide {
+  width: 100%;
+  max-width: none;
+  padding: clamp(12px, 2vw, 24px);
+}
+
+.publicPreviewCanvasFlush {
+  padding: 0;
 }
 
 .publicPreviewStatePage {
@@ -40,6 +54,11 @@
 
 .publicPreviewErrorCard {
   border-color: rgba(185, 28, 28, 0.22);
+  width: min(760px, 100%);
+  gap: 18px;
+  padding: clamp(28px, 5vw, 48px);
+  text-align: center;
+  justify-items: center;
 }
 
 .publicPreviewStateCard h1,
@@ -65,8 +84,62 @@
   text-transform: uppercase;
 }
 
+.publicPreviewActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding-top: 10px;
+}
+
+.publicPreviewActionButton {
+  appearance: none;
+  border: 1px solid rgba(31, 78, 121, 0.18);
+  border-radius: 18px;
+  padding: 1rem 1.45rem;
+  background: #1f4e79;
+  color: #ffffff;
+  font: inherit;
+  font-size: 1.02rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.publicPreviewActionButton:hover,
+.publicPreviewActionButton:focus-visible {
+  background: #163a5b;
+  box-shadow: 0 12px 24px rgba(31, 78, 121, 0.2);
+  transform: translateY(-1px);
+}
+
+.publicPreviewErrorTitle {
+  max-width: 16ch;
+  font-size: clamp(2.4rem, 1.8rem + 2vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+
+.publicPreviewErrorCopy {
+  max-width: 30rem;
+  font-size: clamp(1.02rem, 0.96rem + 0.2vw, 1.16rem);
+  line-height: 1.7;
+}
+
 @media (max-width: 720px) {
   .publicPreviewCanvas {
     padding: 12px;
+  }
+
+  .publicPreviewCanvasFlush {
+    padding: 0;
+  }
+
+  .publicPreviewActionButton {
+    width: 100%;
+    justify-content: center;
   }
 }

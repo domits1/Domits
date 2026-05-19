@@ -3,6 +3,18 @@ import PropTypes from "prop-types";
 import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import styles from "../WebsiteBuilderPage.module.scss";
 
+function WebsiteKpiDeltaBadge({ label }) {
+  if (!label) {
+    return null;
+  }
+
+  return <span className={styles.kpiDeltaBadge}>{label}</span>;
+}
+
+WebsiteKpiDeltaBadge.propTypes = {
+  label: PropTypes.string,
+};
+
 export function WebsiteKpiMetricCard({
   title,
   value,
@@ -11,6 +23,7 @@ export function WebsiteKpiMetricCard({
   loadingMeta = "Loading aggregated website activity...",
   isHighlighted = false,
   sampleLabel = "",
+  deltaLabel = "",
 }) {
   const cardClassName = `${styles.kpiCard} ${isHighlighted ? styles.kpiCardUpdated : ""}`.trim();
 
@@ -25,7 +38,10 @@ export function WebsiteKpiMetricCard({
           <PulseBarsLoader inline message="" />
         </div>
       ) : (
-        <p className={styles.kpiCardValue}>{value}</p>
+        <div className={styles.kpiCardValueWrap}>
+          <p className={styles.kpiCardValue}>{value}</p>
+          <WebsiteKpiDeltaBadge label={deltaLabel} />
+        </div>
       )}
       <p className={styles.kpiCardMeta}>{isLoading ? loadingMeta : meta}</p>
     </article>
@@ -40,9 +56,15 @@ WebsiteKpiMetricCard.propTypes = {
   loadingMeta: PropTypes.string,
   isHighlighted: PropTypes.bool,
   sampleLabel: PropTypes.string,
+  deltaLabel: PropTypes.string,
 };
 
-export function WebsiteKpiResearchCard({ researchKpiCard, isLoading, isHighlighted = false }) {
+export function WebsiteKpiResearchCard({
+  researchKpiCard,
+  isLoading,
+  isHighlighted = false,
+  deltaLabel = "",
+}) {
   const statusClassName =
     isLoading || !researchKpiCard.isInstrumented
       ? styles.researchKpiStatusBadgePending
@@ -69,7 +91,10 @@ export function WebsiteKpiResearchCard({ researchKpiCard, isLoading, isHighlight
           <PulseBarsLoader inline message="" />
         </div>
       ) : (
-        <p className={styles.researchKpiCardValue}>{researchKpiCard.value}</p>
+        <div className={styles.kpiCardValueWrap}>
+          <p className={styles.researchKpiCardValue}>{researchKpiCard.value}</p>
+          <WebsiteKpiDeltaBadge label={deltaLabel} />
+        </div>
       )}
       <div className={styles.researchKpiCriteriaRow}>
         {researchKpiCard.criteria.map((criterion) => (
@@ -102,4 +127,5 @@ WebsiteKpiResearchCard.propTypes = {
   }).isRequired,
   isLoading: PropTypes.bool.isRequired,
   isHighlighted: PropTypes.bool,
+  deltaLabel: PropTypes.string,
 };

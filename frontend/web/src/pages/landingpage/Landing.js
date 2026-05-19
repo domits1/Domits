@@ -27,6 +27,7 @@ function Landing() {
   const landingContent = contentByLanguage[language]?.landing;
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [group, setGroup] = useState("");
   const [faqs, setFaqs] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -78,14 +79,16 @@ function Landing() {
     ]);
   }, [landingContent]);
 
-  const checkAuthentication = async () => {
-    try {
-      await Auth.currentAuthenticatedUser();
-      setIsAuthenticated(true);
-    } catch {
-      setIsAuthenticated(false);
-    }
-  };
+ const checkAuthentication = async () => {
+  try {
+    const user = await Auth.currentAuthenticatedUser();
+
+    setIsAuthenticated(true);
+    setGroup(user.attributes["custom:group"]);
+  } catch {
+    setIsAuthenticated(false);
+  }
+};
 
   const toggleOpen = (index) => {
     setFaqs((prev) =>
@@ -128,25 +131,49 @@ function Landing() {
   return (
     <main className="landing">
 
-      <HeroSection landingContent={landingContent} />
+      <div id="hero">
+        <HeroSection landingContent={landingContent}
+         isAuthenticated={isAuthenticated}
+         group={group}
+        />
+      </div>
 
-      <StepsSection landingContent={landingContent} />
+      <div id="steps">
+        <StepsSection landingContent={landingContent} />
+      </div>
 
-      <WhySection />
+      <div id="why">
+        <WhySection />
+      </div>
 
-      <ChecklistSection />
+      <div id="checklist">
+        <ChecklistSection />
+      </div>
 
-      <RegisterSection />
+      <div id="register">
+        <RegisterSection
+          isAuthenticated={isAuthenticated}
+          group={group}
+        />
+      </div>
 
-      <TestimonialsSection />
+       <div id="testimonials">
+         <TestimonialsSection />
+      </div>
 
-      <FeaturesSection />
+      <div id="features">
+        <FeaturesSection />
+      </div>
 
-      <FaqSection faqs={faqs} toggleOpen={toggleOpen} />
+      <div id="faq">
+        <FaqSection faqs={faqs} toggleOpen={toggleOpen} />
+      </div>
 
-      <CtaSection />
+      <div id="cta">
+        <CtaSection isAuthenticated={isAuthenticated} group={group} />
+      </div>
 
-      <section className="contact-section">
+      <section id="contact" className="contact-section">
         <div className="contact-section__container">
 
           <div className="contact-section__left">
