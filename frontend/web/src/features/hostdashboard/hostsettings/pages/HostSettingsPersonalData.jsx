@@ -1,8 +1,6 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
-import { SettingsContent } from "../../../../components/settings/SettingsComponents";
 import useSettingsData from "../../../../hooks/useSettingsData";
+import PersonalDataForm from "../components/PersonalDataForm";
 import "../../../../styles/sass/pages/dashboard/settingsDashboard.css";
 import "../styles/hostSettings.css";
 
@@ -11,27 +9,53 @@ const SHOW_AUTH_MFA = false;
 
 const HostSettingsPersonalData = () => {
     const settingsData = useSettingsData();
-    const navigate = useNavigate();
+    const {
+        user,
+        tempUser,
+        selectedCountryCode,
+        stripPhone,
+        onSaveUserName,
+        onSaveUserEmail,
+        onSaveUserPhone,
+        onSaveUserDateOfBirth,
+        onSaveUserPlaceOfBirth,
+        onSaveUserNationality,
+    } = settingsData;
+
+    const saveAll = async () => {
+        const saves = [];
+
+        if ((tempUser.name || "").trim() !== (user.name || "").trim()) {
+            saves.push(onSaveUserName());
+        }
+        if ((tempUser.email || "").trim() !== (user.email || "").trim()) {
+            saves.push(onSaveUserEmail());
+        }
+        const fullPhone = `${selectedCountryCode}${stripPhone || ""}`.trim();
+        if (fullPhone !== (user.phone || "").trim()) {
+            saves.push(onSaveUserPhone());
+        }
+        if ((tempUser.dateOfBirth || "") !== (user.dateOfBirth || "")) {
+            saves.push(onSaveUserDateOfBirth());
+        }
+        if ((tempUser.placeOfBirth || "") !== (user.placeOfBirth || "")) {
+            saves.push(onSaveUserPlaceOfBirth());
+        }
+        if ((tempUser.nationality || "").trim() !== (user.nationality || "").trim()) {
+            saves.push(onSaveUserNationality());
+        }
+
+        await Promise.allSettled(saves);
+    };
 
     return (
-        <div className="host-settings-subpage">
-            <button className="host-settings-back" onClick={() => navigate(-1)} type="button">
-                <ArrowBackOutlinedIcon sx={{ fontSize: 18 }} />
-                Settings
-            </button>
-            <div className="page-body settings-page">
-                <h2>Personal Data</h2>
-                <div className="dashboards">
-                    <div className="content">
-                        <SettingsContent
-                            {...settingsData}
-                            showPrefFormats={SHOW_PREF_FORMATS}
-                            showAuthMfa={SHOW_AUTH_MFA}
-                        />
-                    </div>
-                </div>
-            </div>
-        </div>
+        <PersonalDataForm
+            {...settingsData}
+            showPrefFormats={SHOW_PREF_FORMATS}
+            showAuthMfa={SHOW_AUTH_MFA}
+            onSaveAll={saveAll}
+            onVerifyEmail={settingsData.onSaveUserEmail}
+        />
     );
 };
 

@@ -370,6 +370,7 @@ export default function useUserProfile() {
             }
             const emailVerified = attributes.email_verified === true || attributes.email_verified === "true";
             const phoneVerified = attributes.phone_number_verified === true || attributes.phone_number_verified === "true";
+            const displayDob = formatBirthdateForDisplay(attributes.birthdate || "");
             setUser({
                 email: attributes.email,
                 name: attributes["given_name"],
@@ -377,7 +378,18 @@ export default function useUserProfile() {
                 phone: attributes.phone_number,
                 family: "2 adults - 2 kids",
                 title: attributes["custom:title"] || "",
-                dateOfBirth: formatBirthdateForDisplay(attributes.birthdate || ""),
+                dateOfBirth: displayDob,
+                placeOfBirth: attributes["custom:place_of_birth"] || "",
+                sex: attributes.gender || "",
+                picture: attributes.picture || "",
+                nationality: attributes["custom:nationality"] || "",
+            });
+            setTempUser({
+                email: attributes.email || "",
+                name: attributes["given_name"] || "",
+                phone: attributes.phone_number || "",
+                title: attributes["custom:title"] || "",
+                dateOfBirth: displayDob,
                 placeOfBirth: attributes["custom:place_of_birth"] || "",
                 sex: attributes.gender || "",
                 picture: attributes.picture || "",
