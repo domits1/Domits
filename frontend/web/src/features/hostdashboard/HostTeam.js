@@ -74,6 +74,52 @@ const HostTeam = () => {
         }
     };
 
+    const renderMemberList = () => {
+        if (loadError) {
+            return (
+                <div className="team-empty-state">
+                    <p>Failed to load team members. Please refresh the page.</p>
+                </div>
+            );
+        }
+        if (members.length === 0) {
+            return (
+                <div className="team-empty-state">
+                    <p>No additional team members yet. Invite a co-host to get started.</p>
+                </div>
+            );
+        }
+        return (
+            <div className="team-card">
+                {members.map(member => (
+                    <div key={member.id} className="team-member-row team-member-row--bordered">
+                        <img
+                            src={standardAvatar}
+                            alt="Member avatar"
+                            className="team-member-avatar"
+                        />
+                        <div className="team-member-info">
+                            <div className="team-member-name">
+                                {member.member_email}
+                                <span className="team-role-badge">{member.role}</span>
+                                <span className={`team-status-badge team-status-badge--${member.status}`}>
+                                    {member.status}
+                                </span>
+                            </div>
+                        </div>
+                        <button
+                            className="team-remove-btn"
+                            onClick={() => handleRemove(member.id)}
+                            aria-label={`Remove ${member.member_email}`}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <div className="page-body settings-page team-page">
             <nav className="settings-subnav">
@@ -136,43 +182,7 @@ const HostTeam = () => {
                     </button>
                 </div>
 
-                {loadError ? (
-                    <div className="team-empty-state">
-                        <p>Failed to load team members. Please refresh the page.</p>
-                    </div>
-                ) : members.length === 0 ? (
-                    <div className="team-empty-state">
-                        <p>No additional team members yet. Invite a co-host to get started.</p>
-                    </div>
-                ) : (
-                    <div className="team-card">
-                        {members.map(member => (
-                            <div key={member.id} className="team-member-row team-member-row--bordered">
-                                <img
-                                    src={standardAvatar}
-                                    alt="Member avatar"
-                                    className="team-member-avatar"
-                                />
-                                <div className="team-member-info">
-                                    <div className="team-member-name">
-                                        {member.member_email}
-                                        <span className="team-role-badge">{member.role}</span>
-                                        <span className={`team-status-badge team-status-badge--${member.status}`}>
-                                            {member.status}
-                                        </span>
-                                    </div>
-                                </div>
-                                <button
-                                    className="team-remove-btn"
-                                    onClick={() => handleRemove(member.id)}
-                                    aria-label={`Remove ${member.member_email}`}
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                {renderMemberList()}
             </section>
 
             {showInviteModal && (

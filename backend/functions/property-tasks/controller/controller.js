@@ -18,7 +18,7 @@ export class Controller {
     async getTasks(event) {
         try {
             const { effectiveHostId } = await this.resolveHost(event);
-            const filters = { ...( event.queryStringParameters || {}) };
+            const filters = Object.assign({}, event.queryStringParameters);
             delete filters.asHostId;
             const tasks = await getTasks(effectiveHostId, filters);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(tasks) };
