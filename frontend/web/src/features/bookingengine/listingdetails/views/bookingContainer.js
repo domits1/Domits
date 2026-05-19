@@ -323,10 +323,16 @@ const BookingContainer = ({
       return;
     }
 
+    const checkInTime = new Date(checkInDate).getTime();
+    const checkOutTime = new Date(checkOutDate).getTime();
+    if (!Number.isFinite(checkInTime) || !Number.isFinite(checkOutTime) || nights < 1) {
+      return;
+    }
+
     handleReservePress(
       selectedPropertyId,
-      new Date(checkInDate).getTime(),
-      new Date(checkOutDate).getTime(),
+      checkInTime,
+      checkOutTime,
       adults + kids
     );
   };

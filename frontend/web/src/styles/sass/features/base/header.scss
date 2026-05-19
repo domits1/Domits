@@ -252,10 +252,6 @@ $primary-color: var(--primary-color);
   z-index: 9999;
 }
 
-.nineDotsMenuWrapper {
-  position: relative;
-}
-
 .appsDropdown::before {
   content: "";
   position: absolute;
