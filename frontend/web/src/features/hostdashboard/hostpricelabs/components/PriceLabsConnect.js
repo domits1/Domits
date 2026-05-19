@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import "../styles/HostPriceLabs.css";
 
 function PriceLabsConnect({ onConnect, isLoading, error, successMessage }) {
@@ -24,8 +25,9 @@ function PriceLabsConnect({ onConnect, isLoading, error, successMessage }) {
 
       <form className="pl-connect__form" onSubmit={handleSubmit}>
         <div className="pl-connect__field">
-          <label className="pl-connect__label">PriceLabs account email</label>
+          <label htmlFor="pl-email-input" className="pl-connect__label">PriceLabs account email</label>
           <input
+            id="pl-email-input"
             type="email"
             className="pl-connect__input"
             value={email}
@@ -40,7 +42,7 @@ function PriceLabsConnect({ onConnect, isLoading, error, successMessage }) {
           </p>
         </div>
 
-        {error         && <div className="pl-alert pl-alert--error">{error}</div>}
+        {error          && <div className="pl-alert pl-alert--error">{error}</div>}
         {successMessage && <div className="pl-alert pl-alert--success">{successMessage}</div>}
 
         <button
@@ -54,5 +56,18 @@ function PriceLabsConnect({ onConnect, isLoading, error, successMessage }) {
     </div>
   );
 }
+
+PriceLabsConnect.propTypes = {
+  onConnect:      PropTypes.func.isRequired,
+  isLoading:      PropTypes.bool,
+  error:          PropTypes.string,
+  successMessage: PropTypes.string,
+};
+
+PriceLabsConnect.defaultProps = {
+  isLoading:      false,
+  error:          null,
+  successMessage: null,
+};
 
 export default PriceLabsConnect;

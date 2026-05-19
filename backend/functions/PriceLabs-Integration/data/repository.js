@@ -1,17 +1,16 @@
-import { getDataSource } from "/opt/nodejs/database/dataSource.js";
-import { PriceLabs_Connection } from "/opt/nodejs/models/PriceLabs_Connection.js";
-import { Property } from "/opt/nodejs/models/Property.js";
-import { Property_Calendar_Override } from "/opt/nodejs/models/Property_Calendar_Override.js";
-import { Booking } from "/opt/nodejs/models/Booking.js";
-import { ChannelIntegrationProperty } from "/opt/nodejs/models/unified/integrations/ChannelIntegrationProperty.js";
-import { ChannelReservationLink } from "/opt/nodejs/models/unified/integrations/ChannelReservationLink.js";
+import { getDataSource } from "database/dataSource.js";
+import { PriceLabs_Connection } from "database/models/PriceLabs_Connection.js";
+import { Property } from "database/models/Property.js";
+import { Property_Calendar_Override } from "database/models/Property_Calendar_Override.js";
+import { Booking } from "database/models/Booking.js";
+import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty.js";
+import { ChannelReservationLink } from "database/models/unified/integrations/ChannelReservationLink.js";
 
 export class Repository {
   async _ds() {
     return getDataSource();
   }
 
-  // ── Connection ────────────────────────────────────────────────────────────
 
   async getConnectionByHost(hostId) {
     const ds = await this._ds();
@@ -47,14 +46,12 @@ export class Repository {
     );
   }
 
-  // ── Properties ────────────────────────────────────────────────────────────
 
   async getPropertiesByHost(hostId) {
     const ds = await this._ds();
     return ds.getRepository(Property).find({ where: { host_id: hostId } });
   }
 
-  // ── Calendar (availability + pricing) ────────────────────────────────────
 
   async getAvailabilityForProperty(propertyId, days = 730) {
     const ds    = await this._ds();
@@ -68,15 +65,13 @@ export class Repository {
       .getMany();
   }
 
-  // ── Apply inbound price recommendation from PriceLabs sync_url ───────────
 
   async applyPriceRecommendation({ property_id, date, nightly_price, min_stay, closed_to_arrival, closed_to_departure }) {
     const ds = await this._ds();
     const repo = ds.getRepository(Property_Calendar_Override);
 
     // PriceLabs sends dates as "YYYY-MM-DD" — convert to YYYYMMDD integer
-    // (the same format used everywhere else in property_calendar_override)
-    const calendarDate = Number(String(date || "").replace(/-/g, ""));
+    const calendarDate = Number(String(date ?? "").replaceAll("-", ""));
     if (!calendarDate || calendarDate < 10000101 || calendarDate > 99991231) {
       console.error("[PriceLabs] Invalid date received:", date);
       return;
@@ -108,13 +103,10 @@ export class Repository {
     }
   }
 
-  // ── OTA Listing IDs ───────────────────────────────────────────────────────
-  // Returns a map of { [domitsPropertyId]: [externalPropertyId, ...] }
 
   async getOtaListingIdsByHost(hostId) {
     const ds = await this._ds();
 
-    // First get all property IDs for this host
     const properties = await ds.getRepository(Property).find({
       where: { hostid: hostId },
       select: ["id"],
@@ -122,7 +114,6 @@ export class Repository {
     const propertyIds = properties.map((p) => p.id);
     if (!propertyIds.length) return {};
 
-    // Then fetch all channel integration properties for those IDs
     const links = await ds
       .getRepository(ChannelIntegrationProperty)
       .createQueryBuilder("cip")
@@ -130,7 +121,6 @@ export class Repository {
       .andWhere("cip.status = :status", { status: "active" })
       .getMany();
 
-    // Group by domitsPropertyId
     const map = {};
     for (const link of links) {
       if (!map[link.domitsPropertyId]) map[link.domitsPropertyId] = [];
@@ -139,15 +129,12 @@ export class Repository {
     return map;
   }
 
-  // ── Bookings (with booking source from channel) ────────────────────────────
 
   async getBookingsByHost(hostId) {
     const ds = await this._ds();
     const bookings = await ds.getRepository(Booking).find({ where: { hostid: hostId } });
     if (!bookings.length) return [];
 
-    // Try to enrich each booking with channel source from ChannelReservationLink
-    // Match on property_id + overlapping dates
     const enriched = await Promise.all(
       bookings.map(async (b) => {
         const link = await ds
@@ -159,7 +146,7 @@ export class Repository {
 
         return {
           ...b,
-          booking_source: link?.channel || b.bookingtype || "direct",
+          booking_source: link?.channel ?? b.bookingtype ?? "direct",
         };
       })
     );

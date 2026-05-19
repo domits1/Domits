@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import "../styles/HostPriceLabs.css";
 
 function formatDate(ms) {
@@ -16,6 +17,14 @@ function StatusBadge({ status }) {
   const { label, cls } = map[status] || { label: status || "—", cls: "" };
   return <span className={`pl-badge ${cls}`}>{label}</span>;
 }
+
+StatusBadge.propTypes = {
+  status: PropTypes.string,
+};
+
+StatusBadge.defaultProps = {
+  status: null,
+};
 
 function PriceLabsStatusCard({ status, onSync, onDisconnect, isSyncing, isLoading }) {
   return (
@@ -66,5 +75,25 @@ function PriceLabsStatusCard({ status, onSync, onDisconnect, isSyncing, isLoadin
     </div>
   );
 }
+
+PriceLabsStatusCard.propTypes = {
+  status: PropTypes.shape({
+    pricelabs_email:           PropTypes.string,
+    last_sync_status:          PropTypes.string,
+    last_sync_error:           PropTypes.string,
+    last_listings_sync_at:     PropTypes.number,
+    last_calendar_sync_at:     PropTypes.number,
+    last_reservations_sync_at: PropTypes.number,
+  }).isRequired,
+  onSync:       PropTypes.func.isRequired,
+  onDisconnect: PropTypes.func.isRequired,
+  isSyncing:    PropTypes.bool,
+  isLoading:    PropTypes.bool,
+};
+
+PriceLabsStatusCard.defaultProps = {
+  isSyncing:  false,
+  isLoading:  false,
+};
 
 export default PriceLabsStatusCard;

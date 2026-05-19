@@ -18,7 +18,7 @@ export class Controller {
     return this._run(async () => {
       const hostId = await this.cognito.getHostId(event);
       const { pricelabs_email } = JSON.parse(event.body || "{}");
-      if (!pricelabs_email) throw { status: 400, message: "pricelabs_email is required" };
+      if (!pricelabs_email) throw Object.assign(new Error("pricelabs_email is required"), { status: 400 });
       return this.service.connect(hostId, pricelabs_email);
     });
   }
@@ -59,7 +59,6 @@ export class Controller {
     });
   }
 
-  // ── Inbound webhooks ──────────────────────────────────────────────────────
 
   async webhookSync(event) {
     return this._run(async () => {
@@ -79,7 +78,6 @@ export class Controller {
     });
   }
 
-  // ── Helper ────────────────────────────────────────────────────────────────
 
   async _run(fn) {
     try {

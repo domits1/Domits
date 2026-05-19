@@ -2,6 +2,21 @@ import { Controller } from "./controller/controller.js";
 
 let controller = null;
 
+const WEBHOOK_ROUTES = {
+  "/webhook/sync":             (c, e) => c.webhookSync(e),
+  "/webhook/calendar-trigger": (c, e) => c.webhookCalendarTrigger(e),
+  "/webhook/hook":             (c, e) => c.webhookHook(e),
+};
+
+const AUTH_ROUTES = {
+  "POST:/connect":            (c, e) => c.connect(e),
+  "DELETE:/disconnect":       (c, e) => c.disconnect(e),
+  "GET:/status":              (c, e) => c.getStatus(e),
+  "POST:/push/listings":      (c, e) => c.pushListings(e),
+  "POST:/push/calendar":      (c, e) => c.pushCalendar(e),
+  "POST:/push/reservations":  (c, e) => c.pushReservations(e),
+};
+
 export const handler = async (event) => {
   if (!controller) controller = new Controller();
 
@@ -9,31 +24,20 @@ export const handler = async (event) => {
   const path   = event.path || "";
 
   if (method === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers: corsHeaders(["GET","POST","DELETE","PATCH","OPTIONS"]),
-      body: "",
-    };
+    return { statusCode: 200, headers: corsHeaders(["GET","POST","DELETE","PATCH","OPTIONS"]), body: "" };
   }
 
-  // Inbound webhooks from PriceLabs (no Cognito auth — signature verified inside)
-  if (path.endsWith("/webhook/sync"))             return controller.webhookSync(event);
-  if (path.endsWith("/webhook/calendar-trigger")) return controller.webhookCalendarTrigger(event);
-  if (path.endsWith("/webhook/hook"))             return controller.webhookHook(event);
+  for (const [suffix, fn] of Object.entries(WEBHOOK_ROUTES)) {
+    if (path.endsWith(suffix)) return fn(controller, event);
+  }
 
-  // Host-authenticated routes
-  if (method === "POST"   && path.endsWith("/connect"))            return controller.connect(event);
-  if (method === "DELETE" && path.endsWith("/disconnect"))         return controller.disconnect(event);
-  if (method === "GET"    && path.endsWith("/status"))             return controller.getStatus(event);
-  if (method === "POST"   && path.endsWith("/push/listings"))      return controller.pushListings(event);
-  if (method === "POST"   && path.endsWith("/push/calendar"))      return controller.pushCalendar(event);
-  if (method === "POST"   && path.endsWith("/push/reservations"))  return controller.pushReservations(event);
+  const suffix = Object.keys(AUTH_ROUTES).find((k) => {
+    const [m, s] = k.split(":");
+    return method === m && path.endsWith(s);
+  });
+  if (suffix) return AUTH_ROUTES[suffix](controller, event);
 
-  return {
-    statusCode: 404,
-    headers: corsHeaders(),
-    body: JSON.stringify({ message: "Not found" }),
-  };
+  return { statusCode: 404, headers: corsHeaders(), body: JSON.stringify({ message: "Not found" }) };
 };
 
 function corsHeaders(methods = ["GET","OPTIONS"]) {

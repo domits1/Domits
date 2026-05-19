@@ -55,7 +55,14 @@ export default function DynamicPricingCard({
           <span className="hc-dynamic-pricing-badge">Active</span>
         </header>
 
-        {recommendedPrice != null ? (
+        {recommendedPrice == null ? (
+          <>
+            <p className="hc-info-card-line">No suggestion for this day</p>
+            <p className="hc-info-card-line" style={{ fontSize: "0.78rem", color: "#aaa" }}>
+              Sync data to receive recommendations
+            </p>
+          </>
+        ) : (
           <>
             <p className="hc-info-card-line">
               {multipleSelected
@@ -73,13 +80,6 @@ export default function DynamicPricingCard({
             >
               Apply price
             </button>
-          </>
-        ) : (
-          <>
-            <p className="hc-info-card-line">No suggestion for this day</p>
-            <p className="hc-info-card-line" style={{ fontSize: "0.78rem", color: "#aaa" }}>
-              Sync data to receive recommendations
-            </p>
           </>
         )}
       </section>

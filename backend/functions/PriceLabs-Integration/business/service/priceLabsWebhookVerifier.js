@@ -9,7 +9,7 @@
  * Where header_components = "v1:{X-SOURCE}:{X-PL-TIMESTAMP}:{X-PL-REQUESTID}"
  */
 
-import { createHmac } from "crypto";
+import { createHmac } from "node:crypto";
 
 function sha256(data, key) {
   return createHmac("sha256", key).update(data).digest("hex");

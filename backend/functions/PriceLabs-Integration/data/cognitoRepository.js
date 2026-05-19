@@ -5,7 +5,7 @@ export class CognitoRepository {
       event?.requestContext?.authorizer?.jwt?.claims;
 
     const sub = claims?.sub;
-    if (!sub) throw { status: 401, message: "Unauthorized — missing Cognito sub" };
+    if (!sub) throw Object.assign(new Error("Unauthorized — missing Cognito sub"), { status: 401 });
     return sub;
   }
 }

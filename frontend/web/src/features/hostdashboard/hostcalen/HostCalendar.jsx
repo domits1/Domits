@@ -467,6 +467,13 @@ function HostCalendarSidebar({
 HostCalendarSidebar.propTypes = {
   isSidebarLoading: PropTypes.bool.isRequired,
   sidebarLoadingMessage: PropTypes.string.isRequired,
+  priceLabsConnected: PropTypes.bool,
+  priceLabsStatus: PropTypes.object,
+  priceLabsConnect: PropTypes.func,
+  priceLabsDisconnect: PropTypes.func,
+  priceLabsSyncAll: PropTypes.func,
+  priceOverrides: PropTypes.objectOf(PropTypes.number),
+  onApplyPriceLabsPrice: PropTypes.func,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedAvailabilityStats: selectedAvailabilityStatsShape.isRequired,
   handleToggleAvailability: PropTypes.func.isRequired,
