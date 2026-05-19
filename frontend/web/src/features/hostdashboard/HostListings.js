@@ -120,16 +120,20 @@ function HostListings() {
       fetchVerificationStatus();
       fetchAccommodations();
     }
-  }, [fetchVerificationStatus, userId]);
+  }, [fetchVerificationStatus, userId, managedHostId, isPurelyPOM]);
 
   const fetchFromByHostId = async (hostId) => {
-    const response = await fetch(
-      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/bookingEngine/byHostId?hostId=${hostId}`,
-      { method: "GET", headers: { Authorization: getAccessToken() } }
-    );
-    if (!response.ok) return [];
-    const data = await response.json();
-    return Array.isArray(data) ? data : [];
+    try {
+      const response = await fetch(
+        `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/byHostId?hostId=${hostId}`,
+        { method: "GET", headers: { Authorization: getAccessToken() } }
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
   };
 
   const fetchAccommodations = async () => {
