@@ -1,10 +1,10 @@
 import Database from "database";
-import { PriceLabs_Connection } from "database/models/PriceLabs_Connection.js";
-import { Property } from "database/models/Property.js";
-import { Property_Calendar_Override } from "database/models/Property_Calendar_Override.js";
-import { Booking } from "database/models/Booking.js";
-import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty.js";
-import { ChannelReservationLink } from "database/models/unified/integrations/ChannelReservationLink.js";
+import { PriceLabs_Connection } from "database/models/PriceLabs_Connection";
+import { Property } from "database/models/Property";
+import { Property_Calendar_Override } from "database/models/Property_Calendar_Override";
+import { Booking } from "database/models/Booking";
+import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
+import { ChannelReservationLink } from "database/models/unified/integrations/ChannelReservationLink";
 
 export class Repository {
   async _ds() {
