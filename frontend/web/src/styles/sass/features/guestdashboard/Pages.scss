@@ -47,7 +47,16 @@
 
   &.open { transform: translateX(0); }
 
-  .menu-content { display: grid; gap: 12px; flex: 1; overflow-y: auto; min-height: 0; }
+  .menu-content {
+    display: grid;
+    gap: 12px;
+
+    @media (max-width: 1023px) {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+  }
   .sidebar-title {
     font-weight: 700;
     font-size: 1.5rem;
