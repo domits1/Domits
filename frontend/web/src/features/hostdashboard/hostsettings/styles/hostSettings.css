@@ -1,4 +1,5 @@
 .host-settings-hub {
+    box-sizing: border-box;
     padding: 48px 56px;
     max-width: 1100px;
     width: 100%;
@@ -150,6 +151,7 @@
 /* ─── Personal Data page ─────────────────────────────────────────────────── */
 
 .personal-data-page {
+    box-sizing: border-box;
     padding: 40px 48px 64px;
     max-width: 1100px;
     width: 100%;
