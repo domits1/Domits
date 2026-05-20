@@ -14,6 +14,7 @@ const HostTeam = () => {
     const [inviteSent, setInviteSent] = useState(false);
     const [inviteError, setInviteError] = useState("");
     const [loadError, setLoadError] = useState(false);
+    const [confirmRemoveId, setConfirmRemoveId] = useState(null);
 
     useEffect(() => {
         const loadHost = async () => {
@@ -65,7 +66,14 @@ const HostTeam = () => {
         }
     };
 
-    const handleRemove = async (memberId) => {
+    const handleRemoveConfirm = (memberId) => {
+        setConfirmRemoveId(memberId);
+    };
+
+    const handleRemove = async () => {
+        if (!confirmRemoveId) return;
+        const memberId = confirmRemoveId;
+        setConfirmRemoveId(null);
         try {
             await removeTeamMember(memberId);
             setMembers(prev => prev.filter(m => m.id !== memberId));
@@ -73,6 +81,29 @@ const HostTeam = () => {
             /* silently ignore */
         }
     };
+
+    const renderMemberRow = (member) => (
+        <div key={member.id} className="team-member-row team-member-row--bordered">
+            <img
+                src={standardAvatar}
+                alt="Member avatar"
+                className="team-member-avatar"
+            />
+            <div className="team-member-info">
+                <div className="team-member-name">
+                    {member.member_email}
+                    <span className="team-role-badge">{member.role}</span>
+                </div>
+            </div>
+            <button
+                className="team-remove-btn"
+                onClick={() => handleRemoveConfirm(member.id)}
+                aria-label={`Remove ${member.member_email}`}
+            >
+                ✕
+            </button>
+        </div>
+    );
 
     const renderMemberList = () => {
         if (loadError) {
@@ -82,41 +113,33 @@ const HostTeam = () => {
                 </div>
             );
         }
-        if (members.length === 0) {
+
+        const activeMembers = members.filter(m => m.status === "active");
+        const pendingMembers = members.filter(m => m.status === "pending");
+
+        if (activeMembers.length === 0 && pendingMembers.length === 0) {
             return (
                 <div className="team-empty-state">
                     <p>No additional team members yet. Invite a co-host to get started.</p>
                 </div>
             );
         }
+
         return (
-            <div className="team-card">
-                {members.map(member => (
-                    <div key={member.id} className="team-member-row team-member-row--bordered">
-                        <img
-                            src={standardAvatar}
-                            alt="Member avatar"
-                            className="team-member-avatar"
-                        />
-                        <div className="team-member-info">
-                            <div className="team-member-name">
-                                {member.member_email}
-                                <span className="team-role-badge">{member.role}</span>
-                                <span className={`team-status-badge team-status-badge--${member.status}`}>
-                                    {member.status}
-                                </span>
-                            </div>
-                        </div>
-                        <button
-                            className="team-remove-btn"
-                            onClick={() => handleRemove(member.id)}
-                            aria-label={`Remove ${member.member_email}`}
-                        >
-                            ✕
-                        </button>
+            <>
+                {activeMembers.length > 0 && (
+                    <div className="team-card">
+                        <div className="team-card-header">Active members</div>
+                        {activeMembers.map(renderMemberRow)}
                     </div>
-                ))}
-            </div>
+                )}
+                {pendingMembers.length > 0 && (
+                    <div className="team-card">
+                        <div className="team-card-header">Pending invitations</div>
+                        {pendingMembers.map(renderMemberRow)}
+                    </div>
+                )}
+            </>
         );
     };
 
@@ -184,6 +207,23 @@ const HostTeam = () => {
 
                 {renderMemberList()}
             </section>
+
+            {confirmRemoveId && (
+                <div className="team-modal-overlay">
+                    <dialog className="team-modal" open aria-modal="true" aria-labelledby="confirm-remove-title">
+                        <h3 id="confirm-remove-title">Remove team member</h3>
+                        <p>Are you sure you want to remove this member from your team? They will lose access to your properties and tasks.</p>
+                        <div className="team-modal-actions">
+                            <button className="team-remove-btn" onClick={handleRemove}>
+                                Yes, remove
+                            </button>
+                            <button className="team-cancel-btn" onClick={() => setConfirmRemoveId(null)}>
+                                Cancel
+                            </button>
+                        </div>
+                    </dialog>
+                </div>
+            )}
 
             {showInviteModal && (
                 <div className="team-modal-overlay">
