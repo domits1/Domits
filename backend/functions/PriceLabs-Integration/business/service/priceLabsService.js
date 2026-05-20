@@ -52,7 +52,7 @@ export class PriceLabsService {
       features: {
         prices:           true,
         min_stay:         true,
-        check_in_out:     false,
+        check_in_out:     true,
         los_pricing:      false,
         weekly_monthly:   false,
         extra_person_fee: false,
@@ -214,10 +214,14 @@ export class PriceLabsService {
     }
 
     if (trigger === "listing_updated") {
-      const result = await Promise.allSettled([this.pushListings(hostId)]);
+      const [listingsResult, calendarResult] = await Promise.allSettled([
+        this.pushListings(hostId),
+        this.pushCalendar(hostId),
+      ]);
       return {
         trigger,
-        listings: result[0].status === "fulfilled" ? result[0].value : { error: result[0].reason?.message },
+        listings: listingsResult.status === "fulfilled" ? listingsResult.value : { error: listingsResult.reason?.message },
+        calendar: calendarResult.status === "fulfilled" ? calendarResult.value : { error: calendarResult.reason?.message },
       };
     }
 
