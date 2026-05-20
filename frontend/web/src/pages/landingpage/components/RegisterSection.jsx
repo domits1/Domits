@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
-import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import { ShieldCheck, FileText, CheckCircle, Banknote, Headphones, Globe } from "lucide-react";
