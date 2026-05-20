@@ -8,6 +8,10 @@ const WEBHOOK_ROUTES = {
   "/webhook/hook":             (c, e) => c.webhookHook(e),
 };
 
+const INTERNAL_ROUTES = {
+  "/internal/sync-booking": (c, e) => c.internalSyncBooking(e),
+};
+
 const AUTH_ROUTES = {
   "POST:/connect":            (c, e) => c.connect(e),
   "DELETE:/disconnect":       (c, e) => c.disconnect(e),
@@ -28,6 +32,10 @@ export const handler = async (event) => {
   }
 
   for (const [suffix, fn] of Object.entries(WEBHOOK_ROUTES)) {
+    if (path.endsWith(suffix)) return fn(controller, event);
+  }
+
+  for (const [suffix, fn] of Object.entries(INTERNAL_ROUTES)) {
     if (path.endsWith(suffix)) return fn(controller, event);
   }
 

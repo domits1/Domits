@@ -25,7 +25,6 @@ const SYNC_URL             = process.env.PL_SYNC_URL             || "";
 const CALENDAR_TRIGGER_URL = process.env.PL_CALENDAR_TRIGGER_URL || "";
 const HOOK_URL             = process.env.PL_HOOK_URL             || "";
 
-// PriceLabs requires at least 730 days of calendar data
 const CALENDAR_DAYS = 730;
 
 export class PriceLabsService {
@@ -73,7 +72,21 @@ export class PriceLabsService {
       last_sync_status: "connected",
     });
 
-    return { success: true, message: "PriceLabs connected successfully." };
+    const [listingsResult, calendarResult, reservationsResult] = await Promise.allSettled([
+      this.pushListings(hostId),
+      this.pushCalendar(hostId),
+      this.pushReservations(hostId),
+    ]);
+
+    return {
+      success: true,
+      message: "PriceLabs connected successfully.",
+      initial_sync: {
+        listings:     listingsResult.status     === "fulfilled" ? listingsResult.value     : { error: listingsResult.reason?.message },
+        calendar:     calendarResult.status     === "fulfilled" ? calendarResult.value     : { error: calendarResult.reason?.message },
+        reservations: reservationsResult.status === "fulfilled" ? reservationsResult.value : { error: reservationsResult.reason?.message },
+      },
+    };
   }
 
   async disconnect(hostId) {
@@ -162,19 +175,26 @@ export class PriceLabsService {
     const connection = await this._requireActiveConnection(hostId);
     const bookings   = await this.repo.getBookingsByHost(hostId);
 
-    const reservations = bookings.map((b) => ({
-      listing_id:     `${hostId}_${b.property_id}`,
-      user_token:     connection.pricelabs_email,
-      reservation_id: b.id,
-      checkin_date:   _tsToDate(b.arrivaldate),
-      checkout_date:  _tsToDate(b.departuredate),
-      guests:         b.guests || 1,
-      total_cost:     b.total_price || 0,
-      rental_revenue: b.nightly_revenue || 0,
-      currency:       "EUR",
-      status:         b.status || "confirmed",
-      booking_source: b.booking_source || "direct",
-    }));
+    const reservations = bookings.map((b) => {
+      const status = _mapBookingStatus(b.status);
+      const entry = {
+        listing_id:     `${hostId}_${b.property_id}`,
+        user_token:     connection.pricelabs_email,
+        reservation_id: b.id,
+        checkin_date:   _tsToDate(b.arrivaldate),
+        checkout_date:  _tsToDate(b.departuredate),
+        guests:         b.guests || 1,
+        total_cost:     b.total_price || 0,
+        rental_revenue: b.nightly_revenue || 0,
+        currency:       "EUR",
+        status,
+        booking_source: b.booking_source || "direct",
+      };
+      if (status === "cancelled") {
+        entry.cancel_time = new Date().toISOString().split("T")[0];
+      }
+      return entry;
+    });
 
     if (reservations.length) {
       await api.pushReservations(token, name, reservations);
@@ -185,6 +205,32 @@ export class PriceLabsService {
       last_sync_status: "synced",
     });
     return { success: true, reservations_pushed: reservations.length };
+  }
+
+  async syncForBookingChange(hostId, trigger) {
+    const connection = await this.repo.getConnectionByHost(hostId);
+    if (!connection?.is_active) {
+      return { skipped: true, reason: "No active PriceLabs connection for this host." };
+    }
+
+    if (trigger === "listing_updated") {
+      const result = await Promise.allSettled([this.pushListings(hostId)]);
+      return {
+        trigger,
+        listings: result[0].status === "fulfilled" ? result[0].value : { error: result[0].reason?.message },
+      };
+    }
+
+    const [reservationsResult, calendarResult] = await Promise.allSettled([
+      this.pushReservations(hostId),
+      this.pushCalendar(hostId),
+    ]);
+
+    return {
+      trigger,
+      reservations: reservationsResult.status === "fulfilled" ? reservationsResult.value : { error: reservationsResult.reason?.message },
+      calendar:     calendarResult.status     === "fulfilled" ? calendarResult.value     : { error: calendarResult.reason?.message },
+    };
   }
 
   async handleSyncWebhook(headers, rawBody) {
@@ -225,7 +271,6 @@ export class PriceLabsService {
 
     const { listing_ids = [] } = JSON.parse(rawBody || "{}");
 
-    // Group by host_id (listing_id format: "{host_id}_{property_id}")
     const hostMap = {};
     for (const lid of listing_ids) {
       const hostId = lid.split("_")[0];
@@ -271,4 +316,11 @@ export class PriceLabsService {
 function _tsToDate(ts) {
   if (!ts) return null;
   return new Date(Number(ts)).toISOString().split("T")[0];
+}
+
+function _mapBookingStatus(status) {
+  const s = String(status || "").toLowerCase();
+  if (s === "cancelled" || s === "canceled" || s === "declined" || s === "failed") return "cancelled";
+  if (s === "paid" || s === "confirmed" || s === "awaiting payment") return "confirmed";
+  return "confirmed";
 }

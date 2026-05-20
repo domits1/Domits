@@ -60,6 +60,14 @@ export class Controller {
   }
 
 
+  async internalSyncBooking(event) {
+    return this._run(async () => {
+      const { hostId, trigger } = JSON.parse(event.body || "{}");
+      if (!hostId) throw Object.assign(new Error("hostId is required"), { status: 400 });
+      return this.service.syncForBookingChange(hostId, trigger);
+    });
+  }
+
   async webhookSync(event) {
     return this._run(async () => {
       return this.service.handleSyncWebhook(event.headers, event.body);
