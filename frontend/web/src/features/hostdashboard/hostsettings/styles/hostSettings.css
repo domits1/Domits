@@ -511,6 +511,45 @@
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 
+/* Tablet: stack photo above fields before the layout gets too cramped */
+@media (max-width: 900px) {
+    .personal-data-page {
+        padding: 32px 32px 64px;
+    }
+
+    .personal-data-card-inner {
+        flex-direction: column;
+        gap: 24px;
+        padding: 24px 28px;
+    }
+
+    .personal-data-photo-col {
+        flex-direction: row;
+        align-items: center;
+        min-width: unset;
+        width: 100%;
+        gap: 20px;
+    }
+
+    .personal-data-photo {
+        width: 80px;
+        height: 80px;
+        min-width: 80px;
+    }
+
+    .personal-data-photo-actions {
+        flex-direction: row;
+        width: auto;
+        gap: 10px;
+    }
+
+    .pd-photo-btn {
+        width: auto;
+        padding: 8px 16px;
+    }
+}
+
+/* Mobile */
 @media (max-width: 640px) {
     .personal-data-page {
         padding: 20px 16px 80px;
@@ -518,14 +557,21 @@
 
     .personal-data-card-inner {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
         padding: 20px 16px;
         gap: 24px;
     }
 
     .personal-data-photo-col {
-        width: 100%;
+        flex-direction: column;
         align-items: center;
+        width: 100%;
+        min-width: unset;
+    }
+
+    .personal-data-photo {
+        width: 96px;
+        height: 96px;
     }
 
     .personal-data-photo-actions {
@@ -539,6 +585,10 @@
         padding: 8px 20px;
     }
 
+    .personal-data-fields-col {
+        gap: 16px;
+    }
+
     .pd-field {
         flex-direction: column;
         gap: 4px;
@@ -548,6 +598,35 @@
         width: auto;
         min-width: auto;
         padding-top: 0;
+        font-weight: 500;
+    }
+
+    .pd-field-input,
+    .pd-select-wrapper {
+        width: 100%;
+    }
+
+    .pd-phone-row {
+        gap: 8px;
+    }
+
+    .pd-phone-code {
+        width: auto !important;
+        flex: 0 0 auto;
+    }
+
+    .pd-phone-number {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pd-verify-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .pd-verify-btn {
+        width: 100%;
     }
 
     .pd-field-error {
@@ -572,6 +651,7 @@
 
     .pd-pref-label {
         min-width: auto;
+        width: 100%;
     }
 
     .pd-pref-select {

@@ -47,7 +47,7 @@
 
   &.open { transform: translateX(0); }
 
-  .menu-content { display: grid; gap: 12px; }
+  .menu-content { display: grid; gap: 12px; flex: 1; overflow-y: auto; min-height: 0; }
   .sidebar-title {
     font-weight: 700;
     font-size: 1.5rem;
@@ -127,7 +127,7 @@
 
 .hamburger-btn {
   position: fixed;
-  top: 100px; 
+  top: 68px;
   left: 16px; 
   z-index: calc(var(--gd-z-sidebar) + 50);
   display: inline-flex; align-items: center; justify-content: center;
