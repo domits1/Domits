@@ -119,8 +119,8 @@ const HostTeam = () => {
             );
         }
 
-        const activeMembers = members.filter(m => m.status === "active");
-        const pendingMembers = members.filter(m => m.status === "pending");
+        const activeMembers = members.filter(m => m.status === "active" && m.member_email !== host.email);
+        const pendingMembers = members.filter(m => m.status === "pending" && m.member_email !== host.email);
 
         if (activeMembers.length === 0 && pendingMembers.length === 0) {
             return (
@@ -227,7 +227,7 @@ const HostTeam = () => {
                                 <img src={standardAvatar} alt="Host avatar" className="team-member-avatar" />
                                 <div className="team-member-info">
                                     <div className="team-member-name">
-                                        {m.host_id}
+                                        {m.host_email || m.host_id}
                                         <span className="team-role-badge">{m.role}</span>
                                     </div>
                                     {m.accepted_at && (

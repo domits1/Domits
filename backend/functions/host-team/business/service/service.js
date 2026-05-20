@@ -3,7 +3,7 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { sendTeamInviteEmail } from "../emailService.js";
-import { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 import Database from "database";
 
 const cognitoClient = new CognitoIdentityProviderClient({ region: "eu-north-1" });
@@ -54,9 +54,26 @@ export class Service {
         return { message: "Team member removed." };
     }
 
+    async getHostEmail(hostId) {
+        try {
+            const result = await cognitoClient.send(new AdminGetUserCommand({
+                UserPoolId: USER_POOL_ID,
+                Username: hostId,
+            }));
+            const emailAttr = result.UserAttributes.find(a => a.Name === "email");
+            return emailAttr?.Value || null;
+        } catch {
+            return null;
+        }
+    }
+
     async getMemberships(userId) {
         const dataSource = await Database.getInstance();
-        return await this.repository.findByMemberId(dataSource, userId);
+        const memberships = await this.repository.findByMemberId(dataSource, userId);
+        return await Promise.all(memberships.map(async (m) => ({
+            ...m,
+            host_email: await this.getHostEmail(m.host_id),
+        })));
     }
 
     async acceptInvite(token, pomUserId, pomEmail, pomRole) {
