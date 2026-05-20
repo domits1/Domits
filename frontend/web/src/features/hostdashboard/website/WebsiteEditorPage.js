@@ -278,6 +278,7 @@ const runAfterNextPaint = (callback) => {
 };
 
 const EDITOR_TARGET_FOCUS_MAX_ATTEMPTS = 8;
+const EDITOR_SECTION_EXPAND_SCROLL_RETRY_DELAY_MS = 280;
 
 const confirmDiscardDraftChanges = () => {
   if (typeof globalThis.confirm !== "function") {
@@ -1608,6 +1609,7 @@ function WebsiteEditorPage() {
       return;
     }
 
+    const wasSectionCollapsed = expandedSections[sectionId] !== true;
     openSection(sectionId);
     setHighlightedTargetId("");
 
@@ -1657,6 +1659,16 @@ function WebsiteEditorPage() {
     runAfterNextPaint(() => {
       attemptFocus();
     });
+
+    if (wasSectionCollapsed) {
+      globalThis.setTimeout(() => {
+        if (editorTargetFocusRequestRef.current !== focusRequestId) {
+          return;
+        }
+
+        attemptFocus();
+      }, EDITOR_SECTION_EXPAND_SCROLL_RETRY_DELAY_MS);
+    }
   };
 
   const handlePreviewTargetSelect = ({ sectionId, targetId, imageSlot } = {}) => {
