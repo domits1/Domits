@@ -16,7 +16,8 @@ import HostTeam from "./HostTeam";
 import HostSettingsHub from "./hostsettings/pages/HostSettingsHub";
 import HostSettingsPersonalData from "./hostsettings/pages/HostSettingsPersonalData";
 import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
-import HostSettingsPlaceholder from "./hostsettings/pages/HostSettingsPlaceholder";
+import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
+import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
@@ -127,8 +128,8 @@ function MainDashboardHost() {
           <Route path="settings/personal-data" element={<HostSettingsPersonalData />} />
           <Route path="settings/team" element={<HostTeam />} />
           <Route path="settings/company" element={<HostSettingsCompany />} />
-          <Route path="settings/rate-plans" element={<HostSettingsPlaceholder title="Rate Plans" />} />
-          <Route path="settings/compliance" element={<HostSettingsPlaceholder title="Compliance" />} />
+          <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
+          <Route path="settings/compliance" element={<HostSettingsCompliance />} />
 
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>
