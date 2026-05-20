@@ -75,16 +75,11 @@ const HostTeam = () => {
 
     return (
         <div className="page-body settings-page team-page">
-            <nav className="settings-subnav">
-                <Link to="/hostdashboard/settings" className="settings-subnav-link">Profile</Link>
-                <Link to="/hostdashboard/settings/team" className="settings-subnav-link active">Team</Link>
-            </nav>
-
-            <div className="team-breadcrumb">
+            <nav className="personal-data-breadcrumb">
                 <Link to="/hostdashboard/settings">Settings</Link>
-                <span>/</span>
-                <span>Team</span>
-            </div>
+                <span className="personal-data-breadcrumb-sep">/</span>
+                <span className="personal-data-breadcrumb-current">Team</span>
+            </nav>
 
             <h2 className="team-heading">Team</h2>
             <p className="team-subtitle">Manage who has access to your properties and reservations.</p>

@@ -486,37 +486,6 @@
     }
 }
 
-/* ─── Settings sub-navigation (Profile | Team tabs) ─────────────────────── */
-
-.settings-subnav {
-    display: flex;
-    gap: 0;
-    border-bottom: 2px solid #e5e7eb;
-    margin-bottom: 28px;
-    width: 100%;
-}
-
-.settings-subnav-link {
-    padding: 10px 20px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: #6b7280;
-    text-decoration: none;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    transition: color 0.15s, border-color 0.15s;
-}
-
-.settings-subnav-link:hover {
-    color: #111827;
-}
-
-.settings-subnav-link.active {
-    color: #111827;
-    border-bottom-color: #111827;
-    font-weight: 600;
-}
-
 /* ─── Team page ──────────────────────────────────────────────────────────── */
 
 .page-body.settings-page.team-page {
@@ -535,23 +504,6 @@
     margin: 0 0 6px;
 }
 
-.team-breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-    color: #6b7280;
-    margin-bottom: 16px;
-}
-
-.team-breadcrumb a {
-    color: #6b7280;
-    text-decoration: none;
-}
-
-.team-breadcrumb a:hover {
-    text-decoration: underline;
-}
 
 .team-heading {
     font-size: 1.5rem;
