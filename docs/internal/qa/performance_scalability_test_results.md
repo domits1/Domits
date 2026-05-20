@@ -50,20 +50,20 @@ Only use production-safe read-only endpoints unless additional approval is docum
 
 | Endpoint | Method | Test type | Request count | Concurrency | Average response time | P95 response time | Error rate | Status codes | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `/property/bookingEngine/all` | GET | Benchmark / low-rate load | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| `/property/bookingEngine/byType` | GET | Benchmark / low-rate load | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| `/property/bookingEngine/listingDetails?property=<known-active-id>` | GET | Benchmark / low-rate load | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| `/bookings?readType=blockedDates&property_Id=<known-active-id>` | GET | Benchmark / low-rate load | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+| `/property/bookingEngine/all` | GET | Read-only API benchmark | 10 | 1 | 0.670s | 1.616s | 0% | 10/10 HTTP 200 | Full URL: `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/all`. First request was slower than the remaining requests, possibly due to cold start or initial latency. |
+| `/property/bookingEngine/byType?type=Boat` | GET | Read-only API benchmark | 10 | 1 | 0.531s | 3.238s | 100% non-2xx | 10/10 HTTP 404 | Full URL: `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byType?type=Boat`. Endpoint is read-only, but `type=Boat` did not return a successful production benchmark response. Treat as invalid benchmark parameter or routing/data issue, not as successful performance evidence. |
+| `/property/bookingEngine/listingDetails?property=eb212599-e1f7-40a4-a4e9-07e32f367a47` | GET | Read-only API benchmark | 10 | 1 | 0.630s | 1.368s | 0% | 10/10 HTTP 200 | Full URL: `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=eb212599-e1f7-40a4-a4e9-07e32f367a47`. First request was slower than later requests. |
+| `/bookings?readType=blockedDates&property_Id=eb212599-e1f7-40a4-a4e9-07e32f367a47` | GET | Read-only API benchmark | 10 | 1 | 0.634s | 4.537s | 0% | 10/10 HTTP 200 | Full URL: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=blockedDates&property_Id=eb212599-e1f7-40a4-a4e9-07e32f367a47`. First request was significantly slower than later requests, possibly due to cold start or initial latency. |
 
 API notes:
 
-- Known active property ID used: TBD
-- API base URL(s): TBD
-- Search/type parameters used: TBD
-- Authentication used: None / Controlled test account / Other
+- Known active property ID used: `eb212599-e1f7-40a4-a4e9-07e32f367a47`
+- API base URL(s): `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default`, `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development`
+- Search/type parameters used: `type=Boat`, `property=eb212599-e1f7-40a4-a4e9-07e32f367a47`, `readType=blockedDates`, `property_Id=eb212599-e1f7-40a4-a4e9-07e32f367a47`
+- Authentication used: None
 - Any write or financial endpoint included: No
-- Any production user impact observed: Yes / No
-- Notes: TBD
+- Any production user impact observed: No user impact observed from the low-rate read-only curl benchmark.
+- Notes: This run used 10 sequential requests per endpoint with concurrency 1. No booking, payment, account, property creation, upload, PATCH, or DELETE actions were executed. The `byType?type=Boat` endpoint returned HTTP 404 for all requests and should not be counted as successful performance evidence.
 
 ## 4. CloudWatch evidence checklist
 
@@ -71,38 +71,39 @@ Attach screenshots, exported metrics, or links for each available CloudWatch met
 
 | Evidence item | Captured | Value / summary | Link or screenshot reference | Notes |
 | --- | --- | --- | --- | --- |
-| API Gateway `Latency` | Yes / No / N/A | TBD | TBD | TBD |
-| API Gateway `IntegrationLatency` | Yes / No / N/A | TBD | TBD | TBD |
-| API Gateway `4XXError` | Yes / No / N/A | TBD | TBD | TBD |
-| API Gateway `5XXError` | Yes / No / N/A | TBD | TBD | TBD |
-| API Gateway `Count` | Yes / No / N/A | TBD | TBD | TBD |
-| Lambda `Duration` | Yes / No / N/A | TBD | TBD | TBD |
-| Lambda `Errors` | Yes / No / N/A | TBD | TBD | TBD |
-| Lambda `Throttles` | Yes / No / N/A | TBD | TBD | TBD |
-| Lambda `ConcurrentExecutions` | Yes / No / N/A | TBD | TBD | TBD |
-| Database CPU | Yes / No / N/A | TBD | TBD | TBD |
-| Database connections | Yes / No / N/A | TBD | TBD | TBD |
-| Database query latency | Yes / No / N/A | TBD | TBD | TBD |
-| Log anomalies | Yes / No / N/A | TBD | TBD | Cold starts, timeouts, downstream errors |
-| Cold starts | Yes / No / N/A | TBD | TBD | TBD |
-| Timeout errors | Yes / No / N/A | TBD | TBD | TBD |
-| Downstream dependency errors | Yes / No / N/A | TBD | TBD | TBD |
+| API Gateway `Latency` | Yes | Latency visible for Property and Booking APIs. Graphs show latency variation and spikes around the selected window. | `PropertyAPIgateway.png`, `BookingAPIgateway.png` | Region: Europe (Stockholm) / `eu-north-1`. Property API checked using API name `Property-API-Develop`; booking API checked using booking API metrics. |
+| API Gateway `IntegrationLatency` | Yes | IntegrationLatency visible for Property and Booking APIs. | `PropertyAPIgateway.png`, `BookingAPIgateway.png` | No concurrency/stress conclusion should be made from this low-volume run. |
+| API Gateway `4XXError` | Yes | 4XXError included in API Gateway graphs. `byType?type=Boat` returned 10/10 HTTP 404 in curl results. | `PropertyAPIgateway.png`, `BookingAPIgateway.png` | The 404 result should be treated as invalid benchmark parameter or endpoint/routing/data issue. |
+| API Gateway `5XXError` | Yes | 5XXError included in API Gateway graphs. No visible 5XX spike was reported from the screenshots. | `PropertyAPIgateway.png`, `BookingAPIgateway.png` | Not confirmed numerically from exported metric data. |
+| API Gateway `Count` | Yes | Count visible for Property and Booking API metrics. | `PropertyAPIgateway.png`, `BookingAPIgateway.png` | Total benchmark volume was intentionally low: 10 sequential requests per endpoint. |
+| Lambda `Duration` | Yes | Duration checked for Property and Bookings Lambda metrics. Graphs show duration variation and spikes around the selected window. | `PropertyLambda.png`, `BookingsLambda.png` | First curl requests were slower on several endpoints, possibly due to cold start or initial latency. |
+| Lambda `Errors` | Yes | Errors checked for Property and Bookings Lambda metrics. | `PropertyLambda.png`, `BookingsLambda.png` | Not confirmed numerically from exported metric data. |
+| Lambda `Throttles` | Yes | Throttles checked for Property and Bookings Lambda metrics. No throttles were reported from the screenshots. | `PropertyLambda.png`, `BookingsLambda.png` | Not confirmed numerically from exported metric data. |
+| Lambda `ConcurrentExecutions` | Yes | ConcurrentExecutions checked for Property and Bookings Lambda metrics. | `PropertyLambda.png`, `BookingsLambda.png` | Benchmark concurrency was 1; this does not prove scalability or capacity. |
+| Database CPU | No / N/A | TBD | TBD | Database metrics were not provided for this evidence set. |
+| Database connections | No / N/A | TBD | TBD | Database metrics were not provided for this evidence set. |
+| Database query latency | No / N/A | TBD | TBD | Database metrics were not provided for this evidence set. |
+| Log anomalies | No / N/A | TBD | TBD | Cold starts, timeouts, and downstream errors were not confirmed from logs in this evidence set. |
+| Cold starts | No / N/A | Possible cold start or initial latency inferred from slower first requests, but not confirmed from logs. | TBD | Treat as hypothesis only. |
+| Timeout errors | No / N/A | Not confirmed. | TBD | Logs were not provided. |
+| Downstream dependency errors | No / N/A | Not confirmed. | TBD | Logs were not provided. |
 
 CloudWatch time range:
 
 - Start: TBD
 - End: TBD
-- Timezone: TBD
+- Timezone: Europe (Stockholm) / `eu-north-1`
 
 ## 5. NFR comparison
 
 | NFR target | Measured result | Pass / fail | Evidence reference | Notes |
 | --- | --- | --- | --- | --- |
-| API P95 < 300 ms | TBD | Pass / Partial / Fail / N/A | TBD | TBD |
+| API P95 < 300 ms | Successful endpoints had conservative P95 values of 1.616s, 1.368s, and 4.537s in the low-rate curl run | Fail | Read-only API benchmark results table | Failed for successful endpoints in this low-rate run. `byType?type=Boat` returned HTTP 404 and is not counted as successful performance evidence. |
 | Average page load < 2 seconds | PageSpeed LCP ranges from 6.1s to 52.9s; GTmetrix homepage LCP is 2.6s and fully loaded time is 8.1s | Fail / Partial | Frontend benchmark results table | Fails PageSpeed for all tested pages and devices; GTmetrix homepage is closer but still above 2s LCP and has high fully loaded time |
-| p95 CPU < 70% | TBD | Pass / Partial / Fail / N/A | TBD | TBD |
-| No unexpected errors | TBD | Pass / Partial / Fail / N/A | TBD | Review 4XX/5XX and logs |
-| No throttles | TBD | Pass / Partial / Fail / N/A | TBD | Review Lambda throttles |
+| p95 CPU < 70% | Database/compute CPU metrics not provided in this evidence set | N/A | TBD | Cannot assess CPU target from this run. |
+| No unexpected errors | Successful endpoints returned 10/10 HTTP 200 with 0% error rate; `byType?type=Boat` returned 10/10 HTTP 404 | Partial | Read-only API benchmark results table, `PropertyAPIgateway.png` | Passed for successful endpoints, but `byType?type=Boat` should be treated as invalid benchmark parameter or endpoint/routing/data issue. |
+| No throttles | No throttles were reported from Lambda screenshots, but no numeric export was provided | Partial / Not confirmed numerically | `PropertyLambda.png`, `BookingsLambda.png` | Marked carefully because this is screenshot-based evidence only. |
+| No 5XX errors | No visible 5XX spike was reported from API Gateway screenshots, but no numeric export was provided | Partial / Not confirmed numerically | `PropertyAPIgateway.png`, `BookingAPIgateway.png` | Successful curl endpoints returned no 5XX; `byType?type=Boat` returned 404, not 5XX. |
 
 ## 6. Conclusion
 
@@ -112,7 +113,9 @@ Overall result:
 
 Summary:
 
-- The tested pages loaded successfully in PageSpeed, so no unexpected frontend crash was observed. The frontend page-load NFR is not met: LCP is high across homepage, search/listings, and listing detail, with the worst result on `/home` mobile at 52.9s LCP. GTmetrix completed only for the homepage and reported Grade C, 72% performance, 2.6s LCP, 8.1s fully loaded time, 8.44MB total page size, and 85 requests. No production load/stress traffic was generated in this benchmark run. API benchmark results and CloudWatch evidence are still TBD for the next step.
+- The tested frontend pages loaded successfully in PageSpeed, so no unexpected frontend crash was observed. The frontend page-load NFR is not met: LCP is high across homepage, search/listings, and listing detail, with the worst result on `/home` mobile at 52.9s LCP. GTmetrix completed only for the homepage and reported Grade C, 72% performance, 2.6s LCP, 8.1s fully loaded time, 8.44MB total page size, and 85 requests.
+- The read-only API curl benchmark used production endpoints with concurrency 1, 10 sequential requests per endpoint, and no write actions. Successful endpoints returned 10/10 HTTP 200 with 0% error rate, but their conservative P95 values were above the 300 ms API NFR target. `byType?type=Boat` returned 10/10 HTTP 404 and should be treated as an invalid benchmark parameter or endpoint/routing/data issue, not successful performance evidence.
+- CloudWatch screenshots were captured for Property API Gateway, Booking API Gateway, Property Lambda, and Bookings Lambda in `eu-north-1`. The screenshots support that API Gateway latency/integration latency and Lambda duration/error/throttle/concurrency metrics were checked, but this low-rate run does not prove scalability, capacity, or 10k concurrent user readiness.
 
 Follow-up actions:
 
@@ -123,6 +126,10 @@ Follow-up actions:
 - Review unused JavaScript and large bundles.
 - Investigate `/home` mobile CLS of 0.588.
 - Investigate why GTmetrix returns `404 Not Found` for `/home` and listing detail while PageSpeed succeeds.
+- Investigate valid production values for `/property/bookingEngine/byType` because `type=Boat` returned HTTP 404.
+- Investigate first-request latency on `/property/bookingEngine/all`, listing details, and blocked dates. Confirm whether this is Lambda cold start, database connection initialization, or another initial latency source.
+- Export numeric CloudWatch metrics for API Gateway and Lambda to confirm 5XX, throttles, duration, and concurrency values instead of relying only on screenshots.
+- Add database CPU, connection, and query latency evidence for the same test window if available.
 
 Risks found:
 
@@ -132,12 +139,17 @@ Risks found:
 - Large homepage payload in GTmetrix: 8.44MB.
 - Image delivery and cache policy issues.
 - Possible unused JavaScript impacting load and interactivity.
+- API P95 target was missed by successful read-only API endpoints in this low-rate run.
+- First request latency spikes appeared on multiple API endpoints.
+- `byType?type=Boat` returned HTTP 404 for every request.
+- CloudWatch evidence is screenshot-based; numeric metric exports are still needed for stronger reporting.
 
 Recommended next tests:
 
 - Repeat frontend benchmarks after image/cache/bundle improvements.
-- Run controlled read-only API benchmark tests for safe endpoints.
-- Capture CloudWatch evidence for API Gateway, Lambda, and database metrics during low-rate API tests.
+- Repeat read-only API benchmarks after confirming valid `byType` parameters.
+- Capture exported CloudWatch metric data for API Gateway, Lambda, and database metrics during the next low-rate API test.
+- Add a second low-rate run to compare first-request latency against warmed requests.
 - Add mobile-focused regression checks for `/home` layout stability.
 
 Approval needed before next test run:
