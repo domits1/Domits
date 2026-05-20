@@ -7,6 +7,7 @@ import {
   getPreviewTargetMarkerProps,
   TemplateAvailabilityCalendar,
   TemplateHeroCopy,
+  TemplateImageSlotVisual,
   TemplateSoftCallout,
   TemplateTopBar,
 } from "./templateSharedSections";
@@ -46,14 +47,13 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
           activeTargetId={activeTargetId}
         />
 
-        <img
-          {...getInteractiveTargetProps(styles.trustSignalsHeroImage, onSelectTarget, {
-            sectionId: "images",
-            targetId: "images.hero",
-            imageSlot: { kind: "hero" },
-          }, activeTargetId)}
-          src={model.media.heroImage}
+        <TemplateImageSlotVisual
+          model={model}
+          slot={{ kind: "hero" }}
+          imageClassName={styles.trustSignalsHeroImage}
           alt={model.hero.title}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
         />
 
         {showTrustCards ? (

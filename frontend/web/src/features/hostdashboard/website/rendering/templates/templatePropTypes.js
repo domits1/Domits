@@ -13,6 +13,17 @@ export const heroPropType = PropTypes.shape({
 export const mediaPropType = PropTypes.shape({
   heroImage: PropTypes.string,
   residenceImage: PropTypes.string,
+  galleryImages: PropTypes.arrayOf(PropTypes.string),
+  imageRotation: PropTypes.shape({
+    hero: PropTypes.bool,
+    residence: PropTypes.bool,
+    gallery: PropTypes.arrayOf(PropTypes.bool),
+  }),
+});
+
+export const residenceSectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  headline: PropTypes.string,
 });
 
 export const galleryPropType = PropTypes.shape({

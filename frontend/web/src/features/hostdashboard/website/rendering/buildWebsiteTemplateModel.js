@@ -14,6 +14,7 @@ import {
   MAX_FEATURED_WEBSITE_AMENITIES,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
 } from "./websiteAmenitiesConfig";
+import { normalizeWebsiteImageRotationSettings } from "./websiteImageSlotUtils";
 
 const DEFAULT_LOCALE = "en";
 const MAX_FEATURED_POLICIES = 3;
@@ -537,6 +538,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       heroImage: galleryImages[0] || placeholderImage,
       residenceImage: galleryImages[1] || galleryImages[0] || placeholderImage,
       galleryImages,
+      imageRotation: normalizeWebsiteImageRotationSettings(),
       previewImages,
       featuredGalleryImages,
     },
@@ -626,6 +628,10 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
     callToAction: {
       label: "Check live availability",
       note: "Live pricing and availability stay server-side and are checked on quote request.",
+    },
+    residenceSection: {
+      title: "The residence",
+      headline: "Designed to present the stay with clarity and confidence",
     },
     contactSection: {
       title: DEFAULT_WEBSITE_CONTACT_TITLE,

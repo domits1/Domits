@@ -738,11 +738,50 @@
 }
 
 .imageSlotMeta {
+  display: grid;
+  gap: 12px;
+}
+
+.imageSlotMetaHeader {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+}
+
+.compactToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 0.38rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid #d7e3ef;
+  background: #f8fbff;
+  color: #153e64;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+.compactToggle:hover {
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+  background: #ffffff;
+}
+
+.compactToggleInput {
+  width: 14px;
+  height: 14px;
+  accent-color: #1f4e79;
+  cursor: pointer;
+}
+
+.compactToggleLabel {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .imageSlotPreview {

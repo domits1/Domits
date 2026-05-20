@@ -7,6 +7,7 @@ import {
   getPreviewTargetMarkerProps,
   TemplateAvailabilityCalendar,
   TemplateHeroCopy,
+  TemplateImageSlotVisual,
   TemplateSoftCallout,
   TemplateTopBar,
 } from "./templateSharedSections";
@@ -66,7 +67,6 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
           )}
         >
           {model.journeyStops.slice(0, 3).map((stop, index) => {
-            const imageUrl = model.gallery.images[index] || model.media.heroImage;
             const isReversed = index % 2 === 1;
 
             return (
@@ -88,14 +88,13 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
                   <p className={styles.journeyLabel}>{stop.title}</p>
                   <p>{stop.description}</p>
                 </div>
-                <img
-                  {...getInteractiveTargetProps(styles.experienceJourneyVisual, onSelectTarget, {
-                    sectionId: "images",
-                    targetId: `images.gallery.${index}`,
-                    imageSlot: { kind: "gallery", index },
-                  }, activeTargetId)}
-                  src={imageUrl}
+                <TemplateImageSlotVisual
+                  model={model}
+                  slot={{ kind: "gallery", index }}
+                  imageClassName={styles.experienceJourneyVisual}
                   alt={`${stop.title} visual`}
+                  onSelectTarget={onSelectTarget}
+                  activeTargetId={activeTargetId}
                 />
               </article>
             );

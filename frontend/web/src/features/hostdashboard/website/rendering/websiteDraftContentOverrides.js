@@ -17,6 +17,10 @@ import {
   resolveWebsiteAmenityIconColor,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "./websiteAmenitiesConfig";
+import {
+  DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
+  normalizeWebsiteImageRotationSettings,
+} from "./websiteImageSlotUtils";
 
 const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "siteTitle",
@@ -25,6 +29,8 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "heroDescription",
   "ctaLabel",
   "ctaNote",
+  "residenceHeadline",
+  "residenceTitle",
   "contactTitle",
   "contactDescription",
   "contactAccentColor",
@@ -36,6 +42,7 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "heroImage",
   "residenceImage",
   "galleryImages",
+  "imageRotation",
   "amenitiesIconColor",
   "amenities",
   "trustCards",
@@ -91,6 +98,35 @@ const mergeGalleryImages = (baseImages = [], overrideImages = []) => {
     const overrideImage = cleanText(normalizedOverrideImages[index]);
     return overrideImage || baseImage;
   });
+};
+
+const mergeImageRotationSettings = (
+  baseImageRotation = {},
+  overrideImageRotation = {},
+  gallerySlotCount = DEFAULT_WEBSITE_GALLERY_SLOT_COUNT
+) => {
+  const normalizedBaseImageRotation = normalizeWebsiteImageRotationSettings(
+    baseImageRotation,
+    gallerySlotCount
+  );
+  const normalizedOverrideImageRotation =
+    overrideImageRotation && typeof overrideImageRotation === "object" ? overrideImageRotation : {};
+
+  return {
+    hero:
+      typeof normalizedOverrideImageRotation.hero === "boolean"
+        ? normalizedOverrideImageRotation.hero
+        : normalizedBaseImageRotation.hero,
+    residence:
+      typeof normalizedOverrideImageRotation.residence === "boolean"
+        ? normalizedOverrideImageRotation.residence
+        : normalizedBaseImageRotation.residence,
+    gallery: Array.from({ length: normalizedBaseImageRotation.gallery.length }, (_, index) =>
+      typeof normalizedOverrideImageRotation.gallery?.[index] === "boolean"
+        ? normalizedOverrideImageRotation.gallery[index]
+        : normalizedBaseImageRotation.gallery[index]
+    ),
+  };
 };
 
 const joinListWithAnd = (items = []) => {
@@ -164,6 +200,8 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
     heroDescription: "",
     ctaLabel: "",
     ctaNote: "",
+    residenceTitle: "",
+    residenceHeadline: "",
   },
   contact: {
     title: "",
@@ -184,6 +222,7 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
     heroImage: "",
     residenceImage: "",
     gallery: ["", "", ""],
+    rotation: normalizeWebsiteImageRotationSettings({}, DEFAULT_WEBSITE_GALLERY_SLOT_COUNT),
   },
   amenitiesIconColor: getDefaultWebsiteAmenityIconColor(templateKey),
   amenities: [],
@@ -198,6 +237,8 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const heroDescription = cleanText(overrides.heroDescription);
   const ctaLabel = cleanText(overrides.ctaLabel);
   const ctaNote = cleanText(overrides.ctaNote);
+  const residenceTitle = cleanText(overrides.residenceTitle);
+  const residenceHeadline = cleanText(overrides.residenceHeadline);
   const contactTitle = cleanText(overrides.contactTitle);
   const contactDescription = cleanText(overrides.contactDescription);
   const contactAvatarModeOverride = cleanText(overrides.contactAvatarMode);
@@ -208,6 +249,11 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const contactBackgroundColor = resolveWebsiteContactBackgroundColor(contactBackgroundColorOverride);
   const heroImage = cleanText(overrides.heroImage);
   const residenceImage = cleanText(overrides.residenceImage);
+  const mergedImageRotation = mergeImageRotationSettings(
+    model?.media?.imageRotation,
+    overrides.imageRotation,
+    DEFAULT_WEBSITE_GALLERY_SLOT_COUNT
+  );
   const amenitiesIconColorOverride = cleanText(overrides.amenitiesIconColor);
   const amenitiesIconColor = resolveWebsiteAmenityIconColor(
     amenitiesIconColorOverride || model?.amenities?.iconColor,
@@ -256,6 +302,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
       heroImage: heroImage || model.media.heroImage,
       residenceImage: residenceImage || model?.media?.residenceImage || model?.media?.heroImage,
       galleryImages: mergeGalleryImages(model?.media?.galleryImages, overrides.galleryImages),
+      imageRotation: mergedImageRotation,
       featuredGalleryImages: mergedGalleryImages,
       previewImages: mergedGalleryImages.slice(0, 3),
     },
@@ -275,6 +322,16 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
       ...model.callToAction,
       label: ctaLabel || model.callToAction.label,
       note: ctaNote || model.callToAction.note,
+    },
+    residenceSection: {
+      ...(model?.residenceSection && typeof model.residenceSection === "object"
+        ? model.residenceSection
+        : {}),
+      title: residenceTitle || model?.residenceSection?.title || "The residence",
+      headline:
+        residenceHeadline ||
+        model?.residenceSection?.headline ||
+        "Designed to present the stay with clarity and confidence",
     },
     contactSection: {
       ...(model?.contactSection && typeof model.contactSection === "object" ? model.contactSection : {}),
@@ -306,6 +363,10 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
     heroDescription: String(model?.hero?.description || ""),
     ctaLabel: String(model?.callToAction?.label || ""),
     ctaNote: String(model?.callToAction?.note || ""),
+    residenceTitle: String(model?.residenceSection?.title || "The residence"),
+    residenceHeadline: String(
+      model?.residenceSection?.headline || "Designed to present the stay with clarity and confidence"
+    ),
   },
   contact: {
     title: String(model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE),
@@ -325,6 +386,10 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
     heroImage: String(model?.media?.heroImage || ""),
     residenceImage: String(model?.media?.residenceImage || model?.media?.heroImage || ""),
     gallery: Array.from({ length: 3 }, (_, index) => String(model?.gallery?.images?.[index] || "")),
+    rotation: normalizeWebsiteImageRotationSettings(
+      model?.media?.imageRotation,
+      DEFAULT_WEBSITE_GALLERY_SLOT_COUNT
+    ),
   },
   amenitiesIconColor: resolveWebsiteAmenityIconColor(model?.amenities?.iconColor, templateKey),
   amenities: getBaseAmenityItems(model).map((amenity) => ({
@@ -376,6 +441,16 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
     patchKey: "ctaNote",
     editorValue: (editorValues) => editorValues?.common?.ctaNote,
     baseValue: (baseModel) => baseModel?.callToAction?.note,
+  },
+  {
+    patchKey: "residenceTitle",
+    editorValue: (editorValues) => editorValues?.common?.residenceTitle,
+    baseValue: (baseModel) => baseModel?.residenceSection?.title,
+  },
+  {
+    patchKey: "residenceHeadline",
+    editorValue: (editorValues) => editorValues?.common?.residenceHeadline,
+    baseValue: (baseModel) => baseModel?.residenceSection?.headline,
   },
   {
     patchKey: "contactTitle",
@@ -487,6 +562,23 @@ const buildGalleryImagesPatch = (editorValues, baseModel) =>
     return normalizedEditorImage && normalizedEditorImage !== cleanText(baseImage) ? normalizedEditorImage : "";
   });
 
+const buildImageRotationPatch = (editorValues, baseModel) => {
+  const normalizedEditorImageRotation = normalizeWebsiteImageRotationSettings(
+    editorValues?.images?.rotation,
+    DEFAULT_WEBSITE_GALLERY_SLOT_COUNT
+  );
+  const normalizedBaseImageRotation = normalizeWebsiteImageRotationSettings(
+    baseModel?.media?.imageRotation,
+    DEFAULT_WEBSITE_GALLERY_SLOT_COUNT
+  );
+
+  if (JSON.stringify(normalizedEditorImageRotation) === JSON.stringify(normalizedBaseImageRotation)) {
+    return null;
+  }
+
+  return normalizedEditorImageRotation;
+};
+
 const buildCopyCollectionPatch = (baseItems, editorItems) =>
   (Array.isArray(baseItems) ? baseItems : []).map((baseItem, index) => {
     const normalizedTitle = cleanText(editorItems?.[index]?.title);
@@ -551,6 +643,11 @@ export const buildWebsiteDraftOverridePatch = (editorValues, baseModel, template
   const nextGalleryImagesPatch = buildGalleryImagesPatch(editorValues, baseModel);
   if (nextGalleryImagesPatch.some(Boolean)) {
     nextPatch.galleryImages = nextGalleryImagesPatch;
+  }
+
+  const nextImageRotationPatch = buildImageRotationPatch(editorValues, baseModel);
+  if (nextImageRotationPatch) {
+    nextPatch.imageRotation = nextImageRotationPatch;
   }
 
   const nextAmenitiesPatch = buildAmenitiesPatch(editorValues, baseModel);

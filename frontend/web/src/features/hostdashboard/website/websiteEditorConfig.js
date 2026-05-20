@@ -18,6 +18,11 @@ const BASE_COMMON_TEXT_FIELDS = Object.freeze([
   { key: "ctaNote", label: "CTA note", component: "textarea" },
 ]);
 
+const PANORAMA_COMMON_TEXT_FIELDS = Object.freeze([
+  { key: "residenceTitle", label: "Residence section title", component: "input" },
+  { key: "residenceHeadline", label: "Residence section headline", component: "input" },
+]);
+
 const PANORAMA_CONTACT_FIELDS = Object.freeze([
   { key: "title", label: "Section title", component: "input" },
   { key: "description", label: "Section description", component: "textarea" },
@@ -42,6 +47,8 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     heroDescription: "common.heroDescription",
     ctaLabel: "common.ctaLabel",
     ctaNote: "common.ctaNote",
+    residenceTitle: "common.residenceTitle",
+    residenceHeadline: "common.residenceHeadline",
   },
   amenities: (index) => `amenities.${index}`,
   amenitiesIconColor: "amenities.iconColor",
@@ -92,24 +99,79 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
 
 export const TEMPLATE_IMAGE_SLOT_MAP = Object.freeze({
   "panorama-landing": [
-    { id: "panorama-hero", kind: "hero", label: "Hero image", description: "Main visual used in the top hero section." },
+    {
+      id: "panorama-hero",
+      kind: "hero",
+      label: "Hero image",
+      description: "Main visual used in the top hero section.",
+      supportsRotation: true,
+    },
     {
       id: "panorama-residence",
       kind: "residence",
       label: "Residence image",
-      description: 'Image used in the "The residence" section below the hero.',
+      description: 'Lead image shown first in the rotating "The residence" section gallery.',
+      supportsRotation: true,
     },
-    { id: "panorama-gallery-primary", kind: "gallery", index: 0, label: "Gallery slot 1", description: "First image in the lower gallery strip." },
-    { id: "panorama-gallery-secondary", kind: "gallery", index: 1, label: "Gallery slot 2", description: "Second image in the lower gallery strip." },
-    { id: "panorama-gallery-tertiary", kind: "gallery", index: 2, label: "Gallery slot 3", description: "Third image in the lower gallery strip." },
+    {
+      id: "panorama-gallery-primary",
+      kind: "gallery",
+      index: 0,
+      label: "Gallery slot 1",
+      description: "First image in the lower gallery strip.",
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-gallery-secondary",
+      kind: "gallery",
+      index: 1,
+      label: "Gallery slot 2",
+      description: "Second image in the lower gallery strip.",
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-gallery-tertiary",
+      kind: "gallery",
+      index: 2,
+      label: "Gallery slot 3",
+      description: "Third image in the lower gallery strip.",
+      supportsRotation: true,
+    },
   ],
   "trust-signals": [
-    { id: "trust-hero", kind: "hero", label: "Hero image", description: "Main image used in the trust-oriented layout." },
+    {
+      id: "trust-hero",
+      kind: "hero",
+      label: "Hero image",
+      description: "Main image used in the trust-oriented layout.",
+      supportsRotation: true,
+    },
   ],
   "experience-journey": [
-    { id: "journey-gallery-arrival", kind: "gallery", index: 0, label: "Journey image 1", description: "Visual used next to the first journey stop." },
-    { id: "journey-gallery-stay", kind: "gallery", index: 1, label: "Journey image 2", description: "Visual used next to the second journey stop." },
-    { id: "journey-gallery-surroundings", kind: "gallery", index: 2, label: "Journey image 3", description: "Visual used next to the third journey stop." },
+    {
+      id: "journey-gallery-arrival",
+      kind: "gallery",
+      index: 0,
+      label: "Journey image 1",
+      description: "Visual used next to the first journey stop.",
+      supportsRotation: true,
+    },
+    {
+      id: "journey-gallery-stay",
+      kind: "gallery",
+      index: 1,
+      label: "Journey image 2",
+      description: "Visual used next to the second journey stop.",
+      supportsRotation: true,
+    },
+    {
+      id: "journey-gallery-surroundings",
+      kind: "gallery",
+      index: 2,
+      label: "Journey image 3",
+      description: "Visual used next to the third journey stop.",
+      supportsRotation: true,
+    },
   ],
 });
 
@@ -184,6 +246,10 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
 ]);
 
 export const getCommonTextFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return [...BASE_COMMON_TEXT_FIELDS, ...PANORAMA_COMMON_TEXT_FIELDS];
+  }
+
   return BASE_COMMON_TEXT_FIELDS;
 };
 

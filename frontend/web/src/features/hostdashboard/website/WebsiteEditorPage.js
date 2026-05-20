@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
@@ -63,6 +63,7 @@ import {
   resolveWebsiteAmenityIconColor,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "./rendering/websiteAmenitiesConfig";
+import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import {
   AmenityIconSelectField,
@@ -804,6 +805,26 @@ function WebsiteEditorPage() {
     );
   };
 
+  const updateImageSlotRotation = (slot, nextEnabled) => {
+    if (!slot) {
+      return;
+    }
+
+    setPreviewTargetId(getImageSlotTargetId(slot));
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      images: {
+        ...currentValues.images,
+        rotation: setWebsiteImageSlotRotationEnabled(
+          currentValues?.images?.rotation,
+          slot,
+          nextEnabled,
+          currentValues?.images?.gallery?.length
+        ),
+      },
+    }));
+  };
+
   const reloadDraftRecord = async () => {
     const persistedDraft = await fetchWebsiteDraftByPropertyId(propertyId);
     if (!persistedDraft) {
@@ -1283,6 +1304,7 @@ function WebsiteEditorPage() {
                 <WebsiteEditorImageSlotsSection
                   editorValues={editorValues}
                   highlightedTargetId={highlightedTargetId}
+                  onChangeImageRotation={updateImageSlotRotation}
                   imageSlots={imageSlots}
                   importedImageOptions={importedImageOptions}
                   isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.images])}

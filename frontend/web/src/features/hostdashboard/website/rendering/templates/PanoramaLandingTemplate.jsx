@@ -8,6 +8,7 @@ import {
   getInteractiveTargetProps,
   getPreviewTargetMarkerProps,
   TemplateAvailabilityCalendar,
+  TemplateImageSlotVisual,
   TemplateTopBar,
 } from "./templateSharedSections";
 import {
@@ -20,6 +21,7 @@ import {
   heroPropType,
   hostPropType,
   mediaPropType,
+  residenceSectionPropType,
   sitePropType,
   templateInteractionPropTypes,
   visibilityPropType,
@@ -108,14 +110,9 @@ const buildPanoramaGallerySlots = (model) => {
 
   if (galleryImages.length > 0) {
     return galleryImages.slice(0, 5).map((imageUrl, index) => ({
-      imageUrl,
       key: `${model.site.title}-${index}-${imageUrl}`,
       alt: `${model.hero.title} view ${index + 1}`,
-      target: {
-        sectionId: "images",
-        targetId: `images.gallery.${index}`,
-        imageSlot: { kind: "gallery", index },
-      },
+      slot: { kind: "gallery", index },
     }));
   }
 
@@ -126,48 +123,11 @@ const buildPanoramaGallerySlots = (model) => {
 
   return [
     {
-      imageUrl: heroImage,
       key: `${model.site.title}-hero-fallback`,
       alt: model.hero.title,
-      target: {
-        sectionId: "images",
-        targetId: "images.hero",
-        imageSlot: { kind: "hero" },
-      },
+      slot: { kind: "hero" },
     },
   ];
-};
-
-const buildResidenceVisual = (gallerySlots, model) => {
-  const configuredResidenceImage = String(model.media?.residenceImage || "").trim();
-  if (configuredResidenceImage) {
-    return {
-      imageUrl: configuredResidenceImage,
-      key: `${model.site.title}-residence-configured`,
-      alt: `${model.hero.title} residence view`,
-      target: {
-        sectionId: "images",
-        targetId: "images.residence",
-        imageSlot: { kind: "residence" },
-      },
-    };
-  }
-
-  const firstGallerySlot = gallerySlots[0];
-  if (firstGallerySlot) {
-    return firstGallerySlot;
-  }
-
-  return {
-    imageUrl: model.media.heroImage,
-    key: `${model.site.title}-residence-hero`,
-    alt: model.hero.title,
-    target: {
-      sectionId: "images",
-      targetId: "images.hero",
-      imageSlot: { kind: "hero" },
-    },
-  };
 };
 
 const formatPanoramaAmenityCategory = (value) => {
@@ -239,16 +199,27 @@ const buildPanoramaViewState = (model) => {
       model.amenities?.iconColor,
       "panorama-landing"
     ),
-    heroStats: Array.isArray(model.stay?.stats) ? model.stay.stats.slice(0, 4) : [],
+    residenceCards: [
+      ...(Array.isArray(model.stay?.stats) ? model.stay.stats.slice(0, 4) : []),
+      {
+        id: "residence-minimum-stay",
+        label: "Minimum stay",
+        value: model.stay?.minimumStayLabel,
+      },
+      {
+        id: "residence-check-in",
+        label: "Check-in",
+        value: model.stay?.checkInLabel,
+      },
+      {
+        id: "residence-check-out",
+        label: "Check-out",
+        value: model.stay?.checkOutLabel,
+      },
+    ].filter((item) => Boolean(item?.value)),
     featuredTrustCards: Array.isArray(model.trustCards) ? model.trustCards.slice(0, 3) : [],
     featuredAmenities,
     featuredJourneyStops: Array.isArray(model.journeyStops) ? model.journeyStops.slice(0, 3) : [],
-    residenceMeta: [
-      model.stay?.nightlyRateLabel,
-      model.stay?.minimumStayLabel,
-      model.stay?.checkInLabel,
-      model.stay?.checkOutLabel,
-    ].filter(Boolean),
   };
 };
 
@@ -522,14 +493,13 @@ const renderPanoramaHeroSection = ({
     {...getScrollRevealProps(60)}
   >
     <div className={styles.panoramaHeroBackdropShell}>
-      <img
-        {...getInteractiveTargetProps(styles.panoramaHeroBackdrop, onSelectTarget, {
-          sectionId: "images",
-          targetId: "images.hero",
-          imageSlot: { kind: "hero" },
-        }, activeTargetId)}
-        src={model.media.heroImage}
+      <TemplateImageSlotVisual
+        model={model}
+        slot={{ kind: "hero" }}
+        imageClassName={styles.panoramaHeroBackdrop}
         alt={model.hero.title}
+        onSelectTarget={onSelectTarget}
+        activeTargetId={activeTargetId}
       />
       <div className={styles.panoramaHeroOverlay} aria-hidden="true" />
       <div className={styles.panoramaHeroInner}>
@@ -576,68 +546,69 @@ const renderPanoramaResidenceSection = ({
   model,
   onSelectTarget,
   activeTargetId,
-  residenceVisual,
-  residenceMeta,
-  heroStats,
-}) => (
-  <section id="about" className={styles.sectionCard} {...getScrollRevealProps(80)}>
-    <div className={styles.sectionHeading}>
-      <p className={styles.sectionEyebrow}>The residence</p>
-      <h2>Designed to present the stay with clarity and confidence</h2>
-    </div>
-
-    <div className={styles.panoramaResidenceGrid}>
-      <div className={styles.panoramaResidenceCopy}>
+  residenceCards,
+}) => {
+  return (
+    <section id="about" className={styles.sectionCard} {...getScrollRevealProps(80)}>
+      <div className={`${styles.sectionHeading} ${styles.panoramaResidenceHeading}`.trim()}>
         <p
-          {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
+          {...getInteractiveTargetProps(styles.panoramaResidenceEyebrow, onSelectTarget, {
             sectionId: "common",
-            targetId: "common.heroDescription",
+            targetId: "common.residenceTitle",
           }, activeTargetId)}
         >
-          {model.hero.description}
+          {model.residenceSection?.title || "The residence"}
         </p>
-        {model.location?.narrative ? <p className={styles.heroDescription}>{model.location.narrative}</p> : null}
-
-        {heroStats.length > 0 ? (
-          <div className={styles.statGrid}>
-            {heroStats.map((stat) => (
-              <div key={stat.id} className={styles.statCard}>
-                <span className={styles.statLabel}>{stat.label}</span>
-                <strong>{stat.value}</strong>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        <h2
+          {...getInteractiveTargetProps(styles.panoramaResidenceHeadline, onSelectTarget, {
+            sectionId: "common",
+            targetId: "common.residenceHeadline",
+          }, activeTargetId)}
+        >
+          {model.residenceSection?.headline || "Designed to present the stay with clarity and confidence"}
+        </h2>
       </div>
 
+    <div className={styles.panoramaResidenceGrid}>
       <div className={styles.panoramaResidenceVisualColumn}>
-        <img
-          {...getInteractiveTargetProps(
-            styles.panoramaResidenceImage,
-            onSelectTarget,
-            residenceVisual.target,
-            activeTargetId
-          )}
-          src={residenceVisual.imageUrl}
-          alt={residenceVisual.alt}
+        <TemplateImageSlotVisual
+          model={model}
+          slot={{ kind: "residence" }}
+          frameClassName={styles.panoramaResidenceVisualFrame}
+          imageClassName={styles.panoramaResidenceImage}
+          alt={`${model.hero.title} residence view`}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
         />
-
-        {residenceMeta.length > 0 ? (
-          <div className={styles.panoramaResidenceMetaGrid}>
-            {residenceMeta.map((item) => (
-              <div key={item} className={styles.inlineStat}>
-                <span className={styles.statLabel}>Stay detail</span>
-                <strong>{item}</strong>
-              </div>
-            ))}
-          </div>
-        ) : null}
       </div>
-    </div>
-  </section>
-);
 
-const renderPanoramaGallerySection = ({ gallerySlots, onSelectTarget, activeTargetId }) => {
+        <div className={styles.panoramaResidenceCopy}>
+          <p
+            {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
+              sectionId: "common",
+              targetId: "common.heroDescription",
+            }, activeTargetId)}
+          >
+            {model.hero.description}
+          </p>
+        </div>
+      </div>
+
+      {residenceCards.length > 0 ? (
+        <div className={styles.panoramaResidenceCardRail}>
+          {residenceCards.map((item) => (
+            <div key={item.id} className={`${styles.inlineStat} ${styles.panoramaResidenceCard}`.trim()}>
+              <span className={styles.statLabel}>{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+};
+
+const renderPanoramaGallerySection = ({ model, gallerySlots, onSelectTarget, activeTargetId }) => {
   if (gallerySlots.length < 1) {
     return null;
   }
@@ -651,16 +622,16 @@ const renderPanoramaGallerySection = ({ gallerySlots, onSelectTarget, activeTarg
 
       <div className={styles.panoramaGalleryMosaic}>
         {gallerySlots.map((slot, index) => (
-          <img
+          <TemplateImageSlotVisual
             key={slot.key}
-            {...getInteractiveTargetProps(
-              `${styles.panoramaGalleryTile} ${index === 0 ? styles.panoramaGalleryTileLarge : ""}`.trim(),
-              onSelectTarget,
-              slot.target,
-              activeTargetId
-            )}
-            src={slot.imageUrl}
+            model={model}
+            slot={slot.slot}
+            imageClassName={`${styles.panoramaGalleryTile} ${
+              index === 0 ? styles.panoramaGalleryTileLarge : ""
+            }`.trim()}
             alt={slot.alt}
+            onSelectTarget={onSelectTarget}
+            activeTargetId={activeTargetId}
           />
         ))}
       </div>
@@ -876,8 +847,7 @@ const renderPanoramaContactSection = ({
 };
 
 export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId }) {
-  const viewState = buildPanoramaViewState(model);
-  const residenceVisual = buildResidenceVisual(viewState.gallerySlots, model);
+  const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
   const navItems = buildPanoramaNavItems(viewState);
@@ -901,12 +871,11 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
           model,
           onSelectTarget,
           activeTargetId,
-          residenceVisual,
-          residenceMeta: viewState.residenceMeta,
-          heroStats: viewState.heroStats,
+          residenceCards: viewState.residenceCards,
         })}
         {viewState.showGallerySection
           ? renderPanoramaGallerySection({
+              model,
               gallerySlots: viewState.gallerySlots,
               onSelectTarget,
               activeTargetId,
@@ -965,6 +934,7 @@ PanoramaLandingTemplate.propTypes = {
     site: sitePropType.isRequired,
     hero: heroPropType.isRequired,
     media: mediaPropType.isRequired,
+    residenceSection: residenceSectionPropType,
     stay: PropTypes.shape({
       stats: PropTypes.arrayOf(
         PropTypes.shape({
