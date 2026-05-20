@@ -54,26 +54,37 @@ export class Service {
         return { message: "Team member removed." };
     }
 
-    async getHostEmail(hostId) {
+    async getUserInfo(cognitoUsername) {
         try {
             const result = await cognitoClient.send(new AdminGetUserCommand({
                 UserPoolId: USER_POOL_ID,
-                Username: hostId,
+                Username: cognitoUsername,
             }));
-            const emailAttr = result.UserAttributes.find(a => a.Name === "email");
-            return emailAttr?.Value || null;
+            const attrs = Object.fromEntries(result.UserAttributes.map(a => [a.Name, a.Value]));
+            const name = [attrs.given_name, attrs.family_name].filter(Boolean).join(" ") || attrs.name || null;
+            return { email: attrs.email || null, name };
         } catch {
-            return null;
+            return { email: null, name: null };
         }
+    }
+
+    async getTeamMembers(hostId) {
+        const dataSource = await Database.getInstance();
+        const members = await this.repository.findByHostId(dataSource, hostId);
+        return await Promise.all(members.map(async (m) => {
+            if (!m.member_user_id) return m;
+            const { name } = await this.getUserInfo(m.member_user_id);
+            return { ...m, member_name: name };
+        }));
     }
 
     async getMemberships(userId) {
         const dataSource = await Database.getInstance();
         const memberships = await this.repository.findByMemberId(dataSource, userId);
-        return await Promise.all(memberships.map(async (m) => ({
-            ...m,
-            host_email: await this.getHostEmail(m.host_id),
-        })));
+        return await Promise.all(memberships.map(async (m) => {
+            const { email, name } = await this.getUserInfo(m.host_id);
+            return { ...m, host_email: email, host_name: name };
+        }));
     }
 
     async acceptInvite(token, pomUserId, pomEmail, pomRole) {

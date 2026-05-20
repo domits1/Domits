@@ -227,9 +227,12 @@ const HostTeam = () => {
                                 <img src={standardAvatar} alt="Host avatar" className="team-member-avatar" />
                                 <div className="team-member-info">
                                     <div className="team-member-name">
-                                        {m.host_email || m.host_id}
+                                        {m.host_name || m.host_email || m.host_id}
                                         <span className="team-role-badge">{m.role}</span>
                                     </div>
+                                    {(m.host_name && m.host_email) && (
+                                        <div className="team-member-sub">{m.host_email}</div>
+                                    )}
                                     {m.accepted_at && (
                                         <div className="team-member-sub">
                                             Joined {new Date(m.accepted_at).toLocaleDateString()}
