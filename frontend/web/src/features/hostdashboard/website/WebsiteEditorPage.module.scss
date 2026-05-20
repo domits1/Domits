@@ -547,6 +547,12 @@
   align-items: center;
 }
 
+.colorPickerControlGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .colorPickerShell {
   width: 58px;
   height: 58px;
@@ -575,6 +581,45 @@
   box-shadow:
     0 0 0 3px rgba(31, 78, 121, 0.1),
     0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.colorPickerEyeDropperButton {
+  appearance: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid #d6e1ec;
+  background: #ffffff;
+  color: #1f4e79;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease,
+    color 0.16s ease;
+  cursor: pointer;
+}
+
+.colorPickerEyeDropperButton:hover:not(:disabled),
+.colorPickerEyeDropperButton:focus-visible {
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow:
+    0 0 0 3px rgba(31, 78, 121, 0.1),
+    0 12px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.colorPickerEyeDropperButton:focus-visible {
+  outline: none;
+}
+
+.colorPickerEyeDropperButton:disabled {
+  opacity: 0.58;
+  cursor: wait;
 }
 
 .colorPickerInput {

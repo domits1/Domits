@@ -2,10 +2,6 @@ import React, { useRef } from "react";
 import PropTypes from "prop-types";
 import { getAmenityIconNode } from "../rendering/amenityIconRegistry";
 import {
-  WEBSITE_BACKGROUND_COLOR_OPTIONS,
-  resolveWebsiteBackgroundColor,
-} from "../rendering/websiteDraftThemeOverrides";
-import {
   WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
   WEBSITE_CONTACT_AVATAR_MODE_INITIALS,
@@ -18,6 +14,7 @@ import {
 import styles from "../WebsiteEditorPage.module.scss";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../../../images/arrow-up-icon.svg";
+export { ContactColorField, BackgroundColorField } from "./fields/WebsiteEditorColorField";
 
 export function TextField({
   field,
@@ -81,88 +78,6 @@ TextField.propTypes = {
   fieldRef: refPropType,
   isHighlighted: PropTypes.bool,
   onKeyDown: PropTypes.func,
-};
-
-export function ContactColorField({
-  label,
-  hint,
-  value,
-  placeholder,
-  resolveColorValue,
-  inputAriaLabel,
-  onSelectColor,
-  onChangeInput,
-  onCommitInput,
-  onInputKeyDown,
-  fieldRef = null,
-  isHighlighted = false,
-  onFocus = undefined,
-  onBlur = undefined,
-}) {
-  const colorPickerAriaLabel = `${inputAriaLabel} picker`;
-
-  return (
-    <div
-      ref={fieldRef}
-      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-    >
-      <div className={styles.customColorSection}>
-        <div className={styles.customColorHeader}>
-          <span className={styles.fieldLabel}>{label}</span>
-          <p className={styles.customColorHint}>{hint}</p>
-        </div>
-
-        <div className={styles.customColorRow}>
-          <div className={`${styles.colorPickerShell} ${styles.colorPickerShellSelected}`.trim()}>
-            <input
-              type="color"
-              className={styles.colorPickerInput}
-              value={resolveColorValue(value)}
-              onChange={(event) => onSelectColor(event.target.value)}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              aria-label={colorPickerAriaLabel}
-            />
-          </div>
-          <input
-            type="text"
-            className={`${styles.textInput} ${styles.customColorInput}`.trim()}
-            value={value}
-            onChange={(event) => onChangeInput(event.target.value)}
-            onBlur={() => {
-              onCommitInput();
-              onBlur?.();
-            }}
-            onFocus={onFocus}
-            onKeyDown={onInputKeyDown}
-            inputMode="text"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder={placeholder}
-            aria-label={inputAriaLabel}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-ContactColorField.propTypes = {
-  label: PropTypes.string.isRequired,
-  hint: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  placeholder: PropTypes.string.isRequired,
-  resolveColorValue: PropTypes.func.isRequired,
-  inputAriaLabel: PropTypes.string.isRequired,
-  onSelectColor: PropTypes.func.isRequired,
-  onChangeInput: PropTypes.func.isRequired,
-  onCommitInput: PropTypes.func.isRequired,
-  onInputKeyDown: PropTypes.func.isRequired,
-  fieldRef: refPropType,
-  isHighlighted: PropTypes.bool,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
 };
 
 const resolveContactImagePreview = ({
@@ -384,92 +299,6 @@ AmenityIconSelectField.propTypes = {
   onBlur: PropTypes.func,
   fieldRef: refPropType,
   isHighlighted: PropTypes.bool,
-};
-
-export function BackgroundColorField({
-  value,
-  customValue,
-  onSelectColor,
-  onChangeCustomColor,
-  onCommitCustomColor,
-  onCustomColorKeyDown,
-}) {
-  const hasPresetSelection = WEBSITE_BACKGROUND_COLOR_OPTIONS.some(
-    (colorOption) => colorOption.value === value
-  );
-
-  return (
-    <div className={styles.fieldGroup}>
-      <div className={styles.fieldLabel}>Background color</div>
-      <div className={styles.colorGrid} role="radiogroup" aria-label="Website background color">
-        {WEBSITE_BACKGROUND_COLOR_OPTIONS.map((colorOption) => {
-          const isSelected = colorOption.value === value;
-          return (
-            <button
-              key={colorOption.id}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              className={`${styles.colorSwatchButton} ${isSelected ? styles.colorSwatchButtonSelected : ""}`.trim()}
-              onClick={() => onSelectColor(colorOption.value)}
-              title={colorOption.label}
-            >
-              <span
-                className={styles.colorSwatch}
-                style={{ backgroundColor: colorOption.value }}
-                aria-hidden="true"
-              />
-              <span className={styles.colorSwatchLabel}>{colorOption.label}</span>
-            </button>
-          );
-        })}
-      </div>
-      <div className={styles.customColorSection}>
-        <div className={styles.customColorHeader}>
-          <span className={styles.fieldLabel}>Custom color</span>
-          <p className={styles.customColorHint}>
-            Use a hex value if the preset grid is too limiting.
-          </p>
-        </div>
-        <div className={styles.customColorRow}>
-          <div
-            className={`${styles.colorPickerShell} ${hasPresetSelection ? "" : styles.colorPickerShellSelected}`.trim()}
-          >
-            <input
-              type="color"
-              className={styles.colorPickerInput}
-              value={resolveWebsiteBackgroundColor(value)}
-              onChange={(event) => onSelectColor(event.target.value)}
-              aria-label="Pick a custom website background color"
-            />
-          </div>
-          <input
-            type="text"
-            className={`${styles.textInput} ${styles.customColorInput}`}
-            value={customValue}
-            onChange={(event) => onChangeCustomColor(event.target.value)}
-            onBlur={onCommitCustomColor}
-            onKeyDown={onCustomColorKeyDown}
-            inputMode="text"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="#ffffff"
-            aria-label="Custom background color hex code"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-BackgroundColorField.propTypes = {
-  value: PropTypes.string.isRequired,
-  customValue: PropTypes.string.isRequired,
-  onSelectColor: PropTypes.func.isRequired,
-  onChangeCustomColor: PropTypes.func.isRequired,
-  onCommitCustomColor: PropTypes.func.isRequired,
-  onCustomColorKeyDown: PropTypes.func.isRequired,
 };
 
 export function CollapsibleSection({

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
@@ -65,6 +64,7 @@ import {
 } from "./rendering/websiteAmenitiesConfig";
 import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
+import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
 import {
   AmenityIconSelectField,
   BackgroundColorField,
@@ -93,8 +93,6 @@ import {
   getDraftPublishedThemeOverrides,
   getDraftThemeOverrides,
   getDraftWorkingContentOverrides,
-  getImageOptionLabel,
-  getSelectedImageForSlot,
   getLiveLinkStatus,
   getPrimaryWebsiteDomain,
   getPreviewTargetIdForVisibilityField,
@@ -1574,77 +1572,13 @@ function WebsiteEditorPage() {
         </section>
       </div>
 
-      {imagePickerState.isOpen && imagePickerState.slot ? (
-        <dialog
-          open
-          className={styles.imagePickerOverlay}
-          aria-label={`Select image for ${imagePickerState.slot.label}`}
-          onCancel={(event) => {
-            event.preventDefault();
-            closeImagePicker();
-          }}
-          onPointerDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeImagePicker();
-            }
-          }}
-        >
-          <section className={styles.imagePickerDialog}>
-            <div className={styles.imagePickerHeader}>
-              <div className={styles.imagePickerHeaderCopy}>
-                <p className={styles.eyebrow}>Choose imported image</p>
-                <h2 className={styles.panelTitle}>{imagePickerState.slot.label}</h2>
-                <p className={styles.panelDescription}>
-                  Pick from the imported listing photos. Selecting a thumbnail applies it immediately to
-                  this slot.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className={styles.imagePickerCloseButton}
-                onClick={closeImagePicker}
-                aria-label="Close image picker"
-              >
-                <CloseOutlinedIcon fontSize="small" />
-              </button>
-            </div>
-
-            <div className={styles.imagePickerMetaRow}>
-              <span className={styles.imagePickerCount}>
-                {importedImageOptions.length} imported {importedImageOptions.length === 1 ? "image" : "images"}
-              </span>
-              <span className={styles.helperText}>Scroll and click a thumbnail to assign it.</span>
-            </div>
-
-            <div className={styles.imagePickerThumbRail}>
-              {importedImageOptions.map((imageUrl, index) => {
-                const isSelected = imageUrl === getSelectedImageForSlot(imagePickerState.slot, editorValues);
-
-                return (
-                  <button
-                    key={`${imagePickerState.slot.label}-${index}-${imageUrl}`}
-                    type="button"
-                    className={`${styles.imagePickerThumbButton} ${
-                      isSelected ? styles.imagePickerThumbButtonActive : ""
-                    }`.trim()}
-                    onClick={() => selectImageFromPicker(imageUrl)}
-                    aria-label={`Use imported image ${index + 1}`}
-                  >
-                    <img
-                      src={imageUrl}
-                      alt=""
-                      aria-hidden="true"
-                      className={styles.imagePickerThumbImage}
-                    />
-                    <span className={styles.imagePickerThumbLabel}>{getImageOptionLabel(index)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </dialog>
-      ) : null}
+      <WebsiteImagePickerDialog
+        editorValues={editorValues}
+        imagePickerState={imagePickerState}
+        importedImageOptions={importedImageOptions}
+        onClose={closeImagePicker}
+        onSelectImage={selectImageFromPicker}
+      />
 
       <WebsiteIconPickerDialog
         isOpen={iconPickerState.isOpen}
