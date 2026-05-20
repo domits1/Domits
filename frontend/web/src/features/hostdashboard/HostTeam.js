@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import standardAvatar from "../../images/standard.png";
 import { normalizeImageUrl } from "../guestdashboard/utils/image";
-import { fetchTeamMembers, inviteTeamMember, removeTeamMember } from "./services/teamService";
+import { fetchTeamMembers, fetchMemberships, inviteTeamMember, removeTeamMember } from "./services/teamService";
 
 const HostTeam = () => {
-    const [host, setHost] = useState({ name: "", email: "", phone: "", picture: "" });
+    const [host, setHost] = useState({ name: "", email: "", phone: "", picture: "", group: "" });
     const [members, setMembers] = useState([]);
+    const [memberships, setMemberships] = useState([]);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("Property Operations Manager");
@@ -26,6 +27,7 @@ const HostTeam = () => {
                     email: attrs.email || "",
                     phone: attrs.phone_number || "",
                     picture: attrs.picture || "",
+                    group: attrs["custom:group"] || "",
                 });
             } catch {
                 /* not logged in */
@@ -38,6 +40,9 @@ const HostTeam = () => {
         fetchTeamMembers()
             .then(setMembers)
             .catch(() => setLoadError(true));
+        fetchMemberships()
+            .then(setMemberships)
+            .catch(() => { /* memberships optional */ });
     }, []);
 
     useEffect(() => {
@@ -159,54 +164,83 @@ const HostTeam = () => {
             <h2 className="team-heading">Team</h2>
             <p className="team-subtitle">Manage who has access to your properties and reservations.</p>
 
-            <section className="team-section">
-                <h3 className="team-section-title">Primary team members</h3>
-                <div className="team-card">
-                    <div className="team-card-header">Primary host</div>
-                    <div className="team-member-row">
-                        <img
-                            src={host.picture ? normalizeImageUrl(host.picture) : standardAvatar}
-                            alt="Host avatar"
-                            className="team-member-avatar"
-                        />
-                        <div className="team-member-info">
-                            <div className="team-member-name">
-                                {host.name || "—"}
-                                <span className="team-role-badge">Primary host</span>
+            {host.group === "Host" && (
+                <>
+                    <section className="team-section">
+                        <h3 className="team-section-title">Primary team members</h3>
+                        <div className="team-card">
+                            <div className="team-card-header">Primary host</div>
+                            <div className="team-member-row">
+                                <img
+                                    src={host.picture ? normalizeImageUrl(host.picture) : standardAvatar}
+                                    alt="Host avatar"
+                                    className="team-member-avatar"
+                                />
+                                <div className="team-member-info">
+                                    <div className="team-member-name">
+                                        {host.name || "—"}
+                                        <span className="team-role-badge">Primary host</span>
+                                    </div>
+                                </div>
                             </div>
+                            {host.email && (
+                                <div className="team-member-contact">
+                                    <span className="team-contact-icon">✉</span>
+                                    <span>{host.email}</span>
+                                </div>
+                            )}
+                            {host.phone && (
+                                <div className="team-member-contact">
+                                    <span className="team-contact-icon">✆</span>
+                                    <span>{host.phone}</span>
+                                </div>
+                            )}
+                            <p className="team-card-note">
+                                The primary host manages the account and receives platform notifications.
+                            </p>
                         </div>
+                    </section>
+
+                    <section className="team-section">
+                        <div className="team-section-header">
+                            <h3 className="team-section-title">Additional team members</h3>
+                            <button
+                                className="team-invite-btn"
+                                onClick={() => setShowInviteModal(true)}
+                            >
+                                + Invite members
+                            </button>
+                        </div>
+
+                        {renderMemberList()}
+                    </section>
+                </>
+            )}
+
+            {memberships.length > 0 && (
+                <section className="team-section">
+                    <h3 className="team-section-title">Teams you belong to</h3>
+                    <div className="team-card">
+                        <div className="team-card-header">Co-host memberships</div>
+                        {memberships.map(m => (
+                            <div key={m.id} className="team-member-row team-member-row--bordered">
+                                <img src={standardAvatar} alt="Host avatar" className="team-member-avatar" />
+                                <div className="team-member-info">
+                                    <div className="team-member-name">
+                                        {m.host_id}
+                                        <span className="team-role-badge">{m.role}</span>
+                                    </div>
+                                    {m.accepted_at && (
+                                        <div className="team-member-sub">
+                                            Joined {new Date(m.accepted_at).toLocaleDateString()}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                    {host.email && (
-                        <div className="team-member-contact">
-                            <span className="team-contact-icon">✉</span>
-                            <span>{host.email}</span>
-                        </div>
-                    )}
-                    {host.phone && (
-                        <div className="team-member-contact">
-                            <span className="team-contact-icon">✆</span>
-                            <span>{host.phone}</span>
-                        </div>
-                    )}
-                    <p className="team-card-note">
-                        The primary host manages the account and receives platform notifications.
-                    </p>
-                </div>
-            </section>
-
-            <section className="team-section">
-                <div className="team-section-header">
-                    <h3 className="team-section-title">Additional team members</h3>
-                    <button
-                        className="team-invite-btn"
-                        onClick={() => setShowInviteModal(true)}
-                    >
-                        + Invite members
-                    </button>
-                </div>
-
-                {renderMemberList()}
-            </section>
+                </section>
+            )}
 
             {confirmRemoveId && (
                 <div className="team-modal-overlay">
