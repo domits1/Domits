@@ -328,8 +328,6 @@ ContactImageField.propTypes = {
   onChangeFile: PropTypes.func.isRequired,
   onUseInitials: PropTypes.func.isRequired,
   onUseProfilePhoto: PropTypes.func.isRequired,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
   fieldRef: refPropType,
   isHighlighted: PropTypes.bool,
 };

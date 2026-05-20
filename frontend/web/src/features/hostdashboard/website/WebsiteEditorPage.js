@@ -104,6 +104,50 @@ import {
   runAfterNextPaint,
 } from "./editor/websiteEditorUtils";
 import styles from "./WebsiteEditorPage.module.scss";
+
+const loadWebsiteEditorState = async (propertyId) => {
+  const [draft, propertyDetails] = await Promise.all([
+    fetchWebsiteDraftByPropertyId(propertyId),
+    fetchWebsitePropertyDetails(propertyId),
+  ]);
+
+  if (!draft) {
+    throw new Error("Website draft not found for this listing.");
+  }
+
+  const nextBaseModel = buildWebsiteTemplateModel({
+    propertyDetails,
+    summaryProperty: null,
+  });
+  const nextTemplateKey = String(draft.templateKey || "").trim();
+  const nextThemedModel = applyWebsiteDraftThemeOverrides(nextBaseModel, getDraftThemeOverrides(draft));
+  const nextPreviewModel = applyWebsiteDraftContentOverrides(
+    nextThemedModel,
+    getDraftWorkingContentOverrides(draft),
+    nextTemplateKey
+  );
+
+  let nextSiteSummary = null;
+  let nextSiteSummaryError = "";
+  try {
+    nextSiteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
+  } catch (siteError) {
+    nextSiteSummaryError = normalizeUiErrorMessage(
+      siteError?.message,
+      "We could not load the live site status for this listing."
+    );
+  }
+
+  return {
+    draft,
+    nextBaseModel,
+    nextEditorValues: buildWebsiteDraftEditorValues(nextPreviewModel, nextTemplateKey),
+    nextSiteSummary,
+    nextSiteSummaryError,
+    nextThemeValues: buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(draft)),
+  };
+};
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -180,41 +224,14 @@ function WebsiteEditorPage() {
       setSiteSummaryError("");
 
       try {
-        const [draft, propertyDetails] = await Promise.all([
-          fetchWebsiteDraftByPropertyId(propertyId),
-          fetchWebsitePropertyDetails(propertyId),
-        ]);
-
-        if (!draft) {
-          throw new Error("Website draft not found for this listing.");
-        }
-
-        const nextBaseModel = buildWebsiteTemplateModel({
-          propertyDetails,
-          summaryProperty: null,
-        });
-        const nextTemplateKey = String(draft.templateKey || "").trim();
-        const nextThemedModel = applyWebsiteDraftThemeOverrides(nextBaseModel, getDraftThemeOverrides(draft));
-        const nextPreviewModel = applyWebsiteDraftContentOverrides(
-          nextThemedModel,
-          getDraftWorkingContentOverrides(draft),
-          nextTemplateKey
-        );
-
-        if (!isMounted) {
-          return;
-        }
-
-        let nextSiteSummary = null;
-        let nextSiteSummaryError = "";
-        try {
-          nextSiteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
-        } catch (siteError) {
-          nextSiteSummaryError = normalizeUiErrorMessage(
-            siteError?.message,
-            "We could not load the live site status for this listing."
-          );
-        }
+        const {
+          draft,
+          nextBaseModel,
+          nextEditorValues,
+          nextSiteSummary,
+          nextSiteSummaryError,
+          nextThemeValues,
+        } = await loadWebsiteEditorState(propertyId);
 
         if (!isMounted) {
           return;
@@ -222,10 +239,10 @@ function WebsiteEditorPage() {
 
         setDraftRecord(draft);
         setBaseModel(nextBaseModel);
-        setEditorValues(buildWebsiteDraftEditorValues(nextPreviewModel, nextTemplateKey));
+        setEditorValues(nextEditorValues);
         setSiteSummary(nextSiteSummary);
         setSiteSummaryError(nextSiteSummaryError);
-        setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(draft)));
+        setThemeValues(nextThemeValues);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -1176,6 +1193,37 @@ function WebsiteEditorPage() {
     return <WebsiteEditorErrorState loadError={loadError} navigate={navigate} />;
   }
 
+  const amenitiesVisibilityContent = amenitiesVisibilityField
+    ? renderVisibilityFieldCard(amenitiesVisibilityField)
+    : null;
+  const amenitiesEditorSection = copyCollectionConfig.amenities ? (
+    <WebsiteEditorAmenitiesSection
+      activatePreviewTarget={activatePreviewTarget}
+      addAmenityItem={addAmenityItem}
+      amenitiesConfig={copyCollectionConfig.amenities}
+      amenitiesVisibilityContent={amenitiesVisibilityContent}
+      canAddAmenity={editorValues.amenities.length < copyCollectionConfig.amenities.maxCount}
+      clearActivePreviewTarget={clearActivePreviewTarget}
+      commitAmenitiesIconColorInput={commitAmenitiesIconColorInput}
+      draftTemplateKey={draftTemplateKey}
+      editorValues={editorValues}
+      handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
+      handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
+      handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}
+      handleCollectionFieldChange={handleCollectionFieldChange}
+      handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+      highlightedTargetId={highlightedTargetId}
+      isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.amenities])}
+      moveAmenityItemDown={moveAmenityItemDown}
+      moveAmenityItemUp={moveAmenityItemUp}
+      onOpenIconPicker={openIconPicker}
+      removeAmenityItem={removeAmenityItem}
+      sectionRef={setSectionRef(EDITOR_SECTION_KEYS.amenities)}
+      setTargetRef={setTargetRef}
+      toggleSection={toggleSection}
+    />
+  ) : null;
+
   return (
     <main className="page-Host">
       <div className="page-Host-content">
@@ -1381,35 +1429,9 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
-                {copyCollectionConfig.amenities?.placement === "afterTrustCards" ? (
-                  <WebsiteEditorAmenitiesSection
-                    activatePreviewTarget={activatePreviewTarget}
-                    addAmenityItem={addAmenityItem}
-                    amenitiesConfig={copyCollectionConfig.amenities}
-                    amenitiesVisibilityContent={
-                      amenitiesVisibilityField ? renderVisibilityFieldCard(amenitiesVisibilityField) : null
-                    }
-                    canAddAmenity={editorValues.amenities.length < copyCollectionConfig.amenities.maxCount}
-                    clearActivePreviewTarget={clearActivePreviewTarget}
-                    commitAmenitiesIconColorInput={commitAmenitiesIconColorInput}
-                    draftTemplateKey={draftTemplateKey}
-                    editorValues={editorValues}
-                    handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
-                    handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
-                    handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}
-                    handleCollectionFieldChange={handleCollectionFieldChange}
-                    handleEditorFieldKeyDown={handleEditorFieldKeyDown}
-                    highlightedTargetId={highlightedTargetId}
-                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.amenities])}
-                    moveAmenityItemDown={moveAmenityItemDown}
-                    moveAmenityItemUp={moveAmenityItemUp}
-                    onOpenIconPicker={openIconPicker}
-                    removeAmenityItem={removeAmenityItem}
-                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.amenities)}
-                    setTargetRef={setTargetRef}
-                    toggleSection={toggleSection}
-                  />
-                ) : null}
+                {copyCollectionConfig.amenities?.placement === "afterTrustCards"
+                  ? amenitiesEditorSection
+                  : null}
 
                 <WebsiteEditorContactSection
                   activatePreviewTarget={activatePreviewTarget}
@@ -1488,35 +1510,9 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
-                {copyCollectionConfig.amenities?.placement === "afterJourneyStops" ? (
-                  <WebsiteEditorAmenitiesSection
-                    activatePreviewTarget={activatePreviewTarget}
-                    addAmenityItem={addAmenityItem}
-                    amenitiesConfig={copyCollectionConfig.amenities}
-                    amenitiesVisibilityContent={
-                      amenitiesVisibilityField ? renderVisibilityFieldCard(amenitiesVisibilityField) : null
-                    }
-                    canAddAmenity={editorValues.amenities.length < copyCollectionConfig.amenities.maxCount}
-                    clearActivePreviewTarget={clearActivePreviewTarget}
-                    commitAmenitiesIconColorInput={commitAmenitiesIconColorInput}
-                    draftTemplateKey={draftTemplateKey}
-                    editorValues={editorValues}
-                    handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
-                    handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
-                    handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}
-                    handleCollectionFieldChange={handleCollectionFieldChange}
-                    handleEditorFieldKeyDown={handleEditorFieldKeyDown}
-                    highlightedTargetId={highlightedTargetId}
-                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.amenities])}
-                    moveAmenityItemDown={moveAmenityItemDown}
-                    moveAmenityItemUp={moveAmenityItemUp}
-                    onOpenIconPicker={openIconPicker}
-                    removeAmenityItem={removeAmenityItem}
-                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.amenities)}
-                    setTargetRef={setTargetRef}
-                    toggleSection={toggleSection}
-                  />
-                ) : null}
+                {copyCollectionConfig.amenities?.placement === "afterJourneyStops"
+                  ? amenitiesEditorSection
+                  : null}
 
                 <div className={styles.editorFooter}>
                   <p className={styles.editorFooterText}>
