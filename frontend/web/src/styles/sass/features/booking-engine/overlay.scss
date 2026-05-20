@@ -20,8 +20,8 @@
     top: 25px;
     right: 35px;
     font-size: 32px;
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
+    background: #fff;
+    color: #111;
     border: none;
     border-radius: 50%;
     width: 42px;
@@ -34,7 +34,7 @@
     z-index: 9999;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: #f2f2f2;
     }
   }
 
@@ -50,51 +50,82 @@
       max-height: 80vh;
       border-radius: 12px;
       object-fit: contain;
-      box-shadow: 0px 4px 18px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
       margin-top: 10px;
     }
 
     .nav-button {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: white;
-      color: #333;
-      border: none;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      font-size: 30px;
-      display: flex;
-      align-items: center;
+      display: none;
+    }
+  }
+
+  .nav-side-zone {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: 12vw;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 3001;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+
+    &::after {
+      font-size: 72px;
+      color: #fff;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      line-height: 1;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+    }
+
+    &.left {
+      left: 0;
       justify-content: center;
-      cursor: pointer;
-      box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.35);
-      transition: 0.2s ease-in-out;
-      user-select: none;
+
+      &::after {
+        content: '‹';
+      }
 
       &:hover {
-        background: #f2f2f2;
-        transform: translateY(-50%) scale(1.05);
+        background: linear-gradient(to right, rgba(0, 0, 0, 0.4), transparent);
+
+        &::after {
+          opacity: 1;
+        }
+      }
+    }
+
+    &.right {
+      right: 0;
+      justify-content: center;
+
+      &::after {
+        content: '›';
       }
 
-      &.left {
-        left: -70px;
-      }
+      &:hover {
+        background: linear-gradient(to left, rgba(0, 0, 0, 0.4), transparent);
 
-      &.right {
-        right: -70px;
+        &::after {
+          opacity: 1;
+        }
       }
     }
   }
 
   .overlay-thumbnails {
+    position: relative;
     display: flex;
     gap: 14px;
     padding: 12px 20px;
     max-width: 85vw;
     overflow-x: auto;
     justify-content: center;
+    z-index: 3002;
 
     &::-webkit-scrollbar {
       height: 8px;
