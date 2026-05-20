@@ -10,14 +10,7 @@ const RegionCard = ({ item, link = "/home", useMotion = false }) => {
       className="region-card"
       style={{ textDecoration: "none", color: "inherit" }}
     >
-      <img
-        src={item.img}
-        alt={item.name}
-        width={800}
-        height={600}
-        loading="lazy"
-        decoding="async"
-      />
+      <img src={item.img} alt={item.name} />
       <div className="gallery-overlay">
         <h3>{item.name}</h3>
         <p>{item.description}</p>

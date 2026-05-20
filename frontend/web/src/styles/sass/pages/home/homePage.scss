@@ -22,13 +22,12 @@
 .accocard.homepage .accocard-media {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
   overflow: hidden;
 }
 
 .accocard.homepage .swiper-slide img {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 1;
   object-fit: cover;
   border-radius: 15px;
   transition: transform 0.4s ease-in-out;
@@ -36,11 +35,6 @@
 }
 .accocard.homepage .swiper {
   width: 100%;
-  height: 100%;
-}
-.accocard.homepage .swiper-wrapper,
-.accocard.homepage .swiper-slide {
-  height: 100%;
 }
 .accocard.homepage:hover .swiper-slide img {
   transform: scale(1.05);
@@ -102,38 +96,18 @@
   margin-top: 4px;
 }
     .domits-searchContainer {
-      position: relative;
-      overflow: hidden;
+      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), var(--villa-background);
+      background-size: cover;
+      background-position: bottom center;
       height: 87vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
-
-      &::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 1;
-      }
-    }
-
-    .domits-heroImage {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: bottom center;
-      z-index: 0;
-      display: block;
     }
 
     .domits-searchTextCon {
-      position: relative;
-      z-index: 2;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -160,8 +134,6 @@
     }
 
     .domits-searchbarCon {
-      position: relative;
-      z-index: 2;
       margin-top: 10px;
     }
 
