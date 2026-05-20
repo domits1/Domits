@@ -422,6 +422,20 @@
     background: #1d4ed8;
 }
 
+/* ─── Company page ───────────────────────────────────────────────────────── */
+
+.company-card-hint {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 4px 0 0 136px;
+}
+
+@media (max-width: 640px) {
+    .company-card-hint {
+        margin-left: 0;
+    }
+}
+
 /* ─── Preferences / Authentication card ─────────────────────────────────── */
 
 .personal-data-pref-card {
