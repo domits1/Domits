@@ -11,6 +11,14 @@
     width: var(--gd-sidebar-w, 200px);
 }
 
+@media (min-width: 1024px) {
+    .main-dashboard-sidebar {
+        position: sticky;
+        top: 90px;
+        align-self: flex-start;
+    }
+}
+
 .main-dashboard-content {
     flex: 1;
     min-width: 0;
