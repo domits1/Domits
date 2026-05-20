@@ -1,11 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import DeleteIcon from "@mui/icons-material/Delete";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
-import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
-import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
@@ -16,10 +12,7 @@ import {
   unpublishWebsiteSite,
 } from "./services/websiteSiteService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
-import {
-  getAmenityIconNode,
-  getAmenityIconOptions,
-} from "./rendering/amenityIconRegistry";
+import { getAmenityIconOptions } from "./rendering/amenityIconRegistry";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
 import {
@@ -37,7 +30,6 @@ import {
   isValidWebsiteBackgroundColor,
   mergeWebsiteDraftThemeOverrides,
   resolveWebsiteBackgroundColor,
-  WEBSITE_BACKGROUND_COLOR_OPTIONS,
 } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import {
@@ -45,11 +37,10 @@ import {
   announceWebsitePreviewUpdate,
   WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE,
 } from "./services/websitePreviewSync";
-import { buildPublishedWebsiteHref, buildWebsitePreviewPath } from "./websitePublicSiteLinks";
+import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
 import {
   EDITOR_SECTION_KEYS,
   EDITOR_TARGET_KEYS,
-  LOADING_EDITOR_SECTIONS,
   PREVIEW_VIEWPORT_OPTIONS,
   TEMPLATE_COPY_COLLECTION_CONFIG,
   TEMPLATE_IMAGE_SLOT_MAP,
@@ -68,1252 +59,50 @@ import {
   resolveWebsiteContactBackgroundColor,
 } from "./rendering/websiteContactSectionConfig";
 import {
-  DEFAULT_WEBSITE_AMENITY_LABEL,
-  getDefaultWebsiteAmenityIconColor,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
   resolveWebsiteAmenityIconColor,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "./rendering/websiteAmenitiesConfig";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
+import {
+  AmenityIconSelectField,
+  BackgroundColorField,
+  CollapsibleSection,
+  TextField,
+} from "./editor/WebsiteEditorFields";
+import {
+  WebsiteEditorActionMenu,
+  WebsiteEditorErrorState,
+  WebsiteEditorLoadingState,
+  WebsiteEditorPublicSitePanel,
+} from "./editor/WebsiteEditorStates";
+import { WebsiteEditorVisibilityToggleCard } from "./editor/WebsiteEditorVisibilityToggleCard";
+import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTargeting";
+import { WebsiteEditorAmenitiesSection } from "./editor/sections/WebsiteEditorAmenitiesSection";
+import { WebsiteEditorContactSection } from "./editor/sections/WebsiteEditorContactSection";
+import { WebsiteEditorImageSlotsSection } from "./editor/sections/WebsiteEditorImageSlotsSection";
+import {
+  buildEditorValuesFromDraft,
+  confirmDiscardDraftChanges,
+  createAmenityEditorItem,
+  createEditorFieldKeyDownHandler,
+  formatStatusLabel,
+  forwardEditorBoundaryScroll,
+  getDraftPublishedContentOverrides,
+  getDraftPublishedThemeOverrides,
+  getDraftThemeOverrides,
+  getDraftWorkingContentOverrides,
+  getImageOptionLabel,
+  getSelectedImageForSlot,
+  getLiveLinkStatus,
+  getPrimaryWebsiteDomain,
+  getPreviewTargetIdForVisibilityField,
+  normalizeUiErrorMessage,
+  readImageFileAsDataUrl,
+  resolveWindowTargetOrigin,
+  runAfterNextPaint,
+} from "./editor/websiteEditorUtils";
 import styles from "./WebsiteEditorPage.module.scss";
-import arrowDownIcon from "../../../images/arrow-down-icon.svg";
-import arrowUpIcon from "../../../images/arrow-up-icon.svg";
-
-const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
-const buildWebsiteAmenityItemId = (collectionSize) => {
-  if (globalThis.crypto?.randomUUID) {
-    return `website-amenity-${globalThis.crypto.randomUUID()}`;
-  }
-
-  return `website-amenity-${Date.now()}-${collectionSize + 1}`;
-};
-
-const createAmenityEditorItem = (amenityIconOptions, collectionSize) => {
-  const defaultIconOption = amenityIconOptions[0] || null;
-
-  return {
-    id: buildWebsiteAmenityItemId(collectionSize),
-    iconAmenityId: String(defaultIconOption?.id || ""),
-    label: DEFAULT_WEBSITE_AMENITY_LABEL,
-    category: String(defaultIconOption?.category || WEBSITE_AMENITY_FALLBACK_CATEGORY),
-  };
-};
-
-const getSelectedImageForSlot = (slot, editorValues) => {
-  if (slot.kind === "hero") {
-    return editorValues.images.heroImage;
-  }
-
-  if (slot.kind === "residence") {
-    return editorValues.images.residenceImage || "";
-  }
-
-  return editorValues.images.gallery[slot.index] || "";
-};
-
-const normalizeUiErrorMessage = (message, fallbackMessage) => {
-  const normalizedMessage = String(message || "").trim();
-  if (!normalizedMessage || normalizedMessage.toLowerCase() === "failed to fetch") {
-    return fallbackMessage;
-  }
-
-  return normalizedMessage;
-};
-
-const readImageFileAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    if (!file) {
-      reject(new Error("Select an image first."));
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === "string") {
-        resolve(result);
-        return;
-      }
-
-      reject(new Error("We could not read that image file."));
-    };
-    reader.onerror = () => reject(new Error("We could not read that image file."));
-    reader.readAsDataURL(file);
-  });
-
-const formatStatusLabel = (status) => {
-  const normalizedStatus = String(status || "").trim().toUpperCase();
-  switch (normalizedStatus) {
-    case "PUBLISHED":
-      return "Published";
-    case "PREVIEW":
-      return "Not published";
-    case "ACTIVE":
-      return "Active";
-    case "DISABLED":
-      return "Disabled";
-    case "PENDING":
-      return "Pending";
-    case "VERIFIED":
-      return "Verified";
-    case "FAILED":
-      return "Attention needed";
-    case "SUSPENDED":
-      return "Suspended";
-    case "DRAFT":
-      return "Draft";
-    default:
-      return normalizedStatus
-        ? `${normalizedStatus.charAt(0)}${normalizedStatus.slice(1).toLowerCase()}`
-        : "";
-  }
-};
-
-const getDraftWorkingContentOverrides = (draft) =>
-  draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
-
-const getDraftPublishedContentOverrides = (draft) =>
-  draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object"
-    ? draft.publishedContentOverrides
-    : {};
-
-const getDraftThemeOverrides = (draft) =>
-  draft?.themeOverrides && typeof draft.themeOverrides === "object" ? draft.themeOverrides : {};
-
-const getDraftPublishedThemeOverrides = (draft) =>
-  draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object"
-    ? draft.publishedThemeOverrides
-    : {};
-
-const getPrimaryWebsiteDomain = (siteSummary) =>
-  siteSummary?.primaryDomain && typeof siteSummary.primaryDomain === "object"
-    ? siteSummary.primaryDomain
-    : null;
-
-const buildEditorValuesFromDraft = (baseModel, draft, templateKey = "") =>
-  buildWebsiteDraftEditorValues(
-    applyWebsiteDraftContentOverrides(baseModel, getDraftWorkingContentOverrides(draft), templateKey),
-    templateKey
-  );
-
-const resolveSectionNode = (sectionRefEntry) => {
-  if (!sectionRefEntry) {
-    return null;
-  }
-
-  if (typeof sectionRefEntry.scrollIntoView === "function") {
-    return sectionRefEntry;
-  }
-
-  if (sectionRefEntry.current && typeof sectionRefEntry.current.scrollIntoView === "function") {
-    return sectionRefEntry.current;
-  }
-
-  return null;
-};
-
-const getCenteredContainerScrollTop = (node, container) => {
-  if (
-    !node ||
-    !container ||
-    typeof node.getBoundingClientRect !== "function" ||
-    typeof container.getBoundingClientRect !== "function"
-  ) {
-    return null;
-  }
-
-  const containerHeight = container.clientHeight || 0;
-  if (containerHeight < 1) {
-    return null;
-  }
-
-  const nodeRect = node.getBoundingClientRect();
-  const containerRect = container.getBoundingClientRect();
-  const currentScrollTop = container.scrollTop || 0;
-  const centeredTop =
-    currentScrollTop + nodeRect.top - containerRect.top - containerHeight / 2 + nodeRect.height / 2;
-  return Math.max(0, Math.round(centeredTop));
-};
-
-const forwardEditorBoundaryScroll = (event) => {
-  const editorPanelNode = event?.currentTarget;
-  if (!editorPanelNode || typeof editorPanelNode.scrollTop !== "number") {
-    return;
-  }
-
-  const deltaY = Number(event.deltaY || 0);
-  if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.01) {
-    return;
-  }
-
-  const scrollTop = editorPanelNode.scrollTop || 0;
-  const clientHeight = editorPanelNode.clientHeight || 0;
-  const scrollHeight = editorPanelNode.scrollHeight || 0;
-  const canScrollInternally = scrollHeight - clientHeight > 1;
-  const isAtTop = scrollTop <= 0;
-  const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-
-  if (!canScrollInternally || (deltaY < 0 && isAtTop) || (deltaY > 0 && isAtBottom)) {
-    event.preventDefault();
-    if (typeof globalThis.scrollBy === "function") {
-      globalThis.scrollBy({
-        top: deltaY,
-        behavior: "auto",
-      });
-    }
-  }
-};
-
-const runAfterNextPaint = (callback) => {
-  if (typeof globalThis.requestAnimationFrame === "function") {
-    globalThis.requestAnimationFrame(() => {
-      globalThis.requestAnimationFrame(() => {
-        callback();
-      });
-    });
-    return;
-  }
-
-  globalThis.setTimeout(callback, 0);
-};
-
-const EDITOR_TARGET_FOCUS_MAX_ATTEMPTS = 8;
-const EDITOR_SECTION_EXPAND_SCROLL_RETRY_DELAY_MS = 280;
-
-const confirmDiscardDraftChanges = () => {
-  if (typeof globalThis.confirm !== "function") {
-    return true;
-  }
-
-  return globalThis.confirm(
-    "Discard all draft-only changes and reset this editor back to the current published version?"
-  );
-};
-
-const getPublishLiveSiteActionLabel = (isPublishingSite) => {
-  if (isPublishingSite) {
-    return "Publishing...";
-  }
-
-  return "Publish live site";
-};
-
-const getWebsiteActionMenuButtonLabel = ({ hasLiveSite, isPublishingSite, isUpdatingLiveSite }) => {
-  if (!hasLiveSite) {
-    return isPublishingSite ? "Publishing website..." : "Publish website";
-  }
-
-  return isUpdatingLiveSite ? "Updating website..." : "Update website";
-};
-
-const resolveWindowTargetOrigin = (href) => {
-  const normalizedHref = String(href || "").trim();
-  const baseOrigin = globalThis.location?.origin || "";
-
-  if (!normalizedHref) {
-    return baseOrigin;
-  }
-
-  try {
-    return new URL(normalizedHref, baseOrigin).origin;
-  } catch {
-    return baseOrigin;
-  }
-};
-
-const getLiveLinkStatus = ({ primarySiteDomain, hasLiveSite }) => {
-  if (primarySiteDomain?.status) {
-    return formatStatusLabel(primarySiteDomain.status);
-  }
-
-  if (hasLiveSite) {
-    return "Provisioning";
-  }
-
-  return "Not published";
-};
-
-const resolvePublicSiteLinkPresentation = ({
-  hasLiveSite,
-  primarySiteDomain,
-  siteSummary,
-  draftId,
-}) => {
-  const normalizedDraftId = String(draftId || "").trim();
-  const hasPreviewLink = Boolean(normalizedDraftId);
-
-  if (hasLiveSite) {
-    return {
-      primaryLinkLabel: "Domits live link",
-      primaryLinkValue: primarySiteDomain?.domain || "Available after first publish",
-      secondaryLinkHref: primarySiteDomain?.domain
-        ? buildPublishedWebsiteHref(primarySiteDomain.domain, siteSummary?.site?.id, primarySiteDomain.status)
-        : "",
-      secondaryLinkCopy: "Live site URL",
-      secondaryLinkText: primarySiteDomain?.domain || "",
-    };
-  }
-
-  const previewPath = hasPreviewLink ? buildWebsitePreviewPath(normalizedDraftId) : "";
-  return {
-    primaryLinkLabel: "Internal preview link",
-    primaryLinkValue: previewPath || "Available after first save",
-    secondaryLinkHref: previewPath,
-    secondaryLinkCopy: "Preview URL",
-    secondaryLinkText: previewPath,
-  };
-};
-
-const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) => {
-  if (targetId) {
-    return targetId;
-  }
-
-  if (imageSlot?.kind === "hero") {
-    return EDITOR_TARGET_KEYS.images.hero;
-  }
-
-  if (imageSlot?.kind === "residence") {
-    return EDITOR_TARGET_KEYS.images.residence;
-  }
-
-  if (imageSlot?.kind === "gallery" && Number.isInteger(imageSlot.index)) {
-    return EDITOR_TARGET_KEYS.images.gallery(imageSlot.index);
-  }
-
-  if (sectionId === EDITOR_SECTION_KEYS.common) {
-    return EDITOR_TARGET_KEYS.common.heroTitle;
-  }
-
-  if (sectionId === EDITOR_SECTION_KEYS.amenities) {
-    return EDITOR_TARGET_KEYS.amenities(0);
-  }
-
-  if (sectionId === EDITOR_SECTION_KEYS.contact) {
-    return EDITOR_TARGET_KEYS.contact.title;
-  }
-
-  return "";
-};
-
-const shouldSaveEditorFieldOnKeyDown = (field, event) => {
-  if (field.component === "textarea") {
-    return event.key === "Enter" && (event.metaKey || event.ctrlKey);
-  }
-
-  return event.key === "Enter";
-};
-
-const createEditorFieldKeyDownHandler = (field, saveDraftChanges) => async (event) => {
-  if (!shouldSaveEditorFieldOnKeyDown(field, event)) {
-    return;
-  }
-
-  event.preventDefault();
-  await saveDraftChanges();
-};
-
-const activatePreviewTargetId = (setActivePreviewTargetId, targetId) => {
-  setActivePreviewTargetId(String(targetId || "").trim());
-};
-
-const clearPreviewTargetResetTimeout = (previewHighlightResetTimeoutRef) => {
-  if (!previewHighlightResetTimeoutRef.current) {
-    return;
-  }
-
-  globalThis.clearTimeout(previewHighlightResetTimeoutRef.current);
-  previewHighlightResetTimeoutRef.current = null;
-};
-
-const activateTemporaryPreviewTargetId = (
-  setActivePreviewTargetId,
-  previewHighlightResetTimeoutRef,
-  targetId,
-  durationMs = 1800
-) => {
-  const normalizedTargetId = String(targetId || "").trim();
-  clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
-  setActivePreviewTargetId(normalizedTargetId);
-
-  if (!normalizedTargetId) {
-    return;
-  }
-
-  previewHighlightResetTimeoutRef.current = globalThis.setTimeout(() => {
-    setActivePreviewTargetId((currentTargetId) =>
-      currentTargetId === normalizedTargetId ? "" : currentTargetId
-    );
-    previewHighlightResetTimeoutRef.current = null;
-  }, durationMs);
-};
-
-const getPreviewTargetIdForVisibilityField = (fieldKey) => {
-  switch (String(fieldKey || "").trim()) {
-    case "topBar":
-      return EDITOR_TARGET_KEYS.common.siteTitle;
-    case "trustCards":
-      return "visibility.trustCards";
-    case "gallerySection":
-      return EDITOR_TARGET_KEYS.images.gallery(0);
-    case "amenitiesPanel":
-      return "visibility.amenitiesPanel";
-    case "availabilityCalendar":
-      return EDITOR_TARGET_KEYS.visibility("availabilityCalendar");
-    case "callToAction":
-      return EDITOR_TARGET_KEYS.common.ctaLabel;
-    case "journeyStops":
-      return "visibility.journeyStops";
-    case "contactSection":
-      return EDITOR_TARGET_KEYS.contact.backgroundColor;
-    case "chatWidget":
-      return "visibility.chatWidget";
-    default:
-      return EDITOR_TARGET_KEYS.common.heroTitle;
-  }
-};
-
-const fieldPropTypes = PropTypes.shape({
-  key: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  component: PropTypes.oneOf(["input", "textarea"]).isRequired,
-});
-const refPropType = PropTypes.oneOfType([
-  PropTypes.func,
-  PropTypes.shape({
-    current: PropTypes.any,
-  }),
-]);
-const primarySiteDomainPropType = PropTypes.shape({
-  domain: PropTypes.string,
-  status: PropTypes.string,
-});
-const siteSummaryPropType = PropTypes.shape({
-  isReachable: PropTypes.bool,
-  site: PropTypes.shape({
-    id: PropTypes.string,
-  }),
-});
-
-function TextField({
-  field,
-  value,
-  onChange,
-  onKeyDown = undefined,
-  fieldRef = null,
-  isHighlighted = false,
-  onFocus = undefined,
-  onBlur = undefined,
-}) {
-  if (field.component === "textarea") {
-    return (
-      <div
-        ref={fieldRef}
-        className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-      >
-        <label className={styles.fieldLabel} htmlFor={`website-editor-${field.key}`}>
-          {field.label}
-        </label>
-        <textarea
-          id={`website-editor-${field.key}`}
-          className={styles.textArea}
-          value={value}
-          onChange={onChange}
-          onKeyDown={onKeyDown}
-          onFocus={onFocus}
-          onBlur={onBlur}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      ref={fieldRef}
-      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-    >
-      <label className={styles.fieldLabel} htmlFor={`website-editor-${field.key}`}>
-        {field.label}
-      </label>
-      <input
-        id={`website-editor-${field.key}`}
-        className={styles.textInput}
-        value={value}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        onFocus={onFocus}
-        onBlur={onBlur}
-      />
-    </div>
-  );
-}
-
-TextField.propTypes = {
-  field: fieldPropTypes.isRequired,
-  value: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  fieldRef: refPropType,
-  isHighlighted: PropTypes.bool,
-  onKeyDown: PropTypes.func,
-};
-
-function ContactColorField({
-  label,
-  hint,
-  value,
-  placeholder,
-  resolveColorValue,
-  inputAriaLabel,
-  onSelectColor,
-  onChangeInput,
-  onCommitInput,
-  onInputKeyDown,
-  fieldRef = null,
-  isHighlighted = false,
-  onFocus = undefined,
-  onBlur = undefined,
-}) {
-  const colorPickerAriaLabel = `${inputAriaLabel} picker`;
-
-  return (
-    <div
-      ref={fieldRef}
-      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-    >
-      <div className={styles.customColorSection}>
-        <div className={styles.customColorHeader}>
-          <span className={styles.fieldLabel}>{label}</span>
-          <p className={styles.customColorHint}>{hint}</p>
-        </div>
-
-        <div className={styles.customColorRow}>
-          <div className={`${styles.colorPickerShell} ${styles.colorPickerShellSelected}`.trim()}>
-            <input
-              type="color"
-              className={styles.colorPickerInput}
-              value={resolveColorValue(value)}
-              onChange={(event) => onSelectColor(event.target.value)}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              aria-label={colorPickerAriaLabel}
-            />
-          </div>
-          <input
-            type="text"
-            className={`${styles.textInput} ${styles.customColorInput}`.trim()}
-            value={value}
-            onChange={(event) => onChangeInput(event.target.value)}
-            onBlur={() => {
-              onCommitInput();
-              onBlur?.();
-            }}
-            onFocus={onFocus}
-            onKeyDown={onInputKeyDown}
-            inputMode="text"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder={placeholder}
-            aria-label={inputAriaLabel}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-ContactColorField.propTypes = {
-  label: PropTypes.string.isRequired,
-  hint: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  placeholder: PropTypes.string.isRequired,
-  resolveColorValue: PropTypes.func.isRequired,
-  inputAriaLabel: PropTypes.string.isRequired,
-  onSelectColor: PropTypes.func.isRequired,
-  onChangeInput: PropTypes.func.isRequired,
-  onCommitInput: PropTypes.func.isRequired,
-  onInputKeyDown: PropTypes.func.isRequired,
-  fieldRef: refPropType,
-  isHighlighted: PropTypes.bool,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-};
-
-const resolveContactImagePreview = ({
-  normalizedMode,
-  normalizedValue,
-  normalizedFallbackImage,
-}) => {
-  if (normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM) {
-    return normalizedValue;
-  }
-
-  if (normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_HOST) {
-    return normalizedFallbackImage;
-  }
-
-  return "";
-};
-
-const resolveContactImageHelperText = ({
-  hasCustomImage,
-  isUsingInitials,
-  hasProfilePhoto,
-}) => {
-  if (hasCustomImage) {
-    return "Custom uploaded image active for this footer.";
-  }
-
-  if (isUsingInitials) {
-    return "The footer will use the host initial instead of a profile image.";
-  }
-
-  if (hasProfilePhoto) {
-    return "Using the current host profile picture from Domits.";
-  }
-
-  return "No host profile picture is available, so the footer will use initials.";
-};
-
-const buildContactImageFieldState = ({ mode, value, fallbackImage }) => {
-  const normalizedMode = resolveWebsiteContactAvatarMode(mode, WEBSITE_CONTACT_AVATAR_MODE_HOST);
-  const normalizedValue = String(value || "").trim();
-  const normalizedFallbackImage = String(fallbackImage || "").trim();
-  const hasProfilePhoto = Boolean(normalizedFallbackImage);
-  const isUsingInitials =
-    normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_INITIALS ||
-    (normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_HOST && !hasProfilePhoto);
-  const previewImage = resolveContactImagePreview({
-    normalizedMode,
-    normalizedValue,
-    normalizedFallbackImage,
-  });
-  const hasCustomImage =
-    normalizedMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM && Boolean(normalizedValue);
-
-  return {
-    normalizedMode,
-    hasProfilePhoto,
-    isUsingInitials,
-    previewImage,
-    helperText: resolveContactImageHelperText({
-      hasCustomImage,
-      isUsingInitials,
-      hasProfilePhoto,
-    }),
-  };
-};
-
-function ContactImageField({
-  mode = WEBSITE_CONTACT_AVATAR_MODE_HOST,
-  inputId,
-  value,
-  fallbackImage = "",
-  onChangeFile,
-  onUseInitials,
-  onUseProfilePhoto,
-  fieldRef = null,
-  isHighlighted = false,
-  onFocus = undefined,
-  onBlur = undefined,
-}) {
-  const {
-    normalizedMode,
-    hasProfilePhoto,
-    isUsingInitials,
-    previewImage,
-    helperText,
-  } = buildContactImageFieldState({
-    mode,
-    value,
-    fallbackImage,
-  });
-  const previewFallbackLabel = isUsingInitials ? "Using host initials" : "No image selected";
-  const showUseProfilePhotoButton =
-    hasProfilePhoto && normalizedMode !== WEBSITE_CONTACT_AVATAR_MODE_HOST;
-  const showUseInitialsButton = isUsingInitials === false;
-  const fileInputRef = useRef(null);
-  const activateField = () => {
-    onFocus?.();
-  };
-  const openFilePicker = () => {
-    activateField();
-    fileInputRef.current?.click();
-  };
-
-  return (
-    <div
-      ref={fieldRef}
-      className={`${styles.imageSlotCard} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-    >
-      <div className={styles.imageSlotPreview}>
-        {previewImage ? (
-          <img src={previewImage} alt="" aria-hidden="true" className={styles.imageSlotPreviewImage} />
-        ) : (
-          <span className={styles.imageSlotPreviewEmpty}>{previewFallbackLabel}</span>
-        )}
-      </div>
-
-      <div className={styles.imageSlotMeta}>
-        <div className={styles.fieldGroup}>
-          <span className={styles.fieldLabel}>Profile photo</span>
-          <span className={styles.helperText}>{helperText}</span>
-        </div>
-
-        <div className={styles.buttonRow}>
-          <input
-            ref={fileInputRef}
-            id={inputId}
-            hidden
-            type="file"
-            accept="image/*"
-            onChange={onChangeFile}
-            onFocus={onFocus}
-            onBlur={onBlur}
-          />
-          <button
-            type="button"
-            className={styles.secondaryButton}
-            onClick={openFilePicker}
-            onFocus={onFocus}
-            onBlur={onBlur}
-          >
-            Upload image
-          </button>
-          {showUseProfilePhotoButton ? (
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => {
-                activateField();
-                onUseProfilePhoto();
-              }}
-              onFocus={onFocus}
-              onBlur={onBlur}
-            >
-              Use profile photo
-            </button>
-          ) : null}
-          {showUseInitialsButton ? (
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => {
-                activateField();
-                onUseInitials();
-              }}
-              onFocus={onFocus}
-              onBlur={onBlur}
-            >
-              Use initials
-            </button>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-ContactImageField.propTypes = {
-  mode: PropTypes.string,
-  inputId: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  fallbackImage: PropTypes.string,
-  onChangeFile: PropTypes.func.isRequired,
-  onUseInitials: PropTypes.func.isRequired,
-  onUseProfilePhoto: PropTypes.func.isRequired,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  fieldRef: refPropType,
-  isHighlighted: PropTypes.bool,
-};
-
-function AmenityIconSelectField({
-  fieldKey,
-  label,
-  value,
-  onOpenPicker,
-  onFocus = undefined,
-  onBlur = undefined,
-  fieldRef = null,
-  isHighlighted = false,
-}) {
-  const selectedIconNode = getAmenityIconNode(value, {
-    className: styles.iconSelectionPreviewGlyph,
-    "aria-hidden": true,
-    focusable: "false",
-    sx: {
-      color: "#1f4e79",
-      fontSize: 22,
-      padding: 0,
-    },
-  });
-  return (
-    <div
-      ref={fieldRef}
-      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-    >
-      <button
-        id={`website-editor-${fieldKey}`}
-        type="button"
-        className={styles.iconSelectionTrigger}
-        onClick={onOpenPicker}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        aria-label={`Choose icon for ${label.toLowerCase()}`}
-        title={`Choose icon for ${label.toLowerCase()}`}
-      >
-        <span className={styles.iconSelectionPreviewIcon} aria-hidden="true">
-          {selectedIconNode}
-        </span>
-      </button>
-    </div>
-  );
-}
-
-AmenityIconSelectField.propTypes = {
-  fieldKey: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  onOpenPicker: PropTypes.func.isRequired,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  fieldRef: refPropType,
-  isHighlighted: PropTypes.bool,
-};
-
-function BackgroundColorField({
-  value,
-  customValue,
-  onSelectColor,
-  onChangeCustomColor,
-  onCommitCustomColor,
-  onCustomColorKeyDown,
-}) {
-  const hasPresetSelection = WEBSITE_BACKGROUND_COLOR_OPTIONS.some(
-    (colorOption) => colorOption.value === value
-  );
-
-  return (
-    <div className={styles.fieldGroup}>
-      <div className={styles.fieldLabel}>Background color</div>
-      <div className={styles.colorGrid} role="radiogroup" aria-label="Website background color">
-        {WEBSITE_BACKGROUND_COLOR_OPTIONS.map((colorOption) => {
-          const isSelected = colorOption.value === value;
-          return (
-            <button
-              key={colorOption.id}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              className={`${styles.colorSwatchButton} ${isSelected ? styles.colorSwatchButtonSelected : ""}`.trim()}
-              onClick={() => onSelectColor(colorOption.value)}
-              title={colorOption.label}
-            >
-              <span
-                className={styles.colorSwatch}
-                style={{ backgroundColor: colorOption.value }}
-                aria-hidden="true"
-              />
-              <span className={styles.colorSwatchLabel}>{colorOption.label}</span>
-            </button>
-          );
-        })}
-      </div>
-      <div className={styles.customColorSection}>
-        <div className={styles.customColorHeader}>
-          <span className={styles.fieldLabel}>Custom color</span>
-          <p className={styles.customColorHint}>
-            Use a hex value if the preset grid is too limiting.
-          </p>
-        </div>
-        <div className={styles.customColorRow}>
-          <div
-            className={`${styles.colorPickerShell} ${hasPresetSelection ? "" : styles.colorPickerShellSelected}`.trim()}
-          >
-            <input
-              type="color"
-              className={styles.colorPickerInput}
-              value={resolveWebsiteBackgroundColor(value)}
-              onChange={(event) => onSelectColor(event.target.value)}
-              aria-label="Pick a custom website background color"
-            />
-          </div>
-          <input
-            type="text"
-            className={`${styles.textInput} ${styles.customColorInput}`}
-            value={customValue}
-            onChange={(event) => onChangeCustomColor(event.target.value)}
-            onBlur={onCommitCustomColor}
-            onKeyDown={onCustomColorKeyDown}
-            inputMode="text"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="#ffffff"
-            aria-label="Custom background color hex code"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-BackgroundColorField.propTypes = {
-  value: PropTypes.string.isRequired,
-  customValue: PropTypes.string.isRequired,
-  onSelectColor: PropTypes.func.isRequired,
-  onChangeCustomColor: PropTypes.func.isRequired,
-  onCommitCustomColor: PropTypes.func.isRequired,
-  onCustomColorKeyDown: PropTypes.func.isRequired,
-};
-
-function CollapsibleSection({
-  sectionId,
-  title,
-  description,
-  isOpen,
-  onToggle,
-  sectionRef = null,
-  children,
-}) {
-  const toggleIcon = isOpen ? arrowUpIcon : arrowDownIcon;
-
-  return (
-    <section
-      ref={sectionRef}
-      className={styles.panelSection}
-    >
-      <button
-        type="button"
-        className={styles.sectionToggle}
-        onClick={() => onToggle(sectionId)}
-        aria-expanded={isOpen}
-      >
-        <div className={styles.sectionBlockHeader}>
-          <h3 className={styles.sectionBlockTitle}>{title}</h3>
-          <p className={styles.sectionBlockDescription}>{description}</p>
-        </div>
-        <img
-          src={toggleIcon}
-          alt=""
-          aria-hidden="true"
-          className={styles.sectionToggleIcon}
-        />
-      </button>
-
-      <div
-        className={`${styles.panelSectionBody} ${isOpen ? styles.panelSectionBodyOpen : ""}`.trim()}
-        aria-hidden={!isOpen}
-      >
-        <div className={styles.panelSectionBodyInner}>{children}</div>
-      </div>
-    </section>
-  );
-}
-
-CollapsibleSection.propTypes = {
-  sectionId: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  isOpen: PropTypes.bool.isRequired,
-  onToggle: PropTypes.func.isRequired,
-  sectionRef: refPropType,
-  children: PropTypes.node.isRequired,
-};
-
-function WebsiteEditorLoadingState({ renderLoadingSection, editorPanelRef, onEditorPanelWheel }) {
-  return (
-    <main className="page-Host">
-      <div className="page-Host-content">
-        <section className={styles.editorPage}>
-          <div className={styles.heroCard}>
-            <p className={styles.eyebrow}>Standalone website draft editor</p>
-            <div className={styles.heroHeader}>
-              <div>
-                <h1 className={styles.heroTitle}>Opening website editor</h1>
-                <p className={styles.heroDescription}>
-                  Imported listing data, saved overrides, and template bindings are loading into the
-                  editor surface.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.surface}>
-            <aside ref={editorPanelRef} className={styles.editorPanel} onWheel={onEditorPanelWheel}>
-              <div className={styles.panelHeader}>
-                <h2 className={styles.panelTitle}>Editor</h2>
-              </div>
-
-              <div className={styles.editorForm}>{LOADING_EDITOR_SECTIONS.map(renderLoadingSection)}</div>
-            </aside>
-
-            <section className={styles.previewPanel}>
-              <div className={`${styles.panelHeader} ${styles.previewPanelHeader}`.trim()}>
-                <h2 className={styles.panelTitle}>Website preview</h2>
-              </div>
-
-              <div className={styles.loadingPreviewCard}>
-                <PulseBarsLoader message="Loading website preview..." />
-              </div>
-            </section>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-WebsiteEditorLoadingState.propTypes = {
-  renderLoadingSection: PropTypes.func.isRequired,
-  editorPanelRef: refPropType,
-  onEditorPanelWheel: PropTypes.func,
-};
-
-function WebsiteEditorErrorState({ loadError, navigate }) {
-  return (
-    <main className="page-Host">
-      <div className="page-Host-content">
-        <section className={styles.editorPage}>
-          <div className={`${styles.stateCard} ${styles.stateCardError}`}>
-            <p className={styles.errorText}>{loadError || "We could not open this website draft."}</p>
-            <div className={styles.buttonRow}>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={() => navigate("/hostdashboard/website")}
-              >
-                Back to website workspace
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-WebsiteEditorErrorState.propTypes = {
-  loadError: PropTypes.string,
-  navigate: PropTypes.func.isRequired,
-};
-
-function WebsiteEditorActionMenu({
-  actionMenuRef,
-  isActionMenuOpen,
-  toggleActionMenu,
-  hasLiveSite,
-  primarySiteDomain,
-  openLiveWebsiteLink,
-  updateLiveSiteChanges,
-  isMutatingDraft,
-  hasLiveSyncPending,
-  isUpdatingLiveSite,
-  publishLiveSite,
-  canPublishSite,
-  isPublishingSite,
-  unpublishLiveSite,
-  canUnpublishSite,
-  isUnpublishingSite,
-  discardDraftChanges,
-  isDiscardingChanges,
-}) {
-  const actionMenuButtonLabel = getWebsiteActionMenuButtonLabel({
-    hasLiveSite,
-    isPublishingSite,
-    isUpdatingLiveSite,
-  });
-
-  return (
-    <div ref={actionMenuRef} className={styles.actionMenuContainer}>
-      <button
-        type="button"
-        className={styles.primaryButton}
-        onClick={toggleActionMenu}
-        aria-haspopup="menu"
-        aria-expanded={isActionMenuOpen}
-      >
-        <span>{actionMenuButtonLabel}</span>{" "}
-        <img
-          src={arrowDownIcon}
-          alt=""
-          aria-hidden="true"
-          className={`${styles.actionMenuButtonIcon} ${
-            isActionMenuOpen ? styles.actionMenuButtonIconOpen : ""
-          }`.trim()}
-        />
-      </button>
-      <div
-        className={`${styles.actionMenuList} ${isActionMenuOpen ? styles.actionMenuListOpen : ""}`.trim()}
-        role="menu"
-        aria-label="Website update actions"
-        aria-hidden={!isActionMenuOpen}
-      >
-        {hasLiveSite && primarySiteDomain?.domain ? (
-          <button
-            type="button"
-            role="menuitem"
-            className={styles.actionMenuItem}
-            onClick={openLiveWebsiteLink}
-          >
-            Open live site
-          </button>
-        ) : null}
-        {hasLiveSite ? (
-          <>
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.actionMenuItem}
-              onClick={updateLiveSiteChanges}
-              disabled={isMutatingDraft || !hasLiveSyncPending}
-            >
-              {isUpdatingLiveSite ? "Updating..." : "Update live site"}
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.actionMenuItem}
-              onClick={unpublishLiveSite}
-              disabled={!canUnpublishSite}
-            >
-              {isUnpublishingSite ? "Unpublishing..." : "Unpublish site"}
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            role="menuitem"
-            className={styles.actionMenuItem}
-            onClick={publishLiveSite}
-            disabled={!canPublishSite}
-          >
-            <PublicOutlinedIcon fontSize="small" />
-            {getPublishLiveSiteActionLabel(isPublishingSite)}
-          </button>
-        )}
-        <button
-          type="button"
-          role="menuitem"
-          className={`${styles.actionMenuItem} ${styles.actionMenuItemDestructive}`.trim()}
-          onClick={discardDraftChanges}
-          disabled={isMutatingDraft || !hasLiveSyncPending}
-        >
-          {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-WebsiteEditorActionMenu.propTypes = {
-  actionMenuRef: refPropType,
-  isActionMenuOpen: PropTypes.bool.isRequired,
-  toggleActionMenu: PropTypes.func.isRequired,
-  hasLiveSite: PropTypes.bool.isRequired,
-  primarySiteDomain: primarySiteDomainPropType,
-  openLiveWebsiteLink: PropTypes.func.isRequired,
-  updateLiveSiteChanges: PropTypes.func.isRequired,
-  isMutatingDraft: PropTypes.bool.isRequired,
-  hasLiveSyncPending: PropTypes.bool.isRequired,
-  isUpdatingLiveSite: PropTypes.bool.isRequired,
-  publishLiveSite: PropTypes.func.isRequired,
-  canPublishSite: PropTypes.bool.isRequired,
-  isPublishingSite: PropTypes.bool.isRequired,
-  unpublishLiveSite: PropTypes.func.isRequired,
-  canUnpublishSite: PropTypes.bool.isRequired,
-  isUnpublishingSite: PropTypes.bool.isRequired,
-  discardDraftChanges: PropTypes.func.isRequired,
-  isDiscardingChanges: PropTypes.bool.isRequired,
-};
-
-function WebsiteEditorPublicSitePanel({
-  siteSummary,
-  primarySiteDomain,
-  liveSiteStatus,
-  liveLinkStatus,
-  siteSummaryError,
-  hasLiveSite,
-  hasLiveSyncPending,
-  draftId,
-}) {
-  const { primaryLinkLabel, primaryLinkValue, secondaryLinkHref } = resolvePublicSiteLinkPresentation({
-    hasLiveSite,
-    primarySiteDomain,
-    siteSummary,
-    draftId,
-  });
-
-  return (
-    <section className={styles.publicSitePanel}>
-      <div className={styles.publicSiteHeader}>
-        <div>
-          <h2 className={styles.publicSiteTitle}>Live site</h2>
-          <p className={styles.publicSiteDescription}>
-            Publish creates the Domits live link. Update applies the latest editor changes to the
-            public website.
-          </p>
-        </div>
-        {siteSummary?.isReachable ? (
-          <span className={styles.publicSiteReachableBadge}>Reachable</span>
-        ) : null}
-      </div>
-
-      <div className={styles.publicSiteGrid}>
-        <div className={styles.publicSiteMetric}>
-          <span className={styles.publicSiteLabel}>{primaryLinkLabel}</span>
-          {secondaryLinkHref ? (
-            <a
-              className={`${styles.publicSiteLink} ${styles.publicSiteValueLink}`.trim()}
-              href={secondaryLinkHref}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <strong className={styles.publicSiteValue}>{primaryLinkValue}</strong>
-            </a>
-          ) : (
-            <strong className={styles.publicSiteValue}>{primaryLinkValue}</strong>
-          )}
-        </div>
-        <div className={styles.publicSiteMetric}>
-          <span className={styles.publicSiteLabel}>Link status</span>
-          <strong className={styles.publicSiteValue}>{liveLinkStatus}</strong>
-        </div>
-        <div className={styles.publicSiteMetric}>
-          <span className={styles.publicSiteLabel}>Publication status</span>
-          <strong className={styles.publicSiteValue}>{liveSiteStatus}</strong>
-        </div>
-      </div>
-
-      {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
-      {!siteSummaryError && hasLiveSite && hasLiveSyncPending ? (
-        <p className={styles.publicSiteHint}>
-          Update the live site to push the latest editor changes to the public website.
-        </p>
-      ) : null}
-      {!siteSummaryError && !hasLiveSite ? (
-        <p className={styles.publicSiteHint}>
-          Publish the website once to generate its Domits live link.
-        </p>
-      ) : null}
-    </section>
-  );
-}
-
-WebsiteEditorPublicSitePanel.propTypes = {
-  siteSummary: siteSummaryPropType,
-  primarySiteDomain: primarySiteDomainPropType,
-  liveSiteStatus: PropTypes.string.isRequired,
-  liveLinkStatus: PropTypes.string.isRequired,
-  siteSummaryError: PropTypes.string,
-  hasLiveSite: PropTypes.bool.isRequired,
-  hasLiveSyncPending: PropTypes.bool.isRequired,
-  draftId: PropTypes.string,
-};
-
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -1330,8 +119,6 @@ function WebsiteEditorPage() {
   const [isPublishingSite, setIsPublishingSite] = useState(false);
   const [isUnpublishingSite, setIsUnpublishingSite] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
-  const [highlightedTargetId, setHighlightedTargetId] = useState("");
-  const [activePreviewTargetId, setActivePreviewTargetId] = useState("");
   const [siteSummary, setSiteSummary] = useState(null);
   const [siteSummaryError, setSiteSummaryError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
@@ -1353,17 +140,35 @@ function WebsiteEditorPage() {
     itemIndex: -1,
     label: "",
   });
-  const sectionRefs = useRef({});
-  const targetRefs = useRef({});
   const actionMenuRef = useRef(null);
   const editorPanelRef = useRef(null);
   const openedLiveSiteWindowRef = useRef(null);
   const openedLiveSiteWindowOriginRef = useRef("");
-  const sectionHighlightResetTimeoutRef = useRef(null);
-  const previewHighlightResetTimeoutRef = useRef(null);
-  const editorTargetFocusRequestRef = useRef(0);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
   const draftTemplateKey = String(draftRecord?.templateKey || "").trim();
+  const {
+    activePreviewTargetId,
+    activatePreviewTarget,
+    clearActivePreviewTarget,
+    flashPreviewTarget,
+    focusEditorTarget,
+    handlePreviewTargetSelect,
+    highlightedTargetId,
+    setPreviewTargetId,
+    setSectionRef,
+    setTargetRef,
+    toggleSection,
+  } = useWebsiteEditorTargeting({
+    editorPanelRef,
+    expandedSections,
+    onSelectImageSlot: (imageSlot) => {
+      setImagePickerState({
+        isOpen: true,
+        slot: imageSlot,
+      });
+    },
+    setExpandedSections,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -1547,151 +352,9 @@ function WebsiteEditorPage() {
     });
   }, [draftRecord?.templateKey]);
 
-  useEffect(
-    () => () => {
-      if (sectionHighlightResetTimeoutRef.current) {
-        globalThis.clearTimeout(sectionHighlightResetTimeoutRef.current);
-      }
-
-      clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
-    },
-    []
-  );
-
-  const toggleSection = (sectionId) => {
-    setExpandedSections((currentSections) => ({
-      ...currentSections,
-      [sectionId]: !currentSections[sectionId],
-    }));
-  };
-
-  const openSection = (sectionId) => {
-    setExpandedSections((currentSections) => {
-      if (currentSections[sectionId]) {
-        return currentSections;
-      }
-
-      return {
-        ...currentSections,
-        [sectionId]: true,
-      };
-    });
-  };
-
-  const setSectionRef = (sectionId) => (node) => {
-    sectionRefs.current[sectionId] = node;
-  };
-
-  const setTargetRef = (targetId) => (node) => {
-    targetRefs.current[targetId] = node;
-  };
-
-  const scrollEditorNodeIntoView = (node) => {
-    const centeredScrollTop = getCenteredContainerScrollTop(node, editorPanelRef.current);
-    if (centeredScrollTop !== null && editorPanelRef.current) {
-      editorPanelRef.current.scrollTo({
-        top: centeredScrollTop,
-        behavior: "smooth",
-      });
-      return true;
-    }
-
-    node?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-
-    return Boolean(node);
-  };
-
-  const focusEditorTarget = ({ sectionId, targetId }) => {
-    if (!sectionId) {
-      return;
-    }
-
-    const wasSectionCollapsed = expandedSections[sectionId] !== true;
-    openSection(sectionId);
-    setHighlightedTargetId("");
-
-    const resolvedTargetId = resolveEditorPreviewTargetId({ sectionId, targetId });
-    const focusRequestId = editorTargetFocusRequestRef.current + 1;
-    editorTargetFocusRequestRef.current = focusRequestId;
-
-    globalThis.setTimeout(() => {
-      if (resolvedTargetId && editorTargetFocusRequestRef.current === focusRequestId) {
-        setHighlightedTargetId(resolvedTargetId);
-      }
-    }, 0);
-
-    if (sectionHighlightResetTimeoutRef.current) {
-      globalThis.clearTimeout(sectionHighlightResetTimeoutRef.current);
-    }
-
-    sectionHighlightResetTimeoutRef.current = globalThis.setTimeout(() => {
-      if (editorTargetFocusRequestRef.current === focusRequestId) {
-        setHighlightedTargetId("");
-      }
-    }, 1800);
-
-    const attemptFocus = (attemptIndex = 0) => {
-      if (editorTargetFocusRequestRef.current !== focusRequestId) {
-        return;
-      }
-
-      const targetEditorNode = resolvedTargetId
-        ? resolveSectionNode(targetRefs.current[resolvedTargetId])
-        : null;
-      if (targetEditorNode) {
-        scrollEditorNodeIntoView(targetEditorNode);
-        return;
-      }
-
-      if (attemptIndex >= EDITOR_TARGET_FOCUS_MAX_ATTEMPTS) {
-        scrollEditorNodeIntoView(resolveSectionNode(sectionRefs.current[sectionId]));
-        return;
-      }
-
-      runAfterNextPaint(() => {
-        attemptFocus(attemptIndex + 1);
-      });
-    };
-
-    runAfterNextPaint(() => {
-      attemptFocus();
-    });
-
-    if (wasSectionCollapsed) {
-      globalThis.setTimeout(() => {
-        if (editorTargetFocusRequestRef.current !== focusRequestId) {
-          return;
-        }
-
-        attemptFocus();
-      }, EDITOR_SECTION_EXPAND_SCROLL_RETRY_DELAY_MS);
-    }
-  };
-
-  const handlePreviewTargetSelect = ({ sectionId, targetId, imageSlot } = {}) => {
-    if (imageSlot) {
-      focusEditorTarget({
-        sectionId: EDITOR_SECTION_KEYS.images,
-        targetId:
-          targetId || resolveEditorPreviewTargetId({ imageSlot, sectionId: EDITOR_SECTION_KEYS.images }),
-      });
-      globalThis.setTimeout(() => {
-        openImagePicker(imageSlot);
-      }, 140);
-      return;
-    }
-
-    if (sectionId) {
-      focusEditorTarget({ sectionId, targetId });
-    }
-  };
-
   const handleCommonFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common[fieldKey]);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.common[fieldKey]);
     setEditorValues((currentValues) => ({
       ...currentValues,
       common: {
@@ -1703,7 +366,7 @@ function WebsiteEditorPage() {
 
   const handleContactFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact[fieldKey]);
     setEditorValues((currentValues) => ({
       ...currentValues,
       contact: {
@@ -1715,7 +378,7 @@ function WebsiteEditorPage() {
 
   const updateContactColorField = (fieldKey, resolveColor) => (nextValue) => {
     const resolvedColor = resolveColor(nextValue);
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact[fieldKey]);
     setEditorValues((currentValues) => ({
       ...currentValues,
       contact: {
@@ -1726,7 +389,7 @@ function WebsiteEditorPage() {
   };
 
   const updateContactColorInputField = (fieldKey) => (nextInputValue) => {
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact[fieldKey]);
     setEditorValues((currentValues) => ({
       ...currentValues,
       contact: {
@@ -1791,7 +454,7 @@ function WebsiteEditorPage() {
   );
 
   const activateAmenitiesPreviewTarget = () => {
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.visibility("amenitiesPanel"));
+    setPreviewTargetId(EDITOR_TARGET_KEYS.visibility("amenitiesPanel"));
   };
 
   const handleAmenitiesIconColorChange = (nextColor) => {
@@ -1838,7 +501,7 @@ function WebsiteEditorPage() {
       return;
     }
 
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact.avatarImage);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact.avatarImage);
 
     try {
       const nextAvatarImage = await readImageFileAsDataUrl(nextFile);
@@ -1858,7 +521,7 @@ function WebsiteEditorPage() {
   };
 
   const updateContactAvatarMode = (avatarMode) => {
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.contact.avatarImage);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact.avatarImage);
     setEditorValues((currentValues) => ({
       ...currentValues,
       contact: {
@@ -1878,7 +541,7 @@ function WebsiteEditorPage() {
   };
 
   const handleThemeBackgroundColorChange = (backgroundColor) => {
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common.siteTitle);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.common.siteTitle);
     const resolvedBackgroundColor = resolveWebsiteBackgroundColor(backgroundColor);
     setThemeValues((currentValues) => ({
       ...currentValues,
@@ -1903,7 +566,7 @@ function WebsiteEditorPage() {
   };
 
   const handleThemeBackgroundColorInputChange = (nextInputValue) => {
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common.siteTitle);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.common.siteTitle);
     setThemeValues((currentValues) => {
       const hasValidCustomColor = isValidWebsiteBackgroundColor(nextInputValue);
       const nextBackgroundColor = hasValidCustomColor
@@ -1918,15 +581,6 @@ function WebsiteEditorPage() {
     });
   };
 
-  const activatePreviewTarget = (targetId) => () => {
-    activatePreviewTargetId(setActivePreviewTargetId, targetId);
-  };
-
-  const clearActivePreviewTarget = () => {
-    clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
-    setActivePreviewTargetId("");
-  };
-
   const handleVisibilityFieldChange = (fieldKey) => (event) => {
     const nextChecked = event.target.checked;
     const previewTargetId = getPreviewTargetIdForVisibilityField(fieldKey);
@@ -1937,13 +591,9 @@ function WebsiteEditorPage() {
         [fieldKey]: nextChecked,
       },
     }));
-    setActivePreviewTargetId("");
+    clearActivePreviewTarget();
     runAfterNextPaint(() => {
-      activateTemporaryPreviewTargetId(
-        setActivePreviewTargetId,
-        previewHighlightResetTimeoutRef,
-        previewTargetId
-      );
+      flashPreviewTarget(previewTargetId);
     });
   };
 
@@ -1952,7 +602,7 @@ function WebsiteEditorPage() {
       return;
     }
 
-    activatePreviewTargetId(setActivePreviewTargetId, getImageSlotTargetId(slot));
+    setPreviewTargetId(getImageSlotTargetId(slot));
     setEditorValues((currentValues) => {
       if (slot.kind === "hero") {
         return {
@@ -1992,7 +642,7 @@ function WebsiteEditorPage() {
       return;
     }
 
-    activatePreviewTargetId(setActivePreviewTargetId, getImageSlotTargetId(slot));
+    setPreviewTargetId(getImageSlotTargetId(slot));
     setImagePickerState({
       isOpen: true,
       slot,
@@ -2018,7 +668,7 @@ function WebsiteEditorPage() {
   const updateCollectionFieldValue = (collectionKey, itemIndex, fieldKey, nextValue) => {
     const targetId = getCollectionTargetId(collectionKey, itemIndex);
 
-    activatePreviewTargetId(setActivePreviewTargetId, targetId);
+    setPreviewTargetId(targetId);
     setEditorValues((currentValues) => {
       const nextCollection = [...currentValues[collectionKey]];
       const currentItem = nextCollection[itemIndex];
@@ -2047,7 +697,7 @@ function WebsiteEditorPage() {
       return;
     }
 
-    activatePreviewTargetId(setActivePreviewTargetId, getCollectionTargetId(collectionKey, itemIndex));
+    setPreviewTargetId(getCollectionTargetId(collectionKey, itemIndex));
     setIconPickerState({
       isOpen: true,
       collectionKey,
@@ -2074,10 +724,7 @@ function WebsiteEditorPage() {
       const selectedIconOption = amenityIconOptions.find(
         (iconOption) => String(iconOption.id || "") === String(iconAmenityId || "")
       );
-      activatePreviewTargetId(
-        setActivePreviewTargetId,
-        EDITOR_TARGET_KEYS.amenities(iconPickerState.itemIndex)
-      );
+      setPreviewTargetId(EDITOR_TARGET_KEYS.amenities(iconPickerState.itemIndex));
       setEditorValues((currentValues) => {
         const nextAmenities = [...currentValues.amenities];
         const currentAmenity = nextAmenities[iconPickerState.itemIndex];
@@ -2118,7 +765,7 @@ function WebsiteEditorPage() {
     }
 
     const nextTargetId = getCollectionTargetId(collectionKey, nextIndex);
-    activatePreviewTargetId(setActivePreviewTargetId, nextTargetId);
+    setPreviewTargetId(nextTargetId);
     setEditorValues((currentValues) => {
       const currentCollection = Array.isArray(currentValues[collectionKey]) ? currentValues[collectionKey] : [];
       if (nextIndex >= currentCollection.length || itemIndex >= currentCollection.length) {
@@ -2143,65 +790,18 @@ function WebsiteEditorPage() {
     const descriptionId = `website-editor-visibility-${field.key}-description`;
 
     return (
-      <label
+      <WebsiteEditorVisibilityToggleCard
         key={field.key}
-        ref={setTargetRef(visibilityTargetId)}
-        htmlFor={inputId}
-        className={`${styles.toggleCard} ${
-          highlightedTargetId === visibilityTargetId ? styles.editorTargetHighlighted : ""
-        }`.trim()}
-      >
-        <div className={styles.toggleCopy}>
-          <span id={labelId} className={styles.toggleLabel}>{field.label}</span>
-          <span id={descriptionId} className={styles.toggleDescription}>{field.description}</span>
-        </div>
-        <input
-          id={inputId}
-          type="checkbox"
-          className={styles.toggleInput}
-          checked={Boolean(editorValues.visibility[field.key])}
-          onChange={handleVisibilityFieldChange(field.key)}
-          aria-labelledby={labelId}
-          aria-describedby={descriptionId}
-        />
-      </label>
+        targetRef={setTargetRef(visibilityTargetId)}
+        field={field}
+        inputId={inputId}
+        labelId={labelId}
+        descriptionId={descriptionId}
+        checked={Boolean(editorValues.visibility[field.key])}
+        onChange={handleVisibilityFieldChange(field.key)}
+        isHighlighted={highlightedTargetId === visibilityTargetId}
+      />
     );
-  };
-
-  const addAmenityItem = () => {
-    const nextAmenityIndex = editorValues.amenities.length;
-    if (nextAmenityIndex >= MAX_WEBSITE_CONFIGURABLE_AMENITIES) {
-      return;
-    }
-
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.amenities(nextAmenityIndex));
-    setEditorValues((currentValues) => ({
-      ...currentValues,
-      amenities: [...currentValues.amenities, createAmenityEditorItem(amenityIconOptions, currentValues.amenities.length)],
-    }));
-
-    runAfterNextPaint(() => {
-      focusEditorTarget({
-        sectionId: EDITOR_SECTION_KEYS.amenities,
-        targetId: EDITOR_TARGET_KEYS.amenities(nextAmenityIndex),
-      });
-    });
-  };
-
-  const removeAmenityItem = (itemIndex) => {
-    activatePreviewTargetId(setActivePreviewTargetId, "visibility.amenitiesPanel");
-    setEditorValues((currentValues) => ({
-      ...currentValues,
-      amenities: currentValues.amenities.filter((_, currentIndex) => currentIndex !== itemIndex),
-    }));
-  };
-
-  const moveAmenityItemUp = (itemIndex) => {
-    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex - 1);
-  };
-
-  const moveAmenityItemDown = (itemIndex) => {
-    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex + 1);
   };
 
   const reloadDraftRecord = async () => {
@@ -2374,141 +974,43 @@ function WebsiteEditorPage() {
 
   const handleEditorFieldKeyDown = (field) => createEditorFieldKeyDownHandler(field, saveDraftChanges);
 
-  const renderAmenitiesEditorSection = (placement) => {
-    const amenitiesConfig = copyCollectionConfig.amenities;
-    if (!amenitiesConfig || amenitiesConfig.placement !== placement) {
-      return null;
+  const addAmenityItem = () => {
+    const nextAmenityIndex = editorValues.amenities.length;
+    if (nextAmenityIndex >= MAX_WEBSITE_CONFIGURABLE_AMENITIES) {
+      return;
     }
 
-    const canAddAmenity = editorValues.amenities.length < amenitiesConfig.maxCount;
+    setPreviewTargetId(EDITOR_TARGET_KEYS.amenities(nextAmenityIndex));
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenities: [
+        ...currentValues.amenities,
+        createAmenityEditorItem(amenityIconOptions, currentValues.amenities.length),
+      ],
+    }));
 
-    return (
-      <CollapsibleSection
-        sectionId={EDITOR_SECTION_KEYS.amenities}
-        title={amenitiesConfig.title}
-        description={amenitiesConfig.description}
-        isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.amenities])}
-        onToggle={toggleSection}
-        sectionRef={setSectionRef(EDITOR_SECTION_KEYS.amenities)}
-      >
-        {amenitiesVisibilityField ? (
-          <div className={styles.toggleStack}>
-            {renderVisibilityFieldCard(amenitiesVisibilityField)}
-          </div>
-        ) : null}
+    runAfterNextPaint(() => {
+      focusEditorTarget({
+        sectionId: EDITOR_SECTION_KEYS.amenities,
+        targetId: EDITOR_TARGET_KEYS.amenities(nextAmenityIndex),
+      });
+    });
+  };
 
-        <ContactColorField
-          label="Icon color"
-          hint="Controls the amenity icon color in the featured section and full list."
-          value={editorValues.amenitiesIconColor}
-          placeholder={getDefaultWebsiteAmenityIconColor(draftTemplateKey)}
-          resolveColorValue={(value) => resolveWebsiteAmenityIconColor(value, draftTemplateKey)}
-          inputAriaLabel="Amenities icon color"
-          onSelectColor={handleAmenitiesIconColorChange}
-          onChangeInput={handleAmenitiesIconColorInputChange}
-          onCommitInput={commitAmenitiesIconColorInput}
-          onInputKeyDown={handleAmenitiesIconColorInputKeyDown}
-          fieldRef={setTargetRef(EDITOR_TARGET_KEYS.amenitiesIconColor)}
-          isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.amenitiesIconColor}
-          onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.visibility("amenitiesPanel"))}
-          onBlur={clearActivePreviewTarget}
-        />
+  const removeAmenityItem = (itemIndex) => {
+    setPreviewTargetId("visibility.amenitiesPanel");
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenities: currentValues.amenities.filter((_, currentIndex) => currentIndex !== itemIndex),
+    }));
+  };
 
-        <div className={styles.collectionStack}>
-          {editorValues.amenities.map((amenity, index) => {
-            const amenityTargetId = EDITOR_TARGET_KEYS.amenities(index);
-            const amenityDeleteSubject = amenity.label || `amenity ${index + 1}`;
-            const amenityDeleteButtonLabel = `Delete ${amenityDeleteSubject}`;
+  const moveAmenityItemUp = (itemIndex) => {
+    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex - 1);
+  };
 
-            return (
-              <div
-                key={amenity.id}
-                ref={setTargetRef(amenityTargetId)}
-                className={`${styles.collectionCard} ${
-                  highlightedTargetId === amenityTargetId ? styles.editorTargetHighlighted : ""
-                }`.trim()}
-              >
-                <p className={styles.collectionTitle}>
-                  {amenitiesConfig.itemLabel} {index + 1}
-                </p>
-                {amenitiesConfig.supportsIconSelection ? (
-                  <AmenityIconSelectField
-                    fieldKey={`amenity-icon-${index}`}
-                    label={`${amenitiesConfig.itemLabel} ${index + 1}`}
-                    value={amenity.iconAmenityId || amenity.id || ""}
-                    onOpenPicker={() =>
-                      openIconPicker(
-                        EDITOR_SECTION_KEYS.amenities,
-                        index,
-                        `${amenitiesConfig.itemLabel} ${index + 1} icon`
-                      )
-                    }
-                    onFocus={activatePreviewTarget(amenityTargetId)}
-                    onBlur={clearActivePreviewTarget}
-                  />
-                ) : null}
-                <TextField
-                  field={{ key: `amenity-label-${index}`, label: "Name", component: "input" }}
-                  value={amenity.label}
-                  onChange={handleCollectionFieldChange(EDITOR_SECTION_KEYS.amenities, index, "label")}
-                  onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
-                  onFocus={activatePreviewTarget(amenityTargetId)}
-                  onBlur={clearActivePreviewTarget}
-                />
-                <div className={styles.collectionActionRow}>
-                  <button
-                    type="button"
-                    className={`${styles.secondaryButton} ${styles.collectionActionButton} ${styles.collectionActionMoveButton}`.trim()}
-                    onClick={() => moveAmenityItemUp(index)}
-                    disabled={index < 1}
-                    onFocus={activatePreviewTarget(amenityTargetId)}
-                    onBlur={clearActivePreviewTarget}
-                  >
-                    Move up
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.secondaryButton} ${styles.collectionActionButton} ${styles.collectionActionMoveButton}`.trim()}
-                    onClick={() => moveAmenityItemDown(index)}
-                    disabled={index >= editorValues.amenities.length - 1}
-                    onFocus={activatePreviewTarget(amenityTargetId)}
-                    onBlur={clearActivePreviewTarget}
-                  >
-                    Move down
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.secondaryButton} ${styles.collectionActionButton} ${styles.collectionActionDeleteButton}`.trim()}
-                    onClick={() => removeAmenityItem(index)}
-                    aria-label={amenityDeleteButtonLabel}
-                    title={amenityDeleteButtonLabel}
-                    onFocus={activatePreviewTarget(amenityTargetId)}
-                    onBlur={clearActivePreviewTarget}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className={styles.collectionSectionFooter}>
-          <p className={styles.helperText}>
-            Up to {amenitiesConfig.maxCount} amenities can be configured here. Their order controls which ones appear first on the website.
-          </p>
-          {canAddAmenity ? (
-            <button
-              type="button"
-              className={`${styles.secondaryButton} ${styles.collectionAddButton}`.trim()}
-              onClick={addAmenityItem}
-            >
-              + Add amenity
-            </button>
-          ) : null}
-        </div>
-      </CollapsibleSection>
-    );
+  const moveAmenityItemDown = (itemIndex) => {
+    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex + 1);
   };
 
   const handleThemeBackgroundColorInputKeyDown = async (event) => {
@@ -2778,64 +1280,17 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
-                {imageSlots.length > 0 ? (
-                  <CollapsibleSection
-                    sectionId={EDITOR_SECTION_KEYS.images}
-                    title="Image slots"
-                    description="Reassign imported listing images to the key visual slots used by this template."
-                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.images])}
-                    onToggle={toggleSection}
-                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.images)}
-                  >
-                    <div className={styles.imageSlotGrid}>
-                      {imageSlots.map((slot) => {
-                        const selectedImageUrl = getSelectedImageForSlot(slot, editorValues);
-                        const selectedImageIndex = importedImageOptions.indexOf(selectedImageUrl);
-                        const imageSlotTargetId = getImageSlotTargetId(slot);
-                        const isImageSlotHighlighted = highlightedTargetId === imageSlotTargetId;
-                        let selectedImageLabel = "No imported image assigned";
-                        if (selectedImageIndex > -1) {
-                          selectedImageLabel = getImageOptionLabel(selectedImageIndex);
-                        }
-
-                        return (
-                          <div
-                            key={slot.id}
-                            ref={setTargetRef(imageSlotTargetId)}
-                            className={`${styles.imageSlotCard} ${isImageSlotHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-                          >
-                            <div className={styles.imageSlotPreview}>
-                              {selectedImageUrl ? (
-                                <img src={selectedImageUrl} alt={slot.label} className={styles.imageSlotPreviewImage} />
-                              ) : (
-                                <span className={styles.imageSlotPreviewEmpty}>No image selected</span>
-                              )}
-                            </div>
-
-                            <div className={styles.imageSlotMeta}>
-                              <div className={styles.fieldGroup}>
-                                <span className={styles.fieldLabel}>{slot.label}</span>
-                                <span className={styles.helperText}>{selectedImageLabel}</span>
-                              </div>
-
-                              <button
-                                type="button"
-                                className={styles.secondaryButton}
-                                onClick={() => openImagePicker(slot)}
-                                disabled={importedImageOptions.length < 1}
-                              >
-                                <CollectionsOutlinedIcon fontSize="small" />
-                                Choose image
-                              </button>
-                            </div>
-
-                            <p className={styles.helperText}>{slot.description}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CollapsibleSection>
-                ) : null}
+                <WebsiteEditorImageSlotsSection
+                  editorValues={editorValues}
+                  highlightedTargetId={highlightedTargetId}
+                  imageSlots={imageSlots}
+                  importedImageOptions={importedImageOptions}
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.images])}
+                  onOpenImagePicker={openImagePicker}
+                  onToggle={toggleSection}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.images)}
+                  setTargetRef={setTargetRef}
+                />
 
                 {copyCollectionConfig.trustCards ? (
                   <CollapsibleSection
@@ -2904,82 +1359,61 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
-                {renderAmenitiesEditorSection("afterTrustCards")}
-
-                {contactSectionFields.length > 0 ? (
-                  <CollapsibleSection
-                    sectionId={EDITOR_SECTION_KEYS.contact}
-                    title="Contact footer"
-                    description="Adjust the footer copy, profile photo override, and surface colors for the panorama contact section."
-                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.contact])}
-                    onToggle={toggleSection}
-                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.contact)}
-                  >
-                    <div className={styles.fieldStack}>
-                      {contactSectionFields.map((field) => (
-                        <TextField
-                          key={field.key}
-                          field={{ key: `contact-${field.key}`, label: field.label, component: field.component }}
-                          value={editorValues.contact[field.key]}
-                          onChange={handleContactFieldChange(field.key)}
-                          onKeyDown={handleEditorFieldKeyDown(field)}
-                          fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact[field.key])}
-                          isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact[field.key]}
-                          onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact[field.key])}
-                          onBlur={clearActivePreviewTarget}
-                        />
-                      ))}
-
-                      <ContactImageField
-                        mode={editorValues.contact.avatarMode}
-                        inputId="website-editor-contact-avatar-upload"
-                        value={editorValues.contact.avatarImage}
-                        fallbackImage={previewModel.host?.profileImage || ""}
-                        onChangeFile={handleContactImageFileChange}
-                        onUseInitials={handleContactImageUseInitials}
-                        onUseProfilePhoto={handleContactImageUseProfilePhoto}
-                        fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact.avatarImage)}
-                        isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact.avatarImage}
-                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact.avatarImage)}
-                        onBlur={clearActivePreviewTarget}
-                      />
-
-                      <ContactColorField
-                        label="Footer color"
-                        hint="Controls the main surface color behind the contact footer."
-                        value={editorValues.contact.backgroundColor}
-                        placeholder="#1b2436"
-                        resolveColorValue={resolveWebsiteContactBackgroundColor}
-                        inputAriaLabel="Contact footer background color"
-                        onSelectColor={handleContactBackgroundColorChange}
-                        onChangeInput={handleContactBackgroundColorInputChange}
-                        onCommitInput={commitContactBackgroundColorInput}
-                        onInputKeyDown={handleContactBackgroundColorInputKeyDown}
-                        fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact.backgroundColor)}
-                        isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact.backgroundColor}
-                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact.backgroundColor)}
-                        onBlur={clearActivePreviewTarget}
-                      />
-
-                      <ContactColorField
-                        label="Accent color"
-                        hint="Used for the eyebrow, avatar ring, and section highlights."
-                        value={editorValues.contact.accentColor}
-                        placeholder="#f5e5cb"
-                        resolveColorValue={resolveWebsiteContactAccentColor}
-                        inputAriaLabel="Contact footer accent color"
-                        onSelectColor={handleContactAccentColorChange}
-                        onChangeInput={handleContactAccentColorInputChange}
-                        onCommitInput={commitContactAccentColorInput}
-                        onInputKeyDown={handleContactAccentColorInputKeyDown}
-                        fieldRef={setTargetRef(EDITOR_TARGET_KEYS.contact.accentColor)}
-                        isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.contact.accentColor}
-                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.contact.accentColor)}
-                        onBlur={clearActivePreviewTarget}
-                      />
-                    </div>
-                  </CollapsibleSection>
+                {copyCollectionConfig.amenities?.placement === "afterTrustCards" ? (
+                  <WebsiteEditorAmenitiesSection
+                    activatePreviewTarget={activatePreviewTarget}
+                    addAmenityItem={addAmenityItem}
+                    amenitiesConfig={copyCollectionConfig.amenities}
+                    amenitiesVisibilityContent={
+                      amenitiesVisibilityField ? renderVisibilityFieldCard(amenitiesVisibilityField) : null
+                    }
+                    canAddAmenity={editorValues.amenities.length < copyCollectionConfig.amenities.maxCount}
+                    clearActivePreviewTarget={clearActivePreviewTarget}
+                    commitAmenitiesIconColorInput={commitAmenitiesIconColorInput}
+                    draftTemplateKey={draftTemplateKey}
+                    editorValues={editorValues}
+                    handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
+                    handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
+                    handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}
+                    handleCollectionFieldChange={handleCollectionFieldChange}
+                    handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                    highlightedTargetId={highlightedTargetId}
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.amenities])}
+                    moveAmenityItemDown={moveAmenityItemDown}
+                    moveAmenityItemUp={moveAmenityItemUp}
+                    onOpenIconPicker={openIconPicker}
+                    removeAmenityItem={removeAmenityItem}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.amenities)}
+                    setTargetRef={setTargetRef}
+                    toggleSection={toggleSection}
+                  />
                 ) : null}
+
+                <WebsiteEditorContactSection
+                  activatePreviewTarget={activatePreviewTarget}
+                  clearActivePreviewTarget={clearActivePreviewTarget}
+                  commitContactAccentColorInput={commitContactAccentColorInput}
+                  commitContactBackgroundColorInput={commitContactBackgroundColorInput}
+                  contactSectionFields={contactSectionFields}
+                  editorValues={editorValues}
+                  handleContactAccentColorChange={handleContactAccentColorChange}
+                  handleContactAccentColorInputChange={handleContactAccentColorInputChange}
+                  handleContactAccentColorInputKeyDown={handleContactAccentColorInputKeyDown}
+                  handleContactBackgroundColorChange={handleContactBackgroundColorChange}
+                  handleContactBackgroundColorInputChange={handleContactBackgroundColorInputChange}
+                  handleContactBackgroundColorInputKeyDown={handleContactBackgroundColorInputKeyDown}
+                  handleContactFieldChange={handleContactFieldChange}
+                  handleContactImageFileChange={handleContactImageFileChange}
+                  handleContactImageUseInitials={handleContactImageUseInitials}
+                  handleContactImageUseProfilePhoto={handleContactImageUseProfilePhoto}
+                  handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                  highlightedTargetId={highlightedTargetId}
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.contact])}
+                  onToggle={toggleSection}
+                  previewModel={previewModel}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.contact)}
+                  setTargetRef={setTargetRef}
+                />
 
                 {copyCollectionConfig.journeyStops ? (
                   <CollapsibleSection
@@ -3032,7 +1466,35 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
-                {renderAmenitiesEditorSection("afterJourneyStops")}
+                {copyCollectionConfig.amenities?.placement === "afterJourneyStops" ? (
+                  <WebsiteEditorAmenitiesSection
+                    activatePreviewTarget={activatePreviewTarget}
+                    addAmenityItem={addAmenityItem}
+                    amenitiesConfig={copyCollectionConfig.amenities}
+                    amenitiesVisibilityContent={
+                      amenitiesVisibilityField ? renderVisibilityFieldCard(amenitiesVisibilityField) : null
+                    }
+                    canAddAmenity={editorValues.amenities.length < copyCollectionConfig.amenities.maxCount}
+                    clearActivePreviewTarget={clearActivePreviewTarget}
+                    commitAmenitiesIconColorInput={commitAmenitiesIconColorInput}
+                    draftTemplateKey={draftTemplateKey}
+                    editorValues={editorValues}
+                    handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
+                    handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
+                    handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}
+                    handleCollectionFieldChange={handleCollectionFieldChange}
+                    handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                    highlightedTargetId={highlightedTargetId}
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.amenities])}
+                    moveAmenityItemDown={moveAmenityItemDown}
+                    moveAmenityItemUp={moveAmenityItemUp}
+                    onOpenIconPicker={openIconPicker}
+                    removeAmenityItem={removeAmenityItem}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.amenities)}
+                    setTargetRef={setTargetRef}
+                    toggleSection={toggleSection}
+                  />
+                ) : null}
 
                 <div className={styles.editorFooter}>
                   <p className={styles.editorFooterText}>
