@@ -22,7 +22,6 @@ import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
-
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -59,8 +58,7 @@ function MainDashboardHost() {
               <BuilderProvider>
                 <OnboardingLayout />
               </BuilderProvider>
-            }
-          >
+            }>
             <Route index element={<AccommodationTypeView />} />
 
             <Route
