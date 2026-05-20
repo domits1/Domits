@@ -145,11 +145,6 @@ const AccommodationCard = ({
                   <img
                     src={imgSrc}
                     alt={`${propertyTitle} ${index + 1}`}
-                    width={800}
-                    height={600}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    fetchPriority={index === 0 ? "high" : "auto"}
-                    decoding="async"
                   />
                 </SwiperSlide>
               ))}
