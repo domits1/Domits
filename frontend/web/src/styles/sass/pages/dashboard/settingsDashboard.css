@@ -13,7 +13,7 @@
     background-color: #fff;
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -38,7 +38,7 @@
     background-color: #fff;
     border-radius: 15px;
     padding: 10px 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-right: 10px;
     margin-bottom: 10px;
     display: flex;
@@ -80,7 +80,7 @@
     background-color: #fff;
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -520,11 +520,13 @@
 /* ─── Team page ──────────────────────────────────────────────────────────── */
 
 .page-body.settings-page.team-page {
-    padding: 24px 24px 48px;
+    padding: 40px 48px 64px;
 }
 
 .team-page {
-    max-width: 680px;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .team-page .team-heading {
