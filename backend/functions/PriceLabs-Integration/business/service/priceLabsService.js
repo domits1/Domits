@@ -35,12 +35,13 @@ export class PriceLabsService {
       hookUrl:            HOOK_URL,
       regenerateToken:    false,
       features: {
-        prices:           true,
-        min_stay:         true,
-        check_in_out:     true,
-        los_pricing:      false,
-        weekly_monthly:   false,
-        extra_person_fee: false,
+        min_stay:                 true,
+        check_in:                 true,
+        check_out:                true,
+        monthly_weekly_discounts: false,
+        extra_person_fee:         false,
+        los_pricing:              false,
+        delta_only:               false,
       },
     });
 
