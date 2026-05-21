@@ -1,4 +1,4 @@
-const BASE_URL = "https://api.pricelabs.co/v2";
+const BASE_URL = "https://api.pricelabs.co/v2/integration/api";
 
 function headers(token, name) {
   return {
@@ -31,7 +31,7 @@ async function request(method, path, body, token, name) {
 export async function updateIntegration(token, name, {
   syncUrl, calendarTriggerUrl, hookUrl, regenerateToken = false, features = {},
 } = {}) {
-  return request("POST", "/integration/api/integration", {
+  return request("POST", "/integration", {
     integration: {
       sync_url:             syncUrl,
       calendar_trigger_url: calendarTriggerUrl,
