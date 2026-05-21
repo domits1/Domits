@@ -252,10 +252,6 @@ $primary-color: var(--primary-color);
   z-index: 9999;
 }
 
-.nineDotsMenuWrapper {
-  position: relative;
-}
-
 .appsDropdown::before {
   content: "";
   position: absolute;
@@ -277,9 +273,8 @@ $primary-color: var(--primary-color);
 
 .appItem {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   border: none;
   background: transparent;
   border-radius: 12px;

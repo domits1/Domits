@@ -24,11 +24,20 @@ export const inviteTeamMember = async (email, role) => {
 };
 
 export const fetchMemberships = async () => {
-    const response = await fetch(`${TEAM_API_URL}/memberships`, {
+    const response = await fetch(`${TEAM_API_URL}?action=memberships`, {
         method: "GET",
         headers: getHeaders(),
     });
     if (!response.ok) throw new Error(`Failed to fetch memberships: ${response.status}`);
+    return response.json();
+};
+
+export const acceptTeamInvite = async (token) => {
+    const response = await fetch(`${TEAM_API_URL}?action=accept&token=${token}`, {
+        method: "GET",
+        headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error(`Failed to accept invite: ${response.status}`);
     return response.json();
 };
 

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import {
@@ -10,9 +11,20 @@ import {
   Headphones,
   Globe
 } from "lucide-react";
+import FlowContext from "../../../services/FlowContext";
+import { startHostingFlow } from "../../../utils/hostFlow";
 
-function RegisterSection() {
+function RegisterSection({ isAuthenticated, group }) {
   const navigate = useNavigate();
+  const { setFlowState } = useContext(FlowContext);
+
+  const handleRegisterProperty = () =>
+    startHostingFlow({
+      isAuthenticated,
+      group,
+      navigate,
+      setFlowState,
+    });
 
   return (
     <motion.section
@@ -75,7 +87,7 @@ function RegisterSection() {
         <motion.div className="register__cta" variants={fadeUp}>
           <button
             className="btn btn--primary"
-            onClick={() => navigate("/hostonboarding")}
+            onClick={handleRegisterProperty}
           >
             Register Your Property →
           </button>
@@ -85,5 +97,10 @@ function RegisterSection() {
     </motion.section>
   );
 }
+
+RegisterSection.propTypes = {
+  group: PropTypes.string,
+  isAuthenticated: PropTypes.bool,
+};
 
 export default RegisterSection;

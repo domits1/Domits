@@ -229,7 +229,7 @@ export default function useHostDashboardData() {
       }));
 
       const [listingsResult, revenueResult, bookedNightsResult, availableNightsResult] = await Promise.allSettled([
-        fetchHostPropertySelectOptions(),
+        fetchHostPropertySelectOptions(hostId),
         HostRevenueService.getRevenue(hostId),
         HostRevenueService.getBookedNights(hostId),
         HostRevenueService.getAvailableNights(hostId),
