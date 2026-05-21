@@ -224,25 +224,32 @@
 
 .personal-data-card-inner {
     display: flex;
-    gap: 40px;
-    padding: 28px 32px;
+    gap: 0;
+    padding: 0;
 }
 
 .personal-data-photo-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    min-width: 130px;
+    gap: 16px;
+    min-width: 200px;
+    width: 200px;
+    background: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    border-radius: 16px 0 0 16px;
+    padding: 36px 24px 32px;
 }
 
 .personal-data-photo {
-    width: 120px;
-    height: 120px;
+    width: 160px;
+    height: 160px;
     border-radius: 50%;
     object-fit: cover;
-    border: 1px solid #e5e7eb;
-    background: #f3f4f6;
+    object-position: center;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #e5e7eb, 0 4px 14px rgba(0,0,0,0.10);
+    background: #e5e7eb;
 }
 
 .personal-data-photo-actions {
@@ -254,13 +261,14 @@
 
 .pd-photo-btn {
     width: 100%;
-    padding: 8px 12px;
+    padding: 9px 12px;
     border-radius: 8px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     border: 1px solid transparent;
     transition: background 0.15s;
+    text-align: center;
 }
 
 .pd-photo-btn--primary {
@@ -293,6 +301,7 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    padding: 28px 32px;
 }
 
 .pd-field {
@@ -563,22 +572,24 @@
 
     .personal-data-card-inner {
         flex-direction: column;
-        gap: 24px;
-        padding: 24px 28px;
     }
 
     .personal-data-photo-col {
         flex-direction: row;
         align-items: center;
-        min-width: unset;
         width: 100%;
-        gap: 20px;
+        min-width: unset;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 16px 16px 0 0;
+        padding: 24px 28px;
+        gap: 24px;
     }
 
     .personal-data-photo {
-        width: 80px;
-        height: 80px;
-        min-width: 80px;
+        width: 100px;
+        height: 100px;
+        min-width: 100px;
     }
 
     .personal-data-photo-actions {
@@ -591,6 +602,10 @@
         width: auto;
         padding: 8px 16px;
     }
+
+    .personal-data-fields-col {
+        padding: 24px 28px;
+    }
 }
 
 /* Mobile */
@@ -599,23 +614,15 @@
         padding: 20px 16px 80px;
     }
 
-    .personal-data-card-inner {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 20px 16px;
-        gap: 24px;
-    }
-
     .personal-data-photo-col {
         flex-direction: column;
         align-items: center;
-        width: 100%;
-        min-width: unset;
+        padding: 24px 16px;
     }
 
     .personal-data-photo {
-        width: 96px;
-        height: 96px;
+        width: 120px;
+        height: 120px;
     }
 
     .personal-data-photo-actions {
@@ -630,6 +637,7 @@
     }
 
     .personal-data-fields-col {
+        padding: 20px 16px;
         gap: 16px;
     }
 
