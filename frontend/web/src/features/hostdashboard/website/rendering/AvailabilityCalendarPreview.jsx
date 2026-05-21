@@ -1,14 +1,22 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
 import SyncOutlinedIcon from "@mui/icons-material/SyncOutlined";
 import EventBusyOutlinedIcon from "@mui/icons-material/EventBusyOutlined";
 import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import styles from "./AvailabilityCalendarPreview.module.scss";
+import {
+  getDefaultWebsiteCalendarDescription,
+  getDefaultWebsiteCalendarTitle,
+  normalizeWebsiteCalendarPanelColorOverride,
+} from "../config/websiteCalendarSectionConfig";
 
 const LEGACY_WEEKDAY_LABELS = Object.freeze(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
 const PANORAMA_WEEKDAY_LABELS = Object.freeze(["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]);
+const MAX_CALENDAR_NAVIGATION_MONTHS = 12;
 
 const padDatePart = (value) => String(value).padStart(2, "0");
 const toDateKey = (date) =>
@@ -28,6 +36,72 @@ const formatMonthLabel = (viewMonth) =>
     month: "long",
     year: "numeric",
   }).format(viewMonth);
+
+const getCalendarOffsetBounds = (visibleMonthCount) => ({
+  minOffset: 0,
+  maxOffset: Math.max(0, MAX_CALENDAR_NAVIGATION_MONTHS - Math.max(1, visibleMonthCount)),
+});
+
+function CalendarMonthNavigation({
+  labels,
+  canGoPrevious,
+  canGoNext,
+  onGoPrevious,
+  onGoNext,
+  className,
+  labelsClassName,
+  labelClassName,
+  buttonClassName,
+}) {
+  const handleNavigationClick = (handler) => (event) => {
+    event.stopPropagation();
+    handler();
+  };
+
+  return (
+    <div className={className}>
+      <button
+        type="button"
+        className={buttonClassName}
+        onClick={handleNavigationClick(onGoPrevious)}
+        disabled={!canGoPrevious}
+        aria-label="Show previous months"
+      >
+        <ChevronLeftRoundedIcon fontSize="inherit" />
+      </button>
+
+      <div className={labelsClassName}>
+        {labels.map((label) => (
+          <h4 key={label} className={labelClassName}>
+            {label}
+          </h4>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className={buttonClassName}
+        onClick={handleNavigationClick(onGoNext)}
+        disabled={!canGoNext}
+        aria-label="Show next months"
+      >
+        <ChevronRightRoundedIcon fontSize="inherit" />
+      </button>
+    </div>
+  );
+}
+
+CalendarMonthNavigation.propTypes = {
+  labels: PropTypes.arrayOf(PropTypes.string).isRequired,
+  canGoPrevious: PropTypes.bool.isRequired,
+  canGoNext: PropTypes.bool.isRequired,
+  onGoPrevious: PropTypes.func.isRequired,
+  onGoNext: PropTypes.func.isRequired,
+  className: PropTypes.string.isRequired,
+  labelsClassName: PropTypes.string.isRequired,
+  labelClassName: PropTypes.string.isRequired,
+  buttonClassName: PropTypes.string.isRequired,
+};
 
 const buildCalendarCells = (
   viewMonth,
@@ -70,23 +144,13 @@ const getCalendarCellStatus = (cell) => {
 
   if (cell.isUnavailable) {
     return {
-      title: "Blocked in PMS availability",
+      title: "Blocked or booked in PMS availability",
       Icon: BlockOutlinedIcon,
       label: "Blocked",
     };
   }
 
   return null;
-};
-
-const buildPanoramaAvailabilityDescription = (propertyTitle, blockedDateCount) => {
-  const normalizedTitle = String(propertyTitle || "").trim() || "This stay";
-
-  if (blockedDateCount > 0) {
-    return `${normalizedTitle} already has reserved dates across the next two months. Use the calendar below to spot open nights quickly.`;
-  }
-
-  return `${normalizedTitle} is currently open across the next two months. Use the calendar below to plan the stay.`;
 };
 
 function CalendarLegendItem({ children }) {
@@ -97,7 +161,16 @@ CalendarLegendItem.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-function LegacyAvailabilityCalendar({ availability, rootInteractiveProps, interactiveClassName }) {
+function LegacyAvailabilityCalendar({
+  availability,
+  calendarSection,
+  rootInteractiveProps,
+  interactiveClassName,
+  panelSettings,
+  templateKey = "",
+  titleInteractiveTargetProps = {},
+  descriptionInteractiveTargetProps = {},
+}) {
   const externalBlockedDateKeySet = useMemo(
     () => new Set(Array.isArray(availability?.externalBlockedDates) ? availability.externalBlockedDates : []),
     [availability]
@@ -106,24 +179,64 @@ function LegacyAvailabilityCalendar({ availability, rootInteractiveProps, intera
     () => new Set(Array.isArray(availability?.unavailableDateKeys) ? availability.unavailableDateKeys : []),
     [availability]
   );
-  const viewMonth = useMemo(() => {
+  const baseMonth = useMemo(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   }, []);
+  const [{ minOffset, maxOffset }] = useState(() => getCalendarOffsetBounds(1));
+  const [monthOffset, setMonthOffset] = useState(0);
+  const viewMonth = useMemo(() => addMonths(baseMonth, monthOffset), [baseMonth, monthOffset]);
   const calendarCells = useMemo(
     () => buildCalendarCells(viewMonth, externalBlockedDateKeySet, unavailableDateKeySet),
     [externalBlockedDateKeySet, unavailableDateKeySet, viewMonth]
   );
   const monthLabel = useMemo(() => formatMonthLabel(viewMonth), [viewMonth]);
-  const calendarClassName = `${styles.calendarCard} ${interactiveClassName}`.trim();
+  const showPanel = panelSettings?.showPanel !== false;
+  const resolvedPanelColor = normalizeWebsiteCalendarPanelColorOverride(panelSettings?.panelColor);
+  const title = String(calendarSection?.title || "").trim() || getDefaultWebsiteCalendarTitle(templateKey);
+  const description =
+    String(calendarSection?.description || "").trim() ||
+    getDefaultWebsiteCalendarDescription({
+      templateKey,
+      availabilityCallout: availability?.callout,
+    });
+  const calendarClassName = `${styles.calendarCard} ${
+    showPanel ? "" : styles.calendarCardPanelOff
+  } ${interactiveClassName}`.trim();
 
   return (
-    <section {...rootInteractiveProps} className={calendarClassName}>
+    <section
+      {...rootInteractiveProps}
+      className={calendarClassName}
+      style={showPanel && resolvedPanelColor ? { backgroundColor: resolvedPanelColor } : undefined}
+    >
       <div className={styles.calendarHeader}>
         <div className={styles.calendarHeaderCopy}>
-          <p className={styles.calendarEyebrow}>Availability snapshot</p>
-          <h3>{monthLabel}</h3>
-          <p>{availability.callout}</p>
+          <p
+            className={`${styles.calendarEyebrow} ${titleInteractiveTargetProps.className || ""}`.trim()}
+            {...titleInteractiveTargetProps}
+          >
+            {title}
+          </p>
+          <CalendarMonthNavigation
+            labels={[monthLabel]}
+            canGoPrevious={monthOffset > minOffset}
+            canGoNext={monthOffset < maxOffset}
+            onGoPrevious={() => setMonthOffset((currentOffset) => Math.max(minOffset, currentOffset - 1))}
+            onGoNext={() => setMonthOffset((currentOffset) => Math.min(maxOffset, currentOffset + 1))}
+            className={styles.calendarMonthNavigation}
+            labelsClassName={styles.calendarMonthNavigationLabels}
+            labelClassName={styles.calendarMonthNavigationLabel}
+            buttonClassName={styles.calendarMonthNavigationButton}
+          />
+          <p
+            className={`${styles.calendarSectionDescription} ${
+              descriptionInteractiveTargetProps.className || ""
+            }`.trim()}
+            {...descriptionInteractiveTargetProps}
+          >
+            {description}
+          </p>
         </div>
 
         <div className={styles.calendarMeta}>
@@ -161,7 +274,7 @@ function LegacyAvailabilityCalendar({ availability, rootInteractiveProps, intera
         </CalendarLegendItem>
         <CalendarLegendItem>
           <span className={`${styles.calendarLegendDot} ${styles.calendarLegendDotUnavailable}`} aria-hidden="true" />
-          <span>PMS blocked date</span>
+          <span>PMS blocked or booked date</span>
         </CalendarLegendItem>
         <CalendarLegendItem>
           <EventAvailableOutlinedIcon fontSize="inherit" />
@@ -227,13 +340,41 @@ LegacyAvailabilityCalendar.propTypes = {
     onKeyDown: PropTypes.func,
   }),
   interactiveClassName: PropTypes.string.isRequired,
+  panelSettings: PropTypes.shape({
+    showPanel: PropTypes.bool,
+    panelColor: PropTypes.string,
+  }),
+  calendarSection: PropTypes.shape({
+    title: PropTypes.string,
+    description: PropTypes.string,
+  }),
+  templateKey: PropTypes.string,
+  titleInteractiveTargetProps: PropTypes.shape({
+    className: PropTypes.string,
+    role: PropTypes.string,
+    tabIndex: PropTypes.number,
+    onClick: PropTypes.func,
+    onKeyDown: PropTypes.func,
+  }),
+  descriptionInteractiveTargetProps: PropTypes.shape({
+    className: PropTypes.string,
+    role: PropTypes.string,
+    tabIndex: PropTypes.number,
+    onClick: PropTypes.func,
+    onKeyDown: PropTypes.func,
+  }),
 };
 
 function PanoramaAvailabilityCalendar({
   availability,
+  calendarSection,
   propertyTitle = "",
   rootInteractiveProps,
   interactiveClassName,
+  panelSettings,
+  templateKey = "",
+  titleInteractiveTargetProps = {},
+  descriptionInteractiveTargetProps = {},
 }) {
   const externalBlockedDateKeySet = useMemo(
     () => new Set(Array.isArray(availability?.externalBlockedDates) ? availability.externalBlockedDates : []),
@@ -247,6 +388,8 @@ function PanoramaAvailabilityCalendar({
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   }, []);
+  const [{ minOffset, maxOffset }] = useState(() => getCalendarOffsetBounds(2));
+  const [monthOffset, setMonthOffset] = useState(0);
   const blockedDateCount = useMemo(() => {
     const normalizedBlockedDateCount = Number(availability?.blockedDateCount);
     if (Number.isFinite(normalizedBlockedDateCount)) {
@@ -257,32 +400,69 @@ function PanoramaAvailabilityCalendar({
   }, [availability?.blockedDateCount, externalBlockedDateKeySet, unavailableDateKeySet]);
   const monthViews = useMemo(
     () =>
-      [baseMonth, addMonths(baseMonth, 1)].map((viewMonth) => ({
+      [addMonths(baseMonth, monthOffset), addMonths(baseMonth, monthOffset + 1)].map((viewMonth) => ({
         id: `${viewMonth.getFullYear()}-${viewMonth.getMonth() + 1}`,
         label: formatMonthLabel(viewMonth),
         cells: buildCalendarCells(viewMonth, externalBlockedDateKeySet, unavailableDateKeySet, {
           weekStartsOn: 0,
         }),
       })),
-    [baseMonth, externalBlockedDateKeySet, unavailableDateKeySet]
+    [baseMonth, externalBlockedDateKeySet, monthOffset, unavailableDateKeySet]
   );
-  const calendarClassName = `${styles.panoramaCalendarCard} ${interactiveClassName}`.trim();
-  const description = buildPanoramaAvailabilityDescription(propertyTitle, blockedDateCount);
+  const showPanel = panelSettings?.showPanel !== false;
+  const resolvedPanelColor = normalizeWebsiteCalendarPanelColorOverride(panelSettings?.panelColor);
+  const title = String(calendarSection?.title || "").trim() || getDefaultWebsiteCalendarTitle(templateKey);
+  const calendarClassName = `${styles.panoramaCalendarCard} ${
+    showPanel ? "" : styles.panoramaCalendarCardPanelOff
+  } ${interactiveClassName}`.trim();
+  const description =
+    String(calendarSection?.description || "").trim() ||
+    getDefaultWebsiteCalendarDescription({
+      templateKey,
+      propertyTitle,
+      blockedDateCount,
+      availabilityCallout: availability?.callout,
+    });
 
   return (
-    <section {...rootInteractiveProps} className={calendarClassName}>
+    <section
+      {...rootInteractiveProps}
+      className={calendarClassName}
+      style={showPanel && resolvedPanelColor ? { backgroundColor: resolvedPanelColor } : undefined}
+    >
       <div className={styles.panoramaCalendarIntro}>
-        <p className={styles.panoramaCalendarEyebrow}>Availability</p>
-        <h3 className={styles.panoramaCalendarTitle}>Plan Your Stay</h3>
+        <p
+          className={`${styles.panoramaCalendarEyebrow} ${titleInteractiveTargetProps.className || ""}`.trim()}
+          {...titleInteractiveTargetProps}
+        >
+          {title}
+        </p>
         <span className={styles.panoramaCalendarDivider} aria-hidden="true" />
-        <p className={styles.panoramaCalendarDescription}>{description}</p>
+        <p
+          className={`${styles.panoramaCalendarDescription} ${
+            descriptionInteractiveTargetProps.className || ""
+          }`.trim()}
+          {...descriptionInteractiveTargetProps}
+        >
+          {description}
+        </p>
       </div>
+
+      <CalendarMonthNavigation
+        labels={monthViews.map((monthView) => monthView.label)}
+        canGoPrevious={monthOffset > minOffset}
+        canGoNext={monthOffset < maxOffset}
+        onGoPrevious={() => setMonthOffset((currentOffset) => Math.max(minOffset, currentOffset - 1))}
+        onGoNext={() => setMonthOffset((currentOffset) => Math.min(maxOffset, currentOffset + 1))}
+        className={styles.panoramaCalendarMonthNavigation}
+        labelsClassName={styles.panoramaCalendarMonthNavigationLabels}
+        labelClassName={styles.panoramaCalendarMonthNavigationLabel}
+        buttonClassName={styles.panoramaCalendarMonthNavigationButton}
+      />
 
       <div className={styles.panoramaCalendarMonths}>
         {monthViews.map((monthView) => (
           <section key={monthView.id} className={styles.panoramaCalendarMonthCard}>
-            <h4 className={styles.panoramaCalendarMonthTitle}>{monthView.label}</h4>
-
             <div className={styles.panoramaCalendarWeekdays}>
               {PANORAMA_WEEKDAY_LABELS.map((weekdayLabel) => (
                 <span key={weekdayLabel} className={styles.panoramaCalendarWeekday}>
@@ -353,13 +533,40 @@ PanoramaAvailabilityCalendar.propTypes = {
     onKeyDown: PropTypes.func,
   }),
   interactiveClassName: PropTypes.string.isRequired,
+  panelSettings: PropTypes.shape({
+    showPanel: PropTypes.bool,
+    panelColor: PropTypes.string,
+  }),
+  calendarSection: PropTypes.shape({
+    title: PropTypes.string,
+    description: PropTypes.string,
+  }),
+  templateKey: PropTypes.string,
+  titleInteractiveTargetProps: PropTypes.shape({
+    className: PropTypes.string,
+    role: PropTypes.string,
+    tabIndex: PropTypes.number,
+    onClick: PropTypes.func,
+    onKeyDown: PropTypes.func,
+  }),
+  descriptionInteractiveTargetProps: PropTypes.shape({
+    className: PropTypes.string,
+    role: PropTypes.string,
+    tabIndex: PropTypes.number,
+    onClick: PropTypes.func,
+    onKeyDown: PropTypes.func,
+  }),
 };
 
 export default function AvailabilityCalendarPreview({
   availability,
+  calendarSection = undefined,
+  descriptionInteractiveTargetProps = {},
   interactiveTargetProps = {},
+  titleInteractiveTargetProps = {},
   variant = "default",
   propertyTitle = "",
+  templateKey = "",
 }) {
   const { className: interactiveClassName = "", ...rootInteractiveProps } = interactiveTargetProps || {};
 
@@ -367,9 +574,14 @@ export default function AvailabilityCalendarPreview({
     return (
       <PanoramaAvailabilityCalendar
         availability={availability}
+        calendarSection={calendarSection}
+        descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
+        panelSettings={calendarSection}
         propertyTitle={propertyTitle}
         rootInteractiveProps={rootInteractiveProps}
         interactiveClassName={interactiveClassName}
+        templateKey={templateKey}
+        titleInteractiveTargetProps={titleInteractiveTargetProps}
       />
     );
   }
@@ -377,8 +589,13 @@ export default function AvailabilityCalendarPreview({
   return (
     <LegacyAvailabilityCalendar
       availability={availability}
+      calendarSection={calendarSection}
+      descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
+      panelSettings={calendarSection}
       rootInteractiveProps={rootInteractiveProps}
       interactiveClassName={interactiveClassName}
+      templateKey={templateKey}
+      titleInteractiveTargetProps={titleInteractiveTargetProps}
     />
   );
 }
@@ -397,7 +614,27 @@ AvailabilityCalendarPreview.propTypes = {
     nextBlockedLabel: PropTypes.string,
     callout: PropTypes.string,
   }).isRequired,
+  calendarSection: PropTypes.shape({
+    title: PropTypes.string,
+    description: PropTypes.string,
+    showPanel: PropTypes.bool,
+    panelColor: PropTypes.string,
+  }),
+  descriptionInteractiveTargetProps: PropTypes.shape({
+    className: PropTypes.string,
+    role: PropTypes.string,
+    tabIndex: PropTypes.number,
+    onClick: PropTypes.func,
+    onKeyDown: PropTypes.func,
+  }),
   interactiveTargetProps: PropTypes.shape({
+    className: PropTypes.string,
+    role: PropTypes.string,
+    tabIndex: PropTypes.number,
+    onClick: PropTypes.func,
+    onKeyDown: PropTypes.func,
+  }),
+  titleInteractiveTargetProps: PropTypes.shape({
     className: PropTypes.string,
     role: PropTypes.string,
     tabIndex: PropTypes.number,
@@ -406,4 +643,5 @@ AvailabilityCalendarPreview.propTypes = {
   }),
   variant: PropTypes.oneOf(["default", "panorama"]),
   propertyTitle: PropTypes.string,
+  templateKey: PropTypes.string,
 };

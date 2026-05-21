@@ -14,6 +14,7 @@ import {
 import {
   amenityPropType,
   availabilityPropType,
+  calendarSectionPropType,
   callToActionPropType,
   contactSectionPropType,
   copyItemPropType,
@@ -928,6 +929,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
             <TemplateAvailabilityCalendar
               model={model}
               variant="panorama"
+              templateKey="panorama-landing"
               propertyTitle={model.site.title}
               onSelectTarget={onSelectTarget}
               activeTargetId={activeTargetId}
@@ -960,6 +962,7 @@ PanoramaLandingTemplate.propTypes = {
     site: sitePropType.isRequired,
     hero: heroPropType.isRequired,
     media: mediaPropType.isRequired,
+    calendarSection: calendarSectionPropType,
     residenceSection: residenceSectionPropType,
     stay: PropTypes.shape({
       stats: PropTypes.arrayOf(

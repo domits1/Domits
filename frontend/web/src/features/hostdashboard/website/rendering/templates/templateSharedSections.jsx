@@ -135,15 +135,29 @@ export function TemplateAvailabilityCalendar({
   activeTargetId = "",
   variant = "default",
   propertyTitle = "",
+  templateKey = "",
 }) {
+  const titleInteractiveTargetProps = getInteractiveTargetProps("", onSelectTarget, {
+    sectionId: "calendar",
+    targetId: "calendar.title",
+  }, activeTargetId);
+  const descriptionInteractiveTargetProps = getInteractiveTargetProps("", onSelectTarget, {
+    sectionId: "calendar",
+    targetId: "calendar.description",
+  }, activeTargetId);
+
   return (
     <AvailabilityCalendarPreview
       availability={model.availability}
+      calendarSection={model.calendarSection}
+      titleInteractiveTargetProps={titleInteractiveTargetProps}
+      descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
+      templateKey={templateKey}
       variant={variant}
       propertyTitle={propertyTitle}
       interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
-        sectionId: "visibility",
-        targetId: "visibility.availabilityCalendar",
+        sectionId: "calendar",
+        targetId: "calendar.visibility",
       }, activeTargetId)}
     />
   );
@@ -152,11 +166,13 @@ export function TemplateAvailabilityCalendar({
 TemplateAvailabilityCalendar.propTypes = {
   model: PropTypes.shape({
     availability: PropTypes.shape({}).isRequired,
+    calendarSection: PropTypes.shape({}),
   }).isRequired,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
   variant: PropTypes.oneOf(["default", "panorama"]),
   propertyTitle: PropTypes.string,
+  templateKey: PropTypes.string,
 };
 
 export function TemplateImageSlotVisual({

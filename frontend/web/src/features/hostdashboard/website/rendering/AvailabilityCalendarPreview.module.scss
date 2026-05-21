@@ -10,6 +10,12 @@
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
 }
 
+.calendarCardPanelOff {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .calendarHeader {
   display: grid;
   gap: 12px;
@@ -25,7 +31,8 @@
   margin: 0;
 }
 
-.calendarHeaderCopy h3 {
+.calendarHeaderCopy h3,
+.calendarMonthNavigationLabel {
   color: #0f172a;
   font-size: clamp(1rem, 0.92rem + 0.35vw, 1.18rem);
 }
@@ -42,6 +49,48 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #1f4e79;
+}
+
+.calendarMonthNavigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.calendarMonthNavigationLabels {
+  display: flex;
+  justify-content: center;
+}
+
+.calendarMonthNavigationLabel {
+  margin: 0;
+  text-align: center;
+}
+
+.calendarMonthNavigationButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f4e79;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.calendarMonthNavigationButton:hover:not(:disabled) {
+  background: rgba(234, 242, 251, 0.96);
+  transform: translateY(-1px);
+}
+
+.calendarMonthNavigationButton:disabled {
+  opacity: 0.38;
+  cursor: default;
 }
 
 .calendarMeta {
@@ -197,6 +246,11 @@
     #fbf8f2;
 }
 
+.panoramaCalendarCardPanelOff {
+  border: 0;
+  background: transparent;
+}
+
 .panoramaCalendarIntro {
   display: grid;
   gap: 14px;
@@ -208,7 +262,8 @@
 .panoramaCalendarEyebrow,
 .panoramaCalendarTitle,
 .panoramaCalendarDescription,
-.panoramaCalendarMonthTitle {
+.panoramaCalendarMonthTitle,
+.panoramaCalendarMonthNavigationLabel {
   margin: 0;
 }
 
@@ -221,7 +276,8 @@
 }
 
 .panoramaCalendarTitle,
-.panoramaCalendarMonthTitle {
+.panoramaCalendarMonthTitle,
+.panoramaCalendarMonthNavigationLabel {
   color: #1e3150;
   font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   font-weight: 500;
@@ -250,6 +306,49 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
   width: min(100%, 900px);
+}
+
+.panoramaCalendarMonthNavigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: clamp(14px, 2vw, 28px);
+  align-items: center;
+  width: min(100%, 900px);
+}
+
+.panoramaCalendarMonthNavigationLabels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.panoramaCalendarMonthNavigationLabel {
+  text-align: center;
+  font-size: clamp(1.6rem, 1.2rem + 0.8vw, 2.3rem);
+  letter-spacing: -0.04em;
+}
+
+.panoramaCalendarMonthNavigationButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  background: transparent;
+  color: #1e3150;
+  font-size: 2.4rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.panoramaCalendarMonthNavigationButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.panoramaCalendarMonthNavigationButton:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 .panoramaCalendarMonthCard {
@@ -362,6 +461,15 @@
 
   .panoramaCalendarMonths {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaCalendarMonthNavigation {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .panoramaCalendarMonthNavigationLabels {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
   }
 
   .panoramaCalendarMonthCard {

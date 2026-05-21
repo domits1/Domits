@@ -44,6 +44,8 @@ import {
   TEMPLATE_COPY_COLLECTION_CONFIG,
   TEMPLATE_IMAGE_SLOT_MAP,
   TEMPLATE_VISIBILITY_FIELD_MAP,
+  getCalendarTextFields,
+  getCalendarToggleFields,
   getCommonTextFields,
   getContactSectionFields,
   getCollectionTargetId,
@@ -67,6 +69,10 @@ import {
   resolveWebsiteAmenityIconColor,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "./config/websiteAmenitiesConfig";
+import {
+  getDefaultWebsiteCalendarPanelColor,
+  resolveWebsiteCalendarPanelColor,
+} from "./config/websiteCalendarSectionConfig";
 import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
@@ -86,6 +92,7 @@ import { WebsiteEditorVisibilityToggleCard } from "./editor/WebsiteEditorVisibil
 import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTargeting";
 import { WebsiteEditorAmenitiesSection } from "./editor/sections/WebsiteEditorAmenitiesSection";
 import { WebsiteEditorContactSection } from "./editor/sections/WebsiteEditorContactSection";
+import { WebsiteEditorCalendarSection } from "./editor/sections/WebsiteEditorCalendarSection";
 import { WebsiteEditorImageSlotsSection } from "./editor/sections/WebsiteEditorImageSlotsSection";
 import { WebsiteEditorResidenceSection } from "./editor/sections/WebsiteEditorResidenceSection";
 import {
@@ -173,6 +180,7 @@ function WebsiteEditorPage() {
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
     [EDITOR_SECTION_KEYS.residence]: false,
+    [EDITOR_SECTION_KEYS.calendar]: false,
     [EDITOR_SECTION_KEYS.contact]: false,
     [EDITOR_SECTION_KEYS.theme]: false,
     [EDITOR_SECTION_KEYS.visibility]: false,
@@ -275,12 +283,17 @@ function WebsiteEditorPage() {
 
   const draftTemplate = getWebsiteTemplateById(draftRecord?.templateKey);
   const commonTextFields = getCommonTextFields(draftRecord?.templateKey);
+  const calendarTextFields = getCalendarTextFields(draftRecord?.templateKey);
+  const calendarToggleFields = getCalendarToggleFields(draftRecord?.templateKey);
   const residenceTextFields = getResidenceTextFields(draftRecord?.templateKey);
   const residenceToggleFields = getResidenceToggleFields(draftRecord?.templateKey);
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const amenitiesVisibilityField = visibilityFields.find((field) => field.key === "amenitiesPanel") || null;
-  const standaloneVisibilityFields = visibilityFields.filter((field) => field.key !== "amenitiesPanel");
+  const calendarVisibilityField = visibilityFields.find((field) => field.key === "availabilityCalendar") || null;
+  const standaloneVisibilityFields = visibilityFields.filter(
+    (field) => field.key !== "amenitiesPanel" && field.key !== "availabilityCalendar"
+  );
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
   const residenceImageSlot = imageSlots.find((slot) => slot.kind === "residence") || null;
   const generalImageSlots = imageSlots.filter((slot) => slot.kind !== "residence");
@@ -371,6 +384,7 @@ function WebsiteEditorPage() {
     setExpandedSections({
       [EDITOR_SECTION_KEYS.common]: true,
       [EDITOR_SECTION_KEYS.residence]: false,
+      [EDITOR_SECTION_KEYS.calendar]: false,
       [EDITOR_SECTION_KEYS.amenities]: false,
       [EDITOR_SECTION_KEYS.contact]: false,
       [EDITOR_SECTION_KEYS.theme]: false,
@@ -396,6 +410,20 @@ function WebsiteEditorPage() {
       ...currentValues,
       common: {
         ...currentValues.common,
+        [fieldKey]: nextValue,
+      },
+    }));
+  };
+
+  const handleCalendarFieldChange = (fieldKey) => (event) => {
+    const nextValue = event.target.value;
+    const previewTargetId =
+      fieldKey === "title" ? EDITOR_TARGET_KEYS.calendar.title : EDITOR_TARGET_KEYS.calendar.description;
+    setPreviewTargetId(previewTargetId);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
         [fieldKey]: nextValue,
       },
     }));
@@ -463,6 +491,67 @@ function WebsiteEditorPage() {
 
     event.preventDefault();
     commitResidencePanelColorInput();
+    await saveDraftChanges();
+  };
+
+  const handleCalendarPanelToggleChange = (event) => {
+    const nextChecked = Boolean(event.target.checked);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        showPanel: nextChecked,
+      },
+    }));
+    clearActivePreviewTarget();
+    runAfterNextPaint(() => {
+      flashPreviewTarget(EDITOR_TARGET_KEYS.calendar.visibility);
+    });
+  };
+
+  const activateCalendarPreviewTarget = () => {
+    setPreviewTargetId(EDITOR_TARGET_KEYS.calendar.visibility);
+  };
+
+  const handleCalendarPanelColorChange = (nextColor) => {
+    activateCalendarPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        panelColor: resolveWebsiteCalendarPanelColor(nextColor, draftTemplateKey),
+      },
+    }));
+  };
+
+  const handleCalendarPanelColorInputChange = (nextInputValue) => {
+    activateCalendarPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        panelColor: nextInputValue,
+      },
+    }));
+  };
+
+  const commitCalendarPanelColorInput = () => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        panelColor: resolveWebsiteCalendarPanelColor(currentValues?.calendar?.panelColor, draftTemplateKey),
+      },
+    }));
+  };
+
+  const handleCalendarPanelColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitCalendarPanelColorInput();
     await saveDraftChanges();
   };
 
@@ -1543,6 +1632,29 @@ function WebsiteEditorPage() {
                 {copyCollectionConfig.amenities?.placement === "afterTrustCards"
                   ? amenitiesEditorSection
                   : null}
+
+                <WebsiteEditorCalendarSection
+                  activatePreviewTarget={activatePreviewTarget}
+                  calendarTextFields={calendarTextFields}
+                  calendarToggleFields={calendarToggleFields}
+                  calendarVisibilityField={calendarVisibilityField}
+                  clearActivePreviewTarget={clearActivePreviewTarget}
+                  commitCalendarPanelColorInput={commitCalendarPanelColorInput}
+                  editorValues={editorValues}
+                  handleCalendarFieldChange={handleCalendarFieldChange}
+                  handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                  handleCalendarPanelColorChange={handleCalendarPanelColorChange}
+                  handleCalendarPanelColorInputChange={handleCalendarPanelColorInputChange}
+                  handleCalendarPanelColorInputKeyDown={handleCalendarPanelColorInputKeyDown}
+                  handleCalendarPanelToggleChange={handleCalendarPanelToggleChange}
+                  handleVisibilityFieldChange={handleVisibilityFieldChange}
+                  highlightedTargetId={highlightedTargetId}
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.calendar])}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.calendar)}
+                  setTargetRef={setTargetRef}
+                  templateKey={draftTemplateKey}
+                  toggleSection={toggleSection}
+                />
 
                 <WebsiteEditorContactSection
                   activatePreviewTarget={activatePreviewTarget}

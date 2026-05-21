@@ -37,9 +37,23 @@ const PANORAMA_CONTACT_FIELDS = Object.freeze([
   { key: "description", label: "Section description", component: "textarea" },
 ]);
 
+const CALENDAR_TOGGLE_FIELDS = Object.freeze([
+  {
+    key: "showPanel",
+    label: "Show calendar panel",
+    description: "Toggles the framed surface behind the availability calendar.",
+  },
+]);
+
+const CALENDAR_TEXT_FIELDS = Object.freeze([
+  { key: "title", label: "Section title", component: "input" },
+  { key: "description", label: "Section description", component: "textarea" },
+]);
+
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
   residence: "residence",
+  calendar: "calendar",
   amenities: "amenities",
   contact: "contact",
   theme: "theme",
@@ -64,6 +78,12 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     description: "residence.description",
     showPanel: "residence.showPanel",
     image: "residence.image",
+  },
+  calendar: {
+    visibility: "calendar.visibility",
+    title: "calendar.title",
+    description: "calendar.description",
+    showPanel: "calendar.showPanel",
   },
   amenities: (index) => `amenities.${index}`,
   amenitiesIconColor: "amenities.iconColor",
@@ -257,6 +277,11 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
     title: "Image slots",
     description: "Loading imported listing photos and template image slot mappings.",
   },
+  {
+    id: EDITOR_SECTION_KEYS.calendar,
+    title: "Calendar",
+    description: "Loading calendar visibility and panel settings.",
+  },
 ]);
 
 export const getCommonTextFields = (templateKey) => {
@@ -278,6 +303,22 @@ export const getResidenceTextFields = (templateKey) => {
 export const getResidenceToggleFields = (templateKey) => {
   if (templateKey === "panorama-landing") {
     return PANORAMA_RESIDENCE_TOGGLE_FIELDS;
+  }
+
+  return [];
+};
+
+export const getCalendarToggleFields = (templateKey) => {
+  if (TEMPLATE_VISIBILITY_FIELD_MAP[String(templateKey || "").trim()]?.some((field) => field.key === "availabilityCalendar")) {
+    return CALENDAR_TOGGLE_FIELDS;
+  }
+
+  return [];
+};
+
+export const getCalendarTextFields = (templateKey) => {
+  if (TEMPLATE_VISIBILITY_FIELD_MAP[String(templateKey || "").trim()]?.some((field) => field.key === "availabilityCalendar")) {
+    return CALENDAR_TEXT_FIELDS;
   }
 
   return [];

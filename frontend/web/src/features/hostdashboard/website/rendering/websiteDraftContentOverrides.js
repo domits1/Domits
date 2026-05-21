@@ -22,6 +22,13 @@ import {
   resolveWebsiteResidencePanelColor,
 } from "../config/websiteResidenceSectionConfig";
 import {
+  getDefaultWebsiteCalendarDescription,
+  getDefaultWebsiteCalendarTitle,
+  getDefaultWebsiteCalendarPanelColor,
+  normalizeWebsiteCalendarPanelColorOverride,
+  resolveWebsiteCalendarPanelColor,
+} from "../config/websiteCalendarSectionConfig";
+import {
   DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
   normalizeWebsiteImageRotationSettings,
 } from "./websiteImageSlotUtils";
@@ -37,6 +44,10 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "residenceTitle",
   "residenceShowPanel",
   "residencePanelColor",
+  "calendarShowPanel",
+  "calendarPanelColor",
+  "calendarTitle",
+  "calendarDescription",
   "contactTitle",
   "contactDescription",
   "contactAccentColor",
@@ -211,6 +222,12 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
     residenceShowPanel: false,
     residencePanelColor: DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR,
   },
+  calendar: {
+    title: getDefaultWebsiteCalendarTitle(templateKey),
+    description: getDefaultWebsiteCalendarDescription({ templateKey }),
+    showPanel: true,
+    panelColor: getDefaultWebsiteCalendarPanelColor(templateKey),
+  },
   contact: {
     title: "",
     description: "",
@@ -250,6 +267,11 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const residenceShowPanelOverride =
     typeof overrides.residenceShowPanel === "boolean" ? overrides.residenceShowPanel : null;
   const residencePanelColorOverride = cleanText(overrides.residencePanelColor);
+  const calendarShowPanelOverride =
+    typeof overrides.calendarShowPanel === "boolean" ? overrides.calendarShowPanel : null;
+  const calendarPanelColorOverride = cleanText(overrides.calendarPanelColor);
+  const calendarTitle = cleanText(overrides.calendarTitle);
+  const calendarDescription = cleanText(overrides.calendarDescription);
   const contactTitle = cleanText(overrides.contactTitle);
   const contactDescription = cleanText(overrides.contactDescription);
   const contactAvatarModeOverride = cleanText(overrides.contactAvatarMode);
@@ -353,6 +375,31 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
             model?.residenceSection?.panelColor || DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR
           ),
     },
+    calendarSection: {
+      ...(model?.calendarSection && typeof model.calendarSection === "object"
+        ? model.calendarSection
+        : {}),
+      title:
+        calendarTitle ||
+        model?.calendarSection?.title ||
+        getDefaultWebsiteCalendarTitle(templateKey),
+      description:
+        calendarDescription ||
+        model?.calendarSection?.description ||
+        getDefaultWebsiteCalendarDescription({
+          templateKey,
+          propertyTitle: model?.site?.title,
+          blockedDateCount: model?.availability?.blockedDateCount,
+          availabilityCallout: model?.availability?.callout,
+        }),
+      showPanel:
+        calendarShowPanelOverride === null
+          ? model?.calendarSection?.showPanel !== false
+          : calendarShowPanelOverride,
+      panelColor: calendarPanelColorOverride
+        ? normalizeWebsiteCalendarPanelColorOverride(calendarPanelColorOverride)
+        : normalizeWebsiteCalendarPanelColorOverride(model?.calendarSection?.panelColor),
+    },
     contactSection: {
       ...(model?.contactSection && typeof model.contactSection === "object" ? model.contactSection : {}),
       title: contactTitle || model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE,
@@ -390,6 +437,25 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
     residenceShowPanel: Boolean(model?.residenceSection?.showPanel),
     residencePanelColor: resolveWebsiteResidencePanelColor(
       model?.residenceSection?.panelColor || DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR
+    ),
+  },
+  calendar: {
+    title: String(
+      model?.calendarSection?.title || getDefaultWebsiteCalendarTitle(templateKey)
+    ),
+    description: String(
+      model?.calendarSection?.description ||
+        getDefaultWebsiteCalendarDescription({
+          templateKey,
+          propertyTitle: model?.site?.title,
+          blockedDateCount: model?.availability?.blockedDateCount,
+          availabilityCallout: model?.availability?.callout,
+        })
+    ),
+    showPanel: model?.calendarSection?.showPanel !== false,
+    panelColor: resolveWebsiteCalendarPanelColor(
+      model?.calendarSection?.panelColor,
+      templateKey
     ),
   },
   contact: {
@@ -484,6 +550,31 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
       resolveWebsiteResidencePanelColor(baseModel?.residenceSection?.panelColor),
   },
   {
+    patchKey: "calendarPanelColor",
+    editorValue: (editorValues, baseModel, templateKey) =>
+      resolveWebsiteCalendarPanelColor(editorValues?.calendar?.panelColor, templateKey),
+    baseValue: (baseModel, templateKey) =>
+      resolveWebsiteCalendarPanelColor(baseModel?.calendarSection?.panelColor, templateKey),
+  },
+  {
+    patchKey: "calendarTitle",
+    editorValue: (editorValues) => editorValues?.calendar?.title,
+    baseValue: (baseModel, templateKey) =>
+      baseModel?.calendarSection?.title || getDefaultWebsiteCalendarTitle(templateKey),
+  },
+  {
+    patchKey: "calendarDescription",
+    editorValue: (editorValues) => editorValues?.calendar?.description,
+    baseValue: (baseModel, templateKey) =>
+      baseModel?.calendarSection?.description ||
+      getDefaultWebsiteCalendarDescription({
+        templateKey,
+        propertyTitle: baseModel?.site?.title,
+        blockedDateCount: baseModel?.availability?.blockedDateCount,
+        availabilityCallout: baseModel?.availability?.callout,
+      }),
+  },
+  {
     patchKey: "contactTitle",
     editorValue: (editorValues) => editorValues?.contact?.title,
     baseValue: (baseModel) => baseModel?.contactSection?.title,
@@ -543,10 +634,13 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
   },
 ]);
 
-const addTextOverride = (patch, field, editorValues, baseModel) => {
-  const normalizedEditorValue = cleanText(field.editorValue(editorValues, baseModel));
+const addTextOverride = (patch, field, editorValues, baseModel, templateKey) => {
+  const normalizedEditorValue = cleanText(field.editorValue(editorValues, baseModel, templateKey));
 
-  if (normalizedEditorValue && normalizedEditorValue !== cleanText(field.baseValue(baseModel))) {
+  if (
+    normalizedEditorValue &&
+    normalizedEditorValue !== cleanText(field.baseValue(baseModel, templateKey))
+  ) {
     patch[field.patchKey] = normalizedEditorValue;
   }
 };
@@ -556,6 +650,11 @@ const BOOLEAN_OVERRIDE_FIELDS = Object.freeze([
     patchKey: "residenceShowPanel",
     editorValue: (editorValues) => Boolean(editorValues?.common?.residenceShowPanel),
     baseValue: (baseModel) => Boolean(baseModel?.residenceSection?.showPanel),
+  },
+  {
+    patchKey: "calendarShowPanel",
+    editorValue: (editorValues) => editorValues?.calendar?.showPanel !== false,
+    baseValue: (baseModel) => baseModel?.calendarSection?.showPanel !== false,
   },
 ]);
 
@@ -681,7 +780,9 @@ const buildAmenitiesIconColorPatch = (editorValues, baseModel, templateKey = "")
 
 export const buildWebsiteDraftOverridePatch = (editorValues, baseModel, templateKey = "") => {
   const nextPatch = {};
-  TEXT_OVERRIDE_FIELDS.forEach((field) => addTextOverride(nextPatch, field, editorValues, baseModel));
+  TEXT_OVERRIDE_FIELDS.forEach((field) =>
+    addTextOverride(nextPatch, field, editorValues, baseModel, templateKey)
+  );
   BOOLEAN_OVERRIDE_FIELDS.forEach((field) =>
     addBooleanOverride(nextPatch, field, editorValues, baseModel)
   );

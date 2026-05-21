@@ -12,6 +12,7 @@ import {
   TemplateTopBar,
 } from "./templateSharedSections";
 import {
+  calendarSectionPropType,
   availabilityPropType,
   callToActionPropType,
   copyItemPropType,
@@ -108,6 +109,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
         {showAvailabilityCalendar ? (
           <TemplateAvailabilityCalendar
             model={model}
+            templateKey="trust-signals"
             onSelectTarget={onSelectTarget}
             activeTargetId={activeTargetId}
           />
@@ -141,6 +143,7 @@ TrustSignalsTemplate.propTypes = {
       label: PropTypes.string,
     }).isRequired,
     availability: availabilityPropType.isRequired,
+    calendarSection: calendarSectionPropType,
     callToAction: callToActionPropType.isRequired,
     visibility: visibilityPropType.isRequired,
   }).isRequired,

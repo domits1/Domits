@@ -7,7 +7,7 @@ import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
-import { attachWebsiteHostProfile } from "./services/websitePropertyService";
+import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import { fetchWebsitePreviewByDraftId } from "./services/websitePublicPreviewService";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
@@ -62,7 +62,7 @@ function WebsitePublicPreviewPage() {
       try {
         const nextPayload = await fetchWebsitePreviewByDraftId(draftId);
         const nextPropertyDetails = nextPayload?.propertyDetails
-          ? await attachWebsiteHostProfile(nextPayload.propertyDetails)
+          ? await enrichWebsitePropertyDetails(nextPayload.propertyDetails)
           : nextPayload?.propertyDetails;
 
         if (!isMounted) {

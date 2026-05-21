@@ -28,6 +28,13 @@ export const residenceSectionPropType = PropTypes.shape({
   panelColor: PropTypes.string,
 });
 
+export const calendarSectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  description: PropTypes.string,
+  showPanel: PropTypes.bool,
+  panelColor: PropTypes.string,
+});
+
 export const galleryPropType = PropTypes.shape({
   images: PropTypes.arrayOf(PropTypes.string).isRequired,
 });

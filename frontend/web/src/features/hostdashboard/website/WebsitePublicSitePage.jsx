@@ -15,7 +15,7 @@ import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
-import { attachWebsiteHostProfile } from "./services/websitePropertyService";
+import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
@@ -141,7 +141,7 @@ function WebsitePublicSitePage() {
         if (nextRenderPayload?.propertySnapshot) {
           nextRenderPayload = {
             ...nextRenderPayload,
-            propertySnapshot: await attachWebsiteHostProfile(nextRenderPayload.propertySnapshot),
+            propertySnapshot: await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot),
           };
         }
 

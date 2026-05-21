@@ -15,6 +15,11 @@ import {
   resolveWebsiteResidencePanelColor,
 } from "../config/websiteResidenceSectionConfig";
 import {
+  getDefaultWebsiteCalendarDescription,
+  getDefaultWebsiteCalendarTitle,
+  normalizeWebsiteCalendarPanelColorOverride,
+} from "../config/websiteCalendarSectionConfig";
+import {
   MAX_FEATURED_WEBSITE_AMENITIES,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
 } from "../config/websiteAmenitiesConfig";
@@ -443,9 +448,9 @@ const buildCalendarAvailability = (calendarAvailability) => {
   });
   const unavailableDateSummary = formatCountSummary({
     count: unavailableDateKeys.length,
-    singularLabel: "PMS blocked date",
-    pluralLabel: "PMS blocked dates",
-    emptyLabel: "No PMS blocked dates",
+    singularLabel: "PMS blocked or booked date",
+    pluralLabel: "PMS blocked or booked dates",
+    emptyLabel: "No PMS blocked or booked dates",
   });
   const blockedDateSummary = formatCountSummary({
     count: allBlockedDates.length,
@@ -473,8 +478,8 @@ const buildCalendarAvailability = (calendarAvailability) => {
     nextBlockedLabel,
     callout:
       hasExternalCalendarSync || allBlockedDates.length > 0
-        ? "Imported external bookings and PMS blocked dates are shown below. Live quote requests still validate current availability before a guest can continue."
-        : "No external bookings or PMS blocked dates have been imported yet. Live quote requests still validate current availability before a guest can continue.",
+        ? "Imported external bookings and PMS blocked or booked dates are shown below. Live quote requests still validate current availability before a guest can continue."
+        : "No external bookings or PMS blocked or booked dates have been imported yet. Live quote requests still validate current availability before a guest can continue.",
   };
 };
 
@@ -638,6 +643,14 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       headline: "Designed to present the stay with clarity and confidence",
       showPanel: false,
       panelColor: resolveWebsiteResidencePanelColor(DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR),
+    },
+    calendarSection: {
+      title: getDefaultWebsiteCalendarTitle(),
+      description: getDefaultWebsiteCalendarDescription({
+        availabilityCallout: availabilitySnapshot?.callout,
+      }),
+      showPanel: true,
+      panelColor: normalizeWebsiteCalendarPanelColorOverride(""),
     },
     contactSection: {
       title: DEFAULT_WEBSITE_CONTACT_TITLE,

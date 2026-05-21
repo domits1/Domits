@@ -13,6 +13,7 @@ import {
 } from "./templateSharedSections";
 import {
   amenityPropType,
+  calendarSectionPropType,
   availabilityPropType,
   callToActionPropType,
   copyItemPropType,
@@ -105,6 +106,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
       {showAvailabilityCalendar ? (
         <TemplateAvailabilityCalendar
           model={model}
+          templateKey="experience-journey"
           onSelectTarget={onSelectTarget}
           activeTargetId={activeTargetId}
         />
@@ -183,6 +185,7 @@ ExperienceJourneyTemplate.propTypes = {
       featured: PropTypes.arrayOf(amenityPropType).isRequired,
     }).isRequired,
     availability: availabilityPropType.isRequired,
+    calendarSection: calendarSectionPropType,
     callToAction: callToActionPropType.isRequired,
     visibility: visibilityPropType.isRequired,
   }).isRequired,

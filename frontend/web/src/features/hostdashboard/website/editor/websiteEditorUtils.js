@@ -325,6 +325,10 @@ export const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } 
     return EDITOR_TARGET_KEYS.residence.title;
   }
 
+  if (sectionId === EDITOR_SECTION_KEYS.calendar) {
+    return EDITOR_TARGET_KEYS.calendar.visibility;
+  }
+
   if (sectionId === EDITOR_SECTION_KEYS.amenities) {
     return EDITOR_TARGET_KEYS.amenities(0);
   }
@@ -399,7 +403,7 @@ export const getPreviewTargetIdForVisibilityField = (fieldKey) => {
     case "amenitiesPanel":
       return "visibility.amenitiesPanel";
     case "availabilityCalendar":
-      return EDITOR_TARGET_KEYS.visibility("availabilityCalendar");
+      return EDITOR_TARGET_KEYS.calendar.visibility;
     case "callToAction":
       return EDITOR_TARGET_KEYS.common.ctaLabel;
     case "journeyStops":
