@@ -32,11 +32,13 @@ export async function updateIntegration(token, name, {
   syncUrl, calendarTriggerUrl, hookUrl, regenerateToken = false, features = {},
 } = {}) {
   return request("POST", "/integration", {
-    sync_url:              syncUrl,
-    calendar_trigger_url:  calendarTriggerUrl,
-    hook_url:              hookUrl,
-    regenerate_token:      regenerateToken,
-    features,
+    integration: {
+      sync_url:             syncUrl,
+      calendar_trigger_url: calendarTriggerUrl,
+      hook_url:             hookUrl,
+      regenerate_token:     regenerateToken,
+      features,
+    },
   }, token, name);
 }
 
