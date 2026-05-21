@@ -1,18 +1,3 @@
-/**
- * priceLabsService.js
- * Business logic for the PriceLabs integration.
- *
- * Token strategy:
- *   - The global X-INTEGRATION-TOKEN is stored in SSM (/pricelabs/integration_token).
- *   - X-INTEGRATION-NAME ("domits") is stored in SSM (/pricelabs/integration_name).
- *   - On connect we call /integration to register webhook URLs (done once per deploy).
- *   - If /integration returns a new token (regenerate_token=true), we update SSM.
- *
- * Listing ID uniqueness:
- *   - PriceLabs requires unique listing_ids across the PMS.
- *   - We use format: "{host_id}_{property_id}" to guarantee uniqueness.
- */
-
 import * as api     from "./priceLabsApiClient.js";
 import { verifyPriceLabsSignature } from "./priceLabsWebhookVerifier.js";
 import { Repository }               from "../../data/repository.js";
@@ -247,7 +232,6 @@ export class PriceLabsService {
 
     for (const listing of listings) {
       const { listing_id, prices = [] } = listing;
-      // listing_id format: "{host_id}_{property_id}"
       const propertyId = listing_id.split("_").slice(1).join("_");
 
       for (const entry of prices) {

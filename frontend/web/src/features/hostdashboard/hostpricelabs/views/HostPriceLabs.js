@@ -4,10 +4,6 @@ import PriceLabsConnect       from "../components/PriceLabsConnect";
 import PriceLabsStatusCard    from "../components/PriceLabsStatusCard";
 import "../styles/HostPriceLabs.css";
 
-/**
- * HostPriceLabs
- * Main view for the PriceLabs integration in the host dashboard.
- */
 function HostPriceLabs() {
   const {
     status,

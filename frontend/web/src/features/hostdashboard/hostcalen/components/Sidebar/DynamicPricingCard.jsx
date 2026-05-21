@@ -2,12 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 
-/**
- * DynamicPricingCard
- * Shown in the Calendar sidebar — both in summary and when date(s) are selected.
- *
- * priceOverrides format: { "20260520": 145, "20260521": 132, ... }  (number per date key)
- */
 export default function DynamicPricingCard({
   isConnected,
   selectedDateKeys,
@@ -18,13 +12,11 @@ export default function DynamicPricingCard({
   const firstDateKey = selectedDateKeys?.[0];
   const multipleSelected = selectedDateKeys?.length > 1;
 
-  // priceOverrides values are plain numbers (not objects)
   const recommendedPrice =
     firstDateKey && priceOverrides && Number(priceOverrides[firstDateKey]) > 0
       ? Number(priceOverrides[firstDateKey])
       : null;
 
-  // ── Not connected ──────────────────────────────────────────────────────────
   if (!isConnected) {
     return (
       <section className="hc-info-card hc-info-card--interactive">
@@ -46,7 +38,6 @@ export default function DynamicPricingCard({
     );
   }
 
-  // ── Connected, date(s) selected — show recommended price ──────────────────
   if (selectedDateKeys?.length > 0) {
     return (
       <section className="hc-info-card hc-dynamic-pricing-card">
@@ -86,7 +77,6 @@ export default function DynamicPricingCard({
     );
   }
 
-  // ── Connected, no date selected ────────────────────────────────────────────
   return (
     <section className="hc-info-card hc-info-card--interactive">
       <button
