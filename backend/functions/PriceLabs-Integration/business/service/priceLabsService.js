@@ -147,7 +147,7 @@ export class PriceLabsService {
       await api.pushCalendar(token, name, {
         listing_id: listingId,
         user_token: connection.pricelabs_email,
-        calendars: calendar,
+        calendars:  calendar,
       });
     }
 

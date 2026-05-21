@@ -54,9 +54,11 @@ export class Repository {
 
 
   async getAvailabilityForProperty(propertyId, days = 730) {
-    const ds    = await this._ds();
-    const from  = Date.now();
-    const to    = from + days * 24 * 60 * 60 * 1000;
+    const ds  = await this._ds();
+    const now = new Date();
+    const fut = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    const from = parseInt(now.toISOString().slice(0, 10).replace(/-/g, ""));
+    const to   = parseInt(fut.toISOString().slice(0, 10).replace(/-/g, ""));
     return ds.getRepository(Property_Calendar_Override)
       .createQueryBuilder("cal")
       .where("cal.property_id = :propertyId", { propertyId })
