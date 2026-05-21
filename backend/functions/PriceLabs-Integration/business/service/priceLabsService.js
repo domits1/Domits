@@ -148,8 +148,8 @@ export class PriceLabsService {
         blocked_units:   0,
         settings: {
           min_stay:  row.min_stay || 1,
-          check_in:  !(row.closed_to_arrival  || false),
-          check_out: !(row.closed_to_departure || false),
+          check_in:  row.closed_to_arrival  !== true,
+          check_out: row.closed_to_departure !== true,
         },
       }));
 
