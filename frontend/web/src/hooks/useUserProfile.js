@@ -66,6 +66,7 @@ export default function useUserProfile() {
     preferredMFA: "NOMFA",
   });
   const previousDobRef = useRef("");
+  const pendingEmailRef = useRef("");
 
   const countryOptions = useMemo(() => countryList().getLabels(), []);
   const placeOfBirthOptions = useMemo(() => {
@@ -193,7 +194,7 @@ export default function useUserProfile() {
 
       setUser((prev) => ({
         ...prev,
-        email: tempUser.email,
+        email: pendingEmailRef.current,
       }));
 
       if (editState.email) {
@@ -240,6 +241,7 @@ export default function useUserProfile() {
       }
 
       if (result.message === "Email update successful, please verify your new email.") {
+        pendingEmailRef.current = newEmail;
         setIsVerifying(true);
         return;
       }

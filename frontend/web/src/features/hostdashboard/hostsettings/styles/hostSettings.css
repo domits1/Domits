@@ -242,11 +242,12 @@
 }
 
 .personal-data-photo {
+    display: block;
     width: 160px;
     height: 160px;
     border-radius: 50%;
     object-fit: cover;
-    object-position: center;
+    object-position: 40% center;
     border: 3px solid #fff;
     box-shadow: 0 0 0 2px #e5e7eb, 0 4px 14px rgba(0,0,0,0.10);
     background: #e5e7eb;

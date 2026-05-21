@@ -561,10 +561,12 @@
 }
 
 .team-page .team-member-avatar {
-    width: 44px;
-    height: 44px;
+    display: block;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     object-fit: cover;
+    object-position: 40% center;
     border: 1px solid #e5e7eb;
     background: #f3f4f6;
     flex-shrink: 0;
