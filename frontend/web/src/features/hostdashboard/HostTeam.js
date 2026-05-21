@@ -15,6 +15,7 @@ const contentByLanguage = { en, nl, de, es };
 const HostTeam = () => {
     const { language } = useContext(LanguageContext);
     const t = contentByLanguage[language]?.settings?.team ?? contentByLanguage.en.settings.team;
+    const { removeModal, inviteModal } = t;
 
     const [host, setHost] = useState({ name: "", email: "", phone: "", picture: "", group: "" });
     const [members, setMembers] = useState([]);
@@ -251,14 +252,14 @@ const HostTeam = () => {
             {confirmRemoveId && (
                 <div className="team-modal-overlay">
                     <dialog className="team-modal" open aria-modal="true" aria-labelledby="confirm-remove-title">
-                        <h3 id="confirm-remove-title">{t.removeModal.title}</h3>
-                        <p>{t.removeModal.body}</p>
+                        <h3 id="confirm-remove-title">{removeModal.title}</h3>
+                        <p>{removeModal.body}</p>
                         <div className="team-modal-actions">
                             <button className="team-remove-btn" onClick={handleRemove}>
-                                {t.removeModal.confirm}
+                                {removeModal.confirm}
                             </button>
                             <button className="team-cancel-btn" onClick={() => setConfirmRemoveId(null)}>
-                                {t.removeModal.cancel}
+                                {removeModal.cancel}
                             </button>
                         </div>
                     </dialog>
@@ -268,45 +269,45 @@ const HostTeam = () => {
             {showInviteModal && (
                 <div className="team-modal-overlay">
                     <dialog className="team-modal" open aria-modal="true" aria-labelledby="invite-modal-title">
-                        <h3 id="invite-modal-title">{t.inviteModal.title}</h3>
+                        <h3 id="invite-modal-title">{inviteModal.title}</h3>
                         {inviteSent ? (
                             <p className="team-invite-success">
-                                {t.inviteModal.success} {inviteEmail}
+                                {inviteModal.success} {inviteEmail}
                             </p>
                         ) : (
                             <form onSubmit={handleInvite}>
                                 <label className="team-modal-label">
-                                    <span>{t.inviteModal.emailLabel}</span>
+                                    <span>{inviteModal.emailLabel}</span>
                                     <input
                                         type="email"
                                         className="team-modal-input"
-                                        placeholder={t.inviteModal.emailPlaceholder}
+                                        placeholder={inviteModal.emailPlaceholder}
                                         value={inviteEmail}
                                         onChange={(e) => setInviteEmail(e.target.value)}
                                         required
                                     />
                                 </label>
                                 <label className="team-modal-label">
-                                    <span>{t.inviteModal.roleLabel}</span>
+                                    <span>{inviteModal.roleLabel}</span>
                                     <select
                                         className="team-modal-input"
                                         value={inviteRole}
                                         onChange={(e) => setInviteRole(e.target.value)}
                                     >
-                                        <option value="Property Operations Manager">{t.inviteModal.roleOption}</option>
+                                        <option value="Property Operations Manager">{inviteModal.roleOption}</option>
                                     </select>
                                 </label>
                                 {inviteError && (
-                                    <p className="team-invite-error">{t.inviteModal.error}</p>
+                                    <p className="team-invite-error">{inviteModal.error}</p>
                                 )}
                                 <div className="team-modal-actions">
-                                    <button type="submit" className="team-invite-btn">{t.inviteModal.sendBtn}</button>
+                                    <button type="submit" className="team-invite-btn">{inviteModal.sendBtn}</button>
                                     <button
                                         type="button"
                                         className="team-cancel-btn"
                                         onClick={() => setShowInviteModal(false)}
                                     >
-                                        {t.inviteModal.cancel}
+                                        {inviteModal.cancel}
                                     </button>
                                 </div>
                             </form>
