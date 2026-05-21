@@ -105,6 +105,108 @@ CloudWatch time range:
 | No throttles | No throttles were reported from Lambda screenshots, but no numeric export was provided | Partial / Not confirmed numerically | `PropertyLambda.png`, `BookingsLambda.png` | Marked carefully because this is screenshot-based evidence only. |
 | No 5XX errors | No visible 5XX spike was reported from API Gateway screenshots, but no numeric export was provided | Partial / Not confirmed numerically | `PropertyAPIgateway.png`, `BookingAPIgateway.png` | Successful curl endpoints returned no 5XX; `byType?type=Boat` returned 404, not 5XX. |
 
+## Controlled load/stress test preparation
+
+### Purpose
+
+The previous API benchmark was intentionally low-rate and sequential only: 10 requests per endpoint, concurrency 1, and no write actions. That run provides useful baseline evidence, but it does not prove scalability, capacity, or readiness for the 10k concurrent user NFR.
+
+The next step is to prepare a controlled production-safe load/stress test using only read-only endpoints first. The goal is to increase confidence carefully while preserving production safety and keeping CloudWatch as the monitoring and evidence source.
+
+### Scope
+
+In scope for the first controlled load/stress test:
+
+- `GET /property/bookingEngine/all`
+- `GET /property/bookingEngine/listingDetails?property=<known-active-id>`
+- `GET /bookings?readType=blockedDates&property_Id=<known-active-id>`
+
+Excluded from this first controlled production test:
+
+- Booking creation
+- Payments
+- Account creation
+- Login brute-force testing
+- Property creation, update, or delete
+- Any write endpoint
+
+### Proposed low-risk load levels
+
+| Stage | Load | Duration | Notes |
+| --- | --- | --- | --- |
+| Baseline | 1 virtual user | 1 minute | Confirms endpoint availability and monitoring before increasing load. |
+| Low load | 2 virtual users | 2 minutes | Small increase while watching CloudWatch in real time. |
+| Controlled load | 5 virtual users | 2 minutes | Maximum proposed level for the first controlled production test. |
+
+Stop before higher stress unless explicitly approved.
+
+### Abort criteria
+
+Stop immediately if:
+
+- 5XX errors appear
+- Lambda throttles appear
+- API Gateway latency becomes consistently high
+- Error rate is greater than 1%
+- CloudWatch alarms trigger
+- Production user impact is suspected
+
+### Monitoring requirements
+
+API Gateway:
+
+- `Latency`
+- `IntegrationLatency`
+- `Count`
+- `4XXError`
+- `5XXError`
+
+Lambda:
+
+- `Duration`
+- `Errors`
+- `Throttles`
+- `ConcurrentExecutions`
+
+Logs:
+
+- Timeouts
+- Unhandled exceptions
+- Cold starts / init duration if visible
+
+### Success criteria
+
+For this first controlled test:
+
+- No 5XX errors
+- No Lambda throttles
+- Error rate <= 1%
+- All successful read-only endpoints remain available
+- P95 response time recorded
+- CloudWatch screenshots captured
+
+### Tooling recommendation
+
+k6 or Artillery are recommended candidates for local traffic generation. AWS-native CloudWatch monitoring should remain the source of production evidence for API Gateway, Lambda, logs, and any available database metrics.
+
+The traffic generator can be a local tool, while AWS-native monitoring is used to validate production behavior. No final traffic-generation tool is selected yet, and no executable load scripts should be added until approval is confirmed.
+
+### Open approvals/questions before execution
+
+- Confirm exact test window.
+- Confirm maximum allowed virtual users.
+- Confirm whether 5 virtual users is acceptable on production.
+- Confirm whether tests should be run outside peak hours.
+- Confirm who monitors CloudWatch during the run.
+
+### Result placeholders
+
+| Scenario | Tool | Endpoint(s) | Virtual users | Duration | Request count | Avg response time | P95 response time | Error rate | 5XX count | Throttles observed | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Baseline | TBD | TBD | 1 | 1 minute | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+| Low load | TBD | TBD | 2 | 2 minutes | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+| Controlled load | TBD | TBD | 5 | 2 minutes | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+
 ## 6. Conclusion
 
 Overall result:
@@ -116,6 +218,7 @@ Summary:
 - The tested frontend pages loaded successfully in PageSpeed, so no unexpected frontend crash was observed. The frontend page-load NFR is not met: LCP is high across homepage, search/listings, and listing detail, with the worst result on `/home` mobile at 52.9s LCP. GTmetrix completed only for the homepage and reported Grade C, 72% performance, 2.6s LCP, 8.1s fully loaded time, 8.44MB total page size, and 85 requests.
 - The read-only API curl benchmark used production endpoints with concurrency 1, 10 sequential requests per endpoint, and no write actions. Successful endpoints returned 10/10 HTTP 200 with 0% error rate, but their conservative P95 values were above the 300 ms API NFR target. `byType?type=Boat` returned 10/10 HTTP 404 and should be treated as an invalid benchmark parameter or endpoint/routing/data issue, not successful performance evidence.
 - CloudWatch screenshots were captured for Property API Gateway, Booking API Gateway, Property Lambda, and Bookings Lambda in `eu-north-1`. The screenshots support that API Gateway latency/integration latency and Lambda duration/error/throttle/concurrency metrics were checked, but this low-rate run does not prove scalability, capacity, or 10k concurrent user readiness.
+- Controlled load/stress testing is the next planned step and requires explicit execution approval before any traffic generation beyond the documented low-rate benchmark approach.
 
 Follow-up actions:
 
