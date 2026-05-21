@@ -136,7 +136,7 @@ export class PriceLabsService {
       const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
 
       const calendar = availability.map((row) => ({
-        date:                _tsToDate(row.calendar_date),
+        date:                _intToDate(row.calendar_date),
         price:               row.nightly_price || p.base_price || 100,
         available:           row.is_available !== false,
         min_stay:            row.min_stay || 1,
@@ -304,6 +304,12 @@ export class PriceLabsService {
 function _tsToDate(ts) {
   if (!ts) return null;
   return new Date(Number(ts)).toISOString().split("T")[0];
+}
+
+function _intToDate(val) {
+  if (!val) return null;
+  const s = String(val);
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 }
 
 function _mapBookingStatus(status) {
