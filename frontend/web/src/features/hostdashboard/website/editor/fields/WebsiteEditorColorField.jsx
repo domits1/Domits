@@ -27,10 +27,10 @@ function InlineColorPicker({
     isSelected ? styles.colorPickerShellSelected : ""
   }`.trim();
   const supportsEyeDropper =
-    typeof browserWindow !== "undefined" && typeof browserWindow.EyeDropper === "function";
+    browserWindow !== undefined && typeof browserWindow.EyeDropper === "function";
 
   useEffect(() => {
-    if (!isPickerFocused || typeof browserWindow === "undefined") {
+    if (!isPickerFocused || browserWindow === undefined) {
       return undefined;
     }
 

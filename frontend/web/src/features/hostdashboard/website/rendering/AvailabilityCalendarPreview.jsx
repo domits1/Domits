@@ -42,6 +42,87 @@ const getCalendarOffsetBounds = (visibleMonthCount) => ({
   maxOffset: Math.max(0, MAX_CALENDAR_NAVIGATION_MONTHS - Math.max(1, visibleMonthCount)),
 });
 
+const interactiveTargetPropType = PropTypes.shape({
+  className: PropTypes.string,
+  role: PropTypes.string,
+  tabIndex: PropTypes.number,
+  onClick: PropTypes.func,
+  onKeyDown: PropTypes.func,
+});
+
+const calendarPanelSettingsPropType = PropTypes.shape({
+  showPanel: PropTypes.bool,
+  panelColor: PropTypes.string,
+});
+
+const calendarSectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  description: PropTypes.string,
+});
+
+const calendarSectionWithPanelPropType = PropTypes.shape({
+  title: PropTypes.string,
+  description: PropTypes.string,
+  showPanel: PropTypes.bool,
+  panelColor: PropTypes.string,
+});
+
+const availabilityPropType = PropTypes.shape({
+  externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
+  unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  unavailableDateCount: PropTypes.number,
+  blockedDateCount: PropTypes.number,
+  syncSummary: PropTypes.string,
+  externalBlockedSummary: PropTypes.string,
+  unavailableDateSummary: PropTypes.string,
+  blockedDateSummary: PropTypes.string,
+  lastSyncLabel: PropTypes.string,
+  nextBlockedLabel: PropTypes.string,
+  callout: PropTypes.string,
+});
+
+const splitInteractiveTargetProps = (interactiveTargetProps = {}) => {
+  const { className = "", ...targetProps } = interactiveTargetProps;
+  return {
+    className,
+    targetProps,
+  };
+};
+
+const useAvailabilityDateKeySets = (availability) => {
+  const externalBlockedDateKeySet = useMemo(
+    () => new Set(Array.isArray(availability?.externalBlockedDates) ? availability.externalBlockedDates : []),
+    [availability]
+  );
+  const unavailableDateKeySet = useMemo(
+    () => new Set(Array.isArray(availability?.unavailableDateKeys) ? availability.unavailableDateKeys : []),
+    [availability]
+  );
+
+  return {
+    externalBlockedDateKeySet,
+    unavailableDateKeySet,
+  };
+};
+
+const resolveCalendarCopy = ({
+  calendarSection,
+  templateKey = "",
+  propertyTitle = "",
+  blockedDateCount = 0,
+  availabilityCallout = "",
+}) => ({
+  title: String(calendarSection?.title || "").trim() || getDefaultWebsiteCalendarTitle(templateKey),
+  description:
+    String(calendarSection?.description || "").trim() ||
+    getDefaultWebsiteCalendarDescription({
+      templateKey,
+      propertyTitle,
+      blockedDateCount,
+      availabilityCallout,
+    }),
+});
+
 function CalendarMonthNavigation({
   labels,
   canGoPrevious,
@@ -171,14 +252,7 @@ function LegacyAvailabilityCalendar({
   titleInteractiveTargetProps = {},
   descriptionInteractiveTargetProps = {},
 }) {
-  const externalBlockedDateKeySet = useMemo(
-    () => new Set(Array.isArray(availability?.externalBlockedDates) ? availability.externalBlockedDates : []),
-    [availability]
-  );
-  const unavailableDateKeySet = useMemo(
-    () => new Set(Array.isArray(availability?.unavailableDateKeys) ? availability.unavailableDateKeys : []),
-    [availability]
-  );
+  const { externalBlockedDateKeySet, unavailableDateKeySet } = useAvailabilityDateKeySets(availability);
   const baseMonth = useMemo(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -193,21 +267,15 @@ function LegacyAvailabilityCalendar({
   const monthLabel = useMemo(() => formatMonthLabel(viewMonth), [viewMonth]);
   const showPanel = panelSettings?.showPanel !== false;
   const resolvedPanelColor = normalizeWebsiteCalendarPanelColorOverride(panelSettings?.panelColor);
-  const title = String(calendarSection?.title || "").trim() || getDefaultWebsiteCalendarTitle(templateKey);
-  const description =
-    String(calendarSection?.description || "").trim() ||
-    getDefaultWebsiteCalendarDescription({
-      templateKey,
-      availabilityCallout: availability?.callout,
-    });
-  const {
-    className: legacyTitleTargetClassName = "",
-    ...legacyTitleTargetProps
-  } = titleInteractiveTargetProps;
-  const {
-    className: legacyDescriptionTargetClassName = "",
-    ...legacyDescriptionTargetProps
-  } = descriptionInteractiveTargetProps;
+  const { title, description } = resolveCalendarCopy({
+    calendarSection,
+    templateKey,
+    availabilityCallout: availability?.callout,
+  });
+  const { className: legacyTitleTargetClassName, targetProps: legacyTitleTargetProps } =
+    splitInteractiveTargetProps(titleInteractiveTargetProps);
+  const { className: legacyDescriptionTargetClassName, targetProps: legacyDescriptionTargetProps } =
+    splitInteractiveTargetProps(descriptionInteractiveTargetProps);
   const calendarClassName = `${styles.calendarCard} ${
     showPanel ? "" : styles.calendarCardPanelOff
   } ${interactiveClassName}`.trim();
@@ -329,48 +397,14 @@ function LegacyAvailabilityCalendar({
 }
 
 LegacyAvailabilityCalendar.propTypes = {
-  availability: PropTypes.shape({
-    externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
-    unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
-    unavailableDateCount: PropTypes.number,
-    syncSummary: PropTypes.string,
-    externalBlockedSummary: PropTypes.string,
-    unavailableDateSummary: PropTypes.string,
-    blockedDateSummary: PropTypes.string,
-    lastSyncLabel: PropTypes.string,
-    nextBlockedLabel: PropTypes.string,
-    callout: PropTypes.string,
-  }).isRequired,
-  rootInteractiveProps: PropTypes.shape({
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
+  availability: availabilityPropType.isRequired,
+  rootInteractiveProps: interactiveTargetPropType,
   interactiveClassName: PropTypes.string.isRequired,
-  panelSettings: PropTypes.shape({
-    showPanel: PropTypes.bool,
-    panelColor: PropTypes.string,
-  }),
-  calendarSection: PropTypes.shape({
-    title: PropTypes.string,
-    description: PropTypes.string,
-  }),
+  panelSettings: calendarPanelSettingsPropType,
+  calendarSection: calendarSectionPropType,
   templateKey: PropTypes.string,
-  titleInteractiveTargetProps: PropTypes.shape({
-    className: PropTypes.string,
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
-  descriptionInteractiveTargetProps: PropTypes.shape({
-    className: PropTypes.string,
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
+  titleInteractiveTargetProps: interactiveTargetPropType,
+  descriptionInteractiveTargetProps: interactiveTargetPropType,
 };
 
 function PanoramaAvailabilityCalendar({
@@ -384,14 +418,7 @@ function PanoramaAvailabilityCalendar({
   titleInteractiveTargetProps = {},
   descriptionInteractiveTargetProps = {},
 }) {
-  const externalBlockedDateKeySet = useMemo(
-    () => new Set(Array.isArray(availability?.externalBlockedDates) ? availability.externalBlockedDates : []),
-    [availability]
-  );
-  const unavailableDateKeySet = useMemo(
-    () => new Set(Array.isArray(availability?.unavailableDateKeys) ? availability.unavailableDateKeys : []),
-    [availability]
-  );
+  const { externalBlockedDateKeySet, unavailableDateKeySet } = useAvailabilityDateKeySets(availability);
   const baseMonth = useMemo(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -419,26 +446,20 @@ function PanoramaAvailabilityCalendar({
   );
   const showPanel = panelSettings?.showPanel !== false;
   const resolvedPanelColor = normalizeWebsiteCalendarPanelColorOverride(panelSettings?.panelColor);
-  const title = String(calendarSection?.title || "").trim() || getDefaultWebsiteCalendarTitle(templateKey);
-  const {
-    className: panoramaTitleTargetClassName = "",
-    ...panoramaTitleTargetProps
-  } = titleInteractiveTargetProps;
-  const {
-    className: panoramaDescriptionTargetClassName = "",
-    ...panoramaDescriptionTargetProps
-  } = descriptionInteractiveTargetProps;
+  const { title, description } = resolveCalendarCopy({
+    calendarSection,
+    templateKey,
+    propertyTitle,
+    blockedDateCount,
+    availabilityCallout: availability?.callout,
+  });
+  const { className: panoramaTitleTargetClassName, targetProps: panoramaTitleTargetProps } =
+    splitInteractiveTargetProps(titleInteractiveTargetProps);
+  const { className: panoramaDescriptionTargetClassName, targetProps: panoramaDescriptionTargetProps } =
+    splitInteractiveTargetProps(descriptionInteractiveTargetProps);
   const calendarClassName = `${styles.panoramaCalendarCard} ${
     showPanel ? "" : styles.panoramaCalendarCardPanelOff
   } ${interactiveClassName}`.trim();
-  const description =
-    String(calendarSection?.description || "").trim() ||
-    getDefaultWebsiteCalendarDescription({
-      templateKey,
-      propertyTitle,
-      blockedDateCount,
-      availabilityCallout: availability?.callout,
-    });
 
   return (
     <section
@@ -536,42 +557,15 @@ function PanoramaAvailabilityCalendar({
 }
 
 PanoramaAvailabilityCalendar.propTypes = {
-  availability: PropTypes.shape({
-    externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
-    unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
-    blockedDateCount: PropTypes.number,
-  }).isRequired,
+  availability: availabilityPropType.isRequired,
   propertyTitle: PropTypes.string,
-  rootInteractiveProps: PropTypes.shape({
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
+  rootInteractiveProps: interactiveTargetPropType,
   interactiveClassName: PropTypes.string.isRequired,
-  panelSettings: PropTypes.shape({
-    showPanel: PropTypes.bool,
-    panelColor: PropTypes.string,
-  }),
-  calendarSection: PropTypes.shape({
-    title: PropTypes.string,
-    description: PropTypes.string,
-  }),
+  panelSettings: calendarPanelSettingsPropType,
+  calendarSection: calendarSectionPropType,
   templateKey: PropTypes.string,
-  titleInteractiveTargetProps: PropTypes.shape({
-    className: PropTypes.string,
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
-  descriptionInteractiveTargetProps: PropTypes.shape({
-    className: PropTypes.string,
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
+  titleInteractiveTargetProps: interactiveTargetPropType,
+  descriptionInteractiveTargetProps: interactiveTargetPropType,
 };
 
 export default function AvailabilityCalendarPreview({
@@ -617,46 +611,11 @@ export default function AvailabilityCalendarPreview({
 }
 
 AvailabilityCalendarPreview.propTypes = {
-  availability: PropTypes.shape({
-    externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
-    unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
-    unavailableDateCount: PropTypes.number,
-    blockedDateCount: PropTypes.number,
-    syncSummary: PropTypes.string,
-    externalBlockedSummary: PropTypes.string,
-    unavailableDateSummary: PropTypes.string,
-    blockedDateSummary: PropTypes.string,
-    lastSyncLabel: PropTypes.string,
-    nextBlockedLabel: PropTypes.string,
-    callout: PropTypes.string,
-  }).isRequired,
-  calendarSection: PropTypes.shape({
-    title: PropTypes.string,
-    description: PropTypes.string,
-    showPanel: PropTypes.bool,
-    panelColor: PropTypes.string,
-  }),
-  descriptionInteractiveTargetProps: PropTypes.shape({
-    className: PropTypes.string,
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
-  interactiveTargetProps: PropTypes.shape({
-    className: PropTypes.string,
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
-  titleInteractiveTargetProps: PropTypes.shape({
-    className: PropTypes.string,
-    role: PropTypes.string,
-    tabIndex: PropTypes.number,
-    onClick: PropTypes.func,
-    onKeyDown: PropTypes.func,
-  }),
+  availability: availabilityPropType.isRequired,
+  calendarSection: calendarSectionWithPanelPropType,
+  descriptionInteractiveTargetProps: interactiveTargetPropType,
+  interactiveTargetProps: interactiveTargetPropType,
+  titleInteractiveTargetProps: interactiveTargetPropType,
   variant: PropTypes.oneOf(["default", "panorama"]),
   propertyTitle: PropTypes.string,
   templateKey: PropTypes.string,

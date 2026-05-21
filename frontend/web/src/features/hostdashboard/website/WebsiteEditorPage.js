@@ -70,7 +70,6 @@ import {
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "./config/websiteAmenitiesConfig";
 import {
-  getDefaultWebsiteCalendarPanelColor,
   resolveWebsiteCalendarPanelColor,
 } from "./config/websiteCalendarSectionConfig";
 import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";

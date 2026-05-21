@@ -32,6 +32,8 @@ export function WebsiteEditorCalendarSection({
     return null;
   }
 
+  const showCalendarPanelColorField = editorValues.calendar.showPanel !== false;
+
   return (
     <CollapsibleSection
       sectionId={EDITOR_SECTION_KEYS.calendar}
@@ -92,7 +94,7 @@ export function WebsiteEditorCalendarSection({
           </div>
         ) : null}
 
-        {editorValues.calendar.showPanel !== false ? (
+        {showCalendarPanelColorField ? (
           <ContactColorField
             label="Calendar panel color"
             hint="Controls the framed surface behind the availability calendar when the panel is enabled."
