@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import CorporateFareOutlinedIcon from "@mui/icons-material/CorporateFareOutlined";
@@ -54,6 +55,13 @@ const SettingsCard = ({ to, icon, title, desc }) => (
     <ChevronRightIcon className="host-settings-card-chevron" />
   </Link>
 );
+
+SettingsCard.propTypes = {
+  to: PropTypes.string.isRequired,
+  icon: PropTypes.node.isRequired,
+  title: PropTypes.string.isRequired,
+  desc: PropTypes.string.isRequired,
+};
 
 const HostSettingsHub = () => (
   <div className="host-settings-hub">
