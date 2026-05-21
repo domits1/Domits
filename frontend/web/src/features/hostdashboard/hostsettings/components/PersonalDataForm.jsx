@@ -1,8 +1,13 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import standardAvatar from "../../../../images/standard.png";
 import { normalizeImageUrl } from "../../../guestdashboard/utils/image";
+import { LanguageContext } from "../../../../context/LanguageContext";
+import en from "../../../../content/en.json";
+import nl from "../../../../content/nl.json";
+import de from "../../../../content/de.json";
+import es from "../../../../content/es.json";
 import {
     optionShape,
     countryCodeShape,
@@ -11,6 +16,8 @@ import {
     tempUserShape,
     refShape,
 } from "../../../../components/settings/propTypes";
+
+const contentByLanguage = { en, nl, de, es };
 
 const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, stripPhone, onPhoneChange }) => {
     const selectRef = useRef(null);
@@ -63,10 +70,10 @@ PhoneField.propTypes = {
     onPhoneChange: PropTypes.func.isRequired,
 };
 
-function getSaveLabel(isSaving, saveSuccess) {
-    if (isSaving) return "Saving...";
-    if (saveSuccess) return "Saved!";
-    return "Save changes";
+function getSaveLabel(isSaving, saveSuccess, t) {
+    if (isSaving) return t.buttons.saving;
+    if (saveSuccess) return t.buttons.saved;
+    return t.buttons.save;
 }
 
 const PersonalDataForm = ({
@@ -112,25 +119,27 @@ const PersonalDataForm = ({
     showAuthMfa,
     authStatus,
     breadcrumbPath,
-}) => (
+}) => {
+    const { language: lang } = useContext(LanguageContext);
+    const t = contentByLanguage[lang]?.settings?.personalData ?? contentByLanguage.en.settings.personalData;
+
+    return (
     <div className="personal-data-page">
         {breadcrumbPath && (
             <nav className="personal-data-breadcrumb">
-                <Link to={breadcrumbPath}>Settings</Link>
+                <Link to={breadcrumbPath}>{t.hub?.breadcrumb ?? "Settings"}</Link>
                 <span className="personal-data-breadcrumb-sep">/</span>
-                <span className="personal-data-breadcrumb-current">Personal Data</span>
+                <span className="personal-data-breadcrumb-current">{t.breadcrumb}</span>
             </nav>
         )}
 
         <header className="personal-data-header">
-            <h1 className="personal-data-title">Personal Information</h1>
-            <p className="personal-data-subtitle">
-                Manage your personal profile information and account preferences.
-            </p>
+            <h1 className="personal-data-title">{t.title}</h1>
+            <p className="personal-data-subtitle">{t.subtitle}</p>
         </header>
 
         <section className="personal-data-section">
-            <h2 className="personal-data-section-title">Profile</h2>
+            <h2 className="personal-data-section-title">{t.profileSection}</h2>
             <div className="personal-data-card">
                 <div className="personal-data-card-inner">
                     <div className="personal-data-photo-col">
@@ -146,7 +155,7 @@ const PersonalDataForm = ({
                                 className="pd-photo-btn pd-photo-btn--primary"
                                 disabled={isUploadingPhoto}
                             >
-                                {isUploadingPhoto ? "Working..." : "Upload"}
+                                {isUploadingPhoto ? t.photo.uploading : t.photo.upload}
                             </button>
                             <button
                                 type="button"
@@ -154,7 +163,7 @@ const PersonalDataForm = ({
                                 className="pd-photo-btn pd-photo-btn--secondary"
                                 disabled={isUploadingPhoto || !user.picture}
                             >
-                                Remove
+                                {t.photo.remove}
                             </button>
                         </div>
                         {photoError && <p className="pd-field-error">{photoError}</p>}
@@ -170,7 +179,7 @@ const PersonalDataForm = ({
 
                     <div className="personal-data-fields-col">
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-name">Full name</label>
+                            <label className="pd-field-label" htmlFor="pd-name">{t.fields.fullName}</label>
                             <input
                                 id="pd-name"
                                 type="text"
@@ -178,12 +187,12 @@ const PersonalDataForm = ({
                                 value={tempUser.name || ""}
                                 onChange={onInputChange}
                                 className="pd-field-input"
-                                placeholder="Full name"
+                                placeholder={t.fields.fullName}
                             />
                         </div>
 
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-title">Title</label>
+                            <label className="pd-field-label" htmlFor="pd-title">{t.fields.title}</label>
                             <div className="pd-select-wrapper">
                                 <select
                                     id="pd-title"
@@ -194,7 +203,7 @@ const PersonalDataForm = ({
                                 >
                                     {titleOptions.map((opt) => (
                                         <option key={opt || "empty"} value={opt}>
-                                            {opt || "Select title"}
+                                            {opt || t.fields.selectTitle}
                                         </option>
                                     ))}
                                 </select>
@@ -202,7 +211,7 @@ const PersonalDataForm = ({
                         </div>
 
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-email">Email</label>
+                            <label className="pd-field-label" htmlFor="pd-email">{t.fields.email}</label>
                             {isVerifying ? (
                                 <div className="pd-verify-row">
                                     <input
@@ -212,14 +221,14 @@ const PersonalDataForm = ({
                                         value={verificationCode}
                                         onChange={onVerificationInputChange}
                                         className="pd-field-input"
-                                        placeholder="Verification code sent to your email"
+                                        placeholder={t.fields.verificationCode}
                                     />
                                     <button
                                         type="button"
                                         className="pd-verify-btn"
                                         onClick={onVerifyEmail}
                                     >
-                                        Verify
+                                        {t.fields.verify}
                                     </button>
                                 </div>
                             ) : (
@@ -230,24 +239,25 @@ const PersonalDataForm = ({
                                     value={tempUser.email || ""}
                                     onChange={onInputChange}
                                     className="pd-field-input"
-                                    placeholder="Email address"
+                                    placeholder={t.fields.emailAddress}
                                 />
                             )}
                         </div>
 
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-phone">Phone</label>
+                            <label className="pd-field-label" htmlFor="pd-phone">{t.fields.phone}</label>
                             <PhoneField
                                 countryCodes={countryCodes}
                                 selectedCountryCode={selectedCountryCode}
                                 onCountryCodeChange={onCountryCodeChange}
                                 stripPhone={stripPhone}
                                 onPhoneChange={onPhoneChange}
+                                placeholder={t.fields.phoneNumber}
                             />
                         </div>
 
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-sex">Sex</label>
+                            <label className="pd-field-label" htmlFor="pd-sex">{t.fields.sex}</label>
                             <div className="pd-select-wrapper">
                                 <select
                                     id="pd-sex"
@@ -258,7 +268,7 @@ const PersonalDataForm = ({
                                 >
                                     {sexOptions.map((opt) => (
                                         <option key={opt || "empty"} value={opt}>
-                                            {opt || "Select sex"}
+                                            {opt || t.fields.selectSex}
                                         </option>
                                     ))}
                                 </select>
@@ -266,7 +276,7 @@ const PersonalDataForm = ({
                         </div>
 
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-dob">Date of birth</label>
+                            <label className="pd-field-label" htmlFor="pd-dob">{t.fields.dateOfBirth}</label>
                             <input
                                 id="pd-dob"
                                 type="text"
@@ -281,7 +291,7 @@ const PersonalDataForm = ({
                         </div>
 
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-pob">Place of birth</label>
+                            <label className="pd-field-label" htmlFor="pd-pob">{t.fields.placeOfBirth}</label>
                             <div className="pd-select-wrapper">
                                 <select
                                     id="pd-pob"
@@ -290,7 +300,7 @@ const PersonalDataForm = ({
                                     onChange={onInputChange}
                                     className="pd-field-input pd-field-select"
                                 >
-                                    <option value="">Country</option>
+                                    <option value="">{t.fields.country}</option>
                                     {placeOfBirthOptions.map((country) => (
                                         <option key={country} value={country}>
                                             {country}
@@ -301,7 +311,7 @@ const PersonalDataForm = ({
                         </div>
 
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-nationality">Nationality</label>
+                            <label className="pd-field-label" htmlFor="pd-nationality">{t.fields.nationality}</label>
                             <div className="pd-select-wrapper">
                                 <select
                                     id="pd-nationality"
@@ -310,7 +320,7 @@ const PersonalDataForm = ({
                                     onChange={onInputChange}
                                     className="pd-field-input pd-field-select"
                                 >
-                                    <option value="">Nationality</option>
+                                    <option value="">{t.fields.nationality}</option>
                                     {placeOfBirthOptions.map((country) => (
                                         <option key={country} value={country}>
                                             {country}
@@ -330,17 +340,17 @@ const PersonalDataForm = ({
                         onClick={onSaveAll}
                         disabled={isSaving}
                     >
-                        {getSaveLabel(isSaving, saveSuccess)}
+                        {getSaveLabel(isSaving, saveSuccess, t)}
                     </button>
                 </div>
             </div>
         </section>
 
         <section className="personal-data-section">
-            <h2 className="personal-data-section-title">Preferences / Authentication</h2>
+            <h2 className="personal-data-section-title">{t.prefsSection}</h2>
             <div className="personal-data-card personal-data-pref-card">
                 <div className="pd-pref-row">
-                    <span className="pd-pref-label">Default language</span>
+                    <span className="pd-pref-label">{t.prefs.defaultLanguage}</span>
                     <select
                         name="defaultLanguage"
                         value={language}
@@ -392,16 +402,16 @@ const PersonalDataForm = ({
                 )}
 
                 <div className="pd-auth-row">
-                    <span className="pd-pref-label">Email</span>
+                    <span className="pd-pref-label">{t.prefs.emailLabel}</span>
                     <span className={`pd-status-pill ${authStatus.emailVerified ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
-                        {authStatus.emailVerified ? "Active" : "Inactive"}
+                        {authStatus.emailVerified ? t.prefs.active : t.prefs.inactive}
                     </span>
                     {authStatus.emailVerified && (
                         <span className="pd-verified-check">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                                 <path d="M3 8l3.5 3.5L13 5" stroke="#15803d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            Verified
+                            {t.prefs.verified}
                         </span>
                     )}
                 </div>
@@ -409,28 +419,29 @@ const PersonalDataForm = ({
                 {showAuthMfa && (
                     <>
                         <div className="pd-auth-row">
-                            <span className="pd-pref-label">SMS</span>
+                            <span className="pd-pref-label">{t.prefs.sms}</span>
                             <span className={`pd-status-pill ${authStatus.preferredMFA === "SMS" ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
-                                {authStatus.preferredMFA === "SMS" ? "Active" : "Inactive"}
+                                {authStatus.preferredMFA === "SMS" ? t.prefs.active : t.prefs.inactive}
                             </span>
                             <span className="pd-auth-subtext">
-                                Phone verified: {authStatus.phoneVerified ? "Yes" : "No"}
+                                {authStatus.phoneVerified ? t.prefs.phoneVerifiedYes : t.prefs.phoneVerifiedNo}
                             </span>
                         </div>
 
                         <div className="pd-auth-row">
-                            <span className="pd-pref-label">Authenticator app</span>
+                            <span className="pd-pref-label">{t.prefs.authenticatorApp}</span>
                             <span className={`pd-status-pill ${authStatus.preferredMFA === "TOTP" ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
-                                {authStatus.preferredMFA === "TOTP" ? "Active" : "Inactive"}
+                                {authStatus.preferredMFA === "TOTP" ? t.prefs.active : t.prefs.inactive}
                             </span>
-                            <span className="pd-auth-subtext">App-based codes (TOTP)</span>
+                            <span className="pd-auth-subtext">{t.prefs.totp}</span>
                         </div>
                     </>
                 )}
             </div>
         </section>
     </div>
-);
+    );
+};
 
 PersonalDataForm.propTypes = {
     user: userShape.isRequired,

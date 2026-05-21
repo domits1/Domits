@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
@@ -7,43 +7,22 @@ import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import PercentOutlinedIcon from "@mui/icons-material/PercentOutlined";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { LanguageContext } from "../../../../context/LanguageContext";
+import en from "../../../../content/en.json";
+import nl from "../../../../content/nl.json";
+import de from "../../../../content/de.json";
+import es from "../../../../content/es.json";
 import "../styles/hostSettings.css";
 
-const PERSONAL_CARDS = [
-  {
-    to: "personal-data",
-    icon: <AccountCircleOutlinedIcon />,
-    title: "Personal Data",
-    desc: "Manage your contact info, profile photo and personal details.",
-  },
-];
+const contentByLanguage = { en, nl, de, es };
 
-const ACCOUNT_CARDS = [
-  {
-    to: "company",
-    icon: <CorporateFareOutlinedIcon />,
-    title: "Company",
-    desc: "Manage your company name and basic details.",
-  },
-  {
-    to: "team",
-    icon: <PeopleOutlineIcon />,
-    title: "Team",
-    desc: "Manage your primary host and team members.",
-  },
-  {
-    to: "rate-plans",
-    icon: <PercentOutlinedIcon />,
-    title: "Rate Plans",
-    desc: "View your 10% host-only and future pricing options.",
-  },
-  {
-    to: "compliance",
-    icon: <VerifiedUserOutlinedIcon />,
-    title: "Compliance",
-    desc: "Manage your registration number and verification.",
-  },
-];
+const CARD_ICONS = {
+  "personal-data": <AccountCircleOutlinedIcon />,
+  company:         <CorporateFareOutlinedIcon />,
+  team:            <PeopleOutlineIcon />,
+  "rate-plans":    <PercentOutlinedIcon />,
+  compliance:      <VerifiedUserOutlinedIcon />,
+};
 
 const SettingsCard = ({ to, icon, title, desc }) => (
   <Link to={to} className="host-settings-card">
@@ -57,39 +36,54 @@ const SettingsCard = ({ to, icon, title, desc }) => (
 );
 
 SettingsCard.propTypes = {
-  to: PropTypes.string.isRequired,
-  icon: PropTypes.node.isRequired,
+  to:    PropTypes.string.isRequired,
+  icon:  PropTypes.node.isRequired,
   title: PropTypes.string.isRequired,
-  desc: PropTypes.string.isRequired,
+  desc:  PropTypes.string.isRequired,
 };
 
-const HostSettingsHub = () => (
-  <div className="host-settings-hub">
-    <div className="host-settings-hub-header">
-      <h1 className="host-settings-hub-title">Settings</h1>
-      <p className="host-settings-hub-subtitle">
-        Manage your personal and account settings in one place
-      </p>
-    </div>
+const HostSettingsHub = () => {
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.settings?.hub ?? contentByLanguage.en.settings.hub;
+  const { personalData, company, team, ratePlans, compliance } = t.cards;
 
-    <div className="host-settings-section">
-      <h2 className="host-settings-section-title">Personal Settings</h2>
-      <div className="host-settings-cards-single">
-        {PERSONAL_CARDS.map((card) => (
-          <SettingsCard key={card.to} {...card} />
-        ))}
+  const personalCards = [
+    { to: "personal-data", icon: CARD_ICONS["personal-data"], title: personalData.title, desc: personalData.desc },
+  ];
+
+  const accountCards = [
+    { to: "company",     icon: CARD_ICONS.company,      title: company.title,    desc: company.desc },
+    { to: "team",        icon: CARD_ICONS.team,          title: team.title,       desc: team.desc },
+    { to: "rate-plans",  icon: CARD_ICONS["rate-plans"], title: ratePlans.title,  desc: ratePlans.desc },
+    { to: "compliance",  icon: CARD_ICONS.compliance,    title: compliance.title, desc: compliance.desc },
+  ];
+
+  return (
+    <div className="host-settings-hub">
+      <div className="host-settings-hub-header">
+        <h1 className="host-settings-hub-title">{t.title}</h1>
+        <p className="host-settings-hub-subtitle">{t.subtitle}</p>
+      </div>
+
+      <div className="host-settings-section">
+        <h2 className="host-settings-section-title">{t.personalSection}</h2>
+        <div className="host-settings-cards-single">
+          {personalCards.map((card) => (
+            <SettingsCard key={card.to} {...card} />
+          ))}
+        </div>
+      </div>
+
+      <div className="host-settings-section">
+        <h2 className="host-settings-section-title">{t.accountSection}</h2>
+        <div className="host-settings-cards-grid">
+          {accountCards.map((card) => (
+            <SettingsCard key={card.to} {...card} />
+          ))}
+        </div>
       </div>
     </div>
-
-    <div className="host-settings-section">
-      <h2 className="host-settings-section-title">Account Settings</h2>
-      <div className="host-settings-cards-grid">
-        {ACCOUNT_CARDS.map((card) => (
-          <SettingsCard key={card.to} {...card} />
-        ))}
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 export default HostSettingsHub;
