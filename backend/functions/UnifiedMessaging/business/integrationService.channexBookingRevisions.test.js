@@ -921,8 +921,8 @@ describe("IntegrationService Channex booking pull import", () => {
     );
   });
 
-  test("redacts sensitive payment fields from imported reservation link raw payload", async () => {
-    const { service, resLinks } = createService({
+  test("redacts sensitive payment fields from persisted revision and imported reservation link raw payloads", async () => {
+    const { service, channexBookingRevisions, resLinks } = createService({
       feedRevisions: [
         buildFeedRevision({
           rawPayload: {
@@ -934,11 +934,27 @@ describe("IntegrationService Channex booking pull import", () => {
               arrival_date: "2026-06-01",
               departure_date: "2026-06-03",
               guarantee: {
-                card_number: "4111111111111111",
-                cvc: "999",
+                card_number: "SENSITIVE_CARD_NUMBER",
+                cvc: "SENSITIVE_CVC_VALUE",
+              },
+              credit_card: {
+                cvv: "SENSITIVE_CVV_VALUE",
+                card_holder_name: "SENSITIVE_CARD_HOLDER",
+              },
+              card: {
+                number: "SENSITIVE_CARD_OBJECT",
+              },
+              payment_card: {
+                number: "SENSITIVE_PAYMENT_CARD",
+              },
+              paymentCard: {
+                number: "SENSITIVE_CAMEL_PAYMENT_CARD",
               },
               payment: {
-                token: "payment-token-secret",
+                token: "SENSITIVE_PAYMENT_TOKEN",
+              },
+              payment_credentials: {
+                token: "SENSITIVE_CREDENTIAL_TOKEN",
               },
               rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
             },
@@ -953,18 +969,159 @@ describe("IntegrationService Channex booking pull import", () => {
     });
 
     expect(result.response.createdBookingCount).toBe(1);
-    const rawPayload = resLinks.upsert.mock.calls[0][0].rawPayload;
-    expect(rawPayload).toContain("[REDACTED]");
-    expect(rawPayload).not.toContain("4111111111111111");
-    expect(rawPayload).not.toContain("payment-token-secret");
-    expect(rawPayload).not.toContain("999");
-    expect(JSON.parse(rawPayload)).toEqual(
+    const persistedRevisionPayload = channexBookingRevisions.upsert.mock.calls[0][0].rawPayload;
+    const linkRawPayload = resLinks.upsert.mock.calls[0][0].rawPayload;
+    const combinedPayloads = `${persistedRevisionPayload}\n${linkRawPayload}`;
+    expect(combinedPayloads).toContain("[REDACTED]");
+    for (const sensitiveValue of [
+      "SENSITIVE_CARD_NUMBER",
+      "SENSITIVE_CVC_VALUE",
+      "SENSITIVE_CVV_VALUE",
+      "SENSITIVE_CARD_HOLDER",
+      "SENSITIVE_CARD_OBJECT",
+      "SENSITIVE_PAYMENT_CARD",
+      "SENSITIVE_CAMEL_PAYMENT_CARD",
+      "SENSITIVE_PAYMENT_TOKEN",
+      "SENSITIVE_CREDENTIAL_TOKEN",
+    ]) {
+      expect(combinedPayloads).not.toContain(sensitiveValue);
+    }
+    expect(JSON.parse(persistedRevisionPayload)).toEqual(
+      expect.objectContaining({
+        provider: "CHANNEX",
+        bookingId: "booking-ota-1",
+        status: "new",
+        arrivalDate: "2026-06-01",
+        departureDate: "2026-06-03",
+        payload: expect.objectContaining({
+          attributes: expect.objectContaining({
+            guarantee: "[REDACTED]",
+            credit_card: "[REDACTED]",
+            card: "[REDACTED]",
+            payment_card: "[REDACTED]",
+            paymentCard: "[REDACTED]",
+            payment_credentials: "[REDACTED]",
+            payment: expect.objectContaining({
+              token: "[REDACTED]",
+            }),
+          }),
+        }),
+      })
+    );
+    expect(JSON.parse(linkRawPayload)).toEqual(
       expect.objectContaining({
         importedBy: "channex-booking-pull",
         domits: expect.objectContaining({
           bookingId: expect.any(String),
         }),
       })
+    );
+  });
+
+  test("reuses an existing deterministic Domits booking without creating another booking", async () => {
+    const { service, channexProviderClient, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+    externalBookingImportRepository.getBookingById.mockImplementation(async (bookingId) => ({
+      id: bookingId,
+      propertyId: "domits-property-1",
+      hostId: "host-1",
+      guestName: "Existing External Guest",
+      arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
+      departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
+      status: "Paid",
+    }));
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.response).toMatchObject({
+      fetchedCount: 1,
+      createdBookingCount: 0,
+      ackedCount: 1,
+      unackedCount: 0,
+      overallSuccess: true,
+    });
+    expect(result.response.items[0]).toEqual(
+      expect.objectContaining({
+        result: "already-imported-and-acked",
+        createdBooking: false,
+      })
+    );
+    expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      "revision-new-1"
+    );
+  });
+
+  test("recovers when a valid reservation link appears after an upsert race", async () => {
+    const { service, channexProviderClient, externalBookingImportRepository, resLinks } = createService({
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+    let createdBookingId = null;
+    externalBookingImportRepository.getBookingById.mockImplementation(async (bookingId) =>
+      bookingId === createdBookingId
+        ? {
+            id: bookingId,
+            propertyId: "domits-property-1",
+            hostId: "host-1",
+            guestName: "External Guest",
+            arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
+            departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
+            status: "Paid",
+          }
+        : null
+    );
+    externalBookingImportRepository.createExternalBooking.mockImplementation(async (data) => {
+      createdBookingId = data.bookingId;
+      return {
+        id: data.bookingId,
+        propertyId: data.propertyId,
+        hostId: data.hostId,
+        guestName: data.guestName,
+        arrivalDateMs: data.arrivalDateMs,
+        departureDateMs: data.departureDateMs,
+        status: "Paid",
+      };
+    });
+    let linkLookupCount = 0;
+    resLinks.getByIntegrationAccountIdAndExternalReservation.mockImplementation(async () => {
+      linkLookupCount += 1;
+      if (linkLookupCount === 1) return null;
+      return {
+        id: "reservation-link-race",
+        rawPayload: JSON.stringify({
+          domits: { bookingId: createdBookingId },
+        }),
+      };
+    });
+    resLinks.upsert.mockRejectedValueOnce(new Error("duplicate reservation link"));
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.response).toMatchObject({
+      fetchedCount: 1,
+      createdBookingCount: 1,
+      ackedCount: 1,
+      unackedCount: 0,
+      overallSuccess: true,
+    });
+    expect(result.response.items[0]).toEqual(
+      expect.objectContaining({
+        linkId: "reservation-link-race",
+        result: "created-and-acked",
+      })
+    );
+    expect(resLinks.getByIntegrationAccountIdAndExternalReservation).toHaveBeenCalledTimes(2);
+    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      "revision-new-1"
     );
   });
 
@@ -990,7 +1147,9 @@ describe("IntegrationService Channex booking pull import", () => {
         result: "import-failed-unacked",
         errors: [
           expect.objectContaining({
-            message: "link insert failed",
+            code: "CHANNEX_RESERVATION_LINK_CONFIRM_FAILED",
+            message:
+              "ChannelReservationLink could not be confirmed after an upsert failure; Channex revision will remain unacked.",
           }),
         ],
       })

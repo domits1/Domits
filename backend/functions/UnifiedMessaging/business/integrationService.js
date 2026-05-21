@@ -791,6 +791,16 @@ const CHANNEX_SENSITIVE_PAYLOAD_KEYS = new Set([
   "guarantee",
   "card",
   "payment_card",
+  "paymentcard",
+  "payment_credential",
+  "paymentcredential",
+  "payment_credentials",
+  "paymentcredentials",
+  "card_holder",
+  "cardholder",
+  "card_holder_name",
+  "cardholder_name",
+  "cardholdername",
 ]);
 const CHANNEX_PAYMENT_CONTEXT_KEYS = new Set([
   "payment",
@@ -798,6 +808,11 @@ const CHANNEX_PAYMENT_CONTEXT_KEYS = new Set([
   "card",
   "credit_card",
   "payment_card",
+  "paymentcard",
+  "payment_credential",
+  "paymentcredential",
+  "payment_credentials",
+  "paymentcredentials",
   "guarantee",
 ]);
 const CHANNEX_STATUS = {
@@ -939,6 +954,24 @@ const buildChannexBookingLinkPayload = ({ revision, externalReservationId, domit
   externalReservationId,
   importedBy: CHANNEX_BOOKING_IMPORT_SOURCE,
   action,
+});
+const buildChannexBookingRevisionPersistencePayload = ({ revision, propertyMapping }) => ({
+  provider: "CHANNEX",
+  channel: CHANNEL_CHANNEX,
+  externalPropertyId: requireStr(propertyMapping?.externalPropertyId) ?? null,
+  revisionId: requireStr(revision?.revisionId) ?? null,
+  bookingId: requireStr(revision?.bookingId) ?? null,
+  uniqueId: requireStr(revision?.uniqueId) ?? null,
+  systemId: requireStr(revision?.systemId) ?? null,
+  status: requireStr(revision?.status) ?? null,
+  arrivalDate: parseIsoDateParam(revision?.arrivalDate) ?? null,
+  departureDate: parseIsoDateParam(revision?.departureDate) ?? null,
+  propertyId: requireStr(revision?.propertyId) ?? null,
+  roomTypeId: requireStr(revision?.roomTypeId) ?? null,
+  ratePlanId: requireStr(revision?.ratePlanId) ?? null,
+  guestName: requireStr(revision?.guestName) ?? null,
+  persistedAt: nowMs(),
+  payload: sanitizeChannexImportPayload(revision?.rawPayload ?? revision ?? null),
 });
 const summarizeChannexPullItems = (items) => ({
   rawPersistedCount: items.filter((item) => item.rawPersisted).length,
@@ -5227,14 +5260,7 @@ export default class IntegrationService {
       arrivalDate: parseIsoDateParam(revision?.arrivalDate) ?? null,
       departureDate: parseIsoDateParam(revision?.departureDate) ?? null,
       guestSummary: requireStr(revision?.guestName) ?? null,
-      rawPayload: serializeRawPayload({
-        provider: "CHANNEX",
-        externalPropertyId: requireStr(propertyMapping?.externalPropertyId) ?? null,
-        revisionId: requireStr(revision?.revisionId) ?? null,
-        bookingId: requireStr(revision?.bookingId) ?? null,
-        persistedAt: nowMs(),
-        payload: revision?.rawPayload ?? revision ?? null,
-      }),
+      rawPayload: serializeRawPayload(buildChannexBookingRevisionPersistencePayload({ revision, propertyMapping })),
       acknowledgementState: existing?.acknowledgementState ?? "RECEIVED",
       acknowledgedAt: existing?.acknowledgedAt ?? null,
     });
@@ -5533,7 +5559,7 @@ export default class IntegrationService {
     action,
     reservationStatus,
   }) {
-    return this.resLinks.upsert({
+    const linkData = {
       integrationAccountId: integration.id,
       channel: CHANNEL_CHANNEX,
       externalReservationId,
@@ -5557,7 +5583,28 @@ export default class IntegrationService {
           action,
         })
       ),
-    });
+    };
+
+    try {
+      return await this.resLinks.upsert(linkData);
+    } catch (error) {
+      const existingLink = await this.resLinks.getByIntegrationAccountIdAndExternalReservation({
+        integrationAccountId: integration.id,
+        channel: CHANNEL_CHANNEX,
+        externalReservationId,
+      });
+
+      if (existingLink?.id && getDomitsBookingIdFromLink(existingLink) === domitsBookingId) {
+        return existingLink;
+      }
+
+      const confirmationError = new Error(
+        "ChannelReservationLink could not be confirmed after an upsert failure; Channex revision will remain unacked."
+      );
+      confirmationError.code = "CHANNEX_RESERVATION_LINK_CONFIRM_FAILED";
+      confirmationError.cause = error;
+      throw confirmationError;
+    }
   }
 
   async createOrReuseChannexImportedBooking({ revision, integration, externalReservationId, propertyContext, dates }) {
@@ -5571,15 +5618,28 @@ export default class IntegrationService {
       };
     }
 
-    const createdBooking = await this.externalBookingImportRepository.createExternalBooking({
-      bookingId: deterministicBookingId,
-      propertyId: propertyContext.propertyId,
-      hostId: propertyContext.hostId,
-      externalReservationId,
-      guestName: requireStr(revision?.guestName) || "Channex guest",
-      arrivalDateMs: dates.arrivalDateMs,
-      departureDateMs: dates.departureDateMs,
-    });
+    let createdBooking = null;
+    try {
+      createdBooking = await this.externalBookingImportRepository.createExternalBooking({
+        bookingId: deterministicBookingId,
+        propertyId: propertyContext.propertyId,
+        hostId: propertyContext.hostId,
+        externalReservationId,
+        guestName: requireStr(revision?.guestName) || "Channex guest",
+        arrivalDateMs: dates.arrivalDateMs,
+        departureDateMs: dates.departureDateMs,
+      });
+    } catch (error) {
+      const recoveredBooking = await this.externalBookingImportRepository.getBookingById(deterministicBookingId);
+      if (recoveredBooking) {
+        return {
+          booking: recoveredBooking,
+          created: false,
+          domitsBookingId: deterministicBookingId,
+        };
+      }
+      throw error;
+    }
 
     return {
       booking: createdBooking,
