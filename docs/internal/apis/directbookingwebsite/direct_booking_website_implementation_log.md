@@ -1869,3 +1869,157 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/_websiteBuilder.layout.scss`
   - `backend/functions/PropertyHandler/controller/propertyController.js`
   - `backend/functions/PropertyHandler/data/repository/directBookingWebsiteEventRepository.js`
+
+## [2026-05-20] Website editor architecture split and shared editor infrastructure
+
+Context:
+`WebsiteEditorPage.js` had grown into a large orchestration, rendering, and interaction file. The editor still worked, but adding new override areas was raising complexity and making preview-to-editor interactions harder to maintain safely.
+
+Implementation:
+
+- Split the editor into clearer feature-local layers:
+  - shared fields in `editor/WebsiteEditorFields.jsx`
+  - loading/status surfaces in `editor/WebsiteEditorStates.jsx`
+  - pure helpers in `editor/websiteEditorUtils.js`
+  - preview-target navigation in `editor/hooks/useWebsiteEditorTargeting.js`
+  - large editor sections in `editor/sections/*`
+  - a dedicated `WebsiteImagePickerDialog.jsx` alongside the existing icon picker
+- Added section-specific editor components for:
+  - amenities
+  - contact
+  - image slots
+  - residence
+  - calendar
+- Moved shared section resolver/config modules into `frontend/web/src/features/hostdashboard/website/config` instead of leaving them under rendering.
+- Kept `WebsiteEditorPage.js` as the route-level orchestration surface while moving reusable UI and targeting behavior out of it.
+- Hardened preview-to-editor targeting so one click can still land on the intended field when the destination section is collapsed first.
+- Added explicit opt-out behavior for controls such as contact image upload so editor targeting does not break normal file-selection UX.
+
+Decision / Rationale:
+
+- New editor capabilities should be added through dedicated fields, sections, hooks, dialogs, or shared config modules instead of expanding one route file indefinitely.
+- Shared section config belongs to the feature-level `config` layer because it is consumed by editor UI, draft override logic, and template rendering.
+- Preview-targeting logic is product behavior, not page-local incidental code, so it needed its own reusable hook.
+
+AWS / Data impact:
+
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- Frontend-only architecture and interaction refactor.
+
+Validation:
+
+- Frontend production build passed repeatedly during the split.
+- Image picker and preview-target navigation regressions found during refactor were corrected before the final build pass.
+
+Open risks / Next:
+
+- Trust/journey editor surfaces still have room for the same structural cleanup level as the newly extracted residence/calendar/amenities sections.
+- The editor structure is now cleaner, but template coverage still remains uneven; Panorama currently benefits most from the expanded section model.
+
+Evidence (commit(s), file(s), docs):
+
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteImagePickerDialog.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/WebsiteEditorFields.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/WebsiteEditorStates.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/websiteEditorUtils.js`
+  - `frontend/web/src/features/hostdashboard/website/editor/hooks/useWebsiteEditorTargeting.js`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorAmenitiesSection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorContactSection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorImageSlotsSection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorResidenceSection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorCalendarSection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/config/websiteAmenitiesConfig.js`
+  - `frontend/web/src/features/hostdashboard/website/config/websiteContactSectionConfig.js`
+  - `frontend/web/src/features/hostdashboard/website/config/websiteResidenceSectionConfig.js`
+  - `frontend/web/src/features/hostdashboard/website/config/websiteCalendarSectionConfig.js`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
+
+## [2026-05-21] Panorama section expansion, rotating media, and shared calendar contract
+
+Context:
+The first implemented templates already rendered from the shared website model, but Panorama still needed deeper, section-specific configurability. At the same time, the availability calendar needed to evolve from a simple visibility-controlled snapshot into a more explicit shared section contract.
+
+Implementation:
+
+- Expanded Panorama Landing editor coverage with dedicated section contracts for:
+  - contact footer
+  - amenities
+  - residence
+  - calendar
+- Added host-backed contact footer behavior with:
+  - editable title and description
+  - host/profile/initials avatar modes
+  - custom uploaded avatar image
+  - accent color and footer background color
+- Added configurable amenities with:
+  - add/delete/reorder
+  - editable labels
+  - shared amenity icon picker
+  - configurable icon color
+  - capped website-facing list plus full imported-list modal behavior
+- Added dedicated residence controls with:
+  - editable title, headline, and description
+  - separate residence image slot
+  - optional residence panel plus panel color
+  - section-level preview targeting
+- Added shared per-slot image rotation so image slots can rotate through imported listing photos while keeping the selected slot image as the lead image.
+- Added a dedicated calendar section with:
+  - editable title and description
+  - independent panel toggle and panel color
+  - month navigation controls in the rendered availability snapshot
+- Kept the calendar read-only for guests, but expanded the availability data path so website calendars merge:
+  - imported external blocked dates
+  - accepted booking date keys
+  - PMS unavailable override dates
+- Reused the same calendar enrichment path across:
+  - editor preview
+  - internal draft preview
+  - published live-site rendering
+
+Decision / Rationale:
+
+- Panorama needed deeper section-level control, but still within a fixed template architecture instead of turning into a page builder.
+- Image rotation belongs to the shared image-slot contract rather than being hardcoded to one specific section.
+- The website calendar should remain informational in this phase, but the imported snapshot still needs to stay aligned with real PMS and external calendar state.
+
+AWS / Data impact:
+
+- No Aurora schema change.
+- No API Gateway route change.
+- No Lambda routing change.
+- The website property enrichment path in frontend now performs additional accepted-booking and override aggregation on top of the existing property detail payload.
+
+Validation:
+
+- Frontend production build passed after the section-contract additions.
+- Calendar rendering was revalidated after title/class merge fixes and after the shared availability enrichment was applied to editor preview, internal preview, and live-site rendering paths.
+
+Open risks / Next:
+
+- Public booking remains out of scope; the calendar is still a read-only snapshot and not a quote or booking engine.
+- Panorama now has richer section coverage than the other implemented templates, so the next product-quality step is extending equivalent control depth where it makes sense in Trust Signals and Experience Journey.
+
+Evidence (commit(s), file(s), docs):
+
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/websiteDraftContentOverrides.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/buildWebsiteTemplateModel.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/websiteImageSlotUtils.js`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/templateSharedSections.jsx`
+  - `frontend/web/src/features/hostdashboard/website/services/websitePropertyService.js`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicSitePage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorResidenceSection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorCalendarSection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorAmenitiesSection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/config/websiteResidenceSectionConfig.js`
+  - `frontend/web/src/features/hostdashboard/website/config/websiteCalendarSectionConfig.js`
+  - `frontend/web/src/features/hostdashboard/website/config/websiteAmenitiesConfig.js`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
