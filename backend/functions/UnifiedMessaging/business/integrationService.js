@@ -8,6 +8,9 @@ import IntegrationSyncRepository from "../data/integrationSyncRepository.js";
 import ReservationLinkRepository from "../data/reservationLinkRepository.js";
 import ChannexSyncEvidenceRepository from "../data/channexSyncEvidenceRepository.js";
 import ChannexBookingRevisionRepository from "../data/channexBookingRevisionRepository.js";
+import ChannexExternalBookingImportRepository, {
+  buildDeterministicChannexBookingId,
+} from "../data/channexExternalBookingImportRepository.js";
 import Database from "../ORM/index.js";
 
 import SyncRunner from "./syncRunner.js";
@@ -770,6 +773,33 @@ const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_PAGE_SIZE_DAYS = 60;
 const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_REQUESTED_DAYS = CHANNEX_CERTIFICATION_FULL_SYNC_DAYS + 1;
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
 const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
+const CHANNEX_BOOKING_PULL_ACTION = "pull-latest-bookings";
+const CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT = "/api/v1/booking_revisions/feed";
+const CHANNEX_BOOKING_IMPORT_SOURCE = "channex-booking-pull";
+const CHANNEL_CHANNEX = "CHANNEX";
+const CHANNEX_IMPORTED_BOOKING_STATUS = "Paid";
+const CHANNEX_EXTERNAL_PAYMENT_STATUS = "EXTERNAL";
+const CHANNEX_MODIFIED_UNLINKED_REASON =
+  "modified revision not imported because no linked Domits booking was found";
+const CHANNEX_CANCELLED_UNLINKED_REASON =
+  "cancelled revision not imported because no linked Domits booking was found";
+const CHANNEX_SENSITIVE_PAYLOAD_KEYS = new Set([
+  "card_number",
+  "credit_card",
+  "cvv",
+  "cvc",
+  "guarantee",
+  "card",
+  "payment_card",
+]);
+const CHANNEX_PAYMENT_CONTEXT_KEYS = new Set([
+  "payment",
+  "payments",
+  "card",
+  "credit_card",
+  "payment_card",
+  "guarantee",
+]);
 const CHANNEX_STATUS = {
   NOT_CONNECTED: "NOT_CONNECTED",
   PENDING_PROVIDER_VALIDATION: "PENDING_PROVIDER_VALIDATION",
@@ -778,6 +808,149 @@ const CHANNEX_STATUS = {
   DISCONNECTED: "DISCONNECTED",
   CONNECTED: "CONNECTED",
 };
+const normalizePayloadKey = (key) => String(key || "").trim().toLowerCase();
+const shouldRedactChannexPayloadKey = (key, path) => {
+  const normalizedKey = normalizePayloadKey(key);
+  if (CHANNEX_SENSITIVE_PAYLOAD_KEYS.has(normalizedKey)) return true;
+  return normalizedKey === "token" && path.some((item) => CHANNEX_PAYMENT_CONTEXT_KEYS.has(normalizePayloadKey(item)));
+};
+const sanitizeChannexImportPayload = (value, path = []) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeChannexImportPayload(item, path));
+  }
+  if (!value || typeof value !== "object") return value;
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, nestedValue]) => [
+      key,
+      shouldRedactChannexPayloadKey(key, path)
+        ? "[REDACTED]"
+        : sanitizeChannexImportPayload(nestedValue, [...path, key]),
+    ])
+  );
+};
+const getChannexRevisionAttributes = (revision) => {
+  const rawPayload = revision?.rawPayload;
+  if (rawPayload?.attributes && typeof rawPayload.attributes === "object") return rawPayload.attributes;
+  if (rawPayload?.data?.attributes && typeof rawPayload.data.attributes === "object") return rawPayload.data.attributes;
+  return {};
+};
+const getChannexRevisionRoomLines = (revision) => {
+  const attributes = getChannexRevisionAttributes(revision);
+  if (Array.isArray(attributes.rooms)) return attributes.rooms;
+  if (Array.isArray(revision?.rooms)) {
+    return revision.rooms.map((room) => ({
+      room_type_id: room?.roomTypeId ?? room?.room_type_id ?? null,
+      rate_plan_id: room?.ratePlanId ?? room?.rate_plan_id ?? null,
+    }));
+  }
+  if (requireStr(revision?.roomTypeId) || requireStr(revision?.ratePlanId)) {
+    return [
+      {
+        room_type_id: revision?.roomTypeId ?? null,
+        rate_plan_id: revision?.ratePlanId ?? null,
+      },
+    ];
+  }
+  return [];
+};
+const getChannexExternalReservationId = (revision) =>
+  requireStr(revision?.bookingId) ||
+  requireStr(revision?.uniqueId) ||
+  requireStr(revision?.systemId) ||
+  requireStr(revision?.revisionId);
+const getChannexRevisionStatus = (revision) => String(revision?.status || "").trim().toLowerCase();
+const isoDateToBookingMs = (value) => {
+  const normalizedDate = parseIsoDateParam(value);
+  if (!normalizedDate) return null;
+  const parsed = new Date(`${normalizedDate}T00:00:00.000Z`).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+};
+const getDomitsBookingIdFromLink = (link) => {
+  const payload = parseStructuredEvidenceField(link?.rawPayload);
+  return requireStr(payload?.domits?.bookingId);
+};
+const buildChannexPullIssue = (code, message, extra = {}) => ({
+  code,
+  message,
+  ...extra,
+});
+const buildChannexRoomLineMappingFailure = (roomLineCount) => {
+  if (roomLineCount > 1) {
+    return {
+      errorCode: "CHANNEX_BOOKING_MULTI_ROOM_UNSUPPORTED",
+      errorMessage: "Multi-room Channex booking revisions are not imported by this MVP.",
+    };
+  }
+
+  return {
+    errorCode: "CHANNEX_BOOKING_ROOM_MISSING",
+    errorMessage: "Channex booking revision is missing a room line.",
+  };
+};
+const buildImportedNewBookingResult = ({ ackOk, created }) => {
+  if (!ackOk) return "imported-but-ack-failed";
+  return created ? "created-and-acked" : "already-imported-and-acked";
+};
+const getChannexBookingPullEvidenceStatus = ({ overallSuccess, ackedCount }) => {
+  if (overallSuccess) return "SUCCESS";
+  return ackedCount > 0 ? "PARTIAL" : "FAILED";
+};
+const createSkippedChannexPullItem = ({ revision, externalReservationId, reasonCode, reasonMessage, warnings = [] }) => ({
+  revisionId: requireStr(revision?.revisionId),
+  bookingId: requireStr(revision?.bookingId),
+  externalReservationId: externalReservationId ?? getChannexExternalReservationId(revision),
+  status: requireStr(revision?.status),
+  domitsBookingId: null,
+  linkId: null,
+  result: "skipped-unacked",
+  rawPersisted: false,
+  createdBooking: false,
+  updatedBooking: false,
+  cancelledBooking: false,
+  acked: false,
+  unacked: true,
+  warnings: [buildChannexPullIssue(reasonCode, reasonMessage), ...warnings],
+  errors: [],
+});
+const buildChannexBookingLinkPayload = ({ revision, externalReservationId, domitsBookingId, action }) => ({
+  channex: {
+    revisionId: requireStr(revision?.revisionId),
+    bookingId: requireStr(revision?.bookingId),
+    uniqueId: requireStr(revision?.uniqueId),
+    systemId: requireStr(revision?.systemId),
+    otaReservationCode: requireStr(revision?.otaReservationCode),
+    otaName: requireStr(revision?.otaName),
+    status: requireStr(revision?.status),
+    propertyId: requireStr(revision?.propertyId),
+    roomTypeId: requireStr(revision?.roomTypeId),
+    ratePlanId: requireStr(revision?.ratePlanId),
+    arrivalDate: parseIsoDateParam(revision?.arrivalDate) ?? null,
+    departureDate: parseIsoDateParam(revision?.departureDate) ?? null,
+    guestName: requireStr(revision?.guestName),
+    amount: revision?.amount ?? null,
+    currency: requireStr(revision?.currency),
+    insertedAt: requireStr(revision?.insertedAt),
+    sanitizedSourcePayload: sanitizeChannexImportPayload(revision?.rawPayload ?? revision ?? null),
+  },
+  domits: {
+    bookingId: domitsBookingId,
+  },
+  externalReservationId,
+  importedBy: CHANNEX_BOOKING_IMPORT_SOURCE,
+  action,
+});
+const summarizeChannexPullItems = (items) => ({
+  rawPersistedCount: items.filter((item) => item.rawPersisted).length,
+  createdBookingCount: items.filter((item) => item.createdBooking).length,
+  updatedBookingCount: items.filter((item) => item.updatedBooking).length,
+  cancelledBookingCount: items.filter((item) => item.cancelledBooking).length,
+  skippedCount: items.filter((item) => item.result === "skipped-unacked").length,
+  ackedCount: items.filter((item) => item.acked).length,
+  unackedCount: items.filter((item) => item.unacked).length,
+  warnings: items.flatMap((item) => (Array.isArray(item.warnings) ? item.warnings : [])),
+  errors: items.flatMap((item) => (Array.isArray(item.errors) ? item.errors : [])),
+});
 const getUnavailableChannexStatus = (integration) =>
   integration ? CHANNEX_STATUS.DISCONNECTED : CHANNEX_STATUS.NOT_CONNECTED;
 const getChannexProviderValidationFailureStatus = (providerStatus) => {
@@ -2378,6 +2551,7 @@ export default class IntegrationService {
     channexEvidence = new ChannexSyncEvidenceRepository(),
     channexBookingRevisions = new ChannexBookingRevisionRepository(),
     bookingAvailabilityRepository = new ChannexBookingAvailabilityRepository(),
+    externalBookingImportRepository = new ChannexExternalBookingImportRepository(),
     runner = new SyncRunner(),
     credentialStore = new WhatsAppCredentialStore(),
     holiduCredentialStore = new HoliduCredentialStore(),
@@ -2394,6 +2568,7 @@ export default class IntegrationService {
     this.channexEvidence = channexEvidence;
     this.channexBookingRevisions = channexBookingRevisions;
     this.bookingAvailabilityRepository = bookingAvailabilityRepository;
+    this.externalBookingImportRepository = externalBookingImportRepository;
     this.runner = runner;
     this.credentialStore = credentialStore;
     this.holiduCredentialStore = holiduCredentialStore;
@@ -5159,6 +5334,680 @@ export default class IntegrationService {
     return { fetched, persisted, failed };
   }
 
+  buildChannexBookingImportBaseItem({ revision, externalReservationId, persisted }) {
+    return {
+      revisionId: requireStr(revision?.revisionId),
+      bookingId: requireStr(revision?.bookingId),
+      externalReservationId,
+      status: requireStr(revision?.status),
+      domitsBookingId: null,
+      linkId: null,
+      result: null,
+      rawPersisted: !!persisted,
+      createdBooking: false,
+      updatedBooking: false,
+      cancelledBooking: false,
+      acked: false,
+      unacked: false,
+      warnings: [],
+      errors: [],
+    };
+  }
+
+  buildChannexBookingImportDates(revision) {
+    const arrivalDate = parseIsoDateParam(revision?.arrivalDate);
+    const departureDate = parseIsoDateParam(revision?.departureDate);
+    const arrivalDateMs = isoDateToBookingMs(arrivalDate);
+    const departureDateMs = isoDateToBookingMs(departureDate);
+
+    if (!arrivalDate || !departureDate || !Number.isFinite(arrivalDateMs) || !Number.isFinite(departureDateMs)) {
+      return {
+        ok: false,
+        errorCode: "CHANNEX_BOOKING_DATES_INVALID",
+        errorMessage: "Channex booking revision is missing valid arrival/departure dates.",
+      };
+    }
+
+    if (departureDateMs <= arrivalDateMs) {
+      return {
+        ok: false,
+        errorCode: "CHANNEX_BOOKING_DATES_INVALID",
+        errorMessage: "Channex booking departure date must be after arrival date.",
+      };
+    }
+
+    return {
+      ok: true,
+      arrivalDate,
+      departureDate,
+      arrivalDateMs,
+      departureDateMs,
+    };
+  }
+
+  findActiveChannexRoomTypeMapping({ roomTypeMappings, domitsPropertyId, externalPropertyId, externalRoomTypeId }) {
+    return (Array.isArray(roomTypeMappings) ? roomTypeMappings : []).find(
+      (mapping) =>
+        requireStr(mapping?.domitsPropertyId) === domitsPropertyId &&
+        requireStr(mapping?.externalPropertyId) === externalPropertyId &&
+        requireStr(mapping?.externalRoomTypeId) === externalRoomTypeId &&
+        String(mapping?.status || "").toUpperCase() === "ACTIVE"
+    );
+  }
+
+  findActiveChannexRatePlanMapping({
+    ratePlanMappings,
+    domitsPropertyId,
+    externalPropertyId,
+    externalRoomTypeId,
+    externalRatePlanId,
+  }) {
+    return (Array.isArray(ratePlanMappings) ? ratePlanMappings : []).find(
+      (mapping) =>
+        requireStr(mapping?.domitsPropertyId) === domitsPropertyId &&
+        requireStr(mapping?.externalPropertyId) === externalPropertyId &&
+        requireStr(mapping?.externalRoomTypeId) === externalRoomTypeId &&
+        requireStr(mapping?.externalRatePlanId) === externalRatePlanId &&
+        String(mapping?.status || "").toUpperCase() === "ACTIVE"
+    );
+  }
+
+  resolveChannexBookingImportMapping({
+    revision,
+    normalizedDomitsPropertyId,
+    propertyMapping,
+    roomTypeMappings,
+    ratePlanMappings,
+  }) {
+    if (!this.isChannexBookingRevisionInPropertyScope(revision, propertyMapping)) {
+      return {
+        ok: false,
+        errorCode: "CHANNEX_BOOKING_PROPERTY_SCOPE_MISMATCH",
+        errorMessage: "Fetched booking revision does not belong to the selected Channex property mapping.",
+      };
+    }
+
+    const roomLines = getChannexRevisionRoomLines(revision);
+    if (roomLines.length !== 1) {
+      const failure = buildChannexRoomLineMappingFailure(roomLines.length);
+      return {
+        ok: false,
+        ...failure,
+      };
+    }
+
+    const externalPropertyId = requireStr(propertyMapping?.externalPropertyId);
+    const externalRoomTypeId = requireStr(roomLines[0]?.room_type_id) || requireStr(revision?.roomTypeId);
+    const externalRatePlanId = requireStr(roomLines[0]?.rate_plan_id) || requireStr(revision?.ratePlanId);
+    const roomTypeMapping = this.findActiveChannexRoomTypeMapping({
+      roomTypeMappings,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      externalPropertyId,
+      externalRoomTypeId,
+    });
+
+    if (!roomTypeMapping) {
+      return {
+        ok: false,
+        errorCode: "CHANNEX_ROOM_TYPE_MAPPING_MISSING",
+        errorMessage: "Channex room type mapping is missing for this booking revision.",
+      };
+    }
+
+    if (!externalRatePlanId) {
+      return {
+        ok: true,
+        externalPropertyId,
+        externalRoomTypeId,
+        externalRatePlanId: null,
+        roomTypeMapping,
+        ratePlanMapping: null,
+      };
+    }
+
+    const ratePlanMapping = this.findActiveChannexRatePlanMapping({
+      ratePlanMappings,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      externalPropertyId,
+      externalRoomTypeId,
+      externalRatePlanId,
+    });
+
+    if (!ratePlanMapping) {
+      return {
+        ok: false,
+        errorCode: "CHANNEX_RATE_PLAN_MAPPING_MISSING",
+        errorMessage: "Channex rate plan mapping is missing for this booking revision.",
+      };
+    }
+
+    return {
+      ok: true,
+      externalPropertyId,
+      externalRoomTypeId,
+      externalRatePlanId,
+      roomTypeMapping,
+      ratePlanMapping,
+    };
+  }
+
+  async acknowledgeImportedChannexBookingRevision({
+    revisionId,
+    secret,
+    integration,
+    normalizedDomitsPropertyId,
+    propertyMapping,
+  }) {
+    const acknowledgement = await this.processChannexBookingAcknowledgement({
+      revisionId,
+      secret,
+      integration,
+      normalizedDomitsPropertyId,
+      propertyMapping,
+    });
+
+    if (acknowledgement.failure) {
+      return {
+        ok: false,
+        error: buildChannexPullIssue(
+          acknowledgement.failure.errorCode || "CHANNEX_BOOKING_ACK_FAILED",
+          acknowledgement.failure.errorMessage || "Failed to acknowledge Channex booking revision.",
+          { stage: acknowledgement.failure.stage ?? "ack" }
+        ),
+      };
+    }
+
+    return {
+      ok: true,
+      acknowledgement: acknowledgement.acknowledged,
+    };
+  }
+
+  async upsertChannexImportedReservationLink({
+    integration,
+    externalReservationId,
+    revision,
+    dates,
+    mapping,
+    domitsBookingId,
+    action,
+    reservationStatus,
+  }) {
+    return this.resLinks.upsert({
+      integrationAccountId: integration.id,
+      channel: CHANNEL_CHANNEX,
+      externalReservationId,
+      externalThreadId: requireStr(revision?.otaReservationCode) || requireStr(revision?.uniqueId),
+      domitsThreadId: null,
+      domitsPropertyId: mapping.roomTypeMapping.domitsPropertyId,
+      guestName: requireStr(revision?.guestName) || "Channex guest",
+      checkInAt: dates.arrivalDateMs,
+      checkOutAt: dates.departureDateMs,
+      reservationStatus,
+      ratePlan:
+        requireStr(mapping.ratePlanMapping?.externalRatePlanName) ||
+        requireStr(mapping.ratePlanMapping?.externalRatePlanId) ||
+        requireStr(mapping.externalRatePlanId),
+      paymentStatus: CHANNEX_EXTERNAL_PAYMENT_STATUS,
+      rawPayload: serializeRawPayload(
+        buildChannexBookingLinkPayload({
+          revision,
+          externalReservationId,
+          domitsBookingId,
+          action,
+        })
+      ),
+    });
+  }
+
+  async createOrReuseChannexImportedBooking({ revision, integration, externalReservationId, propertyContext, dates }) {
+    const deterministicBookingId = buildDeterministicChannexBookingId(integration.id, externalReservationId);
+    const existingBooking = await this.externalBookingImportRepository.getBookingById(deterministicBookingId);
+    if (existingBooking) {
+      return {
+        booking: existingBooking,
+        created: false,
+        domitsBookingId: deterministicBookingId,
+      };
+    }
+
+    const createdBooking = await this.externalBookingImportRepository.createExternalBooking({
+      bookingId: deterministicBookingId,
+      propertyId: propertyContext.propertyId,
+      hostId: propertyContext.hostId,
+      externalReservationId,
+      guestName: requireStr(revision?.guestName) || "Channex guest",
+      arrivalDateMs: dates.arrivalDateMs,
+      departureDateMs: dates.departureDateMs,
+    });
+
+    return {
+      booking: createdBooking,
+      created: true,
+      domitsBookingId: deterministicBookingId,
+    };
+  }
+
+  async processNewChannexBookingRevision({
+    baseItem,
+    revision,
+    integration,
+    externalReservationId,
+    existingLink,
+    propertyContext,
+    dates,
+    mapping,
+    secret,
+    normalizedDomitsPropertyId,
+    propertyMapping,
+  }) {
+    const linkedBookingId = getDomitsBookingIdFromLink(existingLink);
+    const linkedBooking = linkedBookingId
+      ? await this.externalBookingImportRepository.getBookingById(linkedBookingId)
+      : null;
+    const bookingResult = linkedBooking
+      ? { booking: linkedBooking, created: false, domitsBookingId: linkedBookingId }
+      : await this.createOrReuseChannexImportedBooking({
+          revision,
+          integration,
+          externalReservationId,
+          propertyContext,
+          dates,
+        });
+
+    if (!bookingResult.booking) {
+      return {
+        ...baseItem,
+        result: "booking-create-failed-unacked",
+        unacked: true,
+        errors: [
+          buildChannexPullIssue(
+            "DOMITS_BOOKING_CREATE_FAILED",
+            "Domits booking could not be created for this Channex booking revision."
+          ),
+        ],
+      };
+    }
+
+    const link = await this.upsertChannexImportedReservationLink({
+      integration,
+      externalReservationId,
+      revision,
+      dates,
+      mapping,
+      domitsBookingId: bookingResult.domitsBookingId,
+      action: bookingResult.created ? "created" : "already-imported",
+      reservationStatus: CHANNEX_IMPORTED_BOOKING_STATUS,
+    });
+    const ack = await this.acknowledgeImportedChannexBookingRevision({
+      revisionId: revision.revisionId,
+      secret,
+      integration,
+      normalizedDomitsPropertyId,
+      propertyMapping,
+    });
+
+    return {
+      ...baseItem,
+      domitsBookingId: bookingResult.domitsBookingId,
+      linkId: link?.id ?? null,
+      result: buildImportedNewBookingResult({ ackOk: ack.ok, created: bookingResult.created }),
+      createdBooking: bookingResult.created,
+      acked: ack.ok,
+      unacked: !ack.ok,
+      errors: ack.ok ? [] : [ack.error],
+    };
+  }
+
+  async processModifiedChannexBookingRevision({
+    baseItem,
+    revision,
+    existingLink,
+    dates,
+    mapping,
+    integration,
+    externalReservationId,
+    secret,
+    normalizedDomitsPropertyId,
+    propertyMapping,
+  }) {
+    const domitsBookingId = getDomitsBookingIdFromLink(existingLink);
+    if (!domitsBookingId) {
+      return {
+        ...baseItem,
+        result: "skipped-unacked",
+        unacked: true,
+        warnings: [
+          buildChannexPullIssue("CHANNEX_MODIFIED_BOOKING_LINK_MISSING", CHANNEX_MODIFIED_UNLINKED_REASON),
+        ],
+      };
+    }
+
+    const updatedBooking = await this.externalBookingImportRepository.updateImportedBooking({
+      bookingId: domitsBookingId,
+      guestName: requireStr(revision?.guestName) || "Channex guest",
+      arrivalDateMs: dates.arrivalDateMs,
+      departureDateMs: dates.departureDateMs,
+    });
+    if (!updatedBooking) {
+      return {
+        ...baseItem,
+        domitsBookingId,
+        result: "booking-update-failed-unacked",
+        unacked: true,
+        errors: [
+          buildChannexPullIssue(
+            "DOMITS_BOOKING_UPDATE_FAILED",
+            "Linked Domits booking could not be updated for this Channex modified revision."
+          ),
+        ],
+      };
+    }
+
+    const link = await this.upsertChannexImportedReservationLink({
+      integration,
+      externalReservationId,
+      revision,
+      dates,
+      mapping,
+      domitsBookingId,
+      action: "modified",
+      reservationStatus: CHANNEX_IMPORTED_BOOKING_STATUS,
+    });
+    const ack = await this.acknowledgeImportedChannexBookingRevision({
+      revisionId: revision.revisionId,
+      secret,
+      integration,
+      normalizedDomitsPropertyId,
+      propertyMapping,
+    });
+
+    return {
+      ...baseItem,
+      domitsBookingId,
+      linkId: link?.id ?? null,
+      result: ack.ok ? "updated-and-acked" : "updated-but-ack-failed",
+      updatedBooking: true,
+      acked: ack.ok,
+      unacked: !ack.ok,
+      errors: ack.ok ? [] : [ack.error],
+    };
+  }
+
+  async processCancelledChannexBookingRevision({
+    baseItem,
+    revision,
+    existingLink,
+    dates,
+    mapping,
+    integration,
+    externalReservationId,
+    secret,
+    normalizedDomitsPropertyId,
+    propertyMapping,
+  }) {
+    const domitsBookingId = getDomitsBookingIdFromLink(existingLink);
+    if (!domitsBookingId) {
+      return {
+        ...baseItem,
+        result: "skipped-unacked",
+        unacked: true,
+        warnings: [
+          buildChannexPullIssue("CHANNEX_CANCELLED_BOOKING_LINK_MISSING", CHANNEX_CANCELLED_UNLINKED_REASON),
+        ],
+      };
+    }
+
+    const cancelledBooking = await this.externalBookingImportRepository.cancelImportedBooking(domitsBookingId);
+    if (!cancelledBooking) {
+      return {
+        ...baseItem,
+        domitsBookingId,
+        result: "booking-cancel-failed-unacked",
+        unacked: true,
+        errors: [
+          buildChannexPullIssue(
+            "DOMITS_BOOKING_CANCEL_FAILED",
+            "Linked Domits booking could not be cancelled for this Channex cancelled revision."
+          ),
+        ],
+      };
+    }
+
+    const link = await this.upsertChannexImportedReservationLink({
+      integration,
+      externalReservationId,
+      revision,
+      dates,
+      mapping,
+      domitsBookingId,
+      action: "cancelled",
+      reservationStatus: "Cancelled",
+    });
+    const ack = await this.acknowledgeImportedChannexBookingRevision({
+      revisionId: revision.revisionId,
+      secret,
+      integration,
+      normalizedDomitsPropertyId,
+      propertyMapping,
+    });
+
+    return {
+      ...baseItem,
+      domitsBookingId,
+      linkId: link?.id ?? null,
+      result: ack.ok ? "cancelled-and-acked" : "cancelled-but-ack-failed",
+      cancelledBooking: true,
+      acked: ack.ok,
+      unacked: !ack.ok,
+      errors: ack.ok ? [] : [ack.error],
+    };
+  }
+
+  async processPulledChannexBookingRevision({
+    revision,
+    integration,
+    normalizedDomitsPropertyId,
+    propertyMapping,
+    propertyContext,
+    roomTypeMappings,
+    ratePlanMappings,
+    secret,
+  }) {
+    const externalReservationId = getChannexExternalReservationId(revision);
+    const revisionSummary = this.formatChannexBookingRevisionSummary(revision);
+    let persisted = null;
+
+    try {
+      persisted = await this.persistChannexBookingRevision({
+        integrationAccountId: integration.id,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        propertyMapping,
+        revision,
+      });
+    } catch (error) {
+      return {
+        ...createSkippedChannexPullItem({
+          revision,
+          externalReservationId,
+          reasonCode: error?.code || "CHANNEX_BOOKING_PERSIST_FAILED",
+          reasonMessage: error?.message || "Failed to persist Channex booking revision.",
+        }),
+        errors: [
+          buildChannexPullIssue(
+            error?.code || "CHANNEX_BOOKING_PERSIST_FAILED",
+            error?.message || "Failed to persist Channex booking revision."
+          ),
+        ],
+      };
+    }
+
+    const baseItem = this.buildChannexBookingImportBaseItem({ revision, externalReservationId, persisted });
+    try {
+      if (!externalReservationId) {
+        return {
+          ...baseItem,
+          result: "skipped-unacked",
+          unacked: true,
+          warnings: [
+            buildChannexPullIssue(
+              "CHANNEX_BOOKING_RESERVATION_ID_MISSING",
+              "Channex booking revision is missing a stable reservation identifier."
+            ),
+          ],
+        };
+      }
+
+      const mapping = this.resolveChannexBookingImportMapping({
+        revision,
+        normalizedDomitsPropertyId,
+        propertyMapping,
+        roomTypeMappings,
+        ratePlanMappings,
+      });
+      if (!mapping.ok) {
+        return {
+          ...baseItem,
+          result: "skipped-unacked",
+          unacked: true,
+          warnings: [buildChannexPullIssue(mapping.errorCode, mapping.errorMessage)],
+        };
+      }
+
+      if (!propertyContext?.hostId || !propertyContext?.propertyId) {
+        return {
+          ...baseItem,
+          result: "skipped-unacked",
+          unacked: true,
+          warnings: [
+            buildChannexPullIssue(
+              "DOMITS_PROPERTY_CONTEXT_MISSING",
+              "Domits property host context could not be resolved for this booking import."
+            ),
+          ],
+        };
+      }
+
+      const dates = this.buildChannexBookingImportDates(revision);
+      if (!dates.ok) {
+        return {
+          ...baseItem,
+          result: "skipped-unacked",
+          unacked: true,
+          warnings: [buildChannexPullIssue(dates.errorCode, dates.errorMessage)],
+        };
+      }
+
+      const existingLink = await this.resLinks.getByIntegrationAccountIdAndExternalReservation({
+        integrationAccountId: integration.id,
+        channel: CHANNEL_CHANNEX,
+        externalReservationId,
+      });
+      const status = getChannexRevisionStatus(revision);
+      if (status === "new") {
+        return await this.processNewChannexBookingRevision({
+          baseItem,
+          revision,
+          integration,
+          externalReservationId,
+          existingLink,
+          propertyContext,
+          dates,
+          mapping,
+          secret,
+          normalizedDomitsPropertyId,
+          propertyMapping,
+        });
+      }
+
+      if (status === "modified") {
+        return await this.processModifiedChannexBookingRevision({
+          baseItem,
+          revision,
+          existingLink,
+          dates,
+          mapping,
+          integration,
+          externalReservationId,
+          secret,
+          normalizedDomitsPropertyId,
+          propertyMapping,
+        });
+      }
+
+      if (status === "cancelled" || status === "canceled") {
+        return await this.processCancelledChannexBookingRevision({
+          baseItem,
+          revision,
+          existingLink,
+          dates,
+          mapping,
+          integration,
+          externalReservationId,
+          secret,
+          normalizedDomitsPropertyId,
+          propertyMapping,
+        });
+      }
+
+      return {
+        ...baseItem,
+        result: "skipped-unacked",
+        unacked: true,
+        warnings: [
+          buildChannexPullIssue(
+            "CHANNEX_BOOKING_REVISION_STATUS_UNSUPPORTED",
+            "Only new, modified, and cancelled Channex booking revisions are handled by this pull flow."
+          ),
+        ],
+      };
+    } catch (error) {
+      return {
+        ...baseItem,
+        result: "import-failed-unacked",
+        unacked: true,
+        errors: [
+          buildChannexPullIssue(
+            error?.code || error?.name || "CHANNEX_BOOKING_IMPORT_FAILED",
+            error?.message || "Failed to import Channex booking revision into Domits."
+          ),
+        ],
+      };
+    }
+  }
+
+  async collectPulledChannexBookingImports({
+    providerResult,
+    integration,
+    normalizedDomitsPropertyId,
+    propertyMapping,
+    secret,
+  }) {
+    const [roomTypeMappings, ratePlanMappings, propertyContext] = await Promise.all([
+      this.roomTypes.listByAccountId(integration.id),
+      this.ratePlans.listByAccountId(integration.id),
+      this.externalBookingImportRepository.getDomitsPropertyContext(normalizedDomitsPropertyId),
+    ]);
+    const items = [];
+
+    for (const revision of Array.isArray(providerResult.revisions) ? providerResult.revisions : []) {
+      items.push(
+        await this.processPulledChannexBookingRevision({
+          revision,
+          integration,
+          normalizedDomitsPropertyId,
+          propertyMapping,
+          propertyContext,
+          roomTypeMappings,
+          ratePlanMappings,
+          secret,
+        })
+      );
+    }
+
+    return items;
+  }
+
   buildChannexBookingFetchFailure(revisionId, fetchResult) {
     return {
       revisionId,
@@ -5435,6 +6284,163 @@ export default class IntegrationService {
             {
               errorCode: "CHANNEX_BOOKING_RECEIVE_FAILED",
               errorMessage: "Failed to receive Channex booking revisions.",
+              details,
+            },
+          ],
+          rawDetails: { caughtError: details },
+        }
+      );
+    }
+  }
+
+  async pullLatestChannexBookings(userId, domitsPropertyId, options = {}) {
+    const startedAt = nowMs();
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+    const finalize = async (result, evidencePatch = {}) =>
+      this.finalizeChannexSyncResult(
+        result,
+        buildChannexSyncEvidencePatch({
+          normalizedUserId,
+          normalizedDomitsPropertyId,
+          syncType: "booking_pull",
+          dateFrom: null,
+          dateTo: null,
+          startedAt,
+          evidencePatch,
+        }),
+        options
+      );
+
+    if (!normalizedUserId) {
+      return await finalize(bad(400, { error: "Missing required query param: userId" }), {
+        status: "INVALID_REQUEST",
+        errors: [{ errorCode: "MISSING_USER_ID", errorMessage: "Missing required query param: userId" }],
+      });
+    }
+    if (!normalizedDomitsPropertyId) {
+      return await finalize(bad(400, { error: "Missing required query param: domitsPropertyId" }), {
+        status: "INVALID_REQUEST",
+        errors: [
+          {
+            errorCode: "MISSING_DOMITS_PROPERTY_ID",
+            errorMessage: "Missing required query param: domitsPropertyId",
+          },
+        ],
+      });
+    }
+
+    try {
+      const context = await this.resolveChannexBookingContext(normalizedUserId, normalizedDomitsPropertyId);
+      if (!context.ok) {
+        return await finalize(context.result, {
+          ...context.evidencePatch,
+          notes: [
+            "Manual Channex booking pull imports new external bookings into Domits before acknowledgement.",
+            "No acknowledgement is attempted when mapping or Domits booking persistence fails.",
+          ],
+        });
+      }
+
+      const { integration, propertyMapping, secret } = context;
+      const mappingSnapshot = this.buildChannexBookingMappingSnapshot(propertyMapping);
+      const providerResult = await this.channexProviderClient.listBookingRevisionFeed(secret, {
+        externalPropertyId: propertyMapping.externalPropertyId,
+      });
+      if (!providerResult?.success) {
+        const notes = [
+          "Manual Channex booking pull imports new external bookings into Domits before acknowledgement.",
+        ];
+        const failure = this.buildChannexBookingProviderFeedFailure({
+          integration,
+          providerResult,
+          mappingSnapshot,
+          notes,
+        });
+        return await finalize(failure.response, failure.evidencePatch);
+      }
+
+      const items = await this.collectPulledChannexBookingImports({
+        providerResult,
+        integration,
+        normalizedDomitsPropertyId,
+        propertyMapping,
+        secret,
+      });
+      const summary = summarizeChannexPullItems(items);
+      const fetchedCount = Array.isArray(providerResult.revisions) ? providerResult.revisions.length : 0;
+      const overallSuccess = summary.unackedCount === 0 && summary.errors.length === 0;
+      const status = getChannexBookingPullEvidenceStatus({
+        overallSuccess,
+        ackedCount: summary.ackedCount,
+      });
+      const response = ok({
+        channel: CHANNEL_CHANNEX,
+        action: CHANNEX_BOOKING_PULL_ACTION,
+        endpointCalled: CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT,
+        integrationAccountId: integration.id,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        externalPropertyId: propertyMapping.externalPropertyId,
+        calledProvider: true,
+        fetchedCount,
+        rawPersistedCount: summary.rawPersistedCount,
+        createdBookingCount: summary.createdBookingCount,
+        updatedBookingCount: summary.updatedBookingCount,
+        cancelledBookingCount: summary.cancelledBookingCount,
+        skippedCount: summary.skippedCount,
+        ackedCount: summary.ackedCount,
+        unackedCount: summary.unackedCount,
+        items,
+        warnings: summary.warnings,
+        errors: summary.errors,
+        overallSuccess,
+        notes: [
+          "Manual Channex booking pull. New revisions create Domits booking records before acknowledgement.",
+          "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
+        ],
+      });
+
+      return await finalize(response, {
+        integrationAccountId: integration.id,
+        status,
+        overallSuccess,
+        mappingSnapshot,
+        providerResponseSummary: {
+          calledProvider: true,
+          providerStatus: providerResult?.providerStatus ?? null,
+          fetchedCount,
+          rawPersistedCount: summary.rawPersistedCount,
+          createdBookingCount: summary.createdBookingCount,
+          updatedBookingCount: summary.updatedBookingCount,
+          cancelledBookingCount: summary.cancelledBookingCount,
+          skippedCount: summary.skippedCount,
+          ackedCount: summary.ackedCount,
+          unackedCount: summary.unackedCount,
+        },
+        warnings: summary.warnings,
+        errors: summary.errors,
+        notes: response.response.notes,
+        rawDetails: {
+          items,
+          providerStatus: providerResult?.providerStatus ?? null,
+          propertyMapping: mappingSnapshot.propertyMapping,
+        },
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return await finalize(
+        bad(500, {
+          error: "Failed to pull Channex bookings.",
+          errorCode: "CHANNEX_BOOKING_PULL_FAILED",
+          details,
+        }),
+        {
+          status: "FAILED",
+          overallSuccess: false,
+          errors: [
+            {
+              errorCode: "CHANNEX_BOOKING_PULL_FAILED",
+              errorMessage: "Failed to pull Channex bookings.",
               details,
             },
           ],

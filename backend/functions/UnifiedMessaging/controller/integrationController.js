@@ -221,6 +221,12 @@ class IntegrationController {
     return await this.integrationService.receiveChannexBookingRevisions(userId, domitsPropertyId);
   }
 
+  async pullLatestChannexBookings(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    return await this.integrationService.pullLatestChannexBookings(userId, domitsPropertyId);
+  }
+
   async acknowledgeChannexBookingRevisions(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;

@@ -32,6 +32,38 @@ const buildRevisionRow = (overrides = {}) => ({
   ...overrides,
 });
 
+const buildFeedRevision = (overrides = {}) => ({
+  revisionId: "revision-new-1",
+  bookingId: "booking-ota-1",
+  propertyId: "external-property-1",
+  uniqueId: "unique-ota-1",
+  systemId: "system-ota-1",
+  otaReservationCode: "OTA-123",
+  otaName: "Booking.com",
+  status: "new",
+  arrivalDate: "2026-06-01",
+  departureDate: "2026-06-03",
+  guestName: "External Guest",
+  amount: "200.00",
+  currency: "EUR",
+  insertedAt: "2026-05-21T10:00:00Z",
+  roomTypeId: "external-room-type-1",
+  ratePlanId: "external-rate-plan-1",
+  rawPayload: {
+    id: "revision-new-1",
+    attributes: {
+      booking_id: "booking-ota-1",
+      property_id: "external-property-1",
+      status: "new",
+      arrival_date: "2026-06-01",
+      departure_date: "2026-06-03",
+      customer: { name: "External Guest" },
+      rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
+    },
+  },
+  ...overrides,
+});
+
 const createService = ({
   account = {
     id: "integration-account-1",
@@ -47,27 +79,123 @@ const createService = ({
       status: "ACTIVE",
     },
   ],
+  roomTypeMappings = [
+    {
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalRoomTypeId: "external-room-type-1",
+      externalRoomTypeName: "Demo room",
+      status: "ACTIVE",
+    },
+  ],
+  ratePlanMappings = [
+    {
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalRoomTypeId: "external-room-type-1",
+      externalRatePlanId: "external-rate-plan-1",
+      externalRatePlanName: "Standard",
+      status: "ACTIVE",
+    },
+  ],
   existingRevision = buildRevisionRow(),
+  existingLink = null,
+  feedRevisions = [],
+  propertyContext = {
+    propertyId: "domits-property-1",
+    hostId: "host-1",
+    propertyName: "Demo property",
+  },
+  initialBookings = [],
 } = {}) => {
+  let storedRevision = existingRevision;
+  let storedLink = existingLink;
+  const bookingRowsById = new Map(initialBookings.map((booking) => [booking.id, booking]));
   const accounts = {
     findByUserIdAndChannel: jest.fn().mockResolvedValue(account),
   };
   const props = {
     listByAccountId: jest.fn().mockResolvedValue(propertyMappings),
   };
+  const roomTypes = {
+    listByAccountId: jest.fn().mockResolvedValue(roomTypeMappings),
+  };
+  const ratePlans = {
+    listByAccountId: jest.fn().mockResolvedValue(ratePlanMappings),
+  };
+  const resLinks = {
+    getByIntegrationAccountIdAndExternalReservation: jest.fn().mockImplementation(async () => storedLink),
+    upsert: jest.fn(async (data) => {
+      storedLink = {
+        id: storedLink?.id || "reservation-link-1",
+        ...data,
+        createdAt: storedLink?.createdAt || 1770000000000,
+        updatedAt: 1770000001000,
+      };
+      return storedLink;
+    }),
+  };
   const channexBookingRevisions = {
     listByFilters: jest.fn().mockResolvedValue(revisionRows),
-    getByIntegrationAccountIdAndRevisionId: jest.fn().mockResolvedValue(existingRevision),
+    getByIntegrationAccountIdAndRevisionId: jest.fn().mockImplementation(async () => storedRevision),
+    upsert: jest.fn(async (data) => {
+      storedRevision = buildRevisionRow({
+        id: storedRevision?.id || "local-revision-1",
+        ...data,
+      });
+      return storedRevision;
+    }),
     markAcknowledged: jest.fn(async (_integrationAccountId, revisionId, acknowledgedAt) =>
-      buildRevisionRow({
-        revisionId,
-        acknowledgementState: "ACKNOWLEDGED",
-        acknowledgedAt,
-      })
+      {
+        storedRevision = buildRevisionRow({
+          ...(storedRevision || {}),
+          revisionId,
+          acknowledgementState: "ACKNOWLEDGED",
+          acknowledgedAt,
+        });
+        return storedRevision;
+      }
     ),
   };
+  const externalBookingImportRepository = {
+    getDomitsPropertyContext: jest.fn().mockResolvedValue(propertyContext),
+    getBookingById: jest.fn(async (bookingId) => bookingRowsById.get(bookingId) || null),
+    createExternalBooking: jest.fn(async (data) => {
+      const booking = {
+        id: data.bookingId,
+        propertyId: data.propertyId,
+        hostId: data.hostId,
+        guestName: data.guestName,
+        arrivalDateMs: data.arrivalDateMs,
+        departureDateMs: data.departureDateMs,
+        status: "Paid",
+      };
+      bookingRowsById.set(data.bookingId, booking);
+      return booking;
+    }),
+    updateImportedBooking: jest.fn(async ({ bookingId, guestName, arrivalDateMs, departureDateMs }) => {
+      const existing = bookingRowsById.get(bookingId);
+      if (!existing) return null;
+      const updated = { ...existing, guestName, arrivalDateMs, departureDateMs, status: "Paid" };
+      bookingRowsById.set(bookingId, updated);
+      return updated;
+    }),
+    cancelImportedBooking: jest.fn(async (bookingId) => {
+      const existing = bookingRowsById.get(bookingId);
+      if (!existing) return null;
+      const cancelled = { ...existing, status: "Cancelled" };
+      bookingRowsById.set(bookingId, cancelled);
+      return cancelled;
+    }),
+  };
   const channexProviderClient = {
-    listBookingRevisionFeed: jest.fn(),
+    listBookingRevisionFeed: jest.fn().mockResolvedValue({
+      success: true,
+      revisions: feedRevisions,
+      providerStatus: "ACTIVE",
+      errorCode: null,
+      errorMessage: null,
+    }),
     getBookingRevision: jest.fn(),
     acknowledgeBookingRevision: jest.fn().mockResolvedValue({
       success: true,
@@ -80,12 +208,13 @@ const createService = ({
   const service = new IntegrationService({
     accounts,
     props,
-    ratePlans: {},
-    roomTypes: {},
+    ratePlans,
+    roomTypes,
     sync: {},
-    resLinks: {},
+    resLinks,
     channexEvidence: {},
     channexBookingRevisions,
+    externalBookingImportRepository,
     runner: {},
     credentialStore: {},
     holiduCredentialStore: {},
@@ -100,8 +229,12 @@ const createService = ({
     service,
     accounts,
     props,
+    ratePlans,
+    roomTypes,
+    resLinks,
     channexBookingRevisions,
     channexProviderClient,
+    externalBookingImportRepository,
   };
 };
 
@@ -328,6 +461,540 @@ describe("IntegrationService Channex booking acknowledgement", () => {
       }),
     ]);
     expect(channexProviderClient.getBookingRevision).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+});
+
+describe("IntegrationService Channex booking pull import", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("pulls feed revisions, persists raw data, creates a mapped Domits booking, links it, then acknowledges", async () => {
+    const revision = buildFeedRevision();
+    const {
+      service,
+      channexBookingRevisions,
+      channexProviderClient,
+      externalBookingImportRepository,
+      resLinks,
+    } = createService({
+      feedRevisions: [revision],
+      existingRevision: null,
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toMatchObject({
+      channel: "CHANNEX",
+      action: "pull-latest-bookings",
+      endpointCalled: "/api/v1/booking_revisions/feed",
+      fetchedCount: 1,
+      rawPersistedCount: 1,
+      createdBookingCount: 1,
+      updatedBookingCount: 0,
+      cancelledBookingCount: 0,
+      skippedCount: 0,
+      ackedCount: 1,
+      unackedCount: 0,
+      overallSuccess: true,
+    });
+    expect(channexProviderClient.listBookingRevisionFeed).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      { externalPropertyId: "external-property-1" }
+    );
+    expect(channexBookingRevisions.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationAccountId: "integration-account-1",
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        externalReservationId: "booking-ota-1",
+        revisionId: "revision-new-1",
+        bookingStatus: "new",
+      })
+    );
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        propertyId: "domits-property-1",
+        hostId: "host-1",
+        externalReservationId: "booking-ota-1",
+        guestName: "External Guest",
+        arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
+        departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
+      })
+    );
+    expect(resLinks.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationAccountId: "integration-account-1",
+        channel: "CHANNEX",
+        externalReservationId: "booking-ota-1",
+        domitsPropertyId: "domits-property-1",
+        guestName: "External Guest",
+        checkInAt: Date.parse("2026-06-01T00:00:00.000Z"),
+        checkOutAt: Date.parse("2026-06-03T00:00:00.000Z"),
+        reservationStatus: "Paid",
+        ratePlan: "Standard",
+        paymentStatus: "EXTERNAL",
+      })
+    );
+    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      "revision-new-1"
+    );
+    expect(channexBookingRevisions.markAcknowledged).toHaveBeenCalledWith(
+      "integration-account-1",
+      "revision-new-1",
+      expect.any(Number)
+    );
+    expect(channexBookingRevisions.upsert.mock.invocationCallOrder[0]).toBeLessThan(
+      externalBookingImportRepository.createExternalBooking.mock.invocationCallOrder[0]
+    );
+    expect(externalBookingImportRepository.createExternalBooking.mock.invocationCallOrder[0]).toBeLessThan(
+      resLinks.upsert.mock.invocationCallOrder[0]
+    );
+    expect(resLinks.upsert.mock.invocationCallOrder[0]).toBeLessThan(
+      channexProviderClient.acknowledgeBookingRevision.mock.invocationCallOrder[0]
+    );
+    expect(result.response.items[0]).toEqual(
+      expect.objectContaining({
+        revisionId: "revision-new-1",
+        bookingId: "booking-ota-1",
+        status: "new",
+        result: "created-and-acked",
+        createdBooking: true,
+        acked: true,
+        unacked: false,
+      })
+    );
+  });
+
+  test("does not call the feed or acknowledge when property mapping is missing", async () => {
+    const { service, channexProviderClient } = createService({
+      propertyMappings: [],
+      feedRevisions: [buildFeedRevision()],
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.statusCode).toBe(409);
+    expect(result.response.errorCode).toBe("CHANNEX_PROPERTY_MAPPING_MISSING");
+    expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+
+  test("does not create or acknowledge when the room type mapping is missing", async () => {
+    const { service, channexProviderClient, externalBookingImportRepository } = createService({
+      roomTypeMappings: [],
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toMatchObject({
+      fetchedCount: 1,
+      rawPersistedCount: 1,
+      skippedCount: 1,
+      ackedCount: 0,
+      unackedCount: 1,
+      overallSuccess: false,
+    });
+    expect(result.response.warnings).toEqual([
+      expect.objectContaining({
+        code: "CHANNEX_ROOM_TYPE_MAPPING_MISSING",
+      }),
+    ]);
+    expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+
+  test("does not create or acknowledge when the rate plan mapping is missing", async () => {
+    const { service, channexProviderClient, externalBookingImportRepository } = createService({
+      ratePlanMappings: [],
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toMatchObject({
+      fetchedCount: 1,
+      rawPersistedCount: 1,
+      skippedCount: 1,
+      ackedCount: 0,
+      unackedCount: 1,
+      overallSuccess: false,
+    });
+    expect(result.response.warnings).toEqual([
+      expect.objectContaining({
+        code: "CHANNEX_RATE_PLAN_MAPPING_MISSING",
+      }),
+    ]);
+    expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+
+  test("duplicate pulls reuse the imported booking and do not create duplicates", async () => {
+    const revision = buildFeedRevision();
+    const { service, channexProviderClient, externalBookingImportRepository } = createService({
+      feedRevisions: [revision],
+      existingRevision: null,
+    });
+
+    const firstResult = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+    const secondResult = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(firstResult.response.createdBookingCount).toBe(1);
+    expect(secondResult.response.createdBookingCount).toBe(0);
+    expect(secondResult.response.items[0]).toEqual(
+      expect.objectContaining({
+        result: "already-imported-and-acked",
+        createdBooking: false,
+        acked: true,
+        unacked: false,
+      })
+    );
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledTimes(1);
+    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledTimes(1);
+  });
+
+  test("skips unsupported multi-room revisions without acknowledging", async () => {
+    const revision = buildFeedRevision({
+      rawPayload: {
+        id: "revision-new-1",
+        attributes: {
+          booking_id: "booking-ota-1",
+          property_id: "external-property-1",
+          status: "new",
+          arrival_date: "2026-06-01",
+          departure_date: "2026-06-03",
+          customer: { name: "External Guest" },
+          rooms: [
+            { room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" },
+            { room_type_id: "external-room-type-2", rate_plan_id: "external-rate-plan-2" },
+          ],
+        },
+      },
+    });
+    const { service, channexProviderClient, externalBookingImportRepository } = createService({
+      feedRevisions: [revision],
+      existingRevision: null,
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.response).toMatchObject({
+      skippedCount: 1,
+      ackedCount: 0,
+      unackedCount: 1,
+      overallSuccess: false,
+    });
+    expect(result.response.warnings).toEqual([
+      expect.objectContaining({
+        code: "CHANNEX_BOOKING_MULTI_ROOM_UNSUPPORTED",
+      }),
+    ]);
+    expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+
+  test("modified and cancelled revisions without imported links are explicit skipped/unacked results", async () => {
+    const { service, channexProviderClient } = createService({
+      feedRevisions: [
+        buildFeedRevision({
+          revisionId: "revision-modified-1",
+          bookingId: "booking-modified-1",
+          status: "modified",
+          rawPayload: {
+            id: "revision-modified-1",
+            attributes: {
+              booking_id: "booking-modified-1",
+              property_id: "external-property-1",
+              status: "modified",
+              arrival_date: "2026-06-01",
+              departure_date: "2026-06-03",
+              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
+            },
+          },
+        }),
+        buildFeedRevision({
+          revisionId: "revision-cancelled-1",
+          bookingId: "booking-cancelled-1",
+          status: "cancelled",
+          rawPayload: {
+            id: "revision-cancelled-1",
+            attributes: {
+              booking_id: "booking-cancelled-1",
+              property_id: "external-property-1",
+              status: "cancelled",
+              arrival_date: "2026-06-01",
+              departure_date: "2026-06-03",
+              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
+            },
+          },
+        }),
+      ],
+      existingRevision: null,
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.response).toMatchObject({
+      fetchedCount: 2,
+      rawPersistedCount: 2,
+      skippedCount: 2,
+      ackedCount: 0,
+      unackedCount: 2,
+      overallSuccess: false,
+    });
+    expect(result.response.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "CHANNEX_MODIFIED_BOOKING_LINK_MISSING",
+          message: "modified revision not imported because no linked Domits booking was found",
+        }),
+        expect.objectContaining({
+          code: "CHANNEX_CANCELLED_BOOKING_LINK_MISSING",
+          message: "cancelled revision not imported because no linked Domits booking was found",
+        }),
+      ])
+    );
+    expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+
+  test("linked modified revisions update basic Domits booking fields before acknowledgement", async () => {
+    const existingLink = {
+      id: "reservation-link-1",
+      rawPayload: JSON.stringify({
+        domits: { bookingId: "domits-booking-1" },
+      }),
+    };
+    const { service, channexProviderClient, externalBookingImportRepository, resLinks } = createService({
+      existingLink,
+      initialBookings: [
+        {
+          id: "domits-booking-1",
+          guestName: "Original Guest",
+          arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
+          departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
+          status: "Paid",
+        },
+      ],
+      feedRevisions: [
+        buildFeedRevision({
+          revisionId: "revision-modified-1",
+          bookingId: "booking-ota-1",
+          status: "modified",
+          arrivalDate: "2026-06-02",
+          departureDate: "2026-06-04",
+          guestName: "Modified Guest",
+          rawPayload: {
+            id: "revision-modified-1",
+            attributes: {
+              booking_id: "booking-ota-1",
+              property_id: "external-property-1",
+              status: "modified",
+              arrival_date: "2026-06-02",
+              departure_date: "2026-06-04",
+              customer: { name: "Modified Guest" },
+              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
+            },
+          },
+        }),
+      ],
+      existingRevision: null,
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.response).toMatchObject({
+      fetchedCount: 1,
+      rawPersistedCount: 1,
+      updatedBookingCount: 1,
+      ackedCount: 1,
+      unackedCount: 0,
+      overallSuccess: true,
+    });
+    expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
+    expect(externalBookingImportRepository.updateImportedBooking).toHaveBeenCalledWith({
+      bookingId: "domits-booking-1",
+      guestName: "Modified Guest",
+      arrivalDateMs: Date.parse("2026-06-02T00:00:00.000Z"),
+      departureDateMs: Date.parse("2026-06-04T00:00:00.000Z"),
+    });
+    expect(resLinks.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        externalReservationId: "booking-ota-1",
+        reservationStatus: "Paid",
+        guestName: "Modified Guest",
+      })
+    );
+    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      "revision-modified-1"
+    );
+  });
+
+  test("linked cancelled revisions cancel the Domits booking before acknowledgement", async () => {
+    const existingLink = {
+      id: "reservation-link-1",
+      rawPayload: JSON.stringify({
+        domits: { bookingId: "domits-booking-1" },
+      }),
+    };
+    const { service, channexProviderClient, externalBookingImportRepository, resLinks } = createService({
+      existingLink,
+      initialBookings: [
+        {
+          id: "domits-booking-1",
+          guestName: "External Guest",
+          arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
+          departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
+          status: "Paid",
+        },
+      ],
+      feedRevisions: [
+        buildFeedRevision({
+          revisionId: "revision-cancelled-1",
+          bookingId: "booking-ota-1",
+          status: "cancelled",
+          rawPayload: {
+            id: "revision-cancelled-1",
+            attributes: {
+              booking_id: "booking-ota-1",
+              property_id: "external-property-1",
+              status: "cancelled",
+              arrival_date: "2026-06-01",
+              departure_date: "2026-06-03",
+              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
+            },
+          },
+        }),
+      ],
+      existingRevision: null,
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.response).toMatchObject({
+      fetchedCount: 1,
+      rawPersistedCount: 1,
+      cancelledBookingCount: 1,
+      ackedCount: 1,
+      unackedCount: 0,
+      overallSuccess: true,
+    });
+    expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
+    expect(externalBookingImportRepository.cancelImportedBooking).toHaveBeenCalledWith("domits-booking-1");
+    expect(resLinks.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        externalReservationId: "booking-ota-1",
+        reservationStatus: "Cancelled",
+      })
+    );
+    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      "revision-cancelled-1"
+    );
+  });
+
+  test("redacts sensitive payment fields from imported reservation link raw payload", async () => {
+    const { service, resLinks } = createService({
+      feedRevisions: [
+        buildFeedRevision({
+          rawPayload: {
+            id: "revision-new-1",
+            attributes: {
+              booking_id: "booking-ota-1",
+              property_id: "external-property-1",
+              status: "new",
+              arrival_date: "2026-06-01",
+              departure_date: "2026-06-03",
+              guarantee: {
+                card_number: "4111111111111111",
+                cvc: "999",
+              },
+              payment: {
+                token: "payment-token-secret",
+              },
+              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
+            },
+          },
+        }),
+      ],
+      existingRevision: null,
+    });
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.response.createdBookingCount).toBe(1);
+    const rawPayload = resLinks.upsert.mock.calls[0][0].rawPayload;
+    expect(rawPayload).toContain("[REDACTED]");
+    expect(rawPayload).not.toContain("4111111111111111");
+    expect(rawPayload).not.toContain("payment-token-secret");
+    expect(rawPayload).not.toContain("999");
+    expect(JSON.parse(rawPayload)).toEqual(
+      expect.objectContaining({
+        importedBy: "channex-booking-pull",
+        domits: expect.objectContaining({
+          bookingId: expect.any(String),
+        }),
+      })
+    );
+  });
+
+  test("booking or link import failures leave the revision unacked", async () => {
+    const { service, channexProviderClient, resLinks } = createService({
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+    resLinks.upsert.mockRejectedValueOnce(new Error("link insert failed"));
+
+    const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
+      skipEvidence: true,
+    });
+
+    expect(result.response).toMatchObject({
+      rawPersistedCount: 1,
+      ackedCount: 0,
+      unackedCount: 1,
+      overallSuccess: false,
+    });
+    expect(result.response.items[0]).toEqual(
+      expect.objectContaining({
+        result: "import-failed-unacked",
+        errors: [
+          expect.objectContaining({
+            message: "link insert failed",
+          }),
+        ],
+      })
+    );
     expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
   });
 });

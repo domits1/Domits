@@ -217,6 +217,12 @@ export const receiveChannexBookingRevisions = ({ userId, domitsPropertyId }) =>
     query: { userId, domitsPropertyId },
   });
 
+export const pullLatestChannexBookings = ({ userId, domitsPropertyId }) =>
+  requestChannex("/integrations/channex/bookings/pull", {
+    method: "POST",
+    query: { userId, domitsPropertyId },
+  });
+
 export const ackChannexBookingRevisions = ({ userId, domitsPropertyId, revisionIds }) =>
   requestChannex("/integrations/channex/bookings/ack", {
     method: "POST",

@@ -6,6 +6,7 @@ const mockIntegrationControllerMethods = {
   syncChannexBookingAvailability: jest.fn(),
   syncChannexCertificationTestCase: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
+  pullLatestChannexBookings: jest.fn(),
   acknowledgeChannexBookingRevisions: jest.fn(),
 };
 
@@ -177,6 +178,19 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
 
     expect(response.statusCode).toBe(403);
     expect(mockIntegrationControllerMethods.receiveChannexBookingRevisions).not.toHaveBeenCalled();
+  });
+
+  test("pull latest Channex bookings endpoint is protected before side effects run", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/bookings/pull",
+        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods.pullLatestChannexBookings).not.toHaveBeenCalled();
   });
 
   test("certification test-case endpoint is protected before side effects run", async () => {

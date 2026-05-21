@@ -5,7 +5,9 @@ import {
   getChannexAriPreview,
   getLatestChannexSyncEvidence,
   getChannexStatus,
+  listChannexBookingRevisions,
   modifyBookingDates,
+  pullLatestChannexBookings,
   syncChannexCertificationTestCase,
   syncChannexFull,
   syncChannexRestrictions,
@@ -17,7 +19,10 @@ jest.mock("./channexApi", () => ({
   getChannexAriTargets: jest.fn(),
   getChannexStatus: jest.fn(),
   getLatestChannexSyncEvidence: jest.fn(),
+  listChannexBookingRevisions: jest.fn(),
   modifyBookingDates: jest.fn(),
+  pullLatestChannexBookings: jest.fn(),
+  ackChannexBookingRevisions: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
   syncChannexAri: jest.fn(),
   syncChannexAvailability: jest.fn(),
@@ -52,6 +57,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     jest.spyOn(globalThis, "confirm").mockReturnValue(true);
     getChannexStatus.mockResolvedValue({ status: "CONNECTED" });
     getLatestChannexSyncEvidence.mockResolvedValue({ item: null });
+    listChannexBookingRevisions.mockResolvedValue({ revisions: [], count: 0 });
   });
 
   afterEach(() => {
@@ -290,5 +296,59 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
 
     expect(modifyBookingDates).not.toHaveBeenCalled();
     expect(await screen.findByText("Enter booking ID, new arrival date, and new departure date.")).toBeTruthy();
+  });
+
+  test("pulls latest Channex bookings from the booking revisions tab and refreshes the log", async () => {
+    pullLatestChannexBookings.mockResolvedValue({
+      fetchedCount: 1,
+      rawPersistedCount: 1,
+      createdBookingCount: 1,
+      updatedBookingCount: 0,
+      cancelledBookingCount: 0,
+      skippedCount: 0,
+      ackedCount: 1,
+      unackedCount: 0,
+      warnings: [{ code: "DEMO_WARNING", message: "Visible pull warning" }],
+      errors: [{ code: "DEMO_ERROR", message: "Visible pull error" }],
+      items: [
+        {
+          revisionId: "revision-new-1",
+          bookingId: "booking-ota-1",
+          status: "new",
+          domitsBookingId: "domits-booking-1",
+          result: "created-and-acked",
+        },
+      ],
+    });
+
+    await renderDiagnosticsPanel();
+    fillRequiredInputs({ openActions: false });
+    fireEvent.click(screen.getByRole("button", { name: "Booking Revisions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pull latest Channex bookings" }));
+
+    await waitFor(() => expect(pullLatestChannexBookings).toHaveBeenCalledTimes(1));
+    expect(pullLatestChannexBookings).toHaveBeenCalledWith({
+      userId: "user-1",
+      domitsPropertyId: "domits-property-1",
+    });
+    expect(await screen.findByText("Pull latest Channex bookings summary")).toBeTruthy();
+    expect(screen.getByText("Fetched")).toBeTruthy();
+    expect(screen.getByText("Raw persisted")).toBeTruthy();
+    expect(screen.getByText("Created bookings")).toBeTruthy();
+    expect(screen.getByText("Updated bookings")).toBeTruthy();
+    expect(screen.getByText("Cancelled bookings")).toBeTruthy();
+    expect(screen.getByText("Skipped")).toBeTruthy();
+    expect(screen.getByText("Acked")).toBeTruthy();
+    expect(screen.getByText("Unacked")).toBeTruthy();
+    expect(screen.getAllByText("1").length).toBeGreaterThanOrEqual(4);
+    expect(screen.getByText(/DEMO_WARNING: Visible pull warning/)).toBeTruthy();
+    expect(screen.getByText(/DEMO_ERROR: Visible pull error/)).toBeTruthy();
+    await waitFor(() => expect(listChannexBookingRevisions).toHaveBeenCalledTimes(1));
+    expect(listChannexBookingRevisions).toHaveBeenCalledWith({
+      userId: "user-1",
+      domitsPropertyId: "domits-property-1",
+      includeRawPayload: false,
+      limit: "50",
+    });
   });
 });
