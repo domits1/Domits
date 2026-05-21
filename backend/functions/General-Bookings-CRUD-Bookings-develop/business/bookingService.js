@@ -19,6 +19,7 @@ import ChannexBookingAvailabilityClient, {
   CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
   createBookingAvailabilityFallbackEvidence,
 } from "./channexBookingAvailabilityClient.js";
+import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
 const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
@@ -42,6 +43,7 @@ class BookingService {
     getParamsModel = new GetParamsModel(),
     externalCalendarService = new ExternalCalendarService(),
     channexBookingAvailabilityClient = new ChannexBookingAvailabilityClient(),
+    priceLabsBookingNotifier = new PriceLabsBookingNotifier(),
     sendEmailFn = sendEmail,
     getHostEmailByIdFn = getHostEmailById,
   } = {}) {
@@ -53,6 +55,7 @@ class BookingService {
     this.getParamsModel = getParamsModel;
     this.externalCalendarService = externalCalendarService;
     this.channexBookingAvailabilityClient = channexBookingAvailabilityClient;
+    this.priceLabsBookingNotifier = priceLabsBookingNotifier;
     this.sendEmail = sendEmailFn;
     this.getHostEmailById = getHostEmailByIdFn;
   }
@@ -129,6 +132,8 @@ class BookingService {
       bookingAfter,
       trigger: TRIGGER_BOOKING_CREATED,
     });
+
+    await this.priceLabsBookingNotifier.notifyBookingChange(fetchedProperty.hostId, "booking_created");
 
     return {
       ...result,
@@ -385,6 +390,8 @@ class BookingService {
       trigger: TRIGGER_BOOKING_MODIFIED,
       includeDisabledEvidence: true,
     });
+
+    await this.priceLabsBookingNotifier.notifyBookingChange(bookingAfter.hostid, "booking_modified");
 
     return {
       booking: bookingAfter,
