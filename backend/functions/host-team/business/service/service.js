@@ -14,11 +14,6 @@ export class Service {
         this.repository = new Repository();
     }
 
-    async getTeamMembers(hostId) {
-        const dataSource = await Database.getInstance();
-        return await this.repository.findByHostId(dataSource, hostId);
-    }
-
     async inviteMember(hostId, hostEmail, email, role) {
         if (!email) throw new BadRequestException("Email is required.");
 
