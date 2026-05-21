@@ -143,7 +143,7 @@ export class PriceLabsService {
       const data = availability.map((row) => ({
         date:            _intToDate(row.calendar_date),
         price:           row.nightly_price || p.base_price || 100,
-        available_units: row.is_available !== false ? 1 : 0,
+        available_units: row.is_available === false ? 0 : 1,
         booked_units:    0,
         blocked_units:   0,
         settings: {
