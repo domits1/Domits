@@ -21,16 +21,13 @@ function InlineColorPicker({
   const hadWindowBlurRef = useRef(false);
   const [isPickerFocused, setIsPickerFocused] = useState(false);
   const [isPickingScreenColor, setIsPickingScreenColor] = useState(false);
-  const browserWindow = globalThis.window;
-  const browserDocument = globalThis.document;
   const pickerShellClassName = `${styles.colorPickerShell} ${
     isSelected ? styles.colorPickerShellSelected : ""
   }`.trim();
-  const supportsEyeDropper =
-    browserWindow !== undefined && typeof browserWindow.EyeDropper === "function";
+  const supportsEyeDropper = typeof globalThis.EyeDropper === "function";
 
   useEffect(() => {
-    if (!isPickerFocused || browserWindow === undefined) {
+    if (!isPickerFocused) {
       return undefined;
     }
 
@@ -45,21 +42,21 @@ function InlineColorPicker({
 
       hadWindowBlurRef.current = false;
 
-      if (inputRef.current && browserDocument?.activeElement === inputRef.current) {
-        browserWindow.setTimeout(() => {
+      if (inputRef.current && globalThis.document?.activeElement === inputRef.current) {
+        globalThis.setTimeout(() => {
           inputRef.current?.blur();
         }, 0);
       }
     };
 
-    browserWindow.addEventListener("blur", handleWindowBlur);
-    browserWindow.addEventListener("focus", handleWindowFocus);
+    globalThis.addEventListener("blur", handleWindowBlur);
+    globalThis.addEventListener("focus", handleWindowFocus);
 
     return () => {
-      browserWindow.removeEventListener("blur", handleWindowBlur);
-      browserWindow.removeEventListener("focus", handleWindowFocus);
+      globalThis.removeEventListener("blur", handleWindowBlur);
+      globalThis.removeEventListener("focus", handleWindowFocus);
     };
-  }, [browserDocument, browserWindow, isPickerFocused]);
+  }, [isPickerFocused]);
 
   const handleInputFocus = (event) => {
     hadWindowBlurRef.current = false;
@@ -81,7 +78,7 @@ function InlineColorPicker({
     setIsPickingScreenColor(true);
 
     try {
-      const eyeDropper = new browserWindow.EyeDropper();
+      const eyeDropper = new globalThis.EyeDropper();
       const result = await eyeDropper.open();
 
       if (result?.sRGBHex) {
