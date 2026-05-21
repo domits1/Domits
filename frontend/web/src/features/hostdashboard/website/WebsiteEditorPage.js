@@ -44,6 +44,7 @@ import {
   TEMPLATE_COPY_COLLECTION_CONFIG,
   TEMPLATE_IMAGE_SLOT_MAP,
   TEMPLATE_VISIBILITY_FIELD_MAP,
+  getCommonToggleFields,
   getCommonTextFields,
   getContactSectionFields,
   getCollectionTargetId,
@@ -56,12 +57,16 @@ import {
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
-} from "./rendering/websiteContactSectionConfig";
+} from "./config/websiteContactSectionConfig";
+import {
+  DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR,
+  resolveWebsiteResidencePanelColor,
+} from "./config/websiteResidenceSectionConfig";
 import {
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
   resolveWebsiteAmenityIconColor,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
-} from "./rendering/websiteAmenitiesConfig";
+} from "./config/websiteAmenitiesConfig";
 import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
@@ -69,6 +74,7 @@ import {
   AmenityIconSelectField,
   BackgroundColorField,
   CollapsibleSection,
+  ContactColorField,
   TextField,
 } from "./editor/WebsiteEditorFields";
 import {
@@ -268,6 +274,7 @@ function WebsiteEditorPage() {
 
   const draftTemplate = getWebsiteTemplateById(draftRecord?.templateKey);
   const commonTextFields = getCommonTextFields(draftRecord?.templateKey);
+  const commonToggleFields = getCommonToggleFields(draftRecord?.templateKey);
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const amenitiesVisibilityField = visibilityFields.find((field) => field.key === "amenitiesPanel") || null;
@@ -378,6 +385,68 @@ function WebsiteEditorPage() {
         [fieldKey]: nextValue,
       },
     }));
+  };
+
+  const handleCommonToggleFieldChange = (fieldKey) => (event) => {
+    const nextChecked = Boolean(event.target.checked);
+    const previewTargetId = EDITOR_TARGET_KEYS.common[fieldKey];
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      common: {
+        ...currentValues.common,
+        [fieldKey]: nextChecked,
+      },
+    }));
+    clearActivePreviewTarget();
+    runAfterNextPaint(() => {
+      flashPreviewTarget(previewTargetId);
+    });
+  };
+
+  const activateResidencePanelPreviewTarget = () => {
+    setPreviewTargetId(EDITOR_TARGET_KEYS.common.residenceShowPanel);
+  };
+
+  const handleResidencePanelColorChange = (nextColor) => {
+    activateResidencePanelPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      common: {
+        ...currentValues.common,
+        residencePanelColor: resolveWebsiteResidencePanelColor(nextColor),
+      },
+    }));
+  };
+
+  const handleResidencePanelColorInputChange = (nextInputValue) => {
+    activateResidencePanelPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      common: {
+        ...currentValues.common,
+        residencePanelColor: nextInputValue,
+      },
+    }));
+  };
+
+  const commitResidencePanelColorInput = () => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      common: {
+        ...currentValues.common,
+        residencePanelColor: resolveWebsiteResidencePanelColor(currentValues?.common?.residencePanelColor),
+      },
+    }));
+  };
+
+  const handleResidencePanelColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitResidencePanelColorInput();
+    await saveDraftChanges();
   };
 
   const handleContactFieldChange = (fieldKey) => (event) => {
@@ -1311,6 +1380,47 @@ function WebsiteEditorPage() {
                         onBlur={clearActivePreviewTarget}
                       />
                     ))}
+                    {commonToggleFields.length > 0 ? (
+                      <div className={styles.toggleStack}>
+                        {commonToggleFields.map((field) => {
+                          const targetId = EDITOR_TARGET_KEYS.common[field.key];
+                          const inputId = `website-editor-common-${field.key}`;
+                          const labelId = `website-editor-common-${field.key}-label`;
+                          const descriptionId = `website-editor-common-${field.key}-description`;
+
+                          return (
+                            <WebsiteEditorVisibilityToggleCard
+                              key={field.key}
+                              targetRef={setTargetRef(targetId)}
+                              field={field}
+                              inputId={inputId}
+                              labelId={labelId}
+                              descriptionId={descriptionId}
+                              checked={Boolean(editorValues.common[field.key])}
+                              onChange={handleCommonToggleFieldChange(field.key)}
+                              isHighlighted={highlightedTargetId === targetId}
+                            />
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                    {draftTemplateKey === "panorama-landing" &&
+                    Boolean(editorValues.common.residenceShowPanel) ? (
+                      <ContactColorField
+                        label="Residence panel color"
+                        hint='Controls the white framed surface behind "The residence" when the panel is enabled.'
+                        value={editorValues.common.residencePanelColor}
+                        placeholder={DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR}
+                        resolveColorValue={resolveWebsiteResidencePanelColor}
+                        inputAriaLabel="Residence panel color"
+                        onSelectColor={handleResidencePanelColorChange}
+                        onChangeInput={handleResidencePanelColorInputChange}
+                        onCommitInput={commitResidencePanelColorInput}
+                        onInputKeyDown={handleResidencePanelColorInputKeyDown}
+                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common.residenceShowPanel)}
+                        onBlur={clearActivePreviewTarget}
+                      />
+                    ) : null}
                   </div>
                 </CollapsibleSection>
 

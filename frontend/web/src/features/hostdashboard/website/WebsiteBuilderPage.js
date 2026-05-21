@@ -51,7 +51,7 @@ import {
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
   DEFAULT_WEBSITE_CONTACT_TITLE,
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
-} from "./rendering/websiteContactSectionConfig";
+} from "./config/websiteContactSectionConfig";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides } from "./rendering/websiteDraftThemeOverrides";
 import { placeholderImage, resolveAccommodationImageUrl } from "../../../utils/accommodationImage";

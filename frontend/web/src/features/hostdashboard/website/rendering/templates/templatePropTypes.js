@@ -24,6 +24,8 @@ export const mediaPropType = PropTypes.shape({
 export const residenceSectionPropType = PropTypes.shape({
   title: PropTypes.string,
   headline: PropTypes.string,
+  showPanel: PropTypes.bool,
+  panelColor: PropTypes.string,
 });
 
 export const galleryPropType = PropTypes.shape({

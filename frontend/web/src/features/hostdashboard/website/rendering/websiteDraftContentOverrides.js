@@ -8,7 +8,7 @@ import {
   resolveWebsiteContactAvatarMode,
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
-} from "./websiteContactSectionConfig";
+} from "../config/websiteContactSectionConfig";
 import {
   DEFAULT_WEBSITE_AMENITY_LABEL,
   getDefaultWebsiteAmenityIconColor,
@@ -16,7 +16,11 @@ import {
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
   resolveWebsiteAmenityIconColor,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
-} from "./websiteAmenitiesConfig";
+} from "../config/websiteAmenitiesConfig";
+import {
+  DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR,
+  resolveWebsiteResidencePanelColor,
+} from "../config/websiteResidenceSectionConfig";
 import {
   DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
   normalizeWebsiteImageRotationSettings,
@@ -31,6 +35,8 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "ctaNote",
   "residenceHeadline",
   "residenceTitle",
+  "residenceShowPanel",
+  "residencePanelColor",
   "contactTitle",
   "contactDescription",
   "contactAccentColor",
@@ -202,6 +208,8 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
     ctaNote: "",
     residenceTitle: "",
     residenceHeadline: "",
+    residenceShowPanel: false,
+    residencePanelColor: DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR,
   },
   contact: {
     title: "",
@@ -239,6 +247,9 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const ctaNote = cleanText(overrides.ctaNote);
   const residenceTitle = cleanText(overrides.residenceTitle);
   const residenceHeadline = cleanText(overrides.residenceHeadline);
+  const residenceShowPanelOverride =
+    typeof overrides.residenceShowPanel === "boolean" ? overrides.residenceShowPanel : null;
+  const residencePanelColorOverride = cleanText(overrides.residencePanelColor);
   const contactTitle = cleanText(overrides.contactTitle);
   const contactDescription = cleanText(overrides.contactDescription);
   const contactAvatarModeOverride = cleanText(overrides.contactAvatarMode);
@@ -332,6 +343,15 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
         residenceHeadline ||
         model?.residenceSection?.headline ||
         "Designed to present the stay with clarity and confidence",
+      showPanel:
+        residenceShowPanelOverride === null
+          ? Boolean(model?.residenceSection?.showPanel)
+          : residenceShowPanelOverride,
+      panelColor: residencePanelColorOverride
+        ? resolveWebsiteResidencePanelColor(residencePanelColorOverride)
+        : resolveWebsiteResidencePanelColor(
+            model?.residenceSection?.panelColor || DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR
+          ),
     },
     contactSection: {
       ...(model?.contactSection && typeof model.contactSection === "object" ? model.contactSection : {}),
@@ -366,6 +386,10 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
     residenceTitle: String(model?.residenceSection?.title || "The residence"),
     residenceHeadline: String(
       model?.residenceSection?.headline || "Designed to present the stay with clarity and confidence"
+    ),
+    residenceShowPanel: Boolean(model?.residenceSection?.showPanel),
+    residencePanelColor: resolveWebsiteResidencePanelColor(
+      model?.residenceSection?.panelColor || DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR
     ),
   },
   contact: {
@@ -453,6 +477,13 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
     baseValue: (baseModel) => baseModel?.residenceSection?.headline,
   },
   {
+    patchKey: "residencePanelColor",
+    editorValue: (editorValues) =>
+      resolveWebsiteResidencePanelColor(editorValues?.common?.residencePanelColor),
+    baseValue: (baseModel) =>
+      resolveWebsiteResidencePanelColor(baseModel?.residenceSection?.panelColor),
+  },
+  {
     patchKey: "contactTitle",
     editorValue: (editorValues) => editorValues?.contact?.title,
     baseValue: (baseModel) => baseModel?.contactSection?.title,
@@ -516,6 +547,23 @@ const addTextOverride = (patch, field, editorValues, baseModel) => {
   const normalizedEditorValue = cleanText(field.editorValue(editorValues, baseModel));
 
   if (normalizedEditorValue && normalizedEditorValue !== cleanText(field.baseValue(baseModel))) {
+    patch[field.patchKey] = normalizedEditorValue;
+  }
+};
+
+const BOOLEAN_OVERRIDE_FIELDS = Object.freeze([
+  {
+    patchKey: "residenceShowPanel",
+    editorValue: (editorValues) => Boolean(editorValues?.common?.residenceShowPanel),
+    baseValue: (baseModel) => Boolean(baseModel?.residenceSection?.showPanel),
+  },
+]);
+
+const addBooleanOverride = (patch, field, editorValues, baseModel) => {
+  const normalizedEditorValue = Boolean(field.editorValue(editorValues, baseModel));
+  const normalizedBaseValue = Boolean(field.baseValue(baseModel));
+
+  if (normalizedEditorValue !== normalizedBaseValue) {
     patch[field.patchKey] = normalizedEditorValue;
   }
 };
@@ -634,6 +682,9 @@ const buildAmenitiesIconColorPatch = (editorValues, baseModel, templateKey = "")
 export const buildWebsiteDraftOverridePatch = (editorValues, baseModel, templateKey = "") => {
   const nextPatch = {};
   TEXT_OVERRIDE_FIELDS.forEach((field) => addTextOverride(nextPatch, field, editorValues, baseModel));
+  BOOLEAN_OVERRIDE_FIELDS.forEach((field) =>
+    addBooleanOverride(nextPatch, field, editorValues, baseModel)
+  );
 
   const nextVisibilityPatch = buildVisibilityPatch(editorValues, baseModel);
   if (Object.keys(nextVisibilityPatch).length > 0) {

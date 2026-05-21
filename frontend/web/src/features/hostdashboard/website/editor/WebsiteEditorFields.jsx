@@ -6,7 +6,7 @@ import {
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
   WEBSITE_CONTACT_AVATAR_MODE_INITIALS,
   resolveWebsiteContactAvatarMode,
-} from "../rendering/websiteContactSectionConfig";
+} from "../config/websiteContactSectionConfig";
 import {
   fieldPropTypes,
   refPropType,

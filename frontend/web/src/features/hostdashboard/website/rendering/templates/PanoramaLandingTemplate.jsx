@@ -34,11 +34,12 @@ import {
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
-} from "../websiteContactSectionConfig";
+} from "../../config/websiteContactSectionConfig";
+import { resolveWebsiteResidencePanelColor } from "../../config/websiteResidenceSectionConfig";
 import {
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
   resolveWebsiteAmenityIconColor,
-} from "../websiteAmenitiesConfig";
+} from "../../config/websiteAmenitiesConfig";
 
 const PANORAMA_TOP_BAR_SOLID_THRESHOLD_PX = 24;
 const PANORAMA_TOP_BAR_SELECTOR = "[data-panorama-top-bar]";
@@ -548,8 +549,33 @@ const renderPanoramaResidenceSection = ({
   activeTargetId,
   residenceCards,
 }) => {
+  const residenceRevealProps = getScrollRevealProps(80);
+  const residencePanelStyle = model.residenceSection?.showPanel
+    ? {
+        backgroundColor: resolveWebsiteResidencePanelColor(model.residenceSection?.panelColor),
+      }
+    : undefined;
+
   return (
-    <section id="about" className={styles.sectionCard} {...getScrollRevealProps(80)}>
+    <section
+      id="about"
+      {...getInteractiveTargetProps(
+        `${styles.panoramaResidenceSection} ${
+          model.residenceSection?.showPanel ? styles.panoramaResidenceSectionPanel : ""
+        }`.trim(),
+        onSelectTarget,
+        {
+          sectionId: "common",
+          targetId: "common.residenceShowPanel",
+        },
+        activeTargetId
+      )}
+      {...residenceRevealProps}
+      style={{
+        ...(residenceRevealProps.style || {}),
+        ...(residencePanelStyle || {}),
+      }}
+    >
       <div className={`${styles.sectionHeading} ${styles.panoramaResidenceHeading}`.trim()}>
         <p
           {...getInteractiveTargetProps(styles.panoramaResidenceEyebrow, onSelectTarget, {

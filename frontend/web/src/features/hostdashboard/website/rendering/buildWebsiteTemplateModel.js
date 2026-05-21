@@ -9,11 +9,15 @@ import {
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
-} from "./websiteContactSectionConfig";
+} from "../config/websiteContactSectionConfig";
+import {
+  DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR,
+  resolveWebsiteResidencePanelColor,
+} from "../config/websiteResidenceSectionConfig";
 import {
   MAX_FEATURED_WEBSITE_AMENITIES,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
-} from "./websiteAmenitiesConfig";
+} from "../config/websiteAmenitiesConfig";
 import { normalizeWebsiteImageRotationSettings } from "./websiteImageSlotUtils";
 
 const DEFAULT_LOCALE = "en";
@@ -632,6 +636,8 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
     residenceSection: {
       title: "The residence",
       headline: "Designed to present the stay with clarity and confidence",
+      showPanel: false,
+      panelColor: resolveWebsiteResidencePanelColor(DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR),
     },
     contactSection: {
       title: DEFAULT_WEBSITE_CONTACT_TITLE,

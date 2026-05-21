@@ -10,7 +10,7 @@ import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../../websiteEditorConf
 import {
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
-} from "../../rendering/websiteContactSectionConfig";
+} from "../../config/websiteContactSectionConfig";
 import styles from "../../WebsiteEditorPage.module.scss";
 
 export function WebsiteEditorContactSection({

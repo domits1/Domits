@@ -11,7 +11,7 @@ import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../../websiteEditorConf
 import {
   getDefaultWebsiteAmenityIconColor,
   resolveWebsiteAmenityIconColor,
-} from "../../rendering/websiteAmenitiesConfig";
+} from "../../config/websiteAmenitiesConfig";
 import styles from "../../WebsiteEditorPage.module.scss";
 
 export function WebsiteEditorAmenitiesSection({

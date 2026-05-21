@@ -1,7 +1,7 @@
 import LaptopMacOutlinedIcon from "@mui/icons-material/LaptopMacOutlined";
 import TabletMacOutlinedIcon from "@mui/icons-material/TabletMacOutlined";
 import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
-import { MAX_WEBSITE_CONFIGURABLE_AMENITIES } from "./rendering/websiteAmenitiesConfig";
+import { MAX_WEBSITE_CONFIGURABLE_AMENITIES } from "./config/websiteAmenitiesConfig";
 
 export const PREVIEW_VIEWPORT_OPTIONS = Object.freeze([
   { id: "desktop", label: "Desktop", Icon: LaptopMacOutlinedIcon },
@@ -21,6 +21,14 @@ const BASE_COMMON_TEXT_FIELDS = Object.freeze([
 const PANORAMA_COMMON_TEXT_FIELDS = Object.freeze([
   { key: "residenceTitle", label: "Residence section title", component: "input" },
   { key: "residenceHeadline", label: "Residence section headline", component: "input" },
+]);
+
+const PANORAMA_COMMON_TOGGLE_FIELDS = Object.freeze([
+  {
+    key: "residenceShowPanel",
+    label: "Show residence panel",
+    description: 'Toggles the white framed surface behind "The residence" section.',
+  },
 ]);
 
 const PANORAMA_CONTACT_FIELDS = Object.freeze([
@@ -49,6 +57,7 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     ctaNote: "common.ctaNote",
     residenceTitle: "common.residenceTitle",
     residenceHeadline: "common.residenceHeadline",
+    residenceShowPanel: "common.residenceShowPanel",
   },
   amenities: (index) => `amenities.${index}`,
   amenitiesIconColor: "amenities.iconColor",
@@ -251,6 +260,14 @@ export const getCommonTextFields = (templateKey) => {
   }
 
   return BASE_COMMON_TEXT_FIELDS;
+};
+
+export const getCommonToggleFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_COMMON_TOGGLE_FIELDS;
+  }
+
+  return [];
 };
 
 export const getContactSectionFields = (templateKey) => {

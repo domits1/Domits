@@ -6,7 +6,7 @@ import {
 import {
   DEFAULT_WEBSITE_AMENITY_LABEL,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
-} from "../rendering/websiteAmenitiesConfig";
+} from "../config/websiteAmenitiesConfig";
 import { buildPublishedWebsiteHref, buildWebsitePreviewPath } from "../websitePublicSiteLinks";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
 

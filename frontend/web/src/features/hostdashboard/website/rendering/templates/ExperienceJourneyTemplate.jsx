@@ -23,7 +23,7 @@ import {
   templateInteractionPropTypes,
   visibilityPropType,
 } from "./templatePropTypes";
-import { resolveWebsiteAmenityIconColor } from "../websiteAmenitiesConfig";
+import { resolveWebsiteAmenityIconColor } from "../../config/websiteAmenitiesConfig";
 
 export default function ExperienceJourneyTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
