@@ -59,7 +59,6 @@ export class PriceLabsService {
       },
     });
 
-    // If PriceLabs returned a new token, persist it in SSM
     if (integrationRes?.token) {
       await this.ssm.putParameter(SSM_TOKEN_KEY, integrationRes.token);
     }
