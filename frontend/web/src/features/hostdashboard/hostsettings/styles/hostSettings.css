@@ -311,8 +311,9 @@
 }
 
 .pd-field-label {
-    width: 120px;
+    flex-shrink: 0;
     min-width: 120px;
+    white-space: nowrap;
     font-size: 0.9rem;
     color: #374151;
     padding-top: 10px;
