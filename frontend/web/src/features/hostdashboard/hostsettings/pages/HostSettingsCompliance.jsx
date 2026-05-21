@@ -46,6 +46,11 @@ const HostSettingsCompliance = () => {
                             </p>
                         </div>
                     </div>
+                    <div className="personal-data-card-footer">
+                        <button type="button" className="pd-save-btn" disabled>
+                            Coming soon
+                        </button>
+                    </div>
                 </div>
             </section>
         </div>
