@@ -882,6 +882,43 @@
         "sub": "10% van boekingen betaald door de host",
         "note": "Stelt Domits in staat het platform 24/7 te laten draaien"
       }
+    },
+    "team": {
+      "breadcrumb": "Team",
+      "heading": "Team",
+      "subtitle": "Beheer wie toegang heeft tot je accommodaties en reserveringen.",
+      "primarySection": "Primaire teamleden",
+      "primaryCardHeader": "Primaire host",
+      "primaryHostBadge": "Primaire host",
+      "cardNote": "De primaire host beheert het account en ontvangt platformmeldingen.",
+      "additionalSection": "Aanvullende teamleden",
+      "inviteBtn": "+ Leden uitnodigen",
+      "emptyState": "Nog geen aanvullende teamleden. Nodig een co-host uit om te beginnen.",
+      "loadError": "Teamleden laden mislukt. Vernieuw de pagina.",
+      "activeMembers": "Actieve leden",
+      "pendingInvitations": "Uitnodigingen in behandeling",
+      "membershipsSection": "Teams waarvan je lid bent",
+      "membershipsCardHeader": "Co-host lidmaatschappen",
+      "joined": "Lid geworden op",
+      "memberAvatarAlt": "Avatar lid",
+      "hostAvatarAlt": "Avatar host",
+      "removeModal": {
+        "title": "Teamlid verwijderen",
+        "body": "Weet je zeker dat je dit lid wilt verwijderen? Ze verliezen toegang tot je accommodaties en taken.",
+        "confirm": "Ja, verwijderen",
+        "cancel": "Annuleren"
+      },
+      "inviteModal": {
+        "title": "Teamlid uitnodigen",
+        "emailLabel": "E-mailadres",
+        "emailPlaceholder": "collega@voorbeeld.com",
+        "roleLabel": "Rol",
+        "roleOption": "Property Operations Manager",
+        "sendBtn": "Uitnodiging verzenden",
+        "cancel": "Annuleren",
+        "success": "✓ Uitnodiging verstuurd naar",
+        "error": "Uitnodiging verzenden mislukt. Probeer het opnieuw."
+      }
     }
   }
 }

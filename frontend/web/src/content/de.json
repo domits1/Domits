@@ -882,6 +882,43 @@
         "sub": "10% der Buchungen werden vom Host bezahlt",
         "note": "Ermöglicht Domits den 24/7-Betrieb der Plattform"
       }
+    },
+    "team": {
+      "breadcrumb": "Team",
+      "heading": "Team",
+      "subtitle": "Verwalte, wer Zugriff auf deine Unterkünfte und Reservierungen hat.",
+      "primarySection": "Primäre Teammitglieder",
+      "primaryCardHeader": "Primärer Host",
+      "primaryHostBadge": "Primärer Host",
+      "cardNote": "Der primäre Host verwaltet das Konto und erhält Plattformbenachrichtigungen.",
+      "additionalSection": "Weitere Teammitglieder",
+      "inviteBtn": "+ Mitglieder einladen",
+      "emptyState": "Noch keine weiteren Teammitglieder. Lade einen Co-Host ein, um zu beginnen.",
+      "loadError": "Teammitglieder konnten nicht geladen werden. Bitte lade die Seite neu.",
+      "activeMembers": "Aktive Mitglieder",
+      "pendingInvitations": "Ausstehende Einladungen",
+      "membershipsSection": "Teams, denen du angehörst",
+      "membershipsCardHeader": "Co-Host-Mitgliedschaften",
+      "joined": "Beigetreten am",
+      "memberAvatarAlt": "Mitglied-Avatar",
+      "hostAvatarAlt": "Host-Avatar",
+      "removeModal": {
+        "title": "Teammitglied entfernen",
+        "body": "Bist du sicher, dass du dieses Mitglied aus deinem Team entfernen möchtest? Sie verlieren den Zugriff auf deine Unterkünfte und Aufgaben.",
+        "confirm": "Ja, entfernen",
+        "cancel": "Abbrechen"
+      },
+      "inviteModal": {
+        "title": "Teammitglied einladen",
+        "emailLabel": "E-Mail-Adresse",
+        "emailPlaceholder": "kollege@beispiel.com",
+        "roleLabel": "Rolle",
+        "roleOption": "Property Operations Manager",
+        "sendBtn": "Einladung senden",
+        "cancel": "Abbrechen",
+        "success": "✓ Einladung gesendet an",
+        "error": "Einladung konnte nicht gesendet werden. Bitte versuche es erneut."
+      }
     }
   }
 }

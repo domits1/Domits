@@ -882,6 +882,43 @@
         "sub": "10% de las reservas pagadas por el host",
         "note": "Permite a Domits operar la plataforma 24/7"
       }
+    },
+    "team": {
+      "breadcrumb": "Equipo",
+      "heading": "Equipo",
+      "subtitle": "Gestiona quién tiene acceso a tus propiedades y reservas.",
+      "primarySection": "Miembros principales del equipo",
+      "primaryCardHeader": "Host principal",
+      "primaryHostBadge": "Host principal",
+      "cardNote": "El host principal gestiona la cuenta y recibe notificaciones de la plataforma.",
+      "additionalSection": "Miembros adicionales del equipo",
+      "inviteBtn": "+ Invitar miembros",
+      "emptyState": "Aún no hay miembros adicionales. Invita a un co-anfitrión para empezar.",
+      "loadError": "Error al cargar los miembros del equipo. Por favor, actualiza la página.",
+      "activeMembers": "Miembros activos",
+      "pendingInvitations": "Invitaciones pendientes",
+      "membershipsSection": "Equipos a los que perteneces",
+      "membershipsCardHeader": "Membresías de co-anfitrión",
+      "joined": "Se unió el",
+      "memberAvatarAlt": "Avatar del miembro",
+      "hostAvatarAlt": "Avatar del host",
+      "removeModal": {
+        "title": "Eliminar miembro del equipo",
+        "body": "¿Estás seguro de que quieres eliminar a este miembro de tu equipo? Perderá acceso a tus propiedades y tareas.",
+        "confirm": "Sí, eliminar",
+        "cancel": "Cancelar"
+      },
+      "inviteModal": {
+        "title": "Invitar miembro al equipo",
+        "emailLabel": "Dirección de correo electrónico",
+        "emailPlaceholder": "colega@ejemplo.com",
+        "roleLabel": "Rol",
+        "roleOption": "Property Operations Manager",
+        "sendBtn": "Enviar invitación",
+        "cancel": "Cancelar",
+        "success": "✓ Invitación enviada a",
+        "error": "Error al enviar la invitación. Por favor, inténtalo de nuevo."
+      }
     }
   }
 }

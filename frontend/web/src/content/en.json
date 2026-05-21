@@ -881,6 +881,43 @@
         "sub": "10% of bookings paid by host",
         "note": "Allows Domits to run the platform 24/7"
       }
+    },
+    "team": {
+      "breadcrumb": "Team",
+      "heading": "Team",
+      "subtitle": "Manage who has access to your properties and reservations.",
+      "primarySection": "Primary team members",
+      "primaryCardHeader": "Primary host",
+      "primaryHostBadge": "Primary host",
+      "cardNote": "The primary host manages the account and receives platform notifications.",
+      "additionalSection": "Additional team members",
+      "inviteBtn": "+ Invite members",
+      "emptyState": "No additional team members yet. Invite a co-host to get started.",
+      "loadError": "Failed to load team members. Please refresh the page.",
+      "activeMembers": "Active members",
+      "pendingInvitations": "Pending invitations",
+      "membershipsSection": "Teams you belong to",
+      "membershipsCardHeader": "Co-host memberships",
+      "joined": "Joined",
+      "memberAvatarAlt": "Member avatar",
+      "hostAvatarAlt": "Host avatar",
+      "removeModal": {
+        "title": "Remove team member",
+        "body": "Are you sure you want to remove this member from your team? They will lose access to your properties and tasks.",
+        "confirm": "Yes, remove",
+        "cancel": "Cancel"
+      },
+      "inviteModal": {
+        "title": "Invite team member",
+        "emailLabel": "Email address",
+        "emailPlaceholder": "colleague@example.com",
+        "roleLabel": "Role",
+        "roleOption": "Property Operations Manager",
+        "sendBtn": "Send invitation",
+        "cancel": "Cancel",
+        "success": "✓ Invitation sent to",
+        "error": "Failed to send invitation. Please try again."
+      }
     }
   }
 }
