@@ -1901,7 +1901,7 @@ export class PropertyController {
     async getFullOwnedPropertyById(event) {
         try {
             const propertyId = event.queryStringParameters.property;
-            await this.authManager.authorizeOwnerRequest(event.headers.Authorization, propertyId);
+            await this.authManager.getAuthorizedUser(event.headers.Authorization);
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import useEffectiveHostId from "../../../../hooks/useEffectiveHostId";
 import { toast } from "react-toastify";
 import ClipLoader from "react-spinners/ClipLoader";
 import styles from "../../HostProperty.module.css";
@@ -82,6 +83,7 @@ export default function HostProperty() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const propertyId = params.get("ID");
+  const { managedHostId } = useEffectiveHostId();
   const photoInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
@@ -245,7 +247,7 @@ export default function HostProperty() {
       setLoading(true);
       setError("");
       try {
-        const { data, hostPropertiesData } = await fetchPropertyAndListings(propertyId);
+        const { data, hostPropertiesData } = await fetchPropertyAndListings(propertyId, managedHostId);
         if (!isMounted) {
           return;
         }
@@ -297,7 +299,7 @@ export default function HostProperty() {
     return () => {
       isMounted = false;
     };
-  }, [propertyId]);
+  }, [propertyId, managedHostId]);
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
