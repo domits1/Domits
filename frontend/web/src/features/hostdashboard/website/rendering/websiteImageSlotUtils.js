@@ -105,8 +105,8 @@ export const buildWebsiteImageSlotTarget = (slot) => {
 
   if (slot?.kind === "residence") {
     return {
-      sectionId: "images",
-      targetId: "images.residence",
+      sectionId: "residence",
+      targetId: "residence.image",
       imageSlot: { kind: "residence" },
     };
   }

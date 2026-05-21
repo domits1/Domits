@@ -18,12 +18,13 @@ const BASE_COMMON_TEXT_FIELDS = Object.freeze([
   { key: "ctaNote", label: "CTA note", component: "textarea" },
 ]);
 
-const PANORAMA_COMMON_TEXT_FIELDS = Object.freeze([
-  { key: "residenceTitle", label: "Residence section title", component: "input" },
-  { key: "residenceHeadline", label: "Residence section headline", component: "input" },
+const PANORAMA_RESIDENCE_TEXT_FIELDS = Object.freeze([
+  { key: "residenceTitle", label: "Section title", component: "input" },
+  { key: "residenceHeadline", label: "Section headline", component: "input" },
+  { key: "heroDescription", label: "Section description", component: "textarea" },
 ]);
 
-const PANORAMA_COMMON_TOGGLE_FIELDS = Object.freeze([
+const PANORAMA_RESIDENCE_TOGGLE_FIELDS = Object.freeze([
   {
     key: "residenceShowPanel",
     label: "Show residence panel",
@@ -38,6 +39,7 @@ const PANORAMA_CONTACT_FIELDS = Object.freeze([
 
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
+  residence: "residence",
   amenities: "amenities",
   contact: "contact",
   theme: "theme",
@@ -55,9 +57,13 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     heroDescription: "common.heroDescription",
     ctaLabel: "common.ctaLabel",
     ctaNote: "common.ctaNote",
-    residenceTitle: "common.residenceTitle",
-    residenceHeadline: "common.residenceHeadline",
-    residenceShowPanel: "common.residenceShowPanel",
+  },
+  residence: {
+    title: "residence.title",
+    headline: "residence.headline",
+    description: "residence.description",
+    showPanel: "residence.showPanel",
+    image: "residence.image",
   },
   amenities: (index) => `amenities.${index}`,
   amenitiesIconColor: "amenities.iconColor",
@@ -71,7 +77,6 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
   visibility: (fieldKey) => `visibility.${fieldKey}`,
   images: {
     hero: "images.hero",
-    residence: "images.residence",
     gallery: (index) => `images.gallery.${index}`,
   },
   trustCards: (index) => `trustCards.${index}`,
@@ -256,15 +261,23 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
 
 export const getCommonTextFields = (templateKey) => {
   if (templateKey === "panorama-landing") {
-    return [...BASE_COMMON_TEXT_FIELDS, ...PANORAMA_COMMON_TEXT_FIELDS];
+    return BASE_COMMON_TEXT_FIELDS.filter((field) => field.key !== "heroDescription");
   }
 
   return BASE_COMMON_TEXT_FIELDS;
 };
 
-export const getCommonToggleFields = (templateKey) => {
+export const getResidenceTextFields = (templateKey) => {
   if (templateKey === "panorama-landing") {
-    return PANORAMA_COMMON_TOGGLE_FIELDS;
+    return PANORAMA_RESIDENCE_TEXT_FIELDS;
+  }
+
+  return [];
+};
+
+export const getResidenceToggleFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_RESIDENCE_TOGGLE_FIELDS;
   }
 
   return [];
@@ -300,7 +313,7 @@ export const getImageSlotTargetId = (slot) => {
   }
 
   if (slot.kind === "residence") {
-    return EDITOR_TARGET_KEYS.images.residence;
+    return EDITOR_TARGET_KEYS.residence.image;
   }
 
   return EDITOR_TARGET_KEYS.images.gallery(slot.index);

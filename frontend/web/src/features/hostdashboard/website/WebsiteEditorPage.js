@@ -44,11 +44,12 @@ import {
   TEMPLATE_COPY_COLLECTION_CONFIG,
   TEMPLATE_IMAGE_SLOT_MAP,
   TEMPLATE_VISIBILITY_FIELD_MAP,
-  getCommonToggleFields,
   getCommonTextFields,
   getContactSectionFields,
   getCollectionTargetId,
   getImageSlotTargetId,
+  getResidenceTextFields,
+  getResidenceToggleFields,
 } from "./websiteEditorConfig";
 import {
   WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
@@ -59,7 +60,6 @@ import {
   resolveWebsiteContactBackgroundColor,
 } from "./config/websiteContactSectionConfig";
 import {
-  DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR,
   resolveWebsiteResidencePanelColor,
 } from "./config/websiteResidenceSectionConfig";
 import {
@@ -74,7 +74,6 @@ import {
   AmenityIconSelectField,
   BackgroundColorField,
   CollapsibleSection,
-  ContactColorField,
   TextField,
 } from "./editor/WebsiteEditorFields";
 import {
@@ -88,6 +87,7 @@ import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTarget
 import { WebsiteEditorAmenitiesSection } from "./editor/sections/WebsiteEditorAmenitiesSection";
 import { WebsiteEditorContactSection } from "./editor/sections/WebsiteEditorContactSection";
 import { WebsiteEditorImageSlotsSection } from "./editor/sections/WebsiteEditorImageSlotsSection";
+import { WebsiteEditorResidenceSection } from "./editor/sections/WebsiteEditorResidenceSection";
 import {
   buildEditorValuesFromDraft,
   confirmDiscardDraftChanges,
@@ -172,6 +172,7 @@ function WebsiteEditorPage() {
   const [siteSummaryError, setSiteSummaryError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
+    [EDITOR_SECTION_KEYS.residence]: false,
     [EDITOR_SECTION_KEYS.contact]: false,
     [EDITOR_SECTION_KEYS.theme]: false,
     [EDITOR_SECTION_KEYS.visibility]: false,
@@ -274,13 +275,17 @@ function WebsiteEditorPage() {
 
   const draftTemplate = getWebsiteTemplateById(draftRecord?.templateKey);
   const commonTextFields = getCommonTextFields(draftRecord?.templateKey);
-  const commonToggleFields = getCommonToggleFields(draftRecord?.templateKey);
+  const residenceTextFields = getResidenceTextFields(draftRecord?.templateKey);
+  const residenceToggleFields = getResidenceToggleFields(draftRecord?.templateKey);
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const amenitiesVisibilityField = visibilityFields.find((field) => field.key === "amenitiesPanel") || null;
   const standaloneVisibilityFields = visibilityFields.filter((field) => field.key !== "amenitiesPanel");
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
+  const residenceImageSlot = imageSlots.find((slot) => slot.kind === "residence") || null;
+  const generalImageSlots = imageSlots.filter((slot) => slot.kind !== "residence");
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
+  const residenceSectionTitle = String(editorValues?.common?.residenceTitle || "").trim() || "The residence";
   const importedImageOptions = useMemo(() => {
     const rawImageOptions = Array.isArray(baseModel?.media?.galleryImages) ? baseModel.media.galleryImages : [];
     return Array.from(new Set(rawImageOptions.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)));
@@ -365,6 +370,7 @@ function WebsiteEditorPage() {
   useEffect(() => {
     setExpandedSections({
       [EDITOR_SECTION_KEYS.common]: true,
+      [EDITOR_SECTION_KEYS.residence]: false,
       [EDITOR_SECTION_KEYS.amenities]: false,
       [EDITOR_SECTION_KEYS.contact]: false,
       [EDITOR_SECTION_KEYS.theme]: false,
@@ -377,7 +383,15 @@ function WebsiteEditorPage() {
 
   const handleCommonFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
-    setPreviewTargetId(EDITOR_TARGET_KEYS.common[fieldKey]);
+    const previewTargetId =
+      fieldKey === "residenceTitle"
+        ? EDITOR_TARGET_KEYS.residence.title
+        : fieldKey === "residenceHeadline"
+          ? EDITOR_TARGET_KEYS.residence.headline
+          : fieldKey === "heroDescription" && draftTemplateKey === "panorama-landing"
+            ? EDITOR_TARGET_KEYS.residence.description
+            : EDITOR_TARGET_KEYS.common[fieldKey];
+    setPreviewTargetId(previewTargetId);
     setEditorValues((currentValues) => ({
       ...currentValues,
       common: {
@@ -389,7 +403,10 @@ function WebsiteEditorPage() {
 
   const handleCommonToggleFieldChange = (fieldKey) => (event) => {
     const nextChecked = Boolean(event.target.checked);
-    const previewTargetId = EDITOR_TARGET_KEYS.common[fieldKey];
+    const previewTargetId =
+      fieldKey === "residenceShowPanel"
+        ? EDITOR_TARGET_KEYS.residence.showPanel
+        : EDITOR_TARGET_KEYS.common[fieldKey];
     setEditorValues((currentValues) => ({
       ...currentValues,
       common: {
@@ -404,7 +421,7 @@ function WebsiteEditorPage() {
   };
 
   const activateResidencePanelPreviewTarget = () => {
-    setPreviewTargetId(EDITOR_TARGET_KEYS.common.residenceShowPanel);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.residence.showPanel);
   };
 
   const handleResidencePanelColorChange = (nextColor) => {
@@ -1380,49 +1397,35 @@ function WebsiteEditorPage() {
                         onBlur={clearActivePreviewTarget}
                       />
                     ))}
-                    {commonToggleFields.length > 0 ? (
-                      <div className={styles.toggleStack}>
-                        {commonToggleFields.map((field) => {
-                          const targetId = EDITOR_TARGET_KEYS.common[field.key];
-                          const inputId = `website-editor-common-${field.key}`;
-                          const labelId = `website-editor-common-${field.key}-label`;
-                          const descriptionId = `website-editor-common-${field.key}-description`;
-
-                          return (
-                            <WebsiteEditorVisibilityToggleCard
-                              key={field.key}
-                              targetRef={setTargetRef(targetId)}
-                              field={field}
-                              inputId={inputId}
-                              labelId={labelId}
-                              descriptionId={descriptionId}
-                              checked={Boolean(editorValues.common[field.key])}
-                              onChange={handleCommonToggleFieldChange(field.key)}
-                              isHighlighted={highlightedTargetId === targetId}
-                            />
-                          );
-                        })}
-                      </div>
-                    ) : null}
-                    {draftTemplateKey === "panorama-landing" &&
-                    Boolean(editorValues.common.residenceShowPanel) ? (
-                      <ContactColorField
-                        label="Residence panel color"
-                        hint='Controls the white framed surface behind "The residence" when the panel is enabled.'
-                        value={editorValues.common.residencePanelColor}
-                        placeholder={DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR}
-                        resolveColorValue={resolveWebsiteResidencePanelColor}
-                        inputAriaLabel="Residence panel color"
-                        onSelectColor={handleResidencePanelColorChange}
-                        onChangeInput={handleResidencePanelColorInputChange}
-                        onCommitInput={commitResidencePanelColorInput}
-                        onInputKeyDown={handleResidencePanelColorInputKeyDown}
-                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common.residenceShowPanel)}
-                        onBlur={clearActivePreviewTarget}
-                      />
-                    ) : null}
                   </div>
                 </CollapsibleSection>
+
+                {residenceTextFields.length > 0 || residenceToggleFields.length > 0 || residenceImageSlot ? (
+                  <WebsiteEditorResidenceSection
+                    activatePreviewTarget={activatePreviewTarget}
+                    clearActivePreviewTarget={clearActivePreviewTarget}
+                    commitResidencePanelColorInput={commitResidencePanelColorInput}
+                    editorValues={editorValues}
+                    handleCommonFieldChange={handleCommonFieldChange}
+                    handleCommonToggleFieldChange={handleCommonToggleFieldChange}
+                    handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                    handleResidencePanelColorChange={handleResidencePanelColorChange}
+                    handleResidencePanelColorInputChange={handleResidencePanelColorInputChange}
+                    handleResidencePanelColorInputKeyDown={handleResidencePanelColorInputKeyDown}
+                    highlightedTargetId={highlightedTargetId}
+                    importedImageOptions={importedImageOptions}
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.residence])}
+                    onChangeImageRotation={updateImageSlotRotation}
+                    onOpenImagePicker={openImagePicker}
+                    residenceImageSlot={residenceImageSlot}
+                    residenceTextFields={residenceTextFields}
+                    residenceToggleFields={residenceToggleFields}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.residence)}
+                    sectionTitle={residenceSectionTitle}
+                    setTargetRef={setTargetRef}
+                    toggleSection={toggleSection}
+                  />
+                ) : null}
 
                 <CollapsibleSection
                   sectionId={EDITOR_SECTION_KEYS.theme}
@@ -1461,7 +1464,7 @@ function WebsiteEditorPage() {
                   editorValues={editorValues}
                   highlightedTargetId={highlightedTargetId}
                   onChangeImageRotation={updateImageSlotRotation}
-                  imageSlots={imageSlots}
+                  imageSlots={generalImageSlots}
                   importedImageOptions={importedImageOptions}
                   isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.images])}
                   onOpenImagePicker={openImagePicker}

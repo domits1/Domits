@@ -565,8 +565,8 @@ const renderPanoramaResidenceSection = ({
         }`.trim(),
         onSelectTarget,
         {
-          sectionId: "common",
-          targetId: "common.residenceShowPanel",
+          sectionId: "residence",
+          targetId: "residence.showPanel",
         },
         activeTargetId
       )}
@@ -579,16 +579,16 @@ const renderPanoramaResidenceSection = ({
       <div className={`${styles.sectionHeading} ${styles.panoramaResidenceHeading}`.trim()}>
         <p
           {...getInteractiveTargetProps(styles.panoramaResidenceEyebrow, onSelectTarget, {
-            sectionId: "common",
-            targetId: "common.residenceTitle",
+            sectionId: "residence",
+            targetId: "residence.title",
           }, activeTargetId)}
         >
           {model.residenceSection?.title || "The residence"}
         </p>
         <h2
           {...getInteractiveTargetProps(styles.panoramaResidenceHeadline, onSelectTarget, {
-            sectionId: "common",
-            targetId: "common.residenceHeadline",
+            sectionId: "residence",
+            targetId: "residence.headline",
           }, activeTargetId)}
         >
           {model.residenceSection?.headline || "Designed to present the stay with clarity and confidence"}
@@ -611,8 +611,8 @@ const renderPanoramaResidenceSection = ({
         <div className={styles.panoramaResidenceCopy}>
           <p
             {...getInteractiveTargetProps(styles.heroDescription, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroDescription",
+              sectionId: "residence",
+              targetId: "residence.description",
             }, activeTargetId)}
           >
             {model.hero.description}

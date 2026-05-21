@@ -162,10 +162,10 @@ export const useWebsiteEditorTargeting = ({
     imageSlot,
   } = {}) => {
     if (imageSlot) {
+      const targetSectionId = sectionId || EDITOR_SECTION_KEYS.images;
       focusEditorTarget({
-        sectionId: EDITOR_SECTION_KEYS.images,
-        targetId:
-          targetId || resolveEditorPreviewTargetId({ imageSlot, sectionId: EDITOR_SECTION_KEYS.images }),
+        sectionId: targetSectionId,
+        targetId: targetId || resolveEditorPreviewTargetId({ imageSlot, sectionId: targetSectionId }),
       });
       globalThis.setTimeout(() => {
         onSelectImageSlot?.(imageSlot);

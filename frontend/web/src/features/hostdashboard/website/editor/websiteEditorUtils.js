@@ -310,7 +310,7 @@ export const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } 
   }
 
   if (imageSlot?.kind === "residence") {
-    return EDITOR_TARGET_KEYS.images.residence;
+    return EDITOR_TARGET_KEYS.residence.image;
   }
 
   if (imageSlot?.kind === "gallery" && Number.isInteger(imageSlot.index)) {
@@ -319,6 +319,10 @@ export const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } 
 
   if (sectionId === EDITOR_SECTION_KEYS.common) {
     return EDITOR_TARGET_KEYS.common.heroTitle;
+  }
+
+  if (sectionId === EDITOR_SECTION_KEYS.residence) {
+    return EDITOR_TARGET_KEYS.residence.title;
   }
 
   if (sectionId === EDITOR_SECTION_KEYS.amenities) {
