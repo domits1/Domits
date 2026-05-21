@@ -98,12 +98,12 @@ CloudWatch time range:
 
 | NFR target | Measured result | Pass / fail | Evidence reference | Notes |
 | --- | --- | --- | --- | --- |
-| API P95 < 300 ms | Successful endpoints had conservative P95 values of 1.616s, 1.368s, and 4.537s in the low-rate curl run | Fail | Read-only API benchmark results table | Failed for successful endpoints in this low-rate run. `byType?type=Boat` returned HTTP 404 and is not counted as successful performance evidence. |
+| API P95 < 300 ms | Successful endpoints had conservative P95 values of 1.616s, 1.368s, and 4.537s in the low-rate curl run. The controlled k6 read-only load test had p95 `539.95ms`. | Fail / Partial | Read-only API benchmark results table; controlled k6 load test results | The controlled k6 run passed its first-test threshold of p95 < 2000ms, but it is still above the 300ms NFR target. `byType?type=Boat` returned HTTP 404 and is not counted as successful performance evidence. |
 | Average page load < 2 seconds | PageSpeed LCP ranges from 6.1s to 52.9s; GTmetrix homepage LCP is 2.6s and fully loaded time is 8.1s | Fail / Partial | Frontend benchmark results table | Fails PageSpeed for all tested pages and devices; GTmetrix homepage is closer but still above 2s LCP and has high fully loaded time |
 | p95 CPU < 70% | Database/compute CPU metrics not provided in this evidence set | N/A | TBD | Cannot assess CPU target from this run. |
-| No unexpected errors | Successful endpoints returned 10/10 HTTP 200 with 0% error rate; `byType?type=Boat` returned 10/10 HTTP 404 | Partial | Read-only API benchmark results table, `PropertyAPIgateway.png` | Passed for successful endpoints, but `byType?type=Boat` should be treated as invalid benchmark parameter or endpoint/routing/data issue. |
-| No throttles | No throttles were reported from Lambda screenshots, but no numeric export was provided | Partial / Not confirmed numerically | `PropertyLambda.png`, `BookingsLambda.png` | Marked carefully because this is screenshot-based evidence only. |
-| No 5XX errors | No visible 5XX spike was reported from API Gateway screenshots, but no numeric export was provided | Partial / Not confirmed numerically | `PropertyAPIgateway.png`, `BookingAPIgateway.png` | Successful curl endpoints returned no 5XX; `byType?type=Boat` returned 404, not 5XX. |
+| No unexpected errors | Controlled k6 run completed with 318/318 checks passed, 0.00% failed requests, and all three read-only endpoint checks returning HTTP 200. Earlier curl successful endpoints returned 10/10 HTTP 200; `byType?type=Boat` returned 10/10 HTTP 404. | Passed for controlled k6 run / Partial overall | Controlled k6 load test results; read-only API benchmark results table | Passed for the controlled k6 run. `byType?type=Boat` from the earlier curl benchmark should still be treated as invalid benchmark parameter or endpoint/routing/data issue. |
+| No throttles | No throttles were observed in the monitored CloudWatch dashboards during the controlled k6 run; no numeric export was provided | Passed visually / Not confirmed numerically | `PropertyLambda.png`, `BookingsLambda.png`; controlled load CloudWatch notes | Marked carefully because this is screenshot/dashboard-based evidence only. |
+| No 5XX errors | k6 reported 0.00% failed requests and all endpoint checks returned HTTP 200. No clear 5XX spikes were observed in the monitored API Gateway dashboards; no numeric export was provided. | Passed visually / Not confirmed numerically | Controlled k6 load test results; `PropertyAPIgateway.png`, `BookingAPIgateway.png` | Successful k6 endpoints returned no 5XX. Earlier `byType?type=Boat` returned 404, not 5XX, and was excluded from the k6 run. |
 
 ## Controlled load/stress test preparation
 
@@ -203,9 +203,40 @@ The traffic generator can be a local tool, while AWS-native monitoring is used t
 
 | Scenario | Tool | Endpoint(s) | Virtual users | Duration | Request count | Avg response time | P95 response time | Error rate | 5XX count | Throttles observed | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Baseline | TBD | TBD | 1 | 1 minute | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| Low load | TBD | TBD | 2 | 2 minutes | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
-| Controlled load | TBD | TBD | 5 | 2 minutes | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+| Controlled read-only load test | k6 | `property_booking_engine_all`, `property_listing_details`, `booking_blocked_dates` | Max 5 VUs | 5m30s active test window | 318 HTTP requests | 349.34ms | 539.95ms | 0.00% | 0 observed in k6 output / no clear CloudWatch dashboard spike observed | No throttles observed in monitored dashboards | Passed |
+
+Controlled read-only k6 result details:
+
+- Script: `docs/internal/qa/scripts/performance_readonly_load_test.js`
+- Environment: Production
+- Test type: controlled read-only load test
+- Iterations: 106
+- Checks: 318/318 passed
+- HTTP duration max: 4.68s
+- Threshold `http_req_failed < 1%`: passed
+- Threshold `http_req_duration p95 < 2000ms`: passed
+- Endpoint checks passed:
+  - `property_booking_engine_all returned HTTP 200`
+  - `property_listing_details returned HTTP 200`
+  - `booking_blocked_dates returned HTTP 200`
+
+Controlled load CloudWatch notes:
+
+- Property API Gateway was monitored.
+- Booking API Gateway was monitored.
+- Property Lambda was monitored.
+- Bookings Lambda was monitored.
+- No clear spikes were observed in the four CloudWatch dashboards during the test window.
+- No production user impact was observed.
+- CloudWatch conclusions are based on visual dashboard monitoring/screenshots, not exported metric data.
+
+Controlled load limitations:
+
+- The first sandboxed run was blocked by local socket/network permissions and should not be counted as evidence.
+- This successful run proves only a small controlled read-only load scenario.
+- It does not prove 10k concurrent user readiness.
+- It does not prove full scalability, capacity, spike, soak, or stress readiness.
+- It excludes write, booking, payment, account creation, and property mutation flows.
 
 ## 6. Conclusion
 
@@ -217,8 +248,11 @@ Summary:
 
 - The tested frontend pages loaded successfully in PageSpeed, so no unexpected frontend crash was observed. The frontend page-load NFR is not met: LCP is high across homepage, search/listings, and listing detail, with the worst result on `/home` mobile at 52.9s LCP. GTmetrix completed only for the homepage and reported Grade C, 72% performance, 2.6s LCP, 8.1s fully loaded time, 8.44MB total page size, and 85 requests.
 - The read-only API curl benchmark used production endpoints with concurrency 1, 10 sequential requests per endpoint, and no write actions. Successful endpoints returned 10/10 HTTP 200 with 0% error rate, but their conservative P95 values were above the 300 ms API NFR target. `byType?type=Boat` returned 10/10 HTTP 404 and should be treated as an invalid benchmark parameter or endpoint/routing/data issue, not successful performance evidence.
-- CloudWatch screenshots were captured for Property API Gateway, Booking API Gateway, Property Lambda, and Bookings Lambda in `eu-north-1`. The screenshots support that API Gateway latency/integration latency and Lambda duration/error/throttle/concurrency metrics were checked, but this low-rate run does not prove scalability, capacity, or 10k concurrent user readiness.
-- Controlled load/stress testing is the next planned step and requires explicit execution approval before any traffic generation beyond the documented low-rate benchmark approach.
+- The controlled read-only k6 load test passed for the small approved production scenario: max 5 VUs, 318 HTTP requests, 106 iterations, 318/318 checks passed, 0.00% failed requests, average response time 349.34ms, p95 539.95ms, and max response time 4.68s. The k6 thresholds `http_req_failed < 1%` and `http_req_duration p95 < 2000ms` both passed.
+- The controlled k6 p95 of 539.95ms is above the 300ms API NFR target, so the API P95 target remains partial/fail even though the first controlled read-only load test passed its limited threshold.
+- CloudWatch dashboards were monitored for Property API Gateway, Booking API Gateway, Property Lambda, and Bookings Lambda in `eu-north-1`. No clear spikes were observed in the four dashboards during the controlled k6 test window, and no production user impact was observed. This evidence is visual/dashboard-based; exported CloudWatch metrics are still needed for stronger confirmation.
+- The first sandboxed k6 run was blocked by local socket/network permissions and should not be counted as evidence.
+- The successful k6 run proves only a small controlled read-only load scenario. It does not prove 10k concurrent user readiness, full scalability, capacity, spike, soak, or stress readiness, and it excludes write, booking, payment, account creation, and property mutation flows.
 
 Follow-up actions:
 
@@ -233,6 +267,9 @@ Follow-up actions:
 - Investigate first-request latency on `/property/bookingEngine/all`, listing details, and blocked dates. Confirm whether this is Lambda cold start, database connection initialization, or another initial latency source.
 - Export numeric CloudWatch metrics for API Gateway and Lambda to confirm 5XX, throttles, duration, and concurrency values instead of relying only on screenshots.
 - Add database CPU, connection, and query latency evidence for the same test window if available.
+- Add the controlled k6 run output and CloudWatch screenshots to the issue evidence.
+- Compare per-endpoint k6 timings in a future run if more granular endpoint-level metrics are needed.
+- Decide whether another controlled read-only run with exported CloudWatch metrics should be executed before considering higher VU levels.
 
 Risks found:
 
@@ -243,6 +280,7 @@ Risks found:
 - Image delivery and cache policy issues.
 - Possible unused JavaScript impacting load and interactivity.
 - API P95 target was missed by successful read-only API endpoints in this low-rate run.
+- Controlled k6 p95 was 539.95ms, which passes the first-test threshold but is still above the 300ms API NFR target.
 - First request latency spikes appeared on multiple API endpoints.
 - `byType?type=Boat` returned HTTP 404 for every request.
 - CloudWatch evidence is screenshot-based; numeric metric exports are still needed for stronger reporting.
@@ -254,6 +292,8 @@ Recommended next tests:
 - Capture exported CloudWatch metric data for API Gateway, Lambda, and database metrics during the next low-rate API test.
 - Add a second low-rate run to compare first-request latency against warmed requests.
 - Add mobile-focused regression checks for `/home` layout stability.
+- Repeat the controlled read-only k6 test with exported CloudWatch metrics if the team needs stronger numeric evidence for no throttles and no 5XX errors.
+- Consider higher read-only load levels only after explicit approval, a confirmed test window, and live CloudWatch monitoring ownership.
 
 Approval needed before next test run:
 
