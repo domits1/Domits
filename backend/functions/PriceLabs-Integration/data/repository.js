@@ -49,7 +49,7 @@ export class Repository {
 
   async getPropertiesByHost(hostId) {
     const ds = await this._ds();
-    return ds.getRepository(Property).find({ where: { host_id: hostId } });
+    return ds.getRepository(Property).find({ where: { hostid: hostId } });
   }
 
 
