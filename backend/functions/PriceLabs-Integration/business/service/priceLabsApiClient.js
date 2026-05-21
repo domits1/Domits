@@ -31,7 +31,7 @@ async function request(method, path, body, token, name) {
 export async function updateIntegration(token, name, {
   syncUrl, calendarTriggerUrl, hookUrl, regenerateToken = false, features = {},
 } = {}) {
-  return request("POST", "/integration", {
+  return request("POST", "/integration/api/integration", {
     integration: {
       sync_url:             syncUrl,
       calendar_trigger_url: calendarTriggerUrl,
