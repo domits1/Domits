@@ -10,6 +10,18 @@ import { ContactColorField, CollapsibleSection, TextField } from "../WebsiteEdit
 import { WebsiteEditorImageSlotCard } from "../WebsiteEditorImageSlotCard";
 import styles from "../../WebsiteEditorPage.module.scss";
 
+const getResidenceTextTargetId = (fieldKey) => {
+  if (fieldKey === "residenceTitle") {
+    return EDITOR_TARGET_KEYS.residence.title;
+  }
+
+  if (fieldKey === "residenceHeadline") {
+    return EDITOR_TARGET_KEYS.residence.headline;
+  }
+
+  return EDITOR_TARGET_KEYS.residence.description;
+};
+
 export function WebsiteEditorResidenceSection({
   activatePreviewTarget,
   clearActivePreviewTarget,
@@ -49,12 +61,7 @@ export function WebsiteEditorResidenceSection({
     >
       <div className={styles.fieldStack}>
         {residenceTextFields.map((field) => {
-          const targetId =
-            field.key === "residenceTitle"
-              ? EDITOR_TARGET_KEYS.residence.title
-              : field.key === "residenceHeadline"
-                ? EDITOR_TARGET_KEYS.residence.headline
-                : EDITOR_TARGET_KEYS.residence.description;
+          const targetId = getResidenceTextTargetId(field.key);
 
           return (
             <TextField
@@ -89,7 +96,7 @@ export function WebsiteEditorResidenceSection({
           </div>
         ) : null}
 
-        {Boolean(editorValues.common.residenceShowPanel) ? (
+        {editorValues.common.residenceShowPanel ? (
           <ContactColorField
             label="Residence panel color"
             hint='Controls the white framed surface behind "The residence" when the panel is enabled.'

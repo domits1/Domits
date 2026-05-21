@@ -209,6 +209,68 @@ const getBaseAmenityItems = (model) => normalizeAmenityItems(model?.amenities?.a
 const buildCountLabel = (imageCount) =>
   `${imageCount} imported photo${imageCount === 1 ? "" : "s"}`;
 
+const buildResidenceSectionOverrides = ({
+  model,
+  residenceTitle,
+  residenceHeadline,
+  residenceShowPanelOverride,
+  residencePanelColorOverride,
+}) => ({
+  ...(model?.residenceSection && typeof model.residenceSection === "object"
+    ? model.residenceSection
+    : {}),
+  title: residenceTitle || model?.residenceSection?.title || "The residence",
+  headline:
+    residenceHeadline ||
+    model?.residenceSection?.headline ||
+    "Designed to present the stay with clarity and confidence",
+  showPanel:
+    residenceShowPanelOverride === null
+      ? Boolean(model?.residenceSection?.showPanel)
+      : residenceShowPanelOverride,
+  panelColor: residencePanelColorOverride
+    ? resolveWebsiteResidencePanelColor(residencePanelColorOverride)
+    : resolveWebsiteResidencePanelColor(
+        model?.residenceSection?.panelColor || DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR
+      ),
+});
+
+const buildDefaultCalendarDescription = (model, templateKey = "") =>
+  getDefaultWebsiteCalendarDescription({
+    templateKey,
+    propertyTitle: model?.site?.title,
+    blockedDateCount: model?.availability?.blockedDateCount,
+    availabilityCallout: model?.availability?.callout,
+  });
+
+const buildCalendarSectionOverrides = ({
+  model,
+  templateKey,
+  calendarTitle,
+  calendarDescription,
+  calendarShowPanelOverride,
+  calendarPanelColorOverride,
+}) => ({
+  ...(model?.calendarSection && typeof model.calendarSection === "object"
+    ? model.calendarSection
+    : {}),
+  title:
+    calendarTitle ||
+    model?.calendarSection?.title ||
+    getDefaultWebsiteCalendarTitle(templateKey),
+  description:
+    calendarDescription ||
+    model?.calendarSection?.description ||
+    buildDefaultCalendarDescription(model, templateKey),
+  showPanel:
+    calendarShowPanelOverride === null
+      ? model?.calendarSection?.showPanel !== false
+      : calendarShowPanelOverride,
+  panelColor: calendarPanelColorOverride
+    ? normalizeWebsiteCalendarPanelColorOverride(calendarPanelColorOverride)
+    : normalizeWebsiteCalendarPanelColorOverride(model?.calendarSection?.panelColor),
+});
+
 export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
   common: {
     siteTitle: "",
@@ -356,50 +418,21 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
       label: ctaLabel || model.callToAction.label,
       note: ctaNote || model.callToAction.note,
     },
-    residenceSection: {
-      ...(model?.residenceSection && typeof model.residenceSection === "object"
-        ? model.residenceSection
-        : {}),
-      title: residenceTitle || model?.residenceSection?.title || "The residence",
-      headline:
-        residenceHeadline ||
-        model?.residenceSection?.headline ||
-        "Designed to present the stay with clarity and confidence",
-      showPanel:
-        residenceShowPanelOverride === null
-          ? Boolean(model?.residenceSection?.showPanel)
-          : residenceShowPanelOverride,
-      panelColor: residencePanelColorOverride
-        ? resolveWebsiteResidencePanelColor(residencePanelColorOverride)
-        : resolveWebsiteResidencePanelColor(
-            model?.residenceSection?.panelColor || DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR
-          ),
-    },
-    calendarSection: {
-      ...(model?.calendarSection && typeof model.calendarSection === "object"
-        ? model.calendarSection
-        : {}),
-      title:
-        calendarTitle ||
-        model?.calendarSection?.title ||
-        getDefaultWebsiteCalendarTitle(templateKey),
-      description:
-        calendarDescription ||
-        model?.calendarSection?.description ||
-        getDefaultWebsiteCalendarDescription({
-          templateKey,
-          propertyTitle: model?.site?.title,
-          blockedDateCount: model?.availability?.blockedDateCount,
-          availabilityCallout: model?.availability?.callout,
-        }),
-      showPanel:
-        calendarShowPanelOverride === null
-          ? model?.calendarSection?.showPanel !== false
-          : calendarShowPanelOverride,
-      panelColor: calendarPanelColorOverride
-        ? normalizeWebsiteCalendarPanelColorOverride(calendarPanelColorOverride)
-        : normalizeWebsiteCalendarPanelColorOverride(model?.calendarSection?.panelColor),
-    },
+    residenceSection: buildResidenceSectionOverrides({
+      model,
+      residenceTitle,
+      residenceHeadline,
+      residenceShowPanelOverride,
+      residencePanelColorOverride,
+    }),
+    calendarSection: buildCalendarSectionOverrides({
+      model,
+      templateKey,
+      calendarTitle,
+      calendarDescription,
+      calendarShowPanelOverride,
+      calendarPanelColorOverride,
+    }),
     contactSection: {
       ...(model?.contactSection && typeof model.contactSection === "object" ? model.contactSection : {}),
       title: contactTitle || model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE,

@@ -200,6 +200,14 @@ function LegacyAvailabilityCalendar({
       templateKey,
       availabilityCallout: availability?.callout,
     });
+  const {
+    className: legacyTitleTargetClassName = "",
+    ...legacyTitleTargetProps
+  } = titleInteractiveTargetProps;
+  const {
+    className: legacyDescriptionTargetClassName = "",
+    ...legacyDescriptionTargetProps
+  } = descriptionInteractiveTargetProps;
   const calendarClassName = `${styles.calendarCard} ${
     showPanel ? "" : styles.calendarCardPanelOff
   } ${interactiveClassName}`.trim();
@@ -213,8 +221,8 @@ function LegacyAvailabilityCalendar({
       <div className={styles.calendarHeader}>
         <div className={styles.calendarHeaderCopy}>
           <p
-            className={`${styles.calendarEyebrow} ${titleInteractiveTargetProps.className || ""}`.trim()}
-            {...titleInteractiveTargetProps}
+            className={`${styles.calendarEyebrow} ${legacyTitleTargetClassName}`.trim()}
+            {...legacyTitleTargetProps}
           >
             {title}
           </p>
@@ -231,9 +239,9 @@ function LegacyAvailabilityCalendar({
           />
           <p
             className={`${styles.calendarSectionDescription} ${
-              descriptionInteractiveTargetProps.className || ""
+              legacyDescriptionTargetClassName
             }`.trim()}
-            {...descriptionInteractiveTargetProps}
+            {...legacyDescriptionTargetProps}
           >
             {description}
           </p>
@@ -412,6 +420,14 @@ function PanoramaAvailabilityCalendar({
   const showPanel = panelSettings?.showPanel !== false;
   const resolvedPanelColor = normalizeWebsiteCalendarPanelColorOverride(panelSettings?.panelColor);
   const title = String(calendarSection?.title || "").trim() || getDefaultWebsiteCalendarTitle(templateKey);
+  const {
+    className: panoramaTitleTargetClassName = "",
+    ...panoramaTitleTargetProps
+  } = titleInteractiveTargetProps;
+  const {
+    className: panoramaDescriptionTargetClassName = "",
+    ...panoramaDescriptionTargetProps
+  } = descriptionInteractiveTargetProps;
   const calendarClassName = `${styles.panoramaCalendarCard} ${
     showPanel ? "" : styles.panoramaCalendarCardPanelOff
   } ${interactiveClassName}`.trim();
@@ -432,17 +448,17 @@ function PanoramaAvailabilityCalendar({
     >
       <div className={styles.panoramaCalendarIntro}>
         <p
-          className={`${styles.panoramaCalendarEyebrow} ${titleInteractiveTargetProps.className || ""}`.trim()}
-          {...titleInteractiveTargetProps}
+          className={`${styles.panoramaCalendarEyebrow} ${panoramaTitleTargetClassName}`.trim()}
+          {...panoramaTitleTargetProps}
         >
           {title}
         </p>
         <span className={styles.panoramaCalendarDivider} aria-hidden="true" />
         <p
           className={`${styles.panoramaCalendarDescription} ${
-            descriptionInteractiveTargetProps.className || ""
+            panoramaDescriptionTargetClassName
           }`.trim()}
-          {...descriptionInteractiveTargetProps}
+          {...panoramaDescriptionTargetProps}
         >
           {description}
         </p>

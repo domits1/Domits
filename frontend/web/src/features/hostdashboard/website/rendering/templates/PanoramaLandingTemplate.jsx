@@ -556,6 +556,12 @@ const renderPanoramaResidenceSection = ({
         backgroundColor: resolveWebsiteResidencePanelColor(model.residenceSection?.panelColor),
       }
     : undefined;
+  const residenceSectionStyle = residencePanelStyle
+    ? {
+        ...residenceRevealProps.style,
+        ...residencePanelStyle,
+      }
+    : residenceRevealProps.style;
 
   return (
     <section
@@ -572,10 +578,7 @@ const renderPanoramaResidenceSection = ({
         activeTargetId
       )}
       {...residenceRevealProps}
-      style={{
-        ...(residenceRevealProps.style || {}),
-        ...(residencePanelStyle || {}),
-      }}
+      style={residenceSectionStyle}
     >
       <div className={`${styles.sectionHeading} ${styles.panoramaResidenceHeading}`.trim()}>
         <p

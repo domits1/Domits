@@ -159,6 +159,22 @@ const loadWebsiteEditorState = async (propertyId) => {
   };
 };
 
+const getCommonFieldPreviewTargetId = (fieldKey, templateKey = "") => {
+  if (fieldKey === "residenceTitle") {
+    return EDITOR_TARGET_KEYS.residence.title;
+  }
+
+  if (fieldKey === "residenceHeadline") {
+    return EDITOR_TARGET_KEYS.residence.headline;
+  }
+
+  if (fieldKey === "heroDescription" && templateKey === "panorama-landing") {
+    return EDITOR_TARGET_KEYS.residence.description;
+  }
+
+  return EDITOR_TARGET_KEYS.common[fieldKey];
+};
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -397,14 +413,7 @@ function WebsiteEditorPage() {
 
   const handleCommonFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
-    const previewTargetId =
-      fieldKey === "residenceTitle"
-        ? EDITOR_TARGET_KEYS.residence.title
-        : fieldKey === "residenceHeadline"
-          ? EDITOR_TARGET_KEYS.residence.headline
-          : fieldKey === "heroDescription" && draftTemplateKey === "panorama-landing"
-            ? EDITOR_TARGET_KEYS.residence.description
-            : EDITOR_TARGET_KEYS.common[fieldKey];
+    const previewTargetId = getCommonFieldPreviewTargetId(fieldKey, draftTemplateKey);
     setPreviewTargetId(previewTargetId);
     setEditorValues((currentValues) => ({
       ...currentValues,
