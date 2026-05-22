@@ -1,99 +1,188 @@
 {
-      "component": {
-        "user": {
-          "hello": "Hello",
-          "profile": "Profile",
-          "login": "Login",
-          "register": "Register",
-          "logout": "Log out",
-          "settings": "Settings",
-          "payments": "Payments",
-          "dashboard": "Dashboard",
-          "messages": "Messages",
-          "calendar": "Calendar",
-          "reservations": "Reservations",
-          "switchToGuest": "Switch to Guest",
-          "switchToHost": "Switch to Host",
-          "becomeHost": "Become a host",
-          "browseHomepage": "Browse homepage",
-          "switchConfirmToHost": "Are you sure you want to switch to the Host dashboard?",
-          "switchConfirmToGuest": "Are you sure you want to switch to the Guest dashboard?",
-          "switchConfirmYes": "Yes, switch",
-          "switchConfirmNo": "Cancel"
-        },
-        "search": {
-          "destination": "Destination",
-          "accommodation": "Accommodation",
-          "checkInOut": "Check in • out",
-          "guests": "Guests",
-          "adults": "Adults",
-          "children": "Children",
-          "infants": "Infants",
-          "pets": "Pets",
-          "search": "Search",
-          "house": "House",
-          "boat": "Boat",
-          "camper": "Camper",
-          "ageGroups": {
-            "adults": "Ages 16 or above",
-            "children": "Ages 2–16",
-            "infants": "Ages 0–2",
-            "pets": "Normal sized pets"
-          }
-        },
-        "footer": {
-          "navigation" : {
-            "title": "Navigation",
-            "whyDomits": "Why Domits",
-            "howItWorks": "How it works",
-            "producUpdates": "Product Updates",
-            "about": "About us",
-            "security": "Security",
-            "performance": "Performance",
-            "sustainability": "Sustainability",
-            "careers": "Careers",
-            "contact": "Contact"
-          },
-          "guest": {
-            "title": "Guest",
-            "searchAndBook": "Search and book",
-            "helpDeskForGuests": "Helpdesk for guests"
-          },
-          "host": {
-            "title": "Hosts",
-            "becomeHost": "Become a host",
-            "helpdeskForHosts": "Helpdesk for hosts"
-          },
-          "network": {
-            "title": "Network",
-            "guests": "Guests",
-            "hosts": "Hosts",
-            "developers": "Developers",
-            "partners": "Partners",
-            "students": "Students",
-            "startups": "Startups"
-          },
-          "socials": {
-            "title": "Socials"
-          },
-          "office": {
-            "title": "Office"
-          },
-          "policy": {
-            "title": "Privacy policy"
-          },
-          "termsConditions": {
-            "title": "Terms and Conditions"
-          },
-          "disclaimer": {
-            "title": "Disclaimer"
-          },
-          "sitemap": {
-            "title": "Sitemap"
-          },
-          "rightsReserved": {
-            "title": "Rights reserved"
-          }
+  "component": {
+    "user": {
+      "hello": "Hello",
+      "profile": "Profile",
+      "login": "Login",
+      "register": "Register",
+      "logout": "Log out",
+      "settings": "Settings",
+      "payments": "Payments",
+      "dashboard": "Dashboard",
+      "messages": "Messages",
+      "calendar": "Calendar",
+      "reservations": "Reservations",
+      "switchToGuest": "Switch to Guest",
+      "switchToHost": "Switch to Host",
+      "becomeHost": "Become a host",
+      "browseHomepage": "Browse homepage",
+      "switchConfirmToHost": "Are you sure you want to switch to the Host dashboard?",
+      "switchConfirmToGuest": "Are you sure you want to switch to the Guest dashboard?",
+      "switchConfirmYes": "Yes, switch",
+      "switchConfirmNo": "Cancel"
+    },
+    "search": {
+      "destination": "Destination",
+      "accommodation": "Accommodation",
+      "checkInOut": "Check in • out",
+      "guests": "Guests",
+      "adults": "Adults",
+      "children": "Children",
+      "infants": "Infants",
+      "pets": "Pets",
+      "search": "Search",
+      "house": "House",
+      "boat": "Boat",
+      "camper": "Camper",
+      "ageGroups": {
+        "adults": "Ages 16 or above",
+        "children": "Ages 2–16",
+        "infants": "Ages 0–2",
+        "pets": "Normal sized pets"
+      }
+    },
+    "footer": {
+      "navigation": {
+        "title": "Navigation",
+        "whyDomits": "Why Domits",
+        "howItWorks": "How it works",
+        "producUpdates": "Product Updates",
+        "about": "About us",
+        "security": "Security",
+        "performance": "Performance",
+        "sustainability": "Sustainability",
+        "careers": "Careers",
+        "contact": "Contact"
+      },
+      "guest": {
+        "title": "Guest",
+        "searchAndBook": "Search and book",
+        "helpDeskForGuests": "Helpdesk for guests"
+      },
+      "host": {
+        "title": "Hosts",
+        "becomeHost": "Become a host",
+        "helpdeskForHosts": "Helpdesk for hosts"
+      },
+      "network": {
+        "title": "Network",
+        "guests": "Guests",
+        "hosts": "Hosts",
+        "developers": "Developers",
+        "partners": "Partners",
+        "students": "Students",
+        "startups": "Startups"
+      },
+      "socials": {
+        "title": "Socials"
+      },
+      "office": {
+        "title": "Office"
+      },
+      "policy": {
+        "title": "Privacy policy"
+      },
+      "termsConditions": {
+        "title": "Terms and Conditions"
+      },
+      "disclaimer": {
+        "title": "Disclaimer"
+      },
+      "sitemap": {
+        "title": "Sitemap"
+      },
+      "rightsReserved": {
+        "title": "Rights reserved"
+      }
+    }
+  },
+  "homepage": {
+    "hero": {
+      "title": "Find Your Perfect Stay",
+      "subtitle": "Villas, Beachfront Homes & Luxury Escapes",
+      "searchPlaceholder": "Search Destination",
+      "searchTitle": "Accommodation",
+      "searchGuests": "Guests"
+    },
+    "features": {
+      "securePayments": "Secure payments",
+      "verifiedGuest": "Verified guests/hosts",
+      "quickPhone": "Quick phone support",
+      "qualityGuarantee": "Domits quality guarantee",
+      "bestPrice": "Best price guarantee",
+      "bestPriceDescription": "We strive to offer you the best possible price. If you find a cheaper option elsewhere, we will review it with you and adjust where appropriate.",
+      "bookingGuarantee": "Accommodation booking guarantee",
+      "bookingGuaranteeDescription": "If changes are made after your stay has been confirmed, Domits will do its best to coordinate a suitable solution for your stay.",
+      "stayGuarantee": "Guarantee of stay at the accommodation",
+      "stayGuaranteeDescription": "If you are unable to access the arranged rooms on arrival, Domits will do its best to coordinate a suitable alternative."
+    },
+    "sections": {
+      "trending": "Trending accommodations this month",
+      "rentBoat": "Rent a boat for any occasion",
+      "discoverCampers": "Discover Beautiful Campers",
+      "becomeHost": {
+        "title": "Become a host",
+        "points": [
+          "List your property for free.",
+          "Manage everything centrally.",
+          "Increase your booking metrics."
+        ],
+        "button": "List your property"
+      },
+      "community": {
+        "title": "Need help? Join the community",
+        "description": "Domits has a travel community hosts, guests, and employees",
+        "button": "Search & Book"
+      }
+    },
+    "filters": {
+      "season": {
+        "title": "Favorites by Season",
+        "spring": "Spring",
+        "summer": "Summer",
+        "fall": "Fall",
+        "winter": "Winter"
+      },
+      "interest": {
+        "title": "Great picks by interest",
+        "luxury": "Luxury",
+        "beach": "Beach",
+        "lastMinute": "Last minute",
+        "wellness": "Wellness",
+        "romantic": "Romantic",
+        "adventure": "Adventure",
+        "nature": "Nature",
+        "culture": "Culture",
+        "culinary": "Culinary"
+      },
+      "groups": {
+        "title": "Accommodations by group",
+        "description": "Vacation houses and apartments",
+        "friends": "Friends",
+        "couples": "Couples",
+        "family": "Family & child friendly",
+        "solo": "Solo",
+        "senior": "Senior",
+        "petFriendly": "Pet Friendly"
+      }
+    },
+    "destinations": {
+      "europe": {
+        "title": "Countries in Europe",
+        "countries": {
+          "netherlands": "The Netherlands",
+          "france": "France",
+          "spain": "Spain",
+          "italy": "Italy",
+          "belgium": "Belgium",
+          "germany": "Germany",
+          "greece": "Greece",
+          "unitedKingdom": "United Kingdom",
+          "portugal": "Portugal",
+          "croatia": "Croatia",
+          "poland": "Poland",
+          "austria": "Austria",
+          "czech": "Czech"
         }
       },
   
@@ -528,141 +617,17 @@
             "description": "From the first touch point with Domits for guest we want to let them feel that they are traveling as sustainable as possible. Domits begins with having sustainability filters and a large overview of all eco-friendly amenities."
           }
         },
-        "howItWorksContent": {
-          "title": "How Domits Works",
-          "subtitle": "Discover how Domits makes it easy for both guests and hosts.",
-          "guest": {
-            "title": "Guests",
-            "destination": {
-              "title": "Search your destination",
-              "description": "Explore countless vacation rentals with Domits’ user-friendly search filters. Customize your search by location, date, and amenities to find your perfect match."
-            },
-            "holiday": {
-              "title": "Book your next holiday",
-              "description": "Secure your dream stay with Domits now! Choose your preferred accommodation and book in just a few clicks."
-            },
-            "experience": {
-              "title": "Experience Domits",
-              "description": "Unlimited support, personalized modern dashboard and messaging with your host for further details."
-            }
-          },
-          "host": {
-            "title": "Hosts",
-            "rental": {
-              "title": "List your property for rental",
-              "description": "List your property in a few simple steps. Add photos, describe your property, set your price and share availability."
-            },
-            "getPaid": {
-              "title": "Get paid easy, fast and safe",
-              "description": "Connect your details to our payment system and get paid. Oversee your occupancy, revenue management, reports and average daily rate."
-            },
-            "welcomeGuest": {
-              "title": "Welcome your guests",
-              "description": "Give your guests a warmhearted welcome. Manage your properties, calendars, reservations, messages and much more."
-            }
-          },
-          "feature": {
-            "title": "Feature overview for hosts",
-            "subtitle": "Increase revenue, reduce workload, deliver beautiful experiences",
-            "core": "#1: Core Feature.",
-            "bundles": "#2: Performance Bundles.",
-            "bundles2": " Digital Growth, Revenue, Operations, Guest Experience. ",
-            "support": "#3: Education & Support.",
-            "support2": " 9-5 mo-fr support, onboarding solutions, account team, Community.",
-            "pms": "Property Management System (PMS)",
-            "listing": "Listings",
-            "calendar": "Calendar",
-            "messages": "Messages",
-            "reservations":"Reservations",
-            "revenues": "Revenues",
-            "reviews": "Reviews",
-            "finance": "Finance",
-            "communication": "Communication",
-            "inbox": "Unified Inbox",
-            "hostdash": "Host Dashboard",
-            "guestdash": "Guest Dashboard",
-            "revManagement": "Revenue Management",
-            "overview": "Revenue overview",
-            "rates": "Occupancy rates",
-            "adr": "ADR (Avarage Daily Rate)",
-            "revPar": "RevPAR (Revenue per Available Room)",
-            "operations": "Operations",
-            "reservation": "Reservation management",
-            "pricing": "Pricing management",
-            "housekeeping": "Housekeeping",
-            "maintenance": "Maintenance management",
-            "clientSupport": "Client support",
-            "faq": "FAQ",
-            "email": "E-mail",
-            "phone": "Phone Support"
-          }
+        "company": {
+          "title": "Company",
+          "desc": "Manage your company name and basic details."
         },
-        "policy": {
-          "title": "Domits Privacy Policy",
-          "privacy": {
-            "title": "Privacy Policy",
-            "description": "Last updated: November, 2024 \n\n\n We are aware that you place your trust in us. We therefore see it as our responsibility to protect your privacy.\n\n\nOn this page we let you know what data we collect when you use our website, why we collect this data and how we improve your user experience.\nThis way you understand exactly how we work.\n\n\nThis privacy policy applies to the services of Domits.\n\n\nYou should be aware that Domits is not responsible for the privacy policy of other sites and sources.\n\n\nBy using this website you agree to the privacy policy.\n\n\nDomits respects the privacy of all users of its site and ensures that the personal information you provide is treated confidentially."
-          },
-          "collectedData": {
-            "title": "Pur Use of Collected Data",
-            "service": {
-              "title": "Use our services",
-              "description": "When you register for one of our services, we ask you to provide personal data.\nThe purpose of the processing is to perform the service. The personal data that we initially process are: Name, telephone number and email address.\nThe data is stored on Domits's own secure servers or those of a third party. We will not combine this data with other personal data we have."
-            },
-            "communication": {
-              "title": "Communication",
-              "description": "When you send us an email or other messages, we may store those messages. Sometimes we ask you for your personal information that is relevant to the situation.\nThis makes it possible to process your questions and answer your requests. The data is stored on Domits's own secure servers or those of a third party.\nWe will not combine this data with other personal data we have."
-            }
-          },
-          "cookies": {
-            "title": "Cookies",
-            "description": "We collect data for research to gain a better understanding of our customers so that we can tailor our services accordingly.\n\n\nThis website uses “cookies” (text files placed on your computer) to help the website analyze how users use the site.\nThe information generated by the cookie about your use of the website can be transferred to Domits's own secure servers or those of a third party.\nWe use this information to keep track of how you use the website,\nto compile reports on website activity and to offer other services relating to website activity and internet usage."
-          },
-          "purpose": {
-            "title": "Purposes",
-            "description": "We do not collect or use information for purposes other than those described in this privacy policy unless we have obtained your permission in advance."
-          },
-          "parties": {
-            "title": "Third parties",
-            "description": "The people at Domits do their best to respect everyone's privacy, process as little personal data as possible and protect all personal data as best as possible.\nThe information is not shared with third parties. In some cases the information can be shared internally.\nOur employees are obliged to respect the confidentiality of your data."
-          },
-          "changes": {
-            "title": "Changes",
-            "description": "This privacy statement is tailored to the use of and the possibilities on this site. Any adjustments and/or changes to this site may lead to changes in this privacy statement.\nIt is therefore advisable to regularly consult this privacy statement."
-          },
-          "choices": {
-            "title": "Choices for personal data",
-            "description": "We offer all visitors the opportunity to view, change or delete all personal information that has been provided to us at the time."
-          },
-          "newsletter": {
-            "title": "Adjust/unsubscribe from the newsletter service",
-            "description": "At the bottom of every mailing you will find the option to change your details or unsubscribe."
-          },
-          "communication": {
-            "title": "Adjust/unsubscribe communication",
-            "description": "If you would like to change your data or have it removed from our files yourself, you can contact us. See contact details below."
-          },
-          "disable": {
-            "title": "Disable cookies",
-            "description": "Most browsers are set to accept cookies by default, but you can reset your browser to refuse all cookies or to indicate when a cookie is being sent. However,\nsome features and services - on our and other websites - may not function correctly if cookies are disabled in your browser."
-          },
-          "questions": {
-            "title": "Questions and feedback",
-            "description": "We regularly check whether we comply with this privacy policy. If you have any questions about this privacy policy, please contact us."
-          }
+        "team": {
+          "title": "Team",
+          "desc": "Manage your primary host and team members."
         },
-        "disclaimer": {
-          "title": "Domits Disclaimer",
-          "subtitle": "Disclaimer",
-          "date": "Last updated: November, 2024",
-          "definitions": {
-            "title": "Interpretation and Definitions ",
-            "description": "No rights can be derived or claimed from the content of this website in any way. Although the greatest possible care has been taken in compiling the content of this website, it is possible that certain information may (over time) become outdated or no longer correct.\n\n\n\nDomits is not liable for any damage that could result from the use of data from the site created by Domits. Domits hereby disclaims all liability for damage resulting from the use of this data or data to which links on this site(s) refer. The information on this site is subject to change without notice.\n\n\n\n\nDomits gives no guarantees with regard to the nature and content of the information on the site and is not liable for the content of this information or for the consequences of its use. Any liability for any damage resulting from access to and use of the site is expressly rejected by Domits. Furthermore, no guarantee is offered for the error-free and uninterrupted functioning of the site. References or connections to other sites or sources that are not the property of Domits are only included for the information of the user of the site.\n\n\n\n\nDomits is not responsible for the availability of these sites or sources. Domits accepts no liability whatsoever for the content, advertising, products or other matters on such sites or resources or their availability. Domits is not liable for any form of damage or loss caused by or in connection with the use of or reliance on the content, goods or services offered on such sites or sources."
-          },
-          "copyright": {
-            "title": "©Copyright",
-            "description": "All rights reserved. Nothing from this website (information, images, images) may be copied or stored in a database, in any form or by any means, whether electronic, digital, mechanical, manual, photographic or any other way."
-          }
+        "ratePlans": {
+          "title": "Rate Plans",
+          "desc": "View your 10% host-only and future pricing options."
         },
         "landing": {
           "hero": {
@@ -917,5 +882,133 @@
             "sending": "Sending..."
           }
         }
+      }
+    },
+    "personalData": {
+      "breadcrumb": "Personal Data",
+      "title": "Personal Information",
+      "subtitle": "Manage your personal profile information and account preferences.",
+      "profileSection": "Profile",
+      "prefsSection": "Preferences / Authentication",
+      "photo": {
+        "upload": "Upload",
+        "uploading": "Working...",
+        "remove": "Remove"
+      },
+      "fields": {
+        "fullName": "Full name",
+        "title": "Title",
+        "selectTitle": "Select title",
+        "email": "Email",
+        "emailAddress": "Email address",
+        "verificationCode": "Verification code sent to your email",
+        "verify": "Verify",
+        "phone": "Phone",
+        "phoneNumber": "Phone number",
+        "sex": "Sex",
+        "selectSex": "Select sex",
+        "dateOfBirth": "Date of birth",
+        "placeOfBirth": "Place of birth",
+        "country": "Country",
+        "nationality": "Nationality"
+      },
+      "prefs": {
+        "defaultLanguage": "Default language",
+        "dateFormat": "Date format",
+        "priceFormat": "Price format",
+        "emailLabel": "Email",
+        "active": "Active",
+        "inactive": "Inactive",
+        "verified": "Verified",
+        "sms": "SMS",
+        "phoneVerifiedYes": "Phone verified: Yes",
+        "phoneVerifiedNo": "Phone verified: No",
+        "authenticatorApp": "Authenticator app",
+        "totp": "App-based codes (TOTP)"
+      },
+      "buttons": {
+        "save": "Save changes",
+        "saving": "Saving...",
+        "saved": "Saved!"
+      }
+    },
+    "company": {
+      "breadcrumb": "Company",
+      "title": "Company",
+      "subtitle": "Manage your company information.",
+      "section": "Company Details",
+      "fields": {
+        "companyName": "Company name",
+        "placeholder": "Enter company name",
+        "hint": "This information will appear on invoices and reports."
+      },
+      "buttons": {
+        "comingSoon": "Coming soon"
+      }
+    },
+    "compliance": {
+      "breadcrumb": "Compliance",
+      "title": "Compliance",
+      "subtitle": "Verify your property and host identity to meet local registrations.",
+      "section": "Compliance Details",
+      "fields": {
+        "propertyRegistration": "Property registration",
+        "placeholder": "Registration number",
+        "hint": "This number proves your property is registered with local authorities. Additional compliance methods (ID verification, address proof) will be available soon."
+      },
+      "buttons": {
+        "comingSoon": "Coming soon"
+      }
+    },
+    "ratePlans": {
+      "breadcrumb": "Rate Plans",
+      "title": "Rate Plans",
+      "subtitle": "Manage your rate plans.",
+      "standardSection": "Standard Rate Plan",
+      "additionalSection": "Additional Plans",
+      "additionalSubtitle": "Additional rate plans for direct bookings will be available soon.",
+      "hostOnlyFee": {
+        "title": "Host Only Fee",
+        "sub": "10% of bookings paid by host",
+        "note": "Allows Domits to run the platform 24/7"
+      }
+    },
+    "team": {
+      "breadcrumb": "Team",
+      "heading": "Team",
+      "subtitle": "Manage who has access to your properties and reservations.",
+      "primarySection": "Primary team members",
+      "primaryCardHeader": "Primary host",
+      "primaryHostBadge": "Primary host",
+      "cardNote": "The primary host manages the account and receives platform notifications.",
+      "additionalSection": "Additional team members",
+      "inviteBtn": "+ Invite members",
+      "emptyState": "No additional team members yet. Invite a co-host to get started.",
+      "loadError": "Failed to load team members. Please refresh the page.",
+      "activeMembers": "Active members",
+      "pendingInvitations": "Pending invitations",
+      "membershipsSection": "Teams you belong to",
+      "membershipsCardHeader": "Co-host memberships",
+      "joined": "Joined",
+      "memberAvatarAlt": "Member avatar",
+      "hostAvatarAlt": "Host avatar",
+      "removeModal": {
+        "title": "Remove team member",
+        "body": "Are you sure you want to remove this member from your team? They will lose access to your properties and tasks.",
+        "confirm": "Yes, remove",
+        "cancel": "Cancel"
+      },
+      "inviteModal": {
+        "title": "Invite team member",
+        "emailLabel": "Email address",
+        "emailPlaceholder": "colleague@example.com",
+        "roleLabel": "Role",
+        "roleOption": "Property Operations Manager",
+        "sendBtn": "Send invitation",
+        "cancel": "Cancel",
+        "success": "✓ Invitation sent to",
+        "error": "Failed to send invitation. Please try again."
+      }
+    }
+  }
 }
-

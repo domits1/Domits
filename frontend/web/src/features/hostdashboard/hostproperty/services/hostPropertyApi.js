@@ -62,7 +62,11 @@ const getRestrictionValueWithFallbacks = (restrictionValueMap, restrictionName) 
   return matchedFallbackKey ? restrictionValueMap.get(matchedFallbackKey) : undefined;
 };
 
-export const fetchPropertyAndListings = async (propertyId) => {
+export const fetchPropertyAndListings = async (propertyId, managedHostId = null) => {
+  const hostPropertiesUrl = managedHostId
+    ? `${PROPERTY_API_BASE}/hostDashboard/byHostId?hostId=${encodeURIComponent(managedHostId)}`
+    : `${PROPERTY_API_BASE}/hostDashboard/all`;
+
   const [response, hostPropertiesResponse] = await Promise.all([
     fetch(`${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`, {
       method: "GET",
@@ -70,7 +74,7 @@ export const fetchPropertyAndListings = async (propertyId) => {
         Authorization: getAccessToken(),
       },
     }),
-    fetch(`${PROPERTY_API_BASE}/hostDashboard/all`, {
+    fetch(hostPropertiesUrl, {
       method: "GET",
       headers: {
         Authorization: getAccessToken(),
