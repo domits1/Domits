@@ -350,8 +350,8 @@ const Homepage = () => {
               <img src={hostImage.src} alt={hostImage.alt} />
 
               <div className="host-stats">
-                {hostSection.stats.map((s, i) => (
-                  <div key={i}>
+                {hostSection.stats.map((s) => (
+                  <div key={s.label}>
                     <h3>{s.value}</h3>
                     <span>{s.label}</span>
                   </div>

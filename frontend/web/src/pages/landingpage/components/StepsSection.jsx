@@ -57,6 +57,9 @@ function StepsSection({ landingContent }) {
 StepsSection.propTypes = {
   landingContent: PropTypes.shape({
     hosting: PropTypes.shape({
+      stepsLabel: PropTypes.string,
+      stepsTitleLine1: PropTypes.string,
+      stepsTitleSpan: PropTypes.string,
       first: PropTypes.shape({
         title: PropTypes.string,
         description: PropTypes.string,
