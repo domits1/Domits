@@ -1,0 +1,714 @@
+.host-settings-hub {
+    box-sizing: border-box;
+    padding: 32px 40px 48px;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.host-settings-hub-header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.host-settings-hub-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 6px;
+}
+
+.host-settings-hub-subtitle {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.host-settings-section {
+    margin-bottom: 32px;
+}
+
+.host-settings-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 14px;
+}
+
+.host-settings-cards-single {
+    display: flex;
+    flex-direction: column;
+}
+
+.host-settings-cards-single .host-settings-card {
+    max-width: 100%;
+}
+
+.host-settings-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1100px;
+}
+
+.host-settings-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 22px 26px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.host-settings-card:hover {
+    border-color: #bbf7d0;
+    box-shadow: 0 4px 16px rgba(21, 128, 61, 0.08);
+    background: #f0fdf4;
+    color: inherit;
+    text-decoration: none;
+}
+
+.host-settings-card-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    border-radius: 50%;
+    background-color: #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.host-settings-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.host-settings-card-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #111827;
+}
+
+.host-settings-card-desc {
+    font-size: 0.88rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.host-settings-card-chevron {
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.host-settings-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 8px 0 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #374151;
+    margin-bottom: 4px;
+}
+
+.host-settings-back:hover {
+    color: #111827;
+}
+
+.host-settings-subpage {
+    width: 100%;
+}
+
+.host-settings-coming-soon {
+    padding: 60px 0;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+    .host-settings-hub {
+        padding: 24px 16px 40px;
+    }
+
+    .host-settings-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─── Personal Data page ─────────────────────────────────────────────────── */
+
+.personal-data-page {
+    box-sizing: border-box;
+    padding: 40px 48px 64px;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.personal-data-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.personal-data-breadcrumb a {
+    color: #6b7280;
+    text-decoration: none;
+}
+
+.personal-data-breadcrumb a:hover {
+    color: #111827;
+    text-decoration: underline;
+}
+
+.personal-data-breadcrumb-sep {
+    color: #9ca3af;
+}
+
+.personal-data-breadcrumb-current {
+    color: #15803d;
+    font-weight: 500;
+}
+
+.personal-data-header {
+    margin-bottom: 28px;
+}
+
+.personal-data-title {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 6px;
+}
+
+.personal-data-subtitle {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.personal-data-section {
+    margin-bottom: 36px;
+}
+
+.personal-data-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 14px;
+}
+
+.personal-data-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.personal-data-card-inner {
+    display: flex;
+    gap: 0;
+    padding: 0;
+}
+
+.personal-data-photo-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    min-width: 200px;
+    width: 200px;
+    background: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    border-radius: 16px 0 0 16px;
+    padding: 36px 24px 32px;
+}
+
+.personal-data-photo {
+    display: block;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 40% center;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #e5e7eb, 0 4px 14px rgba(0,0,0,0.10);
+    background: #e5e7eb;
+}
+
+.personal-data-photo-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.pd-photo-btn {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s;
+    text-align: center;
+}
+
+.pd-photo-btn--primary {
+    background: #15803d;
+    color: #fff;
+    border-color: #15803d;
+}
+
+.pd-photo-btn--primary:hover {
+    background: #166534;
+}
+
+.pd-photo-btn--secondary {
+    background: #fff;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.pd-photo-btn--secondary:hover {
+    background: #f3f4f6;
+}
+
+.pd-photo-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.personal-data-fields-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 28px 32px;
+}
+
+.pd-field {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.pd-field-label {
+    flex-shrink: 0;
+    min-width: 120px;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    color: #374151;
+    padding-top: 10px;
+}
+
+.pd-field-input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #111827;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+}
+
+.pd-field-input:focus {
+    border-color: #6b7280;
+}
+
+.pd-select-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+.pd-field-select {
+    width: 100%;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+.pd-phone-row {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+}
+
+.pd-phone-code {
+    flex: 0 0 auto;
+    min-width: 80px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 28px;
+    cursor: pointer;
+}
+
+.pd-phone-number {
+    flex: 1;
+}
+
+.pd-verify-row {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+}
+
+.pd-verify-btn {
+    padding: 9px 16px;
+    background: #15803d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.pd-verify-btn:hover {
+    background: #166534;
+}
+
+.pd-field-error {
+    font-size: 0.78rem;
+    color: #dc2626;
+    margin: 4px 0 0 136px;
+}
+
+.personal-data-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 32px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.pd-save-btn {
+    background: #15803d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.pd-save-btn:hover:not(:disabled) {
+    background: #166534;
+}
+
+.pd-save-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.pd-save-btn--saved {
+    background: #1d4ed8;
+}
+
+/* ─── Rate Plans page ────────────────────────────────────────────────────── */
+
+.rate-plan-item {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 24px 26px;
+}
+
+.rate-plan-item-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rate-plan-item-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #111827;
+}
+
+.rate-plan-item-sub {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.rate-plan-item-note {
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+/* ─── Compliance page ────────────────────────────────────────────────────── */
+
+.compliance-card-hint {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 8px 0 0;
+    line-height: 1.5;
+}
+
+/* ─── Company page ───────────────────────────────────────────────────────── */
+
+.company-card-hint {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 4px 0 0 136px;
+}
+
+@media (max-width: 640px) {
+    .company-card-hint {
+        margin-left: 0;
+    }
+}
+
+/* ─── Preferences / Authentication card ─────────────────────────────────── */
+
+.personal-data-pref-card {
+    padding: 0;
+}
+
+.pd-pref-row,
+.pd-auth-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 28px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.pd-pref-row:last-child,
+.pd-auth-row:last-child {
+    border-bottom: none;
+}
+
+.pd-pref-label {
+    width: 160px;
+    min-width: 160px;
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.pd-pref-select {
+    width: 220px;
+    flex: 0 0 auto;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+.pd-status-pill {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.pd-status-pill--active {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.pd-status-pill--inactive {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.pd-verified-check {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.pd-auth-subtext {
+    font-size: 0.82rem;
+    color: #9ca3af;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+/* Tablet: stack photo above fields before the layout gets too cramped */
+@media (max-width: 900px) {
+    .personal-data-page {
+        padding: 32px 32px 64px;
+    }
+
+    .personal-data-card-inner {
+        flex-direction: column;
+    }
+
+    .personal-data-photo-col {
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+        min-width: unset;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 16px 16px 0 0;
+        padding: 24px 28px;
+        gap: 24px;
+    }
+
+    .personal-data-photo {
+        width: 100px;
+        height: 100px;
+        min-width: 100px;
+    }
+
+    .personal-data-photo-actions {
+        flex-direction: row;
+        width: auto;
+        gap: 10px;
+    }
+
+    .pd-photo-btn {
+        width: auto;
+        padding: 8px 16px;
+    }
+
+    .personal-data-fields-col {
+        padding: 24px 28px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .personal-data-page {
+        padding: 20px 16px 80px;
+    }
+
+    .personal-data-photo-col {
+        flex-direction: column;
+        align-items: center;
+        padding: 24px 16px;
+    }
+
+    .personal-data-photo {
+        width: 120px;
+        height: 120px;
+    }
+
+    .personal-data-photo-actions {
+        flex-direction: row;
+        width: auto;
+        gap: 10px;
+    }
+
+    .pd-photo-btn {
+        width: auto;
+        padding: 8px 20px;
+    }
+
+    .personal-data-fields-col {
+        padding: 20px 16px;
+        gap: 16px;
+    }
+
+    .pd-field {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .pd-field-label {
+        width: auto;
+        min-width: auto;
+        padding-top: 0;
+        font-weight: 500;
+    }
+
+    .pd-field-input,
+    .pd-select-wrapper {
+        width: 100%;
+    }
+
+    .pd-phone-row {
+        gap: 8px;
+    }
+
+    .pd-phone-code {
+        width: auto !important;
+        flex: 0 0 auto;
+    }
+
+    .pd-phone-number {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pd-verify-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .pd-verify-btn {
+        width: 100%;
+    }
+
+    .pd-field-error {
+        margin-left: 0;
+    }
+
+    .personal-data-card-footer {
+        padding: 16px;
+    }
+
+    .pd-save-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .pd-pref-row,
+    .pd-auth-row {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px 16px;
+    }
+
+    .pd-pref-label {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .pd-pref-select {
+        width: 100%;
+    }
+}

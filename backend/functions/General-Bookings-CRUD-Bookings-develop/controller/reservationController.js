@@ -15,9 +15,8 @@ class ReservationController {
     this.paymentSerivce = paymentService;
     this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
   }
-  // -----------
+
   // POST
-  // -----------
 
   async create(event) {
     try {
@@ -53,9 +52,8 @@ class ReservationController {
     }
   }
 
-  // -----------
   // PATCH
-  // -----------
+
   async patch(event) {
     try {
       const cancelBookingId = this.getCancelBookingId(event);
@@ -227,6 +225,8 @@ class ReservationController {
       refundError,
     });
 
+    await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
+
     return {
       statusCode: canceled.statusCode || 200,
       headers: responseHeaderJSON,
@@ -234,9 +234,7 @@ class ReservationController {
     };
   }
 
-  // -----------
   // GET
-  // -----------
 
   async read(event) {
     try {

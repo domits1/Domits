@@ -10,10 +10,11 @@ export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
     const [isPOM, setIsPOM] = useState(false);
+    const [memberships, setMemberships] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const checkUser = async () => {
+        const initialize = async () => {
             try {
                 const userInfo = await Auth.currentAuthenticatedUser({ bypassCache: true });
                 if (userInfo && userInfo.attributes && 'custom:group' in userInfo.attributes) {
@@ -23,30 +24,31 @@ export const UserProvider = ({ children }) => {
                     setUser(userInfo);
                     setRole('Traveler');
                 }
+                try {
+                    const result = await fetchMemberships();
+                    setMemberships(Array.isArray(result) ? result : []);
+                    setIsPOM(Array.isArray(result) && result.length > 0);
+                } catch {
+                    setMemberships([]);
+                    setIsPOM(false);
+                }
             } catch {
                 setUser(null);
                 setRole(null);
+                setMemberships([]);
+                setIsPOM(false);
             } finally {
                 setIsLoading(false);
             }
         };
-        const checkMemberships = async () => {
-            try {
-                const memberships = await fetchMemberships();
-                setIsPOM(memberships.length > 0);
-            } catch {
-                setIsPOM(false);
-            }
-        };
-        checkUser();
-        checkMemberships();
+        initialize();
     }, []);
 
     const hasRole = (allowedRoles) => allowedRoles.includes(role);
 
     const contextValue = useMemo(
-        () => ({ user, role, isPOM, isLoading, hasRole }),
-        [user, role, isPOM, isLoading]
+        () => ({ user, role, isPOM, memberships, isLoading, hasRole }),
+        [user, role, isPOM, memberships, isLoading]
     );
 
     return (
