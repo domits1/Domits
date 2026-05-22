@@ -80,5 +80,21 @@ export const Booking = new EntitySchema({
       nullable: true,
       default: "direct",
     },
+    refunded_amount: {
+      type: "bigint",
+      name: "refunded_amount",
+      nullable: true,
+      default: 0,
+    },
+    stripe_refund_id: {
+      type: "varchar",
+      name: "stripe_refund_id",
+      nullable: true,
+    },
+    refund_error: {
+      type: "text",
+      name: "refund_error",
+      nullable: true,
+    },
   },
 });

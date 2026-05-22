@@ -23,14 +23,16 @@ const REFUND_POLICIES = {
 };
 
 function normalizePolicy(policy) {
-  return String(policy ?? "").trim().toLowerCase();
+  return String(policy ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 function parseDate(date, fieldName) {
   const parsedDate = date instanceof Date ? date : new Date(date);
 
   if (Number.isNaN(parsedDate.getTime())) {
-    throw new Error(`Invalid ${fieldName}.`);
+    throw new TypeError(`Invalid ${fieldName}.`);
   }
 
   return parsedDate;
@@ -57,12 +59,7 @@ function getRefundPercentage(policy, arrivalDate, cancellationDate = new Date())
   return 0;
 }
 
-function calculateRefundAmountCents(
-  policy,
-  arrivalDate,
-  totalPriceCents,
-  cancellationDate = new Date()
-) {
+function calculateRefundAmountCents(policy, arrivalDate, totalPriceCents, cancellationDate = new Date()) {
   if (!Number.isFinite(totalPriceCents) || totalPriceCents < 0) {
     throw new Error("totalPriceCents must be a non-negative number.");
   }
