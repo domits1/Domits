@@ -19,21 +19,41 @@ const draftTableName = (schemaName) => `${schemaName}.standalone_site_draft`;
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
 const siteDomainTableName = (schemaName) => `${schemaName}.standalone_site_domain`;
 const propertyPricingTableName = (schemaName) => `${schemaName}.property_pricing`;
-const STANDALONE_SITE_MONTHLY_FIXED_COST_EUR = Number(process.env.STANDALONE_SITE_MONTHLY_FIXED_COST_EUR);
-const STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR = Number(
-  process.env.STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR
+const getConfiguredNumberEnv = (...envNames) => {
+  for (const envName of envNames) {
+    const rawValue = process.env[envName];
+    if (rawValue === undefined || rawValue === null || String(rawValue).trim() === "") {
+      continue;
+    }
+
+    return Number(rawValue);
+  }
+
+  return Number.NaN;
+};
+const DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR"
 );
-const STANDALONE_SITE_USAGE_WINDOW_DAYS = Number(process.env.STANDALONE_SITE_USAGE_WINDOW_DAYS || 30);
-const STANDALONE_SITE_COST_PER_BUILD_ATTEMPT_EUR = Number(
-  process.env.STANDALONE_SITE_COST_PER_BUILD_ATTEMPT_EUR
+const DIRECT_BOOKING_WEBSITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR"
 );
-const STANDALONE_SITE_COST_PER_DRAFT_SAVE_EUR = Number(process.env.STANDALONE_SITE_COST_PER_DRAFT_SAVE_EUR);
-const STANDALONE_SITE_COST_PER_LIVE_SYNC_EUR = Number(process.env.STANDALONE_SITE_COST_PER_LIVE_SYNC_EUR);
-const STANDALONE_SITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR = Number(
-  process.env.STANDALONE_SITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR
+const DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS"
 );
-const STANDALONE_SITE_COST_PER_PUBLIC_SITE_OPEN_EUR = Number(
-  process.env.STANDALONE_SITE_COST_PER_PUBLIC_SITE_OPEN_EUR
+const DIRECT_BOOKING_WEBSITE_COST_PER_BUILD_ATTEMPT_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_BUILD_ATTEMPT_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_DRAFT_SAVE_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_DRAFT_SAVE_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR"
+);
+const DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR = getConfiguredNumberEnv(
+  "DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR"
 );
 
 const safeParseJson = (rawValue, fallbackValue = {}) => {
@@ -144,12 +164,12 @@ const summarizePublishedPriceAlignment = (publishedPriceRows) => {
   };
 };
 
-const resolveStandaloneSiteMonthlyCostInputs = () => {
-  const fixedMonthlyCostEur = Number.isFinite(STANDALONE_SITE_MONTHLY_FIXED_COST_EUR)
-    ? STANDALONE_SITE_MONTHLY_FIXED_COST_EUR
+const resolveDirectBookingWebsiteMonthlyCostInputs = () => {
+  const fixedMonthlyCostEur = Number.isFinite(DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR)
+    ? DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR
     : null;
-  const variableCostPerSiteEur = Number.isFinite(STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR)
-    ? STANDALONE_SITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR
+  const variableCostPerSiteEur = Number.isFinite(DIRECT_BOOKING_WEBSITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR)
+    ? DIRECT_BOOKING_WEBSITE_MONTHLY_VARIABLE_COST_PER_SITE_EUR
     : null;
 
   return {
@@ -158,27 +178,27 @@ const resolveStandaloneSiteMonthlyCostInputs = () => {
   };
 };
 
-const resolveStandaloneSiteUsageCostInputs = () => ({
-  buildAttemptCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_BUILD_ATTEMPT_EUR)
-    ? STANDALONE_SITE_COST_PER_BUILD_ATTEMPT_EUR
+const resolveDirectBookingWebsiteUsageCostInputs = () => ({
+  buildAttemptCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_BUILD_ATTEMPT_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_BUILD_ATTEMPT_EUR
     : 0,
-  draftSaveCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_DRAFT_SAVE_EUR)
-    ? STANDALONE_SITE_COST_PER_DRAFT_SAVE_EUR
+  draftSaveCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_DRAFT_SAVE_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_DRAFT_SAVE_EUR
     : 0,
-  liveSyncCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_LIVE_SYNC_EUR)
-    ? STANDALONE_SITE_COST_PER_LIVE_SYNC_EUR
+  liveSyncCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR
     : 0,
-  publicPreviewOpenCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR)
-    ? STANDALONE_SITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR
+  publicPreviewOpenCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR
     : 0,
-  publicSiteOpenCostEur: Number.isFinite(STANDALONE_SITE_COST_PER_PUBLIC_SITE_OPEN_EUR)
-    ? STANDALONE_SITE_COST_PER_PUBLIC_SITE_OPEN_EUR
+  publicSiteOpenCostEur: Number.isFinite(DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR)
+    ? DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR
     : 0,
 });
 
-const hasConfiguredStandaloneSiteUsageCosts = () => {
-  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveStandaloneSiteMonthlyCostInputs();
-  const usageInputs = resolveStandaloneSiteUsageCostInputs();
+const hasConfiguredDirectBookingWebsiteUsageCosts = () => {
+  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveDirectBookingWebsiteMonthlyCostInputs();
+  const usageInputs = resolveDirectBookingWebsiteUsageCostInputs();
 
   return (
     Number.isFinite(fixedMonthlyCostEur) ||
@@ -205,18 +225,18 @@ const calculateUsageWeightedCostPerActiveSitePerMonth = ({
     return null;
   }
 
-  if (!hasConfiguredStandaloneSiteUsageCosts()) {
+  if (!hasConfiguredDirectBookingWebsiteUsageCosts()) {
     return null;
   }
 
-  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveStandaloneSiteMonthlyCostInputs();
+  const { fixedMonthlyCostEur, variableCostPerSiteEur } = resolveDirectBookingWebsiteMonthlyCostInputs();
   const {
     buildAttemptCostEur,
     draftSaveCostEur,
     liveSyncCostEur,
     publicPreviewOpenCostEur,
     publicSiteOpenCostEur,
-  } = resolveStandaloneSiteUsageCostInputs();
+  } = resolveDirectBookingWebsiteUsageCostInputs();
 
   const monthlyFixedCost = Number.isFinite(fixedMonthlyCostEur) ? fixedMonthlyCostEur : 0;
   const monthlyVariableCost = Number.isFinite(variableCostPerSiteEur)
@@ -514,7 +534,7 @@ const buildMergedViewportSummary = (surfaceViewportDurations, viewport) => {
   };
 };
 
-export class StandaloneSiteEventRepository {
+export class DirectBookingWebsiteEventRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
   }
@@ -551,18 +571,18 @@ export class StandaloneSiteEventRepository {
   async getKpiSummary({ hostId = null } = {}) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
-    const standaloneDraftTable = draftTableName(schemaName);
-    const standaloneEventTable = eventTableName(schemaName);
-    const standaloneSiteTable = siteTableName(schemaName);
-    const standaloneSiteDomainTable = siteDomainTableName(schemaName);
+    const directBookingWebsiteDraftTable = draftTableName(schemaName);
+    const directBookingWebsiteEventTable = eventTableName(schemaName);
+    const directBookingWebsiteSiteTable = siteTableName(schemaName);
+    const directBookingWebsiteDomainTable = siteDomainTableName(schemaName);
     const propertyPricingTable = propertyPricingTableName(schemaName);
     const hasHostScope = typeof hostId === "string" && hostId.trim().length > 0;
     const draftWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const eventWhereClause = hasHostScope ? "WHERE host_id = $1" : "";
     const siteWhereClause = hasHostScope ? "WHERE site.host_id = $1" : "";
     const queryParameters = hasHostScope ? [hostId] : [];
-    const usageWindowDays = Number.isFinite(STANDALONE_SITE_USAGE_WINDOW_DAYS) && STANDALONE_SITE_USAGE_WINDOW_DAYS > 0
-      ? Math.round(STANDALONE_SITE_USAGE_WINDOW_DAYS)
+    const usageWindowDays = Number.isFinite(DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS) && DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS > 0
+      ? Math.round(DIRECT_BOOKING_WEBSITE_USAGE_WINDOW_DAYS)
       : 30;
     const usageWindowStartedAt = Date.now() - usageWindowDays * 24 * 60 * 60 * 1000;
     const recentUsageWhereClause = hasHostScope
@@ -581,7 +601,7 @@ export class StandaloneSiteEventRepository {
       await Promise.all([
       client.query(
         `SELECT COUNT(*)::bigint AS total
-         FROM ${standaloneDraftTable}
+         FROM ${directBookingWebsiteDraftTable}
          ${draftWhereClause}`,
         queryParameters
       ),
@@ -591,14 +611,14 @@ export class StandaloneSiteEventRepository {
           COUNT(*)::bigint AS total,
           COUNT(DISTINCT draft_id)::bigint AS unique_drafts,
           MAX(occurred_at) AS last_occurred_at
-         FROM ${standaloneEventTable}
+         FROM ${directBookingWebsiteEventTable}
          ${eventWhereClause}
          GROUP BY event_type`,
         queryParameters
       ),
       client.query(
         `SELECT event_type, occurred_at, payload_json, property_id
-         FROM ${standaloneEventTable}
+         FROM ${directBookingWebsiteEventTable}
          ${eventWhereClause}
          ${hasHostScope ? "AND" : "WHERE"} event_type IN (
            'WEBSITE_BUILD_FLOW_STARTED',
@@ -624,8 +644,8 @@ export class StandaloneSiteEventRepository {
                THEN site.id
              END
            )::bigint AS reachable_site_count
-         FROM ${standaloneSiteTable} site
-         LEFT JOIN ${standaloneSiteDomainTable} fallback_domain
+         FROM ${directBookingWebsiteSiteTable} site
+         LEFT JOIN ${directBookingWebsiteDomainTable} fallback_domain
            ON fallback_domain.site_id = site.id
           AND fallback_domain.domain_type = 'FALLBACK'
           AND fallback_domain.is_primary = TRUE
@@ -638,7 +658,7 @@ export class StandaloneSiteEventRepository {
            site.property_id,
            site.published_property_snapshot_json,
            pricing.roomrate
-         FROM ${standaloneSiteTable} site
+         FROM ${directBookingWebsiteSiteTable} site
          LEFT JOIN ${propertyPricingTable} pricing
            ON pricing.property_id = site.property_id
          ${siteWhereClause}
@@ -649,7 +669,7 @@ export class StandaloneSiteEventRepository {
         `SELECT
            event_type,
            COUNT(*)::bigint AS total
-         FROM ${standaloneEventTable}
+         FROM ${directBookingWebsiteEventTable}
          ${recentUsageWhereClause}
          AND event_type IN (
            'WEBSITE_BUILD_STARTED',

@@ -1,12 +1,14 @@
-# Standalone Property Site Frontend Status
+# Direct Booking Website Frontend Status
+
+> Naming note: this feature is now named **Direct Booking Website**. Legacy `standalone_*` schema names are preserved in this document only when they refer to deployed storage objects.
 
 ## Purpose
 
-This document tracks the current implementation status of the host-side standalone website builder and published-site runtime in the frontend. It captures what is implemented now, what remains internal-preview-only, and what the next phase must cover.
+This document tracks the current implementation status of the host-side direct booking website builder and published-site runtime in the frontend. It captures what is implemented now, what remains internal-preview-only, and what the next phase must cover.
 
 Historical iteration log:
 
-- `docs/internal/apis/directbookingwebsite/standalone_property_site_implementation_log.md`
+- `docs/internal/apis/directbookingwebsite/direct_booking_website_implementation_log.md`
 
 ## Current status
 
@@ -77,21 +79,21 @@ What is in place:
 - Saved website cards and the editor now expose `Open live site` actions.
 - Draft editing and published live-site state are now deliberately separated:
   - `Save changes` updates only the working draft
-  - `Update live site` pushes the current draft state into the published standalone site snapshot
+  - `Update live site` pushes the current draft state into the published direct booking website snapshot
   - `Discard all changes` resets the working draft back to the currently published draft snapshot
 - The editor save path now explicitly preserves the current published draft snapshot during a normal draft save, so `Save changes` no longer mutates the published live site implicitly.
 - An already-open live-site tab now refreshes itself when the editor pushes a new live-site update, so hosts do not need to manually reload the published page after updating it.
 - Text fields in the editor now highlight their corresponding preview target while editing, without activating preview highlights for section visibility toggles.
-- Standalone website KPIs now live on a dedicated host dashboard route instead of inside the website builder/workspace page.
-- The standalone website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
-- Standalone website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
+- Direct Booking Website KPIs now live on a dedicated host dashboard route instead of inside the website builder/workspace page.
+- The direct booking website KPI route currently shows platform-wide aggregated data across Domits rather than host-scoped data.
+- Direct Booking Website analytics now also ingest explicit builder timing events through a dedicated `/property/website/event` path, so build-start, build-success, build-failure, abandonment, and time-to-first-preview metrics are no longer inferred from draft timestamps.
 - The KPI dashboard now keeps performance in one viewport-specific panel:
   - mobile, tablet, and desktop LCP are shown as separate viewport slices
   - each viewport combines earlier preview-route history with current live-site telemetry where available
 - Phase 1 of the public-site lifecycle is now implemented:
   - `main.standalone_site` stores standalone-owned published site state separately from the editor draft
   - `main.standalone_site_domain` stores fallback-domain metadata separately from the site lifecycle record
-  - the editor can publish and unpublish the standalone site record without treating the draft row as the public website source of truth
+  - the editor can publish and unpublish the direct booking website record without treating the draft row as the public website source of truth
   - fallback-domain assignment is now visible in the editor
 - Phase 2 of the public runtime is now implemented:
   - published sites can be resolved through `GET /property/website/public/resolve`
@@ -227,7 +229,7 @@ Current implementation details:
 - A dedicated public preview route now exists for saved drafts and can be opened from the workspace/editor for internal review.
 - The shared preview route currently uses the draft id as the preview identifier. This is acceptable for acceptance/internal review, but should be replaced by a stronger preview token or signed-link strategy before treating preview URLs as production-grade private links.
 - The shared preview route still resolves by `draftId`, which means it remains an internal preview mechanism and not the final public live-site runtime.
-- Publishing now snapshots the currently approved draft state into a separate standalone site record.
+- Publishing now snapshots the currently approved draft state into a separate direct booking website record.
 - Fallback-domain state is now tracked separately from site publication state:
   - a site can be `PUBLISHED`
   - while its fallback domain is still `PENDING`
@@ -284,7 +286,7 @@ Current implementation details:
   - `time_to_first_preview_p95`
 - The dedicated KPI dashboard now keeps its full page shell visible on first load and renders pulse-bar loaders inside the KPI sections while aggregated data is still loading.
 - Trust-card icon selection is now editable from the website editor for templates that render those cards.
-  Icon choices are sourced directly from the shared amenities registry, so newly added amenity icons automatically become available to the standalone website editor without a separate icon list.
+  Icon choices are sourced directly from the shared amenities registry, so newly added amenity icons automatically become available to the direct booking website editor without a separate icon list.
 - The trust-card icon trigger is centered within the editable field and the icon-picker overlay now scales more safely across smaller viewports instead of behaving like a fixed desktop panel.
 - The trust-card icon picker now deduplicates repeated amenity visuals and shows one option per unique Domits icon glyph instead of repeating the same icon for multiple amenity records.
 

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Auth } from 'aws-amplify';
+import useEffectiveHostId from '../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
     LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck, LuPartyPopper
@@ -166,7 +167,13 @@ const matchesTaskFilters = (
 };
 
 const HostPropertyCare = () => {
-    const [activeTab, setActiveTab] = useState('Overview'); 
+    const { effectiveHostId, managedHostId, isPurelyPOM } = useEffectiveHostId();
+
+    const [taskContext, setTaskContext] = useState('own');
+    const asHostId = taskContext === 'managed' ? managedHostId : null;
+    const loadRequestRef = useRef(0);
+
+    const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -372,8 +379,9 @@ const HostPropertyCare = () => {
     }, [tasks, filters, timeView]);
 
     useEffect(() => {
-        fetchHostTaskPropertyOptions().then(setPropertyOptions);
-    }, []);
+        const hostIdForOptions = asHostId ?? effectiveHostId;
+        fetchHostTaskPropertyOptions(hostIdForOptions).then(setPropertyOptions);
+    }, [asHostId, effectiveHostId]);
     
     const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -403,7 +411,7 @@ const HostPropertyCare = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [asHostId]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -429,19 +437,25 @@ const HostPropertyCare = () => {
     }, [tasks]);
 
     const loadData = async () => {
+        const requestId = ++loadRequestRef.current;
         setIsLoading(true);
-        const data = await fetchTasks();
-        
-        const todayStr = new Date().toISOString().split('T')[0];
-        const processedTasks = data.map(task => {
-            if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
-                return { ...task, status: 'Overdue', priority: 'Urgent' };
-            }
-            return task;
-        });
-
-        setTasks(processedTasks);
-        setIsLoading(false);
+        try {
+            const data = await fetchTasks({}, asHostId);
+            if (requestId !== loadRequestRef.current) return;
+            const todayStr = new Date().toISOString().split('T')[0];
+            const processedTasks = data.map(task => {
+                if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
+                    return { ...task, status: 'Overdue', priority: 'Urgent' };
+                }
+                return task;
+            });
+            setTasks(processedTasks);
+        } catch {
+            if (requestId !== loadRequestRef.current) return;
+            setTasks([]);
+        } finally {
+            if (requestId === loadRequestRef.current) setIsLoading(false);
+        }
     };
 
     const handleCreateTask = async (e) => {
@@ -1409,9 +1423,27 @@ const HostPropertyCare = () => {
         <main className="task-dashboard-v2">
             <div className="top-header">
                 <h2>Tasks</h2>
-                <button className="btn-create-green btn-create-desktop" onClick={() => setIsModalOpen(true)}>
-                    + Create Task
-                </button>
+                <div className="top-header-actions">
+                    {managedHostId && !isPurelyPOM && (
+                        <div className="task-context-toggle">
+                            <button
+                                className={`task-context-btn ${taskContext === 'own' ? 'active' : ''}`}
+                                onClick={() => setTaskContext('own')}
+                            >
+                                My tasks
+                            </button>
+                            <button
+                                className={`task-context-btn ${taskContext === 'managed' ? 'active' : ''}`}
+                                onClick={() => setTaskContext('managed')}
+                            >
+                                Co-host tasks
+                            </button>
+                        </div>
+                    )}
+                    <button className="btn-create-green btn-create-desktop" onClick={() => setIsModalOpen(true)}>
+                        + Create Task
+                    </button>
+                </div>
             </div>
 
             <button className="btn-create-fab" onClick={() => setIsModalOpen(true)} aria-label="Create Task">
