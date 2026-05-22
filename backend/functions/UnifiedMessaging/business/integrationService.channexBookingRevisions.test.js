@@ -107,12 +107,17 @@ const createService = ({
     propertyName: "Demo property",
   },
   initialBookings = [],
+  channelAccounts,
+  sync: syncOverride = null,
+  channexEvidence: channexEvidenceOverride = null,
 } = {}) => {
   let storedRevision = existingRevision;
   let storedLink = existingLink;
   const bookingRowsById = new Map(initialBookings.map((booking) => [booking.id, booking]));
+  const resolvedChannelAccounts = channelAccounts || (account ? [account] : []);
   const accounts = {
     findByUserIdAndChannel: jest.fn().mockResolvedValue(account),
+    listByChannel: jest.fn().mockResolvedValue(resolvedChannelAccounts),
   };
   const props = {
     listByAccountId: jest.fn().mockResolvedValue(propertyMappings),
@@ -204,15 +209,23 @@ const createService = ({
       errorMessage: null,
     }),
   };
+  const sync = syncOverride || {
+    tryAcquireLock: jest.fn().mockResolvedValue({ acquired: true }),
+    releaseLock: jest.fn().mockResolvedValue(null),
+    insertLog: jest.fn(async (row) => row),
+  };
+  const channexEvidence = channexEvidenceOverride || {
+    create: jest.fn(async (row) => row),
+  };
 
   const service = new IntegrationService({
     accounts,
     props,
     ratePlans,
     roomTypes,
-    sync: {},
+    sync,
     resLinks,
-    channexEvidence: {},
+    channexEvidence,
     channexBookingRevisions,
     externalBookingImportRepository,
     runner: {},
@@ -235,6 +248,9 @@ const createService = ({
     channexBookingRevisions,
     channexProviderClient,
     externalBookingImportRepository,
+    sync,
+    channexEvidence,
+    bookingRowsById,
   };
 };
 
@@ -1155,5 +1171,420 @@ describe("IntegrationService Channex booking pull import", () => {
       })
     );
     expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+});
+
+describe("IntegrationService Channex booking polling", () => {
+  afterEach(() => {
+    delete process.env.CHANNEX_BOOKING_POLL_ENABLED;
+    delete process.env.CHANNEX_BOOKING_POLL_ACCOUNT_IDS;
+    delete process.env.CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS;
+    delete process.env.CHANNEX_BOOKING_POLL_LOCK_STALE_MS;
+    jest.restoreAllMocks();
+  });
+
+  test("returns a disabled response without polling when not enabled", async () => {
+    const { service, accounts, channexProviderClient } = createService({
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const result = await service.pollLatestChannexBookings();
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toMatchObject({
+      action: "poll-latest-bookings",
+      syncType: "booking_poll",
+      enabled: false,
+      accountsChecked: 0,
+      propertiesChecked: 0,
+      fetchedCount: 0,
+      overallSuccess: true,
+    });
+    expect(accounts.listByChannel).not.toHaveBeenCalled();
+    expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+  });
+
+  test("polls active Channex mappings through the same import core and writes evidence/logging", async () => {
+    const revision = buildFeedRevision();
+    const {
+      service,
+      accounts,
+      props,
+      sync,
+      channexEvidence,
+      channexProviderClient,
+      externalBookingImportRepository,
+    } = createService({
+      account: {
+        id: "integration-account-1",
+        userId: "user-1",
+        status: "CONNECTED",
+        credentialsRef: "channex-secret-1",
+      },
+      feedRevisions: [revision],
+      existingRevision: null,
+    });
+
+    const result = await service.pollLatestChannexBookings({ enabled: true });
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toMatchObject({
+      action: "poll-latest-bookings",
+      trigger: "EVENTBRIDGE_POLL",
+      enabled: true,
+      accountsChecked: 1,
+      propertiesChecked: 1,
+      fetchedCount: 1,
+      rawPersistedCount: 1,
+      createdBookingCount: 1,
+      ackedCount: 1,
+      unackedCount: 0,
+      overallSuccess: true,
+    });
+    expect(accounts.listByChannel).toHaveBeenCalledWith("CHANNEX");
+    expect(props.listByAccountId).toHaveBeenCalledWith("integration-account-1");
+    expect(channexProviderClient.listBookingRevisionFeed).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      { externalPropertyId: "external-property-1" }
+    );
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledTimes(1);
+    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
+      { apiKey: "secret" },
+      "revision-new-1"
+    );
+    expect(sync.tryAcquireLock).toHaveBeenCalledWith(
+      "integration-account-1",
+      "booking_poll:domits-property-1",
+      expect.objectContaining({ staleBeforeMs: expect.any(Number) })
+    );
+    expect(sync.releaseLock).toHaveBeenCalledWith(
+      "integration-account-1",
+      "booking_poll:domits-property-1",
+      expect.objectContaining({ status: "SUCCESS" })
+    );
+    expect(sync.insertLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationAccountId: "integration-account-1",
+        syncType: "booking_poll",
+        direction: "IMPORT",
+        status: "SUCCESS",
+        itemsProcessed: 1,
+      })
+    );
+    expect(channexEvidence.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationAccountId: "integration-account-1",
+        domitsPropertyId: "domits-property-1",
+        syncType: "booking_poll",
+        status: "SUCCESS",
+        overallSuccess: true,
+      })
+    );
+  });
+
+  test("skips disconnected accounts and accounts without credentials", async () => {
+    const channelAccounts = [
+      { id: "disconnected-account", userId: "user-1", status: "DISCONNECTED", credentialsRef: "secret-1" },
+      { id: "missing-credentials-account", userId: "user-2", status: "CONNECTED", credentialsRef: null },
+    ];
+    const { service, channexProviderClient } = createService({
+      channelAccounts,
+      feedRevisions: [buildFeedRevision()],
+    });
+
+    const result = await service.pollLatestChannexBookings({ enabled: true });
+
+    expect(result.response).toMatchObject({
+      accountsChecked: 2,
+      propertiesChecked: 0,
+      fetchedCount: 0,
+      overallSuccess: false,
+    });
+    expect(result.response.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "CHANNEX_ACCOUNT_NOT_CONNECTED" }),
+        expect.objectContaining({ code: "CHANNEX_RECONNECT_REQUIRED" }),
+      ])
+    );
+    expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+  });
+
+  test("respects staging account and property allowlist environment variables", async () => {
+    process.env.CHANNEX_BOOKING_POLL_ENABLED = "true";
+    process.env.CHANNEX_BOOKING_POLL_ACCOUNT_IDS = "integration-account-allowed";
+    process.env.CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS = "domits-property-allowed";
+    const account = {
+      id: "integration-account-allowed",
+      userId: "user-1",
+      status: "CONNECTED",
+      credentialsRef: "channex-secret-1",
+    };
+    const skippedAccount = {
+      id: "integration-account-skipped",
+      userId: "user-2",
+      status: "CONNECTED",
+      credentialsRef: "channex-secret-2",
+    };
+    const { service, accounts, props, channexProviderClient } = createService({
+      account,
+      channelAccounts: [skippedAccount, account],
+      propertyMappings: [
+        {
+          domitsPropertyId: "domits-property-skipped",
+          externalPropertyId: "external-property-skipped",
+          status: "ACTIVE",
+        },
+        {
+          domitsPropertyId: "domits-property-allowed",
+          externalPropertyId: "external-property-1",
+          status: "ACTIVE",
+        },
+      ],
+      roomTypeMappings: [
+        {
+          domitsPropertyId: "domits-property-allowed",
+          externalPropertyId: "external-property-1",
+          externalRoomTypeId: "external-room-type-1",
+          status: "ACTIVE",
+        },
+      ],
+      ratePlanMappings: [
+        {
+          domitsPropertyId: "domits-property-allowed",
+          externalPropertyId: "external-property-1",
+          externalRoomTypeId: "external-room-type-1",
+          externalRatePlanId: "external-rate-plan-1",
+          status: "ACTIVE",
+        },
+      ],
+      propertyContext: {
+        propertyId: "domits-property-allowed",
+        hostId: "host-1",
+      },
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const result = await service.pollLatestChannexBookings();
+
+    expect(accounts.listByChannel).toHaveBeenCalledWith("CHANNEX");
+    expect(props.listByAccountId).toHaveBeenCalledTimes(1);
+    expect(props.listByAccountId).toHaveBeenCalledWith("integration-account-allowed");
+    expect(result.response).toMatchObject({
+      enabled: true,
+      accountsChecked: 2,
+      propertiesChecked: 1,
+      fetchedCount: 1,
+      createdBookingCount: 1,
+    });
+    expect(channexProviderClient.listBookingRevisionFeed).toHaveBeenCalledTimes(1);
+  });
+
+  test("polling leaves missing mappings unacked", async () => {
+    const { service, channexProviderClient, externalBookingImportRepository } = createService({
+      account: {
+        id: "integration-account-1",
+        userId: "user-1",
+        status: "CONNECTED",
+        credentialsRef: "channex-secret-1",
+      },
+      roomTypeMappings: [],
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const result = await service.pollLatestChannexBookings({ enabled: true });
+
+    expect(result.response).toMatchObject({
+      fetchedCount: 1,
+      rawPersistedCount: 1,
+      skippedCount: 1,
+      ackedCount: 0,
+      unackedCount: 1,
+      overallSuccess: false,
+    });
+    expect(result.response.warnings).toEqual([
+      expect.objectContaining({ code: "CHANNEX_ROOM_TYPE_MAPPING_MISSING" }),
+    ]);
+    expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
+    expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
+  });
+
+  test("duplicate polling does not create duplicate Domits bookings", async () => {
+    const { service, externalBookingImportRepository } = createService({
+      account: {
+        id: "integration-account-1",
+        userId: "user-1",
+        status: "CONNECTED",
+        credentialsRef: "channex-secret-1",
+      },
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const firstResult = await service.pollLatestChannexBookings({ enabled: true });
+    const secondResult = await service.pollLatestChannexBookings({ enabled: true });
+
+    expect(firstResult.response.createdBookingCount).toBe(1);
+    expect(secondResult.response.createdBookingCount).toBe(0);
+    expect(secondResult.response.items[0]).toEqual(
+      expect.objectContaining({
+        result: "already-imported-and-acked",
+        createdBooking: false,
+      })
+    );
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledTimes(1);
+  });
+
+  test("lock skips overlapping property processing", async () => {
+    const sync = {
+      tryAcquireLock: jest.fn().mockResolvedValue({ acquired: false }),
+      releaseLock: jest.fn(),
+      insertLog: jest.fn(async (row) => row),
+    };
+    const { service, channexProviderClient } = createService({
+      account: {
+        id: "integration-account-1",
+        userId: "user-1",
+        status: "CONNECTED",
+        credentialsRef: "channex-secret-1",
+      },
+      sync,
+      feedRevisions: [buildFeedRevision()],
+    });
+
+    const result = await service.pollLatestChannexBookings({ enabled: true });
+
+    expect(result.response).toMatchObject({
+      propertiesChecked: 1,
+      propertiesSkippedCount: 1,
+      fetchedCount: 0,
+      overallSuccess: false,
+    });
+    expect(result.response.propertyResults[0]).toEqual(
+      expect.objectContaining({
+        result: "skipped-locked",
+        warnings: [expect.objectContaining({ code: "CHANNEX_BOOKING_POLL_LOCKED" })],
+      })
+    );
+    expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+    expect(sync.releaseLock).not.toHaveBeenCalled();
+    expect(sync.insertLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        syncType: "booking_poll",
+        status: "SKIPPED",
+      })
+    );
+  });
+
+  test("stale lock threshold is passed to the sync repository and can be reclaimed", async () => {
+    const sync = {
+      tryAcquireLock: jest.fn().mockResolvedValue({ acquired: true }),
+      releaseLock: jest.fn().mockResolvedValue(null),
+      insertLog: jest.fn(async (row) => row),
+    };
+    const { service } = createService({
+      account: {
+        id: "integration-account-1",
+        userId: "user-1",
+        status: "CONNECTED",
+        credentialsRef: "channex-secret-1",
+      },
+      sync,
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const result = await service.pollLatestChannexBookings({
+      enabled: true,
+      lockStaleMs: 1234,
+    });
+
+    expect(result.response.createdBookingCount).toBe(1);
+    expect(sync.tryAcquireLock).toHaveBeenCalledWith(
+      "integration-account-1",
+      "booking_poll:domits-property-1",
+      expect.objectContaining({
+        staleBeforeMs: expect.any(Number),
+      })
+    );
+    const staleBeforeMs = sync.tryAcquireLock.mock.calls[0][2].staleBeforeMs;
+    expect(Date.now() - staleBeforeMs).toBeGreaterThanOrEqual(1234);
+  });
+
+  test("failure for one property does not stop polling another property", async () => {
+    const propertyMappings = [
+      {
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        status: "ACTIVE",
+      },
+      {
+        domitsPropertyId: "domits-property-2",
+        externalPropertyId: "external-property-2",
+        status: "ACTIVE",
+      },
+    ];
+    const roomTypeMappings = propertyMappings.map((mapping) => ({
+      domitsPropertyId: mapping.domitsPropertyId,
+      externalPropertyId: mapping.externalPropertyId,
+      externalRoomTypeId: "external-room-type-1",
+      status: "ACTIVE",
+    }));
+    const ratePlanMappings = propertyMappings.map((mapping) => ({
+      domitsPropertyId: mapping.domitsPropertyId,
+      externalPropertyId: mapping.externalPropertyId,
+      externalRoomTypeId: "external-room-type-1",
+      externalRatePlanId: "external-rate-plan-1",
+      status: "ACTIVE",
+    }));
+    const { service, channexProviderClient } = createService({
+      account: {
+        id: "integration-account-1",
+        userId: "user-1",
+        status: "CONNECTED",
+        credentialsRef: "channex-secret-1",
+      },
+      propertyMappings,
+      roomTypeMappings,
+      ratePlanMappings,
+      existingRevision: null,
+    });
+    channexProviderClient.listBookingRevisionFeed.mockImplementation(async (_secret, { externalPropertyId }) => {
+      if (externalPropertyId === "external-property-1") {
+        throw new Error("provider timeout");
+      }
+      return {
+        success: true,
+        providerStatus: "ACTIVE",
+        revisions: [
+          buildFeedRevision({
+            revisionId: "revision-new-2",
+            bookingId: "booking-ota-2",
+            uniqueId: "unique-ota-2",
+            propertyId: "external-property-2",
+          }),
+        ],
+      };
+    });
+
+    const result = await service.pollLatestChannexBookings({ enabled: true });
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toMatchObject({
+      propertiesChecked: 2,
+      fetchedCount: 1,
+      createdBookingCount: 1,
+      ackedCount: 1,
+      overallSuccess: false,
+    });
+    expect(result.response.propertyResults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ domitsPropertyId: "domits-property-1", result: "failed" }),
+        expect.objectContaining({ domitsPropertyId: "domits-property-2", result: "processed" }),
+      ])
+    );
+    expect(channexProviderClient.listBookingRevisionFeed).toHaveBeenCalledTimes(2);
   });
 });

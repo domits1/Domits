@@ -9,6 +9,8 @@ import {
 } from "./business/channexRestrictionsSyncVersion.js";
 
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
+const CHANNEX_BOOKING_POLL_EVENT_SOURCE = "domits.channex.booking-poll";
+const CHANNEX_BOOKING_POLL_EVENT_ACTION = "CHANNEX_BOOKING_POLL";
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
 const ingestionController = new IngestionController();
@@ -83,6 +85,10 @@ const isChannexRestrictionsSyncRequest = (method, path) =>
 const isChannexFullSyncRequest = (method, path) =>
   method === "POST" && String(path || "").endsWith("/integrations/channex/sync/full");
 const isTrueQueryParam = (value) => String(value || "").trim().toLowerCase() === "true";
+const isChannexBookingPollEvent = (event) =>
+  event?.source === CHANNEX_BOOKING_POLL_EVENT_SOURCE ||
+  event?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION ||
+  event?.detail?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION;
 const summarizeErrorStack = (error) =>
   (typeof error?.stack === "string" ? error.stack : "")
     .split("\n")
@@ -342,6 +348,11 @@ export const handler = async (event) => {
   const { httpMethod, path } = event;
 
   try {
+    if (isChannexBookingPollEvent(event)) {
+      const returnedResponse = await integrationController.pollLatestChannexBookings(event);
+      return createLambdaResponse(returnedResponse);
+    }
+
     if (isChannexRestrictionsSyncRequest(httpMethod, path)) {
       console.info(
         JSON.stringify({

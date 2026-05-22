@@ -774,7 +774,12 @@ const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_REQUESTED_DAYS = CHANNEX_CERTIFICATION_FUL
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
 const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
 const CHANNEX_BOOKING_PULL_ACTION = "pull-latest-bookings";
+const CHANNEX_BOOKING_POLL_ACTION = "poll-latest-bookings";
 const CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT = "/api/v1/booking_revisions/feed";
+const CHANNEX_BOOKING_PULL_SYNC_TYPE = "booking_pull";
+const CHANNEX_BOOKING_POLL_SYNC_TYPE = "booking_poll";
+const CHANNEX_BOOKING_POLL_TRIGGER = "EVENTBRIDGE_POLL";
+const CHANNEX_BOOKING_POLL_LOCK_STALE_MS = 5 * 60 * 1000;
 const CHANNEX_BOOKING_IMPORT_SOURCE = "channex-booking-pull";
 const CHANNEL_CHANNEX = "CHANNEX";
 const CHANNEX_IMPORTED_BOOKING_STATUS = "Paid";
@@ -823,7 +828,63 @@ const CHANNEX_STATUS = {
   DISCONNECTED: "DISCONNECTED",
   CONNECTED: "CONNECTED",
 };
+const CHANNEX_BOOKING_PULL_COUNT_FIELDS = [
+  "fetchedCount",
+  "rawPersistedCount",
+  "createdBookingCount",
+  "updatedBookingCount",
+  "cancelledBookingCount",
+  "skippedCount",
+  "ackedCount",
+  "unackedCount",
+];
 const normalizePayloadKey = (key) => String(key || "").trim().toLowerCase();
+const parseBooleanEnvLikeValue = (value) => ["1", "true", "yes", "on"].includes(String(value || "").trim().toLowerCase());
+const parseCsvAllowlist = (value) => {
+  if (Array.isArray(value)) {
+    return new Set(value.map((item) => requireStr(item)).filter(Boolean));
+  }
+
+  return new Set(
+    String(value || "")
+      .split(",")
+      .map((item) => requireStr(item))
+      .filter(Boolean)
+  );
+};
+const allowlistIncludes = (allowlist, value) => allowlist.size === 0 || allowlist.has(requireStr(value));
+const isActiveChannexPropertyMapping = (mapping) => String(mapping?.status || "").toUpperCase() === "ACTIVE";
+const createEmptyChannexBookingPollResponse = ({ enabled, trigger }) => ({
+  channel: CHANNEL_CHANNEX,
+  action: CHANNEX_BOOKING_POLL_ACTION,
+  trigger,
+  syncType: CHANNEX_BOOKING_POLL_SYNC_TYPE,
+  endpointCalled: CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT,
+  enabled,
+  calledProvider: false,
+  accountsChecked: 0,
+  propertiesChecked: 0,
+  propertiesSkippedCount: 0,
+  fetchedCount: 0,
+  rawPersistedCount: 0,
+  createdBookingCount: 0,
+  updatedBookingCount: 0,
+  cancelledBookingCount: 0,
+  skippedCount: 0,
+  ackedCount: 0,
+  unackedCount: 0,
+  accountResults: [],
+  propertyResults: [],
+  items: [],
+  warnings: [],
+  errors: [],
+  overallSuccess: true,
+});
+const mergeChannexBookingPollCounts = (target, source) => {
+  for (const field of CHANNEX_BOOKING_PULL_COUNT_FIELDS) {
+    target[field] += Number(source?.[field] || 0);
+  }
+};
 const shouldRedactChannexPayloadKey = (key, path) => {
   const normalizedKey = normalizePayloadKey(key);
   if (CHANNEX_SENSITIVE_PAYLOAD_KEYS.has(normalizedKey)) return true;
@@ -6353,6 +6414,124 @@ export default class IntegrationService {
     }
   }
 
+  async pullLatestChannexBookingsForResolvedContext({
+    normalizedUserId,
+    normalizedDomitsPropertyId,
+    integration,
+    propertyMapping,
+    secret,
+    startedAt = nowMs(),
+    syncType = CHANNEX_BOOKING_PULL_SYNC_TYPE,
+    action = CHANNEX_BOOKING_PULL_ACTION,
+    trigger = "MANUAL_PULL",
+    options = {},
+  }) {
+    const finalize = async (result, evidencePatch = {}) =>
+      this.finalizeChannexSyncResult(
+        result,
+        buildChannexSyncEvidencePatch({
+          normalizedUserId,
+          normalizedDomitsPropertyId,
+          syncType,
+          dateFrom: null,
+          dateTo: null,
+          startedAt,
+          evidencePatch,
+        }),
+        options
+      );
+
+    const isPoll = syncType === CHANNEX_BOOKING_POLL_SYNC_TYPE;
+    const notes = isPoll
+      ? [
+          "Automatic Channex booking poll. New revisions create Domits booking records before acknowledgement.",
+          "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
+        ]
+      : [
+          "Manual Channex booking pull. New revisions create Domits booking records before acknowledgement.",
+          "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
+        ];
+    const mappingSnapshot = this.buildChannexBookingMappingSnapshot(propertyMapping);
+    const providerResult = await this.channexProviderClient.listBookingRevisionFeed(secret, {
+      externalPropertyId: propertyMapping.externalPropertyId,
+    });
+    if (!providerResult?.success) {
+      const failure = this.buildChannexBookingProviderFeedFailure({
+        integration,
+        providerResult,
+        mappingSnapshot,
+        notes: [notes[0]],
+      });
+      return await finalize(failure.response, failure.evidencePatch);
+    }
+
+    const items = await this.collectPulledChannexBookingImports({
+      providerResult,
+      integration,
+      normalizedDomitsPropertyId,
+      propertyMapping,
+      secret,
+    });
+    const summary = summarizeChannexPullItems(items);
+    const fetchedCount = Array.isArray(providerResult.revisions) ? providerResult.revisions.length : 0;
+    const overallSuccess = summary.unackedCount === 0 && summary.errors.length === 0;
+    const status = getChannexBookingPullEvidenceStatus({
+      overallSuccess,
+      ackedCount: summary.ackedCount,
+    });
+    const response = ok({
+      channel: CHANNEL_CHANNEX,
+      action,
+      endpointCalled: CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT,
+      integrationAccountId: integration.id,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      externalPropertyId: propertyMapping.externalPropertyId,
+      calledProvider: true,
+      fetchedCount,
+      rawPersistedCount: summary.rawPersistedCount,
+      createdBookingCount: summary.createdBookingCount,
+      updatedBookingCount: summary.updatedBookingCount,
+      cancelledBookingCount: summary.cancelledBookingCount,
+      skippedCount: summary.skippedCount,
+      ackedCount: summary.ackedCount,
+      unackedCount: summary.unackedCount,
+      items,
+      warnings: summary.warnings,
+      errors: summary.errors,
+      overallSuccess,
+      notes,
+      ...(isPoll ? { trigger } : {}),
+    });
+
+    return await finalize(response, {
+      integrationAccountId: integration.id,
+      status,
+      overallSuccess,
+      mappingSnapshot,
+      providerResponseSummary: {
+        calledProvider: true,
+        providerStatus: providerResult?.providerStatus ?? null,
+        fetchedCount,
+        rawPersistedCount: summary.rawPersistedCount,
+        createdBookingCount: summary.createdBookingCount,
+        updatedBookingCount: summary.updatedBookingCount,
+        cancelledBookingCount: summary.cancelledBookingCount,
+        skippedCount: summary.skippedCount,
+        ackedCount: summary.ackedCount,
+        unackedCount: summary.unackedCount,
+      },
+      warnings: summary.warnings,
+      errors: summary.errors,
+      notes: response.response.notes,
+      rawDetails: {
+        trigger,
+        items,
+        providerStatus: providerResult?.providerStatus ?? null,
+        propertyMapping: mappingSnapshot.propertyMapping,
+      },
+    });
+  }
+
   async pullLatestChannexBookings(userId, domitsPropertyId, options = {}) {
     const startedAt = nowMs();
     const normalizedUserId = requireStr(userId);
@@ -6363,7 +6542,7 @@ export default class IntegrationService {
         buildChannexSyncEvidencePatch({
           normalizedUserId,
           normalizedDomitsPropertyId,
-          syncType: "booking_pull",
+          syncType: CHANNEX_BOOKING_PULL_SYNC_TYPE,
           dateFrom: null,
           dateTo: null,
           startedAt,
@@ -6403,88 +6582,17 @@ export default class IntegrationService {
       }
 
       const { integration, propertyMapping, secret } = context;
-      const mappingSnapshot = this.buildChannexBookingMappingSnapshot(propertyMapping);
-      const providerResult = await this.channexProviderClient.listBookingRevisionFeed(secret, {
-        externalPropertyId: propertyMapping.externalPropertyId,
-      });
-      if (!providerResult?.success) {
-        const notes = [
-          "Manual Channex booking pull imports new external bookings into Domits before acknowledgement.",
-        ];
-        const failure = this.buildChannexBookingProviderFeedFailure({
-          integration,
-          providerResult,
-          mappingSnapshot,
-          notes,
-        });
-        return await finalize(failure.response, failure.evidencePatch);
-      }
-
-      const items = await this.collectPulledChannexBookingImports({
-        providerResult,
-        integration,
+      return await this.pullLatestChannexBookingsForResolvedContext({
+        normalizedUserId,
         normalizedDomitsPropertyId,
+        integration,
         propertyMapping,
         secret,
-      });
-      const summary = summarizeChannexPullItems(items);
-      const fetchedCount = Array.isArray(providerResult.revisions) ? providerResult.revisions.length : 0;
-      const overallSuccess = summary.unackedCount === 0 && summary.errors.length === 0;
-      const status = getChannexBookingPullEvidenceStatus({
-        overallSuccess,
-        ackedCount: summary.ackedCount,
-      });
-      const response = ok({
-        channel: CHANNEL_CHANNEX,
+        startedAt,
+        syncType: CHANNEX_BOOKING_PULL_SYNC_TYPE,
         action: CHANNEX_BOOKING_PULL_ACTION,
-        endpointCalled: CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT,
-        integrationAccountId: integration.id,
-        domitsPropertyId: normalizedDomitsPropertyId,
-        externalPropertyId: propertyMapping.externalPropertyId,
-        calledProvider: true,
-        fetchedCount,
-        rawPersistedCount: summary.rawPersistedCount,
-        createdBookingCount: summary.createdBookingCount,
-        updatedBookingCount: summary.updatedBookingCount,
-        cancelledBookingCount: summary.cancelledBookingCount,
-        skippedCount: summary.skippedCount,
-        ackedCount: summary.ackedCount,
-        unackedCount: summary.unackedCount,
-        items,
-        warnings: summary.warnings,
-        errors: summary.errors,
-        overallSuccess,
-        notes: [
-          "Manual Channex booking pull. New revisions create Domits booking records before acknowledgement.",
-          "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
-        ],
-      });
-
-      return await finalize(response, {
-        integrationAccountId: integration.id,
-        status,
-        overallSuccess,
-        mappingSnapshot,
-        providerResponseSummary: {
-          calledProvider: true,
-          providerStatus: providerResult?.providerStatus ?? null,
-          fetchedCount,
-          rawPersistedCount: summary.rawPersistedCount,
-          createdBookingCount: summary.createdBookingCount,
-          updatedBookingCount: summary.updatedBookingCount,
-          cancelledBookingCount: summary.cancelledBookingCount,
-          skippedCount: summary.skippedCount,
-          ackedCount: summary.ackedCount,
-          unackedCount: summary.unackedCount,
-        },
-        warnings: summary.warnings,
-        errors: summary.errors,
-        notes: response.response.notes,
-        rawDetails: {
-          items,
-          providerStatus: providerResult?.providerStatus ?? null,
-          propertyMapping: mappingSnapshot.propertyMapping,
-        },
+        trigger: "MANUAL_PULL",
+        options,
       });
     } catch (error) {
       const details = describeLocalError(error);
@@ -6507,6 +6615,380 @@ export default class IntegrationService {
           rawDetails: { caughtError: details },
         }
       );
+    }
+  }
+
+  buildChannexBookingPollConfig(options = {}) {
+    const enabled = Object.hasOwn(options, "enabled")
+      ? parseBooleanEnvLikeValue(options.enabled)
+      : parseBooleanEnvLikeValue(process.env.CHANNEX_BOOKING_POLL_ENABLED);
+    const lockStaleMs = Number(options.lockStaleMs ?? process.env.CHANNEX_BOOKING_POLL_LOCK_STALE_MS);
+
+    return {
+      enabled,
+      trigger: requireStr(options.trigger) || CHANNEX_BOOKING_POLL_TRIGGER,
+      accountIds: parseCsvAllowlist(
+        options.accountIds ?? options.integrationAccountIds ?? process.env.CHANNEX_BOOKING_POLL_ACCOUNT_IDS
+      ),
+      domitsPropertyIds: parseCsvAllowlist(
+        options.domitsPropertyIds ?? process.env.CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS
+      ),
+      lockStaleMs:
+        Number.isFinite(lockStaleMs) && lockStaleMs > 0 ? lockStaleMs : CHANNEX_BOOKING_POLL_LOCK_STALE_MS,
+    };
+  }
+
+  buildChannexBookingPollPropertySummary({
+    integration,
+    propertyMapping,
+    result,
+    statusCode = 200,
+    overallSuccess = false,
+    counts = {},
+    evidenceId = null,
+    warnings = [],
+    errors = [],
+  }) {
+    return {
+      integrationAccountId: integration?.id ?? null,
+      domitsPropertyId: propertyMapping?.domitsPropertyId ?? null,
+      externalPropertyId: propertyMapping?.externalPropertyId ?? null,
+      result,
+      statusCode,
+      overallSuccess,
+      evidenceId,
+      fetchedCount: Number(counts.fetchedCount || 0),
+      rawPersistedCount: Number(counts.rawPersistedCount || 0),
+      createdBookingCount: Number(counts.createdBookingCount || 0),
+      updatedBookingCount: Number(counts.updatedBookingCount || 0),
+      cancelledBookingCount: Number(counts.cancelledBookingCount || 0),
+      skippedCount: Number(counts.skippedCount || 0),
+      ackedCount: Number(counts.ackedCount || 0),
+      unackedCount: Number(counts.unackedCount || 0),
+      warnings,
+      errors,
+    };
+  }
+
+  async writeChannexBookingPollLog({ integration, startedAt, status, summary, error = null }) {
+    if (typeof this.sync?.insertLog !== "function") return null;
+
+    const finishedAt = nowMs();
+    const details = error
+      ? { summary, error: describeLocalError(error) }
+      : { summary };
+
+    try {
+      return await this.sync.insertLog({
+        id: randomUUID(),
+        integrationAccountId: integration?.id ?? null,
+        syncType: CHANNEX_BOOKING_POLL_SYNC_TYPE,
+        direction: "IMPORT",
+        status,
+        startedAt,
+        finishedAt,
+        itemsProcessed: Number(summary?.fetchedCount || 0),
+        errorCode: error?.code || null,
+        errorMessage: error?.message || null,
+        details: stringifyJsonOrNull(details),
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  async acquireChannexBookingPollLock(integration, domitsPropertyId, lockStaleMs) {
+    const syncType = `${CHANNEX_BOOKING_POLL_SYNC_TYPE}:${domitsPropertyId}`;
+    if (typeof this.sync?.tryAcquireLock !== "function") {
+      return {
+        acquired: true,
+        syncType,
+        bestEffortOnly: true,
+      };
+    }
+
+    const lock = await this.sync.tryAcquireLock(integration.id, syncType, {
+      staleBeforeMs: nowMs() - lockStaleMs,
+    });
+    return {
+      ...lock,
+      syncType,
+    };
+  }
+
+  async releaseChannexBookingPollLock({ integration, syncType, status, lastSuccessfulItemAt = null }) {
+    if (typeof this.sync?.releaseLock !== "function") return null;
+
+    try {
+      return await this.sync.releaseLock(integration.id, syncType, {
+        status,
+        lastSyncedAt: nowMs(),
+        lastSuccessfulItemAt,
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  applyChannexBookingPollPropertyResult(aggregate, propertySummary, propertyResponse = {}) {
+    aggregate.propertyResults.push(propertySummary);
+    aggregate.calledProvider = aggregate.calledProvider || propertyResponse.calledProvider === true;
+    mergeChannexBookingPollCounts(aggregate, propertyResponse);
+    aggregate.items.push(...(Array.isArray(propertyResponse.items) ? propertyResponse.items : []));
+    aggregate.warnings.push(...(Array.isArray(propertyResponse.warnings) ? propertyResponse.warnings : []));
+    aggregate.errors.push(...(Array.isArray(propertyResponse.errors) ? propertyResponse.errors : []));
+  }
+
+  async pollChannexBookingProperty({
+    integration,
+    propertyMapping,
+    secret,
+    config,
+    startedAt,
+    aggregate,
+    accountResult,
+  }) {
+    const domitsPropertyId = requireStr(propertyMapping?.domitsPropertyId);
+    const lock = await this.acquireChannexBookingPollLock(integration, domitsPropertyId, config.lockStaleMs);
+    if (!lock.acquired) {
+      const warning = buildChannexPullIssue(
+        "CHANNEX_BOOKING_POLL_LOCKED",
+        "Channex booking poll skipped because another poll is already running for this property."
+      );
+      const lockedSummary = this.buildChannexBookingPollPropertySummary({
+        integration,
+        propertyMapping,
+        result: "skipped-locked",
+        warnings: [warning],
+      });
+      aggregate.propertiesSkippedCount += 1;
+      aggregate.warnings.push(warning);
+      aggregate.propertyResults.push(lockedSummary);
+      accountResult.propertiesSkippedCount += 1;
+      await this.writeChannexBookingPollLog({
+        integration,
+        startedAt,
+        status: "SKIPPED",
+        summary: lockedSummary,
+      });
+      return;
+    }
+
+    let lockStatus = "FAILED";
+    let lastSuccessfulItemAt = null;
+    try {
+      const pullResult = await this.pullLatestChannexBookingsForResolvedContext({
+        normalizedUserId: requireStr(integration?.userId),
+        normalizedDomitsPropertyId: domitsPropertyId,
+        integration,
+        propertyMapping,
+        secret,
+        startedAt,
+        syncType: CHANNEX_BOOKING_POLL_SYNC_TYPE,
+        action: CHANNEX_BOOKING_POLL_ACTION,
+        trigger: config.trigger,
+      });
+      const propertyResponse = pullResult?.response || {};
+      const propertySummary = this.buildChannexBookingPollPropertySummary({
+        integration,
+        propertyMapping,
+        result: propertyResponse.overallSuccess ? "processed" : "processed-with-issues",
+        statusCode: pullResult?.statusCode ?? 200,
+        overallSuccess: propertyResponse.overallSuccess === true,
+        counts: propertyResponse,
+        evidenceId: propertyResponse.evidenceId ?? null,
+        warnings: Array.isArray(propertyResponse.warnings) ? propertyResponse.warnings : [],
+        errors: Array.isArray(propertyResponse.errors) ? propertyResponse.errors : [],
+      });
+
+      this.applyChannexBookingPollPropertyResult(aggregate, propertySummary, propertyResponse);
+      if (propertyResponse.overallSuccess) {
+        lockStatus = "SUCCESS";
+      } else if (propertyResponse.ackedCount > 0) {
+        lockStatus = "PARTIAL";
+      }
+      lastSuccessfulItemAt = propertyResponse.ackedCount > 0 ? nowMs() : null;
+      await this.writeChannexBookingPollLog({
+        integration,
+        startedAt,
+        status: lockStatus,
+        summary: propertySummary,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      const propertySummary = this.buildChannexBookingPollPropertySummary({
+        integration,
+        propertyMapping,
+        result: "failed",
+        statusCode: 500,
+        errors: [
+          buildChannexPullIssue(
+            details.code || "CHANNEX_BOOKING_POLL_PROPERTY_FAILED",
+            details.message || "Channex booking poll failed for this property.",
+            { details }
+          ),
+        ],
+      });
+      aggregate.errors.push(...propertySummary.errors);
+      aggregate.propertyResults.push(propertySummary);
+      await this.writeChannexBookingPollLog({
+        integration,
+        startedAt,
+        status: "FAILED",
+        summary: propertySummary,
+        error,
+      });
+    } finally {
+      await this.releaseChannexBookingPollLock({
+        integration,
+        syncType: lock.syncType,
+        status: lockStatus,
+        lastSuccessfulItemAt,
+      });
+    }
+  }
+
+  async readChannexBookingPollSecret(integration) {
+    try {
+      const secret = await this.channexCredentialStore.readSecretOrNull(integration.credentialsRef);
+      if (secret && typeof secret === "object" && !Array.isArray(secret) && hasChannexRequiredCredentialFields(secret)) {
+        return { ok: true, secret };
+      }
+      return {
+        ok: false,
+        warning: buildChannexPullIssue(
+          "CHANNEX_SECRET_INVALID",
+          "Stored Channex secret is missing, unreadable, or incomplete. Poll skipped for this account."
+        ),
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        warning: buildChannexPullIssue(
+          "CHANNEX_SECRET_READ_FAILED",
+          "Stored Channex secret could not be read. Poll skipped for this account.",
+          { details: describeLocalError(error) }
+        ),
+      };
+    }
+  }
+
+  async pollChannexBookingAccount({ integration, config, startedAt, aggregate }) {
+    const accountId = requireStr(integration?.id);
+    if (!allowlistIncludes(config.accountIds, accountId)) return;
+
+    const accountResult = {
+      integrationAccountId: accountId,
+      userId: requireStr(integration?.userId),
+      status: requireStr(integration?.status),
+      result: "processed",
+      propertiesChecked: 0,
+      propertiesSkippedCount: 0,
+      warnings: [],
+      errors: [],
+    };
+    aggregate.accountResults.push(accountResult);
+
+    if (String(integration?.status || "").toUpperCase() !== CHANNEX_STATUS.CONNECTED) {
+      const warning = buildChannexPullIssue(
+        "CHANNEX_ACCOUNT_NOT_CONNECTED",
+        "Channex booking poll skipped because the integration account is not connected."
+      );
+      accountResult.result = "skipped";
+      accountResult.warnings.push(warning);
+      aggregate.warnings.push(warning);
+      return;
+    }
+
+    if (!requireStr(integration?.credentialsRef)) {
+      const warning = buildChannexPullIssue(
+        "CHANNEX_RECONNECT_REQUIRED",
+        "Channex booking poll skipped because credentials are missing."
+      );
+      accountResult.result = "skipped";
+      accountResult.warnings.push(warning);
+      aggregate.warnings.push(warning);
+      return;
+    }
+
+    const secretResult = await this.readChannexBookingPollSecret(integration);
+    if (!secretResult.ok) {
+      accountResult.result = "skipped";
+      accountResult.warnings.push(secretResult.warning);
+      aggregate.warnings.push(secretResult.warning);
+      return;
+    }
+
+    const propertyMappings = await this.props.listByAccountId(accountId);
+    const activeMappings = (Array.isArray(propertyMappings) ? propertyMappings : []).filter(
+      (mapping) =>
+        isActiveChannexPropertyMapping(mapping) &&
+        requireStr(mapping?.domitsPropertyId) &&
+        requireStr(mapping?.externalPropertyId) &&
+        allowlistIncludes(config.domitsPropertyIds, mapping.domitsPropertyId)
+    );
+
+    accountResult.propertiesChecked = activeMappings.length;
+    aggregate.propertiesChecked += activeMappings.length;
+    for (const propertyMapping of activeMappings) {
+      await this.pollChannexBookingProperty({
+        integration,
+        propertyMapping,
+        secret: secretResult.secret,
+        config,
+        startedAt,
+        aggregate,
+        accountResult,
+      });
+    }
+  }
+
+  async pollLatestChannexBookings(options = {}) {
+    const startedAt = nowMs();
+    const config = this.buildChannexBookingPollConfig(options);
+    const aggregate = createEmptyChannexBookingPollResponse({
+      enabled: config.enabled,
+      trigger: config.trigger,
+    });
+
+    if (!config.enabled) {
+      aggregate.notes = [
+        "Automatic Channex booking polling is disabled. Set CHANNEX_BOOKING_POLL_ENABLED=true or pass enabled=true for a direct scheduled invocation test.",
+      ];
+      return ok(aggregate);
+    }
+
+    try {
+      const accounts = await this.accounts.listByChannel(CHANNEL_CHANNEX);
+      aggregate.accountsChecked = Array.isArray(accounts) ? accounts.length : 0;
+      for (const integration of Array.isArray(accounts) ? accounts : []) {
+        await this.pollChannexBookingAccount({
+          integration,
+          config,
+          startedAt,
+          aggregate,
+        });
+      }
+      aggregate.overallSuccess =
+        aggregate.errors.length === 0 &&
+        aggregate.warnings.length === 0 &&
+        aggregate.unackedCount === 0 &&
+        aggregate.propertiesSkippedCount === 0;
+      return ok(aggregate);
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        ...aggregate,
+        overallSuccess: false,
+        errors: [
+          ...aggregate.errors,
+          buildChannexPullIssue(
+            details.code || "CHANNEX_BOOKING_POLL_FAILED",
+            details.message || "Channex booking poll failed.",
+            { details }
+          ),
+        ],
+      });
     }
   }
 

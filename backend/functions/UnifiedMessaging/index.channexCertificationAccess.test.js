@@ -7,6 +7,7 @@ const mockIntegrationControllerMethods = {
   syncChannexCertificationTestCase: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
   pullLatestChannexBookings: jest.fn(),
+  pollLatestChannexBookings: jest.fn(),
   acknowledgeChannexBookingRevisions: jest.fn(),
 };
 
@@ -190,6 +191,35 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     );
 
     expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods.pullLatestChannexBookings).not.toHaveBeenCalled();
+  });
+
+  test("direct Channex booking poll event calls polling without HTTP routing", async () => {
+    mockIntegrationControllerMethods.pollLatestChannexBookings.mockResolvedValue({
+      statusCode: 200,
+      response: {
+        channel: "CHANNEX",
+        action: "poll-latest-bookings",
+        enabled: true,
+      },
+    });
+
+    const event = {
+      source: "domits.channex.booking-poll",
+      detail: {
+        action: "CHANNEX_BOOKING_POLL",
+        enabled: true,
+      },
+    };
+    const response = await handler(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({
+      channel: "CHANNEX",
+      action: "poll-latest-bookings",
+      enabled: true,
+    });
+    expect(mockIntegrationControllerMethods.pollLatestChannexBookings).toHaveBeenCalledWith(event);
     expect(mockIntegrationControllerMethods.pullLatestChannexBookings).not.toHaveBeenCalled();
   });
 
