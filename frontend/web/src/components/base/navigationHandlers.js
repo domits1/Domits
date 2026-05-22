@@ -1,5 +1,6 @@
-export const createNavigationHandlers = ({ navigate, currentView, setCurrentView, setDropdownVisible }) => ({
+export const createNavigationHandlers = ({ navigate, currentView, setCurrentView, setDropdownVisible, setAppsMenuOpen }) => ({
   toggleDropdown: () => {
+    setAppsMenuOpen?.(false);
     setDropdownVisible((prev) => !prev);
   },
   navigateToLogin: () => {

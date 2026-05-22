@@ -55,5 +55,10 @@ export const Property = new EntitySchema({
             nullable: true,
             default: "direct",
         },
+        cleaning_fee: {
+            type: "numeric",
+            nullable: true,
+            default: null,
+        },
     }
 })

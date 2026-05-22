@@ -54,6 +54,12 @@
 
 .accocard-content {
   padding-bottom: 16px;
+  color: inherit;
+  text-decoration: none;
+
+  &:visited {
+    color: inherit;
+  }
 }
 
 .accocard-media {
