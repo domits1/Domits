@@ -1,7 +1,14 @@
-import React from "react";
+import React, { useContext } from "react";
 import PropTypes from "prop-types";
 import "../../../styles/sass/features/guestdashboard/guestDashboard.scss";
 import { useNavigate } from "react-router-dom";
+import { LanguageContext } from "../../../context/LanguageContext.js";
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+import de from "../../../content/de.json";
+import es from "../../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
 
 function PastTripItem({ stay }) {
   return (
@@ -29,22 +36,24 @@ PastTripItem.propTypes = {
 
 function PastTrips({ stays = [] }) {
   const navigate = useNavigate();
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   return (
     <div className="card guest-card--past-trips">
       <div className="cardHeader">
-        <h2>Past trips</h2>
+        <h2>{t?.stays?.pastTrips || "Past trips"}</h2>
         <button
           type="button"
           className="viewAll"
           onClick={() => navigate("/guestdashboard/bookings")}
         >
-          View All &gt;
+          {t?.stays?.viewAll || "View All >"}
         </button>
       </div>
 
       <div className="pastList">
-        {stays.length === 0 ? <p>No past trips yet.</p> : stays.map((stay) => <PastTripItem key={stay.id} stay={stay} />)}
+        {stays.length === 0 ? <p>{t?.stays?.noPastTrips || "No past trips yet."}</p> : stays.map((stay) => <PastTripItem key={stay.id} stay={stay} />)}
       </div>
     </div>
   );

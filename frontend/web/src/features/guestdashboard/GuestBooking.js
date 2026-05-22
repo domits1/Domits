@@ -1,11 +1,14 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useContext } from "react";
 import PropTypes from "prop-types";
 import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
-
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 import { getGuestBookings } from "./services/bookingAPI";
 import { fetchPropertySummaries } from "./services/propertySummaryService";
-
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import { getBookingTimestamp } from "../../utils/getBookingTimestamp";
 import { timestampToDate } from "../../utils/timestampToDate";
@@ -21,6 +24,8 @@ import {
   normalizeStayStatus,
 } from "./utils/guestDashboardUtils";
 
+const contentByLanguage = { en, nl, de, es };
+
 const formatBookingDates = (bookingItem) => {
   const arrivalDate =
     timestampToDate(bookingItem?.arrivaldate ?? bookingItem?.arrival_date ?? bookingItem?.arrivalDate) || null;
@@ -32,7 +37,7 @@ const formatBookingDates = (bookingItem) => {
   return `${dateFormatterDD_MM_YYYY(arrivalDate)} -> ${dateFormatterDD_MM_YYYY(departureDate)}`;
 };
 
-const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
+const BookingRow = ({ bookingItem, propertyMap, handleBookingClick, t }) => {
   const propertyId = getPropertyId(bookingItem);
   const fallbackTitle =
     bookingItem?.title ||
@@ -76,7 +81,7 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
 
           {hostName && (
             <div className="row-host">
-              Host: <span className="row-host-name">{hostName}</span>
+              {t?.bookings?.host || "Host:"} <span className="row-host-name">{hostName}</span>
             </div>
           )}
 
@@ -95,9 +100,10 @@ BookingRow.propTypes = {
   bookingItem: PropTypes.object.isRequired,
   propertyMap: PropTypes.object.isRequired,
   handleBookingClick: PropTypes.func.isRequired,
+  t: PropTypes.object,
 };
 
-const BookingSection = ({ title, bookings, emptyMessage, propertyMap, handleBookingClick, extraClassName = "" }) => (
+const BookingSection = ({ title, bookings, emptyMessage, propertyMap, handleBookingClick, extraClassName = "", t }) => (
   <section className={`guest-card ${extraClassName}`.trim()}>
     <div className="guest-card-header">
       <span>{title}</span>
@@ -113,6 +119,7 @@ const BookingSection = ({ title, bookings, emptyMessage, propertyMap, handleBook
             bookingItem={bookingItem}
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
+            t={t}
           />
         ))
       )}
@@ -127,10 +134,13 @@ BookingSection.propTypes = {
   propertyMap: PropTypes.object.isRequired,
   handleBookingClick: PropTypes.func.isRequired,
   extraClassName: PropTypes.string,
+  t: PropTypes.object,
 };
 
 function GuestBooking() {
   const navigate = useNavigate();
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   const [isLoading, setIsLoading] = useState(true);
   const [guestId, setGuestId] = useState(null);
@@ -155,7 +165,7 @@ function GuestBooking() {
           email: userInfo?.attributes?.email || "",
         });
       } catch {
-        if (isMounted) setError("Could not load your session.");
+        if (isMounted) setError(t?.bookings?.sessionError || "Could not load your session.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -179,7 +189,7 @@ function GuestBooking() {
       normalizedBookings.sort((a, b) => getBookingTimestamp(b) - getBookingTimestamp(a));
       setBookings(normalizedBookings);
     } catch {
-      setError("Could not load your bookings.");
+      setError(t?.bookings?.bookingsError || "Could not load your bookings.");
     } finally {
       setIsLoading(false);
     }
@@ -259,7 +269,7 @@ function GuestBooking() {
 
   let bookingContent;
   if (isLoading) {
-    bookingContent = <div className="guest-booking-loader">Loading...</div>;
+    bookingContent = <div className="guest-booking-loader">{t?.bookings?.loading || "Loading..."}</div>;
   } else if (error) {
     bookingContent = (
       <div className="guest-booking-error" role="alert">
@@ -269,59 +279,64 @@ function GuestBooking() {
   } else if (paidBookings.length === 0 && inquiryBookings.length === 0) {
     bookingContent = (
       <div className="emptyState">
-        <p>You do not have any bookings yet.</p>
+        <p>{t?.bookings?.noBookings || "You do not have any bookings yet."}</p>
       </div>
     );
   } else {
     bookingContent = (
       <div className="guest-booking-bookingContent">
-        {propLoading && <div className="guest-booking-loader-inline">Loading property details...</div>}
+        {propLoading && <div className="guest-booking-loader-inline">{t?.bookings?.loadingPropertyDetails || "Loading property details..."}</div>}
 
         {inquiryBookings.length > 0 && (
           <div className="guest-booking-summary-grid">
             <BookingSection
-              title="Inquiries"
+              title={t?.bookings?.inquiries || "Inquiries"}
               bookings={inquiryBookings}
-              emptyMessage="No inquiries."
+              emptyMessage={t?.bookings?.noInquiries || "No inquiries."}
               propertyMap={propertyMap}
               handleBookingClick={handleBookingClick}
+              t={t}
             />
           </div>
         )}
 
         <div className="guest-booking-summary-grid">
           <BookingSection
-            title="Current / This Week"
+            title={t?.bookings?.currentThisWeek || "Current / This Week"}
             bookings={currentBookings}
-            emptyMessage="No current bookings this week."
+            emptyMessage={t?.bookings?.noCurrentBookings || "No current bookings this week."}
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
+            t={t}
           />
 
           <BookingSection
-            title="Upcoming Bookings"
+            title={t?.bookings?.upcomingBookings || "Upcoming Bookings"}
             bookings={upcomingBookings}
-            emptyMessage="You do not have any upcoming bookings yet."
+            emptyMessage={t?.bookings?.noUpcomingBookings || "You do not have any upcoming bookings yet."}
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
+            t={t}
           />
 
           <BookingSection
-            title="Cancelled Bookings"
+            title={t?.bookings?.cancelledBookings || "Cancelled Bookings"}
             bookings={cancelledBookings}
-            emptyMessage="You do not have any cancelled bookings yet."
+            emptyMessage={t?.bookings?.noCancelledBookings || "You do not have any cancelled bookings yet."}
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
             extraClassName="guest-card--cancelled"
+            t={t}
           />
 
           <BookingSection
-            title="Past Bookings"
+            title={t?.bookings?.pastBookings || "Past Bookings"}
             bookings={pastBookings}
-            emptyMessage="You do not have any past bookings yet."
+            emptyMessage={t?.bookings?.noPastBookings || "You do not have any past bookings yet."}
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
             extraClassName="guest-card--past"
+            t={t}
           />
         </div>
       </div>
@@ -331,7 +346,7 @@ function GuestBooking() {
   return (
     <div className="guest-dashboard-shell">
       <div className="guest-dashboard-page-body guest-booking-page-body">
-        <h2>{user.name || "Guest"} Bookings</h2>
+        <h2>{user.name || "Guest"} {t?.nav?.bookings || "Bookings"}</h2>
 
         <div className="guest-dashboard-dashboards">
           <div className="guest-dashboard-content guest-booking-dashboard-content">
@@ -339,7 +354,7 @@ function GuestBooking() {
               <div className="dashboardHead">
                 <div className="buttonBox">
                   <button className="greenBtn" onClick={fetchBookings} disabled={isLoading}>
-                    {isLoading ? "Refreshing..." : "Refresh"}
+                    {isLoading ? (t?.bookings?.refreshing || "Refreshing...") : (t?.bookings?.refresh || "Refresh")}
                   </button>
                 </div>
               </div>

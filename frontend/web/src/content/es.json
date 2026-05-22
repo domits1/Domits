@@ -763,6 +763,287 @@
             "submit": "Enviar mensaje",
             "sending": "Enviando..."
           }
+        },
+      "guestdashboard": {
+        "nav": {
+          "dashboard": "Panel",
+          "bookings": "Reservas",
+          "messages": "Mensajes",
+          "wishlist": "Lista de deseos",
+          "settings": "Configuración",
+          "menu": "Menú",
+          "closeMenu": "Cerrar menú",
+          "openMenu": "Abrir menú"
+        },
+        "overview": {
+          "welcomeBack": "Bienvenido de nuevo,",
+          "tripsOverview": "Aquí tienes un resumen de tus viajes y próximos viajes",
+          "currentStays": "Estancias actuales",
+          "upcomingStays": "Próximas estancias",
+          "pastStays": "Estancias pasadas",
+          "messages": "Mensajes",
+          "yourTripOverview": "Resumen de tus viajes",
+          "loadingTrips": "Cargando viajes...",
+          "pastTrips": "Viajes pasados",
+          "loadingTripHistory": "Cargando historial de viajes...",
+          "tripReminders": "Recordatorios de viaje",
+          "loadingReminders": "Cargando recordatorios..."
+        },
+        "bookings": {
+          "loading": "Cargando...",
+          "refreshing": "Actualizando...",
+          "refresh": "Actualizar",
+          "sessionError": "No se pudo cargar tu sesión.",
+          "bookingsError": "No se pudieron cargar tus reservas.",
+          "noBookings": "Aún no tienes reservas.",
+          "loadingPropertyDetails": "Cargando detalles del alojamiento...",
+          "inquiries": "Consultas",
+          "noInquiries": "Sin consultas.",
+          "currentThisWeek": "Actual / Esta semana",
+          "noCurrentBookings": "Sin reservas actuales esta semana.",
+          "upcomingBookings": "Próximas reservas",
+          "noUpcomingBookings": "Aún no tienes próximas reservas.",
+          "cancelledBookings": "Reservas canceladas",
+          "noCancelledBookings": "Aún no tienes reservas canceladas.",
+          "pastBookings": "Reservas pasadas",
+          "noPastBookings": "Aún no tienes reservas pasadas.",
+          "host": "Anfitrión:"
+        },
+        "reservation": {
+          "loading": "Cargando reserva...",
+          "unavailable": "Reserva no disponible",
+          "notFound": "Reserva no encontrada.",
+          "loadError": "No se pudo cargar esta reserva.",
+          "cancelled": "Cancelado",
+          "cancelledMessage": "Esta reserva ha sido cancelada.",
+          "cancelReservationTitle": "Cancelar reserva",
+          "cancelReservationDescription": "Revisa la política de cancelación arriba antes de cancelar esta reserva.",
+          "cancelTitle": "¿Cancelar reserva?",
+          "cancelConfirm": "¿Estás seguro de que deseas cancelar esta reserva? Tu anfitrión será notificado y esta acción actualizará el estado de tu reserva.",
+          "keepBooking": "Mantener reserva",
+          "yesCancelBooking": "Sí, cancelar reserva",
+          "cancelling": "Cancelando...",
+          "cancelBooking": "Cancelar reserva",
+          "cancelError": "No se pudo cancelar esta reserva. Por favor, inténtalo de nuevo.",
+          "cancelSuccess": "Reserva cancelada.",
+          "needHelp": "¿Necesitas ayuda?",
+          "messageHost": "Mensaje al anfitrión",
+          "backToTrips": "< Volver a todos los viajes"
+        },
+        "payments": {
+          "title": "Pagos",
+          "fulfilled": "Pagos realizados",
+          "paid": "Pagado:",
+          "total": "Total:",
+          "completeBooking": "Completa tu reserva",
+          "inquiryAccepted": "Tu consulta ha sido aceptada por el anfitrión. Completa tu pago para confirmar la reserva.",
+          "backToBookings": "Volver a reservas",
+          "invalidBookingId": "ID de reserva no válido.",
+          "loadError": "No se pudo cargar el pago. Por favor, inténtalo de nuevo o contacta con el soporte."
+        },
+        "wishlist": {
+          "empty": "Tu lista de deseos está vacía",
+          "emptyDescription": "¡Guarda tus alojamientos favoritos y planifica tu próximo viaje!",
+          "explore": "Explorar alojamientos",
+          "loadingSaved": "Cargando alojamientos guardados...",
+          "noLongerAvailable": "Ya no disponible",
+          "removedOrDraft": "Este anuncio guardado fue eliminado o cambiado a borrador.",
+          "removeFromWishlist": "Eliminar de la lista de deseos",
+          "removed": "Eliminado de la lista de deseos",
+          "savedCount": "alojamientos guardados",
+          "loadError": "No se pudo cargar la lista de deseos. Por favor, inténtalo de nuevo.",
+          "removeError": "No se pudo eliminar de la lista de deseos. Por favor, inténtalo de nuevo.",
+          "saveToWishlist": "Guardar en lista de deseos",
+          "savedToWishlist": "Guardado en lista de deseos",
+          "savedIn": "Guardado en:",
+          "edit": "Editar",
+          "createNewList": "Crear nueva lista",
+          "giveListName": "Dale un nombre a tu lista",
+          "save": "Guardar",
+          "selectList": "Seleccionar lista:",
+          "makeList": "Crear una lista",
+          "shareList": "Compartir la lista",
+          "giveNewListName": "Dale un nombre a tu nueva lista",
+          "create": "Crear",
+          "shareableLink": "Enlace para compartir",
+          "copyLink": "Copiar enlace",
+          "copied": "¡Copiado!",
+          "loadListsError": "No se pudieron cargar las listas de deseos. Por favor, inténtalo de nuevo.",
+          "createListError": "No se pudo crear la lista de deseos. Por favor, inténtalo de nuevo.",
+          "renameListError": "No se pudo renombrar la lista de deseos. Por favor, inténtalo de nuevo.",
+          "deleteListError": "No se pudo eliminar la lista de deseos. Por favor, inténtalo de nuevo.",
+          "copyLinkError": "No se pudo copiar el enlace. Por favor, inténtalo de nuevo.",
+          "moveError": "No se pudo mover el alojamiento. Por favor, inténtalo de nuevo."
+        },
+        "reviews": {
+          "title": "Reseñas",
+          "myReviews": "Mis reseñas",
+          "noWrittenReviews": "Parece que aún no has escrito ninguna reseña...",
+          "receivedReviews": "Reseñas recibidas",
+          "noReceivedReviews": "Parece que aún no has recibido ninguna reseña...",
+          "disputes": "Disputas",
+          "recentReviews": "Reseñas recientes",
+          "deleteConfirm": "¿Estás seguro de que deseas eliminar esta reseña?",
+          "writtenOn": "Escrita el:"
+        },
+        "stays": {
+          "currentStay": "Tu estancia actual",
+          "upcomingStay": "Tu próxima estancia",
+          "viewAll": "Ver todo >",
+          "pastTrips": "Viajes pasados",
+          "noPastTrips": "Aún no hay viajes pasados.",
+          "cancelledTrips": "Viajes cancelados",
+          "noCancelledTrips": "Aún no hay viajes cancelados.",
+          "noUpcomingTrips": "Sin próximos viajes",
+          "noUpcomingStays": "No tienes próximas estancias. Explora destinos.",
+          "browseStays": "Explorar estancias",
+          "noActiveTrips": "Aún no hay viajes activos",
+          "tripReminders": "Recordatorios de viaje"
+        },
+        "stayCard": {
+          "status": "Estado:",
+          "confirmed": "Confirmado",
+          "ref": "Ref:",
+          "openReservation": "Abrir reserva",
+          "messageHost": "Mensaje al anfitrión",
+          "downloadInvoice": "Descargar factura (Próximamente)"
+        },
+        "propertyCard": {
+          "checkIn": "Entrada",
+          "checkOut": "Salida",
+          "guests": "Huéspedes",
+          "guest": "huésped",
+          "guests_plural": "huéspedes",
+          "reservationId": "ID de reserva:",
+          "unavailable": "Detalles del huésped no disponibles"
+        },
+        "checkIn": {
+          "title": "Instrucciones de entrada",
+          "address": "Dirección:",
+          "addressUnavailable": "Dirección no disponible",
+          "noInstructions": "Aún no se han compartido instrucciones adicionales de entrada.",
+          "nextStep": "Siguiente paso:",
+          "checkSection": "Revisa esta sección de nuevo antes de la llegada para ver cualquier actualización del anfitrión."
+        },
+        "houseRules": {
+          "title": "Normas de la casa",
+          "noRules": "No se han proporcionado normas adicionales de la casa."
+        },
+        "cancellationPolicy": {
+          "title": "Política de cancelación",
+          "hidePolicy": "Ocultar detalles de la política",
+          "viewPolicy": "Ver detalles de la política",
+          "policies": {
+            "flexible": {
+              "type": "Flexible",
+              "summary": "Reembolso completo 1 día antes de la llegada.",
+              "details": [
+                "Los huéspedes reciben un reembolso completo cuando cancelan al menos 1 día antes del check-in.",
+                "Las cancelaciones realizadas menos de 1 día antes del check-in no son reembolsables."
+              ]
+            },
+            "moderate": {
+              "type": "Moderada",
+              "summary": "Reembolso completo 5 días antes de la llegada.",
+              "details": [
+                "Los huéspedes reciben un reembolso completo cuando cancelan al menos 5 días antes del check-in.",
+                "Las cancelaciones realizadas menos de 5 días antes del check-in pueden recibir solo un reembolso parcial."
+              ]
+            },
+            "strict": {
+              "type": "Limitada",
+              "summary": "Los reembolsos dependen de cuánto tiempo antes del check-in se realice la cancelación.",
+              "details": [
+                "Al menos 14 días antes del check-in: el huésped recibe un reembolso del 100% (usted retiene el 0%).",
+                "Entre 7 y 14 días antes del check-in: el huésped recibe un reembolso del 50% (usted retiene el 50%).",
+                "Menos de 7 días antes del check-in: el huésped no recibe reembolso (usted retiene el 100%)."
+              ]
+            },
+            "firm": {
+              "type": "Estricta",
+              "summary": "Reembolso completo hasta 30 días antes del check-in.",
+              "details": [
+                "Los huéspedes reciben un reembolso completo cuando cancelan al menos 30 días antes del check-in.",
+                "Las cancelaciones más cercanas a la llegada pueden recibir solo un reembolso parcial o ninguno, según el momento."
+              ]
+            }
+          }
+        },
+        "paymentSummary": {
+          "title": "Resumen de pago",
+          "cleaningFee": "Tarifa de limpieza",
+          "total": "Total",
+          "nights": "noches"
+        },
+        "bookingDetails": {
+          "title": "Detalles de la reserva",
+          "reservationId": "ID de reserva",
+          "bookedOn": "Reservado el",
+          "downloadReceipt": "Descargar recibo"
+        },
+        "guestSelector": {
+          "adults": "Adultos",
+          "children": "Niños",
+          "rooms": "Habitaciones",
+          "done": "Listo"
+        },
+        "messagesPage": {
+          "title": "Mensajes",
+          "searchPlaceholder": "Buscar o iniciar nueva conversación",
+          "allTab": "Todos",
+          "unreadTab": "No leídos",
+          "loadingContacts": "Cargando contactos...",
+          "noContacts": "No se encontraron contactos.",
+          "closeChat": "Cerrar chat",
+          "sortByLatest": "Ordenar por más reciente",
+          "sortAZ": "Ordenar A–Z"
+        },
+        "chatScreen": {
+          "selectConversation": "Seleccionar una conversación",
+          "chooseContact": "Elige un contacto para comenzar a chatear.",
+          "noMessages": "Aún no hay mensajes",
+          "startConversation": "Di hola para iniciar la conversación.",
+          "activeNow": "Activo ahora",
+          "whatsappConversation": "Conversación de WhatsApp",
+          "typePlaceholder": "Escribe un mensaje",
+          "typeWhatsappPlaceholder": "Escribe un mensaje de WhatsApp",
+          "attachments": "Adjuntos",
+          "failedToSend": "No se pudo enviar el mensaje"
+        },
+        "settingsPage": {
+          "personalInfo": "Información personal",
+          "profilePhoto": "Foto de perfil:",
+          "upload": "Subir",
+          "working": "Procesando...",
+          "remove": "Eliminar",
+          "titleLabel": "Título:",
+          "selectTitle": "Seleccionar título",
+          "fullName": "Nombre completo:",
+          "email": "Correo electrónico:",
+          "codeSentEmail": "¡Código enviado a su correo!",
+          "phone": "Teléfono:",
+          "phoneNumber": "Número de teléfono",
+          "sex": "Sexo:",
+          "selectSex": "Seleccionar sexo",
+          "dateOfBirth": "Fecha de nacimiento:",
+          "placeOfBirth": "Lugar de nacimiento:",
+          "selectCountry": "Seleccionar país",
+          "nationality": "Nacionalidad:",
+          "nationalityPlaceholder": "ej. Española",
+          "preferences": "Preferencias",
+          "defaultLanguage": "Idioma predeterminado:",
+          "authentication": "Autenticación",
+          "emailLabel": "Correo electrónico",
+          "active": "Activo",
+          "inactive": "Inactivo",
+          "verified": "Verificado",
+          "notVerified": "No verificado",
+          "phoneVerified": "Teléfono verificado",
+          "yes": "Sí",
+          "no": "No",
+          "authenticatorApp": "Aplicación de autenticación",
+          "totpSubtext": "Códigos basados en la app (TOTP)"
         }
+      }
 }
 

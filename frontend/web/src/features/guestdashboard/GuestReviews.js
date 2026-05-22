@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
 import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
 import { Auth } from "aws-amplify";
@@ -12,6 +19,8 @@ function GuestReviews() {
   const [isLoading2, setIsLoading2] = useState(true);
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   // Get user once & redirect if not logged in
   useEffect(() => {
@@ -78,7 +87,7 @@ function GuestReviews() {
 
  
   const asyncDeleteReview = async (review) => {
-    if (!window.confirm("Are you sure you want to delete this review?")) return;
+    if (!window.confirm(t?.reviews?.deleteConfirm || "Are you sure you want to delete this review?")) return;
 
     
     const reviewId = review["reviewId "];
@@ -97,15 +106,15 @@ function GuestReviews() {
 
   return (
     <main className="page-body">
-      <h2>Reviews</h2>
+      <h2>{t?.reviews?.title || "Reviews"}</h2>
 
       <div className="reviewGrid">
         <div className="contentContainer">
-          
+
           <div className="reviewColumn">
-            
+
             <div className="reviewBox">
-              <p className="boxText">My reviews ({reviews.length})</p>
+              <p className="boxText">{t?.reviews?.myReviews || "My reviews"} ({reviews.length})</p>
 
               {isLoading ? (
                 <div>
@@ -117,7 +126,7 @@ function GuestReviews() {
                     <h2 className="reviewHeader">{review.title}</h2>
                     <p className="reviewContent">{review.content}</p>
                     <p className="reviewDate">
-                      Written on: {DateFormatterDD_MM_YYYY(review.date)}
+                      {t?.reviews?.writtenOn || "Written on:"} {DateFormatterDD_MM_YYYY(review.date)}
                     </p>
                     <button
                       onClick={() => asyncDeleteReview(review)}
@@ -132,7 +141,7 @@ function GuestReviews() {
                 ))
               ) : (
                 <p className="reviewAlert">
-                  It appears that you have not written any reviews yet...
+                  {t?.reviews?.noWrittenReviews || "It appears that you have not written any reviews yet..."}
                 </p>
               )}
             </div>
@@ -140,7 +149,7 @@ function GuestReviews() {
             {/* Received reviews */}
             <div className="reviewBox">
               <p className="boxText">
-                Received reviews ({receivedReviews.length})
+                {t?.reviews?.receivedReviews || "Received reviews"} ({receivedReviews.length})
               </p>
 
               {isLoading2 ? (
@@ -153,25 +162,24 @@ function GuestReviews() {
                     <h2 className="reviewHeader">{receivedReview.title}</h2>
                     <p className="reviewContent">{receivedReview.content}</p>
                     <p className="reviewDate">
-                      Written on: {DateFormatterDD_MM_YYYY(receivedReview.date)}
+                      {t?.reviews?.writtenOn || "Written on:"} {DateFormatterDD_MM_YYYY(receivedReview.date)}
                     </p>
                   </div>
                 ))
               ) : (
                 <p className="reviewAlert">
-                  It appears that you have not received any reviews yet...
+                  {t?.reviews?.noReceivedReviews || "It appears that you have not received any reviews yet..."}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Right column */}
           <div className="reviewColumn">
             <div className="reviewBox">
-              <p className="boxText">Disputes</p>
+              <p className="boxText">{t?.reviews?.disputes || "Disputes"}</p>
             </div>
             <div className="reviewBox">
-              <p className="boxText">Recent reviews</p>
+              <p className="boxText">{t?.reviews?.recentReviews || "Recent reviews"}</p>
             </div>
           </div>
         </div>

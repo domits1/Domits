@@ -763,6 +763,287 @@
             "submit": "Send message",
             "sending": "Sending..."
           }
+        },
+      "guestdashboard": {
+        "nav": {
+          "dashboard": "Dashboard",
+          "bookings": "Bookings",
+          "messages": "Messages",
+          "wishlist": "Wishlist",
+          "settings": "Settings",
+          "menu": "Menu",
+          "closeMenu": "Close menu",
+          "openMenu": "Open menu"
+        },
+        "overview": {
+          "welcomeBack": "Welcome back,",
+          "tripsOverview": "Here is an overview of your trips and upcoming trips",
+          "currentStays": "Current stays",
+          "upcomingStays": "Upcoming stays",
+          "pastStays": "Past stays",
+          "messages": "Messages",
+          "yourTripOverview": "Your trip overview",
+          "loadingTrips": "Loading trips...",
+          "pastTrips": "Past trips",
+          "loadingTripHistory": "Loading trip history...",
+          "tripReminders": "Trip reminders",
+          "loadingReminders": "Loading reminders..."
+        },
+        "bookings": {
+          "loading": "Loading...",
+          "refreshing": "Refreshing...",
+          "refresh": "Refresh",
+          "sessionError": "Could not load your session.",
+          "bookingsError": "Could not load your bookings.",
+          "noBookings": "You do not have any bookings yet.",
+          "loadingPropertyDetails": "Loading property details...",
+          "inquiries": "Inquiries",
+          "noInquiries": "No inquiries.",
+          "currentThisWeek": "Current / This Week",
+          "noCurrentBookings": "No current bookings this week.",
+          "upcomingBookings": "Upcoming Bookings",
+          "noUpcomingBookings": "You do not have any upcoming bookings yet.",
+          "cancelledBookings": "Cancelled Bookings",
+          "noCancelledBookings": "You do not have any cancelled bookings yet.",
+          "pastBookings": "Past Bookings",
+          "noPastBookings": "You do not have any past bookings yet.",
+          "host": "Host:"
+        },
+        "reservation": {
+          "loading": "Loading reservation...",
+          "unavailable": "Reservation unavailable",
+          "notFound": "Reservation not found.",
+          "loadError": "Could not load this reservation.",
+          "cancelled": "Cancelled",
+          "cancelledMessage": "This reservation has been cancelled.",
+          "cancelReservationTitle": "Cancel reservation",
+          "cancelReservationDescription": "Review the cancellation policy above before cancelling this booking.",
+          "cancelTitle": "Cancel booking?",
+          "cancelConfirm": "Are you sure you want to cancel this booking? Your host will be notified and this action will update your reservation status.",
+          "keepBooking": "Keep booking",
+          "yesCancelBooking": "Yes, cancel booking",
+          "cancelling": "Cancelling...",
+          "cancelBooking": "Cancel Booking",
+          "cancelError": "Could not cancel this booking. Please try again.",
+          "cancelSuccess": "Reservation cancelled.",
+          "needHelp": "Need help?",
+          "messageHost": "Message host",
+          "backToTrips": "< Back to all trips"
+        },
+        "payments": {
+          "title": "Payments",
+          "fulfilled": "Fulfilled payments",
+          "paid": "Paid:",
+          "total": "Total:",
+          "completeBooking": "Complete Your Booking",
+          "inquiryAccepted": "Your inquiry has been accepted by the host. Complete your payment to confirm the booking.",
+          "backToBookings": "Back to Bookings",
+          "invalidBookingId": "Invalid booking ID.",
+          "loadError": "Failed to load payment. Please try again or contact support."
+        },
+        "wishlist": {
+          "empty": "Your wishlist is empty",
+          "emptyDescription": "Save your favorite listings and plan your next trip!",
+          "explore": "Explore properties",
+          "loadingSaved": "Loading saved accommodations...",
+          "noLongerAvailable": "No longer available",
+          "removedOrDraft": "This saved listing was removed or switched to draft.",
+          "removeFromWishlist": "Remove from wishlist",
+          "removed": "Removed from wishlist",
+          "savedCount": "saved accommodations",
+          "loadError": "Failed to load wishlist. Please try again.",
+          "removeError": "Failed to remove from wishlist. Please try again.",
+          "saveToWishlist": "Save to wishlist",
+          "savedToWishlist": "Saved to wishlist",
+          "savedIn": "Saved in:",
+          "edit": "Edit",
+          "createNewList": "Create new list",
+          "giveListName": "Give your list a name",
+          "save": "Save",
+          "selectList": "Select list:",
+          "makeList": "Make a list",
+          "shareList": "Share the list",
+          "giveNewListName": "Give your new list a name",
+          "create": "Create",
+          "shareableLink": "Shareable link",
+          "copyLink": "Copy link",
+          "copied": "Copied!",
+          "loadListsError": "Failed to load wishlists. Please try again.",
+          "createListError": "Failed to create wishlist. Please try again.",
+          "renameListError": "Failed to rename wishlist. Please try again.",
+          "deleteListError": "Failed to delete wishlist. Please try again.",
+          "copyLinkError": "Failed to copy link. Please try again.",
+          "moveError": "Failed to move accommodation. Please try again."
+        },
+        "reviews": {
+          "title": "Reviews",
+          "myReviews": "My reviews",
+          "noWrittenReviews": "It appears that you have not written any reviews yet...",
+          "receivedReviews": "Received reviews",
+          "noReceivedReviews": "It appears that you have not received any reviews yet...",
+          "disputes": "Disputes",
+          "recentReviews": "Recent reviews",
+          "deleteConfirm": "Are you sure you want to delete this review?",
+          "writtenOn": "Written on:"
+        },
+        "stays": {
+          "currentStay": "Your current stay",
+          "upcomingStay": "Your upcoming stay",
+          "viewAll": "View All >",
+          "pastTrips": "Past trips",
+          "noPastTrips": "No past trips yet.",
+          "cancelledTrips": "Cancelled trips",
+          "noCancelledTrips": "No cancelled trips yet.",
+          "noUpcomingTrips": "No upcoming trips",
+          "noUpcomingStays": "You have no upcoming stays. Explore destinations.",
+          "browseStays": "Browse stays",
+          "noActiveTrips": "No active trips yet",
+          "tripReminders": "Trip reminders"
+        },
+        "stayCard": {
+          "status": "Status:",
+          "confirmed": "Confirmed",
+          "ref": "Ref:",
+          "openReservation": "Open reservation",
+          "messageHost": "Message host",
+          "downloadInvoice": "Download invoice (Coming soon)"
+        },
+        "propertyCard": {
+          "checkIn": "Check-in",
+          "checkOut": "Check-out",
+          "guests": "Guests",
+          "guest": "guest",
+          "guests_plural": "guests",
+          "reservationId": "Reservation ID:",
+          "unavailable": "Guest details unavailable"
+        },
+        "checkIn": {
+          "title": "Check-in instructions",
+          "address": "Address:",
+          "addressUnavailable": "Address unavailable",
+          "noInstructions": "No additional check-in instructions have been shared yet.",
+          "nextStep": "Next step:",
+          "checkSection": "Check this section again before arrival for any host updates."
+        },
+        "houseRules": {
+          "title": "House rules",
+          "noRules": "No additional house rules have been provided."
+        },
+        "cancellationPolicy": {
+          "title": "Cancellation Policy",
+          "hidePolicy": "Hide policy details",
+          "viewPolicy": "View policy details",
+          "policies": {
+            "flexible": {
+              "type": "Flexible",
+              "summary": "Full refund 1 day prior to arrival.",
+              "details": [
+                "Guests receive a full refund when they cancel at least 1 day before check-in.",
+                "Cancellations made less than 1 day before check-in are non-refundable."
+              ]
+            },
+            "moderate": {
+              "type": "Moderate",
+              "summary": "Full refund 5 days prior to arrival.",
+              "details": [
+                "Guests receive a full refund when they cancel at least 5 days before check-in.",
+                "Cancellations made fewer than 5 days before check-in may receive only a partial refund."
+              ]
+            },
+            "strict": {
+              "type": "Limited",
+              "summary": "Refunds depend on how close the cancellation is to check-in.",
+              "details": [
+                "At least 14 days before check-in: guest receives 100% refund (you keep 0%).",
+                "In between 7 and 14 days before check-in: guest receives 50% refund (you keep 50%).",
+                "Less than 7 days before check-in: guest receives no refund (you keep 100%)."
+              ]
+            },
+            "firm": {
+              "type": "Firm",
+              "summary": "Full refund up to 30 days before check-in.",
+              "details": [
+                "Guests receive a full refund when they cancel at least 30 days before check-in.",
+                "Cancellations closer to arrival may receive only a partial refund or no refund, depending on timing."
+              ]
+            }
+          }
+        },
+        "paymentSummary": {
+          "title": "Payment summary",
+          "cleaningFee": "Cleaning fee",
+          "total": "Total",
+          "nights": "nights"
+        },
+        "bookingDetails": {
+          "title": "Booking details",
+          "reservationId": "Reservation ID",
+          "bookedOn": "Booked on",
+          "downloadReceipt": "Download receipt"
+        },
+        "guestSelector": {
+          "adults": "Adults",
+          "children": "Children",
+          "rooms": "Rooms",
+          "done": "Done"
+        },
+        "messagesPage": {
+          "title": "Messages",
+          "searchPlaceholder": "Search or start new chat",
+          "allTab": "All",
+          "unreadTab": "Unread",
+          "loadingContacts": "Loading contacts...",
+          "noContacts": "No contacts found.",
+          "closeChat": "Close chat",
+          "sortByLatest": "Sort by latest",
+          "sortAZ": "Sort A–Z"
+        },
+        "chatScreen": {
+          "selectConversation": "Select a conversation",
+          "chooseContact": "Choose a contact to start chatting.",
+          "noMessages": "No messages yet",
+          "startConversation": "Say hi to start the conversation.",
+          "activeNow": "Active now",
+          "whatsappConversation": "WhatsApp conversation",
+          "typePlaceholder": "Type a message",
+          "typeWhatsappPlaceholder": "Type a WhatsApp message",
+          "attachments": "Attachments",
+          "failedToSend": "Message failed to send"
+        },
+        "settingsPage": {
+          "personalInfo": "Personal Information",
+          "profilePhoto": "Profile photo:",
+          "upload": "Upload",
+          "working": "Working...",
+          "remove": "Remove",
+          "titleLabel": "Title:",
+          "selectTitle": "Select title",
+          "fullName": "Full name:",
+          "email": "Email:",
+          "codeSentEmail": "Code sent to your email!",
+          "phone": "Phone:",
+          "phoneNumber": "Phone Number",
+          "sex": "Sex:",
+          "selectSex": "Select sex",
+          "dateOfBirth": "Date of birth:",
+          "placeOfBirth": "Place of birth:",
+          "selectCountry": "Select country",
+          "nationality": "Nationality:",
+          "nationalityPlaceholder": "e.g. Dutch",
+          "preferences": "Preferences",
+          "defaultLanguage": "Default language:",
+          "authentication": "Authentication",
+          "emailLabel": "Email",
+          "active": "Active",
+          "inactive": "Inactive",
+          "verified": "Verified",
+          "notVerified": "Not verified",
+          "phoneVerified": "Phone verified",
+          "yes": "Yes",
+          "no": "No",
+          "authenticatorApp": "Authenticator app",
+          "totpSubtext": "App-based codes (TOTP)"
         }
+      }
 }
 

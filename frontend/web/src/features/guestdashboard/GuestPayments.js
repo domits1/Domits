@@ -1,14 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-// import './guestdashboard.css';
+import { LanguageContext } from '../../context/LanguageContext.js';
+import en from '../../content/en.json';
+import nl from '../../content/nl.json';
+import de from '../../content/de.json';
+import es from '../../content/es.json';
 import Pages from './Pages.js';
-// import './paymentsguestdashboard.css';
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY.js';
 import spinner from '../../images/spinnner.gif';
 
+const contentByLanguage = { en, nl, de, es };
+
 const PaymentsGuestDashboard = () => {
     const navigate = useNavigate();
+    const { language } = useContext(LanguageContext);
+    const t = contentByLanguage[language]?.guestdashboard;
     const [payments, setPayments] = useState([]);
     const [cognitoUserId, setCognitoUserId] = useState('');
     const [loading, setLoading] = useState(true);
@@ -47,7 +54,7 @@ const PaymentsGuestDashboard = () => {
 
     return (
         <div className="page-body">
-            <h2>Payments</h2>
+            <h2>{t?.payments?.title || "Payments"}</h2>
             <div className='dashboards'>
             </div>
             <div className="content">
@@ -58,13 +65,13 @@ const PaymentsGuestDashboard = () => {
                 ) : (
                     <div className="payments-content">
                         <div className="fulfilled-payments">
-                            <h2>Fulfilled payments</h2>
+                            <h2>{t?.payments?.fulfilled || "Fulfilled payments"}</h2>
                             {payments.map(payment => (
                                 <div className="payment-item" key={payment.paymentId}>
                                     <h3>{payment.productName}</h3>
-                                    <p>Paid: {DateFormatterDD_MM_YYYY(payment.createdAt)}</p>
+                                    <p>{t?.payments?.paid || "Paid:"} {DateFormatterDD_MM_YYYY(payment.createdAt)}</p>
                                     <h3>{payment.description}</h3>
-                                    <p>Total: &euro;{payment.amount / 100}</p>
+                                    <p>{t?.payments?.total || "Total:"} &euro;{payment.amount / 100}</p>
                                 </div>
                             ))}
                         </div>

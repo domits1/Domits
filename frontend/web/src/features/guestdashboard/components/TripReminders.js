@@ -1,6 +1,13 @@
-import React from "react";
+import React, { useContext } from "react";
 import PropTypes from "prop-types";
 import "../../../styles/sass/features/guestdashboard/guestDashboard.scss";
+import { LanguageContext } from "../../../context/LanguageContext.js";
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+import de from "../../../content/de.json";
+import es from "../../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
 
 function ReminderItem({ text }) {
   return (
@@ -16,12 +23,15 @@ ReminderItem.propTypes = {
 };
 
 function TripReminders({ reminders = [] }) {
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
+
   return (
     <div className="card">
-      <h2>Trip reminders</h2>
+      <h2>{t?.stays?.tripReminders || "Trip reminders"}</h2>
 
       {reminders.length === 0 ? (
-        <p>No active trips yet</p>
+        <p>{t?.stays?.noActiveTrips || "No active trips yet"}</p>
       ) : (
         reminders.map((item) => (
           <ReminderItem key={item} text={item} />

@@ -1,6 +1,13 @@
-import React from "react";
+import React, { useContext } from "react";
 import PropTypes from "prop-types";
 import { FaMapPin, FaCalendarAlt, FaUsers } from "react-icons/fa";
+import { LanguageContext } from "../../../context/LanguageContext.js";
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+import de from "../../../content/de.json";
+import es from "../../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
 
 function PropertyCard({
   image = "",
@@ -11,10 +18,13 @@ function PropertyCard({
   checkOut = "-",
   checkOutTime = "-",
   guests = 0,
-  guestsDetails = "Guest details unavailable",
+  guestsDetails,
   reservationId = "-",
 }) {
-  const guestLabel = guests === 1 ? "guest" : "guests";
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
+  const guestLabel = guests === 1 ? (t?.propertyCard?.guest || "guest") : (t?.propertyCard?.guests_plural || "guests");
+  const resolvedGuestsDetails = guestsDetails ?? (t?.propertyCard?.unavailable || "Guest details unavailable");
 
   return (
     <div className="card leftPropertyCard">
@@ -32,7 +42,7 @@ function PropertyCard({
           <div className="stayLeft">
             <div className="stayBlock">
               <span className="label">
-                <FaCalendarAlt className="propertyIcon" /> Check-in
+                <FaCalendarAlt className="propertyIcon" /> {t?.propertyCard?.checkIn || "Check-in"}
               </span>
               <span className="value">
                 {checkIn}
@@ -44,7 +54,7 @@ function PropertyCard({
 
             <div className="stayBlock">
               <span className="label">
-                <FaCalendarAlt className="propertyIcon" /> Check-out
+                <FaCalendarAlt className="propertyIcon" /> {t?.propertyCard?.checkOut || "Check-out"}
               </span>
               <span className="value">
                 {checkOut}
@@ -57,10 +67,10 @@ function PropertyCard({
 
           <div className="stayBlock guests">
             <span className="label">
-              <FaUsers className="propertyIcon" /> Guests
+              <FaUsers className="propertyIcon" /> {t?.propertyCard?.guests || "Guests"}
             </span>
             <span className="value">
-              <span className="guestDetails">{guestsDetails}</span>
+              <span className="guestDetails">{resolvedGuestsDetails}</span>
               <span className="guestCount">
                 {guests} {guestLabel}
               </span>
@@ -69,7 +79,7 @@ function PropertyCard({
         </div>
 
         <div className="reservationIdRow">
-          Reservation ID: <strong>{reservationId}</strong>
+          {t?.propertyCard?.reservationId || "Reservation ID:"} <strong>{reservationId}</strong>
         </div>
       </div>
     </div>

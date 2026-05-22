@@ -1,5 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import PropTypes from "prop-types";
+import { LanguageContext } from "../../../context/LanguageContext.js";
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+import de from "../../../content/de.json";
+import es from "../../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
 
 const GUEST_CANCELLATION_POLICY_COPY = {
   flexible: {
@@ -43,35 +50,40 @@ const GUEST_CANCELLATION_POLICY_COPY = {
 
 function CancellationPolicySection({ policy }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   if (!policy) {
     return null;
   }
 
-  const details = Array.isArray(policy.details) ? policy.details : [];
+  const policyTranslation = policy.id ? t?.cancellationPolicy?.policies?.[policy.id] : null;
+  const displayType = policyTranslation?.type || policy.type;
+  const displaySummary = policyTranslation?.summary || policy.summary;
+  const displayDetails = Array.isArray(policyTranslation?.details) ? policyTranslation.details : (Array.isArray(policy.details) ? policy.details : []);
 
   return (
     <section className="card cancellationPolicyCard">
       <div className="cancellationPolicyHeader">
-        <h3>Cancellation Policy</h3>
+        <h3>{t?.cancellationPolicy?.title || "Cancellation Policy"}</h3>
         <span className={`cancellationPolicyBadge cancellationPolicyBadge--${policy.id || "default"}`}>
-          {policy.type}
+          {displayType}
         </span>
       </div>
 
-      <p className="cancellationPolicySummary">{policy.summary}</p>
+      <p className="cancellationPolicySummary">{displaySummary}</p>
 
       <button
         type="button"
         className="cancellationPolicyToggle"
         onClick={() => setIsExpanded((current) => !current)}
         aria-expanded={isExpanded}>
-        {isExpanded ? "Hide policy details" : "View policy details"}
+        {isExpanded ? (t?.cancellationPolicy?.hidePolicy || "Hide policy details") : (t?.cancellationPolicy?.viewPolicy || "View policy details")}
       </button>
 
       {isExpanded ? (
         <div className="cancellationPolicyDetails">
-          {details.map((detail) => (
+          {displayDetails.map((detail) => (
             <p key={detail}>{detail}</p>
           ))}
         </div>

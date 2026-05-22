@@ -764,6 +764,287 @@
             "submit": "Bericht verzenden",
             "sending": "Verzenden..."
           }
+        },
+      "guestdashboard": {
+        "nav": {
+          "dashboard": "Dashboard",
+          "bookings": "Boekingen",
+          "messages": "Berichten",
+          "wishlist": "Verlanglijst",
+          "settings": "Instellingen",
+          "menu": "Menu",
+          "closeMenu": "Menu sluiten",
+          "openMenu": "Menu openen"
+        },
+        "overview": {
+          "welcomeBack": "Welkom terug,",
+          "tripsOverview": "Hier is een overzicht van uw reizen en aankomende reizen",
+          "currentStays": "Huidige verblijven",
+          "upcomingStays": "Aankomende verblijven",
+          "pastStays": "Vorige verblijven",
+          "messages": "Berichten",
+          "yourTripOverview": "Uw reisoverzicht",
+          "loadingTrips": "Reizen laden...",
+          "pastTrips": "Vorige reizen",
+          "loadingTripHistory": "Reisgeschiedenis laden...",
+          "tripReminders": "Reisherinneringen",
+          "loadingReminders": "Herinneringen laden..."
+        },
+        "bookings": {
+          "loading": "Laden...",
+          "refreshing": "Vernieuwen...",
+          "refresh": "Vernieuwen",
+          "sessionError": "Uw sessie kon niet worden geladen.",
+          "bookingsError": "Uw boekingen konden niet worden geladen.",
+          "noBookings": "U heeft nog geen boekingen.",
+          "loadingPropertyDetails": "Accommodatiegegevens laden...",
+          "inquiries": "Aanvragen",
+          "noInquiries": "Geen aanvragen.",
+          "currentThisWeek": "Huidig / Deze week",
+          "noCurrentBookings": "Geen huidige boekingen deze week.",
+          "upcomingBookings": "Aankomende boekingen",
+          "noUpcomingBookings": "U heeft nog geen aankomende boekingen.",
+          "cancelledBookings": "Geannuleerde boekingen",
+          "noCancelledBookings": "U heeft nog geen geannuleerde boekingen.",
+          "pastBookings": "Vorige boekingen",
+          "noPastBookings": "U heeft nog geen vorige boekingen.",
+          "host": "Host:"
+        },
+        "reservation": {
+          "loading": "Reservering laden...",
+          "unavailable": "Reservering niet beschikbaar",
+          "notFound": "Reservering niet gevonden.",
+          "loadError": "Deze reservering kon niet worden geladen.",
+          "cancelled": "Geannuleerd",
+          "cancelledMessage": "Deze reservering is geannuleerd.",
+          "cancelReservationTitle": "Reservering annuleren",
+          "cancelReservationDescription": "Bekijk het annuleringsbeleid hierboven voordat u deze boeking annuleert.",
+          "cancelTitle": "Boeking annuleren?",
+          "cancelConfirm": "Weet u zeker dat u deze boeking wilt annuleren? Uw host wordt op de hoogte gesteld en deze actie zal uw reserveringsstatus bijwerken.",
+          "keepBooking": "Boeking behouden",
+          "yesCancelBooking": "Ja, boeking annuleren",
+          "cancelling": "Annuleren...",
+          "cancelBooking": "Boeking annuleren",
+          "cancelError": "Deze boeking kon niet worden geannuleerd. Probeer het opnieuw.",
+          "cancelSuccess": "Reservering geannuleerd.",
+          "needHelp": "Hulp nodig?",
+          "messageHost": "Bericht aan host",
+          "backToTrips": "< Terug naar alle reizen"
+        },
+        "payments": {
+          "title": "Betalingen",
+          "fulfilled": "Voltooide betalingen",
+          "paid": "Betaald:",
+          "total": "Totaal:",
+          "completeBooking": "Voltooi uw boeking",
+          "inquiryAccepted": "Uw aanvraag is geaccepteerd door de host. Voltooi uw betaling om de boeking te bevestigen.",
+          "backToBookings": "Terug naar boekingen",
+          "invalidBookingId": "Ongeldig boekings-ID.",
+          "loadError": "Betaling kon niet worden geladen. Probeer het opnieuw of neem contact op met de ondersteuning."
+        },
+        "wishlist": {
+          "empty": "Uw verlanglijst is leeg",
+          "emptyDescription": "Sla uw favoriete accommodaties op en plan uw volgende reis!",
+          "explore": "Accommodaties verkennen",
+          "loadingSaved": "Opgeslagen accommodaties laden...",
+          "noLongerAvailable": "Niet meer beschikbaar",
+          "removedOrDraft": "Deze opgeslagen advertentie is verwijderd of omgezet naar concept.",
+          "removeFromWishlist": "Verwijderen uit verlanglijst",
+          "removed": "Verwijderd uit verlanglijst",
+          "savedCount": "opgeslagen accommodaties",
+          "loadError": "Verlanglijst kon niet worden geladen. Probeer het opnieuw.",
+          "removeError": "Verwijderen uit verlanglijst mislukt. Probeer het opnieuw.",
+          "saveToWishlist": "Opslaan in verlanglijst",
+          "savedToWishlist": "Opgeslagen in verlanglijst",
+          "savedIn": "Opgeslagen in:",
+          "edit": "Bewerken",
+          "createNewList": "Nieuwe lijst aanmaken",
+          "giveListName": "Geef uw lijst een naam",
+          "save": "Opslaan",
+          "selectList": "Lijst selecteren:",
+          "makeList": "Lijst aanmaken",
+          "shareList": "Lijst delen",
+          "giveNewListName": "Geef uw nieuwe lijst een naam",
+          "create": "Aanmaken",
+          "shareableLink": "Deelbare link",
+          "copyLink": "Link kopiëren",
+          "copied": "Gekopieërd!",
+          "loadListsError": "Verlanglijsten konden niet worden geladen. Probeer het opnieuw.",
+          "createListError": "Verlanglijst kon niet worden aangemaakt. Probeer het opnieuw.",
+          "renameListError": "Verlanglijst kon niet worden hernoemd. Probeer het opnieuw.",
+          "deleteListError": "Verlanglijst kon niet worden verwijderd. Probeer het opnieuw.",
+          "copyLinkError": "Link kopiëren mislukt. Probeer het opnieuw.",
+          "moveError": "Accommodatie verplaatsen mislukt. Probeer het opnieuw."
+        },
+        "reviews": {
+          "title": "Beoordelingen",
+          "myReviews": "Mijn beoordelingen",
+          "noWrittenReviews": "Het lijkt erop dat u nog geen beoordelingen heeft geschreven...",
+          "receivedReviews": "Ontvangen beoordelingen",
+          "noReceivedReviews": "Het lijkt erop dat u nog geen beoordelingen heeft ontvangen...",
+          "disputes": "Geschillen",
+          "recentReviews": "Recente beoordelingen",
+          "deleteConfirm": "Weet u zeker dat u deze beoordeling wilt verwijderen?",
+          "writtenOn": "Geschreven op:"
+        },
+        "stays": {
+          "currentStay": "Uw huidige verblijf",
+          "upcomingStay": "Uw aankomende verblijf",
+          "viewAll": "Alles bekijken >",
+          "pastTrips": "Vorige reizen",
+          "noPastTrips": "Nog geen vorige reizen.",
+          "cancelledTrips": "Geannuleerde reizen",
+          "noCancelledTrips": "Nog geen geannuleerde reizen.",
+          "noUpcomingTrips": "Geen aankomende reizen",
+          "noUpcomingStays": "U heeft geen aankomende verblijven. Verken bestemmingen.",
+          "browseStays": "Verblijven bekijken",
+          "noActiveTrips": "Nog geen actieve reizen",
+          "tripReminders": "Reisherinneringen"
+        },
+        "stayCard": {
+          "status": "Status:",
+          "confirmed": "Bevestigd",
+          "ref": "Ref:",
+          "openReservation": "Reservering openen",
+          "messageHost": "Bericht aan host",
+          "downloadInvoice": "Factuur downloaden (Binnenkort beschikbaar)"
+        },
+        "propertyCard": {
+          "checkIn": "Inchecken",
+          "checkOut": "Uitchecken",
+          "guests": "Gasten",
+          "guest": "gast",
+          "guests_plural": "gasten",
+          "reservationId": "Reserverings-ID:",
+          "unavailable": "Gastgegevens niet beschikbaar"
+        },
+        "checkIn": {
+          "title": "Incheckprocedure",
+          "address": "Adres:",
+          "addressUnavailable": "Adres niet beschikbaar",
+          "noInstructions": "Er zijn nog geen aanvullende incheckinstructies gedeeld.",
+          "nextStep": "Volgende stap:",
+          "checkSection": "Bekijk dit gedeelte opnieuw voor aankomst voor eventuele updates van de host."
+        },
+        "houseRules": {
+          "title": "Huisregels",
+          "noRules": "Er zijn geen aanvullende huisregels opgegeven."
+        },
+        "cancellationPolicy": {
+          "title": "Annuleringsbeleid",
+          "hidePolicy": "Beleidsdetails verbergen",
+          "viewPolicy": "Beleidsdetails bekijken",
+          "policies": {
+            "flexible": {
+              "type": "Flexibel",
+              "summary": "Volledige terugbetaling 1 dag voor aankomst.",
+              "details": [
+                "Gasten ontvangen een volledige terugbetaling wanneer ze minimaal 1 dag voor het inchecken annuleren.",
+                "Annuleringen minder dan 1 dag voor het inchecken worden niet terugbetaald."
+              ]
+            },
+            "moderate": {
+              "type": "Gematigd",
+              "summary": "Volledige terugbetaling 5 dagen voor aankomst.",
+              "details": [
+                "Gasten ontvangen een volledige terugbetaling wanneer ze minimaal 5 dagen voor het inchecken annuleren.",
+                "Annuleringen minder dan 5 dagen voor het inchecken kunnen slechts gedeeltelijk worden terugbetaald."
+              ]
+            },
+            "strict": {
+              "type": "Beperkt",
+              "summary": "Terugbetalingen zijn afhankelijk van hoe dicht de annulering bij het inchecken ligt.",
+              "details": [
+                "Minimaal 14 dagen voor het inchecken: gast ontvangt 100% terugbetaling (u houdt 0%).",
+                "Tussen 7 en 14 dagen voor het inchecken: gast ontvangt 50% terugbetaling (u houdt 50%).",
+                "Minder dan 7 dagen voor het inchecken: gast ontvangt geen terugbetaling (u houdt 100%)."
+              ]
+            },
+            "firm": {
+              "type": "Streng",
+              "summary": "Volledige terugbetaling tot 30 dagen voor het inchecken.",
+              "details": [
+                "Gasten ontvangen een volledige terugbetaling wanneer ze minimaal 30 dagen voor het inchecken annuleren.",
+                "Annuleringen dichter bij aankomst kunnen slechts gedeeltelijk worden terugbetaald of helemaal niet, afhankelijk van het tijdstip."
+              ]
+            }
+          }
+        },
+        "paymentSummary": {
+          "title": "Betalingsoverzicht",
+          "cleaningFee": "Schoonmaakkosten",
+          "total": "Totaal",
+          "nights": "nachten"
+        },
+        "bookingDetails": {
+          "title": "Boekingsgegevens",
+          "reservationId": "Reserverings-ID",
+          "bookedOn": "Geboekt op",
+          "downloadReceipt": "Bon downloaden"
+        },
+        "guestSelector": {
+          "adults": "Volwassenen",
+          "children": "Kinderen",
+          "rooms": "Kamers",
+          "done": "Klaar"
+        },
+        "messagesPage": {
+          "title": "Berichten",
+          "searchPlaceholder": "Zoeken of nieuw gesprek starten",
+          "allTab": "Alles",
+          "unreadTab": "Ongelezen",
+          "loadingContacts": "Contacten laden...",
+          "noContacts": "Geen contacten gevonden.",
+          "closeChat": "Chat sluiten",
+          "sortByLatest": "Sorteren op nieuwste",
+          "sortAZ": "Sorteren A–Z"
+        },
+        "chatScreen": {
+          "selectConversation": "Selecteer een gesprek",
+          "chooseContact": "Kies een contact om te beginnen met chatten.",
+          "noMessages": "Nog geen berichten",
+          "startConversation": "Zeg hallo om het gesprek te beginnen.",
+          "activeNow": "Nu actief",
+          "whatsappConversation": "WhatsApp-gesprek",
+          "typePlaceholder": "Typ een bericht",
+          "typeWhatsappPlaceholder": "Typ een WhatsApp-bericht",
+          "attachments": "Bijlagen",
+          "failedToSend": "Bericht kon niet worden verzonden"
+        },
+        "settingsPage": {
+          "personalInfo": "Persoonlijke informatie",
+          "profilePhoto": "Profielfoto:",
+          "upload": "Uploaden",
+          "working": "Bezig...",
+          "remove": "Verwijderen",
+          "titleLabel": "Aanhef:",
+          "selectTitle": "Selecteer aanhef",
+          "fullName": "Volledige naam:",
+          "email": "E-mail:",
+          "codeSentEmail": "Code verstuurd naar uw e-mail!",
+          "phone": "Telefoon:",
+          "phoneNumber": "Telefoonnummer",
+          "sex": "Geslacht:",
+          "selectSex": "Selecteer geslacht",
+          "dateOfBirth": "Geboortedatum:",
+          "placeOfBirth": "Geboorteplaats:",
+          "selectCountry": "Selecteer land",
+          "nationality": "Nationaliteit:",
+          "nationalityPlaceholder": "bijv. Nederlands",
+          "preferences": "Voorkeuren",
+          "defaultLanguage": "Standaardtaal:",
+          "authentication": "Verificatie",
+          "emailLabel": "E-mail",
+          "active": "Actief",
+          "inactive": "Inactief",
+          "verified": "Geverifieerd",
+          "notVerified": "Niet geverifieerd",
+          "phoneVerified": "Telefoon geverifieerd",
+          "yes": "Ja",
+          "no": "Nee",
+          "authenticatorApp": "Authenticator-app",
+          "totpSubtext": "Op app gebaseerde codes (TOTP)"
         }
+      }
 }
 

@@ -1,6 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
+import { LanguageContext } from "../../../context/LanguageContext.js";
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+import de from "../../../content/de.json";
+import es from "../../../content/es.json";
 import { FiEdit2, FiTrash2, FiChevronDown } from "react-icons/fi";
 import "../../guestdashboard/styles/GuestActions.scss";
 import Toast from "../../../components/toast/Toast";
@@ -11,6 +16,8 @@ import {
   renameWishlist,
   deleteWishlist,
 } from "../services/wishlistService";
+
+const contentByLanguage = { en, nl, de, es };
 
 const buildListSummary = ([name, propertyIds]) => {
   const count = Array.isArray(propertyIds)
@@ -53,6 +60,8 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   const [shareUrl, setShareUrl] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
   const [toast, setToast] = useState({ message: "", status: "" });
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   const wrapperRef = useRef(null);
 
@@ -73,7 +82,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
           onListChange(resolveFallbackListName(structured));
         }
       } catch {
-        setToast({ message: "Failed to load wishlists. Please try again.", status: "error" });
+        setToast({ message: t?.wishlist?.loadListsError || "Failed to load wishlists. Please try again.", status: "error" });
       }
     };
 
@@ -94,7 +103,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       setNewListName("");
       setActivePopup(null);
     } catch {
-      setToast({ message: "Failed to create wishlist. Please try again.", status: "error" });
+      setToast({ message: t?.wishlist?.createListError || "Failed to create wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -119,7 +128,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       if (selectedList === oldName) onListChange(newName);
       setEditingId(null);
     } catch {
-      setToast({ message: "Failed to rename wishlist. Please try again.", status: "error" });
+      setToast({ message: t?.wishlist?.renameListError || "Failed to rename wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -137,7 +146,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       setLists(remaining);
       if (selectedList === name) onListChange(resolveFallbackListName(remaining));
     } catch {
-      setToast({ message: "Failed to delete wishlist. Please try again.", status: "error" });
+      setToast({ message: t?.wishlist?.deleteListError || "Failed to delete wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -154,7 +163,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch {
-      setToast({ message: "Failed to copy link. Please try again.", status: "error" });
+      setToast({ message: t?.wishlist?.copyLinkError || "Failed to copy link. Please try again.", status: "error" });
     }
   };
 
@@ -180,7 +189,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       document.body,
     )}
     <div className="guestActions" ref={wrapperRef}>
-      <label className="label" htmlFor="dropdown-toggle">Select list:</label>
+      <label className="label" htmlFor="dropdown-toggle">{t?.wishlist?.selectList || "Select list:"}</label>
 
       <div className="dropdownWrapper">
         <button
@@ -212,7 +221,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
                       />
                       <div className="editActions">
                         <button className="editSaveBtn" onClick={() => handleRename(list.name, editValue)}>
-                          Save
+                          {t?.wishlist?.save || "Save"}
                         </button>
                         <button className="editCancelBtn" onClick={() => setEditingId(null)}>
                           Cancel
@@ -253,7 +262,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       </div>
 
       <button className="actionBtn" onClick={handleShare}>
-        Share the list
+        {t?.wishlist?.shareList || "Share the list"}
       </button>
 
       <button
@@ -262,32 +271,32 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
           setActivePopup(activePopup === "create" ? null : "create")
         }
       >
-        Make a list
+        {t?.wishlist?.makeList || "Make a list"}
       </button>
 
       {activePopup === "create" && (
         <div className="popup">
           <p className="popupTitle">
-            Make a list <span>*</span>
+            {t?.wishlist?.makeList || "Make a list"} <span>*</span>
           </p>
           <input
             type="text"
-            placeholder="Give your new list a name"
+            placeholder={t?.wishlist?.giveNewListName || "Give your new list a name"}
             value={newListName}
             onChange={(e) => setNewListName(e.target.value)}
           />
           <button className="confirmBtn" onClick={handleCreate}>
-            Create
+            {t?.wishlist?.create || "Create"}
           </button>
         </div>
       )}
 
       {activePopup === "share" && shareUrl && (
         <div className="popup">
-          <p className="popupTitle">Shareable link</p>
+          <p className="popupTitle">{t?.wishlist?.shareableLink || "Shareable link"}</p>
           <input type="text" value={shareUrl} readOnly />
           <button className="confirmBtn" onClick={handleCopy}>
-            {copySuccess ? "Copied!" : "Copy link"}
+            {copySuccess ? (t?.wishlist?.copied || "Copied!") : (t?.wishlist?.copyLink || "Copy link")}
           </button>
         </div>
       )}

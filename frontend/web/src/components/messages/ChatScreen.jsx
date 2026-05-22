@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback, useContext } from "react";
 import PropTypes from "prop-types";
 import ChatMessage from "./ChatMessage";
 import BookingTab from "./BookingTab";
@@ -8,8 +8,14 @@ import { useFetchMessages } from "../../features/hostdashboard/hostmessages/hook
 import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
 import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
-
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 import fallbackAvatar from "./domits-logo.jpg";
+
+const contentByLanguage = { en, nl, de, es };
 
 const getOtherPartyName = (selfUserId, contactId, contactName) => {
   if (!contactName) return "Unknown";
@@ -47,6 +53,8 @@ const ChatScreen = ({
   testMessages = [],
 }) => {
   const { accessToken } = useAuth();
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard?.chatScreen;
 
   const [newMessage, setNewMessage] = useState("");
   const [error, setError] = useState("");
@@ -203,7 +211,7 @@ const ChatScreen = ({
     } catch {
       setLocalMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setError("Failed to send message.");
-      setToastText("Message failed to send");
+      setToastText(t?.failedToSend || "Message failed to send");
       setShowToast(true);
     }
   };
@@ -214,8 +222,8 @@ const ChatScreen = ({
     return (
       <div className="chat-screen">
         <div className="chat-empty-state">
-          <h3>Select a conversation</h3>
-          <p>Choose a contact to start chatting.</p>
+          <h3>{t?.selectConversation || "Select a conversation"}</h3>
+          <p>{t?.chooseContact || "Choose a contact to start chatting."}</p>
         </div>
       </div>
     );
@@ -246,7 +254,7 @@ const ChatScreen = ({
 
           <div className="chat-header-text">
             <h3>{headerName}</h3>
-            <p className="chat-status">{isWhatsApp ? "WhatsApp conversation" : "Active now"}</p>
+            <p className="chat-status">{isWhatsApp ? (t?.whatsappConversation || "WhatsApp conversation") : (t?.activeNow || "Active now")}</p>
           </div>
         </div>
 
@@ -260,8 +268,8 @@ const ChatScreen = ({
       <div className="chat-body" ref={scrollContainerRef} onScroll={handleScroll}>
         {isEmptyThread ? (
           <div className="chat-thread-empty">
-            <h4>No messages yet</h4>
-            <p>Say hi to start the conversation.</p>
+            <h4>{t?.noMessages || "No messages yet"}</h4>
+            <p>{t?.startConversation || "Say hi to start the conversation."}</p>
           </div>
         ) : (
           mergedMessages.map((message) => (
@@ -310,7 +318,7 @@ const ChatScreen = ({
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="message-input-textarea"
-                placeholder={isWhatsApp ? "Type a WhatsApp message" : "Type a message"}
+                placeholder={isWhatsApp ? (t?.typeWhatsappPlaceholder || "Type a WhatsApp message") : (t?.typePlaceholder || "Type a message")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -333,7 +341,7 @@ const ChatScreen = ({
           {showPreviewPopover && uploadedFileUrls.length > 0 && (
             <div className="preview-popover" role="dialog" aria-label="Attachment previews">
               <div className="preview-popover-header">
-                <h4>Attachments</h4>
+                <h4>{t?.attachments || "Attachments"}</h4>
                 <button onClick={() => setShowPreviewPopover(false)} aria-label="Close" type="button">
                   ✕
                 </button>

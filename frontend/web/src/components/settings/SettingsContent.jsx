@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import PropTypes from "prop-types";
 import {normalizeImageUrl} from "../../features/guestdashboard/utils/image";
 import standardAvatar from "../../images/standard.png";
@@ -12,6 +12,17 @@ import {
     editStateShape,
     refShape,
 } from "./propTypes";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
+const useSettingsT = () => {
+    const { language } = useContext(LanguageContext);
+    return contentByLanguage[language]?.guestdashboard?.settingsPage;
+};
 
 const ProfilePhotoBox = ({
     userPicture,
@@ -21,74 +32,80 @@ const ProfilePhotoBox = ({
     onPhotoRemove,
     onPhotoInputChange,
     photoInputRef,
-}) => (
-    <>
-        <div className="InfoBox profile-photo-box">
-            <div className="infoBoxText">
-                <span>Profile photo:</span>
-                <div className="profile-photo-row">
-                    <img
-                        src={userPicture ? normalizeImageUrl(userPicture) : standardAvatar}
-                        alt="Profile"
-                        className="profile-photo-image"
-                    />
-                    <div className="profile-photo-actions">
-                        <button
-                            type="button"
-                            onClick={onPhotoButtonClick}
-                            className="photo-action primary"
-                            disabled={isUploadingPhoto}
-                        >
-                            {isUploadingPhoto ? "Working..." : "Upload"}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onPhotoRemove}
-                            className="photo-action danger"
-                            disabled={isUploadingPhoto || !userPicture}
-                        >
-                            Remove
-                        </button>
+}) => {
+    const t = useSettingsT();
+    return (
+        <>
+            <div className="InfoBox profile-photo-box">
+                <div className="infoBoxText">
+                    <span>{t?.profilePhoto || "Profile photo:"}</span>
+                    <div className="profile-photo-row">
+                        <img
+                            src={userPicture ? normalizeImageUrl(userPicture) : standardAvatar}
+                            alt="Profile"
+                            className="profile-photo-image"
+                        />
+                        <div className="profile-photo-actions">
+                            <button
+                                type="button"
+                                onClick={onPhotoButtonClick}
+                                className="photo-action primary"
+                                disabled={isUploadingPhoto}
+                            >
+                                {isUploadingPhoto ? (t?.working || "Working...") : (t?.upload || "Upload")}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onPhotoRemove}
+                                className="photo-action danger"
+                                disabled={isUploadingPhoto || !userPicture}
+                            >
+                                {t?.remove || "Remove"}
+                            </button>
+                        </div>
                     </div>
+                    {photoError && (
+                        <p className="field-error">{photoError}</p>
+                    )}
                 </div>
-                {photoError && (
-                    <p className="field-error">{photoError}</p>
-                )}
             </div>
-        </div>
-        <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/*"
-            onChange={onPhotoInputChange}
-            style={{ display: "none" }}
-            aria-label="Upload profile photo"
-        />
-    </>
-);
+            <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={onPhotoInputChange}
+                style={{ display: "none" }}
+                aria-label="Upload profile photo"
+            />
+        </>
+    );
+};
 
-const TitleField = ({value, options, onChange}) => (
-    <div className="InfoBox">
-        <div className="infoBoxText infoBoxText--row">
-            <label htmlFor="title-select">Title:</label>
-            <div className="infoBoxEditRow">
-                <select
-                    id="title-select"
-                    name="title"
-                    value={value}
-                    onChange={onChange}
-                    className="guest-edit-input"
-                >
-                    {options.map((option) => (
-                        <option key={option || "empty"} value={option}>
-                            {option || "Select title"}
-                        </option>
-                    ))}
-                </select>
+const TitleField = ({value, options, onChange}) => {
+    const t = useSettingsT();
+    return (
+        <div className="InfoBox">
+            <div className="infoBoxText infoBoxText--row">
+                <label htmlFor="title-select">{t?.titleLabel || "Title:"}</label>
+                <div className="infoBoxEditRow">
+                    <select
+                        id="title-select"
+                        name="title"
+                        value={value}
+                        onChange={onChange}
+                        className="guest-edit-input"
+                    >
+                        {options.map((option) => (
+                            <option key={option || "empty"} value={option}>
+                                {option || (t?.selectTitle || "Select title")}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const NameField = ({
     isEditing,
@@ -98,9 +115,11 @@ const NameField = ({
     onKeyPress,
     onSave,
     onToggle,
-}) => (
+}) => {
+    const t = useSettingsT();
+    return (
     <EditableInfoBox
-        label="Full name:"
+        label={t?.fullName || "Full name:"}
         isEditing={isEditing}
         onSave={onSave}
         onToggle={onToggle}
@@ -120,7 +139,8 @@ const NameField = ({
         )}
         displayContent={<p>{value || "-"}</p>}
     />
-);
+    );
+};
 
 const EmailField = ({
     isEditing,
@@ -133,9 +153,11 @@ const EmailField = ({
     onKeyPress,
     onSave,
     onToggle,
-}) => (
+}) => {
+    const t = useSettingsT();
+    return (
     <EditableInfoBox
-        label="Email:"
+        label={t?.email || "Email:"}
         isEditing={isEditing}
         onSave={onSave}
         onToggle={onToggle}
@@ -149,7 +171,7 @@ const EmailField = ({
                         name="verificationCode"
                         value={verificationCode}
                         onChange={onVerificationChange}
-                        placeholder="Code sent to your email!"
+                        placeholder={t?.codeSentEmail || "Code sent to your email!"}
                         className="guest-edit-input"
                         onKeyPress={onKeyPress}
                     />
@@ -167,7 +189,8 @@ const EmailField = ({
         )}
         displayContent={<p>{value || "-"}</p>}
     />
-);
+    );
+};
 
 const PhoneField = ({
     isEditing,
@@ -180,9 +203,11 @@ const PhoneField = ({
     onKeyPress,
     onSave,
     onToggle,
-}) => (
+}) => {
+    const t = useSettingsT();
+    return (
     <EditableInfoBox
-        label="Phone:"
+        label={t?.phone || "Phone:"}
         isEditing={isEditing}
         onSave={onSave}
         onToggle={onToggle}
@@ -204,7 +229,7 @@ const PhoneField = ({
                 <input
                     type="text"
                     name="phone"
-                    placeholder="Phone Number"
+                    placeholder={t?.phoneNumber || "Phone Number"}
                     value={stripPhone}
                     onChange={onPhoneChange}
                     className="guest-edit-input"
@@ -214,30 +239,34 @@ const PhoneField = ({
         )}
         displayContent={<p>{value || "-"}</p>}
     />
-);
+    );
+};
 
-const SexField = ({value, options, onChange}) => (
-    <div className="InfoBox">
-        <div className="infoBoxText infoBoxText--row">
-            <label htmlFor="sex-select">Sex:</label>
-            <div className="infoBoxEditRow">
-                <select
-                    id="sex-select"
-                    name="sex"
-                    value={value}
-                    onChange={onChange}
-                    className="guest-edit-input"
-                >
-                    {options.map((option) => (
-                        <option key={option || "empty"} value={option}>
-                            {option || "Select sex"}
-                        </option>
-                    ))}
-                </select>
+const SexField = ({value, options, onChange}) => {
+    const t = useSettingsT();
+    return (
+        <div className="InfoBox">
+            <div className="infoBoxText infoBoxText--row">
+                <label htmlFor="sex-select">{t?.sex || "Sex:"}</label>
+                <div className="infoBoxEditRow">
+                    <select
+                        id="sex-select"
+                        name="sex"
+                        value={value}
+                        onChange={onChange}
+                        className="guest-edit-input"
+                    >
+                        {options.map((option) => (
+                            <option key={option || "empty"} value={option}>
+                                {option || (t?.selectSex || "Select sex")}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const DateOfBirthField = ({
     isEditing,
@@ -248,9 +277,11 @@ const DateOfBirthField = ({
     onKeyPress,
     onSave,
     onToggle,
-}) => (
+}) => {
+    const t = useSettingsT();
+    return (
     <EditableInfoBox
-        label="Date of birth:"
+        label={t?.dateOfBirth || "Date of birth:"}
         isEditing={isEditing}
         onSave={onSave}
         onToggle={onToggle}
@@ -275,7 +306,8 @@ const DateOfBirthField = ({
         )}
         displayContent={value ? <p>{value}</p> : <p className="placeholder-text">DD-MM-YYYY</p>}
     />
-);
+    );
+};
 
 const PlaceOfBirthField = ({
     isEditing,
@@ -285,9 +317,11 @@ const PlaceOfBirthField = ({
     onChange,
     onSave,
     onToggle,
-}) => (
+}) => {
+    const t = useSettingsT();
+    return (
     <EditableInfoBox
-        label="Place of birth:"
+        label={t?.placeOfBirth || "Place of birth:"}
         isEditing={isEditing}
         onSave={onSave}
         onToggle={onToggle}
@@ -301,7 +335,7 @@ const PlaceOfBirthField = ({
                     onChange={onChange}
                     className="guest-edit-input"
                 >
-                    <option value="">Select country</option>
+                    <option value="">{t?.selectCountry || "Select country"}</option>
                     {options.map((country) => (
                         <option key={country} value={country}>
                             {country}
@@ -311,10 +345,11 @@ const PlaceOfBirthField = ({
             </div>
         )}
         displayContent={
-            value ? <p>{value}</p> : <p className="placeholder-text">Country</p>
+            value ? <p>{value}</p> : <p className="placeholder-text">{t?.selectCountry || "Country"}</p>
         }
     />
-);
+    );
+};
 
 const NationalityField = ({
     isEditing,
@@ -325,9 +360,11 @@ const NationalityField = ({
     onKeyPress,
     onSave,
     onToggle,
-}) => (
+}) => {
+    const t = useSettingsT();
+    return (
     <EditableInfoBox
-        label="Nationality:"
+        label={t?.nationality || "Nationality:"}
         isEditing={isEditing}
         onSave={onSave}
         onToggle={onToggle}
@@ -338,7 +375,7 @@ const NationalityField = ({
                 <input
                     type="text"
                     name="nationality"
-                    placeholder="e.g. Dutch"
+                    placeholder={t?.nationalityPlaceholder || "e.g. Dutch"}
                     value={tempValue}
                     onChange={onChange}
                     className="guest-edit-input"
@@ -350,10 +387,11 @@ const NationalityField = ({
             </div>
         )}
         displayContent={
-            value ? <p>{value}</p> : <p className="placeholder-text">Nationality</p>
+            value ? <p>{value}</p> : <p className="placeholder-text">{t?.nationality || "Nationality"}</p>
         }
     />
-);
+    );
+};
 
 const PreferencesSection = ({
     language,
@@ -366,13 +404,15 @@ const PreferencesSection = ({
     priceFormatOptions,
     onDateFormatChange,
     onPriceFormatChange,
-}) => (
+}) => {
+    const t = useSettingsT();
+    return (
     <div className="preferencesSection">
-        <h3>Preferences</h3>
+        <h3>{t?.preferences || "Preferences"}</h3>
 
         <div className="InfoBox">
             <div className="infoBoxText infoBoxText--row">
-                <span>Default language:</span>
+                <span>{t?.defaultLanguage || "Default language:"}</span>
                 <div className="infoBoxEditRow">
                     <select
                         name="defaultLanguage"
@@ -434,22 +474,25 @@ const PreferencesSection = ({
             </>
         )}
     </div>
-);
+    );
+};
 
-const AuthenticationSection = ({authStatus, showAuthMfa}) => (
+const AuthenticationSection = ({authStatus, showAuthMfa}) => {
+    const t = useSettingsT();
+    return (
     <div className="preferencesSection authSection">
-        <h3>Authentication</h3>
+        <h3>{t?.authentication || "Authentication"}</h3>
 
         <div className="InfoBox">
             <div className="infoBoxText">
                 <div className="infoBoxTextRow">
-                    <span>Email</span>
+                    <span>{t?.emailLabel || "Email"}</span>
                     <span className={`status-pill ${authStatus.emailVerified ? "is-active" : "is-inactive"}`}>
-                        {authStatus.emailVerified ? "Active" : "Inactive"}
+                        {authStatus.emailVerified ? (t?.active || "Active") : (t?.inactive || "Inactive")}
                     </span>
                 </div>
                 <p className="auth-subtext">
-                    {authStatus.emailVerified ? "Verified" : "Not verified"}
+                    {authStatus.emailVerified ? (t?.verified || "Verified") : (t?.notVerified || "Not verified")}
                 </p>
             </div>
         </div>
@@ -461,11 +504,11 @@ const AuthenticationSection = ({authStatus, showAuthMfa}) => (
                         <div className="infoBoxTextRow">
                             <span>SMS</span>
                             <span className={`status-pill ${authStatus.preferredMFA === "SMS" ? "is-active" : "is-inactive"}`}>
-                                {authStatus.preferredMFA === "SMS" ? "Active" : "Inactive"}
+                                {authStatus.preferredMFA === "SMS" ? (t?.active || "Active") : (t?.inactive || "Inactive")}
                             </span>
                         </div>
                         <p className="auth-subtext">
-                            Phone verified: {authStatus.phoneVerified ? "Yes" : "No"}
+                            {t?.phoneVerified || "Phone verified"}: {authStatus.phoneVerified ? (t?.yes || "Yes") : (t?.no || "No")}
                         </p>
                     </div>
                 </div>
@@ -473,18 +516,19 @@ const AuthenticationSection = ({authStatus, showAuthMfa}) => (
                 <div className="InfoBox">
                     <div className="infoBoxText">
                         <div className="infoBoxTextRow">
-                            <span>Authenticator app</span>
+                            <span>{t?.authenticatorApp || "Authenticator app"}</span>
                             <span className={`status-pill ${authStatus.preferredMFA === "TOTP" ? "is-active" : "is-inactive"}`}>
-                                {authStatus.preferredMFA === "TOTP" ? "Active" : "Inactive"}
+                                {authStatus.preferredMFA === "TOTP" ? (t?.active || "Active") : (t?.inactive || "Inactive")}
                             </span>
                         </div>
-                        <p className="auth-subtext">App-based codes (TOTP)</p>
+                        <p className="auth-subtext">{t?.totpSubtext || "App-based codes (TOTP)"}</p>
                     </div>
                 </div>
             </>
         )}
     </div>
-);
+    );
+};
 
 const SettingsContent = ({
     user,
@@ -537,9 +581,11 @@ const SettingsContent = ({
     onToggleEditState,
     showPrefFormats,
     showAuthMfa,
-}) => (
+}) => {
+    const t = useSettingsT();
+    return (
     <div className="personalInfoContent">
-        <h3>Personal Information</h3>
+        <h3>{t?.personalInfo || "Personal Information"}</h3>
         <ProfilePhotoBox
             userPicture={user.picture}
             isUploadingPhoto={isUploadingPhoto}
@@ -627,7 +673,8 @@ const SettingsContent = ({
         />
         <AuthenticationSection authStatus={authStatus} showAuthMfa={showAuthMfa} />
     </div>
-);
+    );
+};
 
 ProfilePhotoBox.propTypes = {
     userPicture: PropTypes.string,

@@ -1,7 +1,12 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useContext } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 import { TiWarningOutline } from "react-icons/ti";
 import Toast from "../../components/toast/Toast";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader";
@@ -10,8 +15,9 @@ import GuestSelector from "./components/GuestSelector";
 import GuestActions from "./components/GuestActions";
 import { getAccessToken } from "./utils/authUtils";
 import { fetchWishlistItems, updateWishlistItem } from "./services/wishlistService";
-
 import "./styles/GuestWishlist.scss";
+
+const contentByLanguage = { en, nl, de, es };
 
 const WISHLIST_COUNT_LABEL = "\u2764\uFE0F";
 const PROPERTY_SET_ENDPOINT =
@@ -90,14 +96,14 @@ const sortWishlistDisplayItems = (items) => {
   return [...availableItems, ...unavailableItems];
 };
 
-const UnavailableWishlistCard = ({ onRemove }) => (
+const UnavailableWishlistCard = ({ onRemove, t }) => (
   <article className="wishlistUnavailableCard" aria-label="Saved listing no longer available">
     <div className="wishlistUnavailableCard__media">
       <div className="wishlistUnavailableCard__overlay">
         <TiWarningOutline className="wishlistUnavailableCard__icon" />
-        <p className="wishlistUnavailableCard__title">No longer available</p>
+        <p className="wishlistUnavailableCard__title">{t?.wishlist?.noLongerAvailable || "No longer available"}</p>
         <p className="wishlistUnavailableCard__subtitle">
-          This saved listing was removed or switched to draft.
+          {t?.wishlist?.removedOrDraft || "This saved listing was removed or switched to draft."}
         </p>
       </div>
     </div>
@@ -108,7 +114,7 @@ const UnavailableWishlistCard = ({ onRemove }) => (
     </div>
     <div className="wishlistUnavailableCard__actions">
       <button type="button" className="wishlistUnavailableCard__removeBtn" onClick={onRemove}>
-        Remove from wishlist
+        {t?.wishlist?.removeFromWishlist || "Remove from wishlist"}
       </button>
     </div>
   </article>
@@ -116,11 +122,12 @@ const UnavailableWishlistCard = ({ onRemove }) => (
 
 UnavailableWishlistCard.propTypes = {
   onRemove: PropTypes.func.isRequired,
+  t: PropTypes.object,
 };
 
-const WishlistLoadingContent = ({ selectedList }) => (
+const WishlistLoadingContent = ({ selectedList, t }) => (
   <div className="wishlistLoading">
-    <PulseBarsLoader message={`Loading ${selectedList}...`} />
+    <PulseBarsLoader message={`${t?.wishlist?.loadingSaved?.replace("...", "") || "Loading"} ${selectedList}...`} />
     <div className="wishlistLoadingGrid" aria-hidden="true">
       {LOADING_CARD_IDS.map((loadingCardId) => (
         <div key={loadingCardId} className="wishlistLoadingCard">
@@ -136,9 +143,10 @@ const WishlistLoadingContent = ({ selectedList }) => (
 
 WishlistLoadingContent.propTypes = {
   selectedList: PropTypes.string.isRequired,
+  t: PropTypes.object,
 };
 
-const WishlistEmptyContent = ({ onExplore }) => (
+const WishlistEmptyContent = ({ onExplore, t }) => (
   <div className="wishlistEmpty">
     <div className="wishlistEmpty__icon">
       <svg width="260" height="210" viewBox="0 0 260 210" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -166,24 +174,25 @@ const WishlistEmptyContent = ({ onExplore }) => (
         />
       </svg>
     </div>
-    <h3 className="wishlistEmpty__title">Your wishlist is empty</h3>
-    <p className="wishlistEmpty__subtitle">Save your favorite listings and plan your next trip!</p>
+    <h3 className="wishlistEmpty__title">{t?.wishlist?.empty || "Your wishlist is empty"}</h3>
+    <p className="wishlistEmpty__subtitle">{t?.wishlist?.emptyDescription || "Save your favorite listings and plan your next trip!"}</p>
     <button className="wishlistEmpty__cta" onClick={onExplore}>
-      Explore properties
+      {t?.wishlist?.explore || "Explore properties"}
     </button>
   </div>
 );
 
 WishlistEmptyContent.propTypes = {
   onExplore: PropTypes.func.isRequired,
+  t: PropTypes.object,
 };
 
-const WishlistCardGrid = ({ wishlist, onNavigateToListing, onRefresh, onRemoveUnavailable }) => (
+const WishlistCardGrid = ({ wishlist, onNavigateToListing, onRefresh, onRemoveUnavailable, t }) => (
   <div className="cardGrid">
     {wishlist.map((item) => (
       <div key={item.property?.id} className="wishlistCardWrapper">
         {item?.isUnavailable ? (
-          <UnavailableWishlistCard onRemove={() => onRemoveUnavailable(item.property?.id)} />
+          <UnavailableWishlistCard onRemove={() => onRemoveUnavailable(item.property?.id)} t={t} />
         ) : (
           <AccommodationCard
             accommodation={item}
@@ -202,6 +211,7 @@ WishlistCardGrid.propTypes = {
   onNavigateToListing: PropTypes.func.isRequired,
   onRefresh: PropTypes.func.isRequired,
   onRemoveUnavailable: PropTypes.func.isRequired,
+  t: PropTypes.object,
 };
 
 const GuestWishlist = () => {
@@ -211,6 +221,8 @@ const GuestWishlist = () => {
   const [toast, setToast] = useState({ message: "", status: "" });
   const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   useEffect(() => {
     const fetchWishlist = async () => {
@@ -234,7 +246,7 @@ const GuestWishlist = () => {
         const fullData = await fetchWishlistDisplayItems(propertyIds);
         setWishlist(sortWishlistDisplayItems(fullData));
       } catch {
-        setToast({ message: "Failed to load wishlist. Please try again.", status: "error" });
+        setToast({ message: t?.wishlist?.loadError || "Failed to load wishlist. Please try again.", status: "error" });
       } finally {
         setLoading(false);
       }
@@ -246,10 +258,10 @@ const GuestWishlist = () => {
   const handleRemoveUnavailable = async (propertyId) => {
     try {
       await updateWishlistItem(propertyId, "DELETE", selectedList);
-      setToast({ message: "Removed from wishlist", status: "info" });
+      setToast({ message: t?.wishlist?.removed || "Removed from wishlist", status: "info" });
       setRefreshKey((key) => key + 1);
     } catch {
-      setToast({ message: "Failed to remove from wishlist. Please try again.", status: "error" });
+      setToast({ message: t?.wishlist?.removeError || "Failed to remove from wishlist. Please try again.", status: "error" });
     }
   };
 
@@ -264,13 +276,14 @@ const GuestWishlist = () => {
       onNavigateToListing={(id) => navigate(`/listingdetails?ID=${id}`)}
       onRefresh={refreshWishlist}
       onRemoveUnavailable={handleRemoveUnavailable}
+      t={t}
     />
   );
 
   if (loading) {
-    content = <WishlistLoadingContent selectedList={selectedList} />;
+    content = <WishlistLoadingContent selectedList={selectedList} t={t} />;
   } else if (isEmpty) {
-    content = <WishlistEmptyContent onExplore={() => navigate("/")} />;
+    content = <WishlistEmptyContent onExplore={() => navigate("/")} t={t} />;
   }
 
   return (
@@ -301,11 +314,11 @@ const GuestWishlist = () => {
               <PulseBarsLoader
                 inline
                 className="wishlistCountLoader"
-                message="Loading saved accommodations..."
+                message={t?.wishlist?.loadingSaved || "Loading saved accommodations..."}
               />
             ) : (
               <p className="wishlistCount">
-                {WISHLIST_COUNT_LABEL} {wishlist.length} saved accommodations
+                {WISHLIST_COUNT_LABEL} {wishlist.length} {t?.wishlist?.savedCount || "saved accommodations"}
               </p>
             )}
             <GuestSelector onClose={() => {}} />

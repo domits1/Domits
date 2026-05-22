@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import BookingIcon from "@mui/icons-material/LanguageOutlined";
@@ -6,21 +6,29 @@ import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import WishlistIcon from "@mui/icons-material/Favorite";
 import Settings from "@mui/icons-material/Settings";
 // import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 
-const NAV = [
-  { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "/guestdashboard" },
-  { key: "Bookings", label: "Bookings", icon: <BookingIcon />, to: "/guestdashboard/bookings" },
-  { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "/guestdashboard/messages" },
-  // { key: "Reviews",  label: "Reviews",  icon: <ReviewsOutlinedIcon />, to: "reviews" },
-  { key: "Wishlist", label: "Wishlist", icon: <WishlistIcon />, to: "/guestdashboard/wishlist" },
+const contentByLanguage = { en, nl, de, es };
 
-  { key: "Settings", label: "Settings", icon: <Settings />, to: "/guestdashboard/settings" },
+const NAV_KEYS = [
+  { key: "Dashboard", tKey: "dashboard", icon: <DashboardIcon />, to: "/guestdashboard" },
+  { key: "Bookings", tKey: "bookings", icon: <BookingIcon />, to: "/guestdashboard/bookings" },
+  { key: "Messages", tKey: "messages", icon: <MessageIcon />, to: "/guestdashboard/messages" },
+  // { key: "Reviews", tKey: "reviews", icon: <ReviewsOutlinedIcon />, to: "reviews" },
+  { key: "Wishlist", tKey: "wishlist", icon: <WishlistIcon />, to: "/guestdashboard/wishlist" },
+  { key: "Settings", tKey: "settings", icon: <Settings />, to: "/guestdashboard/settings" },
 ];
 
 function Pages() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const btnRef = useRef(null);
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   useEffect(() => {
     setOpen(false);
@@ -49,7 +57,7 @@ function Pages() {
         ref={btnRef}
         type="button"
         className="hamburger-btn"
-        aria-label={open ? "Close menu" : "Open menu"}
+        aria-label={open ? (t?.nav?.closeMenu || "Close menu") : (t?.nav?.openMenu || "Open menu")}
         aria-controls="guest-menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -69,10 +77,10 @@ function Pages() {
         id="guest-menu"
       >
         <div className="menu-content">
-          <h2 className="sidebar-title">Menu</h2>
+          <h2 className="sidebar-title">{t?.nav?.menu || "Menu"}</h2>
 
           <ul className="menu-list">
-            {NAV.map((item) => (
+            {NAV_KEYS.map((item) => (
               <li key={item.key}>
                 <NavLink
                   to={item.to}
@@ -84,7 +92,7 @@ function Pages() {
                   <span className="icon" aria-hidden="true">
                     {item.icon}
                   </span>
-                  <span className="label">{item.label}</span>
+                  <span className="label">{t?.nav?.[item.tKey] || item.key}</span>
                 </NavLink>
               </li>
             ))}

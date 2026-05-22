@@ -1,14 +1,21 @@
-import React from "react";
+import React, { useContext } from "react";
 import PropTypes from "prop-types";
+import { LanguageContext } from "../../../context/LanguageContext.js";
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+import de from "../../../content/de.json";
+import es from "../../../content/es.json";
 
-const buildMetaParts = (stay) => {
+const contentByLanguage = { en, nl, de, es };
+
+const buildMetaParts = (stay, t) => {
   const parts = [
     {
       key: "status",
       content: (
         <>
-          <span>Status: </span>
-          <strong>{stay.status || "Confirmed"}</strong>
+          <span>{t?.stayCard?.status || "Status:"} </span>
+          <strong>{stay.status || (t?.stayCard?.confirmed || "Confirmed")}</strong>
         </>
       ),
     },
@@ -19,7 +26,7 @@ const buildMetaParts = (stay) => {
       key: "total",
       content: (
         <>
-          {"\u20AC"}
+          {"€"}
           {stay.total}
         </>
       ),
@@ -27,7 +34,7 @@ const buildMetaParts = (stay) => {
   }
 
   if (stay.reservationNumber) {
-    parts.push({ key: "ref", content: <>Ref: {stay.reservationNumber}</> });
+    parts.push({ key: "ref", content: <>{t?.stayCard?.ref || "Ref:"} {stay.reservationNumber}</> });
   }
 
   return parts;
@@ -58,7 +65,9 @@ function StayOverviewCard({
   onMessageHost,
   onBrowseBookings = null,
 }) {
-  const metaParts = buildMetaParts(stay);
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
+  const metaParts = buildMetaParts(stay, t);
 
   return (
     <div className={`card ${cardClassName}`.trim()}>
@@ -66,7 +75,7 @@ function StayOverviewCard({
         <div className="cardHeader">
           <h2>{title}</h2>
           <button type="button" className="viewAll" onClick={onBrowseBookings}>
-            View All &gt;
+            {t?.stays?.viewAll || "View All >"}
           </button>
         </div>
       ) : (
@@ -98,13 +107,13 @@ function StayOverviewCard({
 
       <div className={actionClassName}>
         <button type="button" onClick={onOpenReservation}>
-          Open reservation
+          {t?.stayCard?.openReservation || "Open reservation"}
         </button>
         <button type="button" onClick={onMessageHost}>
-          Message host
+          {t?.stayCard?.messageHost || "Message host"}
         </button>
         <button type="button" disabled title="Coming soon">
-          Download invoice (Coming soon)
+          {t?.stayCard?.downloadInvoice || "Download invoice (Coming soon)"}
         </button>
       </div>
     </div>
