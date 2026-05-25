@@ -19,6 +19,8 @@ export default function HostFinanceTab() {
     charges,
     accountId,
     onboardingComplete,
+    chargesEnabled,
+    payoutsEnabled,
     isProcessing,
     processingStep,
     payoutInterval,
@@ -35,6 +37,8 @@ export default function HostFinanceTab() {
     handleStripeAction,
     handlePayoutSchedule,
   } = RefreshFunctions();
+
+  const stripeIssues = onboardingComplete && (!chargesEnabled || !payoutsEnabled);
 
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
@@ -72,6 +76,25 @@ export default function HostFinanceTab() {
       <div className="page-Host-content">
         <section className="host-pc-finance">
           <div className="finance-content">
+            {stripeIssues && (
+              <div className="finance-stripe-alert">
+                <strong>⚠ Action required: Stripe account issue detected</strong>
+                <p>
+                  {!chargesEnabled && !payoutsEnabled
+                    ? "Charges and payouts are currently disabled on your Stripe account."
+                    : !chargesEnabled
+                    ? "Charges are currently disabled on your Stripe account. Guests cannot complete payments."
+                    : "Payouts are currently disabled on your Stripe account. You will not receive funds."}
+                  {" "}Your listings with direct booking enabled are not accepting new reservations until this is resolved.
+                </p>
+                <span
+                  className={`finance-span ${isProcessing ? "disabled" : ""}`}
+                  onClick={!isProcessing ? handleStripeAction : undefined}
+                >
+                  {renderCtaLabel("Open Stripe Dashboard to fix")}
+                </span>
+              </div>
+            )}
             <div className="finance-steps">
               <p className="finance-steps-title">Receive your payouts in 3 easy steps</p>
               <ul>
