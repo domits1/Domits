@@ -1175,6 +1175,19 @@ describe("IntegrationService Channex booking pull import", () => {
 });
 
 describe("IntegrationService Channex booking polling", () => {
+  const enablePollingEnv = () => {
+    process.env.CHANNEX_BOOKING_POLL_ENABLED = "true";
+  };
+  const buildEnabledPollOptions = (overrides = {}) => {
+    enablePollingEnv();
+    return {
+      enabled: true,
+      accountIds: ["integration-account-1"],
+      domitsPropertyIds: ["domits-property-1"],
+      ...overrides,
+    };
+  };
+
   afterEach(() => {
     delete process.env.CHANNEX_BOOKING_POLL_ENABLED;
     delete process.env.CHANNEX_BOOKING_POLL_ACCOUNT_IDS;
@@ -1205,6 +1218,53 @@ describe("IntegrationService Channex booking polling", () => {
     expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
   });
 
+  test("event enabled true does not override the disabled environment flag", async () => {
+    const { service, accounts, channexProviderClient } = createService({
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const result = await service.pollLatestChannexBookings({
+      enabled: true,
+      accountIds: ["integration-account-1"],
+      domitsPropertyIds: ["domits-property-1"],
+    });
+
+    expect(result.response).toMatchObject({
+      enabled: false,
+      calledProvider: false,
+      accountsChecked: 0,
+      propertiesChecked: 0,
+    });
+    expect(accounts.listByChannel).not.toHaveBeenCalled();
+    expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+  });
+
+  test("does not poll when enabled without required allowlists", async () => {
+    enablePollingEnv();
+    const { service, accounts, channexProviderClient } = createService({
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    const result = await service.pollLatestChannexBookings({ enabled: true });
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toMatchObject({
+      enabled: true,
+      calledProvider: false,
+      accountsChecked: 0,
+      propertiesChecked: 0,
+      fetchedCount: 0,
+      overallSuccess: false,
+    });
+    expect(result.response.warnings).toEqual([
+      expect.objectContaining({ code: "CHANNEX_BOOKING_POLL_ALLOWLIST_REQUIRED" }),
+    ]);
+    expect(accounts.listByChannel).not.toHaveBeenCalled();
+    expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+  });
+
   test("polls active Channex mappings through the same import core and writes evidence/logging", async () => {
     const revision = buildFeedRevision();
     const {
@@ -1226,7 +1286,7 @@ describe("IntegrationService Channex booking polling", () => {
       existingRevision: null,
     });
 
-    const result = await service.pollLatestChannexBookings({ enabled: true });
+    const result = await service.pollLatestChannexBookings(buildEnabledPollOptions());
 
     expect(result.statusCode).toBe(200);
     expect(result.response).toMatchObject({
@@ -1293,7 +1353,11 @@ describe("IntegrationService Channex booking polling", () => {
       feedRevisions: [buildFeedRevision()],
     });
 
-    const result = await service.pollLatestChannexBookings({ enabled: true });
+    const result = await service.pollLatestChannexBookings(
+      buildEnabledPollOptions({
+        accountIds: ["disconnected-account", "missing-credentials-account"],
+      })
+    );
 
     expect(result.response).toMatchObject({
       accountsChecked: 2,
@@ -1394,7 +1458,7 @@ describe("IntegrationService Channex booking polling", () => {
       existingRevision: null,
     });
 
-    const result = await service.pollLatestChannexBookings({ enabled: true });
+    const result = await service.pollLatestChannexBookings(buildEnabledPollOptions());
 
     expect(result.response).toMatchObject({
       fetchedCount: 1,
@@ -1423,8 +1487,8 @@ describe("IntegrationService Channex booking polling", () => {
       existingRevision: null,
     });
 
-    const firstResult = await service.pollLatestChannexBookings({ enabled: true });
-    const secondResult = await service.pollLatestChannexBookings({ enabled: true });
+    const firstResult = await service.pollLatestChannexBookings(buildEnabledPollOptions());
+    const secondResult = await service.pollLatestChannexBookings(buildEnabledPollOptions());
 
     expect(firstResult.response.createdBookingCount).toBe(1);
     expect(secondResult.response.createdBookingCount).toBe(0);
@@ -1454,7 +1518,7 @@ describe("IntegrationService Channex booking polling", () => {
       feedRevisions: [buildFeedRevision()],
     });
 
-    const result = await service.pollLatestChannexBookings({ enabled: true });
+    const result = await service.pollLatestChannexBookings(buildEnabledPollOptions());
 
     expect(result.response).toMatchObject({
       propertiesChecked: 1,
@@ -1497,7 +1561,7 @@ describe("IntegrationService Channex booking polling", () => {
     });
 
     const result = await service.pollLatestChannexBookings({
-      enabled: true,
+      ...buildEnabledPollOptions(),
       lockStaleMs: 1234,
     });
 
@@ -1569,7 +1633,11 @@ describe("IntegrationService Channex booking polling", () => {
       };
     });
 
-    const result = await service.pollLatestChannexBookings({ enabled: true });
+    const result = await service.pollLatestChannexBookings(
+      buildEnabledPollOptions({
+        domitsPropertyIds: ["domits-property-1", "domits-property-2"],
+      })
+    );
 
     expect(result.statusCode).toBe(200);
     expect(result.response).toMatchObject({

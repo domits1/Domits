@@ -853,6 +853,8 @@ const parseCsvAllowlist = (value) => {
   );
 };
 const allowlistIncludes = (allowlist, value) => allowlist.size === 0 || allowlist.has(requireStr(value));
+const hasRequiredChannexBookingPollAllowlists = (config) =>
+  config.accountIds.size > 0 && config.domitsPropertyIds.size > 0;
 const isActiveChannexPropertyMapping = (mapping) => String(mapping?.status || "").toUpperCase() === "ACTIVE";
 const createEmptyChannexBookingPollResponse = ({ enabled, trigger }) => ({
   channel: CHANNEL_CHANNEX,
@@ -6619,13 +6621,12 @@ export default class IntegrationService {
   }
 
   buildChannexBookingPollConfig(options = {}) {
-    const enabled = Object.hasOwn(options, "enabled")
-      ? parseBooleanEnvLikeValue(options.enabled)
-      : parseBooleanEnvLikeValue(process.env.CHANNEX_BOOKING_POLL_ENABLED);
+    const envEnabled = parseBooleanEnvLikeValue(process.env.CHANNEX_BOOKING_POLL_ENABLED);
+    const eventAllowsPolling = Object.hasOwn(options, "enabled") ? parseBooleanEnvLikeValue(options.enabled) : true;
     const lockStaleMs = Number(options.lockStaleMs ?? process.env.CHANNEX_BOOKING_POLL_LOCK_STALE_MS);
 
     return {
-      enabled,
+      enabled: envEnabled && eventAllowsPolling,
       trigger: requireStr(options.trigger) || CHANNEX_BOOKING_POLL_TRIGGER,
       accountIds: parseCsvAllowlist(
         options.accountIds ?? options.integrationAccountIds ?? process.env.CHANNEX_BOOKING_POLL_ACCOUNT_IDS
@@ -6953,12 +6954,26 @@ export default class IntegrationService {
 
     if (!config.enabled) {
       aggregate.notes = [
-        "Automatic Channex booking polling is disabled. Set CHANNEX_BOOKING_POLL_ENABLED=true or pass enabled=true for a direct scheduled invocation test.",
+        "Automatic Channex booking polling is disabled. Set CHANNEX_BOOKING_POLL_ENABLED=true and keep the scheduled event enabled=true for staging polling.",
       ];
       return ok(aggregate);
     }
 
     try {
+      if (!hasRequiredChannexBookingPollAllowlists(config)) {
+        aggregate.overallSuccess = false;
+        aggregate.warnings.push(
+          buildChannexPullIssue(
+            "CHANNEX_BOOKING_POLL_ALLOWLIST_REQUIRED",
+            "Automatic Channex booking polling requires both account and Domits property allowlists before it will call Channex."
+          )
+        );
+        aggregate.notes = [
+          "Set CHANNEX_BOOKING_POLL_ACCOUNT_IDS and CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS before enabling scheduled polling.",
+        ];
+        return ok(aggregate);
+      }
+
       const accounts = await this.accounts.listByChannel(CHANNEL_CHANNEX);
       aggregate.accountsChecked = Array.isArray(accounts) ? accounts.length : 0;
       for (const integration of Array.isArray(accounts) ? accounts : []) {
