@@ -20,6 +20,10 @@ import {
   normalizeWebsiteCalendarPanelColorOverride,
 } from "../config/websiteCalendarSectionConfig";
 import {
+  getDefaultWebsiteGalleryPanelColor,
+  normalizeWebsiteGalleryPanelColorOverride,
+} from "../config/websiteGallerySectionConfig";
+import {
   MAX_FEATURED_WEBSITE_AMENITIES,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
 } from "../config/websiteAmenitiesConfig";
@@ -27,7 +31,7 @@ import { normalizeWebsiteImageRotationSettings } from "./websiteImageSlotUtils";
 
 const DEFAULT_LOCALE = "en";
 const MAX_FEATURED_POLICIES = 3;
-const MAX_FEATURED_GALLERY_IMAGES = 5;
+const MAX_FEATURED_GALLERY_IMAGES = 6;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const toDateKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(
@@ -627,6 +631,15 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
     gallery: {
       images: featuredGalleryImages,
       countLabel: `${galleryImages.length} imported photo${galleryImages.length === 1 ? "" : "s"}`,
+    },
+    gallerySection: {
+      title: "Gallery",
+      description: "A more editorial presentation of the property",
+      browseLabel: "Browse",
+      showPanel: true,
+      panelColor: normalizeWebsiteGalleryPanelColorOverride(
+        getDefaultWebsiteGalleryPanelColor("panorama-landing")
+      ),
     },
     trustCards: buildTrustCards({
       guestsLabel,

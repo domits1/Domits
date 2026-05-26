@@ -50,6 +50,8 @@ import {
   getCommonTextFields,
   getContactSectionFields,
   getCollectionTargetId,
+  getGalleryToggleFields,
+  getGalleryTextFields,
   getImageSlotTargetId,
   getResidenceTextFields,
   getResidenceToggleFields,
@@ -73,6 +75,9 @@ import {
 import {
   resolveWebsiteCalendarPanelColor,
 } from "./config/websiteCalendarSectionConfig";
+import {
+  resolveWebsiteGalleryPanelColor,
+} from "./config/websiteGallerySectionConfig";
 import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
@@ -93,6 +98,7 @@ import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTarget
 import { WebsiteEditorAmenitiesSection } from "./editor/sections/WebsiteEditorAmenitiesSection";
 import { WebsiteEditorContactSection } from "./editor/sections/WebsiteEditorContactSection";
 import { WebsiteEditorCalendarSection } from "./editor/sections/WebsiteEditorCalendarSection";
+import { WebsiteEditorGallerySection } from "./editor/sections/WebsiteEditorGallerySection";
 import { WebsiteEditorImageSlotsSection } from "./editor/sections/WebsiteEditorImageSlotsSection";
 import { WebsiteEditorResidenceSection } from "./editor/sections/WebsiteEditorResidenceSection";
 import {
@@ -194,9 +200,10 @@ function WebsiteEditorPage() {
   const [siteSummary, setSiteSummary] = useState(null);
   const [siteSummaryError, setSiteSummaryError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
-    [EDITOR_SECTION_KEYS.common]: true,
+    [EDITOR_SECTION_KEYS.common]: false,
     [EDITOR_SECTION_KEYS.residence]: false,
     [EDITOR_SECTION_KEYS.calendar]: false,
+    [EDITOR_SECTION_KEYS.gallery]: false,
     [EDITOR_SECTION_KEYS.contact]: false,
     [EDITOR_SECTION_KEYS.theme]: false,
     [EDITOR_SECTION_KEYS.visibility]: false,
@@ -302,6 +309,8 @@ function WebsiteEditorPage() {
   const amenitiesTextFields = getAmenitiesTextFields(draftRecord?.templateKey);
   const calendarTextFields = getCalendarTextFields(draftRecord?.templateKey);
   const calendarToggleFields = getCalendarToggleFields(draftRecord?.templateKey);
+  const galleryPanelToggleFields = getGalleryToggleFields(draftRecord?.templateKey);
+  const galleryTextFields = getGalleryTextFields(draftRecord?.templateKey);
   const residenceTextFields = getResidenceTextFields(draftRecord?.templateKey);
   const residenceToggleFields = getResidenceToggleFields(draftRecord?.templateKey);
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
@@ -309,12 +318,30 @@ function WebsiteEditorPage() {
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const amenitiesVisibilityField = visibilityFields.find((field) => field.key === "amenitiesPanel") || null;
   const calendarVisibilityField = visibilityFields.find((field) => field.key === "availabilityCalendar") || null;
+  const galleryVisibilityField = visibilityFields.find((field) => field.key === "gallerySection") || null;
   const standaloneVisibilityFields = visibilityFields.filter(
-    (field) => field.key !== "amenitiesPanel" && field.key !== "availabilityCalendar"
+    (field) =>
+      field.key !== "amenitiesPanel" &&
+      field.key !== "availabilityCalendar" &&
+      field.key !== "gallerySection"
   );
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
   const residenceImageSlot = imageSlots.find((slot) => slot.kind === "residence") || null;
-  const generalImageSlots = imageSlots.filter((slot) => slot.kind !== "residence");
+  const galleryImageSlots =
+    draftTemplateKey === "panorama-landing"
+      ? imageSlots.filter((slot) => slot.kind === "gallery")
+      : [];
+  const generalImageSlots = imageSlots.filter((slot) => {
+    if (slot.kind === "residence") {
+      return false;
+    }
+
+    if (draftTemplateKey === "panorama-landing" && slot.kind === "gallery") {
+      return false;
+    }
+
+    return true;
+  });
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
   const residenceSectionTitle = String(editorValues?.common?.residenceTitle || "").trim() || "The residence";
   const importedImageOptions = useMemo(() => {
@@ -400,9 +427,10 @@ function WebsiteEditorPage() {
 
   useEffect(() => {
     setExpandedSections({
-      [EDITOR_SECTION_KEYS.common]: true,
+      [EDITOR_SECTION_KEYS.common]: false,
       [EDITOR_SECTION_KEYS.residence]: false,
       [EDITOR_SECTION_KEYS.calendar]: false,
+      [EDITOR_SECTION_KEYS.gallery]: false,
       [EDITOR_SECTION_KEYS.amenities]: false,
       [EDITOR_SECTION_KEYS.contact]: false,
       [EDITOR_SECTION_KEYS.theme]: false,
@@ -1040,6 +1068,88 @@ function WebsiteEditorPage() {
     }));
   };
 
+  const handleGallerySectionFieldChange = (fieldKey) => (event) => {
+    const nextValue = event.target.value;
+    const previewTargetId =
+      fieldKey === "title"
+        ? EDITOR_TARGET_KEYS.gallery.title
+        : fieldKey === "browseLabel"
+          ? EDITOR_TARGET_KEYS.gallery.browseLabel
+          : EDITOR_TARGET_KEYS.gallery.description;
+    setPreviewTargetId(previewTargetId);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      gallerySection: {
+        ...currentValues.gallerySection,
+        [fieldKey]: nextValue,
+      },
+    }));
+  };
+
+  const handleGalleryPanelToggleChange = (event) => {
+    const nextChecked = Boolean(event.target.checked);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      gallerySection: {
+        ...currentValues.gallerySection,
+        showPanel: nextChecked,
+      },
+    }));
+    clearActivePreviewTarget();
+    runAfterNextPaint(() => {
+      flashPreviewTarget(EDITOR_TARGET_KEYS.gallery.visibility);
+    });
+  };
+
+  const activateGalleryPreviewTarget = () => {
+    setPreviewTargetId(EDITOR_TARGET_KEYS.gallery.visibility);
+  };
+
+  const handleGalleryPanelColorChange = (nextColor) => {
+    activateGalleryPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      gallerySection: {
+        ...currentValues.gallerySection,
+        panelColor: resolveWebsiteGalleryPanelColor(nextColor, draftTemplateKey),
+      },
+    }));
+  };
+
+  const handleGalleryPanelColorInputChange = (nextInputValue) => {
+    activateGalleryPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      gallerySection: {
+        ...currentValues.gallerySection,
+        panelColor: nextInputValue,
+      },
+    }));
+  };
+
+  const commitGalleryPanelColorInput = () => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      gallerySection: {
+        ...currentValues.gallerySection,
+        panelColor: resolveWebsiteGalleryPanelColor(
+          currentValues?.gallerySection?.panelColor,
+          draftTemplateKey
+        ),
+      },
+    }));
+  };
+
+  const handleGalleryPanelColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitGalleryPanelColorInput();
+    await saveDraftChanges();
+  };
+
   const updateImageSlotRotation = (slot, nextEnabled) => {
     if (!slot) {
       return;
@@ -1562,6 +1672,38 @@ function WebsiteEditorPage() {
                     toggleSection={toggleSection}
                   />
                 ) : null}
+
+                  {galleryVisibilityField ||
+                  galleryTextFields.length > 0 ||
+                  galleryImageSlots.length > 0 ||
+                  galleryPanelToggleFields.length > 0 ? (
+                    <WebsiteEditorGallerySection
+                      activatePreviewTarget={activatePreviewTarget}
+                      clearActivePreviewTarget={clearActivePreviewTarget}
+                      commitGalleryPanelColorInput={commitGalleryPanelColorInput}
+                      editorValues={editorValues}
+                      galleryImageSlots={galleryImageSlots}
+                      galleryPanelToggleFields={galleryPanelToggleFields}
+                      galleryTextFields={galleryTextFields}
+                      galleryVisibilityField={galleryVisibilityField}
+                      handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                      handleGalleryPanelColorChange={handleGalleryPanelColorChange}
+                      handleGalleryPanelColorInputChange={handleGalleryPanelColorInputChange}
+                      handleGalleryPanelColorInputKeyDown={handleGalleryPanelColorInputKeyDown}
+                      handleGalleryPanelToggleChange={handleGalleryPanelToggleChange}
+                      handleGallerySectionFieldChange={handleGallerySectionFieldChange}
+                      handleVisibilityFieldChange={handleVisibilityFieldChange}
+                      highlightedTargetId={highlightedTargetId}
+                      importedImageOptions={importedImageOptions}
+                      isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.gallery])}
+                      onChangeImageRotation={updateImageSlotRotation}
+                      onOpenImagePicker={openImagePicker}
+                      sectionRef={setSectionRef(EDITOR_SECTION_KEYS.gallery)}
+                      setTargetRef={setTargetRef}
+                      templateKey={draftTemplateKey}
+                      toggleSection={toggleSection}
+                    />
+                  ) : null}
 
                 <CollapsibleSection
                   sectionId={EDITOR_SECTION_KEYS.theme}

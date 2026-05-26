@@ -7,6 +7,7 @@ import {
   resolveAccommodationImageUrl,
   resolveAccommodationImageKey,
 } from "../../../../utils/accommodationImage";
+import PhotoBrowserOverlay from "../../../../components/gallery/PhotoBrowserOverlay";
 import ShareModal from "../../components/ShareModal";
 import WishlistChoice from "../../../guestdashboard/components/WishlistChoice";
 import Toast from "../../../../components/toast/Toast";
@@ -35,14 +36,6 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
   const openOverlayAtIndex = (index) => {
     setActiveIndex(index);
     setShowOverlay(true);
-  };
-
-  const nextImage = () => {
-    setActiveIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = () => {
-    setActiveIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   useEffect(() => {
@@ -94,7 +87,7 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
   return (
     <section className="image-section">
       <div className="image-gallery">
-        {main && (
+        {main ? (
           <div className="main-image-wrapper">
             <button
               type="button"
@@ -102,11 +95,7 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
               onClick={() => openOverlayAtIndex(0)}
               aria-label="Open image 1"
             >
-              <img
-                className="main-image"
-                src={toMainSrc(main)}
-                alt={getImageAltText(0)}
-              />
+              <img className="main-image" src={toMainSrc(main)} alt={getImageAltText(0)} />
             </button>
 
             <button
@@ -131,91 +120,41 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
               )}
             </button>
           </div>
-        )}
+        ) : null}
 
         <div className="small-images-container">
-          {thumbs.map((img, index) => (
+          {thumbs.map((image, index) => (
             <button
               type="button"
-              key={resolveAccommodationImageKey(img, "web") || index}
+              key={resolveAccommodationImageKey(image, "web") || index}
               className="image-button small-image-button"
               onClick={() => openOverlayAtIndex(index + 1)}
               aria-label={`Open image ${index + 2}`}
             >
-              <img
-                className="small-image"
-                src={toMainSrc(img)}
-                alt={getImageAltText(index + 1)}
-              />
+              <img className="small-image" src={toMainSrc(image)} alt={getImageAltText(index + 1)} />
             </button>
           ))}
         </div>
       </div>
 
-      {showOverlay && (
-        <div className="image-overlay">
-          <button
-            type="button"
-            className="close-overlay-button"
-            onClick={() => setShowOverlay(false)}
-            aria-label="Close image gallery"
-          >
-            ×
-          </button>
+      <PhotoBrowserOverlay
+        images={images}
+        initialIndex={activeIndex}
+        isOpen={showOverlay}
+        onClose={() => setShowOverlay(false)}
+        resolveImageSrc={toMainSrc}
+        resolveThumbSrc={toThumbSrc}
+        resolveImageKey={(image, index) => resolveAccommodationImageKey(image, "web") || index}
+        resolveImageAlt={(index) => getImageAltText(index)}
+      />
 
-          <div className="overlay-center-wrapper">
-            <button
-              type="button"
-              className="nav-button left"
-              onClick={prevImage}
-              aria-label="Previous image"
-            >
-              ‹
-            </button>
-
-            <img
-              className="overlay-main-image"
-              src={toMainSrc(images[activeIndex])}
-              alt={getImageAltText(activeIndex)}
-            />
-
-            <button
-              type="button"
-              className="nav-button right"
-              onClick={nextImage}
-              aria-label="Next image"
-            >
-              ›
-            </button>
-          </div>
-
-          <div className="overlay-thumbnails">
-            {images.map((img, index) => (
-              <button
-                type="button"
-                key={resolveAccommodationImageKey(img, "web") || index}
-                className={`thumb-button ${index === activeIndex ? "active" : ""}`}
-                onClick={() => setActiveIndex(index)}
-                aria-label={`Show image ${index + 1}`}
-              >
-                <img
-                  className={`thumb ${index === activeIndex ? "active" : ""}`}
-                  src={toThumbSrc(img)}
-                  alt={getImageAltText(index)}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {showShareModal && (
+      {showShareModal ? (
         <ShareModal
           url={globalThis.location.href}
           title={propertyTitle}
           onClose={() => setShowShareModal(false)}
         />
-      )}
+      ) : null}
 
       {showWishlistModal && propertyId ? (
         <WishlistChoice

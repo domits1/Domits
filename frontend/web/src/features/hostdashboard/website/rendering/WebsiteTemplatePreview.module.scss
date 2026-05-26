@@ -649,25 +649,60 @@
   gap: 12px;
 }
 
-.panoramaGalleryMosaic {
+.panoramaGalleryGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
+  width: min(100%, 1080px);
+  justify-self: center;
+}
+
+.sectionHeadingTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.1rem, 0.98rem + 0.35vw, 1.4rem);
+}
+
+.panoramaGallerySection {
+  display: grid;
+  gap: 18px;
+  padding: clamp(22px, 3vw, 34px) 0;
+}
+
+.panoramaGalleryHeading {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+
+.panoramaGalleryHeadingTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.2rem, 1.05rem + 0.55vw, 1.7rem);
+  text-align: center;
+}
+
+.panoramaGalleryTileFrame {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(123, 101, 65, 0.12);
 }
 
 .panoramaGalleryTile {
   width: 100%;
-  min-height: 220px;
+  height: 100%;
   display: block;
   object-fit: cover;
-  border-radius: 22px;
-  border: 1px solid rgba(123, 101, 65, 0.12);
 }
 
-.panoramaGalleryTileLarge {
-  grid-column: span 2;
-  grid-row: span 2;
-  min-height: 452px;
+.panoramaGalleryActions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 20px;
 }
 
 .panoramaAmenitiesSection {
@@ -1479,13 +1514,24 @@
   font-weight: 600;
 }
 
+@mixin website-section-surface {
+  border: 1px solid rgba(31, 78, 121, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.05);
+}
+
 .sectionCard {
   display: grid;
   gap: 14px;
   padding: 20px;
   border-radius: 24px;
+  @include website-section-surface;
+}
+
+.panoramaGallerySectionPanel {
   border: 1px solid rgba(31, 78, 121, 0.12);
-  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  background-color: rgba(255, 255, 255, 0.92);
   box-shadow: 0 18px 34px rgba(15, 23, 42, 0.05);
 }
 
@@ -1876,12 +1922,8 @@
     min-height: 280px;
   }
 
-  .panoramaGalleryMosaic {
+  .panoramaGalleryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .panoramaGalleryTileLarge {
-    grid-column: span 2;
   }
 
   .panoramaAmenityGrid {
@@ -2033,7 +2075,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .panoramaGalleryMosaic,
+  .panoramaGalleryGrid,
   .panoramaJourneyGrid,
   .galleryStrip,
   .galleryColumn {

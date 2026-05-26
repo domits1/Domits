@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-export const DEFAULT_WEBSITE_GALLERY_SLOT_COUNT = 3;
+export const DEFAULT_WEBSITE_GALLERY_SLOT_COUNT = 6;
 
 export const normalizeWebsiteImageRotationSettings = (
   imageRotation = {},
@@ -95,6 +95,9 @@ export const resolveWebsiteImageSlotImageUrl = (slot, media = {}) => {
 };
 
 export const buildWebsiteImageSlotTarget = (slot) => {
+  const slotSectionId = String(slot?.sectionId || "").trim();
+  const slotTargetId = String(slot?.targetId || "").trim();
+
   if (slot?.kind === "hero") {
     return {
       sectionId: "images",
@@ -113,8 +116,8 @@ export const buildWebsiteImageSlotTarget = (slot) => {
 
   const galleryIndex = Number.isInteger(slot?.index) ? slot.index : 0;
   return {
-    sectionId: "images",
-    targetId: `images.gallery.${galleryIndex}`,
+    sectionId: slotSectionId || "images",
+    targetId: slotTargetId || `images.gallery.${galleryIndex}`,
     imageSlot: { kind: "gallery", index: galleryIndex },
   };
 };

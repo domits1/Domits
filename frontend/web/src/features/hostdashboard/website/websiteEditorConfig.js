@@ -55,10 +55,25 @@ const PANORAMA_AMENITIES_TEXT_FIELDS = Object.freeze([
   { key: "description", label: "Section subtitle", component: "input" },
 ]);
 
+const PANORAMA_GALLERY_TEXT_FIELDS = Object.freeze([
+  { key: "title", label: "Section title", component: "input" },
+  { key: "description", label: "Section subtitle", component: "input" },
+  { key: "browseLabel", label: "Browse button label", component: "input" },
+]);
+
+const PANORAMA_GALLERY_TOGGLE_FIELDS = Object.freeze([
+  {
+    key: "showPanel",
+    label: "Show gallery panel",
+    description: "Toggles the framed surface behind the gallery section.",
+  },
+]);
+
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
   residence: "residence",
   calendar: "calendar",
+  gallery: "gallery",
   amenities: "amenities",
   contact: "contact",
   theme: "theme",
@@ -89,6 +104,13 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     title: "calendar.title",
     description: "calendar.description",
     showPanel: "calendar.showPanel",
+  },
+  gallery: {
+    visibility: "gallery.visibility",
+    title: "gallery.title",
+    description: "gallery.description",
+    browseLabel: "gallery.browseLabel",
+    showPanel: "gallery.showPanel",
   },
   amenities: (index) => `amenities.${index}`,
   amenitiesSection: {
@@ -173,7 +195,7 @@ export const TEMPLATE_IMAGE_SLOT_MAP = Object.freeze({
       kind: "gallery",
       index: 0,
       label: "Gallery slot 1",
-      description: "First image in the lower gallery strip.",
+      description: "First image in the Panorama gallery grid.",
       supportsRotation: true,
     },
     {
@@ -181,7 +203,7 @@ export const TEMPLATE_IMAGE_SLOT_MAP = Object.freeze({
       kind: "gallery",
       index: 1,
       label: "Gallery slot 2",
-      description: "Second image in the lower gallery strip.",
+      description: "Second image in the Panorama gallery grid.",
       supportsRotation: true,
     },
     {
@@ -189,7 +211,31 @@ export const TEMPLATE_IMAGE_SLOT_MAP = Object.freeze({
       kind: "gallery",
       index: 2,
       label: "Gallery slot 3",
-      description: "Third image in the lower gallery strip.",
+      description: "Third image in the Panorama gallery grid.",
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-gallery-quaternary",
+      kind: "gallery",
+      index: 3,
+      label: "Gallery slot 4",
+      description: "Fourth image in the Panorama gallery grid.",
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-gallery-quinary",
+      kind: "gallery",
+      index: 4,
+      label: "Gallery slot 5",
+      description: "Fifth image in the Panorama gallery grid.",
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-gallery-senary",
+      kind: "gallery",
+      index: 5,
+      label: "Gallery slot 6",
+      description: "Sixth image in the Panorama gallery grid.",
       supportsRotation: true,
     },
   ],
@@ -303,6 +349,11 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
     title: "Calendar",
     description: "Loading calendar visibility and panel settings.",
   },
+  {
+    id: EDITOR_SECTION_KEYS.gallery,
+    title: "Gallery",
+    description: "Loading gallery visibility, copy, and image-slot controls.",
+  },
 ]);
 
 export const getCommonTextFields = (templateKey) => {
@@ -348,6 +399,22 @@ export const getCalendarTextFields = (templateKey) => {
 export const getAmenitiesTextFields = (templateKey) => {
   if (templateKey === "panorama-landing") {
     return PANORAMA_AMENITIES_TEXT_FIELDS;
+  }
+
+  return [];
+};
+
+export const getGalleryTextFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_GALLERY_TEXT_FIELDS;
+  }
+
+  return [];
+};
+
+export const getGalleryToggleFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_GALLERY_TOGGLE_FIELDS;
   }
 
   return [];

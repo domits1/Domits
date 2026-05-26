@@ -29,6 +29,11 @@ import {
   resolveWebsiteCalendarPanelColor,
 } from "../config/websiteCalendarSectionConfig";
 import {
+  getDefaultWebsiteGalleryPanelColor,
+  normalizeWebsiteGalleryPanelColorOverride,
+  resolveWebsiteGalleryPanelColor,
+} from "../config/websiteGallerySectionConfig";
+import {
   DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
   normalizeWebsiteImageRotationSettings,
 } from "./websiteImageSlotUtils";
@@ -48,6 +53,11 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "calendarPanelColor",
   "calendarTitle",
   "calendarDescription",
+  "galleryTitle",
+  "galleryDescription",
+  "galleryBrowseLabel",
+  "galleryShowPanel",
+  "galleryPanelColor",
   "amenitiesTitle",
   "amenitiesDescription",
   "contactTitle",
@@ -81,6 +91,9 @@ const VISIBILITY_KEYS = Object.freeze([
 ]);
 
 const cleanText = (value) => String(value || "").trim();
+
+const getSectionConfig = (sectionConfig) =>
+  sectionConfig && typeof sectionConfig === "object" ? sectionConfig : {};
 
 const mergeVisibility = (baseVisibility = {}, overrideVisibility = {}) =>
   VISIBILITY_KEYS.reduce(
@@ -213,12 +226,37 @@ const buildAmenitiesSectionOverrides = ({
   amenitiesTitle,
   amenitiesDescription,
 }) => ({
-  ...(model?.amenitiesSection && typeof model.amenitiesSection === "object"
-    ? model.amenitiesSection
-    : {}),
+  ...getSectionConfig(model?.amenitiesSection),
   title: amenitiesTitle || model?.amenitiesSection?.title || "Amenities",
   description:
     amenitiesDescription || model?.amenitiesSection?.description || "Every Detail Considered",
+});
+
+const buildGallerySectionOverrides = ({
+  model,
+  galleryTitle,
+  galleryDescription,
+  galleryBrowseLabel,
+  galleryShowPanelOverride,
+  galleryPanelColorOverride,
+  templateKey,
+}) => ({
+  ...getSectionConfig(model?.gallerySection),
+  title: galleryTitle || model?.gallerySection?.title || "Gallery",
+  description:
+    galleryDescription ||
+    model?.gallerySection?.description ||
+    "A more editorial presentation of the property",
+  browseLabel: galleryBrowseLabel || model?.gallerySection?.browseLabel || "Browse",
+  showPanel:
+    galleryShowPanelOverride === null
+      ? model?.gallerySection?.showPanel !== false
+      : galleryShowPanelOverride,
+  panelColor: galleryPanelColorOverride
+    ? normalizeWebsiteGalleryPanelColorOverride(galleryPanelColorOverride)
+    : normalizeWebsiteGalleryPanelColorOverride(
+        model?.gallerySection?.panelColor || getDefaultWebsiteGalleryPanelColor(templateKey)
+      ),
 });
 
 const buildCountLabel = (imageCount) =>
@@ -231,9 +269,7 @@ const buildResidenceSectionOverrides = ({
   residenceShowPanelOverride,
   residencePanelColorOverride,
 }) => ({
-  ...(model?.residenceSection && typeof model.residenceSection === "object"
-    ? model.residenceSection
-    : {}),
+  ...getSectionConfig(model?.residenceSection),
   title: residenceTitle || model?.residenceSection?.title || "The residence",
   headline:
     residenceHeadline ||
@@ -266,9 +302,7 @@ const buildCalendarSectionOverrides = ({
   calendarShowPanelOverride,
   calendarPanelColorOverride,
 }) => ({
-  ...(model?.calendarSection && typeof model.calendarSection === "object"
-    ? model.calendarSection
-    : {}),
+  ...getSectionConfig(model?.calendarSection),
   title:
     calendarTitle ||
     model?.calendarSection?.title ||
@@ -304,6 +338,13 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
     description: getDefaultWebsiteCalendarDescription({ templateKey }),
     showPanel: true,
     panelColor: getDefaultWebsiteCalendarPanelColor(templateKey),
+  },
+  gallerySection: {
+    title: "Gallery",
+    description: "A more editorial presentation of the property",
+    browseLabel: "Browse",
+    showPanel: true,
+    panelColor: getDefaultWebsiteGalleryPanelColor(templateKey),
   },
   amenitiesSection: {
     title: "Amenities",
@@ -353,6 +394,12 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const calendarPanelColorOverride = cleanText(overrides.calendarPanelColor);
   const calendarTitle = cleanText(overrides.calendarTitle);
   const calendarDescription = cleanText(overrides.calendarDescription);
+  const galleryTitle = cleanText(overrides.galleryTitle);
+  const galleryDescription = cleanText(overrides.galleryDescription);
+  const galleryBrowseLabel = cleanText(overrides.galleryBrowseLabel);
+  const galleryShowPanelOverride =
+    typeof overrides.galleryShowPanel === "boolean" ? overrides.galleryShowPanel : null;
+  const galleryPanelColorOverride = cleanText(overrides.galleryPanelColor);
   const amenitiesTitle = cleanText(overrides.amenitiesTitle);
   const amenitiesDescription = cleanText(overrides.amenitiesDescription);
   const contactTitle = cleanText(overrides.contactTitle);
@@ -454,6 +501,15 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
       calendarShowPanelOverride,
       calendarPanelColorOverride,
     }),
+    gallerySection: buildGallerySectionOverrides({
+      model,
+      galleryTitle,
+      galleryDescription,
+      galleryBrowseLabel,
+      galleryShowPanelOverride,
+      galleryPanelColorOverride,
+      templateKey,
+    }),
     amenitiesSection: buildAmenitiesSectionOverrides({
       model,
       amenitiesTitle,
@@ -517,6 +573,18 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
       templateKey
     ),
   },
+  gallerySection: {
+    title: String(model?.gallerySection?.title || "Gallery"),
+    description: String(
+      model?.gallerySection?.description || "A more editorial presentation of the property"
+    ),
+    browseLabel: String(model?.gallerySection?.browseLabel || "Browse"),
+    showPanel: model?.gallerySection?.showPanel !== false,
+    panelColor: resolveWebsiteGalleryPanelColor(
+      model?.gallerySection?.panelColor,
+      templateKey
+    ),
+  },
   amenitiesSection: {
     title: String(model?.amenitiesSection?.title || "Amenities"),
     description: String(model?.amenitiesSection?.description || "Every Detail Considered"),
@@ -538,7 +606,15 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
   images: {
     heroImage: String(model?.media?.heroImage || ""),
     residenceImage: String(model?.media?.residenceImage || model?.media?.heroImage || ""),
-    gallery: Array.from({ length: 3 }, (_, index) => String(model?.gallery?.images?.[index] || "")),
+    gallery: Array.from(
+      {
+        length: Math.max(
+          DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
+          Array.isArray(model?.gallery?.images) ? model.gallery.images.length : 0
+        ),
+      },
+      (_, index) => String(model?.gallery?.images?.[index] || "")
+    ),
     rotation: normalizeWebsiteImageRotationSettings(
       model?.media?.imageRotation,
       DEFAULT_WEBSITE_GALLERY_SLOT_COUNT
@@ -638,6 +714,29 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
       }),
   },
   {
+    patchKey: "galleryTitle",
+    editorValue: (editorValues) => editorValues?.gallerySection?.title,
+    baseValue: (baseModel) => baseModel?.gallerySection?.title || "Gallery",
+  },
+  {
+    patchKey: "galleryDescription",
+    editorValue: (editorValues) => editorValues?.gallerySection?.description,
+    baseValue: (baseModel) =>
+      baseModel?.gallerySection?.description || "A more editorial presentation of the property",
+  },
+    {
+      patchKey: "galleryBrowseLabel",
+      editorValue: (editorValues) => editorValues?.gallerySection?.browseLabel,
+      baseValue: (baseModel) => baseModel?.gallerySection?.browseLabel || "Browse",
+    },
+    {
+      patchKey: "galleryPanelColor",
+      editorValue: (editorValues, baseModel, templateKey) =>
+        resolveWebsiteGalleryPanelColor(editorValues?.gallerySection?.panelColor, templateKey),
+      baseValue: (baseModel, templateKey) =>
+        resolveWebsiteGalleryPanelColor(baseModel?.gallerySection?.panelColor, templateKey),
+    },
+  {
     patchKey: "amenitiesTitle",
     editorValue: (editorValues) => editorValues?.amenitiesSection?.title,
     baseValue: (baseModel) => baseModel?.amenitiesSection?.title || "Amenities",
@@ -724,12 +823,17 @@ const BOOLEAN_OVERRIDE_FIELDS = Object.freeze([
     editorValue: (editorValues) => Boolean(editorValues?.common?.residenceShowPanel),
     baseValue: (baseModel) => Boolean(baseModel?.residenceSection?.showPanel),
   },
-  {
-    patchKey: "calendarShowPanel",
-    editorValue: (editorValues) => editorValues?.calendar?.showPanel !== false,
-    baseValue: (baseModel) => baseModel?.calendarSection?.showPanel !== false,
-  },
-]);
+    {
+      patchKey: "calendarShowPanel",
+      editorValue: (editorValues) => editorValues?.calendar?.showPanel !== false,
+      baseValue: (baseModel) => baseModel?.calendarSection?.showPanel !== false,
+    },
+    {
+      patchKey: "galleryShowPanel",
+      editorValue: (editorValues) => editorValues?.gallerySection?.showPanel !== false,
+      baseValue: (baseModel) => baseModel?.gallerySection?.showPanel !== false,
+    },
+  ]);
 
 const addBooleanOverride = (patch, field, editorValues, baseModel) => {
   const normalizedEditorValue = Boolean(field.editorValue(editorValues, baseModel));

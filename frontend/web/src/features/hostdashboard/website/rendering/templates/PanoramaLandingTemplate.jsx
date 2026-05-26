@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
+import PhotoBrowserOverlay from "../../../../../components/gallery/PhotoBrowserOverlay";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getScrollRevealProps } from "../animations/scrollRevealProps";
 import { getAmenityIconNode } from "../amenityIconRegistry";
@@ -20,6 +21,7 @@ import {
   contactSectionPropType,
   copyItemPropType,
   galleryPropType,
+  gallerySectionPropType,
   heroPropType,
   hostPropType,
   mediaPropType,
@@ -38,6 +40,7 @@ import {
   resolveWebsiteContactBackgroundColor,
 } from "../../config/websiteContactSectionConfig";
 import { resolveWebsiteResidencePanelColor } from "../../config/websiteResidenceSectionConfig";
+import { resolveWebsiteGalleryPanelColor } from "../../config/websiteGallerySectionConfig";
 import {
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
   resolveWebsiteAmenityIconColor,
@@ -112,10 +115,10 @@ const buildPanoramaGallerySlots = (model) => {
   const galleryImages = Array.isArray(model.gallery?.images) ? model.gallery.images.filter(Boolean) : [];
 
   if (galleryImages.length > 0) {
-    return galleryImages.slice(0, 5).map((imageUrl, index) => ({
+    return galleryImages.slice(0, 6).map((imageUrl, index) => ({
       key: `${model.site.title}-${index}-${imageUrl}`,
       alt: `${model.hero.title} view ${index + 1}`,
-      slot: { kind: "gallery", index },
+      slot: { kind: "gallery", index, sectionId: "gallery" },
     }));
   }
 
@@ -128,7 +131,7 @@ const buildPanoramaGallerySlots = (model) => {
     {
       key: `${model.site.title}-hero-fallback`,
       alt: model.hero.title,
-      slot: { kind: "hero" },
+      slot: { kind: "hero", sectionId: "gallery" },
     },
   ];
 };
@@ -639,33 +642,99 @@ const renderPanoramaResidenceSection = ({
   );
 };
 
-const renderPanoramaGallerySection = ({ model, gallerySlots, onSelectTarget, activeTargetId }) => {
+const renderPanoramaGallerySection = ({
+  model,
+  gallerySlots,
+  onSelectTarget,
+  activeTargetId,
+  onOpenGalleryBrowser,
+}) => {
   if (gallerySlots.length < 1) {
     return null;
   }
 
+  const galleryRevealProps = getScrollRevealProps(100);
+  const galleryPanelStyle =
+    model.gallerySection?.showPanel !== false
+      ? {
+          backgroundColor: resolveWebsiteGalleryPanelColor(
+            model.gallerySection?.panelColor,
+            "panorama-landing"
+          ),
+        }
+      : undefined;
+  const gallerySectionStyle = galleryPanelStyle
+    ? {
+        ...galleryRevealProps.style,
+        ...galleryPanelStyle,
+      }
+    : galleryRevealProps.style;
+
   return (
-    <section id="gallery" className={styles.sectionCard} {...getScrollRevealProps(100)}>
-      <div className={styles.sectionHeading}>
-        <p className={styles.sectionEyebrow}>Gallery</p>
-        <h2>A more editorial presentation of the property</h2>
+    <section
+      id="gallery"
+      {...getInteractiveTargetProps(
+        `${styles.panoramaGallerySection} ${
+          model.gallerySection?.showPanel !== false ? styles.panoramaGallerySectionPanel : ""
+        }`.trim(),
+        onSelectTarget,
+        {
+          sectionId: "gallery",
+          targetId: "gallery.visibility",
+        },
+        activeTargetId
+      )}
+      {...galleryRevealProps}
+      style={gallerySectionStyle}
+    >
+      <div className={styles.panoramaGalleryHeading}>
+        <p
+          {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
+            sectionId: "gallery",
+            targetId: "gallery.title",
+          }, activeTargetId)}
+        >
+          {model.gallerySection?.title || "Gallery"}
+        </p>
+        <h2
+          {...getInteractiveTargetProps(styles.panoramaGalleryHeadingTitle, onSelectTarget, {
+            sectionId: "gallery",
+            targetId: "gallery.description",
+          }, activeTargetId)}
+        >
+          {model.gallerySection?.description || "A more editorial presentation of the property"}
+        </h2>
       </div>
 
-      <div className={styles.panoramaGalleryMosaic}>
+      <div className={styles.panoramaGalleryGrid}>
         {gallerySlots.map((slot, index) => (
           <TemplateImageSlotVisual
             key={slot.key}
             model={model}
             slot={slot.slot}
-            imageClassName={`${styles.panoramaGalleryTile} ${
-              index === 0 ? styles.panoramaGalleryTileLarge : ""
-            }`.trim()}
+            frameClassName={styles.panoramaGalleryTileFrame}
+            imageClassName={styles.panoramaGalleryTile}
             alt={slot.alt}
             onSelectTarget={onSelectTarget}
             activeTargetId={activeTargetId}
           />
         ))}
       </div>
+
+      {Array.isArray(model.media?.galleryImages) && model.media.galleryImages.length > 0 ? (
+        <div className={styles.panoramaGalleryActions}>
+          <button
+            type="button"
+            className={styles.panoramaAmenityShowAllButton}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenGalleryBrowser();
+            }}
+          >
+            {model.gallerySection?.browseLabel || "Browse"}
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 };
@@ -895,6 +964,7 @@ const renderPanoramaContactSection = ({
 export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
   const navItems = buildPanoramaNavItems(viewState);
 
@@ -925,6 +995,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               gallerySlots: viewState.gallerySlots,
               onSelectTarget,
               activeTargetId,
+              onOpenGalleryBrowser: () => setIsGalleryBrowserOpen(true),
             })
           : null}
         {renderPanoramaDetailsSection({
@@ -965,6 +1036,13 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
             })
           : null}
       </article>
+
+      <PhotoBrowserOverlay
+        images={Array.isArray(model.media?.galleryImages) ? model.media.galleryImages : []}
+        isOpen={isGalleryBrowserOpen}
+        onClose={() => setIsGalleryBrowserOpen(false)}
+        resolveImageAlt={(index) => `${model.hero.title} gallery image ${index + 1}`}
+      />
 
       {showAmenitiesModal && viewState.allAmenities.length > 0 ? (
         <PanoramaAmenitiesModal
@@ -1009,6 +1087,7 @@ PanoramaLandingTemplate.propTypes = {
     trustCards: PropTypes.arrayOf(copyItemPropType).isRequired,
     journeyStops: PropTypes.arrayOf(copyItemPropType).isRequired,
     gallery: galleryPropType.isRequired,
+    gallerySection: gallerySectionPropType,
     amenities: PropTypes.shape({
       imported: PropTypes.arrayOf(amenityPropType),
       iconColor: PropTypes.string,

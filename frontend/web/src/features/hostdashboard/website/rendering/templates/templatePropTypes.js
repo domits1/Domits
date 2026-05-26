@@ -39,6 +39,14 @@ export const galleryPropType = PropTypes.shape({
   images: PropTypes.arrayOf(PropTypes.string).isRequired,
 });
 
+export const gallerySectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  description: PropTypes.string,
+  browseLabel: PropTypes.string,
+  showPanel: PropTypes.bool,
+  panelColor: PropTypes.string,
+});
+
 export const availabilityPropType = PropTypes.shape({
   externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
