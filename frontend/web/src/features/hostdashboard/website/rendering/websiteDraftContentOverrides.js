@@ -48,6 +48,8 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "calendarPanelColor",
   "calendarTitle",
   "calendarDescription",
+  "amenitiesTitle",
+  "amenitiesDescription",
   "contactTitle",
   "contactDescription",
   "contactAccentColor",
@@ -206,6 +208,19 @@ const buildAmenitiesSummary = (amenities = []) =>
 
 const getBaseAmenityItems = (model) => normalizeAmenityItems(model?.amenities?.all);
 
+const buildAmenitiesSectionOverrides = ({
+  model,
+  amenitiesTitle,
+  amenitiesDescription,
+}) => ({
+  ...(model?.amenitiesSection && typeof model.amenitiesSection === "object"
+    ? model.amenitiesSection
+    : {}),
+  title: amenitiesTitle || model?.amenitiesSection?.title || "Amenities",
+  description:
+    amenitiesDescription || model?.amenitiesSection?.description || "Every Detail Considered",
+});
+
 const buildCountLabel = (imageCount) =>
   `${imageCount} imported photo${imageCount === 1 ? "" : "s"}`;
 
@@ -290,6 +305,10 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
     showPanel: true,
     panelColor: getDefaultWebsiteCalendarPanelColor(templateKey),
   },
+  amenitiesSection: {
+    title: "Amenities",
+    description: "Every Detail Considered",
+  },
   contact: {
     title: "",
     description: "",
@@ -334,6 +353,8 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const calendarPanelColorOverride = cleanText(overrides.calendarPanelColor);
   const calendarTitle = cleanText(overrides.calendarTitle);
   const calendarDescription = cleanText(overrides.calendarDescription);
+  const amenitiesTitle = cleanText(overrides.amenitiesTitle);
+  const amenitiesDescription = cleanText(overrides.amenitiesDescription);
   const contactTitle = cleanText(overrides.contactTitle);
   const contactDescription = cleanText(overrides.contactDescription);
   const contactAvatarModeOverride = cleanText(overrides.contactAvatarMode);
@@ -433,6 +454,11 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
       calendarShowPanelOverride,
       calendarPanelColorOverride,
     }),
+    amenitiesSection: buildAmenitiesSectionOverrides({
+      model,
+      amenitiesTitle,
+      amenitiesDescription,
+    }),
     contactSection: {
       ...(model?.contactSection && typeof model.contactSection === "object" ? model.contactSection : {}),
       title: contactTitle || model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE,
@@ -490,6 +516,10 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
       model?.calendarSection?.panelColor,
       templateKey
     ),
+  },
+  amenitiesSection: {
+    title: String(model?.amenitiesSection?.title || "Amenities"),
+    description: String(model?.amenitiesSection?.description || "Every Detail Considered"),
   },
   contact: {
     title: String(model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE),
@@ -606,6 +636,16 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
         blockedDateCount: baseModel?.availability?.blockedDateCount,
         availabilityCallout: baseModel?.availability?.callout,
       }),
+  },
+  {
+    patchKey: "amenitiesTitle",
+    editorValue: (editorValues) => editorValues?.amenitiesSection?.title,
+    baseValue: (baseModel) => baseModel?.amenitiesSection?.title || "Amenities",
+  },
+  {
+    patchKey: "amenitiesDescription",
+    editorValue: (editorValues) => editorValues?.amenitiesSection?.description,
+    baseValue: (baseModel) => baseModel?.amenitiesSection?.description || "Every Detail Considered",
   },
   {
     patchKey: "contactTitle",

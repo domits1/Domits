@@ -743,6 +743,16 @@
   line-height: 1.5;
 }
 
+.toggleDescription a {
+  color: #1f4e79;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.toggleDescription a:hover {
+  color: #163d61;
+}
+
 .toggleInput {
   width: 20px;
   height: 20px;

@@ -614,6 +614,10 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
           ? joinListWithAnd(featuredAmenities.slice(0, 3).map((amenity) => amenity.label.toLowerCase()))
           : "",
     },
+    amenitiesSection: {
+      title: "Amenities",
+      description: "Every Detail Considered",
+    },
     policies: {
       featured: policyHighlights.slice(0, MAX_FEATURED_POLICIES),
       all: policyHighlights,

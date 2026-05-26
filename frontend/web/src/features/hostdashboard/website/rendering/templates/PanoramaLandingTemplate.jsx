@@ -13,6 +13,7 @@ import {
 } from "./templateSharedSections";
 import {
   amenityPropType,
+  amenitiesSectionPropType,
   availabilityPropType,
   calendarSectionPropType,
   callToActionPropType,
@@ -671,6 +672,7 @@ const renderPanoramaGallerySection = ({ model, gallerySlots, onSelectTarget, act
 
 const renderPanoramaDetailsSection = ({
   showAmenitiesPanel,
+  amenitiesSection,
   featuredAmenities,
   allAmenities,
   amenityIconColor,
@@ -692,8 +694,22 @@ const renderPanoramaDetailsSection = ({
       {...getScrollRevealProps(120)}
     >
       <div className={styles.panoramaAmenityIntro}>
-        <p className={styles.panoramaAmenityEyebrow}>Amenities</p>
-        <h2 className={styles.panoramaAmenityTitle}>Every Detail Considered</h2>
+        <p
+          {...getInteractiveTargetProps(styles.panoramaAmenityEyebrow, onSelectTarget, {
+            sectionId: "amenities",
+            targetId: "amenities.title",
+          }, activeTargetId)}
+        >
+          {amenitiesSection?.title || "Amenities"}
+        </p>
+        <h2
+          {...getInteractiveTargetProps(styles.panoramaAmenityTitle, onSelectTarget, {
+            sectionId: "amenities",
+            targetId: "amenities.description",
+          }, activeTargetId)}
+        >
+          {amenitiesSection?.description || "Every Detail Considered"}
+        </h2>
         <span className={styles.panoramaAmenityDivider} aria-hidden="true" />
       </div>
 
@@ -913,6 +929,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
           : null}
         {renderPanoramaDetailsSection({
           showAmenitiesPanel: viewState.showAmenitiesPanel,
+          amenitiesSection: model.amenitiesSection,
           featuredAmenities: viewState.featuredAmenities,
           allAmenities: viewState.allAmenities,
           amenityIconColor: viewState.amenityIconColor,
@@ -998,6 +1015,7 @@ PanoramaLandingTemplate.propTypes = {
       featured: PropTypes.arrayOf(amenityPropType).isRequired,
       all: PropTypes.arrayOf(amenityPropType),
     }).isRequired,
+    amenitiesSection: amenitiesSectionPropType,
     availability: availabilityPropType.isRequired,
     visibility: visibilityPropType.isRequired,
     host: hostPropType.isRequired,

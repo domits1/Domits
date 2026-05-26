@@ -13,14 +13,23 @@ export function WebsiteEditorVisibilityToggleCard({
   targetRef = null,
   onChange,
 }) {
+  const WrapperTag = disabled ? "div" : "label";
+  const renderedChecked = disabled ? false : checked;
+  const wrapperProps = disabled
+    ? {
+        ref: targetRef,
+        className: `${styles.toggleCard} ${styles.toggleCardDisabled} ${
+          isHighlighted ? styles.editorTargetHighlighted : ""
+        }`.trim(),
+      }
+    : {
+        ref: targetRef,
+        htmlFor: inputId,
+        className: `${styles.toggleCard} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim(),
+      };
+
   return (
-    <label
-      ref={targetRef}
-      htmlFor={inputId}
-      className={`${styles.toggleCard} ${disabled ? styles.toggleCardDisabled : ""} ${
-        isHighlighted ? styles.editorTargetHighlighted : ""
-      }`.trim()}
-    >
+    <WrapperTag {...wrapperProps}>
       <div className={styles.toggleCopy}>
         <span id={labelId} className={styles.toggleLabel}>{field.label}</span>
         <span id={descriptionId} className={styles.toggleDescription}>{field.description}</span>
@@ -29,13 +38,13 @@ export function WebsiteEditorVisibilityToggleCard({
         id={inputId}
         type="checkbox"
         className={styles.toggleInput}
-        checked={checked}
+        checked={renderedChecked}
         onChange={onChange}
         disabled={disabled}
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
       />
-    </label>
+    </WrapperTag>
   );
 }
 
@@ -46,7 +55,7 @@ WebsiteEditorVisibilityToggleCard.propTypes = {
   field: PropTypes.shape({
     key: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
-    description: PropTypes.string.isRequired,
+    description: PropTypes.node.isRequired,
   }).isRequired,
   inputId: PropTypes.string.isRequired,
   isHighlighted: PropTypes.bool,

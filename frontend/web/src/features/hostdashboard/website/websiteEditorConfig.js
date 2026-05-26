@@ -50,6 +50,11 @@ const CALENDAR_TEXT_FIELDS = Object.freeze([
   { key: "description", label: "Section description", component: "textarea" },
 ]);
 
+const PANORAMA_AMENITIES_TEXT_FIELDS = Object.freeze([
+  { key: "title", label: "Section title", component: "input" },
+  { key: "description", label: "Section subtitle", component: "input" },
+]);
+
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
   residence: "residence",
@@ -86,6 +91,10 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     showPanel: "calendar.showPanel",
   },
   amenities: (index) => `amenities.${index}`,
+  amenitiesSection: {
+    title: "amenities.title",
+    description: "amenities.description",
+  },
   amenitiesIconColor: "amenities.iconColor",
   contact: {
     title: "contact.title",
@@ -331,6 +340,14 @@ export const getCalendarToggleFields = (templateKey) => {
 export const getCalendarTextFields = (templateKey) => {
   if (TEMPLATE_VISIBILITY_FIELD_MAP[String(templateKey || "").trim()]?.some((field) => field.key === "availabilityCalendar")) {
     return CALENDAR_TEXT_FIELDS;
+  }
+
+  return [];
+};
+
+export const getAmenitiesTextFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_AMENITIES_TEXT_FIELDS;
   }
 
   return [];

@@ -94,6 +94,11 @@ export const amenityPropType = PropTypes.shape({
   category: PropTypes.string,
 });
 
+export const amenitiesSectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  description: PropTypes.string,
+});
+
 export const visibilityPropType = PropTypes.shape({
   topBar: PropTypes.bool,
   trustCards: PropTypes.bool,

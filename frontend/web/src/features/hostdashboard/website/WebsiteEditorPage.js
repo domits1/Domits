@@ -44,6 +44,7 @@ import {
   TEMPLATE_COPY_COLLECTION_CONFIG,
   TEMPLATE_IMAGE_SLOT_MAP,
   TEMPLATE_VISIBILITY_FIELD_MAP,
+  getAmenitiesTextFields,
   getCalendarTextFields,
   getCalendarToggleFields,
   getCommonTextFields,
@@ -298,6 +299,7 @@ function WebsiteEditorPage() {
 
   const draftTemplate = getWebsiteTemplateById(draftRecord?.templateKey);
   const commonTextFields = getCommonTextFields(draftRecord?.templateKey);
+  const amenitiesTextFields = getAmenitiesTextFields(draftRecord?.templateKey);
   const calendarTextFields = getCalendarTextFields(draftRecord?.templateKey);
   const calendarToggleFields = getCalendarToggleFields(draftRecord?.templateKey);
   const residenceTextFields = getResidenceTextFields(draftRecord?.templateKey);
@@ -993,8 +995,16 @@ function WebsiteEditorPage() {
     const renderedField = isDisabled
       ? {
           ...field,
-          description:
-            "This unlocks once WhatsApp is connected for your Domits account and a usable WhatsApp number is available.",
+          description: (
+            <a
+              href="/hostdashboard/integrations-marketplace"
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              Connect WhatsApp first to enable direct guest contact.
+            </a>
+          ),
         }
       : field;
 
@@ -1012,6 +1022,22 @@ function WebsiteEditorPage() {
         isHighlighted={highlightedTargetId === visibilityTargetId}
       />
     );
+  };
+
+  const handleAmenitiesSectionFieldChange = (fieldKey) => (event) => {
+    const nextValue = event.target.value;
+    const previewTargetId =
+      fieldKey === "title"
+        ? EDITOR_TARGET_KEYS.amenitiesSection.title
+        : EDITOR_TARGET_KEYS.amenitiesSection.description;
+    setPreviewTargetId(previewTargetId);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenitiesSection: {
+        ...currentValues.amenitiesSection,
+        [fieldKey]: nextValue,
+      },
+    }));
   };
 
   const updateImageSlotRotation = (slot, nextEnabled) => {
@@ -1394,6 +1420,7 @@ function WebsiteEditorPage() {
       addAmenityItem={addAmenityItem}
       amenitiesConfig={copyCollectionConfig.amenities}
       amenitiesVisibilityContent={amenitiesVisibilityContent}
+      amenitiesTextFields={amenitiesTextFields}
       canAddAmenity={editorValues.amenities.length < copyCollectionConfig.amenities.maxCount}
       clearActivePreviewTarget={clearActivePreviewTarget}
       commitAmenitiesIconColorInput={commitAmenitiesIconColorInput}
@@ -1402,6 +1429,7 @@ function WebsiteEditorPage() {
       handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
       handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
       handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}
+      handleAmenitiesSectionFieldChange={handleAmenitiesSectionFieldChange}
       handleCollectionFieldChange={handleCollectionFieldChange}
       handleEditorFieldKeyDown={handleEditorFieldKeyDown}
       highlightedTargetId={highlightedTargetId}
@@ -1565,8 +1593,8 @@ function WebsiteEditorPage() {
                     <div className={styles.toggleStack}>
                       {!hasWhatsAppWidget ? (
                         <p className={styles.helperText}>
-                          The WhatsApp widget unlocks after WhatsApp is configured for this host in the
-                          Domits integrations area.
+                          Connect WhatsApp in the integrations marketplace to unlock direct guest contact
+                          on the website.
                         </p>
                       ) : null}
                       {standaloneVisibilityFields.map((field) => renderVisibilityFieldCard(field))}
