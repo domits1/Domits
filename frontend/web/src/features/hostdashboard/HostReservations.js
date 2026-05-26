@@ -74,7 +74,7 @@ const mapReservations = (data) => {
 };
 
 const labelMap = {
-  INQUIRY: "Inquiry",
+  INQUIRY: "Request",
   PAID: "Paid",
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Failed",
@@ -196,8 +196,8 @@ const HostReservations = () => {
         const declined = result?.declinedCount || 0;
         toast.success(
           declined > 0
-            ? `Inquiry accepted. ${declined} other overlapping request${declined > 1 ? "s were" : " was"} automatically declined.`
-            : "Inquiry accepted."
+            ? `Request accepted. ${declined} other overlapping request${declined > 1 ? "s were" : " was"} automatically declined.`
+            : "Request accepted."
         );
         if (declined > 0) {
           setBookings((prev) =>
@@ -207,10 +207,10 @@ const HostReservations = () => {
           );
         }
       } else {
-        toast.success("Inquiry declined.");
+        toast.success("Request declined.");
       }
     } catch {
-      toast.error("Failed to update inquiry status.");
+      toast.error("Failed to update request status.");
     } finally {
       setInquiryLoading((prev) => ({ ...prev, [bookingId]: false }));
     }
@@ -286,7 +286,7 @@ const HostReservations = () => {
               className={activeTab === "INQUIRY" ? styles.active : ""}
               onClick={() => setActiveTab("INQUIRY")}
             >
-              Inquiries ({count("INQUIRY")})
+              Requests ({count("INQUIRY")})
             </button>
             <button className={activeTab === "FAILED" ? styles.active : ""} onClick={() => setActiveTab("FAILED")}>
               Failed ({count("FAILED")})

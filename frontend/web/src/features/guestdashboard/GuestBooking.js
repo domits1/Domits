@@ -289,9 +289,9 @@ function GuestBooking() {
         {inquiryBookings.length > 0 && (
           <div className="guest-booking-summary-grid">
             <BookingSection
-              title="Inquiries"
+              title="Requests"
               bookings={inquiryBookings}
-              emptyMessage="No inquiries."
+              emptyMessage="No requests."
               propertyMap={propertyMap}
               handleBookingClick={handleBookingClick}
             />
