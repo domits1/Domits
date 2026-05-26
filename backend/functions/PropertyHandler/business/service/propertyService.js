@@ -27,6 +27,32 @@ import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
 
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const normalizeBlockedDateKeys = (dateKeys) =>
+  (Array.isArray(dateKeys) ? dateKeys : [])
+    .map((dateKey) => String(dateKey || "").trim())
+    .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey));
+
+const normalizeOverrideDateKey = (value) => {
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue)) {
+    const normalizedValue = String(Math.trunc(numericValue));
+    if (/^\d{8}$/.test(normalizedValue)) {
+      return `${normalizedValue.slice(0, 4)}-${normalizedValue.slice(4, 6)}-${normalizedValue.slice(6, 8)}`;
+    }
+  }
+
+  const stringValue = String(value || "").trim();
+  return DATE_KEY_PATTERN.test(stringValue) ? stringValue : "";
+};
+
+const extractUnavailableOverrideDateKeys = (overrides) =>
+  (Array.isArray(overrides) ? overrides : [])
+    .filter((override) => override?.isAvailable === false)
+    .map((override) => normalizeOverrideDateKey(override?.date))
+    .filter(Boolean);
+
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
     this.propertyRepository = new PropertyRepository(systemManagerRepository);
@@ -367,13 +393,23 @@ export class PropertyService {
   }
 
   async getPublicCalendarAvailability(propertyId) {
-    const availabilitySnapshot =
-      await this.propertyExternalCalendarRepository.getAvailabilitySnapshotByPropertyId(propertyId);
+    const [availabilitySnapshot, calendarOverrides, blockedBookingDateKeys] = await Promise.all([
+      this.propertyExternalCalendarRepository.getAvailabilitySnapshotByPropertyId(propertyId),
+      this.propertyCalendarOverrideRepository.getOverridesByPropertyId(propertyId).catch(() => []),
+      this.bookingRepository.getBlockedDateKeysByPropertyId(propertyId).catch(() => []),
+    ]);
+    const unavailableDateKeys = Array.from(
+      new Set([
+        ...extractUnavailableOverrideDateKeys(calendarOverrides),
+        ...normalizeBlockedDateKeys(blockedBookingDateKeys),
+      ])
+    ).sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
 
     return {
       externalBlockedDates: Array.isArray(availabilitySnapshot?.externalBlockedDates)
         ? availabilitySnapshot.externalBlockedDates
         : [],
+      unavailableDateKeys,
       hasExternalCalendarSync: availabilitySnapshot?.hasExternalCalendarSync === true,
       syncedSourceCount: Math.max(0, Number(availabilitySnapshot?.syncedSourceCount || 0)),
       lastSyncAt: Number(availabilitySnapshot?.lastSyncAt || 0) || null,
