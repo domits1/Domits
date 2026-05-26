@@ -19,6 +19,7 @@ export class Controller {
       const hostId = await this.cognito.getHostId(event);
       const { pricelabs_email } = JSON.parse(event.body || "{}");
       if (!pricelabs_email) throw Object.assign(new Error("pricelabs_email is required"), { status: 400 });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pricelabs_email)) throw Object.assign(new Error("pricelabs_email must be a valid email address"), { status: 400 });
       return this.service.connect(hostId, pricelabs_email);
     });
   }
