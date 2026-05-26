@@ -1,11 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import standardAvatar from "../../images/standard.png";
 import { normalizeImageUrl } from "../guestdashboard/utils/image";
 import { fetchTeamMembers, fetchMemberships, inviteTeamMember, removeTeamMember } from "./services/teamService";
+import { LanguageContext } from "../../context/LanguageContext";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
 
 const HostTeam = () => {
+    const { language } = useContext(LanguageContext);
+    const t = contentByLanguage[language]?.settings?.team ?? contentByLanguage.en.settings.team;
+    const { removeModal, inviteModal } = t;
+
     const [host, setHost] = useState({ name: "", email: "", phone: "", picture: "", group: "" });
     const [members, setMembers] = useState([]);
     const [memberships, setMemberships] = useState([]);
@@ -91,7 +102,7 @@ const HostTeam = () => {
         <div key={member.id} className="team-member-row team-member-row--bordered">
             <img
                 src={standardAvatar}
-                alt="Member avatar"
+                alt={t.memberAvatarAlt}
                 className="team-member-avatar"
             />
             <div className="team-member-info">
@@ -114,7 +125,7 @@ const HostTeam = () => {
         if (loadError) {
             return (
                 <div className="team-empty-state">
-                    <p>Failed to load team members. Please refresh the page.</p>
+                    <p>{t.loadError}</p>
                 </div>
             );
         }
@@ -125,7 +136,7 @@ const HostTeam = () => {
         if (activeMembers.length === 0 && pendingMembers.length === 0) {
             return (
                 <div className="team-empty-state">
-                    <p>No additional team members yet. Invite a co-host to get started.</p>
+                    <p>{t.emptyState}</p>
                 </div>
             );
         }
@@ -134,13 +145,13 @@ const HostTeam = () => {
             <>
                 {activeMembers.length > 0 && (
                     <div className="team-card">
-                        <div className="team-card-header">Active members</div>
+                        <div className="team-card-header">{t.activeMembers}</div>
                         {activeMembers.map(renderMemberRow)}
                     </div>
                 )}
                 {pendingMembers.length > 0 && (
                     <div className="team-card">
-                        <div className="team-card-header">Pending invitations</div>
+                        <div className="team-card-header">{t.pendingInvitations}</div>
                         {pendingMembers.map(renderMemberRow)}
                     </div>
                 )}
@@ -150,36 +161,31 @@ const HostTeam = () => {
 
     return (
         <div className="page-body settings-page team-page">
-            <nav className="settings-subnav">
-                <Link to="/hostdashboard/settings" className="settings-subnav-link">Profile</Link>
-                <Link to="/hostdashboard/settings/team" className="settings-subnav-link active">Team</Link>
+            <nav className="personal-data-breadcrumb">
+                <Link to="/hostdashboard/settings">{contentByLanguage[language]?.settings?.hub?.breadcrumb ?? "Settings"}</Link>
+                <span className="personal-data-breadcrumb-sep">/</span>
+                <span className="personal-data-breadcrumb-current">{t.breadcrumb}</span>
             </nav>
 
-            <div className="team-breadcrumb">
-                <Link to="/hostdashboard/settings">Settings</Link>
-                <span>/</span>
-                <span>Team</span>
-            </div>
-
-            <h2 className="team-heading">Team</h2>
-            <p className="team-subtitle">Manage who has access to your properties and reservations.</p>
+            <h2 className="team-heading">{t.heading}</h2>
+            <p className="team-subtitle">{t.subtitle}</p>
 
             {host.group === "Host" && (
                 <>
                     <section className="team-section">
-                        <h3 className="team-section-title">Primary team members</h3>
+                        <h3 className="team-section-title">{t.primarySection}</h3>
                         <div className="team-card">
-                            <div className="team-card-header">Primary host</div>
+                            <div className="team-card-header">{t.primaryCardHeader}</div>
                             <div className="team-member-row">
                                 <img
                                     src={host.picture ? normalizeImageUrl(host.picture) : standardAvatar}
-                                    alt="Host avatar"
+                                    alt={t.hostAvatarAlt}
                                     className="team-member-avatar"
                                 />
                                 <div className="team-member-info">
                                     <div className="team-member-name">
                                         {host.name || "—"}
-                                        <span className="team-role-badge">Primary host</span>
+                                        <span className="team-role-badge">{t.primaryHostBadge}</span>
                                     </div>
                                 </div>
                             </div>
@@ -195,20 +201,18 @@ const HostTeam = () => {
                                     <span>{host.phone}</span>
                                 </div>
                             )}
-                            <p className="team-card-note">
-                                The primary host manages the account and receives platform notifications.
-                            </p>
+                            <p className="team-card-note">{t.cardNote}</p>
                         </div>
                     </section>
 
                     <section className="team-section">
                         <div className="team-section-header">
-                            <h3 className="team-section-title">Additional team members</h3>
+                            <h3 className="team-section-title">{t.additionalSection}</h3>
                             <button
                                 className="team-invite-btn"
                                 onClick={() => setShowInviteModal(true)}
                             >
-                                + Invite members
+                                {t.inviteBtn}
                             </button>
                         </div>
 
@@ -219,12 +223,12 @@ const HostTeam = () => {
 
             {memberships.length > 0 && (
                 <section className="team-section">
-                    <h3 className="team-section-title">Teams you belong to</h3>
+                    <h3 className="team-section-title">{t.membershipsSection}</h3>
                     <div className="team-card">
-                        <div className="team-card-header">Co-host memberships</div>
+                        <div className="team-card-header">{t.membershipsCardHeader}</div>
                         {memberships.map(m => (
                             <div key={m.id} className="team-member-row team-member-row--bordered">
-                                <img src={standardAvatar} alt="Host avatar" className="team-member-avatar" />
+                                <img src={standardAvatar} alt={t.hostAvatarAlt} className="team-member-avatar" />
                                 <div className="team-member-info">
                                     <div className="team-member-name">
                                         {m.host_name || m.host_email || m.host_id}
@@ -235,7 +239,7 @@ const HostTeam = () => {
                                     )}
                                     {m.accepted_at && (
                                         <div className="team-member-sub">
-                                            Joined {new Date(m.accepted_at).toLocaleDateString()}
+                                            {t.joined} {new Date(m.accepted_at).toLocaleDateString()}
                                         </div>
                                     )}
                                 </div>
@@ -248,14 +252,14 @@ const HostTeam = () => {
             {confirmRemoveId && (
                 <div className="team-modal-overlay">
                     <dialog className="team-modal" open aria-modal="true" aria-labelledby="confirm-remove-title">
-                        <h3 id="confirm-remove-title">Remove team member</h3>
-                        <p>Are you sure you want to remove this member from your team? They will lose access to your properties and tasks.</p>
+                        <h3 id="confirm-remove-title">{removeModal.title}</h3>
+                        <p>{removeModal.body}</p>
                         <div className="team-modal-actions">
                             <button className="team-remove-btn" onClick={handleRemove}>
-                                Yes, remove
+                                {removeModal.confirm}
                             </button>
                             <button className="team-cancel-btn" onClick={() => setConfirmRemoveId(null)}>
-                                Cancel
+                                {removeModal.cancel}
                             </button>
                         </div>
                     </dialog>
@@ -265,45 +269,45 @@ const HostTeam = () => {
             {showInviteModal && (
                 <div className="team-modal-overlay">
                     <dialog className="team-modal" open aria-modal="true" aria-labelledby="invite-modal-title">
-                        <h3 id="invite-modal-title">Invite team member</h3>
+                        <h3 id="invite-modal-title">{inviteModal.title}</h3>
                         {inviteSent ? (
                             <p className="team-invite-success">
-                                ✓ Invitation sent to {inviteEmail}
+                                {inviteModal.success} {inviteEmail}
                             </p>
                         ) : (
                             <form onSubmit={handleInvite}>
                                 <label className="team-modal-label">
-                                    <span>Email address</span>
+                                    <span>{inviteModal.emailLabel}</span>
                                     <input
                                         type="email"
                                         className="team-modal-input"
-                                        placeholder="colleague@example.com"
+                                        placeholder={inviteModal.emailPlaceholder}
                                         value={inviteEmail}
                                         onChange={(e) => setInviteEmail(e.target.value)}
                                         required
                                     />
                                 </label>
                                 <label className="team-modal-label">
-                                    <span>Role</span>
+                                    <span>{inviteModal.roleLabel}</span>
                                     <select
                                         className="team-modal-input"
                                         value={inviteRole}
                                         onChange={(e) => setInviteRole(e.target.value)}
                                     >
-                                        <option value="Property Operations Manager">Property Operations Manager</option>
+                                        <option value="Property Operations Manager">{inviteModal.roleOption}</option>
                                     </select>
                                 </label>
                                 {inviteError && (
-                                    <p className="team-invite-error">{inviteError}</p>
+                                    <p className="team-invite-error">{inviteModal.error}</p>
                                 )}
                                 <div className="team-modal-actions">
-                                    <button type="submit" className="team-invite-btn">Send invitation</button>
+                                    <button type="submit" className="team-invite-btn">{inviteModal.sendBtn}</button>
                                     <button
                                         type="button"
                                         className="team-cancel-btn"
                                         onClick={() => setShowInviteModal(false)}
                                     >
-                                        Cancel
+                                        {inviteModal.cancel}
                                     </button>
                                 </div>
                             </form>

@@ -10,6 +10,12 @@
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
 }
 
+.calendarCardPanelOff {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .calendarHeader {
   display: grid;
   gap: 12px;
@@ -25,7 +31,8 @@
   margin: 0;
 }
 
-.calendarHeaderCopy h3 {
+.calendarHeaderCopy h3,
+.calendarMonthNavigationLabel {
   color: #0f172a;
   font-size: clamp(1rem, 0.92rem + 0.35vw, 1.18rem);
 }
@@ -42,6 +49,48 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #1f4e79;
+}
+
+.calendarMonthNavigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.calendarMonthNavigationLabels {
+  display: flex;
+  justify-content: center;
+}
+
+.calendarMonthNavigationLabel {
+  margin: 0;
+  text-align: center;
+}
+
+.calendarMonthNavigationButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f4e79;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.calendarMonthNavigationButton:hover:not(:disabled) {
+  background: rgba(234, 242, 251, 0.96);
+  transform: translateY(-1px);
+}
+
+.calendarMonthNavigationButton:disabled {
+  opacity: 0.38;
+  cursor: default;
 }
 
 .calendarMeta {
@@ -185,6 +234,212 @@
   line-height: 1.2;
 }
 
+.panoramaCalendarCard {
+  display: grid;
+  gap: clamp(24px, 2.8vw, 36px);
+  justify-items: center;
+  padding: clamp(28px, 4vw, 54px) clamp(18px, 3vw, 30px) clamp(22px, 3vw, 34px);
+  border-radius: 32px;
+  border: 1px solid rgba(197, 181, 151, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 249, 0.92), rgba(255, 255, 255, 0.9)),
+    #fbf8f2;
+}
+
+.panoramaCalendarCardPanelOff {
+  border: 0;
+  background: transparent;
+}
+
+.panoramaCalendarIntro {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  width: min(100%, 620px);
+  text-align: center;
+}
+
+.panoramaCalendarEyebrow,
+.panoramaCalendarTitle,
+.panoramaCalendarDescription,
+.panoramaCalendarMonthTitle,
+.panoramaCalendarMonthNavigationLabel {
+  margin: 0;
+}
+
+.panoramaCalendarEyebrow {
+  color: #1f4e79;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.panoramaCalendarTitle,
+.panoramaCalendarMonthTitle,
+.panoramaCalendarMonthNavigationLabel {
+  color: #1e3150;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-weight: 500;
+}
+
+.panoramaCalendarTitle {
+  font-size: clamp(2rem, 1.45rem + 1.5vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.panoramaCalendarDivider {
+  width: 64px;
+  height: 1px;
+  background: rgba(183, 138, 66, 0.65);
+}
+
+.panoramaCalendarDescription {
+  color: #7b8798;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.panoramaCalendarMonths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  width: min(100%, 900px);
+}
+
+.panoramaCalendarMonthNavigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: clamp(14px, 2vw, 28px);
+  align-items: center;
+  width: min(100%, 900px);
+}
+
+.panoramaCalendarMonthNavigationLabels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.panoramaCalendarMonthNavigationLabel {
+  text-align: center;
+  font-size: clamp(1.6rem, 1.2rem + 0.8vw, 2.3rem);
+  letter-spacing: -0.04em;
+}
+
+.panoramaCalendarMonthNavigationButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  background: transparent;
+  color: #1e3150;
+  font-size: 2.4rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.panoramaCalendarMonthNavigationButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.panoramaCalendarMonthNavigationButton:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.panoramaCalendarMonthCard {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  padding: 28px 24px 26px;
+  border: 1px solid rgba(208, 197, 178, 0.74);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.panoramaCalendarMonthTitle {
+  text-align: center;
+  font-size: clamp(1.4rem, 1.1rem + 0.5vw, 1.8rem);
+}
+
+.panoramaCalendarWeekdays,
+.panoramaCalendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.panoramaCalendarWeekdays {
+  gap: 10px 8px;
+}
+
+.panoramaCalendarGrid {
+  gap: 4px;
+}
+
+.panoramaCalendarWeekday {
+  text-align: center;
+  color: #7b8798;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.panoramaCalendarCell {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  color: #1e3150;
+}
+
+.panoramaCalendarCellReserved {
+  background: #e6e5e2;
+}
+
+.panoramaCalendarCellPlaceholder {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.panoramaCalendarCellDay {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.panoramaCalendarLegend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  color: #60708a;
+  font-size: 0.82rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.panoramaCalendarLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panoramaCalendarLegendSwatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(208, 197, 178, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.panoramaCalendarLegendSwatchReserved {
+  border-color: #e6e5e2;
+  background: #e6e5e2;
+}
+
 @media (max-width: 720px) {
   .calendarCard {
     padding: 16px;
@@ -198,5 +453,40 @@
 
   .calendarCellStatus {
     font-size: 0.5rem;
+  }
+
+  .panoramaCalendarCard {
+    padding: 22px 14px 20px;
+    border-radius: 24px;
+  }
+
+  .panoramaCalendarMonths {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaCalendarMonthNavigation {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .panoramaCalendarMonthNavigationLabels {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .panoramaCalendarMonthCard {
+    padding: 22px 14px 20px;
+  }
+
+  .panoramaCalendarWeekday,
+  .panoramaCalendarLegend {
+    letter-spacing: 0.14em;
+  }
+
+  .panoramaCalendarCell {
+    min-height: 32px;
+  }
+
+  .panoramaCalendarCellDay {
+    font-size: 0.92rem;
   }
 }
