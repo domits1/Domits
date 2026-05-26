@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import "../styles/HostPriceLabs.css";
 
@@ -7,7 +7,7 @@ function formatDate(ms) {
   return new Date(Number(ms)).toLocaleString("nl-NL");
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status = null }) {
   const map = {
     connected:    { label: "Connected",    cls: "badge--success" },
     synced:       { label: "Synced",       cls: "badge--success" },
@@ -22,11 +22,31 @@ StatusBadge.propTypes = {
   status: PropTypes.string,
 };
 
-StatusBadge.defaultProps = {
-  status: null,
-};
+function PriceLabsStatusCard({ status, onSync, onDisconnect, isSyncing = false, isLoading = false }) {
+  const [syncing, setSyncing]         = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
-function PriceLabsStatusCard({ status, onSync, onDisconnect, isSyncing, isLoading }) {
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await onSync();
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    try {
+      await onDisconnect();
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  const syncBusy       = isSyncing || syncing;
+  const disconnectBusy = isLoading || disconnecting;
+
   return (
     <div className="pl-card">
       <div className="pl-card__header">
@@ -59,17 +79,27 @@ function PriceLabsStatusCard({ status, onSync, onDisconnect, isSyncing, isLoadin
       <div className="pl-card__actions">
         <button
           className="pl-btn pl-btn--primary"
-          onClick={onSync}
-          disabled={isSyncing || isLoading}
+          onClick={handleSync}
+          disabled={syncBusy || disconnectBusy}
         >
-          {isSyncing ? "Syncing…" : "Sync all data to PriceLabs"}
+          {syncBusy ? (
+            <span className="pl-btn__loading">
+              <span className="pl-spinner" />
+              Syncing…
+            </span>
+          ) : "Sync data"}
         </button>
         <button
           className="pl-btn pl-btn--danger"
-          onClick={onDisconnect}
-          disabled={isLoading || isSyncing}
+          onClick={handleDisconnect}
+          disabled={disconnectBusy || syncBusy}
         >
-          Disconnect
+          {disconnectBusy ? (
+            <span className="pl-btn__loading">
+              <span className="pl-spinner pl-spinner--dark" />
+              Disconnecting…
+            </span>
+          ) : "Disconnect"}
         </button>
       </div>
     </div>
@@ -89,11 +119,6 @@ PriceLabsStatusCard.propTypes = {
   onDisconnect: PropTypes.func.isRequired,
   isSyncing:    PropTypes.bool,
   isLoading:    PropTypes.bool,
-};
-
-PriceLabsStatusCard.defaultProps = {
-  isSyncing:  false,
-  isLoading:  false,
 };
 
 export default PriceLabsStatusCard;

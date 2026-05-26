@@ -54,8 +54,8 @@ function HostPriceLabs() {
         <PriceLabsConnect
           onConnect={handleConnect}
           isLoading={isLoading}
-          error={null}
-          successMessage={null}
+          error={error}
+          successMessage={successMessage}
         />
       )}
 

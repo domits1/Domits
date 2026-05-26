@@ -2,14 +2,22 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import "../styles/HostPriceLabs.css";
 
-function PriceLabsConnect({ onConnect, isLoading, error, successMessage }) {
+function PriceLabsConnect({ onConnect, isLoading = false, error = null, successMessage = null }) {
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
-    onConnect(email);
+    setSubmitting(true);
+    try {
+      await onConnect(email);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const loading = isLoading || submitting;
 
   return (
     <div className="pl-connect">
@@ -34,7 +42,7 @@ function PriceLabsConnect({ onConnect, isLoading, error, successMessage }) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             required
-            disabled={isLoading}
+            disabled={loading}
           />
           <p className="pl-connect__hint">
             This is the email you registered with PriceLabs. Make sure PriceLabs
@@ -48,9 +56,14 @@ function PriceLabsConnect({ onConnect, isLoading, error, successMessage }) {
         <button
           type="submit"
           className="pl-btn pl-btn--primary"
-          disabled={isLoading || !email}
+          disabled={loading || !email}
         >
-          {isLoading ? "Connecting…" : "Connect PriceLabs"}
+          {loading ? (
+            <span className="pl-btn__loading">
+              <span className="pl-spinner" />
+              Connecting…
+            </span>
+          ) : "Connect PriceLabs"}
         </button>
       </form>
     </div>
@@ -62,12 +75,6 @@ PriceLabsConnect.propTypes = {
   isLoading:      PropTypes.bool,
   error:          PropTypes.string,
   successMessage: PropTypes.string,
-};
-
-PriceLabsConnect.defaultProps = {
-  isLoading:      false,
-  error:          null,
-  successMessage: null,
 };
 
 export default PriceLabsConnect;

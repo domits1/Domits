@@ -49,11 +49,12 @@
   background: #fff; border-radius: 12px; padding: 1.5rem;
   box-shadow: 0 2px 10px rgba(0,0,0,.07);
   display: flex; flex-direction: column; gap: 1rem;
+  width: 100%; box-sizing: border-box; overflow: hidden;
 }
 .pl-card__header   { display: flex; justify-content: space-between; align-items: flex-start; }
 .pl-card__title    { font-size: 1.1rem; font-weight: 700; color: var(--pl-dark); margin: 0; }
 .pl-card__subtitle { font-size: .82rem; color: #888; margin: .2rem 0 0; }
-.pl-card__stats    { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+.pl-card__stats    { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .75rem; }
 .pl-card__stat {
   display: flex; flex-direction: column; gap: .2rem;
   background: #f8f9fa; border-radius: 8px; padding: .75rem 1rem;
@@ -61,6 +62,7 @@
 .pl-card__stat-label { font-size: .75rem; color: #888; text-transform: uppercase; letter-spacing: .5px; }
 .pl-card__stat-value { font-size: .9rem; font-weight: 600; color: var(--pl-dark); }
 .pl-card__actions    { display: flex; gap: .75rem; }
+.pl-card__actions .pl-btn { flex: 1; }
 
 .pl-btn {
   padding: .7rem 1.4rem; border-radius: 8px; font-size: .95rem;
@@ -80,6 +82,31 @@
 .pl-alert--error     { background: var(--pl-error-bg);   border: 1px solid var(--pl-error-border);   color: var(--pl-error-text);   }
 .pl-alert--info      { background: var(--pl-info-bg);    border: 1px solid var(--pl-info-border);    color: var(--pl-info-text);    }
 
+.pl-btn__loading { display: flex; align-items: center; gap: .5rem; justify-content: center; }
+
+@keyframes pl-spin { to { transform: rotate(360deg); } }
+.pl-spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  animation: pl-spin .7s linear infinite;
+  flex-shrink: 0;
+}
+.pl-spinner--dark {
+  border-color: rgba(192,57,43,.25);
+  border-top-color: var(--pl-danger);
+}
+
 .pl-badge            { display: inline-block; padding: .25rem .7rem; border-radius: 99px; font-size: .78rem; font-weight: 600; }
 .badge--success      { background: var(--pl-success-bg); color: var(--pl-success-text); border: 1px solid var(--pl-success-border); }
 .badge--error        { background: var(--pl-error-bg);   color: var(--pl-error-text);   border: 1px solid var(--pl-error-border);   }
+
+.host-pl          { padding: 1rem; box-sizing: border-box; width: 100%; max-width: 860px; margin: 0 auto; }
+.pl-card          { box-sizing: border-box; width: 100%; }
+.pl-card__actions { flex-wrap: wrap; }
+
+@media (max-width: 600px) {
+  .pl-card__stats  { grid-template-columns: 1fr; }
+  .pl-card__header { flex-direction: column; gap: .5rem; }
+  .pl-connect      { padding: 1rem; }
+}
