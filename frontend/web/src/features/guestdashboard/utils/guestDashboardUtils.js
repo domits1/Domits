@@ -210,6 +210,34 @@ export const getCurrentOrUpcomingBooking = (bookingData) => {
   return currentBookings[0] || upcomingBookings[0] || paidBookings[0] || null;
 };
 
+export const getInquiryStatusInfo = (status, bookingType) => {
+  const s = String(status || "").toLowerCase();
+  const t = String(bookingType || "direct").toLowerCase();
+
+  if (s === "inquiry") {
+    return {
+      label: "Awaiting host response",
+      description: "Your request has been sent. The host will accept or decline it shortly.",
+      variant: "pending",
+    };
+  }
+  if (s === "awaiting payment" && t === "inquiry") {
+    return {
+      label: "Accepted — payment required",
+      description: "The host accepted your request. Complete your payment to confirm the booking.",
+      variant: "action",
+    };
+  }
+  if (s === "declined") {
+    return {
+      label: "Request declined",
+      description: "The host has declined your request.",
+      variant: "declined",
+    };
+  }
+  return null;
+};
+
 export const resolveHostName = (...sources) => {
   for (const source of sources) {
     const value = String(source || "").trim();

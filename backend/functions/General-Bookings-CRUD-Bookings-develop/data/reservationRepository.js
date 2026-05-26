@@ -372,6 +372,19 @@ class ReservationRepository {
     };
   }
 
+  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
+    const client = await Database.getInstance();
+    return await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.property_id = :propertyId", { propertyId })
+      .andWhere("booking.status = :status", { status: "Inquiry" })
+      .andWhere("booking.id != :excludeBookingId", { excludeBookingId })
+      .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
+      .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
+      .getMany();
+  }
+
   async updateBookingDates(id, arrivalDateMs, departureDateMs) {
     const client = await Database.getInstance();
     const query = await client
