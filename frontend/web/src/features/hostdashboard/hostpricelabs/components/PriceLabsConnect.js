@@ -61,7 +61,7 @@ function PriceLabsConnect({ onConnect, isLoading = false, error = null, successM
           {loading ? (
             <span className="pl-btn__loading">
               <span className="pl-spinner" />
-              Connecting…
+              <span>Connecting…</span>
             </span>
           ) : "Connect PriceLabs"}
         </button>

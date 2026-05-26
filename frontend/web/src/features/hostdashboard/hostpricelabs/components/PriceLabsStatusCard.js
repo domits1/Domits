@@ -85,7 +85,7 @@ function PriceLabsStatusCard({ status, onSync, onDisconnect, isSyncing = false, 
           {syncBusy ? (
             <span className="pl-btn__loading">
               <span className="pl-spinner" />
-              Syncing…
+              <span>Syncing…</span>
             </span>
           ) : "Sync data"}
         </button>
@@ -97,7 +97,7 @@ function PriceLabsStatusCard({ status, onSync, onDisconnect, isSyncing = false, 
           {disconnectBusy ? (
             <span className="pl-btn__loading">
               <span className="pl-spinner pl-spinner--dark" />
-              Disconnecting…
+              <span>Disconnecting…</span>
             </span>
           ) : "Disconnect"}
         </button>
