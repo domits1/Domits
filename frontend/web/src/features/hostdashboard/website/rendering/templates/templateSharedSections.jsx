@@ -2,6 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
+import {
+  buildWebsiteImageSlotTarget,
+  useWebsiteImageSlotRotation,
+} from "../websiteImageSlotUtils";
+
+const DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS = 3600;
+const DEFAULT_IMAGE_SLOT_FADE_DURATION_MS = 720;
 
 export const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
   const targetId = target?.targetId || "";
@@ -14,7 +21,10 @@ export const getInteractiveTargetProps = (className, onSelectTarget, target, act
   }
 
   const isActiveTarget = targetId && targetId === activeTargetId;
-  const handleActivate = () => onSelectTarget(target);
+  const handleActivate = (event) => {
+    event?.stopPropagation?.();
+    onSelectTarget(target);
+  };
 
   return {
     className: `${className} ${styles.previewInteractiveTarget} ${
@@ -27,7 +37,7 @@ export const getInteractiveTargetProps = (className, onSelectTarget, target, act
     onKeyDown: (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        handleActivate();
+        handleActivate(event);
       }
     },
   };
@@ -40,7 +50,13 @@ export const getPreviewTargetMarkerProps = (className, targetId, activeTargetId 
   "data-preview-target-id": targetId || undefined,
 });
 
-export function TemplateTopBar({ model, onSelectTarget = undefined, activeTargetId = "", children }) {
+export function TemplateTopBar({
+  model,
+  onSelectTarget = undefined,
+  activeTargetId = "",
+  showMark = true,
+  children,
+}) {
   return (
     <div
       {...getInteractiveTargetProps(styles.templateTopBar, onSelectTarget, {
@@ -49,7 +65,7 @@ export function TemplateTopBar({ model, onSelectTarget = undefined, activeTarget
       }, activeTargetId)}
     >
       <div className={styles.templateTopBarBrand}>
-        <span className={styles.templateTopBarMark} aria-hidden="true" />
+        {showMark ? <span className={styles.templateTopBarMark} aria-hidden="true" /> : null}
         <span>{model.site.title}</span>
       </div>
       {children}
@@ -65,6 +81,7 @@ TemplateTopBar.propTypes = {
   }).isRequired,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  showMark: PropTypes.bool,
   children: PropTypes.node.isRequired,
 };
 
@@ -116,13 +133,31 @@ export function TemplateAvailabilityCalendar({
   model,
   onSelectTarget = undefined,
   activeTargetId = "",
+  variant = "default",
+  propertyTitle = "",
+  templateKey = "",
 }) {
+  const titleInteractiveTargetProps = getInteractiveTargetProps("", onSelectTarget, {
+    sectionId: "calendar",
+    targetId: "calendar.title",
+  }, activeTargetId);
+  const descriptionInteractiveTargetProps = getInteractiveTargetProps("", onSelectTarget, {
+    sectionId: "calendar",
+    targetId: "calendar.description",
+  }, activeTargetId);
+
   return (
     <AvailabilityCalendarPreview
       availability={model.availability}
+      calendarSection={model.calendarSection}
+      titleInteractiveTargetProps={titleInteractiveTargetProps}
+      descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
+      templateKey={templateKey}
+      variant={variant}
+      propertyTitle={propertyTitle}
       interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
-        sectionId: "visibility",
-        targetId: "visibility.availabilityCalendar",
+        sectionId: "calendar",
+        targetId: "calendar.visibility",
       }, activeTargetId)}
     />
   );
@@ -131,9 +166,104 @@ export function TemplateAvailabilityCalendar({
 TemplateAvailabilityCalendar.propTypes = {
   model: PropTypes.shape({
     availability: PropTypes.shape({}).isRequired,
+    calendarSection: PropTypes.shape({}),
   }).isRequired,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  variant: PropTypes.oneOf(["default", "panorama"]),
+  propertyTitle: PropTypes.string,
+  templateKey: PropTypes.string,
+};
+
+export function TemplateImageSlotVisual({
+  alt,
+  model,
+  slot,
+  imageClassName,
+  frameClassName = "",
+  onSelectTarget = undefined,
+  activeTargetId = "",
+  rotationIntervalMs = DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS,
+  fadeDurationMs = DEFAULT_IMAGE_SLOT_FADE_DURATION_MS,
+}) {
+  const imageSlotTarget = buildWebsiteImageSlotTarget(slot);
+  const {
+    activeImageIndex,
+    imageSequence,
+    isRotationEnabled,
+  } = useWebsiteImageSlotRotation(slot, model?.media, rotationIntervalMs);
+
+  if (imageSequence.length < 1) {
+    return null;
+  }
+
+  if (!frameClassName && !isRotationEnabled) {
+    return (
+      <img
+        {...getInteractiveTargetProps(imageClassName, onSelectTarget, imageSlotTarget, activeTargetId)}
+        src={imageSequence[0]}
+        alt={alt}
+      />
+    );
+  }
+
+  if (!isRotationEnabled) {
+    return (
+      <div
+        {...getInteractiveTargetProps(
+          `${frameClassName || imageClassName} ${styles.templateRotatingImageFrame}`.trim(),
+          onSelectTarget,
+          imageSlotTarget,
+          activeTargetId
+        )}
+      >
+        <img src={imageSequence[0]} alt={alt} className={imageClassName} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      {...getInteractiveTargetProps(
+        `${frameClassName || imageClassName} ${styles.templateRotatingImageFrame}`.trim(),
+        onSelectTarget,
+        imageSlotTarget,
+        activeTargetId
+      )}
+      style={{
+        "--template-image-slot-fade-duration-ms": `${fadeDurationMs}ms`,
+      }}
+    >
+      {imageSequence.map((imageUrl, index) => (
+        <img
+          key={`${slot.kind}-${slot.index ?? 0}-${index}-${imageUrl}`}
+          src={imageUrl}
+          alt={index === activeImageIndex ? alt : ""}
+          aria-hidden={index === activeImageIndex ? undefined : "true"}
+          className={`${styles.templateRotatingImageLayer} ${
+            index === activeImageIndex ? styles.templateRotatingImageLayerActive : ""
+          }`.trim()}
+        />
+      ))}
+    </div>
+  );
+}
+
+TemplateImageSlotVisual.propTypes = {
+  alt: PropTypes.string.isRequired,
+  model: PropTypes.shape({
+    media: PropTypes.shape({}).isRequired,
+  }).isRequired,
+  slot: PropTypes.shape({
+    kind: PropTypes.oneOf(["hero", "residence", "gallery"]).isRequired,
+    index: PropTypes.number,
+  }).isRequired,
+  imageClassName: PropTypes.string.isRequired,
+  frameClassName: PropTypes.string,
+  onSelectTarget: PropTypes.func,
+  activeTargetId: PropTypes.string,
+  rotationIntervalMs: PropTypes.number,
+  fadeDurationMs: PropTypes.number,
 };
 
 export function TemplateSoftCallout({

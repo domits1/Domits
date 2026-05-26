@@ -175,6 +175,7 @@ export function WebsiteTemplateSurface({
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
+  const isPanoramaTemplate = template.id === "panorama-landing";
   const previewCanvasRef = useWebsiteScrollReveal({
     enabled: enableScrollReveal,
     deps: [templateId, model],
@@ -184,7 +185,9 @@ export function WebsiteTemplateSurface({
   };
 
   return (
-    <div className={styles.previewBrowser}>
+    <div
+      className={`${styles.previewBrowser} ${isPanoramaTemplate ? styles.previewBrowserPanorama : ""}`.trim()}
+    >
       {showBrowserChrome ? (
         <div className={styles.previewBrowserBar}>
           <div className={styles.previewBrowserDots} aria-hidden="true">
@@ -199,6 +202,8 @@ export function WebsiteTemplateSurface({
       <div
         ref={previewCanvasRef}
         className={`${styles.previewCanvas} ${
+          isPanoramaTemplate ? styles.previewCanvasPanorama : ""
+        } ${
           enableScrollReveal ? motionStyles.previewCanvasAnimated : ""
         }`.trim()}
         style={previewCanvasStyle}

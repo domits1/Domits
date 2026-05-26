@@ -7,11 +7,13 @@ import {
   getPreviewTargetMarkerProps,
   TemplateAvailabilityCalendar,
   TemplateHeroCopy,
+  TemplateImageSlotVisual,
   TemplateSoftCallout,
   TemplateTopBar,
 } from "./templateSharedSections";
 import {
   amenityPropType,
+  calendarSectionPropType,
   availabilityPropType,
   callToActionPropType,
   copyItemPropType,
@@ -22,6 +24,7 @@ import {
   templateInteractionPropTypes,
   visibilityPropType,
 } from "./templatePropTypes";
+import { resolveWebsiteAmenityIconColor } from "../../config/websiteAmenitiesConfig";
 
 export default function ExperienceJourneyTemplate({ model, onSelectTarget, activeTargetId }) {
   const showTopBar = model.visibility?.topBar !== false;
@@ -30,6 +33,10 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
   const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
   const showCallToAction = model.visibility?.callToAction !== false;
   const showExperienceFooter = showAmenitiesPanel || showCallToAction;
+  const amenityIconColor = resolveWebsiteAmenityIconColor(
+    model.amenities?.iconColor,
+    "experience-journey"
+  );
 
   return (
     <article className={styles.templateSite}>
@@ -61,7 +68,6 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
           )}
         >
           {model.journeyStops.slice(0, 3).map((stop, index) => {
-            const imageUrl = model.gallery.images[index] || model.media.heroImage;
             const isReversed = index % 2 === 1;
 
             return (
@@ -83,14 +89,13 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
                   <p className={styles.journeyLabel}>{stop.title}</p>
                   <p>{stop.description}</p>
                 </div>
-                <img
-                  {...getInteractiveTargetProps(styles.experienceJourneyVisual, onSelectTarget, {
-                    sectionId: "images",
-                    targetId: `images.gallery.${index}`,
-                    imageSlot: { kind: "gallery", index },
-                  }, activeTargetId)}
-                  src={imageUrl}
+                <TemplateImageSlotVisual
+                  model={model}
+                  slot={{ kind: "gallery", index }}
+                  imageClassName={styles.experienceJourneyVisual}
                   alt={`${stop.title} visual`}
+                  onSelectTarget={onSelectTarget}
+                  activeTargetId={activeTargetId}
                 />
               </article>
             );
@@ -101,6 +106,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
       {showAvailabilityCalendar ? (
         <TemplateAvailabilityCalendar
           model={model}
+          templateKey="experience-journey"
           onSelectTarget={onSelectTarget}
           activeTargetId={activeTargetId}
         />
@@ -116,26 +122,31 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
           <div className={styles.experienceFooter}>
             {showAmenitiesPanel ? (
               <div
-                {...getPreviewTargetMarkerProps(
-                  styles.amenityList,
-                  "visibility.amenitiesPanel",
-                  activeTargetId
-                )}
+                {...getInteractiveTargetProps(styles.amenityList, onSelectTarget, {
+                  sectionId: "amenities",
+                  targetId: "visibility.amenitiesPanel",
+                }, activeTargetId)}
               >
-                {model.amenities.featured.slice(0, 4).map((amenity) => {
-                  const amenityIcon = getAmenityIconNode(amenity.id, {
+                {model.amenities.featured.slice(0, 4).map((amenity, index) => {
+                  const amenityIcon = getAmenityIconNode(amenity.iconAmenityId || amenity.id, {
                     className: styles.amenityRowIconGlyph,
                     "aria-hidden": true,
                     focusable: "false",
                     sx: {
-                      color: "#314f22",
+                      color: amenityIconColor,
                       fontSize: 18,
                       padding: 0,
                     },
                   });
 
                   return (
-                    <div key={amenity.id} className={styles.amenityRow}>
+                    <div
+                      key={amenity.id}
+                      {...getInteractiveTargetProps(styles.amenityRow, onSelectTarget, {
+                        sectionId: "amenities",
+                        targetId: `amenities.${index}`,
+                      }, activeTargetId)}
+                    >
                       <div className={styles.amenityRowPrimary}>
                         {amenityIcon ? <span className={styles.amenityRowIcon}>{amenityIcon}</span> : null}
                         <strong>{amenity.label}</strong>
@@ -170,9 +181,11 @@ ExperienceJourneyTemplate.propTypes = {
     gallery: galleryPropType.isRequired,
     media: mediaPropType.isRequired,
     amenities: PropTypes.shape({
+      iconColor: PropTypes.string,
       featured: PropTypes.arrayOf(amenityPropType).isRequired,
     }).isRequired,
     availability: availabilityPropType.isRequired,
+    calendarSection: calendarSectionPropType,
     callToAction: callToActionPropType.isRequired,
     visibility: visibilityPropType.isRequired,
   }).isRequired,
