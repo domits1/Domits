@@ -62,6 +62,13 @@ export const hostPropType = PropTypes.shape({
   name: PropTypes.string.isRequired,
   profileImage: PropTypes.string,
   initial: PropTypes.string,
+  whatsapp: PropTypes.shape({
+    connected: PropTypes.bool,
+    displayName: PropTypes.string,
+    phoneNumber: PropTypes.string,
+    phoneNumberDigits: PropTypes.string,
+    isAvailable: PropTypes.bool,
+  }),
 });
 
 export const contactSectionPropType = PropTypes.shape({

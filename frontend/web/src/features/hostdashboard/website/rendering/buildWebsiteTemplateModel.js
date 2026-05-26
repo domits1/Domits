@@ -169,11 +169,22 @@ const buildHostDetails = (propertyDetails, summaryProperty) => {
       "Host"
   );
   const profileImage = cleanText(hostProfile?.profileImage || hostProfile?.picture || hostProfile?.image);
+  const whatsappPhoneNumber = cleanText(hostProfile?.whatsapp?.phoneNumber);
+  const whatsappPhoneNumberDigits = cleanText(hostProfile?.whatsapp?.phoneNumberDigits);
+  const whatsappAvailable =
+    hostProfile?.whatsapp?.isAvailable === true && Boolean(whatsappPhoneNumberDigits);
 
   return {
     name: name || "Host",
     profileImage,
     initial: (name || "H").charAt(0).toUpperCase(),
+    whatsapp: {
+      connected: hostProfile?.whatsapp?.connected === true,
+      displayName: cleanText(hostProfile?.whatsapp?.displayName),
+      phoneNumber: whatsappPhoneNumber,
+      phoneNumberDigits: whatsappPhoneNumberDigits,
+      isAvailable: whatsappAvailable,
+    },
   };
 };
 

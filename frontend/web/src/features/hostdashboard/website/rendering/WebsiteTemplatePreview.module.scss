@@ -1691,23 +1691,25 @@
   border: 0;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-height: 48px;
   padding: 0 18px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #1f4e79, #163d61);
+  background: linear-gradient(135deg, #25d366, #128c43);
   color: #ffffff;
+  text-decoration: none;
   font: inherit;
   font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 18px 32px rgba(31, 78, 121, 0.28);
+  box-shadow: 0 18px 32px rgba(18, 140, 67, 0.28);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .visitorChatLauncher:hover {
   transform: translateY(-1px);
-  box-shadow: 0 22px 38px rgba(31, 78, 121, 0.34);
+  box-shadow: 0 22px 38px rgba(18, 140, 67, 0.34);
 }
 
 .visitorChatPanel {

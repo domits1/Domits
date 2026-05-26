@@ -303,6 +303,7 @@ function WebsiteEditorPage() {
   const residenceTextFields = getResidenceTextFields(draftRecord?.templateKey);
   const residenceToggleFields = getResidenceToggleFields(draftRecord?.templateKey);
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
+  const hasWhatsAppWidget = Boolean(baseModel?.host?.whatsapp?.isAvailable);
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const amenitiesVisibilityField = visibilityFields.find((field) => field.key === "amenitiesPanel") || null;
   const calendarVisibilityField = visibilityFields.find((field) => field.key === "availabilityCalendar") || null;
@@ -987,17 +988,27 @@ function WebsiteEditorPage() {
     const inputId = `website-editor-visibility-${field.key}`;
     const labelId = `website-editor-visibility-${field.key}-label`;
     const descriptionId = `website-editor-visibility-${field.key}-description`;
+    const isWhatsAppVisibilityField = field.key === "chatWidget";
+    const isDisabled = isWhatsAppVisibilityField && !hasWhatsAppWidget;
+    const renderedField = isDisabled
+      ? {
+          ...field,
+          description:
+            "This unlocks once WhatsApp is connected for your Domits account and a usable WhatsApp number is available.",
+        }
+      : field;
 
     return (
       <WebsiteEditorVisibilityToggleCard
         key={field.key}
         targetRef={setTargetRef(visibilityTargetId)}
-        field={field}
+        field={renderedField}
         inputId={inputId}
         labelId={labelId}
         descriptionId={descriptionId}
         checked={Boolean(editorValues.visibility[field.key])}
-        onChange={handleVisibilityFieldChange(field.key)}
+        onChange={isDisabled ? undefined : handleVisibilityFieldChange(field.key)}
+        disabled={isDisabled}
         isHighlighted={highlightedTargetId === visibilityTargetId}
       />
     );
@@ -1552,6 +1563,12 @@ function WebsiteEditorPage() {
                     sectionRef={setSectionRef(EDITOR_SECTION_KEYS.visibility)}
                   >
                     <div className={styles.toggleStack}>
+                      {!hasWhatsAppWidget ? (
+                        <p className={styles.helperText}>
+                          The WhatsApp widget unlocks after WhatsApp is configured for this host in the
+                          Domits integrations area.
+                        </p>
+                      ) : null}
                       {standaloneVisibilityFields.map((field) => renderVisibilityFieldCard(field))}
                     </div>
                   </CollapsibleSection>

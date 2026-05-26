@@ -5,6 +5,7 @@ import styles from "../WebsiteEditorPage.module.scss";
 export function WebsiteEditorVisibilityToggleCard({
   checked,
   descriptionId,
+  disabled = false,
   field,
   inputId,
   isHighlighted = false,
@@ -16,7 +17,9 @@ export function WebsiteEditorVisibilityToggleCard({
     <label
       ref={targetRef}
       htmlFor={inputId}
-      className={`${styles.toggleCard} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+      className={`${styles.toggleCard} ${disabled ? styles.toggleCardDisabled : ""} ${
+        isHighlighted ? styles.editorTargetHighlighted : ""
+      }`.trim()}
     >
       <div className={styles.toggleCopy}>
         <span id={labelId} className={styles.toggleLabel}>{field.label}</span>
@@ -28,6 +31,7 @@ export function WebsiteEditorVisibilityToggleCard({
         className={styles.toggleInput}
         checked={checked}
         onChange={onChange}
+        disabled={disabled}
         aria-labelledby={labelId}
         aria-describedby={descriptionId}
       />
@@ -38,6 +42,7 @@ export function WebsiteEditorVisibilityToggleCard({
 WebsiteEditorVisibilityToggleCard.propTypes = {
   checked: PropTypes.bool.isRequired,
   descriptionId: PropTypes.string.isRequired,
+  disabled: PropTypes.bool,
   field: PropTypes.shape({
     key: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
@@ -46,7 +51,7 @@ WebsiteEditorVisibilityToggleCard.propTypes = {
   inputId: PropTypes.string.isRequired,
   isHighlighted: PropTypes.bool,
   labelId: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
+  onChange: PropTypes.func,
   targetRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({

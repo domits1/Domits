@@ -112,14 +112,22 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
     { key: "amenitiesPanel", label: "Show amenities panel", description: "Controls the featured amenities panel in the lower content block." },
     { key: "availabilityCalendar", label: "Show availability calendar", description: "Controls the imported availability snapshot section." },
     { key: "contactSection", label: "Show contact footer", description: "Controls the contact footer section at the bottom of the page." },
-    { key: "chatWidget", label: "Show chat widget", description: "Shows the visitor contact widget on the website." },
+    {
+      key: "chatWidget",
+      label: "Show WhatsApp widget",
+      description: "Shows the floating WhatsApp chat launcher when the host has WhatsApp connected.",
+    },
   ],
   "trust-signals": [
     { key: "topBar", label: "Show top bar", description: "Keep or hide the compact website bar at the top." },
     { key: "trustCards", label: "Show reassurance cards", description: "Controls the stacked trust cards under the hero image." },
     { key: "callToAction", label: "Show soft CTA", description: "Controls the soft callout at the bottom of the page." },
     { key: "availabilityCalendar", label: "Show availability calendar", description: "Controls the imported availability snapshot section." },
-    { key: "chatWidget", label: "Show chat widget", description: "Shows the visitor contact widget on the website." },
+    {
+      key: "chatWidget",
+      label: "Show WhatsApp widget",
+      description: "Shows the floating WhatsApp chat launcher when the host has WhatsApp connected.",
+    },
   ],
   "experience-journey": [
     { key: "topBar", label: "Show top bar", description: "Keep or hide the navigation strip at the top of the page." },
@@ -127,7 +135,11 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
     { key: "amenitiesPanel", label: "Show amenities recap", description: "Controls the featured amenities list in the footer block." },
     { key: "callToAction", label: "Show next-step callout", description: "Controls the CTA callout in the footer block." },
     { key: "availabilityCalendar", label: "Show availability calendar", description: "Controls the imported availability snapshot section." },
-    { key: "chatWidget", label: "Show chat widget", description: "Shows the visitor contact widget on the website." },
+    {
+      key: "chatWidget",
+      label: "Show WhatsApp widget",
+      description: "Shows the floating WhatsApp chat launcher when the host has WhatsApp connected.",
+    },
   ],
 });
 

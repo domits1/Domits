@@ -714,6 +714,18 @@
   transform: translateY(-1px);
 }
 
+.toggleCardDisabled {
+  cursor: not-allowed;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.toggleCardDisabled:hover {
+  border-color: #e2e8f0;
+  box-shadow: none;
+  transform: none;
+}
+
 .toggleCopy {
   display: grid;
   gap: 4px;
@@ -736,6 +748,11 @@
   height: 20px;
   accent-color: #1f4e79;
   cursor: pointer;
+}
+
+.toggleInput:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .collectionActionRow {
