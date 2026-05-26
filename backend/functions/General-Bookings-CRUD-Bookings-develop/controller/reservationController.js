@@ -8,6 +8,8 @@ import NotFoundException from "../util/exception/NotFoundException.js";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
 const responseHeaderJSON = responsejson;
+const REFUND_CURRENCY = "eur";
+const STRIPE_REFUND_REASON = "requested_by_customer";
 
 class ReservationController {
   constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
@@ -207,11 +209,11 @@ class ReservationController {
       refundAmountCents = calculateRefundAmountCents(booking.cancellation_policy, booking.arrivaldate, totalPriceCents);
 
       // Process refund with Stripe if amount > 0 and Stripe is configured
-      if (refundAmountCents > 0 && booking.paymentid && this.stripe) {
-        const refund = await this.stripe.refunds.create({
-          payment_intent: booking.paymentid,
-          amount: refundAmountCents,
-        });
+      if (refundAmountCents > 0 && booking.stripe_refund_id) {
+        stripeRefundId = booking.stripe_refund_id;
+        refundAmountCents = Number(booking.refunded_amount) || refundAmountCents;
+      } else if (refundAmountCents > 0 && booking.paymentid && this.stripe) {
+        const refund = await this.createStripeRefund(booking.paymentid, refundAmountCents);
         stripeRefundId = refund.id;
       }
     } catch (error) {
@@ -232,6 +234,28 @@ class ReservationController {
       headers: responseHeaderJSON,
       response: canceled.response,
     };
+  }
+
+  async createStripeRefund(paymentIntentId, amountCents) {
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    const currency = paymentIntent?.currency?.toLowerCase();
+
+    if (currency !== REFUND_CURRENCY) {
+      throw new Error(
+        `Cannot refund ${currency || "unknown"} PaymentIntent ${paymentIntentId}; expected ${REFUND_CURRENCY}.`
+      );
+    }
+
+    return await this.stripe.refunds.create(
+      {
+        payment_intent: paymentIntentId,
+        amount: amountCents,
+        reason: STRIPE_REFUND_REASON,
+      },
+      {
+        idempotencyKey: `refund-${paymentIntentId}-${amountCents}`,
+      }
+    );
   }
 
   // GET
