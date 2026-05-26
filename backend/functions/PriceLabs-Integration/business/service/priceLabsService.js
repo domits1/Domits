@@ -35,12 +35,13 @@ export class PriceLabsService {
       hookUrl:            HOOK_URL,
       regenerateToken:    false,
       features: {
-        prices:           true,
-        min_stay:         true,
-        check_in_out:     true,
-        los_pricing:      false,
-        weekly_monthly:   false,
-        extra_person_fee: false,
+        min_stay:                 true,
+        check_in:                 true,
+        check_out:                true,
+        monthly_weekly_discounts: false,
+        extra_person_fee:         false,
+        los_pricing:              false,
+        delta_only:               false,
       },
     });
 
@@ -102,17 +103,22 @@ export class PriceLabsService {
     const otaMap = await this.repo.getOtaListingIdsByHost(hostId);
 
     const listings = properties.map((p) => ({
-      listing_id:      `${hostId}_${p.id}`,
-      user_token:      connection.pricelabs_email,
-      name:            p.title || p.id,
-      currency:        "EUR",
-      country:         p.country || "NL",
-      city:            p.city || "",
-      bedroom_count:   p.bedrooms || 1,
-      bathroom_count:  p.bathrooms || 1,
-      max_guests:      p.max_guests || 2,
-      listing_type:    "entire_home",
-      cleaning_fee:    p.cleaning_fee == null ? 0 : Number(p.cleaning_fee),
+      listing_id:         `${hostId}_${p.id}`,
+      user_token:         connection.pricelabs_email,
+      name:               p.title || p.id,
+      status:             "available",
+      location: {
+        city:    p.city    || "",
+        country: p.country || "NL",
+      },
+      number_of_bedrooms: p.bedrooms || 1,
+      listing_fees: {
+        cleaning_fee: {
+          type:     "fixed",
+          value:    p.cleaning_fee == null ? 0 : Number(p.cleaning_fee),
+          currency: "EUR",
+        },
+      },
       ota_listing_ids: otaMap[p.id] || [],
     }));
 
@@ -134,19 +140,27 @@ export class PriceLabsService {
       const listingId   = `${hostId}_${p.id}`;
       const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
 
-      const calendar = availability.map((row) => ({
-        date:                _tsToDate(row.calendar_date),
-        price:               row.nightly_price || p.base_price || 100,
-        available:           row.is_available !== false,
-        min_stay:            row.min_stay || 1,
-        closed_to_arrival:   row.closed_to_arrival   || false,
-        closed_to_departure: row.closed_to_departure || false,
+      const data = availability.map((row) => ({
+        date:            _intToDate(row.calendar_date),
+        price:           row.nightly_price || p.base_price || 100,
+        available_units: row.is_available === false ? 0 : 1,
+        booked_units:    0,
+        blocked_units:   0,
+        settings: {
+          min_stay:  row.min_stay || 1,
+          check_in:  row.closed_to_arrival  !== true,
+          check_out: row.closed_to_departure !== true,
+        },
       }));
 
       await api.pushCalendar(token, name, {
-        listing_id: listingId,
-        user_token: connection.pricelabs_email,
-        calendar,
+        calendars: [
+          {
+            listing_id: listingId,
+            currency:   "EUR",
+            data,
+          },
+        ],
       });
     }
 
@@ -159,14 +173,25 @@ export class PriceLabsService {
     const connection = await this._requireActiveConnection(hostId);
     const bookings   = await this.repo.getBookingsByHost(hostId);
 
-    const reservations = bookings.map((b) => {
-      const status = _mapBookingStatus(b.status);
+    const grouped = {};
+    for (const b of bookings) {
+      const listingId = `${hostId}_${b.property_id}`;
+      if (!grouped[listingId]) {
+        grouped[listingId] = {
+          listing_id: listingId,
+          user_token: connection.pricelabs_email,
+          data:       [],
+        };
+      }
+      const status   = _mapBookingStatus(b.status);
+      const checkin  = _tsToDate(b.arrivaldate);
+      const checkout = _tsToDate(b.departuredate);
       const entry = {
-        listing_id:     `${hostId}_${b.property_id}`,
-        user_token:     connection.pricelabs_email,
         reservation_id: b.id,
-        checkin_date:   _tsToDate(b.arrivaldate),
-        checkout_date:  _tsToDate(b.departuredate),
+        start_date:     checkin,
+        end_date:       checkout,
+        booked_time:    new Date().toISOString().split("T")[0],
+        total_days:     _dateDiff(checkin, checkout),
         guests:         b.guests || 1,
         total_cost:     b.total_price || 0,
         rental_revenue: b.nightly_revenue || 0,
@@ -174,12 +199,13 @@ export class PriceLabsService {
         status,
         booking_source: b.booking_source || "direct",
       };
-      if (status === "cancelled") {
+      if (status === "canceled") {
         entry.cancel_time = new Date().toISOString().split("T")[0];
       }
-      return entry;
-    });
+      grouped[listingId].data.push(entry);
+    }
 
+    const reservations = Object.values(grouped);
     if (reservations.length) {
       await api.pushReservations(token, name, reservations);
     }
@@ -188,7 +214,8 @@ export class PriceLabsService {
       last_reservations_sync_at: Date.now(),
       last_sync_status: "synced",
     });
-    return { success: true, reservations_pushed: reservations.length };
+    const totalReservations = reservations.reduce((sum, r) => sum + r.data.length, 0);
+    return { success: true, reservations_pushed: totalReservations };
   }
 
   async syncForBookingChange(hostId, trigger) {
@@ -305,9 +332,22 @@ function _tsToDate(ts) {
   return new Date(Number(ts)).toISOString().split("T")[0];
 }
 
+function _intToDate(val) {
+  if (!val) return null;
+  const s = String(val);
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+}
+
 function _mapBookingStatus(status) {
   const s = String(status || "").toLowerCase();
-  if (s === "cancelled" || s === "canceled" || s === "declined" || s === "failed") return "cancelled";
-  if (s === "paid" || s === "confirmed" || s === "awaiting payment") return "confirmed";
-  return "confirmed";
+  if (s === "cancelled" || s === "canceled" || s === "declined" || s === "failed") return "canceled";
+  return "booked";
+}
+
+function _dateDiff(checkin, checkout) {
+  if (!checkin || !checkout) return 1;
+  const a = new Date(checkin);
+  const b = new Date(checkout);
+  const diff = Math.round((b - a) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? diff : 1;
 }

@@ -15,6 +15,7 @@ import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
+import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
@@ -137,6 +138,13 @@ function WebsitePublicSitePage() {
           });
         }
 
+        if (nextRenderPayload?.propertySnapshot) {
+          nextRenderPayload = {
+            ...nextRenderPayload,
+            propertySnapshot: await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot),
+          };
+        }
+
         if (!isMounted) {
           return;
         }
@@ -176,8 +184,12 @@ function WebsitePublicSitePage() {
     });
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, renderPayload.themeOverrides || {});
 
-    return applyWebsiteDraftContentOverrides(themedModel, renderPayload.contentOverrides || {});
-  }, [renderPayload]);
+    return applyWebsiteDraftContentOverrides(
+      themedModel,
+      renderPayload.contentOverrides || {},
+      renderPayload?.site?.templateKey || resolution?.templateKey || ""
+    );
+  }, [renderPayload, resolution?.templateKey]);
 
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
