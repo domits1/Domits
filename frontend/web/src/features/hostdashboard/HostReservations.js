@@ -1,5 +1,6 @@
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import { useEffect, useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import spinner from "../../images/spinnner.gif";
 import { getAccessToken } from "../../services/getAccessToken.js";
@@ -108,6 +109,13 @@ const TabButton = ({ tab, activeTab, onSelect, label }) => (
   </button>
 );
 
+TabButton.propTypes = {
+  tab: PropTypes.string.isRequired,
+  activeTab: PropTypes.string.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  label: PropTypes.string.isRequired,
+};
+
 const ModalText = ({ overlappingCount }) => {
   if (overlappingCount > 0) {
     const verb = overlappingCount === 1 ? "is" : "are";
@@ -121,6 +129,10 @@ const ModalText = ({ overlappingCount }) => {
     );
   }
   return <p className={styles.modalText}>Are you sure you want to accept this request?</p>;
+};
+
+ModalText.propTypes = {
+  overlappingCount: PropTypes.number.isRequired,
 };
 
 const HostReservations = () => {

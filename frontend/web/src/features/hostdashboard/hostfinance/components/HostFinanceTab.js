@@ -90,15 +90,14 @@ export default function HostFinanceTab() {
                   {stripeAlertMessage}{" "}
                   Your listings with direct booking enabled are not accepting new reservations until this is resolved.
                 </p>
-                <span
-                  role="button"
-                  tabIndex={0}
+                <button
+                  type="button"
                   className={`finance-span ${isProcessing ? "disabled" : ""}`}
                   onClick={isProcessing ? undefined : handleStripeAction}
-                  onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !isProcessing) handleStripeAction(); }}
+                  disabled={isProcessing}
                 >
                   {renderCtaLabel("Open Stripe Dashboard to fix")}
-                </span>
+                </button>
               </div>
             )}
             <div className="finance-steps">
