@@ -97,6 +97,7 @@ const HostReservations = () => {
   const [search, setSearch] = useState("");
   const [range, setRange] = useState("ALL");
   const [inquiryLoading, setInquiryLoading] = useState({});
+  const [confirmAccept, setConfirmAccept] = useState(null);
 
   const authToken = useMemo(() => getAccessToken(), []);
   const itemsPerPage = 10;
@@ -183,21 +184,52 @@ const HostReservations = () => {
     return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
   }, [pageRange]);
 
-  const handleInquiryAction = async (bookingId, action) => {
+  const executeInquiryAction = async (bookingId, action) => {
     setInquiryLoading((prev) => ({ ...prev, [bookingId]: true }));
     try {
-      await updateInquiryStatus(bookingId, action, authToken);
+      const result = await updateInquiryStatus(bookingId, action, authToken);
       const newStatus = action === "accept-inquiry" ? "AWAITING_PAYMENT" : "DECLINED";
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
       );
-      toast.success(
-        action === "accept-inquiry" ? "Inquiry accepted." : "Inquiry declined."
-      );
+      if (action === "accept-inquiry") {
+        const declined = result?.declinedCount || 0;
+        toast.success(
+          declined > 0
+            ? `Inquiry accepted. ${declined} other overlapping request${declined > 1 ? "s were" : " was"} automatically declined.`
+            : "Inquiry accepted."
+        );
+        if (declined > 0) {
+          setBookings((prev) =>
+            prev.map((b) =>
+              b.id !== bookingId && b.status === "INQUIRY" ? { ...b, status: "DECLINED" } : b
+            )
+          );
+        }
+      } else {
+        toast.success("Inquiry declined.");
+      }
     } catch {
       toast.error("Failed to update inquiry status.");
     } finally {
       setInquiryLoading((prev) => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
+  const handleInquiryAction = (bookingId, action) => {
+    if (action === "accept-inquiry") {
+      const booking = bookings.find((b) => b.id === bookingId);
+      const overlappingCount = bookings.filter(
+        (b) =>
+          b.id !== bookingId &&
+          b.status === "INQUIRY" &&
+          b.property_id === booking?.property_id &&
+          b.arrivaldate < booking?.departuredate &&
+          b.departuredate > booking?.arrivaldate
+      ).length;
+      setConfirmAccept({ bookingId, overlappingCount });
+    } else {
+      executeInquiryAction(bookingId, action);
     }
   };
 
@@ -407,6 +439,44 @@ const HostReservations = () => {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {confirmAccept && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
+            <h3 className={styles.modalTitle}>Accept this request?</h3>
+            {confirmAccept.overlappingCount > 0 ? (
+              <p className={styles.modalText}>
+                There {confirmAccept.overlappingCount === 1 ? "is" : "are"}{" "}
+                <strong>{confirmAccept.overlappingCount}</strong> other pending request
+                {confirmAccept.overlappingCount > 1 ? "s" : ""} for overlapping dates on this property.
+                Accepting will automatically decline {confirmAccept.overlappingCount === 1 ? "it" : "them"}.
+              </p>
+            ) : (
+              <p className={styles.modalText}>
+                Are you sure you want to accept this request?
+              </p>
+            )}
+            <div className={styles.modalActions}>
+              <button
+                className={styles.btnAccept}
+                onClick={() => {
+                  const { bookingId } = confirmAccept;
+                  setConfirmAccept(null);
+                  executeInquiryAction(bookingId, "accept-inquiry");
+                }}
+              >
+                Yes, accept
+              </button>
+              <button
+                className={styles.btnDecline}
+                onClick={() => setConfirmAccept(null)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
