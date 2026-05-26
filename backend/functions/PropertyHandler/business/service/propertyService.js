@@ -26,32 +26,10 @@ import { PropertyCustomRuleRepository } from "../../data/repository/propertyCust
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
-
-const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-const normalizeBlockedDateKeys = (dateKeys) =>
-  (Array.isArray(dateKeys) ? dateKeys : [])
-    .map((dateKey) => String(dateKey || "").trim())
-    .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey));
-
-const normalizeOverrideDateKey = (value) => {
-  const numericValue = Number(value);
-  if (Number.isFinite(numericValue)) {
-    const normalizedValue = String(Math.trunc(numericValue));
-    if (/^\d{8}$/.test(normalizedValue)) {
-      return `${normalizedValue.slice(0, 4)}-${normalizedValue.slice(4, 6)}-${normalizedValue.slice(6, 8)}`;
-    }
-  }
-
-  const stringValue = String(value || "").trim();
-  return DATE_KEY_PATTERN.test(stringValue) ? stringValue : "";
-};
-
-const extractUnavailableOverrideDateKeys = (overrides) =>
-  (Array.isArray(overrides) ? overrides : [])
-    .filter((override) => override?.isAvailable === false)
-    .map((override) => normalizeOverrideDateKey(override?.date))
-    .filter(Boolean);
+import {
+  extractUnavailableOverrideDateKeys,
+  normalizeBlockedDateKeys,
+} from "../../util/calendarAvailability.js";
 
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {

@@ -9,64 +9,120 @@ export const PREVIEW_VIEWPORT_OPTIONS = Object.freeze([
   { id: "mobile", label: "Mobile", Icon: SmartphoneOutlinedIcon },
 ]);
 
+const PANORAMA_TEMPLATE_KEY = "panorama-landing";
+const TRUST_SIGNALS_TEMPLATE_KEY = "trust-signals";
+const EXPERIENCE_JOURNEY_TEMPLATE_KEY = "experience-journey";
+const WHATSAPP_WIDGET_DESCRIPTION =
+  "Shows the floating WhatsApp chat launcher when the host has WhatsApp connected.";
+
+const createTextField = (key, label, component = "input") => ({
+  key,
+  label,
+  component,
+});
+
+const createToggleField = (key, label, description) => ({
+  key,
+  label,
+  description,
+});
+
+const createVisibilityField = (key, label, description) =>
+  createToggleField(key, label, description);
+
+const createImageSlot = ({
+  id,
+  kind,
+  label,
+  description,
+  index = undefined,
+  supportsRotation = true,
+}) => ({
+  id,
+  kind,
+  ...(typeof index === "number" ? { index } : {}),
+  label,
+  description,
+  supportsRotation,
+});
+
+const createGallerySlots = (count, labelPrefix, descriptionPrefix, idPrefix) =>
+  Array.from({ length: count }, (_, index) =>
+    createImageSlot({
+      id: `${idPrefix}-${index + 1}`,
+      kind: "gallery",
+      index,
+      label: `${labelPrefix} ${index + 1}`,
+      description: `${descriptionPrefix} ${index + 1}.`,
+    })
+  );
+
+const isPanoramaTemplate = (templateKey) =>
+  String(templateKey || "").trim() === PANORAMA_TEMPLATE_KEY;
+
+const hasAvailabilityCalendarVisibilityField = (templateKey) =>
+  (TEMPLATE_VISIBILITY_FIELD_MAP[String(templateKey || "").trim()] || []).some(
+    (field) => field.key === "availabilityCalendar"
+  );
+
 const BASE_COMMON_TEXT_FIELDS = Object.freeze([
-  { key: "siteTitle", label: "Website title", component: "input" },
-  { key: "heroEyebrow", label: "Hero eyebrow", component: "input" },
-  { key: "heroTitle", label: "Hero title", component: "input" },
-  { key: "heroDescription", label: "Hero description", component: "textarea" },
-  { key: "ctaLabel", label: "CTA label", component: "input" },
-  { key: "ctaNote", label: "CTA note", component: "textarea" },
+  createTextField("siteTitle", "Website title"),
+  createTextField("heroEyebrow", "Hero eyebrow"),
+  createTextField("heroTitle", "Hero title"),
+  createTextField("heroDescription", "Hero description", "textarea"),
+  createTextField("ctaLabel", "CTA label"),
+  createTextField("ctaNote", "CTA note", "textarea"),
 ]);
 
 const PANORAMA_RESIDENCE_TEXT_FIELDS = Object.freeze([
-  { key: "residenceTitle", label: "Section title", component: "input" },
-  { key: "residenceHeadline", label: "Section headline", component: "input" },
-  { key: "heroDescription", label: "Section description", component: "textarea" },
+  createTextField("residenceTitle", "Section title"),
+  createTextField("residenceHeadline", "Section headline"),
+  createTextField("heroDescription", "Section description", "textarea"),
 ]);
 
 const PANORAMA_RESIDENCE_TOGGLE_FIELDS = Object.freeze([
-  {
-    key: "residenceShowPanel",
-    label: "Show residence panel",
-    description: 'Toggles the white framed surface behind "The residence" section.',
-  },
+  createToggleField(
+    "residenceShowPanel",
+    "Show residence panel",
+    'Toggles the white framed surface behind "The residence" section.'
+  ),
 ]);
 
 const PANORAMA_CONTACT_FIELDS = Object.freeze([
-  { key: "title", label: "Section title", component: "input" },
-  { key: "description", label: "Section description", component: "textarea" },
+  createTextField("title", "Section title"),
+  createTextField("description", "Section description", "textarea"),
 ]);
 
 const CALENDAR_TOGGLE_FIELDS = Object.freeze([
-  {
-    key: "showPanel",
-    label: "Show calendar panel",
-    description: "Toggles the framed surface behind the availability calendar.",
-  },
+  createToggleField(
+    "showPanel",
+    "Show calendar panel",
+    "Toggles the framed surface behind the availability calendar."
+  ),
 ]);
 
 const CALENDAR_TEXT_FIELDS = Object.freeze([
-  { key: "title", label: "Section title", component: "input" },
-  { key: "description", label: "Section description", component: "textarea" },
+  createTextField("title", "Section title"),
+  createTextField("description", "Section description", "textarea"),
 ]);
 
 const PANORAMA_AMENITIES_TEXT_FIELDS = Object.freeze([
-  { key: "title", label: "Section title", component: "input" },
-  { key: "description", label: "Section subtitle", component: "input" },
+  createTextField("title", "Section title"),
+  createTextField("description", "Section subtitle"),
 ]);
 
 const PANORAMA_GALLERY_TEXT_FIELDS = Object.freeze([
-  { key: "title", label: "Section title", component: "input" },
-  { key: "description", label: "Section subtitle", component: "input" },
-  { key: "browseLabel", label: "Browse button label", component: "input" },
+  createTextField("title", "Section title"),
+  createTextField("description", "Section subtitle"),
+  createTextField("browseLabel", "Browse button label"),
 ]);
 
 const PANORAMA_GALLERY_TOGGLE_FIELDS = Object.freeze([
-  {
-    key: "showPanel",
-    label: "Show gallery panel",
-    description: "Toggles the framed surface behind the gallery section.",
-  },
+  createToggleField(
+    "showPanel",
+    "Show gallery panel",
+    "Toggles the framed surface behind the gallery section."
+  ),
 ]);
 
 export const EDITOR_SECTION_KEYS = Object.freeze({
@@ -135,144 +191,131 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
 });
 
 export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
-  "panorama-landing": [
-    { key: "topBar", label: "Show top bar", description: "Keep or hide the navigation strip at the top of the page." },
-    { key: "callToAction", label: "Show booking prompt", description: "Controls the booking CTA pill below the hero image." },
-    { key: "trustCards", label: "Show trust cards", description: "Controls the three quick-scan feature cards below the hero." },
-    { key: "gallerySection", label: "Show gallery section", description: "Controls the imported photo strip in the lower content block." },
-    { key: "amenitiesPanel", label: "Show amenities panel", description: "Controls the featured amenities panel in the lower content block." },
-    { key: "availabilityCalendar", label: "Show availability calendar", description: "Controls the imported availability snapshot section." },
-    { key: "contactSection", label: "Show contact footer", description: "Controls the contact footer section at the bottom of the page." },
-    {
-      key: "chatWidget",
-      label: "Show WhatsApp widget",
-      description: "Shows the floating WhatsApp chat launcher when the host has WhatsApp connected.",
-    },
+  [PANORAMA_TEMPLATE_KEY]: [
+    createVisibilityField("topBar", "Show top bar", "Keep or hide the navigation strip at the top of the page."),
+    createVisibilityField(
+      "callToAction",
+      "Show booking prompt",
+      "Controls the booking CTA pill below the hero image."
+    ),
+    createVisibilityField(
+      "trustCards",
+      "Show trust cards",
+      "Controls the three quick-scan feature cards below the hero."
+    ),
+    createVisibilityField(
+      "gallerySection",
+      "Show gallery section",
+      "Controls the imported photo strip in the lower content block."
+    ),
+    createVisibilityField(
+      "amenitiesPanel",
+      "Show amenities panel",
+      "Controls the featured amenities panel in the lower content block."
+    ),
+    createVisibilityField(
+      "availabilityCalendar",
+      "Show availability calendar",
+      "Controls the imported availability snapshot section."
+    ),
+    createVisibilityField(
+      "contactSection",
+      "Show contact footer",
+      "Controls the contact footer section at the bottom of the page."
+    ),
+    createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],
-  "trust-signals": [
-    { key: "topBar", label: "Show top bar", description: "Keep or hide the compact website bar at the top." },
-    { key: "trustCards", label: "Show reassurance cards", description: "Controls the stacked trust cards under the hero image." },
-    { key: "callToAction", label: "Show soft CTA", description: "Controls the soft callout at the bottom of the page." },
-    { key: "availabilityCalendar", label: "Show availability calendar", description: "Controls the imported availability snapshot section." },
-    {
-      key: "chatWidget",
-      label: "Show WhatsApp widget",
-      description: "Shows the floating WhatsApp chat launcher when the host has WhatsApp connected.",
-    },
+  [TRUST_SIGNALS_TEMPLATE_KEY]: [
+    createVisibilityField("topBar", "Show top bar", "Keep or hide the compact website bar at the top."),
+    createVisibilityField(
+      "trustCards",
+      "Show reassurance cards",
+      "Controls the stacked trust cards under the hero image."
+    ),
+    createVisibilityField(
+      "callToAction",
+      "Show soft CTA",
+      "Controls the soft callout at the bottom of the page."
+    ),
+    createVisibilityField(
+      "availabilityCalendar",
+      "Show availability calendar",
+      "Controls the imported availability snapshot section."
+    ),
+    createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],
-  "experience-journey": [
-    { key: "topBar", label: "Show top bar", description: "Keep or hide the navigation strip at the top of the page." },
-    { key: "journeyStops", label: "Show journey sections", description: "Controls the arrival, stay, and area narrative blocks." },
-    { key: "amenitiesPanel", label: "Show amenities recap", description: "Controls the featured amenities list in the footer block." },
-    { key: "callToAction", label: "Show next-step callout", description: "Controls the CTA callout in the footer block." },
-    { key: "availabilityCalendar", label: "Show availability calendar", description: "Controls the imported availability snapshot section." },
-    {
-      key: "chatWidget",
-      label: "Show WhatsApp widget",
-      description: "Shows the floating WhatsApp chat launcher when the host has WhatsApp connected.",
-    },
+  [EXPERIENCE_JOURNEY_TEMPLATE_KEY]: [
+    createVisibilityField("topBar", "Show top bar", "Keep or hide the navigation strip at the top of the page."),
+    createVisibilityField(
+      "journeyStops",
+      "Show journey sections",
+      "Controls the arrival, stay, and area narrative blocks."
+    ),
+    createVisibilityField(
+      "amenitiesPanel",
+      "Show amenities recap",
+      "Controls the featured amenities list in the footer block."
+    ),
+    createVisibilityField(
+      "callToAction",
+      "Show next-step callout",
+      "Controls the CTA callout in the footer block."
+    ),
+    createVisibilityField(
+      "availabilityCalendar",
+      "Show availability calendar",
+      "Controls the imported availability snapshot section."
+    ),
+    createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],
 });
 
 export const TEMPLATE_IMAGE_SLOT_MAP = Object.freeze({
-  "panorama-landing": [
-    {
+  [PANORAMA_TEMPLATE_KEY]: [
+    createImageSlot({
       id: "panorama-hero",
       kind: "hero",
       label: "Hero image",
       description: "Main visual used in the top hero section.",
-      supportsRotation: true,
-    },
-    {
+    }),
+    createImageSlot({
       id: "panorama-residence",
       kind: "residence",
       label: "Residence image",
       description: 'Lead image shown first in the rotating "The residence" section gallery.',
-      supportsRotation: true,
-    },
-    {
-      id: "panorama-gallery-primary",
-      kind: "gallery",
-      index: 0,
-      label: "Gallery slot 1",
-      description: "First image in the Panorama gallery grid.",
-      supportsRotation: true,
-    },
-    {
-      id: "panorama-gallery-secondary",
-      kind: "gallery",
-      index: 1,
-      label: "Gallery slot 2",
-      description: "Second image in the Panorama gallery grid.",
-      supportsRotation: true,
-    },
-    {
-      id: "panorama-gallery-tertiary",
-      kind: "gallery",
-      index: 2,
-      label: "Gallery slot 3",
-      description: "Third image in the Panorama gallery grid.",
-      supportsRotation: true,
-    },
-    {
-      id: "panorama-gallery-quaternary",
-      kind: "gallery",
-      index: 3,
-      label: "Gallery slot 4",
-      description: "Fourth image in the Panorama gallery grid.",
-      supportsRotation: true,
-    },
-    {
-      id: "panorama-gallery-quinary",
-      kind: "gallery",
-      index: 4,
-      label: "Gallery slot 5",
-      description: "Fifth image in the Panorama gallery grid.",
-      supportsRotation: true,
-    },
-    {
-      id: "panorama-gallery-senary",
-      kind: "gallery",
-      index: 5,
-      label: "Gallery slot 6",
-      description: "Sixth image in the Panorama gallery grid.",
-      supportsRotation: true,
-    },
+    }),
+    ...createGallerySlots(6, "Gallery slot", "Image shown in the Panorama gallery grid slot", "panorama-gallery"),
   ],
-  "trust-signals": [
-    {
+  [TRUST_SIGNALS_TEMPLATE_KEY]: [
+    createImageSlot({
       id: "trust-hero",
       kind: "hero",
       label: "Hero image",
       description: "Main image used in the trust-oriented layout.",
-      supportsRotation: true,
-    },
+    }),
   ],
-  "experience-journey": [
-    {
+  [EXPERIENCE_JOURNEY_TEMPLATE_KEY]: [
+    createImageSlot({
       id: "journey-gallery-arrival",
       kind: "gallery",
       index: 0,
       label: "Journey image 1",
       description: "Visual used next to the first journey stop.",
-      supportsRotation: true,
-    },
-    {
+    }),
+    createImageSlot({
       id: "journey-gallery-stay",
       kind: "gallery",
       index: 1,
       label: "Journey image 2",
       description: "Visual used next to the second journey stop.",
-      supportsRotation: true,
-    },
-    {
+    }),
+    createImageSlot({
       id: "journey-gallery-surroundings",
       kind: "gallery",
       index: 2,
       label: "Journey image 3",
       description: "Visual used next to the third journey stop.",
-      supportsRotation: true,
-    },
+    }),
   ],
 });
 
@@ -365,7 +408,7 @@ export const getCommonTextFields = (templateKey) => {
 };
 
 export const getResidenceTextFields = (templateKey) => {
-  if (templateKey === "panorama-landing") {
+  if (isPanoramaTemplate(templateKey)) {
     return PANORAMA_RESIDENCE_TEXT_FIELDS;
   }
 
@@ -373,7 +416,7 @@ export const getResidenceTextFields = (templateKey) => {
 };
 
 export const getResidenceToggleFields = (templateKey) => {
-  if (templateKey === "panorama-landing") {
+  if (isPanoramaTemplate(templateKey)) {
     return PANORAMA_RESIDENCE_TOGGLE_FIELDS;
   }
 
@@ -381,7 +424,7 @@ export const getResidenceToggleFields = (templateKey) => {
 };
 
 export const getCalendarToggleFields = (templateKey) => {
-  if (TEMPLATE_VISIBILITY_FIELD_MAP[String(templateKey || "").trim()]?.some((field) => field.key === "availabilityCalendar")) {
+  if (hasAvailabilityCalendarVisibilityField(templateKey)) {
     return CALENDAR_TOGGLE_FIELDS;
   }
 
@@ -389,7 +432,7 @@ export const getCalendarToggleFields = (templateKey) => {
 };
 
 export const getCalendarTextFields = (templateKey) => {
-  if (TEMPLATE_VISIBILITY_FIELD_MAP[String(templateKey || "").trim()]?.some((field) => field.key === "availabilityCalendar")) {
+  if (hasAvailabilityCalendarVisibilityField(templateKey)) {
     return CALENDAR_TEXT_FIELDS;
   }
 
@@ -397,7 +440,7 @@ export const getCalendarTextFields = (templateKey) => {
 };
 
 export const getAmenitiesTextFields = (templateKey) => {
-  if (templateKey === "panorama-landing") {
+  if (isPanoramaTemplate(templateKey)) {
     return PANORAMA_AMENITIES_TEXT_FIELDS;
   }
 
@@ -405,7 +448,7 @@ export const getAmenitiesTextFields = (templateKey) => {
 };
 
 export const getGalleryTextFields = (templateKey) => {
-  if (templateKey === "panorama-landing") {
+  if (isPanoramaTemplate(templateKey)) {
     return PANORAMA_GALLERY_TEXT_FIELDS;
   }
 
@@ -413,7 +456,7 @@ export const getGalleryTextFields = (templateKey) => {
 };
 
 export const getGalleryToggleFields = (templateKey) => {
-  if (templateKey === "panorama-landing") {
+  if (isPanoramaTemplate(templateKey)) {
     return PANORAMA_GALLERY_TOGGLE_FIELDS;
   }
 
@@ -421,7 +464,7 @@ export const getGalleryToggleFields = (templateKey) => {
 };
 
 export const getContactSectionFields = (templateKey) => {
-  if (templateKey === "panorama-landing") {
+  if (isPanoramaTemplate(templateKey)) {
     return PANORAMA_CONTACT_FIELDS;
   }
 
