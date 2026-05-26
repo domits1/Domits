@@ -40,6 +40,13 @@ export default function HostFinanceTab() {
 
   const stripeIssues = onboardingComplete && (!chargesEnabled || !payoutsEnabled);
 
+  let stripeAlertMessage = "Payouts are currently disabled on your Stripe account. You will not receive funds.";
+  if (!chargesEnabled && !payoutsEnabled) {
+    stripeAlertMessage = "Charges and payouts are currently disabled on your Stripe account.";
+  } else if (!chargesEnabled) {
+    stripeAlertMessage = "Charges are currently disabled on your Stripe account. Guests cannot complete payments.";
+  }
+
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
 
@@ -80,16 +87,15 @@ export default function HostFinanceTab() {
               <div className="finance-stripe-alert">
                 <strong>⚠ Action required: Stripe account issue detected</strong>
                 <p>
-                  {!chargesEnabled && !payoutsEnabled
-                    ? "Charges and payouts are currently disabled on your Stripe account."
-                    : !chargesEnabled
-                    ? "Charges are currently disabled on your Stripe account. Guests cannot complete payments."
-                    : "Payouts are currently disabled on your Stripe account. You will not receive funds."}
-                  {" "}Your listings with direct booking enabled are not accepting new reservations until this is resolved.
+                  {stripeAlertMessage}{" "}
+                  Your listings with direct booking enabled are not accepting new reservations until this is resolved.
                 </p>
                 <span
+                  role="button"
+                  tabIndex={0}
                   className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                  onClick={!isProcessing ? handleStripeAction : undefined}
+                  onClick={isProcessing ? undefined : handleStripeAction}
+                  onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !isProcessing) handleStripeAction(); }}
                 >
                   {renderCtaLabel("Open Stripe Dashboard to fix")}
                 </span>
@@ -113,7 +119,7 @@ export default function HostFinanceTab() {
                       account to receive payments: &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        onClick={isProcessing ? undefined : handleStripeAction}>
                         {renderCtaLabel("Create Stripe account")}
                       </span>
                     </>
@@ -122,7 +128,7 @@ export default function HostFinanceTab() {
                       <strong>Step 2: </strong> &nbsp; Finish your Stripe onboarding to start receiving payouts: &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        onClick={isProcessing ? undefined : handleStripeAction}>
                         {renderCtaLabel("Continue Stripe onboarding")}
                       </span>
                     </>
@@ -131,7 +137,7 @@ export default function HostFinanceTab() {
                       <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done! &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        onClick={isProcessing ? undefined : handleStripeAction}>
                         {renderCtaLabel("Open Stripe Dashboard")}
                       </span>
                     </>

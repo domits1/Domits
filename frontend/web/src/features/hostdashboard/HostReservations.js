@@ -90,6 +90,39 @@ const renderPolicyDisplay = (cancellationType) => {
   return <span>-</span>;
 };
 
+const mapStatusToClass = (status) => {
+  if (status === "INQUIRY") return "statusInquiry";
+  if (status === "PAID") return "statusPaid";
+  if (status === "AWAITING_PAYMENT") return "statusAwaitingPayment";
+  if (status === "FAILED") return "statusFailed";
+  if (status === "DECLINED") return "statusDeclined";
+  return "statusOther";
+};
+
+const TabButton = ({ tab, activeTab, onSelect, label }) => (
+  <button
+    className={activeTab === tab ? styles.active : ""}
+    onClick={() => onSelect(tab)}
+  >
+    {label}
+  </button>
+);
+
+const ModalText = ({ overlappingCount }) => {
+  if (overlappingCount > 0) {
+    const verb = overlappingCount === 1 ? "is" : "are";
+    const plural = overlappingCount > 1 ? "s" : "";
+    const pronoun = overlappingCount === 1 ? "it" : "them";
+    return (
+      <p className={styles.modalText}>
+        There {verb} <strong>{overlappingCount}</strong> other pending request{plural} for overlapping dates on this
+        property. Accepting will automatically decline {pronoun}.
+      </p>
+    );
+  }
+  return <p className={styles.modalText}>Are you sure you want to accept this request?</p>;
+};
+
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
@@ -194,11 +227,12 @@ const HostReservations = () => {
       );
       if (action === "accept-inquiry") {
         const declined = result?.declinedCount || 0;
-        toast.success(
-          declined > 0
-            ? `Request accepted. ${declined} other overlapping request${declined > 1 ? "s were" : " was"} automatically declined.`
-            : "Request accepted."
-        );
+        let toastMsg = "Request accepted.";
+        if (declined > 0) {
+          const suffix = declined > 1 ? "s were" : " was";
+          toastMsg = `Request accepted. ${declined} other overlapping request${suffix} automatically declined.`;
+        }
+        toast.success(toastMsg);
         if (declined > 0) {
           setBookings((prev) =>
             prev.map((b) =>
@@ -233,15 +267,6 @@ const HostReservations = () => {
     }
   };
 
-  const mapStatusToClass = (status) => {
-    if (status === "INQUIRY") return "statusInquiry";
-    if (status === "PAID") return "statusPaid";
-    if (status === "AWAITING_PAYMENT") return "statusAwaitingPayment";
-    if (status === "FAILED") return "statusFailed";
-    if (status === "DECLINED") return "statusDeclined";
-    return "statusOther";
-  };
-
   return (
     <main className="page-body">
       {isLoading ? (
@@ -271,32 +296,12 @@ const HostReservations = () => {
           </div>
 
           <div className={styles.tabs}>
-            <button className={activeTab === "ALL" ? styles.active : ""} onClick={() => setActiveTab("ALL")}>
-              All ({count("ALL")})
-            </button>
-            <button className={activeTab === "PAID" ? styles.active : ""} onClick={() => setActiveTab("PAID")}>
-              Upcoming ({count("PAID")})
-            </button>
-            <button
-              className={activeTab === "AWAITING_PAYMENT" ? styles.active : ""}
-              onClick={() => setActiveTab("AWAITING_PAYMENT")}>
-              Awaiting payment ({count("AWAITING_PAYMENT")})
-            </button>
-            <button
-              className={activeTab === "INQUIRY" ? styles.active : ""}
-              onClick={() => setActiveTab("INQUIRY")}
-            >
-              Requests ({count("INQUIRY")})
-            </button>
-            <button className={activeTab === "FAILED" ? styles.active : ""} onClick={() => setActiveTab("FAILED")}>
-              Failed ({count("FAILED")})
-            </button>
-            <button
-              className={activeTab === "DECLINED" ? styles.active : ""}
-              onClick={() => setActiveTab("DECLINED")}
-            >
-              Declined ({count("DECLINED")})
-            </button>
+            <TabButton tab="ALL" activeTab={activeTab} onSelect={setActiveTab} label={`All (${count("ALL")})`} />
+            <TabButton tab="PAID" activeTab={activeTab} onSelect={setActiveTab} label={`Upcoming (${count("PAID")})`} />
+            <TabButton tab="AWAITING_PAYMENT" activeTab={activeTab} onSelect={setActiveTab} label={`Awaiting payment (${count("AWAITING_PAYMENT")})`} />
+            <TabButton tab="INQUIRY" activeTab={activeTab} onSelect={setActiveTab} label={`Requests (${count("INQUIRY")})`} />
+            <TabButton tab="FAILED" activeTab={activeTab} onSelect={setActiveTab} label={`Failed (${count("FAILED")})`} />
+            <TabButton tab="DECLINED" activeTab={activeTab} onSelect={setActiveTab} label={`Declined (${count("DECLINED")})`} />
           </div>
 
           <div className={styles.list}>
@@ -447,18 +452,7 @@ const HostReservations = () => {
         <div className={styles.modalOverlay}>
           <div className={styles.modalBox}>
             <h3 className={styles.modalTitle}>Accept this request?</h3>
-            {confirmAccept.overlappingCount > 0 ? (
-              <p className={styles.modalText}>
-                There {confirmAccept.overlappingCount === 1 ? "is" : "are"}{" "}
-                <strong>{confirmAccept.overlappingCount}</strong> other pending request
-                {confirmAccept.overlappingCount > 1 ? "s" : ""} for overlapping dates on this property.
-                Accepting will automatically decline {confirmAccept.overlappingCount === 1 ? "it" : "them"}.
-              </p>
-            ) : (
-              <p className={styles.modalText}>
-                Are you sure you want to accept this request?
-              </p>
-            )}
+            <ModalText overlappingCount={confirmAccept.overlappingCount} />
             <div className={styles.modalActions}>
               <button
                 className={styles.btnAccept}
