@@ -7,7 +7,6 @@ import Description from "../components/description";
 import RangeCalendar from "./RangeCalendar";
 import WhereYoullStay from "../components/WhereYoullStay";
 import HostSection from "../components/HostSection";
-import ReviewsSection from "../components/ReviewsSection";
 import {
   getActiveCancellationPolicyId,
   parseHouseRules,
@@ -144,19 +143,6 @@ const PropertyContainer = ({
 
         <section id="listing-host" className="listing-section-block">
           <HostSection host={host} onContactHost={onContactHost} />
-        </section>
-
-        <section id="listing-reviews" className="listing-section-block">
-          <ReviewsSection
-            reviews={property?.reviews || []}
-            overallRating={property?.property?.rating ?? null}
-            totalReviews={
-              property?.property?.reviewCount ||
-              property?.property?.totalReviews ||
-              (property?.reviews?.length ?? 0)
-            }
-            categoryScores={property?.categoryScores || {}}
-          />
         </section>
 
         <section id="listing-policies" className="listing-section-block">
