@@ -147,6 +147,15 @@ describe("Refund Logic - 10 Test Scenarios", () => {
     let controller;
     let mockBookingService;
     let mockStripe;
+    const authEvent = { headers: { Authorization: "Bearer test_token" } };
+    const bookingDefaults = {
+      id: "booking123",
+      guestid: "guest123",
+      cancellation_policy: "flexible",
+      total_price: 100,
+      paymentid: "pi_test_123456",
+      status: "Confirmed",
+    };
 
     beforeEach(() => {
       mockStripe = {
@@ -189,28 +198,35 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       controller.stripe = mockStripe;
     });
 
-    it("should process refund successfully for Moderate policy 3 days before", async () => {
-      const now = new Date();
-      const arrivalDate = new Date(now.getTime() + 72 * 60 * 60 * 1000);
-      const bookingId = "booking_moderate_3d";
+    const arrivalDateHoursFromNow = (hours) => new Date(Date.now() + hours * 60 * 60 * 1000);
 
-      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({
-        response: {
-          id: bookingId,
-          guestid: "guest123",
-          cancellation_policy: "moderate",
-          arrivaldate: arrivalDate,
-          total_price: 100, // EUR 100
-          paymentid: "pi_test_123456",
-          status: "Confirmed",
-        },
+    const mockBooking = (overrides = {}) => {
+      const booking = {
+        ...bookingDefaults,
+        arrivaldate: arrivalDateHoursFromNow(25),
+        ...overrides,
+      };
+      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({ response: booking });
+      return booking;
+    };
+
+    const expectCancelRecord = (bookingId, refundInfo) => {
+      expect(mockBookingService.reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith(
+        bookingId,
+        "guest123",
+        refundInfo
+      );
+    };
+
+    it("should process refund successfully for Moderate policy 3 days before", async () => {
+      const bookingId = "booking_moderate_3d";
+      mockBooking({
+        id: bookingId,
+        cancellation_policy: "moderate",
+        arrivaldate: arrivalDateHoursFromNow(72),
       });
 
-      const event = {
-        headers: { Authorization: "Bearer test_token" },
-      };
-
-      const result = await controller.cancelBooking(bookingId, event);
+      const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.paymentIntents.retrieve).toHaveBeenCalledWith("pi_test_123456");
 
@@ -225,237 +241,115 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         }
       );
 
-      expect(mockBookingService.reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith(
-        bookingId,
-        "guest123",
-        {
-          refundedAmount: 5000,
-          stripeRefundId: "re_test_123456",
-          refundError: null,
-        }
-      );
+      expectCancelRecord(bookingId, {
+        refundedAmount: 5000,
+        stripeRefundId: "re_test_123456",
+        refundError: null,
+      });
 
       expect(result.statusCode).toBe(200);
     });
 
     it("should not create a second Stripe refund when the booking already has a refund id", async () => {
-      const now = new Date();
-      const arrivalDate = new Date(now.getTime() + 25 * 60 * 60 * 1000);
       const bookingId = "booking_already_refunded";
-
-      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({
-        response: {
-          id: bookingId,
-          guestid: "guest123",
-          cancellation_policy: "flexible",
-          arrivaldate: arrivalDate,
-          total_price: 100,
-          paymentid: "pi_test_already_refunded",
-          stripe_refund_id: "re_existing_123",
-          refunded_amount: 10000,
-          status: "Cancelled",
-        },
+      mockBooking({
+        id: bookingId,
+        paymentid: "pi_test_already_refunded",
+        stripe_refund_id: "re_existing_123",
+        refunded_amount: 10000,
+        status: "Cancelled",
       });
 
-      const event = {
-        headers: { Authorization: "Bearer test_token" },
-      };
-
-      const result = await controller.cancelBooking(bookingId, event);
+      const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.paymentIntents.retrieve).not.toHaveBeenCalled();
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expect(mockBookingService.reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith(
-        bookingId,
-        "guest123",
-        {
-          refundedAmount: 10000,
-          stripeRefundId: "re_existing_123",
-          refundError: null,
-        }
-      );
+      expectCancelRecord(bookingId, {
+        refundedAmount: 10000,
+        stripeRefundId: "re_existing_123",
+        refundError: null,
+      });
       expect(result.statusCode).toBe(200);
     });
 
     it("should not refund a non-EUR PaymentIntent", async () => {
-      const now = new Date();
-      const arrivalDate = new Date(now.getTime() + 25 * 60 * 60 * 1000);
       const bookingId = "booking_usd_payment";
-
-      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({
-        response: {
-          id: bookingId,
-          guestid: "guest123",
-          cancellation_policy: "flexible",
-          arrivaldate: arrivalDate,
-          total_price: 100,
-          paymentid: "pi_test_usd",
-          status: "Confirmed",
-        },
-      });
+      mockBooking({ id: bookingId, paymentid: "pi_test_usd" });
       mockStripe.paymentIntents.retrieve.mockResolvedValue({
         id: "pi_test_usd",
         currency: "usd",
         status: "succeeded",
       });
 
-      const event = {
-        headers: { Authorization: "Bearer test_token" },
-      };
-
-      const result = await controller.cancelBooking(bookingId, event);
+      const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expect(mockBookingService.reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith(
-        bookingId,
-        "guest123",
-        {
-          refundedAmount: 10000,
-          stripeRefundId: null,
-          refundError: "Cannot refund usd PaymentIntent pi_test_usd; expected eur.",
-        }
-      );
+      expectCancelRecord(bookingId, {
+        refundedAmount: 10000,
+        stripeRefundId: null,
+        refundError: "Cannot refund usd PaymentIntent pi_test_usd; expected eur.",
+      });
       expect(result.statusCode).toBe(200);
     });
 
     it("should not process refund for Flexible policy within 24h", async () => {
-      const now = new Date();
-      const arrivalDate = new Date(now.getTime() + 12 * 60 * 60 * 1000);
       const bookingId = "booking_flexible_12h";
-
-      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({
-        response: {
-          id: bookingId,
-          guestid: "guest123",
-          cancellation_policy: "flexible",
-          arrivaldate: arrivalDate,
-          total_price: 100,
-          paymentid: "pi_test_789012",
-          status: "Confirmed",
-        },
+      mockBooking({
+        id: bookingId,
+        arrivaldate: arrivalDateHoursFromNow(12),
+        paymentid: "pi_test_789012",
       });
 
-      const event = {
-        headers: { Authorization: "Bearer test_token" },
-      };
-
-      const result = await controller.cancelBooking(bookingId, event);
+      const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-
-      expect(mockBookingService.reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith(
-        bookingId,
-        "guest123",
-        {
-          refundedAmount: 0,
-          stripeRefundId: null,
-          refundError: null,
-        }
-      );
+      expectCancelRecord(bookingId, {
+        refundedAmount: 0,
+        stripeRefundId: null,
+        refundError: null,
+      });
 
       expect(result.statusCode).toBe(200);
     });
 
     it("should handle Stripe API errors gracefully and still cancel booking", async () => {
-      const now = new Date();
-      const arrivalDate = new Date(now.getTime() + 25 * 60 * 60 * 1000);
       const bookingId = "booking_stripe_error";
-
-      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({
-        response: {
-          id: bookingId,
-          guestid: "guest123",
-          cancellation_policy: "flexible",
-          arrivaldate: arrivalDate,
-          total_price: 100,
-          paymentid: "pi_test_failed",
-          status: "Confirmed",
-        },
-      });
-
+      mockBooking({ id: bookingId, paymentid: "pi_test_failed" });
       mockStripe.refunds.create.mockRejectedValue(new Error("Card declined"));
 
-      const event = {
-        headers: { Authorization: "Bearer test_token" },
-      };
+      const result = await controller.cancelBooking(bookingId, authEvent);
 
-      const result = await controller.cancelBooking(bookingId, event);
-
-      expect(mockBookingService.reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith(
-        bookingId,
-        "guest123",
-        {
-          refundedAmount: 10000,
-          stripeRefundId: null,
-          refundError: "Card declined",
-        }
-      );
+      expectCancelRecord(bookingId, {
+        refundedAmount: 10000,
+        stripeRefundId: null,
+        refundError: "Card declined",
+      });
 
       expect(result.statusCode).toBe(200);
     });
 
     it("should handle missing Stripe configuration", async () => {
-      const now = new Date();
-      const arrivalDate = new Date(now.getTime() + 25 * 60 * 60 * 1000);
       const bookingId = "booking_no_stripe";
-
-      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({
-        response: {
-          id: bookingId,
-          guestid: "guest123",
-          cancellation_policy: "flexible",
-          arrivaldate: arrivalDate,
-          total_price: 100,
-          paymentid: "pi_test_123",
-          status: "Confirmed",
-        },
-      });
-
+      mockBooking({ id: bookingId, paymentid: "pi_test_123" });
       controller.stripe = null;
 
-      const event = {
-        headers: { Authorization: "Bearer test_token" },
-      };
-
-      const result = await controller.cancelBooking(bookingId, event);
+      const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-
-      expect(mockBookingService.reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith(
-        bookingId,
-        "guest123",
-        {
-          refundedAmount: 10000,
-          stripeRefundId: null,
-          refundError: null,
-        }
-      );
+      expectCancelRecord(bookingId, {
+        refundedAmount: 10000,
+        stripeRefundId: null,
+        refundError: null,
+      });
 
       expect(result.statusCode).toBe(200);
     });
 
     it("should handle booking without payment ID", async () => {
-      const now = new Date();
-      const arrivalDate = new Date(now.getTime() + 25 * 60 * 60 * 1000);
       const bookingId = "booking_no_payment";
+      mockBooking({ id: bookingId, paymentid: null });
 
-      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({
-        response: {
-          id: bookingId,
-          guestid: "guest123",
-          cancellation_policy: "flexible",
-          arrivaldate: arrivalDate,
-          total_price: 100,
-          paymentid: null,
-          status: "Confirmed",
-        },
-      });
-
-      const event = {
-        headers: { Authorization: "Bearer test_token" },
-      };
-
-      const result = await controller.cancelBooking(bookingId, event);
+      const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
 
@@ -463,30 +357,18 @@ describe("Refund Logic - 10 Test Scenarios", () => {
     });
 
     it("should correctly round refund amounts in cents", async () => {
-      const now = new Date();
-      const arrivalDate = new Date(now.getTime() + 72 * 60 * 60 * 1000);
       const bookingId = "booking_rounding";
-
       const priceInEuros = 33.33;
       const priceInCents = Math.round(priceInEuros * 100);
-
-      mockBookingService.reservationRepository.getBookingById.mockResolvedValue({
-        response: {
-          id: bookingId,
-          guestid: "guest123",
-          cancellation_policy: "moderate",
-          arrivaldate: arrivalDate,
-          total_price: priceInEuros,
-          paymentid: "pi_test_odd",
-          status: "Confirmed",
-        },
+      mockBooking({
+        id: bookingId,
+        cancellation_policy: "moderate",
+        arrivaldate: arrivalDateHoursFromNow(72),
+        total_price: priceInEuros,
+        paymentid: "pi_test_odd",
       });
 
-      const event = {
-        headers: { Authorization: "Bearer test_token" },
-      };
-
-      await controller.cancelBooking(bookingId, event);
+      await controller.cancelBooking(bookingId, authEvent);
 
       const expectedRefund = Math.round(priceInCents * 0.5);
       expect(mockStripe.refunds.create).toHaveBeenCalledWith(
