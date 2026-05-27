@@ -359,6 +359,81 @@ const useWebsiteEditorOverlayLock = ({
   }, [closeIconPicker, closeImagePicker, isIconPickerOpen, isImagePickerOpen]);
 };
 
+const useWebsiteEditorDataLoader = ({
+  propertyId,
+  setBaseModel,
+  setDraftRecord,
+  setEditorValues,
+  setIsLoading,
+  setLoadError,
+  setSiteSummary,
+  setSiteSummaryError,
+  setThemeValues,
+}) => {
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadEditorState = async () => {
+      setIsLoading(true);
+      setLoadError("");
+      setSiteSummaryError("");
+
+      try {
+        const {
+          draft,
+          nextBaseModel,
+          nextEditorValues,
+          nextSiteSummary,
+          nextSiteSummaryError,
+          nextThemeValues,
+        } = await loadWebsiteEditorState(propertyId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setDraftRecord(draft);
+        setBaseModel(nextBaseModel);
+        setEditorValues(nextEditorValues);
+        setSiteSummary(nextSiteSummary);
+        setSiteSummaryError(nextSiteSummaryError);
+        setThemeValues(nextThemeValues);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setDraftRecord(null);
+        setBaseModel(null);
+        setEditorValues(createEmptyWebsiteDraftEditorValues());
+        setSiteSummary(null);
+        setThemeValues(createEmptyWebsiteDraftThemeEditorValues());
+        setLoadError(error?.message || "We could not open this website draft.");
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadEditorState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    propertyId,
+    setBaseModel,
+    setDraftRecord,
+    setEditorValues,
+    setIsLoading,
+    setLoadError,
+    setSiteSummary,
+    setSiteSummaryError,
+    setThemeValues,
+  ]);
+};
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -429,58 +504,17 @@ function WebsiteEditorPage() {
     setExpandedSections,
   });
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadEditorState = async () => {
-      setIsLoading(true);
-      setLoadError("");
-      setSiteSummaryError("");
-
-      try {
-        const {
-          draft,
-          nextBaseModel,
-          nextEditorValues,
-          nextSiteSummary,
-          nextSiteSummaryError,
-          nextThemeValues,
-        } = await loadWebsiteEditorState(propertyId);
-
-        if (!isMounted) {
-          return;
-        }
-
-        setDraftRecord(draft);
-        setBaseModel(nextBaseModel);
-        setEditorValues(nextEditorValues);
-        setSiteSummary(nextSiteSummary);
-        setSiteSummaryError(nextSiteSummaryError);
-        setThemeValues(nextThemeValues);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        setDraftRecord(null);
-        setBaseModel(null);
-        setEditorValues(createEmptyWebsiteDraftEditorValues());
-        setSiteSummary(null);
-        setThemeValues(createEmptyWebsiteDraftThemeEditorValues());
-        setLoadError(error?.message || "We could not open this website draft.");
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadEditorState();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [propertyId]);
+  useWebsiteEditorDataLoader({
+    propertyId,
+    setBaseModel,
+    setDraftRecord,
+    setEditorValues,
+    setIsLoading,
+    setLoadError,
+    setSiteSummary,
+    setSiteSummaryError,
+    setThemeValues,
+  });
 
   const draftTemplate = getWebsiteTemplateById(draftRecord?.templateKey);
   const commonTextFields = getCommonTextFields(draftRecord?.templateKey);

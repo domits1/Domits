@@ -42,7 +42,7 @@ const normalizeStringDateKey = (value) => {
 };
 
 const collectNormalizedDateKeys = (items, getDateKey) =>
-  sortUniqueDateKeys((Array.isArray(items) ? items : []).map(getDateKey).filter(Boolean));
+  sortUniqueDateKeys((Array.isArray(items) ? items : []).map((item) => getDateKey(item)).filter(Boolean));
 
 export const buildBlockedDateKeys = (bookings) => {
   const blockedDateKeys = new Set();
