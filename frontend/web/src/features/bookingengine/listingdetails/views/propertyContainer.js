@@ -146,15 +146,6 @@ const PropertyContainer = ({
           <HostSection host={host} onContactHost={onContactHost} />
         </section>
 
-        <section id="listing-location" className="listing-section-block">
-          <div className="location-placeholder">
-            <h3 className="location-placeholder__title">Location</h3>
-            <div className="location-placeholder__map">
-              <span className="location-placeholder__label">Map coming soon</span>
-            </div>
-          </div>
-        </section>
-
         <section id="listing-reviews" className="listing-section-block">
           <ReviewsSection
             reviews={property?.reviews || []}
