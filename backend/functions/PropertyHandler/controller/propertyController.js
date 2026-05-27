@@ -10,6 +10,7 @@ import { DirectBookingWebsiteEventRepository } from "../data/repository/directBo
 import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
 import { randomUUID } from "node:crypto";
+import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
@@ -206,6 +207,9 @@ export class PropertyController {
             if (imageUploadMode === "presigned" && propertyId) {
                 await this.propertyDraftRepository.deleteDraft(propertyId);
             }
+
+            await new PriceLabsCalendarNotifier().notifyListingChange(userId);
+
             return {
                 statusCode: 201,
                 headers: responseHeaders,
@@ -479,7 +483,7 @@ export class PropertyController {
 
             const normalizedOverviewPayload = this.normalizeOverviewPayload(overviewPayload);
 
-            await this.authManager.authorizeOwnerRequest(accessToken, normalizedOverviewPayload.propertyId);
+            const hostId = await this.authManager.authorizeOwnerRequest(accessToken, normalizedOverviewPayload.propertyId);
             await this.propertyService.updatePropertyOverview(
                 normalizedOverviewPayload.propertyId,
                 normalizedOverviewPayload.title,
@@ -496,6 +500,8 @@ export class PropertyController {
                     bookingType: normalizedOverviewPayload.bookingType,
                 }
             );
+
+            await new PriceLabsCalendarNotifier().notifyListingChange(hostId);
 
             return {
                 statusCode: 204,
@@ -572,13 +578,15 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const hostId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.updatePropertyCalendarOverrides(
                 propertyId,
                 normalizedOverrides,
                 normalizedRange
             );
+
+            await new PriceLabsCalendarNotifier().notifyCalendarChange(hostId);
 
             return {
                 statusCode: 200,
@@ -1897,12 +1905,42 @@ export class PropertyController {
     }
 
     // -------------------------
+    // GET /property/hostDashboard/byHostId
+    // -------------------------
+    async getFullOwnedPropertiesByHostId(event) {
+        try {
+            const accessToken = event.headers.Authorization;
+            await this.authManager.getAuthorizedUser(accessToken);
+            const hostId = event.queryStringParameters?.hostId;
+            if (!hostId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("hostId query parameter is required.")
+                };
+            }
+            const properties = await this.propertyService.getFullPropertiesByHostId(hostId);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(properties)
+            };
+        } catch (error) {
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    // -------------------------
     // GET /property/hostDashboard/single
     // -------------------------
     async getFullOwnedPropertyById(event) {
         try {
             const propertyId = event.queryStringParameters.property;
-            await this.authManager.authorizeOwnerRequest(event.headers.Authorization, propertyId);
+            await this.authManager.getAuthorizedUser(event.headers.Authorization);
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,

@@ -22,6 +22,7 @@ export default function PhotoBrowserOverlay({
   initialIndex = 0,
   isOpen,
   onClose,
+  showSideZones = false,
   resolveImageSrc = defaultResolveImageSrc,
   resolveThumbSrc = defaultResolveThumbSrc,
   resolveImageKey = defaultResolveImageKey,
@@ -30,6 +31,14 @@ export default function PhotoBrowserOverlay({
   const [activeIndex, setActiveIndex] = useState(0);
   const normalizedImages = Array.isArray(images) ? images : [];
   const canBrowse = normalizedImages.length > 1;
+  const goToPreviousImage = () => {
+    setActiveIndex((currentIndex) =>
+      currentIndex === 0 ? normalizedImages.length - 1 : currentIndex - 1
+    );
+  };
+  const goToNextImage = () => {
+    setActiveIndex((currentIndex) => (currentIndex + 1) % normalizedImages.length);
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -58,13 +67,11 @@ export default function PhotoBrowserOverlay({
       }
 
       if (event.key === "ArrowLeft") {
-        setActiveIndex((currentIndex) =>
-          currentIndex === 0 ? normalizedImages.length - 1 : currentIndex - 1
-        );
+        goToPreviousImage();
       }
 
       if (event.key === "ArrowRight") {
-        setActiveIndex((currentIndex) => (currentIndex + 1) % normalizedImages.length);
+        goToNextImage();
       }
     };
 
@@ -93,15 +100,30 @@ export default function PhotoBrowserOverlay({
         ×
       </button>
 
+      {showSideZones ? (
+        <>
+          <button
+            type="button"
+            className="nav-side-zone left"
+            onClick={goToPreviousImage}
+            disabled={!canBrowse}
+            aria-label="Previous image"
+          />
+          <button
+            type="button"
+            className="nav-side-zone right"
+            onClick={goToNextImage}
+            disabled={!canBrowse}
+            aria-label="Next image"
+          />
+        </>
+      ) : null}
+
       <div className="overlay-center-wrapper">
         <button
           type="button"
           className="nav-button left"
-          onClick={() =>
-            setActiveIndex((currentIndex) =>
-              currentIndex === 0 ? normalizedImages.length - 1 : currentIndex - 1
-            )
-          }
+          onClick={goToPreviousImage}
           disabled={!canBrowse}
           aria-label="Previous image"
         >
@@ -117,7 +139,7 @@ export default function PhotoBrowserOverlay({
         <button
           type="button"
           className="nav-button right"
-          onClick={() => setActiveIndex((currentIndex) => (currentIndex + 1) % normalizedImages.length)}
+          onClick={goToNextImage}
           disabled={!canBrowse}
           aria-label="Next image"
         >
@@ -152,6 +174,7 @@ PhotoBrowserOverlay.propTypes = {
   initialIndex: PropTypes.number,
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
+  showSideZones: PropTypes.bool,
   resolveImageSrc: PropTypes.func,
   resolveThumbSrc: PropTypes.func,
   resolveImageKey: PropTypes.func,

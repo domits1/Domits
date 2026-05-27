@@ -31,21 +31,24 @@ const Login = () => {
   const inputRef = useRef([]);
 
   useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      const user = await Auth.currentAuthenticatedUser();
+    const checkAuth = async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
 
-      if (redirect) return;
+        if (redirect) {
+          window.location.href = redirect;
+          return;
+        }
 
-      const group = user.attributes["custom:group"];
+        const group = user.attributes["custom:group"];
 
-      if (group === "Host") navigate("/hostdashboard");
-      else navigate("/guestdashboard");
-    } catch {}
-  };
+        if (group === "Host") navigate("/hostdashboard");
+        else navigate("/guestdashboard");
+      } catch {}
+    };
 
-  checkAuth();
-}, [navigate, redirect]);
+    checkAuth();
+  }, [navigate, redirect]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -62,9 +65,11 @@ const Login = () => {
       await Auth.signIn(formData.email, formData.password);
       globalThis.dispatchEvent(new Event("authChanged"));
 
-      redirect
-        ? navigate(redirect)
-        : globalThis.location.reload();
+      if (redirect) {
+        window.location.href = redirect;
+      } else {
+        globalThis.location.reload();
+      }
     } catch {
       setErrorMessage("Invalid email or password");
       setIsSigningIn(false);
@@ -246,7 +251,7 @@ const Login = () => {
               </button>
             </form>
 
-            <div className="bottomText">Don’t have an account?</div>
+            <div className="bottomText">Don't have an account?</div>
 
             <button
               className="registerBtn"

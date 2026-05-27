@@ -19,6 +19,7 @@ import ChannexBookingAvailabilityClient, {
   CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
   createBookingAvailabilityFallbackEvidence,
 } from "./channexBookingAvailabilityClient.js";
+import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
 const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
@@ -42,6 +43,7 @@ class BookingService {
     getParamsModel = new GetParamsModel(),
     externalCalendarService = new ExternalCalendarService(),
     channexBookingAvailabilityClient = new ChannexBookingAvailabilityClient(),
+    priceLabsBookingNotifier = new PriceLabsBookingNotifier(),
     sendEmailFn = sendEmail,
     getHostEmailByIdFn = getHostEmailById,
   } = {}) {
@@ -53,6 +55,7 @@ class BookingService {
     this.getParamsModel = getParamsModel;
     this.externalCalendarService = externalCalendarService;
     this.channexBookingAvailabilityClient = channexBookingAvailabilityClient;
+    this.priceLabsBookingNotifier = priceLabsBookingNotifier;
     this.sendEmail = sendEmailFn;
     this.getHostEmailById = getHostEmailByIdFn;
   }
@@ -129,6 +132,8 @@ class BookingService {
       bookingAfter,
       trigger: TRIGGER_BOOKING_CREATED,
     });
+
+    await this.priceLabsBookingNotifier.notifyBookingChange(fetchedProperty.hostId, "booking_created");
 
     return {
       ...result,
@@ -255,12 +260,23 @@ class BookingService {
     const booking = bookingResult.response;
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
     if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
+
     await this.reservationRepository.updateBookingStatus(bookingId, BOOKING_STATUS_AWAITING_PAYMENT);
+
+    const overlapping = await this.reservationRepository.getOverlappingInquiries({
+      propertyId: booking.property_id,
+      arrivalDateMs: booking.arrivaldate,
+      departureDateMs: booking.departuredate,
+      excludeBookingId: bookingId,
+    });
+    await Promise.all(overlapping.map((b) => this.reservationRepository.updateBookingStatus(b.id, "Declined")));
+
     return {
       bookingId,
       status: BOOKING_STATUS_AWAITING_PAYMENT,
       hostId: booking.hostid,
       propertyId: booking.property_id,
+      declinedCount: overlapping.length,
       dates: {
         arrivalDate: booking.arrivaldate,
         departureDate: booking.departuredate,
@@ -385,6 +401,8 @@ class BookingService {
       trigger: TRIGGER_BOOKING_MODIFIED,
       includeDisabledEvidence: true,
     });
+
+    await this.priceLabsBookingNotifier.notifyBookingChange(bookingAfter.hostid, "booking_modified");
 
     return {
       booking: bookingAfter,

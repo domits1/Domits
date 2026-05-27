@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Auth } from 'aws-amplify';
 import useEffectiveHostId from '../../hooks/useEffectiveHostId';
@@ -10,6 +10,7 @@ import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, getAttachmentViewUrl } from './services/taskService';
 import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
+import { fetchTeamMembers, fetchMemberships, inviteTeamMember } from './services/teamService';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
     PieChart, Pie, Cell 
@@ -171,6 +172,7 @@ const HostPropertyCare = () => {
 
     const [taskContext, setTaskContext] = useState('own');
     const asHostId = taskContext === 'managed' ? managedHostId : null;
+    const loadRequestRef = useRef(0);
 
     const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
@@ -191,8 +193,14 @@ const HostPropertyCare = () => {
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
 
-    const [currentUser, setCurrentUser] = useState({ name: '', email: '' });
-    const [openDropdown, setOpenDropdown] = useState(null); 
+    const [currentUser, setCurrentUser] = useState({ name: '', email: '', group: '' });
+    const [openDropdown, setOpenDropdown] = useState(null);
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [teamMemberships, setTeamMemberships] = useState([]);
+    const [showTeamInviteModal, setShowTeamInviteModal] = useState(false);
+    const [teamInviteEmail, setTeamInviteEmail] = useState('');
+    const [teamInviteError, setTeamInviteError] = useState('');
+    const [teamInviteSent, setTeamInviteSent] = useState(false);
 
     useEffect(() => {
         Auth.currentAuthenticatedUser()
@@ -201,9 +209,15 @@ const HostPropertyCare = () => {
                 setCurrentUser({
                     name: attrs.given_name || attrs.name || u.username || '',
                     email: attrs.email || '',
+                    group: attrs['custom:group'] || '',
                 });
             })
             .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        fetchTeamMembers().then(setTeamMembers).catch(() => {});
+        fetchMemberships().then(setTeamMemberships).catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -282,9 +296,26 @@ const HostPropertyCare = () => {
         setSettingsDraft({ ...settings });
     };
 
-    const TEAM_MEMBERS = currentUser.name
-        ? [{ name: currentUser.name, role: 'Host', email: currentUser.email, properties: 'All', status: 'Active' }]
-        : [];
+    const TEAM_MEMBERS = useMemo(() => {
+        const rows = [];
+        if (taskContext === 'managed' && managedHostId) {
+            const membership = teamMemberships.find(m => m.host_id === managedHostId);
+            const hostName = membership?.host_name || membership?.host_email || managedHostId;
+            const hostEmail = membership?.host_email || managedHostId;
+            rows.push({ name: hostName, role: 'Host', email: hostEmail, properties: 'All', status: 'Active' });
+            if (currentUser.name) {
+                rows.push({ name: currentUser.name, role: 'Property Operations Manager', email: currentUser.email, properties: 'All', status: 'Active' });
+            }
+        } else {
+            if (currentUser.name) {
+                rows.push({ name: currentUser.name, role: 'Host', email: currentUser.email, properties: 'All', status: 'Active' });
+            }
+            teamMembers
+                .filter(m => m.status === 'active' && m.member_email !== currentUser.email)
+                .forEach(m => rows.push({ name: m.member_name || m.member_email, role: m.role, email: m.member_email, properties: 'All', status: 'Active' }));
+        }
+        return rows;
+    }, [currentUser, teamMembers, teamMemberships, taskContext, managedHostId]);
 
     const INTEGRATIONS = [
         { name: 'Airbnb', logo: '🏠', connected: false },
@@ -436,19 +467,25 @@ const HostPropertyCare = () => {
     }, [tasks]);
 
     const loadData = async () => {
+        const requestId = ++loadRequestRef.current;
         setIsLoading(true);
-        const data = await fetchTasks({}, asHostId);
-        
-        const todayStr = new Date().toISOString().split('T')[0];
-        const processedTasks = data.map(task => {
-            if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
-                return { ...task, status: 'Overdue', priority: 'Urgent' };
-            }
-            return task;
-        });
-
-        setTasks(processedTasks);
-        setIsLoading(false);
+        try {
+            const data = await fetchTasks({}, asHostId);
+            if (requestId !== loadRequestRef.current) return;
+            const todayStr = new Date().toISOString().split('T')[0];
+            const processedTasks = data.map(task => {
+                if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
+                    return { ...task, status: 'Overdue', priority: 'Urgent' };
+                }
+                return task;
+            });
+            setTasks(processedTasks);
+        } catch {
+            if (requestId !== loadRequestRef.current) return;
+            setTasks([]);
+        } finally {
+            if (requestId === loadRequestRef.current) setIsLoading(false);
+        }
     };
 
     const handleCreateTask = async (e) => {
@@ -873,7 +910,9 @@ const HostPropertyCare = () => {
                     <div className="settings-card settings-team-card">
                         <div className="settings-card-header">
                             <h3 className="settings-card-title">Team Members</h3>
-                            <button className="btn-primary-green" disabled>+ Invite Member</button>
+                            {taskContext !== 'managed' && (
+                                <button className="btn-primary-green" onClick={() => setShowTeamInviteModal(true)}>+ Invite Member</button>
+                            )}
                         </div>
                         <table className="settings-team-table">
                             <thead>
@@ -975,6 +1014,51 @@ const HostPropertyCare = () => {
                 <button className="settings-cancel-btn" onClick={handleCancelSettings} disabled={!settingsChanged}>Cancel</button>
                 <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!settingsChanged}>Save changes</button>
             </div>
+
+            {showTeamInviteModal && (
+                <div className="team-modal-overlay">
+                    <dialog className="team-modal" open aria-modal="true" aria-labelledby="hk-invite-title">
+                        <h3 id="hk-invite-title">Invite team member</h3>
+                        {teamInviteSent ? (
+                            <p className="team-invite-success">✓ Invitation sent to {teamInviteEmail}</p>
+                        ) : (
+                            <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                setTeamInviteError('');
+                                try {
+                                    const created = await inviteTeamMember(teamInviteEmail, 'Property Operations Manager');
+                                    setTeamMembers(prev => [...prev, created]);
+                                    setTeamInviteSent(true);
+                                    setTimeout(() => {
+                                        setTeamInviteSent(false);
+                                        setTeamInviteEmail('');
+                                        setShowTeamInviteModal(false);
+                                    }, 2500);
+                                } catch {
+                                    setTeamInviteError('Failed to send invitation. Please try again.');
+                                }
+                            }}>
+                                <label className="team-modal-label">
+                                    <span>Email address</span>
+                                    <input
+                                        type="email"
+                                        className="team-modal-input"
+                                        placeholder="colleague@example.com"
+                                        value={teamInviteEmail}
+                                        onChange={(e) => setTeamInviteEmail(e.target.value)}
+                                        required
+                                    />
+                                </label>
+                                {teamInviteError && <p className="team-invite-error">{teamInviteError}</p>}
+                                <div className="team-modal-actions">
+                                    <button type="submit" className="team-invite-btn">Send invitation</button>
+                                    <button type="button" className="team-cancel-btn" onClick={() => setShowTeamInviteModal(false)}>Cancel</button>
+                                </div>
+                            </form>
+                        )}
+                    </dialog>
+                </div>
+            )}
         </div>
     );
 

@@ -12,9 +12,8 @@ class ReservationController {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
   }
-  // -----------
+
   // POST
-  // -----------
 
   async create(event) {
     try {
@@ -50,9 +49,8 @@ class ReservationController {
     }
   }
 
-  // -----------
   // PATCH
-  // -----------
+
   async patch(event) {
     try {
       const cancelBookingId = this.getCancelBookingId(event);
@@ -199,6 +197,8 @@ class ReservationController {
 
     const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub);
 
+    await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
+
     return {
       statusCode: canceled.statusCode || 200,
       headers: responseHeaderJSON,
@@ -206,9 +206,7 @@ class ReservationController {
     };
   }
 
-  // -----------
   // GET
-  // -----------
 
   async read(event) {
     try {

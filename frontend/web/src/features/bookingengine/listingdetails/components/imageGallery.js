@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import IosShareIcon from "@mui/icons-material/IosShare";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
+import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
 import {
   resolveAccommodationImageUrl,
   resolveAccommodationImageKey,
@@ -17,7 +18,7 @@ import {
   isPropertyInAnyWishlist,
 } from "../../../guestdashboard/services/wishlistService";
 
-const ImageGallery = ({ images, propertyTitle, propertyId }) => {
+const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -122,6 +123,18 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
           </div>
         ) : null}
 
+        {images.length > 0 ? (
+          <button
+            type="button"
+            className="view-all-photos-btn"
+            onClick={() => openOverlayAtIndex(0)}
+            aria-label="View all photos"
+          >
+            <PhotoLibraryIcon fontSize="small" />
+            View all photos
+          </button>
+        ) : null}
+
         <div className="small-images-container">
           {thumbs.map((image, index) => (
             <button
@@ -142,6 +155,7 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
         initialIndex={activeIndex}
         isOpen={showOverlay}
         onClose={() => setShowOverlay(false)}
+        showSideZones={true}
         resolveImageSrc={toMainSrc}
         resolveThumbSrc={toThumbSrc}
         resolveImageKey={(image, index) => resolveAccommodationImageKey(image, "web") || index}
@@ -176,7 +190,7 @@ const ImageGallery = ({ images, propertyTitle, propertyId }) => {
 };
 
 ImageGallery.propTypes = {
-  images: PropTypes.array.isRequired,
+  images: PropTypes.array,
   propertyTitle: PropTypes.string,
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
