@@ -43,7 +43,7 @@ export const Invoice = new EntitySchema({
     arrival_date: {
       type: "bigint",
       transformer: {
-        from: (value) => Number(value),
+        from: Number,
         to: (value) => value,
       },
       nullable: false,
@@ -51,7 +51,7 @@ export const Invoice = new EntitySchema({
     departure_date: {
       type: "bigint",
       transformer: {
-        from: (value) => Number(value),
+        from: Number,
         to: (value) => value,
       },
       nullable: false,
@@ -93,7 +93,7 @@ export const Invoice = new EntitySchema({
     created_at: {
       type: "bigint",
       transformer: {
-        from: (value) => Number(value),
+        from: Number,
         to: (value) => value,
       },
       nullable: false,

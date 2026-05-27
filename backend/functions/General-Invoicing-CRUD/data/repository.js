@@ -4,7 +4,7 @@ import { Booking } from "database/models/Booking";
 import { DatabaseException } from "../util/exception/databaseException.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 
-const COMMISSION_RATE = 0.10;
+const COMMISSION_RATE = 0.1;
 
 function generateInvoiceNumber(sequenceNumber) {
   const year = new Date().getFullYear();
@@ -18,7 +18,7 @@ async function getNextSequenceNumber(client) {
     .createQueryBuilder("invoice")
     .select("COUNT(invoice.id)", "count")
     .getRawOne();
-  return parseInt(result?.count || "0", 10) + 1;
+  return Number.parseInt(result?.count || "0", 10) + 1;
 }
 
 export class Repository {
@@ -48,9 +48,9 @@ export class Repository {
       return existing;
     }
 
-    const grossAmount = parseFloat(Number(totalAmount).toFixed(2));
-    const commissionAmount = parseFloat((grossAmount * COMMISSION_RATE).toFixed(2));
-    const netAmount = parseFloat((grossAmount - commissionAmount).toFixed(2));
+    const grossAmount = Number.parseFloat(Number(totalAmount).toFixed(2));
+    const commissionAmount = Number.parseFloat((grossAmount * COMMISSION_RATE).toFixed(2));
+    const netAmount = Number.parseFloat((grossAmount - commissionAmount).toFixed(2));
 
     const sequenceNumber = await getNextSequenceNumber(client);
     const invoiceNumber = generateInvoiceNumber(sequenceNumber);
@@ -69,7 +69,7 @@ export class Repository {
         arrival_date: Number(booking.arrivaldate),
         departure_date: Number(booking.departuredate),
         nights: Number(nights),
-        rate_per_night: parseFloat(Number(ratePerNight).toFixed(2)),
+        rate_per_night: Number.parseFloat(Number(ratePerNight).toFixed(2)),
         gross_amount: grossAmount,
         commission_amount: commissionAmount,
         net_amount: netAmount,
