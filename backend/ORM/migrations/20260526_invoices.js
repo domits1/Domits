@@ -20,9 +20,9 @@ export class Invoices20260526 {
         created_at BIGINT NOT NULL
       );
 
-      CREATE INDEX IF NOT EXISTS idx_invoice_host_id ON main.invoice (host_id);
-      CREATE INDEX IF NOT EXISTS idx_invoice_booking_id ON main.invoice (booking_id);
-      CREATE INDEX IF NOT EXISTS idx_invoice_created_at ON main.invoice (created_at);
+      CREATE INDEX ASYNC idx_invoice_host_id ON main.invoice (host_id);
+      CREATE INDEX ASYNC idx_invoice_booking_id ON main.invoice (booking_id);
+      CREATE INDEX ASYNC idx_invoice_created_at ON main.invoice (created_at);
     `);
   }
 
