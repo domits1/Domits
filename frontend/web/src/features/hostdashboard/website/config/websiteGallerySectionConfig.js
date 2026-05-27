@@ -1,8 +1,8 @@
 import {
   DEFAULT_WEBSITE_SECTION_PANEL_COLOR,
-  normalizeWebsiteSectionPanelColorOverride,
   resolveWebsiteSectionPanelColor,
 } from "./websiteSectionPanelConfig";
+export { normalizeWebsiteSectionPanelColorOverride as normalizeWebsiteGalleryPanelColorOverride } from "./websiteSectionPanelConfig";
 
 export const DEFAULT_WEBSITE_GALLERY_PANEL_COLORS = Object.freeze({
   default: DEFAULT_WEBSITE_SECTION_PANEL_COLOR,
@@ -15,7 +15,3 @@ export const getDefaultWebsiteGalleryPanelColor = (templateKey = "") =>
 
 export const resolveWebsiteGalleryPanelColor = (value, templateKey = "") =>
   resolveWebsiteSectionPanelColor(value, getDefaultWebsiteGalleryPanelColor(templateKey));
-
-export {
-  normalizeWebsiteSectionPanelColorOverride as normalizeWebsiteGalleryPanelColorOverride,
-};

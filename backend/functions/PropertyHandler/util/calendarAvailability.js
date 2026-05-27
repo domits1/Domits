@@ -31,6 +31,11 @@ const toUtcDateKey = (date) =>
     date.getUTCDate()
   ).padStart(2, "0")}`;
 
+const sortUniqueDateKeys = (dateKeys) =>
+  Array.from(new Set(Array.isArray(dateKeys) ? dateKeys : Array.from(dateKeys || []))).sort(
+    (leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey)
+  );
+
 export const buildBlockedDateKeys = (bookings) => {
   const blockedDateKeys = new Set();
 
@@ -55,15 +60,15 @@ export const buildBlockedDateKeys = (bookings) => {
     }
   });
 
-  return Array.from(blockedDateKeys).sort((leftDateKey, rightDateKey) =>
-    leftDateKey.localeCompare(rightDateKey)
-  );
+  return sortUniqueDateKeys(blockedDateKeys);
 };
 
 export const normalizeBlockedDateKeys = (dateKeys) =>
-  (Array.isArray(dateKeys) ? dateKeys : [])
-    .map((dateKey) => String(dateKey || "").trim())
-    .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey));
+  sortUniqueDateKeys(
+    (Array.isArray(dateKeys) ? dateKeys : [])
+      .map((dateKey) => String(dateKey || "").trim())
+      .filter((dateKey) => DATE_KEY_PATTERN.test(dateKey))
+  );
 
 export const normalizeOverrideDateKey = (value) => {
   const numericValue = Number(value);
@@ -79,7 +84,9 @@ export const normalizeOverrideDateKey = (value) => {
 };
 
 export const extractUnavailableOverrideDateKeys = (overrides) =>
-  (Array.isArray(overrides) ? overrides : [])
-    .filter((override) => override?.isAvailable === false)
-    .map((override) => normalizeOverrideDateKey(override?.date))
-    .filter(Boolean);
+  sortUniqueDateKeys(
+    (Array.isArray(overrides) ? overrides : [])
+      .filter((override) => override?.isAvailable === false)
+      .map((override) => normalizeOverrideDateKey(override?.date))
+      .filter(Boolean)
+  );

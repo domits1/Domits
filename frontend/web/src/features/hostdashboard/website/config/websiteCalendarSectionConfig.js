@@ -1,8 +1,8 @@
 import {
   DEFAULT_WEBSITE_SECTION_PANEL_COLOR,
-  normalizeWebsiteSectionPanelColorOverride,
   resolveWebsiteSectionPanelColor,
 } from "./websiteSectionPanelConfig";
+export { normalizeWebsiteSectionPanelColorOverride as normalizeWebsiteCalendarPanelColorOverride } from "./websiteSectionPanelConfig";
 
 export const DEFAULT_WEBSITE_CALENDAR_PANEL_COLORS = Object.freeze({
   default: DEFAULT_WEBSITE_SECTION_PANEL_COLOR,
@@ -52,5 +52,3 @@ export const resolveWebsiteCalendarPanelColor = (value, templateKey = "") => {
     getDefaultWebsiteCalendarPanelColor(templateKey)
   );
 };
-
-export { normalizeWebsiteSectionPanelColorOverride as normalizeWebsiteCalendarPanelColorOverride };

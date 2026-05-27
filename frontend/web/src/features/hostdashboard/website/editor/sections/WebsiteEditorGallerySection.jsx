@@ -4,7 +4,11 @@ import {
   getDefaultWebsiteGalleryPanelColor,
   resolveWebsiteGalleryPanelColor,
 } from "../../config/websiteGallerySectionConfig";
-import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../../websiteEditorConfig";
+import {
+  EDITOR_SECTION_KEYS,
+  EDITOR_TARGET_KEYS,
+  getGalleryFieldPreviewTargetId,
+} from "../../websiteEditorConfig";
 import { CollapsibleSection, TextField } from "../WebsiteEditorFields";
 import { WebsiteEditorVisibilityToggleCard } from "../WebsiteEditorVisibilityToggleCard";
 import { WebsiteEditorImageSlotCard } from "../WebsiteEditorImageSlotCard";
@@ -59,12 +63,7 @@ export function WebsiteEditorGallerySection({
     >
       <div className={styles.fieldStack}>
         {galleryTextFields.map((field) => {
-          const targetId =
-            field.key === "title"
-              ? EDITOR_TARGET_KEYS.gallery.title
-              : field.key === "browseLabel"
-                ? EDITOR_TARGET_KEYS.gallery.browseLabel
-                : EDITOR_TARGET_KEYS.gallery.description;
+          const targetId = getGalleryFieldPreviewTargetId(field.key);
 
           return (
             <TextField

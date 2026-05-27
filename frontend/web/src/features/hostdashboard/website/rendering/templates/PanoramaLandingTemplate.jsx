@@ -654,15 +654,15 @@ const renderPanoramaGallerySection = ({
   }
 
   const galleryRevealProps = getScrollRevealProps(100);
-  const galleryPanelStyle =
-    model.gallerySection?.showPanel !== false
-      ? {
-          backgroundColor: resolveWebsiteGalleryPanelColor(
-            model.gallerySection?.panelColor,
-            "panorama-landing"
-          ),
-        }
-      : undefined;
+  const showGalleryPanel = model.gallerySection?.showPanel !== false;
+  const galleryPanelStyle = showGalleryPanel
+    ? {
+        backgroundColor: resolveWebsiteGalleryPanelColor(
+          model.gallerySection?.panelColor,
+          "panorama-landing"
+        ),
+      }
+    : undefined;
   const gallerySectionStyle = galleryPanelStyle
     ? {
         ...galleryRevealProps.style,
@@ -675,7 +675,7 @@ const renderPanoramaGallerySection = ({
       id="gallery"
       {...getInteractiveTargetProps(
         `${styles.panoramaGallerySection} ${
-          model.gallerySection?.showPanel !== false ? styles.panoramaGallerySectionPanel : ""
+          showGalleryPanel ? styles.panoramaGallerySectionPanel : ""
         }`.trim(),
         onSelectTarget,
         {

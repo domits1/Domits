@@ -190,6 +190,18 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
   journeyStops: (index) => `journeyStops.${index}`,
 });
 
+export const getGalleryFieldPreviewTargetId = (fieldKey) => {
+  if (fieldKey === "title") {
+    return EDITOR_TARGET_KEYS.gallery.title;
+  }
+
+  if (fieldKey === "browseLabel") {
+    return EDITOR_TARGET_KEYS.gallery.browseLabel;
+  }
+
+  return EDITOR_TARGET_KEYS.gallery.description;
+};
+
 export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
   [PANORAMA_TEMPLATE_KEY]: [
     createVisibilityField("topBar", "Show top bar", "Keep or hide the navigation strip at the top of the page."),

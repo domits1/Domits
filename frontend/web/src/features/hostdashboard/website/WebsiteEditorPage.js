@@ -50,6 +50,7 @@ import {
   getCommonTextFields,
   getContactSectionFields,
   getCollectionTargetId,
+  getGalleryFieldPreviewTargetId,
   getGalleryToggleFields,
   getGalleryTextFields,
   getImageSlotTargetId,
@@ -325,6 +326,7 @@ function WebsiteEditorPage() {
       field.key !== "availabilityCalendar" &&
       field.key !== "gallerySection"
   );
+  const showWhatsAppSetupHint = hasWhatsAppWidget === false;
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
   const residenceImageSlot = imageSlots.find((slot) => slot.kind === "residence") || null;
   const galleryImageSlots =
@@ -1070,12 +1072,7 @@ function WebsiteEditorPage() {
 
   const handleGallerySectionFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
-    const previewTargetId =
-      fieldKey === "title"
-        ? EDITOR_TARGET_KEYS.gallery.title
-        : fieldKey === "browseLabel"
-          ? EDITOR_TARGET_KEYS.gallery.browseLabel
-          : EDITOR_TARGET_KEYS.gallery.description;
+    const previewTargetId = getGalleryFieldPreviewTargetId(fieldKey);
     setPreviewTargetId(previewTargetId);
     setEditorValues((currentValues) => ({
       ...currentValues,
@@ -1733,7 +1730,7 @@ function WebsiteEditorPage() {
                     sectionRef={setSectionRef(EDITOR_SECTION_KEYS.visibility)}
                   >
                     <div className={styles.toggleStack}>
-                      {!hasWhatsAppWidget ? (
+                      {showWhatsAppSetupHint ? (
                         <p className={styles.helperText}>
                           Connect WhatsApp in the integrations marketplace to unlock direct guest contact
                           on the website.

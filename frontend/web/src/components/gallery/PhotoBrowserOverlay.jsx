@@ -40,7 +40,7 @@ export default function PhotoBrowserOverlay({
   }, [initialIndex, isOpen, normalizedImages.length]);
 
   useEffect(() => {
-    if (!isOpen || typeof globalThis.document === "undefined") {
+    if (!isOpen || globalThis.document === undefined) {
       return undefined;
     }
 
@@ -76,7 +76,7 @@ export default function PhotoBrowserOverlay({
     };
   }, [canBrowse, isOpen, normalizedImages.length, onClose]);
 
-  if (!isOpen || normalizedImages.length < 1 || typeof globalThis.document === "undefined") {
+  if (!isOpen || normalizedImages.length < 1 || globalThis.document === undefined) {
     return null;
   }
 
