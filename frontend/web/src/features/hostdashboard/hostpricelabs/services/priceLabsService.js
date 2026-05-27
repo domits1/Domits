@@ -1,6 +1,6 @@
 import { Auth } from "aws-amplify";
 
-const BASE = process.env.REACT_APP_API_URL || "";
+const BASE = "https://wq2aughzk2.execute-api.eu-north-1.amazonaws.com/default";
 
 async function authHeaders() {
   const session = await Auth.currentSession();
