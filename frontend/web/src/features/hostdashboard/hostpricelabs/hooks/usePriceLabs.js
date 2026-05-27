@@ -35,8 +35,9 @@ export function usePriceLabs() {
     clear(); setIsLoading(true);
     try {
       await connectPriceLabs(priceLabsEmail);
+      setStatus({ connected: true, pricelabs_email: priceLabsEmail });
       setSuccessMessage("PriceLabs connected successfully!");
-      await fetchStatus();
+      fetchStatus();
       return true;
     } catch (err) {
       setError(err.message || "Failed to connect PriceLabs");
