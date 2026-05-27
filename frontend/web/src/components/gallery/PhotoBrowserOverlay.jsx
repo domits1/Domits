@@ -23,6 +23,7 @@ export default function PhotoBrowserOverlay({
   isOpen,
   onClose,
   showSideZones = false,
+  alwaysShowSideZoneArrows = false,
   resolveImageSrc = defaultResolveImageSrc,
   resolveThumbSrc = defaultResolveThumbSrc,
   resolveImageKey = defaultResolveImageKey,
@@ -88,9 +89,12 @@ export default function PhotoBrowserOverlay({
   }
 
   const activeImage = normalizedImages[activeIndex];
+  const overlayClassName = `image-overlay${showSideZones ? " with-side-zones" : ""}${
+    alwaysShowSideZoneArrows ? " show-side-zone-arrows" : ""
+  }`;
 
   return createPortal(
-    <div className="image-overlay">
+    <div className={overlayClassName}>
       <button
         type="button"
         className="close-overlay-button"
@@ -175,6 +179,7 @@ PhotoBrowserOverlay.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   showSideZones: PropTypes.bool,
+  alwaysShowSideZoneArrows: PropTypes.bool,
   resolveImageSrc: PropTypes.func,
   resolveThumbSrc: PropTypes.func,
   resolveImageKey: PropTypes.func,

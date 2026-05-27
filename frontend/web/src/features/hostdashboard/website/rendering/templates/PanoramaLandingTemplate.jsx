@@ -1041,6 +1041,8 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
         images={Array.isArray(model.media?.galleryImages) ? model.media.galleryImages : []}
         isOpen={isGalleryBrowserOpen}
         onClose={() => setIsGalleryBrowserOpen(false)}
+        showSideZones={true}
+        alwaysShowSideZoneArrows={true}
         resolveImageAlt={(index) => `${model.hero.title} gallery image ${index + 1}`}
       />
 
