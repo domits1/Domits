@@ -182,6 +182,64 @@ const getCommonFieldPreviewTargetId = (fieldKey, templateKey = "") => {
   return EDITOR_TARGET_KEYS.common[fieldKey];
 };
 
+function WebsiteEditorSectionVisibilityFieldCard({
+  checked,
+  field,
+  handleVisibilityFieldChange,
+  hasWhatsAppWidget,
+  highlightedTargetId,
+  setTargetRef,
+}) {
+  const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
+  const inputId = `website-editor-visibility-${field.key}`;
+  const labelId = `website-editor-visibility-${field.key}-label`;
+  const descriptionId = `website-editor-visibility-${field.key}-description`;
+  const isWhatsAppVisibilityField = field.key === "chatWidget";
+  const isDisabled = isWhatsAppVisibilityField && !hasWhatsAppWidget;
+  const fieldDescription = isDisabled ? (
+    <a
+      href="/hostdashboard/integrations-marketplace"
+      onClick={(event) => {
+        event.stopPropagation();
+      }}
+    >
+      Connect WhatsApp first to enable direct guest contact.
+    </a>
+  ) : (
+    field.description
+  );
+
+  return (
+    <WebsiteEditorVisibilityToggleCard
+      targetRef={setTargetRef(visibilityTargetId)}
+      field={{
+        ...field,
+        description: fieldDescription,
+      }}
+      inputId={inputId}
+      labelId={labelId}
+      descriptionId={descriptionId}
+      checked={checked}
+      onChange={isDisabled ? undefined : handleVisibilityFieldChange(field.key)}
+      disabled={isDisabled}
+      isHighlighted={highlightedTargetId === visibilityTargetId}
+    />
+  );
+}
+
+WebsiteEditorSectionVisibilityFieldCard.propTypes = {
+  checked: PropTypes.bool.isRequired,
+  field: PropTypes.shape({
+    description: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+  }).isRequired,
+  handleVisibilityFieldChange: PropTypes.func.isRequired,
+  hasWhatsAppWidget: PropTypes.bool.isRequired,
+  highlightedTargetId: PropTypes.string.isRequired,
+  setTargetRef: PropTypes.func.isRequired,
+};
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -1015,45 +1073,6 @@ function WebsiteEditorPage() {
     });
   };
 
-  const renderVisibilityFieldCard = (field) => {
-    const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
-    const inputId = `website-editor-visibility-${field.key}`;
-    const labelId = `website-editor-visibility-${field.key}-label`;
-    const descriptionId = `website-editor-visibility-${field.key}-description`;
-    const isWhatsAppVisibilityField = field.key === "chatWidget";
-    const isDisabled = isWhatsAppVisibilityField && !hasWhatsAppWidget;
-    const renderedField = isDisabled
-      ? {
-          ...field,
-          description: (
-            <a
-              href="/hostdashboard/integrations-marketplace"
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-            >
-              Connect WhatsApp first to enable direct guest contact.
-            </a>
-          ),
-        }
-      : field;
-
-    return (
-      <WebsiteEditorVisibilityToggleCard
-        key={field.key}
-        targetRef={setTargetRef(visibilityTargetId)}
-        field={renderedField}
-        inputId={inputId}
-        labelId={labelId}
-        descriptionId={descriptionId}
-        checked={Boolean(editorValues.visibility[field.key])}
-        onChange={isDisabled ? undefined : handleVisibilityFieldChange(field.key)}
-        disabled={isDisabled}
-        isHighlighted={highlightedTargetId === visibilityTargetId}
-      />
-    );
-  };
-
   const handleAmenitiesSectionFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
     const previewTargetId =
@@ -1518,9 +1537,16 @@ function WebsiteEditorPage() {
     return <WebsiteEditorErrorState loadError={loadError} navigate={navigate} />;
   }
 
-  const amenitiesVisibilityContent = amenitiesVisibilityField
-    ? renderVisibilityFieldCard(amenitiesVisibilityField)
-    : null;
+  const amenitiesVisibilityContent = amenitiesVisibilityField ? (
+    <WebsiteEditorSectionVisibilityFieldCard
+      checked={Boolean(editorValues.visibility.amenitiesPanel)}
+      field={amenitiesVisibilityField}
+      handleVisibilityFieldChange={handleVisibilityFieldChange}
+      hasWhatsAppWidget={hasWhatsAppWidget}
+      highlightedTargetId={highlightedTargetId}
+      setTargetRef={setTargetRef}
+    />
+  ) : null;
   const amenitiesEditorSection = copyCollectionConfig.amenities ? (
     <WebsiteEditorAmenitiesSection
       activatePreviewTarget={activatePreviewTarget}
@@ -1736,7 +1762,17 @@ function WebsiteEditorPage() {
                           on the website.
                         </p>
                       ) : null}
-                      {standaloneVisibilityFields.map((field) => renderVisibilityFieldCard(field))}
+                      {standaloneVisibilityFields.map((field) => (
+                        <WebsiteEditorSectionVisibilityFieldCard
+                          key={field.key}
+                          checked={Boolean(editorValues.visibility[field.key])}
+                          field={field}
+                          handleVisibilityFieldChange={handleVisibilityFieldChange}
+                          hasWhatsAppWidget={hasWhatsAppWidget}
+                          highlightedTargetId={highlightedTargetId}
+                          setTargetRef={setTargetRef}
+                        />
+                      ))}
                     </div>
                   </CollapsibleSection>
                 ) : null}

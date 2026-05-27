@@ -31,6 +31,7 @@ export default function PhotoBrowserOverlay({
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const normalizedImages = Array.isArray(images) ? images : [];
+  const runtimeDocument = globalThis.document;
   const canBrowse = normalizedImages.length > 1;
   const goToPreviousImage = () => {
     setActiveIndex((currentIndex) =>
@@ -50,12 +51,12 @@ export default function PhotoBrowserOverlay({
   }, [initialIndex, isOpen, normalizedImages.length]);
 
   useEffect(() => {
-    if (!isOpen || globalThis.document === undefined) {
+    if (!isOpen || !runtimeDocument) {
       return undefined;
     }
 
-    const originalOverflow = globalThis.document.body.style.overflow;
-    globalThis.document.body.style.overflow = "hidden";
+    const originalOverflow = runtimeDocument.body.style.overflow;
+    runtimeDocument.body.style.overflow = "hidden";
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -76,15 +77,15 @@ export default function PhotoBrowserOverlay({
       }
     };
 
-    globalThis.document.addEventListener("keydown", handleKeyDown);
+    runtimeDocument.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      globalThis.document.body.style.overflow = originalOverflow;
-      globalThis.document.removeEventListener("keydown", handleKeyDown);
+      runtimeDocument.body.style.overflow = originalOverflow;
+      runtimeDocument.removeEventListener("keydown", handleKeyDown);
     };
-  }, [canBrowse, isOpen, normalizedImages.length, onClose]);
+  }, [canBrowse, isOpen, normalizedImages.length, onClose, runtimeDocument]);
 
-  if (!isOpen || normalizedImages.length < 1 || globalThis.document === undefined) {
+  if (!isOpen || normalizedImages.length < 1 || !runtimeDocument) {
     return null;
   }
 
@@ -169,7 +170,7 @@ export default function PhotoBrowserOverlay({
         ))}
       </div>
     </div>,
-    globalThis.document.body
+    runtimeDocument.body
   );
 }
 
