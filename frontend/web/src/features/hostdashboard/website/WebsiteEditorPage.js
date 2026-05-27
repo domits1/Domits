@@ -241,6 +241,50 @@ WebsiteEditorSectionVisibilityFieldCard.propTypes = {
   setTargetRef: PropTypes.func.isRequired,
 };
 
+const PANORAMA_TEMPLATE_KEY = "panorama-landing";
+const WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS = Object.freeze([
+  "amenitiesPanel",
+  "availabilityCalendar",
+  "gallerySection",
+]);
+
+const buildWebsiteEditorSectionData = ({
+  draftTemplateKey = "",
+  imageSlots = [],
+  visibilityFields = [],
+} = {}) => {
+  const normalizedVisibilityFields = Array.isArray(visibilityFields) ? visibilityFields : [];
+  const normalizedImageSlots = Array.isArray(imageSlots) ? imageSlots : [];
+  const isPanoramaTemplate = draftTemplateKey === PANORAMA_TEMPLATE_KEY;
+
+  return {
+    amenitiesVisibilityField:
+      normalizedVisibilityFields.find((field) => field.key === "amenitiesPanel") || null,
+    calendarVisibilityField:
+      normalizedVisibilityFields.find((field) => field.key === "availabilityCalendar") || null,
+    galleryVisibilityField:
+      normalizedVisibilityFields.find((field) => field.key === "gallerySection") || null,
+    standaloneVisibilityFields: normalizedVisibilityFields.filter(
+      (field) => !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key)
+    ),
+    residenceImageSlot: normalizedImageSlots.find((slot) => slot.kind === "residence") || null,
+    galleryImageSlots: isPanoramaTemplate
+      ? normalizedImageSlots.filter((slot) => slot.kind === "gallery")
+      : [],
+    generalImageSlots: normalizedImageSlots.filter((slot) => {
+      if (slot.kind === "residence") {
+        return false;
+      }
+
+      if (isPanoramaTemplate && slot.kind === "gallery") {
+        return false;
+      }
+
+      return true;
+    }),
+  };
+};
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -376,33 +420,25 @@ function WebsiteEditorPage() {
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const hasWhatsAppWidget = Boolean(baseModel?.host?.whatsapp?.isAvailable);
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
-  const amenitiesVisibilityField = visibilityFields.find((field) => field.key === "amenitiesPanel") || null;
-  const calendarVisibilityField = visibilityFields.find((field) => field.key === "availabilityCalendar") || null;
-  const galleryVisibilityField = visibilityFields.find((field) => field.key === "gallerySection") || null;
-  const standaloneVisibilityFields = visibilityFields.filter(
-    (field) =>
-      field.key !== "amenitiesPanel" &&
-      field.key !== "availabilityCalendar" &&
-      field.key !== "gallerySection"
-  );
   const showWhatsAppSetupHint = hasWhatsAppWidget === false;
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
-  const residenceImageSlot = imageSlots.find((slot) => slot.kind === "residence") || null;
-  const galleryImageSlots =
-    draftTemplateKey === "panorama-landing"
-      ? imageSlots.filter((slot) => slot.kind === "gallery")
-      : [];
-  const generalImageSlots = imageSlots.filter((slot) => {
-    if (slot.kind === "residence") {
-      return false;
-    }
-
-    if (draftTemplateKey === "panorama-landing" && slot.kind === "gallery") {
-      return false;
-    }
-
-    return true;
-  });
+  const {
+    amenitiesVisibilityField,
+    calendarVisibilityField,
+    galleryVisibilityField,
+    standaloneVisibilityFields,
+    residenceImageSlot,
+    galleryImageSlots,
+    generalImageSlots,
+  } = useMemo(
+    () =>
+      buildWebsiteEditorSectionData({
+        draftTemplateKey,
+        imageSlots,
+        visibilityFields,
+      }),
+    [draftTemplateKey, imageSlots, visibilityFields]
+  );
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
   const residenceSectionTitle = String(editorValues?.common?.residenceTitle || "").trim() || "The residence";
   const importedImageOptions = useMemo(() => {
