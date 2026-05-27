@@ -285,6 +285,80 @@ const buildWebsiteEditorSectionData = ({
   };
 };
 
+const useWebsiteEditorActionMenuDismiss = ({
+  actionMenuRef,
+  isActionMenuOpen,
+  onClose,
+}) => {
+  useEffect(() => {
+    if (!isActionMenuOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    globalThis.document?.addEventListener("mousedown", handlePointerDown);
+    globalThis.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      globalThis.document?.removeEventListener("mousedown", handlePointerDown);
+      globalThis.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [actionMenuRef, isActionMenuOpen, onClose]);
+};
+
+const useWebsiteEditorOverlayLock = ({
+  closeIconPicker,
+  closeImagePicker,
+  isIconPickerOpen,
+  isImagePickerOpen,
+}) => {
+  useEffect(() => {
+    const isOverlayOpen = isImagePickerOpen || isIconPickerOpen;
+    if (!isOverlayOpen) {
+      return undefined;
+    }
+
+    const documentBody = globalThis.document?.body;
+    const previousOverflow = documentBody?.style.overflow ?? "";
+    if (documentBody) {
+      documentBody.style.overflow = "hidden";
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      if (isIconPickerOpen) {
+        closeIconPicker();
+        return;
+      }
+
+      closeImagePicker();
+    };
+
+    globalThis.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      if (documentBody) {
+        documentBody.style.overflow = previousOverflow;
+      }
+      globalThis.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeIconPicker, closeImagePicker, isIconPickerOpen, isImagePickerOpen]);
+};
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -1489,64 +1563,20 @@ function WebsiteEditorPage() {
     setIsActionMenuOpen((currentValue) => !currentValue);
   };
 
-  useEffect(() => {
-    if (!isActionMenuOpen) {
-      return undefined;
-    }
+  useWebsiteEditorActionMenuDismiss({
+    actionMenuRef,
+    isActionMenuOpen,
+    onClose: () => {
+      setIsActionMenuOpen(false);
+    },
+  });
 
-    const handlePointerDown = (event) => {
-      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target)) {
-        setIsActionMenuOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        setIsActionMenuOpen(false);
-      }
-    };
-
-    globalThis.document?.addEventListener("mousedown", handlePointerDown);
-    globalThis.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      globalThis.document?.removeEventListener("mousedown", handlePointerDown);
-      globalThis.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isActionMenuOpen]);
-
-  useEffect(() => {
-    const isOverlayOpen = imagePickerState.isOpen || iconPickerState.isOpen;
-    if (!isOverlayOpen) {
-      return undefined;
-    }
-
-    const documentBody = globalThis.document?.body;
-    const previousOverflow = documentBody?.style.overflow ?? "";
-    if (documentBody) {
-      documentBody.style.overflow = "hidden";
-    }
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        if (iconPickerState.isOpen) {
-          closeIconPicker();
-          return;
-        }
-
-        closeImagePicker();
-      }
-    };
-
-    globalThis.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      if (documentBody) {
-        documentBody.style.overflow = previousOverflow;
-      }
-      globalThis.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [iconPickerState.isOpen, imagePickerState.isOpen]);
+  useWebsiteEditorOverlayLock({
+    closeIconPicker,
+    closeImagePicker,
+    isIconPickerOpen: iconPickerState.isOpen,
+    isImagePickerOpen: imagePickerState.isOpen,
+  });
 
   const renderLoadingSection = ({ id, title, description }) => (
     <section key={id} className={styles.panelSection}>
