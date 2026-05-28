@@ -70,6 +70,12 @@ export const Booking = new EntitySchema({
       type: "varchar",
       nullable: false,
     },
+    total_price: {
+      type: "double precision",
+      name: "total_price",
+      nullable: true,
+      default: 0,
+    },
     cancellation_policy: {
       type: "varchar",
       name: "cancellation_policy",

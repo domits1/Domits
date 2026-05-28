@@ -320,6 +320,27 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
+      .select([
+        "booking.id",
+        "booking.arrivaldate",
+        "booking.departuredate",
+        "booking.createdat",
+        "booking.guestid",
+        "booking.guests",
+        "booking.hostid",
+        "booking.latepayment",
+        "booking.paymentid",
+        "booking.property_id",
+        "booking.status",
+        "booking.guestname",
+        "booking.hostname",
+        "booking.cancellation_policy",
+        "booking.bookingtype",
+        "booking.total_price",
+        "booking.refunded_amount",
+        "booking.stripe_refund_id",
+        "booking.refund_error",
+      ])
       .where("booking.id = :id", { id: id })
       .getOne();
 
