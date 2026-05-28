@@ -146,7 +146,7 @@
   "jest": {
     "moduleNameMapper": {
       "^axios$": "axios/dist/node/axios.cjs",
-      "\\.json$": "<rootDir>/__mocks__/fileMock.js"
+      "^.+/content/(en|nl|de|es)\\.json$": "<rootDir>/__mocks__/fileMock.js"
     }
   }
 }
