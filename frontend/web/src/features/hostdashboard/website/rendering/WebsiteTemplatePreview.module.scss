@@ -562,10 +562,11 @@
 }
 
 .panoramaResidenceSectionPanel {
-  border: 1px solid rgba(31, 78, 121, 0.12);
-  border-radius: 24px;
-  background-color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.05);
+  margin-inline: calc(var(--template-preview-frame-gutter) * -1);
+  padding-inline: var(--template-preview-frame-gutter);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .panoramaResidenceHeading {
@@ -1072,7 +1073,7 @@
 }
 
 .panoramaAvailabilityShell {
-  justify-items: center;
+  justify-items: stretch;
 }
 
 .panoramaContactShell {
@@ -1529,10 +1530,11 @@
 }
 
 .panoramaGallerySectionPanel {
-  border: 1px solid rgba(31, 78, 121, 0.12);
-  border-radius: 24px;
-  background-color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.05);
+  margin-inline: calc(var(--template-preview-frame-gutter) * -1);
+  padding-inline: var(--template-preview-frame-gutter);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .sectionHeading {
