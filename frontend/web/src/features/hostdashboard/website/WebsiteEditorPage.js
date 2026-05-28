@@ -74,6 +74,7 @@ import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlot
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
 import { WebsiteEditorSidebar } from "./editor/WebsiteEditorSidebar";
+import { WebsiteEditorPreviewSkeleton } from "./editor/WebsiteEditorPreviewSkeleton";
 import {
   WebsiteEditorActionMenu,
   WebsiteEditorErrorState,
@@ -1443,9 +1444,7 @@ function WebsiteEditorPage() {
               </div>
 
               {isPreviewLoading ? (
-                <div className={styles.loadingSectionBody}>
-                  <PulseBarsLoader message="Loading website preview..." />
-                </div>
+                <WebsiteEditorPreviewSkeleton viewport={previewViewport} />
               ) : previewLoadError || !baseModel || !previewModel ? (
                 <p className={styles.errorText}>
                   {previewLoadError || "We could not render the website preview right now."}

@@ -172,7 +172,6 @@ export function WebsiteEditorSidebar({
       onWheel={forwardEditorBoundaryScroll}
       onInputCapture={markEditorInteracted}
       onChangeCapture={markEditorInteracted}
-      onClickCapture={markEditorInteracted}
     >
       <div className={styles.panelHeader}>
         <h2 className={styles.panelTitle}>Editor</h2>
