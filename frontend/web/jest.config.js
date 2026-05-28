@@ -1,8 +1,8 @@
 module.exports = {
     testEnvironment: "jsdom",
-    testMatch: ["**/__tests__/**/*.js", "**/?(*.)+(spec|test).js"],
+    testMatch: ["**/__tests__/**/*.js", "**/?(*.)+(spec|test).js?(x)", "**/?(*.)+(spec|test).jsx"],
     transform: {
-        "^.+\\.js$": "babel-jest",
+        "^.+\\.[jt]sx?$": "babel-jest",
         "^.+\\.(css|less|scss|sass)$": "identity-obj-proxy",
         "^.+\\.(jpg|jpeg|png|gif|webp|svg)$": "jest-transform-stub"
     },
@@ -11,5 +11,6 @@ module.exports = {
     ],
     moduleNameMapper: {
         "\\.(css|less|scss|sass)$": "identity-obj-proxy",
+        "\\.json$": "<rootDir>/__mocks__/fileMock.js",
     },
 };
