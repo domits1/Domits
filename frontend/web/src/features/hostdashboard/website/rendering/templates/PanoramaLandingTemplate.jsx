@@ -610,6 +610,7 @@ const renderPanoramaResidenceSection = ({
           slot={{ kind: "residence" }}
           frameClassName={styles.panoramaResidenceVisualFrame}
           imageClassName={styles.panoramaResidenceImage}
+          enableHoverEffect
           alt={`${model.hero.title} residence view`}
           onSelectTarget={onSelectTarget}
           activeTargetId={activeTargetId}
@@ -714,6 +715,7 @@ const renderPanoramaGallerySection = ({
             slot={slot.slot}
             frameClassName={styles.panoramaGalleryTileFrame}
             imageClassName={styles.panoramaGalleryTile}
+            enableHoverEffect
             alt={slot.alt}
             onSelectTarget={onSelectTarget}
             activeTargetId={activeTargetId}
