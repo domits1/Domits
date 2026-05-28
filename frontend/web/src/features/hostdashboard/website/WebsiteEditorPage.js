@@ -435,6 +435,32 @@ const useWebsiteEditorDataLoader = ({
   ]);
 };
 
+const notifyOpenedLiveSiteWindow = ({
+  nextSiteSummary,
+  openedLiveSiteWindowOriginRef,
+  openedLiveSiteWindowRef,
+}) => {
+  if (!openedLiveSiteWindowRef.current || openedLiveSiteWindowRef.current.closed) {
+    openedLiveSiteWindowOriginRef.current = "";
+    return;
+  }
+
+  const targetOrigin = String(openedLiveSiteWindowOriginRef.current || "").trim();
+  if (!targetOrigin) {
+    return;
+  }
+
+  openedLiveSiteWindowRef.current.postMessage(
+    {
+      type: WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE,
+      siteId: nextSiteSummary?.site?.id || "",
+      domain: nextSiteSummary?.primaryDomain?.domain || "",
+      updatedAt: Date.now(),
+    },
+    targetOrigin
+  );
+};
+
 function WebsiteEditorPage() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -1414,7 +1440,11 @@ const buildNextEditorImageState = (currentValues, slot, nextValue) => {
         siteId: nextSiteSummary?.site?.id,
         domain: nextSiteSummary?.primaryDomain?.domain,
       });
-      notifyOpenedLiveSiteWindow(nextSiteSummary);
+      notifyOpenedLiveSiteWindow({
+        nextSiteSummary,
+        openedLiveSiteWindowOriginRef,
+        openedLiveSiteWindowRef,
+      });
       toast.success("Live site updated.");
     } catch (error) {
       const errorMessage = error?.message || "We could not update the live site.";
@@ -1442,7 +1472,11 @@ const buildNextEditorImageState = (currentValues, slot, nextValue) => {
         siteId: nextSiteSummary?.site?.id,
         domain: nextSiteSummary?.primaryDomain?.domain,
       });
-      notifyOpenedLiveSiteWindow(nextSiteSummary);
+      notifyOpenedLiveSiteWindow({
+        nextSiteSummary,
+        openedLiveSiteWindowOriginRef,
+        openedLiveSiteWindowRef,
+      });
       toast.success("Live site published.");
     } catch (error) {
       const errorMessage = error?.message || "We could not publish the live site.";
@@ -1469,7 +1503,11 @@ const buildNextEditorImageState = (currentValues, slot, nextValue) => {
         siteId: nextSiteSummary?.site?.id,
         domain: nextSiteSummary?.primaryDomain?.domain,
       });
-      notifyOpenedLiveSiteWindow(nextSiteSummary);
+      notifyOpenedLiveSiteWindow({
+        nextSiteSummary,
+        openedLiveSiteWindowOriginRef,
+        openedLiveSiteWindowRef,
+      });
       toast.success("Live site unpublished.");
     } catch (error) {
       const errorMessage = error?.message || "We could not unpublish the live site.";
@@ -1545,28 +1583,6 @@ const buildNextEditorImageState = (currentValues, slot, nextValue) => {
     openedLiveSiteWindowOriginRef.current = openedLiveSiteWindow
       ? resolveWindowTargetOrigin(publishedWebsiteHref)
       : "";
-  };
-
-  const notifyOpenedLiveSiteWindow = (nextSiteSummary) => {
-    if (!openedLiveSiteWindowRef.current || openedLiveSiteWindowRef.current.closed) {
-      openedLiveSiteWindowOriginRef.current = "";
-      return;
-    }
-
-    const targetOrigin = String(openedLiveSiteWindowOriginRef.current || "").trim();
-    if (!targetOrigin) {
-      return;
-    }
-
-    openedLiveSiteWindowRef.current.postMessage(
-      {
-        type: WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE,
-        siteId: nextSiteSummary?.site?.id || "",
-        domain: nextSiteSummary?.primaryDomain?.domain || "",
-        updatedAt: Date.now(),
-      },
-      targetOrigin
-    );
   };
 
   const toggleActionMenu = () => {
