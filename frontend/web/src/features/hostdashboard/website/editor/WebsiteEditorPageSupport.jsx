@@ -15,7 +15,7 @@ import {
   createEmptyWebsiteDraftThemeEditorValues,
 } from "../rendering/websiteDraftThemeOverrides";
 import { WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE } from "../services/websitePreviewSync";
-import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
+import { EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
 import { WebsiteEditorVisibilityToggleCard } from "./WebsiteEditorVisibilityToggleCard";
 import {
   getDraftThemeOverrides,

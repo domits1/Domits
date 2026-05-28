@@ -1260,6 +1260,24 @@ function WebsiteEditorPage() {
   }
   const previewHeadingTitle =
     previewModel?.site?.title || editorValues.common.siteTitle || draftTemplate?.name || "Website preview";
+  const hasPreviewRenderError = Boolean(previewLoadError || !baseModel || !previewModel);
+  let previewPanelContent = <WebsitePreviewSkeleton viewport={previewViewport} />;
+
+  if (!isPreviewLoading) {
+    previewPanelContent = hasPreviewRenderError ? (
+      <p className={styles.errorText}>
+        {previewLoadError || "We could not render the website preview right now."}
+      </p>
+    ) : (
+      <WebsiteTemplatePreview
+        templateId={draftRecord.templateKey}
+        model={previewModel}
+        viewport={previewViewport}
+        onSelectTarget={handlePreviewTargetSelect}
+        activeTargetId={activePreviewTargetId}
+      />
+    );
+  }
 
   return (
     <main className="page-Host">
@@ -1443,21 +1461,7 @@ function WebsiteEditorPage() {
                 </div>
               </div>
 
-              {isPreviewLoading ? (
-                <WebsitePreviewSkeleton viewport={previewViewport} />
-              ) : previewLoadError || !baseModel || !previewModel ? (
-                <p className={styles.errorText}>
-                  {previewLoadError || "We could not render the website preview right now."}
-                </p>
-              ) : (
-                <WebsiteTemplatePreview
-                  templateId={draftRecord.templateKey}
-                  model={previewModel}
-                  viewport={previewViewport}
-                  onSelectTarget={handlePreviewTargetSelect}
-                  activeTargetId={activePreviewTargetId}
-                />
-              )}
+              {previewPanelContent}
             </section>
           </div>
         </section>
