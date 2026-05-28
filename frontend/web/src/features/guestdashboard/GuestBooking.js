@@ -22,6 +22,7 @@ import {
   normalizeGuestBookingsResponse,
   splitBookingsByTime,
   normalizeStayStatus,
+  getInquiryStatusInfo,
 } from "./utils/guestDashboardUtils";
 
 const contentByLanguage = { en, nl, de, es };
@@ -53,7 +54,7 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick, t }) => {
   const bookingCity = propertyInfo?.city || bookingItem?.city || bookingItem?.location?.city || "Unknown city";
   const bookingStatus = String(bookingItem?.status || bookingItem?.Status || "");
   const bookingType = String(bookingItem?.bookingtype ?? "direct").toLowerCase();
-  const isPaymentRequired = bookingStatus.toLowerCase() === "awaiting payment" && bookingType === "inquiry";
+  const inquiryStatusInfo = getInquiryStatusInfo(bookingStatus, bookingType);
   const hostName =
     propertyInfo?.hostName ||
     bookingItem?.hostName ||
@@ -86,8 +87,16 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick, t }) => {
           )}
 
           <div className="guest-booking-row-meta">
-            <span className="guest-booking-status">{bookingStatus || "-"}</span>
-            {isPaymentRequired && <span className="guest-booking-pay-now">Pay Now →</span>}
+            {inquiryStatusInfo ? (
+              <>
+                <span className={`guest-booking-status guest-booking-status--${inquiryStatusInfo.variant}`}>
+                  {inquiryStatusInfo.label}
+                </span>
+                <span className="guest-booking-status-desc">{inquiryStatusInfo.description}</span>
+              </>
+            ) : (
+              <span className="guest-booking-status">{normalizeStayStatus(bookingStatus) || "-"}</span>
+            )}
             <span className="guest-booking-dates">{formatBookingDates(bookingItem)}</span>
           </div>
         </div>
@@ -293,6 +302,9 @@ function GuestBooking() {
               title={t?.bookings?.inquiries || "Inquiries"}
               bookings={inquiryBookings}
               emptyMessage={t?.bookings?.noInquiries || "No inquiries."}
+              title="Requests"
+              bookings={inquiryBookings}
+              emptyMessage="No requests."
               propertyMap={propertyMap}
               handleBookingClick={handleBookingClick}
               t={t}

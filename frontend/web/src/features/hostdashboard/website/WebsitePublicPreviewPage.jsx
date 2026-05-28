@@ -7,6 +7,7 @@ import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
+import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import { fetchWebsitePreviewByDraftId } from "./services/websitePublicPreviewService";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
@@ -60,11 +61,22 @@ function WebsitePublicPreviewPage() {
 
       try {
         const nextPayload = await fetchWebsitePreviewByDraftId(draftId);
+        const nextPropertyDetails = nextPayload?.propertyDetails
+          ? await enrichWebsitePropertyDetails(nextPayload.propertyDetails)
+          : nextPayload?.propertyDetails;
+
         if (!isMounted) {
           return;
         }
 
-        setPayload(nextPayload);
+        setPayload(
+          nextPropertyDetails === nextPayload?.propertyDetails
+            ? nextPayload
+            : {
+                ...nextPayload,
+                propertyDetails: nextPropertyDetails,
+              }
+        );
       } catch (error) {
         if (!isMounted) {
           return;
@@ -103,7 +115,11 @@ function WebsitePublicPreviewPage() {
     });
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, getDraftPreviewThemeOverrides(payload.draft));
 
-    return applyWebsiteDraftContentOverrides(themedModel, getDraftPreviewContentOverrides(payload.draft));
+    return applyWebsiteDraftContentOverrides(
+      themedModel,
+      getDraftPreviewContentOverrides(payload.draft),
+      payload?.draft?.templateKey || ""
+    );
   }, [payload]);
 
   const templateId = payload?.draft?.templateKey || "";

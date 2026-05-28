@@ -10,7 +10,7 @@ This document defines the v1 design pack for Domits direct booking websites. It 
 
 **Status:** Mixed - implemented foundation plus forward design
 
-**Last Updated:** 2026-05-11
+**Last Updated:** 2026-05-21
 
 **Related Architecture Decision:** [ADR - Direct Booking Website V1](./direct_booking_website_adr.md)
 
@@ -56,6 +56,16 @@ Important alignment points for the rest of this document:
 - Earlier split-table ideas such as `standalone_site_theme`, `standalone_site_content`, and `standalone_site_section` are not the current implementation.
 - Custom-domain support is not implemented yet, even though `standalone_site_domain.domain_type` already allows `CUSTOM`.
 - Quote, checkout, and booking sections later in this document remain forward design, not current runtime behavior.
+- The current frontend editor has progressed into section-scoped contracts for shared website areas such as:
+  - `residenceSection`
+  - `calendarSection`
+  - `contactSection`
+  - configurable amenities collections
+  - per-slot media rotation settings
+- The current calendar implementation is still read-only for guests, but the availability snapshot shown on websites already merges:
+  - imported external blocked dates
+  - accepted booking date keys
+  - PMS unavailable override dates
 
 ---
 

@@ -317,8 +317,8 @@ function HostPropertyOverviewTab(props) {
           value={bookingType || "direct"}
           onChange={(event) => onBookingTypeChange(event.target.value)}
         >
-          <option value="direct">Direct booking (guest pays immediately)</option>
-          <option value="inquiry">Inquiry first (host reviews before payment)</option>
+          <option value="direct">Book Instantly (guest pays immediately)</option>
+          <option value="inquiry">Request first (host reviews before payment)</option>
         </select>
       </div>
 

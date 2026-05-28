@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { Auth } from "aws-amplify";
+import { confirmEmailChange } from "../../features/guestdashboard/emailSettings";
 import useUserProfile from "../../hooks/useUserProfile";
 
 jest.mock("aws-amplify");
@@ -12,8 +13,6 @@ jest.mock("../../features/guestdashboard/emailSettings", () => ({
 jest.mock("react-select-country-list", () => () => ({
   getLabels: () => ["Netherlands", "Germany", "France", "Spain"],
 }));
-
-import { confirmEmailChange } from "../../features/guestdashboard/emailSettings";
 
 const MOCK_COGNITO_USER = {
   username: "user-abc-123",
@@ -36,11 +35,17 @@ const MOCK_COGNITO_USER = {
 describe("useUserProfile", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "warn").mockImplementation(() => {});
     globalThis.fetch = jest.fn();
     globalThis.alert = jest.fn();
     Auth.currentAuthenticatedUser.mockImplementation(() => new Promise(() => {}));
     Auth.getPreferredMFA.mockResolvedValue("NOMFA");
     Auth.updateUserAttributes.mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   // ─── Initial state ────────────────────────────────────────────────────────
