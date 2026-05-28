@@ -107,6 +107,7 @@ import {
   buildEditorValuesFromDraft,
   confirmDiscardDraftChanges,
   createAmenityEditorItem,
+  createCommitAndSaveOnEnterHandler,
   createEditorFieldKeyDownHandler,
   formatStatusLabel,
   forwardEditorBoundaryScroll,
@@ -689,8 +690,41 @@ function WebsiteEditorPage() {
     clearActivePreviewTarget();
     runAfterNextPaint(() => {
       flashPreviewTarget(previewTargetId);
-    });
+  });
+};
+
+const buildNextEditorImageState = (currentValues, slot, nextValue) => {
+  if (slot.kind === "hero") {
+    return {
+      ...currentValues,
+      images: {
+        ...currentValues.images,
+        heroImage: nextValue,
+      },
+    };
+  }
+
+  if (slot.kind === "residence") {
+    return {
+      ...currentValues,
+      images: {
+        ...currentValues.images,
+        residenceImage: nextValue,
+      },
+    };
+  }
+
+  const nextGalleryValues = [...currentValues.images.gallery];
+  nextGalleryValues[slot.index] = nextValue;
+
+  return {
+    ...currentValues,
+    images: {
+      ...currentValues.images,
+      gallery: nextGalleryValues,
+    },
   };
+};
 
   const activateResidencePanelPreviewTarget = () => {
     setPreviewTargetId(EDITOR_TARGET_KEYS.residence.showPanel);
@@ -728,15 +762,10 @@ function WebsiteEditorPage() {
     }));
   };
 
-  const handleResidencePanelColorInputKeyDown = async (event) => {
-    if (event.key !== "Enter") {
-      return;
-    }
-
-    event.preventDefault();
-    commitResidencePanelColorInput();
-    await saveDraftChanges();
-  };
+  const handleResidencePanelColorInputKeyDown = createCommitAndSaveOnEnterHandler(
+    commitResidencePanelColorInput,
+    saveDraftChanges
+  );
 
   const handleCalendarPanelToggleChange = (event) => {
     const nextChecked = Boolean(event.target.checked);
@@ -789,15 +818,10 @@ function WebsiteEditorPage() {
     }));
   };
 
-  const handleCalendarPanelColorInputKeyDown = async (event) => {
-    if (event.key !== "Enter") {
-      return;
-    }
-
-    event.preventDefault();
-    commitCalendarPanelColorInput();
-    await saveDraftChanges();
-  };
+  const handleCalendarPanelColorInputKeyDown = createCommitAndSaveOnEnterHandler(
+    commitCalendarPanelColorInput,
+    saveDraftChanges
+  );
 
   const handleContactFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
@@ -844,15 +868,13 @@ function WebsiteEditorPage() {
     }));
   };
 
-  const createContactColorInputKeyDownHandler = (fieldKey, resolveColor) => async (event) => {
-    if (event.key !== "Enter") {
-      return;
-    }
-
-    event.preventDefault();
-    commitContactColorInput(fieldKey, resolveColor);
-    await saveDraftChanges();
-  };
+  const createContactColorInputKeyDownHandler = (fieldKey, resolveColor) =>
+    createCommitAndSaveOnEnterHandler(
+      () => {
+        commitContactColorInput(fieldKey, resolveColor);
+      },
+      saveDraftChanges
+    );
 
   const handleContactAccentColorChange = (accentColor) => {
     updateContactColorField("accentColor", resolveWebsiteContactAccentColor)(accentColor);
@@ -918,15 +940,10 @@ function WebsiteEditorPage() {
     }));
   };
 
-  const handleAmenitiesIconColorInputKeyDown = async (event) => {
-    if (event.key !== "Enter") {
-      return;
-    }
-
-    event.preventDefault();
-    commitAmenitiesIconColorInput();
-    await saveDraftChanges();
-  };
+  const handleAmenitiesIconColorInputKeyDown = createCommitAndSaveOnEnterHandler(
+    commitAmenitiesIconColorInput,
+    saveDraftChanges
+  );
 
   const handleContactImageFileChange = async (event) => {
     const nextFile = event.target.files?.[0];
@@ -1038,38 +1055,7 @@ function WebsiteEditorPage() {
     }
 
     setPreviewTargetId(getImageSlotTargetId(slot));
-    setEditorValues((currentValues) => {
-      if (slot.kind === "hero") {
-        return {
-          ...currentValues,
-          images: {
-            ...currentValues.images,
-            heroImage: nextValue,
-          },
-        };
-      }
-
-      if (slot.kind === "residence") {
-        return {
-          ...currentValues,
-          images: {
-            ...currentValues.images,
-            residenceImage: nextValue,
-          },
-        };
-      }
-
-      const nextGalleryValues = [...currentValues.images.gallery];
-      nextGalleryValues[slot.index] = nextValue;
-
-      return {
-        ...currentValues,
-        images: {
-          ...currentValues.images,
-          gallery: nextGalleryValues,
-        },
-      };
-    });
+    setEditorValues((currentValues) => buildNextEditorImageState(currentValues, slot, nextValue));
   };
 
   const openImagePicker = (slot) => {
@@ -1301,15 +1287,10 @@ function WebsiteEditorPage() {
     }));
   };
 
-  const handleGalleryPanelColorInputKeyDown = async (event) => {
-    if (event.key !== "Enter") {
-      return;
-    }
-
-    event.preventDefault();
-    commitGalleryPanelColorInput();
-    await saveDraftChanges();
-  };
+  const handleGalleryPanelColorInputKeyDown = createCommitAndSaveOnEnterHandler(
+    commitGalleryPanelColorInput,
+    saveDraftChanges
+  );
 
   const updateImageSlotRotation = (slot, nextEnabled) => {
     if (!slot) {
@@ -1368,7 +1349,7 @@ function WebsiteEditorPage() {
     return nextDraft;
   };
 
-  const saveDraftChanges = async () => {
+  async function saveDraftChanges() {
     if (!draftRecord || !hasUnsavedChanges) {
       return;
     }
@@ -1383,7 +1364,7 @@ function WebsiteEditorPage() {
     } finally {
       setIsSaving(false);
     }
-  };
+  }
 
   const discardDraftChanges = async () => {
     if (!draftRecord || !hasLiveSyncPending || isMutatingDraft) {
@@ -1540,15 +1521,10 @@ function WebsiteEditorPage() {
     moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex + 1);
   };
 
-  const handleThemeBackgroundColorInputKeyDown = async (event) => {
-    if (event.key !== "Enter") {
-      return;
-    }
-
-    event.preventDefault();
-    commitThemeBackgroundColorInput();
-    await saveDraftChanges();
-  };
+  const handleThemeBackgroundColorInputKeyDown = createCommitAndSaveOnEnterHandler(
+    commitThemeBackgroundColorInput,
+    saveDraftChanges
+  );
 
   const openLiveWebsiteLink = () => {
     const publishedDomain = String(primarySiteDomain?.domain || "").trim();

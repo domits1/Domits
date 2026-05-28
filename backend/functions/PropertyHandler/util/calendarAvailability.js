@@ -1,35 +1,34 @@
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const UTC_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-const normalizeTimestampLike = (value) => {
-  if (value === null || value === undefined) {
+const buildDateFromEpochLike = (value) => {
+  const epochMilliseconds = Math.abs(value) < 1000000000000 ? value * 1000 : value;
+  const nextDate = new Date(epochMilliseconds);
+  return Number.isNaN(nextDate.getTime()) ? null : nextDate;
+};
+
+const parseDateInput = (value) => {
+  if (value == null || value === "") {
     return null;
   }
 
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
   }
 
   const numericValue = Number(value);
   if (Number.isFinite(numericValue) && numericValue > 0) {
-    const milliseconds = numericValue > 1000000000000 ? numericValue : numericValue * 1000;
-    const parsedDate = new Date(milliseconds);
-    if (!Number.isNaN(parsedDate.getTime())) {
-      return parsedDate;
-    }
+    return buildDateFromEpochLike(numericValue);
   }
 
-  const parsedDate = new Date(String(value || ""));
+  const parsedDate = new Date(String(value).trim());
   return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
 };
 
-const startOfUtcDay = (date) =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+const toUtcMidnightTimestamp = (date) =>
+  Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 
-const toUtcDateKey = (date) =>
-  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
-    date.getUTCDate()
-  ).padStart(2, "0")}`;
+const toUtcDateKey = (value) => new Date(value).toISOString().slice(0, 10);
 
 const sortUniqueDateKeys = (dateKeys) =>
   Array.from(new Set(Array.isArray(dateKeys) ? dateKeys : Array.from(dateKeys || []))).sort(
@@ -47,26 +46,27 @@ const collectNormalizedDateKeys = (items, getDateKey) =>
 export const buildBlockedDateKeys = (bookings) => {
   const blockedDateKeys = new Set();
 
-  (Array.isArray(bookings) ? bookings : []).forEach((booking) => {
-    const arrival = normalizeTimestampLike(booking?.arrivaldate);
-    const departure = normalizeTimestampLike(booking?.departuredate);
+  for (const booking of Array.isArray(bookings) ? bookings : []) {
+    const arrivalDate = parseDateInput(booking?.arrivaldate);
+    const departureDate = parseDateInput(booking?.departuredate);
 
-    if (!arrival || !departure) {
-      return;
+    if (!(arrivalDate && departureDate)) {
+      continue;
     }
 
-    const start = startOfUtcDay(arrival);
-    const endExclusive = startOfUtcDay(departure);
+    let cursorTimestamp = toUtcMidnightTimestamp(arrivalDate);
+    const endExclusiveTimestamp = toUtcMidnightTimestamp(departureDate);
 
-    if (endExclusive <= start) {
-      blockedDateKeys.add(toUtcDateKey(start));
-      return;
+    if (endExclusiveTimestamp <= cursorTimestamp) {
+      blockedDateKeys.add(toUtcDateKey(cursorTimestamp));
+      continue;
     }
 
-    for (let cursor = start.getTime(); cursor < endExclusive.getTime(); cursor += UTC_DAY_IN_MS) {
-      blockedDateKeys.add(toUtcDateKey(new Date(cursor)));
+    while (cursorTimestamp < endExclusiveTimestamp) {
+      blockedDateKeys.add(toUtcDateKey(cursorTimestamp));
+      cursorTimestamp += UTC_DAY_IN_MS;
     }
-  });
+  }
 
   return sortUniqueDateKeys(blockedDateKeys);
 };

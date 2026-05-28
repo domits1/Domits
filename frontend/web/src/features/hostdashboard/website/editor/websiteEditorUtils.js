@@ -361,6 +361,16 @@ export const createEditorFieldKeyDownHandler = (field, saveDraftChanges) => asyn
   await saveDraftChanges();
 };
 
+export const createCommitAndSaveOnEnterHandler = (commitChange, saveDraftChanges) => async (event) => {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  commitChange();
+  await saveDraftChanges();
+};
+
 export const activatePreviewTargetId = (setActivePreviewTargetId, targetId) => {
   setActivePreviewTargetId(String(targetId || "").trim());
 };
