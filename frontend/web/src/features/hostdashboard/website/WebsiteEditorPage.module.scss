@@ -372,12 +372,17 @@
 .previewSkeletonFrame {
   display: grid;
   place-items: center;
+  width: 100%;
+  min-width: 0;
   min-height: 640px;
   padding: 12px 0 8px;
+  box-sizing: border-box;
 }
 
 .previewSkeletonViewport {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   transition: max-width 0.2s ease;
 }
 
@@ -397,7 +402,9 @@
   display: grid;
   gap: clamp(20px, 2.8vw, 32px);
   width: 100%;
+  min-width: 0;
   padding: clamp(18px, 2.2vw, 28px);
+  box-sizing: border-box;
   border-radius: 36px;
   border: 1px solid rgba(226, 232, 240, 0.8);
   background:
