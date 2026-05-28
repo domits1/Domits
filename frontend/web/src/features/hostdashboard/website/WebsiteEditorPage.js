@@ -71,10 +71,10 @@ import {
   resolveWebsiteGalleryPanelColor,
 } from "./config/websiteGallerySectionConfig";
 import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";
+import { WebsitePreviewSkeleton } from "./rendering/WebsitePreviewSkeleton";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
 import { WebsiteEditorSidebar } from "./editor/WebsiteEditorSidebar";
-import { WebsiteEditorPreviewSkeleton } from "./editor/WebsiteEditorPreviewSkeleton";
 import {
   WebsiteEditorActionMenu,
   WebsiteEditorErrorState,
@@ -1444,7 +1444,7 @@ function WebsiteEditorPage() {
               </div>
 
               {isPreviewLoading ? (
-                <WebsiteEditorPreviewSkeleton viewport={previewViewport} />
+                <WebsitePreviewSkeleton viewport={previewViewport} />
               ) : previewLoadError || !baseModel || !previewModel ? (
                 <p className={styles.errorText}>
                   {previewLoadError || "We could not render the website preview right now."}

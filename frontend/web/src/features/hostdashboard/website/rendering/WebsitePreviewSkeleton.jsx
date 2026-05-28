@@ -28,7 +28,20 @@ const buildSkeletonStyle = (order) => ({
   "--preview-skeleton-order": order,
 });
 
-export function WebsiteEditorPreviewSkeleton({ viewport }) {
+export const resolveWebsitePreviewSkeletonViewport = () => {
+  const viewportWidth = Number(globalThis.innerWidth || 0);
+  if (viewportWidth > 0 && viewportWidth <= 560) {
+    return "mobile";
+  }
+
+  if (viewportWidth > 0 && viewportWidth <= 960) {
+    return "tablet";
+  }
+
+  return "desktop";
+};
+
+export function WebsitePreviewSkeleton({ viewport }) {
   return (
     <div className={styles.previewSkeletonFrame}>
       <div className={`${styles.previewSkeletonViewport} ${getViewportClassName(viewport)}`.trim()}>
@@ -132,6 +145,6 @@ export function WebsiteEditorPreviewSkeleton({ viewport }) {
   );
 }
 
-WebsiteEditorPreviewSkeleton.propTypes = {
+WebsitePreviewSkeleton.propTypes = {
   viewport: PropTypes.oneOf(["desktop", "tablet", "mobile"]).isRequired,
 };
