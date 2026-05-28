@@ -3,7 +3,6 @@ import {
   getRefundPercentage,
 } from "../../functions/General-Bookings-CRUD-Bookings-develop/util/refundCalculator.js";
 import ReservationController from "../../functions/General-Bookings-CRUD-Bookings-develop/controller/reservationController.js";
-import BookingService from "../../functions/General-Bookings-CRUD-Bookings-develop/business/bookingService.js";
 import PaymentService from "../../functions/General-Bookings-CRUD-Bookings-develop/business/paymentService.js";
 
 describe("Refund Logic - 10 Test Scenarios", () => {
@@ -138,7 +137,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
       expect(() => {
-        calculateRefundAmountCents("flexible", futureDate, NaN, now);
+        calculateRefundAmountCents("flexible", futureDate, Number.NaN, now);
       }).toThrow("totalPriceCents must be a non-negative number");
     });
   });
