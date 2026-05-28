@@ -6,6 +6,7 @@ import { StatusBadge } from "./StatusBadge/StatusBadge";
 import { TablePager } from "./TabelPager/TablePager";
 import { pageSlice, MAX_ITEMS_PER_PAGE, getTotalPages } from "../utils/pagination";
 import { RefreshFunctions } from "../hooks/refreshFunctions.js";
+import InvoicesSection from "./InvoicesSection";
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
@@ -408,6 +409,7 @@ export default function HostFinanceTab() {
                 </div>
               </>
             )}
+            <InvoicesSection />
           </div>
         </section>
 
