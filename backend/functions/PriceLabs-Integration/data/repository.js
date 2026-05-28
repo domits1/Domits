@@ -49,14 +49,16 @@ export class Repository {
 
   async getPropertiesByHost(hostId) {
     const ds = await this._ds();
-    return ds.getRepository(Property).find({ where: { host_id: hostId } });
+    return ds.getRepository(Property).find({ where: { hostid: hostId } });
   }
 
 
   async getAvailabilityForProperty(propertyId, days = 730) {
-    const ds    = await this._ds();
-    const from  = Date.now();
-    const to    = from + days * 24 * 60 * 60 * 1000;
+    const ds  = await this._ds();
+    const now = new Date();
+    const fut = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    const from = Number.parseInt(now.toISOString().slice(0, 10).replaceAll("-", ""));
+    const to   = Number.parseInt(fut.toISOString().slice(0, 10).replaceAll("-", ""));
     return ds.getRepository(Property_Calendar_Override)
       .createQueryBuilder("cal")
       .where("cal.property_id = :propertyId", { propertyId })

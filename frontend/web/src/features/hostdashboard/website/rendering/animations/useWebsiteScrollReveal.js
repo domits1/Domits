@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import motionStyles from "./WebsiteTemplateMotion.module.scss";
 
+const WEBSITE_SCROLL_REVEAL_THRESHOLD = 0.08;
+const WEBSITE_SCROLL_REVEAL_ROOT_MARGIN = "0px 0px 6% 0px";
+
 export const useWebsiteScrollReveal = ({ enabled = false, deps = [] } = {}) => {
   const previewCanvasRef = useRef(null);
 
@@ -47,8 +50,8 @@ export const useWebsiteScrollReveal = ({ enabled = false, deps = [] } = {}) => {
         });
       },
       {
-        threshold: 0.14,
-        rootMargin: "0px 0px -10% 0px",
+        threshold: WEBSITE_SCROLL_REVEAL_THRESHOLD,
+        rootMargin: WEBSITE_SCROLL_REVEAL_ROOT_MARGIN,
       }
     );
 

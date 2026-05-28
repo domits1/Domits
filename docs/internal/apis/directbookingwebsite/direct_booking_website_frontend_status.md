@@ -28,16 +28,17 @@ What is in place:
 - Data mapping from selected listing detail payload into a shared template model.
 - Draft persistence to backend storage per host and property.
 - Saved website draft overview tab (`My websites`) with dedicated editor-page entry.
-- Dedicated draft editor page with controlled text override editing for:
-  - website title
-  - hero eyebrow
-  - hero title
-  - hero description
-  - CTA label
-  - CTA note
+- Dedicated draft editor page with section-scoped override editing for:
+  - website title and hero copy
+  - residence title, headline, description, and panel settings
+  - calendar title, description, and panel settings
+  - contact footer copy, avatar mode, and colors
+  - amenities order, labels, icons, and icon color
+  - trust-card and journey-stop copy for implemented templates
 - Template-aware section visibility toggles for implemented templates.
-- The availability calendar is part of the controlled visibility surface and can be shown or hidden per website draft.
+- The editor now uses dedicated dropdown sections for shared website areas such as residence, calendar, amenities, contact, and image slots instead of keeping all controls in one flat list.
 - Image-slot selection for hero/gallery slots used by implemented templates, now driven through a visual image-picker overlay instead of dropdown-only controls.
+- Image slots can now opt into shared rotation through imported listing photos, with the selected slot image acting as the lead image in the rotating sequence.
 - Editor save feedback now uses toast notifications instead of inline status copy inside the form.
 - Image-slot picker now uses a compact thumbnail grid that can scale to larger imported photo sets without a large hero preview stage.
 - Scaled preview rendering with dedicated desktop/tablet/mobile viewport switching in the editor.
@@ -50,7 +51,8 @@ What is in place:
 - Compact saved website previews are centered on mobile cards.
 - Editor sections are now collapsible so the left-side control surface remains usable as more override fields are added.
 - Clicking editable areas in the editor preview now opens or scrolls to the matching editor section, and clicking preview images opens the image picker directly.
-- Clicking the availability calendar in the editor preview now opens the visibility section and highlights the `Show availability calendar` toggle.
+- Clicking editable areas now still lands correctly even when the destination dropdown is collapsed first, because preview-to-editor targeting performs a second pass after the section opens.
+- The editor targeting/runtime logic is now split into dedicated modules (`editor/fields`, `editor/sections`, `editor/hooks`, dedicated picker dialogs, and feature-shared `config` files) instead of keeping all interaction code inside `WebsiteEditorPage.js`.
 - Preview-to-editor jumps now briefly highlight the matched editor section so users can see where they landed after clicking the preview.
 - Editor loading now keeps the editor shell visible and uses section-level pulse-bar loaders instead of a single blocking state card.
 - Editor section bodies now open and close with an animated dropdown transition instead of a hard mount/unmount jump.
@@ -63,7 +65,9 @@ What is in place:
   - last sync timestamp when available
 - The website-side calendar payload is now enriched with the same iCal source/block data used by the host calendar sync flow, which keeps the website calendar snapshot closer to the PMS/calendar tab.
 - The website-side calendar payload now also merges PMS unavailable date overrides from the existing calendar override endpoint, so grey blocked days can appear alongside imported external bookings.
+- The website-side calendar enrichment now also merges accepted booking date keys and is shared across editor preview, internal draft preview, and published live-site rendering.
 - Implemented templates now render a read-only availability snapshot card using the shared website model.
+- The shared availability snapshot now supports month-to-month navigation in the preview/live calendar without leaving the website surface.
 - Acceptance AWS wiring has been validated far enough for draft save/list behavior and the live-site foundation:
   - Aurora `main.standalone_site_draft`
   - Aurora `main.standalone_site`
@@ -161,9 +165,14 @@ Calendar data path:
 - The website detail fetch now uses `no-store`, and the host-owned property detail response also returns no-store headers to reduce stale calendar sync snapshots.
 - Current rendered availability is intentionally a read-only imported snapshot:
   - external blocked dates
+  - accepted booking date keys
   - PMS unavailable override dates
   - iCal sync state
   - sync metadata
+- The same availability enrichment path is now reused by:
+  - the host editor preview
+  - `/website-preview/:draftId`
+  - `/website-live/:domain`
 - PMS-backed availability snapshot import is implemented in the current foundation. Authoritative server-side quote calculation for standalone guest traffic is designed, but not yet exposed as a live standalone public API.
 
 ## Template implementation status
@@ -241,8 +250,32 @@ Current implementation details:
 - Saved drafts now open in a dedicated editor route instead of reusing Step 3 in the builder.
 - Saved draft cards now render a clipped desktop-style website thumbnail instead of a mobile-biased preview.
 - Implemented templates now honor draft visibility toggles for major sections.
+- Panorama Landing now has the deepest editor coverage, including:
+  - configurable contact footer
+  - configurable amenities collection
+  - dedicated residence section controls
+  - dedicated calendar section controls
 - Editor image slot reassignment now uses an overlay gallery with navigation and confirm-select behavior.
 - Editor image slot reassignment now uses a thumbnail-only overlay grid with direct-select behavior.
+- Shared image slots now support optional photo rotation, so a slot can render a lead image plus the imported listing set instead of staying fixed to one photo.
+- Panorama residence now supports:
+  - dedicated image-slot ownership instead of reusing the hero image
+  - optional section panel with configurable color
+  - editable title, headline, and description
+- Calendar editing now supports:
+  - editable title and description
+  - independent panel toggle and panel color
+  - month navigation controls in the rendered snapshot
+- Amenities editing now supports:
+  - add/delete/reorder up to the configured maximum
+  - editable labels
+  - editable icon choice from the shared amenity registry
+  - shared amenity icon color override
+- Contact footer editing now supports:
+  - editable title and description
+  - host/profile/initials avatar modes
+  - custom uploaded avatar image
+  - accent and footer background colors
 - Editor field overflow issues were corrected by tightening field sizing/box-model behavior.
 - Shared preview scaling was corrected so compact preview cards no longer reserve large unscaled whitespace.
 - Editor save success/error feedback was moved into toast notifications to keep the editor surface cleaner.
@@ -296,7 +329,7 @@ The next high-priority phase is aligning the published-site runtime with real ho
 
 Required next steps:
 
-- Expand section-level/content override coverage further into template-specific headings and branding/theme controls.
+- Extend the richer Panorama editor coverage into the remaining implemented templates so section contracts stay shared but template support becomes more even.
 - Introduce image reordering / richer media management beyond the current slot reassignment approach.
 - Finish fallback-domain infrastructure activation so `*.direct.domits.com` resolves to the published live site.
 - Add custom-domain management on top of the existing `standalone_site_domain` model.

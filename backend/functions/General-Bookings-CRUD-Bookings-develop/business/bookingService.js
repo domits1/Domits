@@ -260,12 +260,23 @@ class BookingService {
     const booking = bookingResult.response;
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
     if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
+
     await this.reservationRepository.updateBookingStatus(bookingId, BOOKING_STATUS_AWAITING_PAYMENT);
+
+    const overlapping = await this.reservationRepository.getOverlappingInquiries({
+      propertyId: booking.property_id,
+      arrivalDateMs: booking.arrivaldate,
+      departureDateMs: booking.departuredate,
+      excludeBookingId: bookingId,
+    });
+    await Promise.all(overlapping.map((b) => this.reservationRepository.updateBookingStatus(b.id, "Declined")));
+
     return {
       bookingId,
       status: BOOKING_STATUS_AWAITING_PAYMENT,
       hostId: booking.hostid,
       propertyId: booking.property_id,
+      declinedCount: overlapping.length,
       dates: {
         arrivalDate: booking.arrivaldate,
         departureDate: booking.departuredate,

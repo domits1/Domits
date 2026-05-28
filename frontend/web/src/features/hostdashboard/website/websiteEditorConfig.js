@@ -1,6 +1,7 @@
 import LaptopMacOutlinedIcon from "@mui/icons-material/LaptopMacOutlined";
 import TabletMacOutlinedIcon from "@mui/icons-material/TabletMacOutlined";
 import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
+import { MAX_WEBSITE_CONFIGURABLE_AMENITIES } from "./config/websiteAmenitiesConfig";
 
 export const PREVIEW_VIEWPORT_OPTIONS = Object.freeze([
   { id: "desktop", label: "Desktop", Icon: LaptopMacOutlinedIcon },
@@ -8,7 +9,7 @@ export const PREVIEW_VIEWPORT_OPTIONS = Object.freeze([
   { id: "mobile", label: "Mobile", Icon: SmartphoneOutlinedIcon },
 ]);
 
-export const COMMON_TEXT_FIELDS = Object.freeze([
+const BASE_COMMON_TEXT_FIELDS = Object.freeze([
   { key: "siteTitle", label: "Website title", component: "input" },
   { key: "heroEyebrow", label: "Hero eyebrow", component: "input" },
   { key: "heroTitle", label: "Hero title", component: "input" },
@@ -17,8 +18,44 @@ export const COMMON_TEXT_FIELDS = Object.freeze([
   { key: "ctaNote", label: "CTA note", component: "textarea" },
 ]);
 
+const PANORAMA_RESIDENCE_TEXT_FIELDS = Object.freeze([
+  { key: "residenceTitle", label: "Section title", component: "input" },
+  { key: "residenceHeadline", label: "Section headline", component: "input" },
+  { key: "heroDescription", label: "Section description", component: "textarea" },
+]);
+
+const PANORAMA_RESIDENCE_TOGGLE_FIELDS = Object.freeze([
+  {
+    key: "residenceShowPanel",
+    label: "Show residence panel",
+    description: 'Toggles the white framed surface behind "The residence" section.',
+  },
+]);
+
+const PANORAMA_CONTACT_FIELDS = Object.freeze([
+  { key: "title", label: "Section title", component: "input" },
+  { key: "description", label: "Section description", component: "textarea" },
+]);
+
+const CALENDAR_TOGGLE_FIELDS = Object.freeze([
+  {
+    key: "showPanel",
+    label: "Show calendar panel",
+    description: "Toggles the framed surface behind the availability calendar.",
+  },
+]);
+
+const CALENDAR_TEXT_FIELDS = Object.freeze([
+  { key: "title", label: "Section title", component: "input" },
+  { key: "description", label: "Section description", component: "textarea" },
+]);
+
 export const EDITOR_SECTION_KEYS = Object.freeze({
   common: "common",
+  residence: "residence",
+  calendar: "calendar",
+  amenities: "amenities",
+  contact: "contact",
   theme: "theme",
   visibility: "visibility",
   images: "images",
@@ -34,6 +71,28 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     heroDescription: "common.heroDescription",
     ctaLabel: "common.ctaLabel",
     ctaNote: "common.ctaNote",
+  },
+  residence: {
+    title: "residence.title",
+    headline: "residence.headline",
+    description: "residence.description",
+    showPanel: "residence.showPanel",
+    image: "residence.image",
+  },
+  calendar: {
+    visibility: "calendar.visibility",
+    title: "calendar.title",
+    description: "calendar.description",
+    showPanel: "calendar.showPanel",
+  },
+  amenities: (index) => `amenities.${index}`,
+  amenitiesIconColor: "amenities.iconColor",
+  contact: {
+    title: "contact.title",
+    description: "contact.description",
+    avatarImage: "contact.avatarImage",
+    accentColor: "contact.accentColor",
+    backgroundColor: "contact.backgroundColor",
   },
   visibility: (fieldKey) => `visibility.${fieldKey}`,
   images: {
@@ -52,6 +111,7 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
     { key: "gallerySection", label: "Show gallery section", description: "Controls the imported photo strip in the lower content block." },
     { key: "amenitiesPanel", label: "Show amenities panel", description: "Controls the featured amenities panel in the lower content block." },
     { key: "availabilityCalendar", label: "Show availability calendar", description: "Controls the imported availability snapshot section." },
+    { key: "contactSection", label: "Show contact footer", description: "Controls the contact footer section at the bottom of the page." },
     { key: "chatWidget", label: "Show chat widget", description: "Shows the visitor contact widget on the website." },
   ],
   "trust-signals": [
@@ -73,18 +133,79 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
 
 export const TEMPLATE_IMAGE_SLOT_MAP = Object.freeze({
   "panorama-landing": [
-    { id: "panorama-hero", kind: "hero", label: "Hero image", description: "Main visual used in the top hero section." },
-    { id: "panorama-gallery-primary", kind: "gallery", index: 0, label: "Gallery slot 1", description: "First image in the lower gallery strip." },
-    { id: "panorama-gallery-secondary", kind: "gallery", index: 1, label: "Gallery slot 2", description: "Second image in the lower gallery strip." },
-    { id: "panorama-gallery-tertiary", kind: "gallery", index: 2, label: "Gallery slot 3", description: "Third image in the lower gallery strip." },
+    {
+      id: "panorama-hero",
+      kind: "hero",
+      label: "Hero image",
+      description: "Main visual used in the top hero section.",
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-residence",
+      kind: "residence",
+      label: "Residence image",
+      description: 'Lead image shown first in the rotating "The residence" section gallery.',
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-gallery-primary",
+      kind: "gallery",
+      index: 0,
+      label: "Gallery slot 1",
+      description: "First image in the lower gallery strip.",
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-gallery-secondary",
+      kind: "gallery",
+      index: 1,
+      label: "Gallery slot 2",
+      description: "Second image in the lower gallery strip.",
+      supportsRotation: true,
+    },
+    {
+      id: "panorama-gallery-tertiary",
+      kind: "gallery",
+      index: 2,
+      label: "Gallery slot 3",
+      description: "Third image in the lower gallery strip.",
+      supportsRotation: true,
+    },
   ],
   "trust-signals": [
-    { id: "trust-hero", kind: "hero", label: "Hero image", description: "Main image used in the trust-oriented layout." },
+    {
+      id: "trust-hero",
+      kind: "hero",
+      label: "Hero image",
+      description: "Main image used in the trust-oriented layout.",
+      supportsRotation: true,
+    },
   ],
   "experience-journey": [
-    { id: "journey-gallery-arrival", kind: "gallery", index: 0, label: "Journey image 1", description: "Visual used next to the first journey stop." },
-    { id: "journey-gallery-stay", kind: "gallery", index: 1, label: "Journey image 2", description: "Visual used next to the second journey stop." },
-    { id: "journey-gallery-surroundings", kind: "gallery", index: 2, label: "Journey image 3", description: "Visual used next to the third journey stop." },
+    {
+      id: "journey-gallery-arrival",
+      kind: "gallery",
+      index: 0,
+      label: "Journey image 1",
+      description: "Visual used next to the first journey stop.",
+      supportsRotation: true,
+    },
+    {
+      id: "journey-gallery-stay",
+      kind: "gallery",
+      index: 1,
+      label: "Journey image 2",
+      description: "Visual used next to the second journey stop.",
+      supportsRotation: true,
+    },
+    {
+      id: "journey-gallery-surroundings",
+      kind: "gallery",
+      index: 2,
+      label: "Journey image 3",
+      description: "Visual used next to the third journey stop.",
+      supportsRotation: true,
+    },
   ],
 });
 
@@ -96,6 +217,15 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
       itemLabel: "Card",
       count: 3,
       supportsIconSelection: true,
+    },
+    amenities: {
+      title: "Amenities",
+      description:
+        "Choose which amenities appear first on the website. The first items lead the amenities section and the full list.",
+      itemLabel: "Amenity",
+      maxCount: MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+      supportsIconSelection: true,
+      placement: "afterTrustCards",
     },
   },
   "trust-signals": {
@@ -113,6 +243,15 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
       description: "These stops control the step-by-step narrative in the experience layout.",
       itemLabel: "Stop",
       count: 3,
+    },
+    amenities: {
+      title: "Amenities",
+      description:
+        "Choose which amenities appear first in the footer recap. The first items lead the visible list.",
+      itemLabel: "Amenity",
+      maxCount: MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+      supportsIconSelection: true,
+      placement: "afterJourneyStops",
     },
   },
 });
@@ -138,9 +277,66 @@ export const LOADING_EDITOR_SECTIONS = Object.freeze([
     title: "Image slots",
     description: "Loading imported listing photos and template image slot mappings.",
   },
+  {
+    id: EDITOR_SECTION_KEYS.calendar,
+    title: "Calendar",
+    description: "Loading calendar visibility and panel settings.",
+  },
 ]);
 
+export const getCommonTextFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return BASE_COMMON_TEXT_FIELDS.filter((field) => field.key !== "heroDescription");
+  }
+
+  return BASE_COMMON_TEXT_FIELDS;
+};
+
+export const getResidenceTextFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_RESIDENCE_TEXT_FIELDS;
+  }
+
+  return [];
+};
+
+export const getResidenceToggleFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_RESIDENCE_TOGGLE_FIELDS;
+  }
+
+  return [];
+};
+
+export const getCalendarToggleFields = (templateKey) => {
+  if (TEMPLATE_VISIBILITY_FIELD_MAP[String(templateKey || "").trim()]?.some((field) => field.key === "availabilityCalendar")) {
+    return CALENDAR_TOGGLE_FIELDS;
+  }
+
+  return [];
+};
+
+export const getCalendarTextFields = (templateKey) => {
+  if (TEMPLATE_VISIBILITY_FIELD_MAP[String(templateKey || "").trim()]?.some((field) => field.key === "availabilityCalendar")) {
+    return CALENDAR_TEXT_FIELDS;
+  }
+
+  return [];
+};
+
+export const getContactSectionFields = (templateKey) => {
+  if (templateKey === "panorama-landing") {
+    return PANORAMA_CONTACT_FIELDS;
+  }
+
+  return [];
+};
+
 export const getCollectionTargetId = (collectionKey, itemIndex) => {
+  if (collectionKey === EDITOR_SECTION_KEYS.amenities) {
+    return EDITOR_TARGET_KEYS.amenities(itemIndex);
+  }
+
   if (collectionKey === EDITOR_SECTION_KEYS.trustCards) {
     return EDITOR_TARGET_KEYS.trustCards(itemIndex);
   }
@@ -155,6 +351,10 @@ export const getCollectionTargetId = (collectionKey, itemIndex) => {
 export const getImageSlotTargetId = (slot) => {
   if (slot.kind === "hero") {
     return EDITOR_TARGET_KEYS.images.hero;
+  }
+
+  if (slot.kind === "residence") {
+    return EDITOR_TARGET_KEYS.residence.image;
   }
 
   return EDITOR_TARGET_KEYS.images.gallery(slot.index);

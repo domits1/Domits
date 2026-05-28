@@ -205,7 +205,7 @@ const BookingOverview = () => {
       navigate(`/bookingconfirmationoverview?bookingId=${response.bookingId}&status=inquiry`);
     } catch (error) {
       console.error("Error sending inquiry:", error);
-      setError("Unable to send your inquiry. Please try again later.");
+      setError("Unable to send your request. Please try again later.");
     } finally {
       setLoading(false);
       setIsProcessing(false);
