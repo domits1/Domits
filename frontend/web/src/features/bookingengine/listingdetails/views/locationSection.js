@@ -14,9 +14,9 @@ const buildLocationLabel = (location = {}) => {
 };
 
 const buildMapQuery = (location = {}) => {
-  const query = [location?.street, location?.houseNumber, location?.city, location?.country]
+  const query = [location?.city, location?.country]
     .filter(Boolean)
-    .join(" ");
+    .join(", ");
   return encodeURIComponent(query);
 };
 
@@ -44,7 +44,7 @@ const LocationSection = ({ location }) => {
           <div className="location-section__map-shell">
             <iframe
               className="location-section__map"
-              title="Property location"
+              title={t.title}
               src={`https://maps.google.com/maps?q=${buildMapQuery(location)}&z=14&output=embed`}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
