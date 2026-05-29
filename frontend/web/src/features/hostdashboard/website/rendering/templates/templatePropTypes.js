@@ -39,6 +39,14 @@ export const galleryPropType = PropTypes.shape({
   images: PropTypes.arrayOf(PropTypes.string).isRequired,
 });
 
+export const gallerySectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  description: PropTypes.string,
+  browseLabel: PropTypes.string,
+  showPanel: PropTypes.bool,
+  panelColor: PropTypes.string,
+});
+
 export const availabilityPropType = PropTypes.shape({
   externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
@@ -62,6 +70,13 @@ export const hostPropType = PropTypes.shape({
   name: PropTypes.string.isRequired,
   profileImage: PropTypes.string,
   initial: PropTypes.string,
+  whatsapp: PropTypes.shape({
+    connected: PropTypes.bool,
+    displayName: PropTypes.string,
+    phoneNumber: PropTypes.string,
+    phoneNumberDigits: PropTypes.string,
+    isAvailable: PropTypes.bool,
+  }),
 });
 
 export const contactSectionPropType = PropTypes.shape({
@@ -85,6 +100,11 @@ export const amenityPropType = PropTypes.shape({
   iconAmenityId: PropTypes.string,
   label: PropTypes.string.isRequired,
   category: PropTypes.string,
+});
+
+export const amenitiesSectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  description: PropTypes.string,
 });
 
 export const visibilityPropType = PropTypes.shape({

@@ -329,6 +329,10 @@ export const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } 
     return EDITOR_TARGET_KEYS.calendar.visibility;
   }
 
+  if (sectionId === EDITOR_SECTION_KEYS.gallery) {
+    return EDITOR_TARGET_KEYS.gallery.title;
+  }
+
   if (sectionId === EDITOR_SECTION_KEYS.amenities) {
     return EDITOR_TARGET_KEYS.amenities(0);
   }
@@ -354,6 +358,16 @@ export const createEditorFieldKeyDownHandler = (field, saveDraftChanges) => asyn
   }
 
   event.preventDefault();
+  await saveDraftChanges();
+};
+
+export const createCommitAndSaveOnEnterHandler = (commitChange, saveDraftChanges) => async (event) => {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  commitChange();
   await saveDraftChanges();
 };
 
@@ -399,7 +413,7 @@ export const getPreviewTargetIdForVisibilityField = (fieldKey) => {
     case "trustCards":
       return "visibility.trustCards";
     case "gallerySection":
-      return EDITOR_TARGET_KEYS.images.gallery(0);
+      return EDITOR_TARGET_KEYS.gallery.visibility;
     case "amenitiesPanel":
       return "visibility.amenitiesPanel";
     case "availabilityCalendar":

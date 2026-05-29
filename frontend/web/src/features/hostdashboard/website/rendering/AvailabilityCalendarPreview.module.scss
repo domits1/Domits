@@ -238,15 +238,20 @@
   display: grid;
   gap: clamp(24px, 2.8vw, 36px);
   justify-items: center;
-  padding: clamp(28px, 4vw, 54px) clamp(18px, 3vw, 30px) clamp(22px, 3vw, 34px);
-  border-radius: 32px;
-  border: 1px solid rgba(197, 181, 151, 0.22);
-  background:
-    linear-gradient(180deg, rgba(255, 253, 249, 0.92), rgba(255, 255, 255, 0.9)),
-    #fbf8f2;
+  width: 100%;
+  margin-inline: calc(var(--template-preview-frame-gutter) * -1);
+  padding:
+    clamp(28px, 4vw, 54px)
+    calc(clamp(18px, 3vw, 30px) + var(--template-preview-frame-gutter))
+    clamp(22px, 3vw, 34px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .panoramaCalendarCardPanelOff {
+  margin-inline: 0;
+  padding-inline: clamp(18px, 3vw, 30px);
   border: 0;
   background: transparent;
 }

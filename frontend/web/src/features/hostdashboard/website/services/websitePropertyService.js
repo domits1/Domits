@@ -6,6 +6,10 @@ import {
 } from "../../services/fetchUserProfileById";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
+import {
+  fetchWebsiteHostWhatsApp,
+  getEmptyWebsiteHostWhatsApp,
+} from "./websiteHostMessagingService";
 
 const buildSinglePropertyUrl = (propertyId) =>
   `${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`;
@@ -202,6 +206,13 @@ const normalizeWebsiteHostProfile = (hostProfile, fallbackHostId = "") => {
     givenName: normalizedGivenName || null,
     profileImage: normalizedProfileImage || null,
     userId: normalizedHostId,
+    whatsapp:
+      hostProfile?.whatsapp && typeof hostProfile.whatsapp === "object"
+        ? {
+            ...getEmptyWebsiteHostWhatsApp(),
+            ...hostProfile.whatsapp,
+          }
+        : getEmptyWebsiteHostWhatsApp(),
   };
 };
 
@@ -293,17 +304,22 @@ export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty 
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
   const hostId = resolveWebsiteHostId(normalizedPropertyDetails, summaryProperty);
+  const hostProfilePromise =
+    normalizedPropertyDetails.hostProfile && typeof normalizedPropertyDetails.hostProfile === "object"
+      ? Promise.resolve(normalizeWebsiteHostProfile(normalizedPropertyDetails.hostProfile, hostId))
+      : fetchWebsiteHostProfile(hostId);
 
-  if (normalizedPropertyDetails.hostProfile && typeof normalizedPropertyDetails.hostProfile === "object") {
-    return {
-      ...normalizedPropertyDetails,
-      hostProfile: normalizeWebsiteHostProfile(normalizedPropertyDetails.hostProfile, hostId),
-    };
-  }
+  const [hostProfile, whatsapp] = await Promise.all([
+    hostProfilePromise,
+    fetchWebsiteHostWhatsApp(hostId),
+  ]);
 
   return {
     ...normalizedPropertyDetails,
-    hostProfile: await fetchWebsiteHostProfile(hostId),
+    hostProfile: {
+      ...hostProfile,
+      whatsapp,
+    },
   };
 };
 
