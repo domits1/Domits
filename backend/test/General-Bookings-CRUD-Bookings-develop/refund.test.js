@@ -150,6 +150,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
     const bookingDefaults = {
       id: "booking123",
       guestid: "guest123",
+
       cancellation_policy: "flexible",
       total_price: 100,
       paymentid: "pi_test_123456",
