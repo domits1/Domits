@@ -125,6 +125,11 @@ export const getChannexStatus = ({ userId }) =>
     query: { userId },
   });
 
+export const getChannexAdminAccess = ({ userId }) =>
+  requestChannex("/integrations/channex/admin-access", {
+    query: { userId },
+  });
+
 export const getChannexAriTargets = ({ userId, domitsPropertyId }) =>
   requestChannex("/integrations/channex/ari-targets", {
     query: { userId, domitsPropertyId },

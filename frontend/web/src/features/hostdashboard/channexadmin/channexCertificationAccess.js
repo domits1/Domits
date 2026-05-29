@@ -1,10 +1,14 @@
+import { getChannexAdminAccess } from "../hostintegrations/channexApi";
+
 export const CHANNEX_CERTIFICATION_ADMIN_ROUTE = "admin/channex-certification";
 
-const getAllowedChannexCertificationUserIds = () =>
-  String(process.env.REACT_APP_CHANNEX_CERTIFICATION_USER_IDS || "")
-    .split(/[,\s;]+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
+export const checkChannexCertificationAccess = async (userId) => {
+  if (!userId) return false;
 
-export const isChannexCertificationUser = (userId) =>
-  Boolean(userId) && getAllowedChannexCertificationUserIds().includes(String(userId).trim());
+  try {
+    const response = await getChannexAdminAccess({ userId });
+    return response?.allowed === true;
+  } catch {
+    return false;
+  }
+};

@@ -30,6 +30,12 @@ const forbiddenChannexCertificationAdmin = {
     message: "User is not allowed to access Channex certification admin endpoints.",
   },
 };
+const getChannexCertificationAdminAccess = (event) => ({
+  statusCode: 200,
+  response: {
+    allowed: isChannexCertificationUserAllowed(event?.queryStringParameters?.userId),
+  },
+});
 
 const protectedChannexCertificationAdminRoutes = [
   { methods: ["GET"], pattern: /\/integrations\/channex\/status$/ },
@@ -144,6 +150,10 @@ const routeDefinitions = [
   {
     matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/status"),
     handle: (event) => integrationController.checkChannexStatus(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/admin-access"),
+    handle: (event) => getChannexCertificationAdminAccess(event),
   },
   {
     matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/properties"),

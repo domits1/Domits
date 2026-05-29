@@ -112,6 +112,45 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(mockIntegrationControllerMethods.checkChannexStatus).toHaveBeenCalledTimes(1);
   });
 
+  test("admin access endpoint returns allowed true for allowlisted user", async () => {
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/admin-access",
+        query: { userId: "allowed-user" },
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(parseBody(response)).toEqual({ allowed: true });
+    expect(mockIntegrationControllerMethods.checkChannexStatus).not.toHaveBeenCalled();
+  });
+
+  test("admin access endpoint returns allowed false for non-allowlisted user", async () => {
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/admin-access",
+        query: { userId: "not-allowed" },
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ allowed: false });
+    expect(mockIntegrationControllerMethods.checkChannexStatus).not.toHaveBeenCalled();
+  });
+
+  test("admin access endpoint returns allowed false when userId is missing", async () => {
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/admin-access",
+        query: {},
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ allowed: false });
+  });
+
   test("booking revisions list endpoint is protected", async () => {
     const response = await handler(
       buildEvent({
