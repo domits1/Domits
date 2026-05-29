@@ -45,9 +45,10 @@ import {
 } from "./channexBookingAvailabilityBridge.js";
 
 const nowMs = () => Date.now();
-const DAY_MS = 24 * 60 * 60 * 1000;
-const SIXTY_DAYS_MS = 60 * DAY_MS;
-const THREE_DAYS_MS = 3 * DAY_MS;
+const TIME_WINDOWS_MS = Object.freeze({
+  DAY: 24 * 60 * 60 * 1000,
+  THREE_DAYS: 3 * 24 * 60 * 60 * 1000,
+});
 const GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v22.0";
 const PLACEHOLDER_REFRESH_STATUSES = new Set([
   "NEEDS_REAL_META_TOKEN_EXCHANGE",
@@ -56,9 +57,11 @@ const PLACEHOLDER_REFRESH_STATUSES = new Set([
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
-const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
-const CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS = 8000;
-const CHANNEX_DEFAULT_SELLABLE_UNIT_COUNT = 1;
+const CHANNEX_FULL_SYNC_DEFAULTS = Object.freeze({
+  VERSION: "full-sync-v1",
+  PROVIDER_REQUEST_TIMEOUT_MS: 8000,
+  DEFAULT_SELLABLE_UNIT_COUNT: 1,
+});
 
 const requireStr = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
 const compareAlphabetically = (left, right) => String(left).localeCompare(String(right));
@@ -1094,7 +1097,7 @@ const logChannexFullCertificationSync = (stage, fields = {}) => {
     console.info(
       JSON.stringify({
         event: "CHANNEX_FULL_CERTIFICATION_SYNC_DIAGNOSTIC",
-        fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+        fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
         stage,
         ...fields,
       })
@@ -1608,7 +1611,7 @@ const normalizeActiveBookingCount = (activeCountsByNight, isoDate) => {
   return Number.isFinite(count) && count > 0 ? Math.trunc(count) : 0;
 };
 const buildBookingAwareAvailability = ({ baseAvailability, activeBookingCount }) => {
-  const sellableUnitCount = CHANNEX_DEFAULT_SELLABLE_UNIT_COUNT;
+  const sellableUnitCount = CHANNEX_FULL_SYNC_DEFAULTS.DEFAULT_SELLABLE_UNIT_COUNT;
   const availableUnitCount = baseAvailability
     ? Math.max(0, sellableUnitCount - Math.max(0, activeBookingCount))
     : 0;
@@ -1641,7 +1644,7 @@ const buildAvailabilityOccupancyContext = async ({ bookingAvailabilityRepository
   const activeBookingRows = await bookingAvailabilityRepository.listActiveBookingsOverlappingRange(
     normalizedDomitsPropertyId,
     fromMs,
-    lastDateStartMs + DAY_MS
+    lastDateStartMs + TIME_WINDOWS_MS.DAY
   );
   const activeBookings = Array.isArray(activeBookingRows) ? activeBookingRows : [];
   const activeCountsByNight = countActiveBookingsByNight(activeBookings, normalizedDates);
@@ -2781,7 +2784,7 @@ export default class IntegrationService {
       });
     }
 
-    if (expiresAt - now <= THREE_DAYS_MS) {
+    if (expiresAt - now <= TIME_WINDOWS_MS.THREE_DAYS) {
       return buildTokenState({
         status: "EXPIRING_SOON",
         needsReconnect: false,
@@ -4370,7 +4373,7 @@ export default class IntegrationService {
           bookingAwareAvailability: true,
           activeBookingCount: occupancyContext.activeBookingCount,
           activeBookingNightCount: occupancyContext.activeBookingNightCount,
-          sellableUnitCount: CHANNEX_DEFAULT_SELLABLE_UNIT_COUNT,
+          sellableUnitCount: CHANNEX_FULL_SYNC_DEFAULTS.DEFAULT_SELLABLE_UNIT_COUNT,
         },
         availabilityPreview,
         rateRestrictionPreview,
@@ -4598,7 +4601,7 @@ export default class IntegrationService {
           bookingAwareAvailability: true,
           activeBookingCount: occupancyContext.activeBookingCount,
           activeBookingNightCount: occupancyContext.activeBookingNightCount,
-          sellableUnitCount: CHANNEX_DEFAULT_SELLABLE_UNIT_COUNT,
+          sellableUnitCount: CHANNEX_FULL_SYNC_DEFAULTS.DEFAULT_SELLABLE_UNIT_COUNT,
         },
         availabilityPayloadPreview: {
           items: availabilityItems,
@@ -8199,7 +8202,7 @@ export default class IntegrationService {
       domitsPropertyId: normalizedDomitsPropertyId,
       dateFrom: normalizedDateFrom,
       dateTo: normalizedDateTo,
-      fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+      fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
       stage,
       usedDefaultDateRange: !!usingDefaultDateRange,
       dryRun: dryRun === true,
@@ -8209,7 +8212,7 @@ export default class IntegrationService {
 
   async callChannexFullSyncProviderStep({ step, secret, payloads }) {
     logChannexFullCertificationSync(`${step}_provider_call_start`, {
-      providerRequestTimeoutMs: CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS,
+      providerRequestTimeoutMs: CHANNEX_FULL_SYNC_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS,
       requestCount: Array.isArray(payloads) ? payloads.length : 0,
       payloadSummary: summarizeChannexGroupedPayloads(payloads),
     });
@@ -8217,11 +8220,11 @@ export default class IntegrationService {
     const providerResult =
       step === "availability"
         ? await this.channexProviderClient.pushAvailability(secret, payloads, {
-            requestTimeoutMs: CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS,
+            requestTimeoutMs: CHANNEX_FULL_SYNC_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS,
             stopOnFailure: true,
           })
         : await this.channexProviderClient.pushRestrictions(secret, payloads, {
-            requestTimeoutMs: CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS,
+            requestTimeoutMs: CHANNEX_FULL_SYNC_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS,
             stopOnFailure: true,
           });
     const rawResults = Array.isArray(providerResult?.results) ? providerResult.results : [];
@@ -9054,7 +9057,7 @@ export default class IntegrationService {
     if (!providerMode) {
       return await finalize(
         bad(400, {
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
           stage: "validation_failed",
           error: "Invalid query param: providerMode.",
           errorCode: "CHANNEX_FULL_SYNC_INVALID_PROVIDER_MODE",
@@ -9077,7 +9080,7 @@ export default class IntegrationService {
     if (debugStage === "INVALID") {
       return await finalize(
         bad(400, {
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
           stage: "validation_failed",
           error: "Invalid query param: debugStage.",
           errorCode: "CHANNEX_FULL_SYNC_INVALID_DEBUG_STAGE",
@@ -9118,7 +9121,7 @@ export default class IntegrationService {
       {
         ...validationFailure.response,
         response: {
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
           stage: "validation_failed",
           dryRun,
           providerMode,
@@ -9156,7 +9159,7 @@ export default class IntegrationService {
         ok({
           ok: true,
           route: "sync/full",
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
           stage: "validation_passed",
           debugStage,
           dryRun,
@@ -9184,7 +9187,7 @@ export default class IntegrationService {
         ok({
           ok: true,
           route: "sync/full",
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
           stage: "evidence_only_response_ready",
           debugStage,
           dryRun,
@@ -9212,9 +9215,9 @@ export default class IntegrationService {
   buildChannexFullSyncNotes({ usingDefaultDateRange, dryRun, debugStage, providerMode }) {
     const baseNotes = createCertificationFullSyncBaseNotes(usingDefaultDateRange);
     baseNotes.push(
-      `Full certification sync runtime marker: ${CHANNEX_FULL_CERTIFICATION_SYNC_VERSION}.`,
+      `Full certification sync runtime marker: ${CHANNEX_FULL_SYNC_DEFAULTS.VERSION}.`,
       `Real non-debug full sync sends exactly one availability request and one rates/restrictions request to Channex when both payloads contain values.`,
-      `Provider requests use a controlled ${CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS} ms timeout so slow Channex responses return JSON instead of hanging the API request.`
+      `Provider requests use a controlled ${CHANNEX_FULL_SYNC_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS} ms timeout so slow Channex responses return JSON instead of hanging the API request.`
     );
     if (dryRun) {
       baseNotes.push("dryRun=true: payloads are built and summarized, but no Channex provider request is sent.");
@@ -9249,7 +9252,7 @@ export default class IntegrationService {
           {
             ...readinessResult,
             response: {
-              fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+              fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
               stage: "mappings_failed",
               dryRun,
               providerMode,
@@ -9357,7 +9360,7 @@ export default class IntegrationService {
       config: {
         includeCombinedFieldsInBlockedResponse: true,
         getBlockedResponseFieldsBeforeReady: () => ({
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
           stage: "mappings_loaded",
           usedDefaultDateRange: usingDefaultDateRange,
           dryRun,
@@ -10114,7 +10117,7 @@ export default class IntegrationService {
         groupedPayloads: payloadSummaries,
         baseNotes,
         payloadPreview: {
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
           dryRun,
           providerMode,
           dateFrom: normalizedDateFrom,
@@ -10169,7 +10172,7 @@ export default class IntegrationService {
       });
       return await finalize(
         bad(500, {
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          fullCertificationSyncVersion: CHANNEX_FULL_SYNC_DEFAULTS.VERSION,
           stage,
           dryRun,
           providerMode,
