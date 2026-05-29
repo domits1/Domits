@@ -20,33 +20,16 @@ const renderWithLanguage = (language, props = {}) =>
 
 describe("LocationSection", () => {
   describe("translations", () => {
-    test("renders English text by default", () => {
-      renderWithLanguage("en", { location });
-      expect(screen.getByText("Where you'll be")).toBeInTheDocument();
-      expect(screen.getByText("Exact location is provided after booking.")).toBeInTheDocument();
-    });
-
-    test("renders Dutch text when language is nl", () => {
-      renderWithLanguage("nl", { location });
-      expect(screen.getByText("Waar je verblijft")).toBeInTheDocument();
-      expect(screen.getByText("De exacte locatie wordt na boeking verstrekt.")).toBeInTheDocument();
-    });
-
-    test("renders German text when language is de", () => {
-      renderWithLanguage("de", { location });
-      expect(screen.getByText("Wo du sein wirst")).toBeInTheDocument();
-      expect(screen.getByText("Der genaue Standort wird nach der Buchung mitgeteilt.")).toBeInTheDocument();
-    });
-
-    test("renders Spanish text when language is es", () => {
-      renderWithLanguage("es", { location });
-      expect(screen.getByText("Dónde estarás")).toBeInTheDocument();
-      expect(screen.getByText("La ubicación exacta se facilita tras la reserva.")).toBeInTheDocument();
-    });
-
-    test("falls back to English for an unknown language", () => {
-      renderWithLanguage("fr", { location });
-      expect(screen.getByText("Where you'll be")).toBeInTheDocument();
+    test.each([
+      ["en", "Where you'll be",  "Exact location is provided after booking."],
+      ["nl", "Waar je verblijft", "De exacte locatie wordt na boeking verstrekt."],
+      ["de", "Wo du sein wirst",  "Der genaue Standort wird nach der Buchung mitgeteilt."],
+      ["es", "Dónde estarás",     "La ubicación exacta se facilita tras la reserva."],
+      ["fr", "Where you'll be",  "Exact location is provided after booking."],
+    ])("renders correct text for language %s", (lang, expectedTitle, expectedDisclaimer) => {
+      renderWithLanguage(lang, { location });
+      expect(screen.getByText(expectedTitle)).toBeInTheDocument();
+      expect(screen.getByText(expectedDisclaimer)).toBeInTheDocument();
     });
   });
 
