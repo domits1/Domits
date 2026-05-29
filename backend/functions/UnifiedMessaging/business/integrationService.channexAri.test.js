@@ -142,6 +142,17 @@ const extractAvailabilityByDate = (pushAvailability) => {
   return Object.fromEntries(values.map((value) => [value.date, value.availability]));
 };
 
+const expectAvailabilityByDate = (pushAvailability, expectedAvailabilityByDate) => {
+  expect(extractAvailabilityByDate(pushAvailability)).toEqual(expectedAvailabilityByDate);
+};
+
+const expectSuccessfulFullSyncProviderCalls = (result, pushAvailability, pushRestrictions) => {
+  expect(result.statusCode).toBe(200);
+  expect(result.response.requestCount).toBe(2);
+  expect(pushAvailability).toHaveBeenCalledTimes(1);
+  expect(pushRestrictions).toHaveBeenCalledTimes(1);
+};
+
 const buildReadyAriTargets = (overrides = {}) => ({
   statusCode: 200,
   response: {
@@ -672,7 +683,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     expect(result.statusCode).toBe(200);
     expect(result.response.requestCount).toBe(1);
     expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(extractAvailabilityByDate(pushAvailability)).toEqual({
+    expectAvailabilityByDate(pushAvailability, {
       "2026-06-01": 0,
       "2026-06-02": 0,
       "2026-06-03": 1,
@@ -761,11 +772,8 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       { skipEvidence: true }
     );
 
-    expect(result.statusCode).toBe(200);
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
     expect(result.response.fullCertificationSyncVersion).toBe(CHANNEX_FULL_CERTIFICATION_SYNC_VERSION);
-    expect(result.response.requestCount).toBe(2);
-    expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
     expect(pushAvailability.mock.calls[0][2]).toEqual(
       expect.objectContaining({
         requestTimeoutMs: CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS,
@@ -817,11 +825,8 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       { skipEvidence: true }
     );
 
-    expect(result.statusCode).toBe(200);
-    expect(result.response.requestCount).toBe(2);
-    expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
-    expect(extractAvailabilityByDate(pushAvailability)).toEqual({
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
+    expectAvailabilityByDate(pushAvailability, {
       "2026-06-01": 0,
       "2026-06-02": 0,
       "2026-06-03": 1,
@@ -877,11 +882,8 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       { skipEvidence: true }
     );
 
-    expect(result.statusCode).toBe(200);
-    expect(result.response.requestCount).toBe(2);
-    expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
-    expect(extractAvailabilityByDate(pushAvailability)).toEqual({
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
+    expectAvailabilityByDate(pushAvailability, {
       "2026-06-01": 0,
       "2026-06-02": 0,
       "2026-06-03": 1,
@@ -920,11 +922,8 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       { skipEvidence: true }
     );
 
-    expect(result.statusCode).toBe(200);
-    expect(result.response.requestCount).toBe(2);
-    expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
-    expect(extractAvailabilityByDate(pushAvailability)).toEqual({
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
+    expectAvailabilityByDate(pushAvailability, {
       "2026-06-01": 1,
       "2026-06-02": 1,
       "2026-06-03": 1,
@@ -956,10 +955,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       { skipEvidence: true }
     );
 
-    expect(result.statusCode).toBe(200);
-    expect(result.response.requestCount).toBe(2);
-    expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
     expect(result.response.overallSuccess).toBe(false);
     expect(result.response.warnings).toEqual(["Provided value was accepted with warnings."]);
     expect(result.response.errors).toEqual([]);

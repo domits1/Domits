@@ -1633,7 +1633,7 @@ const buildAvailabilityOccupancyContext = async ({ bookingAvailabilityRepository
   }
 
   const fromMs = isoDateToUtcStartMs(normalizedDates[0]);
-  const lastDateStartMs = isoDateToUtcStartMs(normalizedDates[normalizedDates.length - 1]);
+  const lastDateStartMs = isoDateToUtcStartMs(normalizedDates.at(-1));
   if (fromMs === null || lastDateStartMs === null) {
     return buildEmptyAvailabilityOccupancyContext();
   }
@@ -5938,7 +5938,6 @@ export default class IntegrationService {
     secret,
   }) {
     const externalReservationId = getChannexExternalReservationId(revision);
-    const revisionSummary = this.formatChannexBookingRevisionSummary(revision);
     let persisted = null;
 
     try {

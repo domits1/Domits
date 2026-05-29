@@ -6,8 +6,15 @@ import { getChannexAdminAccess } from "../hostintegrations/channexApi";
 
 jest.mock("../hostmessages/context/AuthContext", () => {
   const React = require("react");
+  const PropTypes = require("prop-types");
+  function MockUserProvider({ children }) {
+    return React.createElement(React.Fragment, null, children);
+  }
+  MockUserProvider.propTypes = {
+    children: PropTypes.node,
+  };
   return {
-    UserProvider: ({ children }) => React.createElement(React.Fragment, null, children),
+    UserProvider: MockUserProvider,
   };
 });
 

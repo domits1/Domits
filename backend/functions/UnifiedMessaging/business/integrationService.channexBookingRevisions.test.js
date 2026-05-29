@@ -13,11 +13,51 @@ jest.mock("../ORM/index.js", () => ({
 
 const IntegrationService = require("./integrationService.js").default;
 
+const DEFAULT_INTEGRATION_ACCOUNT_ID = "integration-account-1";
+const DEFAULT_DOMITS_PROPERTY_ID = "domits-property-1";
+const DEFAULT_EXTERNAL_PROPERTY_ID = "external-property-1";
+const DEFAULT_EXTERNAL_ROOM_TYPE_ID = "external-room-type-1";
+const DEFAULT_EXTERNAL_RATE_PLAN_ID = "external-rate-plan-1";
+
+const buildPropertyMapping = (overrides = {}) => ({
+  domitsPropertyId: DEFAULT_DOMITS_PROPERTY_ID,
+  externalPropertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
+  externalPropertyName: "Test Property",
+  status: "ACTIVE",
+  ...overrides,
+});
+
+const buildRoomTypeMapping = (overrides = {}) => ({
+  domitsPropertyId: DEFAULT_DOMITS_PROPERTY_ID,
+  externalPropertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
+  externalRoomTypeId: DEFAULT_EXTERNAL_ROOM_TYPE_ID,
+  externalRoomTypeName: "Demo room",
+  status: "ACTIVE",
+  ...overrides,
+});
+
+const buildRatePlanMapping = (overrides = {}) => ({
+  domitsPropertyId: DEFAULT_DOMITS_PROPERTY_ID,
+  externalPropertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
+  externalRoomTypeId: DEFAULT_EXTERNAL_ROOM_TYPE_ID,
+  externalRatePlanId: DEFAULT_EXTERNAL_RATE_PLAN_ID,
+  externalRatePlanName: "Standard",
+  status: "ACTIVE",
+  ...overrides,
+});
+
+const buildIntegrationAccount = (overrides = {}) => ({
+  id: DEFAULT_INTEGRATION_ACCOUNT_ID,
+  status: "CONNECTED",
+  credentialsRef: "channex-secret-1",
+  ...overrides,
+});
+
 const buildRevisionRow = (overrides = {}) => ({
   id: "local-revision-1",
-  integrationAccountId: "integration-account-1",
-  domitsPropertyId: "domits-property-1",
-  externalPropertyId: "external-property-1",
+  integrationAccountId: DEFAULT_INTEGRATION_ACCOUNT_ID,
+  domitsPropertyId: DEFAULT_DOMITS_PROPERTY_ID,
+  externalPropertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
   externalReservationId: "booking-1",
   revisionId: "revision-1",
   bookingStatus: "new",
@@ -35,7 +75,7 @@ const buildRevisionRow = (overrides = {}) => ({
 const buildFeedRevision = (overrides = {}) => ({
   revisionId: "revision-new-1",
   bookingId: "booking-ota-1",
-  propertyId: "external-property-1",
+  propertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
   uniqueId: "unique-ota-1",
   systemId: "system-ota-1",
   otaReservationCode: "OTA-123",
@@ -47,62 +87,34 @@ const buildFeedRevision = (overrides = {}) => ({
   amount: "200.00",
   currency: "EUR",
   insertedAt: "2026-05-21T10:00:00Z",
-  roomTypeId: "external-room-type-1",
-  ratePlanId: "external-rate-plan-1",
+  roomTypeId: DEFAULT_EXTERNAL_ROOM_TYPE_ID,
+  ratePlanId: DEFAULT_EXTERNAL_RATE_PLAN_ID,
   rawPayload: {
     id: "revision-new-1",
     attributes: {
       booking_id: "booking-ota-1",
-      property_id: "external-property-1",
+      property_id: DEFAULT_EXTERNAL_PROPERTY_ID,
       status: "new",
       arrival_date: "2026-06-01",
       departure_date: "2026-06-03",
       customer: { name: "External Guest" },
-      rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
+      rooms: [{ room_type_id: DEFAULT_EXTERNAL_ROOM_TYPE_ID, rate_plan_id: DEFAULT_EXTERNAL_RATE_PLAN_ID }],
     },
   },
   ...overrides,
 });
 
 const createService = ({
-  account = {
-    id: "integration-account-1",
-    status: "CONNECTED",
-    credentialsRef: "channex-secret-1",
-  },
+  account = buildIntegrationAccount(),
   revisionRows = [buildRevisionRow()],
-  propertyMappings = [
-    {
-      domitsPropertyId: "domits-property-1",
-      externalPropertyId: "external-property-1",
-      externalPropertyName: "Test Property",
-      status: "ACTIVE",
-    },
-  ],
-  roomTypeMappings = [
-    {
-      domitsPropertyId: "domits-property-1",
-      externalPropertyId: "external-property-1",
-      externalRoomTypeId: "external-room-type-1",
-      externalRoomTypeName: "Demo room",
-      status: "ACTIVE",
-    },
-  ],
-  ratePlanMappings = [
-    {
-      domitsPropertyId: "domits-property-1",
-      externalPropertyId: "external-property-1",
-      externalRoomTypeId: "external-room-type-1",
-      externalRatePlanId: "external-rate-plan-1",
-      externalRatePlanName: "Standard",
-      status: "ACTIVE",
-    },
-  ],
+  propertyMappings = [buildPropertyMapping()],
+  roomTypeMappings = [buildRoomTypeMapping()],
+  ratePlanMappings = [buildRatePlanMapping()],
   existingRevision = buildRevisionRow(),
   existingLink = null,
   feedRevisions = [],
   propertyContext = {
-    propertyId: "domits-property-1",
+    propertyId: DEFAULT_DOMITS_PROPERTY_ID,
     hostId: "host-1",
     propertyName: "Demo property",
   },
@@ -150,17 +162,17 @@ const createService = ({
       });
       return storedRevision;
     }),
-    markAcknowledged: jest.fn(async (_integrationAccountId, revisionId, acknowledgedAt) =>
-      {
-        storedRevision = buildRevisionRow({
-          ...(storedRevision || {}),
-          revisionId,
-          acknowledgementState: "ACKNOWLEDGED",
-          acknowledgedAt,
-        });
-        return storedRevision;
-      }
-    ),
+    markAcknowledged: jest.fn(async (_integrationAccountId, revisionId, acknowledgedAt) => {
+      const acknowledgedRevision = {
+        revisionId,
+        acknowledgementState: "ACKNOWLEDGED",
+        acknowledgedAt,
+      };
+      storedRevision = storedRevision
+        ? buildRevisionRow({ ...storedRevision, ...acknowledgedRevision })
+        : buildRevisionRow(acknowledgedRevision);
+      return storedRevision;
+    }),
   };
   const externalBookingImportRepository = {
     getDomitsPropertyContext: jest.fn().mockResolvedValue(propertyContext),
@@ -1276,12 +1288,7 @@ describe("IntegrationService Channex booking polling", () => {
       channexProviderClient,
       externalBookingImportRepository,
     } = createService({
-      account: {
-        id: "integration-account-1",
-        userId: "user-1",
-        status: "CONNECTED",
-        credentialsRef: "channex-secret-1",
-      },
+      account: buildIntegrationAccount({ userId: "user-1" }),
       feedRevisions: [revision],
       existingRevision: null,
     });
@@ -1378,49 +1385,36 @@ describe("IntegrationService Channex booking polling", () => {
     process.env.CHANNEX_BOOKING_POLL_ENABLED = "true";
     process.env.CHANNEX_BOOKING_POLL_ACCOUNT_IDS = "integration-account-allowed";
     process.env.CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS = "domits-property-allowed";
-    const account = {
+    const account = buildIntegrationAccount({
       id: "integration-account-allowed",
       userId: "user-1",
-      status: "CONNECTED",
-      credentialsRef: "channex-secret-1",
-    };
-    const skippedAccount = {
+    });
+    const skippedAccount = buildIntegrationAccount({
       id: "integration-account-skipped",
       userId: "user-2",
-      status: "CONNECTED",
       credentialsRef: "channex-secret-2",
-    };
+    });
     const { service, accounts, props, channexProviderClient } = createService({
       account,
       channelAccounts: [skippedAccount, account],
       propertyMappings: [
-        {
+        buildPropertyMapping({
           domitsPropertyId: "domits-property-skipped",
           externalPropertyId: "external-property-skipped",
-          status: "ACTIVE",
-        },
-        {
+        }),
+        buildPropertyMapping({
           domitsPropertyId: "domits-property-allowed",
-          externalPropertyId: "external-property-1",
-          status: "ACTIVE",
-        },
+        }),
       ],
       roomTypeMappings: [
-        {
+        buildRoomTypeMapping({
           domitsPropertyId: "domits-property-allowed",
-          externalPropertyId: "external-property-1",
-          externalRoomTypeId: "external-room-type-1",
-          status: "ACTIVE",
-        },
+        }),
       ],
       ratePlanMappings: [
-        {
+        buildRatePlanMapping({
           domitsPropertyId: "domits-property-allowed",
-          externalPropertyId: "external-property-1",
-          externalRoomTypeId: "external-room-type-1",
-          externalRatePlanId: "external-rate-plan-1",
-          status: "ACTIVE",
-        },
+        }),
       ],
       propertyContext: {
         propertyId: "domits-property-allowed",
@@ -1447,12 +1441,7 @@ describe("IntegrationService Channex booking polling", () => {
 
   test("polling leaves missing mappings unacked", async () => {
     const { service, channexProviderClient, externalBookingImportRepository } = createService({
-      account: {
-        id: "integration-account-1",
-        userId: "user-1",
-        status: "CONNECTED",
-        credentialsRef: "channex-secret-1",
-      },
+      account: buildIntegrationAccount({ userId: "user-1" }),
       roomTypeMappings: [],
       feedRevisions: [buildFeedRevision()],
       existingRevision: null,
@@ -1477,12 +1466,7 @@ describe("IntegrationService Channex booking polling", () => {
 
   test("duplicate polling does not create duplicate Domits bookings", async () => {
     const { service, externalBookingImportRepository } = createService({
-      account: {
-        id: "integration-account-1",
-        userId: "user-1",
-        status: "CONNECTED",
-        credentialsRef: "channex-secret-1",
-      },
+      account: buildIntegrationAccount({ userId: "user-1" }),
       feedRevisions: [buildFeedRevision()],
       existingRevision: null,
     });
@@ -1508,12 +1492,7 @@ describe("IntegrationService Channex booking polling", () => {
       insertLog: jest.fn(async (row) => row),
     };
     const { service, channexProviderClient } = createService({
-      account: {
-        id: "integration-account-1",
-        userId: "user-1",
-        status: "CONNECTED",
-        credentialsRef: "channex-secret-1",
-      },
+      account: buildIntegrationAccount({ userId: "user-1" }),
       sync,
       feedRevisions: [buildFeedRevision()],
     });
@@ -1549,12 +1528,7 @@ describe("IntegrationService Channex booking polling", () => {
       insertLog: jest.fn(async (row) => row),
     };
     const { service } = createService({
-      account: {
-        id: "integration-account-1",
-        userId: "user-1",
-        status: "CONNECTED",
-        credentialsRef: "channex-secret-1",
-      },
+      account: buildIntegrationAccount({ userId: "user-1" }),
       sync,
       feedRevisions: [buildFeedRevision()],
       existingRevision: null,
@@ -1579,37 +1553,26 @@ describe("IntegrationService Channex booking polling", () => {
 
   test("failure for one property does not stop polling another property", async () => {
     const propertyMappings = [
-      {
-        domitsPropertyId: "domits-property-1",
-        externalPropertyId: "external-property-1",
-        status: "ACTIVE",
-      },
-      {
+      buildPropertyMapping(),
+      buildPropertyMapping({
         domitsPropertyId: "domits-property-2",
         externalPropertyId: "external-property-2",
-        status: "ACTIVE",
-      },
+      }),
     ];
-    const roomTypeMappings = propertyMappings.map((mapping) => ({
-      domitsPropertyId: mapping.domitsPropertyId,
-      externalPropertyId: mapping.externalPropertyId,
-      externalRoomTypeId: "external-room-type-1",
-      status: "ACTIVE",
-    }));
-    const ratePlanMappings = propertyMappings.map((mapping) => ({
-      domitsPropertyId: mapping.domitsPropertyId,
-      externalPropertyId: mapping.externalPropertyId,
-      externalRoomTypeId: "external-room-type-1",
-      externalRatePlanId: "external-rate-plan-1",
-      status: "ACTIVE",
-    }));
+    const roomTypeMappings = propertyMappings.map((mapping) =>
+      buildRoomTypeMapping({
+        domitsPropertyId: mapping.domitsPropertyId,
+        externalPropertyId: mapping.externalPropertyId,
+      })
+    );
+    const ratePlanMappings = propertyMappings.map((mapping) =>
+      buildRatePlanMapping({
+        domitsPropertyId: mapping.domitsPropertyId,
+        externalPropertyId: mapping.externalPropertyId,
+      })
+    );
     const { service, channexProviderClient } = createService({
-      account: {
-        id: "integration-account-1",
-        userId: "user-1",
-        status: "CONNECTED",
-        credentialsRef: "channex-secret-1",
-      },
+      account: buildIntegrationAccount({ userId: "user-1" }),
       propertyMappings,
       roomTypeMappings,
       ratePlanMappings,

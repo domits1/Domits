@@ -103,7 +103,7 @@ const countPayloadGroups = (payloadSection) =>
 
 const countPayloadItems = (payloadSection) => (Array.isArray(payloadSection?.items) ? payloadSection.items.length : 0);
 
-const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value || {}, key);
+const hasOwn = (value, key) => Object.hasOwn(value || {}, key);
 
 const formatBooleanFlag = (value) => {
   if (value === true) return "Yes";
@@ -166,9 +166,9 @@ const enrichAvailabilityValue = (value, group, metadataIndex) => {
       date: value?.date,
     })
   );
+  const mergedValue = metadata ? { ...value, ...metadata } : { ...value };
   return {
-    ...value,
-    ...(metadata || {}),
+    ...mergedValue,
     externalPropertyId: group?.externalPropertyId || metadata?.externalPropertyId || "-",
     externalRoomTypeId: group?.externalRoomTypeId || metadata?.externalRoomTypeId || "-",
   };

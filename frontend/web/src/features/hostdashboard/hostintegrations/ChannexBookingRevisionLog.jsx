@@ -29,6 +29,25 @@ const formatIssueMessage = (issue) => {
   const message = issue.message || issue.errorMessage || issue.details || "";
   return message ? `${code}: ${message}` : String(code);
 };
+const stringifyIssueKey = (issue) => {
+  if (!issue || typeof issue !== "object") return renderValue(issue);
+  return JSON.stringify({
+    code: issue.code || issue.errorCode || issue.reason || null,
+    message: issue.message || issue.errorMessage || issue.details || null,
+  });
+};
+const buildIssueListItems = (issues, keyPrefix) => {
+  const seenCountsByKey = new Map();
+  return issues.map((issue) => {
+    const baseKey = stringifyIssueKey(issue);
+    const nextCount = (seenCountsByKey.get(baseKey) || 0) + 1;
+    seenCountsByKey.set(baseKey, nextCount);
+    return {
+      key: `${keyPrefix}-${baseKey}-${nextCount}`,
+      message: formatIssueMessage(issue),
+    };
+  });
+};
 
 const getRevisionRowKey = (revision, revisionId, index) =>
   revision?.id || revisionId || `${revision?.externalReservationId || "revision"}-${index}`;
@@ -220,6 +239,8 @@ function PullResultSummary({ result }) {
   if (!result) return null;
   const warnings = Array.isArray(result.warnings) ? result.warnings : [];
   const errors = Array.isArray(result.errors) ? result.errors : [];
+  const warningItems = buildIssueListItems(warnings, "pull-warning");
+  const errorItems = buildIssueListItems(errors, "pull-error");
 
   return (
     <section className="channex-payload-summary-panel">
@@ -262,8 +283,8 @@ function PullResultSummary({ result }) {
         <div className="host-integrations-warning-banner">
           <strong>Warnings</strong>
           <ul className="channex-diagnostics-list">
-            {warnings.map((warning, index) => (
-              <li key={`pull-warning-${index}`}>{formatIssueMessage(warning)}</li>
+            {warningItems.map((warning) => (
+              <li key={warning.key}>{warning.message}</li>
             ))}
           </ul>
         </div>
@@ -272,8 +293,8 @@ function PullResultSummary({ result }) {
         <div className="host-integrations-error-banner">
           <strong>Errors</strong>
           <ul className="channex-diagnostics-list">
-            {errors.map((error, index) => (
-              <li key={`pull-error-${index}`}>{formatIssueMessage(error)}</li>
+            {errorItems.map((error) => (
+              <li key={error.key}>{error.message}</li>
             ))}
           </ul>
         </div>
