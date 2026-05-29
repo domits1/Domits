@@ -1,8 +1,6 @@
 import BookingService from "../business/bookingService.js";
 import PaymentService from "../business/paymentService.js";
-import Forbidden from "../util/exception/Forbidden.js";
-import Unauthorized from "../util/exception/Unauthorized.js";
-import NotFoundException from "../util/exception/NotFoundException.js";
+import { BadRequestException } from "../util/exception/badRequestException.js";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
 const responseHeaderJSON = responsejson;
@@ -84,7 +82,7 @@ class ReservationController {
 
       const body = this.getPatchBody(event);
       const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
-      const actionResponse = await this.handlePatchAction(body, event, authToken);
+      const actionResponse = await this.handlePatchAction(body, authToken);
 
       return actionResponse || await this.handlePaymentPatch(body);
     } catch (error) {
@@ -120,10 +118,17 @@ class ReservationController {
     return { statusCode: 200, headers: responseHeaderJSON, response: toJsonSafeResponse(result) };
   }
 
-  async handlePatchAction(body, event, authToken) {
+  async handleCancelBookingAction(body, authToken) {
+    if (!body?.bookingId) throw new BadRequestException("Missing bookingId.");
+    const result = await this.bookingService.cancelBooking(body.bookingId, authToken, {
+      reason: body.reason,
+    });
+    return { statusCode: 200, headers: responseHeaderJSON, response: toJsonSafeResponse(result) };
+  }
+
+  async handlePatchAction(body, authToken) {
     if (body?.action === "cancel-booking") {
-      if (!body?.bookingId) throw new Error("Missing bookingId.");
-      return await this.cancelBooking(body.bookingId, event);
+      return await this.handleCancelBookingAction(body, authToken);
     }
 
     if (body?.action === "decline-inquiry") {
@@ -204,30 +209,7 @@ class ReservationController {
 
   async cancelBooking(bookingId, event) {
     const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
-
-    if (!authToken) {
-      throw new Unauthorized("Missing Authorization header.");
-    }
-
-    const user = await this.bookingService.authManager.authenticateUser(authToken);
-    const bookingResult = await this.bookingService.reservationRepository.getBookingById(bookingId);
-    if (!bookingResult?.response) {
-      throw new NotFoundException("Booking not found.");
-    }
-    const booking = bookingResult.response;
-    if (booking.guestid !== user.sub) {
-      throw new Forbidden("Only the guest of this booking may cancel this booking.");
-    }
-
-    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub);
-
-    await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
-
-    return {
-      statusCode: canceled.statusCode || 200,
-      headers: responseHeaderJSON,
-      response: canceled.response,
-    };
+    return await this.handleCancelBookingAction({ bookingId }, authToken);
   }
 
   // GET

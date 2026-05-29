@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ChannexDiagnosticsPanel from "./ChannexDiagnosticsPanel";
 import {
+  cancelBooking,
   getChannexAriPreview,
   getLatestChannexSyncEvidence,
   getChannexStatus,
@@ -14,6 +15,7 @@ import {
 } from "./channexApi";
 
 jest.mock("./channexApi", () => ({
+  cancelBooking: jest.fn(),
   getChannexAriPayloadPreview: jest.fn(),
   getChannexAriPreview: jest.fn(),
   getChannexAriTargets: jest.fn(),
@@ -296,6 +298,49 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
 
     expect(modifyBookingDates).not.toHaveBeenCalled();
     expect(await screen.findByText("Enter booking ID, new arrival date, and new departure date.")).toBeTruthy();
+  });
+
+  test("cancels a booking from the admin actions UI and shows change-only sync evidence", async () => {
+    cancelBooking.mockResolvedValue({
+      booking: {
+        id: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
+        status: "Cancelled",
+      },
+      channexAvailabilitySync: {
+        syncType: "booking-availability",
+        trigger: "BOOKING_CANCELLED",
+        requestCount: 1,
+        taskIds: ["task-cancel-availability"],
+        affectedDates: ["2026-06-01", "2026-06-02"],
+        warnings: [{ code: "DEMO_WARNING", message: "Visible cancel warning" }],
+        errors: [],
+        overallSuccess: true,
+      },
+    });
+
+    await renderDiagnosticsPanel();
+    fillRequiredInputs();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel booking" }));
+
+    await waitFor(() => expect(cancelBooking).toHaveBeenCalledTimes(1));
+    expect(cancelBooking).toHaveBeenCalledWith({
+      bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
+      reason: "Channex certification demo cancellation",
+    });
+    expect(getLatestChannexSyncEvidence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        domitsPropertyId: "domits-property-1",
+      })
+    );
+    expect(await screen.findByText("Booking cancelled.")).toBeTruthy();
+    expect(screen.getByText("Cancellation availability sync summary")).toBeTruthy();
+    expect(screen.getByText("booking-availability")).toBeTruthy();
+    expect(screen.getByText("BOOKING_CANCELLED")).toBeTruthy();
+    expect(screen.getByText("Change-only availability sync. Full Sync and restrictions/rates were not called.")).toBeTruthy();
+    expect(screen.getAllByText(/task-cancel-availability/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/DEMO_WARNING: Visible cancel warning/)).toBeTruthy();
   });
 
   test("pulls latest Channex bookings from the booking revisions tab and refreshes the log", async () => {

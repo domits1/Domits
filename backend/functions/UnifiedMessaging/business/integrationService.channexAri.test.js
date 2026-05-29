@@ -889,6 +889,48 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     });
   });
 
+  test("full certification sync does not block cancelled booking nights", async () => {
+    const pushAvailability = createAvailabilityPush();
+    const pushRestrictions = createRestrictionsPush();
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
+        bookings: [
+          buildBookingRow({
+            id: "cancelled-booking",
+            arrivaldate: "2026-06-01",
+            departuredate: "2026-06-03",
+            status: "Cancelled",
+          }),
+        ],
+      })
+    );
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-06-01",
+      "2026-06-03",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestCount).toBe(2);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    expect(extractAvailabilityByDate(pushAvailability)).toEqual({
+      "2026-06-01": 1,
+      "2026-06-02": 1,
+      "2026-06-03": 1,
+    });
+  });
+
   test("full certification sync provider warnings keep overallSuccess false", async () => {
     const pushAvailability = createAvailabilityPush({
       resultOverrides: {

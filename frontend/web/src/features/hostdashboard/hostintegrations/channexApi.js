@@ -260,3 +260,13 @@ export const modifyBookingDates = ({ bookingId, arrivalDate, departureDate }) =>
       departureDate,
     },
   });
+
+export const cancelBooking = ({ bookingId, reason }) =>
+  requestBooking({
+    method: "PATCH",
+    body: {
+      action: "cancel-booking",
+      bookingId,
+      reason,
+    },
+  });
