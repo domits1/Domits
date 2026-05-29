@@ -2023,3 +2023,128 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/config/websiteCalendarSectionConfig.js`
   - `frontend/web/src/features/hostdashboard/website/config/websiteAmenitiesConfig.js`
   - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
+
+## [2026-05-27] Staged editor hydration and shared website skeleton loading
+
+Context:
+The website editor still waited on one combined load before both the left editing surface and the right preview became usable. Public preview and live-site routes also still relied on generic loading bars instead of a website-shaped loading state.
+
+Implementation:
+
+- Split editor hydration into two phases:
+  - draft-backed editor controls can load first
+  - property-backed preview hydration can complete afterward
+- Extracted editor support/orchestration concerns into:
+  - `editor/WebsiteEditorPageSupport.jsx`
+  - `editor/WebsiteEditorSidebar.jsx`
+- Added a shared website skeleton component used by:
+  - the host editor preview
+  - `/website-preview/:draftId`
+  - `/website-live/:domain`
+- Fixed the initial skeleton overflow issue inside the editor preview frame.
+- Tightened late editor hydration so harmless sidebar clicks do not block property-backed control values from finishing hydration.
+
+Decision / Rationale:
+
+- Perceived speed matters more here than raw request count; hosts should be able to start interacting with draft-backed controls before the rendered preview finishes hydrating.
+- The loading treatment should look like a website in progress rather than a generic infrastructure loader, especially on guest-facing preview/live surfaces.
+- The split should remain frontend-only and keep the same request set instead of introducing a new bootstrap endpoint prematurely.
+
+AWS / Data impact:
+
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- No additional request volume on refresh; the existing draft, site-summary, and property-detail calls are only sequenced differently.
+
+Validation:
+
+- Frontend production build passed repeatedly during the staged-loading refactor and follow-up fixes.
+
+Open risks / Next:
+
+- The staged-loading pattern currently benefits the website editor and preview/live runtime; if more template-specific heavy controls are added later, hydration guards should continue to avoid overwriting active host edits.
+- Additional templates can adopt the same loading/skeleton assumptions without adding new runtime contracts.
+
+Evidence (commit(s), file(s), docs):
+
+- Commit(s):
+  - `fdbee4b6a` (`feat(website editor): load editable sidebar separate from preview site sonar issues`)
+  - `9f25cdf23` (`refactor(website): split editor and preview loading in website editor`)
+  - `351ca6f1b` (`refactor(website): skeletion load style for preview and live site`)
+  - `2fdf6d1b7` (`fix skeleton overflow outside of dedicated borders`)
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.js`
+  - `frontend/web/src/features/hostdashboard/website/editor/WebsiteEditorPageSupport.jsx`
+  - `frontend/web/src/features/hostdashboard/website/editor/WebsiteEditorSidebar.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsitePreviewSkeleton.jsx`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicPreviewPage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/WebsitePublicSitePage.jsx`
+  - `frontend/web/src/features/hostdashboard/website/WebsiteEditorPage.module.scss`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`
+
+## [2026-05-28] Panorama gallery polish, full-width section bands, and shared media interactions
+
+Context:
+Panorama had gained deeper section configurability, but the gallery and panel presentation still needed more polished runtime behavior. At the same time, media interactions needed to stay reusable instead of becoming Panorama-only one-off code.
+
+Implementation:
+
+- Added dedicated Panorama gallery controls for:
+  - section title
+  - section subtitle
+  - browse button label
+  - panel visibility and panel color
+  - gallery image-slot ownership
+- Rendered the gallery as a uniform `3x2` image grid with consistent framing.
+- Reused the listing-details photo browser pattern for Panorama `Browse`, then aligned its navigation so the website gallery also supports:
+  - fixed left/right side arrows
+  - far-left/far-right side-zone navigation
+  - always-visible arrows in the website context
+- Converted Panorama section panels into full-width themed bands for:
+  - residence
+  - calendar
+  - gallery
+- Added shared hover support to the reusable image-slot renderer and enabled it for Panorama residence and gallery images.
+- Smoothed rotating-image hover behavior so residence media no longer jumps when hover scale and rotation transitions overlap.
+
+Decision / Rationale:
+
+- Section panel colors should let hosts theme an entire section band instead of only tinting an inset card.
+- Gallery/browser interaction should reuse shared photo-browser infrastructure rather than creating a second overlay system for the website feature.
+- Hover behavior belongs to the shared image-slot rendering contract so other templates can opt in later with minimal code.
+
+AWS / Data impact:
+
+- No Aurora schema change.
+- No API Gateway change.
+- No Lambda change.
+- Frontend-only template and shared-component refinement.
+
+Validation:
+
+- Frontend production build passed after the gallery section contract, overlay reuse, panel-band styling, and hover refinements.
+
+Open risks / Next:
+
+- Panorama now has stronger gallery/media polish than the other implemented templates; template parity remains a future product decision.
+- If additional templates adopt the shared photo browser and hoverable image-slot behavior, the shared overlay and image-slot contracts should continue to stay template-agnostic.
+
+Evidence (commit(s), file(s), docs):
+
+- Commit(s):
+  - `bcf89732f` (`feat(website): add configurable panorama gallery section`)
+  - `16454f78a` (`feat(website): enabled navigation within panorama template browse images overlay`)
+  - `a8b49e0d9` (`refactor(website editor): panorama section panels behave like full-width color bands instead of inset cards`)
+  - `bb7e1b578` (`made images hoverable in residence and gallery section for panorama template`)
+- Files:
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/PanoramaLandingTemplate.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/templates/templateSharedSections.jsx`
+  - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/rendering/AvailabilityCalendarPreview.module.scss`
+  - `frontend/web/src/features/hostdashboard/website/editor/sections/WebsiteEditorGallerySection.jsx`
+  - `frontend/web/src/features/hostdashboard/website/config/websiteGallerySectionConfig.js`
+  - `frontend/web/src/components/gallery/PhotoBrowserOverlay.jsx`
+  - `frontend/web/src/features/bookingengine/listingdetails/components/imageGallery.js`
+  - `frontend/web/src/styles/sass/features/booking-engine/overlay.scss`
+  - `docs/internal/apis/directbookingwebsite/direct_booking_website_frontend_status.md`

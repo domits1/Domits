@@ -180,7 +180,7 @@
 
 .kpiCardUpdated,
 .researchKpiCardUpdated {
-  animation: kpiCardHuePulse 1.9s ease;
+  animation: kpiCardHuePulse 3.8s ease;
 }
 
 .kpiCardHeader {
@@ -248,7 +248,7 @@
     0 8px 20px rgba(31, 78, 121, 0.14),
     0 0 0 1px rgba(18, 57, 87, 0.08);
   pointer-events: none;
-  animation: kpiDeltaFloat 1.4s cubic-bezier(0.18, 0.8, 0.22, 1) both;
+  animation: kpiDeltaFloat 3.2s cubic-bezier(0.18, 0.8, 0.22, 1) both;
 }
 
 .kpiCardLoader,
@@ -422,7 +422,7 @@
 }
 
 .deletionReasonRowUpdated {
-  animation: kpiTableCellHuePulse 1.9s ease;
+  animation: kpiTableCellHuePulse 3.8s ease;
 }
 
 .researchKpiPanel {
@@ -533,12 +533,12 @@
     transform: translate3d(0, 10px, 0) scale(0.88);
   }
 
-  18% {
+  10% {
     opacity: 1;
     transform: translate3d(0, -2px, 0) scale(1);
   }
 
-  72% {
+  82% {
     opacity: 1;
     transform: translate3d(0, -12px, 0) scale(1);
   }
