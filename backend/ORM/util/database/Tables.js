@@ -45,6 +45,7 @@ import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
+import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
 
 export const Tables = [
@@ -95,5 +96,6 @@ export const Tables = [
   Property_Task_Activity,
   Host_Settings,
   Kpi_Snapshot,
+  PriceLabs_Connection,
   Team_Member,
 ];

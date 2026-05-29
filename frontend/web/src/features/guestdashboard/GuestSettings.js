@@ -1,22 +1,28 @@
 import React from "react";
-import {SettingsLayout, SettingsContent} from "../../components/settings/SettingsComponents";
 import useSettingsData from "../../hooks/useSettingsData";
+import usePersonalDataSave from "../../hooks/usePersonalDataSave";
+import PersonalDataForm from "../hostdashboard/hostsettings/components/PersonalDataForm";
+import "../../styles/sass/pages/dashboard/settingsDashboard.css";
+import "../hostdashboard/hostsettings/styles/hostSettings.css";
 
 const SHOW_PREF_FORMATS = false;
 const SHOW_AUTH_MFA = false;
 
-const GuestDashboard = () => {
+const GuestSettings = () => {
     const settingsData = useSettingsData();
+    const { saveAll, isSaving, saveSuccess } = usePersonalDataSave(settingsData);
 
     return (
-        <SettingsLayout>
-            <SettingsContent
-                {...settingsData}
-                showPrefFormats={SHOW_PREF_FORMATS}
-                showAuthMfa={SHOW_AUTH_MFA}
-            />
-        </SettingsLayout>
+        <PersonalDataForm
+            {...settingsData}
+            showPrefFormats={SHOW_PREF_FORMATS}
+            showAuthMfa={SHOW_AUTH_MFA}
+            onSaveAll={saveAll}
+            isSaving={isSaving}
+            saveSuccess={saveSuccess}
+            onVerifyEmail={settingsData.onSaveUserEmail}
+        />
     );
 };
 
-export default GuestDashboard;
+export default GuestSettings;
