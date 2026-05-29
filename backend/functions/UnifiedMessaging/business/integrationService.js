@@ -5711,6 +5711,52 @@ export default class IntegrationService {
     };
   }
 
+  async finalizeChannexBookingImportItem({
+    baseItem,
+    revision,
+    integration,
+    externalReservationId,
+    dates,
+    mapping,
+    domitsBookingId,
+    action,
+    reservationStatus,
+    secret,
+    normalizedDomitsPropertyId,
+    propertyMapping,
+    resultForAck,
+    itemPatch = {},
+  }) {
+    const link = await this.upsertChannexImportedReservationLink({
+      integration,
+      externalReservationId,
+      revision,
+      dates,
+      mapping,
+      domitsBookingId,
+      action,
+      reservationStatus,
+    });
+    const ack = await this.acknowledgeImportedChannexBookingRevision({
+      revisionId: revision.revisionId,
+      secret,
+      integration,
+      normalizedDomitsPropertyId,
+      propertyMapping,
+    });
+
+    return {
+      ...baseItem,
+      domitsBookingId,
+      linkId: link?.id ?? null,
+      result: resultForAck(ack.ok),
+      ...itemPatch,
+      acked: ack.ok,
+      unacked: !ack.ok,
+      errors: ack.ok ? [] : [ack.error],
+    };
+  }
+
   async processNewChannexBookingRevision({
     baseItem,
     revision,
@@ -5752,7 +5798,8 @@ export default class IntegrationService {
       };
     }
 
-    const link = await this.upsertChannexImportedReservationLink({
+    return await this.finalizeChannexBookingImportItem({
+      baseItem,
       integration,
       externalReservationId,
       revision,
@@ -5761,25 +5808,12 @@ export default class IntegrationService {
       domitsBookingId: bookingResult.domitsBookingId,
       action: bookingResult.created ? "created" : "already-imported",
       reservationStatus: CHANNEX_IMPORTED_BOOKING_STATUS,
-    });
-    const ack = await this.acknowledgeImportedChannexBookingRevision({
-      revisionId: revision.revisionId,
       secret,
-      integration,
       normalizedDomitsPropertyId,
       propertyMapping,
+      resultForAck: (ackOk) => buildImportedNewBookingResult({ ackOk, created: bookingResult.created }),
+      itemPatch: { createdBooking: bookingResult.created },
     });
-
-    return {
-      ...baseItem,
-      domitsBookingId: bookingResult.domitsBookingId,
-      linkId: link?.id ?? null,
-      result: buildImportedNewBookingResult({ ackOk: ack.ok, created: bookingResult.created }),
-      createdBooking: bookingResult.created,
-      acked: ack.ok,
-      unacked: !ack.ok,
-      errors: ack.ok ? [] : [ack.error],
-    };
   }
 
   async processModifiedChannexBookingRevision({
@@ -5827,7 +5861,8 @@ export default class IntegrationService {
       };
     }
 
-    const link = await this.upsertChannexImportedReservationLink({
+    return await this.finalizeChannexBookingImportItem({
+      baseItem,
       integration,
       externalReservationId,
       revision,
@@ -5836,25 +5871,12 @@ export default class IntegrationService {
       domitsBookingId,
       action: "modified",
       reservationStatus: CHANNEX_IMPORTED_BOOKING_STATUS,
-    });
-    const ack = await this.acknowledgeImportedChannexBookingRevision({
-      revisionId: revision.revisionId,
       secret,
-      integration,
       normalizedDomitsPropertyId,
       propertyMapping,
+      resultForAck: (ackOk) => (ackOk ? "updated-and-acked" : "updated-but-ack-failed"),
+      itemPatch: { updatedBooking: true },
     });
-
-    return {
-      ...baseItem,
-      domitsBookingId,
-      linkId: link?.id ?? null,
-      result: ack.ok ? "updated-and-acked" : "updated-but-ack-failed",
-      updatedBooking: true,
-      acked: ack.ok,
-      unacked: !ack.ok,
-      errors: ack.ok ? [] : [ack.error],
-    };
   }
 
   async processCancelledChannexBookingRevision({
@@ -5897,7 +5919,8 @@ export default class IntegrationService {
       };
     }
 
-    const link = await this.upsertChannexImportedReservationLink({
+    return await this.finalizeChannexBookingImportItem({
+      baseItem,
       integration,
       externalReservationId,
       revision,
@@ -5906,25 +5929,12 @@ export default class IntegrationService {
       domitsBookingId,
       action: "cancelled",
       reservationStatus: "Cancelled",
-    });
-    const ack = await this.acknowledgeImportedChannexBookingRevision({
-      revisionId: revision.revisionId,
       secret,
-      integration,
       normalizedDomitsPropertyId,
       propertyMapping,
+      resultForAck: (ackOk) => (ackOk ? "cancelled-and-acked" : "cancelled-but-ack-failed"),
+      itemPatch: { cancelledBooking: true },
     });
-
-    return {
-      ...baseItem,
-      domitsBookingId,
-      linkId: link?.id ?? null,
-      result: ack.ok ? "cancelled-and-acked" : "cancelled-but-ack-failed",
-      cancelledBooking: true,
-      acked: ack.ok,
-      unacked: !ack.ok,
-      errors: ack.ok ? [] : [ack.error],
-    };
   }
 
   async processPulledChannexBookingRevision({

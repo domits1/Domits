@@ -13,51 +13,61 @@ jest.mock("../ORM/index.js", () => ({
 
 const IntegrationService = require("./integrationService.js").default;
 
-const DEFAULT_INTEGRATION_ACCOUNT_ID = "integration-account-1";
-const DEFAULT_DOMITS_PROPERTY_ID = "domits-property-1";
-const DEFAULT_EXTERNAL_PROPERTY_ID = "external-property-1";
-const DEFAULT_EXTERNAL_ROOM_TYPE_ID = "external-room-type-1";
-const DEFAULT_EXTERNAL_RATE_PLAN_ID = "external-rate-plan-1";
+const CHANNEX_TEST_FIXTURE = Object.freeze({
+  integrationAccountId: "integration-account-1",
+  domitsPropertyId: "domits-property-1",
+  externalPropertyId: "external-property-1",
+  externalRoomTypeId: "external-room-type-1",
+  externalRatePlanId: "external-rate-plan-1",
+  credentialsRef: "channex-secret-1",
+  hostId: "host-1",
+  guestName: "External Guest",
+  arrivalDate: "2026-06-01",
+  departureDate: "2026-06-03",
+});
 
-const buildPropertyMapping = (overrides = {}) => ({
-  domitsPropertyId: DEFAULT_DOMITS_PROPERTY_ID,
-  externalPropertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
-  externalPropertyName: "Test Property",
+const buildMappingFixture = (fields = {}, overrides = {}) => ({
+  domitsPropertyId: CHANNEX_TEST_FIXTURE.domitsPropertyId,
+  externalPropertyId: CHANNEX_TEST_FIXTURE.externalPropertyId,
   status: "ACTIVE",
+  ...fields,
   ...overrides,
 });
 
-const buildRoomTypeMapping = (overrides = {}) => ({
-  domitsPropertyId: DEFAULT_DOMITS_PROPERTY_ID,
-  externalPropertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
-  externalRoomTypeId: DEFAULT_EXTERNAL_ROOM_TYPE_ID,
-  externalRoomTypeName: "Demo room",
-  status: "ACTIVE",
-  ...overrides,
-});
+const buildPropertyMapping = (overrides = {}) =>
+  buildMappingFixture({ externalPropertyName: "Test Property" }, overrides);
 
-const buildRatePlanMapping = (overrides = {}) => ({
-  domitsPropertyId: DEFAULT_DOMITS_PROPERTY_ID,
-  externalPropertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
-  externalRoomTypeId: DEFAULT_EXTERNAL_ROOM_TYPE_ID,
-  externalRatePlanId: DEFAULT_EXTERNAL_RATE_PLAN_ID,
-  externalRatePlanName: "Standard",
-  status: "ACTIVE",
-  ...overrides,
-});
+const buildRoomTypeMapping = (overrides = {}) =>
+  buildMappingFixture(
+    {
+      externalRoomTypeId: CHANNEX_TEST_FIXTURE.externalRoomTypeId,
+      externalRoomTypeName: "Demo room",
+    },
+    overrides
+  );
+
+const buildRatePlanMapping = (overrides = {}) =>
+  buildMappingFixture(
+    {
+      externalRoomTypeId: CHANNEX_TEST_FIXTURE.externalRoomTypeId,
+      externalRatePlanId: CHANNEX_TEST_FIXTURE.externalRatePlanId,
+      externalRatePlanName: "Standard",
+    },
+    overrides
+  );
 
 const buildIntegrationAccount = (overrides = {}) => ({
-  id: DEFAULT_INTEGRATION_ACCOUNT_ID,
+  id: CHANNEX_TEST_FIXTURE.integrationAccountId,
   status: "CONNECTED",
-  credentialsRef: "channex-secret-1",
+  credentialsRef: CHANNEX_TEST_FIXTURE.credentialsRef,
   ...overrides,
 });
 
 const buildRevisionRow = (overrides = {}) => ({
   id: "local-revision-1",
-  integrationAccountId: DEFAULT_INTEGRATION_ACCOUNT_ID,
-  domitsPropertyId: DEFAULT_DOMITS_PROPERTY_ID,
-  externalPropertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
+  integrationAccountId: CHANNEX_TEST_FIXTURE.integrationAccountId,
+  domitsPropertyId: CHANNEX_TEST_FIXTURE.domitsPropertyId,
+  externalPropertyId: CHANNEX_TEST_FIXTURE.externalPropertyId,
   externalReservationId: "booking-1",
   revisionId: "revision-1",
   bookingStatus: "new",
@@ -72,37 +82,185 @@ const buildRevisionRow = (overrides = {}) => ({
   ...overrides,
 });
 
-const buildFeedRevision = (overrides = {}) => ({
-  revisionId: "revision-new-1",
-  bookingId: "booking-ota-1",
-  propertyId: DEFAULT_EXTERNAL_PROPERTY_ID,
-  uniqueId: "unique-ota-1",
-  systemId: "system-ota-1",
-  otaReservationCode: "OTA-123",
-  otaName: "Booking.com",
-  status: "new",
-  arrivalDate: "2026-06-01",
-  departureDate: "2026-06-03",
-  guestName: "External Guest",
-  amount: "200.00",
-  currency: "EUR",
-  insertedAt: "2026-05-21T10:00:00Z",
-  roomTypeId: DEFAULT_EXTERNAL_ROOM_TYPE_ID,
-  ratePlanId: DEFAULT_EXTERNAL_RATE_PLAN_ID,
-  rawPayload: {
-    id: "revision-new-1",
-    attributes: {
-      booking_id: "booking-ota-1",
-      property_id: DEFAULT_EXTERNAL_PROPERTY_ID,
-      status: "new",
-      arrival_date: "2026-06-01",
-      departure_date: "2026-06-03",
-      customer: { name: "External Guest" },
-      rooms: [{ room_type_id: DEFAULT_EXTERNAL_ROOM_TYPE_ID, rate_plan_id: DEFAULT_EXTERNAL_RATE_PLAN_ID }],
-    },
-  },
+const buildRevisionRoomLine = (overrides = {}) => ({
+  room_type_id: CHANNEX_TEST_FIXTURE.externalRoomTypeId,
+  rate_plan_id: CHANNEX_TEST_FIXTURE.externalRatePlanId,
   ...overrides,
 });
+
+const buildRevisionRawPayload = ({
+  revisionId = "revision-new-1",
+  bookingId = "booking-ota-1",
+  propertyId = CHANNEX_TEST_FIXTURE.externalPropertyId,
+  status = "new",
+  arrivalDate = CHANNEX_TEST_FIXTURE.arrivalDate,
+  departureDate = CHANNEX_TEST_FIXTURE.departureDate,
+  guestName = CHANNEX_TEST_FIXTURE.guestName,
+  rooms = [buildRevisionRoomLine()],
+  attributes = {},
+} = {}) => ({
+  id: revisionId,
+  attributes: {
+    booking_id: bookingId,
+    property_id: propertyId,
+    status,
+    arrival_date: arrivalDate,
+    departure_date: departureDate,
+    customer: { name: guestName },
+    rooms,
+    ...attributes,
+  },
+});
+
+const buildFeedRevision = (overrides = {}) => {
+  const revision = {
+    revisionId: "revision-new-1",
+    bookingId: "booking-ota-1",
+    propertyId: CHANNEX_TEST_FIXTURE.externalPropertyId,
+    uniqueId: "unique-ota-1",
+    systemId: "system-ota-1",
+    otaReservationCode: "OTA-123",
+    otaName: "Booking.com",
+    status: "new",
+    arrivalDate: CHANNEX_TEST_FIXTURE.arrivalDate,
+    departureDate: CHANNEX_TEST_FIXTURE.departureDate,
+    guestName: CHANNEX_TEST_FIXTURE.guestName,
+    amount: "200.00",
+    currency: "EUR",
+    insertedAt: "2026-05-21T10:00:00Z",
+    roomTypeId: CHANNEX_TEST_FIXTURE.externalRoomTypeId,
+    ratePlanId: CHANNEX_TEST_FIXTURE.externalRatePlanId,
+    ...overrides,
+  };
+
+  return {
+    ...revision,
+    rawPayload: Object.hasOwn(overrides, "rawPayload") ? overrides.rawPayload : buildRevisionRawPayload(revision),
+  };
+};
+
+const buildPropertyContext = (overrides = {}) => ({
+  propertyId: CHANNEX_TEST_FIXTURE.domitsPropertyId,
+  hostId: CHANNEX_TEST_FIXTURE.hostId,
+  propertyName: "Demo property",
+  ...overrides,
+});
+
+const buildImportedBookingRow = (overrides = {}) => ({
+  id: "domits-booking-1",
+  propertyId: CHANNEX_TEST_FIXTURE.domitsPropertyId,
+  hostId: CHANNEX_TEST_FIXTURE.hostId,
+  guestName: CHANNEX_TEST_FIXTURE.guestName,
+  arrivalDateMs: Date.parse(`${CHANNEX_TEST_FIXTURE.arrivalDate}T00:00:00.000Z`),
+  departureDateMs: Date.parse(`${CHANNEX_TEST_FIXTURE.departureDate}T00:00:00.000Z`),
+  status: "Paid",
+  ...overrides,
+});
+
+const createListByAccountRepository = (rows) => ({
+  listByAccountId: jest.fn().mockResolvedValue(rows),
+});
+
+const createAccountRepository = ({ account, channelAccounts }) => ({
+  findByUserIdAndChannel: jest.fn().mockResolvedValue(account),
+  listByChannel: jest.fn().mockResolvedValue(channelAccounts || (account ? [account] : [])),
+});
+
+const createReservationLinkRepository = (state) => ({
+  getByIntegrationAccountIdAndExternalReservation: jest.fn().mockImplementation(async () => state.storedLink),
+  upsert: jest.fn(async (data) => {
+    state.storedLink = {
+      id: state.storedLink?.id || "reservation-link-1",
+      ...data,
+      createdAt: state.storedLink?.createdAt || 1770000000000,
+      updatedAt: 1770000001000,
+    };
+    return state.storedLink;
+  }),
+});
+
+const createBookingRevisionRepository = ({ state, revisionRows }) => ({
+  listByFilters: jest.fn().mockResolvedValue(revisionRows),
+  getByIntegrationAccountIdAndRevisionId: jest.fn().mockImplementation(async () => state.storedRevision),
+  upsert: jest.fn(async (data) => {
+    state.storedRevision = buildRevisionRow({
+      id: state.storedRevision?.id || "local-revision-1",
+      ...data,
+    });
+    return state.storedRevision;
+  }),
+  markAcknowledged: jest.fn(async (_integrationAccountId, revisionId, acknowledgedAt) => {
+    const acknowledgedRevision = {
+      revisionId,
+      acknowledgementState: "ACKNOWLEDGED",
+      acknowledgedAt,
+    };
+    state.storedRevision = state.storedRevision
+      ? buildRevisionRow({ ...state.storedRevision, ...acknowledgedRevision })
+      : buildRevisionRow(acknowledgedRevision);
+    return state.storedRevision;
+  }),
+});
+
+const createExternalBookingImportRepository = ({ propertyContext, bookingRowsById }) => ({
+  getDomitsPropertyContext: jest.fn().mockResolvedValue(propertyContext),
+  getBookingById: jest.fn(async (bookingId) => bookingRowsById.get(bookingId) || null),
+  createExternalBooking: jest.fn(async (data) => {
+    const booking = buildImportedBookingRow({
+      id: data.bookingId,
+      propertyId: data.propertyId,
+      hostId: data.hostId,
+      guestName: data.guestName,
+      arrivalDateMs: data.arrivalDateMs,
+      departureDateMs: data.departureDateMs,
+    });
+    bookingRowsById.set(data.bookingId, booking);
+    return booking;
+  }),
+  updateImportedBooking: jest.fn(async ({ bookingId, guestName, arrivalDateMs, departureDateMs }) => {
+    const existing = bookingRowsById.get(bookingId);
+    if (!existing) return null;
+    const updated = buildImportedBookingRow({ ...existing, guestName, arrivalDateMs, departureDateMs });
+    bookingRowsById.set(bookingId, updated);
+    return updated;
+  }),
+  cancelImportedBooking: jest.fn(async (bookingId) => {
+    const existing = bookingRowsById.get(bookingId);
+    if (!existing) return null;
+    const cancelled = { ...existing, status: "Cancelled" };
+    bookingRowsById.set(bookingId, cancelled);
+    return cancelled;
+  }),
+});
+
+const createChannexProviderClient = (feedRevisions) => ({
+  listBookingRevisionFeed: jest.fn().mockResolvedValue({
+    success: true,
+    revisions: feedRevisions,
+    providerStatus: "ACTIVE",
+    errorCode: null,
+    errorMessage: null,
+  }),
+  getBookingRevision: jest.fn(),
+  acknowledgeBookingRevision: jest.fn().mockResolvedValue({
+    success: true,
+    providerStatus: "ACKNOWLEDGED",
+    errorCode: null,
+    errorMessage: null,
+  }),
+});
+
+const createSyncRepository = (override) =>
+  override || {
+    tryAcquireLock: jest.fn().mockResolvedValue({ acquired: true }),
+    releaseLock: jest.fn().mockResolvedValue(null),
+    insertLog: jest.fn(async (row) => row),
+  };
+
+const createEvidenceRepository = (override) =>
+  override || {
+    create: jest.fn(async (row) => row),
+  };
 
 const createService = ({
   account = buildIntegrationAccount(),
@@ -113,122 +271,27 @@ const createService = ({
   existingRevision = buildRevisionRow(),
   existingLink = null,
   feedRevisions = [],
-  propertyContext = {
-    propertyId: DEFAULT_DOMITS_PROPERTY_ID,
-    hostId: "host-1",
-    propertyName: "Demo property",
-  },
+  propertyContext = buildPropertyContext(),
   initialBookings = [],
   channelAccounts,
   sync: syncOverride = null,
   channexEvidence: channexEvidenceOverride = null,
 } = {}) => {
-  let storedRevision = existingRevision;
-  let storedLink = existingLink;
+  const state = {
+    storedRevision: existingRevision,
+    storedLink: existingLink,
+  };
   const bookingRowsById = new Map(initialBookings.map((booking) => [booking.id, booking]));
-  const resolvedChannelAccounts = channelAccounts || (account ? [account] : []);
-  const accounts = {
-    findByUserIdAndChannel: jest.fn().mockResolvedValue(account),
-    listByChannel: jest.fn().mockResolvedValue(resolvedChannelAccounts),
-  };
-  const props = {
-    listByAccountId: jest.fn().mockResolvedValue(propertyMappings),
-  };
-  const roomTypes = {
-    listByAccountId: jest.fn().mockResolvedValue(roomTypeMappings),
-  };
-  const ratePlans = {
-    listByAccountId: jest.fn().mockResolvedValue(ratePlanMappings),
-  };
-  const resLinks = {
-    getByIntegrationAccountIdAndExternalReservation: jest.fn().mockImplementation(async () => storedLink),
-    upsert: jest.fn(async (data) => {
-      storedLink = {
-        id: storedLink?.id || "reservation-link-1",
-        ...data,
-        createdAt: storedLink?.createdAt || 1770000000000,
-        updatedAt: 1770000001000,
-      };
-      return storedLink;
-    }),
-  };
-  const channexBookingRevisions = {
-    listByFilters: jest.fn().mockResolvedValue(revisionRows),
-    getByIntegrationAccountIdAndRevisionId: jest.fn().mockImplementation(async () => storedRevision),
-    upsert: jest.fn(async (data) => {
-      storedRevision = buildRevisionRow({
-        id: storedRevision?.id || "local-revision-1",
-        ...data,
-      });
-      return storedRevision;
-    }),
-    markAcknowledged: jest.fn(async (_integrationAccountId, revisionId, acknowledgedAt) => {
-      const acknowledgedRevision = {
-        revisionId,
-        acknowledgementState: "ACKNOWLEDGED",
-        acknowledgedAt,
-      };
-      storedRevision = storedRevision
-        ? buildRevisionRow({ ...storedRevision, ...acknowledgedRevision })
-        : buildRevisionRow(acknowledgedRevision);
-      return storedRevision;
-    }),
-  };
-  const externalBookingImportRepository = {
-    getDomitsPropertyContext: jest.fn().mockResolvedValue(propertyContext),
-    getBookingById: jest.fn(async (bookingId) => bookingRowsById.get(bookingId) || null),
-    createExternalBooking: jest.fn(async (data) => {
-      const booking = {
-        id: data.bookingId,
-        propertyId: data.propertyId,
-        hostId: data.hostId,
-        guestName: data.guestName,
-        arrivalDateMs: data.arrivalDateMs,
-        departureDateMs: data.departureDateMs,
-        status: "Paid",
-      };
-      bookingRowsById.set(data.bookingId, booking);
-      return booking;
-    }),
-    updateImportedBooking: jest.fn(async ({ bookingId, guestName, arrivalDateMs, departureDateMs }) => {
-      const existing = bookingRowsById.get(bookingId);
-      if (!existing) return null;
-      const updated = { ...existing, guestName, arrivalDateMs, departureDateMs, status: "Paid" };
-      bookingRowsById.set(bookingId, updated);
-      return updated;
-    }),
-    cancelImportedBooking: jest.fn(async (bookingId) => {
-      const existing = bookingRowsById.get(bookingId);
-      if (!existing) return null;
-      const cancelled = { ...existing, status: "Cancelled" };
-      bookingRowsById.set(bookingId, cancelled);
-      return cancelled;
-    }),
-  };
-  const channexProviderClient = {
-    listBookingRevisionFeed: jest.fn().mockResolvedValue({
-      success: true,
-      revisions: feedRevisions,
-      providerStatus: "ACTIVE",
-      errorCode: null,
-      errorMessage: null,
-    }),
-    getBookingRevision: jest.fn(),
-    acknowledgeBookingRevision: jest.fn().mockResolvedValue({
-      success: true,
-      providerStatus: "ACKNOWLEDGED",
-      errorCode: null,
-      errorMessage: null,
-    }),
-  };
-  const sync = syncOverride || {
-    tryAcquireLock: jest.fn().mockResolvedValue({ acquired: true }),
-    releaseLock: jest.fn().mockResolvedValue(null),
-    insertLog: jest.fn(async (row) => row),
-  };
-  const channexEvidence = channexEvidenceOverride || {
-    create: jest.fn(async (row) => row),
-  };
+  const accounts = createAccountRepository({ account, channelAccounts });
+  const props = createListByAccountRepository(propertyMappings);
+  const roomTypes = createListByAccountRepository(roomTypeMappings);
+  const ratePlans = createListByAccountRepository(ratePlanMappings);
+  const resLinks = createReservationLinkRepository(state);
+  const channexBookingRevisions = createBookingRevisionRepository({ state, revisionRows });
+  const externalBookingImportRepository = createExternalBookingImportRepository({ propertyContext, bookingRowsById });
+  const channexProviderClient = createChannexProviderClient(feedRevisions);
+  const sync = createSyncRepository(syncOverride);
+  const channexEvidence = createEvidenceRepository(channexEvidenceOverride);
 
   const service = new IntegrationService({
     accounts,
@@ -703,21 +766,9 @@ describe("IntegrationService Channex booking pull import", () => {
 
   test("skips unsupported multi-room revisions without acknowledging", async () => {
     const revision = buildFeedRevision({
-      rawPayload: {
-        id: "revision-new-1",
-        attributes: {
-          booking_id: "booking-ota-1",
-          property_id: "external-property-1",
-          status: "new",
-          arrival_date: "2026-06-01",
-          departure_date: "2026-06-03",
-          customer: { name: "External Guest" },
-          rooms: [
-            { room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" },
-            { room_type_id: "external-room-type-2", rate_plan_id: "external-rate-plan-2" },
-          ],
-        },
-      },
+      rawPayload: buildRevisionRawPayload({
+        rooms: [buildRevisionRoomLine(), buildRevisionRoomLine({ room_type_id: "external-room-type-2" })],
+      }),
     });
     const { service, channexProviderClient, externalBookingImportRepository } = createService({
       feedRevisions: [revision],
@@ -750,33 +801,11 @@ describe("IntegrationService Channex booking pull import", () => {
           revisionId: "revision-modified-1",
           bookingId: "booking-modified-1",
           status: "modified",
-          rawPayload: {
-            id: "revision-modified-1",
-            attributes: {
-              booking_id: "booking-modified-1",
-              property_id: "external-property-1",
-              status: "modified",
-              arrival_date: "2026-06-01",
-              departure_date: "2026-06-03",
-              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
-            },
-          },
         }),
         buildFeedRevision({
           revisionId: "revision-cancelled-1",
           bookingId: "booking-cancelled-1",
           status: "cancelled",
-          rawPayload: {
-            id: "revision-cancelled-1",
-            attributes: {
-              booking_id: "booking-cancelled-1",
-              property_id: "external-property-1",
-              status: "cancelled",
-              arrival_date: "2026-06-01",
-              departure_date: "2026-06-03",
-              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
-            },
-          },
         }),
       ],
       existingRevision: null,
@@ -819,13 +848,10 @@ describe("IntegrationService Channex booking pull import", () => {
     const { service, channexProviderClient, externalBookingImportRepository, resLinks } = createService({
       existingLink,
       initialBookings: [
-        {
+        buildImportedBookingRow({
           id: "domits-booking-1",
           guestName: "Original Guest",
-          arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
-          departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
-          status: "Paid",
-        },
+        }),
       ],
       feedRevisions: [
         buildFeedRevision({
@@ -835,18 +861,6 @@ describe("IntegrationService Channex booking pull import", () => {
           arrivalDate: "2026-06-02",
           departureDate: "2026-06-04",
           guestName: "Modified Guest",
-          rawPayload: {
-            id: "revision-modified-1",
-            attributes: {
-              booking_id: "booking-ota-1",
-              property_id: "external-property-1",
-              status: "modified",
-              arrival_date: "2026-06-02",
-              departure_date: "2026-06-04",
-              customer: { name: "Modified Guest" },
-              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
-            },
-          },
         }),
       ],
       existingRevision: null,
@@ -894,30 +908,15 @@ describe("IntegrationService Channex booking pull import", () => {
     const { service, channexProviderClient, externalBookingImportRepository, resLinks } = createService({
       existingLink,
       initialBookings: [
-        {
+        buildImportedBookingRow({
           id: "domits-booking-1",
-          guestName: "External Guest",
-          arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
-          departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
-          status: "Paid",
-        },
+        }),
       ],
       feedRevisions: [
         buildFeedRevision({
           revisionId: "revision-cancelled-1",
           bookingId: "booking-ota-1",
           status: "cancelled",
-          rawPayload: {
-            id: "revision-cancelled-1",
-            attributes: {
-              booking_id: "booking-ota-1",
-              property_id: "external-property-1",
-              status: "cancelled",
-              arrival_date: "2026-06-01",
-              departure_date: "2026-06-03",
-              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
-            },
-          },
         }),
       ],
       existingRevision: null,
@@ -953,14 +952,8 @@ describe("IntegrationService Channex booking pull import", () => {
     const { service, channexBookingRevisions, resLinks } = createService({
       feedRevisions: [
         buildFeedRevision({
-          rawPayload: {
-            id: "revision-new-1",
+          rawPayload: buildRevisionRawPayload({
             attributes: {
-              booking_id: "booking-ota-1",
-              property_id: "external-property-1",
-              status: "new",
-              arrival_date: "2026-06-01",
-              departure_date: "2026-06-03",
               guarantee: {
                 card_number: "SENSITIVE_CARD_NUMBER",
                 cvc: "SENSITIVE_CVC_VALUE",
@@ -984,9 +977,8 @@ describe("IntegrationService Channex booking pull import", () => {
               payment_credentials: {
                 token: "SENSITIVE_CREDENTIAL_TOKEN",
               },
-              rooms: [{ room_type_id: "external-room-type-1", rate_plan_id: "external-rate-plan-1" }],
             },
-          },
+          }),
         }),
       ],
       existingRevision: null,
@@ -1052,13 +1044,8 @@ describe("IntegrationService Channex booking pull import", () => {
       existingRevision: null,
     });
     externalBookingImportRepository.getBookingById.mockImplementation(async (bookingId) => ({
-      id: bookingId,
-      propertyId: "domits-property-1",
-      hostId: "host-1",
+      ...buildImportedBookingRow({ id: bookingId }),
       guestName: "Existing External Guest",
-      arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
-      departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
-      status: "Paid",
     }));
 
     const result = await service.pullLatestChannexBookings("user-1", "domits-property-1", {
@@ -1092,17 +1079,7 @@ describe("IntegrationService Channex booking pull import", () => {
     });
     let createdBookingId = null;
     externalBookingImportRepository.getBookingById.mockImplementation(async (bookingId) =>
-      bookingId === createdBookingId
-        ? {
-            id: bookingId,
-            propertyId: "domits-property-1",
-            hostId: "host-1",
-            guestName: "External Guest",
-            arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
-            departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
-            status: "Paid",
-          }
-        : null
+      bookingId === createdBookingId ? buildImportedBookingRow({ id: bookingId }) : null
     );
     externalBookingImportRepository.createExternalBooking.mockImplementation(async (data) => {
       createdBookingId = data.bookingId;
@@ -1416,10 +1393,9 @@ describe("IntegrationService Channex booking polling", () => {
           domitsPropertyId: "domits-property-allowed",
         }),
       ],
-      propertyContext: {
+      propertyContext: buildPropertyContext({
         propertyId: "domits-property-allowed",
-        hostId: "host-1",
-      },
+      }),
       feedRevisions: [buildFeedRevision()],
       existingRevision: null,
     });
