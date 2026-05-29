@@ -10,7 +10,12 @@ import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import arrowLeftIcon from "../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../images/arrow-right-icon.svg";
 import TemplateSilhouette from "./TemplateSilhouette";
-import { WEBSITE_TEMPLATE_OPTIONS, getWebsiteTemplateById } from "./websiteTemplates";
+import {
+  DEFAULT_WEBSITE_TEMPLATE_ID,
+  WEBSITE_TEMPLATE_OPTIONS,
+  getWebsiteTemplateById,
+  isWebsiteTemplateBuilderEnabled,
+} from "./websiteTemplates";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
 import { isWebsiteTemplateImplemented } from "./rendering/templateRegistry";
 import {
@@ -587,7 +592,7 @@ function WebsiteBuilderPage() {
   const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_WEBSITES);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
-  const [selectedTemplateId, setSelectedTemplateId] = useState(WEBSITE_TEMPLATE_OPTIONS[0].id);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(DEFAULT_WEBSITE_TEMPLATE_ID);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -774,6 +779,8 @@ function WebsiteBuilderPage() {
   const summaryDescription = truncateDescription(selectedProperty?.description);
   const selectedTemplate = getWebsiteTemplateById(selectedTemplateId);
   const selectedTemplateIsImplemented = isWebsiteTemplateImplemented(selectedTemplateId);
+  const selectedTemplateIsBuilderEnabled = isWebsiteTemplateBuilderEnabled(selectedTemplateId);
+  const selectedTemplateIsBuildable = selectedTemplateIsImplemented && selectedTemplateIsBuilderEnabled;
   const activeGalleryImage = galleryImages[activeGalleryIndex] || galleryImages[0] || "";
   const isListingStepComplete = Boolean(selectedProperty);
 
@@ -1026,7 +1033,7 @@ function WebsiteBuilderPage() {
   };
 
   const buildWebsitePreview = async () => {
-    if (!selectedProperty) {
+    if (!selectedProperty || !selectedTemplateIsBuildable) {
       return;
     }
 
@@ -1537,26 +1544,38 @@ function WebsiteBuilderPage() {
   };
 
   const renderTemplateStep = () => {
-    const showTemplateImplementationHint = selectedTemplateIsImplemented === false;
+    const showTemplateAvailabilityHint = WEBSITE_TEMPLATE_OPTIONS.some(
+      (templateOption) => isWebsiteTemplateBuilderEnabled(templateOption.id) === false
+    );
 
     return (
       <div className={styles.templateStage}>
         <div className={styles.templateGrid}>
           {WEBSITE_TEMPLATE_OPTIONS.map((templateOption) => {
             const isSelected = templateOption.id === selectedTemplateId;
+            const isBuilderEnabled = isWebsiteTemplateBuilderEnabled(templateOption.id);
+            const isComingSoon = !isBuilderEnabled;
 
             return (
               <button
                 key={templateOption.id}
                 type="button"
-                className={`${styles.templateCard} ${isSelected ? styles.templateCardSelected : ""}`}
-                onClick={() => setSelectedTemplateId(templateOption.id)}
+                className={`${styles.templateCard} ${isSelected ? styles.templateCardSelected : ""} ${
+                  isComingSoon ? styles.templateCardComingSoon : ""
+                }`}
+                onClick={() => {
+                  if (isBuilderEnabled) {
+                    setSelectedTemplateId(templateOption.id);
+                  }
+                }}
+                disabled={isComingSoon}
                 aria-pressed={isSelected}
               >
                 <span className={styles.templateRadio} aria-hidden="true">
                   <span className={styles.templateRadioDot} />
                 </span>
                 {isSelected ? <span className={styles.templateSelectedTag}>Selected</span> : null}
+                {isComingSoon ? <span className={styles.templateComingSoonTag}>Coming soon</span> : null}
                 <div className={styles.templatePreviewShell}>
                   <TemplateSilhouette layout={templateOption.layout} />
                 </div>
@@ -1582,18 +1601,17 @@ function WebsiteBuilderPage() {
               type="button"
               className={styles.primaryButton}
               onClick={() => void buildWebsitePreview()}
-              disabled={!selectedTemplateIsImplemented || previewStage === PREVIEW_STAGE.loading}
+              disabled={!selectedTemplateIsBuildable || previewStage === PREVIEW_STAGE.loading}
             >
               {previewStage === PREVIEW_STAGE.loading ? "Building preview..." : "Build my website"}
             </button>
           </div>
 
           <p className={styles.selectedTemplateDescription}>{selectedTemplate.description}</p>
-          {showTemplateImplementationHint ? (
+          {showTemplateAvailabilityHint ? (
             <p className={styles.previewHelperText}>
-              Real template preview is currently available for Panorama Landing, Trust Signals, and
-              Experience Journey. The other template options stay visible so the chooser is not locked to
-              one direction.
+              Panorama Landing is currently the only selectable template. The other template directions
+              stay visible here as coming-soon options while we continue iterating on them.
             </p>
           ) : null}
         </div>
@@ -1683,8 +1701,7 @@ function WebsiteBuilderPage() {
             <div className={styles.previewStageActions}>
               <div className={styles.previewStageMessageStack}>
                 <span className={styles.previewHelperText}>
-                  Change the selected template above to compare other implemented layouts against the same
-                  imported listing data.
+                  Continue into the editor to refine this Panorama website with the imported listing data.
                 </span>
                 {isPersistingWebsiteDraft ? (
                   <span className={styles.previewHelperText}>Saving website draft to your workspace...</span>

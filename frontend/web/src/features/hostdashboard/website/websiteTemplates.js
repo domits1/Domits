@@ -4,49 +4,63 @@ const TEMPLATE_DEFINITIONS = [
     "Panorama Landing",
     "Large hero image with fast trust signals and a guided booking call-to-action.",
     "panorama",
+    { builderEnabled: true },
   ],
   [
     "trust-signals",
     "Trust Signals",
     "A reassuring landing page with reviews, guest highlights, policy clarity, and a soft booking nudge.",
     "trustSignals",
+    { builderEnabled: false },
   ],
   [
     "experience-journey",
     "Experience Journey",
     "A curated flow that walks guests through arrival, stay, surroundings, and next steps.",
     "experienceJourney",
+    { builderEnabled: false },
   ],
   [
     "amenities-spotlight",
     "Amenities Spotlight",
     "A feature-led layout that puts standout amenities and property strengths front and center.",
     "amenitiesSpotlight",
+    { builderEnabled: false },
   ],
-  ["gallery-grid", "Gallery Grid", "Photo-first browsing with a clean grid for guests who compare on visuals.", "galleryGrid"],
+  [
+    "gallery-grid",
+    "Gallery Grid",
+    "Photo-first browsing with a clean grid for guests who compare on visuals.",
+    "galleryGrid",
+    { builderEnabled: false },
+  ],
   [
     "editorial-split",
     "Editorial Split",
     "Story-led content on the left with a visual property showcase on the right.",
     "editorial",
+    { builderEnabled: false },
   ],
   [
     "booking-focus",
     "Booking Focus",
     "A booking-led layout with a visible quote panel for guests ready to decide faster.",
     "bookingFocus",
+    { builderEnabled: false },
   ],
   [
     "contact-focus",
     "Contact Focus",
     "Balanced content sections with a strong footer action for direct guest contact.",
     "contactFocus",
+    { builderEnabled: false },
   ],
   [
     "local-guide",
     "Local Guide",
     "A location-led page that highlights the area, nearby spots, and the context around the stay.",
     "localGuide",
+    { builderEnabled: false },
   ],
   [
     "feature-stack",
@@ -66,6 +80,7 @@ const buildTemplateOption = ([id, name, description, layout, extraOptions = {}])
 });
 
 const WEBSITE_TEMPLATE_CATALOG = TEMPLATE_DEFINITIONS.map(buildTemplateOption);
+export const DEFAULT_WEBSITE_TEMPLATE_ID = "panorama-landing";
 
 export const WEBSITE_TEMPLATE_OPTIONS = WEBSITE_TEMPLATE_CATALOG.filter(
   (templateOption) => !templateOption.hidden
@@ -79,3 +94,6 @@ export const WEBSITE_TEMPLATE_LAYOUTS = [...new Set(WEBSITE_TEMPLATE_CATALOG.map
 
 export const getWebsiteTemplateById = (templateId) =>
   WEBSITE_TEMPLATE_LOOKUP.get(templateId) || WEBSITE_TEMPLATE_OPTIONS[0];
+
+export const isWebsiteTemplateBuilderEnabled = (templateId) =>
+  WEBSITE_TEMPLATE_LOOKUP.get(templateId)?.builderEnabled === true;
