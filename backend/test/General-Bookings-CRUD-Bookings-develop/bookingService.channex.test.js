@@ -480,19 +480,44 @@ describe("BookingService Channex booking availability hooks", () => {
 
   test("cancel-booking PATCH action returns Channex cancellation sync evidence", async () => {
     const evidence = buildEvidence({ trigger: "BOOKING_CANCELLED" });
-    const cancelBooking = jest.fn().mockResolvedValue({
-      booking: { id: "booking-1", status: "Cancelled" },
-      channexAvailabilitySync: evidence,
+    const bookingBefore = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      guestid: "guest-1",
+      arrivaldate: Date.now() + 12 * 60 * 60 * 1000,
+      departuredate: Date.now() + 36 * 60 * 60 * 1000,
+      cancellation_policy: "flexible",
+      total_price: 100,
+      paymentid: "pi_booking_1",
+      status: "Paid",
+    };
+    const bookingAfter = { ...bookingBefore, status: "Cancelled" };
+    const cancelBookingByGuest = jest.fn().mockResolvedValue({
+      response: bookingAfter,
+      statusCode: 200,
     });
+    const syncChannexBookingAvailabilityIfEnabled = jest.fn().mockResolvedValue(evidence);
     const controller = new ReservationController({
       bookingService: {
-        cancelBooking,
+        authManager: {
+          authenticateUser: jest.fn().mockResolvedValue({ sub: "guest-1" }),
+        },
+        reservationRepository: {
+          getBookingById: jest.fn().mockResolvedValue({ response: bookingBefore }),
+          cancelBookingByGuest,
+        },
+        priceLabsBookingNotifier: {
+          notifyBookingChange: jest.fn().mockResolvedValue({}),
+        },
+        syncChannexBookingAvailabilityIfEnabled,
       },
       paymentService: {},
     });
+    controller.stripe = null;
 
     const response = await controller.patch({
-      headers: { Authorization: "Bearer host-token" },
+      headers: { Authorization: "Bearer guest-token" },
       body: JSON.stringify({
         action: "cancel-booking",
         bookingId: "booking-1",
@@ -501,8 +526,17 @@ describe("BookingService Channex booking availability hooks", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(cancelBooking).toHaveBeenCalledWith("booking-1", "Bearer host-token", {
-      reason: "Demo cancel",
+    expect(cancelBookingByGuest).toHaveBeenCalledWith("booking-1", "guest-1", {
+      refundedAmount: 0,
+      stripeRefundId: null,
+      refundError: null,
+    });
+    expect(syncChannexBookingAvailabilityIfEnabled).toHaveBeenCalledWith({
+      userId: "host-1",
+      bookingBefore,
+      bookingAfter,
+      trigger: "BOOKING_CANCELLED",
+      includeDisabledEvidence: true,
     });
     expect(response.response.channexAvailabilitySync).toEqual(evidence);
   });

@@ -2,7 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { getDefaultWebsiteCalendarPanelColor, resolveWebsiteCalendarPanelColor } from "../../config/websiteCalendarSectionConfig";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../../websiteEditorConfig";
-import { ContactColorField, CollapsibleSection, TextField } from "../WebsiteEditorFields";
+import { CollapsibleSection, TextField } from "../WebsiteEditorFields";
+import { WebsiteEditorSectionPanelControls } from "../WebsiteEditorSectionPanelControls";
 import { WebsiteEditorVisibilityToggleCard } from "../WebsiteEditorVisibilityToggleCard";
 import styles from "../../WebsiteEditorPage.module.scss";
 
@@ -76,40 +77,30 @@ export function WebsiteEditorCalendarSection({
           />
         </div>
 
-        {calendarToggleFields.length > 0 ? (
-          <div className={styles.toggleStack}>
-            {calendarToggleFields.map((field) => (
-              <WebsiteEditorVisibilityToggleCard
-                key={field.key}
-                targetRef={setTargetRef(EDITOR_TARGET_KEYS.calendar.showPanel)}
-                field={field}
-                inputId={`website-editor-calendar-${field.key}`}
-                labelId={`website-editor-calendar-${field.key}-label`}
-                descriptionId={`website-editor-calendar-${field.key}-description`}
-                checked={editorValues.calendar.showPanel !== false}
-                onChange={handleCalendarPanelToggleChange}
-                isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.calendar.showPanel}
-              />
-            ))}
-          </div>
-        ) : null}
-
-        {showCalendarPanelColorField ? (
-          <ContactColorField
-            label="Calendar panel color"
-            hint="Controls the framed surface behind the availability calendar when the panel is enabled."
-            value={editorValues.calendar.panelColor}
-            placeholder={getDefaultWebsiteCalendarPanelColor(templateKey)}
-            resolveColorValue={(value) => resolveWebsiteCalendarPanelColor(value, templateKey)}
-            inputAriaLabel="Calendar panel color"
-            onSelectColor={handleCalendarPanelColorChange}
-            onChangeInput={handleCalendarPanelColorInputChange}
-            onCommitInput={commitCalendarPanelColorInput}
-            onInputKeyDown={handleCalendarPanelColorInputKeyDown}
-            onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.calendar.visibility)}
-            onBlur={clearActivePreviewTarget}
-          />
-        ) : null}
+        <WebsiteEditorSectionPanelControls
+          activatePreviewTarget={activatePreviewTarget}
+          clearActivePreviewTarget={clearActivePreviewTarget}
+          colorField={{
+            label: "Calendar panel color",
+            hint: "Controls the framed surface behind the availability calendar when the panel is enabled.",
+            value: editorValues.calendar.panelColor,
+            placeholder: getDefaultWebsiteCalendarPanelColor(templateKey),
+            resolveColorValue: (value) => resolveWebsiteCalendarPanelColor(value, templateKey),
+            inputAriaLabel: "Calendar panel color",
+            previewTargetId: EDITOR_TARGET_KEYS.calendar.visibility,
+          }}
+          commitPanelColorInput={commitCalendarPanelColorInput}
+          handlePanelColorChange={handleCalendarPanelColorChange}
+          handlePanelColorInputChange={handleCalendarPanelColorInputChange}
+          handlePanelColorInputKeyDown={handleCalendarPanelColorInputKeyDown}
+          handlePanelToggleChange={handleCalendarPanelToggleChange}
+          highlightedTargetId={highlightedTargetId}
+          inputIdPrefix="website-editor-calendar"
+          panelTargetId={EDITOR_TARGET_KEYS.calendar.showPanel}
+          setTargetRef={setTargetRef}
+          showPanel={showCalendarPanelColorField}
+          toggleFields={calendarToggleFields}
+        />
       </div>
     </CollapsibleSection>
   );

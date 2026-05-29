@@ -2524,14 +2524,27 @@ const normalizeEvidenceDateFilters = (dateFrom, dateTo) => {
   };
 };
 const shapeCredentialIntegrationForResponse = (integration) => {
-  const channel = String(integration?.channel || "").toUpperCase();
-  if (!integration || (channel !== "HOLIDU" && channel !== "CHANNEX")) {
+  if (!integration || typeof integration !== "object") {
     return integration;
   }
 
   const { credentialsRef, ...safeIntegration } = integration;
   return safeIntegration;
 };
+const resolveSelectedWhatsAppNumber = (secret, integration) => {
+  const selectableNumbers = Array.isArray(secret?.selectableNumbers) ? secret.selectableNumbers : [];
+  const selectedPhoneNumberId =
+    requireStr(secret?.selectedPhoneNumberId) || requireStr(integration?.externalAccountId) || null;
+  if (!selectedPhoneNumberId) {
+    return null;
+  }
+
+  return (
+    selectableNumbers.find((item) => requireStr(item?.phoneNumberId) === selectedPhoneNumberId) || null
+  );
+};
+const resolveWhatsAppPublicPhoneNumber = (secret, integration) =>
+  requireStr(secret?.selectedPhoneNumber) || requireStr(resolveSelectedWhatsAppNumber(secret, integration)?.phoneNumber);
 const buildHoliduProviderValidationRecord = (validationResult, attemptedAt) => {
   if (validationResult?.success) {
     return normalizeHoliduProviderValidation({
@@ -3102,22 +3115,25 @@ export default class IntegrationService {
       const evaluation = this.evaluateWhatsAppTokenState(item, secret);
       const preservesExistingError =
         evaluation.status === "HEALTHY" || evaluation.status === "EXPIRING_SOON";
+      const publicPhoneNumber = resolveWhatsAppPublicPhoneNumber(secret, item);
 
-      return {
+      return shapeCredentialIntegrationForResponse({
         ...item,
         status: evaluation.status === "EXPIRING_SOON" ? "TOKEN_EXPIRING_SOON" : evaluation.status,
         lastErrorMessage: preservesExistingError ? item.lastErrorMessage : evaluation.message,
-      };
+        phoneNumber: publicPhoneNumber,
+      });
     } catch (error) {
       this.logTokenLifecycle("warn", "WhatsApp token health evaluation failed during list", item, "health_check_error", {
         errorCode: error?.code || null,
         errorMessage: error?.message || null,
       });
-      return {
+      return shapeCredentialIntegrationForResponse({
         ...item,
         status: "UNKNOWN",
         lastErrorMessage: item.lastErrorMessage || "Unable to evaluate WhatsApp token health.",
-      };
+        phoneNumber: null,
+      });
     }
   }
 
@@ -10324,6 +10340,7 @@ export default class IntegrationService {
       provider: "META_WHATSAPP",
       accessToken,
       selectedPhoneNumberId: selectedNumber.phoneNumberId,
+      selectedPhoneNumber: selectedNumber.phoneNumber || null,
       selectedBusinessAccountId: selectedNumber.businessAccountId || null,
       selectedBusinessId: selectedNumber.businessId || null,
       selectedDisplayName: displayName || selectedNumber.displayName || null,
