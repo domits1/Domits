@@ -39,7 +39,7 @@ import {
   normalizeChannexProviderValidation,
   buildDefaultChannexProviderValidation,
 } from "./channexCredentialUtils.js";
-import {
+import ChannexBookingAvailabilityBridge, {
   ChannexBookingAvailabilityRepository,
   countActiveBookingsByNight,
 } from "./channexBookingAvailabilityBridge.js";
@@ -784,9 +784,16 @@ const CHANNEX_BOOKING_POLL_SYNC_TYPE = "booking_poll";
 const CHANNEX_BOOKING_POLL_TRIGGER = "EVENTBRIDGE_POLL";
 const CHANNEX_BOOKING_POLL_LOCK_STALE_MS = 5 * 60 * 1000;
 const CHANNEX_BOOKING_IMPORT_SOURCE = "channex-booking-pull";
+const CHANNEX_CERTIFICATION_CANCEL_ACTION = "certification-cancel-booking";
+const CHANNEX_CERTIFICATION_CANCEL_MODE = "admin-certification-no-refund";
+const CHANNEX_CERTIFICATION_CANCEL_REFUND_SKIPPED_REASON =
+  "Channex certification/admin cancellation does not process guest refunds.";
+const CHANNEX_BOOKING_CANCELLED_TRIGGER = "BOOKING_CANCELLED";
 const CHANNEL_CHANNEX = "CHANNEX";
 const CHANNEX_IMPORTED_BOOKING_STATUS = "Paid";
+const CHANNEX_CANCELLED_BOOKING_STATUS = "Cancelled";
 const CHANNEX_EXTERNAL_PAYMENT_STATUS = "EXTERNAL";
+const CHANNEX_ADMIN_CANCEL_ACTIVE_STATUSES = new Set(["awaiting payment", "paid"]);
 const CHANNEX_MODIFIED_UNLINKED_REASON =
   "modified revision not imported because no linked Domits booking was found";
 const CHANNEX_CANCELLED_UNLINKED_REASON =
@@ -941,6 +948,25 @@ const getChannexExternalReservationId = (revision) =>
   requireStr(revision?.systemId) ||
   requireStr(revision?.revisionId);
 const getChannexRevisionStatus = (revision) => String(revision?.status || "").trim().toLowerCase();
+const getDomitsBookingStatus = (booking) => String(booking?.status || "").trim().toLowerCase();
+const isActiveDomitsBookingForChannexCancel = (booking) =>
+  CHANNEX_ADMIN_CANCEL_ACTIVE_STATUSES.has(getDomitsBookingStatus(booking));
+const isCancelledDomitsBooking = (booking) => ["cancelled", "canceled"].includes(getDomitsBookingStatus(booking));
+const toBookingAvailabilityBridgeBooking = (booking) =>
+  booking
+    ? {
+        id: requireStr(booking.id),
+        property_id: requireStr(booking.propertyId),
+        hostid: requireStr(booking.hostId),
+        guestid: requireStr(booking.guestId),
+        guestname: requireStr(booking.guestName),
+        arrivaldate: booking.arrivalDateMs,
+        departuredate: booking.departureDateMs,
+        status: requireStr(booking.status),
+        paymentid: requireStr(booking.paymentId),
+        bookingtype: requireStr(booking.bookingType),
+      }
+    : null;
 const isoDateToBookingMs = (value) => {
   const normalizedDate = parseIsoDateParam(value);
   if (!normalizedDate) return null;
@@ -2664,6 +2690,7 @@ export default class IntegrationService {
     channexBookingRevisions = new ChannexBookingRevisionRepository(),
     bookingAvailabilityRepository = new ChannexBookingAvailabilityRepository(),
     externalBookingImportRepository = new ChannexExternalBookingImportRepository(),
+    channexBookingAvailabilityBridge = new ChannexBookingAvailabilityBridge(),
     runner = new SyncRunner(),
     credentialStore = new WhatsAppCredentialStore(),
     holiduCredentialStore = new HoliduCredentialStore(),
@@ -2681,6 +2708,7 @@ export default class IntegrationService {
     this.channexBookingRevisions = channexBookingRevisions;
     this.bookingAvailabilityRepository = bookingAvailabilityRepository;
     this.externalBookingImportRepository = externalBookingImportRepository;
+    this.channexBookingAvailabilityBridge = channexBookingAvailabilityBridge;
     this.runner = runner;
     this.credentialStore = credentialStore;
     this.holiduCredentialStore = holiduCredentialStore;
@@ -5953,6 +5981,109 @@ export default class IntegrationService {
       propertyMapping,
       resultForAck: (ackOk) => (ackOk ? "cancelled-and-acked" : "cancelled-but-ack-failed"),
       itemPatch: { cancelledBooking: true },
+    });
+  }
+
+  buildChannexCertificationCancelSkippedEvidence({ booking, reason }) {
+    const bridgeBooking = toBookingAvailabilityBridgeBooking(booking);
+    return {
+      bookingId: bridgeBooking?.id ?? null,
+      trigger: CHANNEX_BOOKING_CANCELLED_TRIGGER,
+      syncType: "booking-availability",
+      domitsPropertyId: bridgeBooking?.property_id ?? null,
+      channexPropertyId: null,
+      externalRoomTypeId: null,
+      countOfRooms: null,
+      countOfRoomsSource: null,
+      affectedDateRange: { dateFrom: null, dateTo: null },
+      affectedDates: [],
+      availabilityValuesSent: [],
+      requestCount: 0,
+      taskIds: [],
+      warnings: [],
+      errors: [],
+      overallSuccess: false,
+      skipped: true,
+      reason,
+    };
+  }
+
+  async cancelChannexCertificationBooking(userId, domitsPropertyId, body = {}) {
+    const normalizedUserId = requireStr(userId);
+    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
+    const bookingId = requireStr(body?.bookingId);
+
+    if (!normalizedUserId) {
+      return bad(400, { error: "Missing required query param: userId" });
+    }
+
+    if (!normalizedDomitsPropertyId) {
+      return bad(400, { error: "Missing required query param: domitsPropertyId" });
+    }
+
+    if (!bookingId) {
+      return bad(400, { error: "Missing bookingId." });
+    }
+
+    const bookingBefore = await this.externalBookingImportRepository.getBookingById(bookingId);
+    if (!bookingBefore) {
+      return bad(404, { error: "Booking not found." });
+    }
+
+    if (requireStr(bookingBefore.propertyId) !== normalizedDomitsPropertyId) {
+      return bad(403, {
+        error: "BOOKING_PROPERTY_MISMATCH",
+        message: "Booking does not belong to the requested Domits property.",
+      });
+    }
+
+    const alreadyCancelled = isCancelledDomitsBooking(bookingBefore);
+    const bookingAfter = alreadyCancelled
+      ? bookingBefore
+      : await this.externalBookingImportRepository.cancelImportedBooking(bookingId);
+
+    if (!bookingAfter) {
+      return bad(500, {
+        error: "DOMITS_BOOKING_CANCEL_FAILED",
+        message: "Domits booking could not be cancelled for the Channex certification admin action.",
+      });
+    }
+
+    let channexAvailabilitySync = null;
+    if (alreadyCancelled) {
+      channexAvailabilitySync = this.buildChannexCertificationCancelSkippedEvidence({
+        booking: bookingAfter,
+        reason: "BOOKING_ALREADY_CANCELLED",
+      });
+    } else if (isActiveDomitsBookingForChannexCancel(bookingBefore)) {
+      channexAvailabilitySync = await this.channexBookingAvailabilityBridge.syncAvailabilityForBookingChange({
+        userId: bookingBefore.hostId,
+        bookingBefore: toBookingAvailabilityBridgeBooking(bookingBefore),
+        bookingAfter: toBookingAvailabilityBridgeBooking(bookingAfter),
+        trigger: CHANNEX_BOOKING_CANCELLED_TRIGGER,
+      });
+    } else {
+      channexAvailabilitySync = this.buildChannexCertificationCancelSkippedEvidence({
+        booking: bookingAfter,
+        reason: "BOOKING_STATUS_NOT_ACTIVE_FOR_CHANNEX_CANCEL",
+      });
+    }
+
+    return ok({
+      channel: CHANNEL_CHANNEX,
+      action: CHANNEX_CERTIFICATION_CANCEL_ACTION,
+      mode: CHANNEX_CERTIFICATION_CANCEL_MODE,
+      bookingId,
+      domitsPropertyId: normalizedDomitsPropertyId,
+      requestedByUserId: normalizedUserId,
+      previousStatus: bookingBefore.status ?? null,
+      status: bookingAfter.status ?? CHANNEX_CANCELLED_BOOKING_STATUS,
+      alreadyCancelled,
+      refundProcessed: false,
+      refundSkippedReason: CHANNEX_CERTIFICATION_CANCEL_REFUND_SKIPPED_REASON,
+      reason: requireStr(body?.reason),
+      booking: bookingAfter,
+      channexAvailabilitySync,
     });
   }
 

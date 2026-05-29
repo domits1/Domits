@@ -263,6 +263,7 @@ const createService = ({
   channelAccounts,
   sync: syncOverride = null,
   channexEvidence: channexEvidenceOverride = null,
+  channexBookingAvailabilityBridge = null,
 } = {}) => {
   const state = {
     storedRevision: existingRevision,
@@ -279,6 +280,22 @@ const createService = ({
   const channexProviderClient = createChannexProviderClient(feedRevisions);
   const sync = createSyncRepository(syncOverride);
   const channexEvidence = createEvidenceRepository(channexEvidenceOverride);
+  const bookingAvailabilityBridge = channexBookingAvailabilityBridge || {
+    syncAvailabilityForBookingChange: jest.fn().mockResolvedValue({
+      syncType: "booking-availability",
+      trigger: "BOOKING_CANCELLED",
+      requestCount: 1,
+      taskIds: ["task-admin-cancel"],
+      affectedDates: ["2026-06-01", "2026-06-02"],
+      availabilityValuesSent: [
+        { date: "2026-06-01", availability: 1 },
+        { date: "2026-06-02", availability: 1 },
+      ],
+      warnings: [],
+      errors: [],
+      overallSuccess: true,
+    }),
+  };
 
   const service = new IntegrationService({
     accounts,
@@ -298,6 +315,7 @@ const createService = ({
       readSecretOrNull: jest.fn().mockResolvedValue({ apiKey: "secret" }),
     },
     channexProviderClient,
+    channexBookingAvailabilityBridge: bookingAvailabilityBridge,
   });
 
   return {
@@ -309,6 +327,7 @@ const createService = ({
     resLinks,
     channexBookingRevisions,
     channexProviderClient,
+    channexBookingAvailabilityBridge: bookingAvailabilityBridge,
     externalBookingImportRepository,
     sync,
     channexEvidence,

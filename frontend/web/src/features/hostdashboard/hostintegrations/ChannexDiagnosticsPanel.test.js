@@ -325,6 +325,8 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
 
     await waitFor(() => expect(cancelBooking).toHaveBeenCalledTimes(1));
     expect(cancelBooking).toHaveBeenCalledWith({
+      userId: "user-1",
+      domitsPropertyId: "domits-property-1",
       bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
       reason: "Channex certification demo cancellation",
     });

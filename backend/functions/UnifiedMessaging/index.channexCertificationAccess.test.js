@@ -5,6 +5,7 @@ const mockIntegrationControllerMethods = {
   syncChannexFull: jest.fn(),
   syncChannexBookingAvailability: jest.fn(),
   syncChannexCertificationTestCase: jest.fn(),
+  cancelChannexCertificationBooking: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
   pullLatestChannexBookings: jest.fn(),
   pollLatestChannexBookings: jest.fn(),
@@ -274,6 +275,48 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
 
     expect(response.statusCode).toBe(403);
     expect(mockIntegrationControllerMethods.syncChannexCertificationTestCase).not.toHaveBeenCalled();
+  });
+
+  test("certification cancel booking endpoint is protected before side effects run", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/certification/cancel-booking",
+        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        body: JSON.stringify({ bookingId: "booking-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods.cancelChannexCertificationBooking).not.toHaveBeenCalled();
+  });
+
+  test("allowed user can call certification cancel booking endpoint", async () => {
+    mockIntegrationControllerMethods.cancelChannexCertificationBooking.mockResolvedValue({
+      statusCode: 200,
+      response: {
+        channel: "CHANNEX",
+        action: "certification-cancel-booking",
+        bookingId: "booking-1",
+      },
+    });
+
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/certification/cancel-booking",
+        query: { userId: "allowed-user", domitsPropertyId: "property-1" },
+        body: JSON.stringify({ bookingId: "booking-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({
+      channel: "CHANNEX",
+      action: "certification-cancel-booking",
+      bookingId: "booking-1",
+    });
+    expect(mockIntegrationControllerMethods.cancelChannexCertificationBooking).toHaveBeenCalledTimes(1);
   });
 
   test("booking ack endpoint is protected before side effects run", async () => {

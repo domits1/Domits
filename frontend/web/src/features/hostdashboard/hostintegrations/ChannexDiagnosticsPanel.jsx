@@ -1411,7 +1411,7 @@ function ChannexDiagnosticsPanel({ userId }) {
     setCancelBookingState({ loading: true, error: "", errorDetails: null, data: null });
 
     try {
-      const data = await cancelBooking(payload);
+      const data = await cancelBooking({ ...payload, userId, domitsPropertyId });
       setCancelBookingState({ loading: false, error: "", errorDetails: null, data });
       if (userId && hasProperty) {
         await loadLatestEvidence();
@@ -1806,7 +1806,7 @@ function ChannexDiagnosticsPanel({ userId }) {
           <div>
             <h3>Cancel booking</h3>
             <p className="host-integrations-muted">
-              Internal demo action for cancelling a Domits booking and showing the Channex availability restore evidence.
+              Admin certification action for cancelling a Domits booking without processing refunds and showing the Channex availability restore evidence.
             </p>
           </div>
         </div>

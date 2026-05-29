@@ -261,11 +261,11 @@ export const modifyBookingDates = ({ bookingId, arrivalDate, departureDate }) =>
     },
   });
 
-export const cancelBooking = ({ bookingId, reason }) =>
-  requestBooking({
-    method: "PATCH",
+export const cancelBooking = ({ userId, domitsPropertyId, bookingId, reason }) =>
+  requestChannex("/integrations/channex/certification/cancel-booking", {
+    method: "POST",
+    query: { userId, domitsPropertyId },
     body: {
-      action: "cancel-booking",
       bookingId,
       reason,
     },

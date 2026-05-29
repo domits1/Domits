@@ -51,6 +51,7 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/ari$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/full$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/certification\/test-case$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/certification\/cancel-booking$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/receive$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/pull$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/ack$/ },
@@ -240,6 +241,11 @@ const routeDefinitions = [
     matches: (method, path) =>
       method === "POST" && String(path || "").endsWith("/integrations/channex/certification/test-case"),
     handle: (event) => integrationController.syncChannexCertificationTestCase(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").endsWith("/integrations/channex/certification/cancel-booking"),
+    handle: (event) => integrationController.cancelChannexCertificationBooking(event),
   },
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/rate-plans"),
