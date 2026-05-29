@@ -11,10 +11,11 @@ import {
   startWebsitePreviewLcpObserver,
 } from "./analytics/websitePreviewAnalytics";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
-import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
+import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
+import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
@@ -137,6 +138,13 @@ function WebsitePublicSitePage() {
           });
         }
 
+        if (nextRenderPayload?.propertySnapshot) {
+          nextRenderPayload = {
+            ...nextRenderPayload,
+            propertySnapshot: await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot),
+          };
+        }
+
         if (!isMounted) {
           return;
         }
@@ -176,12 +184,17 @@ function WebsitePublicSitePage() {
     });
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, renderPayload.themeOverrides || {});
 
-    return applyWebsiteDraftContentOverrides(themedModel, renderPayload.contentOverrides || {});
-  }, [renderPayload]);
+    return applyWebsiteDraftContentOverrides(
+      themedModel,
+      renderPayload.contentOverrides || {},
+      renderPayload?.site?.templateKey || resolution?.templateKey || ""
+    );
+  }, [renderPayload, resolution?.templateKey]);
 
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
+  const isPanoramaTemplate = templateId === "panorama-landing";
 
   const resolvedSiteId = String(renderPayload?.site?.id || resolution?.siteId || requestedSiteId || "").trim();
   const resolvedDomain = normalizeWebsiteDomain(
@@ -332,16 +345,26 @@ function WebsitePublicSitePage() {
   }
 
   if (canRenderPublishedSite) {
-    const shouldShowContactWidget = publicModel.visibility?.chatWidget ?? true;
     const publishedSitePageStyle = {
       "--website-surface-background": resolveWebsiteBackgroundColor(publicModel?.theme?.backgroundColor),
     };
+    const publicPreviewPageClassName = `${styles.publicPreviewPage} ${
+      isPanoramaTemplate ? styles.publicPreviewPagePanorama : ""
+    }`.trim();
+    const publicPreviewCanvasClassName = `${styles.publicPreviewCanvas} ${
+      isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
+    } ${isPanoramaTemplate ? styles.publicPreviewCanvasFlush : ""}`.trim();
 
     return (
-      <main className={styles.publicPreviewPage} style={publishedSitePageStyle}>
-        <div className={styles.publicPreviewCanvas}>
-          <TemplateComponent model={publicModel} />
-          {shouldShowContactWidget ? <WebsiteContactWidget model={publicModel} /> : null}
+      <main className={publicPreviewPageClassName} style={publishedSitePageStyle}>
+        <div className={publicPreviewCanvasClassName}>
+          <WebsiteTemplateSurface
+            templateId={templateId}
+            model={publicModel}
+            showContactWidget={publicModel.visibility?.chatWidget ?? true}
+            showBrowserChrome={false}
+            enableScrollReveal={isPanoramaTemplate}
+          />
         </div>
       </main>
     );

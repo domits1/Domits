@@ -677,3 +677,26 @@ $color-muted: #6b7280;
     padding: 16px 16px 14px;
   }
 }
+
+.finance-stripe-alert {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-left: 4px solid $color-danger;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  color: #7f1d1d;
+
+  strong {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0 0 12px;
+    color: #991b1b;
+  }
+}

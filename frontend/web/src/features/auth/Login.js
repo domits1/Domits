@@ -26,6 +26,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   const inputRef = useRef([]);
 
@@ -33,6 +34,12 @@ const Login = () => {
     const checkAuth = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
+
+        if (redirect) {
+          window.location.href = redirect;
+          return;
+        }
+
         const group = user.attributes["custom:group"];
 
         if (group === "Host") navigate("/hostdashboard");
@@ -41,23 +48,31 @@ const Login = () => {
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [navigate, redirect]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSignIn = async () => {
+    if (isSigningIn) {
+      return;
+    }
+
     setErrorMessage("");
+    setIsSigningIn(true);
     try {
       await Auth.signIn(formData.email, formData.password);
       globalThis.dispatchEvent(new Event("authChanged"));
 
-      redirect
-        ? navigate(redirect)
-        : globalThis.location.reload();
+      if (redirect) {
+        window.location.href = redirect;
+      } else {
+        globalThis.location.reload();
+      }
     } catch {
       setErrorMessage("Invalid email or password");
+      setIsSigningIn(false);
     }
   };
 
@@ -181,6 +196,7 @@ const Login = () => {
                   placeholder="Email"
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={isSigningIn}
                 />
               </div>
 
@@ -194,12 +210,14 @@ const Login = () => {
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleChange}
+                  disabled={isSigningIn}
                 />
                 <button
                   type="button"
                   className="eyeIcon"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
+                  disabled={isSigningIn}
                 >
                   {showPassword ? <FaEye /> : <FaEyeSlash />}
                 </button>
@@ -209,22 +227,37 @@ const Login = () => {
                 type="button"
                 className="forgotText"
                 onClick={() => setForgotPassword(true)}
+                disabled={isSigningIn}
               >
                 Forgot password?
               </button>
 
               {errorMessage && <div className="error">{errorMessage}</div>}
 
-              <button type="submit" className="primaryBtn">
-                Login
+              <button
+                type="submit"
+                className="primaryBtn"
+                disabled={isSigningIn}
+                aria-busy={isSigningIn}
+              >
+                {isSigningIn ? (
+                  <span className="buttonLoadingContent">
+                    <span className="buttonSpinner" aria-hidden="true"></span>
+                    <span>Signing in...</span>
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </button>
             </form>
 
-            <div className="divider"></div>
+            <div className="bottomText">Don't have an account?</div>
 
-            <div className="bottomText">Don’t have an account?</div>
-
-            <button className="registerBtn" onClick={handleRegisterClick}>
+            <button
+              className="registerBtn"
+              onClick={handleRegisterClick}
+              disabled={isSigningIn}
+            >
               Register
             </button>
           </>

@@ -1,9 +1,31 @@
 import amenitiesCatalog from "../../../../store/amenities";
 import { placeholderImage, resolveAccommodationImageUrls } from "../../../../utils/accommodationImage";
 import { AMENITY_CATEGORY_ORDER, POLICY_RULE_CONFIG } from "../../hostproperty/constants";
+import {
+  DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
+  DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
+  DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_TITLE,
+  WEBSITE_CONTACT_AVATAR_MODE_HOST,
+  resolveWebsiteContactAccentColor,
+  resolveWebsiteContactBackgroundColor,
+} from "../config/websiteContactSectionConfig";
+import {
+  DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR,
+  resolveWebsiteResidencePanelColor,
+} from "../config/websiteResidenceSectionConfig";
+import {
+  getDefaultWebsiteCalendarDescription,
+  getDefaultWebsiteCalendarTitle,
+  normalizeWebsiteCalendarPanelColorOverride,
+} from "../config/websiteCalendarSectionConfig";
+import {
+  MAX_FEATURED_WEBSITE_AMENITIES,
+  MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+} from "../config/websiteAmenitiesConfig";
+import { normalizeWebsiteImageRotationSettings } from "./websiteImageSlotUtils";
 
 const DEFAULT_LOCALE = "en";
-const MAX_FEATURED_AMENITIES = 6;
 const MAX_FEATURED_POLICIES = 3;
 const MAX_FEATURED_GALLERY_IMAGES = 5;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -127,6 +149,32 @@ const buildLocationLabel = (location, summaryProperty) => {
   }
 
   return cleanText(summaryProperty?.location);
+};
+
+const buildHostDetails = (propertyDetails, summaryProperty) => {
+  let hostProfile = {};
+
+  if (propertyDetails?.hostProfile && typeof propertyDetails.hostProfile === "object") {
+    hostProfile = propertyDetails.hostProfile;
+  } else if (propertyDetails?.host && typeof propertyDetails.host === "object") {
+    hostProfile = propertyDetails.host;
+  }
+
+  const name = cleanText(
+    hostProfile?.givenName ||
+      hostProfile?.name ||
+      hostProfile?.fullName ||
+      summaryProperty?.hostName ||
+      summaryProperty?.host?.givenName ||
+      "Host"
+  );
+  const profileImage = cleanText(hostProfile?.profileImage || hostProfile?.picture || hostProfile?.image);
+
+  return {
+    name: name || "Host",
+    profileImage,
+    initial: (name || "H").charAt(0).toUpperCase(),
+  };
 };
 
 const buildAmenityItems = (amenities) => {
@@ -400,9 +448,9 @@ const buildCalendarAvailability = (calendarAvailability) => {
   });
   const unavailableDateSummary = formatCountSummary({
     count: unavailableDateKeys.length,
-    singularLabel: "PMS blocked date",
-    pluralLabel: "PMS blocked dates",
-    emptyLabel: "No PMS blocked dates",
+    singularLabel: "PMS blocked or booked date",
+    pluralLabel: "PMS blocked or booked dates",
+    emptyLabel: "No PMS blocked or booked dates",
   });
   const blockedDateSummary = formatCountSummary({
     count: allBlockedDates.length,
@@ -430,8 +478,8 @@ const buildCalendarAvailability = (calendarAvailability) => {
     nextBlockedLabel,
     callout:
       hasExternalCalendarSync || allBlockedDates.length > 0
-        ? "Imported external bookings and PMS blocked dates are shown below. Live quote requests still validate current availability before a guest can continue."
-        : "No external bookings or PMS blocked dates have been imported yet. Live quote requests still validate current availability before a guest can continue.",
+        ? "Imported external bookings and PMS blocked or booked dates are shown below. Live quote requests still validate current availability before a guest can continue."
+        : "No external bookings or PMS blocked or booked dates have been imported yet. Live quote requests still validate current availability before a guest can continue.",
   };
 };
 
@@ -443,6 +491,14 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   const previewImages = galleryImages.slice(0, 3);
   const featuredGalleryImages = galleryImages.slice(0, MAX_FEATURED_GALLERY_IMAGES);
   const locationLabel = buildLocationLabel(propertyDetails?.location, summaryProperty);
+  const hostId = cleanText(
+    property.hostId ||
+      property.host_id ||
+      propertyDetails?.hostProfile?.userId ||
+      propertyDetails?.host?.userId ||
+      summaryProperty?.hostId
+  );
+  const host = buildHostDetails(propertyDetails, summaryProperty);
 
   const title = cleanText(property.title || summaryProperty?.title || summaryProperty?.label || "Untitled listing");
   const subtitle = cleanText(property.subtitle);
@@ -467,18 +523,20 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   const checkInLabel = cleanText(normalizedCheckIn?.checkIn?.from);
   const checkOutLabel = cleanText(normalizedCheckIn?.checkOut?.till || normalizedCheckIn?.checkOut?.from);
 
-  const amenities = buildAmenityItems(propertyDetails?.amenities);
-  const featuredAmenities = amenities.slice(0, MAX_FEATURED_AMENITIES);
+  const importedAmenities = buildAmenityItems(propertyDetails?.amenities);
+  const amenities = importedAmenities.slice(0, MAX_WEBSITE_CONFIGURABLE_AMENITIES);
+  const featuredAmenities = amenities.slice(0, MAX_FEATURED_WEBSITE_AMENITIES);
   const policyHighlights = buildPolicyHighlights(propertyDetails?.rules);
   const availabilitySnapshot = buildCalendarAvailability(propertyDetails?.calendarAvailability);
 
   return {
     source: {
       propertyId: cleanText(property.id || summaryProperty?.value),
-      hostId: cleanText(property.hostId || property.host_id || summaryProperty?.hostId),
+      hostId,
       status: cleanText(property.status || summaryProperty?.status || "INACTIVE"),
       locale: DEFAULT_LOCALE,
     },
+    host,
     site: {
       title,
       subtitle,
@@ -487,7 +545,9 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
     },
     media: {
       heroImage: galleryImages[0] || placeholderImage,
+      residenceImage: galleryImages[1] || galleryImages[0] || placeholderImage,
       galleryImages,
+      imageRotation: normalizeWebsiteImageRotationSettings(),
       previewImages,
       featuredGalleryImages,
     },
@@ -535,6 +595,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       narrative: locationLabel ? `This stay is located in ${locationLabel}.` : "",
     },
     amenities: {
+      imported: importedAmenities,
       featured: featuredAmenities,
       all: amenities,
       summary:
@@ -577,6 +638,28 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       label: "Check live availability",
       note: "Live pricing and availability stay server-side and are checked on quote request.",
     },
+    residenceSection: {
+      title: "The residence",
+      headline: "Designed to present the stay with clarity and confidence",
+      showPanel: false,
+      panelColor: resolveWebsiteResidencePanelColor(DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR),
+    },
+    calendarSection: {
+      title: getDefaultWebsiteCalendarTitle(),
+      description: getDefaultWebsiteCalendarDescription({
+        availabilityCallout: availabilitySnapshot?.callout,
+      }),
+      showPanel: true,
+      panelColor: normalizeWebsiteCalendarPanelColorOverride(""),
+    },
+    contactSection: {
+      title: DEFAULT_WEBSITE_CONTACT_TITLE,
+      description: DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+      accentColor: resolveWebsiteContactAccentColor(DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR),
+      backgroundColor: resolveWebsiteContactBackgroundColor(DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR),
+      avatarMode: WEBSITE_CONTACT_AVATAR_MODE_HOST,
+      avatarImage: "",
+    },
     visibility: {
       topBar: true,
       trustCards: true,
@@ -585,6 +668,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       availabilityCalendar: true,
       callToAction: true,
       journeyStops: true,
+      contactSection: true,
       chatWidget: true,
     },
   };

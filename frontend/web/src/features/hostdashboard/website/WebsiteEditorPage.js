@@ -1,10 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
-import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
-import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
@@ -15,10 +11,7 @@ import {
   unpublishWebsiteSite,
 } from "./services/websiteSiteService";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
-import {
-  getAmenityIconNode,
-  getAmenityIconOptions,
-} from "./rendering/amenityIconRegistry";
+import { getAmenityIconOptions } from "./rendering/amenityIconRegistry";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
 import {
@@ -36,7 +29,6 @@ import {
   isValidWebsiteBackgroundColor,
   mergeWebsiteDraftThemeOverrides,
   resolveWebsiteBackgroundColor,
-  WEBSITE_BACKGROUND_COLOR_OPTIONS,
 } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import {
@@ -44,920 +36,142 @@ import {
   announceWebsitePreviewUpdate,
   WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE,
 } from "./services/websitePreviewSync";
-import { buildPublishedWebsiteHref, buildWebsitePreviewPath } from "./websitePublicSiteLinks";
+import { buildPublishedWebsiteHref } from "./websitePublicSiteLinks";
 import {
-  COMMON_TEXT_FIELDS,
   EDITOR_SECTION_KEYS,
   EDITOR_TARGET_KEYS,
-  LOADING_EDITOR_SECTIONS,
   PREVIEW_VIEWPORT_OPTIONS,
   TEMPLATE_COPY_COLLECTION_CONFIG,
   TEMPLATE_IMAGE_SLOT_MAP,
   TEMPLATE_VISIBILITY_FIELD_MAP,
+  getCalendarTextFields,
+  getCalendarToggleFields,
+  getCommonTextFields,
+  getContactSectionFields,
   getCollectionTargetId,
   getImageSlotTargetId,
+  getResidenceTextFields,
+  getResidenceToggleFields,
 } from "./websiteEditorConfig";
+import {
+  WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
+  WEBSITE_CONTACT_AVATAR_MODE_HOST,
+  WEBSITE_CONTACT_AVATAR_MODE_INITIALS,
+  resolveWebsiteContactAccentColor,
+  resolveWebsiteContactAvatarMode,
+  resolveWebsiteContactBackgroundColor,
+} from "./config/websiteContactSectionConfig";
+import {
+  resolveWebsiteResidencePanelColor,
+} from "./config/websiteResidenceSectionConfig";
+import {
+  MAX_WEBSITE_CONFIGURABLE_AMENITIES,
+  resolveWebsiteAmenityIconColor,
+  WEBSITE_AMENITY_FALLBACK_CATEGORY,
+} from "./config/websiteAmenitiesConfig";
+import {
+  resolveWebsiteCalendarPanelColor,
+} from "./config/websiteCalendarSectionConfig";
+import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
+import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
+import {
+  AmenityIconSelectField,
+  BackgroundColorField,
+  CollapsibleSection,
+  TextField,
+} from "./editor/WebsiteEditorFields";
+import {
+  WebsiteEditorActionMenu,
+  WebsiteEditorErrorState,
+  WebsiteEditorLoadingState,
+  WebsiteEditorPublicSitePanel,
+} from "./editor/WebsiteEditorStates";
+import { WebsiteEditorVisibilityToggleCard } from "./editor/WebsiteEditorVisibilityToggleCard";
+import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTargeting";
+import { WebsiteEditorAmenitiesSection } from "./editor/sections/WebsiteEditorAmenitiesSection";
+import { WebsiteEditorContactSection } from "./editor/sections/WebsiteEditorContactSection";
+import { WebsiteEditorCalendarSection } from "./editor/sections/WebsiteEditorCalendarSection";
+import { WebsiteEditorImageSlotsSection } from "./editor/sections/WebsiteEditorImageSlotsSection";
+import { WebsiteEditorResidenceSection } from "./editor/sections/WebsiteEditorResidenceSection";
+import {
+  buildEditorValuesFromDraft,
+  confirmDiscardDraftChanges,
+  createAmenityEditorItem,
+  createEditorFieldKeyDownHandler,
+  formatStatusLabel,
+  forwardEditorBoundaryScroll,
+  getDraftPublishedContentOverrides,
+  getDraftPublishedThemeOverrides,
+  getDraftThemeOverrides,
+  getDraftWorkingContentOverrides,
+  getLiveLinkStatus,
+  getPrimaryWebsiteDomain,
+  getPreviewTargetIdForVisibilityField,
+  normalizeUiErrorMessage,
+  readImageFileAsDataUrl,
+  resolveWindowTargetOrigin,
+  runAfterNextPaint,
+} from "./editor/websiteEditorUtils";
 import styles from "./WebsiteEditorPage.module.scss";
-import arrowDownIcon from "../../../images/arrow-down-icon.svg";
-import arrowUpIcon from "../../../images/arrow-up-icon.svg";
 
-const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
+const loadWebsiteEditorState = async (propertyId) => {
+  const [draft, propertyDetails] = await Promise.all([
+    fetchWebsiteDraftByPropertyId(propertyId),
+    fetchWebsitePropertyDetails(propertyId),
+  ]);
 
-const getSelectedImageForSlot = (slot, editorValues) =>
-  slot.kind === "hero" ? editorValues.images.heroImage : editorValues.images.gallery[slot.index] || "";
-
-const normalizeUiErrorMessage = (message, fallbackMessage) => {
-  const normalizedMessage = String(message || "").trim();
-  if (!normalizedMessage || normalizedMessage.toLowerCase() === "failed to fetch") {
-    return fallbackMessage;
+  if (!draft) {
+    throw new Error("Website draft not found for this listing.");
   }
 
-  return normalizedMessage;
-};
-
-const formatStatusLabel = (status) => {
-  const normalizedStatus = String(status || "").trim().toUpperCase();
-  switch (normalizedStatus) {
-    case "PUBLISHED":
-      return "Published";
-    case "PREVIEW":
-      return "Not published";
-    case "ACTIVE":
-      return "Active";
-    case "DISABLED":
-      return "Disabled";
-    case "PENDING":
-      return "Pending";
-    case "VERIFIED":
-      return "Verified";
-    case "FAILED":
-      return "Attention needed";
-    case "SUSPENDED":
-      return "Suspended";
-    case "DRAFT":
-      return "Draft";
-    default:
-      return normalizedStatus
-        ? `${normalizedStatus.charAt(0)}${normalizedStatus.slice(1).toLowerCase()}`
-        : "";
-  }
-};
-
-const getDraftWorkingContentOverrides = (draft) =>
-  draft?.contentOverrides && typeof draft.contentOverrides === "object" ? draft.contentOverrides : {};
-
-const getDraftPublishedContentOverrides = (draft) =>
-  draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object"
-    ? draft.publishedContentOverrides
-    : {};
-
-const getDraftThemeOverrides = (draft) =>
-  draft?.themeOverrides && typeof draft.themeOverrides === "object" ? draft.themeOverrides : {};
-
-const getDraftPublishedThemeOverrides = (draft) =>
-  draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object"
-    ? draft.publishedThemeOverrides
-    : {};
-
-const getPrimaryWebsiteDomain = (siteSummary) =>
-  siteSummary?.primaryDomain && typeof siteSummary.primaryDomain === "object"
-    ? siteSummary.primaryDomain
-    : null;
-
-const buildEditorValuesFromDraft = (baseModel, draft) =>
-  buildWebsiteDraftEditorValues(
-    applyWebsiteDraftContentOverrides(baseModel, getDraftWorkingContentOverrides(draft))
+  const nextBaseModel = buildWebsiteTemplateModel({
+    propertyDetails,
+    summaryProperty: null,
+  });
+  const nextTemplateKey = String(draft.templateKey || "").trim();
+  const nextThemedModel = applyWebsiteDraftThemeOverrides(nextBaseModel, getDraftThemeOverrides(draft));
+  const nextPreviewModel = applyWebsiteDraftContentOverrides(
+    nextThemedModel,
+    getDraftWorkingContentOverrides(draft),
+    nextTemplateKey
   );
 
-const resolveSectionNode = (sectionRefEntry) => {
-  if (!sectionRefEntry) {
-    return null;
-  }
-
-  if (typeof sectionRefEntry.scrollIntoView === "function") {
-    return sectionRefEntry;
-  }
-
-  if (sectionRefEntry.current && typeof sectionRefEntry.current.scrollIntoView === "function") {
-    return sectionRefEntry.current;
-  }
-
-  return null;
-};
-
-const getCenteredContainerScrollTop = (node, container) => {
-  if (
-    !node ||
-    !container ||
-    typeof node.getBoundingClientRect !== "function" ||
-    typeof container.getBoundingClientRect !== "function"
-  ) {
-    return null;
-  }
-
-  const containerHeight = container.clientHeight || 0;
-  if (containerHeight < 1) {
-    return null;
-  }
-
-  const nodeRect = node.getBoundingClientRect();
-  const containerRect = container.getBoundingClientRect();
-  const currentScrollTop = container.scrollTop || 0;
-  const centeredTop =
-    currentScrollTop + nodeRect.top - containerRect.top - containerHeight / 2 + nodeRect.height / 2;
-  return Math.max(0, Math.round(centeredTop));
-};
-
-const forwardEditorBoundaryScroll = (event) => {
-  const editorPanelNode = event?.currentTarget;
-  if (!editorPanelNode || typeof editorPanelNode.scrollTop !== "number") {
-    return;
-  }
-
-  const deltaY = Number(event.deltaY || 0);
-  if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.01) {
-    return;
-  }
-
-  const scrollTop = editorPanelNode.scrollTop || 0;
-  const clientHeight = editorPanelNode.clientHeight || 0;
-  const scrollHeight = editorPanelNode.scrollHeight || 0;
-  const canScrollInternally = scrollHeight - clientHeight > 1;
-  const isAtTop = scrollTop <= 0;
-  const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-
-  if (!canScrollInternally || (deltaY < 0 && isAtTop) || (deltaY > 0 && isAtBottom)) {
-    event.preventDefault();
-    if (typeof globalThis.scrollBy === "function") {
-      globalThis.scrollBy({
-        top: deltaY,
-        behavior: "auto",
-      });
-    }
-  }
-};
-
-const runAfterNextPaint = (callback) => {
-  if (typeof globalThis.requestAnimationFrame === "function") {
-    globalThis.requestAnimationFrame(() => {
-      globalThis.requestAnimationFrame(() => {
-        callback();
-      });
-    });
-    return;
-  }
-
-  globalThis.setTimeout(callback, 0);
-};
-
-const confirmDiscardDraftChanges = () => {
-  if (typeof globalThis.confirm !== "function") {
-    return true;
-  }
-
-  return globalThis.confirm(
-    "Discard all draft-only changes and reset this editor back to the current published version?"
-  );
-};
-
-const getPublishLiveSiteActionLabel = (isPublishingSite) => {
-  if (isPublishingSite) {
-    return "Publishing...";
-  }
-
-  return "Publish live site";
-};
-
-const getWebsiteActionMenuButtonLabel = ({ hasLiveSite, isPublishingSite, isUpdatingLiveSite }) => {
-  if (!hasLiveSite) {
-    return isPublishingSite ? "Publishing website..." : "Publish website";
-  }
-
-  return isUpdatingLiveSite ? "Updating website..." : "Update website";
-};
-
-const resolveWindowTargetOrigin = (href) => {
-  const normalizedHref = String(href || "").trim();
-  const baseOrigin = globalThis.location?.origin || "";
-
-  if (!normalizedHref) {
-    return baseOrigin;
-  }
-
+  let nextSiteSummary = null;
+  let nextSiteSummaryError = "";
   try {
-    return new URL(normalizedHref, baseOrigin).origin;
-  } catch {
-    return baseOrigin;
-  }
-};
-
-const getLiveLinkStatus = ({ primarySiteDomain, hasLiveSite }) => {
-  if (primarySiteDomain?.status) {
-    return formatStatusLabel(primarySiteDomain.status);
+    nextSiteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
+  } catch (siteError) {
+    nextSiteSummaryError = normalizeUiErrorMessage(
+      siteError?.message,
+      "We could not load the live site status for this listing."
+    );
   }
 
-  if (hasLiveSite) {
-    return "Provisioning";
-  }
-
-  return "Not published";
-};
-
-const resolvePublicSiteLinkPresentation = ({
-  hasLiveSite,
-  primarySiteDomain,
-  siteSummary,
-  draftId,
-}) => {
-  const normalizedDraftId = String(draftId || "").trim();
-  const hasPreviewLink = Boolean(normalizedDraftId);
-
-  if (hasLiveSite) {
-    return {
-      primaryLinkLabel: "Domits live link",
-      primaryLinkValue: primarySiteDomain?.domain || "Available after first publish",
-      secondaryLinkHref: primarySiteDomain?.domain
-        ? buildPublishedWebsiteHref(primarySiteDomain.domain, siteSummary?.site?.id, primarySiteDomain.status)
-        : "",
-      secondaryLinkCopy: "Live site URL",
-      secondaryLinkText: primarySiteDomain?.domain || "",
-    };
-  }
-
-  const previewPath = hasPreviewLink ? buildWebsitePreviewPath(normalizedDraftId) : "";
   return {
-    primaryLinkLabel: "Internal preview link",
-    primaryLinkValue: previewPath || "Available after first save",
-    secondaryLinkHref: previewPath,
-    secondaryLinkCopy: "Preview URL",
-    secondaryLinkText: previewPath,
+    draft,
+    nextBaseModel,
+    nextEditorValues: buildWebsiteDraftEditorValues(nextPreviewModel, nextTemplateKey),
+    nextSiteSummary,
+    nextSiteSummaryError,
+    nextThemeValues: buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(draft)),
   };
 };
 
-const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } = {}) => {
-  if (targetId) {
-    return targetId;
+const getCommonFieldPreviewTargetId = (fieldKey, templateKey = "") => {
+  if (fieldKey === "residenceTitle") {
+    return EDITOR_TARGET_KEYS.residence.title;
   }
 
-  if (imageSlot?.kind === "hero") {
-    return EDITOR_TARGET_KEYS.images.hero;
+  if (fieldKey === "residenceHeadline") {
+    return EDITOR_TARGET_KEYS.residence.headline;
   }
 
-  if (imageSlot?.kind === "gallery" && Number.isInteger(imageSlot.index)) {
-    return EDITOR_TARGET_KEYS.images.gallery(imageSlot.index);
+  if (fieldKey === "heroDescription" && templateKey === "panorama-landing") {
+    return EDITOR_TARGET_KEYS.residence.description;
   }
 
-  if (sectionId === EDITOR_SECTION_KEYS.common) {
-    return EDITOR_TARGET_KEYS.common.heroTitle;
-  }
-
-  return "";
-};
-
-const shouldSaveEditorFieldOnKeyDown = (field, event) => {
-  if (field.component === "textarea") {
-    return event.key === "Enter" && (event.metaKey || event.ctrlKey);
-  }
-
-  return event.key === "Enter";
-};
-
-const createEditorFieldKeyDownHandler = (field, saveDraftChanges) => async (event) => {
-  if (!shouldSaveEditorFieldOnKeyDown(field, event)) {
-    return;
-  }
-
-  event.preventDefault();
-  await saveDraftChanges();
-};
-
-const activatePreviewTargetId = (setActivePreviewTargetId, targetId) => {
-  setActivePreviewTargetId(String(targetId || "").trim());
-};
-
-const clearPreviewTargetResetTimeout = (previewHighlightResetTimeoutRef) => {
-  if (!previewHighlightResetTimeoutRef.current) {
-    return;
-  }
-
-  globalThis.clearTimeout(previewHighlightResetTimeoutRef.current);
-  previewHighlightResetTimeoutRef.current = null;
-};
-
-const activateTemporaryPreviewTargetId = (
-  setActivePreviewTargetId,
-  previewHighlightResetTimeoutRef,
-  targetId,
-  durationMs = 1800
-) => {
-  const normalizedTargetId = String(targetId || "").trim();
-  clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
-  setActivePreviewTargetId(normalizedTargetId);
-
-  if (!normalizedTargetId) {
-    return;
-  }
-
-  previewHighlightResetTimeoutRef.current = globalThis.setTimeout(() => {
-    setActivePreviewTargetId((currentTargetId) =>
-      currentTargetId === normalizedTargetId ? "" : currentTargetId
-    );
-    previewHighlightResetTimeoutRef.current = null;
-  }, durationMs);
-};
-
-const getPreviewTargetIdForVisibilityField = (fieldKey) => {
-  switch (String(fieldKey || "").trim()) {
-    case "topBar":
-      return EDITOR_TARGET_KEYS.common.siteTitle;
-    case "trustCards":
-      return "visibility.trustCards";
-    case "gallerySection":
-      return EDITOR_TARGET_KEYS.images.gallery(0);
-    case "amenitiesPanel":
-      return "visibility.amenitiesPanel";
-    case "availabilityCalendar":
-      return EDITOR_TARGET_KEYS.visibility("availabilityCalendar");
-    case "callToAction":
-      return EDITOR_TARGET_KEYS.common.ctaLabel;
-    case "journeyStops":
-      return "visibility.journeyStops";
-    case "chatWidget":
-      return "visibility.chatWidget";
-    default:
-      return EDITOR_TARGET_KEYS.common.heroTitle;
-  }
-};
-
-const fieldPropTypes = PropTypes.shape({
-  key: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  component: PropTypes.oneOf(["input", "textarea"]).isRequired,
-});
-const refPropType = PropTypes.oneOfType([
-  PropTypes.func,
-  PropTypes.shape({
-    current: PropTypes.any,
-  }),
-]);
-const primarySiteDomainPropType = PropTypes.shape({
-  domain: PropTypes.string,
-  status: PropTypes.string,
-});
-const siteSummaryPropType = PropTypes.shape({
-  isReachable: PropTypes.bool,
-  site: PropTypes.shape({
-    id: PropTypes.string,
-  }),
-});
-
-function TextField({
-  field,
-  value,
-  onChange,
-  onKeyDown = undefined,
-  fieldRef = null,
-  isHighlighted = false,
-  onFocus = undefined,
-  onBlur = undefined,
-}) {
-  if (field.component === "textarea") {
-    return (
-      <div
-        ref={fieldRef}
-        className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-      >
-        <label className={styles.fieldLabel} htmlFor={`website-editor-${field.key}`}>
-          {field.label}
-        </label>
-        <textarea
-          id={`website-editor-${field.key}`}
-          className={styles.textArea}
-          value={value}
-          onChange={onChange}
-          onKeyDown={onKeyDown}
-          onFocus={onFocus}
-          onBlur={onBlur}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      ref={fieldRef}
-      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-    >
-      <label className={styles.fieldLabel} htmlFor={`website-editor-${field.key}`}>
-        {field.label}
-      </label>
-      <input
-        id={`website-editor-${field.key}`}
-        className={styles.textInput}
-        value={value}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        onFocus={onFocus}
-        onBlur={onBlur}
-      />
-    </div>
-  );
-}
-
-TextField.propTypes = {
-  field: fieldPropTypes.isRequired,
-  value: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  fieldRef: refPropType,
-  isHighlighted: PropTypes.bool,
-  onKeyDown: PropTypes.func,
-};
-
-function AmenityIconSelectField({
-  fieldKey,
-  label,
-  value,
-  onOpenPicker,
-  onFocus = undefined,
-  onBlur = undefined,
-  fieldRef = null,
-  isHighlighted = false,
-}) {
-  const selectedIconNode = getAmenityIconNode(value, {
-    className: styles.iconSelectionPreviewGlyph,
-    "aria-hidden": true,
-    focusable: "false",
-    sx: {
-      color: "#1f4e79",
-      fontSize: 22,
-      padding: 0,
-    },
-  });
-  return (
-    <div
-      ref={fieldRef}
-      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-    >
-      <button
-        id={`website-editor-${fieldKey}`}
-        type="button"
-        className={styles.iconSelectionTrigger}
-        onClick={onOpenPicker}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        aria-label={`Choose icon for ${label.toLowerCase()}`}
-        title={`Choose icon for ${label.toLowerCase()}`}
-      >
-        <span className={styles.iconSelectionPreviewIcon} aria-hidden="true">
-          {selectedIconNode}
-        </span>
-      </button>
-    </div>
-  );
-}
-
-AmenityIconSelectField.propTypes = {
-  fieldKey: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  onOpenPicker: PropTypes.func.isRequired,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  fieldRef: refPropType,
-  isHighlighted: PropTypes.bool,
-};
-
-function BackgroundColorField({
-  value,
-  customValue,
-  onSelectColor,
-  onChangeCustomColor,
-  onCommitCustomColor,
-  onCustomColorKeyDown,
-}) {
-  const hasPresetSelection = WEBSITE_BACKGROUND_COLOR_OPTIONS.some(
-    (colorOption) => colorOption.value === value
-  );
-
-  return (
-    <div className={styles.fieldGroup}>
-      <div className={styles.fieldLabel}>Background color</div>
-      <div className={styles.colorGrid} role="radiogroup" aria-label="Website background color">
-        {WEBSITE_BACKGROUND_COLOR_OPTIONS.map((colorOption) => {
-          const isSelected = colorOption.value === value;
-          return (
-            <button
-              key={colorOption.id}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              className={`${styles.colorSwatchButton} ${isSelected ? styles.colorSwatchButtonSelected : ""}`.trim()}
-              onClick={() => onSelectColor(colorOption.value)}
-              title={colorOption.label}
-            >
-              <span
-                className={styles.colorSwatch}
-                style={{ backgroundColor: colorOption.value }}
-                aria-hidden="true"
-              />
-              <span className={styles.colorSwatchLabel}>{colorOption.label}</span>
-            </button>
-          );
-        })}
-      </div>
-      <div className={styles.customColorSection}>
-        <div className={styles.customColorHeader}>
-          <span className={styles.fieldLabel}>Custom color</span>
-          <p className={styles.customColorHint}>
-            Use a hex value if the preset grid is too limiting.
-          </p>
-        </div>
-        <div className={styles.customColorRow}>
-          <label
-            className={`${styles.colorPickerShell} ${hasPresetSelection ? "" : styles.colorPickerShellSelected}`.trim()}
-            aria-label="Pick a custom website background color"
-          >
-            <input
-              type="color"
-              className={styles.colorPickerInput}
-              value={resolveWebsiteBackgroundColor(value)}
-              onChange={(event) => onSelectColor(event.target.value)}
-            />
-          </label>
-          <input
-            type="text"
-            className={`${styles.textInput} ${styles.customColorInput}`}
-            value={customValue}
-            onChange={(event) => onChangeCustomColor(event.target.value)}
-            onBlur={onCommitCustomColor}
-            onKeyDown={onCustomColorKeyDown}
-            inputMode="text"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="#ffffff"
-            aria-label="Custom background color hex code"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-BackgroundColorField.propTypes = {
-  value: PropTypes.string.isRequired,
-  customValue: PropTypes.string.isRequired,
-  onSelectColor: PropTypes.func.isRequired,
-  onChangeCustomColor: PropTypes.func.isRequired,
-  onCommitCustomColor: PropTypes.func.isRequired,
-  onCustomColorKeyDown: PropTypes.func.isRequired,
-};
-
-function CollapsibleSection({
-  sectionId,
-  title,
-  description,
-  isOpen,
-  onToggle,
-  sectionRef = null,
-  children,
-}) {
-  const toggleIcon = isOpen ? arrowUpIcon : arrowDownIcon;
-
-  return (
-    <section
-      ref={sectionRef}
-      className={styles.panelSection}
-    >
-      <button
-        type="button"
-        className={styles.sectionToggle}
-        onClick={() => onToggle(sectionId)}
-        aria-expanded={isOpen}
-      >
-        <div className={styles.sectionBlockHeader}>
-          <h3 className={styles.sectionBlockTitle}>{title}</h3>
-          <p className={styles.sectionBlockDescription}>{description}</p>
-        </div>
-        <img
-          src={toggleIcon}
-          alt=""
-          aria-hidden="true"
-          className={styles.sectionToggleIcon}
-        />
-      </button>
-
-      <div
-        className={`${styles.panelSectionBody} ${isOpen ? styles.panelSectionBodyOpen : ""}`.trim()}
-        aria-hidden={!isOpen}
-      >
-        <div className={styles.panelSectionBodyInner}>{children}</div>
-      </div>
-    </section>
-  );
-}
-
-CollapsibleSection.propTypes = {
-  sectionId: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  isOpen: PropTypes.bool.isRequired,
-  onToggle: PropTypes.func.isRequired,
-  sectionRef: refPropType,
-  children: PropTypes.node.isRequired,
-};
-
-function WebsiteEditorLoadingState({ renderLoadingSection, editorPanelRef, onEditorPanelWheel }) {
-  return (
-    <main className="page-Host">
-      <div className="page-Host-content">
-        <section className={styles.editorPage}>
-          <div className={styles.heroCard}>
-            <p className={styles.eyebrow}>Standalone website draft editor</p>
-            <div className={styles.heroHeader}>
-              <div>
-                <h1 className={styles.heroTitle}>Opening website editor</h1>
-                <p className={styles.heroDescription}>
-                  Imported listing data, saved overrides, and template bindings are loading into the
-                  editor surface.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.surface}>
-            <aside ref={editorPanelRef} className={styles.editorPanel} onWheel={onEditorPanelWheel}>
-              <div className={styles.panelHeader}>
-                <h2 className={styles.panelTitle}>Editor</h2>
-              </div>
-
-              <div className={styles.editorForm}>{LOADING_EDITOR_SECTIONS.map(renderLoadingSection)}</div>
-            </aside>
-
-            <section className={styles.previewPanel}>
-              <div className={`${styles.panelHeader} ${styles.previewPanelHeader}`.trim()}>
-                <h2 className={styles.panelTitle}>Website preview</h2>
-              </div>
-
-              <div className={styles.loadingPreviewCard}>
-                <PulseBarsLoader message="Loading website preview..." />
-              </div>
-            </section>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-WebsiteEditorLoadingState.propTypes = {
-  renderLoadingSection: PropTypes.func.isRequired,
-  editorPanelRef: refPropType,
-  onEditorPanelWheel: PropTypes.func,
-};
-
-function WebsiteEditorErrorState({ loadError, navigate }) {
-  return (
-    <main className="page-Host">
-      <div className="page-Host-content">
-        <section className={styles.editorPage}>
-          <div className={`${styles.stateCard} ${styles.stateCardError}`}>
-            <p className={styles.errorText}>{loadError || "We could not open this website draft."}</p>
-            <div className={styles.buttonRow}>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={() => navigate("/hostdashboard/website")}
-              >
-                Back to website workspace
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-WebsiteEditorErrorState.propTypes = {
-  loadError: PropTypes.string,
-  navigate: PropTypes.func.isRequired,
-};
-
-function WebsiteEditorActionMenu({
-  actionMenuRef,
-  isActionMenuOpen,
-  toggleActionMenu,
-  hasLiveSite,
-  primarySiteDomain,
-  openLiveWebsiteLink,
-  updateLiveSiteChanges,
-  isMutatingDraft,
-  hasLiveSyncPending,
-  isUpdatingLiveSite,
-  publishLiveSite,
-  canPublishSite,
-  isPublishingSite,
-  unpublishLiveSite,
-  canUnpublishSite,
-  isUnpublishingSite,
-  discardDraftChanges,
-  isDiscardingChanges,
-}) {
-  const actionMenuButtonLabel = getWebsiteActionMenuButtonLabel({
-    hasLiveSite,
-    isPublishingSite,
-    isUpdatingLiveSite,
-  });
-
-  return (
-    <div ref={actionMenuRef} className={styles.actionMenuContainer}>
-      <button
-        type="button"
-        className={styles.primaryButton}
-        onClick={toggleActionMenu}
-        aria-haspopup="menu"
-        aria-expanded={isActionMenuOpen}
-      >
-        <span>{actionMenuButtonLabel}</span>{" "}
-        <img
-          src={arrowDownIcon}
-          alt=""
-          aria-hidden="true"
-          className={`${styles.actionMenuButtonIcon} ${
-            isActionMenuOpen ? styles.actionMenuButtonIconOpen : ""
-          }`.trim()}
-        />
-      </button>
-      <div
-        className={`${styles.actionMenuList} ${isActionMenuOpen ? styles.actionMenuListOpen : ""}`.trim()}
-        role="menu"
-        aria-label="Website update actions"
-        aria-hidden={!isActionMenuOpen}
-      >
-        {hasLiveSite && primarySiteDomain?.domain ? (
-          <button
-            type="button"
-            role="menuitem"
-            className={styles.actionMenuItem}
-            onClick={openLiveWebsiteLink}
-          >
-            Open live site
-          </button>
-        ) : null}
-        {hasLiveSite ? (
-          <>
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.actionMenuItem}
-              onClick={updateLiveSiteChanges}
-              disabled={isMutatingDraft || !hasLiveSyncPending}
-            >
-              {isUpdatingLiveSite ? "Updating..." : "Update live site"}
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.actionMenuItem}
-              onClick={unpublishLiveSite}
-              disabled={!canUnpublishSite}
-            >
-              {isUnpublishingSite ? "Unpublishing..." : "Unpublish site"}
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            role="menuitem"
-            className={styles.actionMenuItem}
-            onClick={publishLiveSite}
-            disabled={!canPublishSite}
-          >
-            <PublicOutlinedIcon fontSize="small" />
-            {getPublishLiveSiteActionLabel(isPublishingSite)}
-          </button>
-        )}
-        <button
-          type="button"
-          role="menuitem"
-          className={`${styles.actionMenuItem} ${styles.actionMenuItemDestructive}`.trim()}
-          onClick={discardDraftChanges}
-          disabled={isMutatingDraft || !hasLiveSyncPending}
-        >
-          {isDiscardingChanges ? "Discarding..." : "Discard all changes"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-WebsiteEditorActionMenu.propTypes = {
-  actionMenuRef: refPropType,
-  isActionMenuOpen: PropTypes.bool.isRequired,
-  toggleActionMenu: PropTypes.func.isRequired,
-  hasLiveSite: PropTypes.bool.isRequired,
-  primarySiteDomain: primarySiteDomainPropType,
-  openLiveWebsiteLink: PropTypes.func.isRequired,
-  updateLiveSiteChanges: PropTypes.func.isRequired,
-  isMutatingDraft: PropTypes.bool.isRequired,
-  hasLiveSyncPending: PropTypes.bool.isRequired,
-  isUpdatingLiveSite: PropTypes.bool.isRequired,
-  publishLiveSite: PropTypes.func.isRequired,
-  canPublishSite: PropTypes.bool.isRequired,
-  isPublishingSite: PropTypes.bool.isRequired,
-  unpublishLiveSite: PropTypes.func.isRequired,
-  canUnpublishSite: PropTypes.bool.isRequired,
-  isUnpublishingSite: PropTypes.bool.isRequired,
-  discardDraftChanges: PropTypes.func.isRequired,
-  isDiscardingChanges: PropTypes.bool.isRequired,
-};
-
-function WebsiteEditorPublicSitePanel({
-  siteSummary,
-  primarySiteDomain,
-  liveSiteStatus,
-  liveLinkStatus,
-  siteSummaryError,
-  hasLiveSite,
-  hasLiveSyncPending,
-  draftId,
-}) {
-  const { primaryLinkLabel, primaryLinkValue, secondaryLinkHref } = resolvePublicSiteLinkPresentation({
-    hasLiveSite,
-    primarySiteDomain,
-    siteSummary,
-    draftId,
-  });
-
-  return (
-    <section className={styles.publicSitePanel}>
-      <div className={styles.publicSiteHeader}>
-        <div>
-          <h2 className={styles.publicSiteTitle}>Live site</h2>
-          <p className={styles.publicSiteDescription}>
-            Publish creates the Domits live link. Update applies the latest editor changes to the
-            public website.
-          </p>
-        </div>
-        {siteSummary?.isReachable ? (
-          <span className={styles.publicSiteReachableBadge}>Reachable</span>
-        ) : null}
-      </div>
-
-      <div className={styles.publicSiteGrid}>
-        <div className={styles.publicSiteMetric}>
-          <span className={styles.publicSiteLabel}>{primaryLinkLabel}</span>
-          {secondaryLinkHref ? (
-            <a
-              className={`${styles.publicSiteLink} ${styles.publicSiteValueLink}`.trim()}
-              href={secondaryLinkHref}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <strong className={styles.publicSiteValue}>{primaryLinkValue}</strong>
-            </a>
-          ) : (
-            <strong className={styles.publicSiteValue}>{primaryLinkValue}</strong>
-          )}
-        </div>
-        <div className={styles.publicSiteMetric}>
-          <span className={styles.publicSiteLabel}>Link status</span>
-          <strong className={styles.publicSiteValue}>{liveLinkStatus}</strong>
-        </div>
-        <div className={styles.publicSiteMetric}>
-          <span className={styles.publicSiteLabel}>Publication status</span>
-          <strong className={styles.publicSiteValue}>{liveSiteStatus}</strong>
-        </div>
-      </div>
-
-      {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
-      {!siteSummaryError && hasLiveSite && hasLiveSyncPending ? (
-        <p className={styles.publicSiteHint}>
-          Update the live site to push the latest editor changes to the public website.
-        </p>
-      ) : null}
-      {!siteSummaryError && !hasLiveSite ? (
-        <p className={styles.publicSiteHint}>
-          Publish the website once to generate its Domits live link.
-        </p>
-      ) : null}
-    </section>
-  );
-}
-
-WebsiteEditorPublicSitePanel.propTypes = {
-  siteSummary: siteSummaryPropType,
-  primarySiteDomain: primarySiteDomainPropType,
-  liveSiteStatus: PropTypes.string.isRequired,
-  liveLinkStatus: PropTypes.string.isRequired,
-  siteSummaryError: PropTypes.string,
-  hasLiveSite: PropTypes.bool.isRequired,
-  hasLiveSyncPending: PropTypes.bool.isRequired,
-  draftId: PropTypes.string,
+  return EDITOR_TARGET_KEYS.common[fieldKey];
 };
 
 function WebsiteEditorPage() {
@@ -976,12 +190,13 @@ function WebsiteEditorPage() {
   const [isPublishingSite, setIsPublishingSite] = useState(false);
   const [isUnpublishingSite, setIsUnpublishingSite] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
-  const [highlightedTargetId, setHighlightedTargetId] = useState("");
-  const [activePreviewTargetId, setActivePreviewTargetId] = useState("");
   const [siteSummary, setSiteSummary] = useState(null);
   const [siteSummaryError, setSiteSummaryError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     [EDITOR_SECTION_KEYS.common]: true,
+    [EDITOR_SECTION_KEYS.residence]: false,
+    [EDITOR_SECTION_KEYS.calendar]: false,
+    [EDITOR_SECTION_KEYS.contact]: false,
     [EDITOR_SECTION_KEYS.theme]: false,
     [EDITOR_SECTION_KEYS.visibility]: false,
     [EDITOR_SECTION_KEYS.images]: false,
@@ -998,15 +213,35 @@ function WebsiteEditorPage() {
     itemIndex: -1,
     label: "",
   });
-  const sectionRefs = useRef({});
-  const targetRefs = useRef({});
   const actionMenuRef = useRef(null);
   const editorPanelRef = useRef(null);
   const openedLiveSiteWindowRef = useRef(null);
   const openedLiveSiteWindowOriginRef = useRef("");
-  const sectionHighlightResetTimeoutRef = useRef(null);
-  const previewHighlightResetTimeoutRef = useRef(null);
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
+  const draftTemplateKey = String(draftRecord?.templateKey || "").trim();
+  const {
+    activePreviewTargetId,
+    activatePreviewTarget,
+    clearActivePreviewTarget,
+    flashPreviewTarget,
+    focusEditorTarget,
+    handlePreviewTargetSelect,
+    highlightedTargetId,
+    setPreviewTargetId,
+    setSectionRef,
+    setTargetRef,
+    toggleSection,
+  } = useWebsiteEditorTargeting({
+    editorPanelRef,
+    expandedSections,
+    onSelectImageSlot: (imageSlot) => {
+      setImagePickerState({
+        isOpen: true,
+        slot: imageSlot,
+      });
+    },
+    setExpandedSections,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -1017,36 +252,14 @@ function WebsiteEditorPage() {
       setSiteSummaryError("");
 
       try {
-        const [draft, propertyDetails] = await Promise.all([
-          fetchWebsiteDraftByPropertyId(propertyId),
-          fetchWebsitePropertyDetails(propertyId),
-        ]);
-
-        if (!draft) {
-          throw new Error("Website draft not found for this listing.");
-        }
-
-        const nextBaseModel = buildWebsiteTemplateModel({
-          propertyDetails,
-          summaryProperty: null,
-        });
-        const nextThemedModel = applyWebsiteDraftThemeOverrides(nextBaseModel, getDraftThemeOverrides(draft));
-        const nextPreviewModel = applyWebsiteDraftContentOverrides(nextThemedModel, getDraftWorkingContentOverrides(draft));
-
-        if (!isMounted) {
-          return;
-        }
-
-        let nextSiteSummary = null;
-        let nextSiteSummaryError = "";
-        try {
-          nextSiteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
-        } catch (siteError) {
-          nextSiteSummaryError = normalizeUiErrorMessage(
-            siteError?.message,
-            "We could not load the live site status for this listing."
-          );
-        }
+        const {
+          draft,
+          nextBaseModel,
+          nextEditorValues,
+          nextSiteSummary,
+          nextSiteSummaryError,
+          nextThemeValues,
+        } = await loadWebsiteEditorState(propertyId);
 
         if (!isMounted) {
           return;
@@ -1054,10 +267,10 @@ function WebsiteEditorPage() {
 
         setDraftRecord(draft);
         setBaseModel(nextBaseModel);
-        setEditorValues(buildWebsiteDraftEditorValues(nextPreviewModel));
+        setEditorValues(nextEditorValues);
         setSiteSummary(nextSiteSummary);
         setSiteSummaryError(nextSiteSummaryError);
-        setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(draft)));
+        setThemeValues(nextThemeValues);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -1084,9 +297,23 @@ function WebsiteEditorPage() {
   }, [propertyId]);
 
   const draftTemplate = getWebsiteTemplateById(draftRecord?.templateKey);
+  const commonTextFields = getCommonTextFields(draftRecord?.templateKey);
+  const calendarTextFields = getCalendarTextFields(draftRecord?.templateKey);
+  const calendarToggleFields = getCalendarToggleFields(draftRecord?.templateKey);
+  const residenceTextFields = getResidenceTextFields(draftRecord?.templateKey);
+  const residenceToggleFields = getResidenceToggleFields(draftRecord?.templateKey);
+  const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
+  const amenitiesVisibilityField = visibilityFields.find((field) => field.key === "amenitiesPanel") || null;
+  const calendarVisibilityField = visibilityFields.find((field) => field.key === "availabilityCalendar") || null;
+  const standaloneVisibilityFields = visibilityFields.filter(
+    (field) => field.key !== "amenitiesPanel" && field.key !== "availabilityCalendar"
+  );
   const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
+  const residenceImageSlot = imageSlots.find((slot) => slot.kind === "residence") || null;
+  const generalImageSlots = imageSlots.filter((slot) => slot.kind !== "residence");
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
+  const residenceSectionTitle = String(editorValues?.common?.residenceTitle || "").trim() || "The residence";
   const importedImageOptions = useMemo(() => {
     const rawImageOptions = Array.isArray(baseModel?.media?.galleryImages) ? baseModel.media.galleryImages : [];
     return Array.from(new Set(rawImageOptions.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)));
@@ -1097,8 +324,8 @@ function WebsiteEditorPage() {
       return {};
     }
 
-    return buildWebsiteDraftOverridePatch(editorValues, baseModel);
-  }, [baseModel, editorValues]);
+    return buildWebsiteDraftOverridePatch(editorValues, baseModel, draftTemplateKey);
+  }, [baseModel, draftTemplateKey, editorValues]);
 
   const mergedContentOverrides = useMemo(
     () => mergeWebsiteDraftContentOverrides(getDraftWorkingContentOverrides(draftRecord), contentOverridePatch),
@@ -1128,8 +355,8 @@ function WebsiteEditorPage() {
     }
 
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, mergedThemeOverrides);
-    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides);
-  }, [baseModel, mergedContentOverrides, mergedThemeOverrides]);
+    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides, draftTemplateKey);
+  }, [baseModel, draftTemplateKey, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasUnsavedChanges = useMemo(() => {
     const persistedOverrides = getDraftWorkingContentOverrides(draftRecord);
@@ -1171,6 +398,10 @@ function WebsiteEditorPage() {
   useEffect(() => {
     setExpandedSections({
       [EDITOR_SECTION_KEYS.common]: true,
+      [EDITOR_SECTION_KEYS.residence]: false,
+      [EDITOR_SECTION_KEYS.calendar]: false,
+      [EDITOR_SECTION_KEYS.amenities]: false,
+      [EDITOR_SECTION_KEYS.contact]: false,
       [EDITOR_SECTION_KEYS.theme]: false,
       [EDITOR_SECTION_KEYS.visibility]: false,
       [EDITOR_SECTION_KEYS.images]: false,
@@ -1179,111 +410,10 @@ function WebsiteEditorPage() {
     });
   }, [draftRecord?.templateKey]);
 
-  useEffect(
-    () => () => {
-      if (sectionHighlightResetTimeoutRef.current) {
-        globalThis.clearTimeout(sectionHighlightResetTimeoutRef.current);
-      }
-
-      clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
-    },
-    []
-  );
-
-  const toggleSection = (sectionId) => {
-    setExpandedSections((currentSections) => ({
-      ...currentSections,
-      [sectionId]: !currentSections[sectionId],
-    }));
-  };
-
-  const openSection = (sectionId) => {
-    setExpandedSections((currentSections) => {
-      if (currentSections[sectionId]) {
-        return currentSections;
-      }
-
-      return {
-        ...currentSections,
-        [sectionId]: true,
-      };
-    });
-  };
-
-  const setSectionRef = (sectionId) => (node) => {
-    sectionRefs.current[sectionId] = node;
-  };
-
-  const setTargetRef = (targetId) => (node) => {
-    targetRefs.current[targetId] = node;
-  };
-
-  const focusEditorTarget = ({ sectionId, targetId }) => {
-    if (!sectionId) {
-      return;
-    }
-
-    openSection(sectionId);
-    setHighlightedTargetId("");
-
-    const resolvedTargetId = resolveEditorPreviewTargetId({ sectionId, targetId });
-
-    globalThis.setTimeout(() => {
-      if (resolvedTargetId) {
-        setHighlightedTargetId(resolvedTargetId);
-      }
-    }, 0);
-
-    if (sectionHighlightResetTimeoutRef.current) {
-      globalThis.clearTimeout(sectionHighlightResetTimeoutRef.current);
-    }
-
-    sectionHighlightResetTimeoutRef.current = globalThis.setTimeout(() => {
-      setHighlightedTargetId("");
-    }, 1800);
-
-    runAfterNextPaint(() => {
-      const targetEditorNode =
-        resolveSectionNode(targetRefs.current[resolvedTargetId]) ||
-        resolveSectionNode(sectionRefs.current[sectionId]);
-
-      const centeredScrollTop = getCenteredContainerScrollTop(targetEditorNode, editorPanelRef.current);
-      if (centeredScrollTop !== null && editorPanelRef.current) {
-        editorPanelRef.current.scrollTo({
-          top: centeredScrollTop,
-          behavior: "smooth",
-        });
-        return;
-      }
-
-      targetEditorNode?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    });
-  };
-
-  const handlePreviewTargetSelect = ({ sectionId, targetId, imageSlot } = {}) => {
-    if (imageSlot) {
-      focusEditorTarget({
-        sectionId: EDITOR_SECTION_KEYS.images,
-        targetId:
-          targetId || resolveEditorPreviewTargetId({ imageSlot, sectionId: EDITOR_SECTION_KEYS.images }),
-      });
-      globalThis.setTimeout(() => {
-        openImagePicker(imageSlot);
-      }, 140);
-      return;
-    }
-
-    if (sectionId) {
-      focusEditorTarget({ sectionId, targetId });
-    }
-  };
-
   const handleCommonFieldChange = (fieldKey) => (event) => {
     const nextValue = event.target.value;
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common[fieldKey]);
+    const previewTargetId = getCommonFieldPreviewTargetId(fieldKey, draftTemplateKey);
+    setPreviewTargetId(previewTargetId);
     setEditorValues((currentValues) => ({
       ...currentValues,
       common: {
@@ -1293,8 +423,324 @@ function WebsiteEditorPage() {
     }));
   };
 
+  const handleCalendarFieldChange = (fieldKey) => (event) => {
+    const nextValue = event.target.value;
+    const previewTargetId =
+      fieldKey === "title" ? EDITOR_TARGET_KEYS.calendar.title : EDITOR_TARGET_KEYS.calendar.description;
+    setPreviewTargetId(previewTargetId);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        [fieldKey]: nextValue,
+      },
+    }));
+  };
+
+  const handleCommonToggleFieldChange = (fieldKey) => (event) => {
+    const nextChecked = Boolean(event.target.checked);
+    const previewTargetId =
+      fieldKey === "residenceShowPanel"
+        ? EDITOR_TARGET_KEYS.residence.showPanel
+        : EDITOR_TARGET_KEYS.common[fieldKey];
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      common: {
+        ...currentValues.common,
+        [fieldKey]: nextChecked,
+      },
+    }));
+    clearActivePreviewTarget();
+    runAfterNextPaint(() => {
+      flashPreviewTarget(previewTargetId);
+    });
+  };
+
+  const activateResidencePanelPreviewTarget = () => {
+    setPreviewTargetId(EDITOR_TARGET_KEYS.residence.showPanel);
+  };
+
+  const handleResidencePanelColorChange = (nextColor) => {
+    activateResidencePanelPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      common: {
+        ...currentValues.common,
+        residencePanelColor: resolveWebsiteResidencePanelColor(nextColor),
+      },
+    }));
+  };
+
+  const handleResidencePanelColorInputChange = (nextInputValue) => {
+    activateResidencePanelPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      common: {
+        ...currentValues.common,
+        residencePanelColor: nextInputValue,
+      },
+    }));
+  };
+
+  const commitResidencePanelColorInput = () => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      common: {
+        ...currentValues.common,
+        residencePanelColor: resolveWebsiteResidencePanelColor(currentValues?.common?.residencePanelColor),
+      },
+    }));
+  };
+
+  const handleResidencePanelColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitResidencePanelColorInput();
+    await saveDraftChanges();
+  };
+
+  const handleCalendarPanelToggleChange = (event) => {
+    const nextChecked = Boolean(event.target.checked);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        showPanel: nextChecked,
+      },
+    }));
+    clearActivePreviewTarget();
+    runAfterNextPaint(() => {
+      flashPreviewTarget(EDITOR_TARGET_KEYS.calendar.visibility);
+    });
+  };
+
+  const activateCalendarPreviewTarget = () => {
+    setPreviewTargetId(EDITOR_TARGET_KEYS.calendar.visibility);
+  };
+
+  const handleCalendarPanelColorChange = (nextColor) => {
+    activateCalendarPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        panelColor: resolveWebsiteCalendarPanelColor(nextColor, draftTemplateKey),
+      },
+    }));
+  };
+
+  const handleCalendarPanelColorInputChange = (nextInputValue) => {
+    activateCalendarPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        panelColor: nextInputValue,
+      },
+    }));
+  };
+
+  const commitCalendarPanelColorInput = () => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      calendar: {
+        ...currentValues.calendar,
+        panelColor: resolveWebsiteCalendarPanelColor(currentValues?.calendar?.panelColor, draftTemplateKey),
+      },
+    }));
+  };
+
+  const handleCalendarPanelColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitCalendarPanelColorInput();
+    await saveDraftChanges();
+  };
+
+  const handleContactFieldChange = (fieldKey) => (event) => {
+    const nextValue = event.target.value;
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        [fieldKey]: nextValue,
+      },
+    }));
+  };
+
+  const updateContactColorField = (fieldKey, resolveColor) => (nextValue) => {
+    const resolvedColor = resolveColor(nextValue);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        [fieldKey]: resolvedColor,
+      },
+    }));
+  };
+
+  const updateContactColorInputField = (fieldKey) => (nextInputValue) => {
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact[fieldKey]);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        [fieldKey]: nextInputValue,
+      },
+    }));
+  };
+
+  const commitContactColorInput = (fieldKey, resolveColor) => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        [fieldKey]: resolveColor(currentValues?.contact?.[fieldKey]),
+      },
+    }));
+  };
+
+  const createContactColorInputKeyDownHandler = (fieldKey, resolveColor) => async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitContactColorInput(fieldKey, resolveColor);
+    await saveDraftChanges();
+  };
+
+  const handleContactAccentColorChange = (accentColor) => {
+    updateContactColorField("accentColor", resolveWebsiteContactAccentColor)(accentColor);
+  };
+
+  const handleContactAccentColorInputChange = (nextInputValue) => {
+    updateContactColorInputField("accentColor")(nextInputValue);
+  };
+
+  const commitContactAccentColorInput = () => {
+    commitContactColorInput("accentColor", resolveWebsiteContactAccentColor);
+  };
+
+  const handleContactAccentColorInputKeyDown = createContactColorInputKeyDownHandler(
+    "accentColor",
+    resolveWebsiteContactAccentColor
+  );
+
+  const handleContactBackgroundColorChange = (backgroundColor) => {
+    updateContactColorField("backgroundColor", resolveWebsiteContactBackgroundColor)(backgroundColor);
+  };
+
+  const handleContactBackgroundColorInputChange = (nextInputValue) => {
+    updateContactColorInputField("backgroundColor")(nextInputValue);
+  };
+
+  const commitContactBackgroundColorInput = () => {
+    commitContactColorInput("backgroundColor", resolveWebsiteContactBackgroundColor);
+  };
+
+  const handleContactBackgroundColorInputKeyDown = createContactColorInputKeyDownHandler(
+    "backgroundColor",
+    resolveWebsiteContactBackgroundColor
+  );
+
+  const activateAmenitiesPreviewTarget = () => {
+    setPreviewTargetId(EDITOR_TARGET_KEYS.visibility("amenitiesPanel"));
+  };
+
+  const handleAmenitiesIconColorChange = (nextColor) => {
+    activateAmenitiesPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenitiesIconColor: resolveWebsiteAmenityIconColor(nextColor, draftTemplateKey),
+    }));
+  };
+
+  const handleAmenitiesIconColorInputChange = (nextInputValue) => {
+    activateAmenitiesPreviewTarget();
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenitiesIconColor: nextInputValue,
+    }));
+  };
+
+  const commitAmenitiesIconColorInput = () => {
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenitiesIconColor: resolveWebsiteAmenityIconColor(
+        currentValues?.amenitiesIconColor,
+        draftTemplateKey
+      ),
+    }));
+  };
+
+  const handleAmenitiesIconColorInputKeyDown = async (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitAmenitiesIconColorInput();
+    await saveDraftChanges();
+  };
+
+  const handleContactImageFileChange = async (event) => {
+    const nextFile = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!nextFile) {
+      return;
+    }
+
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact.avatarImage);
+
+    try {
+      const nextAvatarImage = await readImageFileAsDataUrl(nextFile);
+      setEditorValues((currentValues) => ({
+        ...currentValues,
+        contact: {
+          ...currentValues.contact,
+          avatarMode: WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
+          avatarImage: nextAvatarImage,
+        },
+      }));
+    } catch (error) {
+      toast.error(
+        normalizeUiErrorMessage(error?.message, "We could not upload that image for the contact footer.")
+      );
+    }
+  };
+
+  const updateContactAvatarMode = (avatarMode) => {
+    setPreviewTargetId(EDITOR_TARGET_KEYS.contact.avatarImage);
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      contact: {
+        ...currentValues.contact,
+        avatarMode: resolveWebsiteContactAvatarMode(avatarMode, WEBSITE_CONTACT_AVATAR_MODE_HOST),
+        avatarImage: "",
+      },
+    }));
+  };
+
+  const handleContactImageUseInitials = () => {
+    updateContactAvatarMode(WEBSITE_CONTACT_AVATAR_MODE_INITIALS);
+  };
+
+  const handleContactImageUseProfilePhoto = () => {
+    updateContactAvatarMode(WEBSITE_CONTACT_AVATAR_MODE_HOST);
+  };
+
   const handleThemeBackgroundColorChange = (backgroundColor) => {
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common.siteTitle);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.common.siteTitle);
     const resolvedBackgroundColor = resolveWebsiteBackgroundColor(backgroundColor);
     setThemeValues((currentValues) => ({
       ...currentValues,
@@ -1319,7 +765,7 @@ function WebsiteEditorPage() {
   };
 
   const handleThemeBackgroundColorInputChange = (nextInputValue) => {
-    activatePreviewTargetId(setActivePreviewTargetId, EDITOR_TARGET_KEYS.common.siteTitle);
+    setPreviewTargetId(EDITOR_TARGET_KEYS.common.siteTitle);
     setThemeValues((currentValues) => {
       const hasValidCustomColor = isValidWebsiteBackgroundColor(nextInputValue);
       const nextBackgroundColor = hasValidCustomColor
@@ -1334,15 +780,6 @@ function WebsiteEditorPage() {
     });
   };
 
-  const activatePreviewTarget = (targetId) => () => {
-    activatePreviewTargetId(setActivePreviewTargetId, targetId);
-  };
-
-  const clearActivePreviewTarget = () => {
-    clearPreviewTargetResetTimeout(previewHighlightResetTimeoutRef);
-    setActivePreviewTargetId("");
-  };
-
   const handleVisibilityFieldChange = (fieldKey) => (event) => {
     const nextChecked = event.target.checked;
     const previewTargetId = getPreviewTargetIdForVisibilityField(fieldKey);
@@ -1353,13 +790,9 @@ function WebsiteEditorPage() {
         [fieldKey]: nextChecked,
       },
     }));
-    setActivePreviewTargetId("");
+    clearActivePreviewTarget();
     runAfterNextPaint(() => {
-      activateTemporaryPreviewTargetId(
-        setActivePreviewTargetId,
-        previewHighlightResetTimeoutRef,
-        previewTargetId
-      );
+      flashPreviewTarget(previewTargetId);
     });
   };
 
@@ -1368,7 +801,7 @@ function WebsiteEditorPage() {
       return;
     }
 
-    activatePreviewTargetId(setActivePreviewTargetId, getImageSlotTargetId(slot));
+    setPreviewTargetId(getImageSlotTargetId(slot));
     setEditorValues((currentValues) => {
       if (slot.kind === "hero") {
         return {
@@ -1376,6 +809,16 @@ function WebsiteEditorPage() {
           images: {
             ...currentValues.images,
             heroImage: nextValue,
+          },
+        };
+      }
+
+      if (slot.kind === "residence") {
+        return {
+          ...currentValues,
+          images: {
+            ...currentValues.images,
+            residenceImage: nextValue,
           },
         };
       }
@@ -1398,7 +841,7 @@ function WebsiteEditorPage() {
       return;
     }
 
-    activatePreviewTargetId(setActivePreviewTargetId, getImageSlotTargetId(slot));
+    setPreviewTargetId(getImageSlotTargetId(slot));
     setImagePickerState({
       isOpen: true,
       slot,
@@ -1424,7 +867,7 @@ function WebsiteEditorPage() {
   const updateCollectionFieldValue = (collectionKey, itemIndex, fieldKey, nextValue) => {
     const targetId = getCollectionTargetId(collectionKey, itemIndex);
 
-    activatePreviewTargetId(setActivePreviewTargetId, targetId);
+    setPreviewTargetId(targetId);
     setEditorValues((currentValues) => {
       const nextCollection = [...currentValues[collectionKey]];
       const currentItem = nextCollection[itemIndex];
@@ -1453,7 +896,7 @@ function WebsiteEditorPage() {
       return;
     }
 
-    activatePreviewTargetId(setActivePreviewTargetId, getCollectionTargetId(collectionKey, itemIndex));
+    setPreviewTargetId(getCollectionTargetId(collectionKey, itemIndex));
     setIconPickerState({
       isOpen: true,
       collectionKey,
@@ -1476,6 +919,36 @@ function WebsiteEditorPage() {
       return;
     }
 
+    if (iconPickerState.collectionKey === EDITOR_SECTION_KEYS.amenities) {
+      const selectedIconOption = amenityIconOptions.find(
+        (iconOption) => String(iconOption.id || "") === String(iconAmenityId || "")
+      );
+      setPreviewTargetId(EDITOR_TARGET_KEYS.amenities(iconPickerState.itemIndex));
+      setEditorValues((currentValues) => {
+        const nextAmenities = [...currentValues.amenities];
+        const currentAmenity = nextAmenities[iconPickerState.itemIndex];
+        if (!currentAmenity) {
+          return currentValues;
+        }
+
+        nextAmenities[iconPickerState.itemIndex] = {
+          ...currentAmenity,
+          iconAmenityId,
+          category:
+            String(selectedIconOption?.category || "").trim() ||
+            currentAmenity.category ||
+            WEBSITE_AMENITY_FALLBACK_CATEGORY,
+        };
+
+        return {
+          ...currentValues,
+          amenities: nextAmenities,
+        };
+      });
+      closeIconPicker();
+      return;
+    }
+
     updateCollectionFieldValue(
       iconPickerState.collectionKey,
       iconPickerState.itemIndex,
@@ -1483,6 +956,71 @@ function WebsiteEditorPage() {
       iconAmenityId
     );
     closeIconPicker();
+  };
+
+  const moveCollectionItem = (collectionKey, itemIndex, nextIndex) => {
+    if (!collectionKey || itemIndex === nextIndex || itemIndex < 0 || nextIndex < 0) {
+      return;
+    }
+
+    const nextTargetId = getCollectionTargetId(collectionKey, nextIndex);
+    setPreviewTargetId(nextTargetId);
+    setEditorValues((currentValues) => {
+      const currentCollection = Array.isArray(currentValues[collectionKey]) ? currentValues[collectionKey] : [];
+      if (nextIndex >= currentCollection.length || itemIndex >= currentCollection.length) {
+        return currentValues;
+      }
+
+      const nextCollection = [...currentCollection];
+      const [movedItem] = nextCollection.splice(itemIndex, 1);
+      nextCollection.splice(nextIndex, 0, movedItem);
+
+      return {
+        ...currentValues,
+        [collectionKey]: nextCollection,
+      };
+    });
+  };
+
+  const renderVisibilityFieldCard = (field) => {
+    const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
+    const inputId = `website-editor-visibility-${field.key}`;
+    const labelId = `website-editor-visibility-${field.key}-label`;
+    const descriptionId = `website-editor-visibility-${field.key}-description`;
+
+    return (
+      <WebsiteEditorVisibilityToggleCard
+        key={field.key}
+        targetRef={setTargetRef(visibilityTargetId)}
+        field={field}
+        inputId={inputId}
+        labelId={labelId}
+        descriptionId={descriptionId}
+        checked={Boolean(editorValues.visibility[field.key])}
+        onChange={handleVisibilityFieldChange(field.key)}
+        isHighlighted={highlightedTargetId === visibilityTargetId}
+      />
+    );
+  };
+
+  const updateImageSlotRotation = (slot, nextEnabled) => {
+    if (!slot) {
+      return;
+    }
+
+    setPreviewTargetId(getImageSlotTargetId(slot));
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      images: {
+        ...currentValues.images,
+        rotation: setWebsiteImageSlotRotationEnabled(
+          currentValues?.images?.rotation,
+          slot,
+          nextEnabled,
+          currentValues?.images?.gallery?.length
+        ),
+      },
+    }));
   };
 
   const reloadDraftRecord = async () => {
@@ -1493,7 +1031,7 @@ function WebsiteEditorPage() {
 
     setDraftRecord(persistedDraft);
     if (baseModel) {
-      setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft));
+      setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft, draftTemplateKey));
     }
     setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(persistedDraft)));
 
@@ -1517,9 +1055,7 @@ function WebsiteEditorPage() {
 
     const nextDraft = await reloadDraftRecord();
 
-    if (syncPublishedState) {
-      announceWebsitePreviewUpdate(nextDraft?.id || draftRecord.id);
-    }
+    announceWebsitePreviewUpdate(nextDraft?.id || draftRecord.id);
 
     return nextDraft;
   };
@@ -1656,6 +1192,45 @@ function WebsiteEditorPage() {
   };
 
   const handleEditorFieldKeyDown = (field) => createEditorFieldKeyDownHandler(field, saveDraftChanges);
+
+  const addAmenityItem = () => {
+    const nextAmenityIndex = editorValues.amenities.length;
+    if (nextAmenityIndex >= MAX_WEBSITE_CONFIGURABLE_AMENITIES) {
+      return;
+    }
+
+    setPreviewTargetId(EDITOR_TARGET_KEYS.amenities(nextAmenityIndex));
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenities: [
+        ...currentValues.amenities,
+        createAmenityEditorItem(amenityIconOptions, currentValues.amenities.length),
+      ],
+    }));
+
+    runAfterNextPaint(() => {
+      focusEditorTarget({
+        sectionId: EDITOR_SECTION_KEYS.amenities,
+        targetId: EDITOR_TARGET_KEYS.amenities(nextAmenityIndex),
+      });
+    });
+  };
+
+  const removeAmenityItem = (itemIndex) => {
+    setPreviewTargetId("visibility.amenitiesPanel");
+    setEditorValues((currentValues) => ({
+      ...currentValues,
+      amenities: currentValues.amenities.filter((_, currentIndex) => currentIndex !== itemIndex),
+    }));
+  };
+
+  const moveAmenityItemUp = (itemIndex) => {
+    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex - 1);
+  };
+
+  const moveAmenityItemDown = (itemIndex) => {
+    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex + 1);
+  };
 
   const handleThemeBackgroundColorInputKeyDown = async (event) => {
     if (event.key !== "Enter") {
@@ -1799,6 +1374,37 @@ function WebsiteEditorPage() {
     return <WebsiteEditorErrorState loadError={loadError} navigate={navigate} />;
   }
 
+  const amenitiesVisibilityContent = amenitiesVisibilityField
+    ? renderVisibilityFieldCard(amenitiesVisibilityField)
+    : null;
+  const amenitiesEditorSection = copyCollectionConfig.amenities ? (
+    <WebsiteEditorAmenitiesSection
+      activatePreviewTarget={activatePreviewTarget}
+      addAmenityItem={addAmenityItem}
+      amenitiesConfig={copyCollectionConfig.amenities}
+      amenitiesVisibilityContent={amenitiesVisibilityContent}
+      canAddAmenity={editorValues.amenities.length < copyCollectionConfig.amenities.maxCount}
+      clearActivePreviewTarget={clearActivePreviewTarget}
+      commitAmenitiesIconColorInput={commitAmenitiesIconColorInput}
+      draftTemplateKey={draftTemplateKey}
+      editorValues={editorValues}
+      handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
+      handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
+      handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}
+      handleCollectionFieldChange={handleCollectionFieldChange}
+      handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+      highlightedTargetId={highlightedTargetId}
+      isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.amenities])}
+      moveAmenityItemDown={moveAmenityItemDown}
+      moveAmenityItemUp={moveAmenityItemUp}
+      onOpenIconPicker={openIconPicker}
+      removeAmenityItem={removeAmenityItem}
+      sectionRef={setSectionRef(EDITOR_SECTION_KEYS.amenities)}
+      setTargetRef={setTargetRef}
+      toggleSection={toggleSection}
+    />
+  ) : null;
+
   return (
     <main className="page-Host">
       <div className="page-Host-content">
@@ -1875,7 +1481,7 @@ function WebsiteEditorPage() {
                   sectionRef={setSectionRef(EDITOR_SECTION_KEYS.common)}
                 >
                   <div className={styles.fieldStack}>
-                    {COMMON_TEXT_FIELDS.map((field) => (
+                    {commonTextFields.map((field) => (
                       <TextField
                         key={field.key}
                         field={field}
@@ -1890,6 +1496,33 @@ function WebsiteEditorPage() {
                     ))}
                   </div>
                 </CollapsibleSection>
+
+                {residenceTextFields.length > 0 || residenceToggleFields.length > 0 || residenceImageSlot ? (
+                  <WebsiteEditorResidenceSection
+                    activatePreviewTarget={activatePreviewTarget}
+                    clearActivePreviewTarget={clearActivePreviewTarget}
+                    commitResidencePanelColorInput={commitResidencePanelColorInput}
+                    editorValues={editorValues}
+                    handleCommonFieldChange={handleCommonFieldChange}
+                    handleCommonToggleFieldChange={handleCommonToggleFieldChange}
+                    handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                    handleResidencePanelColorChange={handleResidencePanelColorChange}
+                    handleResidencePanelColorInputChange={handleResidencePanelColorInputChange}
+                    handleResidencePanelColorInputKeyDown={handleResidencePanelColorInputKeyDown}
+                    highlightedTargetId={highlightedTargetId}
+                    importedImageOptions={importedImageOptions}
+                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.residence])}
+                    onChangeImageRotation={updateImageSlotRotation}
+                    onOpenImagePicker={openImagePicker}
+                    residenceImageSlot={residenceImageSlot}
+                    residenceTextFields={residenceTextFields}
+                    residenceToggleFields={residenceToggleFields}
+                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.residence)}
+                    sectionTitle={residenceSectionTitle}
+                    setTargetRef={setTargetRef}
+                    toggleSection={toggleSection}
+                  />
+                ) : null}
 
                 <CollapsibleSection
                   sectionId={EDITOR_SECTION_KEYS.theme}
@@ -1909,7 +1542,7 @@ function WebsiteEditorPage() {
                   />
                 </CollapsibleSection>
 
-                {visibilityFields.length > 0 ? (
+                {standaloneVisibilityFields.length > 0 ? (
                   <CollapsibleSection
                     sectionId={EDITOR_SECTION_KEYS.visibility}
                     title="Section visibility"
@@ -1919,99 +1552,23 @@ function WebsiteEditorPage() {
                     sectionRef={setSectionRef(EDITOR_SECTION_KEYS.visibility)}
                   >
                     <div className={styles.toggleStack}>
-                      {visibilityFields.map((field) => {
-                        const visibilityTargetId = EDITOR_TARGET_KEYS.visibility(field.key);
-                        const inputId = `website-editor-visibility-${field.key}`;
-                        const labelId = `website-editor-visibility-${field.key}-label`;
-                        const descriptionId = `website-editor-visibility-${field.key}-description`;
-
-                        return (
-                          <label
-                            key={field.key}
-                            ref={setTargetRef(visibilityTargetId)}
-                            htmlFor={inputId}
-                            className={`${styles.toggleCard} ${
-                              highlightedTargetId === visibilityTargetId ? styles.editorTargetHighlighted : ""
-                            }`.trim()}
-                          >
-                            <div className={styles.toggleCopy}>
-                              <span id={labelId} className={styles.toggleLabel}>{field.label}</span>
-                              <span id={descriptionId} className={styles.toggleDescription}>{field.description}</span>
-                            </div>
-                            <input
-                              id={inputId}
-                              type="checkbox"
-                              className={styles.toggleInput}
-                              checked={Boolean(editorValues.visibility[field.key])}
-                              onChange={handleVisibilityFieldChange(field.key)}
-                              aria-labelledby={labelId}
-                              aria-describedby={descriptionId}
-                            />
-                          </label>
-                        );
-                      })}
+                      {standaloneVisibilityFields.map((field) => renderVisibilityFieldCard(field))}
                     </div>
                   </CollapsibleSection>
                 ) : null}
 
-                {imageSlots.length > 0 ? (
-                  <CollapsibleSection
-                    sectionId={EDITOR_SECTION_KEYS.images}
-                    title="Image slots"
-                    description="Reassign imported listing images to the key visual slots used by this template."
-                    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.images])}
-                    onToggle={toggleSection}
-                    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.images)}
-                  >
-                    <div className={styles.imageSlotGrid}>
-                      {imageSlots.map((slot) => {
-                        const selectedImageUrl = getSelectedImageForSlot(slot, editorValues);
-                        const selectedImageIndex = importedImageOptions.indexOf(selectedImageUrl);
-                        const imageSlotTargetId = getImageSlotTargetId(slot);
-                        const isImageSlotHighlighted = highlightedTargetId === imageSlotTargetId;
-                        let selectedImageLabel = "No imported image assigned";
-                        if (selectedImageIndex > -1) {
-                          selectedImageLabel = getImageOptionLabel(selectedImageIndex);
-                        }
-
-                        return (
-                          <div
-                            key={slot.id}
-                            ref={setTargetRef(imageSlotTargetId)}
-                            className={`${styles.imageSlotCard} ${isImageSlotHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
-                          >
-                            <div className={styles.imageSlotPreview}>
-                              {selectedImageUrl ? (
-                                <img src={selectedImageUrl} alt={slot.label} className={styles.imageSlotPreviewImage} />
-                              ) : (
-                                <span className={styles.imageSlotPreviewEmpty}>No image selected</span>
-                              )}
-                            </div>
-
-                            <div className={styles.imageSlotMeta}>
-                              <div className={styles.fieldGroup}>
-                                <span className={styles.fieldLabel}>{slot.label}</span>
-                                <span className={styles.helperText}>{selectedImageLabel}</span>
-                              </div>
-
-                              <button
-                                type="button"
-                                className={styles.secondaryButton}
-                                onClick={() => openImagePicker(slot)}
-                                disabled={importedImageOptions.length < 1}
-                              >
-                                <CollectionsOutlinedIcon fontSize="small" />
-                                Choose image
-                              </button>
-                            </div>
-
-                            <p className={styles.helperText}>{slot.description}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CollapsibleSection>
-                ) : null}
+                <WebsiteEditorImageSlotsSection
+                  editorValues={editorValues}
+                  highlightedTargetId={highlightedTargetId}
+                  onChangeImageRotation={updateImageSlotRotation}
+                  imageSlots={generalImageSlots}
+                  importedImageOptions={importedImageOptions}
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.images])}
+                  onOpenImagePicker={openImagePicker}
+                  onToggle={toggleSection}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.images)}
+                  setTargetRef={setTargetRef}
+                />
 
                 {copyCollectionConfig.trustCards ? (
                   <CollapsibleSection
@@ -2080,6 +1637,59 @@ function WebsiteEditorPage() {
                   </CollapsibleSection>
                 ) : null}
 
+                {copyCollectionConfig.amenities?.placement === "afterTrustCards"
+                  ? amenitiesEditorSection
+                  : null}
+
+                <WebsiteEditorCalendarSection
+                  activatePreviewTarget={activatePreviewTarget}
+                  calendarTextFields={calendarTextFields}
+                  calendarToggleFields={calendarToggleFields}
+                  calendarVisibilityField={calendarVisibilityField}
+                  clearActivePreviewTarget={clearActivePreviewTarget}
+                  commitCalendarPanelColorInput={commitCalendarPanelColorInput}
+                  editorValues={editorValues}
+                  handleCalendarFieldChange={handleCalendarFieldChange}
+                  handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                  handleCalendarPanelColorChange={handleCalendarPanelColorChange}
+                  handleCalendarPanelColorInputChange={handleCalendarPanelColorInputChange}
+                  handleCalendarPanelColorInputKeyDown={handleCalendarPanelColorInputKeyDown}
+                  handleCalendarPanelToggleChange={handleCalendarPanelToggleChange}
+                  handleVisibilityFieldChange={handleVisibilityFieldChange}
+                  highlightedTargetId={highlightedTargetId}
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.calendar])}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.calendar)}
+                  setTargetRef={setTargetRef}
+                  templateKey={draftTemplateKey}
+                  toggleSection={toggleSection}
+                />
+
+                <WebsiteEditorContactSection
+                  activatePreviewTarget={activatePreviewTarget}
+                  clearActivePreviewTarget={clearActivePreviewTarget}
+                  commitContactAccentColorInput={commitContactAccentColorInput}
+                  commitContactBackgroundColorInput={commitContactBackgroundColorInput}
+                  contactSectionFields={contactSectionFields}
+                  editorValues={editorValues}
+                  handleContactAccentColorChange={handleContactAccentColorChange}
+                  handleContactAccentColorInputChange={handleContactAccentColorInputChange}
+                  handleContactAccentColorInputKeyDown={handleContactAccentColorInputKeyDown}
+                  handleContactBackgroundColorChange={handleContactBackgroundColorChange}
+                  handleContactBackgroundColorInputChange={handleContactBackgroundColorInputChange}
+                  handleContactBackgroundColorInputKeyDown={handleContactBackgroundColorInputKeyDown}
+                  handleContactFieldChange={handleContactFieldChange}
+                  handleContactImageFileChange={handleContactImageFileChange}
+                  handleContactImageUseInitials={handleContactImageUseInitials}
+                  handleContactImageUseProfilePhoto={handleContactImageUseProfilePhoto}
+                  handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+                  highlightedTargetId={highlightedTargetId}
+                  isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.contact])}
+                  onToggle={toggleSection}
+                  previewModel={previewModel}
+                  sectionRef={setSectionRef(EDITOR_SECTION_KEYS.contact)}
+                  setTargetRef={setTargetRef}
+                />
+
                 {copyCollectionConfig.journeyStops ? (
                   <CollapsibleSection
                     sectionId={EDITOR_SECTION_KEYS.journeyStops}
@@ -2130,6 +1740,10 @@ function WebsiteEditorPage() {
                     </div>
                   </CollapsibleSection>
                 ) : null}
+
+                {copyCollectionConfig.amenities?.placement === "afterJourneyStops"
+                  ? amenitiesEditorSection
+                  : null}
 
                 <div className={styles.editorFooter}>
                   <p className={styles.editorFooterText}>
@@ -2191,77 +1805,13 @@ function WebsiteEditorPage() {
         </section>
       </div>
 
-      {imagePickerState.isOpen && imagePickerState.slot ? (
-        <dialog
-          open
-          className={styles.imagePickerOverlay}
-          aria-label={`Select image for ${imagePickerState.slot.label}`}
-          onCancel={(event) => {
-            event.preventDefault();
-            closeImagePicker();
-          }}
-          onPointerDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeImagePicker();
-            }
-          }}
-        >
-          <section className={styles.imagePickerDialog}>
-            <div className={styles.imagePickerHeader}>
-              <div className={styles.imagePickerHeaderCopy}>
-                <p className={styles.eyebrow}>Choose imported image</p>
-                <h2 className={styles.panelTitle}>{imagePickerState.slot.label}</h2>
-                <p className={styles.panelDescription}>
-                  Pick from the imported listing photos. Selecting a thumbnail applies it immediately to
-                  this slot.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className={styles.imagePickerCloseButton}
-                onClick={closeImagePicker}
-                aria-label="Close image picker"
-              >
-                <CloseOutlinedIcon fontSize="small" />
-              </button>
-            </div>
-
-            <div className={styles.imagePickerMetaRow}>
-              <span className={styles.imagePickerCount}>
-                {importedImageOptions.length} imported {importedImageOptions.length === 1 ? "image" : "images"}
-              </span>
-              <span className={styles.helperText}>Scroll and click a thumbnail to assign it.</span>
-            </div>
-
-            <div className={styles.imagePickerThumbRail}>
-              {importedImageOptions.map((imageUrl, index) => {
-                const isSelected = imageUrl === getSelectedImageForSlot(imagePickerState.slot, editorValues);
-
-                return (
-                  <button
-                    key={`${imagePickerState.slot.label}-${index}-${imageUrl}`}
-                    type="button"
-                    className={`${styles.imagePickerThumbButton} ${
-                      isSelected ? styles.imagePickerThumbButtonActive : ""
-                    }`.trim()}
-                    onClick={() => selectImageFromPicker(imageUrl)}
-                    aria-label={`Use imported image ${index + 1}`}
-                  >
-                    <img
-                      src={imageUrl}
-                      alt=""
-                      aria-hidden="true"
-                      className={styles.imagePickerThumbImage}
-                    />
-                    <span className={styles.imagePickerThumbLabel}>{getImageOptionLabel(index)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </dialog>
-      ) : null}
+      <WebsiteImagePickerDialog
+        editorValues={editorValues}
+        imagePickerState={imagePickerState}
+        importedImageOptions={importedImageOptions}
+        onClose={closeImagePicker}
+        onSelectImage={selectImageFromPicker}
+      />
 
       <WebsiteIconPickerDialog
         isOpen={iconPickerState.isOpen}

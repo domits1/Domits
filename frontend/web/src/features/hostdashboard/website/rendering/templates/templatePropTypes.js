@@ -12,6 +12,27 @@ export const heroPropType = PropTypes.shape({
 
 export const mediaPropType = PropTypes.shape({
   heroImage: PropTypes.string,
+  residenceImage: PropTypes.string,
+  galleryImages: PropTypes.arrayOf(PropTypes.string),
+  imageRotation: PropTypes.shape({
+    hero: PropTypes.bool,
+    residence: PropTypes.bool,
+    gallery: PropTypes.arrayOf(PropTypes.bool),
+  }),
+});
+
+export const residenceSectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  headline: PropTypes.string,
+  showPanel: PropTypes.bool,
+  panelColor: PropTypes.string,
+});
+
+export const calendarSectionPropType = PropTypes.shape({
+  title: PropTypes.string,
+  description: PropTypes.string,
+  showPanel: PropTypes.bool,
+  panelColor: PropTypes.string,
 });
 
 export const galleryPropType = PropTypes.shape({
@@ -21,7 +42,11 @@ export const galleryPropType = PropTypes.shape({
 export const availabilityPropType = PropTypes.shape({
   externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  blockedDateCount: PropTypes.number,
+  unavailableDateCount: PropTypes.number,
   syncSummary: PropTypes.string,
+  externalBlockedSummary: PropTypes.string,
+  unavailableDateSummary: PropTypes.string,
   blockedDateSummary: PropTypes.string,
   lastSyncLabel: PropTypes.string,
   nextBlockedLabel: PropTypes.string,
@@ -33,6 +58,21 @@ export const callToActionPropType = PropTypes.shape({
   note: PropTypes.string,
 });
 
+export const hostPropType = PropTypes.shape({
+  name: PropTypes.string.isRequired,
+  profileImage: PropTypes.string,
+  initial: PropTypes.string,
+});
+
+export const contactSectionPropType = PropTypes.shape({
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  accentColor: PropTypes.string,
+  backgroundColor: PropTypes.string,
+  avatarMode: PropTypes.string,
+  avatarImage: PropTypes.string,
+});
+
 export const copyItemPropType = PropTypes.shape({
   id: PropTypes.string.isRequired,
   iconAmenityId: PropTypes.string,
@@ -42,6 +82,7 @@ export const copyItemPropType = PropTypes.shape({
 
 export const amenityPropType = PropTypes.shape({
   id: PropTypes.string.isRequired,
+  iconAmenityId: PropTypes.string,
   label: PropTypes.string.isRequired,
   category: PropTypes.string,
 });
@@ -54,6 +95,7 @@ export const visibilityPropType = PropTypes.shape({
   availabilityCalendar: PropTypes.bool,
   callToAction: PropTypes.bool,
   journeyStops: PropTypes.bool,
+  contactSection: PropTypes.bool,
   chatWidget: PropTypes.bool,
 });
 

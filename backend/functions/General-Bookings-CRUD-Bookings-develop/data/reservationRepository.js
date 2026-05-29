@@ -10,6 +10,7 @@ import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
+const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
 
 class ReservationRepository {
   // ---------
@@ -71,14 +72,16 @@ class ReservationRepository {
 
   async assertNoBookingConflict({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId = null }) {
     const client = await Database.getInstance();
+    const bufferedArrivalDate = arrivalDateMs - MIN_CHECK_IN_OUT_GAP_MS;
+    const bufferedDepartureDate = departureDateMs + MIN_CHECK_IN_OUT_GAP_MS;
 
     const query = client
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :property_id", { property_id: propertyId })
       .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: NON_BLOCKING_BOOKING_STATUSES })
-      .andWhere("booking.arrivaldate < :departureDate", { departureDate: departureDateMs })
-      .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs });
+      .andWhere("booking.arrivaldate < :bufferedDepartureDate", { bufferedDepartureDate })
+      .andWhere("booking.departuredate > :bufferedArrivalDate", { bufferedArrivalDate });
 
     if (excludeBookingId) {
       query.andWhere("booking.id != :excludeBookingId", { excludeBookingId });
@@ -367,6 +370,19 @@ class ReservationRepository {
       response: query,
       statusCode: 200,
     };
+  }
+
+  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
+    const client = await Database.getInstance();
+    return await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.property_id = :propertyId", { propertyId })
+      .andWhere("booking.status = :status", { status: "Inquiry" })
+      .andWhere("booking.id != :excludeBookingId", { excludeBookingId })
+      .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
+      .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
+      .getMany();
   }
 
   async updateBookingDates(id, arrivalDateMs, departureDateMs) {

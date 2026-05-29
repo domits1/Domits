@@ -14,7 +14,6 @@ import {
   MAX_PROPERTY_IMAGES,
   PHOTO_ACCEPT,
   PHOTO_CATEGORY_PLACEHOLDERS,
-  POLICY_RULE_CONFIG,
   PRICING_DISCOUNT_PERCENT_OPTIONS,
   PRICING_EARLY_BIRD_DAY_OPTIONS,
   PRICING_LAST_MINUTE_DAY_OPTIONS,
@@ -28,6 +27,8 @@ import {
   animatePhotoTileToNewPosition,
   getSelectOptionsWithCurrent,
   getStayOptionLabel,
+  getCheckInOutTimeValidationError,
+  getLateCheckInOutTimeValidationErrors,
   normalizePricingForm,
 } from "../utils/hostPropertyUtils";
 
@@ -116,14 +117,21 @@ function CustomRuleRow({ rule, onToggle, onDelete }) {
   );
 }
 
-function PolicySelectField({ id, label, value, onChange, disabled, options, hint }) {
+function PolicySelectField({ id, label, value, onChange, disabled, options, hint, error }) {
   return (
     <div className={styles.checkinField}>
       <label htmlFor={id} className={styles.checkinLabel}>
         {label}
       </label>
       {hint ? <p className={styles.checkinFieldHint}>{hint}</p> : null}
-      <select id={id} className={styles.checkinSelect} value={value} onChange={onChange} disabled={disabled}>
+      <select
+        id={id}
+        className={`${styles.checkinSelect} ${error ? styles.checkinSelectError : ""}`}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}>
         {options.map((option) => {
           const optionValue = typeof option === "object" ? option.value : option;
           const optionLabel = typeof option === "object" ? option.label : option;
@@ -134,11 +142,16 @@ function PolicySelectField({ id, label, value, onChange, disabled, options, hint
           );
         })}
       </select>
+      {error ? (
+        <p id={`${id}-error`} className={styles.checkinFieldError}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-function PolicyLateTimeField({ id, label, enabled, onToggle, value, onChange, disabled, options }) {
+function PolicyLateTimeField({ id, label, enabled, onToggle, value, onChange, disabled, options, error }) {
   return (
     <div className={styles.checkinField}>
       <label htmlFor={id} className={styles.checkinLabel}>
@@ -147,7 +160,14 @@ function PolicyLateTimeField({ id, label, enabled, onToggle, value, onChange, di
       <div className={styles.checkinToggleRow}>
         <ToggleSwitch checked={enabled} onChange={onToggle} disabled={disabled} />
         {enabled ? (
-          <select id={id} className={styles.checkinSelectInline} value={value} onChange={onChange} disabled={disabled}>
+          <select
+            id={id}
+            className={`${styles.checkinSelectInline} ${error ? styles.checkinSelectError : ""}`}
+            value={value}
+            onChange={onChange}
+            disabled={disabled}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? `${id}-error` : undefined}>
             {options.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -156,6 +176,11 @@ function PolicyLateTimeField({ id, label, enabled, onToggle, value, onChange, di
           </select>
         ) : null}
       </div>
+      {enabled && error ? (
+        <p id={`${id}-error`} className={styles.checkinFieldError}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -292,8 +317,8 @@ function HostPropertyOverviewTab(props) {
           value={bookingType || "direct"}
           onChange={(event) => onBookingTypeChange(event.target.value)}
         >
-          <option value="direct">Direct booking (guest pays immediately)</option>
-          <option value="inquiry">Inquiry first (host reviews before payment)</option>
+          <option value="direct">Book Instantly (guest pays immediately)</option>
+          <option value="inquiry">Request first (host reviews before payment)</option>
         </select>
       </div>
 
@@ -1163,7 +1188,6 @@ export default function HostPropertyPoliciesTab(props) {
     handleDeletePropertyClick,
     saving,
   } = props;
-  const [selectedPolicy, setSelectedPolicy] = useState("flexible");
   const [cancellationPolicy, setCancellationPolicy] = useState("flexible");
 
   // Sync cancellation policy from policyRules
@@ -1172,13 +1196,11 @@ export default function HostPropertyPoliciesTab(props) {
     for (const policyName of policyOrder) {
       if (policyRules[`CancellationPolicy:${policyName}`]) {
         const policyId = policyName.toLowerCase();
-        setSelectedPolicy(policyId);
         setCancellationPolicy(policyId);
         return;
       }
     }
     // No policy selected, reset to default
-    setSelectedPolicy("flexible");
     setCancellationPolicy("flexible");
   }, [policyRules]);
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
@@ -1190,7 +1212,6 @@ export default function HostPropertyPoliciesTab(props) {
   });
 
   const handleSelectPolicy = (id) => {
-    setSelectedPolicy(id);
     setCancellationPolicy(id);
     updatePolicyRule(`CancellationPolicy:${id.charAt(0).toUpperCase() + id.slice(1)}`, true);
     CANCELLATION_POLICIES.filter((p) => p.id !== id).forEach((p) => {
@@ -1209,6 +1230,8 @@ export default function HostPropertyPoliciesTab(props) {
   const lateCheckOutEnabled = Boolean(
     checkInDetails?.checkOut?.till && checkInDetails?.checkOut?.till !== checkInDetails?.checkOut?.from
   );
+  const checkInOutTimeError = getCheckInOutTimeValidationError(checkInDetails);
+  const lateTimeErrors = getLateCheckInOutTimeValidationErrors(checkInDetails);
 
   const updateTimeWindow = (windowKey, fallbackValue, lateEnabled, nextValue) => {
     setCheckInDetails((previous) => {
@@ -1379,6 +1402,7 @@ export default function HostPropertyPoliciesTab(props) {
                 onChange={(event) => updateTimeWindow(windowKey, fallbackValue, lateEnabled, event.target.value)}
                 disabled={saving}
                 options={TIME_OPTIONS}
+                error={id === "checkin" ? checkInOutTimeError : ""}
               />
 
               <PolicyLateTimeField
@@ -1397,6 +1421,7 @@ export default function HostPropertyPoliciesTab(props) {
                 onChange={(event) => updateLateTimeWindow(windowKey, fallbackValue, true, event.target.value)}
                 disabled={saving}
                 options={TIME_OPTIONS}
+                error={id === "checkin" ? lateTimeErrors.checkIn : lateTimeErrors.checkOut}
               />
             </React.Fragment>
           ))}
@@ -1747,6 +1772,7 @@ PolicySelectField.propTypes = {
     ])
   ).isRequired,
   hint: PropTypes.string,
+  error: PropTypes.string,
 };
 
 PolicyLateTimeField.propTypes = {
@@ -1758,6 +1784,7 @@ PolicyLateTimeField.propTypes = {
   onChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  error: PropTypes.string,
 };
 
 RuleToggleField.propTypes = {

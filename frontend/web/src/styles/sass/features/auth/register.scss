@@ -19,6 +19,41 @@
 .hostCheckbox {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 10px 0;
+  gap: 12px;
+
+  margin: 20px 0;
+
+  font-size: 16px;
+  color: #000;
+  cursor: pointer;
+}
+
+.hostCheckbox input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+.strength-container {
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+#strength-bar {
+  height: 6px;
+  width: 0;
+  border-radius: 999px;
+  transition: 0.3s ease;
+  margin-bottom: 8px;
+}
+
+.strength-text {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.requirements {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }

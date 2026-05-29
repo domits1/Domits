@@ -8,8 +8,6 @@ import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
 
-const BOOKINGS_API_URL =
-  "https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const startOfUtcDay = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -72,28 +70,6 @@ const buildAcceptedBookingDateKeys = (bookings) => {
   });
 
   return Array.from(blockedDateKeys);
-};
-
-const parseBookingResponse = async (response) => {
-  const payload = await response.json();
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
-  if (Array.isArray(payload?.body)) {
-    return payload.body;
-  }
-
-  if (typeof payload?.body === "string") {
-    try {
-      const parsed = JSON.parse(payload.body);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  return [];
 };
 
 const toPlainObject = (value) => (value && typeof value === "object" ? value : {});
@@ -201,6 +177,7 @@ const ListingDetails2 = () => {
   const [checkOutDate, setCheckOutDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showMessageHost, setShowMessageHost] = useState(false);
 
   const unavailableDateKeys = useMemo(
     () =>
@@ -257,38 +234,52 @@ const ListingDetails2 = () => {
     );
   }
 
+  const hasAmenities = Array.isArray(property?.amenities) && property.amenities.length > 0;
+
   const sectionItems = [
     { id: "photos", label: "Photos", targetId: "listing-photos" },
-    { id: "about", label: "About", targetId: "listing-about" },
-    { id: "amenities", label: "Amenities", targetId: "listing-amenities" },
-    { id: "availability", label: "Availability", targetId: "listing-availability" },
+    ...(hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
+    { id: "host", label: "Host", targetId: "listing-host" },
     { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];
 
   return (
     <div className="listing-details">
       <SectionTabs sections={sectionItems} />
-      <Header title={property?.property?.title} />
+      <Header
+        title={property?.property?.title}
+        rating={property?.property?.rating}
+        generalDetails={property?.generalDetails}
+      />
 
       <div className="container">
         <PropertyContainer
           property={property}
-          unavailableDateKeys={unavailableDateKeys}
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          setCheckInDate={setCheckInDate}
-          setCheckOutDate={setCheckOutDate}
-        />
-        <BookingContainer
-          property={property}
           host={host}
-          propertyId={id}
+          onContactHost={
+            (property?.property?.hostId || property?.property?.hostID)
+              ? () => setShowMessageHost(true)
+              : undefined
+          }
           unavailableDateKeys={unavailableDateKeys}
           checkInDate={checkInDate}
-          setCheckInDate={setCheckInDate}
           checkOutDate={checkOutDate}
+          setCheckInDate={setCheckInDate}
           setCheckOutDate={setCheckOutDate}
-        />
+        >
+          <BookingContainer
+            property={property}
+            host={host}
+            propertyId={id}
+            unavailableDateKeys={unavailableDateKeys}
+            checkInDate={checkInDate}
+            setCheckInDate={setCheckInDate}
+            checkOutDate={checkOutDate}
+            setCheckOutDate={setCheckOutDate}
+            showMessageHost={showMessageHost}
+            setShowMessageHost={setShowMessageHost}
+          />
+        </PropertyContainer>
       </div>
     </div>
   );
