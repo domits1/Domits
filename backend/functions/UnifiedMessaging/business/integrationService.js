@@ -45,9 +45,10 @@ import ChannexBookingAvailabilityBridge, {
 } from "./channexBookingAvailabilityBridge.js";
 
 const nowMs = () => Date.now();
+const daysToMs = (days) => days * 24 * 60 * 60 * 1000;
 const TIME_WINDOWS_MS = Object.freeze({
-  DAY: 24 * 60 * 60 * 1000,
-  THREE_DAYS: 3 * 24 * 60 * 60 * 1000,
+  DAY: daysToMs(1),
+  THREE_DAYS: daysToMs(3),
 });
 const GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v22.0";
 const PLACEHOLDER_REFRESH_STATUSES = new Set([
@@ -57,11 +58,7 @@ const PLACEHOLDER_REFRESH_STATUSES = new Set([
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
-const CHANNEX_FULL_SYNC_DEFAULTS = Object.freeze({
-  VERSION: "full-sync-v1",
-  PROVIDER_REQUEST_TIMEOUT_MS: 8000,
-  DEFAULT_SELLABLE_UNIT_COUNT: 1,
-});
+const CHANNEX_FULL_SYNC_DEFAULTS = Object.freeze({ VERSION: "full-sync-v1", PROVIDER_REQUEST_TIMEOUT_MS: 8000, DEFAULT_SELLABLE_UNIT_COUNT: 1 });
 
 const requireStr = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
 const compareAlphabetically = (left, right) => String(left).localeCompare(String(right));

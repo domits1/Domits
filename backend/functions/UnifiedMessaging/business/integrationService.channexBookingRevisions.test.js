@@ -11,19 +11,22 @@ jest.mock("../ORM/index.js", () => ({
   },
 }));
 
-const {
-  buildFeedRevision,
-  buildImportedBookingRow,
-  buildIntegrationAccount,
-  buildPropertyContext,
-  buildPropertyMapping,
-  buildRatePlanMapping,
-  buildRevisionRawPayload,
-  buildRevisionRoomLine,
-  buildRevisionRow,
-  buildRoomTypeMapping,
-  createService,
-} = require("./integrationService.channexBookingRevisions.fixture.js");
+const channexBookingRevisionFixture = require("./integrationService.channexBookingRevisions.fixture.js");
+
+const buildCancellationAvailabilityEvidence =
+  channexBookingRevisionFixture.buildCancellationAvailabilityEvidence;
+const buildFeedRevision = channexBookingRevisionFixture.buildFeedRevision;
+const buildImportedBookingRow = channexBookingRevisionFixture.buildImportedBookingRow;
+const buildIntegrationAccount = channexBookingRevisionFixture.buildIntegrationAccount;
+const buildPropertyContext = channexBookingRevisionFixture.buildPropertyContext;
+const buildPropertyMapping = channexBookingRevisionFixture.buildPropertyMapping;
+const buildRatePlanMapping = channexBookingRevisionFixture.buildRatePlanMapping;
+const buildReservationLinkRow = channexBookingRevisionFixture.buildReservationLinkRow;
+const buildRevisionRawPayload = channexBookingRevisionFixture.buildRevisionRawPayload;
+const buildRevisionRoomLine = channexBookingRevisionFixture.buildRevisionRoomLine;
+const buildRevisionRow = channexBookingRevisionFixture.buildRevisionRow;
+const buildRoomTypeMapping = channexBookingRevisionFixture.buildRoomTypeMapping;
+const createService = channexBookingRevisionFixture.createService;
 
 describe("IntegrationService Channex booking revision listing", () => {
   afterEach(() => {
@@ -535,12 +538,7 @@ describe("IntegrationService Channex booking pull import", () => {
   });
 
   test("linked modified revisions update basic Domits booking fields before acknowledgement", async () => {
-    const existingLink = {
-      id: "reservation-link-1",
-      rawPayload: JSON.stringify({
-        domits: { bookingId: "domits-booking-1" },
-      }),
-    };
+    const existingLink = buildReservationLinkRow();
     const { service, channexProviderClient, externalBookingImportRepository, resLinks } = createService({
       existingLink,
       initialBookings: [
@@ -595,12 +593,7 @@ describe("IntegrationService Channex booking pull import", () => {
   });
 
   test("linked cancelled revisions cancel the Domits booking before acknowledgement", async () => {
-    const existingLink = {
-      id: "reservation-link-1",
-      rawPayload: JSON.stringify({
-        domits: { bookingId: "domits-booking-1" },
-      }),
-    };
+    const existingLink = buildReservationLinkRow();
     const { service, channexProviderClient, externalBookingImportRepository, resLinks } = createService({
       existingLink,
       initialBookings: [
@@ -865,20 +858,7 @@ describe("IntegrationService Channex certification admin cancellation", () => {
       id: "booking-demo-1",
       status: "Paid",
     });
-    const evidence = {
-      syncType: "booking-availability",
-      trigger: "BOOKING_CANCELLED",
-      requestCount: 1,
-      taskIds: ["task-admin-cancel"],
-      affectedDates: ["2026-06-01", "2026-06-02"],
-      availabilityValuesSent: [
-        { date: "2026-06-01", availability: 1 },
-        { date: "2026-06-02", availability: 1 },
-      ],
-      warnings: [],
-      errors: [],
-      overallSuccess: true,
-    };
+    const evidence = buildCancellationAvailabilityEvidence();
     const channexBookingAvailabilityBridge = {
       syncAvailabilityForBookingChange: jest.fn().mockResolvedValue(evidence),
     };

@@ -144,6 +144,30 @@ const buildImportedBookingRow = (overrides = {}) => ({
   ...overrides,
 });
 
+const buildReservationLinkRow = ({ bookingId = "domits-booking-1", id = "reservation-link-1", ...overrides } = {}) => ({
+  id,
+  rawPayload: JSON.stringify({
+    domits: { bookingId },
+  }),
+  ...overrides,
+});
+
+const buildCancellationAvailabilityEvidence = (overrides = {}) => ({
+  syncType: "booking-availability",
+  trigger: "BOOKING_CANCELLED",
+  requestCount: 1,
+  taskIds: ["task-admin-cancel"],
+  affectedDates: ["2026-06-01", "2026-06-02"],
+  availabilityValuesSent: [
+    { date: "2026-06-01", availability: 1 },
+    { date: "2026-06-02", availability: 1 },
+  ],
+  warnings: [],
+  errors: [],
+  overallSuccess: true,
+  ...overrides,
+});
+
 const createListByAccountRepository = (rows) => ({
   listByAccountId: jest.fn().mockResolvedValue(rows),
 });
@@ -281,20 +305,7 @@ const createService = ({
   const sync = createSyncRepository(syncOverride);
   const channexEvidence = createEvidenceRepository(channexEvidenceOverride);
   const bookingAvailabilityBridge = channexBookingAvailabilityBridge || {
-    syncAvailabilityForBookingChange: jest.fn().mockResolvedValue({
-      syncType: "booking-availability",
-      trigger: "BOOKING_CANCELLED",
-      requestCount: 1,
-      taskIds: ["task-admin-cancel"],
-      affectedDates: ["2026-06-01", "2026-06-02"],
-      availabilityValuesSent: [
-        { date: "2026-06-01", availability: 1 },
-        { date: "2026-06-02", availability: 1 },
-      ],
-      warnings: [],
-      errors: [],
-      overallSuccess: true,
-    }),
+    syncAvailabilityForBookingChange: jest.fn().mockResolvedValue(buildCancellationAvailabilityEvidence()),
   };
 
   const service = new IntegrationService({
@@ -336,12 +347,14 @@ const createService = ({
 };
 
 module.exports = {
+  buildCancellationAvailabilityEvidence,
   buildFeedRevision,
   buildImportedBookingRow,
   buildIntegrationAccount,
   buildPropertyContext,
   buildPropertyMapping,
   buildRatePlanMapping,
+  buildReservationLinkRow,
   buildRevisionRawPayload,
   buildRevisionRoomLine,
   buildRevisionRow,
