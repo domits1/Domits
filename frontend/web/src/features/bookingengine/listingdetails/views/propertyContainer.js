@@ -7,6 +7,7 @@ import Description from "../components/description";
 import RangeCalendar from "./RangeCalendar";
 import WhereYoullStay from "../components/WhereYoullStay";
 import HostSection from "../components/HostSection";
+import LocationSection from "./locationSection";
 import {
   getActiveCancellationPolicyId,
   parseHouseRules,
@@ -31,6 +32,7 @@ const PropertyContainer = ({
     checkIn: { checkIn: {}, checkOut: {} },
   },
   host = {},
+  location = {},
   onContactHost,
   unavailableDateKeys = [],
   checkInDate = "",
@@ -145,6 +147,10 @@ const PropertyContainer = ({
           <HostSection host={host} onContactHost={onContactHost} />
         </section>
 
+        <section id="listing-location" className="listing-section-block">
+          <LocationSection location={location} />
+        </section>
+
         <section id="listing-policies" className="listing-section-block">
           {cancellationPolicy && (
             <PolicySection
@@ -175,6 +181,12 @@ const PropertyContainer = ({
 };
 
 PropertyContainer.propTypes = {
+  location: PropTypes.shape({
+    street: PropTypes.string,
+    houseNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    city: PropTypes.string,
+    country: PropTypes.string,
+  }),
   property: PropTypes.shape({
     images: PropTypes.array,
     pricing: PropTypes.shape({
