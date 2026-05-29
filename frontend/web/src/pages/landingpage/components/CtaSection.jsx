@@ -1,22 +1,13 @@
-import React, { useContext } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
-import FlowContext from "../../../services/FlowContext";
-import { startHostingFlow } from "../../../utils/hostFlow";
 
 function CtaSection({ content }) {
   const navigate = useNavigate();
-  const { setFlowState } = useContext(FlowContext);
 
-  const handleStartHosting = () =>
-    startHostingFlow({
-      isAuthenticated,
-      group,
-      navigate,
-      setFlowState,
-    });
+  const handleStartHosting = () => navigate("/register");
 
   return (
     <motion.section

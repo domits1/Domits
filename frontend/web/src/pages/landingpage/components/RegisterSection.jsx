@@ -10,15 +10,8 @@ const CARD_KEYS = ["verified", "rules", "how", "payments", "support", "renting"]
 
 function RegisterSection({ content }) {
   const navigate = useNavigate();
-  const { setFlowState } = useContext(FlowContext);
 
-  const handleRegisterProperty = () =>
-    startHostingFlow({
-      isAuthenticated,
-      group,
-      navigate,
-      setFlowState,
-    });
+  const handleRegisterProperty = () => navigate("/register");
 
   return (
     <motion.section

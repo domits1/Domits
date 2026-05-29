@@ -95,7 +95,10 @@ const Homepage = () => {
   const [allAccommodations, setAllAccommodations] = useState([]);
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [group, setGroup] = useState("");
   const { language } = useContext(LanguageContext);
+  const { setFlowState } = useContext(FlowContext);
   const langContent = contentByLanguage[language];
   const homePageContent = langContent?.homepage;
 

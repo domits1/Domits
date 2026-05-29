@@ -21,7 +21,7 @@ function FaqSection({ faqs, toggleOpen, content }) {
 
         <motion.div className="faq-landing__list" variants={staggerContainer}>
           {faqs.map((faq, index) => (
-            <motion.div key={index} variants={fadeUp}>
+            <motion.div key={faq.id} variants={fadeUp}>
               <FaqItem
                 question={faq.question}
                 answer={faq.answer}

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
@@ -11,12 +11,12 @@ import vrboLogo from "../../../images/vrbo-logo.svg";
 import domitsLogo from "../../../images/domits-logo.svg";
 import heroImage from "../../../images/hero-image.svg";
 import checkIcon from "../../../images/check-icon.svg";
-import FlowContext from "../../../services/FlowContext";
-import { startHostingFlow } from "../../../utils/hostFlow";
 
-function HeroSection({ landingContent, isAuthenticated, group }) {
+function HeroSection({ landingContent }) {
   const navigate = useNavigate();
   const h = landingContent.hero;
+
+  const handleStartHosting = () => navigate("/register");
 
   return (
     <section className="hero">
@@ -167,5 +167,6 @@ function HeroSection({ landingContent, isAuthenticated, group }) {
 HeroSection.propTypes = {
   landingContent: PropTypes.object.isRequired,
 };
+
 
 export default HeroSection;

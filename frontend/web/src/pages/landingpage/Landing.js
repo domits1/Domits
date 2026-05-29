@@ -25,11 +25,11 @@ const contentByLanguage = { en, nl, de, es };
 const buildFaqs = (content) => {
   if (!content) return [];
   return [
-    { question: content.answerTo.host.title, answer: content.answerTo.host.description, isOpen: false },
-    { question: content.answerTo.how.title, answer: content.answerTo.how.description, isOpen: false },
-    { question: content.answerTo.manage.title, answer: content.answerTo.manage.description, isOpen: false },
-    { question: content.answerTo.payout.title, answer: content.answerTo.payout.description, isOpen: false },
-    { question: content.answerTo.calendar.title, answer: content.answerTo.calendar.description, isOpen: false },
+    { id: "host", question: content.answerTo.host.title, answer: content.answerTo.host.description, isOpen: false },
+    { id: "how", question: content.answerTo.how.title, answer: content.answerTo.how.description, isOpen: false },
+    { id: "manage", question: content.answerTo.manage.title, answer: content.answerTo.manage.description, isOpen: false },
+    { id: "payout", question: content.answerTo.payout.title, answer: content.answerTo.payout.description, isOpen: false },
+    { id: "calendar", question: content.answerTo.calendar.title, answer: content.answerTo.calendar.description, isOpen: false },
   ];
 };
 
@@ -38,6 +38,7 @@ function Landing() {
   const landingContent = contentByLanguage[language]?.landing;
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [group, setGroup] = useState("");
   const [faqs, setFaqs] = useState(() => buildFaqs(contentByLanguage[language]?.landing));
 
   const [formData, setFormData] = useState({
@@ -117,10 +118,7 @@ function Landing() {
     <main className="landing">
 
       <div id="hero">
-        <HeroSection landingContent={landingContent}
-         isAuthenticated={isAuthenticated}
-         group={group}
-        />
+        <HeroSection landingContent={landingContent} />
       </div>
 
       <div id="steps">
