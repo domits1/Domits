@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Auth } from "aws-amplify";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -37,8 +36,6 @@ function Landing() {
   const { language } = useContext(LanguageContext);
   const landingContent = contentByLanguage[language]?.landing;
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [group, setGroup] = useState("");
   const [faqs, setFaqs] = useState(() => buildFaqs(contentByLanguage[language]?.landing));
 
   const [formData, setFormData] = useState({
@@ -55,26 +52,11 @@ function Landing() {
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
   useEffect(() => {
-    checkAuthentication();
-  }, []);
-
-  useEffect(() => {
     if (!landingContent) return;
     setFaqs((prev) =>
       buildFaqs(landingContent).map((faq, i) => ({ ...faq, isOpen: prev[i]?.isOpen ?? false }))
     );
   }, [landingContent]);
-
- const checkAuthentication = async () => {
-  try {
-    const user = await Auth.currentAuthenticatedUser();
-
-    setIsAuthenticated(true);
-    setGroup(user.attributes["custom:group"]);
-  } catch {
-    setIsAuthenticated(false);
-  }
-};
 
   const toggleOpen = (index) => {
     setFaqs((prev) =>
