@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { LanguageContext } from "../../../../context/LanguageContext.js";
@@ -27,6 +27,9 @@ const LocationSection = ({ location }) => {
   const locationLabel = buildLocationLabel(location);
   const hasUsableLocation = Boolean(location?.city || location?.country);
 
+  const [mapKey, setMapKey] = useState(0);
+  const resetMap = useCallback(() => setMapKey((k) => k + 1), []);
+
   return (
     <section className="location-section">
       <div className="location-section__header">
@@ -43,12 +46,21 @@ const LocationSection = ({ location }) => {
         <>
           <div className="location-section__map-shell">
             <iframe
+              key={mapKey}
               className="location-section__map"
               title={t.title}
               src={`https://maps.google.com/maps?q=${buildMapQuery(location)}&z=14&output=embed`}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
+            <button
+              className="location-section__reset-btn"
+              onClick={resetMap}
+              aria-label="Reset map view"
+              type="button"
+            >
+              <FaMapMarkerAlt />
+            </button>
           </div>
           <p className="location-section__disclaimer">{t.disclaimer}</p>
         </>
