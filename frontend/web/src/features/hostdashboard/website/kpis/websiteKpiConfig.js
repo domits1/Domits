@@ -14,7 +14,13 @@ const KPI_EMPTY_VALUE = "No data yet";
 const RESEARCH_KPI_EMPTY_VALUE = "Pending";
 const KPI_STATUS_READY = "Instrumented";
 const KPI_STATUS_PENDING = "Not instrumented yet";
+const KPI_STATUS_PROXY = "Proxy metric";
+const KPI_STATUS_NEEDS_CONFIG = "Needs config";
 const KPI_DELTA_EPSILON = 0.0001;
+const KPI_READINESS_STATE_INSTRUMENTED = "instrumented";
+const KPI_READINESS_STATE_PENDING = "pending";
+const KPI_READINESS_STATE_PROXY = "proxy";
+const KPI_READINESS_STATE_NEEDS_CONFIG = "needs_config";
 
 const createFixedPrecisionFormatter = (suffix, scale = 1) => (value) => `${(value / scale).toFixed(2)}${suffix}`;
 const createWholeMinutesFormatter = () => (value) => `${value.toFixed(1)} min`;
@@ -367,6 +373,31 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
   ),
 ]);
 
+const RESEARCH_KPI_NOTE_SUFFIX_BY_STATE = Object.freeze({
+  cost_per_active_site_per_month: {
+    [KPI_READINESS_STATE_NEEDS_CONFIG]:
+      " Set the DIRECT_BOOKING_WEBSITE_MONTHLY_* and DIRECT_BOOKING_WEBSITE_COST_* env inputs for this environment to activate this KPI.",
+  },
+  fallback_subdomain_availability: {
+    [KPI_READINESS_STATE_NEEDS_CONFIG]:
+      " Set DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE=true once direct.domits.com routing is active for this environment.",
+  },
+});
+
+const RESEARCH_KPI_STATUS_LABEL_BY_STATE = Object.freeze({
+  [KPI_READINESS_STATE_INSTRUMENTED]: KPI_STATUS_READY,
+  [KPI_READINESS_STATE_PENDING]: KPI_STATUS_PENDING,
+  [KPI_READINESS_STATE_PROXY]: KPI_STATUS_PROXY,
+  [KPI_READINESS_STATE_NEEDS_CONFIG]: KPI_STATUS_NEEDS_CONFIG,
+});
+
+const RESEARCH_KPI_STATUS_TONE_BY_STATE = Object.freeze({
+  [KPI_READINESS_STATE_INSTRUMENTED]: "ready",
+  [KPI_READINESS_STATE_PENDING]: "pending",
+  [KPI_READINESS_STATE_PROXY]: "proxy",
+  [KPI_READINESS_STATE_NEEDS_CONFIG]: "warning",
+});
+
 export const formatKpiTimestamp = (timestamp) => {
   const parsedValue = Number(timestamp);
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
@@ -422,7 +453,13 @@ export const buildPerformanceMetricDeltaMap = (previousWebsiteKpis, nextWebsiteK
     nextWebsiteKpis
   );
 
-const resolveResearchKpiValue = ({ hasNumericValue, rawValue, formatterKey, hasSamples }) => {
+const resolveResearchKpiValue = ({
+  hasNumericValue,
+  rawValue,
+  formatterKey,
+  hasSamples,
+  readinessState,
+}) => {
   if (hasNumericValue) {
     return formatters[formatterKey](rawValue);
   }
@@ -431,7 +468,36 @@ const resolveResearchKpiValue = ({ hasNumericValue, rawValue, formatterKey, hasS
     return "No valid samples";
   }
 
+  if (readinessState === KPI_READINESS_STATE_NEEDS_CONFIG) {
+    return "Config required";
+  }
+
+  if (
+    readinessState === KPI_READINESS_STATE_INSTRUMENTED ||
+    readinessState === KPI_READINESS_STATE_PROXY
+  ) {
+    return KPI_EMPTY_VALUE;
+  }
+
   return RESEARCH_KPI_EMPTY_VALUE;
+};
+
+const resolveResearchKpiReadinessState = ({ researchKpiId, websiteKpis, hasNumericValue, hasSamples }) => {
+  const explicitState = String(websiteKpis?.kpiReadiness?.[researchKpiId]?.state || "")
+    .trim()
+    .toLowerCase();
+  if (explicitState) {
+    return explicitState;
+  }
+
+  return hasNumericValue || hasSamples
+    ? KPI_READINESS_STATE_INSTRUMENTED
+    : KPI_READINESS_STATE_PENDING;
+};
+
+const resolveResearchKpiNote = ({ researchKpi, readinessState }) => {
+  const noteSuffix = RESEARCH_KPI_NOTE_SUFFIX_BY_STATE[researchKpi.id]?.[readinessState] || "";
+  return `${researchKpi.note}${noteSuffix}`;
 };
 
 export const buildResearchKpiCards = (websiteKpis) =>
@@ -440,21 +506,33 @@ export const buildResearchKpiCards = (websiteKpis) =>
     const sampleCount = Number(websiteKpis[researchKpi.sampleCountKey] || 0);
     const hasSamples = Number.isFinite(sampleCount) && sampleCount > 0;
     const hasNumericValue = typeof rawValue === "number" && Number.isFinite(rawValue);
-    const isInstrumented = hasNumericValue || hasSamples;
+    const readinessState = resolveResearchKpiReadinessState({
+      researchKpiId: researchKpi.id,
+      websiteKpis,
+      hasNumericValue,
+      hasSamples,
+    });
+    const isInstrumented = readinessState === KPI_READINESS_STATE_INSTRUMENTED;
 
     return {
       ...researchKpi,
       isInstrumented,
+      statusTone: RESEARCH_KPI_STATUS_TONE_BY_STATE[readinessState] || "pending",
       value: resolveResearchKpiValue({
         hasNumericValue,
         rawValue,
         formatterKey: researchKpi.formatterKey,
         hasSamples,
+        readinessState,
       }),
-      statusLabel: isInstrumented ? KPI_STATUS_READY : KPI_STATUS_PENDING,
-      sampleLabel: isInstrumented
+      statusLabel: RESEARCH_KPI_STATUS_LABEL_BY_STATE[readinessState] || KPI_STATUS_PENDING,
+      sampleLabel: hasSamples
         ? resolveMetricSampleLabel(researchKpi.sampleLabel, websiteKpis)
         : "",
+      note: resolveResearchKpiNote({
+        researchKpi,
+        readinessState,
+      }),
     };
   });
 

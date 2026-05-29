@@ -1,5 +1,9 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
+import {
+  isDirectBookingWebsiteFallbackRoutingActive,
+  isDirectBookingWebsitePublishedFallbackReachable,
+} from "../../util/directBookingWebsiteRouting.js";
 
 const resolveSchemaName = (client) => {
   if (process.env.TEST === "true") {
@@ -19,6 +23,10 @@ const draftTableName = (schemaName) => `${schemaName}.standalone_site_draft`;
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
 const siteDomainTableName = (schemaName) => `${schemaName}.standalone_site_domain`;
 const propertyPricingTableName = (schemaName) => `${schemaName}.property_pricing`;
+const KPI_READINESS_STATE_INSTRUMENTED = "instrumented";
+const KPI_READINESS_STATE_NEEDS_CONFIG = "needs_config";
+const KPI_READINESS_STATE_PENDING = "pending";
+const KPI_READINESS_STATE_PROXY = "proxy";
 const getConfiguredNumberEnv = (...envNames) => {
   for (const envName of envNames) {
     const rawValue = process.env[envName];
@@ -164,6 +172,36 @@ const summarizePublishedPriceAlignment = (publishedPriceRows) => {
   };
 };
 
+const summarizeFallbackSubdomainAvailability = (liveLinkAvailabilityRows) => {
+  let publishedSiteCount = 0;
+  let reachableSiteCount = 0;
+
+  (Array.isArray(liveLinkAvailabilityRows) ? liveLinkAvailabilityRows : []).forEach((row) => {
+    const siteStatus = String(row?.site_status || "").trim().toUpperCase();
+    const domainEntry = {
+      domain: row?.fallback_domain,
+      domainType: row?.fallback_domain_type,
+      status: row?.fallback_domain_status,
+      isPrimary: row?.fallback_domain_is_primary === true,
+    };
+
+    if (siteStatus !== "PUBLISHED") {
+      return;
+    }
+
+    publishedSiteCount += 1;
+    if (isDirectBookingWebsitePublishedFallbackReachable({ siteStatus, domainEntry })) {
+      reachableSiteCount += 1;
+    }
+  });
+
+  return {
+    publishedSiteCount,
+    reachableSiteCount,
+    availabilityRate: toPercentage(reachableSiteCount, publishedSiteCount),
+  };
+};
+
 const resolveDirectBookingWebsiteMonthlyCostInputs = () => {
   const fixedMonthlyCostEur = Number.isFinite(DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR)
     ? DIRECT_BOOKING_WEBSITE_MONTHLY_FIXED_COST_EUR
@@ -206,6 +244,34 @@ const hasConfiguredDirectBookingWebsiteUsageCosts = () => {
     Object.values(usageInputs).some((value) => Number.isFinite(value) && value > 0)
   );
 };
+
+const buildWebsiteResearchKpiReadiness = () => ({
+  time_to_publish_p95: {
+    state: KPI_READINESS_STATE_INSTRUMENTED,
+  },
+  cost_per_active_site_per_month: {
+    state: hasConfiguredDirectBookingWebsiteUsageCosts()
+      ? KPI_READINESS_STATE_INSTRUMENTED
+      : KPI_READINESS_STATE_NEEDS_CONFIG,
+  },
+  fallback_subdomain_availability: {
+    state: isDirectBookingWebsiteFallbackRoutingActive()
+      ? KPI_READINESS_STATE_INSTRUMENTED
+      : KPI_READINESS_STATE_NEEDS_CONFIG,
+  },
+  booking_api_error_rate: {
+    state: KPI_READINESS_STATE_PENDING,
+  },
+  quote_to_charge_mismatch_rate: {
+    state: KPI_READINESS_STATE_PROXY,
+  },
+  booking_funnel_completion_rate: {
+    state: KPI_READINESS_STATE_PENDING,
+  },
+  custom_domain_setup_success_rate: {
+    state: KPI_READINESS_STATE_PENDING,
+  },
+});
 
 const buildRecentUsageCountMap = (recentUsageRows) =>
   new Map(
@@ -637,13 +703,12 @@ export class DirectBookingWebsiteEventRepository {
       ),
       client.query(
         `SELECT
-           COUNT(DISTINCT CASE WHEN site.status = 'PUBLISHED' THEN site.id END)::bigint AS published_site_count,
-           COUNT(
-             DISTINCT CASE
-               WHEN site.status = 'PUBLISHED' AND fallback_domain.status = 'ACTIVE'
-               THEN site.id
-             END
-           )::bigint AS reachable_site_count
+           site.id,
+           site.status AS site_status,
+           fallback_domain.domain AS fallback_domain,
+           fallback_domain.domain_type AS fallback_domain_type,
+           fallback_domain.status AS fallback_domain_status,
+           fallback_domain.is_primary AS fallback_domain_is_primary
          FROM ${directBookingWebsiteSiteTable} site
          LEFT JOIN ${directBookingWebsiteDomainTable} fallback_domain
            ON fallback_domain.site_id = site.id
@@ -725,8 +790,11 @@ export class DirectBookingWebsiteEventRepository {
       completedBuildFlowIds,
     });
     const buildAbandonedCount = buildAttemptClosureSummary.abandonedCount;
-    const publishedLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.published_site_count);
-    const reachableLiveSiteCount = toCount(liveLinkAvailabilityRows?.[0]?.reachable_site_count);
+    const fallbackSubdomainAvailabilitySummary = summarizeFallbackSubdomainAvailability(
+      liveLinkAvailabilityRows
+    );
+    const publishedLiveSiteCount = fallbackSubdomainAvailabilitySummary.publishedSiteCount;
+    const reachableLiveSiteCount = fallbackSubdomainAvailabilitySummary.reachableSiteCount;
     const recentUsageCounts = buildRecentUsageCountMap(recentUsageRows);
     const publishedPriceAlignmentSummary = summarizePublishedPriceAlignment(publishedPriceRows);
     const costPerActiveSitePerMonth = calculateUsageWeightedCostPerActiveSitePerMonth({
@@ -795,10 +863,11 @@ export class DirectBookingWebsiteEventRepository {
       siteLcpTabletSampleCount: mergedTabletLcpSummary.sampleCount,
       siteLcpDesktopP75: mergedDesktopLcpSummary.p75,
       siteLcpDesktopSampleCount: mergedDesktopLcpSummary.sampleCount,
-      fallbackSubdomainAvailability: toPercentage(reachableLiveSiteCount, publishedLiveSiteCount),
+      fallbackSubdomainAvailability: fallbackSubdomainAvailabilitySummary.availabilityRate,
       fallbackSubdomainAvailabilitySampleCount: publishedLiveSiteCount,
       quoteToChargeMismatchRate: publishedPriceAlignmentSummary.mismatchRate,
       quoteToChargeMismatchSampleCount: publishedPriceAlignmentSummary.comparableSiteCount,
+      kpiReadiness: buildWebsiteResearchKpiReadiness(),
       deletionReasonBreakdown,
     };
   }
