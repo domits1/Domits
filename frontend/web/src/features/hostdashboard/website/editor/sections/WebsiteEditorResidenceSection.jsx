@@ -5,9 +5,9 @@ import {
   resolveWebsiteResidencePanelColor,
 } from "../../config/websiteResidenceSectionConfig";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../../websiteEditorConfig";
-import { WebsiteEditorVisibilityToggleCard } from "../WebsiteEditorVisibilityToggleCard";
-import { ContactColorField, CollapsibleSection, TextField } from "../WebsiteEditorFields";
+import { CollapsibleSection, TextField } from "../WebsiteEditorFields";
 import { WebsiteEditorImageSlotCard } from "../WebsiteEditorImageSlotCard";
+import { WebsiteEditorSectionPanelControls } from "../WebsiteEditorSectionPanelControls";
 import styles from "../../WebsiteEditorPage.module.scss";
 
 const getResidenceTextTargetId = (fieldKey) => {
@@ -78,40 +78,29 @@ export function WebsiteEditorResidenceSection({
           );
         })}
 
-        {residenceToggleFields.length > 0 ? (
-          <div className={styles.toggleStack}>
-            {residenceToggleFields.map((field) => (
-              <WebsiteEditorVisibilityToggleCard
-                key={field.key}
-                targetRef={setTargetRef(EDITOR_TARGET_KEYS.residence.showPanel)}
-                field={field}
-                inputId={`website-editor-residence-${field.key}`}
-                labelId={`website-editor-residence-${field.key}-label`}
-                descriptionId={`website-editor-residence-${field.key}-description`}
-                checked={Boolean(editorValues.common[field.key])}
-                onChange={handleCommonToggleFieldChange(field.key)}
-                isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.residence.showPanel}
-              />
-            ))}
-          </div>
-        ) : null}
-
-        {editorValues.common.residenceShowPanel ? (
-          <ContactColorField
-            label="Residence panel color"
-            hint='Controls the white framed surface behind "The residence" when the panel is enabled.'
-            value={editorValues.common.residencePanelColor}
-            placeholder={DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR}
-            resolveColorValue={resolveWebsiteResidencePanelColor}
-            inputAriaLabel="Residence panel color"
-            onSelectColor={handleResidencePanelColorChange}
-            onChangeInput={handleResidencePanelColorInputChange}
-            onCommitInput={commitResidencePanelColorInput}
-            onInputKeyDown={handleResidencePanelColorInputKeyDown}
-            onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.residence.showPanel)}
-            onBlur={clearActivePreviewTarget}
-          />
-        ) : null}
+        <WebsiteEditorSectionPanelControls
+          activatePreviewTarget={activatePreviewTarget}
+          clearActivePreviewTarget={clearActivePreviewTarget}
+          colorField={{
+            label: "Residence panel color",
+            hint: 'Controls the white framed surface behind "The residence" when the panel is enabled.',
+            value: editorValues.common.residencePanelColor,
+            placeholder: DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR,
+            resolveColorValue: resolveWebsiteResidencePanelColor,
+            inputAriaLabel: "Residence panel color",
+          }}
+          commitPanelColorInput={commitResidencePanelColorInput}
+          handlePanelColorChange={handleResidencePanelColorChange}
+          handlePanelColorInputChange={handleResidencePanelColorInputChange}
+          handlePanelColorInputKeyDown={handleResidencePanelColorInputKeyDown}
+          handlePanelToggleChange={handleCommonToggleFieldChange("residenceShowPanel")}
+          highlightedTargetId={highlightedTargetId}
+          inputIdPrefix="website-editor-residence"
+          panelTargetId={EDITOR_TARGET_KEYS.residence.showPanel}
+          setTargetRef={setTargetRef}
+          showPanel={Boolean(editorValues.common.residenceShowPanel)}
+          toggleFields={residenceToggleFields}
+        />
 
         {residenceImageSlot ? (
           <WebsiteEditorImageSlotCard

@@ -1,16 +1,21 @@
 import BookingService from "../business/bookingService.js";
 import PaymentService from "../business/paymentService.js";
+import Stripe from "stripe";
+import { calculateRefundAmountCents } from "../util/refundCalculator.js";
 import Forbidden from "../util/exception/Forbidden.js";
 import Unauthorized from "../util/exception/Unauthorized.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
 const responseHeaderJSON = responsejson;
+const REFUND_CURRENCY = "eur";
+const STRIPE_REFUND_REASON = "requested_by_customer";
 
 class ReservationController {
   constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
+    this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
   }
 
   // POST
@@ -62,7 +67,7 @@ class ReservationController {
       const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
       const actionResponse = await this.handlePatchAction(body, event, authToken);
 
-      return actionResponse || await this.handlePaymentPatch(body);
+      return actionResponse || (await this.handlePaymentPatch(body));
     } catch (error) {
       console.error(error);
       return {
@@ -195,7 +200,32 @@ class ReservationController {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub);
+    let refundAmountCents = 0;
+    let stripeRefundId = null;
+    let refundError = null;
+
+    try {
+      const totalPriceCents = Math.round((booking.total_price || 0) * 100);
+      refundAmountCents = calculateRefundAmountCents(booking.cancellation_policy, booking.arrivaldate, totalPriceCents);
+
+      // Process refund with Stripe if amount > 0 and Stripe is configured
+      if (refundAmountCents > 0 && booking.stripe_refund_id) {
+        stripeRefundId = booking.stripe_refund_id;
+        refundAmountCents = Number(booking.refunded_amount) || refundAmountCents;
+      } else if (refundAmountCents > 0 && booking.paymentid && this.stripe) {
+        const refund = await this.createStripeRefund(booking.paymentid, refundAmountCents);
+        stripeRefundId = refund.id;
+      }
+    } catch (error) {
+      console.error(`Refund processing failed for booking ${bookingId}:`, error.message);
+      refundError = error.message;
+    }
+
+    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub, {
+      refundedAmount: refundAmountCents,
+      stripeRefundId,
+      refundError,
+    });
 
     await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
 
@@ -204,6 +234,28 @@ class ReservationController {
       headers: responseHeaderJSON,
       response: canceled.response,
     };
+  }
+
+  async createStripeRefund(paymentIntentId, amountCents) {
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    const currency = paymentIntent?.currency?.toLowerCase();
+
+    if (currency !== REFUND_CURRENCY) {
+      throw new Error(
+        `Cannot refund ${currency || "unknown"} PaymentIntent ${paymentIntentId}; expected ${REFUND_CURRENCY}.`
+      );
+    }
+
+    return await this.stripe.refunds.create(
+      {
+        payment_intent: paymentIntentId,
+        amount: amountCents,
+        reason: STRIPE_REFUND_REASON,
+      },
+      {
+        idempotencyKey: `refund-${paymentIntentId}-${amountCents}`,
+      }
+    );
   }
 
   // GET
