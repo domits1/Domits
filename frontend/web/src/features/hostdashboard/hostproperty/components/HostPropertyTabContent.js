@@ -7,6 +7,9 @@ import infoIcon from "../../../../images/icons/info.png";
 import checkIcon from "../../../../images/icons/checkPng.png";
 import crossIcon from "../../../../images/icons/cross.png";
 import { HostPropertyPlaceholderTab } from "./HostPropertyShell";
+import { getAccessToken } from "../../../../services/getAccessToken";
+import { PROPERTY_API_BASE } from "../constants";
+import { keyToDateNumber, normalizeAvailabilityRanges } from "../../hostcalen/hooks/hostCalendarHelpers";
 import { usePhotoTileInteractionHandlers } from "../hooks/usePhotoTileInteractionHandlers";
 import {
   createInitialPricingForm,
@@ -84,6 +87,61 @@ const CANCELLATION_POLICIES = [
     important: null,
   },
 ];
+
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const toDateKey = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+const getDefaultAvailabilityDateKey = () => toDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
+const calendarDateToKey = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return "";
+  }
+  const normalized = String(Math.trunc(numericValue));
+  if (!/^\d{8}$/.test(normalized)) {
+    return "";
+  }
+  return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}`;
+};
+
+const normalizeAvailabilityOverrideMap = (overrides) =>
+  (Array.isArray(overrides) ? overrides : []).reduce((next, override) => {
+    const dateKey = calendarDateToKey(override?.date ?? override?.calendarDate ?? override?.calendar_date);
+    if (
+      !dateKey ||
+      override?.isAvailable === undefined ||
+      override?.isAvailable === null
+    ) {
+      return next;
+    }
+    next[dateKey] = Boolean(override.isAvailable);
+    return next;
+  }, {});
+
+const resolveAvailabilityLabel = ({ dateKey, availabilityOverrides, availabilityRanges }) => {
+  if (!DATE_KEY_PATTERN.test(String(dateKey || ""))) {
+    return "Choose a date";
+  }
+  if (Object.hasOwn(availabilityOverrides, dateKey)) {
+    return availabilityOverrides[dateKey] ? "Available by override" : "Unavailable by override";
+  }
+
+  const dateNumber = keyToDateNumber(dateKey);
+  const isInBaseWindow = availabilityRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
+  return isInBaseWindow ? "Available from listing window" : "Unavailable outside listing window";
+};
+
+const buildAvailabilityOverridePayload = ({ dateKey, available }) => ({
+  overrides: [
+    {
+      date: keyToDateNumber(dateKey),
+      isAvailable: available,
+    },
+  ],
+});
 
 function ToggleSwitch({ checked, onChange, disabled }) {
   return (
@@ -1020,6 +1078,190 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
   );
 }
 
+export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availability, saving }) {
+  const [selectedDateKey, setSelectedDateKey] = useState(getDefaultAvailabilityDateKey);
+  const [selectedAvailability, setSelectedAvailability] = useState("unavailable");
+  const [availabilityOverrides, setAvailabilityOverrides] = useState({});
+  const [loadingOverrides, setLoadingOverrides] = useState(false);
+  const [savingOverride, setSavingOverride] = useState(false);
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
+  const [availabilityError, setAvailabilityError] = useState("");
+  const availabilityRanges = normalizeAvailabilityRanges(availability);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadOverrides = async () => {
+      if (!propertyId) {
+        return;
+      }
+
+      const token = getAccessToken();
+      if (!token) {
+        setAvailabilityError("Sign in again to load availability.");
+        return;
+      }
+
+      setLoadingOverrides(true);
+      setAvailabilityError("");
+      setAvailabilityMessage("");
+      try {
+        const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides?propertyId=${encodeURIComponent(propertyId)}`, {
+          method: "GET",
+          headers: {
+            Authorization: token,
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`Could not load availability overrides (${response.status}).`);
+        }
+        const body = await response.json();
+        if (mounted) {
+          setAvailabilityOverrides(normalizeAvailabilityOverrideMap(body?.overrides));
+        }
+      } catch (error) {
+        if (mounted) {
+          setAvailabilityError(error?.message || "Could not load availability overrides.");
+        }
+      } finally {
+        if (mounted) {
+          setLoadingOverrides(false);
+        }
+      }
+    };
+
+    loadOverrides();
+    return () => {
+      mounted = false;
+    };
+  }, [propertyId]);
+
+  const saveAvailabilityOverride = async () => {
+    if (!propertyId || savingOverride || saving || !DATE_KEY_PATTERN.test(selectedDateKey)) {
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      setAvailabilityError("Sign in again to save availability.");
+      return;
+    }
+
+    setSavingOverride(true);
+    setAvailabilityError("");
+    setAvailabilityMessage("");
+    const isAvailable = selectedAvailability === "available";
+    const payload = buildAvailabilityOverridePayload({
+      dateKey: selectedDateKey,
+      available: isAvailable,
+    });
+
+    try {
+      const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides`, {
+        method: "PATCH",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          propertyId,
+          ...payload,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`Could not save availability override (${response.status}).`);
+      }
+      const body = await response.json();
+      setAvailabilityOverrides(normalizeAvailabilityOverrideMap(body?.overrides));
+      setAvailabilityMessage(
+        `${selectedDateKey} marked ${isAvailable ? "available" : "unavailable"}. Calendar & Pricing, guest bookings, and Full Sync use this same source.`
+      );
+    } catch (error) {
+      setAvailabilityError(error?.message || "Could not save availability override.");
+    } finally {
+      setSavingOverride(false);
+    }
+  };
+
+  const selectedDateStatus = resolveAvailabilityLabel({
+    dateKey: selectedDateKey,
+    availabilityOverrides,
+    availabilityRanges,
+  });
+  const unavailableOverrideDates = Object.entries(availabilityOverrides)
+    .filter(([, isAvailable]) => isAvailable === false)
+    .map(([dateKey]) => dateKey)
+    .sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
+
+  return (
+    <section className={`${styles.card} ${styles.pricingCard}`} aria-label="Listing availability editor">
+      <h3 className={styles.sectionTitle}>Availability</h3>
+      <p className={styles.pricingSubtitle}>
+        Manage per-date availability for this listing. These changes are saved to the same calendar overrides used by Calendar & Pricing, guest availability, booking validation, and Channex Full Sync.
+      </p>
+      <p className={styles.pricingSubtitle}>
+        Listing: <strong>{listingTitle || propertyId || "Selected listing"}</strong>
+      </p>
+
+      <div className={styles.pricingStayGrid}>
+        <label className={styles.pricingStayField} htmlFor="listing-editor-availability-date">
+          <span className={styles.pricingStayLabel}>Date</span>
+          <input
+            id="listing-editor-availability-date"
+            className={styles.input}
+            type="date"
+            value={selectedDateKey}
+            onChange={(event) => setSelectedDateKey(event.target.value)}
+            disabled={savingOverride || saving}
+          />
+        </label>
+
+        <label className={styles.pricingStayField} htmlFor="listing-editor-availability-status">
+          <span className={styles.pricingStayLabel}>Availability</span>
+          <select
+            id="listing-editor-availability-status"
+            className={styles.pricingSelect}
+            value={selectedAvailability}
+            onChange={(event) => setSelectedAvailability(event.target.value)}
+            disabled={savingOverride || saving}>
+            <option value="available">Available</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </label>
+      </div>
+
+      <p className={styles.pricingHint}>Current selected date status: {selectedDateStatus}</p>
+      <p className={styles.pricingHint}>
+        Active bookings and imported external bookings still block availability even if a date is marked available here.
+      </p>
+
+      <button
+        type="button"
+        className={styles.actionButton}
+        onClick={saveAvailabilityOverride}
+        disabled={savingOverride || saving || loadingOverrides || !DATE_KEY_PATTERN.test(selectedDateKey)}>
+        {savingOverride ? "Saving availability..." : "Save availability"}
+      </button>
+
+      {loadingOverrides ? <p className={styles.pricingHint}>Loading availability overrides...</p> : null}
+      {availabilityMessage ? <p className={styles.pricingHint}>{availabilityMessage}</p> : null}
+      {availabilityError ? <p className={styles.errorText}>{availabilityError}</p> : null}
+
+      <section aria-label="Unavailable override dates">
+        <h4 className={styles.pricingDiscountTitle}>Unavailable override dates</h4>
+        {unavailableOverrideDates.length > 0 ? (
+          <ul>
+            {unavailableOverrideDates.slice(0, 12).map((dateKey) => (
+              <li key={dateKey}>{dateKey}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.pricingHint}>No unavailable date overrides saved yet.</p>
+        )}
+      </section>
+    </section>
+  );
+}
+
 function PolicyRuleSection({
   title,
   toggleFields,
@@ -1511,6 +1753,8 @@ export function HostPropertyTabContent(props) {
       return <HostPropertyAmenitiesTab {...props} />;
     case "Pricing":
       return <HostPropertyPricingTab pricingForm={pricingForm} setPricingForm={setPricingForm} />;
+    case "Availability":
+      return <HostPropertyAvailabilityTab {...props} />;
     case "Policies":
       return <HostPropertyPoliciesTab {...props} />;
     default:
@@ -1646,6 +1890,15 @@ const policiesTabPropTypes = {
   saving: PropTypes.bool.isRequired,
 };
 
+const availabilityShape = PropTypes.arrayOf(
+  PropTypes.shape({
+    availableStartDate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    availableEndDate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    availablestartdate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    availableenddate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  })
+);
+
 HostPropertyOverviewTab.propTypes = overviewTabPropTypes;
 
 HostPropertyPhotosTab.propTypes = photoTabPropTypes;
@@ -1677,6 +1930,13 @@ HostPropertyPricingDiscountRow.propTypes = {
 HostPropertyPricingTab.propTypes = {
   pricingForm: pricingFormShape.isRequired,
   setPricingForm: PropTypes.func.isRequired,
+};
+
+HostPropertyAvailabilityTab.propTypes = {
+  propertyId: PropTypes.string,
+  listingTitle: PropTypes.string,
+  availability: availabilityShape,
+  saving: PropTypes.bool.isRequired,
 };
 
 PolicyRuleSection.propTypes = {
@@ -1737,6 +1997,9 @@ HostPropertyTabContent.propTypes = {
   ...amenitiesTabPropTypes,
   pricingForm: pricingFormShape.isRequired,
   setPricingForm: PropTypes.func.isRequired,
+  propertyId: PropTypes.string,
+  listingTitle: PropTypes.string,
+  availability: availabilityShape,
   ...policiesTabPropTypes,
 };
 
