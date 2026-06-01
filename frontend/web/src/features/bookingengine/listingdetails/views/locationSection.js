@@ -1,4 +1,4 @@
-import { useContext, useState, useCallback } from "react";
+import { useContext } from "react";
 import PropTypes from "prop-types";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { LanguageContext } from "../../../../context/LanguageContext.js";
@@ -27,9 +27,6 @@ const LocationSection = ({ location }) => {
   const locationLabel = buildLocationLabel(location);
   const hasUsableLocation = Boolean(location?.city || location?.country);
 
-  const [mapKey, setMapKey] = useState(0);
-  const resetMap = useCallback(() => setMapKey((k) => k + 1), []);
-
   return (
     <section className="location-section">
       <div className="location-section__header">
@@ -44,23 +41,33 @@ const LocationSection = ({ location }) => {
 
       {hasUsableLocation ? (
         <>
-          <div className="location-section__map-shell">
+          <div className="location-section__map-shell" style={{ position: "relative" }}>
             <iframe
-              key={mapKey}
               className="location-section__map"
               title={t.title}
               src={`https://maps.google.com/maps?q=${buildMapQuery(location)}&z=14&output=embed`}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
-            <button
-              className="location-section__reset-btn"
-              onClick={resetMap}
-              aria-label="Reset map view"
-              type="button"
-            >
-              <FaMapMarkerAlt />
-            </button>
+            <div className="location-section__map-lock location-section__map-lock--tr" aria-hidden="true" />
+            <div className="location-section__map-lock location-section__map-lock--btm" aria-hidden="true" />
+            <div
+              className="location-section__approx-overlay"
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "180px",
+                height: "180px",
+                borderRadius: "50%",
+                background: "rgba(100, 110, 120, 0.28)",
+                border: "2px solid rgba(100, 110, 120, 0.45)",
+                pointerEvents: "none",
+                zIndex: 2,
+              }}
+            />
           </div>
           <p className="location-section__disclaimer">{t.disclaimer}</p>
         </>
