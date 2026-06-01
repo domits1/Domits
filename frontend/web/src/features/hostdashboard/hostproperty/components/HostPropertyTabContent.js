@@ -8,7 +8,6 @@ import checkIcon from "../../../../images/icons/checkPng.png";
 import crossIcon from "../../../../images/icons/cross.png";
 import { HostPropertyPlaceholderTab } from "./HostPropertyShell";
 import { getAccessToken } from "../../../../services/getAccessToken";
-import { PROPERTY_API_BASE } from "../constants";
 import {
   getKeyRangeInclusive,
   keyToDateNumber,
@@ -32,6 +31,7 @@ import {
   MAX_PROPERTY_IMAGES,
   PHOTO_ACCEPT,
   PHOTO_CATEGORY_PLACEHOLDERS,
+  PROPERTY_API_BASE,
   PRICING_DISCOUNT_PERCENT_OPTIONS,
   PRICING_EARLY_BIRD_DAY_OPTIONS,
   PRICING_LAST_MINUTE_DAY_OPTIONS,
@@ -1374,19 +1374,19 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
         <div className={styles.availabilityLegend} aria-label="Availability legend">
           <span className={styles.availabilityLegendItem}>
             <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendAvailable}`} />
-            Available
+            <span>Available</span>
           </span>
           <span className={styles.availabilityLegendItem}>
             <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendUnavailable}`} />
-            Unavailable
+            <span>Unavailable</span>
           </span>
           <span className={styles.availabilityLegendItem}>
             <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendOutside}`} />
-            Outside window
+            <span>Outside window</span>
           </span>
           <span className={styles.availabilityLegendItem}>
             <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendBlocked}`} />
-            Booked/blocked
+            <span>Booked/blocked</span>
           </span>
         </div>
       </div>

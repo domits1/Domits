@@ -29,7 +29,7 @@ export const normalizeBookingDateForRequest = (value) => {
   }
 
   const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : normalized;
+  return Number.isFinite(numericValue) ? String(numericValue) : normalized;
 };
 
 export const buildBookingRequestEvent = ({ propertyId, bookingDetails, userName }) => ({

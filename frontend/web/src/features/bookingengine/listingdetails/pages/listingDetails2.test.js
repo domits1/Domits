@@ -12,15 +12,30 @@ jest.mock("../services/fetchHostInfo");
 jest.mock("../../../hostdashboard/Loading", () => () => <div>Loading</div>);
 jest.mock("../components/header", () => () => <div>Header</div>);
 jest.mock("../components/sectionTabs", () => () => <div>Tabs</div>);
-jest.mock("../views/propertyContainer", () => ({ unavailableDateKeys = [], children }) => (
-  <div>
-    <div data-testid="property-unavailable-dates">{unavailableDateKeys.join("|")}</div>
-    {children}
-  </div>
-));
-jest.mock("../views/bookingContainer", () => ({ unavailableDateKeys = [] }) => (
-  <div data-testid="booking-unavailable-dates">{unavailableDateKeys.join("|")}</div>
-));
+jest.mock("../views/propertyContainer", () => {
+  const PropTypes = require("prop-types");
+  const MockPropertyContainer = ({ unavailableDateKeys = [], children }) => (
+    <div>
+      <div data-testid="property-unavailable-dates">{unavailableDateKeys.join("|")}</div>
+      {children}
+    </div>
+  );
+  MockPropertyContainer.propTypes = {
+    unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+    children: PropTypes.node,
+  };
+  return MockPropertyContainer;
+});
+jest.mock("../views/bookingContainer", () => {
+  const PropTypes = require("prop-types");
+  const MockBookingContainer = ({ unavailableDateKeys = [] }) => (
+    <div data-testid="booking-unavailable-dates">{unavailableDateKeys.join("|")}</div>
+  );
+  MockBookingContainer.propTypes = {
+    unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  };
+  return MockBookingContainer;
+});
 
 const renderListingDetails = () =>
   render(
@@ -43,7 +58,7 @@ const mockProperty = (calendarAvailability = {}) => {
 
 describe("ListingDetails2 availability", () => {
   beforeEach(() => {
-    global.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => [],
     });
@@ -58,7 +73,7 @@ describe("ListingDetails2 availability", () => {
       externalBlockedDates: ["2026-06-18"],
       unavailableDateKeys: ["2026-06-19"],
     });
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => [
         {

@@ -28,12 +28,40 @@ const renderAvailabilityTab = (props = {}) =>
 
 const expectCalendarOverridePatch = async (expectedBody) => {
   await waitFor(() => {
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
-  const [url, options] = global.fetch.mock.calls[1];
+  const [url, options] = globalThis.fetch.mock.calls[1];
   expect(url).toContain("/calendar/overrides");
   expect(options).toEqual(expect.objectContaining({ method: "PATCH" }));
   expect(JSON.parse(options.body)).toEqual(expectedBody);
+};
+
+const mockOverrideLoad = (overrides = []) => {
+  globalThis.fetch.mockResolvedValueOnce(okJsonResponse({ overrides }));
+};
+
+const mockOverrideLoadThenSave = ({ savedOverrides, initialOverrides = [] }) => {
+  globalThis.fetch
+    .mockResolvedValueOnce(okJsonResponse({ overrides: initialOverrides }))
+    .mockResolvedValueOnce(okJsonResponse({ overrides: savedOverrides }));
+};
+
+const getSaveButton = () => screen.getByRole("button", { name: /save availability/i });
+
+const prepareRangeSelection = async ({ startDate, endDate, availability }) => {
+  await waitFor(() => {
+    expect(getSaveButton()).toBeEnabled();
+  });
+  fireEvent.change(screen.getByLabelText("Start date"), { target: { value: startDate } });
+  fireEvent.change(screen.getByLabelText("End date"), { target: { value: endDate } });
+  fireEvent.change(screen.getByLabelText("Mark selected range as", { selector: "select" }), {
+    target: { value: availability },
+  });
+};
+
+const saveAvailabilityRange = async (rangeSelection) => {
+  await prepareRangeSelection(rangeSelection);
+  fireEvent.click(getSaveButton());
 };
 
 const buildTabContentProps = () => ({
@@ -97,12 +125,12 @@ const buildTabContentProps = () => ({
 describe("HostPropertyAvailabilityTab", () => {
   beforeEach(() => {
     getAccessToken.mockReturnValue("test-token");
-    global.fetch = jest.fn().mockResolvedValue(okJsonResponse({ overrides: [] }));
+    globalThis.fetch = jest.fn().mockResolvedValue(okJsonResponse({ overrides: [] }));
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    delete global.fetch;
+    delete globalThis.fetch;
   });
 
   test("renders a calendar from the Listing Editor Availability tab instead of the placeholder", async () => {
@@ -115,7 +143,7 @@ describe("HostPropertyAvailabilityTab", () => {
     expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/calendar/overrides?propertyId=property-1"),
         expect.objectContaining({ method: "GET" })
       );
@@ -123,14 +151,10 @@ describe("HostPropertyAvailabilityTab", () => {
   });
 
   test("loads existing calendar overrides and shows unavailable dates", async () => {
-    global.fetch.mockResolvedValueOnce(
-      okJsonResponse({
-        overrides: [
-          { date: 20260615, isAvailable: false },
-          { date: 20260616, isAvailable: true },
-        ],
-      })
-    );
+    mockOverrideLoad([
+      { date: 20260615, isAvailable: false },
+      { date: 20260616, isAvailable: true },
+    ]);
 
     renderAvailabilityTab();
 
@@ -154,21 +178,17 @@ describe("HostPropertyAvailabilityTab", () => {
   });
 
   test("saves an unavailable override to the shared calendar override endpoint", async () => {
-    global.fetch
-      .mockResolvedValueOnce(okJsonResponse({ overrides: [] }))
-      .mockResolvedValueOnce(okJsonResponse({ overrides: [{ date: 20260616, isAvailable: false }] }));
+    mockOverrideLoadThenSave({
+      savedOverrides: [{ date: 20260616, isAvailable: false }],
+    });
 
     renderAvailabilityTab();
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save availability/i })).toBeEnabled();
+    await saveAvailabilityRange({
+      startDate: "2026-06-16",
+      endDate: "2026-06-16",
+      availability: "unavailable",
     });
-    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-06-16" } });
-    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2026-06-16" } });
-    fireEvent.change(screen.getByLabelText("Mark selected range as", { selector: "select" }), {
-      target: { value: "unavailable" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /save availability/i }));
 
     await expectCalendarOverridePatch({
       propertyId: "property-1",
@@ -178,29 +198,21 @@ describe("HostPropertyAvailabilityTab", () => {
   });
 
   test("saves an unavailable date range to the shared calendar override endpoint", async () => {
-    global.fetch
-      .mockResolvedValueOnce(okJsonResponse({ overrides: [] }))
-      .mockResolvedValueOnce(
-        okJsonResponse({
-          overrides: [
-            { date: 20260615, isAvailable: false },
-            { date: 20260616, isAvailable: false },
-            { date: 20260617, isAvailable: false },
-          ],
-        })
-      );
+    mockOverrideLoadThenSave({
+      savedOverrides: [
+        { date: 20260615, isAvailable: false },
+        { date: 20260616, isAvailable: false },
+        { date: 20260617, isAvailable: false },
+      ],
+    });
 
     renderAvailabilityTab();
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save availability/i })).toBeEnabled();
+    await saveAvailabilityRange({
+      startDate: "2026-06-15",
+      endDate: "2026-06-17",
+      availability: "unavailable",
     });
-    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-06-15" } });
-    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2026-06-17" } });
-    fireEvent.change(screen.getByLabelText("Mark selected range as", { selector: "select" }), {
-      target: { value: "unavailable" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /save availability/i }));
 
     await expectCalendarOverridePatch({
       propertyId: "property-1",
@@ -217,28 +229,20 @@ describe("HostPropertyAvailabilityTab", () => {
   });
 
   test("saves an available range without changing payload shape", async () => {
-    global.fetch
-      .mockResolvedValueOnce(okJsonResponse({ overrides: [] }))
-      .mockResolvedValueOnce(
-        okJsonResponse({
-          overrides: [
-            { date: 20260617, isAvailable: true },
-            { date: 20260618, isAvailable: true },
-          ],
-        })
-      );
+    mockOverrideLoadThenSave({
+      savedOverrides: [
+        { date: 20260617, isAvailable: true },
+        { date: 20260618, isAvailable: true },
+      ],
+    });
 
     renderAvailabilityTab();
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save availability/i })).toBeEnabled();
+    await saveAvailabilityRange({
+      startDate: "2026-06-17",
+      endDate: "2026-06-18",
+      availability: "available",
     });
-    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-06-17" } });
-    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2026-06-18" } });
-    fireEvent.change(screen.getByLabelText("Mark selected range as", { selector: "select" }), {
-      target: { value: "available" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /save availability/i }));
 
     await expectCalendarOverridePatch({
       propertyId: "property-1",
@@ -256,6 +260,6 @@ describe("HostPropertyAvailabilityTab", () => {
     renderAvailabilityTab();
 
     expect(await screen.findByText("Sign in again to load availability.")).toBeInTheDocument();
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 });
