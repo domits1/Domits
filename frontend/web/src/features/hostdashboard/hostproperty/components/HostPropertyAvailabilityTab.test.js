@@ -105,10 +105,13 @@ describe("HostPropertyAvailabilityTab", () => {
     delete global.fetch;
   });
 
-  test("renders from the Listing Editor Availability tab instead of the placeholder", async () => {
+  test("renders a calendar from the Listing Editor Availability tab instead of the placeholder", async () => {
     render(<HostPropertyTabContent {...buildTabContentProps()} />);
 
     expect(screen.getByRole("heading", { name: "Availability" })).toBeInTheDocument();
+    expect(screen.getByRole("grid", { name: "Availability calendar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous month" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next month" })).toBeInTheDocument();
     expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
 
     await waitFor(() => {
@@ -135,6 +138,21 @@ describe("HostPropertyAvailabilityTab", () => {
     expect(screen.queryByText("2026-06-16")).not.toBeInTheDocument();
   });
 
+  test("shows outside-listing-window dates when base availability data allows it", async () => {
+    renderAvailabilityTab();
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save availability/i })).toBeEnabled();
+    });
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-06-10" } });
+
+    expect(
+      screen.getByRole("gridcell", {
+        name: /2026-06-10, Outside listing window/i,
+      })
+    ).toBeInTheDocument();
+  });
+
   test("saves an unavailable override to the shared calendar override endpoint", async () => {
     global.fetch
       .mockResolvedValueOnce(okJsonResponse({ overrides: [] }))
@@ -145,8 +163,9 @@ describe("HostPropertyAvailabilityTab", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /save availability/i })).toBeEnabled();
     });
-    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-06-16" } });
-    fireEvent.change(screen.getByLabelText("Availability", { selector: "select" }), {
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-06-16" } });
+    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2026-06-16" } });
+    fireEvent.change(screen.getByLabelText("Mark selected range as", { selector: "select" }), {
       target: { value: "unavailable" },
     });
     fireEvent.click(screen.getByRole("button", { name: /save availability/i }));
@@ -155,30 +174,80 @@ describe("HostPropertyAvailabilityTab", () => {
       propertyId: "property-1",
       overrides: [{ date: 20260616, isAvailable: false }],
     });
-    expect(await screen.findByText(/2026-06-16 marked unavailable/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1 date marked unavailable/i)).toBeInTheDocument();
   });
 
-  test("saves an available override without changing payload shape", async () => {
+  test("saves an unavailable date range to the shared calendar override endpoint", async () => {
     global.fetch
       .mockResolvedValueOnce(okJsonResponse({ overrides: [] }))
-      .mockResolvedValueOnce(okJsonResponse({ overrides: [{ date: 20260617, isAvailable: true }] }));
+      .mockResolvedValueOnce(
+        okJsonResponse({
+          overrides: [
+            { date: 20260615, isAvailable: false },
+            { date: 20260616, isAvailable: false },
+            { date: 20260617, isAvailable: false },
+          ],
+        })
+      );
 
     renderAvailabilityTab();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /save availability/i })).toBeEnabled();
     });
-    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-06-17" } });
-    fireEvent.change(screen.getByLabelText("Availability", { selector: "select" }), {
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-06-15" } });
+    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2026-06-17" } });
+    fireEvent.change(screen.getByLabelText("Mark selected range as", { selector: "select" }), {
+      target: { value: "unavailable" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /save availability/i }));
+
+    await expectCalendarOverridePatch({
+      propertyId: "property-1",
+      overrides: [
+        { date: 20260615, isAvailable: false },
+        { date: 20260616, isAvailable: false },
+        { date: 20260617, isAvailable: false },
+      ],
+    });
+    expect(await screen.findByText(/3 dates marked unavailable/i)).toBeInTheDocument();
+    expect(screen.getByText("2026-06-15")).toBeInTheDocument();
+    expect(screen.getByText("2026-06-16")).toBeInTheDocument();
+    expect(screen.getByText("2026-06-17")).toBeInTheDocument();
+  });
+
+  test("saves an available range without changing payload shape", async () => {
+    global.fetch
+      .mockResolvedValueOnce(okJsonResponse({ overrides: [] }))
+      .mockResolvedValueOnce(
+        okJsonResponse({
+          overrides: [
+            { date: 20260617, isAvailable: true },
+            { date: 20260618, isAvailable: true },
+          ],
+        })
+      );
+
+    renderAvailabilityTab();
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save availability/i })).toBeEnabled();
+    });
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-06-17" } });
+    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2026-06-18" } });
+    fireEvent.change(screen.getByLabelText("Mark selected range as", { selector: "select" }), {
       target: { value: "available" },
     });
     fireEvent.click(screen.getByRole("button", { name: /save availability/i }));
 
     await expectCalendarOverridePatch({
       propertyId: "property-1",
-      overrides: [{ date: 20260617, isAvailable: true }],
+      overrides: [
+        { date: 20260617, isAvailable: true },
+        { date: 20260618, isAvailable: true },
+      ],
     });
-    expect(await screen.findByText(/2026-06-17 marked available/i)).toBeInTheDocument();
+    expect(await screen.findByText(/2 dates marked available/i)).toBeInTheDocument();
   });
 
   test("denies access safely when the host token is missing", async () => {

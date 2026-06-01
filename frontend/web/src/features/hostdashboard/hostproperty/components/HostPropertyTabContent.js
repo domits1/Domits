@@ -9,7 +9,22 @@ import crossIcon from "../../../../images/icons/cross.png";
 import { HostPropertyPlaceholderTab } from "./HostPropertyShell";
 import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../constants";
-import { keyToDateNumber, normalizeAvailabilityRanges } from "../../hostcalen/hooks/hostCalendarHelpers";
+import {
+  getKeyRangeInclusive,
+  keyToDateNumber,
+  keyToUtcDate,
+  normalizeAvailabilityRanges,
+  utcDateToKey,
+} from "../../hostcalen/hooks/hostCalendarHelpers";
+import {
+  addMonthsUTC,
+  dayNames,
+  formatYearMonth,
+  getMonthMatrix,
+  isSameMonthUTC,
+  startOfMonthUTC,
+  subMonthsUTC,
+} from "../../hostcalen/utils/date";
 import { usePhotoTileInteractionHandlers } from "../hooks/usePhotoTileInteractionHandlers";
 import {
   createInitialPricingForm,
@@ -134,14 +149,45 @@ const resolveAvailabilityLabel = ({ dateKey, availabilityOverrides, availability
   return isInBaseWindow ? "Available from listing window" : "Unavailable outside listing window";
 };
 
-const buildAvailabilityOverridePayload = ({ dateKey, available }) => ({
-  overrides: [
-    {
-      date: keyToDateNumber(dateKey),
-      isAvailable: available,
-    },
-  ],
+const buildAvailabilityOverridePayload = ({ dateKeys, available }) => ({
+  overrides: (Array.isArray(dateKeys) ? dateKeys : [])
+    .map((dateKey) => {
+      const date = keyToDateNumber(dateKey);
+      if (!date) {
+        return null;
+      }
+      return {
+        date,
+        isAvailable: available,
+      };
+    })
+    .filter(Boolean),
 });
+
+const getAvailabilityMonthCursor = (dateKey) =>
+  startOfMonthUTC(keyToUtcDate(dateKey) || new Date());
+
+const resolveAvailabilityDetails = ({ dateKey, availabilityOverrides, availabilityRanges, blockedDateSet }) => {
+  if (!DATE_KEY_PATTERN.test(String(dateKey || ""))) {
+    return { label: "Choose a date", tone: "outside" };
+  }
+
+  if (blockedDateSet.has(dateKey)) {
+    return { label: "Booked/blocked", tone: "blocked" };
+  }
+
+  if (Object.hasOwn(availabilityOverrides, dateKey)) {
+    return availabilityOverrides[dateKey]
+      ? { label: "Available override", tone: "available" }
+      : { label: "Unavailable override", tone: "unavailable" };
+  }
+
+  const dateNumber = keyToDateNumber(dateKey);
+  const isInBaseWindow = availabilityRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
+  return isInBaseWindow
+    ? { label: "Available", tone: "available" }
+    : { label: "Outside listing window", tone: "outside" };
+};
 
 function ToggleSwitch({ checked, onChange, disabled }) {
   return (
@@ -1078,8 +1124,11 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
   );
 }
 
-export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availability, saving }) {
-  const [selectedDateKey, setSelectedDateKey] = useState(getDefaultAvailabilityDateKey);
+export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availability, blockedDateKeys = [], saving }) {
+  const defaultDateKey = getDefaultAvailabilityDateKey();
+  const [calendarCursor, setCalendarCursor] = useState(() => getAvailabilityMonthCursor(defaultDateKey));
+  const [selectedStartDateKey, setSelectedStartDateKey] = useState(defaultDateKey);
+  const [selectedEndDateKey, setSelectedEndDateKey] = useState(defaultDateKey);
   const [selectedAvailability, setSelectedAvailability] = useState("unavailable");
   const [availabilityOverrides, setAvailabilityOverrides] = useState({});
   const [loadingOverrides, setLoadingOverrides] = useState(false);
@@ -1087,6 +1136,10 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
   const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
   const availabilityRanges = normalizeAvailabilityRanges(availability);
+  const blockedDateSet = new Set(Array.isArray(blockedDateKeys) ? blockedDateKeys : []);
+  const monthGrid = getMonthMatrix(calendarCursor);
+  const selectedDateKeys = getKeyRangeInclusive(selectedStartDateKey, selectedEndDateKey);
+  const selectedDateSet = new Set(selectedDateKeys);
 
   useEffect(() => {
     let mounted = true;
@@ -1135,8 +1188,45 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
     };
   }, [propertyId]);
 
+  const selectCalendarDate = (dateKey) => {
+    if (!DATE_KEY_PATTERN.test(dateKey)) {
+      return;
+    }
+
+    if (!selectedStartDateKey || selectedDateKeys.length > 1) {
+      setSelectedStartDateKey(dateKey);
+      setSelectedEndDateKey(dateKey);
+      return;
+    }
+
+    if (dateKey < selectedStartDateKey) {
+      setSelectedStartDateKey(dateKey);
+      setSelectedEndDateKey(selectedStartDateKey);
+      return;
+    }
+
+    setSelectedEndDateKey(dateKey);
+  };
+
+  const updateSelectedStartDate = (dateKey) => {
+    setSelectedStartDateKey(dateKey);
+    if (DATE_KEY_PATTERN.test(dateKey)) {
+      setCalendarCursor(getAvailabilityMonthCursor(dateKey));
+      if (!DATE_KEY_PATTERN.test(selectedEndDateKey)) {
+        setSelectedEndDateKey(dateKey);
+      }
+    }
+  };
+
+  const updateSelectedEndDate = (dateKey) => {
+    setSelectedEndDateKey(dateKey);
+    if (DATE_KEY_PATTERN.test(dateKey)) {
+      setCalendarCursor(getAvailabilityMonthCursor(dateKey));
+    }
+  };
+
   const saveAvailabilityOverride = async () => {
-    if (!propertyId || savingOverride || saving || !DATE_KEY_PATTERN.test(selectedDateKey)) {
+    if (!propertyId || savingOverride || saving || selectedDateKeys.length < 1) {
       return;
     }
 
@@ -1151,9 +1241,14 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
     setAvailabilityMessage("");
     const isAvailable = selectedAvailability === "available";
     const payload = buildAvailabilityOverridePayload({
-      dateKey: selectedDateKey,
+      dateKeys: selectedDateKeys,
       available: isAvailable,
     });
+    if (!payload.overrides.length) {
+      setAvailabilityError("Choose a valid date range before saving availability.");
+      setSavingOverride(false);
+      return;
+    }
 
     try {
       const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides`, {
@@ -1171,9 +1266,15 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
         throw new Error(`Could not save availability override (${response.status}).`);
       }
       const body = await response.json();
-      setAvailabilityOverrides(normalizeAvailabilityOverrideMap(body?.overrides));
+      const confirmedOverrides = normalizeAvailabilityOverrideMap(body?.overrides);
+      setAvailabilityOverrides((previous) => ({
+        ...previous,
+        ...confirmedOverrides,
+      }));
       setAvailabilityMessage(
-        `${selectedDateKey} marked ${isAvailable ? "available" : "unavailable"}. Calendar & Pricing, guest bookings, and Full Sync use this same source.`
+        `${selectedDateKeys.length} ${selectedDateKeys.length === 1 ? "date" : "dates"} marked ${
+          isAvailable ? "available" : "unavailable"
+        }. Calendar & Pricing, guest bookings, and Full Sync use this same source.`
       );
     } catch (error) {
       setAvailabilityError(error?.message || "Could not save availability override.");
@@ -1182,11 +1283,15 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
     }
   };
 
-  const selectedDateStatus = resolveAvailabilityLabel({
-    dateKey: selectedDateKey,
+  const selectedStartStatus = resolveAvailabilityLabel({
+    dateKey: selectedStartDateKey,
     availabilityOverrides,
     availabilityRanges,
   });
+  const selectedRangeLabel =
+    selectedDateKeys.length === 1
+      ? selectedStartDateKey
+      : `${selectedDateKeys[0]} to ${selectedDateKeys[selectedDateKeys.length - 1]}`;
   const unavailableOverrideDates = Object.entries(availabilityOverrides)
     .filter(([, isAvailable]) => isAvailable === false)
     .map(([dateKey]) => dateKey)
@@ -1202,21 +1307,117 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
         Listing: <strong>{listingTitle || propertyId || "Selected listing"}</strong>
       </p>
 
+      <div className={styles.availabilityCalendarPanel}>
+        <div className={styles.availabilityCalendarHeader}>
+          <button
+            type="button"
+            className={styles.availabilityMonthButton}
+            onClick={() => setCalendarCursor((current) => subMonthsUTC(current, 1))}
+            disabled={savingOverride || saving}
+            aria-label="Previous month">
+            ‹
+          </button>
+          <h4 className={styles.availabilityMonthTitle}>{formatYearMonth(calendarCursor)}</h4>
+          <button
+            type="button"
+            className={styles.availabilityMonthButton}
+            onClick={() => setCalendarCursor((current) => addMonthsUTC(current, 1))}
+            disabled={savingOverride || saving}
+            aria-label="Next month">
+            ›
+          </button>
+        </div>
+
+        <div className={styles.availabilityWeekdays} aria-hidden="true">
+          {dayNames.map((dayName) => (
+            <span key={dayName}>{dayName}</span>
+          ))}
+        </div>
+
+        <div className={styles.availabilityGrid} role="grid" aria-label="Availability calendar">
+          {monthGrid.flat().map((date) => {
+            const dateKey = utcDateToKey(date);
+            const availabilityDetails = resolveAvailabilityDetails({
+              dateKey,
+              availabilityOverrides,
+              availabilityRanges,
+              blockedDateSet,
+            });
+            const isSelected = selectedDateSet.has(dateKey);
+            const isCurrentMonth = isSameMonthUTC(date, calendarCursor);
+            const className = [
+              styles.availabilityDayButton,
+              styles[`availabilityDay${availabilityDetails.tone[0].toUpperCase()}${availabilityDetails.tone.slice(1)}`],
+              isCurrentMonth ? "" : styles.availabilityDayOutsideMonth,
+              isSelected ? styles.availabilityDaySelected : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+
+            return (
+              <button
+                key={dateKey}
+                type="button"
+                role="gridcell"
+                aria-selected={isSelected}
+                aria-label={`${dateKey}, ${availabilityDetails.label}${isSelected ? ", selected" : ""}`}
+                className={className}
+                onClick={() => selectCalendarDate(dateKey)}
+                disabled={savingOverride || saving}>
+                <span className={styles.availabilityDayNumber}>{date.getUTCDate()}</span>
+                <span className={styles.availabilityDayStatus}>{availabilityDetails.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={styles.availabilityLegend} aria-label="Availability legend">
+          <span className={styles.availabilityLegendItem}>
+            <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendAvailable}`} />
+            Available
+          </span>
+          <span className={styles.availabilityLegendItem}>
+            <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendUnavailable}`} />
+            Unavailable
+          </span>
+          <span className={styles.availabilityLegendItem}>
+            <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendOutside}`} />
+            Outside window
+          </span>
+          <span className={styles.availabilityLegendItem}>
+            <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendBlocked}`} />
+            Booked/blocked
+          </span>
+        </div>
+      </div>
+
       <div className={styles.pricingStayGrid}>
-        <label className={styles.pricingStayField} htmlFor="listing-editor-availability-date">
-          <span className={styles.pricingStayLabel}>Date</span>
+        <label className={styles.pricingStayField} htmlFor="listing-editor-availability-start-date">
+          <span className={styles.pricingStayLabel}>Start date</span>
           <input
-            id="listing-editor-availability-date"
+            id="listing-editor-availability-start-date"
             className={styles.input}
             type="date"
-            value={selectedDateKey}
-            onChange={(event) => setSelectedDateKey(event.target.value)}
+            value={selectedStartDateKey}
+            onChange={(event) => updateSelectedStartDate(event.target.value)}
+            disabled={savingOverride || saving}
+          />
+        </label>
+
+        <label className={styles.pricingStayField} htmlFor="listing-editor-availability-end-date">
+          <span className={styles.pricingStayLabel}>End date</span>
+          <input
+            id="listing-editor-availability-end-date"
+            className={styles.input}
+            type="date"
+            value={selectedEndDateKey}
+            onChange={(event) => updateSelectedEndDate(event.target.value)}
             disabled={savingOverride || saving}
           />
         </label>
 
         <label className={styles.pricingStayField} htmlFor="listing-editor-availability-status">
-          <span className={styles.pricingStayLabel}>Availability</span>
+          <span className={styles.pricingStayLabel}>Mark selected range as</span>
           <select
             id="listing-editor-availability-status"
             className={styles.pricingSelect}
@@ -1229,7 +1430,10 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
         </label>
       </div>
 
-      <p className={styles.pricingHint}>Current selected date status: {selectedDateStatus}</p>
+      <p className={styles.pricingHint}>
+        Selection: {selectedRangeLabel || "Choose dates"} ({selectedDateKeys.length}{" "}
+        {selectedDateKeys.length === 1 ? "date" : "dates"}). Start status: {selectedStartStatus}
+      </p>
       <p className={styles.pricingHint}>
         Active bookings and imported external bookings still block availability even if a date is marked available here.
       </p>
@@ -1238,7 +1442,7 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
         type="button"
         className={styles.actionButton}
         onClick={saveAvailabilityOverride}
-        disabled={savingOverride || saving || loadingOverrides || !DATE_KEY_PATTERN.test(selectedDateKey)}>
+        disabled={savingOverride || saving || loadingOverrides || selectedDateKeys.length < 1}>
         {savingOverride ? "Saving availability..." : "Save availability"}
       </button>
 
@@ -1936,6 +2140,7 @@ HostPropertyAvailabilityTab.propTypes = {
   propertyId: PropTypes.string,
   listingTitle: PropTypes.string,
   availability: availabilityShape,
+  blockedDateKeys: PropTypes.arrayOf(PropTypes.string),
   saving: PropTypes.bool.isRequired,
 };
 
@@ -2000,6 +2205,7 @@ HostPropertyTabContent.propTypes = {
   propertyId: PropTypes.string,
   listingTitle: PropTypes.string,
   availability: availabilityShape,
+  blockedDateKeys: PropTypes.arrayOf(PropTypes.string),
   ...policiesTabPropTypes,
 };
 
