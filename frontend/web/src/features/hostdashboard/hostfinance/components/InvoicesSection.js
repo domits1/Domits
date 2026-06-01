@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getInvoices } from "../services/invoiceService";
 
 const STATUS_LABEL = { finalized: "Paid", draft: "Draft" };
+const FILTER_LABEL = { all: "All", finalized: "Paid", draft: "Draft" };
 
 function formatDate(ms) {
   if (!ms) return "-";
@@ -117,7 +118,7 @@ export default function InvoicesSection() {
             className={`invoices-filter-btn${filter === f ? " active" : ""}`}
             onClick={() => setFilter(f)}
           >
-            {f === "all" ? "All" : f === "finalized" ? "Paid" : "Draft"}
+            {FILTER_LABEL[f]}
           </button>
         ))}
       </div>
