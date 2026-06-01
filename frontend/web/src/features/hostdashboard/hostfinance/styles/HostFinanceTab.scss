@@ -700,3 +700,82 @@ $color-muted: #6b7280;
     color: #991b1b;
   }
 }
+
+.invoices-section {
+  margin-top: 32px;
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+}
+
+.invoices-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.invoices-filter-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid $color-success;
+  background: transparent;
+  color: $color-success;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &.active {
+    background: $color-success;
+    color: #fff;
+  }
+
+  &:hover:not(.active) {
+    background: rgba($color-success, 0.08);
+  }
+}
+
+.invoices-loading,
+.invoices-empty {
+  color: $color-muted;
+  font-size: 0.9rem;
+}
+
+.invoices-error {
+  color: $color-danger;
+  font-size: 0.9rem;
+}
+
+.invoice-status {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  &--finalized {
+    background: rgba($color-success, 0.12);
+    color: $color-success;
+  }
+
+  &--draft {
+    background: rgba($color-pending, 0.16);
+    color: $color-pending;
+  }
+}
+
+.invoice-download-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid $color-success;
+  background: transparent;
+  color: $color-success;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-success;
+    color: #fff;
+  }
+}
