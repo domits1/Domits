@@ -794,7 +794,6 @@ export class DirectBookingWebsiteEventRepository {
       liveLinkAvailabilityRows
     );
     const publishedLiveSiteCount = fallbackSubdomainAvailabilitySummary.publishedSiteCount;
-    const reachableLiveSiteCount = fallbackSubdomainAvailabilitySummary.reachableSiteCount;
     const recentUsageCounts = buildRecentUsageCountMap(recentUsageRows);
     const publishedPriceAlignmentSummary = summarizePublishedPriceAlignment(publishedPriceRows);
     const costPerActiveSitePerMonth = calculateUsageWeightedCostPerActiveSitePerMonth({
