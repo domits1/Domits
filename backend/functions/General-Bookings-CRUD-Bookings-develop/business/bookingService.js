@@ -87,6 +87,14 @@ class BookingService {
       throw new BadRequestException("check-in and check-out must be at least 1 hour apart.");
     }
 
+    const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
+
+    await this.propertyRepository.assertBookingDatesAvailable({
+      propertyId,
+      arrivalDateMs,
+      departureDateMs,
+    });
+
     await this.reservationRepository.assertNoBookingConflict({
       propertyId,
       arrivalDateMs,
@@ -100,7 +108,6 @@ class BookingService {
     });
 
     const userEmail = authenticatedUser.email;
-    const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
     const cancellationPolicy = await this.propertyRepository.getCancellationPolicyByPropertyId(propertyId);
     const hostEmail = await this.getHostEmailById(fetchedProperty.hostId);
     const isInquiry = fetchedProperty.bookingType === "inquiry";

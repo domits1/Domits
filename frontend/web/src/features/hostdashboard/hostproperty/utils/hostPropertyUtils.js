@@ -708,6 +708,7 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
   const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
   const propertyImages = Array.isArray(data?.images) ? data.images : [];
+  const propertyAvailability = Array.isArray(data?.availability) ? data.availability : [];
   const availabilityRestrictions = Array.isArray(data?.availabilityRestrictions) ? data.availabilityRestrictions : [];
   const property = data?.property || {};
   const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
@@ -781,6 +782,7 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
     checkInDetails: normalizeCheckInDetails(checkInDetails),
     policyAvailabilitySettings: normalizePolicyAvailabilitySettings(policyAvailabilitySettings),
     pricingForm: mapPropertyPricingToState(propertyPricing, availabilityRestrictions),
+    availability: propertyAvailability,
     existingPhotos: mapPropertyImagesToState(propertyImages),
     hostProperties: mapHostProperties(hostPropertiesData, property),
   };

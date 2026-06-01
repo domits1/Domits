@@ -49,6 +49,7 @@ const buildEvidence = (overrides = {}) => ({
 const buildService = ({
   bookingType = "direct",
   reservationRepository = {},
+  propertyRepository = {},
   stripeRepository = {},
   channexEvidence = buildEvidence(),
 } = {}) => {
@@ -85,7 +86,9 @@ const buildService = ({
         title: "Demo Property",
         bookingType,
       }),
+      assertBookingDatesAvailable: jest.fn().mockResolvedValue(true),
       getCancellationPolicyByPropertyId: jest.fn().mockResolvedValue("strict"),
+      ...propertyRepository,
     },
     authManager: {
       authenticateUser: jest.fn().mockResolvedValue({
@@ -162,6 +165,39 @@ describe("BookingService Channex booking availability hooks", () => {
       }),
     });
     expect(result.channexAvailabilitySync).toEqual(buildEvidence());
+  });
+
+  test("direct booking validates host calendar availability before storing and syncing", async () => {
+    process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED = "true";
+    const { service, dependencies } = buildService();
+
+    await service.create(buildCreateEvent());
+
+    expect(dependencies.propertyRepository.assertBookingDatesAvailable).toHaveBeenCalledWith({
+      propertyId: "domits-property-1",
+      arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
+      departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
+    });
+    expect(dependencies.reservationRepository.addBookingToTable).toHaveBeenCalledTimes(1);
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
+  });
+
+  test("unavailable host calendar dates reject booking before storage or Channex sync", async () => {
+    process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED = "true";
+    const unavailableError = new Error("Selected dates are not available.");
+    unavailableError.statusCode = 409;
+    const { service, dependencies } = buildService({
+      propertyRepository: {
+        assertBookingDatesAvailable: jest.fn().mockRejectedValue(unavailableError),
+      },
+    });
+
+    await expect(service.create(buildCreateEvent())).rejects.toBe(unavailableError);
+
+    expect(dependencies.reservationRepository.assertNoBookingConflict).not.toHaveBeenCalled();
+    expect(dependencies.reservationRepository.addBookingToTable).not.toHaveBeenCalled();
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
+    expect(dependencies.sendEmailFn).not.toHaveBeenCalled();
   });
 
   test("inquiry booking does not call Channex availability bridge", async () => {
