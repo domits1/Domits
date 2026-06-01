@@ -20,6 +20,30 @@ import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationIm
 import CancellationPolicySection from "./CancellationPolicySection";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+export const normalizeBookingDateForRequest = (value) => {
+  const normalized = String(value ?? "").trim();
+  if (DATE_KEY_PATTERN.test(normalized)) {
+    return normalized;
+  }
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : normalized;
+};
+
+export const buildBookingRequestEvent = ({ propertyId, bookingDetails, userName }) => ({
+  identifiers: {
+    property_Id: propertyId,
+  },
+  general: {
+    guests: Number.parseFloat(bookingDetails.guests),
+    latePayment: false,
+    arrivalDate: normalizeBookingDateForRequest(bookingDetails.checkInDate),
+    departureDate: normalizeBookingDateForRequest(bookingDetails.checkOutDate),
+    guestName: userName,
+  },
+});
 
 const BookingOverview = () => {
   const navigate = useNavigate();
@@ -105,18 +129,7 @@ const BookingOverview = () => {
   }
 
   const createBooking = async () => {
-    const event = {
-      identifiers: {
-        property_Id: propertyId,
-      },
-      general: {
-        guests: Number.parseFloat(bookingDetails.guests),
-        latePayment: false,
-        arrivalDate: Number.parseFloat(bookingDetails.checkInDate),
-        departureDate: Number.parseFloat(bookingDetails.checkOutDate),
-        guestName: userName,
-      },
-    };
+    const event = buildBookingRequestEvent({ propertyId, bookingDetails, userName });
 
     try {
       const authToken = getAccessToken();
@@ -180,16 +193,7 @@ const BookingOverview = () => {
         setError("Missing authentication token. Try refreshing the page.");
         return;
       }
-      const event = {
-        identifiers: { property_Id: propertyId },
-        general: {
-          guests: Number.parseFloat(bookingDetails.guests),
-          latePayment: false,
-          arrivalDate: Number.parseFloat(bookingDetails.checkInDate),
-          departureDate: Number.parseFloat(bookingDetails.checkOutDate),
-          guestName: userName,
-        },
-      };
+      const event = buildBookingRequestEvent({ propertyId, bookingDetails, userName });
       const request = await fetch("https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings", {
         method: "POST",
         body: JSON.stringify(event),
