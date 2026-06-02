@@ -164,6 +164,21 @@ const buildAvailabilityOverridePayload = ({ dateKeys, available }) => ({
     .filter(Boolean),
 });
 
+const resolveAvailabilityResponseError = async (response, fallbackMessage) => {
+  try {
+    const body = await response.json();
+    if (typeof body === "string" && body.trim()) {
+      return body.trim();
+    }
+    if (typeof body?.message === "string" && body.message.trim()) {
+      return body.message.trim();
+    }
+  } catch {
+    return fallbackMessage;
+  }
+  return fallbackMessage;
+};
+
 const getAvailabilityMonthCursor = (dateKey) =>
   startOfMonthUTC(keyToUtcDate(dateKey) || new Date());
 
@@ -1165,7 +1180,9 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
           },
         });
         if (!response.ok) {
-          throw new Error(`Could not load availability overrides (${response.status}).`);
+          throw new Error(
+            await resolveAvailabilityResponseError(response, `Could not load availability overrides (${response.status}).`)
+          );
         }
         const body = await response.json();
         if (mounted) {
@@ -1263,7 +1280,9 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
         }),
       });
       if (!response.ok) {
-        throw new Error(`Could not save availability override (${response.status}).`);
+        throw new Error(
+          await resolveAvailabilityResponseError(response, `Could not save availability override (${response.status}).`)
+        );
       }
       const body = await response.json();
       const confirmedOverrides = normalizeAvailabilityOverrideMap(body?.overrides);

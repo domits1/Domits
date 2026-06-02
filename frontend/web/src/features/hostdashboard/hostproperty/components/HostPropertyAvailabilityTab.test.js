@@ -17,6 +17,12 @@ const okJsonResponse = (body) => ({
   json: async () => body,
 });
 
+const errorJsonResponse = (status, body) => ({
+  ok: false,
+  status,
+  json: async () => body,
+});
+
 const propertyResponse = ({ id, title, status = "INACTIVE" }) => ({
   property: { id, title, status },
 });
@@ -285,6 +291,33 @@ describe("HostPropertyAvailabilityTab", () => {
       overrides: [{ date: 20260610, isAvailable: true }],
     });
     expect(await screen.findByText(/1 date marked available/i)).toBeInTheDocument();
+  });
+
+  test("shows backend authorization errors when saving availability is denied", async () => {
+    globalThis.fetch
+      .mockResolvedValueOnce(okJsonResponse({ overrides: [] }))
+      .mockResolvedValueOnce(
+        errorJsonResponse(403, "You must be the owner or an active co-host of the property to access it.")
+      );
+
+    renderAvailabilityTab({
+      propertyId: "cohost-draft-listing",
+      listingTitle: "Cohost draft",
+    });
+
+    await saveAvailabilityRange({
+      startDate: "2026-06-10",
+      endDate: "2026-06-10",
+      availability: "available",
+    });
+
+    await expectCalendarOverridePatch({
+      propertyId: "cohost-draft-listing",
+      overrides: [{ date: 20260610, isAvailable: true }],
+    });
+    expect(
+      await screen.findByText("You must be the owner or an active co-host of the property to access it.")
+    ).toBeInTheDocument();
   });
 
   test("denies access safely when the host token is missing", async () => {
