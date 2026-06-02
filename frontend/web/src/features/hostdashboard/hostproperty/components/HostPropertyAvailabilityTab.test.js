@@ -4,6 +4,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { createInitialPricingForm } from "../constants";
 import { HostPropertyAvailabilityTab, HostPropertyTabContent } from "./HostPropertyTabContent";
+import { fetchPropertyAndListings } from "../services/hostPropertyApi";
+import { extractFetchedPropertyData } from "../utils/hostPropertyUtils";
 import { getAccessToken } from "../../../../services/getAccessToken";
 
 jest.mock("../../../../services/getAccessToken", () => ({
@@ -13,6 +15,14 @@ jest.mock("../../../../services/getAccessToken", () => ({
 const okJsonResponse = (body) => ({
   ok: true,
   json: async () => body,
+});
+
+const propertyResponse = ({ id, title, status = "INACTIVE" }) => ({
+  property: { id, title, status },
+});
+
+const hostListingResponse = ({ id, title, status = "INACTIVE" }) => ({
+  property: { id, title, status },
 });
 
 const renderAvailabilityTab = (props = {}) =>
@@ -172,7 +182,7 @@ describe("HostPropertyAvailabilityTab", () => {
 
     expect(
       screen.getByRole("gridcell", {
-        name: /2026-06-10, Outside listing window/i,
+        name: /2026-06-10, Outside base window/i,
       })
     ).toBeInTheDocument();
   });
@@ -254,6 +264,29 @@ describe("HostPropertyAvailabilityTab", () => {
     expect(await screen.findByText(/2 dates marked available/i)).toBeInTheDocument();
   });
 
+  test("saves an outside-window available override to the current editor listing", async () => {
+    mockOverrideLoadThenSave({
+      savedOverrides: [{ date: 20260610, isAvailable: true }],
+    });
+
+    renderAvailabilityTab({
+      propertyId: "cohost-draft-listing",
+      listingTitle: "Cohost draft",
+    });
+
+    await saveAvailabilityRange({
+      startDate: "2026-06-10",
+      endDate: "2026-06-10",
+      availability: "available",
+    });
+
+    await expectCalendarOverridePatch({
+      propertyId: "cohost-draft-listing",
+      overrides: [{ date: 20260610, isAvailable: true }],
+    });
+    expect(await screen.findByText(/1 date marked available/i)).toBeInTheDocument();
+  });
+
   test("denies access safely when the host token is missing", async () => {
     getAccessToken.mockReturnValue("");
 
@@ -261,5 +294,56 @@ describe("HostPropertyAvailabilityTab", () => {
 
     expect(await screen.findByText("Sign in again to load availability.")).toBeInTheDocument();
     expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("Listing Editor cohost availability context", () => {
+  beforeEach(() => {
+    getAccessToken.mockReturnValue("test-token");
+    globalThis.fetch = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    delete globalThis.fetch;
+  });
+
+  test("keeps owner listings selectable when the opened editor listing is managed through a cohost context", async () => {
+    globalThis.fetch
+      .mockResolvedValueOnce(okJsonResponse(propertyResponse({ id: "cohost-listing", title: "Cohost draft" })))
+      .mockResolvedValueOnce(okJsonResponse([hostListingResponse({ id: "owner-listing", title: "Owner listing" })]))
+      .mockResolvedValueOnce(okJsonResponse([hostListingResponse({ id: "cohost-listing", title: "Cohost draft" })]));
+
+    const { data, hostPropertiesData } = await fetchPropertyAndListings("cohost-listing", "managed-host-id");
+    const fetchedPropertyData = extractFetchedPropertyData(data, hostPropertiesData);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/hostDashboard/single?property=cohost-listing"),
+      expect.objectContaining({ method: "GET" })
+    );
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/hostDashboard/all"),
+      expect.objectContaining({ method: "GET" })
+    );
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/hostDashboard/byHostId?hostId=managed-host-id"),
+      expect.objectContaining({ method: "GET" })
+    );
+    expect(fetchedPropertyData.hostProperties).toEqual([
+      { id: "owner-listing", title: "Owner listing", status: "INACTIVE" },
+      { id: "cohost-listing", title: "Cohost draft", status: "INACTIVE" },
+    ]);
+  });
+
+  test("uses the currently opened listing when the managed listing is not returned in the dropdown list", () => {
+    const fetchedPropertyData = extractFetchedPropertyData(
+      propertyResponse({ id: "cohost-listing", title: "Cohost draft" }),
+      [hostListingResponse({ id: "owner-listing", title: "Owner listing" })]
+    );
+
+    expect(fetchedPropertyData.hostProperties).toEqual([
+      { id: "cohost-listing", title: "Cohost draft", status: "INACTIVE" },
+      { id: "owner-listing", title: "Owner listing", status: "INACTIVE" },
+    ]);
   });
 });

@@ -146,7 +146,7 @@ const resolveAvailabilityLabel = ({ dateKey, availabilityOverrides, availability
 
   const dateNumber = keyToDateNumber(dateKey);
   const isInBaseWindow = availabilityRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
-  return isInBaseWindow ? "Available from listing window" : "Unavailable outside listing window";
+  return isInBaseWindow ? "Available from listing window" : "Unavailable outside base window";
 };
 
 const buildAvailabilityOverridePayload = ({ dateKeys, available }) => ({
@@ -186,7 +186,7 @@ const resolveAvailabilityDetails = ({ dateKey, availabilityOverrides, availabili
   const isInBaseWindow = availabilityRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
   return isInBaseWindow
     ? { label: "Available", tone: "available" }
-    : { label: "Outside listing window", tone: "outside" };
+    : { label: "Outside base window", tone: "outside" };
 };
 
 function ToggleSwitch({ checked, onChange, disabled }) {
@@ -1382,7 +1382,7 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
           </span>
           <span className={styles.availabilityLegendItem}>
             <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendOutside}`} />
-            <span>Outside window</span>
+            <span>Outside base window</span>
           </span>
           <span className={styles.availabilityLegendItem}>
             <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendBlocked}`} />
@@ -1436,6 +1436,7 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
       </p>
       <p className={styles.pricingHint}>
         Active bookings and imported external bookings still block availability even if a date is marked available here.
+        Marking an outside-window date available saves an explicit available override.
       </p>
 
       <button
