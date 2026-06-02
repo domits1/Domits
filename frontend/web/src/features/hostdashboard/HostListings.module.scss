@@ -5,7 +5,8 @@
 }
 
 .hostListingContainer {
-  width: 100%;
+  margin: 0 auto;
+  width: 95%;
 }
 
 .listingBody {
@@ -16,13 +17,21 @@
 
 .buttonBox {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
+
+  padding: 0 18px 18px;
+  margin-top: auto;
+}
+
+.cardButtons {
+  display: flex;
+  gap: 16px;
+  padding: 0 16px 24px;
 }
 
 .greenBtn {
   color: #fff;
-  background: var(--domits-host-blue);
+  background: #1f7a1f;
   border: none;
   padding: 10px 20px;
   border-radius: 10px;
@@ -40,6 +49,26 @@
 .greenBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.secondaryBtn {
+  background: #fff;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+
+  padding: 10px 20px;
+  border-radius: 10px;
+
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.secondaryBtn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .listingsDisplay {
@@ -199,14 +228,6 @@
 }
 
 @media (max-width: 768px) {
-  .buttonBox {
-    flex-direction: column;
-  }
-
-  .greenBtn {
-    width: 100%;
-  }
-
   .listingsDisplay {
     padding: 18px;
   }
@@ -223,4 +244,60 @@
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .cardButtons {
+    flex-direction: column;
+  }
+
+  .cardButtons button {
+    width: 100%;
+  }
+}
+
+.topHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.tabsNav {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.tabBtn {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  position: relative;
+  cursor: pointer;
+
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.tabBtnActive {
+  color: #28a745;
+  font-weight: 700;
+}
+
+.tabBtnActive::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 3px;
+  background: #28a745;
+  border-radius: 3px;
 }
