@@ -1,41 +1,31 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
 
 import { getDashboardDisplayName } from "../utils/dashboardShared";
+import useEffectiveHostId from "./useEffectiveHostId";
 
 export default function useDashboardIdentity(fallbackName) {
-  const [userId, setUserId] = useState(null);
+  const { effectiveHostId, loading: hostIdLoading } = useEffectiveHostId();
   const [displayName, setDisplayName] = useState(fallbackName);
-  const [loading, setLoading] = useState(true);
+  const [nameLoading, setNameLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadUser = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser({ bypassCache: true });
-        if (!isMounted) {
-          return;
-        }
-
-        setUserId(user?.attributes?.sub || null);
+    Auth.currentAuthenticatedUser({ bypassCache: false })
+      .then((user) => {
+        if (!isMounted) return;
         setDisplayName(getDashboardDisplayName(user, fallbackName));
-        setLoading(false);
+        setNameLoading(false);
         setError(null);
-      } catch {
-        if (!isMounted) {
-          return;
-        }
-
-        setUserId(null);
+      })
+      .catch(() => {
+        if (!isMounted) return;
         setDisplayName(fallbackName);
-        setLoading(false);
+        setNameLoading(false);
         setError("Unable to load your dashboard.");
-      }
-    };
-
-    loadUser();
+      });
 
     return () => {
       isMounted = false;
@@ -43,9 +33,9 @@ export default function useDashboardIdentity(fallbackName) {
   }, [fallbackName]);
 
   return {
-    userId,
+    userId: effectiveHostId,
     displayName,
-    loading,
+    loading: hostIdLoading || nameLoading,
     error,
   };
 }

@@ -19,6 +19,8 @@ export function RefreshFunctions() {
   const [hostBalance, setHostBalance] = useState({ available: [], pending: [] });
   const [accountId, setAccountId] = useState(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [chargesEnabled, setChargesEnabled] = useState(true);
+  const [payoutsEnabled, setPayoutsEnabled] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
   const [payoutInterval, setPayoutInterval] = useState(null);
@@ -55,6 +57,8 @@ export function RefreshFunctions() {
         if (!details) return;
         setAccountId(details.accountId);
         setOnboardingComplete(details.onboardingComplete);
+        setChargesEnabled(details.chargesEnabled ?? true);
+        setPayoutsEnabled(details.payoutsEnabled ?? true);
       } catch (error) {
         console.error("Error fetching user data or Stripe status:", error);
       } finally {
@@ -141,6 +145,8 @@ export function RefreshFunctions() {
       if (!isMountedRef.current) return;
       setAccountId(details?.accountId ?? null);
       setOnboardingComplete(!!details?.onboardingComplete);
+      setChargesEnabled(details?.chargesEnabled ?? true);
+      setPayoutsEnabled(details?.payoutsEnabled ?? true);
     } catch (e) {
       console.error("silent account refresh failed:", e);
     }
@@ -289,6 +295,8 @@ export function RefreshFunctions() {
     hostBalance,
     accountId,
     onboardingComplete,
+    chargesEnabled,
+    payoutsEnabled,
     isProcessing,
     processingStep,
     payoutInterval,

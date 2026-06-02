@@ -162,6 +162,8 @@ const Accommodations = ({ searchResults }) => {
                     key={getAccommodationKey(accommodation, index)}
                     accommodation={accommodation}
                     onClick={handleClick}
+                    imageVariant="web"
+                    variant="listing"
                   />
                 );
               })

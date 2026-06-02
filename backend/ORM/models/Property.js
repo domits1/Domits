@@ -50,5 +50,15 @@ export const Property = new EntitySchema({
             },
             nullable: false
         },
+        bookingtype: {
+            type: "varchar",
+            nullable: true,
+            default: "direct",
+        },
+        cleaning_fee: {
+            type: "numeric",
+            nullable: true,
+            default: null,
+        },
     }
 })

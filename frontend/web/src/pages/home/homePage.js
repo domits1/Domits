@@ -1,44 +1,105 @@
-import { useState, useEffect, useRef, useContext } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import verifiedLogo from "../../images/icons/verify-icon.png";
-import checkMark from "../../images/icons/checkMark.png";
-import question from "../../images/icons/question.png";
-import bill from "../../images/icons/bill.png";
+import { useState, useEffect, useContext } from "react";
+import { Auth } from "aws-amplify";
+import { useNavigate } from "react-router-dom";
+import { FaShieldAlt, FaUserCheck, FaHeadset, FaAward, FaTag, FaHome, FaDollarSign } from "react-icons/fa";
 import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
-import { hostImages, reviews, categories as groups, buildHomepageLists, S3_URL } from "./store/constants";
-
+import {
+  guarantees,
+  hostImage,
+  hostSection,
+  categories as groups,
+  buildHomepageLists,
+  S3_URL
+} from "./store/constants";
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animations.js";
 import { FetchAllPropertyTypes } from "./services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import RegionCard from "./RegionCard";
+import PropTypes from "prop-types";
+import FlowContext from "../../services/FlowContext";
+import { getHostLoginPath, startHostingFlow } from "../../utils/hostFlow";
 
-const contentByLanguage = {
-  en,
-  nl,
-  de,
-  es,
+const contentByLanguage = { en, nl, de, es };
+
+const RegionBlock = ({
+  title,
+  subtitle,
+  items,
+  bg = "green",
+  slice,
+  linkBuilder,
+  footerText,
+  navigate,
+}) => {
+  return (
+    <motion.div
+      className={`region-block ${bg}`}
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+    >
+      <motion.div className="region-header" variants={fadeUp}>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
+      </motion.div>
+
+      <div className="regions-grid">
+        {(slice ? items.slice(0, slice) : items).map((item) => (
+          <RegionCard
+            key={item.name}
+            item={item}
+            link={linkBuilder ? linkBuilder(item) : "/home"}
+          />
+        ))}
+      </div>
+
+      <button className="region-footer" onClick={() => navigate("/home")}>
+        {footerText}
+      </button>
+    </motion.div>
+  );
+};
+
+RegionBlock.propTypes = {
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string.isRequired,
+  items: PropTypes.arrayOf(
+  PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    img: PropTypes.string,
+    description: PropTypes.string,
+  })
+).isRequired,
+  bg: PropTypes.string,
+  slice: PropTypes.number,
+  linkBuilder: PropTypes.func,
+  footerText: PropTypes.string.isRequired,
+  navigate: PropTypes.func.isRequired,
 };
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isBarActive, setIsBarActive] = useState(false);
-  const [isFixed, setIsFixed] = useState(false);
-  const [activePopup, setActivePopup] = useState(null);
   const [propertyLoading, setPropertyLoading] = useState(false);
   const [allAccommodations, setAllAccommodations] = useState([]);
-
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
-  const {language} = useContext(LanguageContext);
+  const { language } = useContext(LanguageContext);
+  const { setFlowState } = useContext(FlowContext);
   const homePageContent = contentByLanguage[language]?.homepage;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [group, setGroup] = useState("");
 
   const {
     countries,
@@ -52,8 +113,50 @@ const Homepage = () => {
     interests,
   } = buildHomepageLists(homePageContent);
 
-  const searchBarRef = useRef(null);
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
+  const checkAuthentication = async () => {
+    try {
+      const user = await Auth.currentAuthenticatedUser();
+
+      setIsAuthenticated(true);
+      setGroup(user.attributes["custom:group"] || "");
+    } catch {
+      setIsAuthenticated(false);
+      setGroup("");
+    }
+  };
+
+  const handleHostButtonClick = () =>
+    startHostingFlow({
+      isAuthenticated,
+      group,
+      navigate,
+      setFlowState,
+      unauthenticatedPath: getHostLoginPath(),
+    });
+
+  const getIcon = (type) => {
+    switch (type) {
+      case "price": return <FaTag />;
+      case "booking": return <FaShieldAlt />;
+      case "stay": return <FaHome />;
+      default: return null;
+    }
+  };
+
+  const getHostIcon = (type) => {
+    switch (type) {
+      case "money": return <FaDollarSign />;
+      case "shield": return <FaShieldAlt />;
+      case "home": return <FaHome />;
+      default: return null;
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -63,388 +166,230 @@ const Homepage = () => {
         if (data.lastEvaluatedKey) {
           setLastEvaluatedKeyCreatedAt(data.lastEvaluatedKey.createdAt);
           setLastEvaluatedKeyId(data.lastEvaluatedKey.id);
-        } else {
-          setLastEvaluatedKeyCreatedAt(null);
-          setLastEvaluatedKeyId(null);
         }
-        setAllAccommodations(data.properties.slice(6, 9));
+        setAllAccommodations(data.properties.slice(0, 6));
       } catch (error) {
-        console.error("Failed to load accommodations:", error);
+        console.error(error);
       } finally {
         setPropertyLoading(false);
       }
     }
-
     loadData();
   }, []);
 
-  const toggleBar = (isActive) => {
-    setIsBarActive(isActive);
-  };
-
-  const handleScroll = () => {
-    if (!searchBarRef.current) return;
-
-    const offsetTop = searchBarRef.current.offsetTop;
-    const scrollPosition = window.scrollY;
-
-    if (scrollPosition > offsetTop && !isFixed) {
-      setIsFixed(true);
-    } else if (scrollPosition <= offsetTop && isFixed) {
-      setIsFixed(false);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [isFixed]);
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const handleNextReview = () => {
-    setCurrentIndex((prev) => (prev + 1) % reviews.length);
-  };
-
-  const handlePreviousReview = () => {
-    setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
-  };
-
-  const visibleReviews = [
-    reviews[currentIndex],
-    reviews[(currentIndex + 1) % reviews.length],
-    reviews[(currentIndex + 2) % reviews.length],
-  ];
-
-  const trendingBadges = [
-    {
-      id: "bestPrice",
-      emoji: String.fromCodePoint(0x1f396, 0xfe0f),
-      title: homePageContent.features.bestPrice,
-      text: homePageContent.features.bestPriceDescription,
-    },
-    {
-      id: "bookingGuarantee",
-      emoji: String.fromCodePoint(0x2705),
-      title: homePageContent.features.bookingGuarantee,
-      text: homePageContent.features.bookingGuaranteeDescription,
-    },
-    {
-      id: "stayGuarantee",
-      emoji: String.fromCodePoint(0x1f91d),
-      title: homePageContent.features.stayGuarantee,
-      text: homePageContent.features.stayGuaranteeDescription,
-    },
-  ];
-
-  const handleClick = (e, ID) => {
-    if (!e || !e.target) {
-      console.error("Event or event target is undefined.");
-      return;
-    }
-    if (e.target.closest(".swiper-button-next") || e.target.closest(".swiper-button-prev")) {
-      e.stopPropagation();
-      return;
-    }
-    navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
-  };
-
-  const handlePopupClick = (text) => {
-    setActivePopup(activePopup === text ? null : text);
-  };
-
-  useEffect(() => {
-    if (!activePopup) return;
-
-    const handleOutsideClick = (event) => {
-      if (event.target.closest(".popup-trigger")) return;
-      setActivePopup(null);
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("touchstart", handleOutsideClick);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("touchstart", handleOutsideClick);
-    };
-  }, [activePopup]);
-
   return (
-    <>
-      <div className="homePage-container">
-        <div className="domits-homepage">
-          <div className="domits-searchContainer" style={{ "--villa-background": `url(${S3_URL}/Images/villaHomepage.webp)` }}>
-            <div className="domits-searchTextCon">
-              <h1 className="domits-searchText">{homePageContent.hero.title}</h1>
-              {homePageContent.hero.subtitle && (
-                <p className="domits-searchSubtitle">{homePageContent.hero.subtitle}</p>
-              )}
-            </div>
-            <div className="domits-searchbarCon">
-              <SearchBar
-                setSearchResults={setSearchResults}
-                setLoading={setLoading}
-                placeholderText="Search for holiday homes, boats, or campers..."
-                toggleBar={toggleBar}
-              />
-            </div>
+    <div className="homePage-container">
+      <div className="domits-homepage">
+
+        <div className="domits-searchContainer" style={{ "--villa-background": `url(${S3_URL}/Images/villaHomepage.webp)` }}>
+          <div className="domits-searchTextCon">
+            <h1 className="domits-searchText">{homePageContent.hero.title}</h1>
+            <p className="domits-searchSubtitle">{homePageContent.hero.subtitle}</p>
           </div>
-
-          <div className="domits-iconsContainer">
-            <div className="domits-iconsContainerText">
-              <div className="domits-iconTextGroup">
-                <img
-                  src={bill}
-                  // srcSet={`${bill_400} 400w, ${bill_800} 800w, ${bill_1200} 1200w`}
-                  // sizes="(max-width: 600px) 400px, (max-width: 1200px) 800px, 1200px"
-                  alt="bill"
-                  loading="lazy"
-                />
-
-                <p>{homePageContent.features.securePayments}</p>
-              </div>
-              <div className="domits-iconTextGroup">
-                <img src={verifiedLogo} alt="verified logo" loading="lazy" />
-                <p>{homePageContent.features.verifiedGuest}</p>
-              </div>
-              <div className="domits-iconTextGroup">
-                <img src={question} alt="question" loading="lazy" />
-                <p>{homePageContent.features.quickPhone}</p>
-              </div>
-              <div className="domits-iconTextGroup">
-                <img src={checkMark} alt="checkMark" loading="lazy" />
-                <p>{homePageContent.features.qualityGuarantee}</p>
-              </div>
-            </div>
+          <div className="domits-searchbarCon">
+            <SearchBar
+              setSearchResults={setSearchResults}
+              setLoading={setLoading}
+              placeholderText="Search for holiday homes, boats, or campers..."
+            />
           </div>
+        </div>
 
-          <div className="domits-popularAccommodation">
-            <div className="domits-popularAccommodationText">
-              <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
+        <motion.div
+          className="domits-iconsContainer"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
+          <div className="domits-iconsContainerText">
+            <motion.div className="domits-iconTextGroup" variants={fadeUp}>
+              <div className="icon-circle"><FaShieldAlt /></div>
+              <h4>Secure Payments</h4>
+              <p>Your transactions are protected</p>
+            </motion.div>
 
-              <div className="domits-trendingContainer">
-                {trendingBadges.map((item) => {
-                  const isOpen = activePopup === item.id;
-                  return (
-                    <button
-                      type="button"
-                      key={item.id}
-                      className={`popup-trigger${isOpen ? " is-open" : ""}`}
-                      onClick={() => handlePopupClick(item.id)}
-                      onPointerEnter={(event) => {
-                        if (event.pointerType !== "mouse") return;
-                        setActivePopup(item.id);
-                      }}
-                      onPointerLeave={(event) => {
-                        if (event.pointerType !== "mouse") return;
-                        if (activePopup === item.id) {
-                          setActivePopup(null);
-                        }
-                      }}
-                      aria-expanded={isOpen}>
-                      <span className="popup-header">
-                        <span className="popup-emoji" aria-hidden="true">
-                          {item.emoji}
-                        </span>
-                        <span className="popup-title">{item.title}</span>
-                      </span>
-                      <span className="popup-content">{item.text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="domits-accommodationGroup">
-              {propertyLoading === false ? (
-                allAccommodations.length > 0 ? (
-                  allAccommodations.map((property) => (
-                    <AccommodationCard key={property.property.id} accommodation={property} onClick={handleClick} />
-                  ))
-                ) : (
-                  <div>No trending properties available.</div>
-                )
-              ) : (
-                Array(3)
-                  .fill()
-                  .map((_, index) => <SkeletonLoader key={index} />)
-              )}
-            </div>
+            <motion.div className="domits-iconTextGroup" variants={fadeUp}>
+              <div className="icon-circle"><FaUserCheck /></div>
+              <h4>Verified Hosts</h4>
+              <p>Every property is verified</p>
+            </motion.div>
+
+            <motion.div className="domits-iconTextGroup" variants={fadeUp}>
+              <div className="icon-circle"><FaHeadset /></div>
+              <h4>Quick Support</h4>
+              <p>24/7 customer service</p>
+            </motion.div>
+
+            <motion.div className="domits-iconTextGroup" variants={fadeUp}>
+              <div className="icon-circle"><FaAward /></div>
+              <h4>Quality Guarantee</h4>
+              <p>Premium stays only</p>
+            </motion.div>
           </div>
+        </motion.div>
 
-          <div className="become-host-section">
-            <div className="become-host-content">
-              <h1 className="BH">{homePageContent.sections.becomeHost.title}</h1>
-              <ul>
-                <li>{homePageContent.sections.becomeHost.points[0]}</li>
-                <li>{homePageContent.sections.becomeHost.points[1]}</li>
-                <li>{homePageContent.sections.becomeHost.points[2]}</li>
-              </ul>
-              <button className="list-property-button" onClick={() => navigate("/landing")}>
-                {homePageContent.sections.becomeHost.button}
+        <motion.div className="domits-popularAccommodation" initial="hidden" animate="visible">
+          <motion.h3 variants={fadeUp} className="domits-subHead">
+            Trending Now
+          </motion.h3>
+
+          <div className="domits-accommodationGroup">
+            {propertyLoading ? (
+              new Array(6).fill(null).map(() => <SkeletonLoader key={crypto.randomUUID()} />)
+            ) : (
+              allAccommodations.slice(0, 3).map((property) => (
+                <motion.div 
+                  key={property.id} 
+                  variants={fadeUp}
+                >
+                  <AccommodationCard 
+                    accommodation={property}
+                    variant="homepage"
+                    onClick={(e, id) => {
+                      if (
+                        e.target.closest(".swiper-button-next") ||
+                        e.target.closest(".swiper-button-prev") 
+                      ) {
+                        e.stopPropagation();
+                        return;
+                      }
+
+                      navigate(`/listingdetails?ID=${encodeURIComponent(id)}`);
+                    }} 
+                  />
+                </motion.div>
+              ))
+            )}
+          </div>
+        </motion.div>
+
+        <div className="regions-wrapper">
+          <RegionBlock
+            title="Europe"
+            subtitle="Discover luxury stays across European destinations"
+            items={countries}
+            slice={3}
+            bg="green"
+            footerText="Explore all countries in europe →"
+            navigate={navigate}
+          />
+
+          <RegionBlock
+            title="Asia"
+            subtitle="Explore exotic Asian retreats and modern metropolises"
+            items={asiaCountries}
+            bg="light"
+            footerText="Explore all countries in Asia →"
+            navigate={navigate}
+          />
+
+          <RegionBlock
+            title="Islands in the Caribbean"
+            subtitle="Paradise awaits in these tropical havens"
+            items={caribbeanCountries}
+            bg="green"
+            footerText="Explore all countries in the caribbean →"
+            navigate={navigate}
+          />
+
+          <RegionBlock
+            title="Popular Ski Destinations"
+            subtitle="World-class slopes and cozy mountain chalets"
+            items={skiCountries}
+            slice={3}
+            bg="light"
+            footerText="Explore all popular ski destinations →"
+            navigate={navigate}
+          />
+        </div>
+
+        <RegionBlock
+          title="Favorites by Season"
+          subtitle="Perfect properties for every time of year"
+          items={seasons}
+          slice={3}
+          bg="green"
+          footerText="Explore all favorites by season →"
+          navigate={navigate}
+        />
+
+        <RegionBlock
+          title="Great Picks by Interest"
+          subtitle="Find stays that match your passions"
+          items={interests}
+          slice={3}
+          bg="light"
+          footerText="Explore all great picks by interest →"
+          navigate={navigate}
+        />
+
+        <RegionBlock
+          title="Accommodations by Group"
+          subtitle="The perfect stay for your travel party"
+          items={groups}
+          slice={3}
+          bg="green"
+          footerText="Explore all accommodations by group →"
+          navigate={navigate}
+        />
+
+        <motion.div className="guarantee-section" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <motion.h2 variants={fadeUp}>Our Guarantees, Your Peace of Mind</motion.h2>
+          <motion.p variants={fadeUp}>We stand behind every stay with our commitments to you.</motion.p>
+
+          <div className="guarantee-grid">
+            {guarantees.map((item) => (
+              <motion.div className="guarantee-card" key={item.title} variants={fadeUp}>
+                <div className="icon">{getIcon(item.icon)}</div>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div className="host-section" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <div className="host-container">
+            <motion.div className="host-left" variants={fadeUp}>
+              <h2>{hostSection.title}</h2>
+              <p>{hostSection.description}</p>
+
+              <div className="host-features">
+                {hostSection.features.map((f) => (
+                  <motion.div className="feature" key={f.title} variants={fadeUp}>
+                    <div className="icon">{getHostIcon(f.icon)}</div>
+                    <div>
+                      <h4>{f.title}</h4>
+                      <span>{f.text}</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              <button className="host-btn" onClick={handleHostButtonClick}>
+                {hostSection.button}
               </button>
-            </div>
-            <div className="host-images">
-              {hostImages.map((image, index) => (
-                <img key={index} src={image.src} alt={image.alt} className="host-image" loading="lazy" />
-              ))}
-            </div>
-          </div>
+            </motion.div>
 
-          <h1 className="Places-text">{homePageContent.destinations.europe.title}</h1>
-          <div className="countries-container">
-            {countries.map((country, index) => (
-              <div className="country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-                <p>{country.description}</p>
+            <motion.div className="host-right" variants={fadeUp}>
+              <img src={hostImage.src} alt={hostImage.alt} />
+
+              <div className="host-stats">
+                {hostSection.stats.map((s) => (
+                  <div key={s.label}>
+                    <h3>{s.value}</h3>
+                    <span>{s.label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </motion.div>
           </div>
-          <div className="small-countries-container">
-            {smallCountries.map((country, index) => (
-              <div className="country-card small-country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-                <p>{country.description}</p>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.destinations.asia.title}</h1>
-          <div className="asia-countries-container">
-            {asiaCountries.map((country, index) => (
-              <div className="country-card asia-country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-                <p>{country.description}</p>
-              </div>
-            ))}
-          </div>
-          <div className="small-asia-countries-container">
-            {smallAsiaCountries.map((country, index) => (
-              <div className="country-card small-asia-country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.destinations.caribbean.title}</h1>
-          <div className="caribbean-countries-container">
-            {caribbeanCountries.map((country, index) => (
-              <div className="country-card caribbean-country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-                <p>{country.description}</p>
-              </div>
-            ))}
-          </div>
-          <div className="small-caribbean-countries-container">
-            {smallCaribbeanCountries.map((country, index) => (
-              <div className="country-card small-caribbean-country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.destinations.ski.title}</h1>
-          <div className="ski-countries-container">
-            {skiCountries.map((country, index) => (
-              <div className="country-card ski-country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-                <p>{country.description}</p>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.filters.season.title}</h1>
-          <div className="seasons-container">
-            {seasons.map((season, index) => (
-              <div className="season-card" key={index}>
-                <Link to="/home">
-                  <img src={season.img} alt={season.name} loading="lazy" />
-                </Link>
-                <h3>{season.name}</h3>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.filters.interest.title}</h1>
-          <div className="interests-container">
-            {interests.map((interest, index) => (
-              <div className="interest-card" key={index}>
-                <Link to="/home">
-                  <img src={interest.img} alt={interest.name} loading="lazy" />
-                </Link>
-                <h3>{interest.name}</h3>
-                <p>{interest.description}</p>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.filters.groups.title}</h1>
-          <div className="groups-container">
-            {groups.map((group, index) => (
-              <div className="group-card" key={index}>
-                <Link to="/home">
-                  <img src={group.img} alt={group.name} loading="lazy" />
-                </Link>
-                <h3>{group.name}</h3>
-                <p>{group.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="review-container">
-          <button className="arrow-button" onClick={handlePreviousReview}>
-            &lt;
-          </button>
-          <div className="review-list">
-            {visibleReviews.map((review, index) => (
-              <div className="review-card" key={index}>
-                <img src={review.img} alt={review.name} className="review-profile-pic" loading="lazy" />
-                <h3>{review.name}</h3>
-                <p className="review-location">Host from The Netherlands</p>
-                <div className="review-stars">★★★★★</div>
-                <p className="review-text">{review.text}</p>
-              </div>
-            ))}
-          </div>
-          <button className="arrow-button" onClick={handleNextReview}>
-            &gt;
-          </button>
-        </div>
-        <div className="domits-communityContainer">
-          <h2 className="domits-communityHead">{homePageContent.sections.community.title}</h2>
-          <p className="domits-communityGroup">{homePageContent.sections.community.description}</p>
-          <div className="domits-communityButtons">
-            <button className="domits-hostButton">
-              <a href="/landing">{homePageContent.sections.becomeHost.title}</a>
-            </button>
-            <button className="domits-SearchButton">
-              <a href="/home">{homePageContent.sections.community.button}</a>
-            </button>
-          </div>
-        </div>
+        </motion.div>
+
       </div>
-    </>
+    </div>
   );
 };
 
-
 export default Homepage;
-
-

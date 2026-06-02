@@ -1,0 +1,154 @@
+import Database from "../ORM/index.js";
+
+import { ChannelIntegrationAccount } from "../models/unified/integrations/ChannelIntegrationAccount.js";
+
+const getPatchedValue = (patch, key, fallback) => (Object.hasOwn(patch, key) ? patch[key] : fallback);
+
+class IntegrationAccountRepository {
+  async create(row) {
+    const client = await Database.getInstance();
+    await client.createQueryBuilder().insert().into(ChannelIntegrationAccount).values(row).execute();
+    return row;
+  }
+
+  async listByUserId(userId) {
+    const client = await Database.getInstance();
+    return client
+      .getRepository(ChannelIntegrationAccount)
+      .createQueryBuilder("a")
+      .where("a.userId = :userId", { userId })
+      .orderBy("a.updatedAt", "DESC")
+      .getMany();
+  }
+
+  async listByChannel(channel) {
+    const client = await Database.getInstance();
+    return client
+      .getRepository(ChannelIntegrationAccount)
+      .createQueryBuilder("a")
+      .where("a.channel = :channel", { channel })
+      .orderBy("a.updatedAt", "DESC")
+      .getMany();
+  }
+
+  async getById(id) {
+    const client = await Database.getInstance();
+    return client.getRepository(ChannelIntegrationAccount).findOne({ where: { id } });
+  }
+
+  async findByUserIdAndChannel(userId, channel) {
+    const client = await Database.getInstance();
+
+    return client
+      .getRepository(ChannelIntegrationAccount)
+      .createQueryBuilder("a")
+      .where("a.userId = :userId", { userId })
+      .andWhere("a.channel = :channel", { channel })
+      .orderBy("a.updatedAt", "DESC")
+      .getOne();
+  }
+
+  async findByChannelAndExternalAccountId(channel, externalAccountId) {
+    const client = await Database.getInstance();
+
+    return client
+      .getRepository(ChannelIntegrationAccount)
+      .createQueryBuilder("a")
+      .where("a.channel = :channel", { channel })
+      .andWhere("a.externalAccountId = :externalAccountId", { externalAccountId })
+      .getOne();
+  }
+
+  async update(id, patch) {
+    const client = await Database.getInstance();
+
+    const existing = await this.getById(id);
+    if (!existing) return null;
+
+    const next = {
+      ...existing,
+      externalAccountId: getPatchedValue(patch, "externalAccountId", existing.externalAccountId),
+      displayName: getPatchedValue(patch, "displayName", existing.displayName),
+      status: getPatchedValue(patch, "status", existing.status),
+      credentialsRef: getPatchedValue(patch, "credentialsRef", existing.credentialsRef),
+      lastErrorCode: getPatchedValue(patch, "lastErrorCode", existing.lastErrorCode),
+      lastErrorMessage: getPatchedValue(patch, "lastErrorMessage", existing.lastErrorMessage),
+      updatedAt: Date.now(),
+    };
+
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationAccount)
+      .set({
+        externalAccountId: next.externalAccountId,
+        displayName: next.displayName,
+        status: next.status,
+        credentialsRef: next.credentialsRef,
+        lastErrorCode: next.lastErrorCode,
+        lastErrorMessage: next.lastErrorMessage,
+        updatedAt: next.updatedAt,
+      })
+      .where("id = :id", { id })
+      .execute();
+
+    return next;
+  }
+
+  async disconnect(id) {
+    const client = await Database.getInstance();
+
+    const existing = await this.getById(id);
+    if (!existing) return null;
+
+    const next = {
+      ...existing,
+      externalAccountId: null,
+      credentialsRef: null,
+      status: "DISCONNECTED",
+      updatedAt: Date.now(),
+    };
+
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationAccount)
+      .set({
+        externalAccountId: null,
+        credentialsRef: null,
+        status: "DISCONNECTED",
+        updatedAt: next.updatedAt,
+      })
+      .where("id = :id", { id })
+      .execute();
+
+    return next;
+  }
+
+  async touchSyncSuccess(id) {
+    const client = await Database.getInstance();
+    const ts = Date.now();
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationAccount)
+      .set({ lastSuccessfulSyncAt: ts, updatedAt: ts })
+      .where("id = :id", { id })
+      .execute();
+  }
+
+  async touchSyncFailure(id, errorCode, errorMessage) {
+    const client = await Database.getInstance();
+    const ts = Date.now();
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationAccount)
+      .set({
+        lastFailedSyncAt: ts,
+        lastErrorCode: errorCode ?? null,
+        lastErrorMessage: errorMessage ?? null,
+        updatedAt: ts,
+      })
+      .where("id = :id", { id })
+      .execute();
+  }
+}
+
+export default IntegrationAccountRepository;

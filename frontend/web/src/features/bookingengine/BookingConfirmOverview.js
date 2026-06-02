@@ -41,6 +41,11 @@ const BookingConfirmationOverview = () => {
     useEffect(() => {
         const fetchBookingDetails = async () => {
             const queryParams = new URLSearchParams(location.search);
+            const status = queryParams.get("status");
+            if (status === "inquiry") {
+                setLoading(false);
+                return;
+            }
             const paymentId = queryParams.get("paymentId");
             if (!paymentId) {
                 console.error("Missing Payment ID in URL");
@@ -114,6 +119,27 @@ const BookingConfirmationOverview = () => {
 
     if (loading) return <p>Loading booking details...</p>;
     if (error) return <p>{error}</p>;
+
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.get("status") === "inquiry") {
+        return (
+            <main className="PaymentOverview">
+                <div className="right-panel">
+                    <h1>Request Sent</h1>
+                    <div className="confirmInformation">
+                        <div>
+                            <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 50, color: "green" }} />
+                            <h3>Your request has been received</h3>
+                            <p>The host will review your request and get back to you. You will be notified once the host accepts or declines your request.</p>
+                        </div>
+                    </div>
+                    <button className="view-booking-button" onClick={() => navigate("/guestdashboard/messages")}>
+                        Go to Inbox
+                    </button>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="PaymentOverview">

@@ -25,8 +25,7 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const result = await response.json();
-        console.log("Automated message sent successfully via UnifiedMessaging:", result);
+        await response.json();
         
     } catch (error) {
         console.error("Error sending automated message:", error);
@@ -51,7 +50,6 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
             });
 
             await lambdaClient.send(command);
-            console.log("Fallback: Sent via legacy system");
         } catch (fallbackError) {
             console.error("Both UnifiedMessaging and legacy system failed:", fallbackError);
         }
@@ -59,4 +57,3 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
 };
 
 export default sendAutomatedMessage;
-

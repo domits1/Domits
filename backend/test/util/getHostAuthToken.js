@@ -3,12 +3,18 @@ import {
   AdminInitiateAuthCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
+const TEST_HOST_TOKEN = "TEST_HOST_TOKEN";
+
 let cachedHostToken = null;
 let hostTokenExpiresAt = 0;
 let hostTokenRequest = null;
 
 // The hardcoded credentials below are for testing purposes only.
 export async function getHostAuthToken() {
+  if (process.env.TEST === "true") {
+    return TEST_HOST_TOKEN;
+  }
+
   const now = Date.now();
   if (cachedHostToken && now < hostTokenExpiresAt) {
     return cachedHostToken;

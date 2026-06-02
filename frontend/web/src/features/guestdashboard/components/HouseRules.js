@@ -11,7 +11,7 @@ const buildRuleKey = (() => {
   };
 })();
 
-function HouseRules({ rules, cancellationPolicy }) {
+function HouseRules({ rules = [] }) {
   const ruleCounts = new Map();
 
   return (
@@ -32,29 +32,16 @@ function HouseRules({ rules, cancellationPolicy }) {
           </div>
         )}
       </div>
-
-      {cancellationPolicy ? (
-        <div className="policyBlock">
-          <h3>Cancellation Policy</h3>
-          <span className="policyTag">{cancellationPolicy.type}</span>
-          <span>{cancellationPolicy.description}</span>
-        </div>
-      ) : null}
     </div>
   );
 }
 
 HouseRules.propTypes = {
   rules: PropTypes.arrayOf(PropTypes.string),
-  cancellationPolicy: PropTypes.shape({
-    type: PropTypes.string,
-    description: PropTypes.string,
-  }),
 };
 
 HouseRules.defaultProps = {
   rules: [],
-  cancellationPolicy: null,
 };
 
 export default HouseRules;

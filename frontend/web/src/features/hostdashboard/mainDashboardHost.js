@@ -8,12 +8,21 @@ import Messages from "../../components/messages/Messages";
 import HostReports from "./HostPayments";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
-// import HostPricing from "./hostpricing/views/HostPricing";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
-import HostSettings from "./HostSettings";
+import WebsiteEditorPage from "./website/WebsiteEditorPage";
+import WebsiteKpiDashboardPage from "./website/kpis/WebsiteKpiDashboardPage";
+import HostTeam from "./HostTeam";
+import HostSettingsHub from "./hostsettings/pages/HostSettingsHub";
+import HostSettingsPersonalData from "./hostsettings/pages/HostSettingsPersonalData";
+import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
+import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
+import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
 import HostProperty from "./HostProperty";
-
+import HostIntegrations from "./HostIntegrations";
+import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
+import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
+import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -44,15 +53,13 @@ function MainDashboardHost() {
         <Routes>
           <Route index element={<HostDashboard />} />
 
-          {/* If you want onboarding fully hidden from host sidebar, keep routes but don't link to them */}
           <Route
             path="hostonboarding/*"
             element={
               <BuilderProvider>
                 <OnboardingLayout />
               </BuilderProvider>
-            }
-          >
+            }>
             <Route index element={<AccommodationTypeView />} />
 
             <Route
@@ -96,30 +103,33 @@ function MainDashboardHost() {
             <Route path="*" element={<Navigate to="." replace />} />
           </Route>
 
-          {/* ✅ Rename URL: calendar -> calendar-pricing */}
           <Route path="calendar-pricing" element={<HostCalendar />} />
-
-          {/* Optional: keep old URL working (redirect) */}
           <Route path="calendar" element={<Navigate to="../calendar-pricing" replace />} />
 
           <Route path="reservations" element={<HostReservations />} />
           <Route path="messages" element={<Messages dashboardType="host" />} />
+          <Route path="integrations-marketplace" element={<HostIntegrations />} />
+          <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />
+          <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
           <Route path="revenues" element={<HostReports />} />
 
-          {/* ✅ Rename URL: housekeeping -> tasks */}
           <Route path="tasks" element={<HostPropertyCare />} />
-
-          {/* Optional: keep old URL working (redirect) */}
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
 
           <Route path="finance" element={<HostFinanceTab />} />
-
-          {/* <Route path="pricing" element={<HostPricing />} /> */}
-
+          <Route path="pricelabs" element={<HostPriceLabs />} />
           <Route path="listings" element={<HostListings />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
+          <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
+          <Route path="website/:propertyId" element={<WebsiteEditorPage />} />
+          <Route path="website-kpis" element={<Navigate to="../website/kpis" replace />} />
           <Route path="property" element={<HostProperty />} />
-          <Route path="settings" element={<HostSettings />} />
+          <Route path="settings" element={<HostSettingsHub />} />
+          <Route path="settings/personal-data" element={<HostSettingsPersonalData />} />
+          <Route path="settings/team" element={<HostTeam />} />
+          <Route path="settings/company" element={<HostSettingsCompany />} />
+          <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
+          <Route path="settings/compliance" element={<HostSettingsCompliance />} />
 
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>

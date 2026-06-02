@@ -1,19 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import "../../styles/sass/features/guestdashboard/guestReservationDetail.scss";
 import "../../styles/sass/features/guestdashboard/mainDashboardGuest.scss";
 
 import PropertyCard from "./components/PropertyCard";
 import CheckInInstructions from "./components/CheckInInstructions";
 import HouseRules from "./components/HouseRules";
+import CancellationPolicySection, { resolveGuestCancellationPolicy } from "./components/CancellationPolicySection";
 import PaymentSummary from "./components/PaymentSummary";
 import BookingDetails from "./components/BookingDetails";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader";
 import useDashboardIdentity from "../../hooks/useDashboardIdentity";
-import {
-  getGuestBookingPropertyDetails,
-  getGuestBookings,
-} from "./services/bookingAPI";
+import { cancelGuestBooking, getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
 import {
   formatFamilyLabel,
   getArrivalDate,
@@ -22,16 +22,15 @@ import {
   getBookingTotal,
   getDepartureDate,
   getPaidBookings,
+  normalizeGuestBookingsResponse,
   getPropertyId,
   getReservationNumber,
   normalizeStayStatus,
   parseFamilyString,
 } from "./utils/guestDashboardUtils";
 import { normalizeImageUrl, placeholderImage } from "./utils/image";
-import {
-  resolveAccommodationImageUrl,
-  resolvePrimaryAccommodationImageUrl,
-} from "../../utils/accommodationImage";
+import { resolveAccommodationImageUrl, resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
+import { getActiveCancellationPolicyId } from "../../utils/policyDisplayUtils.js";
 import { isValidDate, startOfDay } from "../../utils/dashboardShared";
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
@@ -69,7 +68,10 @@ const formatRuleLabel = (ruleEntry) => {
 
   const segments = ruleName.split("/").map((segment) => {
     const cleanedSegment = segment.replace("Allowed", "");
-    return cleanedSegment.split(/(?=[A-Z])/).join(" ").trim();
+    return cleanedSegment
+      .split(/(?=[A-Z])/)
+      .join(" ")
+      .trim();
   });
   const attributes = segments.join(" and ");
   const isAllowed = Boolean(ruleEntry?.value);
@@ -98,13 +100,9 @@ const matchesReservationRoute = (booking, reservationId) => {
     return false;
   }
 
-  return [
-    getBookingId(booking),
-    booking?.paymentid,
-    booking?.paymentId,
-    booking?.id,
-    booking?.ID,
-  ].some((candidate) => String(candidate || "").trim() === normalizedReservationId);
+  return [getBookingId(booking), booking?.paymentid, booking?.paymentId, booking?.id, booking?.ID].some(
+    (candidate) => String(candidate || "").trim() === normalizedReservationId
+  );
 };
 
 const buildAddressLabel = (location, fallbackLocationLabel) => {
@@ -149,9 +147,7 @@ const resolveGuestCount = ({ numericGuestCount, familyGuestCount, guestName }) =
 
 const buildGuestDetails = (booking) => {
   const guestName = String(booking?.guestname || booking?.guestName || "").trim();
-  const familyCounts = parseFamilyString(
-    booking?.family || booking?.guestsDetails || booking?.guestDetails || ""
-  );
+  const familyCounts = parseFamilyString(booking?.family || booking?.guestsDetails || booking?.guestDetails || "");
   const familyGuestCount = familyCounts.adults + familyCounts.kids;
   const numericGuestCount = Number(booking?.guests);
   const guests = resolveGuestCount({
@@ -218,7 +214,101 @@ const resolveStayNights = ({ arrivalDate, departureDate }) => {
 
 const buildRuleLabels = (propertyDetails) => {
   const rules = Array.isArray(propertyDetails?.rules) ? propertyDetails.rules : [];
-  return rules.map((ruleEntry) => formatRuleLabel(ruleEntry)).filter(Boolean);
+  return rules
+    .filter((ruleEntry) => !String(ruleEntry?.rule || "").startsWith("CancellationPolicy:"))
+    .map((ruleEntry) => formatRuleLabel(ruleEntry))
+    .filter(Boolean);
+};
+
+const resolveReservationCancellationPolicy = ({ booking, propertyDetails }) => {
+  const snapshotPolicy =
+    booking?.cancellation_policy ||
+    booking?.cancellationPolicy ||
+    propertyDetails?.reservation?.cancellation_policy ||
+    propertyDetails?.reservation?.cancellationPolicy ||
+    "";
+
+  if (snapshotPolicy) {
+    return resolveGuestCancellationPolicy(snapshotPolicy);
+  }
+
+  const fallbackPolicyId = getActiveCancellationPolicyId(propertyDetails?.rules || []);
+  return fallbackPolicyId ? resolveGuestCancellationPolicy(fallbackPolicyId) : null;
+};
+
+function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm }) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (!dialog) {
+      return;
+    }
+
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    }
+
+    if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  const handleCancel = (event) => {
+    if (isSubmitting) {
+      event.preventDefault();
+      return;
+    }
+
+    onClose();
+  };
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="cancelBookingModal"
+      aria-labelledby="cancel-booking-title"
+      aria-describedby="cancel-booking-description"
+      onCancel={handleCancel}>
+      <h2 id="cancel-booking-title">Cancel booking?</h2>
+      <p id="cancel-booking-description">
+        Are you sure you want to cancel this booking? Your host will be notified and this action will update your
+        reservation status.
+      </p>
+
+      {error && (
+        <p className="cancelBookingModalError" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="cancelBookingModalActions">
+        <button type="button" className="secondaryBtn modalActionBtn" onClick={onClose} disabled={isSubmitting}>
+          Keep booking
+        </button>
+        <button type="button" className="dangerBtn modalActionBtn" onClick={onConfirm} disabled={isSubmitting}>
+          {isSubmitting ? "Cancelling..." : "Yes, cancel booking"}
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
+CancelBookingModal.propTypes = {
+  error: PropTypes.string,
+  isOpen: PropTypes.bool.isRequired,
+  isSubmitting: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
+
+CancelBookingModal.defaultProps = {
+  error: "",
 };
 
 const buildReservationContent = ({
@@ -226,6 +316,7 @@ const buildReservationContent = ({
   pageError,
   reservation,
   handleMessageHost,
+  handleOpenCancelBooking,
 }) => {
   if (isPageLoading) {
     return (
@@ -245,12 +336,22 @@ const buildReservationContent = ({
   }
 
   if (reservation) {
+    const isCancelledReservation = normalizeStayStatus(reservation.stay.status) === "Cancelled";
+
     return (
       <>
         <div className="reservationHeader">
           <h1 className="reservationTitle">{reservation.property.title}</h1>
-          <span className="confirmed reservationStatus">{reservation.stay.status}</span>
+          <span className={`reservationStatus ${isCancelledReservation ? "cancelled" : "confirmed"}`}>
+            {isCancelledReservation ? "Cancelled" : reservation.stay.status}
+          </span>
         </div>
+
+        {isCancelledReservation && (
+          <output className="reservationCancelledBanner">
+            This reservation has been cancelled.
+          </output>
+        )}
 
         <div className="reservationPage">
           <div className="reservationLeft">
@@ -267,22 +368,27 @@ const buildReservationContent = ({
               reservationId={reservation.stay.reservationId}
             />
 
-            <CheckInInstructions
-              address={reservation.property.address}
-              instructions={reservation.instructions}
-            />
+            <CheckInInstructions address={reservation.property.address} instructions={reservation.instructions} />
           </div>
 
           <div className="reservationRight">
-            <HouseRules rules={reservation.rules} cancellationPolicy={null} />
+            <CancellationPolicySection policy={reservation.cancellationPolicy} />
+
+            <HouseRules rules={reservation.rules} />
+
+            {normalizeStayStatus(reservation.stay.status) !== "Cancelled" && (
+              <div className="card cancelBookingCard">
+                <h3>Cancel reservation</h3>
+                <p>Review the cancellation policy above before cancelling this booking.</p>
+                <button type="button" className="dangerOutlineBtn" onClick={handleOpenCancelBooking}>
+                  Cancel Booking
+                </button>
+              </div>
+            )}
 
             <div className="card helpCard">
               <h3>Need help?</h3>
-              <button
-                type="button"
-                className="primaryBtn"
-                onClick={handleMessageHost}
-              >
+              <button type="button" className="primaryBtn" onClick={handleMessageHost}>
                 Message host
               </button>
             </div>
@@ -293,10 +399,7 @@ const buildReservationContent = ({
               cleaningFee={reservation.pricing.cleaningFee}
             />
 
-            <BookingDetails
-              reservationId={reservation.stay.reservationId}
-              bookedDate={reservation.stay.bookedDate}
-            />
+            <BookingDetails reservationId={reservation.stay.reservationId} bookedDate={reservation.stay.bookedDate} />
           </div>
         </div>
       </>
@@ -333,6 +436,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
   });
   const total = getBookingTotal(booking);
   const roomRateRaw = Number(pricing?.roomRate ?? pricing?.roomrate);
+  const bookingId = getBookingId(booking);
   const nightlyRate = resolveNightlyRate({
     roomRateRaw,
     total,
@@ -350,17 +454,17 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
         resolvePrimaryAccommodationImageUrl(images, "thumb") ||
         resolveAccommodationImageUrl(booking?.images?.[0], "thumb") ||
         resolveAccommodationImageUrl(booking?.property?.images?.[0], "thumb") ||
-        normalizeImageUrl(
-          booking?.propertyImage || booking?.image || booking?.property?.coverImage || null
-        ) ||
+        normalizeImageUrl(booking?.propertyImage || booking?.image || booking?.property?.coverImage || null) ||
         placeholderImage,
     },
     host: {
-      id: property?.hostId || property?.hostID || host?.id || host?.userId || booking?.hostid || booking?.hostId || null,
+      id:
+        property?.hostId || property?.hostID || host?.id || host?.userId || booking?.hostid || booking?.hostId || null,
       name: host?.givenName || host?.name || host?.fullName || booking?.hostname || booking?.hostName || "Host",
       image: host?.profileImage || host?.image || null,
     },
     stay: {
+      bookingId,
       reservationId: getReservationNumber(booking),
       status: normalizeStayStatus(booking?.status),
       bookedDate: formatDisplayDate(bookedDate),
@@ -376,6 +480,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
       nights,
       cleaningFee,
     },
+    cancellationPolicy: resolveReservationCancellationPolicy({ booking, propertyDetails }),
     rules: buildRuleLabels(propertyDetails),
     instructions: [],
   };
@@ -387,16 +492,12 @@ function ReservationDetails() {
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const {
-    userId: guestId,
-    loading: identityLoading,
-    error: identityError,
-  } = useDashboardIdentity("Guest");
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelBookingLoading, setCancelBookingLoading] = useState(false);
+  const [cancelBookingError, setCancelBookingError] = useState("");
+  const { userId: guestId, loading: identityLoading, error: identityError } = useDashboardIdentity("Guest");
 
-  const reservationRouteId = useMemo(
-    () => extractReservationIdFromPath(location.pathname),
-    [location.pathname]
-  );
+  const reservationRouteId = useMemo(() => extractReservationIdFromPath(location.pathname), [location.pathname]);
 
   useEffect(() => {
     let isMounted = true;
@@ -421,9 +522,8 @@ function ReservationDetails() {
           return;
         }
 
-        const booking = getPaidBookings(bookingData).find((entry) =>
-          matchesReservationRoute(entry, reservationRouteId)
-        );
+        const allBookings = normalizeGuestBookingsResponse(bookingData);
+        const booking = allBookings.find((entry) => matchesReservationRoute(entry, reservationRouteId));
 
         if (!booking) {
           throw new Error("Reservation not found.");
@@ -434,9 +534,14 @@ function ReservationDetails() {
           throw new Error("Reservation is missing a valid booking id.");
         }
 
-        const propertyDetails = await getGuestBookingPropertyDetails(bookingId);
-        if (!isMounted) {
-          return;
+        let propertyDetails = null;
+        try {
+          propertyDetails = await getGuestBookingPropertyDetails(bookingId);
+          if (!isMounted) {
+            return;
+          }
+        } catch (propertyDetailsError) {
+          console.warn("Falling back to booking-only reservation details:", propertyDetailsError);
         }
 
         setReservation(buildReservationViewModel({ booking, propertyDetails }));
@@ -490,11 +595,58 @@ function ReservationDetails() {
     navigate("/guestdashboard/messages");
   };
 
+  const handleOpenCancelBooking = () => {
+    setCancelBookingError("");
+    setIsCancelModalOpen(true);
+  };
+
+  const handleCloseCancelBooking = () => {
+    if (cancelBookingLoading) {
+      return;
+    }
+
+    setCancelBookingError("");
+    setIsCancelModalOpen(false);
+  };
+
+  const handleConfirmCancelBooking = async () => {
+    const bookingId = reservation?.stay?.bookingId;
+
+    if (!bookingId) {
+      setCancelBookingError("This reservation is missing a booking id.");
+      return;
+    }
+
+    setCancelBookingLoading(true);
+    setCancelBookingError("");
+
+    try {
+      const updatedBooking = await cancelGuestBooking(bookingId);
+      setIsCancelModalOpen(false);
+
+      if (updatedBooking) {
+        const updatedStatus = normalizeStayStatus(updatedBooking.status);
+        setReservation((prev) => {
+          if (!prev) return prev;
+          return { ...prev, stay: { ...prev.stay, status: updatedStatus } };
+        });
+      }
+
+      toast.success("Reservation cancelled.");
+    } catch (cancelError) {
+      console.error("Failed to cancel booking:", cancelError);
+      setCancelBookingError("Could not cancel this booking. Please try again.");
+    } finally {
+      setCancelBookingLoading(false);
+    }
+  };
+
   const reservationContent = buildReservationContent({
     isPageLoading,
     pageError,
     reservation,
     handleMessageHost,
+    handleOpenCancelBooking,
   });
 
   return (
@@ -506,6 +658,14 @@ function ReservationDetails() {
 
         {reservationContent}
       </div>
+
+      <CancelBookingModal
+        error={cancelBookingError}
+        isOpen={isCancelModalOpen}
+        isSubmitting={cancelBookingLoading}
+        onClose={handleCloseCancelBooking}
+        onConfirm={handleConfirmCancelBooking}
+      />
     </main>
   );
 }

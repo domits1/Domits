@@ -25,7 +25,18 @@ Description:
 ## Refactoring
 Refactors following files, but didn't change the code. This is to avoid reviewing old logic.
 - src/features/example.xx
--
+
+## Evidence
+- [ ] Screenshots or screen recording added for UI changes
+- [ ] Before/after images added when relevant
+- [ ] Images clearly show the implemented change
+- [ ] Image quality is readable (no cropped or blurry evidence)
+
+## Responsiveness
+- [ ] UI checked on mobile
+- [ ] UI checked on tablet
+- [ ] UI checked on desktop
+- [ ] No broken layout, overflow, or hidden content on tested screen sizes
 
 ## Npm Packages
 - [ ] NPM Packages installed

@@ -89,8 +89,16 @@ import NavigationIcon from "@mui/icons-material/Navigation";
 import SevereColdIcon from "@mui/icons-material/SevereCold";
 import ChairAltIcon from "@mui/icons-material/ChairAlt";
 import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTouristTaxes";
+import {
+  parseCancellationPolicy,
+  parseHouseRules,
+  parsePropertyRules,
+  parseSafetyFeatures,
+  parseCheckInOut,
+  PolicySection,
+} from "../../utils/policyDisplayUtils.js";
 
-    const ListingDetails = () => {
+const ListingDetails = () => {
   const navigate = useNavigate();
   const { search } = useLocation();
   const searchParams = new URLSearchParams(search);
@@ -360,8 +368,6 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
       }
       return orderA - orderB;
     });
-
-    console.log("Sorted categories:", sortedCategories);
 
     return (
       <div className="modal-overlay" onClick={onClose}>
@@ -871,7 +877,7 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
       mergedRanges.push(currentRange);
       return mergedRanges;
     };
-  
+
     if (accommodation?.DateRanges) {
       const mergedRanges = mergeDateRanges(accommodation.DateRanges);
       setAccommodation((prev) => ({
@@ -972,19 +978,40 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
               </div>
               <div>
                 <hr className="pageDividerr" />
-                <h3 className="houseRulesTitle">House rules</h3>
-                <p className="houseRulesDetails">
-                  {accommodation.AllowParties ? "Parties Allowed" : "No Parties"} •{" "}
-                  {accommodation.AllowPets ? "Pets Allowed" : "No Pets"} •{" "}
-                  {accommodation.AllowSmoking ? "Smoking Allowed" : "No Smoking"}
-                </p>
-                <div className="checkInCheckOut">
-                  <div className="checkIn">
-                    Check-in From: {accommodation.CheckIn?.From} To: {accommodation.CheckIn?.Til}
-                  </div>
-                  <div className="checkOut">
-                    Check-out From: {accommodation.CheckOut?.From} To: {accommodation.CheckOut?.Til}
-                  </div>
+                <div>
+                  {(() => {
+                    const rules = accommodation.Rules || [];
+                    const checkInData = accommodation.CheckIn || {};
+                    const cancellation = parseCancellationPolicy(rules);
+                    const houseRules = parseHouseRules(rules, accommodation);
+                    const propertyRules = parsePropertyRules(rules, accommodation);
+                    const safetyFeatures = parseSafetyFeatures(rules, accommodation);
+                    const checkInOut = parseCheckInOut(checkInData);
+                    return (
+                      <>
+                        {cancellation && (
+                          <PolicySection
+                            title="Cancellation Policy"
+                            items={[cancellation.summary, ...cancellation.details]}
+                            expandable={true}
+                          />
+                        )}
+                        <PolicySection title="House Rules" items={houseRules} />
+                        <PolicySection title="Property Rules" items={propertyRules} />
+                        <PolicySection title="Safety & Property" items={safetyFeatures} />
+                        <div className="checkInCheckOut">
+                          <div className="checkIn">
+                            Check-in: {checkInOut.checkInFrom}
+                            {checkInOut.lateCheckIn && ` to ${checkInOut.checkInTill}`}
+                          </div>
+                          <div className="checkOut">
+                            Check-out: {checkInOut.checkOutFrom}
+                            {checkInOut.lateCheckOut && ` to ${checkInOut.checkOutTill}`}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 

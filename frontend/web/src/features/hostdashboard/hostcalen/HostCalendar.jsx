@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import "./HostCalendar.scss";
+import PriceLabsConnect from "../hostpricelabs/components/PriceLabsConnect";
+import PriceLabsStatusCard from "../hostpricelabs/components/PriceLabsStatusCard";
 
 import Toolbar from "./components/Toolbar";
 import CalendarGrid from "./components/CalendarGrid";
@@ -8,6 +10,7 @@ import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
 import CalendarLinkCard from "./components/Sidebar/CalendarLinkCard";
+import DynamicPricingCard from "./components/Sidebar/DynamicPricingCard";
 import PricingSettingsCard from "./components/Sidebar/PricingSettingsCard";
 import AvailabilitySettingsCard from "./components/Sidebar/AvailabilitySettingsCard";
 import CalendarSyncCard from "./components/Sidebar/CalendarSyncCard";
@@ -28,6 +31,7 @@ import { useCalendarPropertyDetails } from "./hooks/useCalendarPropertyDetails";
 import { useCalendarSelection } from "./hooks/useCalendarSelection";
 import { useCalendarSync } from "./hooks/useCalendarSync";
 import { usePricingSettings } from "./hooks/usePricingSettings";
+import { usePriceLabs } from "../hostpricelabs/hooks/usePriceLabs";
 import { uploadICalToS3 } from "../../../utils/iCalFormatHost";
 import { getCognitoUserId } from "../../../services/getAccessToken";
 
@@ -39,6 +43,22 @@ const availabilityWindowOptionShape = PropTypes.shape({
 const selectedAvailabilityStatsShape = PropTypes.shape({
   total: PropTypes.number.isRequired,
   allAvailable: PropTypes.bool.isRequired,
+});
+
+const selectionRestrictionsFormShape = PropTypes.shape({
+  stopSell: PropTypes.string.isRequired,
+  closedToArrival: PropTypes.string.isRequired,
+  closedToDeparture: PropTypes.string.isRequired,
+  minStay: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  maxStay: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+});
+
+const selectionRestrictionMixedFieldsShape = PropTypes.shape({
+  stopSell: PropTypes.bool.isRequired,
+  closedToArrival: PropTypes.bool.isRequired,
+  closedToDeparture: PropTypes.bool.isRequired,
+  minStay: PropTypes.bool.isRequired,
+  maxStay: PropTypes.bool.isRequired,
 });
 
 const normalizedPricingSettingsFormShape = PropTypes.shape({
@@ -149,6 +169,13 @@ const buildPropertyIcalExportEvents = ({
 function HostCalendarSidebar({
   isSidebarLoading,
   sidebarLoadingMessage,
+  priceLabsConnected,
+  priceLabsStatus,
+  priceLabsConnect,
+  priceLabsDisconnect,
+  priceLabsSyncAll,
+  priceOverrides,
+  onApplyPriceLabsPrice,
   selectedDateKeys,
   selectedAvailabilityStats,
   handleToggleAvailability,
@@ -157,6 +184,12 @@ function HostCalendarSidebar({
   selectionPriceDirty,
   canSaveSelectionPrice,
   handleSaveSelectionPrice,
+  selectionRestrictionsForm,
+  selectionRestrictionMixedFields,
+  selectionRestrictionsDirty,
+  canSaveSelectionRestrictions,
+  handleSelectionRestrictionChange,
+  handleSaveSelectionRestrictions,
   sidebarMode,
   normalizedPricingSettingsForm,
   pricingSnapshot,
@@ -214,16 +247,31 @@ function HostCalendarSidebar({
 
   if (selectedDateKeys.length > 0) {
     return (
-      <SelectionCard
-        selectedCount={selectedAvailabilityStats.total}
-        allSelectedAvailable={selectedAvailabilityStats.allAvailable}
-        onToggleAvailability={handleToggleAvailability}
-        priceInputValue={selectionPriceInput}
-        onPriceInputChange={handleSelectionPriceChange}
-        showSavePrice={selectionPriceDirty}
-        canSavePrice={canSaveSelectionPrice}
-        onSavePrice={handleSaveSelectionPrice}
-      />
+      <>
+        <SelectionCard
+          selectedCount={selectedAvailabilityStats.total}
+          allSelectedAvailable={selectedAvailabilityStats.allAvailable}
+          onToggleAvailability={handleToggleAvailability}
+          priceInputValue={selectionPriceInput}
+          onPriceInputChange={handleSelectionPriceChange}
+          showSavePrice={selectionPriceDirty}
+          canSavePrice={canSaveSelectionPrice}
+          onSavePrice={handleSaveSelectionPrice}
+          restrictionForm={selectionRestrictionsForm}
+          restrictionMixedFields={selectionRestrictionMixedFields}
+          onRestrictionFieldChange={handleSelectionRestrictionChange}
+          showSaveRestrictions={selectionRestrictionsDirty}
+          canSaveRestrictions={canSaveSelectionRestrictions}
+          onSaveRestrictions={handleSaveSelectionRestrictions}
+        />
+        <DynamicPricingCard
+          isConnected={priceLabsConnected}
+          selectedDateKeys={selectedDateKeys}
+          priceOverrides={priceOverrides}
+          onApplyPrice={onApplyPriceLabsPrice}
+          onOpenSettings={() => setSidebarMode("pricelabs")}
+        />
+      </>
     );
   }
 
@@ -332,6 +380,25 @@ function HostCalendarSidebar({
     );
   }
 
+  if (sidebarMode === "pricelabs") {
+    return priceLabsConnected ? (
+      <PriceLabsStatusCard
+        status={priceLabsStatus}
+        onSync={priceLabsSyncAll}
+        onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
+        isSyncing={false}
+        isLoading={false}
+      />
+    ) : (
+      <PriceLabsConnect
+        onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
+        isLoading={false}
+        error={null}
+        successMessage={null}
+      />
+    );
+  }
+
   if (sidebarMode === "calendar-sync") {
     return (
       <CalendarSyncCard
@@ -386,6 +453,13 @@ function HostCalendarSidebar({
         onOpenSettings={() => setSidebarMode("availability-settings")}
       />
       <CalendarLinkCard connectedCount={calendarSources.length} onOpenSettings={openCalendarSync} />
+      <DynamicPricingCard
+        isConnected={priceLabsConnected}
+        selectedDateKeys={selectedDateKeys}
+        priceOverrides={priceOverrides}
+        onApplyPrice={onApplyPriceLabsPrice}
+        onOpenSettings={() => setSidebarMode("pricelabs")}
+      />
     </>
   );
 }
@@ -393,6 +467,13 @@ function HostCalendarSidebar({
 HostCalendarSidebar.propTypes = {
   isSidebarLoading: PropTypes.bool.isRequired,
   sidebarLoadingMessage: PropTypes.string.isRequired,
+  priceLabsConnected: PropTypes.bool,
+  priceLabsStatus: PropTypes.object,
+  priceLabsConnect: PropTypes.func,
+  priceLabsDisconnect: PropTypes.func,
+  priceLabsSyncAll: PropTypes.func,
+  priceOverrides: PropTypes.objectOf(PropTypes.number),
+  onApplyPriceLabsPrice: PropTypes.func,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedAvailabilityStats: selectedAvailabilityStatsShape.isRequired,
   handleToggleAvailability: PropTypes.func.isRequired,
@@ -401,6 +482,12 @@ HostCalendarSidebar.propTypes = {
   selectionPriceDirty: PropTypes.bool.isRequired,
   canSaveSelectionPrice: PropTypes.bool.isRequired,
   handleSaveSelectionPrice: PropTypes.func.isRequired,
+  selectionRestrictionsForm: selectionRestrictionsFormShape.isRequired,
+  selectionRestrictionMixedFields: selectionRestrictionMixedFieldsShape.isRequired,
+  selectionRestrictionsDirty: PropTypes.bool.isRequired,
+  canSaveSelectionRestrictions: PropTypes.bool.isRequired,
+  handleSelectionRestrictionChange: PropTypes.func.isRequired,
+  handleSaveSelectionRestrictions: PropTypes.func.isRequired,
   sidebarMode: PropTypes.string.isRequired,
   normalizedPricingSettingsForm: normalizedPricingSettingsFormShape.isRequired,
   pricingSnapshot: pricingSnapshotShape.isRequired,
@@ -528,6 +615,7 @@ export default function HostCalendar() {
 
   const {
     availabilityOverrides,
+    restrictionOverrides,
     selectedPropertyPriceOverrides,
     selectedDateKeys,
     pendingSelectionStartKey,
@@ -536,10 +624,16 @@ export default function HostCalendar() {
     selectionPriceInput,
     selectionPriceDirty,
     canSaveSelectionPrice,
+    selectionRestrictionsForm,
+    selectionRestrictionMixedFields,
+    selectionRestrictionsDirty,
+    canSaveSelectionRestrictions,
     handleDateSelect,
     handleToggleAvailability,
     handleSelectionPriceChange,
     handleSaveSelectionPrice,
+    handleSelectionRestrictionChange,
+    handleSaveSelectionRestrictions,
   } = useCalendarSelection({
     cursor,
     monthGrid,
@@ -589,6 +683,21 @@ export default function HostCalendar() {
   const next = () =>
     setCursor((currentCursor) => addMonthsUTC(currentCursor, view === "year" ? 12 : 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
+
+  const {
+    status: priceLabsStatus,
+    connect: priceLabsConnect,
+    disconnect: priceLabsDisconnect,
+    syncAll: priceLabsSyncAll,
+  } = usePriceLabs();
+  const priceLabsConnected = Boolean(priceLabsStatus?.connected);
+
+  const handleApplyPriceLabsPrice = (dateKeys, price) => {
+    // Price already saved in Property_Calendar_Override via webhook — just update local state
+    // by triggering the existing selection price save with the PriceLabs price
+    handleSelectionPriceChange(price);
+    handleSaveSelectionPrice();
+  };
 
   const openCalendarSync = () => setSidebarMode("calendar-sync");
   const handleCalendarSyncBack = () => setSidebarMode("summary");
@@ -654,6 +763,7 @@ export default function HostCalendar() {
             selectedDateKeys={selectedDateKeys}
             pendingSelectionStartKey={pendingSelectionStartKey}
             availabilityOverrides={availabilityOverrides}
+            restrictionOverrides={restrictionOverrides}
             priceOverrides={selectedPropertyPriceOverrides}
             bookedDateKeys={bookedDateKeys}
             onDateSelect={handleCalendarDateSelect}
@@ -664,6 +774,13 @@ export default function HostCalendar() {
           <HostCalendarSidebar
             isSidebarLoading={isSidebarLoading}
             sidebarLoadingMessage={sidebarLoadingMessage}
+            priceLabsConnected={priceLabsConnected}
+            priceLabsStatus={priceLabsStatus}
+            priceLabsConnect={priceLabsConnect}
+            priceLabsDisconnect={priceLabsDisconnect}
+            priceLabsSyncAll={priceLabsSyncAll}
+            priceOverrides={selectedPropertyPriceOverrides}
+            onApplyPriceLabsPrice={handleApplyPriceLabsPrice}
             selectedDateKeys={selectedDateKeys}
             selectedAvailabilityStats={selectedAvailabilityStats}
             handleToggleAvailability={handleToggleAvailability}
@@ -672,6 +789,12 @@ export default function HostCalendar() {
             selectionPriceDirty={selectionPriceDirty}
             canSaveSelectionPrice={canSaveSelectionPrice}
             handleSaveSelectionPrice={handleSaveSelectionPrice}
+            selectionRestrictionsForm={selectionRestrictionsForm}
+            selectionRestrictionMixedFields={selectionRestrictionMixedFields}
+            selectionRestrictionsDirty={selectionRestrictionsDirty}
+            canSaveSelectionRestrictions={canSaveSelectionRestrictions}
+            handleSelectionRestrictionChange={handleSelectionRestrictionChange}
+            handleSaveSelectionRestrictions={handleSaveSelectionRestrictions}
             sidebarMode={sidebarMode}
             normalizedPricingSettingsForm={normalizedPricingSettingsForm}
             pricingSnapshot={pricingSnapshot}

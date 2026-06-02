@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import styles from "../../HostProperty.module.css";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
@@ -7,6 +7,23 @@ import infoIcon from "../../../../images/icons/info.png";
 import checkIcon from "../../../../images/icons/checkPng.png";
 import crossIcon from "../../../../images/icons/cross.png";
 import { HostPropertyPlaceholderTab } from "./HostPropertyShell";
+import { getAccessToken } from "../../../../services/getAccessToken";
+import {
+  getKeyRangeInclusive,
+  keyToDateNumber,
+  keyToUtcDate,
+  normalizeAvailabilityRanges,
+  utcDateToKey,
+} from "../../hostcalen/hooks/hostCalendarHelpers";
+import {
+  addMonthsUTC,
+  dayNames,
+  formatYearMonth,
+  getMonthMatrix,
+  isSameMonthUTC,
+  startOfMonthUTC,
+  subMonthsUTC,
+} from "../../hostcalen/utils/date";
 import { usePhotoTileInteractionHandlers } from "../hooks/usePhotoTileInteractionHandlers";
 import {
   createInitialPricingForm,
@@ -14,7 +31,7 @@ import {
   MAX_PROPERTY_IMAGES,
   PHOTO_ACCEPT,
   PHOTO_CATEGORY_PLACEHOLDERS,
-  POLICY_RULE_CONFIG,
+  PROPERTY_API_BASE,
   PRICING_DISCOUNT_PERCENT_OPTIONS,
   PRICING_EARLY_BIRD_DAY_OPTIONS,
   PRICING_LAST_MINUTE_DAY_OPTIONS,
@@ -28,6 +45,8 @@ import {
   animatePhotoTileToNewPosition,
   getSelectOptionsWithCurrent,
   getStayOptionLabel,
+  getCheckInOutTimeValidationError,
+  getLateCheckInOutTimeValidationErrors,
   normalizePricingForm,
 } from "../utils/hostPropertyUtils";
 
@@ -62,11 +81,12 @@ const CANCELLATION_POLICIES = [
   },
   {
     id: "strict",
-    name: "Strict",
-    summary: "Full refund until 30 days before check-in",
+    name: "Limited",
+    summary: "Full refund until 14 days before check-in",
     rules: [
-      "At least 30 days before check-in, they will receive a 70% refund (you will keep 30% of the booking)",
-      "Less than 30 days before check-in, they will receive no refund (you will keep 100% of the booking)",
+      "At least 14 days before check-in, they will receive 100% refund (you will keep 0% of the booking)",
+      "Between 7 and 14 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
+      "Less than 7 days before check-in, they will receive no refund (you will keep 100% of the booking)",
     ],
     important: null,
   },
@@ -82,6 +102,92 @@ const CANCELLATION_POLICIES = [
     important: null,
   },
 ];
+
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const toDateKey = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+const getDefaultAvailabilityDateKey = () => toDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
+const calendarDateToKey = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return "";
+  }
+  const normalized = String(Math.trunc(numericValue));
+  if (!/^\d{8}$/.test(normalized)) {
+    return "";
+  }
+  return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}`;
+};
+
+const normalizeAvailabilityOverrideMap = (overrides) =>
+  (Array.isArray(overrides) ? overrides : []).reduce((next, override) => {
+    const dateKey = calendarDateToKey(override?.date ?? override?.calendarDate ?? override?.calendar_date);
+    if (
+      !dateKey ||
+      override?.isAvailable === undefined ||
+      override?.isAvailable === null
+    ) {
+      return next;
+    }
+    next[dateKey] = Boolean(override.isAvailable);
+    return next;
+  }, {});
+
+const resolveAvailabilityLabel = ({ dateKey, availabilityOverrides, availabilityRanges }) => {
+  if (!DATE_KEY_PATTERN.test(String(dateKey || ""))) {
+    return "Choose a date";
+  }
+  if (Object.hasOwn(availabilityOverrides, dateKey)) {
+    return availabilityOverrides[dateKey] ? "Available by override" : "Unavailable by override";
+  }
+
+  const dateNumber = keyToDateNumber(dateKey);
+  const isInBaseWindow = availabilityRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
+  return isInBaseWindow ? "Available from listing window" : "Unavailable outside listing window";
+};
+
+const buildAvailabilityOverridePayload = ({ dateKeys, available }) => ({
+  overrides: (Array.isArray(dateKeys) ? dateKeys : [])
+    .map((dateKey) => {
+      const date = keyToDateNumber(dateKey);
+      if (!date) {
+        return null;
+      }
+      return {
+        date,
+        isAvailable: available,
+      };
+    })
+    .filter(Boolean),
+});
+
+const getAvailabilityMonthCursor = (dateKey) =>
+  startOfMonthUTC(keyToUtcDate(dateKey) || new Date());
+
+const resolveAvailabilityDetails = ({ dateKey, availabilityOverrides, availabilityRanges, blockedDateSet }) => {
+  if (!DATE_KEY_PATTERN.test(String(dateKey || ""))) {
+    return { label: "Choose a date", tone: "outside" };
+  }
+
+  if (blockedDateSet.has(dateKey)) {
+    return { label: "Booked/blocked", tone: "blocked" };
+  }
+
+  if (Object.hasOwn(availabilityOverrides, dateKey)) {
+    return availabilityOverrides[dateKey]
+      ? { label: "Available override", tone: "available" }
+      : { label: "Unavailable override", tone: "unavailable" };
+  }
+
+  const dateNumber = keyToDateNumber(dateKey);
+  const isInBaseWindow = availabilityRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
+  return isInBaseWindow
+    ? { label: "Available", tone: "available" }
+    : { label: "Outside listing window", tone: "outside" };
+};
 
 function ToggleSwitch({ checked, onChange, disabled }) {
   return (
@@ -115,14 +221,21 @@ function CustomRuleRow({ rule, onToggle, onDelete }) {
   );
 }
 
-function PolicySelectField({ id, label, value, onChange, disabled, options, hint }) {
+function PolicySelectField({ id, label, value, onChange, disabled, options, hint, error }) {
   return (
     <div className={styles.checkinField}>
       <label htmlFor={id} className={styles.checkinLabel}>
         {label}
       </label>
       {hint ? <p className={styles.checkinFieldHint}>{hint}</p> : null}
-      <select id={id} className={styles.checkinSelect} value={value} onChange={onChange} disabled={disabled}>
+      <select
+        id={id}
+        className={`${styles.checkinSelect} ${error ? styles.checkinSelectError : ""}`}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}>
         {options.map((option) => {
           const optionValue = typeof option === "object" ? option.value : option;
           const optionLabel = typeof option === "object" ? option.label : option;
@@ -133,20 +246,16 @@ function PolicySelectField({ id, label, value, onChange, disabled, options, hint
           );
         })}
       </select>
+      {error ? (
+        <p id={`${id}-error`} className={styles.checkinFieldError}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-function PolicyLateTimeField({
-  id,
-  label,
-  enabled,
-  onToggle,
-  value,
-  onChange,
-  disabled,
-  options,
-}) {
+function PolicyLateTimeField({ id, label, enabled, onToggle, value, onChange, disabled, options, error }) {
   return (
     <div className={styles.checkinField}>
       <label htmlFor={id} className={styles.checkinLabel}>
@@ -157,10 +266,12 @@ function PolicyLateTimeField({
         {enabled ? (
           <select
             id={id}
-            className={styles.checkinSelectInline}
+            className={`${styles.checkinSelectInline} ${error ? styles.checkinSelectError : ""}`}
             value={value}
             onChange={onChange}
-            disabled={disabled}>
+            disabled={disabled}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? `${id}-error` : undefined}>
             {options.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -169,6 +280,11 @@ function PolicyLateTimeField({
           </select>
         ) : null}
       </div>
+      {enabled && error ? (
+        <p id={`${id}-error`} className={styles.checkinFieldError}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -245,6 +361,8 @@ function HostPropertyOverviewTab(props) {
     updateCapacityField,
     address,
     updateAddressField,
+    bookingType,
+    onBookingTypeChange,
   } = props;
   const renderCapacityCounter = ({ key, label }) => (
     <div key={key} className={styles.counterItem}>
@@ -294,6 +412,19 @@ function HostPropertyOverviewTab(props) {
         value={form.subtitle}
         onChange={(event) => updateField("subtitle", event.target.value)}
       />
+
+      <div className={styles.field}>
+        <label htmlFor="booking-type">Booking type</label>
+        <select
+          id="booking-type"
+          className={styles.input}
+          value={bookingType || "direct"}
+          onChange={(event) => onBookingTypeChange(event.target.value)}
+        >
+          <option value="direct">Book Instantly (guest pays immediately)</option>
+          <option value="inquiry">Request first (host reviews before payment)</option>
+        </select>
+      </div>
 
       <div className={styles.sectionDivider} />
 
@@ -993,21 +1124,363 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
   );
 }
 
+export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availability, blockedDateKeys = [], saving }) {
+  const defaultDateKey = getDefaultAvailabilityDateKey();
+  const [calendarCursor, setCalendarCursor] = useState(() => getAvailabilityMonthCursor(defaultDateKey));
+  const [selectedStartDateKey, setSelectedStartDateKey] = useState(defaultDateKey);
+  const [selectedEndDateKey, setSelectedEndDateKey] = useState(defaultDateKey);
+  const [selectedAvailability, setSelectedAvailability] = useState("unavailable");
+  const [availabilityOverrides, setAvailabilityOverrides] = useState({});
+  const [loadingOverrides, setLoadingOverrides] = useState(false);
+  const [savingOverride, setSavingOverride] = useState(false);
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
+  const [availabilityError, setAvailabilityError] = useState("");
+  const availabilityRanges = normalizeAvailabilityRanges(availability);
+  const blockedDateSet = new Set(Array.isArray(blockedDateKeys) ? blockedDateKeys : []);
+  const monthGrid = getMonthMatrix(calendarCursor);
+  const selectedDateKeys = getKeyRangeInclusive(selectedStartDateKey, selectedEndDateKey);
+  const selectedDateSet = new Set(selectedDateKeys);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadOverrides = async () => {
+      if (!propertyId) {
+        return;
+      }
+
+      const token = getAccessToken();
+      if (!token) {
+        setAvailabilityError("Sign in again to load availability.");
+        return;
+      }
+
+      setLoadingOverrides(true);
+      setAvailabilityError("");
+      setAvailabilityMessage("");
+      try {
+        const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides?propertyId=${encodeURIComponent(propertyId)}`, {
+          method: "GET",
+          headers: {
+            Authorization: token,
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`Could not load availability overrides (${response.status}).`);
+        }
+        const body = await response.json();
+        if (mounted) {
+          setAvailabilityOverrides(normalizeAvailabilityOverrideMap(body?.overrides));
+        }
+      } catch (error) {
+        if (mounted) {
+          setAvailabilityError(error?.message || "Could not load availability overrides.");
+        }
+      } finally {
+        if (mounted) {
+          setLoadingOverrides(false);
+        }
+      }
+    };
+
+    loadOverrides();
+    return () => {
+      mounted = false;
+    };
+  }, [propertyId]);
+
+  const selectCalendarDate = (dateKey) => {
+    if (!DATE_KEY_PATTERN.test(dateKey)) {
+      return;
+    }
+
+    if (!selectedStartDateKey || selectedDateKeys.length > 1) {
+      setSelectedStartDateKey(dateKey);
+      setSelectedEndDateKey(dateKey);
+      return;
+    }
+
+    if (dateKey < selectedStartDateKey) {
+      setSelectedStartDateKey(dateKey);
+      setSelectedEndDateKey(selectedStartDateKey);
+      return;
+    }
+
+    setSelectedEndDateKey(dateKey);
+  };
+
+  const updateSelectedStartDate = (dateKey) => {
+    setSelectedStartDateKey(dateKey);
+    if (DATE_KEY_PATTERN.test(dateKey)) {
+      setCalendarCursor(getAvailabilityMonthCursor(dateKey));
+      if (!DATE_KEY_PATTERN.test(selectedEndDateKey)) {
+        setSelectedEndDateKey(dateKey);
+      }
+    }
+  };
+
+  const updateSelectedEndDate = (dateKey) => {
+    setSelectedEndDateKey(dateKey);
+    if (DATE_KEY_PATTERN.test(dateKey)) {
+      setCalendarCursor(getAvailabilityMonthCursor(dateKey));
+    }
+  };
+
+  const saveAvailabilityOverride = async () => {
+    if (!propertyId || savingOverride || saving || selectedDateKeys.length < 1) {
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      setAvailabilityError("Sign in again to save availability.");
+      return;
+    }
+
+    setSavingOverride(true);
+    setAvailabilityError("");
+    setAvailabilityMessage("");
+    const isAvailable = selectedAvailability === "available";
+    const payload = buildAvailabilityOverridePayload({
+      dateKeys: selectedDateKeys,
+      available: isAvailable,
+    });
+    if (!payload.overrides.length) {
+      setAvailabilityError("Choose a valid date range before saving availability.");
+      setSavingOverride(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides`, {
+        method: "PATCH",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          propertyId,
+          ...payload,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`Could not save availability override (${response.status}).`);
+      }
+      const body = await response.json();
+      const confirmedOverrides = normalizeAvailabilityOverrideMap(body?.overrides);
+      setAvailabilityOverrides((previous) => ({
+        ...previous,
+        ...confirmedOverrides,
+      }));
+      setAvailabilityMessage(
+        `${selectedDateKeys.length} ${selectedDateKeys.length === 1 ? "date" : "dates"} marked ${
+          isAvailable ? "available" : "unavailable"
+        }. Calendar & Pricing, guest bookings, and Full Sync use this same source.`
+      );
+    } catch (error) {
+      setAvailabilityError(error?.message || "Could not save availability override.");
+    } finally {
+      setSavingOverride(false);
+    }
+  };
+
+  const selectedStartStatus = resolveAvailabilityLabel({
+    dateKey: selectedStartDateKey,
+    availabilityOverrides,
+    availabilityRanges,
+  });
+  const selectedRangeLabel =
+    selectedDateKeys.length === 1
+      ? selectedStartDateKey
+      : `${selectedDateKeys[0]} to ${selectedDateKeys[selectedDateKeys.length - 1]}`;
+  const unavailableOverrideDates = Object.entries(availabilityOverrides)
+    .filter(([, isAvailable]) => isAvailable === false)
+    .map(([dateKey]) => dateKey)
+    .sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
+
+  return (
+    <section className={`${styles.card} ${styles.pricingCard}`} aria-label="Listing availability editor">
+      <h3 className={styles.sectionTitle}>Availability</h3>
+      <p className={styles.pricingSubtitle}>
+        Manage per-date availability for this listing. These changes are saved to the same calendar overrides used by Calendar & Pricing, guest availability, booking validation, and Channex Full Sync.
+      </p>
+      <p className={styles.pricingSubtitle}>
+        Listing: <strong>{listingTitle || propertyId || "Selected listing"}</strong>
+      </p>
+
+      <div className={styles.availabilityCalendarPanel}>
+        <div className={styles.availabilityCalendarHeader}>
+          <button
+            type="button"
+            className={styles.availabilityMonthButton}
+            onClick={() => setCalendarCursor((current) => subMonthsUTC(current, 1))}
+            disabled={savingOverride || saving}
+            aria-label="Previous month">
+            ‹
+          </button>
+          <h4 className={styles.availabilityMonthTitle}>{formatYearMonth(calendarCursor)}</h4>
+          <button
+            type="button"
+            className={styles.availabilityMonthButton}
+            onClick={() => setCalendarCursor((current) => addMonthsUTC(current, 1))}
+            disabled={savingOverride || saving}
+            aria-label="Next month">
+            ›
+          </button>
+        </div>
+
+        <div className={styles.availabilityWeekdays} aria-hidden="true">
+          {dayNames.map((dayName) => (
+            <span key={dayName}>{dayName}</span>
+          ))}
+        </div>
+
+        <div className={styles.availabilityGrid} role="grid" aria-label="Availability calendar">
+          {monthGrid.flat().map((date) => {
+            const dateKey = utcDateToKey(date);
+            const availabilityDetails = resolveAvailabilityDetails({
+              dateKey,
+              availabilityOverrides,
+              availabilityRanges,
+              blockedDateSet,
+            });
+            const isSelected = selectedDateSet.has(dateKey);
+            const isCurrentMonth = isSameMonthUTC(date, calendarCursor);
+            const className = [
+              styles.availabilityDayButton,
+              styles[`availabilityDay${availabilityDetails.tone[0].toUpperCase()}${availabilityDetails.tone.slice(1)}`],
+              isCurrentMonth ? "" : styles.availabilityDayOutsideMonth,
+              isSelected ? styles.availabilityDaySelected : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+
+            return (
+              <button
+                key={dateKey}
+                type="button"
+                role="gridcell"
+                aria-selected={isSelected}
+                aria-label={`${dateKey}, ${availabilityDetails.label}${isSelected ? ", selected" : ""}`}
+                className={className}
+                onClick={() => selectCalendarDate(dateKey)}
+                disabled={savingOverride || saving}>
+                <span className={styles.availabilityDayNumber}>{date.getUTCDate()}</span>
+                <span className={styles.availabilityDayStatus}>{availabilityDetails.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={styles.availabilityLegend} aria-label="Availability legend">
+          <span className={styles.availabilityLegendItem}>
+            <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendAvailable}`} />
+            <span>Available</span>
+          </span>
+          <span className={styles.availabilityLegendItem}>
+            <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendUnavailable}`} />
+            <span>Unavailable</span>
+          </span>
+          <span className={styles.availabilityLegendItem}>
+            <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendOutside}`} />
+            <span>Outside window</span>
+          </span>
+          <span className={styles.availabilityLegendItem}>
+            <span className={`${styles.availabilityLegendSwatch} ${styles.availabilityLegendBlocked}`} />
+            <span>Booked/blocked</span>
+          </span>
+        </div>
+      </div>
+
+      <div className={styles.pricingStayGrid}>
+        <label className={styles.pricingStayField} htmlFor="listing-editor-availability-start-date">
+          <span className={styles.pricingStayLabel}>Start date</span>
+          <input
+            id="listing-editor-availability-start-date"
+            className={styles.input}
+            type="date"
+            value={selectedStartDateKey}
+            onChange={(event) => updateSelectedStartDate(event.target.value)}
+            disabled={savingOverride || saving}
+          />
+        </label>
+
+        <label className={styles.pricingStayField} htmlFor="listing-editor-availability-end-date">
+          <span className={styles.pricingStayLabel}>End date</span>
+          <input
+            id="listing-editor-availability-end-date"
+            className={styles.input}
+            type="date"
+            value={selectedEndDateKey}
+            onChange={(event) => updateSelectedEndDate(event.target.value)}
+            disabled={savingOverride || saving}
+          />
+        </label>
+
+        <label className={styles.pricingStayField} htmlFor="listing-editor-availability-status">
+          <span className={styles.pricingStayLabel}>Mark selected range as</span>
+          <select
+            id="listing-editor-availability-status"
+            className={styles.pricingSelect}
+            value={selectedAvailability}
+            onChange={(event) => setSelectedAvailability(event.target.value)}
+            disabled={savingOverride || saving}>
+            <option value="available">Available</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </label>
+      </div>
+
+      <p className={styles.pricingHint}>
+        Selection: {selectedRangeLabel || "Choose dates"} ({selectedDateKeys.length}{" "}
+        {selectedDateKeys.length === 1 ? "date" : "dates"}). Start status: {selectedStartStatus}
+      </p>
+      <p className={styles.pricingHint}>
+        Active bookings and imported external bookings still block availability even if a date is marked available here.
+      </p>
+
+      <button
+        type="button"
+        className={styles.actionButton}
+        onClick={saveAvailabilityOverride}
+        disabled={savingOverride || saving || loadingOverrides || selectedDateKeys.length < 1}>
+        {savingOverride ? "Saving availability..." : "Save availability"}
+      </button>
+
+      {loadingOverrides ? <p className={styles.pricingHint}>Loading availability overrides...</p> : null}
+      {availabilityMessage ? <p className={styles.pricingHint}>{availabilityMessage}</p> : null}
+      {availabilityError ? <p className={styles.errorText}>{availabilityError}</p> : null}
+
+      <section aria-label="Unavailable override dates">
+        <h4 className={styles.pricingDiscountTitle}>Unavailable override dates</h4>
+        {unavailableOverrideDates.length > 0 ? (
+          <ul>
+            {unavailableOverrideDates.slice(0, 12).map((dateKey) => (
+              <li key={dateKey}>{dateKey}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.pricingHint}>No unavailable date overrides saved yet.</p>
+        )}
+      </section>
+    </section>
+  );
+}
+
 function PolicyRuleSection({
   title,
   toggleFields,
   toggleState,
-  setToggleState,
-  customRules,
-  onToggleCustomRule,
-  onDeleteCustomRule,
-  customRuleInputVisible,
-  customRuleValue,
-  onCustomRuleChange,
-  onConfirmCustomRule,
-  onCancelCustomRule,
-  onShowCustomRuleInput,
+  onToggleChange,
   disabled,
+  customRules = [],
+  onToggleCustomRule = () => {},
+  onDeleteCustomRule = () => {},
+  customRuleInputVisible = false,
+  customRuleValue = "",
+  onCustomRuleChange = () => {},
+  onConfirmCustomRule = () => {},
+  onCancelCustomRule = () => {},
+  onShowCustomRuleInput = () => {},
 }) {
   return (
     <section className={`${styles.card} ${styles.policiesCard}`}>
@@ -1016,21 +1489,16 @@ function PolicyRuleSection({
       <div className={styles.rulesGrid}>
         {toggleFields.map((field) => (
           <RuleToggleField
-            key={field.key}
+            key={field.rule || field.key}
             label={field.label}
-            checked={Boolean(toggleState[field.key])}
-            onChange={(value) => setToggleState((previous) => ({ ...previous, [field.key]: value }))}
+            checked={Boolean(toggleState[field.rule || field.key])}
+            onChange={(value) => onToggleChange(field.rule || field.key, value)}
             disabled={disabled}
           />
         ))}
 
         {customRules.map((rule) => (
-          <CustomRuleRow
-            key={rule.id}
-            rule={rule}
-            onToggle={onToggleCustomRule}
-            onDelete={onDeleteCustomRule}
-          />
+          <CustomRuleRow key={rule.id} rule={rule} onToggle={onToggleCustomRule} onDelete={onDeleteCustomRule} />
         ))}
       </div>
 
@@ -1129,14 +1597,14 @@ const PREPARATION_TIME_OPTIONS = [
 const CHECK_IN_FALLBACK_TIME = "15:00";
 const CHECK_OUT_FALLBACK_TIME = "11:00";
 const PROPERTY_RULE_TOGGLE_FIELDS = [
-  { key: "cookingAllowed", label: "Cooking allowed" },
-  { key: "parkingAvailable", label: "Parking available" },
+  { key: "CookingAllowed", label: "Cooking allowed", rule: "CookingAllowed" },
+  { key: "ParkingAvailable", label: "Parking available", rule: "ParkingAvailable" },
 ];
 const SAFETY_RULE_TOGGLE_FIELDS = [
-  { key: "smokeDetector", label: "Smoke detector" },
-  { key: "carbonMonoxide", label: "Carbon monoxide" },
-  { key: "fireExtinguisher", label: "Fire extinguisher" },
-  { key: "firstAidKit", label: "First aid kit" },
+  { key: "SmokeDetector", label: "Smoke detector" },
+  { key: "CarbonMonoxide", label: "Carbon monoxide" },
+  { key: "FireExtinguisher", label: "Fire extinguisher" },
+  { key: "FirstAidKit", label: "First aid kit" },
 ];
 
 const resolveDistinctLateTime = (fromValue, preferredTillValue, fallbackFromValue) => {
@@ -1166,12 +1634,22 @@ export default function HostPropertyPoliciesTab(props) {
     handleDeletePropertyClick,
     saving,
   } = props;
-  const [selectedPolicy, setSelectedPolicy] = useState("flexible");
+  const [cancellationPolicy, setCancellationPolicy] = useState("flexible");
+
+  // Sync cancellation policy from policyRules
+  useEffect(() => {
+    const policyOrder = ["Strict", "Firm", "Moderate", "Flexible"];
+    for (const policyName of policyOrder) {
+      if (policyRules[`CancellationPolicy:${policyName}`]) {
+        const policyId = policyName.toLowerCase();
+        setCancellationPolicy(policyId);
+        return;
+      }
+    }
+    // No policy selected, reset to default
+    setCancellationPolicy("flexible");
+  }, [policyRules]);
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
-  const propertyRuleSection = useRuleSectionState({
-    cookingAllowed: false,
-    parkingAvailable: false,
-  });
   const safetyRuleSection = useRuleSectionState({
     smokeDetector: true,
     carbonMonoxide: true,
@@ -1180,7 +1658,11 @@ export default function HostPropertyPoliciesTab(props) {
   });
 
   const handleSelectPolicy = (id) => {
-    setSelectedPolicy(id);
+    setCancellationPolicy(id);
+    updatePolicyRule(`CancellationPolicy:${id.charAt(0).toUpperCase() + id.slice(1)}`, true);
+    CANCELLATION_POLICIES.filter((p) => p.id !== id).forEach((p) => {
+      updatePolicyRule(`CancellationPolicy:${p.id.charAt(0).toUpperCase() + p.id.slice(1)}`, false);
+    });
     setExpandedPolicy(id);
   };
 
@@ -1194,6 +1676,8 @@ export default function HostPropertyPoliciesTab(props) {
   const lateCheckOutEnabled = Boolean(
     checkInDetails?.checkOut?.till && checkInDetails?.checkOut?.till !== checkInDetails?.checkOut?.from
   );
+  const checkInOutTimeError = getCheckInOutTimeValidationError(checkInDetails);
+  const lateTimeErrors = getLateCheckInOutTimeValidationErrors(checkInDetails);
 
   const updateTimeWindow = (windowKey, fallbackValue, lateEnabled, nextValue) => {
     setCheckInDetails((previous) => {
@@ -1236,11 +1720,16 @@ export default function HostPropertyPoliciesTab(props) {
     {
       title: "Property Rules",
       toggleFields: PROPERTY_RULE_TOGGLE_FIELDS,
-      sectionState: propertyRuleSection,
+      policyRules,
+      updatePolicyRule,
+      saving,
     },
     {
       title: "Safety & Property",
       toggleFields: SAFETY_RULE_TOGGLE_FIELDS,
+      policyRules: safetyRuleSection.toggleState,
+      updatePolicyRule,
+      saving,
       sectionState: safetyRuleSection,
     },
   ];
@@ -1288,7 +1777,7 @@ export default function HostPropertyPoliciesTab(props) {
 
         <div className={styles.cancellationPolicyList}>
           {CANCELLATION_POLICIES.map((policy) => {
-            const isSelected = selectedPolicy === policy.id;
+            const isSelected = cancellationPolicy === policy.id;
             const isExpanded = expandedPolicy === policy.id;
 
             return (
@@ -1359,6 +1848,7 @@ export default function HostPropertyPoliciesTab(props) {
                 onChange={(event) => updateTimeWindow(windowKey, fallbackValue, lateEnabled, event.target.value)}
                 disabled={saving}
                 options={TIME_OPTIONS}
+                error={id === "checkin" ? checkInOutTimeError : ""}
               />
 
               <PolicyLateTimeField
@@ -1377,6 +1867,7 @@ export default function HostPropertyPoliciesTab(props) {
                 onChange={(event) => updateLateTimeWindow(windowKey, fallbackValue, true, event.target.value)}
                 disabled={saving}
                 options={TIME_OPTIONS}
+                error={id === "checkin" ? lateTimeErrors.checkIn : lateTimeErrors.checkOut}
               />
             </React.Fragment>
           ))}
@@ -1412,25 +1903,24 @@ export default function HostPropertyPoliciesTab(props) {
         </div>
       </section>
 
-      {policyRuleSections.map(({ title, toggleFields, sectionState }) => (
-        <PolicyRuleSection
-          key={title}
-          title={title}
-          toggleFields={toggleFields}
-          toggleState={sectionState.toggleState}
-          setToggleState={sectionState.setToggleState}
-          customRules={sectionState.customRules}
-          onToggleCustomRule={sectionState.toggleCustomRule}
-          onDeleteCustomRule={sectionState.deleteCustomRule}
-          customRuleInputVisible={sectionState.showRuleInput}
-          customRuleValue={sectionState.newRuleValue}
-          onCustomRuleChange={(event) => sectionState.setNewRuleValue(event.target.value)}
-          onConfirmCustomRule={sectionState.addCustomRule}
-          onCancelCustomRule={sectionState.cancelCustomRule}
-          onShowCustomRuleInput={() => sectionState.setShowRuleInput(true)}
-          disabled={saving}
-        />
-      ))}
+      {policyRuleSections.map(({ title, toggleFields, sectionState }) => {
+        const { toggleState, setToggleState, ...customRuleProps } = sectionState || {};
+
+        return (
+          <PolicyRuleSection
+            key={title}
+            title={title}
+            toggleFields={toggleFields}
+            toggleState={policyRules}
+            onToggleChange={(fieldKey, value) => {
+              updatePolicyRule(fieldKey, value);
+              if (setToggleState) setToggleState((prev) => ({ ...prev, [fieldKey]: value })); // Update local state (if exists)
+            }}
+            disabled={saving}
+            {...customRuleProps}
+          />
+        );
+      })}
 
       <p className={styles.policiesHint}>
         <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />
@@ -1467,6 +1957,8 @@ export function HostPropertyTabContent(props) {
       return <HostPropertyAmenitiesTab {...props} />;
     case "Pricing":
       return <HostPropertyPricingTab pricingForm={pricingForm} setPricingForm={setPricingForm} />;
+    case "Availability":
+      return <HostPropertyAvailabilityTab {...props} />;
     case "Policies":
       return <HostPropertyPoliciesTab {...props} />;
     default:
@@ -1539,6 +2031,8 @@ const overviewTabPropTypes = {
   updateCapacityField: PropTypes.func.isRequired,
   address: propertyAddressShape.isRequired,
   updateAddressField: PropTypes.func.isRequired,
+  bookingType: PropTypes.string,
+  onBookingTypeChange: PropTypes.func,
 };
 
 const photoTabPropTypes = {
@@ -1600,6 +2094,15 @@ const policiesTabPropTypes = {
   saving: PropTypes.bool.isRequired,
 };
 
+const availabilityShape = PropTypes.arrayOf(
+  PropTypes.shape({
+    availableStartDate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    availableEndDate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    availablestartdate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    availableenddate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  })
+);
+
 HostPropertyOverviewTab.propTypes = overviewTabPropTypes;
 
 HostPropertyPhotosTab.propTypes = photoTabPropTypes;
@@ -1633,6 +2136,14 @@ HostPropertyPricingTab.propTypes = {
   setPricingForm: PropTypes.func.isRequired,
 };
 
+HostPropertyAvailabilityTab.propTypes = {
+  propertyId: PropTypes.string,
+  listingTitle: PropTypes.string,
+  availability: availabilityShape,
+  blockedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  saving: PropTypes.bool.isRequired,
+};
+
 PolicyRuleSection.propTypes = {
   title: PropTypes.string.isRequired,
   toggleFields: PropTypes.arrayOf(
@@ -1642,28 +2153,59 @@ PolicyRuleSection.propTypes = {
     })
   ).isRequired,
   toggleState: PropTypes.objectOf(PropTypes.bool).isRequired,
-  setToggleState: PropTypes.func.isRequired,
-  customRules: PropTypes.arrayOf(customRuleShape).isRequired,
-  onToggleCustomRule: PropTypes.func.isRequired,
-  onDeleteCustomRule: PropTypes.func.isRequired,
-  customRuleInputVisible: PropTypes.bool.isRequired,
-  customRuleValue: PropTypes.string.isRequired,
-  onCustomRuleChange: PropTypes.func.isRequired,
-  onConfirmCustomRule: PropTypes.func.isRequired,
-  onCancelCustomRule: PropTypes.func.isRequired,
-  onShowCustomRuleInput: PropTypes.func.isRequired,
-  disabled: PropTypes.bool.isRequired,
+  onToggleChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  customRules: PropTypes.arrayOf(customRuleShape),
+  onToggleCustomRule: PropTypes.func,
+  onDeleteCustomRule: PropTypes.func,
+  customRuleInputVisible: PropTypes.bool,
+  customRuleValue: PropTypes.string,
+  onCustomRuleChange: PropTypes.func,
+  onConfirmCustomRule: PropTypes.func,
+  onCancelCustomRule: PropTypes.func,
+  onShowCustomRuleInput: PropTypes.func,
 };
 
 HostPropertyPoliciesTab.propTypes = policiesTabPropTypes;
 
 HostPropertyTabContent.propTypes = {
   selectedTab: PropTypes.string.isRequired,
+  checkinTime: PropTypes.string,
+  setCheckinTime: PropTypes.func,
+  checkoutTime: PropTypes.string,
+  setCheckoutTime: PropTypes.func,
+  lateCheckinEnabled: PropTypes.bool,
+  setLateCheckinEnabled: PropTypes.func,
+  lateCheckinTime: PropTypes.string,
+  setLateCheckinTime: PropTypes.func,
+  lateCheckoutEnabled: PropTypes.bool,
+  setLateCheckoutEnabled: PropTypes.func,
+  lateCheckoutTime: PropTypes.string,
+  setLateCheckoutTime: PropTypes.func,
+  houseRules: PropTypes.object,
+  setHouseRules: PropTypes.func,
+  updateHouseRule: PropTypes.func,
+  propertyRules: PropTypes.object,
+  setPropertyRules: PropTypes.func,
+  updatePropertyRule: PropTypes.func,
+  customPropertyRules: PropTypes.array,
+  setCustomPropertyRules: PropTypes.func,
+  safetyRules: PropTypes.object,
+  setSafetyRules: PropTypes.func,
+  updateSafetyRule: PropTypes.func,
+  customSafetyRules: PropTypes.array,
+  setCustomSafetyRules: PropTypes.func,
+  selectedCancellationPolicy: PropTypes.string,
+  setSelectedCancellationPolicy: PropTypes.func,
   ...overviewTabPropTypes,
   ...photoTabPropTypes,
   ...amenitiesTabPropTypes,
   pricingForm: pricingFormShape.isRequired,
   setPricingForm: PropTypes.func.isRequired,
+  propertyId: PropTypes.string,
+  listingTitle: PropTypes.string,
+  availability: availabilityShape,
+  blockedDateKeys: PropTypes.arrayOf(PropTypes.string),
   ...policiesTabPropTypes,
 };
 
@@ -1699,6 +2241,7 @@ PolicySelectField.propTypes = {
     ])
   ).isRequired,
   hint: PropTypes.string,
+  error: PropTypes.string,
 };
 
 PolicyLateTimeField.propTypes = {
@@ -1710,6 +2253,7 @@ PolicyLateTimeField.propTypes = {
   onChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  error: PropTypes.string,
 };
 
 RuleToggleField.propTypes = {
@@ -1743,4 +2287,3 @@ TextareaField.propTypes = {
   onChange: PropTypes.func.isRequired,
   rows: PropTypes.number,
 };
-

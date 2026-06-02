@@ -5,10 +5,146 @@ import { SystemManagerRepository } from "../data/repository/systemManagerReposit
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { PropertyImageRepository } from "../data/repository/propertyImageRepository.js";
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
+import { DirectBookingWebsiteDraftRepository } from "../data/repository/directBookingWebsiteDraftRepository.js";
+import { DirectBookingWebsiteEventRepository } from "../data/repository/directBookingWebsiteEventRepository.js";
+import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
+import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
 import { randomUUID } from "node:crypto";
+import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
+
+const draftResponseHeaders = {
+    ...responseHeaders,
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+};
+
+const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
+    "WEBSITE_BUILD_STARTED",
+    "WEBSITE_PREVIEW_READY",
+    "WEBSITE_BUILD_SUCCEEDED",
+    "WEBSITE_BUILD_FAILED",
+    "WEBSITE_BUILD_FLOW_STARTED",
+    "WEBSITE_BUILD_FLOW_ABANDONED",
+]);
+
+const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
+    "SITE_LCP_RECORDED",
+]);
+
+const WEBSITE_ANALYTICS_SURFACES = new Set(["preview", "live"]);
+const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
+const DIRECT_BOOKING_WEBSITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
+const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
+const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
+const DEFAULT_DIRECT_BOOKING_WEBSITE_LIVE_DOMAIN_SUFFIX = "direct.domits.com";
+
+const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
+const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const isAsciiLowercaseLetter = (value) => value >= "a" && value <= "z";
+const isAsciiDigit = (value) => value >= "0" && value <= "9";
+const isAsciiLowercaseLetterOrDigit = (value) => isAsciiLowercaseLetter(value) || isAsciiDigit(value);
+const trimRepeatedCharacterEdges = (value, character) => {
+    let startIndex = 0;
+    let endIndex = value.length;
+
+    while (startIndex < endIndex && value[startIndex] === character) {
+        startIndex += 1;
+    }
+
+    while (endIndex > startIndex && value[endIndex - 1] === character) {
+        endIndex -= 1;
+    }
+
+    return value.slice(startIndex, endIndex);
+};
+const getConfiguredEnvValue = (...envNames) => {
+    for (const envName of envNames) {
+        const configuredValue = cleanWebsiteText(process.env[envName]);
+        if (configuredValue) {
+            return configuredValue;
+        }
+    }
+
+    return "";
+};
+const getLiveSiteDomainSuffix = () => {
+    const configuredSuffix = getConfiguredEnvValue(
+        "DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX"
+    ).toLowerCase();
+    return configuredSuffix || DEFAULT_DIRECT_BOOKING_WEBSITE_LIVE_DOMAIN_SUFFIX;
+};
+const getLiveSiteRoutingStatus = () =>
+    String(
+        process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE ?? ""
+    ).trim().toLowerCase() === "true"
+        ? "ACTIVE"
+        : "PENDING";
+const slugifyWebsiteDomainLabel = (value) => {
+    const normalizedValue = cleanWebsiteText(value).normalize("NFKD").toLowerCase();
+    let sanitizedValue = "";
+    let previousCharacterWasHyphen = false;
+
+    for (const currentCharacter of normalizedValue) {
+        const isAsciiCharacter = (currentCharacter.codePointAt(0) || 0) <= 0x7f;
+        if (!isAsciiCharacter) {
+            continue;
+        }
+
+        if (isAsciiLowercaseLetterOrDigit(currentCharacter)) {
+            sanitizedValue += currentCharacter;
+            previousCharacterWasHyphen = false;
+            continue;
+        }
+
+        if (!previousCharacterWasHyphen) {
+            sanitizedValue += "-";
+            previousCharacterWasHyphen = true;
+        }
+    }
+
+    sanitizedValue = trimRepeatedCharacterEdges(sanitizedValue, "-");
+
+    return sanitizedValue || "site";
+};
+const normalizeDirectBookingWebsiteIdSuffix = (value) => {
+    let sanitizedValue = "";
+
+    for (const currentCharacter of cleanWebsiteText(value).toLowerCase()) {
+        if (isAsciiLowercaseLetterOrDigit(currentCharacter)) {
+            sanitizedValue += currentCharacter;
+        }
+    }
+
+    return sanitizedValue;
+};
+const buildLiveSiteDomainLabel = (siteName, siteId) => {
+    const slugBase = trimRepeatedCharacterEdges(slugifyWebsiteDomainLabel(siteName).slice(0, 40), "-") || "site";
+    const idSuffix = normalizeDirectBookingWebsiteIdSuffix(siteId).slice(0, 8) || "domits";
+    const combinedLabel = `${slugBase}-${idSuffix}`;
+    return trimRepeatedCharacterEdges(combinedLabel.slice(0, 63), "-");
+};
+const buildLiveSiteDomain = (siteName, siteId) =>
+    `${buildLiveSiteDomainLabel(siteName, siteId)}.${getLiveSiteDomainSuffix()}`;
+const normalizeDirectBookingWebsiteDomainInput = (value) => {
+    const normalizedValue = cleanWebsiteText(value).toLowerCase();
+    if (!normalizedValue) {
+        return "";
+    }
+
+    const withoutProtocol = normalizedValue.replace(/^https?:\/\//, "");
+    const hostSegment = withoutProtocol.split("/")[0] || "";
+    return hostSegment.split(":")[0] || "";
+};
+const getRequestHostHeaderValue = (headers = {}) =>
+    headers["x-forwarded-host"] ||
+    headers["X-Forwarded-Host"] ||
+    headers.host ||
+    headers.Host ||
+    "";
 
 export class PropertyController {
 
@@ -20,6 +156,10 @@ export class PropertyController {
         this.propertyService = new PropertyService(dynamoDbClient, systemManagerRepository);
         this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
         this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
+        this.directBookingWebsiteDraftRepository = new DirectBookingWebsiteDraftRepository(systemManagerRepository);
+        this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
+        this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
+        this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
     }
 
     // -------------------------
@@ -67,6 +207,9 @@ export class PropertyController {
             if (imageUploadMode === "presigned" && propertyId) {
                 await this.propertyDraftRepository.deleteDraft(propertyId);
             }
+
+            await new PriceLabsCalendarNotifier().notifyListingChange(userId);
+
             return {
                 statusCode: 201,
                 headers: responseHeaders,
@@ -340,7 +483,7 @@ export class PropertyController {
 
             const normalizedOverviewPayload = this.normalizeOverviewPayload(overviewPayload);
 
-            await this.authManager.authorizeOwnerRequest(accessToken, normalizedOverviewPayload.propertyId);
+            const hostId = await this.authManager.authorizeOwnerRequest(accessToken, normalizedOverviewPayload.propertyId);
             await this.propertyService.updatePropertyOverview(
                 normalizedOverviewPayload.propertyId,
                 normalizedOverviewPayload.title,
@@ -354,8 +497,11 @@ export class PropertyController {
                     checkIn: normalizedOverviewPayload.checkIn,
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
+                    bookingType: normalizedOverviewPayload.bookingType,
                 }
             );
+
+            await new PriceLabsCalendarNotifier().notifyListingChange(hostId);
 
             return {
                 statusCode: 204,
@@ -432,13 +578,15 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const hostId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.updatePropertyCalendarOverrides(
                 propertyId,
                 normalizedOverrides,
                 normalizedRange
             );
+
+            await new PriceLabsCalendarNotifier().notifyCalendarChange(hostId);
 
             return {
                 statusCode: 200,
@@ -474,6 +622,7 @@ export class PropertyController {
             checkIn: body.checkIn,
             amenities: body.amenities,
             rules: body.rules,
+            bookingType: body.bookingType,
         };
     }
 
@@ -657,6 +806,13 @@ export class PropertyController {
         return null;
     }
 
+    resolveBookingType(value) {
+        if (value === "inquiry" || value === "direct") {
+            return value;
+        }
+        return undefined;
+    }
+
     normalizeOverviewPayload(payload) {
         return {
             propertyId: payload.propertyId,
@@ -686,6 +842,7 @@ export class PropertyController {
                     ).values()
                 )
                 : undefined,
+            bookingType: this.resolveBookingType(payload.bookingType),
         };
     }
 
@@ -812,6 +969,26 @@ export class PropertyController {
                             entry.isAvailable,
                             "isAvailable"
                         );
+                        const stopSell = this.normalizeCalendarOverrideBoolean(
+                            entry.stopSell ?? entry.stop_sell,
+                            "stopSell"
+                        );
+                        const closedToArrival = this.normalizeCalendarOverrideBoolean(
+                            entry.closedToArrival ?? entry.closed_to_arrival,
+                            "closedToArrival"
+                        );
+                        const closedToDeparture = this.normalizeCalendarOverrideBoolean(
+                            entry.closedToDeparture ?? entry.closed_to_departure,
+                            "closedToDeparture"
+                        );
+                        const minStay = this.normalizeCalendarOverrideOptionalInteger(
+                            entry.minStay ?? entry.min_stay,
+                            "minStay"
+                        );
+                        const maxStay = this.normalizeCalendarOverrideOptionalInteger(
+                            entry.maxStay ?? entry.max_stay,
+                            "maxStay"
+                        );
 
                         return [
                             calendarDate,
@@ -819,6 +996,11 @@ export class PropertyController {
                                 calendarDate,
                                 isAvailable,
                                 nightlyPrice,
+                                stopSell,
+                                closedToArrival,
+                                closedToDeparture,
+                                minStay,
+                                maxStay,
                             },
                         ];
                     })
@@ -827,6 +1009,23 @@ export class PropertyController {
         );
 
         return normalizedOverrides;
+    }
+
+    normalizeCalendarOverrideOptionalInteger(value, fieldName) {
+        if (
+            value === undefined ||
+            value === null ||
+            value === "" ||
+            (typeof value === "string" && value.trim() === "")
+        ) {
+            return null;
+        }
+
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+            throw new Error(`Calendar override ${fieldName} must be a number greater than or equal to 0.`);
+        }
+        return Math.trunc(parsed);
     }
 
     normalizeCalendarOverrideBoolean(value, fieldName) {
@@ -1070,12 +1269,570 @@ export class PropertyController {
         );
     }
 
+    parseWebsiteOverridePayload(payload, fieldName) {
+        if (payload === undefined || payload === null) {
+            return {};
+        }
+
+        if (typeof payload !== "object" || Array.isArray(payload)) {
+            throw new TypeError(`${fieldName} must be a plain object.`);
+        }
+
+        return payload;
+    }
+
+    parseOptionalWebsiteOverridePayload(payload, fieldName) {
+        if (payload === undefined) {
+            return undefined;
+        }
+
+        return this.parseWebsiteOverridePayload(payload, fieldName);
+    }
+
+    parseOptionalWebsiteBuildCompletionPayload(payload) {
+        if (payload === undefined) {
+            return undefined;
+        }
+
+        if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+            throw new TypeError("buildCompletion must be a plain object.");
+        }
+
+        const attemptId = String(payload.attemptId || "").trim();
+        if (!attemptId) {
+            throw new TypeError("buildCompletion.attemptId is required.");
+        }
+
+        const flowId = String(payload.flowId || "").trim();
+        const templateKey = String(payload.templateKey || "").trim();
+        const phase = String(payload.phase || "").trim();
+        const durationMs = Number(payload.durationMs);
+
+        return {
+            attemptId,
+            flowId,
+            templateKey,
+            phase,
+            durationMs: Number.isFinite(durationMs) && durationMs > 0 ? Math.round(durationMs) : null,
+        };
+    }
+
+    parseWebsiteDeleteReasons(payload) {
+        if (payload === undefined || payload === null) {
+            return [];
+        }
+
+        if (!Array.isArray(payload)) {
+            throw new TypeError("deleteReasons must be an array.");
+        }
+
+        return [...new Set(
+            payload
+                .map((reason) => String(reason || "").trim())
+                .filter(Boolean)
+        )];
+    }
+
+    parseWebsiteAnalyticsPayload(payload) {
+        if (payload === undefined || payload === null) {
+            return {};
+        }
+
+        if (!this.isPlainObject(payload)) {
+            throw new TypeError("payload must be a plain object.");
+        }
+
+        return payload;
+    }
+
+    parseWebsiteAnalyticsDuration(payloadValue, fieldName) {
+        const parsedValue = Number(payloadValue);
+        if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+            throw new TypeError(`${fieldName} must be a positive number.`);
+        }
+
+        return Math.round(parsedValue);
+    }
+
+    normalizeWebsiteBuildAnalyticsPayload(eventType, payload) {
+        const attemptId = String(payload?.attemptId || "").trim();
+        const flowId = String(payload?.flowId || "").trim();
+        const templateKey = String(payload?.templateKey || "").trim();
+        if (eventType === "WEBSITE_BUILD_FLOW_STARTED" || eventType === "WEBSITE_BUILD_FLOW_ABANDONED") {
+            if (!flowId) {
+                throw new TypeError("payload.flowId is required for website build flow analytics.");
+            }
+
+            return {
+                flowId,
+                ...(templateKey ? { templateKey } : {}),
+            };
+        }
+
+        if (!attemptId) {
+            throw new TypeError("payload.attemptId is required for website build analytics.");
+        }
+
+        const normalizedPayload = {
+            attemptId,
+        };
+
+        if (flowId) {
+            normalizedPayload.flowId = flowId;
+        }
+
+        if (templateKey) {
+            normalizedPayload.templateKey = templateKey;
+        }
+
+        if (eventType === "WEBSITE_PREVIEW_READY" || eventType === "WEBSITE_BUILD_SUCCEEDED" || eventType === "WEBSITE_BUILD_FAILED") {
+            normalizedPayload.durationMs = this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs");
+        }
+
+        if (eventType === "WEBSITE_BUILD_FAILED") {
+            const phase = String(payload?.phase || "").trim();
+            if (phase) {
+                normalizedPayload.phase = phase;
+            }
+        }
+
+        return normalizedPayload;
+    }
+
+    normalizeWebsiteSurfaceAnalyticsPayload(payload) {
+        const surface = String(payload?.surface || "").trim().toLowerCase();
+        const viewport = String(payload?.viewport || "").trim().toLowerCase();
+
+        if (!WEBSITE_ANALYTICS_SURFACES.has(surface)) {
+            throw new TypeError("payload.surface must be 'preview' or 'live'.");
+        }
+
+        if (!WEBSITE_ANALYTICS_VIEWPORTS.has(viewport)) {
+            throw new TypeError("payload.viewport must be 'mobile', 'tablet', or 'desktop'.");
+        }
+
+        return {
+            surface,
+            viewport,
+            durationMs: this.parseWebsiteAnalyticsDuration(payload?.durationMs, "payload.durationMs"),
+        };
+    }
+
+    normalizeWebsiteAnalyticsPayload(eventType, payload) {
+        if (WEBSITE_HOST_ANALYTICS_EVENT_TYPES.has(eventType)) {
+            return this.normalizeWebsiteBuildAnalyticsPayload(eventType, payload);
+        }
+
+        if (eventType === "SITE_LCP_RECORDED") {
+            return this.normalizeWebsiteSurfaceAnalyticsPayload(payload);
+        }
+
+        throw new TypeError("Unsupported website eventType.");
+    }
+
+    normalizeDirectBookingWebsiteStatus(status) {
+        const normalizedStatus = String(status || "").trim().toUpperCase();
+        if (!DIRECT_BOOKING_WEBSITE_PUBLIC_STATUSES.has(normalizedStatus)) {
+            throw new TypeError("website site status must be DRAFT, PREVIEW, PUBLISHED, or SUSPENDED.");
+        }
+
+        return normalizedStatus;
+    }
+
+    normalizeDirectBookingWebsiteDomainStatus(status) {
+        const normalizedStatus = String(status || "").trim().toUpperCase();
+        if (!DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES.has(normalizedStatus)) {
+            throw new TypeError("website domain status must be PENDING, VERIFIED, ACTIVE, FAILED, or DISABLED.");
+        }
+
+        return normalizedStatus;
+    }
+
+    buildDirectBookingWebsiteName({ draft, propertyDetails }) {
+        const draftSiteTitle = cleanWebsiteText(draft?.publishedContentOverrides?.siteTitle);
+        if (draftSiteTitle) {
+            return draftSiteTitle;
+        }
+
+        const propertyTitle = cleanWebsiteText(propertyDetails?.property?.title);
+        if (propertyTitle) {
+            return propertyTitle;
+        }
+
+        return `Website ${String(draft?.propertyId || "").slice(0, 8)}`;
+    }
+
+    ensureDirectBookingWebsitePublishEligibility(propertyDetails) {
+        if (!propertyDetails?.property || this.isPlainObject(propertyDetails.property) === false) {
+            throw new TypeError("Listing data could not be loaded for this live site.");
+        }
+    }
+
+    buildDirectBookingWebsiteSummary(site, domains = []) {
+        if (!site) {
+            return null;
+        }
+
+        const normalizedDomains = Array.isArray(domains) ? domains : [];
+        const primaryDomain = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
+        const isReachable = site.status === "PUBLISHED" && primaryDomain?.status === "ACTIVE";
+
+        return {
+            site,
+            primaryDomain,
+            domains: normalizedDomains,
+            isReachable,
+        };
+    }
+
+    buildPublicDirectBookingWebsiteResolution(site, domain) {
+        const siteSummary = this.buildDirectBookingWebsiteSummary(site, domain ? [domain] : []);
+        if (!siteSummary?.site || !siteSummary?.primaryDomain) {
+            return null;
+        }
+
+        return {
+            siteId: siteSummary.site.id,
+            propertyId: siteSummary.site.propertyId,
+            hostId: siteSummary.site.hostId,
+            templateKey: siteSummary.site.templateKey,
+            primaryLocale: siteSummary.site.primaryLocale,
+            siteName: siteSummary.site.siteName,
+            siteStatus: siteSummary.site.status,
+            publishedAt: siteSummary.site.publishedAt,
+            isReachable: siteSummary.isReachable,
+            domain: siteSummary.primaryDomain,
+        };
+    }
+
+    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined) {
+        const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
+        if (!resolution) {
+            return null;
+        }
+
+        return {
+            resolution,
+            site: {
+                id: site.id,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                siteName: site.siteName,
+                primaryLocale: site.primaryLocale,
+                status: site.status,
+                templateKey: site.templateKey,
+                publishedAt: site.publishedAt,
+            },
+            domain,
+            propertySnapshot:
+                propertySnapshot && typeof propertySnapshot === "object"
+                    ? propertySnapshot
+                    : site.publishedPropertySnapshot || {},
+            contentOverrides: site.publishedContentOverrides || {},
+            themeOverrides: site.publishedThemeOverrides || {},
+            renderSource: "published_site",
+        };
+    }
+
+    async buildPublicPropertySnapshotForWebsiteRender(site) {
+        const publishedPropertySnapshot =
+            site?.publishedPropertySnapshot && typeof site.publishedPropertySnapshot === "object"
+                ? site.publishedPropertySnapshot
+                : {};
+        const propertyId = cleanWebsiteText(
+            site?.propertyId ||
+            publishedPropertySnapshot?.property?.id ||
+            publishedPropertySnapshot?.property?.ID ||
+            publishedPropertySnapshot?.id ||
+            publishedPropertySnapshot?.ID
+        );
+
+        if (!propertyId) {
+            return publishedPropertySnapshot;
+        }
+
+        try {
+            const calendarAvailability = await this.propertyService.getPublicCalendarAvailability(propertyId);
+            return {
+                ...publishedPropertySnapshot,
+                calendarAvailability,
+            };
+        } catch {
+            return publishedPropertySnapshot;
+        }
+    }
+
+    resolveRequestedStandaloneWebsiteDomain(event) {
+        const domainQueryValue =
+            event.queryStringParameters?.domain ||
+            event.queryStringParameters?.host ||
+            getRequestHostHeaderValue(event.headers || {});
+        return normalizeDirectBookingWebsiteDomainInput(domainQueryValue);
+    }
+
+    async resolvePublicDirectBookingWebsiteByDomain(domainInput) {
+        const normalizedDomain = normalizeDirectBookingWebsiteDomainInput(domainInput);
+        if (!normalizedDomain) {
+            throw new TypeError("Missing website domain.");
+        }
+
+        const domain = await this.directBookingWebsiteDomainRepository.getDomainByName(normalizedDomain);
+        if (!domain) {
+            return null;
+        }
+
+        const site = await this.directBookingWebsiteSiteRepository.getSiteById(domain.siteId);
+        if (!site) {
+            return null;
+        }
+
+        return { site, domain };
+    }
+
+    async getPublicRenderableDirectBookingWebsiteById(siteId) {
+        const normalizedSiteId = cleanWebsiteText(siteId);
+        if (!normalizedSiteId) {
+            throw new TypeError("Missing website siteId.");
+        }
+
+        const site = await this.directBookingWebsiteSiteRepository.getSiteById(normalizedSiteId);
+        if (!site) {
+            return null;
+        }
+
+        const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        const primaryDomain =
+            domains.find((domainEntry) => domainEntry?.isPrimary) ||
+            domains.find((domainEntry) => Boolean(domainEntry?.domain)) ||
+            null;
+
+        return {
+            site,
+            domain: primaryDomain,
+        };
+    }
+
+    isPublicDirectBookingWebsiteReachable(site, domain) {
+        return Boolean(site) && site.status === "PUBLISHED" && domain?.status === "ACTIVE";
+    }
+
+    async getDirectBookingWebsiteSummaryByPropertyId(propertyId, hostId) {
+        const site = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+        if (!site) {
+            return null;
+        }
+
+        const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        return this.buildDirectBookingWebsiteSummary(site, domains);
+    }
+
+    async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId }) {
+        const publishStartedAt = Date.now();
+        const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
+            propertyId,
+            { includeCalendarAvailability: true }
+        );
+        this.ensureDirectBookingWebsitePublishEligibility(propertyDetails);
+
+        const siteName = this.buildDirectBookingWebsiteName({
+            draft,
+            propertyDetails,
+        });
+
+        const site = await this.directBookingWebsiteSiteRepository.upsertSite({
+            propertyId,
+            hostId,
+            siteName,
+            primaryLocale: "en",
+            status: "PUBLISHED",
+            templateKey: draft.templateKey,
+            publishedPropertySnapshot: propertyDetails,
+            publishedContentOverrides: draft.publishedContentOverrides || {},
+            publishedThemeOverrides: draft.publishedThemeOverrides || {},
+            publishedAt: Date.now(),
+            suspendedAt: null,
+        });
+
+        const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(getLiveSiteRoutingStatus());
+        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const liveDomain = await this.directBookingWebsiteDomainRepository.ensureDomain({
+            siteId: site.id,
+            domain: existingLiveDomain?.domain || buildLiveSiteDomain(site.siteName, site.id),
+            domainType: DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK,
+            status: liveDomainStatus,
+            isPrimary: true,
+            verificationDetails: {
+                activationMode: "internal",
+                domainKind: "live",
+                routingConfigured: liveDomainStatus === "ACTIVE",
+                activationStatus: liveDomainStatus,
+                domainSuffix: getLiveSiteDomainSuffix(),
+            },
+        });
+
+        await this.recordStandaloneWebsiteEventSafely({
+            draftId: draft.id,
+            propertyId,
+            hostId,
+            eventType: "WEBSITE_SITE_PUBLISHED",
+            payload: {
+                templateKey: draft.templateKey,
+                siteId: site.id,
+                domain: liveDomain?.domain || "",
+                domainStatus: liveDomain?.status || liveDomainStatus,
+                durationMs: Date.now() - publishStartedAt,
+            },
+        });
+
+        return this.buildDirectBookingWebsiteSummary(site, [liveDomain]);
+    }
+
+    async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
+        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatus(site.id, "PREVIEW");
+        const liveDomain = await this.directBookingWebsiteDomainRepository.updatePrimaryLiveDomainStatus(
+            site.id,
+            "DISABLED",
+            {
+                activationMode: "internal",
+                disabledByHost: true,
+                routingConfigured: false,
+            }
+        );
+        const allDomains = liveDomain
+            ? [liveDomain]
+            : await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+
+        await this.recordStandaloneWebsiteEventSafely({
+            draftId: draft?.id || null,
+            propertyId,
+            hostId,
+            eventType: "WEBSITE_SITE_UNPUBLISHED",
+            payload: {
+                siteId: site.id,
+                domain: liveDomain?.domain || "",
+                domainStatus: liveDomain?.status || "DISABLED",
+            },
+        });
+
+        return this.buildDirectBookingWebsiteSummary(nextSite, allDomains);
+    }
+
+    isWebsiteDraftClientError(error) {
+        return (
+            error?.message?.startsWith("Missing propertyId") ||
+            error?.message?.startsWith("Missing draftId") ||
+            error?.message?.startsWith("Missing eventType") ||
+            error?.message?.startsWith("Missing templateKey") ||
+            error?.message?.includes("must be a plain object") ||
+            error?.message?.includes("deleteReasons must be an array") ||
+            error?.message?.includes("Unsupported website eventType") ||
+            error?.message?.includes("Listing data could not be loaded for this live site.") ||
+            error?.message?.includes("website site status must be") ||
+            error?.message?.includes("website domain status must be") ||
+            error?.message?.includes("payload.flowId") ||
+            error?.message?.includes("payload.attemptId") ||
+            error?.message?.includes("payload.durationMs") ||
+            error?.message?.includes("payload.surface") ||
+            error?.message?.includes("payload.viewport")
+        );
+    }
+
     badRequest(message) {
         return {
             statusCode: 400,
             headers: responseHeaders,
             body: JSON.stringify({ message }),
         };
+    }
+
+    websiteServerError(message = "We could not complete this website request. Please try again.") {
+        return {
+            statusCode: 500,
+            headers: draftResponseHeaders,
+            body: JSON.stringify({ message }),
+        };
+    }
+
+    async recordStandaloneWebsiteEventSafely(eventInput) {
+        try {
+            await this.directBookingWebsiteEventRepository.recordEvent(eventInput);
+        } catch (error) {
+            console.error("Failed to record direct booking website event.", error);
+        }
+    }
+
+    async recordPublicWebsiteAnalyticsEvent({ draftId, siteId, domain, eventType, payload }) {
+        const normalizedDraftId = cleanWebsiteText(draftId);
+        if (normalizedDraftId) {
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftById(normalizedDraftId);
+            if (!draft || draft.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website analytics target not found." }),
+                };
+            }
+
+            await this.directBookingWebsiteEventRepository.recordEvent({
+                draftId: draft.id,
+                propertyId: draft.propertyId,
+                hostId: draft.hostId,
+                eventType,
+                payload,
+            });
+
+            return null;
+        }
+
+        const normalizedSiteId = cleanWebsiteText(siteId);
+        if (normalizedSiteId) {
+            const site = await this.directBookingWebsiteSiteRepository.getSiteById(normalizedSiteId);
+            if (!site || site.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website analytics target not found." }),
+                };
+            }
+
+            await this.directBookingWebsiteEventRepository.recordEvent({
+                draftId: null,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                eventType,
+                payload: {
+                    ...payload,
+                    siteId: site.id,
+                    domain: normalizeDirectBookingWebsiteDomainInput(domain),
+                },
+            });
+
+            return null;
+        }
+
+        return this.badRequest("Missing website analytics target.");
+    }
+
+    async recordHostWebsiteAnalyticsEvent({ event, propertyId, draftId, eventType, payload }) {
+        if (!propertyId) {
+            return this.badRequest("Missing propertyId.");
+        }
+
+        const accessToken = event.headers.Authorization || event.headers.authorization;
+        const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+        await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+        const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+
+        await this.directBookingWebsiteEventRepository.recordEvent({
+            draftId: existingDraft?.id || draftId || null,
+            propertyId,
+            hostId,
+            eventType,
+            payload,
+        });
+
+        return null;
     }
 
     // -------------------------
@@ -1148,16 +1905,46 @@ export class PropertyController {
     }
 
     // -------------------------
+    // GET /property/hostDashboard/byHostId
+    // -------------------------
+    async getFullOwnedPropertiesByHostId(event) {
+        try {
+            const accessToken = event.headers.Authorization;
+            await this.authManager.getAuthorizedUser(accessToken);
+            const hostId = event.queryStringParameters?.hostId;
+            if (!hostId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("hostId query parameter is required.")
+                };
+            }
+            const properties = await this.propertyService.getFullPropertiesByHostId(hostId);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(properties)
+            };
+        } catch (error) {
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    // -------------------------
     // GET /property/hostDashboard/single
     // -------------------------
     async getFullOwnedPropertyById(event) {
         try {
             const propertyId = event.queryStringParameters.property;
-            await this.authManager.authorizeOwnerRequest(event.headers.Authorization, propertyId);
+            await this.authManager.getAuthorizedUser(event.headers.Authorization);
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,
-                headers: responseHeaders,
+                headers: draftResponseHeaders,
                 body: JSON.stringify(property)
             }
         } catch (error) {
@@ -1391,6 +2178,583 @@ export class PropertyController {
                 headers: responseHeaders,
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             }
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/event
+    // -------------------------
+    async recordWebsiteAnalyticsEvent(event) {
+        try {
+            const eventBody = JSON.parse(event.body || "{}");
+            const eventType = String(eventBody.eventType || "").trim().toUpperCase();
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+            const draftId = String(eventBody.draftId || eventBody.draft || "").trim();
+            const siteId = String(eventBody.siteId || eventBody.site || "").trim();
+            const domain = normalizeDirectBookingWebsiteDomainInput(eventBody.domain || eventBody.host || "");
+            const payload = this.parseWebsiteAnalyticsPayload(eventBody.payload);
+
+            if (!eventType) {
+                return this.badRequest("Missing eventType.");
+            }
+
+            const normalizedPayload = this.normalizeWebsiteAnalyticsPayload(eventType, payload);
+            const earlyResponse = WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES.has(eventType)
+                ? await this.recordPublicWebsiteAnalyticsEvent({
+                    draftId,
+                    siteId,
+                    domain,
+                    eventType,
+                    payload: normalizedPayload,
+                })
+                : await this.recordHostWebsiteAnalyticsEvent({
+                    event,
+                    propertyId,
+                    draftId,
+                    eventType,
+                    payload: normalizedPayload,
+                });
+
+            if (earlyResponse) {
+                return earlyResponse;
+            }
+
+            return {
+                statusCode: 204,
+                headers: draftResponseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/draft
+    // -------------------------
+    async upsertWebsiteDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+            const templateKey = String(eventBody.templateKey || "").trim();
+            const status = String(eventBody.status || "DRAFT").trim().toUpperCase();
+            const contentOverrides = this.parseWebsiteOverridePayload(eventBody.contentOverrides, "contentOverrides");
+            const themeOverrides = this.parseWebsiteOverridePayload(eventBody.themeOverrides, "themeOverrides");
+            const publishedContentOverrides = this.parseOptionalWebsiteOverridePayload(
+                eventBody.publishedContentOverrides,
+                "publishedContentOverrides"
+            );
+            const publishedThemeOverrides = this.parseOptionalWebsiteOverridePayload(
+                eventBody.publishedThemeOverrides,
+                "publishedThemeOverrides"
+            );
+            const buildCompletion = this.parseOptionalWebsiteBuildCompletionPayload(
+                eventBody.buildCompletion
+            );
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            if (!templateKey) {
+                return this.badRequest("Missing templateKey.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+
+            const draft = await this.directBookingWebsiteDraftRepository.upsertDraft({
+                hostId,
+                propertyId,
+                templateKey,
+                status,
+                contentOverrides,
+                themeOverrides,
+                publishedContentOverrides,
+                publishedThemeOverrides,
+            });
+
+            const shouldTrackLiveSiteUpdate =
+                publishedContentOverrides !== undefined || publishedThemeOverrides !== undefined;
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: draft?.id || existingDraft?.id || null,
+                propertyId,
+                hostId,
+                eventType: existingDraft ? "WEBSITE_DRAFT_SAVED" : "WEBSITE_DRAFT_CREATED",
+                payload: {
+                    templateKey,
+                    status,
+                },
+            });
+
+            if (shouldTrackLiveSiteUpdate) {
+                await this.recordStandaloneWebsiteEventSafely({
+                    draftId: draft?.id || existingDraft?.id || null,
+                    propertyId,
+                    hostId,
+                    eventType: "LIVE_SITE_UPDATED",
+                    payload: {
+                        templateKey,
+                        status,
+                    },
+                });
+            }
+
+            if (buildCompletion) {
+                await this.recordStandaloneWebsiteEventSafely({
+                    draftId: draft?.id || existingDraft?.id || null,
+                    propertyId,
+                    hostId,
+                    eventType: "WEBSITE_BUILD_SUCCEEDED",
+                    payload: {
+                        attemptId: buildCompletion.attemptId,
+                        flowId: buildCompletion.flowId,
+                        templateKey: buildCompletion.templateKey || templateKey,
+                        durationMs: buildCompletion.durationMs,
+                        phase: buildCompletion.phase || "persist_draft",
+                    },
+                });
+            }
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(draft),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/drafts
+    // -------------------------
+    async getWebsiteDrafts(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const drafts = await this.directBookingWebsiteDraftRepository.listDraftsByHostId(hostId);
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(drafts),
+            };
+        } catch (error) {
+            console.error(error);
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/draft
+    // -------------------------
+    async getWebsiteDraftByPropertyId(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const propertyId = String(event.queryStringParameters?.property || event.queryStringParameters?.propertyId || "").trim();
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            if (!draft) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website draft not found." }),
+                };
+            }
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(draft),
+            };
+        } catch (error) {
+            console.error(error);
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/kpis
+    // -------------------------
+    async getWebsiteKpis(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const summary = await this.directBookingWebsiteEventRepository.getGlobalKpiSummary();
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(summary),
+            };
+        } catch (error) {
+            console.error(error);
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/site
+    // -------------------------
+    async getWebsiteSiteByPropertyId(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const propertyId = String(event.queryStringParameters?.property || event.queryStringParameters?.propertyId || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const siteSummary = await this.getDirectBookingWebsiteSummaryByPropertyId(propertyId, hostId);
+            if (!siteSummary) {
+                return {
+                    statusCode: 200,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify(null),
+                };
+            }
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/publish
+    // -------------------------
+    async publishWebsiteSite(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            if (!draft) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website draft not found." }),
+                };
+            }
+
+            const siteSummary = await this.publishDirectBookingWebsiteForDraft({
+                draft,
+                hostId,
+                propertyId,
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/site/unpublish
+    // -------------------------
+    async unpublishWebsiteSite(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const site = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+            if (!site) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website site record not found." }),
+                };
+            }
+
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const siteSummary = await this.unpublishDirectBookingWebsiteSummary({
+                site,
+                draft,
+                hostId,
+                propertyId,
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(siteSummary),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/public/resolve
+    // -------------------------
+    async resolvePublicWebsiteSite(event) {
+        try {
+            const requestedDomain = this.resolveRequestedStandaloneWebsiteDomain(event);
+            if (!requestedDomain) {
+                return this.badRequest("Missing website domain.");
+            }
+
+            const resolutionResult = await this.resolvePublicDirectBookingWebsiteByDomain(requestedDomain);
+            if (!resolutionResult || !this.isPublicDirectBookingWebsiteReachable(resolutionResult.site, resolutionResult.domain)) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(this.buildPublicDirectBookingWebsiteResolution(
+                    resolutionResult.site,
+                    resolutionResult.domain
+                )),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/public/render
+    // -------------------------
+    async getPublicWebsiteRenderModel(event) {
+        try {
+            const siteId = cleanWebsiteText(
+                event.queryStringParameters?.site ||
+                event.queryStringParameters?.siteId
+            );
+            const requestedDomain = this.resolveRequestedStandaloneWebsiteDomain(event);
+            const isInternalSiteRender = Boolean(siteId);
+
+            let resolutionResult = null;
+            if (requestedDomain) {
+                resolutionResult = await this.resolvePublicDirectBookingWebsiteByDomain(requestedDomain);
+            } else if (siteId) {
+                resolutionResult = await this.getPublicRenderableDirectBookingWebsiteById(siteId);
+            } else {
+                return this.badRequest("Missing website siteId or domain.");
+            }
+
+            const canRenderPublishedSite = isInternalSiteRender
+                ? Boolean(resolutionResult?.site) &&
+                    resolutionResult.site.status === "PUBLISHED" &&
+                    Boolean(resolutionResult?.domain?.domain)
+                : this.isPublicDirectBookingWebsiteReachable(resolutionResult?.site, resolutionResult?.domain);
+
+            if (!resolutionResult || !canRenderPublishedSite) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            if (siteId && resolutionResult.site.id !== siteId) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Published website not found." }),
+                };
+            }
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId: resolutionResult.site.propertyId,
+                hostId: resolutionResult.site.hostId,
+                eventType: "PUBLIC_SITE_OPENED",
+                payload: {
+                    siteId: resolutionResult.site.id,
+                    domain: resolutionResult.domain?.domain || requestedDomain,
+                    templateKey: resolutionResult.site.templateKey,
+                    surface: "live",
+                },
+            });
+
+            const propertySnapshot = await this.buildPublicPropertySnapshotForWebsiteRender(
+                resolutionResult.site
+            );
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(this.buildPublicDirectBookingWebsiteRenderPayload(
+                    resolutionResult.site,
+                    resolutionResult.domain,
+                    propertySnapshot
+                )),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // GET /property/website/preview
+    // -------------------------
+    async getWebsitePreviewByDraftId(event) {
+        try {
+            const draftId = String(
+                event.queryStringParameters?.draft ||
+                event.queryStringParameters?.draftId ||
+                ""
+            ).trim();
+
+            if (!draftId) {
+                return this.badRequest("Missing draftId.");
+            }
+
+            const draft = await this.directBookingWebsiteDraftRepository.getDraftById(draftId);
+            if (!draft || draft.status === "SUSPENDED") {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website preview not found." }),
+                };
+            }
+
+            const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
+                draft.propertyId,
+                { includeCalendarAvailability: true }
+            );
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: draft.id,
+                propertyId: draft.propertyId,
+                hostId: draft.hostId,
+                eventType: "PUBLIC_PREVIEW_OPENED",
+                payload: {
+                    templateKey: draft.templateKey,
+                },
+            });
+
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify({
+                    draft,
+                    propertyDetails,
+                }),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
+        }
+    }
+
+    // -------------------------
+    // DELETE /property/website/draft
+    // -------------------------
+    async deleteWebsiteDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = String(eventBody.propertyId || eventBody.property || "").trim();
+            const deleteReasons = this.parseWebsiteDeleteReasons(eventBody.deleteReasons);
+
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+
+            if (existingSite?.id) {
+                await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
+                await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);
+            }
+
+            await this.directBookingWebsiteDraftRepository.deleteDraftByPropertyIdAndHostId(propertyId, hostId);
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: existingDraft?.id || null,
+                propertyId,
+                hostId,
+                eventType: "WEBSITE_DELETED",
+                payload: {
+                    templateKey: existingDraft?.templateKey || "",
+                    siteId: existingSite?.id || "",
+                    siteStatus: existingSite?.status || "",
+                    reasons: deleteReasons,
+                },
+            });
+
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isWebsiteDraftClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return this.websiteServerError();
         }
     }
 

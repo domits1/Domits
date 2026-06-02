@@ -27,7 +27,6 @@ const BookedNights = ({ refreshKey }) => {
         if (!isMountedRef.current) return;
         setCognitoUserId(user.attributes.sub);
       } catch (err) {
-        console.error("Error fetching Cognito user ID:", err);
         if (isMountedRef.current) setError("User not logged in.");
       }
     };
@@ -77,7 +76,6 @@ const BookedNights = ({ refreshKey }) => {
 
         if (!silent) setError(null);
       } catch (err) {
-        console.error("Error fetching booked nights:", err);
         if (!isMountedRef.current) return;
 
         if (!silent) setError(err.message || "Failed to fetch booked nights.");

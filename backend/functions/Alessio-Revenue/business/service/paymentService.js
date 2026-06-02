@@ -20,13 +20,11 @@ export class PaymentsService {
 
     const stripeAccount = await this.repository.getExistingStripeRevenueAccount(cognitoUserId);
     if (!stripeAccount?.account_id) {
-    return {
-      totalRevenue: 0,
-      formattedTotalRevenue: (0).toLocaleString("de-DE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      }),
-    };
+      return {
+        totalRevenue: null,
+        formattedTotalRevenue: null,
+        error: "Stripe not configured",
+      };
     }
 
     const transfers = await this.stripe.transfers.list({

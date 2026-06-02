@@ -20,11 +20,7 @@ const POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS = [
   "MinimumAdvanceBookingDays",
 ];
 const DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY = "MinimumAdvanceReservation";
-const POLICY_PREPARATION_TIME_RESTRICTION_KEYS = [
-  "PreparationTimeDays",
-  "PreparationDays",
-  "TurnoverDays",
-];
+const POLICY_PREPARATION_TIME_RESTRICTION_KEYS = ["PreparationTimeDays", "PreparationDays", "TurnoverDays"];
 const DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY = "PreparationTimeDays";
 
 const clampInteger = (value, fallback, min, max) => {
@@ -153,6 +149,19 @@ export const buildAvailabilityRestrictionValueMap = (availabilityRestrictions) =
       .filter(Boolean)
   );
 
+const buildRuleValueMap = (rules) =>
+  new Map(
+    (Array.isArray(rules) ? rules : [])
+      .map((entry) => {
+        const rule = String(entry?.rule || "").trim();
+        if (!rule) {
+          return null;
+        }
+        return [rule, entry?.value];
+      })
+      .filter(Boolean)
+  );
+
 const readRestrictionValue = (restrictionValueMap, restrictionKey, fallbackValue = 0) => {
   if (!restrictionValueMap.has(restrictionKey)) {
     return fallbackValue;
@@ -167,11 +176,11 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
   const nightlyRateRaw = Number(pricing?.roomRate ?? pricing?.roomrate);
   const nightlyRate = Number.isFinite(nightlyRateRaw)
     ? clampInteger(
-      nightlyRateRaw,
-      defaultPricingForm.nightlyRate,
-      PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
-      PRICING_MAX_NIGHTLY_RATE
-    )
+        nightlyRateRaw,
+        defaultPricingForm.nightlyRate,
+        PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
+        PRICING_MAX_NIGHTLY_RATE
+      )
     : defaultPricingForm.nightlyRate;
   const minimumStay = clampInteger(
     readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.minimumStay, defaultPricingForm.minimumStay),
@@ -187,19 +196,11 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
   );
   const maximumStay = maximumStayRaw === 0 ? 0 : Math.max(minimumStay, maximumStayRaw);
   const weeklyDiscountPercent = normalizeDiscountPercent(
-    readRestrictionValue(
-      restrictionValueMap,
-      PRICING_RESTRICTION_KEYS.weeklyDiscountPercent,
-      0
-    ),
+    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.weeklyDiscountPercent, 0),
     0
   );
   const monthlyDiscountPercent = normalizeDiscountPercent(
-    readRestrictionValue(
-      restrictionValueMap,
-      PRICING_RESTRICTION_KEYS.monthlyDiscountPercent,
-      0
-    ),
+    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.monthlyDiscountPercent, 0),
     0
   );
   const lastMinuteDiscountDays = clampInteger(
@@ -213,11 +214,7 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
     365
   );
   const lastMinuteDiscountPercent = normalizeDiscountPercent(
-    readRestrictionValue(
-      restrictionValueMap,
-      PRICING_RESTRICTION_KEYS.lastMinuteDiscountPercent,
-      0
-    ),
+    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.lastMinuteDiscountPercent, 0),
     0
   );
   const earlyBirdDiscountDays = clampInteger(
@@ -231,11 +228,7 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
     365
   );
   const earlyBirdDiscountPercent = normalizeDiscountPercent(
-    readRestrictionValue(
-      restrictionValueMap,
-      PRICING_RESTRICTION_KEYS.earlyBirdDiscountPercent,
-      0
-    ),
+    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.earlyBirdDiscountPercent, 0),
     0
   );
 
@@ -445,19 +438,17 @@ export const buildDisplayedPhotos = (existingPhotos, pendingPhotos, photoOrderId
   const existingById = new Map((Array.isArray(existingPhotos) ? existingPhotos : []).map((photo) => [photo.id, photo]));
   const pendingById = new Map((Array.isArray(pendingPhotos) ? pendingPhotos : []).map((photo) => [photo.id, photo]));
   const orderedIds = Array.isArray(photoOrderIds) ? photoOrderIds : [];
-  const missingIds = [
-    ...existingById.keys(),
-    ...pendingById.keys(),
-  ].filter((photoId) => !orderedIds.includes(photoId));
+  const missingIds = [...existingById.keys(), ...pendingById.keys()].filter((photoId) => !orderedIds.includes(photoId));
   const resolvedOrder = [...orderedIds, ...missingIds];
 
   return resolvedOrder
     .map((photoId, index) => {
       const existingPhoto = existingById.get(photoId);
       if (existingPhoto) {
-        const preferredKey = index === 0
-          ? existingPhoto.webKey || existingPhoto.key || existingPhoto.thumbKey || existingPhoto.originalKey
-          : existingPhoto.thumbKey || existingPhoto.webKey || existingPhoto.key || existingPhoto.originalKey;
+        const preferredKey =
+          index === 0
+            ? existingPhoto.webKey || existingPhoto.key || existingPhoto.thumbKey || existingPhoto.originalKey
+            : existingPhoto.thumbKey || existingPhoto.webKey || existingPhoto.key || existingPhoto.originalKey;
         return {
           id: photoId,
           src: normalizeImageUrl(preferredKey),
@@ -480,11 +471,7 @@ export const buildDisplayedPhotos = (existingPhotos, pendingPhotos, photoOrderId
 
 export const normalizeAmenityIds = (amenityIds) =>
   Array.from(
-    new Set(
-      (Array.isArray(amenityIds) ? amenityIds : [])
-        .map((amenityId) => String(amenityId).trim())
-        .filter(Boolean)
-    )
+    new Set((Array.isArray(amenityIds) ? amenityIds : []).map((amenityId) => String(amenityId).trim()).filter(Boolean))
   ).sort((left, right) => left.localeCompare(right));
 
 export const buildPolicyRulesSnapshot = (policyRules) =>
@@ -520,15 +507,86 @@ export const normalizeCheckInDetails = (checkInDetails) => {
   };
 };
 
+const parseTimeToMinutes = (value) => {
+  const match = /^(\d{1,2}):(\d{2})/.exec(String(value || "").trim());
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+};
+
+export const getCheckInOutTimeValidationError = (checkInDetails) => {
+  const normalizedCheckInDetails = normalizeCheckInDetails(checkInDetails);
+  const checkInMinutes = parseTimeToMinutes(normalizedCheckInDetails.checkIn.from);
+  const checkOutMinutes = parseTimeToMinutes(normalizedCheckInDetails.checkOut.from);
+  const lateCheckOutMinutes = parseTimeToMinutes(normalizedCheckInDetails.checkOut.till);
+
+  if (checkInMinutes === null || checkOutMinutes === null) {
+    return "";
+  }
+
+  if (checkInMinutes - checkOutMinutes < 60) {
+    return "Check-in must be at least 1 hour after check-out.";
+  }
+
+  if (lateCheckOutMinutes !== null && lateCheckOutMinutes !== checkOutMinutes) {
+    if (checkInMinutes - lateCheckOutMinutes < 60) {
+      return "Check-in must be at least 1 hour after late check-out.";
+    }
+  }
+
+  return "";
+};
+
+const getLateTimeValidationError = (fromValue, tillValue, label) => {
+  const fromMinutes = parseTimeToMinutes(fromValue);
+  const tillMinutes = parseTimeToMinutes(tillValue);
+
+  if (fromMinutes === null || tillMinutes === null || fromValue === tillValue) {
+    return "";
+  }
+
+  return tillMinutes > fromMinutes ? "" : `Late ${label} time must be after the selected ${label} time.`;
+};
+
+export const getLateCheckInOutTimeValidationErrors = (checkInDetails) => {
+  const normalizedCheckInDetails = normalizeCheckInDetails(checkInDetails);
+
+  return {
+    checkIn: getLateTimeValidationError(
+      normalizedCheckInDetails.checkIn.from,
+      normalizedCheckInDetails.checkIn.till,
+      "check-in"
+    ),
+    checkOut: getLateTimeValidationError(
+      normalizedCheckInDetails.checkOut.from,
+      normalizedCheckInDetails.checkOut.till,
+      "check-out"
+    ),
+  };
+};
+
 export const normalizePolicyAvailabilitySettings = (settings) => ({
   advanceNoticeDays: clampInteger(settings?.advanceNoticeDays, 0, 0, 365),
   preparationTimeDays: clampInteger(settings?.preparationTimeDays, 0, 0, 30),
   advanceNoticeRestrictionKey:
-    String(settings?.advanceNoticeRestrictionKey || "").trim() ||
-    DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY,
+    String(settings?.advanceNoticeRestrictionKey || "").trim() || DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY,
   preparationTimeRestrictionKey:
-    String(settings?.preparationTimeRestrictionKey || "").trim() ||
-    DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY,
+    String(settings?.preparationTimeRestrictionKey || "").trim() || DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY,
 });
 
 export const buildPolicyEditorSnapshot = (policyRules, checkInDetails, policyAvailabilitySettings) => ({
@@ -650,33 +708,41 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
   const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
   const propertyImages = Array.isArray(data?.images) ? data.images : [];
-  const availabilityRestrictions = Array.isArray(data?.availabilityRestrictions)
-    ? data.availabilityRestrictions
-    : [];
+  const propertyAvailability = Array.isArray(data?.availability) ? data.availability : [];
+  const availabilityRestrictions = Array.isArray(data?.availabilityRestrictions) ? data.availabilityRestrictions : [];
   const property = data?.property || {};
   const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
   const locationData = data?.location || {};
   const propertyType = data?.propertyType || {};
   const propertyPricing = data?.pricing || null;
   const restrictionValueMap = buildAvailabilityRestrictionValueMap(availabilityRestrictions);
-  const checkInDetails = data?.checkIn && typeof data.checkIn === "object"
-    ? data.checkIn
-    : { checkIn: {}, checkOut: {} };
+  const ruleValueMap = buildRuleValueMap(propertyRules);
+  const checkInDetailsFromRules = {
+    checkIn: {
+      from: ruleValueMap.get("CheckInFrom"),
+      till: ruleValueMap.get("CheckInTill"),
+    },
+    checkOut: {
+      from: ruleValueMap.get("CheckOutFrom"),
+      till: ruleValueMap.get("CheckOutTill"),
+    },
+  };
+  const checkInDetails = data?.checkIn && typeof data.checkIn === "object" ? data.checkIn : checkInDetailsFromRules;
   const policyAvailabilitySettings = {
     advanceNoticeDays: Math.max(
       0,
-      ...POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS
-        .filter((restrictionKey) => restrictionValueMap.has(restrictionKey))
-        .map((restrictionKey) => Number(restrictionValueMap.get(restrictionKey)) || 0),
+      ...POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS.filter((restrictionKey) => restrictionValueMap.has(restrictionKey)).map(
+        (restrictionKey) => Number(restrictionValueMap.get(restrictionKey)) || 0
+      ),
       restrictionValueMap.has(DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY)
         ? Number(restrictionValueMap.get(DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY)) || 0
         : 0
     ),
     preparationTimeDays: Math.max(
       0,
-      ...POLICY_PREPARATION_TIME_RESTRICTION_KEYS
-        .filter((restrictionKey) => restrictionValueMap.has(restrictionKey))
-        .map((restrictionKey) => Number(restrictionValueMap.get(restrictionKey)) || 0),
+      ...POLICY_PREPARATION_TIME_RESTRICTION_KEYS.filter((restrictionKey) =>
+        restrictionValueMap.has(restrictionKey)
+      ).map((restrictionKey) => Number(restrictionValueMap.get(restrictionKey)) || 0),
       restrictionValueMap.has(DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY)
         ? Number(restrictionValueMap.get(DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY)) || 0
         : 0
@@ -691,6 +757,7 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
 
   return {
     status: property.status || "INACTIVE",
+    bookingType: property.bookingType || "direct",
     form: {
       title: property.title || "",
       subtitle: property.subtitle || "",
@@ -715,12 +782,14 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
     checkInDetails: normalizeCheckInDetails(checkInDetails),
     policyAvailabilitySettings: normalizePolicyAvailabilitySettings(policyAvailabilitySettings),
     pricingForm: mapPropertyPricingToState(propertyPricing, availabilityRestrictions),
+    availability: propertyAvailability,
     existingPhotos: mapPropertyImagesToState(propertyImages),
     hostProperties: mapHostProperties(hostPropertiesData, property),
   };
 };
 
-export const getSaveSuccessMessage = (selectedTab) => SAVE_SUCCESS_MESSAGE_BY_TAB[selectedTab] || "Property updated successfully.";
+export const getSaveSuccessMessage = (selectedTab) =>
+  SAVE_SUCCESS_MESSAGE_BY_TAB[selectedTab] || "Property updated successfully.";
 
 export const resolveSaveErrorMessage = (error, isDevelopment) => {
   if (error?.name === "TypeError") {
@@ -792,11 +861,7 @@ export const buildNoPhotoChangesResult = ({ existingPhotos, pendingPhotos, photo
   didReorder: false,
 });
 
-export const buildFinalPersistedPhotoOrder = ({
-  normalizedOrderIds,
-  existingById,
-  pendingIdToPersistedId,
-}) =>
+export const buildFinalPersistedPhotoOrder = ({ normalizedOrderIds, existingById, pendingIdToPersistedId }) =>
   normalizedOrderIds
     .map((photoId) => {
       if (existingById.has(photoId)) {

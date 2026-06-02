@@ -3,6 +3,18 @@
     grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
     gap: 28px;
   }
+
+  .kpiGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .researchKpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .surfaceKpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -52,6 +64,25 @@
     flex-direction: column;
   }
 
+  .kpiToolbar {
+    align-items: stretch;
+  }
+
+  .kpiToolbarPrimary {
+    flex-basis: auto;
+  }
+
+  .kpiViewTabRow {
+    width: 100%;
+    justify-content: space-between;
+    overflow-x: auto;
+  }
+
+  .kpiViewTabButton {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
   .selectionPreview {
     justify-items: center;
   }
@@ -70,6 +101,77 @@
     align-items: stretch;
   }
 
+  .workspaceTabs {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .workspaceTabButton {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .kpiGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .researchKpiGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .surfaceKpiHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .surfaceKpiTabRow {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .surfaceKpiTabButton {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .surfaceKpiGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .websiteDraftCardHeader {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: flex-start;
+  }
+
+  .websiteDraftCardPreview {
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .websiteDraftCardHeader > .statusPill {
+    justify-self: center;
+  }
+
+  .websiteDraftMetaRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .previewBuildCard {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .previewStageActions {
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+  }
+
+  .websiteDraftPreviewPlaceholder {
+    min-height: 180px;
+  }
+
 }
 
 @media (max-width: 639px) {
@@ -81,9 +183,9 @@
   .templateCard {
     width: 100%;
     min-width: 0;
-    min-height: 366px;
+    min-height: 360px;
     gap: 10px;
-    padding: 12px 12px 12px;
+    padding: 12px 12px 10px;
     border-radius: 20px;
   }
 
@@ -120,9 +222,9 @@
   }
 
   .templateCard {
-    min-height: 344px;
+    min-height: 338px;
     gap: 8px;
-    padding: 10px 10px 10px;
+    padding: 10px 10px 8px;
     border-radius: 18px;
   }
 

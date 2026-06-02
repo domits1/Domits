@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { Auth } from "aws-amplify";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import CalendarIcon from "@mui/icons-material/CalendarToday";
 import EventIcon from "@mui/icons-material/Event";
@@ -7,34 +8,74 @@ import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import ShowChartIcon from "@mui/icons-material/BarChart";
 import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import CreditCardIcon from "@mui/icons-material/AccountBalanceWallet";
-// import PriceChangeIcon from "@mui/icons-material/PriceChange";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
+import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import {
+  CHANNEX_CERTIFICATION_ADMIN_ROUTE,
+  checkChannexCertificationAccess,
+} from "./channexadmin/channexCertificationAccess";
 
 const NAV = [
-  
   { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
   { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "." },
   { key: "CalendarPricing", label: "Calendar & Pricing", icon: <CalendarIcon />, to: "calendar-pricing" },
   { key: "Reservations", label: "Reservations", icon: <EventIcon />, to: "reservations" },
   { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "messages" },
+  {
+    key: "Integrations",
+    label: "Marketplace",
+    icon: <IntegrationInstructionsIcon />,
+    to: "integrations-marketplace",
+  },
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
-
-  // { key: "Pricing", label: "Pricing", icon: <PriceChangeIcon />, to: "pricing" },
-
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
-  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
+  {
+    key: "ChannexCertification",
+    label: "Channex Certification",
+    icon: <AdminPanelSettingsIcon />,
+    to: CHANNEX_CERTIFICATION_ADMIN_ROUTE,
+    internalOnly: true,
+  },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
 function Pages({ onNavigate }) {
   const [open, setOpen] = useState(false);
+  const [canSeeChannexCertification, setCanSeeChannexCertification] = useState(false);
   const location = useLocation();
   const btnRef = useRef(null);
+  const visibleNav = useMemo(
+    () => NAV.filter((item) => !item.internalOnly || canSeeChannexCertification),
+    [canSeeChannexCertification]
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadChannexCertificationAccess() {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        const userId = user?.attributes?.sub;
+        const isAllowed = await checkChannexCertificationAccess(userId);
+        if (mounted) setCanSeeChannexCertification(isAllowed);
+      } catch {
+        if (mounted) setCanSeeChannexCertification(false);
+      }
+    }
+
+    loadChannexCertificationAccess();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -59,7 +100,6 @@ function Pages({ onNavigate }) {
 
   return (
     <>
-      
       <button
         ref={btnRef}
         type="button"
@@ -72,12 +112,15 @@ function Pages({ onNavigate }) {
         <span aria-hidden="true">{open ? "×" : "☰"}</span>
       </button>
 
-      <div
+      <button
+        type="button"
         className={`sidebar-overlay ${open ? "open" : ""}`}
         onClick={() => setOpen(false)}
+        tabIndex={open ? 0 : -1}
+        aria-label="Close menu overlay"
         aria-hidden={!open}
       />
-      
+
       <nav
         className={`sidebar ${open ? "open" : ""}`}
         aria-label="Host navigation"
@@ -86,7 +129,7 @@ function Pages({ onNavigate }) {
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
           <ul className="menu-list">
-            {NAV.map((item) => (
+            {visibleNav.map((item) => (
               <li key={item.key}>
                 <NavLink
                   to={item.to}
@@ -94,7 +137,9 @@ function Pages({ onNavigate }) {
                   onClick={() => onNavigate?.(item.key)}
                   className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}
                 >
-                  <span className="icon" aria-hidden="true">{item.icon}</span>
+                  <span className="icon" aria-hidden="true">
+                    {item.icon}
+                  </span>
                   <span className="label">{item.label}</span>
                 </NavLink>
               </li>

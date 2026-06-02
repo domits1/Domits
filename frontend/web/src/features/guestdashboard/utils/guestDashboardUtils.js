@@ -177,6 +177,15 @@ export const getPaidBookings = (bookingData) =>
     (booking) => String(booking?.status ?? booking?.Status ?? "").toLowerCase() === "paid"
   );
 
+export const getInquiryBookings = (bookingData) =>
+  normalizeGuestBookingsResponse(bookingData).filter((booking) => {
+    const status = String(booking?.status ?? booking?.Status ?? "").toLowerCase();
+    const bookingType = String(booking?.bookingtype ?? booking?.bookingType ?? "direct").toLowerCase();
+    if (status === "inquiry" || status === "declined") return true;
+    if (status === "awaiting payment" && bookingType === "inquiry") return true;
+    return false;
+  });
+
 export const normalizeStayStatus = (value) => {
   const normalized = String(value || "").trim().toLowerCase();
 
@@ -199,6 +208,34 @@ export const getCurrentOrUpcomingBooking = (bookingData) => {
   const paidBookings = getPaidBookings(bookingData);
   const { currentBookings, upcomingBookings } = splitBookingsByTime(paidBookings);
   return currentBookings[0] || upcomingBookings[0] || paidBookings[0] || null;
+};
+
+export const getInquiryStatusInfo = (status, bookingType) => {
+  const s = String(status || "").toLowerCase();
+  const t = String(bookingType || "direct").toLowerCase();
+
+  if (s === "inquiry") {
+    return {
+      label: "Awaiting host response",
+      description: "Your request has been sent. The host will accept or decline it shortly.",
+      variant: "pending",
+    };
+  }
+  if (s === "awaiting payment" && t === "inquiry") {
+    return {
+      label: "Accepted — payment required",
+      description: "The host accepted your request. Complete your payment to confirm the booking.",
+      variant: "action",
+    };
+  }
+  if (s === "declined") {
+    return {
+      label: "Request declined",
+      description: "The host has declined your request.",
+      variant: "declined",
+    };
+  }
+  return null;
 };
 
 export const resolveHostName = (...sources) => {
