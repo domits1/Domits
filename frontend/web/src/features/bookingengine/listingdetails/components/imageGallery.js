@@ -107,6 +107,11 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
                 className="main-image"
                 src={toMainSrc(main)}
                 alt={getImageAltText(0)}
+                fetchPriority="high"
+                decoding="async"
+                width={1200}
+                height={765}
+                loading="eager"
               />
             </button>
 
@@ -157,8 +162,12 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
             >
               <img
                 className="small-image"
-                src={toMainSrc(img)}
+                src={toThumbSrc(img)}
                 alt={getImageAltText(index + 1)}
+                loading="lazy"
+                decoding="async"
+                width={400}
+                height={255}
               />
             </button>
           ))}
@@ -204,6 +213,9 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
               className="overlay-main-image"
               src={toMainSrc(images[activeIndex])}
               alt={getImageAltText(activeIndex)}
+              decoding="async"
+              width={1200}
+              height={800}
             />
 
             <button
@@ -229,6 +241,10 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
                   className={`thumb ${index === activeIndex ? "active" : ""}`}
                   src={toThumbSrc(img)}
                   alt={getImageAltText(index)}
+                  loading="lazy"
+                  decoding="async"
+                  width={150}
+                  height={100}
                 />
               </button>
             ))}
