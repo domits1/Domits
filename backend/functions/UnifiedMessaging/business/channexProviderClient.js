@@ -35,6 +35,10 @@ const normalizeChannexBookingRevision = (row) => {
       requireStr(customer?.name) ||
       [requireStr(customer?.first_name), requireStr(customer?.last_name)].filter(Boolean).join(" ") ||
       null,
+    rooms: rooms.map((room) => ({
+      roomTypeId: requireStr(room?.room_type_id),
+      ratePlanId: requireStr(room?.rate_plan_id),
+    })),
     ratePlanId: requireStr(firstRoom?.rate_plan_id),
     roomTypeId: requireStr(firstRoom?.room_type_id),
     rawPayload: row,

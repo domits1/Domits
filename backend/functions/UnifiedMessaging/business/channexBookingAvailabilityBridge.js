@@ -13,13 +13,14 @@ const CHANNEL_CHANNEX = "CHANNEX";
 const SYNC_TYPE_BOOKING_AVAILABILITY = "booking-availability";
 const TRIGGER_BOOKING_CREATED = "BOOKING_CREATED";
 const TRIGGER_BOOKING_MODIFIED = "BOOKING_MODIFIED";
+const TRIGGER_BOOKING_CANCELLED = "BOOKING_CANCELLED";
 const ROOM_TYPE_MAPPING_MISSING_REASON = "CHANNEX_ROOM_TYPE_MAPPING_MISSING";
 const ROOM_TYPE_AMBIGUOUS_REASON = "CHANNEX_ROOM_TYPE_AMBIGUOUS";
 const SYNC_FAILED_REASON = "CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED";
 const COUNT_OF_ROOMS_SOURCE_CHANNEX_ROOM_TYPE = "CHANNEX_ROOM_TYPE";
 const COUNT_OF_ROOMS_SOURCE_MVP_SINGLE_UNIT = "MVP_DEFAULT_SINGLE_UNIT";
 const ACTIVE_BOOKING_STATUSES = new Set(["awaiting payment", "paid"]);
-const SUPPORTED_TRIGGERS = new Set([TRIGGER_BOOKING_CREATED, TRIGGER_BOOKING_MODIFIED]);
+const SUPPORTED_TRIGGERS = new Set([TRIGGER_BOOKING_CREATED, TRIGGER_BOOKING_MODIFIED, TRIGGER_BOOKING_CANCELLED]);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -120,6 +121,10 @@ export const getAffectedDateKeysForBookingChange = ({ bookingBefore, bookingAfte
     return Array.from(
       new Set([...buildBookingNightDateKeys(bookingBefore), ...buildBookingNightDateKeys(bookingAfter)])
     ).sort(compareAlphabetically);
+  }
+
+  if (trigger === TRIGGER_BOOKING_CANCELLED) {
+    return buildBookingNightDateKeys(bookingBefore).sort(compareAlphabetically);
   }
 
   return [];
@@ -530,8 +535,8 @@ export default class ChannexBookingAvailabilityBridge {
       };
 
       const { fromMs, toMs } = getAffectedRangeMs(affectedDates);
-      // Booking create/modify call this bridge after the booking row is persisted.
-      // Counts therefore include the updated booking itself; excluding it here would understate occupied inventory.
+      // Booking lifecycle calls this bridge after the booking row is persisted.
+      // Counts therefore reflect the current active-booking state for create, modify, and cancel.
       const activeBookings = await this.bookingRepository.listActiveBookingsOverlappingRange(
         domitsPropertyId,
         fromMs,
