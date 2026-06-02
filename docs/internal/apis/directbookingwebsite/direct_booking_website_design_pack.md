@@ -10,7 +10,7 @@ This document defines the v1 design pack for Domits direct booking websites. It 
 
 **Status:** Mixed - implemented foundation plus forward design
 
-**Last Updated:** 2026-05-11
+**Last Updated:** 2026-05-28
 
 **Related Architecture Decision:** [ADR - Direct Booking Website V1](./direct_booking_website_adr.md)
 
@@ -56,6 +56,21 @@ Important alignment points for the rest of this document:
 - Earlier split-table ideas such as `standalone_site_theme`, `standalone_site_content`, and `standalone_site_section` are not the current implementation.
 - Custom-domain support is not implemented yet, even though `standalone_site_domain.domain_type` already allows `CUSTOM`.
 - Quote, checkout, and booking sections later in this document remain forward design, not current runtime behavior.
+- The current frontend editor has progressed into section-scoped contracts for shared website areas such as:
+  - `residenceSection`
+  - `calendarSection`
+  - `gallerySection`
+  - `contactSection`
+  - configurable amenities collections
+  - per-slot media rotation settings
+- The current editor bootstrap stages draft-backed controls before property-backed preview hydration, so the left editor surface can become interactive earlier without increasing request volume.
+- The editor preview, internal draft preview, and published live site now use the same website-shaped skeleton loading pattern instead of generic load bars.
+- The current Panorama implementation uses full-width themed section bands for panel-enabled residence, calendar, and gallery sections instead of inset card panels.
+- The public contact affordance is now a WhatsApp launcher derived from shared host integration enrichment; hosts still see the toggle when WhatsApp is unavailable, but it stays disabled and points them to the integrations marketplace.
+- The current calendar implementation is still read-only for guests, but the availability snapshot shown on websites already merges:
+  - imported external blocked dates
+  - accepted booking date keys
+  - PMS unavailable override dates
 
 ---
 

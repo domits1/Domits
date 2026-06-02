@@ -1,20 +1,55 @@
 import BookingService from "../business/bookingService.js";
 import PaymentService from "../business/paymentService.js";
+import { BadRequestException } from "../util/exception/badRequestException.js";
+import Stripe from "stripe";
+import { calculateRefundAmountCents } from "../util/refundCalculator.js";
 import Forbidden from "../util/exception/Forbidden.js";
 import Unauthorized from "../util/exception/Unauthorized.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
 const responseHeaderJSON = responsejson;
+const REFUND_CURRENCY = "eur";
+const STRIPE_REFUND_REASON = "requested_by_customer";
+const CHANNEX_BOOKING_CANCELLED_TRIGGER = "BOOKING_CANCELLED";
+const CHANNEX_ACTIVE_CANCELLATION_STATUSES = new Set(["awaiting payment", "paid"]);
+
+const normalizeJsonNumber = (value) => {
+  const numeric = Number(value);
+  return Number.isSafeInteger(numeric) ? numeric : String(value);
+};
+
+const toJsonSafeResponse = (value) => {
+  const seen = new WeakSet();
+
+  return JSON.parse(
+    JSON.stringify(value, (_key, nestedValue) => {
+      if (typeof nestedValue === "bigint") {
+        return normalizeJsonNumber(nestedValue);
+      }
+
+      if (nestedValue && typeof nestedValue === "object") {
+        if (seen.has(nestedValue)) return undefined;
+        seen.add(nestedValue);
+      }
+
+      return nestedValue;
+    })
+  );
+};
+
+const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
+const shouldSyncChannexCancellation = (booking) =>
+  CHANNEX_ACTIVE_CANCELLATION_STATUSES.has(normalizeBookingStatus(booking?.status));
 
 class ReservationController {
   constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
+    this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
   }
-  // -----------
+
   // POST
-  // -----------
 
   async create(event) {
     try {
@@ -50,9 +85,8 @@ class ReservationController {
     }
   }
 
-  // -----------
   // PATCH
-  // -----------
+
   async patch(event) {
     try {
       const cancelBookingId = this.getCancelBookingId(event);
@@ -62,9 +96,9 @@ class ReservationController {
 
       const body = this.getPatchBody(event);
       const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
-      const actionResponse = await this.handlePatchAction(body, event, authToken);
+      const actionResponse = await this.handlePatchAction(body, authToken);
 
-      return actionResponse || await this.handlePaymentPatch(body);
+      return actionResponse || (await this.handlePaymentPatch(body));
     } catch (error) {
       console.error(error);
       return {
@@ -95,13 +129,17 @@ class ReservationController {
       this.requirePatchField(body, "departureDate"),
       authToken
     );
-    return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    return { statusCode: 200, headers: responseHeaderJSON, response: toJsonSafeResponse(result) };
   }
 
-  async handlePatchAction(body, event, authToken) {
+  async handleCancelBookingAction(body, authToken) {
+    if (!body?.bookingId) throw new BadRequestException("Missing bookingId.");
+    return await this.cancelBooking(body.bookingId, { headers: { Authorization: authToken } });
+  }
+
+  async handlePatchAction(body, authToken) {
     if (body?.action === "cancel-booking") {
-      if (!body?.bookingId) throw new Error("Missing bookingId.");
-      return await this.cancelBooking(body.bookingId, event);
+      return await this.handleCancelBookingAction(body, authToken);
     }
 
     if (body?.action === "decline-inquiry") {
@@ -197,18 +235,78 @@ class ReservationController {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub);
+    let refundAmountCents = 0;
+    let stripeRefundId = null;
+    let refundError = null;
+
+    try {
+      const totalPriceCents = Math.round((booking.total_price || 0) * 100);
+      refundAmountCents = calculateRefundAmountCents(booking.cancellation_policy, booking.arrivaldate, totalPriceCents);
+
+      // Process refund with Stripe if amount > 0 and Stripe is configured
+      if (refundAmountCents > 0 && booking.stripe_refund_id) {
+        stripeRefundId = booking.stripe_refund_id;
+        refundAmountCents = Number(booking.refunded_amount) || refundAmountCents;
+      } else if (refundAmountCents > 0 && booking.paymentid && this.stripe) {
+        const refund = await this.createStripeRefund(booking.paymentid, refundAmountCents);
+        stripeRefundId = refund.id;
+      }
+    } catch (error) {
+      console.error(`Refund processing failed for booking ${bookingId}:`, error.message);
+      refundError = error.message;
+    }
+
+    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub, {
+      refundedAmount: refundAmountCents,
+      stripeRefundId,
+      refundError,
+    });
+
+    await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
+
+    const channexAvailabilitySync = shouldSyncChannexCancellation(booking)
+      ? await this.bookingService.syncChannexBookingAvailabilityIfEnabled({
+          userId: booking.hostid,
+          bookingBefore: booking,
+          bookingAfter: canceled.response,
+          trigger: CHANNEX_BOOKING_CANCELLED_TRIGGER,
+          includeDisabledEvidence: true,
+        })
+      : undefined;
 
     return {
       statusCode: canceled.statusCode || 200,
       headers: responseHeaderJSON,
-      response: canceled.response,
+      response: toJsonSafeResponse({
+        ...canceled.response,
+        ...(channexAvailabilitySync === undefined ? {} : { channexAvailabilitySync }),
+      }),
     };
   }
 
-  // -----------
+  async createStripeRefund(paymentIntentId, amountCents) {
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    const currency = paymentIntent?.currency?.toLowerCase();
+
+    if (currency !== REFUND_CURRENCY) {
+      throw new Error(
+        `Cannot refund ${currency || "unknown"} PaymentIntent ${paymentIntentId}; expected ${REFUND_CURRENCY}.`
+      );
+    }
+
+    return await this.stripe.refunds.create(
+      {
+        payment_intent: paymentIntentId,
+        amount: amountCents,
+        reason: STRIPE_REFUND_REASON,
+      },
+      {
+        idempotencyKey: `refund-${paymentIntentId}-${amountCents}`,
+      }
+    );
+  }
+
   // GET
-  // -----------
 
   async read(event) {
     try {

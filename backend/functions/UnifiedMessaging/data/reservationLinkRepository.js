@@ -4,16 +4,27 @@ import { randomUUID } from "node:crypto";
 import { ChannelReservationLink } from "../models/unified/integrations/ChannelReservationLink.js";
 
 class ReservationLinkRepository {
+  async getByIntegrationAccountIdAndExternalReservation({ integrationAccountId, channel, externalReservationId } = {}) {
+    if (!integrationAccountId || !channel || !externalReservationId) return null;
+
+    const client = await Database.getInstance();
+    return client
+      .getRepository(ChannelReservationLink)
+      .createQueryBuilder("r")
+      .where("r.integrationAccountId = :a", { a: integrationAccountId })
+      .andWhere("r.channel = :c", { c: channel })
+      .andWhere("r.externalReservationId = :e", { e: externalReservationId })
+      .getOne();
+  }
+
   async upsert(data) {
     const client = await Database.getInstance();
 
-    const existing = await client
-      .getRepository(ChannelReservationLink)
-      .createQueryBuilder("r")
-      .where("r.integrationAccountId = :a", { a: data.integrationAccountId })
-      .andWhere("r.channel = :c", { c: data.channel })
-      .andWhere("r.externalReservationId = :e", { e: data.externalReservationId })
-      .getOne();
+    const existing = await this.getByIntegrationAccountIdAndExternalReservation({
+      integrationAccountId: data.integrationAccountId,
+      channel: data.channel,
+      externalReservationId: data.externalReservationId,
+    });
 
     const now = Date.now();
 

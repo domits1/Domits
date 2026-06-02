@@ -220,6 +220,7 @@ function Header({ setSearchResults, setLoading }) {
     currentView,
     setCurrentView,
     setDropdownVisible,
+    setAppsMenuOpen,
   });
 
   const navigateToDashboard = () => {
@@ -410,7 +411,7 @@ function Header({ setSearchResults, setLoading }) {
               </button>
             )}
 
-            <button className="headerButtons nineDotsButton" onClick={() => setAppsMenuOpen((prev) => !prev)}>
+            <button className="headerButtons nineDotsButton" onClick={() => { setDropdownVisible(false); setAppsMenuOpen((prev) => !prev); }}>
               <img src={nineDots} alt="Nine Dots" />
             </button>
 

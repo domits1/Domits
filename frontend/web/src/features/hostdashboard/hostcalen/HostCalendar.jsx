@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import "./HostCalendar.scss";
+import PriceLabsConnect from "../hostpricelabs/components/PriceLabsConnect";
+import PriceLabsStatusCard from "../hostpricelabs/components/PriceLabsStatusCard";
 
 import Toolbar from "./components/Toolbar";
 import CalendarGrid from "./components/CalendarGrid";
@@ -8,6 +10,7 @@ import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
 import CalendarLinkCard from "./components/Sidebar/CalendarLinkCard";
+import DynamicPricingCard from "./components/Sidebar/DynamicPricingCard";
 import PricingSettingsCard from "./components/Sidebar/PricingSettingsCard";
 import AvailabilitySettingsCard from "./components/Sidebar/AvailabilitySettingsCard";
 import CalendarSyncCard from "./components/Sidebar/CalendarSyncCard";
@@ -28,6 +31,7 @@ import { useCalendarPropertyDetails } from "./hooks/useCalendarPropertyDetails";
 import { useCalendarSelection } from "./hooks/useCalendarSelection";
 import { useCalendarSync } from "./hooks/useCalendarSync";
 import { usePricingSettings } from "./hooks/usePricingSettings";
+import { usePriceLabs } from "../hostpricelabs/hooks/usePriceLabs";
 import { uploadICalToS3 } from "../../../utils/iCalFormatHost";
 import { getCognitoUserId } from "../../../services/getAccessToken";
 
@@ -165,6 +169,13 @@ const buildPropertyIcalExportEvents = ({
 function HostCalendarSidebar({
   isSidebarLoading,
   sidebarLoadingMessage,
+  priceLabsConnected,
+  priceLabsStatus,
+  priceLabsConnect,
+  priceLabsDisconnect,
+  priceLabsSyncAll,
+  priceOverrides,
+  onApplyPriceLabsPrice,
   selectedDateKeys,
   selectedAvailabilityStats,
   handleToggleAvailability,
@@ -236,22 +247,31 @@ function HostCalendarSidebar({
 
   if (selectedDateKeys.length > 0) {
     return (
-      <SelectionCard
-        selectedCount={selectedAvailabilityStats.total}
-        allSelectedAvailable={selectedAvailabilityStats.allAvailable}
-        onToggleAvailability={handleToggleAvailability}
-        priceInputValue={selectionPriceInput}
-        onPriceInputChange={handleSelectionPriceChange}
-        showSavePrice={selectionPriceDirty}
-        canSavePrice={canSaveSelectionPrice}
-        onSavePrice={handleSaveSelectionPrice}
-        restrictionForm={selectionRestrictionsForm}
-        restrictionMixedFields={selectionRestrictionMixedFields}
-        onRestrictionFieldChange={handleSelectionRestrictionChange}
-        showSaveRestrictions={selectionRestrictionsDirty}
-        canSaveRestrictions={canSaveSelectionRestrictions}
-        onSaveRestrictions={handleSaveSelectionRestrictions}
-      />
+      <>
+        <SelectionCard
+          selectedCount={selectedAvailabilityStats.total}
+          allSelectedAvailable={selectedAvailabilityStats.allAvailable}
+          onToggleAvailability={handleToggleAvailability}
+          priceInputValue={selectionPriceInput}
+          onPriceInputChange={handleSelectionPriceChange}
+          showSavePrice={selectionPriceDirty}
+          canSavePrice={canSaveSelectionPrice}
+          onSavePrice={handleSaveSelectionPrice}
+          restrictionForm={selectionRestrictionsForm}
+          restrictionMixedFields={selectionRestrictionMixedFields}
+          onRestrictionFieldChange={handleSelectionRestrictionChange}
+          showSaveRestrictions={selectionRestrictionsDirty}
+          canSaveRestrictions={canSaveSelectionRestrictions}
+          onSaveRestrictions={handleSaveSelectionRestrictions}
+        />
+        <DynamicPricingCard
+          isConnected={priceLabsConnected}
+          selectedDateKeys={selectedDateKeys}
+          priceOverrides={priceOverrides}
+          onApplyPrice={onApplyPriceLabsPrice}
+          onOpenSettings={() => setSidebarMode("pricelabs")}
+        />
+      </>
     );
   }
 
@@ -360,6 +380,25 @@ function HostCalendarSidebar({
     );
   }
 
+  if (sidebarMode === "pricelabs") {
+    return priceLabsConnected ? (
+      <PriceLabsStatusCard
+        status={priceLabsStatus}
+        onSync={priceLabsSyncAll}
+        onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
+        isSyncing={false}
+        isLoading={false}
+      />
+    ) : (
+      <PriceLabsConnect
+        onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
+        isLoading={false}
+        error={null}
+        successMessage={null}
+      />
+    );
+  }
+
   if (sidebarMode === "calendar-sync") {
     return (
       <CalendarSyncCard
@@ -414,6 +453,13 @@ function HostCalendarSidebar({
         onOpenSettings={() => setSidebarMode("availability-settings")}
       />
       <CalendarLinkCard connectedCount={calendarSources.length} onOpenSettings={openCalendarSync} />
+      <DynamicPricingCard
+        isConnected={priceLabsConnected}
+        selectedDateKeys={selectedDateKeys}
+        priceOverrides={priceOverrides}
+        onApplyPrice={onApplyPriceLabsPrice}
+        onOpenSettings={() => setSidebarMode("pricelabs")}
+      />
     </>
   );
 }
@@ -421,6 +467,13 @@ function HostCalendarSidebar({
 HostCalendarSidebar.propTypes = {
   isSidebarLoading: PropTypes.bool.isRequired,
   sidebarLoadingMessage: PropTypes.string.isRequired,
+  priceLabsConnected: PropTypes.bool,
+  priceLabsStatus: PropTypes.object,
+  priceLabsConnect: PropTypes.func,
+  priceLabsDisconnect: PropTypes.func,
+  priceLabsSyncAll: PropTypes.func,
+  priceOverrides: PropTypes.objectOf(PropTypes.number),
+  onApplyPriceLabsPrice: PropTypes.func,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedAvailabilityStats: selectedAvailabilityStatsShape.isRequired,
   handleToggleAvailability: PropTypes.func.isRequired,
@@ -631,6 +684,21 @@ export default function HostCalendar() {
     setCursor((currentCursor) => addMonthsUTC(currentCursor, view === "year" ? 12 : 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
 
+  const {
+    status: priceLabsStatus,
+    connect: priceLabsConnect,
+    disconnect: priceLabsDisconnect,
+    syncAll: priceLabsSyncAll,
+  } = usePriceLabs();
+  const priceLabsConnected = Boolean(priceLabsStatus?.connected);
+
+  const handleApplyPriceLabsPrice = (dateKeys, price) => {
+    // Price already saved in Property_Calendar_Override via webhook — just update local state
+    // by triggering the existing selection price save with the PriceLabs price
+    handleSelectionPriceChange(price);
+    handleSaveSelectionPrice();
+  };
+
   const openCalendarSync = () => setSidebarMode("calendar-sync");
   const handleCalendarSyncBack = () => setSidebarMode("summary");
 
@@ -706,6 +774,13 @@ export default function HostCalendar() {
           <HostCalendarSidebar
             isSidebarLoading={isSidebarLoading}
             sidebarLoadingMessage={sidebarLoadingMessage}
+            priceLabsConnected={priceLabsConnected}
+            priceLabsStatus={priceLabsStatus}
+            priceLabsConnect={priceLabsConnect}
+            priceLabsDisconnect={priceLabsDisconnect}
+            priceLabsSyncAll={priceLabsSyncAll}
+            priceOverrides={selectedPropertyPriceOverrides}
+            onApplyPriceLabsPrice={handleApplyPriceLabsPrice}
             selectedDateKeys={selectedDateKeys}
             selectedAvailabilityStats={selectedAvailabilityStats}
             handleToggleAvailability={handleToggleAvailability}
