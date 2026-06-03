@@ -20,27 +20,70 @@ function chunkArray(arr, size) {
   return chunks;
 }
 
+async function fetchStripeSecret() {
+  const envSecret = process.env.STRIPE_SECRET_KEY;
+  if (envSecret) return envSecret;
+
+  try {
+    const ssm = new SystemManagerRepository();
+    return await ssm.getSystemManagerParameter("/stripe/keys/secret/live");
+  } catch (err) {
+    console.error("Failed to fetch Stripe secret from SSM:", err.message || err);
+    return null;
+  }
+}
+
+async function processBooking(booking, stripe, client, commit) {
+  const paymentId = booking.paymentid;
+  if (paymentId == null || paymentId === "") return "skipped";
+
+  let pi;
+  try {
+    pi = await stripe.paymentIntents.retrieve(paymentId);
+  } catch (err) {
+    console.error(`Stripe retrieval failed for booking ${booking.id} payment ${paymentId}:`, err.message || err);
+    return "error";
+  }
+
+  if (pi == null || typeof pi.amount !== "number") {
+    console.error(`PaymentIntent missing amount for booking ${booking.id} payment ${paymentId}`);
+    return "error";
+  }
+
+  const amountCents = pi.amount;
+  const amountEuros = Math.round(amountCents) / 100;
+
+  console.log(
+    `Booking ${booking.id}: payment=${paymentId} amount=${amountCents} ${pi.currency} -> total_price=${amountEuros}`
+  );
+
+  if (commit !== true) return "skipped";
+
+  try {
+    await client
+      .createQueryBuilder()
+      .update(Booking)
+      .set({ total_price: amountEuros })
+      .where("id = :id", { id: booking.id })
+      .execute();
+    return "updated";
+  } catch (err) {
+    console.error(`Failed to update booking ${booking.id}:`, err.message || err);
+    return "error";
+  }
+}
+
 async function main() {
   const { commit, limit } = parseArgs();
   console.log(`Backfill total_price from Stripe - commit=${commit} limit=${limit ?? "none"}`);
 
-  let stripeSecret = process.env.STRIPE_SECRET_KEY || null;
-  if (!stripeSecret) {
-    try {
-      const ssm = new SystemManagerRepository();
-      stripeSecret = await ssm.getSystemManagerParameter("/stripe/keys/secret/live");
-    } catch (err) {
-      console.error("Failed to fetch Stripe secret from SSM:", err.message || err);
-    }
-  }
-
-  if (!stripeSecret) {
+  const stripeSecret = await fetchStripeSecret();
+  if (stripeSecret == null) {
     console.error("Stripe secret not found. Set STRIPE_SECRET_KEY or ensure SSM access to /stripe/keys/secret/live.");
     process.exit(2);
   }
 
   const stripe = new Stripe(stripeSecret);
-
   const client = await Database.getInstance();
 
   let query = client
@@ -52,7 +95,6 @@ async function main() {
   if (limit) query = query.limit(limit);
 
   const bookings = await query.getMany();
-
   console.log(`Found ${bookings.length} bookings to inspect.`);
   if (bookings.length === 0) process.exit(0);
 
@@ -61,56 +103,18 @@ async function main() {
   let errors = 0;
 
   for (const b of bookings) {
-    try {
-      const paymentId = b.paymentid;
-      if (!paymentId) {
-        skipped++;
-        continue;
-      }
-
-      let pi;
-      try {
-        pi = await stripe.paymentIntents.retrieve(paymentId);
-      } catch (err) {
-        console.error(`Stripe retrieval failed for booking ${b.id} payment ${paymentId}:`, err.message || err);
-        errors++;
-        continue;
-      }
-
-      if (!pi || typeof pi.amount !== "number") {
-        console.error(`PaymentIntent missing amount for booking ${b.id} payment ${paymentId}`);
-        errors++;
-        continue;
-      }
-
-      const amountCents = pi.amount;
-      const amountEuros = Math.round(amountCents) / 100;
-
-      console.log(
-        `Booking ${b.id}: payment=${paymentId} amount=${amountCents} ${pi.currency} -> total_price=${amountEuros}`
-      );
-
-      if (commit) {
-        await client
-          .createQueryBuilder()
-          .update(Booking)
-          .set({ total_price: amountEuros })
-          .where("id = :id", { id: b.id })
-          .execute();
-        updated++;
-      } else {
-        skipped++;
-      }
-    } catch (err) {
-      console.error(`Unexpected error processing booking ${b.id}:`, err.message || err);
-      errors++;
-    }
+    const result = await processBooking(b, stripe, client, commit);
+    if (result === "updated") updated++;
+    else if (result === "skipped") skipped++;
+    else if (result === "error") errors++;
   }
 
   console.log(`Finished. updated=${updated} skipped=${skipped} errors=${errors}`);
 }
 
-main().catch((err) => {
+try {
+  await main();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}
