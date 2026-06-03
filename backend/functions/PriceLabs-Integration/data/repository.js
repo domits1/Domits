@@ -66,8 +66,10 @@ export class Repository {
 
     return properties.map((p) => ({
       ...p,
-      city:    locationMap[p.id]?.city    ?? "",
-      country: locationMap[p.id]?.country ?? "NL",
+      city:      locationMap[p.id]?.city      ?? "",
+      country:   locationMap[p.id]?.country   ?? "NL",
+      latitude:  locationMap[p.id]?.latitude  ?? null,
+      longitude: locationMap[p.id]?.longitude ?? null,
     }));
   }
 

@@ -1,4 +1,4 @@
-const BASE_URL = "https://api.pricelabs.co/v2/integration/api";
+const BASE_URL = "https://api.pricelabs.co/v1/integration/api";
 
 function headers(token, name) {
   return {

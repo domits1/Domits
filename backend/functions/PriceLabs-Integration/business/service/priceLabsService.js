@@ -108,6 +108,8 @@ export class PriceLabsService {
       name:               p.title || p.id,
       status:             "available",
       location: {
+        ...(p.latitude  != null ? { latitude:  Number(p.latitude)  } : {}),
+        ...(p.longitude != null ? { longitude: Number(p.longitude) } : {}),
         city:    p.city    || "Amsterdam",
         country: p.country || "NLD",
       },
