@@ -32,6 +32,8 @@ const FilterUi = ({ onFilterApplied }) => {
     fetchFilteredAccommodations,
     roomsAndBeds,
     handleRoomChange,
+    bookingOptions,
+    handleBookingOptionChange,
   } = FilterLogic({ onFilterApplied });
 
   const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
@@ -217,6 +219,32 @@ const FilterUi = ({ onFilterApplied }) => {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="filter-section">
+        <div className="FilterTitle">Booking Options</div>
+        <div className="facility-list">
+          <label className="facility-item">
+            <input
+              type="checkbox"
+              name="bookInstantly"
+              checked={bookingOptions.bookInstantly}
+              onChange={handleBookingOptionChange}
+              className="filter-select-option"
+            />
+            <span>Book Instantly</span>
+          </label>
+          <label className="facility-item">
+            <input
+              type="checkbox"
+              name="bookingRequest"
+              checked={bookingOptions.bookingRequest}
+              onChange={handleBookingOptionChange}
+              className="filter-select-option"
+            />
+            <span>Booking Request</span>
+          </label>
+        </div>
       </div>
 
     </div>

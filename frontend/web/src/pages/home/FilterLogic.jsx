@@ -33,6 +33,18 @@ export default function useFilterLogic(props) {
     }));
   };
 
+  const [bookingOptions, setBookingOptions] = useState({
+    bookInstantly: false,
+    bookingRequest: false,
+  });
+
+  const handleBookingOptionChange = (event) => {
+    setBookingOptions((prev) => ({
+      ...prev,
+      [event.target.name]: event.target.checked,
+    }));
+  };
+
   const [accommodationResults, setAccommodationResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -101,6 +113,8 @@ export default function useFilterLogic(props) {
     handlePriceChange,
     roomsAndBeds,
     handleRoomChange,
+    bookingOptions,
+    handleBookingOptionChange,
     accommodationResults,
     loading,
     error,
