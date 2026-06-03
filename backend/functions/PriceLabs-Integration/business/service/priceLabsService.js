@@ -103,7 +103,7 @@ export class PriceLabsService {
     const otaMap = await this.repo.getOtaListingIdsByHost(hostId);
 
     const listings = properties.map((p) => ({
-      listing_id:         `${hostId.replace(/-/g, "_")}_${p.id.replace(/-/g, "_")}`,
+      listing_id:         `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`,
       user_token:         connection.pricelabs_email,
       name:               p.title || p.id,
       status:             "available",
@@ -133,11 +133,11 @@ export class PriceLabsService {
     const properties = await this.repo.getPropertiesByHost(hostId);
 
     const targets = listingIds
-      ? properties.filter((p) => listingIds.includes(`${hostId.replace(/-/g, "_")}_${p.id.replace(/-/g, "_")}`))
+      ? properties.filter((p) => listingIds.includes(`${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`))
       : properties;
 
     for (const p of targets) {
-      const listingId   = `${hostId.replace(/-/g, "_")}_${p.id.replace(/-/g, "_")}`;
+      const listingId   = `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`;
       const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
 
       const data = availability.map((row) => {
@@ -179,7 +179,7 @@ export class PriceLabsService {
 
     const grouped = {};
     for (const b of bookings) {
-      const listingId = `${hostId.replace(/-/g, "_")}_${b.property_id.replace(/-/g, "_")}`;
+      const listingId = `${hostId.replaceAll("-", "_")}_${b.property_id.replaceAll("-", "_")}`;
       if (!grouped[listingId]) {
         grouped[listingId] = {
           listing_id: listingId,
