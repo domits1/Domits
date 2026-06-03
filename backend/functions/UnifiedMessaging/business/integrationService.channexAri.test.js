@@ -801,6 +801,123 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     });
   });
 
+  test("host calendar availability changes send booking-aware change-only availability", async () => {
+    const pushAvailability = createAvailabilityPush();
+    const pushRestrictions = jest.fn().mockResolvedValue({ results: [] });
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
+        bookings: [
+          buildBookingRow({
+            arrivaldate: "2026-06-01",
+            departuredate: "2026-06-03",
+            status: "Paid",
+          }),
+        ],
+      })
+    );
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexCalendarChange(
+      {
+        userId: "user-1",
+        domitsPropertyId: "domits-property-1",
+        changedDates: ["2026-06-01", "2026-06-02"],
+        changeTypes: ["availability"],
+        source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+      },
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.syncType).toBe("calendar-change");
+    expect(result.response.requestTypes).toEqual(["availability"]);
+    expect(result.response.requestCount).toBe(1);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expect(pushRestrictions).not.toHaveBeenCalled();
+    expectAvailabilityByDate(pushAvailability, {
+      "2026-06-01": 0,
+      "2026-06-02": 0,
+    });
+  });
+
+  test("host calendar rate changes send rates only through restrictions endpoint", async () => {
+    const pushAvailability = jest.fn().mockResolvedValue({ results: [] });
+    const pushRestrictions = createRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexCalendarChange(
+      {
+        userId: "user-1",
+        domitsPropertyId: "domits-property-1",
+        changedDates: ["2026-05-01"],
+        changeTypes: ["rates"],
+        source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+      },
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestTypes).toEqual(["restrictions/rates"]);
+    expect(pushAvailability).not.toHaveBeenCalled();
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    const [value] = pushRestrictions.mock.calls[0][1][0].values;
+    expect(value).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-1",
+      date: "2026-05-01",
+      rate: "123.00",
+    });
+  });
+
+  test("host calendar restriction changes include explicit false values without rate", async () => {
+    const pushAvailability = jest.fn().mockResolvedValue({ results: [] });
+    const pushRestrictions = createRestrictionsPush();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexCalendarChange(
+      {
+        userId: "user-1",
+        domitsPropertyId: "domits-property-1",
+        changedDates: ["2026-05-01"],
+        changeTypes: ["restrictions"],
+        source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+      },
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestTypes).toEqual(["restrictions/rates"]);
+    expect(pushAvailability).not.toHaveBeenCalled();
+    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    const [value] = pushRestrictions.mock.calls[0][1][0].values;
+    expect(value).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-1",
+      date: "2026-05-01",
+      stop_sell: true,
+      closed_to_arrival: true,
+      closed_to_departure: false,
+      min_stay_through: 4,
+    });
+    expect(value).not.toHaveProperty("rate");
+  });
+
   test("restrictions sync supports a 500-day range and sends one combined provider request", async () => {
     const pushRestrictions = createSuccessfulRestrictionsPush();
     const service = createService({

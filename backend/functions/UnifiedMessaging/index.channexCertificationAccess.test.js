@@ -12,6 +12,7 @@ const mockIntegrationControllerMethods = {
   syncChannexRestrictions: jest.fn(),
   syncChannexFull: jest.fn(),
   syncChannexBookingAvailability: jest.fn(),
+  syncChannexCalendarChange: jest.fn(),
   syncChannexCertificationTestCase: jest.fn(),
   cancelChannexCertificationBooking: jest.fn(),
   saveChannexSetupMapping: jest.fn(),
@@ -353,6 +354,36 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     });
     expect(mockIntegrationControllerMethods.pollLatestChannexBookings).toHaveBeenCalledWith(event);
     expect(mockIntegrationControllerMethods.pullLatestChannexBookings).not.toHaveBeenCalled();
+  });
+
+  test("internal Channex calendar-change sync route calls controller without admin guard", async () => {
+    mockIntegrationControllerMethods.syncChannexCalendarChange.mockResolvedValue({
+      statusCode: 200,
+      response: {
+        syncType: "calendar-change",
+        requestCount: 1,
+      },
+    });
+
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/calendar-change/sync",
+        body: JSON.stringify({
+          userId: "host-1",
+          domitsPropertyId: "property-1",
+          changedDates: ["2026-06-10"],
+          changeTypes: ["availability"],
+        }),
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({
+      syncType: "calendar-change",
+      requestCount: 1,
+    });
+    expect(mockIntegrationControllerMethods.syncChannexCalendarChange).toHaveBeenCalledTimes(1);
   });
 
   test("certification test-case endpoint is protected before side effects run", async () => {

@@ -198,6 +198,23 @@ const CHANNEX_SUPPORTED_RESTRICTION_FIELDS = [
   "max_stay",
   "min_stay_through",
 ];
+const CHANNEX_CALENDAR_CHANGE_SYNC_TYPE = "calendar-change";
+const CHANNEX_CALENDAR_CHANGE_TYPES = Object.freeze({
+  AVAILABILITY: "availability",
+  RATES: "rates",
+  RESTRICTIONS: "restrictions",
+});
+const CHANNEX_CALENDAR_CHANGE_TYPE_ALIASES = new Map([
+  ["availability", CHANNEX_CALENDAR_CHANGE_TYPES.AVAILABILITY],
+  ["available", CHANNEX_CALENDAR_CHANGE_TYPES.AVAILABILITY],
+  ["isavailable", CHANNEX_CALENDAR_CHANGE_TYPES.AVAILABILITY],
+  ["rates", CHANNEX_CALENDAR_CHANGE_TYPES.RATES],
+  ["rate", CHANNEX_CALENDAR_CHANGE_TYPES.RATES],
+  ["pricing", CHANNEX_CALENDAR_CHANGE_TYPES.RATES],
+  ["price", CHANNEX_CALENDAR_CHANGE_TYPES.RATES],
+  ["restrictions", CHANNEX_CALENDAR_CHANGE_TYPES.RESTRICTIONS],
+  ["restriction", CHANNEX_CALENDAR_CHANGE_TYPES.RESTRICTIONS],
+]);
 const normalizeRestrictionInteger = (value) => {
   if (value === undefined || value === null || value === "") return null;
 
@@ -2192,6 +2209,84 @@ const buildChannexRestrictionSyncPayloads = (groupedPayloads) =>
       };
     })
     .filter((group) => group.values.length > 0);
+const normalizeChannexCalendarChangeTypes = (changeTypes) =>
+  Array.from(
+    new Set(
+      (Array.isArray(changeTypes) ? changeTypes : [changeTypes])
+        .map((changeType) => requireStr(changeType)?.toLowerCase().replaceAll(/[^a-z]/g, ""))
+        .map((changeType) => CHANNEX_CALENDAR_CHANGE_TYPE_ALIASES.get(changeType))
+        .filter(Boolean)
+    )
+  ).sort(compareAlphabetically);
+const normalizeChannexCalendarChangeDates = (changedDates) =>
+  Array.from(
+    new Set(
+      (Array.isArray(changedDates) ? changedDates : [])
+        .map((date) => parseIsoDateParam(date))
+        .filter(Boolean)
+    )
+  ).sort(compareAlphabetically);
+const buildChannexCalendarChangeDateContext = (body) => {
+  const changedDates = normalizeChannexCalendarChangeDates(body?.changedDates);
+  if (changedDates.length) {
+    return {
+      changedDates,
+      dateFrom: changedDates[0],
+      dateTo: changedDates.at(-1),
+      exactDateSet: new Set(changedDates),
+    };
+  }
+
+  const dateFrom = parseIsoDateParam(body?.dateFrom);
+  const dateTo = parseIsoDateParam(body?.dateTo);
+  return {
+    changedDates: [],
+    dateFrom,
+    dateTo,
+    exactDateSet: null,
+  };
+};
+const filterChannexPayloadValuesByDate = (payloads, exactDateSet) =>
+  (Array.isArray(payloads) ? payloads : [])
+    .map((payload) => ({
+      ...payload,
+      values: (Array.isArray(payload?.values) ? payload.values : []).filter(
+        (value) => !exactDateSet || exactDateSet.has(value?.date)
+      ),
+    }))
+    .filter((payload) => payload.values.length > 0);
+const buildChannexCalendarRestrictionSyncValue = (value, changeTypes) => {
+  const includeRates = changeTypes.includes(CHANNEX_CALENDAR_CHANGE_TYPES.RATES);
+  const includeRestrictions = changeTypes.includes(CHANNEX_CALENDAR_CHANGE_TYPES.RESTRICTIONS);
+  const out = {
+    property_id: value.property_id,
+    rate_plan_id: value.rate_plan_id,
+    date: value.date,
+  };
+
+  if (includeRates && Object.hasOwn(value || {}, "rate")) {
+    out.rate = value.rate;
+  }
+
+  if (includeRestrictions) {
+    for (const field of CHANNEX_SUPPORTED_RESTRICTION_FIELDS) {
+      if (Object.hasOwn(value || {}, field)) {
+        out[field] = value[field];
+      }
+    }
+  }
+
+  return Object.keys(out).length > 3 ? out : null;
+};
+const buildChannexCalendarRestrictionSyncPayloads = ({ payloads, changeTypes, exactDateSet }) =>
+  filterChannexPayloadValuesByDate(payloads, exactDateSet)
+    .map((payload) => ({
+      ...payload,
+      values: payload.values
+        .map((value) => buildChannexCalendarRestrictionSyncValue(value, changeTypes))
+        .filter(Boolean),
+    }))
+    .filter((payload) => payload.values.length > 0);
 const appendRestrictionSyncOutboundNotes = (notes, transformedPayloads) => {
   const sentChannexRestrictionFields = collectChannexRestrictionFieldsFromGroups(transformedPayloads);
   if (sentChannexRestrictionFields.length) {
@@ -7997,6 +8092,348 @@ export default class IntegrationService {
             },
           ],
           rawDetails: { caughtError: details },
+        }
+      );
+    }
+  }
+
+  async syncChannexCalendarChange(body = {}, options = {}) {
+    const startedAt = nowMs();
+    const normalizedUserId = requireStr(body?.userId);
+    const normalizedDomitsPropertyId = requireStr(body?.domitsPropertyId);
+    const source = requireStr(body?.source) || "HOST_CALENDAR_CHANGED";
+    const changeTypes = normalizeChannexCalendarChangeTypes(body?.changeTypes);
+    const dateContext = buildChannexCalendarChangeDateContext(body);
+    const finalize = this.createChannexSyncFinalizer({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom: dateContext.dateFrom,
+      normalizedDateTo: dateContext.dateTo,
+      rawDateFrom: body?.dateFrom,
+      rawDateTo: body?.dateTo,
+      startedAt,
+      syncType: CHANNEX_CALENDAR_CHANGE_SYNC_TYPE,
+      options,
+    });
+
+    if (!normalizedUserId) {
+      return await finalize(bad(400, { error: "Missing required field: userId" }), {
+        status: "INVALID_REQUEST",
+        errors: [{ errorCode: "MISSING_USER_ID", errorMessage: "Missing required field: userId" }],
+      });
+    }
+    if (!normalizedDomitsPropertyId) {
+      return await finalize(bad(400, { error: "Missing required field: domitsPropertyId" }), {
+        status: "INVALID_REQUEST",
+        errors: [
+          { errorCode: "MISSING_DOMITS_PROPERTY_ID", errorMessage: "Missing required field: domitsPropertyId" },
+        ],
+      });
+    }
+    if (!dateContext.dateFrom || !dateContext.dateTo || dateContext.dateFrom > dateContext.dateTo) {
+      return await finalize(bad(400, { error: "Invalid or missing calendar-change date range." }), {
+        status: "INVALID_REQUEST",
+        errors: [
+          {
+            errorCode: "CHANNEX_CALENDAR_CHANGE_DATE_RANGE_INVALID",
+            errorMessage: "Calendar-change sync needs changedDates or a valid dateFrom/dateTo range.",
+          },
+        ],
+      });
+    }
+    const validationFailure = buildSyncDateRangeValidationFailure({
+      normalizedUserId,
+      normalizedDomitsPropertyId,
+      normalizedDateFrom: dateContext.dateFrom,
+      normalizedDateTo: dateContext.dateTo,
+    });
+    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
+    if (!changeTypes.length) {
+      return await finalize(bad(400, { error: "Missing required field: changeTypes" }), {
+        status: "INVALID_REQUEST",
+        errors: [
+          {
+            errorCode: "CHANNEX_CALENDAR_CHANGE_TYPES_MISSING",
+            errorMessage: "Calendar-change sync needs at least one supported change type.",
+          },
+        ],
+      });
+    }
+
+    const baseNotes = [
+      "Host calendar change-only sync. This endpoint sends only the Channex provider payloads needed for the changed calendar fields.",
+      "Availability values are rebuilt from Domits effective availability, including active booking occupancy, before sending to Channex.",
+    ];
+
+    try {
+      const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
+      if (readinessResult?.statusCode !== 200) {
+        return await finalize(readinessResult, this.buildChannexAriTargetsFailureEvidencePatch(readinessResult));
+      }
+
+      const readiness = readinessResult.response || {};
+      const mappingSnapshot = this.buildChannexMultiStepMappingSnapshot(readiness);
+      if (!readiness.ready) {
+        const response = ok({
+          channel: readiness.channel || "CHANNEX",
+          integrationAccountId: readiness.integrationAccountId || null,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          source,
+          dateFrom: dateContext.dateFrom,
+          dateTo: dateContext.dateTo,
+          changedDates: dateContext.changedDates,
+          changeTypes,
+          requestTypes: [],
+          ready: false,
+          calledProvider: false,
+          requestCount: 0,
+          taskIds: [],
+          warnings: [],
+          errors: [],
+          overallSuccess: false,
+          missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
+          notes: appendMissingMappingNotes(baseNotes, readiness.missingMappings),
+        });
+        return await finalize(response, {
+          integrationAccountId: readiness.integrationAccountId ?? null,
+          status: "BLOCKED",
+          overallSuccess: false,
+          mappingSnapshot,
+          groupedOutboundPayloadSnapshot: { availability: [], restrictions: [] },
+          providerResponseSummary: { calledProvider: false, requestCount: 0, results: [] },
+          notes: response.response.notes,
+          rawDetails: { readiness, source, changeTypes, changedDates: dateContext.changedDates },
+        });
+      }
+
+      const needsAvailability = changeTypes.includes(CHANNEX_CALENDAR_CHANGE_TYPES.AVAILABILITY);
+      const needsRestrictionsOrRates =
+        changeTypes.includes(CHANNEX_CALENDAR_CHANGE_TYPES.RESTRICTIONS) ||
+        changeTypes.includes(CHANNEX_CALENDAR_CHANGE_TYPES.RATES);
+      const availabilityContext = needsAvailability
+        ? await this.buildChannexFullSyncAvailabilityPayloadContext({
+            readiness,
+            normalizedDomitsPropertyId,
+            normalizedDateFrom: dateContext.dateFrom,
+            normalizedDateTo: dateContext.dateTo,
+          })
+        : null;
+      const fullPayloadContext = needsRestrictionsOrRates
+        ? await this.buildChannexFullSyncPayloadContext({
+            readiness,
+            normalizedDomitsPropertyId,
+            normalizedDateFrom: dateContext.dateFrom,
+            normalizedDateTo: dateContext.dateTo,
+          })
+        : null;
+      const availabilityPayloads = needsAvailability
+        ? filterChannexPayloadValuesByDate(
+            availabilityContext?.availabilityProviderPayloads,
+            dateContext.exactDateSet
+          )
+        : [];
+      const restrictionPayloads = needsRestrictionsOrRates
+        ? buildChannexCalendarRestrictionSyncPayloads({
+            payloads: fullPayloadContext?.restrictionProviderPayloads,
+            changeTypes,
+            exactDateSet: dateContext.exactDateSet,
+          })
+        : [];
+      const requestTypes = [
+        ...(availabilityPayloads.length ? ["availability"] : []),
+        ...(restrictionPayloads.length ? ["restrictions/rates"] : []),
+      ];
+
+      if (!requestTypes.length) {
+        const response = ok({
+          channel: "CHANNEX",
+          integrationAccountId: readiness.integrationAccountId ?? null,
+          domitsPropertyId: normalizedDomitsPropertyId,
+          source,
+          dateFrom: dateContext.dateFrom,
+          dateTo: dateContext.dateTo,
+          changedDates: dateContext.changedDates,
+          changeTypes,
+          requestTypes: [],
+          ready: true,
+          calledProvider: false,
+          requestCount: 0,
+          taskIds: [],
+          warnings: [],
+          errors: [],
+          overallSuccess: false,
+          notes: [
+            ...baseNotes,
+            "No Channex provider values were generated for the requested host calendar change.",
+          ],
+        });
+        return await finalize(response, {
+          integrationAccountId: readiness.integrationAccountId ?? null,
+          status: "NOOP",
+          overallSuccess: false,
+          mappingSnapshot,
+          groupedOutboundPayloadSnapshot: { availability: [], restrictions: [] },
+          providerResponseSummary: { calledProvider: false, requestCount: 0, results: [] },
+          notes: response.response.notes,
+          rawDetails: {
+            source,
+            changeTypes,
+            changedDates: dateContext.changedDates,
+            availabilityPayloadSummary: availabilityContext?.availabilityPayloadSummary ?? [],
+            restrictionsPayloadSummary: fullPayloadContext?.restrictionsPayloadSummary ?? [],
+          },
+        });
+      }
+
+      const credentialContext = await this.resolveChannexSyncCredentialContext({
+        userId: normalizedUserId,
+        mappingSnapshot,
+        groupedPayloads: {
+          availability: summarizeChannexGroupedPayloads(availabilityPayloads),
+          restrictions: summarizeChannexGroupedPayloads(restrictionPayloads),
+        },
+        baseNotes,
+        payloadPreview: {
+          source,
+          changeTypes,
+          changedDates: dateContext.changedDates,
+          dateFrom: dateContext.dateFrom,
+          dateTo: dateContext.dateTo,
+        },
+      });
+      if (!credentialContext.ok) {
+        return await finalize(credentialContext.response, credentialContext.evidencePatch);
+      }
+
+      const { integration, secret } = credentialContext;
+      const providerSteps = [];
+      if (availabilityPayloads.length) {
+        const providerResult = await this.channexProviderClient.pushAvailability(secret, availabilityPayloads, {
+          requestTimeoutMs: options?.providerRequestTimeoutMs,
+          stopOnFailure: true,
+        });
+        const results = (Array.isArray(providerResult?.results) ? providerResult.results : []).map(
+          formatChannexAvailabilityProviderResult
+        );
+        providerSteps.push({
+          step: "availability",
+          requestCount: availabilityPayloads.length,
+          results,
+          taskIds: collectTaskIdsFromResultList(results),
+          warnings: collectWarningsFromResultList(results),
+          errors: collectErrorsFromResultList(results),
+        });
+      }
+      if (restrictionPayloads.length) {
+        const providerResult = await this.channexProviderClient.pushRestrictions(secret, restrictionPayloads, {
+          requestTimeoutMs: options?.providerRequestTimeoutMs,
+          stopOnFailure: true,
+        });
+        const results = (Array.isArray(providerResult?.results) ? providerResult.results : []).map(
+          formatChannexRestrictionProviderResult
+        );
+        providerSteps.push({
+          step: "restrictions/rates",
+          requestCount: restrictionPayloads.length,
+          results,
+          taskIds: collectTaskIdsFromResultList(results),
+          warnings: collectWarningsFromResultList(results),
+          errors: collectErrorsFromResultList(results),
+        });
+      }
+
+      const allResults = providerSteps.flatMap((step) => step.results);
+      const taskIds = collectTaskIdsFromResultList(allResults);
+      const warnings = collectWarningsFromResultList(allResults);
+      const errors = collectErrorsFromResultList(allResults);
+      const hasErrors = resultListHasErrors(allResults);
+      const hasWarnings = resultListHasWarnings(allResults);
+      const overallSuccess = !hasErrors && !hasWarnings;
+      const responseBody = {
+        channel: "CHANNEX",
+        integrationAccountId: integration.id,
+        domitsPropertyId: normalizedDomitsPropertyId,
+        source,
+        syncType: CHANNEX_CALENDAR_CHANGE_SYNC_TYPE,
+        dateFrom: dateContext.dateFrom,
+        dateTo: dateContext.dateTo,
+        changedDates: dateContext.changedDates,
+        changeTypes,
+        requestTypes,
+        ready: true,
+        calledProvider: true,
+        requestCount: availabilityPayloads.length + restrictionPayloads.length,
+        taskIds,
+        warnings,
+        errors,
+        overallSuccess,
+        steps: providerSteps,
+        notes: baseNotes,
+        ...(hasErrors
+          ? {
+              error: "Failed to sync Channex host calendar change.",
+              errorCode: "CHANNEX_CALENDAR_CHANGE_SYNC_FAILED",
+            }
+          : {}),
+      };
+      const response = hasErrors ? bad(500, responseBody) : ok(responseBody);
+      const outcome = deriveEvidenceOutcome({
+        statusCode: response.statusCode,
+        ready: true,
+        calledProvider: true,
+        results: allResults,
+        overallSuccess,
+      });
+
+      return await finalize(response, {
+        integrationAccountId: integration.id,
+        status: outcome.status,
+        overallSuccess: outcome.overallSuccess && overallSuccess,
+        mappingSnapshot,
+        groupedOutboundPayloadSnapshot: {
+          availability: summarizeChannexGroupedPayloads(availabilityPayloads),
+          restrictions: summarizeChannexGroupedPayloads(restrictionPayloads),
+        },
+        providerResponseSummary: {
+          calledProvider: true,
+          requestCount: responseBody.requestCount,
+          requestTypes,
+          results: allResults,
+          steps: providerSteps,
+        },
+        taskIds,
+        warnings,
+        errors,
+        notes: baseNotes,
+        rawDetails: {
+          source,
+          changeTypes,
+          changedDates: dateContext.changedDates,
+          activeBookingCount:
+            availabilityContext?.activeBookingCount ?? fullPayloadContext?.activeBookingCount ?? null,
+          activeBookingNightCount:
+            availabilityContext?.activeBookingNightCount ?? fullPayloadContext?.activeBookingNightCount ?? null,
+        },
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return await finalize(
+        bad(500, {
+          error: "Failed to sync Channex host calendar change.",
+          errorCode: "CHANNEX_CALENDAR_CHANGE_SYNC_FAILED",
+          details,
+        }),
+        {
+          status: "FAILED",
+          overallSuccess: false,
+          errors: [
+            {
+              errorCode: "CHANNEX_CALENDAR_CHANGE_SYNC_FAILED",
+              errorMessage: "Failed to sync Channex host calendar change.",
+              details,
+            },
+          ],
+          rawDetails: { caughtError: details, source, changeTypes, changedDates: dateContext.changedDates },
         }
       );
     }

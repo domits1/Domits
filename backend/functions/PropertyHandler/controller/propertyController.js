@@ -11,6 +11,9 @@ import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBoo
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
+import ChannexCalendarChangeSyncClient, {
+    createCalendarChangeFallbackEvidence,
+} from "../business/service/channexCalendarChangeSyncClient.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
@@ -45,6 +48,12 @@ const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
 const DIRECT_BOOKING_WEBSITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
+const CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS = 500;
+const CALENDAR_CHANGE_FIELD_GROUPS = Object.freeze({
+    availability: ["isAvailable"],
+    rates: ["nightlyPrice"],
+    restrictions: ["stopSell", "closedToArrival", "closedToDeparture", "minStay", "maxStay"],
+});
 
 const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
 const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -133,7 +142,11 @@ export class PropertyController {
     propertyService;
     authManager;
 
-    constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
+    constructor(
+        dynamoDbClient = new DynamoDBClient({}),
+        systemManagerRepository = new SystemManagerRepository(),
+        { channexCalendarChangeSyncClient = new ChannexCalendarChangeSyncClient() } = {}
+    ) {
         this.authManager = new AuthManager(dynamoDbClient, systemManagerRepository);
         this.propertyService = new PropertyService(dynamoDbClient, systemManagerRepository);
         this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
@@ -142,6 +155,7 @@ export class PropertyController {
         this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
         this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
         this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
+        this.channexCalendarChangeSyncClient = channexCalendarChangeSyncClient;
     }
 
     // -------------------------
@@ -484,6 +498,11 @@ export class PropertyController {
             );
 
             await new PriceLabsCalendarNotifier().notifyListingChange(hostId);
+            await this.notifyChannexOverviewCalendarChange({
+                hostId,
+                propertyId: normalizedOverviewPayload.propertyId,
+                normalizedOverviewPayload,
+            });
 
             return {
                 statusCode: 204,
@@ -561,6 +580,7 @@ export class PropertyController {
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
             const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
+            const previousOverrides = await this.getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides);
 
             const overrides = await this.propertyService.updatePropertyCalendarOverrides(
                 propertyId,
@@ -569,6 +589,12 @@ export class PropertyController {
             );
 
             await new PriceLabsCalendarNotifier().notifyCalendarChange(hostId);
+            const channexCalendarChangeSync = await this.notifyChannexCalendarOverrideChange({
+                hostId,
+                propertyId,
+                previousOverrides,
+                normalizedOverrides,
+            });
 
             return {
                 statusCode: 200,
@@ -576,6 +602,7 @@ export class PropertyController {
                 body: JSON.stringify({
                     propertyId,
                     overrides,
+                    channexCalendarChangeSync,
                 }),
             };
         } catch (error) {
@@ -589,6 +616,132 @@ export class PropertyController {
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             };
         }
+    }
+
+    calendarDateIntToIsoDate(value) {
+        const rawValue = String(value || "").trim();
+        if (!/^\d{8}$/.test(rawValue)) {
+            return null;
+        }
+        return `${rawValue.slice(0, 4)}-${rawValue.slice(4, 6)}-${rawValue.slice(6, 8)}`;
+    }
+
+    buildCalendarOverrideMap(overrides) {
+        return new Map(
+            (Array.isArray(overrides) ? overrides : [])
+                .map((override) => {
+                    const date = Number(override?.calendarDate ?? override?.date);
+                    return Number.isInteger(date) ? [date, override] : null;
+                })
+                .filter(Boolean)
+        );
+    }
+
+    compareCalendarOverrideField(previousOverride, nextOverride, field) {
+        const previousValue = previousOverride?.[field] ?? null;
+        const nextValue = nextOverride?.[field] ?? null;
+        return previousValue !== nextValue;
+    }
+
+    collectCalendarOverrideChangeTypes(previousOverrides, normalizedOverrides) {
+        const previousByDate = this.buildCalendarOverrideMap(previousOverrides);
+        const changeTypes = new Set();
+        const changedDates = [];
+
+        for (const override of normalizedOverrides) {
+            const previousOverride = previousByDate.get(override.calendarDate) || {};
+            const dateChangeTypes = Object.entries(CALENDAR_CHANGE_FIELD_GROUPS)
+                .filter(([, fields]) =>
+                    fields.some((field) => this.compareCalendarOverrideField(previousOverride, override, field))
+                )
+                .map(([changeType]) => changeType);
+
+            if (dateChangeTypes.length) {
+                changedDates.push(this.calendarDateIntToIsoDate(override.calendarDate));
+                dateChangeTypes.forEach((changeType) => changeTypes.add(changeType));
+            }
+        }
+
+        return {
+            changedDates: changedDates.filter(Boolean).sort(),
+            changeTypes: Array.from(changeTypes).sort(),
+        };
+    }
+
+    async getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides) {
+        const dates = normalizedOverrides.map((override) => Number(override.calendarDate)).filter(Number.isInteger);
+        if (!dates.length) return [];
+
+        return await this.propertyService.getPropertyCalendarOverrides(propertyId, {
+            startDate: Math.min(...dates),
+            endDate: Math.max(...dates),
+        });
+    }
+
+    async notifyChannexCalendarOverrideChange({
+        hostId,
+        propertyId,
+        previousOverrides,
+        normalizedOverrides,
+    }) {
+        const { changedDates, changeTypes } = this.collectCalendarOverrideChangeTypes(
+            previousOverrides,
+            normalizedOverrides
+        );
+        const payload = {
+            userId: hostId,
+            domitsPropertyId: propertyId,
+            changedDates,
+            changeTypes,
+            source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+        };
+
+        if (!changedDates.length || !changeTypes.length) {
+            return createCalendarChangeFallbackEvidence({
+                payload,
+                skipped: true,
+                reason: "NO_CHANNEX_RELEVANT_CALENDAR_CHANGES",
+            });
+        }
+
+        return await this.channexCalendarChangeSyncClient.syncCalendarChange(payload);
+    }
+
+    getForwardCalendarSyncRange() {
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setUTCDate(endDate.getUTCDate() + CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS - 1);
+
+        return {
+            dateFrom: startDate.toISOString().slice(0, 10),
+            dateTo: endDate.toISOString().slice(0, 10),
+        };
+    }
+
+    getOverviewCalendarChangeTypes(normalizedOverviewPayload) {
+        const changeTypes = [];
+        if (normalizedOverviewPayload.pricing !== undefined) {
+            changeTypes.push("rates");
+        }
+        if (normalizedOverviewPayload.availabilityRestrictions !== undefined) {
+            changeTypes.push("restrictions");
+        }
+        return changeTypes;
+    }
+
+    async notifyChannexOverviewCalendarChange({ hostId, propertyId, normalizedOverviewPayload }) {
+        const changeTypes = this.getOverviewCalendarChangeTypes(normalizedOverviewPayload);
+        if (!changeTypes.length) return null;
+
+        const payload = {
+            userId: hostId,
+            domitsPropertyId: propertyId,
+            ...this.getForwardCalendarSyncRange(),
+            changeTypes,
+            source: "HOST_CALENDAR_GLOBAL_SETTINGS_CHANGED",
+        };
+
+        return await this.channexCalendarChangeSyncClient.syncCalendarChange(payload);
     }
 
     extractOverviewPayload(body) {
