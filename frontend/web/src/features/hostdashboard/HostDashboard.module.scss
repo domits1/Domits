@@ -633,16 +633,16 @@
 
 .archived {
   background: #eee;
-  color: #6b7280;
+  color: #464b56;
 }
 
 .location {
-  color: #6b7280;
+  color: #464b56;
   font-weight: 500;
 }
 
 .meta {
-  color: #6b7280;
+  color: #464b56;
   font-size: 13px;
 }
 
@@ -654,7 +654,7 @@
 }
 
 .primaryBtn {
-  background: #28a745;
+  background: var(--primary-color);
   color: white;
   border: none;
   padding: 8px 14px;
@@ -663,18 +663,8 @@
 }
 
 .primaryBtn:hover {
-  background: #218838;
+  background: #166534;
 }
-
-.primaryBtn {
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
 
 .secondaryBtn,
 .moreBtn {

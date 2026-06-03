@@ -31,7 +31,7 @@
 
 .greenBtn {
   color: #fff;
-  background: #1f7a1f;
+  background: var(--primary-color);
   border: none;
   padding: 10px 20px;
   border-radius: 10px;
@@ -146,7 +146,7 @@
 
 .cardsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 280px));
   gap: 18px;
   width: 100%;
 }
@@ -171,7 +171,7 @@
 .imgListedDashboard,
 .imgListedDashboardFallback {
   width: 100%;
-  height: 190px;
+  height: 130px;
   display: block;
 }
 
@@ -220,7 +220,7 @@
 
 .status {
   font-weight: 700;
-  color: #1f7a1f;
+  color: var(--primary-color);
 }
 
 .isArchived {
@@ -287,7 +287,7 @@
 }
 
 .tabBtnActive {
-  color: #28a745;
+  color: var(--primary-color);
   font-weight: 700;
 }
 
@@ -298,6 +298,6 @@
   bottom: -1px;
   width: 100%;
   height: 3px;
-  background: #28a745;
+  background: var(--primary-color);
   border-radius: 3px;
 }
