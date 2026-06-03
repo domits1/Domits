@@ -53,6 +53,43 @@ class IntegrationSyncRepository {
       .execute();
   }
 
+  async tryAcquireLock(integrationAccountId, syncType, { staleBeforeMs = Date.now() - 300000 } = {}) {
+    const client = await Database.getInstance();
+    await this.ensureStateRow(integrationAccountId, syncType);
+
+    const now = Date.now();
+    const result = await client
+      .createQueryBuilder()
+      .update(IntegrationSyncState)
+      .set({
+        status: "RUNNING",
+        lastSyncedAt: now,
+        updatedAt: now,
+      })
+      .where("integrationAccountId = :a AND syncType = :t", { a: integrationAccountId, t: syncType })
+      .andWhere("(status <> :running OR updatedAt <= :staleBeforeMs)", {
+        running: "RUNNING",
+        staleBeforeMs,
+      })
+      .execute();
+    const state = await client.getRepository(IntegrationSyncState).findOne({
+      where: { integrationAccountId, syncType },
+    });
+
+    return {
+      acquired: Number(result?.affected || 0) > 0,
+      state,
+    };
+  }
+
+  async releaseLock(integrationAccountId, syncType, { status = "IDLE", lastSyncedAt, lastSuccessfulItemAt } = {}) {
+    await this.setState(integrationAccountId, syncType, {
+      status,
+      lastSyncedAt,
+      lastSuccessfulItemAt,
+    });
+  }
+
   async insertLog(row) {
     const client = await Database.getInstance();
     await client.createQueryBuilder().insert().into(IntegrationSyncLog).values(row).execute();

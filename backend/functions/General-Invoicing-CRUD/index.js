@@ -15,6 +15,18 @@ export const handler = async (event) => {
 
     const { httpMethod, path } = event;
 
+    if (httpMethod === "OPTIONS") {
+      return {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type,Authorization",
+        },
+        body: "",
+      };
+    }
+
     if (httpMethod === "POST" && path.endsWith("/invoices")) {
       return await controller.createInvoice(event);
     }

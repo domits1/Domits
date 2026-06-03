@@ -14,6 +14,11 @@ import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendar
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
+import {
+    getDirectBookingWebsiteFallbackDomainSuffix,
+    getDirectBookingWebsiteFallbackRoutingStatus,
+    resolveDirectBookingWebsiteFallbackDomainStatus,
+} from "../util/directBookingWebsiteRouting.js";
 
 const draftResponseHeaders = {
     ...responseHeaders,
@@ -40,7 +45,6 @@ const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
 const DIRECT_BOOKING_WEBSITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
-const DEFAULT_DIRECT_BOOKING_WEBSITE_LIVE_DOMAIN_SUFFIX = "direct.domits.com";
 
 const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
 const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -61,28 +65,6 @@ const trimRepeatedCharacterEdges = (value, character) => {
 
     return value.slice(startIndex, endIndex);
 };
-const getConfiguredEnvValue = (...envNames) => {
-    for (const envName of envNames) {
-        const configuredValue = cleanWebsiteText(process.env[envName]);
-        if (configuredValue) {
-            return configuredValue;
-        }
-    }
-
-    return "";
-};
-const getLiveSiteDomainSuffix = () => {
-    const configuredSuffix = getConfiguredEnvValue(
-        "DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX"
-    ).toLowerCase();
-    return configuredSuffix || DEFAULT_DIRECT_BOOKING_WEBSITE_LIVE_DOMAIN_SUFFIX;
-};
-const getLiveSiteRoutingStatus = () =>
-    String(
-        process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE ?? ""
-    ).trim().toLowerCase() === "true"
-        ? "ACTIVE"
-        : "PENDING";
 const slugifyWebsiteDomainLabel = (value) => {
     const normalizedValue = cleanWebsiteText(value).normalize("NFKD").toLowerCase();
     let sanitizedValue = "";
@@ -128,7 +110,7 @@ const buildLiveSiteDomainLabel = (siteName, siteId) => {
     return trimRepeatedCharacterEdges(combinedLabel.slice(0, 63), "-");
 };
 const buildLiveSiteDomain = (siteName, siteId) =>
-    `${buildLiveSiteDomainLabel(siteName, siteId)}.${getLiveSiteDomainSuffix()}`;
+    `${buildLiveSiteDomainLabel(siteName, siteId)}.${getDirectBookingWebsiteFallbackDomainSuffix()}`;
 const normalizeDirectBookingWebsiteDomainInput = (value) => {
     const normalizedValue = cleanWebsiteText(value).toLowerCase();
     if (!normalizedValue) {
@@ -533,7 +515,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(query);
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.getPropertyCalendarOverrides(propertyId, normalizedRange);
             return {
@@ -578,7 +560,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
-            const hostId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.updatePropertyCalendarOverrides(
                 propertyId,
@@ -1473,7 +1455,21 @@ export class PropertyController {
             return null;
         }
 
-        const normalizedDomains = Array.isArray(domains) ? domains : [];
+        const normalizedDomains = (Array.isArray(domains) ? domains : []).map((domainEntry) => {
+            if (!domainEntry || typeof domainEntry !== "object") {
+                return domainEntry;
+            }
+
+            const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
+            if (!resolvedStatus || resolvedStatus === domainEntry.status) {
+                return domainEntry;
+            }
+
+            return {
+                ...domainEntry,
+                status: resolvedStatus,
+            };
+        });
         const primaryDomain = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
         const isReachable = site.status === "PUBLISHED" && primaryDomain?.status === "ACTIVE";
 
@@ -1653,7 +1649,9 @@ export class PropertyController {
             suspendedAt: null,
         });
 
-        const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(getLiveSiteRoutingStatus());
+        const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(
+            getDirectBookingWebsiteFallbackRoutingStatus()
+        );
         const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
         const liveDomain = await this.directBookingWebsiteDomainRepository.ensureDomain({
             siteId: site.id,

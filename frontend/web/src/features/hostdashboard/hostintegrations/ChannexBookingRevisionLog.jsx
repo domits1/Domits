@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { ackChannexBookingRevisions, listChannexBookingRevisions } from "./channexApi";
+import { ackChannexBookingRevisions, listChannexBookingRevisions, pullLatestChannexBookings } from "./channexApi";
 
 const DEFAULT_LIMIT = "50";
 const LIMIT_OPTIONS = ["25", "50", "100"];
@@ -23,6 +23,31 @@ const renderValue = (value) => {
 const stringifyJson = (value) => JSON.stringify(value ?? null, null, 2);
 
 const pluralizeRevision = (count) => `${count} booking revision${count === 1 ? "" : "s"}`;
+const formatIssueMessage = (issue) => {
+  if (!issue || typeof issue !== "object") return renderValue(issue);
+  const code = issue.code || issue.errorCode || issue.reason || "WARNING";
+  const message = issue.message || issue.errorMessage || issue.details || "";
+  return message ? `${code}: ${message}` : String(code);
+};
+const stringifyIssueKey = (issue) => {
+  if (!issue || typeof issue !== "object") return renderValue(issue);
+  return JSON.stringify({
+    code: issue.code || issue.errorCode || issue.reason || null,
+    message: issue.message || issue.errorMessage || issue.details || null,
+  });
+};
+const buildIssueListItems = (issues, keyPrefix) => {
+  const seenCountsByKey = new Map();
+  return issues.map((issue) => {
+    const baseKey = stringifyIssueKey(issue);
+    const nextCount = (seenCountsByKey.get(baseKey) || 0) + 1;
+    seenCountsByKey.set(baseKey, nextCount);
+    return {
+      key: `${keyPrefix}-${baseKey}-${nextCount}`,
+      message: formatIssueMessage(issue),
+    };
+  });
+};
 
 const getRevisionRowKey = (revision, revisionId, index) =>
   revision?.id || revisionId || `${revision?.externalReservationId || "revision"}-${index}`;
@@ -41,15 +66,17 @@ const getRevisionLogUiState = ({
   propertyId,
   loading,
   ackLoading,
+  pullLoading,
   selectedRevisionIds,
   hasLoaded,
   revisions,
   listError,
 }) => {
   const hasPropertyContext = Boolean(userId && propertyId);
-  const isIdle = loading === false && ackLoading === false;
+  const isIdle = loading === false && ackLoading === false && pullLoading === false;
   return {
     canLoad: hasPropertyContext && isIdle,
+    canPull: hasPropertyContext && isIdle,
     canAcknowledge: selectedRevisionIds.length > 0 && hasPropertyContext && isIdle,
     shouldShowMissingContext: hasPropertyContext === false,
     shouldShowEmptyState: hasLoaded && revisions.length === 0 && loading === false && listError === "",
@@ -208,6 +235,82 @@ RevisionTable.propTypes = {
   onToggleRevisionSelection: PropTypes.func.isRequired,
 };
 
+function PullResultSummary({ result }) {
+  if (!result) return null;
+  const warnings = Array.isArray(result.warnings) ? result.warnings : [];
+  const errors = Array.isArray(result.errors) ? result.errors : [];
+  const warningItems = buildIssueListItems(warnings, "pull-warning");
+  const errorItems = buildIssueListItems(errors, "pull-error");
+
+  return (
+    <section className="channex-payload-summary-panel">
+      <h4>Pull latest Channex bookings summary</h4>
+      <dl className="channex-diagnostics-detail-grid">
+        <div>
+          <dt>Fetched</dt>
+          <dd>{renderValue(result.fetchedCount)}</dd>
+        </div>
+        <div>
+          <dt>Raw persisted</dt>
+          <dd>{renderValue(result.rawPersistedCount)}</dd>
+        </div>
+        <div>
+          <dt>Created bookings</dt>
+          <dd>{renderValue(result.createdBookingCount)}</dd>
+        </div>
+        <div>
+          <dt>Updated bookings</dt>
+          <dd>{renderValue(result.updatedBookingCount)}</dd>
+        </div>
+        <div>
+          <dt>Cancelled bookings</dt>
+          <dd>{renderValue(result.cancelledBookingCount)}</dd>
+        </div>
+        <div>
+          <dt>Skipped</dt>
+          <dd>{renderValue(result.skippedCount)}</dd>
+        </div>
+        <div>
+          <dt>Acked</dt>
+          <dd>{renderValue(result.ackedCount)}</dd>
+        </div>
+        <div>
+          <dt>Unacked</dt>
+          <dd>{renderValue(result.unackedCount)}</dd>
+        </div>
+      </dl>
+      {warnings.length ? (
+        <div className="host-integrations-warning-banner">
+          <strong>Warnings</strong>
+          <ul className="channex-diagnostics-list">
+            {warningItems.map((warning) => (
+              <li key={warning.key}>{warning.message}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {errors.length ? (
+        <div className="host-integrations-error-banner">
+          <strong>Errors</strong>
+          <ul className="channex-diagnostics-list">
+            {errorItems.map((error) => (
+              <li key={error.key}>{error.message}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <details className="channex-diagnostics-collapsible">
+        <summary>Raw pull response JSON</summary>
+        <pre>{stringifyJson(result)}</pre>
+      </details>
+    </section>
+  );
+}
+
+PullResultSummary.propTypes = {
+  result: PropTypes.object,
+};
+
 function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [includeRawPayload, setIncludeRawPayload] = useState(false);
@@ -221,6 +324,10 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
   const [ackLoading, setAckLoading] = useState(false);
   const [ackError, setAckError] = useState("");
   const [ackSuccess, setAckSuccess] = useState("");
+  const [pullLoading, setPullLoading] = useState(false);
+  const [pullError, setPullError] = useState("");
+  const [pullSuccess, setPullSuccess] = useState("");
+  const [pullResult, setPullResult] = useState(null);
 
   const propertyId = String(domitsPropertyId || "").trim();
   const selectedRevisionIdSet = useMemo(() => new Set(selectedRevisionIds), [selectedRevisionIds]);
@@ -229,6 +336,7 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
     propertyId,
     loading,
     ackLoading,
+    pullLoading,
     selectedRevisionIds,
     hasLoaded,
     revisions,
@@ -303,6 +411,30 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
     }
   };
 
+  const pullLatestBookings = async () => {
+    if (uiState.canPull === false) return;
+
+    setPullLoading(true);
+    setPullError("");
+    setPullSuccess("");
+    setAckError("");
+    setAckSuccess("");
+
+    try {
+      const data = await pullLatestChannexBookings({
+        userId,
+        domitsPropertyId: propertyId,
+      });
+      setPullResult(data);
+      setPullSuccess("Pulled latest Channex bookings.");
+      await loadRevisions(includeRawPayload);
+    } catch (error) {
+      setPullError(error?.message || "Latest Channex bookings could not be pulled.");
+    } finally {
+      setPullLoading(false);
+    }
+  };
+
   return (
     <section className="channex-diagnostics-card">
       <div className="channex-diagnostics-card-header">
@@ -327,6 +459,14 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
         </label>
 
         <div className="channex-diagnostics-actions">
+          <button
+            type="button"
+            className="host-integrations-primary-btn"
+            disabled={uiState.canPull === false}
+            onClick={pullLatestBookings}
+          >
+            {pullLoading ? "Pulling..." : "Pull latest Channex bookings"}
+          </button>
           <button
             type="button"
             className="host-integrations-secondary-btn"
@@ -357,12 +497,14 @@ function ChannexBookingRevisionLog({ userId, domitsPropertyId }) {
       <RevisionMessages
         shouldShowMissingContext={uiState.shouldShowMissingContext}
         listSuccess={listSuccess}
-        ackSuccess={ackSuccess}
+        ackSuccess={pullSuccess || ackSuccess}
         listError={listError}
-        ackError={ackError}
+        ackError={pullError || ackError}
         shouldShowEmptyState={uiState.shouldShowEmptyState}
         shouldShowInitialState={uiState.shouldShowInitialState}
       />
+
+      <PullResultSummary result={pullResult} />
 
       <RevisionTable
         revisions={revisions}

@@ -2,14 +2,37 @@ import React from "react";
 import { UserProvider } from "../hostmessages/context/AuthContext";
 import { useAuth } from "../hostmessages/hooks/useAuth";
 import ChannexDiagnosticsPanel from "../hostintegrations/ChannexDiagnosticsPanel";
-import { isChannexCertificationUser } from "./channexCertificationAccess";
+import { checkChannexCertificationAccess } from "./channexCertificationAccess";
 import "../hostintegrations/HostIntegrations.scss";
 
 function ChannexCertificationAdminPageInner() {
   const { userId } = useAuth();
-  const isAllowed = isChannexCertificationUser(userId);
+  const [accessState, setAccessState] = React.useState({
+    allowed: false,
+    checking: true,
+  });
 
-  if (!userId) {
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function checkAccess() {
+      if (!userId) {
+        setAccessState({ allowed: false, checking: true });
+        return;
+      }
+
+      setAccessState({ allowed: false, checking: true });
+      const allowed = await checkChannexCertificationAccess(userId);
+      if (mounted) setAccessState({ allowed, checking: false });
+    }
+
+    checkAccess();
+    return () => {
+      mounted = false;
+    };
+  }, [userId]);
+
+  if (!userId || accessState.checking) {
     return (
       <main className="channex-admin-page">
         <section className="channex-admin-access-card">
@@ -21,7 +44,7 @@ function ChannexCertificationAdminPageInner() {
     );
   }
 
-  if (!isAllowed) {
+  if (!accessState.allowed) {
     return (
       <main className="channex-admin-page">
         <section className="channex-admin-access-card">

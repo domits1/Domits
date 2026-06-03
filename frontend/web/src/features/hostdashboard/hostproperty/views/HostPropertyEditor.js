@@ -103,6 +103,7 @@ export default function HostProperty() {
     advanceNoticeRestrictionKey: "MinimumAdvanceReservation",
     preparationTimeRestrictionKey: "PreparationTimeDays",
   });
+  const [availability, setAvailability] = useState([]);
   const [pricingForm, setPricingForm] = useState(createInitialPricingForm);
   const [expandedAmenityCategories, setExpandedAmenityCategories] = useState({});
   const [form, setForm] = useState({
@@ -261,6 +262,7 @@ export default function HostProperty() {
         setPolicyRules(fetchedPropertyData.policyRules);
         setCheckInDetails(fetchedPropertyData.checkInDetails);
         setPolicyAvailabilitySettings(fetchedPropertyData.policyAvailabilitySettings);
+        setAvailability(fetchedPropertyData.availability || []);
         setPricingForm(fetchedPropertyData.pricingForm);
         setExistingPhotos(fetchedPropertyData.existingPhotos);
         setPendingPhotos([]);
@@ -946,6 +948,9 @@ export default function HostProperty() {
             toggleAmenitySelection={toggleAmenitySelection}
             pricingForm={pricingForm}
             setPricingForm={setPricingForm}
+            propertyId={propertyId}
+            listingTitle={form.title}
+            availability={availability}
             policyRules={policyRules}
             checkInDetails={checkInDetails}
             policyAvailabilitySettings={policyAvailabilitySettings}

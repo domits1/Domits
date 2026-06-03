@@ -1,5 +1,6 @@
 import BookingService from "../business/bookingService.js";
 import PaymentService from "../business/paymentService.js";
+import { BadRequestException } from "../util/exception/badRequestException.js";
 import Stripe from "stripe";
 import { calculateRefundAmountCents } from "../util/refundCalculator.js";
 import Forbidden from "../util/exception/Forbidden.js";
@@ -10,6 +11,36 @@ import responsejson from "../util/const/responseheader.json" with { type: "json"
 const responseHeaderJSON = responsejson;
 const REFUND_CURRENCY = "eur";
 const STRIPE_REFUND_REASON = "requested_by_customer";
+const CHANNEX_BOOKING_CANCELLED_TRIGGER = "BOOKING_CANCELLED";
+const CHANNEX_ACTIVE_CANCELLATION_STATUSES = new Set(["awaiting payment", "paid"]);
+
+const normalizeJsonNumber = (value) => {
+  const numeric = Number(value);
+  return Number.isSafeInteger(numeric) ? numeric : String(value);
+};
+
+const toJsonSafeResponse = (value) => {
+  const seen = new WeakSet();
+
+  return JSON.parse(
+    JSON.stringify(value, (_key, nestedValue) => {
+      if (typeof nestedValue === "bigint") {
+        return normalizeJsonNumber(nestedValue);
+      }
+
+      if (nestedValue && typeof nestedValue === "object") {
+        if (seen.has(nestedValue)) return undefined;
+        seen.add(nestedValue);
+      }
+
+      return nestedValue;
+    })
+  );
+};
+
+const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
+const shouldSyncChannexCancellation = (booking) =>
+  CHANNEX_ACTIVE_CANCELLATION_STATUSES.has(normalizeBookingStatus(booking?.status));
 
 class ReservationController {
   constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
@@ -65,7 +96,7 @@ class ReservationController {
 
       const body = this.getPatchBody(event);
       const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
-      const actionResponse = await this.handlePatchAction(body, event, authToken);
+      const actionResponse = await this.handlePatchAction(body, authToken);
 
       return actionResponse || (await this.handlePaymentPatch(body));
     } catch (error) {
@@ -98,13 +129,17 @@ class ReservationController {
       this.requirePatchField(body, "departureDate"),
       authToken
     );
-    return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    return { statusCode: 200, headers: responseHeaderJSON, response: toJsonSafeResponse(result) };
   }
 
-  async handlePatchAction(body, event, authToken) {
+  async handleCancelBookingAction(body, authToken) {
+    if (!body?.bookingId) throw new BadRequestException("Missing bookingId.");
+    return await this.cancelBooking(body.bookingId, { headers: { Authorization: authToken } });
+  }
+
+  async handlePatchAction(body, authToken) {
     if (body?.action === "cancel-booking") {
-      if (!body?.bookingId) throw new Error("Missing bookingId.");
-      return await this.cancelBooking(body.bookingId, event);
+      return await this.handleCancelBookingAction(body, authToken);
     }
 
     if (body?.action === "decline-inquiry") {
@@ -229,10 +264,23 @@ class ReservationController {
 
     await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
 
+    const channexAvailabilitySync = shouldSyncChannexCancellation(booking)
+      ? await this.bookingService.syncChannexBookingAvailabilityIfEnabled({
+          userId: booking.hostid,
+          bookingBefore: booking,
+          bookingAfter: canceled.response,
+          trigger: CHANNEX_BOOKING_CANCELLED_TRIGGER,
+          includeDisabledEvidence: true,
+        })
+      : undefined;
+
     return {
       statusCode: canceled.statusCode || 200,
       headers: responseHeaderJSON,
-      response: canceled.response,
+      response: toJsonSafeResponse({
+        ...canceled.response,
+        ...(channexAvailabilitySync === undefined ? {} : { channexAvailabilitySync }),
+      }),
     };
   }
 
