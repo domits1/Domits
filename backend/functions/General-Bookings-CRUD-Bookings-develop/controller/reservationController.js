@@ -39,7 +39,10 @@ const toJsonSafeResponse = (value) => {
   );
 };
 
-const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
+const normalizeBookingStatus = (status) =>
+  String(status || "")
+    .trim()
+    .toLowerCase();
 const shouldSyncChannexCancellation = (booking) =>
   CHANNEX_ACTIVE_CANCELLATION_STATUSES.has(normalizeBookingStatus(booking?.status));
 
@@ -48,17 +51,16 @@ class ReservationController {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
     this.systemManagerRepository = new SystemManagerRepository();
-    this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+    this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : undefined;
     this._stripeInitPromise = null;
   }
 
   async getStripeInstance() {
-    if (this.stripe) return this.stripe;
+    if (this.stripe !== undefined) return this.stripe;
     if (this._stripeInitPromise) return this._stripeInitPromise;
 
     this._stripeInitPromise = (async () => {
       try {
-        // Prefer env var if provided (useful for local/dev). Otherwise fetch from SSM.
         const secret =
           process.env.STRIPE_SECRET_KEY ||
           (await this.systemManagerRepository.getSystemManagerParameter("/stripe/keys/secret/live"));
