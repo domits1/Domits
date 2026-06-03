@@ -54,11 +54,10 @@ export default function useFilterLogic(props) {
           onFilterApplied(data.items);
         }
       } else {
-        throw new TypeError("No accommodations found for these criteria");
+        setError("No accommodations found for these criteria");
       }
     } catch (err) {
       setError(err.message);
-      console.error("Error fetching accommodations:", err);
     } finally {
       setLoading(false);
     }
