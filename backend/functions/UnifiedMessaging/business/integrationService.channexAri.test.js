@@ -349,6 +349,117 @@ const expectValidChannexRestrictionProviderValues = (payloads) => {
   }
 };
 
+describe("IntegrationService Channex setup mapping", () => {
+  const setupPayload = {
+    domitsPropertyId: "domits-property-1",
+    externalPropertyId: "external-property-1",
+    externalPropertyName: "Demo Channex property",
+    externalRoomTypeId: "room-type-1",
+    externalRoomTypeName: "Demo room",
+    externalRatePlanId: "rate-plan-1",
+    externalRatePlanName: "Standard rate",
+    status: "ACTIVE",
+    scope: "SINGLE_UNIT",
+  };
+
+  const buildMappingRepositories = () => ({
+    props: {
+      upsert: jest.fn(async (row) => ({ id: "property-mapping-1", ...row })),
+    },
+    roomTypes: {
+      upsert: jest.fn(async (row) => ({ id: "room-type-mapping-1", ...row })),
+    },
+    ratePlans: {
+      upsert: jest.fn(async (row) => ({ id: "rate-plan-mapping-1", ...row })),
+    },
+  });
+
+  test("validates required setup mapping fields", async () => {
+    const service = createService();
+
+    const result = await service.saveChannexSetupMapping("user-1", {
+      ...setupPayload,
+      externalRatePlanId: "",
+    });
+
+    expect(result.statusCode).toBe(400);
+    expect(result.response.error).toBe("Missing required field: externalRatePlanId");
+  });
+
+  test("upserts property, room type, and rate plan mappings and returns readiness", async () => {
+    const repositories = buildMappingRepositories();
+    const service = createService(repositories);
+    service.getChannexAriTargets.mockResolvedValue({
+      statusCode: 200,
+      response: {
+        channel: "CHANNEX",
+        integrationAccountId: "integration-account-1",
+        domitsPropertyId: "domits-property-1",
+        ready: true,
+        missingMappings: [],
+      },
+    });
+
+    const result = await service.saveChannexSetupMapping("user-1", setupPayload);
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        channel: "CHANNEX",
+        action: "setup-mapping",
+        scope: "SINGLE_UNIT",
+        saved: true,
+        integrationAccountId: "integration-account-1",
+        domitsPropertyId: "domits-property-1",
+        readinessStatusCode: 200,
+        ready: true,
+      })
+    );
+    expect(repositories.props.upsert).toHaveBeenCalledWith({
+      integrationAccountId: "integration-account-1",
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalPropertyName: "Demo Channex property",
+      status: "ACTIVE",
+    });
+    expect(repositories.roomTypes.upsert).toHaveBeenCalledWith({
+      integrationAccountId: "integration-account-1",
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalRoomTypeId: "room-type-1",
+      externalRoomTypeName: "Demo room",
+      status: "ACTIVE",
+    });
+    expect(repositories.ratePlans.upsert).toHaveBeenCalledWith({
+      integrationAccountId: "integration-account-1",
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalRoomTypeId: "room-type-1",
+      externalRatePlanId: "rate-plan-1",
+      externalRatePlanName: "Standard rate",
+      status: "ACTIVE",
+    });
+    expect(service.getChannexAriTargets).toHaveBeenCalledWith("user-1", "domits-property-1");
+    expect(JSON.stringify(result.response)).not.toContain("channex-secret-1");
+    expect(JSON.stringify(result.response)).not.toContain("credentialsRef");
+  });
+
+  test("returns saved mapping progress if setup mapping persistence fails", async () => {
+    const repositories = buildMappingRepositories();
+    repositories.ratePlans.upsert.mockRejectedValueOnce(new Error("rate plan write failed"));
+    const service = createService(repositories);
+
+    const result = await service.saveChannexSetupMapping("user-1", setupPayload);
+
+    expect(result.statusCode).toBe(500);
+    expect(result.response.errorCode).toBe("CHANNEX_SETUP_MAPPING_FAILED");
+    expect(result.response.savedMappings.property).toEqual(expect.objectContaining({ id: "property-mapping-1" }));
+    expect(result.response.savedMappings.roomType).toEqual(expect.objectContaining({ id: "room-type-mapping-1" }));
+    expect(result.response.savedMappings.ratePlan).toBeNull();
+    expect(service.getChannexAriTargets).not.toHaveBeenCalled();
+  });
+});
+
 describe("IntegrationService Channex ARI restriction mapping", () => {
   beforeEach(() => {
     Database.getInstance.mockResolvedValue(buildDatabaseClient());

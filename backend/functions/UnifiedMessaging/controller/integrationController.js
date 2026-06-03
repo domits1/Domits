@@ -359,6 +359,12 @@ class IntegrationController {
     return await this.integrationService.syncChannexCertificationTestCase(userId, domitsPropertyId, body);
   }
 
+  async saveChannexSetupMapping(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.saveChannexSetupMapping(userId, body);
+  }
+
   async linkChannexProperty(event) {
     const userId = event.queryStringParameters?.userId || null;
     const body = safeJson(event.body) || {};

@@ -4155,6 +4155,91 @@ export default class IntegrationService {
     }
   }
 
+  async saveChannexSetupMapping(userId, body) {
+    const normalizedUserId = requireStr(userId);
+    if (!normalizedUserId) return bad(400, { error: "Missing required field: userId" });
+
+    const domitsPropertyId = requireStr(body?.domitsPropertyId);
+    const externalPropertyId = requireStr(body?.externalPropertyId);
+    const externalPropertyName = requireStr(body?.externalPropertyName);
+    const externalRoomTypeId = requireStr(body?.externalRoomTypeId);
+    const externalRoomTypeName = requireStr(body?.externalRoomTypeName);
+    const externalRatePlanId = requireStr(body?.externalRatePlanId);
+    const externalRatePlanName = requireStr(body?.externalRatePlanName);
+    const status = requireStr(body?.status) || "ACTIVE";
+    const scope = requireStr(body?.scope) || "SINGLE_UNIT";
+
+    if (!domitsPropertyId) return bad(400, { error: "Missing required field: domitsPropertyId" });
+    if (!externalPropertyId) return bad(400, { error: "Missing required field: externalPropertyId" });
+    if (!externalRoomTypeId) return bad(400, { error: "Missing required field: externalRoomTypeId" });
+    if (!externalRatePlanId) return bad(400, { error: "Missing required field: externalRatePlanId" });
+    if (scope !== "SINGLE_UNIT") {
+      return bad(400, {
+        error: "Channex setup mapping currently supports only SINGLE_UNIT scope.",
+        errorCode: "CHANNEX_SETUP_SCOPE_UNSUPPORTED",
+      });
+    }
+
+    const savedMappings = {
+      property: null,
+      roomType: null,
+      ratePlan: null,
+    };
+
+    try {
+      const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
+      if (!channexContext.ok) return channexContext.response;
+
+      const { integration } = channexContext;
+      const mappingBase = {
+        integrationAccountId: integration.id,
+        domitsPropertyId,
+        externalPropertyId,
+        status,
+      };
+
+      savedMappings.property = await this.props.upsert({
+        ...mappingBase,
+        externalPropertyName,
+      });
+      savedMappings.roomType = await this.roomTypes.upsert({
+        ...mappingBase,
+        externalRoomTypeId,
+        externalRoomTypeName,
+      });
+      savedMappings.ratePlan = await this.ratePlans.upsert({
+        ...mappingBase,
+        externalRoomTypeId,
+        externalRatePlanId,
+        externalRatePlanName,
+      });
+
+      const readinessResult = await this.getChannexAriTargets(normalizedUserId, domitsPropertyId);
+      const readiness = readinessResult?.response ?? null;
+
+      return ok({
+        channel: "CHANNEX",
+        action: "setup-mapping",
+        scope,
+        saved: true,
+        integrationAccountId: integration.id,
+        domitsPropertyId,
+        savedMappings,
+        readinessStatusCode: readinessResult?.statusCode ?? null,
+        readiness,
+        ready: readiness?.ready === true,
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to save Channex setup mapping.",
+        errorCode: "CHANNEX_SETUP_MAPPING_FAILED",
+        details,
+        savedMappings,
+      });
+    }
+  }
+
   async listLinkedChannexRoomTypes(userId) {
     const normalizedUserId = requireStr(userId);
     if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
