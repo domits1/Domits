@@ -135,6 +135,28 @@ export const getChannexAriTargets = ({ userId, domitsPropertyId }) =>
     query: { userId, domitsPropertyId },
   });
 
+export const listChannexProperties = ({ userId }) =>
+  requestChannex("/integrations/channex/properties", {
+    query: { userId },
+  });
+
+export const listChannexRoomTypes = ({ userId, externalPropertyId }) =>
+  requestChannex("/integrations/channex/room-types", {
+    query: { userId, externalPropertyId },
+  });
+
+export const listChannexRatePlans = ({ userId, externalRoomTypeId }) =>
+  requestChannex("/integrations/channex/rate-plans", {
+    query: { userId, externalRoomTypeId },
+  });
+
+export const saveChannexSetupMapping = ({ userId, mapping }) =>
+  requestChannex("/integrations/channex/setup/mapping", {
+    method: "POST",
+    query: { userId },
+    body: mapping,
+  });
+
 export const getChannexAriPreview = ({ userId, domitsPropertyId, dateFrom, dateTo }) =>
   requestChannex("/integrations/channex/ari-preview", {
     query: { userId, domitsPropertyId, dateFrom, dateTo },
