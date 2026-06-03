@@ -9,6 +9,7 @@ import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 const startOfUtcDay = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
@@ -76,6 +77,13 @@ const toPlainObject = (value) => (value && typeof value === "object" ? value : {
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
 
+const normalizeDateKey = (value) => {
+  const normalized = String(value || "").trim();
+  return DATE_KEY_PATTERN.test(normalized) ? normalized : "";
+};
+
+const normalizeDateKeyArray = (value) => toArray(value).map(normalizeDateKey).filter(Boolean);
+
 const normalizeCheckInSection = (checkIn) => {
   const safeCheckIn = toPlainObject(checkIn);
   return {
@@ -88,7 +96,8 @@ const normalizeCalendarAvailability = (calendarAvailability) => {
   const safeCalendarAvailability = toPlainObject(calendarAvailability);
   return {
     ...safeCalendarAvailability,
-    externalBlockedDates: toArray(safeCalendarAvailability.externalBlockedDates),
+    externalBlockedDates: normalizeDateKeyArray(safeCalendarAvailability.externalBlockedDates),
+    unavailableDateKeys: normalizeDateKeyArray(safeCalendarAvailability.unavailableDateKeys),
   };
 };
 
@@ -186,10 +195,17 @@ const ListingDetails2 = () => {
           ...(Array.isArray(property?.calendarAvailability?.externalBlockedDates)
             ? property.calendarAvailability.externalBlockedDates
             : []),
+          ...(Array.isArray(property?.calendarAvailability?.unavailableDateKeys)
+            ? property.calendarAvailability.unavailableDateKeys
+            : []),
           ...(Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : []),
         ])
       ),
-    [acceptedBookingDateKeys, property?.calendarAvailability?.externalBlockedDates]
+    [
+      acceptedBookingDateKeys,
+      property?.calendarAvailability?.externalBlockedDates,
+      property?.calendarAvailability?.unavailableDateKeys,
+    ]
   );
 
   useEffect(() => {
@@ -240,8 +256,6 @@ const ListingDetails2 = () => {
     { id: "photos", label: "Photos", targetId: "listing-photos" },
     ...(hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
     { id: "host", label: "Host", targetId: "listing-host" },
-    { id: "location", label: "Location", targetId: "listing-location" },
-    { id: "reviews", label: "Reviews", targetId: "listing-reviews" },
     { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];
 

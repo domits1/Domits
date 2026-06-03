@@ -1,8 +1,8 @@
 {
   "dependencies": {
     "dotenv": "^17.2.2",
-    "framer-motion": "^12.38.0",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "stripe": "^22.1.1"
   },
   "devDependencies": {
     "eslint-plugin-react-hooks": "^7.0.1"

@@ -1,128 +1,82 @@
-import React, { useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import SendOutlinedIcon from "@mui/icons-material/SendOutlined";
-import { sendWebsiteContactMessage } from "../services/websiteContactService";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import { getInteractiveTargetProps } from "./templates/templateSharedSections";
 import styles from "./WebsiteTemplatePreview.module.scss";
 
-const INITIAL_FORM_STATE = Object.freeze({
-  name: "",
-  email: "",
-  message: "",
+const VISIBILITY_TARGET = Object.freeze({
+  sectionId: "visibility",
+  targetId: "visibility.chatWidget",
 });
 
-export default function WebsiteContactWidget({ model }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [formState, setFormState] = useState(INITIAL_FORM_STATE);
-  const [isSending, setIsSending] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+const cleanText = (value) => String(value || "").trim();
+const normalizePhoneDigits = (value) => cleanText(value).replaceAll(/\D+/g, "");
 
-  const updateField = (fieldKey) => (event) => {
-    setFormState((currentFormState) => ({
-      ...currentFormState,
-      [fieldKey]: event.target.value,
-    }));
-  };
+const buildWhatsAppHref = (phoneNumberDigits, siteTitle) => {
+  if (!phoneNumberDigits) {
+    return "";
+  }
 
-  const sendMessage = async (event) => {
-    event.preventDefault();
-    setStatusMessage("");
-    setErrorMessage("");
-    setIsSending(true);
+  const message = `Hi, I'm interested in ${cleanText(siteTitle) || "this stay"}.`;
+  return `https://wa.me/${phoneNumberDigits}?text=${encodeURIComponent(message)}`;
+};
 
-    try {
-      await sendWebsiteContactMessage({
-        model,
-        name: formState.name,
-        email: formState.email,
-        message: formState.message,
-      });
-      setFormState(INITIAL_FORM_STATE);
-      setStatusMessage("Message sent. The host can reply from Domits messages.");
-    } catch (error) {
-      setErrorMessage(error?.message || "We could not send this message yet.");
-    } finally {
-      setIsSending(false);
-    }
-  };
+export default function WebsiteContactWidget({ model, onSelectTarget = undefined, activeTargetId = "" }) {
+  const phoneNumberDigits = normalizePhoneDigits(
+    model?.host?.whatsapp?.phoneNumberDigits || model?.host?.whatsapp?.phoneNumber
+  );
+  const href = buildWhatsAppHref(phoneNumberDigits, model?.site?.title);
 
-  if (!isOpen) {
+  if (!href) {
+    return null;
+  }
+
+  if (onSelectTarget) {
     return (
       <button
         type="button"
-        className={styles.visitorChatLauncher}
-        data-preview-target-id="visibility.chatWidget"
-        onClick={() => setIsOpen(true)}
-        aria-label="Contact host"
+        aria-label="WhatsApp widget visibility"
+        {...getInteractiveTargetProps(
+          styles.visitorChatLauncher,
+          onSelectTarget,
+          VISIBILITY_TARGET,
+          activeTargetId
+        )}
       >
-        <ChatBubbleOutlineIcon fontSize="small" />
-        <span>Contact host</span>
+        <WhatsAppIcon fontSize="small" />
+        <span>WhatsApp host</span>
       </button>
     );
   }
 
   return (
-    <aside
-      className={styles.visitorChatPanel}
-      data-preview-target-id="visibility.chatWidget"
-      aria-label="Contact host widget"
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={styles.visitorChatLauncher}
+      data-preview-target-id={VISIBILITY_TARGET.targetId}
+      aria-label="Chat with host on WhatsApp"
     >
-      <div className={styles.visitorChatHeader}>
-        <div>
-          <p className={styles.visitorChatEyebrow}>Host contact</p>
-          <h3>Message the owner</h3>
-        </div>
-        <button
-          type="button"
-          className={styles.visitorChatCloseButton}
-          onClick={() => setIsOpen(false)}
-          aria-label="Close contact widget"
-        >
-          <CloseOutlinedIcon fontSize="small" />
-        </button>
-      </div>
-
-      <form className={styles.visitorChatForm} onSubmit={sendMessage}>
-        <label>
-          <span>Name</span>
-          <input value={formState.name} onChange={updateField("name")} placeholder="Your name" />
-        </label>
-        <label>
-          <span>Email</span>
-          <input value={formState.email} onChange={updateField("email")} placeholder="you@example.com" />
-        </label>
-        <label>
-          <span>Message</span>
-          <textarea
-            value={formState.message}
-            onChange={updateField("message")}
-            placeholder={`Ask about ${model.site.title || "this stay"}`}
-            required
-          />
-        </label>
-
-        {statusMessage ? <p className={styles.visitorChatSuccess}>{statusMessage}</p> : null}
-        {errorMessage ? <p className={styles.visitorChatError}>{errorMessage}</p> : null}
-
-        <button type="submit" className={styles.visitorChatSendButton} disabled={isSending}>
-          <SendOutlinedIcon fontSize="small" />
-          {isSending ? "Sending..." : "Send message"}
-        </button>
-      </form>
-    </aside>
+      <WhatsAppIcon fontSize="small" />
+      <span>WhatsApp host</span>
+    </a>
   );
 }
 
 WebsiteContactWidget.propTypes = {
   model: PropTypes.shape({
-    source: PropTypes.shape({
-      hostId: PropTypes.string,
-      propertyId: PropTypes.string,
+    host: PropTypes.shape({
+      whatsapp: PropTypes.shape({
+        phoneNumber: PropTypes.string,
+        phoneNumberDigits: PropTypes.string,
+        isAvailable: PropTypes.bool,
+      }),
     }).isRequired,
     site: PropTypes.shape({
       title: PropTypes.string,
     }).isRequired,
   }).isRequired,
+  onSelectTarget: PropTypes.func,
+  activeTargetId: PropTypes.string,
 };

@@ -221,6 +221,23 @@ class IntegrationController {
     return await this.integrationService.receiveChannexBookingRevisions(userId, domitsPropertyId);
   }
 
+  async pullLatestChannexBookings(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    return await this.integrationService.pullLatestChannexBookings(userId, domitsPropertyId);
+  }
+
+  async cancelChannexCertificationBooking(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.cancelChannexCertificationBooking(userId, domitsPropertyId, body);
+  }
+
+  async pollLatestChannexBookings(event) {
+    return await this.integrationService.pollLatestChannexBookings(event?.detail || event || {});
+  }
+
   async acknowledgeChannexBookingRevisions(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import useEffectiveHostId from "../../../../hooks/useEffectiveHostId";
 import { toast } from "react-toastify";
 import ClipLoader from "react-spinners/ClipLoader";
 import styles from "../../HostProperty.module.css";
@@ -82,6 +83,7 @@ export default function HostProperty() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const propertyId = params.get("ID");
+  const { managedHostId } = useEffectiveHostId();
   const photoInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
@@ -101,6 +103,7 @@ export default function HostProperty() {
     advanceNoticeRestrictionKey: "MinimumAdvanceReservation",
     preparationTimeRestrictionKey: "PreparationTimeDays",
   });
+  const [availability, setAvailability] = useState([]);
   const [pricingForm, setPricingForm] = useState(createInitialPricingForm);
   const [expandedAmenityCategories, setExpandedAmenityCategories] = useState({});
   const [form, setForm] = useState({
@@ -245,7 +248,7 @@ export default function HostProperty() {
       setLoading(true);
       setError("");
       try {
-        const { data, hostPropertiesData } = await fetchPropertyAndListings(propertyId);
+        const { data, hostPropertiesData } = await fetchPropertyAndListings(propertyId, managedHostId);
         if (!isMounted) {
           return;
         }
@@ -259,6 +262,7 @@ export default function HostProperty() {
         setPolicyRules(fetchedPropertyData.policyRules);
         setCheckInDetails(fetchedPropertyData.checkInDetails);
         setPolicyAvailabilitySettings(fetchedPropertyData.policyAvailabilitySettings);
+        setAvailability(fetchedPropertyData.availability || []);
         setPricingForm(fetchedPropertyData.pricingForm);
         setExistingPhotos(fetchedPropertyData.existingPhotos);
         setPendingPhotos([]);
@@ -297,7 +301,7 @@ export default function HostProperty() {
     return () => {
       isMounted = false;
     };
-  }, [propertyId]);
+  }, [propertyId, managedHostId]);
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -944,6 +948,9 @@ export default function HostProperty() {
             toggleAmenitySelection={toggleAmenitySelection}
             pricingForm={pricingForm}
             setPricingForm={setPricingForm}
+            propertyId={propertyId}
+            listingTitle={form.title}
+            availability={availability}
             policyRules={policyRules}
             checkInDetails={checkInDetails}
             policyAvailabilitySettings={policyAvailabilitySettings}

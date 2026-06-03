@@ -147,6 +147,13 @@ const websiteTemplatePreviewModelPropType = PropTypes.shape({
     hostId: PropTypes.string,
     propertyId: PropTypes.string,
   }),
+  host: PropTypes.shape({
+    whatsapp: PropTypes.shape({
+      phoneNumber: PropTypes.string,
+      phoneNumberDigits: PropTypes.string,
+      isAvailable: PropTypes.bool,
+    }),
+  }),
   site: PropTypes.shape({
     title: PropTypes.string,
     templateReadyTitle: PropTypes.string,
@@ -175,16 +182,20 @@ export function WebsiteTemplateSurface({
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
+  const isPanoramaTemplate = template.id === "panorama-landing";
   const previewCanvasRef = useWebsiteScrollReveal({
     enabled: enableScrollReveal,
     deps: [templateId, model],
   });
+  const canShowContactWidget = showContactWidget && Boolean(model?.host?.whatsapp?.isAvailable);
   const previewCanvasStyle = {
     "--website-surface-background": resolveWebsiteBackgroundColor(model?.theme?.backgroundColor),
   };
 
   return (
-    <div className={styles.previewBrowser}>
+    <div
+      className={`${styles.previewBrowser} ${isPanoramaTemplate ? styles.previewBrowserPanorama : ""}`.trim()}
+    >
       {showBrowserChrome ? (
         <div className={styles.previewBrowserBar}>
           <div className={styles.previewBrowserDots} aria-hidden="true">
@@ -199,6 +210,8 @@ export function WebsiteTemplateSurface({
       <div
         ref={previewCanvasRef}
         className={`${styles.previewCanvas} ${
+          isPanoramaTemplate ? styles.previewCanvasPanorama : ""
+        } ${
           enableScrollReveal ? motionStyles.previewCanvasAnimated : ""
         }`.trim()}
         style={previewCanvasStyle}
@@ -212,7 +225,13 @@ export function WebsiteTemplateSurface({
         ) : (
           <UnsupportedTemplatePreview templateName={template.name} />
         )}
-        {showContactWidget ? <WebsiteContactWidget model={model} /> : null}
+        {canShowContactWidget ? (
+          <WebsiteContactWidget
+            model={model}
+            onSelectTarget={onSelectTarget}
+            activeTargetId={activeTargetId}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -239,7 +258,10 @@ export default function WebsiteTemplatePreview({
   activeTargetId = "",
 }) {
   const isCompactVariant = variant === "compact";
-  const showContactWidget = !isCompactVariant && model.visibility?.chatWidget !== false;
+  const showContactWidget =
+    !isCompactVariant &&
+    model.visibility?.chatWidget !== false &&
+    Boolean(model?.host?.whatsapp?.isAvailable);
   const viewportWidth = isCompactVariant
     ? COMPACT_PREVIEW_VIEWPORT_WIDTH
     : resolveViewportWidth(viewport, templateId);

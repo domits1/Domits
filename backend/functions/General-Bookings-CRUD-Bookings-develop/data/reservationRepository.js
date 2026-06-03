@@ -320,6 +320,27 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
+      .select([
+        "booking.id",
+        "booking.arrivaldate",
+        "booking.departuredate",
+        "booking.createdat",
+        "booking.guestid",
+        "booking.guests",
+        "booking.hostid",
+        "booking.latepayment",
+        "booking.paymentid",
+        "booking.property_id",
+        "booking.status",
+        "booking.guestname",
+        "booking.hostname",
+        "booking.cancellation_policy",
+        "booking.bookingtype",
+        "booking.total_price",
+        "booking.refunded_amount",
+        "booking.stripe_refund_id",
+        "booking.refund_error",
+      ])
       .where("booking.id = :id", { id: id })
       .getOne();
 
@@ -372,6 +393,19 @@ class ReservationRepository {
     };
   }
 
+  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
+    const client = await Database.getInstance();
+    return await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.property_id = :propertyId", { propertyId })
+      .andWhere("booking.status = :status", { status: "Inquiry" })
+      .andWhere("booking.id != :excludeBookingId", { excludeBookingId })
+      .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
+      .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
+      .getMany();
+  }
+
   async updateBookingDates(id, arrivalDateMs, departureDateMs) {
     const client = await Database.getInstance();
     const query = await client
@@ -390,7 +424,7 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId) {
+  async cancelBookingByGuest(id, guestId, refundInfo = {}) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -407,7 +441,18 @@ class ReservationRepository {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    await client.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute();
+    const updateData = { status: "Cancelled" };
+    if (refundInfo.refundedAmount !== undefined) {
+      updateData.refunded_amount = refundInfo.refundedAmount;
+    }
+    if (refundInfo.stripeRefundId) {
+      updateData.stripe_refund_id = refundInfo.stripeRefundId;
+    }
+    if (refundInfo.refundError) {
+      updateData.refund_error = refundInfo.refundError;
+    }
+
+    await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
 
     const updated = await client
       .getRepository(Booking)

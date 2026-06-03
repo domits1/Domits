@@ -1,5 +1,6 @@
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import { useEffect, useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import spinner from "../../images/spinnner.gif";
 import { getAccessToken } from "../../services/getAccessToken.js";
@@ -74,7 +75,7 @@ const mapReservations = (data) => {
 };
 
 const labelMap = {
-  INQUIRY: "Inquiry",
+  INQUIRY: "Request",
   PAID: "Paid",
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Failed",
@@ -90,6 +91,50 @@ const renderPolicyDisplay = (cancellationType) => {
   return <span>-</span>;
 };
 
+const mapStatusToClass = (status) => {
+  if (status === "INQUIRY") return "statusInquiry";
+  if (status === "PAID") return "statusPaid";
+  if (status === "AWAITING_PAYMENT") return "statusAwaitingPayment";
+  if (status === "FAILED") return "statusFailed";
+  if (status === "DECLINED") return "statusDeclined";
+  return "statusOther";
+};
+
+const TabButton = ({ tab, activeTab, onSelect, label }) => (
+  <button
+    className={activeTab === tab ? styles.active : ""}
+    onClick={() => onSelect(tab)}
+  >
+    {label}
+  </button>
+);
+
+TabButton.propTypes = {
+  tab: PropTypes.string.isRequired,
+  activeTab: PropTypes.string.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  label: PropTypes.string.isRequired,
+};
+
+const ModalText = ({ overlappingCount }) => {
+  if (overlappingCount > 0) {
+    const verb = overlappingCount === 1 ? "is" : "are";
+    const plural = overlappingCount > 1 ? "s" : "";
+    const pronoun = overlappingCount === 1 ? "it" : "them";
+    return (
+      <p className={styles.modalText}>
+        There {verb} <strong>{overlappingCount}</strong> other pending request{plural} for overlapping dates on this
+        property. Accepting will automatically decline {pronoun}.
+      </p>
+    );
+  }
+  return <p className={styles.modalText}>Are you sure you want to accept this request?</p>;
+};
+
+ModalText.propTypes = {
+  overlappingCount: PropTypes.number.isRequired,
+};
+
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
@@ -97,6 +142,7 @@ const HostReservations = () => {
   const [search, setSearch] = useState("");
   const [range, setRange] = useState("ALL");
   const [inquiryLoading, setInquiryLoading] = useState({});
+  const [confirmAccept, setConfirmAccept] = useState(null);
 
   const authToken = useMemo(() => getAccessToken(), []);
   const itemsPerPage = 10;
@@ -183,31 +229,54 @@ const HostReservations = () => {
     return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
   }, [pageRange]);
 
-  const handleInquiryAction = async (bookingId, action) => {
+  const executeInquiryAction = async (bookingId, action) => {
     setInquiryLoading((prev) => ({ ...prev, [bookingId]: true }));
     try {
-      await updateInquiryStatus(bookingId, action, authToken);
+      const result = await updateInquiryStatus(bookingId, action, authToken);
       const newStatus = action === "accept-inquiry" ? "AWAITING_PAYMENT" : "DECLINED";
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
       );
-      toast.success(
-        action === "accept-inquiry" ? "Inquiry accepted." : "Inquiry declined."
-      );
+      if (action === "accept-inquiry") {
+        const declined = result?.declinedCount || 0;
+        let toastMsg = "Request accepted.";
+        if (declined > 0) {
+          const suffix = declined > 1 ? "s were" : " was";
+          toastMsg = `Request accepted. ${declined} other overlapping request${suffix} automatically declined.`;
+        }
+        toast.success(toastMsg);
+        if (declined > 0) {
+          setBookings((prev) =>
+            prev.map((b) =>
+              b.id !== bookingId && b.status === "INQUIRY" ? { ...b, status: "DECLINED" } : b
+            )
+          );
+        }
+      } else {
+        toast.success("Request declined.");
+      }
     } catch {
-      toast.error("Failed to update inquiry status.");
+      toast.error("Failed to update request status.");
     } finally {
       setInquiryLoading((prev) => ({ ...prev, [bookingId]: false }));
     }
   };
 
-  const mapStatusToClass = (status) => {
-    if (status === "INQUIRY") return "statusInquiry";
-    if (status === "PAID") return "statusPaid";
-    if (status === "AWAITING_PAYMENT") return "statusAwaitingPayment";
-    if (status === "FAILED") return "statusFailed";
-    if (status === "DECLINED") return "statusDeclined";
-    return "statusOther";
+  const handleInquiryAction = (bookingId, action) => {
+    if (action === "accept-inquiry") {
+      const booking = bookings.find((b) => b.id === bookingId);
+      const overlappingCount = bookings.filter(
+        (b) =>
+          b.id !== bookingId &&
+          b.status === "INQUIRY" &&
+          b.property_id === booking?.property_id &&
+          b.arrivaldate < booking?.departuredate &&
+          b.departuredate > booking?.arrivaldate
+      ).length;
+      setConfirmAccept({ bookingId, overlappingCount });
+    } else {
+      executeInquiryAction(bookingId, action);
+    }
   };
 
   return (
@@ -239,32 +308,12 @@ const HostReservations = () => {
           </div>
 
           <div className={styles.tabs}>
-            <button className={activeTab === "ALL" ? styles.active : ""} onClick={() => setActiveTab("ALL")}>
-              All ({count("ALL")})
-            </button>
-            <button className={activeTab === "PAID" ? styles.active : ""} onClick={() => setActiveTab("PAID")}>
-              Upcoming ({count("PAID")})
-            </button>
-            <button
-              className={activeTab === "AWAITING_PAYMENT" ? styles.active : ""}
-              onClick={() => setActiveTab("AWAITING_PAYMENT")}>
-              Awaiting payment ({count("AWAITING_PAYMENT")})
-            </button>
-            <button
-              className={activeTab === "INQUIRY" ? styles.active : ""}
-              onClick={() => setActiveTab("INQUIRY")}
-            >
-              Inquiries ({count("INQUIRY")})
-            </button>
-            <button className={activeTab === "FAILED" ? styles.active : ""} onClick={() => setActiveTab("FAILED")}>
-              Failed ({count("FAILED")})
-            </button>
-            <button
-              className={activeTab === "DECLINED" ? styles.active : ""}
-              onClick={() => setActiveTab("DECLINED")}
-            >
-              Declined ({count("DECLINED")})
-            </button>
+            <TabButton tab="ALL" activeTab={activeTab} onSelect={setActiveTab} label={`All (${count("ALL")})`} />
+            <TabButton tab="PAID" activeTab={activeTab} onSelect={setActiveTab} label={`Upcoming (${count("PAID")})`} />
+            <TabButton tab="AWAITING_PAYMENT" activeTab={activeTab} onSelect={setActiveTab} label={`Awaiting payment (${count("AWAITING_PAYMENT")})`} />
+            <TabButton tab="INQUIRY" activeTab={activeTab} onSelect={setActiveTab} label={`Requests (${count("INQUIRY")})`} />
+            <TabButton tab="FAILED" activeTab={activeTab} onSelect={setActiveTab} label={`Failed (${count("FAILED")})`} />
+            <TabButton tab="DECLINED" activeTab={activeTab} onSelect={setActiveTab} label={`Declined (${count("DECLINED")})`} />
           </div>
 
           <div className={styles.list}>
@@ -407,6 +456,33 @@ const HostReservations = () => {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {confirmAccept && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
+            <h3 className={styles.modalTitle}>Accept this request?</h3>
+            <ModalText overlappingCount={confirmAccept.overlappingCount} />
+            <div className={styles.modalActions}>
+              <button
+                className={styles.btnAccept}
+                onClick={() => {
+                  const { bookingId } = confirmAccept;
+                  setConfirmAccept(null);
+                  executeInquiryAction(bookingId, "accept-inquiry");
+                }}
+              >
+                Yes, accept
+              </button>
+              <button
+                className={styles.btnDecline}
+                onClick={() => setConfirmAccept(null)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

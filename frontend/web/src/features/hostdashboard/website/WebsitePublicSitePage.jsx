@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
   WEBSITE_ANALYTICS_SURFACE_LIVE,
@@ -12,9 +11,14 @@ import {
 } from "./analytics/websitePreviewAnalytics";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
+import {
+  resolveWebsitePreviewSkeletonViewport,
+  WebsitePreviewSkeleton,
+} from "./rendering/WebsitePreviewSkeleton";
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
+import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
   fetchPublicWebsiteSiteResolution,
@@ -137,6 +141,13 @@ function WebsitePublicSitePage() {
           });
         }
 
+        if (nextRenderPayload?.propertySnapshot) {
+          nextRenderPayload = {
+            ...nextRenderPayload,
+            propertySnapshot: await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot),
+          };
+        }
+
         if (!isMounted) {
           return;
         }
@@ -176,13 +187,18 @@ function WebsitePublicSitePage() {
     });
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, renderPayload.themeOverrides || {});
 
-    return applyWebsiteDraftContentOverrides(themedModel, renderPayload.contentOverrides || {});
-  }, [renderPayload]);
+    return applyWebsiteDraftContentOverrides(
+      themedModel,
+      renderPayload.contentOverrides || {},
+      renderPayload?.site?.templateKey || resolution?.templateKey || ""
+    );
+  }, [renderPayload, resolution?.templateKey]);
 
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
   const isPanoramaTemplate = templateId === "panorama-landing";
+  const skeletonViewport = resolveWebsitePreviewSkeletonViewport();
 
   const resolvedSiteId = String(renderPayload?.site?.id || resolution?.siteId || requestedSiteId || "").trim();
   const resolvedDomain = normalizeWebsiteDomain(
@@ -324,10 +340,10 @@ function WebsitePublicSitePage() {
 
   if (isLoading) {
     return (
-      <main className={styles.publicPreviewStatePage}>
-        <section className={styles.publicPreviewStateCard}>
-          <PulseBarsLoader message="Loading published website..." />
-        </section>
+      <main className={styles.publicPreviewPage}>
+        <div className={styles.publicPreviewCanvas}>
+          <WebsitePreviewSkeleton viewport={skeletonViewport} />
+        </div>
       </main>
     );
   }
