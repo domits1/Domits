@@ -1,6 +1,7 @@
 import Database from "database";
 import { PriceLabs_Connection } from "database/models/PriceLabs_Connection";
 import { Property } from "database/models/Property";
+import { Property_Location } from "database/models/Property_Location";
 import { Property_Calendar_Override } from "database/models/Property_Calendar_Override";
 import { Booking } from "database/models/Booking";
 import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
@@ -49,7 +50,25 @@ export class Repository {
 
   async getPropertiesByHost(hostId) {
     const ds = await this._ds();
-    return ds.getRepository(Property).find({ where: { hostid: hostId } });
+    const properties = await ds.getRepository(Property).find({ where: { hostid: hostId } });
+
+    const locationMap = {};
+    if (properties.length) {
+      const ids = properties.map((p) => p.id);
+      const locations = await ds.getRepository(Property_Location)
+        .createQueryBuilder("loc")
+        .where("loc.property_id IN (:...ids)", { ids })
+        .getMany();
+      for (const loc of locations) {
+        locationMap[loc.property_id] = loc;
+      }
+    }
+
+    return properties.map((p) => ({
+      ...p,
+      city:    locationMap[p.id]?.city    ?? "",
+      country: locationMap[p.id]?.country ?? "NL",
+    }));
   }
 
 

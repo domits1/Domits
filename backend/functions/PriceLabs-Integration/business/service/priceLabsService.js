@@ -103,13 +103,13 @@ export class PriceLabsService {
     const otaMap = await this.repo.getOtaListingIdsByHost(hostId);
 
     const listings = properties.map((p) => ({
-      listing_id:         `${hostId}_${p.id}`,
+      listing_id:         `${hostId.replace(/-/g, "_")}_${p.id.replace(/-/g, "_")}`,
       user_token:         connection.pricelabs_email,
       name:               p.title || p.id,
       status:             "available",
       location: {
-        city:    p.city    || "",
-        country: p.country || "NL",
+        city:    p.city    || "Amsterdam",
+        country: p.country || "NLD",
       },
       number_of_bedrooms: p.bedrooms || 1,
       listing_fees: {
@@ -119,7 +119,7 @@ export class PriceLabsService {
           currency: "EUR",
         },
       },
-      ota_listing_ids: otaMap[p.id] || [],
+      ota_listing_ids: {},
     }));
 
     await api.pushListings(token, name, listings);
@@ -133,25 +133,29 @@ export class PriceLabsService {
     const properties = await this.repo.getPropertiesByHost(hostId);
 
     const targets = listingIds
-      ? properties.filter((p) => listingIds.includes(`${hostId}_${p.id}`))
+      ? properties.filter((p) => listingIds.includes(`${hostId.replace(/-/g, "_")}_${p.id.replace(/-/g, "_")}`))
       : properties;
 
     for (const p of targets) {
-      const listingId   = `${hostId}_${p.id}`;
+      const listingId   = `${hostId.replace(/-/g, "_")}_${p.id.replace(/-/g, "_")}`;
       const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
 
-      const data = availability.map((row) => ({
-        date:            _intToDate(row.calendar_date),
-        price:           row.nightly_price || p.base_price || 100,
-        available_units: row.is_available === false ? 0 : 1,
-        booked_units:    0,
-        blocked_units:   0,
-        settings: {
-          min_stay:  row.min_stay || 1,
-          check_in:  row.closed_to_arrival  !== true,
-          check_out: row.closed_to_departure !== true,
-        },
-      }));
+      const data = availability.map((row) => {
+        const date = _intToDate(row.calendar_date);
+        return {
+          date,
+          end_date:        date,
+          price:           row.nightly_price || p.base_price || 100,
+          available_units: row.is_available === false ? 0 : 1,
+          booked_units:    0,
+          blocked_units:   0,
+          settings: {
+            min_stay:  row.min_stay || 1,
+            check_in:  row.closed_to_arrival  !== true,
+            check_out: row.closed_to_departure !== true,
+          },
+        };
+      });
 
       await api.pushCalendar(token, name, {
         calendars: [
@@ -175,7 +179,7 @@ export class PriceLabsService {
 
     const grouped = {};
     for (const b of bookings) {
-      const listingId = `${hostId}_${b.property_id}`;
+      const listingId = `${hostId.replace(/-/g, "_")}_${b.property_id.replace(/-/g, "_")}`;
       if (!grouped[listingId]) {
         grouped[listingId] = {
           listing_id: listingId,
@@ -190,7 +194,7 @@ export class PriceLabsService {
         reservation_id: b.id,
         start_date:     checkin,
         end_date:       checkout,
-        booked_time:    new Date().toISOString().split("T")[0],
+        booked_time:    new Date().toISOString().replace("T", " ").split(".")[0],
         total_days:     _dateDiff(checkin, checkout),
         guests:         b.guests || 1,
         total_cost:     b.total_price || 0,
@@ -249,6 +253,9 @@ export class PriceLabsService {
   }
 
   async handleSyncWebhook(headers, rawBody) {
+    const parsed = JSON.parse(rawBody || "{}");
+    if (parsed.verify === true) return { success: true };
+
     const { token } = await this._creds();
 
     if (!verifyPriceLabsSignature(headers, rawBody, token)) {
@@ -259,7 +266,8 @@ export class PriceLabsService {
 
     for (const listing of listings) {
       const { listing_id, prices = [] } = listing;
-      const propertyId = listing_id.split("_").slice(1).join("_");
+      const parts = listing_id.split("_");
+      const propertyId = parts.slice(5).join("-");
 
       for (const entry of prices) {
         await this.repo.applyPriceRecommendation({
@@ -277,6 +285,9 @@ export class PriceLabsService {
   }
 
   async handleCalendarTriggerWebhook(headers, rawBody) {
+    const parsed = JSON.parse(rawBody || "{}");
+    if (parsed.verify === true) return { success: true };
+
     const { token } = await this._creds();
 
     if (!verifyPriceLabsSignature(headers, rawBody, token)) {
@@ -287,7 +298,7 @@ export class PriceLabsService {
 
     const hostMap = {};
     for (const lid of listing_ids) {
-      const hostId = lid.split("_")[0];
+      const hostId = lid.split("_").slice(0, 5).join("-");
       if (!hostMap[hostId]) hostMap[hostId] = [];
       hostMap[hostId].push(lid);
     }
@@ -300,17 +311,19 @@ export class PriceLabsService {
   }
 
   async handleHookWebhook(headers, rawBody) {
+    const payload = JSON.parse(rawBody || "{}");
+    if (payload.verify === true) return { success: true };
+
     const { token } = await this._creds();
 
     if (!verifyPriceLabsSignature(headers, rawBody, token)) {
       throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
     }
 
-    const payload = JSON.parse(rawBody || "{}");
     console.warn("[PriceLabs Hook]", JSON.stringify(payload));
 
     if (payload.listing_id) {
-      const hostId = payload.listing_id.split("_")[0];
+      const hostId = payload.listing_id.split("_").slice(0, 5).join("-");
       await this.repo.updateSyncStatus(hostId, {
         last_sync_status: "error",
         last_sync_error:  payload.message || "PriceLabs hook notification",
