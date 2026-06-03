@@ -1,4 +1,11 @@
 {
+  "listingDetails": {
+    "location": {
+      "title": "Waar je verblijft",
+      "disclaimer": "De exacte locatie wordt na boeking verstrekt.",
+      "unavailable": "Locatie-informatie is niet beschikbaar."
+    }
+  },
   "component": {
     "user": {
       "hello": "Hallo",

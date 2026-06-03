@@ -1,4 +1,11 @@
 {
+  "listingDetails": {
+    "location": {
+      "title": "Wo du sein wirst",
+      "disclaimer": "Der genaue Standort wird nach der Buchung mitgeteilt.",
+      "unavailable": "Standortinformationen sind nicht verfügbar."
+    }
+  },
   "component": {
     "user": {
       "hello": "Hallo",

@@ -251,11 +251,13 @@ const ListingDetails2 = () => {
   }
 
   const hasAmenities = Array.isArray(property?.amenities) && property.amenities.length > 0;
+  const hasLocation = Boolean(property?.location?.city || property?.location?.country);
 
   const sectionItems = [
     { id: "photos", label: "Photos", targetId: "listing-photos" },
     ...(hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
     { id: "host", label: "Host", targetId: "listing-host" },
+    ...(hasLocation ? [{ id: "location", label: "Location", targetId: "listing-location" }] : []),
     { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];
 
@@ -272,6 +274,7 @@ const ListingDetails2 = () => {
         <PropertyContainer
           property={property}
           host={host}
+          location={property.location}
           onContactHost={
             (property?.property?.hostId || property?.property?.hostID)
               ? () => setShowMessageHost(true)

@@ -509,12 +509,21 @@ function HostPropertyOverviewTab(props) {
       </div>
 
       <div className={styles.mapPreview}>
-        <p className={styles.mapPreviewLabel}>Map preview</p>
-        <p className={styles.mapPreviewAddress}>
-          {[address.street, address.houseNumber, address.postalCode, address.city, address.country]
-            .filter(Boolean)
-            .join(", ") || "Address details are not fully available yet."}
-        </p>
+        {address.city || address.country ? (
+          <iframe
+            className={styles.mapPreviewIframe}
+            title="Guest map preview"
+            src={`https://maps.google.com/maps?q=${encodeURIComponent([address.city, address.country].filter(Boolean).join(", "))}&z=14&output=embed`}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        ) : (
+          <div className={styles.mapPreviewEmpty} />
+        )}
+        <div className={styles.mapPreviewFooter}>
+          <p className={styles.mapPreviewLabel}>Map preview — guest view</p>
+          <p className={styles.mapPreviewAddress}>Guests see the approximate area only. Exact address is hidden until booking is confirmed.</p>
+        </div>
       </div>
     </section>
   );
