@@ -49,6 +49,7 @@ const buildEvidence = (overrides = {}) => ({
 const buildService = ({
   bookingType = "direct",
   reservationRepository = {},
+  propertyRepository = {},
   stripeRepository = {},
   channexEvidence = buildEvidence(),
 } = {}) => {
@@ -85,7 +86,9 @@ const buildService = ({
         title: "Demo Property",
         bookingType,
       }),
+      assertBookingDatesAvailable: jest.fn().mockResolvedValue(true),
       getCancellationPolicyByPropertyId: jest.fn().mockResolvedValue("strict"),
+      ...propertyRepository,
     },
     authManager: {
       authenticateUser: jest.fn().mockResolvedValue({
@@ -99,6 +102,9 @@ const buildService = ({
     },
     channexBookingAvailabilityClient: {
       syncAvailabilityForBookingChange: jest.fn().mockResolvedValue(channexEvidence),
+    },
+    priceLabsBookingNotifier: {
+      notifyBookingChange: jest.fn(),
     },
     sendEmailFn: jest.fn(),
     getHostEmailByIdFn: jest.fn().mockResolvedValue("host@example.com"),
@@ -159,6 +165,39 @@ describe("BookingService Channex booking availability hooks", () => {
       }),
     });
     expect(result.channexAvailabilitySync).toEqual(buildEvidence());
+  });
+
+  test("direct booking validates host calendar availability before storing and syncing", async () => {
+    process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED = "true";
+    const { service, dependencies } = buildService();
+
+    await service.create(buildCreateEvent());
+
+    expect(dependencies.propertyRepository.assertBookingDatesAvailable).toHaveBeenCalledWith({
+      propertyId: "domits-property-1",
+      arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
+      departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
+    });
+    expect(dependencies.reservationRepository.addBookingToTable).toHaveBeenCalledTimes(1);
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
+  });
+
+  test("unavailable host calendar dates reject booking before storage or Channex sync", async () => {
+    process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED = "true";
+    const unavailableError = new Error("Selected dates are not available.");
+    unavailableError.statusCode = 409;
+    const { service, dependencies } = buildService({
+      propertyRepository: {
+        assertBookingDatesAvailable: jest.fn().mockRejectedValue(unavailableError),
+      },
+    });
+
+    await expect(service.create(buildCreateEvent())).rejects.toBe(unavailableError);
+
+    expect(dependencies.reservationRepository.assertNoBookingConflict).not.toHaveBeenCalled();
+    expect(dependencies.reservationRepository.addBookingToTable).not.toHaveBeenCalled();
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
+    expect(dependencies.sendEmailFn).not.toHaveBeenCalled();
   });
 
   test("inquiry booking does not call Channex availability bridge", async () => {
@@ -310,5 +349,254 @@ describe("BookingService Channex booking availability hooks", () => {
       "2026-06-06",
       "Bearer host-token"
     );
+  });
+
+  test("modify-booking-dates returns a JSON-safe response after successful side effects", async () => {
+    const bookingBefore = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      arrivaldate: BigInt(Date.parse("2026-06-01T00:00:00.000Z")),
+      departuredate: BigInt(Date.parse("2026-06-03T00:00:00.000Z")),
+      status: "Paid",
+    };
+    const bookingAfter = {
+      ...bookingBefore,
+      arrivaldate: BigInt(Date.parse("2026-06-04T00:00:00.000Z")),
+      departuredate: BigInt(Date.parse("2026-06-06T00:00:00.000Z")),
+    };
+    const modifyBookingDates = jest.fn().mockResolvedValue({
+      booking: bookingAfter,
+      bookingBefore,
+      bookingAfter,
+      channexAvailabilitySync: buildEvidence({
+        trigger: "BOOKING_MODIFIED",
+        countOfRooms: BigInt(1),
+      }),
+    });
+    const controller = new ReservationController({
+      bookingService: {
+        modifyBookingDates,
+      },
+      paymentService: {},
+    });
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer host-token" },
+      body: JSON.stringify({
+        action: "modify-booking-dates",
+        bookingId: "booking-1",
+        arrivalDate: "2026-06-04",
+        departureDate: "2026-06-06",
+      }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(() => JSON.stringify(response.response)).not.toThrow();
+    expect(response.response.booking.arrivaldate).toBe(Date.parse("2026-06-04T00:00:00.000Z"));
+    expect(response.response.channexAvailabilitySync.countOfRooms).toBe(1);
+  });
+
+  test("cancel paid booking updates status to Cancelled and calls bridge once", async () => {
+    process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED = "true";
+    const bookingBefore = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      guestid: "guest-1",
+      arrivaldate: Date.parse("2026-06-01T00:00:00.000Z"),
+      departuredate: Date.parse("2026-06-03T00:00:00.000Z"),
+      status: "Paid",
+    };
+    const bookingAfter = {
+      ...bookingBefore,
+      status: "Cancelled",
+    };
+    const evidence = buildEvidence({
+      trigger: "BOOKING_CANCELLED",
+      affectedDates: ["2026-06-01", "2026-06-02"],
+      availabilityValuesSent: [
+        { date: "2026-06-01", availability: 1 },
+        { date: "2026-06-02", availability: 1 },
+      ],
+    });
+    const { service, dependencies } = buildService({
+      channexEvidence: evidence,
+      reservationRepository: {
+        getBookingById: jest
+          .fn()
+          .mockResolvedValueOnce({ response: bookingBefore })
+          .mockResolvedValueOnce({ response: bookingAfter }),
+      },
+    });
+    dependencies.authManager.authenticateUser.mockResolvedValue({ sub: "host-1" });
+
+    const result = await service.cancelBooking("booking-1", "Bearer host-token", { reason: "Demo cancel" });
+
+    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Cancelled");
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
+      userId: "host-1",
+      bookingBefore,
+      bookingAfter,
+      trigger: "BOOKING_CANCELLED",
+    });
+    expect(result.booking.status).toBe("Cancelled");
+    expect(result.reason).toBe("Demo cancel");
+    expect(result.channexAvailabilitySync).toEqual(evidence);
+  });
+
+  test("cancel awaiting payment booking updates status to Cancelled and calls bridge once", async () => {
+    process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED = "true";
+    const bookingBefore = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      guestid: "guest-1",
+      arrivaldate: Date.parse("2026-06-01T00:00:00.000Z"),
+      departuredate: Date.parse("2026-06-03T00:00:00.000Z"),
+      status: "Awaiting Payment",
+    };
+    const bookingAfter = {
+      ...bookingBefore,
+      status: "Cancelled",
+    };
+    const evidence = buildEvidence({ trigger: "BOOKING_CANCELLED" });
+    const { service, dependencies } = buildService({
+      channexEvidence: evidence,
+      reservationRepository: {
+        getBookingById: jest
+          .fn()
+          .mockResolvedValueOnce({ response: bookingBefore })
+          .mockResolvedValueOnce({ response: bookingAfter }),
+      },
+    });
+    dependencies.authManager.authenticateUser.mockResolvedValue({ sub: "guest-1" });
+
+    const result = await service.cancelBooking("booking-1", "Bearer guest-token");
+
+    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Cancelled");
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
+    expect(result.booking.status).toBe("Cancelled");
+    expect(result.channexAvailabilitySync.trigger).toBe("BOOKING_CANCELLED");
+  });
+
+  test("cancel already Cancelled booking is idempotent and does not call Channex", async () => {
+    process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED = "true";
+    const booking = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      guestid: "guest-1",
+      arrivaldate: Date.parse("2026-06-01T00:00:00.000Z"),
+      departuredate: Date.parse("2026-06-03T00:00:00.000Z"),
+      status: "Cancelled",
+    };
+    const { service, dependencies } = buildService({
+      reservationRepository: {
+        getBookingById: jest.fn().mockResolvedValue({ response: booking }),
+      },
+    });
+    dependencies.authManager.authenticateUser.mockResolvedValue({ sub: "host-1" });
+
+    const result = await service.cancelBooking("booking-1", "Bearer host-token");
+
+    expect(dependencies.reservationRepository.updateBookingStatus).not.toHaveBeenCalled();
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
+    expect(result.alreadyCancelled).toBe(true);
+    expect(result.channexAvailabilitySync).toEqual(
+      expect.objectContaining({
+        trigger: "BOOKING_CANCELLED",
+        syncType: "booking-availability",
+        skipped: true,
+        reason: "BOOKING_ALREADY_CANCELLED",
+      })
+    );
+  });
+
+  test("cancel-booking PATCH action returns Channex cancellation sync evidence", async () => {
+    const evidence = buildEvidence({ trigger: "BOOKING_CANCELLED" });
+    const bookingBefore = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      guestid: "guest-1",
+      arrivaldate: Date.now() + 12 * 60 * 60 * 1000,
+      departuredate: Date.now() + 36 * 60 * 60 * 1000,
+      cancellation_policy: "flexible",
+      total_price: 100,
+      paymentid: "pi_booking_1",
+      status: "Paid",
+    };
+    const bookingAfter = { ...bookingBefore, status: "Cancelled" };
+    const cancelBookingByGuest = jest.fn().mockResolvedValue({
+      response: bookingAfter,
+      statusCode: 200,
+    });
+    const syncChannexBookingAvailabilityIfEnabled = jest.fn().mockResolvedValue(evidence);
+    const controller = new ReservationController({
+      bookingService: {
+        authManager: {
+          authenticateUser: jest.fn().mockResolvedValue({ sub: "guest-1" }),
+        },
+        reservationRepository: {
+          getBookingById: jest.fn().mockResolvedValue({ response: bookingBefore }),
+          cancelBookingByGuest,
+        },
+        priceLabsBookingNotifier: {
+          notifyBookingChange: jest.fn().mockResolvedValue({}),
+        },
+        syncChannexBookingAvailabilityIfEnabled,
+      },
+      paymentService: {},
+    });
+    controller.stripe = null;
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer guest-token" },
+      body: JSON.stringify({
+        action: "cancel-booking",
+        bookingId: "booking-1",
+        reason: "Demo cancel",
+      }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(cancelBookingByGuest).toHaveBeenCalledWith("booking-1", "guest-1", {
+      refundedAmount: 0,
+      stripeRefundId: null,
+      refundError: null,
+    });
+    expect(syncChannexBookingAvailabilityIfEnabled).toHaveBeenCalledWith({
+      userId: "host-1",
+      bookingBefore,
+      bookingAfter,
+      trigger: "BOOKING_CANCELLED",
+      includeDisabledEvidence: true,
+    });
+    expect(response.response.channexAvailabilitySync).toEqual(evidence);
+  });
+
+  test("cancel-booking PATCH action validates bookingId", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const cancelBooking = jest.fn();
+    const controller = new ReservationController({
+      bookingService: {
+        cancelBooking,
+      },
+      paymentService: {},
+    });
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer host-token" },
+      body: JSON.stringify({
+        action: "cancel-booking",
+      }),
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.response).toBe("Missing bookingId.");
+    expect(cancelBooking).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });

@@ -32,6 +32,7 @@ What is in place:
   - website title and hero copy
   - residence title, headline, description, and panel settings
   - calendar title, description, and panel settings
+  - gallery title, subtitle, browse label, and panel settings
   - contact footer copy, avatar mode, and colors
   - amenities order, labels, icons, and icon color
   - trust-card and journey-stop copy for implemented templates
@@ -54,10 +55,11 @@ What is in place:
 - Clicking editable areas now still lands correctly even when the destination dropdown is collapsed first, because preview-to-editor targeting performs a second pass after the section opens.
 - The editor targeting/runtime logic is now split into dedicated modules (`editor/fields`, `editor/sections`, `editor/hooks`, dedicated picker dialogs, and feature-shared `config` files) instead of keeping all interaction code inside `WebsiteEditorPage.js`.
 - Preview-to-editor jumps now briefly highlight the matched editor section so users can see where they landed after clicking the preview.
-- Editor loading now keeps the editor shell visible and uses section-level pulse-bar loaders instead of a single blocking state card.
+- Editor loading now stages in two phases so the draft-backed sidebar can appear before property-backed preview data finishes hydrating.
+- The editor preview, internal draft preview, and published live site now use a shared website-shaped skeleton during initial load instead of generic load bars.
 - Editor section bodies now open and close with an animated dropdown transition instead of a hard mount/unmount jump.
-- Implemented previews now include a reusable visitor contact widget that can be shown or hidden through the editor visibility controls.
-- The visitor contact widget uses the shared unified messaging send service with host/property context so it can flow toward Domits messages once the public-site contact endpoint contract is finalized.
+- Implemented previews now include a reusable visitor WhatsApp widget that can be shown or hidden through the editor visibility controls.
+- The WhatsApp widget is driven by shared host integration enrichment; when no usable WhatsApp number exists, the toggle remains visible but disabled and links hosts to the integrations marketplace.
 - Imported calendar availability now flows into website previews from `hostDashboard/single`, including:
   - imported external blocked dates
   - iCal sync presence
@@ -68,6 +70,8 @@ What is in place:
 - The website-side calendar enrichment now also merges accepted booking date keys and is shared across editor preview, internal draft preview, and published live-site rendering.
 - Implemented templates now render a read-only availability snapshot card using the shared website model.
 - The shared availability snapshot now supports month-to-month navigation in the preview/live calendar without leaving the website surface.
+- Panorama gallery now has its own dedicated editor section, renders as a uniform `3x2` image grid, and reuses the listing-details photo browser pattern for `Browse`.
+- Panorama residence, calendar, and gallery panels now behave as full-width themed bands instead of inset white cards when section panels are enabled.
 - Acceptance AWS wiring has been validated far enough for draft save/list behavior and the live-site foundation:
   - Aurora `main.standalone_site_draft`
   - Aurora `main.standalone_site`
@@ -255,16 +259,22 @@ Current implementation details:
   - configurable amenities collection
   - dedicated residence section controls
   - dedicated calendar section controls
+  - dedicated gallery section controls
 - Editor image slot reassignment now uses an overlay gallery with navigation and confirm-select behavior.
 - Editor image slot reassignment now uses a thumbnail-only overlay grid with direct-select behavior.
 - Shared image slots now support optional photo rotation, so a slot can render a lead image plus the imported listing set instead of staying fixed to one photo.
 - Panorama residence now supports:
   - dedicated image-slot ownership instead of reusing the hero image
-  - optional section panel with configurable color
+  - optional full-width section panel with configurable color
   - editable title, headline, and description
+- Panorama gallery now supports:
+  - dedicated section title, subtitle, and browse-label editing
+  - dedicated gallery image-slot ownership
+  - shared browse overlay navigation through the reused photo browser
+  - optional full-width section panel plus panel color
 - Calendar editing now supports:
   - editable title and description
-  - independent panel toggle and panel color
+  - independent full-width panel toggle and panel color
   - month navigation controls in the rendered snapshot
 - Amenities editing now supports:
   - add/delete/reorder up to the configured maximum
@@ -282,7 +292,8 @@ Current implementation details:
 - Preview-to-editor linking now exists for implemented templates so the preview can drive navigation to text/image editing areas.
 - Editor-to-preview linking now also exists for active text editing, so the preview target is highlighted while a text field is focused or changing.
 - Preview-to-editor linking now includes temporary section highlight feedback after navigation.
-- The editor now renders per-section loading states while opening instead of replacing the whole page with one loader card.
+- The editor sidebar now hydrates from the saved draft before property-backed preview data completes, so the left editing surface becomes interactive earlier without adding extra API requests.
+- The editor preview, draft preview, and live site now all use the shared website skeleton instead of a generic pulse-bar loading treatment.
 - Editor sections now animate when expanding and collapsing.
 - Host-side website detail payload now includes calendar availability and iCal sync metadata without introducing a new schema change.
 - The website-side calendar sync snapshot path now uses the shared iCal source reader instead of a drifting duplicate query contract.
@@ -322,6 +333,7 @@ Current implementation details:
   Icon choices are sourced directly from the shared amenities registry, so newly added amenity icons automatically become available to the direct booking website editor without a separate icon list.
 - The trust-card icon trigger is centered within the editable field and the icon-picker overlay now scales more safely across smaller viewports instead of behaving like a fixed desktop panel.
 - The trust-card icon picker now deduplicates repeated amenity visuals and shows one option per unique Domits icon glyph instead of repeating the same icon for multiple amenity records.
+- Shared website image rendering now supports reusable hover states, and Panorama currently enables that shared hover treatment on the residence image and gallery tiles.
 
 ## Next phase
 

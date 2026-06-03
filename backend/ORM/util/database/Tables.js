@@ -47,6 +47,7 @@ import { Host_Settings } from "../../models/Host_Settings.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
+import { Invoice } from "../../models/Invoice.js";
 
 export const Tables = [
   Amenities,
@@ -98,4 +99,5 @@ export const Tables = [
   Kpi_Snapshot,
   PriceLabs_Connection,
   Team_Member,
+  Invoice,
 ];

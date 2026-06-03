@@ -18,6 +18,7 @@ export function WebsiteEditorAmenitiesSection({
   activatePreviewTarget,
   addAmenityItem,
   amenitiesConfig,
+  amenitiesTextFields = [],
   amenitiesVisibilityContent = null,
   canAddAmenity,
   clearActivePreviewTarget,
@@ -27,6 +28,7 @@ export function WebsiteEditorAmenitiesSection({
   handleAmenitiesIconColorChange,
   handleAmenitiesIconColorInputChange,
   handleAmenitiesIconColorInputKeyDown,
+  handleAmenitiesSectionFieldChange,
   handleCollectionFieldChange,
   handleEditorFieldKeyDown,
   highlightedTargetId,
@@ -53,6 +55,27 @@ export function WebsiteEditorAmenitiesSection({
       sectionRef={sectionRef}
     >
       {amenitiesVisibilityContent ? <div className={styles.toggleStack}>{amenitiesVisibilityContent}</div> : null}
+
+      {amenitiesTextFields.map((field) => {
+        const targetId =
+          field.key === "title"
+            ? EDITOR_TARGET_KEYS.amenitiesSection.title
+            : EDITOR_TARGET_KEYS.amenitiesSection.description;
+
+        return (
+          <TextField
+            key={field.key}
+            field={{ key: `amenities-${field.key}`, label: field.label, component: field.component }}
+            value={editorValues.amenitiesSection[field.key]}
+            onChange={handleAmenitiesSectionFieldChange(field.key)}
+            onKeyDown={handleEditorFieldKeyDown(field)}
+            fieldRef={setTargetRef(targetId)}
+            isHighlighted={highlightedTargetId === targetId}
+            onFocus={activatePreviewTarget(targetId)}
+            onBlur={clearActivePreviewTarget}
+          />
+        );
+      })}
 
       <ContactColorField
         label="Icon color"
@@ -178,12 +201,23 @@ WebsiteEditorAmenitiesSection.propTypes = {
     maxCount: PropTypes.number.isRequired,
     supportsIconSelection: PropTypes.bool,
   }),
+  amenitiesTextFields: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      component: PropTypes.oneOf(["input", "textarea"]).isRequired,
+    })
+  ),
   amenitiesVisibilityContent: PropTypes.node,
   canAddAmenity: PropTypes.bool.isRequired,
   clearActivePreviewTarget: PropTypes.func.isRequired,
   commitAmenitiesIconColorInput: PropTypes.func.isRequired,
   draftTemplateKey: PropTypes.string.isRequired,
   editorValues: PropTypes.shape({
+    amenitiesSection: PropTypes.shape({
+      title: PropTypes.string.isRequired,
+      description: PropTypes.string.isRequired,
+    }).isRequired,
     amenitiesIconColor: PropTypes.string.isRequired,
     amenities: PropTypes.arrayOf(
       PropTypes.shape({
@@ -196,6 +230,7 @@ WebsiteEditorAmenitiesSection.propTypes = {
   handleAmenitiesIconColorChange: PropTypes.func.isRequired,
   handleAmenitiesIconColorInputChange: PropTypes.func.isRequired,
   handleAmenitiesIconColorInputKeyDown: PropTypes.func.isRequired,
+  handleAmenitiesSectionFieldChange: PropTypes.func.isRequired,
   handleCollectionFieldChange: PropTypes.func.isRequired,
   handleEditorFieldKeyDown: PropTypes.func.isRequired,
   highlightedTargetId: PropTypes.string.isRequired,

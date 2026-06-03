@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import BookingOverview from '../BookingOverview';
+import BookingOverview, { buildBookingRequestEvent, normalizeBookingDateForRequest } from '../BookingOverview';
 
 jest.mock('aws-amplify');
 jest.mock('react-router-dom', () => ({
@@ -22,6 +22,38 @@ jest.mock('react-router-dom', () => ({
     }),
     useNavigate: jest.fn(),
 }));
+
+describe('BookingOverview booking request payload', () => {
+    test('keeps YYYY-MM-DD booking dates intact for backend parsing', () => {
+        expect(normalizeBookingDateForRequest('2026-06-15')).toBe('2026-06-15');
+        expect(normalizeBookingDateForRequest('2026-06-17')).toBe('2026-06-17');
+    });
+
+    test('builds booking request without parsing date strings into years', () => {
+        const payload = buildBookingRequestEvent({
+            propertyId: 'property-1',
+            userName: 'Guest',
+            bookingDetails: {
+                guests: '2',
+                checkInDate: '2026-06-15',
+                checkOutDate: '2026-06-17',
+            },
+        });
+
+        expect(payload).toEqual({
+            identifiers: {
+                property_Id: 'property-1',
+            },
+            general: {
+                guests: 2,
+                latePayment: false,
+                arrivalDate: '2026-06-15',
+                departureDate: '2026-06-17',
+                guestName: 'Guest',
+            },
+        });
+    });
+});
 
 describe.skip('BookingOverview Component', () => {
     beforeEach(() => {

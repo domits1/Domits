@@ -9,6 +9,8 @@ import {
 } from "./business/channexRestrictionsSyncVersion.js";
 
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
+const CHANNEX_BOOKING_POLL_EVENT_SOURCE = "domits.channex.booking-poll";
+const CHANNEX_BOOKING_POLL_EVENT_ACTION = "CHANNEX_BOOKING_POLL";
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
 const ingestionController = new IngestionController();
@@ -28,6 +30,12 @@ const forbiddenChannexCertificationAdmin = {
     message: "User is not allowed to access Channex certification admin endpoints.",
   },
 };
+const getChannexCertificationAdminAccess = (event) => ({
+  statusCode: 200,
+  response: {
+    allowed: isChannexCertificationUserAllowed(event?.queryStringParameters?.userId),
+  },
+});
 
 const protectedChannexCertificationAdminRoutes = [
   { methods: ["GET"], pattern: /\/integrations\/channex\/status$/ },
@@ -43,7 +51,9 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/ari$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/full$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/certification\/test-case$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/certification\/cancel-booking$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/receive$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/pull$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/ack$/ },
 ];
 
@@ -82,6 +92,10 @@ const isChannexRestrictionsSyncRequest = (method, path) =>
 const isChannexFullSyncRequest = (method, path) =>
   method === "POST" && String(path || "").endsWith("/integrations/channex/sync/full");
 const isTrueQueryParam = (value) => String(value || "").trim().toLowerCase() === "true";
+const isChannexBookingPollEvent = (event) =>
+  event?.source === CHANNEX_BOOKING_POLL_EVENT_SOURCE ||
+  event?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION ||
+  event?.detail?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION;
 const summarizeErrorStack = (error) =>
   (typeof error?.stack === "string" ? error.stack : "")
     .split("\n")
@@ -139,6 +153,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.checkChannexStatus(event),
   },
   {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/admin-access"),
+    handle: (event) => getChannexCertificationAdminAccess(event),
+  },
+  {
     matches: (method, path) => method === "GET" && String(path || "").endsWith("/integrations/channex/properties"),
     handle: (event) => integrationController.listChannexProperties(event),
   },
@@ -191,6 +209,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.receiveChannexBookingRevisions(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/pull"),
+    handle: (event) => integrationController.pullLatestChannexBookings(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/ack"),
     handle: (event) => integrationController.acknowledgeChannexBookingRevisions(event),
   },
@@ -219,6 +241,11 @@ const routeDefinitions = [
     matches: (method, path) =>
       method === "POST" && String(path || "").endsWith("/integrations/channex/certification/test-case"),
     handle: (event) => integrationController.syncChannexCertificationTestCase(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").endsWith("/integrations/channex/certification/cancel-booking"),
+    handle: (event) => integrationController.cancelChannexCertificationBooking(event),
   },
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/rate-plans"),
@@ -337,6 +364,11 @@ export const handler = async (event) => {
   const { httpMethod, path } = event;
 
   try {
+    if (isChannexBookingPollEvent(event)) {
+      const returnedResponse = await integrationController.pollLatestChannexBookings(event);
+      return createLambdaResponse(returnedResponse);
+    }
+
     if (isChannexRestrictionsSyncRequest(httpMethod, path)) {
       console.info(
         JSON.stringify({

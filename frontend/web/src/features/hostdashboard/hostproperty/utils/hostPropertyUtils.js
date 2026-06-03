@@ -364,15 +364,23 @@ const findDetailValue = (generalDetails, key) => {
 };
 
 const mapHostProperties = (hostPropertiesData, property) => {
+  const mappedPropertyIds = new Set();
   const mappedHostProperties = (Array.isArray(hostPropertiesData) ? hostPropertiesData : [])
-    .map((accommodation) => ({
-      id: accommodation?.property?.id || "",
-      title: accommodation?.property?.title || "Untitled listing",
-      status: accommodation?.property?.status || "INACTIVE",
-    }))
-    .filter((accommodation) => Boolean(accommodation.id));
+    .map((accommodation) => {
+      const id = accommodation?.property?.id || "";
+      if (!id || mappedPropertyIds.has(id)) {
+        return null;
+      }
+      mappedPropertyIds.add(id);
+      return {
+        id,
+        title: accommodation?.property?.title || "Untitled listing",
+        status: accommodation?.property?.status || "INACTIVE",
+      };
+    })
+    .filter(Boolean);
 
-  if (property?.id && !mappedHostProperties.some((accommodation) => accommodation.id === property.id)) {
+  if (property?.id && !mappedPropertyIds.has(property.id)) {
     mappedHostProperties.unshift({
       id: property.id,
       title: property.title || "Untitled listing",
@@ -708,6 +716,7 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
   const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
   const propertyImages = Array.isArray(data?.images) ? data.images : [];
+  const propertyAvailability = Array.isArray(data?.availability) ? data.availability : [];
   const availabilityRestrictions = Array.isArray(data?.availabilityRestrictions) ? data.availabilityRestrictions : [];
   const property = data?.property || {};
   const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
@@ -781,6 +790,7 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
     checkInDetails: normalizeCheckInDetails(checkInDetails),
     policyAvailabilitySettings: normalizePolicyAvailabilitySettings(policyAvailabilitySettings),
     pricingForm: mapPropertyPricingToState(propertyPricing, availabilityRestrictions),
+    availability: propertyAvailability,
     existingPhotos: mapPropertyImagesToState(propertyImages),
     hostProperties: mapHostProperties(hostPropertiesData, property),
   };

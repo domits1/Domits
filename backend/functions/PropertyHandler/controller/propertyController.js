@@ -533,7 +533,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(query);
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.getPropertyCalendarOverrides(propertyId, normalizedRange);
             return {
@@ -578,7 +578,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
-            const hostId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.updatePropertyCalendarOverrides(
                 propertyId,
@@ -1505,7 +1505,7 @@ export class PropertyController {
         };
     }
 
-    buildPublicDirectBookingWebsiteRenderPayload(site, domain) {
+    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
@@ -1524,11 +1524,42 @@ export class PropertyController {
                 publishedAt: site.publishedAt,
             },
             domain,
-            propertySnapshot: site.publishedPropertySnapshot || {},
+            propertySnapshot:
+                propertySnapshot && typeof propertySnapshot === "object"
+                    ? propertySnapshot
+                    : site.publishedPropertySnapshot || {},
             contentOverrides: site.publishedContentOverrides || {},
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
         };
+    }
+
+    async buildPublicPropertySnapshotForWebsiteRender(site) {
+        const publishedPropertySnapshot =
+            site?.publishedPropertySnapshot && typeof site.publishedPropertySnapshot === "object"
+                ? site.publishedPropertySnapshot
+                : {};
+        const propertyId = cleanWebsiteText(
+            site?.propertyId ||
+            publishedPropertySnapshot?.property?.id ||
+            publishedPropertySnapshot?.property?.ID ||
+            publishedPropertySnapshot?.id ||
+            publishedPropertySnapshot?.ID
+        );
+
+        if (!propertyId) {
+            return publishedPropertySnapshot;
+        }
+
+        try {
+            const calendarAvailability = await this.propertyService.getPublicCalendarAvailability(propertyId);
+            return {
+                ...publishedPropertySnapshot,
+                calendarAvailability,
+            };
+        } catch {
+            return publishedPropertySnapshot;
+        }
     }
 
     resolveRequestedStandaloneWebsiteDomain(event) {
@@ -2597,12 +2628,17 @@ export class PropertyController {
                 },
             });
 
+            const propertySnapshot = await this.buildPublicPropertySnapshotForWebsiteRender(
+                resolutionResult.site
+            );
+
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
                 body: JSON.stringify(this.buildPublicDirectBookingWebsiteRenderPayload(
                     resolutionResult.site,
-                    resolutionResult.domain
+                    resolutionResult.domain,
+                    propertySnapshot
                 )),
             };
         } catch (error) {

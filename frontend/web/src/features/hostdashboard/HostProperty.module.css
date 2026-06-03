@@ -780,6 +780,177 @@
   font-weight: 700;
 }
 
+.availabilityCalendarPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.availabilityCalendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.availabilityMonthTitle {
+  margin: 0;
+  color: #1f2937;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-align: center;
+}
+
+.availabilityMonthButton {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d4dce7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.availabilityMonthButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.availabilityWeekdays,
+.availabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.availabilityWeekdays span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.availabilityDayButton {
+  min-height: 74px;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
+  padding: 7px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.availabilityDayButton:hover:not(:disabled) {
+  border-color: #0d9813;
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.12);
+}
+
+.availabilityDayButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.availabilityDaySelected {
+  border-color: #0d9813;
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.2);
+}
+
+.availabilityDayOutsideMonth {
+  opacity: 0.55;
+}
+
+.availabilityDayAvailable {
+  background: #eefbf0;
+  border-color: #a7e4ad;
+}
+
+.availabilityDayUnavailable {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+.availabilityDayOutside {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.availabilityDayBlocked {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.availabilityDayNumber {
+  display: block;
+  color: #111827;
+  font-size: 15px;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.availabilityDayStatus {
+  display: block;
+  margin-top: 6px;
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.availabilityLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.availabilityLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.availabilityLegendSwatch {
+  width: 12px;
+  height: 12px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+}
+
+.availabilityLegendAvailable {
+  background: #bbf7d0;
+  border-color: #86efac;
+}
+
+.availabilityLegendUnavailable {
+  background: #fecdd3;
+  border-color: #fda4af;
+}
+
+.availabilityLegendOutside {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.availabilityLegendBlocked {
+  background: #fed7aa;
+  border-color: #fdba74;
+}
+
 .pricingSelect {
   width: 100%;
   border: 1px solid #dddddd;
@@ -1872,6 +2043,24 @@
 
   .pricingStayGrid {
     grid-template-columns: 1fr;
+  }
+
+  .availabilityCalendarPanel {
+    padding: 10px;
+  }
+
+  .availabilityWeekdays,
+  .availabilityGrid {
+    gap: 4px;
+  }
+
+  .availabilityDayButton {
+    min-height: 62px;
+    padding: 5px;
+  }
+
+  .availabilityDayStatus {
+    font-size: 10px;
   }
 
   .pricingDiscountRow {

@@ -26,6 +26,10 @@ import { PropertyCustomRuleRepository } from "../../data/repository/propertyCust
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
+import {
+  extractUnavailableOverrideDateKeys,
+  normalizeBlockedDateKeys,
+} from "../../util/calendarAvailability.js";
 
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
@@ -367,13 +371,23 @@ export class PropertyService {
   }
 
   async getPublicCalendarAvailability(propertyId) {
-    const availabilitySnapshot =
-      await this.propertyExternalCalendarRepository.getAvailabilitySnapshotByPropertyId(propertyId);
+    const [availabilitySnapshot, calendarOverrides, blockedBookingDateKeys] = await Promise.all([
+      this.propertyExternalCalendarRepository.getAvailabilitySnapshotByPropertyId(propertyId),
+      this.propertyCalendarOverrideRepository.getOverridesByPropertyId(propertyId).catch(() => []),
+      this.bookingRepository.getBlockedDateKeysByPropertyId(propertyId).catch(() => []),
+    ]);
+    const unavailableDateKeys = Array.from(
+      new Set([
+        ...extractUnavailableOverrideDateKeys(calendarOverrides),
+        ...normalizeBlockedDateKeys(blockedBookingDateKeys),
+      ])
+    ).sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
 
     return {
       externalBlockedDates: Array.isArray(availabilitySnapshot?.externalBlockedDates)
         ? availabilitySnapshot.externalBlockedDates
         : [],
+      unavailableDateKeys,
       hasExternalCalendarSync: availabilitySnapshot?.hasExternalCalendarSync === true,
       syncedSourceCount: Math.max(0, Number(availabilitySnapshot?.syncedSourceCount || 0)),
       lastSyncAt: Number(availabilitySnapshot?.lastSyncAt || 0) || null,

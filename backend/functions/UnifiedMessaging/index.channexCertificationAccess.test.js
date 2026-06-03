@@ -5,7 +5,10 @@ const mockIntegrationControllerMethods = {
   syncChannexFull: jest.fn(),
   syncChannexBookingAvailability: jest.fn(),
   syncChannexCertificationTestCase: jest.fn(),
+  cancelChannexCertificationBooking: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
+  pullLatestChannexBookings: jest.fn(),
+  pollLatestChannexBookings: jest.fn(),
   acknowledgeChannexBookingRevisions: jest.fn(),
 };
 
@@ -110,6 +113,45 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(mockIntegrationControllerMethods.checkChannexStatus).toHaveBeenCalledTimes(1);
   });
 
+  test("admin access endpoint returns allowed true for allowlisted user", async () => {
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/admin-access",
+        query: { userId: "allowed-user" },
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(parseBody(response)).toEqual({ allowed: true });
+    expect(mockIntegrationControllerMethods.checkChannexStatus).not.toHaveBeenCalled();
+  });
+
+  test("admin access endpoint returns allowed false for non-allowlisted user", async () => {
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/admin-access",
+        query: { userId: "not-allowed" },
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ allowed: false });
+    expect(mockIntegrationControllerMethods.checkChannexStatus).not.toHaveBeenCalled();
+  });
+
+  test("admin access endpoint returns allowed false when userId is missing", async () => {
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/admin-access",
+        query: {},
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ allowed: false });
+  });
+
   test("booking revisions list endpoint is protected", async () => {
     const response = await handler(
       buildEvent({
@@ -179,6 +221,48 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(mockIntegrationControllerMethods.receiveChannexBookingRevisions).not.toHaveBeenCalled();
   });
 
+  test("pull latest Channex bookings endpoint is protected before side effects run", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/bookings/pull",
+        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods.pullLatestChannexBookings).not.toHaveBeenCalled();
+  });
+
+  test("direct Channex booking poll event calls polling without HTTP routing", async () => {
+    mockIntegrationControllerMethods.pollLatestChannexBookings.mockResolvedValue({
+      statusCode: 200,
+      response: {
+        channel: "CHANNEX",
+        action: "poll-latest-bookings",
+        enabled: true,
+      },
+    });
+
+    const event = {
+      source: "domits.channex.booking-poll",
+      detail: {
+        action: "CHANNEX_BOOKING_POLL",
+        enabled: true,
+      },
+    };
+    const response = await handler(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({
+      channel: "CHANNEX",
+      action: "poll-latest-bookings",
+      enabled: true,
+    });
+    expect(mockIntegrationControllerMethods.pollLatestChannexBookings).toHaveBeenCalledWith(event);
+    expect(mockIntegrationControllerMethods.pullLatestChannexBookings).not.toHaveBeenCalled();
+  });
+
   test("certification test-case endpoint is protected before side effects run", async () => {
     const response = await handler(
       buildEvent({
@@ -191,6 +275,48 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
 
     expect(response.statusCode).toBe(403);
     expect(mockIntegrationControllerMethods.syncChannexCertificationTestCase).not.toHaveBeenCalled();
+  });
+
+  test("certification cancel booking endpoint is protected before side effects run", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/certification/cancel-booking",
+        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        body: JSON.stringify({ bookingId: "booking-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods.cancelChannexCertificationBooking).not.toHaveBeenCalled();
+  });
+
+  test("allowed user can call certification cancel booking endpoint", async () => {
+    mockIntegrationControllerMethods.cancelChannexCertificationBooking.mockResolvedValue({
+      statusCode: 200,
+      response: {
+        channel: "CHANNEX",
+        action: "certification-cancel-booking",
+        bookingId: "booking-1",
+      },
+    });
+
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/certification/cancel-booking",
+        query: { userId: "allowed-user", domitsPropertyId: "property-1" },
+        body: JSON.stringify({ bookingId: "booking-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({
+      channel: "CHANNEX",
+      action: "certification-cancel-booking",
+      bookingId: "booking-1",
+    });
+    expect(mockIntegrationControllerMethods.cancelChannexCertificationBooking).toHaveBeenCalledTimes(1);
   });
 
   test("booking ack endpoint is protected before side effects run", async () => {

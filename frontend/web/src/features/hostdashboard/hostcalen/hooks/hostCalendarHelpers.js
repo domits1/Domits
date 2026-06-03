@@ -33,6 +33,8 @@ export const AVAILABILITY_WINDOW_OPTIONS = [
 export const WEEKEND_PRICE_KEYS = ["weekendRate", "weekendrate", "weekendPrice", "weekendprice"];
 export const BOOKING_EXCLUDED_STATUSES = new Set([
   "failed",
+  "declined",
+  "inquiry",
   "cancelled",
   "canceled",
   "denied",

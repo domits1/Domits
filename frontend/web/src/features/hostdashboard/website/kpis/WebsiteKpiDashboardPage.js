@@ -30,7 +30,7 @@ const KPI_VIEW_TAB_OPTIONS = Object.freeze([
   { id: KPI_VIEW_TAB_DELETIONS, label: "Deletion reasons" },
 ]);
 const WEBSITE_KPI_POLL_INTERVAL_MS = 60000;
-const WEBSITE_KPI_HIGHLIGHT_DURATION_MS = 2200;
+const WEBSITE_KPI_HIGHLIGHT_DURATION_MS = 4200;
 const formatWebsiteKpiSyncTime = (timestamp) =>
   new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
