@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PhotoBrowserOverlay from "../../../../../components/gallery/PhotoBrowserOverlay";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getScrollRevealProps } from "../animations/scrollRevealProps";
@@ -64,7 +66,7 @@ const hexToRgbChannels = (hexColor) => {
   return `${redChannel} ${greenChannel} ${blueChannel}`;
 };
 
-const handlePanoramaNavItemClick = (href) => (event) => {
+const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event) => {
   const normalizedHref = String(href || "").trim();
   if (!normalizedHref.startsWith("#")) {
     return;
@@ -97,15 +99,17 @@ const handlePanoramaNavItemClick = (href) => (event) => {
     top: Math.max(0, nextScrollTop),
     behavior: prefersReducedMotion ? "auto" : "smooth",
   });
+
+  onAfterNavigate?.();
 };
 
-const renderPanoramaNavItem = ({ href, label }, isInteractivePreview) => {
+const renderPanoramaNavItem = ({ href, label }, isInteractivePreview, onAfterNavigate = undefined) => {
   if (isInteractivePreview) {
     return <span key={href}>{label}</span>;
   }
 
   return (
-    <a key={href} href={href} onClick={handlePanoramaNavItemClick(href)}>
+    <a key={href} href={href} onClick={handlePanoramaNavItemClick(href, onAfterNavigate)}>
       {label}
     </a>
   );
@@ -421,7 +425,16 @@ PanoramaAmenitiesModal.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
-const renderPanoramaTopBar = ({ model, onSelectTarget, activeTargetId, isTopBarSolid, navItems }) => (
+const renderPanoramaTopBar = ({
+  model,
+  onSelectTarget,
+  activeTargetId,
+  isTopBarSolid,
+  navItems,
+  isNavDrawerOpen,
+  onToggleNavDrawer,
+  onCloseNavDrawer,
+}) => (
   <div
     data-panorama-top-bar="true"
     className={`${styles.panoramaTopBarShell} ${
@@ -434,10 +447,60 @@ const renderPanoramaTopBar = ({ model, onSelectTarget, activeTargetId, isTopBarS
       activeTargetId={activeTargetId}
       showMark={false}
     >
-      <div className={styles.templateTopBarNav}>
-        {navItems.map((item) => renderPanoramaNavItem(item, Boolean(onSelectTarget)))}
+      <div className={styles.panoramaTopBarActions}>
+        <div className={styles.templateTopBarNav}>
+          {navItems.map((item) => renderPanoramaNavItem(item, Boolean(onSelectTarget)))}
+        </div>
+        <button
+          type="button"
+          className={styles.panoramaTopBarMenuButton}
+          onClick={onToggleNavDrawer}
+          aria-label={isNavDrawerOpen ? "Close section menu" : "Open section menu"}
+          aria-expanded={isNavDrawerOpen}
+          aria-controls="panorama-site-menu"
+        >
+          {isNavDrawerOpen ? <CloseRoundedIcon fontSize="small" /> : <MenuRoundedIcon fontSize="small" />}
+          <span>{isNavDrawerOpen ? "Close" : "Sections"}</span>
+        </button>
       </div>
     </TemplateTopBar>
+    <div
+      className={`${styles.panoramaTopBarDrawerOverlay} ${
+        isNavDrawerOpen ? styles.panoramaTopBarDrawerOverlayOpen : ""
+      }`.trim()}
+      onClick={onCloseNavDrawer}
+      aria-hidden={!isNavDrawerOpen}
+    />
+    <aside
+      id="panorama-site-menu"
+      className={`${styles.panoramaTopBarDrawer} ${
+        isNavDrawerOpen ? styles.panoramaTopBarDrawerOpen : ""
+      }`.trim()}
+      aria-label="Website section navigation"
+      aria-hidden={!isNavDrawerOpen}
+    >
+      <div className={styles.panoramaTopBarDrawerHeader}>
+        <div className={styles.panoramaTopBarDrawerTitleBlock}>
+          <span className={styles.panoramaTopBarDrawerLabel}>Sections</span>
+          <strong className={styles.panoramaTopBarDrawerTitle}>{model.site.title}</strong>
+        </div>
+        <button
+          type="button"
+          className={styles.panoramaTopBarDrawerCloseButton}
+          onClick={onCloseNavDrawer}
+          aria-label="Close section menu"
+        >
+          <CloseRoundedIcon fontSize="small" />
+        </button>
+      </div>
+      <nav className={styles.panoramaTopBarDrawerNav}>
+        {navItems.map((item) =>
+          renderPanoramaNavItem(item, Boolean(onSelectTarget), () => {
+            onCloseNavDrawer();
+          })
+        )}
+      </nav>
+    </aside>
   </div>
 );
 
@@ -718,6 +781,7 @@ const renderPanoramaGallerySection = ({
             enableHoverEffect
             alt={slot.alt}
             onSelectTarget={onSelectTarget}
+            onActivate={() => onOpenGalleryBrowser(index)}
             activeTargetId={activeTargetId}
           />
         ))}
@@ -730,7 +794,7 @@ const renderPanoramaGallerySection = ({
             className={styles.panoramaAmenityShowAllButton}
             onClick={(event) => {
               event.stopPropagation();
-              onOpenGalleryBrowser();
+              onOpenGalleryBrowser(0);
             }}
           >
             {model.gallerySection?.browseLabel || "Browse"}
@@ -967,14 +1031,65 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
+  const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
   const navItems = buildPanoramaNavItems(viewState);
+  const handleOpenGalleryBrowser = (imageIndex = 0) => {
+    const normalizedGalleryImages = Array.isArray(model.media?.galleryImages)
+      ? model.media.galleryImages.filter(Boolean)
+      : [];
+    const maxGalleryIndex = Math.max(normalizedGalleryImages.length - 1, 0);
+    const nextGalleryIndex = Number.isInteger(imageIndex) ? imageIndex : 0;
+
+    setGalleryBrowserInitialIndex(Math.max(0, Math.min(nextGalleryIndex, maxGalleryIndex)));
+    setIsGalleryBrowserOpen(true);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsNavDrawerOpen(false);
+      }
+    };
+
+    globalThis.document?.addEventListener("keydown", handleKeyDown);
+    return () => {
+      globalThis.document?.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isNavDrawerOpen) {
+      return undefined;
+    }
+
+    const originalOverflow = globalThis.document?.body?.style?.overflow;
+    if (globalThis.document?.body?.style) {
+      globalThis.document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      if (globalThis.document?.body?.style) {
+        globalThis.document.body.style.overflow = originalOverflow || "";
+      }
+    };
+  }, [isNavDrawerOpen]);
 
   return (
     <>
       <article className={styles.templateSite}>
         {viewState.showTopBar
-          ? renderPanoramaTopBar({ model, onSelectTarget, activeTargetId, isTopBarSolid, navItems })
+          ? renderPanoramaTopBar({
+              model,
+              onSelectTarget,
+              activeTargetId,
+              isTopBarSolid,
+              navItems,
+              isNavDrawerOpen,
+              onToggleNavDrawer: () => setIsNavDrawerOpen((currentState) => !currentState),
+              onCloseNavDrawer: () => setIsNavDrawerOpen(false),
+            })
           : null}
         {renderPanoramaHeroSection({
           model,
@@ -997,7 +1112,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               gallerySlots: viewState.gallerySlots,
               onSelectTarget,
               activeTargetId,
-              onOpenGalleryBrowser: () => setIsGalleryBrowserOpen(true),
+              onOpenGalleryBrowser: handleOpenGalleryBrowser,
             })
           : null}
         {renderPanoramaDetailsSection({
@@ -1041,6 +1156,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
 
       <PhotoBrowserOverlay
         images={Array.isArray(model.media?.galleryImages) ? model.media.galleryImages : []}
+        initialIndex={galleryBrowserInitialIndex}
         isOpen={isGalleryBrowserOpen}
         onClose={() => setIsGalleryBrowserOpen(false)}
         showSideZones={true}

@@ -13,6 +13,14 @@ const PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   tablet: 834,
   mobile: 390,
 });
+const PREVIEW_SCALE_SHELL_VIEWPORT_CLASS_NAMES = Object.freeze({
+  tablet: "previewScaleShellViewportTablet",
+  mobile: "previewScaleShellViewportMobile",
+});
+const PREVIEW_CANVAS_VIEWPORT_CLASS_NAMES = Object.freeze({
+  tablet: "previewCanvasViewportTablet",
+  mobile: "previewCanvasViewportMobile",
+});
 const TEMPLATE_PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   "panorama-landing": Object.freeze({
     desktop: 1440,
@@ -173,6 +181,7 @@ const websiteTemplatePreviewModelPropType = PropTypes.shape({
 export function WebsiteTemplateSurface({
   templateId,
   model,
+  viewport = "desktop",
   showContactWidget = true,
   showBrowserChrome = true,
   enableScrollReveal = false,
@@ -187,6 +196,8 @@ export function WebsiteTemplateSurface({
     enabled: enableScrollReveal,
     deps: [templateId, model],
   });
+  const previewCanvasViewportClassName =
+    styles[PREVIEW_CANVAS_VIEWPORT_CLASS_NAMES[viewport] || ""] || "";
   const canShowContactWidget = showContactWidget && Boolean(model?.host?.whatsapp?.isAvailable);
   const previewCanvasStyle = {
     "--website-surface-background": resolveWebsiteBackgroundColor(model?.theme?.backgroundColor),
@@ -211,6 +222,8 @@ export function WebsiteTemplateSurface({
         ref={previewCanvasRef}
         className={`${styles.previewCanvas} ${
           isPanoramaTemplate ? styles.previewCanvasPanorama : ""
+        } ${
+          previewCanvasViewportClassName
         } ${
           enableScrollReveal ? motionStyles.previewCanvasAnimated : ""
         }`.trim()}
@@ -240,6 +253,7 @@ export function WebsiteTemplateSurface({
 WebsiteTemplateSurface.propTypes = {
   templateId: PropTypes.string.isRequired,
   model: websiteTemplatePreviewModelPropType,
+  viewport: PropTypes.oneOf(["desktop", "tablet", "mobile"]),
   showContactWidget: PropTypes.bool,
   showBrowserChrome: PropTypes.bool,
   enableScrollReveal: PropTypes.bool,
@@ -274,6 +288,8 @@ export default function WebsiteTemplatePreview({
   };
   const scaledShellStyle = previewHeight ? { height: previewHeight } : undefined;
   const scaleShellStyle = isCompactVariant ? compactShellStyle : scaledShellStyle;
+  const scaleShellViewportClassName =
+    styles[PREVIEW_SCALE_SHELL_VIEWPORT_CLASS_NAMES[viewport] || ""] || "";
   const compactInnerStyle = {
     width: `${viewportWidth}px`,
     transform: `scale(${compactScale})`,
@@ -301,7 +317,9 @@ export default function WebsiteTemplatePreview({
     >
       <div
         ref={scaleShellRef}
-        className={`${styles.previewScaleShell} ${isCompactVariant ? styles.previewScaleShellCompact : ""}`.trim()}
+        className={`${styles.previewScaleShell} ${
+          isCompactVariant ? styles.previewScaleShellCompact : ""
+        } ${scaleShellViewportClassName}`.trim()}
         style={scaleShellStyle}
       >
         <div
@@ -313,6 +331,7 @@ export default function WebsiteTemplatePreview({
             <WebsiteTemplateSurface
               templateId={templateId}
               model={model}
+              viewport={viewport}
               showContactWidget={showContactWidget}
               showBrowserChrome={showBrowserChrome}
               browserTitle={model.site.title || "Website preview"}
