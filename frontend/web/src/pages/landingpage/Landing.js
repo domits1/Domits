@@ -27,6 +27,7 @@ function Landing() {
   const landingContent = contentByLanguage[language]?.landing;
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [group, setGroup] = useState("");
   const [faqs, setFaqs] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -78,14 +79,16 @@ function Landing() {
     ]);
   }, [landingContent]);
 
-  const checkAuthentication = async () => {
-    try {
-      await Auth.currentAuthenticatedUser();
-      setIsAuthenticated(true);
-    } catch {
-      setIsAuthenticated(false);
-    }
-  };
+ const checkAuthentication = async () => {
+  try {
+    const user = await Auth.currentAuthenticatedUser();
+
+    setIsAuthenticated(true);
+    setGroup(user.attributes["custom:group"]);
+  } catch {
+    setIsAuthenticated(false);
+  }
+};
 
   const toggleOpen = (index) => {
     setFaqs((prev) =>
@@ -129,7 +132,10 @@ function Landing() {
     <main className="landing">
 
       <div id="hero">
-        <HeroSection landingContent={landingContent} />
+        <HeroSection landingContent={landingContent}
+         isAuthenticated={isAuthenticated}
+         group={group}
+        />
       </div>
 
       <div id="steps">
@@ -145,7 +151,10 @@ function Landing() {
       </div>
 
       <div id="register">
-        <RegisterSection />
+        <RegisterSection
+          isAuthenticated={isAuthenticated}
+          group={group}
+        />
       </div>
 
        <div id="testimonials">
@@ -161,7 +170,7 @@ function Landing() {
       </div>
 
       <div id="cta">
-        <CtaSection />
+        <CtaSection isAuthenticated={isAuthenticated} group={group} />
       </div>
 
       <section id="contact" className="contact-section">

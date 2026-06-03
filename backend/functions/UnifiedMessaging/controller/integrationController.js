@@ -1,9 +1,32 @@
 import IntegrationService from "../business/integrationService.js";
+import ChannexBookingAvailabilityBridge from "../business/channexBookingAvailabilityBridge.js";
+import {
+  CHANNEX_RESTRICTIONS_SYNC_MODE,
+  CHANNEX_RESTRICTIONS_SYNC_VERSION,
+} from "../business/channexRestrictionsSyncVersion.js";
 import { extractIntegrationId, extractLastPathSegment, safeJson } from "./controllerUtils.js";
 
+const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
+const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+const getHeader = (headers, name) => {
+  const expected = String(name || "").toLowerCase();
+  const match = Object.entries(headers || {}).find(([key]) => String(key || "").toLowerCase() === expected);
+  return match?.[1] ?? null;
+};
+const summarizeErrorStack = (error) =>
+  (typeof error?.stack === "string" ? error.stack : "")
+    .split("\n")
+    .slice(0, 6)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
 class IntegrationController {
-  constructor() {
-    this.integrationService = new IntegrationService();
+  constructor({
+    integrationService = new IntegrationService(),
+    channexBookingAvailabilityBridge = new ChannexBookingAvailabilityBridge(),
+  } = {}) {
+    this.integrationService = integrationService;
+    this.channexBookingAvailabilityBridge = channexBookingAvailabilityBridge;
   }
 
   async createIntegration(event) {
@@ -129,11 +152,18 @@ class IntegrationController {
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
     const dateFrom = event.queryStringParameters?.dateFrom || null;
     const dateTo = event.queryStringParameters?.dateTo || null;
+    const pageDateFrom = event.queryStringParameters?.pageDateFrom || null;
+    const pageSizeDays = event.queryStringParameters?.pageSizeDays || null;
     return await this.integrationService.previewChannexAriPayloads(
       userId,
       domitsPropertyId,
       dateFrom,
-      dateTo
+      dateTo,
+      {
+        paginate: true,
+        pageDateFrom,
+        pageSizeDays,
+      }
     );
   }
 
@@ -171,10 +201,41 @@ class IntegrationController {
     return await this.integrationService.getLatestChannexSyncEvidenceSummary(userId, domitsPropertyId);
   }
 
+  async listChannexBookingRevisions(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const limitRaw = event.queryStringParameters?.limit;
+    const limit = limitRaw ? Number(limitRaw) : 50;
+    const includeRawPayload = String(event.queryStringParameters?.includeRawPayload || "").toLowerCase() === "true";
+
+    return await this.integrationService.listChannexBookingRevisions(userId, {
+      domitsPropertyId,
+      limit,
+      includeRawPayload,
+    });
+  }
+
   async receiveChannexBookingRevisions(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
     return await this.integrationService.receiveChannexBookingRevisions(userId, domitsPropertyId);
+  }
+
+  async pullLatestChannexBookings(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    return await this.integrationService.pullLatestChannexBookings(userId, domitsPropertyId);
+  }
+
+  async cancelChannexCertificationBooking(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.cancelChannexCertificationBooking(userId, domitsPropertyId, body);
+  }
+
+  async pollLatestChannexBookings(event) {
+    return await this.integrationService.pollLatestChannexBookings(event?.detail || event || {});
   }
 
   async acknowledgeChannexBookingRevisions(event) {
@@ -192,11 +253,46 @@ class IntegrationController {
     return await this.integrationService.syncChannexAvailability(userId, domitsPropertyId, dateFrom, dateTo);
   }
 
+  async syncChannexBookingAvailability(event) {
+    const expectedToken = requireStr(process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN);
+    const providedToken = requireStr(getHeader(event?.headers, "x-domits-internal-token"));
+    const allowWithoutToken = process.env.TEST === "true" && !expectedToken;
+
+    if (!allowWithoutToken && (!expectedToken || providedToken !== expectedToken)) {
+      return {
+        statusCode: 403,
+        response: {
+          error: "FORBIDDEN",
+          message: "Invalid internal booking availability sync token.",
+        },
+      };
+    }
+
+    const body = safeJson(event.body) || {};
+    const evidence = await this.channexBookingAvailabilityBridge.syncAvailabilityForBookingChange(body);
+    return {
+      statusCode: 200,
+      response: evidence,
+    };
+  }
+
   async syncChannexRestrictions(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
     const dateFrom = event.queryStringParameters?.dateFrom || null;
     const dateTo = event.queryStringParameters?.dateTo || null;
+    console.info(
+      JSON.stringify({
+        event: "CHANNEX_RESTRICTIONS_SYNC_DIAGNOSTIC",
+        restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
+        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
+        stage: "controller_entry",
+        userId,
+        domitsPropertyId,
+        dateFrom,
+        dateTo,
+      })
+    );
     return await this.integrationService.syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo);
   }
 
@@ -209,11 +305,58 @@ class IntegrationController {
   }
 
   async syncChannexFull(event) {
+    try {
+      const userId = event.queryStringParameters?.userId || null;
+      const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+      const dateFrom = event.queryStringParameters?.dateFrom || null;
+      const dateTo = event.queryStringParameters?.dateTo || null;
+      const dryRun = event.queryStringParameters?.dryRun || null;
+      const providerMode = event.queryStringParameters?.providerMode || null;
+      const debugStage = event.queryStringParameters?.debugStage || null;
+      const persistEvidence = event.queryStringParameters?.persistEvidence || null;
+      console.info(
+        JSON.stringify({
+          event: "CHANNEX_FULL_CERTIFICATION_SYNC_DIAGNOSTIC",
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "controller_reached",
+          userId,
+          domitsPropertyId,
+          dateFrom,
+          dateTo,
+          dryRun,
+          providerMode,
+          debugStage,
+          persistEvidence,
+        })
+      );
+      return await this.integrationService.syncChannexFull(userId, domitsPropertyId, dateFrom, dateTo, {
+        dryRun,
+        providerMode,
+        debugStage,
+        persistEvidence,
+      });
+    } catch (error) {
+      console.error("Error in Channex full certification sync controller:", error);
+      return {
+        statusCode: 500,
+        response: {
+          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
+          stage: "controller_catch",
+          error: "Failed to run Channex certification full sync.",
+          errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_CONTROLLER_FAILED",
+          errorName: error?.name ?? null,
+          errorMessage: error?.message ?? "Unhandled Channex full certification sync controller error.",
+          stackSummary: summarizeErrorStack(error),
+        },
+      };
+    }
+  }
+
+  async syncChannexCertificationTestCase(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const dateFrom = event.queryStringParameters?.dateFrom || null;
-    const dateTo = event.queryStringParameters?.dateTo || null;
-    return await this.integrationService.syncChannexFull(userId, domitsPropertyId, dateFrom, dateTo);
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.syncChannexCertificationTestCase(userId, domitsPropertyId, body);
   }
 
   async linkChannexProperty(event) {

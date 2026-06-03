@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
 import { FaShieldAlt, FaUserCheck, FaHeadset, FaAward, FaTag, FaHome, FaDollarSign } from "react-icons/fa";
 import { SearchBar } from "../../components/base/SearchBar";
@@ -25,6 +26,8 @@ import de from "../../content/de.json";
 import es from "../../content/es.json";
 import RegionCard from "./RegionCard";
 import PropTypes from "prop-types";
+import FlowContext from "../../services/FlowContext";
+import { getHostLoginPath, startHostingFlow } from "../../utils/hostFlow";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -93,7 +96,10 @@ const Homepage = () => {
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
   const { language } = useContext(LanguageContext);
+  const { setFlowState } = useContext(FlowContext);
   const homePageContent = contentByLanguage[language]?.homepage;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [group, setGroup] = useState("");
 
   const {
     countries,
@@ -108,6 +114,31 @@ const Homepage = () => {
   } = buildHomepageLists(homePageContent);
 
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
+  const checkAuthentication = async () => {
+    try {
+      const user = await Auth.currentAuthenticatedUser();
+
+      setIsAuthenticated(true);
+      setGroup(user.attributes["custom:group"] || "");
+    } catch {
+      setIsAuthenticated(false);
+      setGroup("");
+    }
+  };
+
+  const handleHostButtonClick = () =>
+    startHostingFlow({
+      isAuthenticated,
+      group,
+      navigate,
+      setFlowState,
+      unauthenticatedPath: getHostLoginPath(),
+    });
 
   const getIcon = (type) => {
     switch (type) {
@@ -336,7 +367,7 @@ const Homepage = () => {
                 ))}
               </div>
 
-              <button className="host-btn">
+              <button className="host-btn" onClick={handleHostButtonClick}>
                 {hostSection.button}
               </button>
             </motion.div>

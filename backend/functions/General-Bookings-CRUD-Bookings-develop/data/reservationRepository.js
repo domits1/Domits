@@ -10,6 +10,7 @@ import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
+const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
 
 class ReservationRepository {
   // ---------
@@ -35,9 +36,9 @@ class ReservationRepository {
       .into(Booking)
       .values({
         id: id,
-        arrivaldate: parseFloat(arrivalDate),
+        arrivaldate: Number.parseFloat(arrivalDate),
         createdat: date,
-        departuredate: parseFloat(departureDate),
+        departuredate: Number.parseFloat(departureDate),
         guestid: userId,
         hostid: hostId,
         hostname: "WIP-Host",
@@ -69,17 +70,24 @@ class ReservationRepository {
     };
   }
 
-  async assertNoBookingConflict({ propertyId, arrivalDateMs, departureDateMs }) {
+  async assertNoBookingConflict({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId = null }) {
     const client = await Database.getInstance();
+    const bufferedArrivalDate = arrivalDateMs - MIN_CHECK_IN_OUT_GAP_MS;
+    const bufferedDepartureDate = departureDateMs + MIN_CHECK_IN_OUT_GAP_MS;
 
-    const conflictCount = await client
+    const query = client
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :property_id", { property_id: propertyId })
       .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: NON_BLOCKING_BOOKING_STATUSES })
-      .andWhere("booking.arrivaldate < :departureDate", { departureDate: departureDateMs })
-      .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs })
-      .getCount();
+      .andWhere("booking.arrivaldate < :bufferedDepartureDate", { bufferedDepartureDate })
+      .andWhere("booking.departuredate > :bufferedArrivalDate", { bufferedArrivalDate });
+
+    if (excludeBookingId) {
+      query.andWhere("booking.id != :excludeBookingId", { excludeBookingId });
+    }
+
+    const conflictCount = await query.getCount();
 
     if (conflictCount > 0) {
       throw new ConflictException("Selected dates are no longer available.");
@@ -312,6 +320,27 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
+      .select([
+        "booking.id",
+        "booking.arrivaldate",
+        "booking.departuredate",
+        "booking.createdat",
+        "booking.guestid",
+        "booking.guests",
+        "booking.hostid",
+        "booking.latepayment",
+        "booking.paymentid",
+        "booking.property_id",
+        "booking.status",
+        "booking.guestname",
+        "booking.hostname",
+        "booking.cancellation_policy",
+        "booking.bookingtype",
+        "booking.total_price",
+        "booking.refunded_amount",
+        "booking.stripe_refund_id",
+        "booking.refund_error",
+      ])
       .where("booking.id = :id", { id: id })
       .getOne();
 
@@ -364,7 +393,38 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId) {
+  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
+    const client = await Database.getInstance();
+    return await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.property_id = :propertyId", { propertyId })
+      .andWhere("booking.status = :status", { status: "Inquiry" })
+      .andWhere("booking.id != :excludeBookingId", { excludeBookingId })
+      .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
+      .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
+      .getMany();
+  }
+
+  async updateBookingDates(id, arrivalDateMs, departureDateMs) {
+    const client = await Database.getInstance();
+    const query = await client
+      .createQueryBuilder()
+      .update(Booking)
+      .set({
+        arrivaldate: Number.parseFloat(arrivalDateMs),
+        departuredate: Number.parseFloat(departureDateMs),
+      })
+      .where("id = :id", { id })
+      .execute();
+
+    return {
+      response: query,
+      statusCode: 200,
+    };
+  }
+
+  async cancelBookingByGuest(id, guestId, refundInfo = {}) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -381,7 +441,18 @@ class ReservationRepository {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    await client.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute();
+    const updateData = { status: "Cancelled" };
+    if (refundInfo.refundedAmount !== undefined) {
+      updateData.refunded_amount = refundInfo.refundedAmount;
+    }
+    if (refundInfo.stripeRefundId) {
+      updateData.stripe_refund_id = refundInfo.stripeRefundId;
+    }
+    if (refundInfo.refundError) {
+      updateData.refund_error = refundInfo.refundError;
+    }
+
+    await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
 
     const updated = await client
       .getRepository(Booking)

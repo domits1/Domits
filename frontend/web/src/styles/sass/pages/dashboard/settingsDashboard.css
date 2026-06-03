@@ -13,7 +13,7 @@
     background-color: #fff;
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -38,7 +38,7 @@
     background-color: #fff;
     border-radius: 15px;
     padding: 10px 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-right: 10px;
     margin-bottom: 10px;
     display: flex;
@@ -80,7 +80,7 @@
     background-color: #fff;
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -484,4 +484,401 @@
     .page-body.settings-page {
         padding-bottom: 110px;
     }
+}
+
+/* ─── Team page ──────────────────────────────────────────────────────────── */
+
+.page-body.settings-page.team-page {
+    box-sizing: border-box;
+    padding: 40px 48px 64px;
+}
+
+.team-page {
+    box-sizing: border-box;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.team-page .team-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: #111827;
+    align-self: flex-start;
+    text-align: left;
+}
+
+.team-page .team-subtitle {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin: 0 0 28px;
+}
+
+.team-page .team-section {
+    margin-bottom: 32px;
+    width: 100%;
+}
+
+.team-page .team-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.team-page .team-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 12px;
+}
+
+.team-page .team-section-header .team-section-title {
+    margin-bottom: 0;
+}
+
+.team-page .team-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 20px;
+}
+
+.team-page .team-card-header {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9ca3af;
+    margin-bottom: 12px;
+}
+
+.team-page .team-member-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.team-page .team-member-avatar {
+    display: block;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 40% center;
+    border: 1px solid #e5e7eb;
+    background: #f3f4f6;
+    flex-shrink: 0;
+}
+
+.team-page .team-member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.team-page .team-member-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.team-page .team-role-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #374151;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+
+.team-page .team-member-chevron {
+    font-size: 1.2rem;
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.team-page .team-member-contact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: #4b5563;
+    margin-top: 8px;
+    padding-left: 56px;
+}
+
+.team-page .team-contact-icon {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.team-page .team-card-note {
+    font-size: 0.82rem;
+    color: #9ca3af;
+    margin: 12px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.team-page .team-empty-state {
+    background: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 28px 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.team-page .team-empty-state p {
+    margin: 0;
+}
+
+.team-page .team-invite-btn,
+dialog.team-modal .team-invite-btn {
+    background: #15803d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.team-page .team-invite-btn:hover,
+dialog.team-modal .team-invite-btn:hover {
+    background: #166534;
+}
+
+.team-page .team-cancel-btn,
+dialog.team-modal .team-cancel-btn {
+    background: transparent;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.team-page .team-cancel-btn:hover,
+dialog.team-modal .team-cancel-btn:hover {
+    background: #f3f4f6;
+}
+
+.team-page .team-member-row--bordered + .team-member-row--bordered {
+    border-top: 1px solid #f3f4f6;
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+.team-page .team-status-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+}
+
+.team-page .team-status-badge--pending {
+    background: #fef9c3;
+    color: #854d0e;
+    border-color: #fde047;
+}
+
+.team-page .team-status-badge--active {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.team-page .team-remove-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+}
+
+.team-page .team-remove-btn:hover {
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+/* ─── Team invite modal ──────────────────────────────────────────────────── */
+
+.team-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+dialog.team-modal {
+    position: relative;
+    border: none;
+    border-radius: 16px;
+    padding: 28px;
+    width: min(440px, 90vw);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    margin: 0;
+}
+
+dialog.team-modal h3 {
+    margin: 0 0 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.team-modal-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 16px;
+}
+
+.team-modal-input {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #111827;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.team-modal-input:focus {
+    border-color: #6b7280;
+}
+
+.team-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.team-invite-success {
+    color: #15803d;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 0;
+    text-align: center;
+}
+
+.team-invite-error {
+    color: #dc2626;
+    font-size: 0.82rem;
+    margin: 0 0 8px;
+}
+
+@media (max-width: 640px) {
+    .team-page {
+        max-width: 100%;
+    }
+
+    .team-modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .team-page .team-invite-btn,
+    dialog.team-modal .team-invite-btn,
+    .team-page .team-cancel-btn,
+    dialog.team-modal .team-cancel-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ─── Accept invite page ─────────────────────────────────────────────────── */
+
+.accept-invite-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #f9fafb;
+}
+
+.accept-invite-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: min(480px, 100%);
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.accept-invite-card h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 12px;
+}
+
+.accept-invite-card p {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+.accept-invite-card .accept-invite-btn {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.accept-invite-btn {
+    display: inline-block;
+    background: #15803d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+
+.accept-invite-btn:hover {
+    background: #166534;
+}
+
+.accept-invite-btn--secondary {
+    background: transparent;
+    color: #15803d;
+    border: 1.5px solid #15803d;
+    margin-top: 8px;
+}
+
+.accept-invite-btn--secondary:hover {
+    background: #f0fdf4;
 }

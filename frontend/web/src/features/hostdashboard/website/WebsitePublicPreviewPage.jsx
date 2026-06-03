@@ -1,12 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
+import {
+  resolveWebsitePreviewSkeletonViewport,
+  WebsitePreviewSkeleton,
+} from "./rendering/WebsitePreviewSkeleton";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
-import WebsiteContactWidget from "./rendering/WebsiteContactWidget";
+import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
+import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import { fetchWebsitePreviewByDraftId } from "./services/websitePublicPreviewService";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
@@ -20,7 +24,11 @@ import {
 import { subscribeToWebsitePreviewUpdates } from "./services/websitePreviewSync";
 import styles from "./WebsitePublicPreviewPage.module.scss";
 
-const getDraftPublishedContentOverrides = (draft) => {
+const getDraftPreviewContentOverrides = (draft) => {
+  if (draft?.contentOverrides && typeof draft.contentOverrides === "object") {
+    return draft.contentOverrides;
+  }
+
   if (draft?.publishedContentOverrides && typeof draft.publishedContentOverrides === "object") {
     return draft.publishedContentOverrides;
   }
@@ -28,7 +36,11 @@ const getDraftPublishedContentOverrides = (draft) => {
   return {};
 };
 
-const getDraftPublishedThemeOverrides = (draft) => {
+const getDraftPreviewThemeOverrides = (draft) => {
+  if (draft?.themeOverrides && typeof draft.themeOverrides === "object") {
+    return draft.themeOverrides;
+  }
+
   if (draft?.publishedThemeOverrides && typeof draft.publishedThemeOverrides === "object") {
     return draft.publishedThemeOverrides;
   }
@@ -52,11 +64,22 @@ function WebsitePublicPreviewPage() {
 
       try {
         const nextPayload = await fetchWebsitePreviewByDraftId(draftId);
+        const nextPropertyDetails = nextPayload?.propertyDetails
+          ? await enrichWebsitePropertyDetails(nextPayload.propertyDetails)
+          : nextPayload?.propertyDetails;
+
         if (!isMounted) {
           return;
         }
 
-        setPayload(nextPayload);
+        setPayload(
+          nextPropertyDetails === nextPayload?.propertyDetails
+            ? nextPayload
+            : {
+                ...nextPayload,
+                propertyDetails: nextPropertyDetails,
+              }
+        );
       } catch (error) {
         if (!isMounted) {
           return;
@@ -93,15 +116,21 @@ function WebsitePublicPreviewPage() {
       propertyDetails: payload.propertyDetails,
       summaryProperty: null,
     });
-    const themedModel = applyWebsiteDraftThemeOverrides(baseModel, getDraftPublishedThemeOverrides(payload.draft));
+    const themedModel = applyWebsiteDraftThemeOverrides(baseModel, getDraftPreviewThemeOverrides(payload.draft));
 
-    return applyWebsiteDraftContentOverrides(themedModel, getDraftPublishedContentOverrides(payload.draft));
+    return applyWebsiteDraftContentOverrides(
+      themedModel,
+      getDraftPreviewContentOverrides(payload.draft),
+      payload?.draft?.templateKey || ""
+    );
   }, [payload]);
 
   const templateId = payload?.draft?.templateKey || "";
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPreview = !loadError && previewModel && TemplateComponent;
+  const isPanoramaTemplate = templateId === "panorama-landing";
+  const skeletonViewport = resolveWebsitePreviewSkeletonViewport();
 
   useEffect(() => {
     if (!previewModel?.site?.title) {
@@ -136,25 +165,35 @@ function WebsitePublicPreviewPage() {
 
   if (isLoading) {
     return (
-      <main className={styles.publicPreviewStatePage}>
-        <section className={styles.publicPreviewStateCard}>
-          <PulseBarsLoader message="Loading website preview..." />
-        </section>
+      <main className={styles.publicPreviewPage}>
+        <div className={styles.publicPreviewCanvas}>
+          <WebsitePreviewSkeleton viewport={skeletonViewport} />
+        </div>
       </main>
     );
   }
 
   if (canRenderPreview) {
-    const shouldShowContactWidget = previewModel.visibility?.chatWidget ?? true;
     const publicPreviewPageStyle = {
       "--website-surface-background": resolveWebsiteBackgroundColor(previewModel?.theme?.backgroundColor),
     };
+    const publicPreviewPageClassName = `${styles.publicPreviewPage} ${
+      isPanoramaTemplate ? styles.publicPreviewPagePanorama : ""
+    }`.trim();
+    const publicPreviewCanvasClassName = `${styles.publicPreviewCanvas} ${
+      isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
+    } ${isPanoramaTemplate ? styles.publicPreviewCanvasFlush : ""}`.trim();
 
     return (
-      <main className={styles.publicPreviewPage} style={publicPreviewPageStyle}>
-        <div className={styles.publicPreviewCanvas}>
-          <TemplateComponent model={previewModel} />
-          {shouldShowContactWidget ? <WebsiteContactWidget model={previewModel} /> : null}
+      <main className={publicPreviewPageClassName} style={publicPreviewPageStyle}>
+        <div className={publicPreviewCanvasClassName}>
+          <WebsiteTemplateSurface
+            templateId={templateId}
+            model={previewModel}
+            showContactWidget={previewModel.visibility?.chatWidget ?? true}
+            showBrowserChrome={false}
+            enableScrollReveal={isPanoramaTemplate}
+          />
         </div>
       </main>
     );

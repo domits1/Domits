@@ -8,7 +8,7 @@
 	},
 	"scripts": {
 		"test": "cross-env TEST=true jest",
-		"createLambda": "node ./CD/npm/createLambda.js"
+		"createLambda": "node ./CD/npm/createLambda.js" 
 	},
 	"keywords": [],
 	"author": "",
