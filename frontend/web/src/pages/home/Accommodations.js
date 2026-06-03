@@ -9,6 +9,24 @@ import { FetchAllPropertyTypes } from "./services/fetchProperties";
 
 const SKELETON_IDS = ["sk-0","sk-1","sk-2","sk-3","sk-4","sk-5","sk-6","sk-7","sk-8","sk-9","sk-10","sk-11"];
 
+const getPageNumbers = (current, total) => {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const nearby = new Set(
+    [1, total, current - 1, current, current + 1].filter((p) => p >= 1 && p <= total)
+  );
+  const sorted = [...nearby].sort((a, b) => a - b);
+
+  const result = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) {
+      result.push(`ellipsis-before-${sorted[i]}`);
+    }
+    result.push(sorted[i]);
+  }
+  return result;
+};
+
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
 
@@ -45,15 +63,18 @@ const Accommodations = ({ searchResults }) => {
       setLoadingMore(true);
       try {
         const result = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
-        if (result.lastEvaluatedKey) {
+        const newProperties = result.properties ?? [];
+        if (newProperties.length > 0) {
+          setAccolist((prev) => [...prev, ...newProperties]);
+          setCurrentPage(page);
+        }
+        if (result.lastEvaluatedKey && newProperties.length > 0) {
           setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
           setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
         } else {
           setLastEvaluatedKeyCreatedAt(null);
           setLastEvaluatedKeyId(null);
         }
-        setAccolist((prev) => [...prev, ...result.properties]);
-        setCurrentPage(page);
       } catch {
         setLastEvaluatedKeyCreatedAt(null);
         setLastEvaluatedKeyId(null);
@@ -88,7 +109,7 @@ const Accommodations = ({ searchResults }) => {
           setSearchLoading(false);
         }, 500);
       } else {
-        const result = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
+        const result = await FetchAllPropertyTypes(null, null);
         if (result.lastEvaluatedKey) {
           setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
           setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
@@ -236,19 +257,40 @@ const Accommodations = ({ searchResults }) => {
       </div>
 
       <div className={PageSwitcher.pagination}>
-        <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1 || loadingMore}>
-          &lt; Previous
+        <button
+          type="button"
+          className={PageSwitcher.arrow}
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1 || loadingMore}
+          aria-label="Previous page"
+        >
+          ‹
         </button>
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={`page-${i + 1}`}
-            onClick={() => handlePageChange(i + 1)}
-            className={`${currentPage === i + 1 ? PageSwitcher.active : ""}`}>
-            {i + 1}
-          </button>
-        ))}
-        <button onClick={() => handlePageChange(currentPage + 1)} disabled={(currentPage === totalPages && !hasMore) || loadingMore}>
-          {loadingMore ? "Loading…" : "Next >"}
+
+        {getPageNumbers(currentPage, totalPages).map((item) => {
+          if (typeof item === "string") {
+            return <span key={item} className={PageSwitcher.ellipsis}>…</span>;
+          }
+          return (
+            <button
+              key={`page-${item}`}
+              type="button"
+              onClick={() => handlePageChange(item)}
+              className={currentPage === item ? PageSwitcher.active : PageSwitcher.page}
+            >
+              {item}
+            </button>
+          );
+        })}
+
+        <button
+          type="button"
+          className={PageSwitcher.arrow}
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={(currentPage === totalPages && !hasMore) || loadingMore}
+          aria-label="Next page"
+        >
+          {loadingMore ? "…" : "›"}
         </button>
       </div>
     </>
