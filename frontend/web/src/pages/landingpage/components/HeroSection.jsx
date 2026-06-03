@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
@@ -11,20 +11,12 @@ import vrboLogo from "../../../images/vrbo-logo.svg";
 import domitsLogo from "../../../images/domits-logo.svg";
 import heroImage from "../../../images/hero-image.svg";
 import checkIcon from "../../../images/check-icon.svg";
-import FlowContext from "../../../services/FlowContext";
-import { startHostingFlow } from "../../../utils/hostFlow";
 
-function HeroSection({ landingContent, isAuthenticated, group }) {
+function HeroSection({ landingContent }) {
   const navigate = useNavigate();
-  const { setFlowState } = useContext(FlowContext);
+  const h = landingContent.hero;
 
-  const handleStartHosting = () =>
-    startHostingFlow({
-      isAuthenticated,
-      group,
-      navigate,
-      setFlowState,
-    });
+  const handleStartHosting = () => navigate("/register");
 
   return (
     <section className="hero">
@@ -40,18 +32,17 @@ function HeroSection({ landingContent, isAuthenticated, group }) {
 
           <motion.div className="hero__badge" variants={fadeUp}>
             <span className="dot"></span>{" "}
-            Trusted by many hosts
+            {h.badge}
           </motion.div>
 
           <motion.h1 className="hero__title" variants={fadeUp}>
-            Your Properties.
+            {h.titleLine1}
             <br />
-            <span>Our Infrastructure.</span>
+            <span>{h.titleLine2}</span>
           </motion.h1>
 
           <motion.p className="hero__description" variants={fadeUp}>
-            Turn your luxury vacation rentals into a revenue stream that runs
-            itself. More revenue. Less workload. Total confidence.
+            {h.description}
           </motion.p>
 
           <motion.div className="hero__actions" variants={fadeUp}>
@@ -60,7 +51,7 @@ function HeroSection({ landingContent, isAuthenticated, group }) {
               onClick={handleStartHosting}
               whileHover={{ scale: 1.05 }}
             >
-              Start Hosting →
+              {h.primaryButton}
             </motion.button>
 
             <motion.button
@@ -70,18 +61,18 @@ function HeroSection({ landingContent, isAuthenticated, group }) {
               }
               whileHover={{ scale: 1.05 }}
             >
-              See how it works
+              {h.secondaryButton}
             </motion.button>
           </motion.div>
 
           <motion.div className="hero__stats" variants={fadeUp}>
-            <div><strong>30%</strong><span>more revenue</span></div>
-            <div><strong>60%</strong><span>workload reduction</span></div>
-            <div><strong>24/7</strong><span>support</span></div>
+            <div><strong>30%</strong><span>{h.stat1Label}</span></div>
+            <div><strong>60%</strong><span>{h.stat2Label}</span></div>
+            <div><strong>24/7</strong><span>{h.stat3Label}</span></div>
           </motion.div>
 
           <motion.div className="hero__integrations" variants={fadeUp}>
-            <span>Seamlessly integrates with</span>
+            <span>{h.integratesLabel}</span>
 
             <div className="hero__logos">
 
@@ -174,16 +165,8 @@ function HeroSection({ landingContent, isAuthenticated, group }) {
 }
 
 HeroSection.propTypes = {
-  landingContent: PropTypes.shape({
-    secure: PropTypes.string,
-    verified: PropTypes.string,
-    quick: PropTypes.string,
-    guarantee: PropTypes.string,
-  }),
-
-  isAuthenticated: PropTypes.bool,
-
-  group: PropTypes.string,
+  landingContent: PropTypes.object.isRequired,
 };
+
 
 export default HeroSection;
