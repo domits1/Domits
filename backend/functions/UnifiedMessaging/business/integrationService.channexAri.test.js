@@ -321,6 +321,23 @@ const createSuccessfulRestrictionsPush = () => createRestrictionsPush();
 
 const createSuccessfulAvailabilityPush = () => createAvailabilityPush();
 
+const BOOKED_CALENDAR_DATES = ["2026-06-01", "2026-06-02"];
+
+const mockAvailabilityWindowWithPaidBooking = () => {
+  Database.getInstance.mockResolvedValue(
+    buildDatabaseClient({
+      availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
+      bookings: [
+        buildBookingRow({
+          arrivaldate: "2026-06-01",
+          departuredate: "2026-06-03",
+          status: "Paid",
+        }),
+      ],
+    })
+  );
+};
+
 const buildCalendarChangeRequest = (overrides = {}) => ({
   userId: "user-1",
   domitsPropertyId: "domits-property-1",
@@ -348,6 +365,35 @@ const syncCalendarChangeForTest = (service, overrides = {}) =>
   service.syncChannexCalendarChange(buildCalendarChangeRequest(overrides), { skipEvidence: true });
 
 const extractFirstRestrictionsValue = (pushRestrictions) => pushRestrictions.mock.calls[0]?.[1]?.[0]?.values?.[0];
+
+const expectOnlyAvailabilityCalendarChange = ({ result, pushAvailability, pushRestrictions, expectedAvailability }) => {
+  expect(result.statusCode).toBe(200);
+  expect(result.response.syncType).toBe("calendar-change");
+  expect(result.response.requestTypes).toEqual(["availability"]);
+  expect(result.response.requestCount).toBe(1);
+  expect(pushAvailability).toHaveBeenCalledTimes(1);
+  expect(pushRestrictions).not.toHaveBeenCalled();
+  expectAvailabilityByDate(pushAvailability, expectedAvailability);
+};
+
+const expectOnlyRestrictionsCalendarChange = ({ result, pushAvailability, pushRestrictions }) => {
+  expect(result.statusCode).toBe(200);
+  expect(result.response.requestTypes).toEqual(["restrictions/rates"]);
+  expect(pushAvailability).not.toHaveBeenCalled();
+  expect(pushRestrictions).toHaveBeenCalledTimes(1);
+};
+
+const syncRestrictionsCalendarChangeForTest = async (changeTypes) => {
+  const calendarChange = createCalendarChangeService({
+    pushRestrictions: createRestrictionsPush(),
+  });
+  const result = await syncCalendarChangeForTest(calendarChange.service, { changeTypes });
+  return {
+    ...calendarChange,
+    result,
+    value: extractFirstRestrictionsValue(calendarChange.pushRestrictions),
+  };
+};
 
 const expectValidChannexRestrictionProviderValues = (payloads) => {
   for (const payload of Array.isArray(payloads) ? payloads : []) {
@@ -792,18 +838,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
 
   test("availability sync sends booking-aware effective availability", async () => {
     const pushAvailability = createAvailabilityPush();
-    Database.getInstance.mockResolvedValue(
-      buildDatabaseClient({
-        availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
-        bookings: [
-          buildBookingRow({
-            arrivaldate: "2026-06-01",
-            departuredate: "2026-06-03",
-            status: "Paid",
-          }),
-        ],
-      })
-    );
+    mockAvailabilityWindowWithPaidBooking();
     const service = createService({
       channexProviderClient: {
         pushAvailability,
@@ -830,51 +865,33 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("host calendar availability changes send booking-aware change-only availability", async () => {
-    Database.getInstance.mockResolvedValue(
-      buildDatabaseClient({
-        availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
-        bookings: [
-          buildBookingRow({
-            arrivaldate: "2026-06-01",
-            departuredate: "2026-06-03",
-            status: "Paid",
-          }),
-        ],
-      })
-    );
+    mockAvailabilityWindowWithPaidBooking();
     const { service, pushAvailability, pushRestrictions } = createCalendarChangeService({
       pushAvailability: createAvailabilityPush(),
     });
 
     const result = await syncCalendarChangeForTest(service, {
-      changedDates: ["2026-06-01", "2026-06-02"],
+      changedDates: BOOKED_CALENDAR_DATES,
       changeTypes: ["availability"],
     });
 
-    expect(result.statusCode).toBe(200);
-    expect(result.response.syncType).toBe("calendar-change");
-    expect(result.response.requestTypes).toEqual(["availability"]);
-    expect(result.response.requestCount).toBe(1);
-    expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(pushRestrictions).not.toHaveBeenCalled();
-    expectAvailabilityByDate(pushAvailability, {
-      "2026-06-01": 0,
-      "2026-06-02": 0,
+    expectOnlyAvailabilityCalendarChange({
+      result,
+      pushAvailability,
+      pushRestrictions,
+      expectedAvailability: {
+        "2026-06-01": 0,
+        "2026-06-02": 0,
+      },
     });
   });
 
   test("host calendar rate changes send rates only through restrictions endpoint", async () => {
-    const { service, pushAvailability, pushRestrictions } = createCalendarChangeService({
-      pushRestrictions: createRestrictionsPush(),
-    });
+    const { result, pushAvailability, pushRestrictions, value } = await syncRestrictionsCalendarChangeForTest([
+      "rates",
+    ]);
 
-    const result = await syncCalendarChangeForTest(service, { changeTypes: ["rates"] });
-
-    expect(result.statusCode).toBe(200);
-    expect(result.response.requestTypes).toEqual(["restrictions/rates"]);
-    expect(pushAvailability).not.toHaveBeenCalled();
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
-    const value = extractFirstRestrictionsValue(pushRestrictions);
+    expectOnlyRestrictionsCalendarChange({ result, pushAvailability, pushRestrictions });
     expect(value).toEqual({
       property_id: "external-property-1",
       rate_plan_id: "rate-plan-1",
@@ -884,17 +901,11 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("host calendar restriction changes include explicit false values without rate", async () => {
-    const { service, pushAvailability, pushRestrictions } = createCalendarChangeService({
-      pushRestrictions: createRestrictionsPush(),
-    });
+    const { result, pushAvailability, pushRestrictions, value } = await syncRestrictionsCalendarChangeForTest([
+      "restrictions",
+    ]);
 
-    const result = await syncCalendarChangeForTest(service, { changeTypes: ["restrictions"] });
-
-    expect(result.statusCode).toBe(200);
-    expect(result.response.requestTypes).toEqual(["restrictions/rates"]);
-    expect(pushAvailability).not.toHaveBeenCalled();
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
-    const value = extractFirstRestrictionsValue(pushRestrictions);
+    expectOnlyRestrictionsCalendarChange({ result, pushAvailability, pushRestrictions });
     expect(value).toEqual({
       property_id: "external-property-1",
       rate_plan_id: "rate-plan-1",
