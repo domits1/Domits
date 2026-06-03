@@ -20,6 +20,19 @@ export default function useFilterLogic(props) {
 
   const [showMoreFacilities, setShowMoreFacilities] = useState(false);
 
+  const [roomsAndBeds, setRoomsAndBeds] = useState({
+    bedrooms: 0,
+    beds: 0,
+    bathrooms: 0,
+  });
+
+  const handleRoomChange = (key, delta) => {
+    setRoomsAndBeds((prev) => ({
+      ...prev,
+      [key]: Math.max(0, prev[key] + delta),
+    }));
+  };
+
   const [accommodationResults, setAccommodationResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -86,6 +99,8 @@ export default function useFilterLogic(props) {
     showMoreFacilities,
     setShowMoreFacilities,
     handlePriceChange,
+    roomsAndBeds,
+    handleRoomChange,
     accommodationResults,
     loading,
     error,

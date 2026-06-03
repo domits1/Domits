@@ -30,6 +30,8 @@ const FilterUi = ({ onFilterApplied }) => {
     setShowMoreFacilities,
     handlePriceChange,
     fetchFilteredAccommodations,
+    roomsAndBeds,
+    handleRoomChange,
   } = FilterLogic({ onFilterApplied });
 
   const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
@@ -180,6 +182,41 @@ const FilterUi = ({ onFilterApplied }) => {
         >
           {showMoreFacilities ? 'Show Less' : 'Show More'}
         </button>
+      </div>
+
+      <div className="filter-section">
+        <div className="FilterTitle">Rooms &amp; Beds</div>
+        {[
+          { key: 'bedrooms', label: 'Bedrooms' },
+          { key: 'beds', label: 'Beds' },
+          { key: 'bathrooms', label: 'Bathrooms' },
+        ].map(({ key, label }) => (
+          <div key={key} className="room-counter">
+            <span className="room-counter-label">{label}</span>
+            <div className="counter-controls">
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => handleRoomChange(key, -1)}
+                disabled={roomsAndBeds[key] === 0}
+                aria-label={`Decrease ${label}`}
+              >
+                −
+              </button>
+              <span className="counter-value">
+                {roomsAndBeds[key] === 0 ? 'Any' : roomsAndBeds[key]}
+              </span>
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => handleRoomChange(key, 1)}
+                aria-label={`Increase ${label}`}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
     </div>
