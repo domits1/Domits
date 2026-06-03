@@ -5,7 +5,7 @@ export default function useFilterLogic(props) {
   const [priceValues, setPriceValues] = useState([MIN_PRICE, MAX_PRICE]);
   const { onFilterApplied } = props || {};
 
-  const [selectedFacilities, setSelectedFacilities] = useState({
+  const [selectedAmenities, setSelectedAmenities] = useState({
     wifi: false,
     parking: false,
     gym: false,
@@ -72,9 +72,9 @@ export default function useFilterLogic(props) {
     }
   };
 
-  const handleFacilityChange = (event) => {
-    setSelectedFacilities({
-      ...selectedFacilities,
+  const handleAmenityChange = (event) => {
+    setSelectedAmenities({
+      ...selectedAmenities,
       [event.target.name]: event.target.checked,
     });
   };
@@ -82,8 +82,8 @@ export default function useFilterLogic(props) {
   return {
     priceValues,
     setPriceValues,
-    selectedFacilities,
-    handleFacilityChange,
+    selectedAmenities,
+    handleAmenityChange,
     showMoreFacilities,
     setShowMoreFacilities,
     handlePriceChange,

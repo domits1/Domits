@@ -7,12 +7,25 @@ import { MAX_PRICE, MIN_PRICE } from '../../constants/searchFilters';
 
 const EURO_SYMBOL = '\u20AC';
 
+const AMENITY_LABELS = {
+  wifi: 'WiFi',
+  parking: 'Parking',
+  gym: 'Gym',
+  spa: 'Spa',
+  swimmingPool: 'Swimming Pool',
+  restaurant: 'Restaurant',
+  petFriendly: 'Pet Friendly',
+  airConditioning: 'Air Conditioning',
+  breakfast: 'Breakfast',
+  bar: 'Bar',
+};
+
 const FilterUi = ({ onFilterApplied }) => {
   const {
     priceValues,
     setPriceValues,
-    selectedFacilities,
-    handleFacilityChange,
+    selectedAmenities,
+    handleAmenityChange,
     showMoreFacilities,
     setShowMoreFacilities,
     handlePriceChange,
@@ -130,33 +143,33 @@ const FilterUi = ({ onFilterApplied }) => {
       </div>
 
       <div className="filter-section">
-        <div className="FilterTitle">Facilities</div>
+        <div className="FilterTitle">Amenities</div>
         <div className="facility-list">
-          {Object.keys(selectedFacilities).slice(0, 5).map((facility) => (
-            <label key={facility} className="facility-item">
+          {Object.keys(selectedAmenities).slice(0, 5).map((key) => (
+            <label key={key} className="facility-item">
               <input
                 type="checkbox"
-                name={facility}
-                checked={selectedFacilities[facility]}
-                onChange={handleFacilityChange}
+                name={key}
+                checked={selectedAmenities[key]}
+                onChange={handleAmenityChange}
                 className="filter-select-option"
               />
-              {facility.charAt(0).toUpperCase() + facility.slice(1)}
+              {AMENITY_LABELS[key] ?? key}
             </label>
           ))}
           {showMoreFacilities &&
-            Object.keys(selectedFacilities)
+            Object.keys(selectedAmenities)
               .slice(5)
-              .map((facility) => (
-                <label key={facility} className="facility-item">
+              .map((key) => (
+                <label key={key} className="facility-item">
                   <input
                     type="checkbox"
-                    name={facility}
-                    checked={selectedFacilities[facility]}
-                    onChange={handleFacilityChange}
+                    name={key}
+                    checked={selectedAmenities[key]}
+                    onChange={handleAmenityChange}
                     className="filter-select-option"
                   />
-                  {facility.charAt(0).toUpperCase() + facility.slice(1)}
+                  {AMENITY_LABELS[key] ?? key}
                 </label>
               ))}
         </div>
