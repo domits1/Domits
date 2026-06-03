@@ -5,26 +5,6 @@ export default function useFilterLogic(props) {
   const [priceValues, setPriceValues] = useState([MIN_PRICE, MAX_PRICE]);
   const { onFilterApplied } = props || {};
 
-  const [ecoScore, setEcoScore] = useState({
-    "Star 1": false,
-    "Star 2": false,
-    "Star 3": false,
-    "Star 4": false,
-    "Star 5": false,
-  });
-
-  const [seasonFilter, setSeasonFilter] = useState({
-    Spring: false,
-    Summer: false,
-    Autumn: false,
-    Winter: false,
-    Fall: false,
-    Easter: false,
-    Christmas: false,
-    LowSeason: false,
-    HighSeason: false,
-  });
-
   const [selectedFacilities, setSelectedFacilities] = useState({
     wifi: false,
     parking: false,
@@ -38,25 +18,7 @@ export default function useFilterLogic(props) {
     bar: false,
   });
 
-  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState({
-    apartment: false,
-    villa: false,
-    bungalow: false,
-    studio: false,
-    penthouse: false,
-    cottage: false,
-    townhouse: false,
-    cabin: false,
-    chalet: false,
-    duplex: false,
-    mansion: false,
-    farmstay: false,
-  });
-
   const [showMoreFacilities, setShowMoreFacilities] = useState(false);
-  const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
-
-  const [showMoreSeasonTypes, setShowMoreSeasonTypes] = useState(false);
 
   const [accommodationResults, setAccommodationResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -117,50 +79,17 @@ export default function useFilterLogic(props) {
     });
   };
 
-  const handlePropertyTypeChange = (event) => {
-    setSelectedPropertyTypes({
-      ...selectedPropertyTypes,
-      [event.target.name]: event.target.checked,
-    });
-  };
-
-  const handleSeasonChange = (event) => {
-    setSeasonFilter({
-      ...seasonFilter,
-      [event.target.name]: event.target.checked,
-    });
-  };
-
-  const handleEcoChange = (event) => {
-    setEcoScore({
-      ...ecoScore,
-      [event.target.name]: event.target.checked,
-    })
-  }
-
   return {
     priceValues,
     setPriceValues,
     selectedFacilities,
     handleFacilityChange,
-    selectedPropertyTypes,
-    handlePropertyTypeChange,
     showMoreFacilities,
     setShowMoreFacilities,
-    showMorePropertyTypes,
-    setShowMorePropertyTypes,
     handlePriceChange,
     accommodationResults,
     loading,
     error,
     fetchFilteredAccommodations,
-    handleSeasonChange,
-    seasonFilter,
-    setSeasonFilter,
-    showMoreSeasonTypes,
-    setShowMoreSeasonTypes,
-    handleEcoChange,
-    ecoScore,
-    setEcoScore,
   };
 }

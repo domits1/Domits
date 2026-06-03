@@ -13,20 +13,10 @@ const FilterUi = ({ onFilterApplied }) => {
     setPriceValues,
     selectedFacilities,
     handleFacilityChange,
-    selectedPropertyTypes,
-    handlePropertyTypeChange,
     showMoreFacilities,
     setShowMoreFacilities,
-    showMorePropertyTypes,
-    setShowMorePropertyTypes,
     handlePriceChange,
     fetchFilteredAccommodations,
-    handleSeasonChange,
-    seasonFilter,
-    setShowMoreSeasonTypes,
-    showMoreSeasonTypes,
-    handleEcoChange,
-    ecoScore,
   } = FilterLogic({ onFilterApplied });
 
   const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
@@ -179,103 +169,6 @@ const FilterUi = ({ onFilterApplied }) => {
         </button>
       </div>
 
-      <div className="filter-section">
-        <div className="FilterTitle">Property Type</div>
-        <div className="facility-list">
-          {Object.keys(selectedPropertyTypes).slice(0, 5).map((propertyType) => (
-            <label key={propertyType} className="facility-item">
-              <input
-                type="checkbox"
-                name={propertyType}
-                checked={selectedPropertyTypes[propertyType]}
-                onChange={handlePropertyTypeChange}
-                className="filter-select-option"
-              />
-              {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
-            </label>
-          ))}
-          {showMorePropertyTypes &&
-            Object.keys(selectedPropertyTypes)
-              .slice(5)
-              .map((propertyType) => (
-                <label key={propertyType} className="facility-item">
-                  <input
-                    type="checkbox"
-                    name={propertyType}
-                    checked={selectedPropertyTypes[propertyType]}
-                    onChange={handlePropertyTypeChange}
-                    className="filter-select-option"
-                  />
-                  {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
-                </label>
-              ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowMorePropertyTypes(!showMorePropertyTypes)}
-          className="show-more-text"
-        >
-          {showMorePropertyTypes ? 'Show Less' : 'Show More'}
-        </button>
-      </div>
-
-      <div className="filter-section">
-        <div className="FilterTitle">Seasons</div>
-        <div className="facility-list">
-          {Object.keys(seasonFilter).slice(0, 5).map((season) => (
-            <label key={season} className="facility-item">
-              <input
-                type="checkbox"
-                name={season}
-                checked={seasonFilter[season]}
-                onChange={handleSeasonChange}
-                className="filter-select-option"
-              />
-              {season.charAt(0).toUpperCase() + season.slice(1)}
-            </label>
-          ))}
-          {showMoreSeasonTypes &&
-            Object.keys(seasonFilter)
-              .slice(5)
-              .map((season) => (
-                <label key={season} className="facility-item">
-                  <input
-                    type="checkbox"
-                    name={season}
-                    checked={seasonFilter[season]}
-                    onChange={handleSeasonChange}
-                    className="filter-select-option"
-                  />
-                  {season.charAt(0).toUpperCase() + season.slice(1)}
-                </label>
-              ))}
-          <button
-            type="button"
-            onClick={() => setShowMoreSeasonTypes(!showMoreSeasonTypes)}
-            className="show-more-text"
-          >
-            {showMoreSeasonTypes ? 'Show Less' : 'Show More'}
-          </button>
-        </div>
-      </div>
-
-      <div className="filter-section">
-        <div className="FilterTitle">Eco Score</div>
-        <div className="facility-list">
-          {Object.keys(ecoScore).slice(0, 5).map((eco) => (
-            <label key={eco} className="facility-item">
-              <input
-                type="checkbox"
-                name={eco}
-                checked={ecoScore[eco]}
-                onChange={handleEcoChange}
-                className="filter-select-option"
-              />
-              {eco.charAt(0).toUpperCase() + eco.slice(1)}
-            </label>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
