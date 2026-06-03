@@ -321,6 +321,34 @@ const createSuccessfulRestrictionsPush = () => createRestrictionsPush();
 
 const createSuccessfulAvailabilityPush = () => createAvailabilityPush();
 
+const buildCalendarChangeRequest = (overrides = {}) => ({
+  userId: "user-1",
+  domitsPropertyId: "domits-property-1",
+  changedDates: ["2026-05-01"],
+  changeTypes: ["availability"],
+  source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+  ...overrides,
+});
+
+const createCalendarChangeService = ({
+  pushAvailability = jest.fn().mockResolvedValue({ results: [] }),
+  pushRestrictions = jest.fn().mockResolvedValue({ results: [] }),
+} = {}) => ({
+  pushAvailability,
+  pushRestrictions,
+  service: createService({
+    channexProviderClient: {
+      pushAvailability,
+      pushRestrictions,
+    },
+  }),
+});
+
+const syncCalendarChangeForTest = (service, overrides = {}) =>
+  service.syncChannexCalendarChange(buildCalendarChangeRequest(overrides), { skipEvidence: true });
+
+const extractFirstRestrictionsValue = (pushRestrictions) => pushRestrictions.mock.calls[0]?.[1]?.[0]?.values?.[0];
+
 const expectValidChannexRestrictionProviderValues = (payloads) => {
   for (const payload of Array.isArray(payloads) ? payloads : []) {
     for (const value of Array.isArray(payload?.values) ? payload.values : []) {
@@ -802,8 +830,6 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("host calendar availability changes send booking-aware change-only availability", async () => {
-    const pushAvailability = createAvailabilityPush();
-    const pushRestrictions = jest.fn().mockResolvedValue({ results: [] });
     Database.getInstance.mockResolvedValue(
       buildDatabaseClient({
         availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
@@ -816,23 +842,14 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         ],
       })
     );
-    const service = createService({
-      channexProviderClient: {
-        pushAvailability,
-        pushRestrictions,
-      },
+    const { service, pushAvailability, pushRestrictions } = createCalendarChangeService({
+      pushAvailability: createAvailabilityPush(),
     });
 
-    const result = await service.syncChannexCalendarChange(
-      {
-        userId: "user-1",
-        domitsPropertyId: "domits-property-1",
-        changedDates: ["2026-06-01", "2026-06-02"],
-        changeTypes: ["availability"],
-        source: "HOST_CALENDAR_OVERRIDES_CHANGED",
-      },
-      { skipEvidence: true }
-    );
+    const result = await syncCalendarChangeForTest(service, {
+      changedDates: ["2026-06-01", "2026-06-02"],
+      changeTypes: ["availability"],
+    });
 
     expect(result.statusCode).toBe(200);
     expect(result.response.syncType).toBe("calendar-change");
@@ -847,31 +864,17 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("host calendar rate changes send rates only through restrictions endpoint", async () => {
-    const pushAvailability = jest.fn().mockResolvedValue({ results: [] });
-    const pushRestrictions = createRestrictionsPush();
-    const service = createService({
-      channexProviderClient: {
-        pushAvailability,
-        pushRestrictions,
-      },
+    const { service, pushAvailability, pushRestrictions } = createCalendarChangeService({
+      pushRestrictions: createRestrictionsPush(),
     });
 
-    const result = await service.syncChannexCalendarChange(
-      {
-        userId: "user-1",
-        domitsPropertyId: "domits-property-1",
-        changedDates: ["2026-05-01"],
-        changeTypes: ["rates"],
-        source: "HOST_CALENDAR_OVERRIDES_CHANGED",
-      },
-      { skipEvidence: true }
-    );
+    const result = await syncCalendarChangeForTest(service, { changeTypes: ["rates"] });
 
     expect(result.statusCode).toBe(200);
     expect(result.response.requestTypes).toEqual(["restrictions/rates"]);
     expect(pushAvailability).not.toHaveBeenCalled();
     expect(pushRestrictions).toHaveBeenCalledTimes(1);
-    const [value] = pushRestrictions.mock.calls[0][1][0].values;
+    const value = extractFirstRestrictionsValue(pushRestrictions);
     expect(value).toEqual({
       property_id: "external-property-1",
       rate_plan_id: "rate-plan-1",
@@ -881,31 +884,17 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
   });
 
   test("host calendar restriction changes include explicit false values without rate", async () => {
-    const pushAvailability = jest.fn().mockResolvedValue({ results: [] });
-    const pushRestrictions = createRestrictionsPush();
-    const service = createService({
-      channexProviderClient: {
-        pushAvailability,
-        pushRestrictions,
-      },
+    const { service, pushAvailability, pushRestrictions } = createCalendarChangeService({
+      pushRestrictions: createRestrictionsPush(),
     });
 
-    const result = await service.syncChannexCalendarChange(
-      {
-        userId: "user-1",
-        domitsPropertyId: "domits-property-1",
-        changedDates: ["2026-05-01"],
-        changeTypes: ["restrictions"],
-        source: "HOST_CALENDAR_OVERRIDES_CHANGED",
-      },
-      { skipEvidence: true }
-    );
+    const result = await syncCalendarChangeForTest(service, { changeTypes: ["restrictions"] });
 
     expect(result.statusCode).toBe(200);
     expect(result.response.requestTypes).toEqual(["restrictions/rates"]);
     expect(pushAvailability).not.toHaveBeenCalled();
     expect(pushRestrictions).toHaveBeenCalledTimes(1);
-    const [value] = pushRestrictions.mock.calls[0][1][0].values;
+    const value = extractFirstRestrictionsValue(pushRestrictions);
     expect(value).toEqual({
       property_id: "external-property-1",
       rate_plan_id: "rate-plan-1",

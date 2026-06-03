@@ -24,6 +24,12 @@ const decodePayload = (payload) => {
     return new TextDecoder("utf-8").decode(payload);
 };
 
+const buildFallbackError = ({ code, message, httpStatus }) => ({
+    code,
+    message,
+    httpStatus,
+});
+
 export const createCalendarChangeFallbackEvidence = ({
     payload = null,
     skipped,
@@ -47,6 +53,32 @@ export const createCalendarChangeFallbackEvidence = ({
     reason,
 });
 
+const buildCalendarChangeSyncPayload = (payload, internalToken) => ({
+    httpMethod: "POST",
+    path: "/integrations/channex/calendar-change/sync",
+    headers: {
+        "x-domits-internal-token": internalToken,
+    },
+    queryStringParameters: {},
+    body: JSON.stringify(payload),
+});
+
+const createCalendarChangeFailureEvidence = ({ payload, error }) =>
+    createCalendarChangeFallbackEvidence({
+        payload,
+        skipped: false,
+        reason: CHANNEX_CALENDAR_CHANGE_SYNC_FAILED,
+        errors: [buildFallbackError(error)],
+    });
+
+const parseUnifiedMessagingCalendarChangeResponse = (response) => {
+    const lambdaBody = parseJsonSafely(decodePayload(response?.Payload)) || {};
+    return {
+        lambdaBody,
+        evidence: parseJsonSafely(lambdaBody?.body) || lambdaBody?.response || null,
+    };
+};
+
 export default class ChannexCalendarChangeSyncClient {
     constructor({ lambda = lambdaClient, functionName = process.env.UNIFIED_MESSAGING_FUNCTION_NAME } = {}) {
         this.lambda = lambda;
@@ -67,48 +99,31 @@ export default class ChannexCalendarChangeSyncClient {
             const response = await this.lambda.send(
                 new InvokeCommand({
                     FunctionName: this.functionName,
-                    Payload: JSON.stringify({
-                        httpMethod: "POST",
-                        path: "/integrations/channex/calendar-change/sync",
-                        headers: {
-                            "x-domits-internal-token": internalToken,
-                        },
-                        queryStringParameters: {},
-                        body: JSON.stringify(payload),
-                    }),
+                    Payload: JSON.stringify(buildCalendarChangeSyncPayload(payload, internalToken)),
                 })
             );
 
-            const lambdaBody = parseJsonSafely(decodePayload(response?.Payload)) || {};
-            const evidence = parseJsonSafely(lambdaBody?.body) || lambdaBody?.response || null;
+            const { lambdaBody, evidence } = parseUnifiedMessagingCalendarChangeResponse(response);
             if (response?.FunctionError || Number(lambdaBody?.statusCode) >= 400 || !evidence) {
-                return createCalendarChangeFallbackEvidence({
+                return createCalendarChangeFailureEvidence({
                     payload,
-                    skipped: false,
-                    reason: CHANNEX_CALENDAR_CHANGE_SYNC_FAILED,
-                    errors: [
-                        {
-                            code: response?.FunctionError || lambdaBody?.statusCode || "UNIFIED_MESSAGING_ERROR",
-                            message: evidence?.message || evidence?.error || "UnifiedMessaging calendar-change sync failed.",
-                            httpStatus: lambdaBody?.statusCode ?? null,
-                        },
-                    ],
+                    error: {
+                        code: response?.FunctionError || lambdaBody?.statusCode || "UNIFIED_MESSAGING_ERROR",
+                        message: evidence?.message || evidence?.error || "UnifiedMessaging calendar-change sync failed.",
+                        httpStatus: lambdaBody?.statusCode ?? null,
+                    },
                 });
             }
 
             return evidence;
         } catch (error) {
-            return createCalendarChangeFallbackEvidence({
+            return createCalendarChangeFailureEvidence({
                 payload,
-                skipped: false,
-                reason: CHANNEX_CALENDAR_CHANGE_SYNC_FAILED,
-                errors: [
-                    {
-                        code: error?.code || error?.name || "LAMBDA_INVOKE_FAILED",
-                        message: error?.message || "UnifiedMessaging calendar-change sync invoke failed.",
-                        httpStatus: error?.statusCode ?? null,
-                    },
-                ],
+                error: {
+                    code: error?.code || error?.name || "LAMBDA_INVOKE_FAILED",
+                    message: error?.message || "UnifiedMessaging calendar-change sync invoke failed.",
+                    httpStatus: error?.statusCode ?? null,
+                },
             });
         }
     }

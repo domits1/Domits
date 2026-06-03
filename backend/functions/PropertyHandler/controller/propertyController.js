@@ -74,6 +74,7 @@ const trimRepeatedCharacterEdges = (value, character) => {
 
     return value.slice(startIndex, endIndex);
 };
+const compareAsString = (left, right) => String(left).localeCompare(String(right));
 const slugifyWebsiteDomainLabel = (value) => {
     const normalizedValue = cleanWebsiteText(value).normalize("NFKD").toLowerCase();
     let sanitizedValue = "";
@@ -663,8 +664,8 @@ export class PropertyController {
         }
 
         return {
-            changedDates: changedDates.filter(Boolean).sort(),
-            changeTypes: Array.from(changeTypes).sort(),
+            changedDates: changedDates.filter(Boolean).sort(compareAsString),
+            changeTypes: Array.from(changeTypes).sort(compareAsString),
         };
     }
 
