@@ -108,10 +108,10 @@ export class PriceLabsService {
       name:               p.title || p.id,
       status:             "available",
       location: {
-        ...(p.latitude  === null ? {} : { latitude:  Number(p.latitude)  }),
-        ...(p.longitude === null ? {} : { longitude: Number(p.longitude) }),
+        latitude:  p.latitude  !== null ? Number(p.latitude)  : 52.3676,
+        longitude: p.longitude !== null ? Number(p.longitude) : 4.9041,
         city:    p.city    || "Amsterdam",
-        country: p.country || "NLD",
+        country: _toAlpha3(p.country),
       },
       number_of_bedrooms: p.bedrooms || 1,
       listing_fees: {
@@ -264,21 +264,30 @@ export class PriceLabsService {
       throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
     }
 
-    const { listings = [] } = JSON.parse(rawBody || "{}");
+    const body = JSON.parse(rawBody || "{}");
+
+    // Swagger v2: single object { listing_id, last_refreshed, data: [] }
+    // Normalize to array for uniform handling
+    const listings = Array.isArray(body.listings)
+      ? body.listings
+      : body.listing_id
+        ? [{ listing_id: body.listing_id, data: body.data ?? [] }]
+        : [];
 
     for (const listing of listings) {
-      const { listing_id, prices = [] } = listing;
+      const { listing_id, data = [], prices = [] } = listing;
+      const entries = data.length ? data : prices; // support both field names
       const parts = listing_id.split("_");
       const propertyId = parts.slice(5).join("-");
 
-      for (const entry of prices) {
+      for (const entry of entries) {
         await this.repo.applyPriceRecommendation({
           property_id:         propertyId,
           date:                entry.date,
           nightly_price:       entry.price,
           min_stay:            entry.min_stay,
-          closed_to_arrival:   entry.closed_to_arrival,
-          closed_to_departure: entry.closed_to_departure,
+          closed_to_arrival:   entry.check_in  === false ? true : false,
+          closed_to_departure: entry.check_out === false ? true : false,
         });
       }
     }
@@ -296,7 +305,11 @@ export class PriceLabsService {
       throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
     }
 
-    const { listing_ids = [] } = JSON.parse(rawBody || "{}");
+    const body = JSON.parse(rawBody || "{}");
+
+    // Swagger v2: single listing_id (string) + start_date + end_date
+    // Legacy: listing_ids (array)
+    const listing_ids = body.listing_ids ?? (body.listing_id ? [body.listing_id] : []);
 
     const hostMap = {};
     for (const lid of listing_ids) {
@@ -357,6 +370,28 @@ function _mapBookingStatus(status) {
   const s = String(status || "").toLowerCase();
   if (s === "cancelled" || s === "canceled" || s === "declined" || s === "failed") return "canceled";
   return "booked";
+}
+
+const COUNTRY_TO_ALPHA3 = {
+  "netherlands": "NLD", "nl": "NLD", "nld": "NLD",
+  "germany": "DEU", "de": "DEU", "deutschland": "DEU",
+  "belgium": "BEL", "be": "BEL",
+  "france": "FRA", "fr": "FRA",
+  "spain": "ESP", "es": "ESP",
+  "italy": "ITA", "it": "ITA",
+  "united kingdom": "GBR", "gb": "GBR", "uk": "GBR",
+  "austria": "AUT", "at": "AUT",
+  "switzerland": "CHE", "ch": "CHE",
+  "portugal": "PRT", "pt": "PRT",
+  "greece": "GRC", "gr": "GRC",
+  "turkey": "TUR", "tr": "TUR",
+  "united states": "USA", "us": "USA",
+};
+
+function _toAlpha3(country) {
+  if (!country) return "NLD";
+  const key = country.toLowerCase().trim();
+  return COUNTRY_TO_ALPHA3[key] || country.toUpperCase().slice(0, 3);
 }
 
 function _dateDiff(checkin, checkout) {
