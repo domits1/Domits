@@ -65,10 +65,14 @@ export function WebsiteKpiResearchCard({
   isHighlighted = false,
   deltaLabel = "",
 }) {
-  const statusClassName =
-    isLoading || !researchKpiCard.isInstrumented
-      ? styles.researchKpiStatusBadgePending
-      : styles.researchKpiStatusBadgeReady;
+  const statusClassName = isLoading
+    ? styles.researchKpiStatusBadgePending
+    : {
+        ready: styles.researchKpiStatusBadgeReady,
+        warning: styles.researchKpiStatusBadgeWarning,
+        proxy: styles.researchKpiStatusBadgeProxy,
+        pending: styles.researchKpiStatusBadgePending,
+      }[researchKpiCard.statusTone] || styles.researchKpiStatusBadgePending;
   const cardClassName = `${styles.researchKpiCard} ${
     isHighlighted ? styles.researchKpiCardUpdated : ""
   }`.trim();
@@ -121,6 +125,7 @@ WebsiteKpiResearchCard.propTypes = {
     criteria: PropTypes.arrayOf(PropTypes.string).isRequired,
     isInstrumented: PropTypes.bool.isRequired,
     statusLabel: PropTypes.string.isRequired,
+    statusTone: PropTypes.string.isRequired,
     value: PropTypes.string.isRequired,
     note: PropTypes.string.isRequired,
     sampleLabel: PropTypes.string,

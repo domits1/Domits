@@ -1,5 +1,7 @@
 # Getting started with Domits
-Domits is a React project with several dependencies. Follow these steps to set up and run the project on your local machine. 
+Domits is a React project with several dependencies. Follow these steps to set up and run the project on your local machine.
+
+> If this onboarding flow does not work, or if your AWS access uses the newer SSO setup, continue with [running Domits locally - SSO.md](./running%20Domits%20locally%20-%20SSO.md).
 
 ## Prerequisites
 
@@ -14,7 +16,7 @@ Open your terminal and run the following command to clone the develop branch of 
 `git clone https://github.com/domits1/Domits.git`
 
 ## Pre Amplify Setup
-Before you start the backend setup make sure you `delete` the `amplify` map in the Domits folder inside your code editor (VsCode/Intellij). After you have deleted this folder enter the web folder (through your code editor terminal): `cd web`. Inside your web folder there is also an amplify map you can `delete` this one too (just to be sure). 
+Before you start the backend setup make sure you `delete` the `amplify` map in the Domits folder inside your code editor (VsCode/Intellij). After you have deleted this folder enter the web folder (through your code editor terminal): `cd web`. Inside your web folder there is also an amplify map you can `delete` this one too (just to be sure).
 
 ## Amplify Setup
 ### Our backend is cloud-based and uses AWS Amplify. To get the backend up and running on your system, follow these instructions:
@@ -27,7 +29,7 @@ Depending on whether you're working on the web app or the mobile app, navigate t
 
 >**Hint**: Before running the upcoming command, ask for the login credentials to the Domits AWS account.
 
-Ask for the login details to the Domits AWS account. Once you have the credentials, install the Amplify backend configuration using the following command: 
+Ask for the login details to the Domits AWS account. Once you have the credentials, install the Amplify backend configuration using the following command:
 
 ```amplify pull --appId d34jwd0sihmsus --envName develop```
 
@@ -39,17 +41,17 @@ After you have logged in to AWS, go back to your Code editor and you will be pro
     1. Choose your default editor: Select None.
 
     2. Choose the type of app that you're building: Javascript.
-    
+
     3. What type of Javascript framework are you using: react
-    
+
     4. Source directory path: src
-    
+
     5. Distribution Directory Path: Leave this as it is(just click enter)
-    
+
     6. Build Command: Leave this as it is. (just click enter)
-    
+
     7. Start Command: Leave this as it is. (just click enter)
-    
+
     8. Do you plan on modifying this backend: no
 
 ### Starting the application
@@ -80,8 +82,8 @@ npm run build
 `npm run eject`
 
 ## Development Environment
-Node.js version: >=14.0.0* 
-React version: ^18.2.0* 
+Node.js version: >=14.0.0*
+React version: ^18.2.0*
 
 
 ------- needs to be added to the onboarding:
