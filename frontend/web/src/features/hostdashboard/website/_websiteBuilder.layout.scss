@@ -165,6 +165,42 @@
   gap: 14px;
 }
 
+.kpiSectionGroupList {
+  display: grid;
+  gap: 18px;
+}
+
+.kpiSectionGroup {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 1)),
+    #ffffff;
+}
+
+.kpiSectionGroupHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.kpiSectionGroupHeader h3,
+.kpiSectionGroupHeader p {
+  margin: 0;
+}
+
+.kpiSectionGroupHeader h3 {
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.kpiSectionGroupHeader p {
+  color: #64748b;
+  line-height: 1.55;
+}
+
 .kpiCard {
   display: grid;
   gap: 10px;

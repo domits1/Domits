@@ -11,6 +11,7 @@ import {
   buildPerformanceCards,
   buildPerformanceMetricDeltaMap,
   buildWebsiteMetricCards,
+  buildWebsiteMetricGroups,
   buildWebsiteMetricDeltaMap,
   EMPTY_WEBSITE_KPIS,
   PERFORMANCE_VIEWPORT_TAB_MOBILE,
@@ -285,7 +286,7 @@ function WebsiteKpiDashboardPage() {
     };
   }, []);
 
-  const metricCards = buildWebsiteMetricCards(websiteKpis);
+  const metricGroups = buildWebsiteMetricGroups(websiteKpis);
   const performanceCards = buildPerformanceCards(websiteKpis, performanceViewportTab);
   const researchKpiCards = buildResearchKpiCards(websiteKpis);
   const deletionReasonRows = useMemo(
@@ -351,18 +352,29 @@ function WebsiteKpiDashboardPage() {
   };
 
   const renderOverviewTabContent = () => (
-    <div className={styles.kpiGrid}>
-      {metricCards.map((metricCard) => (
-        <WebsiteKpiMetricCard
-          key={metricCard.id}
-          title={metricCard.title}
-          value={metricCard.value}
-          meta={metricCard.meta}
-          isLoading={isInitialKpiLoad}
-          isHighlighted={highlightedMetricIds.includes(metricCard.id)}
-          sampleLabel={metricCard.sampleLabel}
-          deltaLabel={metricDeltaMap[metricCard.id] || ""}
-        />
+    <div className={styles.kpiSectionGroupList}>
+      {metricGroups.map((metricGroup) => (
+        <article key={metricGroup.id} className={styles.kpiSectionGroup}>
+          <div className={styles.kpiSectionGroupHeader}>
+            <h3>{metricGroup.title}</h3>
+            <p>{metricGroup.description}</p>
+          </div>
+
+          <div className={styles.kpiGrid}>
+            {metricGroup.metricCards.map((metricCard) => (
+              <WebsiteKpiMetricCard
+                key={metricCard.id}
+                title={metricCard.title}
+                value={metricCard.value}
+                meta={metricCard.meta}
+                isLoading={isInitialKpiLoad}
+                isHighlighted={highlightedMetricIds.includes(metricCard.id)}
+                sampleLabel={metricCard.sampleLabel}
+                deltaLabel={metricDeltaMap[metricCard.id] || ""}
+              />
+            ))}
+          </div>
+        </article>
       ))}
     </div>
   );

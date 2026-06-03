@@ -192,10 +192,16 @@ const buildDeltaMapFromDefinitions = (definitions, previousWebsiteKpis, nextWebs
 
 const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
   createMetricCardDefinition(
+    "draft-created",
+    "Website drafts created",
+    "draftCreatedCount",
+    "How many direct booking website drafts have been created across Domits"
+  ),
+  createMetricCardDefinition(
     "active-websites",
     "Active website drafts",
     "currentDraftCount",
-    (websiteKpis) => `${websiteKpis.draftCreatedCount} drafts created across Domits`
+    "Saved website drafts that still remain active in the workspace"
   ),
   createMetricCardDefinition(
     "build-started",
@@ -273,6 +279,37 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "deletedWebsiteCount",
     "Website drafts removed from the direct booking website workspace"
   ),
+]);
+
+const WEBSITE_METRIC_GROUP_DEFINITIONS = Object.freeze([
+  {
+    id: "usage-in-practice",
+    title: "Usage in practice",
+    description:
+      "These KPIs show whether hosts actually use the feature as an ongoing editor instead of only as a one-time builder.",
+    metricCardIds: ["draft-created", "active-websites", "draft-saves"],
+  },
+  {
+    id: "builder-funnel",
+    title: "Builder and preview funnel",
+    description:
+      "These KPIs show how often hosts start the builder, reach a saved preview, and how reliable that flow remains.",
+    metricCardIds: [
+      "build-started",
+      "build-succeeded",
+      "time-to-first-preview",
+      "build-success-rate",
+      "build-failure-rate",
+      "build-abandonment-rate",
+    ],
+  },
+  {
+    id: "live-site-activity",
+    title: "Live-site activity",
+    description:
+      "These KPIs show whether published websites continue to be opened, updated, and maintained over time.",
+    metricCardIds: ["unique-live-sites", "live-site-opens", "live-site-updates", "deleted-websites"],
+  },
 ]);
 
 const PERFORMANCE_DEFINITIONS = Object.freeze({
@@ -422,6 +459,18 @@ export const formatNullableDurationMs = (value) => formatKpiValue(value, "second
 
 export const buildWebsiteMetricCards = (websiteKpis) =>
   buildMetricCardsFromDefinitions(WEBSITE_METRIC_CARD_DEFINITIONS, websiteKpis);
+
+export const buildWebsiteMetricGroups = (websiteKpis) => {
+  const metricCards = buildWebsiteMetricCards(websiteKpis);
+  const metricCardMap = new Map(metricCards.map((metricCard) => [metricCard.id, metricCard]));
+
+  return WEBSITE_METRIC_GROUP_DEFINITIONS.map((groupDefinition) => ({
+    ...groupDefinition,
+    metricCards: groupDefinition.metricCardIds
+      .map((metricCardId) => metricCardMap.get(metricCardId))
+      .filter(Boolean),
+  }));
+};
 
 export const buildWebsiteMetricDeltaMap = (previousWebsiteKpis, nextWebsiteKpis) =>
   buildDeltaMapFromDefinitions(
