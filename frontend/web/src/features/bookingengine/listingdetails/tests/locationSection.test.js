@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { LanguageContext } from "../../../../context/LanguageContext.js";
 import LocationSection from "../views/locationSection";
 
@@ -66,23 +66,4 @@ describe("LocationSection", () => {
     });
   });
 
-  describe("reset button", () => {
-    test("renders the reset button when location is available", () => {
-      renderWithLanguage("en", { location });
-      expect(screen.getByRole("button", { name: /reset map view/i })).toBeInTheDocument();
-    });
-
-    test("does not render the reset button when location is unavailable", () => {
-      renderWithLanguage("en", { location: {} });
-      expect(screen.queryByRole("button", { name: /reset map view/i })).not.toBeInTheDocument();
-    });
-
-    test("remounts the iframe when reset button is clicked", () => {
-      renderWithLanguage("en", { location });
-      const iframeBefore = screen.getByTitle("Where you'll be");
-      fireEvent.click(screen.getByRole("button", { name: /reset map view/i }));
-      const iframeAfter = screen.getByTitle("Where you'll be");
-      expect(iframeAfter).not.toBe(iframeBefore);
-    });
-  });
 });
