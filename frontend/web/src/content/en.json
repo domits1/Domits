@@ -113,9 +113,13 @@
     },
     "features": {
       "securePayments": "Secure payments",
+      "securePaymentsDesc": "Your transactions are protected",
       "verifiedGuest": "Verified guests/hosts",
+      "verifiedDesc": "Every property is verified",
       "quickPhone": "Quick phone support",
+      "quickSupportDesc": "24/7 customer service",
       "qualityGuarantee": "Domits quality guarantee",
+      "qualityDesc": "Premium stays only",
       "bestPrice": "Best price guarantee",
       "bestPriceDescription": "We strive to offer you the best possible price. If you find a cheaper option elsewhere, we will review it with you and adjust where appropriate.",
       "bookingGuarantee": "Accommodation booking guarantee",
@@ -125,6 +129,7 @@
     },
     "sections": {
       "trending": "Trending accommodations this month",
+      "trendingNow": "Trending Now",
       "rentBoat": "Rent a boat for any occasion",
       "discoverCampers": "Discover Beautiful Campers",
       "becomeHost": {
@@ -230,6 +235,80 @@
         }
       }
     }
+  },
+  "regionBlocks": {
+    "europe": {
+      "title": "Europe",
+      "subtitle": "Discover luxury stays across European destinations",
+      "footer": "Explore all countries in europe →"
+    },
+    "asia": {
+      "title": "Asia",
+      "subtitle": "Explore exotic Asian retreats and modern metropolises",
+      "footer": "Explore all countries in Asia →"
+    },
+    "caribbean": {
+      "title": "Islands in the Caribbean",
+      "subtitle": "Paradise awaits in these tropical havens",
+      "footer": "Explore all countries in the caribbean →"
+    },
+    "ski": {
+      "title": "Popular Ski Destinations",
+      "subtitle": "World-class slopes and cozy mountain chalets",
+      "footer": "Explore all popular ski destinations →"
+    },
+    "seasons": {
+      "title": "Favorites by Season",
+      "subtitle": "Perfect properties for every time of year",
+      "footer": "Explore all favorites by season →"
+    },
+    "interests": {
+      "title": "Great Picks by Interest",
+      "subtitle": "Find stays that match your passions",
+      "footer": "Explore all great picks by interest →"
+    },
+    "groups": {
+      "title": "Accommodations by Group",
+      "subtitle": "The perfect stay for your travel party",
+      "footer": "Explore all accommodations by group →"
+    }
+  },
+  "guarantees": {
+    "sectionTitle": "Our Guarantees, Your Peace of Mind",
+    "sectionSubtitle": "We stand behind every stay with our commitments to you."
+  },
+  "hostSection": {
+    "title": "Share Your Space, Earn Premium Income",
+    "description": "Join our exclusive community of luxury hosts. List your villa, beachfront home, or unique property and connect with travelers seeking extraordinary experiences.",
+    "features": {
+      "earn": {
+        "title": "Earn More",
+        "text": "Premium pricing for luxury properties"
+      },
+      "infrastructure": {
+        "title": "Infrastructure",
+        "text": "Latest industry standards"
+      },
+      "support": {
+        "title": "Expert Support",
+        "text": "Dedicated team to help you succeed"
+      }
+    },
+    "stats": {
+      "hosts": {
+        "value": "500+",
+        "label": "Active Hosts"
+      },
+      "rating": {
+        "value": "4.9",
+        "label": "Avg Rating"
+      },
+      "earning": {
+        "value": "$2.5k",
+        "label": "Avg/Month"
+      }
+    },
+    "button": "List Your Property"
   },
   "travelInnovationLabs": {
     "title": "Travel Innovation Labs",
@@ -601,6 +680,18 @@
     }
   },
   "landing": {
+    "hero": {
+      "badge": "Trusted by many hosts",
+      "titleLine1": "Your Properties.",
+      "titleLine2": "Our Infrastructure.",
+      "description": "Turn your luxury vacation rentals into a revenue stream that runs itself. More revenue. Less workload. Total confidence.",
+      "primaryButton": "Start Hosting →",
+      "secondaryButton": "See how it works",
+      "stat1Label": "more revenue",
+      "stat2Label": "workload reduction",
+      "stat3Label": "support",
+      "integratesLabel": "Seamlessly integrates with"
+    },
     "list": "List your",
     "house": "House",
     "camper": "Camper",
@@ -618,6 +709,9 @@
       "title2": "has never been ",
       "easier": "easier",
       "subtitle": "It only takes 3 steps",
+      "stepsLabel": "THE PROCESS",
+      "stepsTitleLine1": "Three Steps.",
+      "stepsTitleSpan": "Zero Friction.",
       "first": {
         "one": "1.",
         "title": "List your property",
@@ -639,7 +733,18 @@
       "domits": "Domits",
       "end": "?",
       "description": "At Domits, we're not just another platform, we're building a future-focused, sustainable community with our Travel Innovation Labs. Our innovative approach ensures that your property adds meaningful value to both travelers and the environment. You'll also enjoy unlimited support and personalized, modern dashboards that make managing your listings easier than ever. But what truly sets Domits apart is our commitment to you. You're more than just a customer or data, we genuinely care about your success, and we're here every step on the way to help you thrive. Hosting with Domits means aligning with deeply embedded values of health, safety, and sustainability, creating a future-proof path for your business.",
-      "btnHosting": "Start hosting"
+      "btnHosting": "Start hosting",
+      "sectionTitle": "Why",
+      "sectionDescription": "Domits transforms the future of luxury vacation rental management into a seamless experience. From listing to payout, everything is handled in one centralized place so you can focus on growth, not operations.",
+      "rating": "4.9 ★",
+      "features": {
+        "pmsOta": "Domits PMS with OTA",
+        "revenueManagement": "Revenue Management",
+        "directReservations": "Direct Reservations",
+        "financeSuite": "Finance Suite",
+        "channelManagement": "Channel Management",
+        "taskAutomations": "Task Automations"
+      }
     },
     "register": {
       "title": "Register your property",
@@ -669,11 +774,15 @@
       "renting": {
         "title": "International renting",
         "description": "You rent out your holiday home on an international market. This makes the chances of renting of out your holiday home even greater"
-      }
+      },
+      "subtitle": "Everything you need to rent out your property with confidence and peace of mind.",
+      "cta": "Register Your Property →"
     },
     "othersSay": {
       "title": "What others say about",
-      "domits": "Domits"
+      "domits": "Domits",
+      "hearFrom": "Hear from our Hosts.",
+      "trustText": "Many hosts trust Domits"
     },
     "rentingOut": {
       "title": "Is your property suitable for",
@@ -710,12 +819,65 @@
       "safety": {
         "title": "Safety ✓",
         "description": "The property meets safety standards with functional smoke detectors, secured balconies, safe playgrounds, and clear access paths."
+      },
+      "cta": "Ready to list your property? Our team will guide you through every step.",
+      "ctaBadge": "✔ Verified properties get 3x more bookings"
+    },
+    "featuresSection": {
+      "title": "Outcome-Driven",
+      "span": "Features",
+      "pmsOta": {
+        "title": "Domits PMS with OTA",
+        "description": "A centralized Property Management System (PMS) with booking channel integration."
+      },
+      "directReservation": {
+        "title": "Direct Reservation Suite",
+        "description": "A direct booking website builder to reduce OTA costs and dependency"
+      },
+      "channelManagement": {
+        "title": "Channel Management",
+        "description": "Distribute to channels like Airbnb, Domits, Booking, Vrbo and more"
+      },
+      "revenueIntelligence": {
+        "title": "Revenue Intelligence",
+        "description": "Real-time insights into KPIs and dynamic pricing."
+      },
+      "financeSuite": {
+        "title": "Finance Suite",
+        "description": "Guest payments, host payouts and precision management tools"
+      },
+      "taskAutomation": {
+        "title": "Task Automation",
+        "description": "Automate check-ins, cleaning schedule and maintenance requests"
       }
+    },
+    "cta": {
+      "badge": "✦ Join a community of hosts",
+      "title": "Ready to Elevate Your Property Performance?",
+      "subtitle": "Start earning more from your luxury vacation rentals today. No credit card required.",
+      "button": "Start hosting now →",
+      "benefit1": "● Free to get started",
+      "benefit2": "● No hidden fees",
+      "benefit3": "● Cancel anytime"
+    },
+    "partnerContact": {
+      "title": "More than software.",
+      "subtitle": "A dedicated partner.",
+      "description": "Our team is here to answer your questions, discuss your property's potential, and help you get started on the path to effortless rental income.",
+      "emailLabel": "Email us",
+      "emailValue": "teamdomits@gmail.com",
+      "phoneLabel": "Call us",
+      "phoneValue": "Available 24/7",
+      "addressLabel": "Visit us",
+      "addressLine1": "Kinderhuissingel 6-K",
+      "addressLine2": "2013 AS, Haarlem"
     },
     "answerTo": {
       "title": "Answers to ",
       "your": "your",
       "question": "questions",
+      "faqTitle": "Answers to",
+      "faqSpan": "Your Questions",
       "host": {
         "title": "Getting started as a host",
         "description": "Register as a host, connect or create your stripe account, start listing your accommodation."
