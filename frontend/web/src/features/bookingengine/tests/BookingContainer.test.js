@@ -11,6 +11,12 @@ jest.mock("../listingdetails/components/pricing", () => () => <div>Pricing</div>
 jest.mock("../listingdetails/hooks/handleReservePress", () => () => mockReservePress);
 jest.mock("../listingdetails/utils/dateAvailability", () => ({
   buildUnavailableDateSet: () => new Set(),
+  DATE_AVAILABILITY_REASONS: {
+    AVAILABLE: "available",
+    BOOKED: "booked",
+  },
+  getDateAvailabilityReason: () => "available",
+  getStayRangeAvailabilityIssue: () => null,
   hasUnavailableDateInStayRange: () => false,
   isUnavailableDate: () => false,
 }));

@@ -15,10 +15,12 @@ const CheckIn = ({
   checkInDate = "",
   setCheckInDate = () => {},
   unavailableDateKeys = [],
+  bookedDateKeys = [],
   availabilityRanges = null,
   availableDateKeys = null,
 }) => {
   const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
+  const bookedDateSet = buildUnavailableDateSet(bookedDateKeys);
   const minDate = normalizeDateValue(getFutureDateKey(1));
 
   return (
@@ -34,6 +36,7 @@ const CheckIn = ({
             !isUnavailableDate(date, unavailableDateSet, {
               availabilityRanges,
               availableDateKeys,
+              bookedDateKeys: bookedDateSet,
             })
           }
           dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
@@ -54,6 +57,7 @@ CheckIn.propTypes = {
   checkInDate: PropTypes.string,
   setCheckInDate: PropTypes.func,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
   availabilityRanges: PropTypes.arrayOf(
     PropTypes.shape({
       start: PropTypes.number.isRequired,

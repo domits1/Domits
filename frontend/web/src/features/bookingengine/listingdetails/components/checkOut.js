@@ -17,12 +17,14 @@ const CheckOut = ({
   setCheckOutDate = () => {},
   checkInDate = "",
   unavailableDateKeys = [],
+  bookedDateKeys = [],
   availabilityRanges = null,
   availableDateKeys = null,
 }) => {
   const minCheckOutDate = checkInDate ? addDaysToDateKey(checkInDate, 1) : getFutureDateKey(2);
 
   const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
+  const bookedDateSet = buildUnavailableDateSet(bookedDateKeys);
 
   const selectedCheckOutDate = normalizeDateValue(checkOutDate);
   const selectedCheckInDate = normalizeDateValue(checkInDate);
@@ -46,6 +48,7 @@ const CheckOut = ({
             return !hasUnavailableDateInStayRange(selectedCheckInDate, date, unavailableDateSet, {
               availabilityRanges,
               availableDateKeys,
+              bookedDateKeys: bookedDateSet,
             });
           }}
           dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
@@ -68,6 +71,7 @@ CheckOut.propTypes = {
   setCheckOutDate: PropTypes.func,
   checkInDate: PropTypes.string,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
   availabilityRanges: PropTypes.arrayOf(
     PropTypes.shape({
       start: PropTypes.number.isRequired,
