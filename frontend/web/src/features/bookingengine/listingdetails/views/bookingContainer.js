@@ -156,7 +156,7 @@ const BookingContainer = ({
   propertyId = null,
   unavailableDateKeys = [],
   availabilityRanges = null,
-  availableDateKeys = [],
+  availableDateKeys = null,
   checkInDate = "",
   setCheckInDate = () => {},
   checkOutDate = "",

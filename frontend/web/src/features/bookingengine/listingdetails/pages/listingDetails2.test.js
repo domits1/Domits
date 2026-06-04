@@ -15,14 +15,17 @@ jest.mock("../components/header", () => () => <div>Header</div>);
 jest.mock("../components/sectionTabs", () => () => <div>Tabs</div>);
 jest.mock("../views/propertyContainer", () => {
   const PropTypes = require("prop-types");
-  const MockPropertyContainer = ({ unavailableDateKeys = [], availabilityRanges = [], availableDateKeys = [], children }) => (
-    <div>
-      <div data-testid="property-unavailable-dates">{unavailableDateKeys.join("|")}</div>
-      <div data-testid="property-availability-ranges">{JSON.stringify(availabilityRanges)}</div>
-      <div data-testid="property-available-dates">{availableDateKeys.join("|")}</div>
-      {children}
-    </div>
-  );
+  const MockPropertyContainer = ({ unavailableDateKeys = [], availabilityRanges = [], availableDateKeys = null, children }) => {
+    const safeAvailableDateKeys = Array.isArray(availableDateKeys) ? availableDateKeys : [];
+    return (
+      <div>
+        <div data-testid="property-unavailable-dates">{unavailableDateKeys.join("|")}</div>
+        <div data-testid="property-availability-ranges">{JSON.stringify(availabilityRanges)}</div>
+        <div data-testid="property-available-dates">{safeAvailableDateKeys.join("|")}</div>
+        {children}
+      </div>
+    );
+  };
   MockPropertyContainer.propTypes = {
     unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
     availabilityRanges: PropTypes.arrayOf(PropTypes.object),
@@ -33,13 +36,16 @@ jest.mock("../views/propertyContainer", () => {
 });
 jest.mock("../views/bookingContainer", () => {
   const PropTypes = require("prop-types");
-  const MockBookingContainer = ({ unavailableDateKeys = [], availabilityRanges = [], availableDateKeys = [] }) => (
-    <div>
-      <div data-testid="booking-unavailable-dates">{unavailableDateKeys.join("|")}</div>
-      <div data-testid="booking-availability-ranges">{JSON.stringify(availabilityRanges)}</div>
-      <div data-testid="booking-available-dates">{availableDateKeys.join("|")}</div>
-    </div>
-  );
+  const MockBookingContainer = ({ unavailableDateKeys = [], availabilityRanges = [], availableDateKeys = null }) => {
+    const safeAvailableDateKeys = Array.isArray(availableDateKeys) ? availableDateKeys : [];
+    return (
+      <div>
+        <div data-testid="booking-unavailable-dates">{unavailableDateKeys.join("|")}</div>
+        <div data-testid="booking-availability-ranges">{JSON.stringify(availabilityRanges)}</div>
+        <div data-testid="booking-available-dates">{safeAvailableDateKeys.join("|")}</div>
+      </div>
+    );
+  };
   MockBookingContainer.propTypes = {
     unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
     availabilityRanges: PropTypes.arrayOf(PropTypes.object),
@@ -73,6 +79,7 @@ const renderRangeCalendar = (props = {}) => {
   render(
     <RangeCalendar
       availabilityRanges={[{ start: 20260615, end: 20260621 }]}
+      availableDateKeys={[]}
       checkInDate=""
       checkOutDate=""
       onRangeChange={onRangeChange}
@@ -160,6 +167,26 @@ describe("ListingDetails2 availability", () => {
       JSON.stringify([{ start: 20260615, end: 20260621 }])
     );
   });
+
+  test("keeps missing availableDateKeys as unknown instead of an empty allowlist", async () => {
+    mockProperty(
+      {
+        unavailableDateKeys: ["2026-06-19"],
+      },
+      {
+        availability: [{ availableStartDate: 20260615, availableEndDate: 20260621 }],
+      }
+    );
+
+    renderListingDetails();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("booking-available-dates")).toHaveTextContent("");
+    });
+    expect(screen.getByTestId("booking-availability-ranges")).toHaveTextContent(
+      JSON.stringify([{ start: 20260615, end: 20260621 }])
+    );
+  });
 });
 
 describe("RangeCalendar effective availability", () => {
@@ -181,6 +208,13 @@ describe("RangeCalendar effective availability", () => {
     expect(outsideWindowDate).toBeDisabled();
     expect(within(outsideWindowDate).getByText("--")).toBeInTheDocument();
     expect(insideWindowDate).not.toBeDisabled();
+  });
+
+  test("does not mass-disable outside-window dates when available override snapshot is missing", () => {
+    renderRangeCalendar({ availableDateKeys: null });
+
+    expect(screen.getByRole("button", { name: "June 10, 2026" })).not.toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   test("shows a clear message when selected stay includes outside-window unavailable nights", () => {

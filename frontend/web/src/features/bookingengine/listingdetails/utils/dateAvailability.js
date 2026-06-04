@@ -69,6 +69,8 @@ export const dateKeyToDateNumber = (value) => {
 };
 
 const normalizeAvailabilityContext = (availabilityContext = {}) => ({
+  hasAvailableDateKeySnapshot:
+    availabilityContext.availableDateKeys instanceof Set || Array.isArray(availabilityContext.availableDateKeys),
   availableDateSet:
     availabilityContext.availableDateKeys instanceof Set
       ? availabilityContext.availableDateKeys
@@ -99,12 +101,13 @@ export const isUnavailableDate = (value, unavailableValues, availabilityContext)
     return true;
   }
 
-  const { availableDateSet, availabilityRanges } = normalizeAvailabilityContext(availabilityContext);
+  const { availableDateSet, availabilityRanges, hasAvailableDateKeySnapshot } =
+    normalizeAvailabilityContext(availabilityContext);
   if (availableDateSet.has(dateKey)) {
     return false;
   }
 
-  if (Array.isArray(availabilityRanges)) {
+  if (hasAvailableDateKeySnapshot && Array.isArray(availabilityRanges)) {
     return !isDateAvailableFromBaseWindow(dateKey, availabilityRanges);
   }
 

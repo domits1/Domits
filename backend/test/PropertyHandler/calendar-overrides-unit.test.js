@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { AuthManager } from "../../functions/PropertyHandler/auth/authManager.js";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
+import { PropertyService } from "../../functions/PropertyHandler/business/service/propertyService.js";
 
 const buildAuthManager = ({ username = "caller-user", property, membership = null }) => {
   const authManager = new AuthManager();
@@ -302,5 +303,31 @@ describe("Property calendar override authorization", () => {
     expect(response.statusCode).toBe(403);
     expect(JSON.parse(response.body)).toBe("You must be the owner or an active co-host of the property to access it.");
     expect(controller.propertyService.updatePropertyCalendarOverrides).not.toHaveBeenCalled();
+  });
+});
+
+describe("Property public calendar availability response", () => {
+  it("includes explicit available override dates for guest listing availability", async () => {
+    const service = new PropertyService();
+    service.propertyExternalCalendarRepository = {
+      getAvailabilitySnapshotByPropertyId: jest.fn().mockResolvedValue({
+        externalBlockedDates: ["2026-06-18"],
+      }),
+    };
+    service.propertyCalendarOverrideRepository = {
+      getOverridesByPropertyId: jest.fn().mockResolvedValue([
+        { date: 20260610, isAvailable: true },
+        { date: 20260619, isAvailable: false },
+      ]),
+    };
+    service.bookingRepository = {
+      getBlockedDateKeysByPropertyId: jest.fn().mockResolvedValue(["2026-06-20"]),
+    };
+
+    const response = await service.getPublicCalendarAvailability("property-1");
+
+    expect(response.availableDateKeys).toEqual(["2026-06-10"]);
+    expect(response.unavailableDateKeys).toEqual(["2026-06-19", "2026-06-20"]);
+    expect(response.externalBlockedDates).toEqual(["2026-06-18"]);
   });
 });
