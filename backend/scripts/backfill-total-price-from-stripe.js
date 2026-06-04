@@ -9,17 +9,15 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const commit = args.includes("--commit");
   const limitIndex = args.indexOf("--limit");
-  let limit = null;
+  let limit;
 
-  if (limitIndex === -1) {
-    limit = null;
-  } else {
+  if (limitIndex !== -1) {
     const parsed = Number(args[limitIndex + 1]);
     if (Number.isNaN(parsed)) throw new Error("--limit expects a number");
     limit = parsed;
   }
 
-  return { commit, limit };
+  return { commit, limit: limit ?? null };
 }
 
 function chunkArray(arr, size) {
