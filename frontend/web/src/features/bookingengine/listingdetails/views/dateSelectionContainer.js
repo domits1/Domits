@@ -10,7 +10,7 @@ const DateSelectionContainer = ({
   setCheckOutDate = () => {},
   unavailableDateKeys = [],
   availabilityRanges = null,
-  availableDateKeys = [],
+  availableDateKeys = null,
   className = "",
 }) => {
   const containerClassName = className ? `date-container ${className}` : "date-container";

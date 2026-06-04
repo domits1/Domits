@@ -85,6 +85,11 @@ const normalizeDateKey = (value) => {
 
 const normalizeDateKeyArray = (value) => toArray(value).map(normalizeDateKey).filter(Boolean);
 
+const normalizeOptionalDateKeyArray = (...values) => {
+  const providedValue = values.find((value) => Array.isArray(value));
+  return Array.isArray(providedValue) ? normalizeDateKeyArray(providedValue) : null;
+};
+
 const normalizeCheckInSection = (checkIn) => {
   const safeCheckIn = toPlainObject(checkIn);
   return {
@@ -97,8 +102,9 @@ const normalizeCalendarAvailability = (calendarAvailability) => {
   const safeCalendarAvailability = toPlainObject(calendarAvailability);
   return {
     ...safeCalendarAvailability,
-    availableDateKeys: normalizeDateKeyArray(
-      safeCalendarAvailability.availableDateKeys ?? safeCalendarAvailability.availableOverrideDateKeys
+    availableDateKeys: normalizeOptionalDateKeyArray(
+      safeCalendarAvailability.availableDateKeys,
+      safeCalendarAvailability.availableOverrideDateKeys
     ),
     externalBlockedDates: normalizeDateKeyArray(safeCalendarAvailability.externalBlockedDates),
     unavailableDateKeys: normalizeDateKeyArray(safeCalendarAvailability.unavailableDateKeys),
@@ -220,7 +226,7 @@ const ListingDetails2 = () => {
     () =>
       Array.isArray(property?.calendarAvailability?.availableDateKeys)
         ? property.calendarAvailability.availableDateKeys
-        : [],
+        : null,
     [property?.calendarAvailability?.availableDateKeys]
   );
 

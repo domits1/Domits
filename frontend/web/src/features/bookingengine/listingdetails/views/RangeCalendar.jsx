@@ -144,7 +144,7 @@ MonthGrid.propTypes = {
       end: PropTypes.number.isRequired,
     })
   ),
-  availableDateKeys: PropTypes.instanceOf(Set).isRequired,
+  availableDateKeys: PropTypes.instanceOf(Set),
   navigation: PropTypes.shape({
     side: PropTypes.oneOf(["left", "right"]),
     onClick: PropTypes.func,
@@ -154,7 +154,7 @@ MonthGrid.propTypes = {
 export default function RangeCalendar({
   unavailableDateKeys = [],
   availabilityRanges = null,
-  availableDateKeys = [],
+  availableDateKeys = null,
   checkInDate = "",
   checkOutDate = "",
   onRangeChange,
@@ -169,7 +169,10 @@ export default function RangeCalendar({
   const rangeEnd = useMemo(() => normalizeDateValue(checkOutDate), [checkOutDate]);
 
   const blockedDateKeys = useMemo(() => buildUnavailableDateSet(unavailableDateKeys), [unavailableDateKeys]);
-  const availableDateKeySet = useMemo(() => buildUnavailableDateSet(availableDateKeys), [availableDateKeys]);
+  const availableDateKeySet = useMemo(
+    () => (Array.isArray(availableDateKeys) ? buildUnavailableDateSet(availableDateKeys) : null),
+    [availableDateKeys]
+  );
   const availabilityContext = useMemo(
     () => ({
       availabilityRanges,

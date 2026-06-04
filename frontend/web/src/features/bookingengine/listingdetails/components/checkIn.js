@@ -16,7 +16,7 @@ const CheckIn = ({
   setCheckInDate = () => {},
   unavailableDateKeys = [],
   availabilityRanges = null,
-  availableDateKeys = [],
+  availableDateKeys = null,
 }) => {
   const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
   const minDate = normalizeDateValue(getFutureDateKey(1));

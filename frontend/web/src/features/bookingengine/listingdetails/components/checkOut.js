@@ -18,7 +18,7 @@ const CheckOut = ({
   checkInDate = "",
   unavailableDateKeys = [],
   availabilityRanges = null,
-  availableDateKeys = [],
+  availableDateKeys = null,
 }) => {
   const minCheckOutDate = checkInDate ? addDaysToDateKey(checkInDate, 1) : getFutureDateKey(2);
 
