@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import FaqItem from "./FaqItem";
 
-function FaqSection({ faqs, toggleOpen }) {
+function FaqSection({ faqs, toggleOpen, content }) {
   return (
     <motion.section
       className="faq-landing"
@@ -16,12 +16,12 @@ function FaqSection({ faqs, toggleOpen }) {
       <div className="faq-landing__container">
 
         <motion.h2 className="faq-landing__title" variants={fadeUp}>
-          Answers to <span>Your Questions</span>
+          {content.faqTitle} <span>{content.faqSpan}</span>
         </motion.h2>
 
         <motion.div className="faq-landing__list" variants={staggerContainer}>
           {faqs.map((faq, index) => (
-            <motion.div key={faq.id || faq.question} variants={fadeUp}>
+            <motion.div key={faq.id} variants={fadeUp}>
               <FaqItem
                 question={faq.question}
                 answer={faq.answer}
@@ -40,6 +40,7 @@ function FaqSection({ faqs, toggleOpen }) {
 FaqSection.propTypes = {
   faqs: PropTypes.arrayOf(PropTypes.object),
   toggleOpen: PropTypes.func,
+  content: PropTypes.object.isRequired,
 };
 
 export default FaqSection;

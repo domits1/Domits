@@ -103,59 +103,31 @@ export const reviews = [
   },
 ];
 
-export const hostSection = {
-  title: "Share Your Space, Earn Premium Income",
-  description:
-    "Join our exclusive community of luxury hosts. List your villa, beachfront home, or unique property and connect with travelers seeking extraordinary experiences.",
-
+export const buildHostSection = (content) => ({
+  title: content.title,
+  description: content.description,
   features: [
-    {
-      icon: "money",
-      title: "Earn More",
-      text: "Premium pricing for luxury properties",
-    },
-    {
-      icon: "shield",
-      title: "Infrastructure",
-      text: "Latest industry standards",
-    },
-    {
-      icon: "home",
-      title: "Expert Support",
-      text: "Dedicated team to help you succeed",
-    },
+    { icon: "money", title: content.features.earn.title, text: content.features.earn.text },
+    { icon: "shield", title: content.features.infrastructure.title, text: content.features.infrastructure.text },
+    { icon: "home", title: content.features.support.title, text: content.features.support.text },
   ],
-
   stats: [
-    { value: "500+", label: "Active Hosts" },
-    { value: "4.9", label: "Avg Rating" },
-    { value: "$2.5k", label: "Avg/Month" },
+    { value: content.stats.hosts.value, label: content.stats.hosts.label },
+    { value: content.stats.rating.value, label: content.stats.rating.label },
+    { value: content.stats.earning.value, label: content.stats.earning.label },
   ],
-
-  button: "List Your Property",
-};
+  button: content.button,
+});
 
 export const hostImage = {
   src: hostImg,
   alt: "Become a host",
 };
 
-export const guarantees = [
-  {
-    icon: "price",
-    title: "Best Price Guarantee",
-    text: "We strive to offer you the best possible price. If you find a cheaper option elsewhere, we will review it with you and adjust where appropriate.",
-  },
-  {
-    icon: "booking",
-    title: "Accommodation booking guarantee",
-    text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate a suitable solution for your stay.",
-  },
-  {
-    icon: "stay",
-    title: "Guarantee of stay at the accommodation",
-    text: "If you are unable to access the arranged rooms on arrival, Domits will do its best to coordinate a suitable alternative.",
-  },
+export const buildGuarantees = (content) => [
+  { icon: "price", title: content.bestPrice, text: content.bestPriceDescription },
+  { icon: "booking", title: content.bookingGuarantee, text: content.bookingGuaranteeDescription },
+  { icon: "stay", title: content.stayGuarantee, text: content.stayGuaranteeDescription },
 ];
 
 export const buildHomepageLists = (homePageContent) => {

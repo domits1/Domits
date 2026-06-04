@@ -2,6 +2,7 @@ import BookingService from "../business/bookingService.js";
 import PaymentService from "../business/paymentService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import Stripe from "stripe";
+import SystemManagerRepository from "../data/systemManagerRepository.js";
 import { calculateRefundAmountCents } from "../util/refundCalculator.js";
 import Forbidden from "../util/exception/Forbidden.js";
 import Unauthorized from "../util/exception/Unauthorized.js";
@@ -38,7 +39,10 @@ const toJsonSafeResponse = (value) => {
   );
 };
 
-const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
+const normalizeBookingStatus = (status) =>
+  String(status || "")
+    .trim()
+    .toLowerCase();
 const shouldSyncChannexCancellation = (booking) =>
   CHANNEX_ACTIVE_CANCELLATION_STATUSES.has(normalizeBookingStatus(booking?.status));
 
@@ -46,7 +50,35 @@ class ReservationController {
   constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
-    this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+    this.systemManagerRepository = new SystemManagerRepository();
+    this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : undefined;
+    this._stripeInitPromise = null;
+  }
+
+  async getStripeInstance() {
+    if (this.stripe !== undefined) return this.stripe;
+    if (this._stripeInitPromise) return this._stripeInitPromise;
+
+    this._stripeInitPromise = (async () => {
+      try {
+        const secret =
+          process.env.STRIPE_SECRET_KEY ||
+          (await this.systemManagerRepository.getSystemManagerParameter("/stripe/keys/secret/live"));
+        if (secret) {
+          this.stripe = new Stripe(secret);
+        } else {
+          this.stripe = null;
+        }
+      } catch (error) {
+        console.error("Failed to initialize Stripe from SSM:", error);
+        this.stripe = null;
+      } finally {
+        this._stripeInitPromise = null;
+      }
+      return this.stripe;
+    })();
+
+    return this._stripeInitPromise;
   }
 
   // POST
@@ -80,7 +112,9 @@ class ReservationController {
       return {
         statusCode: error.statusCode || 500,
         headers: responseHeaderJSON,
-        message: error.message || "Something went wrong, please contact support.",
+        response: {
+          message: error.message || "Something went wrong, please contact support.",
+        },
       };
     }
   }
@@ -243,13 +277,16 @@ class ReservationController {
       const totalPriceCents = Math.round((booking.total_price || 0) * 100);
       refundAmountCents = calculateRefundAmountCents(booking.cancellation_policy, booking.arrivaldate, totalPriceCents);
 
-      // Process refund with Stripe if amount > 0 and Stripe is configured
+      // Process refund with Stripe if amount > 0
       if (refundAmountCents > 0 && booking.stripe_refund_id) {
         stripeRefundId = booking.stripe_refund_id;
         refundAmountCents = Number(booking.refunded_amount) || refundAmountCents;
-      } else if (refundAmountCents > 0 && booking.paymentid && this.stripe) {
-        const refund = await this.createStripeRefund(booking.paymentid, refundAmountCents);
-        stripeRefundId = refund.id;
+      } else if (refundAmountCents > 0 && booking.paymentid) {
+        const stripeInstance = await this.getStripeInstance();
+        if (stripeInstance) {
+          const refund = await this.createStripeRefund(booking.paymentid, refundAmountCents);
+          stripeRefundId = refund.id;
+        }
       }
     } catch (error) {
       console.error(`Refund processing failed for booking ${bookingId}:`, error.message);
@@ -285,7 +322,10 @@ class ReservationController {
   }
 
   async createStripeRefund(paymentIntentId, amountCents) {
-    const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    const stripeInstance = await this.getStripeInstance();
+    if (!stripeInstance) throw new Error("Stripe is not configured.");
+
+    const paymentIntent = await stripeInstance.paymentIntents.retrieve(paymentIntentId);
     const currency = paymentIntent?.currency?.toLowerCase();
 
     if (currency !== REFUND_CURRENCY) {
@@ -294,7 +334,7 @@ class ReservationController {
       );
     }
 
-    return await this.stripe.refunds.create(
+    return await stripeInstance.refunds.create(
       {
         payment_intent: paymentIntentId,
         amount: amountCents,
