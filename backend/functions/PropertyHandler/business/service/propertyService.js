@@ -27,6 +27,7 @@ import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
 import {
+  extractAvailableOverrideDateKeys,
   extractUnavailableOverrideDateKeys,
   normalizeBlockedDateKeys,
 } from "../../util/calendarAvailability.js";
@@ -387,6 +388,7 @@ export class PropertyService {
       externalBlockedDates: Array.isArray(availabilitySnapshot?.externalBlockedDates)
         ? availabilitySnapshot.externalBlockedDates
         : [],
+      availableDateKeys: extractAvailableOverrideDateKeys(calendarOverrides),
       unavailableDateKeys,
       hasExternalCalendarSync: availabilitySnapshot?.hasExternalCalendarSync === true,
       syncedSourceCount: Math.max(0, Number(availabilitySnapshot?.syncedSourceCount || 0)),
