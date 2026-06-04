@@ -9,8 +9,16 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const commit = args.includes("--commit");
   const limitIndex = args.indexOf("--limit");
-  const limit = limitIndex !== -1 ? Number(args[limitIndex + 1]) : null;
-  if (limit !== null && Number.isNaN(limit)) throw new Error("--limit expects a number");
+  let limit = null;
+
+  if (limitIndex === -1) {
+    limit = null;
+  } else {
+    const parsed = Number(args[limitIndex + 1]);
+    if (Number.isNaN(parsed)) throw new Error("--limit expects a number");
+    limit = parsed;
+  }
+
   return { commit, limit };
 }
 
