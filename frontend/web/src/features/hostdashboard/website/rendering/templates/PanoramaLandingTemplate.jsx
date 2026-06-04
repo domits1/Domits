@@ -551,6 +551,7 @@ const renderPanoramaHeroSection = ({
   onSelectTarget,
   activeTargetId,
   heroSectionRef,
+  showTopBar,
   showCallToAction,
   showTrustCards,
   featuredTrustCards,
@@ -558,7 +559,9 @@ const renderPanoramaHeroSection = ({
   <section
     id="overview"
     ref={heroSectionRef}
-    className={styles.panoramaEditorialHero}
+    className={`${styles.panoramaEditorialHero} ${
+      showTopBar ? styles.panoramaEditorialHeroWithTopBar : ""
+    }`.trim()}
     {...getScrollRevealProps(60)}
   >
     <div className={styles.panoramaHeroBackdropShell}>
@@ -1078,7 +1081,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
 
   return (
     <>
-      <article className={styles.templateSite}>
+      <article className={`${styles.templateSite} ${styles.templateSitePanorama}`.trim()}>
         {viewState.showTopBar
           ? renderPanoramaTopBar({
               model,
@@ -1096,6 +1099,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
           onSelectTarget,
           activeTargetId,
           heroSectionRef,
+          showTopBar: viewState.showTopBar,
           showCallToAction: viewState.showCallToAction,
           showTrustCards: viewState.showTrustCards,
           featuredTrustCards: viewState.featuredTrustCards,

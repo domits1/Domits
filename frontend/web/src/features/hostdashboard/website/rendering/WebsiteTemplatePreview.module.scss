@@ -233,6 +233,8 @@
   .templateTopBar {
     flex-wrap: nowrap;
     align-items: center;
+    position: absolute;
+    inset: 0 0 auto 0;
   }
 
   .templateTopBarNav,
@@ -268,6 +270,26 @@
 
   .panoramaHeroCopyBlock {
     gap: 14px;
+  }
+
+  .panoramaHeroPrimaryAction {
+    min-height: 0;
+    max-width: min(100%, clamp(165px, 50vw, 220px));
+    gap: clamp(4px, 1vw, 6px);
+    padding:
+      clamp(0.3rem, 0.18rem + 0.5vw, 0.42rem)
+      clamp(0.48rem, 0.28rem + 0.9vw, 0.68rem);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.14);
+  }
+
+  .panoramaHeroPrimaryAction strong {
+    font-size: clamp(0.6rem, 0.48rem + 0.35vw, 0.74rem);
+    line-height: 1.2;
+  }
+
+  .panoramaHeroPrimaryAction span {
+    font-size: clamp(0.5rem, 0.4rem + 0.28vw, 0.62rem);
+    line-height: 1.3;
   }
 
   .panoramaHeroBackdropShell {
@@ -456,6 +478,10 @@
 
 .templateSite {
   display: grid;
+  gap: 18px;
+}
+
+.templateSitePanorama {
   gap: 18px;
 }
 
@@ -733,6 +759,10 @@
   gap: 20px;
 }
 
+.panoramaEditorialHeroWithTopBar {
+  margin-top: 0;
+}
+
 .panoramaHeroBackdropShell {
   margin:
     calc(0px - var(--template-preview-frame-gutter))
@@ -829,9 +859,14 @@
   flex-wrap: wrap;
   gap: 10px;
   padding: 0.88rem 1.12rem;
-  background: rgba(255, 248, 237, 0.96);
-  color: #1a2232;
-  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.22);
+  background: rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #f8f4ed;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 18px 32px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .panoramaHeroPrimaryAction strong,
@@ -840,7 +875,7 @@
 }
 
 .panoramaHeroPrimaryAction span {
-  color: #6b7280;
+  color: rgba(248, 244, 237, 0.82);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -2359,9 +2394,15 @@
     overflow: visible;
   }
 
+  .panoramaEditorialHeroWithTopBar {
+    margin-top: -18px;
+  }
+
   .templateTopBar {
     flex-wrap: nowrap;
     align-items: center;
+    position: absolute;
+    inset: 0 0 auto 0;
   }
 
   .templateTopBarNav,
@@ -2397,6 +2438,26 @@
 
   .panoramaHeroCopyBlock {
     gap: 14px;
+  }
+
+  .panoramaHeroPrimaryAction {
+    min-height: 0;
+    max-width: min(100%, clamp(165px, 50vw, 220px));
+    gap: clamp(4px, 1vw, 6px);
+    padding:
+      clamp(0.3rem, 0.18rem + 0.5vw, 0.42rem)
+      clamp(0.48rem, 0.28rem + 0.9vw, 0.68rem);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.14);
+  }
+
+  .panoramaHeroPrimaryAction strong {
+    font-size: clamp(0.6rem, 0.48rem + 0.35vw, 0.74rem);
+    line-height: 1.2;
+  }
+
+  .panoramaHeroPrimaryAction span {
+    font-size: clamp(0.5rem, 0.4rem + 0.28vw, 0.62rem);
+    line-height: 1.3;
   }
 
   .statGrid,
@@ -2511,11 +2572,11 @@
   }
 
   .panoramaHeroBackdropShell {
-    min-height: 250px;
+    min-height: 320px;
   }
 
   .panoramaHeroBackdrop {
-    min-height: 250px;
+    min-height: 320px;
     object-position: center 58%;
   }
 
