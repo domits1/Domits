@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import PageSwitcher from "../../utils/PageSwitcher.module.css";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
@@ -33,6 +33,7 @@ const Accommodations = ({ searchResults }) => {
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreInFlightRef = useRef(false);
 
   const [filterLoading, setFilterLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -55,32 +56,53 @@ const Accommodations = ({ searchResults }) => {
     accommodation?.ID ||
     accommodation?.id;
 
+  const loadMoreProperties = useCallback(async ({ page, isCancelled = () => false } = {}) => {
+    if (loadMoreInFlightRef.current || !lastEvaluatedKeyCreatedAt) return false;
+
+    loadMoreInFlightRef.current = true;
+    setLoadingMore(true);
+
+    try {
+      const result = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
+      if (isCancelled()) return false;
+
+      const newProperties = result.properties ?? [];
+      if (newProperties.length > 0) {
+        setAccolist((prev) => [...prev, ...newProperties]);
+        if (page) {
+          setCurrentPage(page);
+        }
+      }
+
+      if (result.lastEvaluatedKey && newProperties.length > 0) {
+        setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
+        setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
+      } else {
+        setLastEvaluatedKeyCreatedAt(null);
+        setLastEvaluatedKeyId(null);
+      }
+
+      return newProperties.length > 0;
+    } catch {
+      if (!isCancelled()) {
+        setLastEvaluatedKeyCreatedAt(null);
+        setLastEvaluatedKeyId(null);
+      }
+      return false;
+    } finally {
+      loadMoreInFlightRef.current = false;
+      if (!isCancelled()) {
+        setLoadingMore(false);
+      }
+    }
+  }, [lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId]);
+
   const handlePageChange = async (page) => {
     if (page < 1) return;
     if (page > totalPages && !hasMore) return;
 
-    if (page > totalPages && hasMore && !loadingMore) {
-      setLoadingMore(true);
-      try {
-        const result = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
-        const newProperties = result.properties ?? [];
-        if (newProperties.length > 0) {
-          setAccolist((prev) => [...prev, ...newProperties]);
-          setCurrentPage(page);
-        }
-        if (result.lastEvaluatedKey && newProperties.length > 0) {
-          setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
-          setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
-        } else {
-          setLastEvaluatedKeyCreatedAt(null);
-          setLastEvaluatedKeyId(null);
-        }
-      } catch {
-        setLastEvaluatedKeyCreatedAt(null);
-        setLastEvaluatedKeyId(null);
-      } finally {
-        setLoadingMore(false);
-      }
+    if (page > totalPages && hasMore) {
+      await loadMoreProperties({ page });
       return;
     }
 
@@ -137,35 +159,16 @@ const Accommodations = ({ searchResults }) => {
 
   useEffect(() => {
     const isSearchActive = searchResults && searchResults.length > 0;
-    if (currentPage !== totalPages || !hasMore || loadingMore || isSearchActive || totalPages === 0) return;
+    if (currentPage !== totalPages || !hasMore || isSearchActive || totalPages === 0) return;
 
     let cancelled = false;
 
-    FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId)
-      .then((result) => {
-        if (cancelled) return;
-        const nextProperties = result.properties ?? [];
-        if (nextProperties.length > 0) {
-          setAccolist((prev) => [...prev, ...nextProperties]);
-        }
-        if (result.lastEvaluatedKey && nextProperties.length > 0) {
-          setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
-          setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
-        } else {
-          setLastEvaluatedKeyCreatedAt(null);
-          setLastEvaluatedKeyId(null);
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setLastEvaluatedKeyCreatedAt(null);
-        setLastEvaluatedKeyId(null);
-      });
+    loadMoreProperties({ isCancelled: () => cancelled });
 
     return () => {
       cancelled = true;
     };
-  }, [currentPage, totalPages, hasMore, loadingMore, lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId, searchResults]);
+  }, [currentPage, totalPages, hasMore, searchResults, loadMoreProperties]);
 
   if (filterLoading || searchLoading) {
     return (

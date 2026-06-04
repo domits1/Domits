@@ -14,13 +14,27 @@ export class FilterController {
       guests,
       country,
       city,
+      bedrooms,
+      beds,
+      bathrooms,
+      bookingType,
       lastEvaluatedKeyCreatedAt,
       lastEvaluatedKeyId,
     } = queryParams;
 
     try {
       const result = await this.service.getFilteredProperties({
-        min, max, guests, country, city, lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId,
+        min,
+        max,
+        guests,
+        country,
+        city,
+        bedrooms,
+        beds,
+        bathrooms,
+        bookingType,
+        lastEvaluatedKeyCreatedAt,
+        lastEvaluatedKeyId,
       });
       return ok(result);
     } catch (err) {

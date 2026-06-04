@@ -48,7 +48,8 @@
     padding: 16px 10px;
 }
 
-.pagination button {
+.pagination button,
+.page {
     display: flex;
     align-items: center;
     justify-content: center;

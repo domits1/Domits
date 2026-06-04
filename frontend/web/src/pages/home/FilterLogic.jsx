@@ -3,6 +3,12 @@ import { MAX_PRICE, MIN_PRICE } from "../../constants/searchFilters";
 
 const FILTER_URL = "https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction";
 
+const appendPositiveNumberParam = (params, key, value) => {
+  if (value > 0) {
+    params.append(key, value);
+  }
+};
+
 export default function useFilterLogic(props) {
   const { onFilterApplied } = props || {};
 
@@ -30,10 +36,12 @@ export default function useFilterLogic(props) {
   });
 
   const handleRoomChange = (key, delta) => {
-    setRoomsAndBeds((prev) => ({
-      ...prev,
-      [key]: Math.max(0, prev[key] + delta),
-    }));
+    const nextRoomsAndBeds = {
+      ...roomsAndBeds,
+      [key]: Math.max(0, roomsAndBeds[key] + delta),
+    };
+    setRoomsAndBeds(nextRoomsAndBeds);
+    fetchFilteredAccommodations({ roomsAndBeds: nextRoomsAndBeds });
   };
 
   const [bookingOptions, setBookingOptions] = useState({
@@ -42,23 +50,40 @@ export default function useFilterLogic(props) {
   });
 
   const handleBookingOptionChange = (event) => {
-    setBookingOptions((prev) => ({
-      ...prev,
+    const nextBookingOptions = {
+      ...bookingOptions,
       [event.target.name]: event.target.checked,
-    }));
+    };
+    setBookingOptions(nextBookingOptions);
+    fetchFilteredAccommodations({ bookingOptions: nextBookingOptions });
   };
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchFilteredAccommodations = async () => {
+  async function fetchFilteredAccommodations(overrides = {}) {
+    const nextPriceValues = overrides.priceValues ?? priceValues;
+    const nextRoomsAndBeds = overrides.roomsAndBeds ?? roomsAndBeds;
+    const nextBookingOptions = overrides.bookingOptions ?? bookingOptions;
+
     try {
       setLoading(true);
       setError(null);
 
       const url = new URL(FILTER_URL);
-      url.searchParams.append("minPrice", priceValues[0]);
-      url.searchParams.append("maxPrice", priceValues[1]);
+      url.searchParams.append("minPrice", nextPriceValues[0]);
+      url.searchParams.append("maxPrice", nextPriceValues[1]);
+      appendPositiveNumberParam(url.searchParams, "bedrooms", nextRoomsAndBeds.bedrooms);
+      appendPositiveNumberParam(url.searchParams, "beds", nextRoomsAndBeds.beds);
+      appendPositiveNumberParam(url.searchParams, "bathrooms", nextRoomsAndBeds.bathrooms);
+
+      if (nextBookingOptions.bookInstantly && !nextBookingOptions.bookingRequest) {
+        url.searchParams.append("bookingType", "direct");
+      }
+
+      if (nextBookingOptions.bookingRequest && !nextBookingOptions.bookInstantly) {
+        url.searchParams.append("bookingType", "inquiry");
+      }
 
       const response = await fetch(url);
       const data = await response.json();
@@ -67,8 +92,10 @@ export default function useFilterLogic(props) {
       if (properties.length > 0) {
         if (onFilterApplied) {
           onFilterApplied(properties, data?.lastEvaluatedKey ?? null, {
-            minPrice: priceValues[0],
-            maxPrice: priceValues[1],
+            minPrice: nextPriceValues[0],
+            maxPrice: nextPriceValues[1],
+            roomsAndBeds: nextRoomsAndBeds,
+            bookingOptions: nextBookingOptions,
           });
         }
       } else {
@@ -79,14 +106,16 @@ export default function useFilterLogic(props) {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handlePriceChange = (index, value) => {
     const newValues = [...priceValues];
     newValues[index] = Number(value);
     if (newValues[0] <= newValues[1]) {
       setPriceValues(newValues);
+      return newValues;
     }
+    return priceValues;
   };
 
   const handleAmenityChange = (event) => {

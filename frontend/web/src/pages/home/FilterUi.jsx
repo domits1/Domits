@@ -61,8 +61,8 @@ const FilterUi = ({ onFilterApplied }) => {
     if (numericValue) {
       const newValue = Number.parseInt(numericValue, 10);
       if (newValue >= MIN_PRICE && newValue <= priceValues[1]) {
-        handlePriceChange(0, newValue);
-        fetchFilteredAccommodations();
+        const nextPriceValues = handlePriceChange(0, newValue);
+        fetchFilteredAccommodations({ priceValues: nextPriceValues });
       }
     }
   };
@@ -76,8 +76,8 @@ const FilterUi = ({ onFilterApplied }) => {
     if (numericValue) {
       const newValue = Number.parseInt(numericValue, 10);
       if (newValue <= MAX_PRICE && newValue >= priceValues[0]) {
-        handlePriceChange(1, newValue);
-        fetchFilteredAccommodations();
+        const nextPriceValues = handlePriceChange(1, newValue);
+        fetchFilteredAccommodations({ priceValues: nextPriceValues });
       }
     }
   };
