@@ -9,6 +9,7 @@ const DateSelectionContainer = ({
   checkOutDate = "",
   setCheckOutDate = () => {},
   unavailableDateKeys = [],
+  bookedDateKeys = [],
   availabilityRanges = null,
   availableDateKeys = null,
   className = "",
@@ -21,6 +22,7 @@ const DateSelectionContainer = ({
         checkInDate={checkInDate}
         setCheckInDate={setCheckInDate}
         unavailableDateKeys={unavailableDateKeys}
+        bookedDateKeys={bookedDateKeys}
         availabilityRanges={availabilityRanges}
         availableDateKeys={availableDateKeys}
       />
@@ -30,6 +32,7 @@ const DateSelectionContainer = ({
         setCheckOutDate={setCheckOutDate}
         checkInDate={checkInDate}
         unavailableDateKeys={unavailableDateKeys}
+        bookedDateKeys={bookedDateKeys}
         availabilityRanges={availabilityRanges}
         availableDateKeys={availableDateKeys}
       />
@@ -43,6 +46,7 @@ DateSelectionContainer.propTypes = {
   checkOutDate: PropTypes.string,
   setCheckOutDate: PropTypes.func,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
   availabilityRanges: PropTypes.arrayOf(
     PropTypes.shape({
       start: PropTypes.number.isRequired,
