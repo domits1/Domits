@@ -235,6 +235,11 @@ const routeDefinitions = [
     handle: (event) => integrationController.syncChannexBookingAvailability(event),
   },
   {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").endsWith("/integrations/channex/calendar-change/sync"),
+    handle: (event) => integrationController.syncChannexCalendarChange(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/availability"),
     handle: (event) => integrationController.syncChannexAvailability(event),
   },

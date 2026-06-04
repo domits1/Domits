@@ -276,6 +276,25 @@ class IntegrationController {
     };
   }
 
+  async syncChannexCalendarChange(event) {
+    const expectedToken = requireStr(process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN);
+    const providedToken = requireStr(getHeader(event?.headers, "x-domits-internal-token"));
+    const allowWithoutToken = process.env.TEST === "true" && !expectedToken;
+
+    if (!allowWithoutToken && (!expectedToken || providedToken !== expectedToken)) {
+      return {
+        statusCode: 403,
+        response: {
+          error: "FORBIDDEN",
+          message: "Invalid internal calendar-change sync token.",
+        },
+      };
+    }
+
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.syncChannexCalendarChange(body);
+  }
+
   async syncChannexRestrictions(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
