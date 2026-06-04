@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { MAX_PRICE, MIN_PRICE } from "../../constants/searchFilters";
 
+const FILTER_URL = "https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction";
+
 export default function useFilterLogic(props) {
-  const [priceValues, setPriceValues] = useState([MIN_PRICE, MAX_PRICE]);
   const { onFilterApplied } = props || {};
+
+  const [priceValues, setPriceValues] = useState([MIN_PRICE, MAX_PRICE]);
 
   const [selectedAmenities, setSelectedAmenities] = useState({
     wifi: false,
@@ -45,7 +48,6 @@ export default function useFilterLogic(props) {
     }));
   };
 
-  const [accommodationResults, setAccommodationResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -54,29 +56,20 @@ export default function useFilterLogic(props) {
       setLoading(true);
       setError(null);
 
-      const minPrice = priceValues[0];
-      const maxPrice = priceValues[1];
-
-      const url = new URL(
-        "https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction"
-      );
-      url.searchParams.append("minPrice", minPrice);
-      url.searchParams.append("maxPrice", maxPrice);
+      const url = new URL(FILTER_URL);
+      url.searchParams.append("minPrice", priceValues[0]);
+      url.searchParams.append("maxPrice", priceValues[1]);
 
       const response = await fetch(url);
       const data = await response.json();
+      const properties = data?.properties ?? [];
 
-      if (data && Array.isArray(data) && data.length > 0) {
-        setAccommodationResults(data);
-
-        if (onFilterApplied && typeof onFilterApplied === "function") {
-          onFilterApplied(data);
-        }
-      } else if (Array.isArray(data?.items)) {
-        setAccommodationResults(data.items);
-
-        if (onFilterApplied && typeof onFilterApplied === "function") {
-          onFilterApplied(data.items);
+      if (properties.length > 0) {
+        if (onFilterApplied) {
+          onFilterApplied(properties, data?.lastEvaluatedKey ?? null, {
+            minPrice: priceValues[0],
+            maxPrice: priceValues[1],
+          });
         }
       } else {
         setError("No accommodations found for these criteria");
@@ -115,7 +108,6 @@ export default function useFilterLogic(props) {
     handleRoomChange,
     bookingOptions,
     handleBookingOptionChange,
-    accommodationResults,
     loading,
     error,
     fetchFilteredAccommodations,
