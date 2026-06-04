@@ -221,6 +221,17 @@
 }
 
 .previewCanvasViewportMobile {
+  --panorama-calendar-card-padding: 22px 14px 20px;
+  --panorama-calendar-card-radius: 24px;
+  --panorama-calendar-content-max-width: 100%;
+  --panorama-calendar-month-columns: minmax(0, 1fr);
+  --panorama-calendar-navigation-label-columns: minmax(0, 1fr);
+  --panorama-calendar-navigation-label-gap: 10px;
+  --panorama-calendar-month-card-padding: 22px 14px 20px;
+  --panorama-calendar-weekday-letter-spacing: 0.14em;
+  --panorama-calendar-legend-letter-spacing: 0.14em;
+  --panorama-calendar-cell-min-height: 32px;
+  --panorama-calendar-cell-day-font-size: 0.92rem;
   padding: 14px;
 
   .panoramaTopBarShell {
@@ -268,6 +279,10 @@
     display: inline-flex;
   }
 
+  .panoramaEditorialHeroWithTopBar {
+    margin-top: -18px;
+  }
+
   .panoramaHeroCopyBlock {
     gap: 14px;
   }
@@ -293,12 +308,31 @@
   }
 
   .panoramaHeroBackdropShell {
-    min-height: 250px;
+    --panorama-hero-min-height: clamp(380px, 62vh, 500px);
+    min-height: var(--panorama-hero-min-height);
   }
 
   .panoramaHeroBackdrop {
-    min-height: 250px;
+    min-height: var(--panorama-hero-min-height);
     object-position: center 58%;
+  }
+
+  .panoramaTopBarDrawer {
+    width: min(300px, calc(100% - 20px));
+    padding: 16px 14px 20px;
+  }
+
+  .panoramaTopBarShellSolid .templateTopBar {
+    box-shadow: none;
+    border-bottom: 1px solid rgba(208, 197, 178, 0.72);
+  }
+
+  .previewBrowserBar {
+    padding: 12px 14px;
+  }
+
+  .heroTitle {
+    font-size: 1.42rem;
   }
 
   .statGrid,
@@ -349,6 +383,7 @@
   }
 
   .panoramaHostCard {
+    flex-direction: row;
     width: 100%;
     justify-self: stretch;
     align-items: center;
@@ -555,6 +590,11 @@
   pointer-events: auto;
 }
 
+.panoramaTopBarShellInteractive,
+.panoramaTopBarShellPublic {
+  width: 100%;
+}
+
 .panoramaTopBarShell .templateTopBar {
   width: 100%;
   box-sizing: border-box;
@@ -565,7 +605,6 @@
     background 0.28s ease,
     border-color 0.28s ease,
     box-shadow 0.28s ease,
-    backdrop-filter 0.28s ease,
     color 0.28s ease;
 }
 
@@ -576,6 +615,14 @@
 .panoramaTopBarShell .templateTopBarNav {
   flex: 1 1 auto;
   justify-content: flex-end;
+}
+
+.panoramaTopBarShell .templateTopBarNav span,
+.panoramaTopBarShell .templateTopBarNav a {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding-inline: 0;
 }
 
 .panoramaTopBarActions {
@@ -729,6 +776,7 @@
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .panoramaTopBarShellTransparent .templateTopBarBrand {
@@ -743,15 +791,23 @@
 .panoramaTopBarShellTransparent .templateTopBarNav span,
 .panoramaTopBarShellTransparent .templateTopBarNav a,
 .panoramaTopBarShellTransparent .templateTopBarMeta span {
-  background: rgba(30, 49, 80, 0.72);
+  background: transparent;
   color: #fffaf3;
-  box-shadow: inset 0 0 0 1px rgba(248, 244, 237, 0.18);
+  box-shadow: none;
+  text-shadow: 0 1px 2px rgba(15, 23, 42, 0.34);
 }
 
 .panoramaTopBarShellSolid .templateTopBar {
-  background: rgba(255, 255, 255, 0.84);
+  background: #fbf8f2;
   box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
-  backdrop-filter: blur(18px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.panoramaTopBarShellSolid .templateTopBarNav span,
+.panoramaTopBarShellSolid .templateTopBarNav a,
+.panoramaTopBarShellSolid .templateTopBarMeta span {
+  color: #334155;
 }
 
 .panoramaEditorialHero {
@@ -764,13 +820,14 @@
 }
 
 .panoramaHeroBackdropShell {
+  --panorama-hero-min-height: clamp(520px, 46vw, 720px);
   margin:
     calc(0px - var(--template-preview-frame-gutter))
     calc(0px - var(--template-preview-frame-gutter))
     0;
   position: relative;
-  min-height: clamp(520px, 46vw, 720px);
-  border-radius: 0 0 30px 30px;
+  min-height: var(--panorama-hero-min-height);
+  border-radius: 0;
   overflow: hidden;
   border: 0;
   background: #111827;
@@ -779,7 +836,7 @@
 .panoramaHeroBackdrop {
   width: 100%;
   height: 100%;
-  min-height: clamp(520px, 46vw, 720px);
+  min-height: var(--panorama-hero-min-height);
   display: block;
   object-fit: cover;
 }
@@ -2436,6 +2493,24 @@
     display: inline-flex;
   }
 
+  .panoramaTopBarShellPublic {
+    position: relative;
+    top: auto;
+    height: var(--panorama-topbar-overlay-offset);
+    margin-bottom: calc(0px - var(--panorama-topbar-overlay-offset));
+  }
+
+  .panoramaTopBarShellPublic > [data-panorama-top-bar-inner="true"] {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 24;
+  }
+
+  .panoramaTopBarShellPublic .templateTopBar {
+    position: relative;
+    inset: auto;
+  }
+
   .panoramaHeroCopyBlock {
     gap: 14px;
   }
@@ -2542,6 +2617,11 @@
     gap: 10px 14px;
   }
 
+  .panoramaTopBarShellSolid .templateTopBar {
+    box-shadow: none;
+    border-bottom: 1px solid rgba(208, 197, 178, 0.72);
+  }
+
   .visitorChatLauncher,
   .visitorChatPanel {
     right: 18px;
@@ -2572,11 +2652,12 @@
   }
 
   .panoramaHeroBackdropShell {
-    min-height: 320px;
+    --panorama-hero-min-height: clamp(380px, 62vh, 500px);
+    min-height: var(--panorama-hero-min-height);
   }
 
   .panoramaHeroBackdrop {
-    min-height: 320px;
+    min-height: var(--panorama-hero-min-height);
     object-position: center 58%;
   }
 

@@ -34,13 +34,16 @@ import {
 } from "./templatePropTypes";
 import {
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
   DEFAULT_WEBSITE_CONTACT_TITLE,
   WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
+  resolveWebsiteContactSectionCopy,
 } from "../../config/websiteContactSectionConfig";
+import { getDefaultWebsiteCalendarTitle } from "../../config/websiteCalendarSectionConfig";
 import { resolveWebsiteResidencePanelColor } from "../../config/websiteResidenceSectionConfig";
 import { resolveWebsiteGalleryPanelColor } from "../../config/websiteGallerySectionConfig";
 import {
@@ -50,6 +53,7 @@ import {
 
 const PANORAMA_TOP_BAR_SOLID_THRESHOLD_PX = 24;
 const PANORAMA_TOP_BAR_SELECTOR = "[data-panorama-top-bar]";
+const PANORAMA_TOP_BAR_INNER_SELECTOR = "[data-panorama-top-bar-inner]";
 const PANORAMA_TOP_BAR_SCROLL_OFFSET_PX = 18;
 const PANORAMA_AMENITY_CATEGORY_LABELS = Object.freeze({
   EcoFriendly: "Eco Friendly",
@@ -57,6 +61,8 @@ const PANORAMA_AMENITY_CATEGORY_LABELS = Object.freeze({
   FamilyFriendly: "Family Friendly",
   LivingArea: "Living Area",
 });
+const PANORAMA_RESIDENCE_SECTION_LABEL = "The residence";
+const PANORAMA_JOURNEY_SECTION_LABEL = "The stay";
 
 const hexToRgbChannels = (hexColor) => {
   const normalizedHexColor = resolveWebsiteContactAccentColor(hexColor).slice(1);
@@ -81,7 +87,9 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
   event.preventDefault();
 
   const topBarElement = globalThis.document.querySelector(PANORAMA_TOP_BAR_SELECTOR);
-  const topBarHeight = topBarElement?.getBoundingClientRect().height || 0;
+  const topBarInnerElement =
+    topBarElement?.querySelector(PANORAMA_TOP_BAR_INNER_SELECTOR) || topBarElement;
+  const topBarHeight = topBarInnerElement?.getBoundingClientRect().height || 0;
   const prefersReducedMotion =
     typeof globalThis.matchMedia === "function" &&
     globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -144,6 +152,8 @@ const formatPanoramaAmenityCategory = (value) => {
   const normalizedValue = String(value || "").trim();
   return PANORAMA_AMENITY_CATEGORY_LABELS[normalizedValue] || normalizedValue || "Amenities";
 };
+
+const resolvePanoramaNavLabel = (value, fallbackLabel) => String(value || "").trim() || fallbackLabel;
 
 const getAmenityMatchKey = (amenity) => {
   const normalizedId = String(amenity?.id || "").trim();
@@ -293,17 +303,46 @@ const usePanoramaTopBarSolidState = (enabled) => {
   };
 };
 
-const buildPanoramaNavItems = (viewState) =>
+const buildPanoramaNavItems = (model, viewState) =>
   [
     { href: "#overview", label: "Overview" },
+    {
+      href: "#about",
+      label: resolvePanoramaNavLabel(model.residenceSection?.title, PANORAMA_RESIDENCE_SECTION_LABEL),
+    },
     ...(viewState.showGallerySection && viewState.gallerySlots.length > 0
-      ? [{ href: "#gallery", label: "Gallery" }]
+      ? [{
+        href: "#gallery",
+        label: resolvePanoramaNavLabel(model.gallerySection?.title, "Gallery"),
+      }]
       : []),
     ...(viewState.showAmenitiesPanel && viewState.featuredAmenities.length > 0
-      ? [{ href: "#features", label: "Amenities" }]
+      ? [{
+        href: "#features",
+        label: resolvePanoramaNavLabel(model.amenitiesSection?.title, "Amenities"),
+      }]
       : []),
-    ...(viewState.showAvailabilityCalendar ? [{ href: "#availability", label: "Availability" }] : []),
-    ...(viewState.showContactSection ? [{ href: "#contact", label: "Contact" }] : []),
+    ...(viewState.showJourneyStops && viewState.featuredJourneyStops.length > 0
+      ? [{ href: "#lifestyle", label: PANORAMA_JOURNEY_SECTION_LABEL }]
+      : []),
+    ...(viewState.showAvailabilityCalendar
+      ? [{
+        href: "#availability",
+        label: resolvePanoramaNavLabel(
+          model.calendarSection?.title,
+          getDefaultWebsiteCalendarTitle("panorama-landing")
+        ),
+      }]
+      : []),
+    ...(viewState.showContactSection
+      ? [{
+        href: "#contact",
+        label: resolvePanoramaNavLabel(
+          resolveWebsiteContactSectionCopy(model.contactSection).title,
+          DEFAULT_WEBSITE_CONTACT_SECTION_TITLE
+        ),
+      }]
+      : []),
   ];
 
 function PanoramaAmenitiesModal({ amenities, amenityIconColor, onClose }) {
@@ -434,75 +473,83 @@ const renderPanoramaTopBar = ({
   isNavDrawerOpen,
   onToggleNavDrawer,
   onCloseNavDrawer,
-}) => (
-  <div
-    data-panorama-top-bar="true"
-    className={`${styles.panoramaTopBarShell} ${
-      isTopBarSolid ? styles.panoramaTopBarShellSolid : styles.panoramaTopBarShellTransparent
-    }`.trim()}
-  >
-    <TemplateTopBar
-      model={model}
-      onSelectTarget={onSelectTarget}
-      activeTargetId={activeTargetId}
-      showMark={false}
-    >
-      <div className={styles.panoramaTopBarActions}>
-        <div className={styles.templateTopBarNav}>
-          {navItems.map((item) => renderPanoramaNavItem(item, Boolean(onSelectTarget)))}
-        </div>
-        <button
-          type="button"
-          className={styles.panoramaTopBarMenuButton}
-          onClick={onToggleNavDrawer}
-          aria-label={isNavDrawerOpen ? "Close section menu" : "Open section menu"}
-          aria-expanded={isNavDrawerOpen}
-          aria-controls="panorama-site-menu"
-        >
-          {isNavDrawerOpen ? <CloseRoundedIcon fontSize="small" /> : <MenuRoundedIcon fontSize="small" />}
-          <span>{isNavDrawerOpen ? "Close" : "Sections"}</span>
-        </button>
-      </div>
-    </TemplateTopBar>
+}) => {
+  const isInteractivePreview = Boolean(onSelectTarget);
+
+  return (
     <div
-      className={`${styles.panoramaTopBarDrawerOverlay} ${
-        isNavDrawerOpen ? styles.panoramaTopBarDrawerOverlayOpen : ""
+      data-panorama-top-bar="true"
+      className={`${styles.panoramaTopBarShell} ${
+        isTopBarSolid ? styles.panoramaTopBarShellSolid : styles.panoramaTopBarShellTransparent
+      } ${
+        isInteractivePreview ? styles.panoramaTopBarShellInteractive : styles.panoramaTopBarShellPublic
       }`.trim()}
-      onClick={onCloseNavDrawer}
-      aria-hidden={!isNavDrawerOpen}
-    />
-    <aside
-      id="panorama-site-menu"
-      className={`${styles.panoramaTopBarDrawer} ${
-        isNavDrawerOpen ? styles.panoramaTopBarDrawerOpen : ""
-      }`.trim()}
-      aria-label="Website section navigation"
-      aria-hidden={!isNavDrawerOpen}
     >
-      <div className={styles.panoramaTopBarDrawerHeader}>
-        <div className={styles.panoramaTopBarDrawerTitleBlock}>
-          <span className={styles.panoramaTopBarDrawerLabel}>Sections</span>
-          <strong className={styles.panoramaTopBarDrawerTitle}>{model.site.title}</strong>
-        </div>
-        <button
-          type="button"
-          className={styles.panoramaTopBarDrawerCloseButton}
-          onClick={onCloseNavDrawer}
-          aria-label="Close section menu"
+      <div data-panorama-top-bar-inner="true">
+        <TemplateTopBar
+          model={model}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
+          showMark={false}
         >
-          <CloseRoundedIcon fontSize="small" />
-        </button>
+          <div className={styles.panoramaTopBarActions}>
+            <div className={styles.templateTopBarNav}>
+              {navItems.map((item) => renderPanoramaNavItem(item, isInteractivePreview))}
+            </div>
+            <button
+              type="button"
+              className={styles.panoramaTopBarMenuButton}
+              onClick={onToggleNavDrawer}
+              aria-label={isNavDrawerOpen ? "Close section menu" : "Open section menu"}
+              aria-expanded={isNavDrawerOpen}
+              aria-controls="panorama-site-menu"
+            >
+              {isNavDrawerOpen ? <CloseRoundedIcon fontSize="small" /> : <MenuRoundedIcon fontSize="small" />}
+              <span>{isNavDrawerOpen ? "Close" : "Sections"}</span>
+            </button>
+          </div>
+        </TemplateTopBar>
       </div>
-      <nav className={styles.panoramaTopBarDrawerNav}>
-        {navItems.map((item) =>
-          renderPanoramaNavItem(item, Boolean(onSelectTarget), () => {
-            onCloseNavDrawer();
-          })
-        )}
-      </nav>
-    </aside>
-  </div>
-);
+      <div
+        className={`${styles.panoramaTopBarDrawerOverlay} ${
+          isNavDrawerOpen ? styles.panoramaTopBarDrawerOverlayOpen : ""
+        }`.trim()}
+        onClick={onCloseNavDrawer}
+        aria-hidden={!isNavDrawerOpen}
+      />
+      <aside
+        id="panorama-site-menu"
+        className={`${styles.panoramaTopBarDrawer} ${
+          isNavDrawerOpen ? styles.panoramaTopBarDrawerOpen : ""
+        }`.trim()}
+        aria-label="Website section navigation"
+        aria-hidden={!isNavDrawerOpen}
+      >
+        <div className={styles.panoramaTopBarDrawerHeader}>
+          <div className={styles.panoramaTopBarDrawerTitleBlock}>
+            <span className={styles.panoramaTopBarDrawerLabel}>Sections</span>
+            <strong className={styles.panoramaTopBarDrawerTitle}>{model.site.title}</strong>
+          </div>
+          <button
+            type="button"
+            className={styles.panoramaTopBarDrawerCloseButton}
+            onClick={onCloseNavDrawer}
+            aria-label="Close section menu"
+          >
+            <CloseRoundedIcon fontSize="small" />
+          </button>
+        </div>
+        <nav className={styles.panoramaTopBarDrawerNav}>
+          {navItems.map((item) =>
+            renderPanoramaNavItem(item, isInteractivePreview, () => {
+              onCloseNavDrawer();
+            })
+          )}
+        </nav>
+      </aside>
+    </div>
+  );
+};
 
 const renderPanoramaTrustCards = ({ featuredTrustCards, onSelectTarget, activeTargetId }) => {
   if (featuredTrustCards.length < 1) {
@@ -939,7 +986,11 @@ const renderPanoramaContactSection = ({
   onSelectTarget,
   activeTargetId,
 }) => {
-  const contactTitle = String(model.contactSection?.title || "").trim() || DEFAULT_WEBSITE_CONTACT_TITLE;
+  const resolvedContactSectionCopy = resolveWebsiteContactSectionCopy(model.contactSection);
+  const contactTitle =
+    String(resolvedContactSectionCopy.title || "").trim() || DEFAULT_WEBSITE_CONTACT_SECTION_TITLE;
+  const contactCaption =
+    String(resolvedContactSectionCopy.caption || "").trim() || DEFAULT_WEBSITE_CONTACT_TITLE;
   const contactDescription =
     String(model.contactSection?.description || "").trim() || DEFAULT_WEBSITE_CONTACT_DESCRIPTION;
   const hostName = String(model.host?.name || "").trim() || "Host";
@@ -982,18 +1033,18 @@ const renderPanoramaContactSection = ({
           <p
             {...getInteractiveTargetProps(styles.panoramaContactEyebrow, onSelectTarget, {
               sectionId: "contact",
-              targetId: "contact.accentColor",
-            }, activeTargetId)}
-          >
-            Contact
-          </p>
-          <h2
-            {...getInteractiveTargetProps(styles.panoramaContactTitle, onSelectTarget, {
-              sectionId: "contact",
               targetId: "contact.title",
             }, activeTargetId)}
           >
             {contactTitle}
+          </p>
+          <h2
+            {...getInteractiveTargetProps(styles.panoramaContactTitle, onSelectTarget, {
+              sectionId: "contact",
+              targetId: "contact.caption",
+            }, activeTargetId)}
+          >
+            {contactCaption}
           </h2>
           <p
             {...getInteractiveTargetProps(styles.panoramaContactDescription, onSelectTarget, {
@@ -1037,7 +1088,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
   const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
-  const navItems = buildPanoramaNavItems(viewState);
+  const navItems = buildPanoramaNavItems(model, viewState);
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
     const normalizedGalleryImages = Array.isArray(model.media?.galleryImages)
       ? model.media.galleryImages.filter(Boolean)
