@@ -1,11 +1,12 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import ListingDetails2 from "./listingDetails2";
 import FetchPropertyById from "../services/fetchPropertyById";
 import fetchHostInfo from "../services/fetchHostInfo";
+import RangeCalendar from "../views/RangeCalendar";
 
 jest.mock("../services/fetchPropertyById");
 jest.mock("../services/fetchHostInfo");
@@ -14,25 +15,35 @@ jest.mock("../components/header", () => () => <div>Header</div>);
 jest.mock("../components/sectionTabs", () => () => <div>Tabs</div>);
 jest.mock("../views/propertyContainer", () => {
   const PropTypes = require("prop-types");
-  const MockPropertyContainer = ({ unavailableDateKeys = [], children }) => (
+  const MockPropertyContainer = ({ unavailableDateKeys = [], availabilityRanges = [], availableDateKeys = [], children }) => (
     <div>
       <div data-testid="property-unavailable-dates">{unavailableDateKeys.join("|")}</div>
+      <div data-testid="property-availability-ranges">{JSON.stringify(availabilityRanges)}</div>
+      <div data-testid="property-available-dates">{availableDateKeys.join("|")}</div>
       {children}
     </div>
   );
   MockPropertyContainer.propTypes = {
     unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+    availabilityRanges: PropTypes.arrayOf(PropTypes.object),
+    availableDateKeys: PropTypes.arrayOf(PropTypes.string),
     children: PropTypes.node,
   };
   return MockPropertyContainer;
 });
 jest.mock("../views/bookingContainer", () => {
   const PropTypes = require("prop-types");
-  const MockBookingContainer = ({ unavailableDateKeys = [] }) => (
-    <div data-testid="booking-unavailable-dates">{unavailableDateKeys.join("|")}</div>
+  const MockBookingContainer = ({ unavailableDateKeys = [], availabilityRanges = [], availableDateKeys = [] }) => (
+    <div>
+      <div data-testid="booking-unavailable-dates">{unavailableDateKeys.join("|")}</div>
+      <div data-testid="booking-availability-ranges">{JSON.stringify(availabilityRanges)}</div>
+      <div data-testid="booking-available-dates">{availableDateKeys.join("|")}</div>
+    </div>
   );
   MockBookingContainer.propTypes = {
     unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+    availabilityRanges: PropTypes.arrayOf(PropTypes.object),
+    availableDateKeys: PropTypes.arrayOf(PropTypes.string),
   };
   return MockBookingContainer;
 });
@@ -44,16 +55,31 @@ const renderListingDetails = () =>
     </MemoryRouter>
   );
 
-const mockProperty = (calendarAvailability = {}) => {
+const mockProperty = (calendarAvailability = {}, options = {}) => {
   FetchPropertyById.mockResolvedValue({
     property: {
       id: "property-1",
       hostId: "host-1",
       title: "Demo listing",
     },
+    availability: options.availability || [],
     calendarAvailability,
   });
   fetchHostInfo.mockResolvedValue({ name: "Host" });
+};
+
+const renderRangeCalendar = (props = {}) => {
+  const onRangeChange = jest.fn();
+  render(
+    <RangeCalendar
+      availabilityRanges={[{ start: 20260615, end: 20260621 }]}
+      checkInDate=""
+      checkOutDate=""
+      onRangeChange={onRangeChange}
+      {...props}
+    />
+  );
+  return onRangeChange;
 };
 
 describe("ListingDetails2 availability", () => {
@@ -107,5 +133,95 @@ describe("ListingDetails2 availability", () => {
     await waitFor(() => {
       expect(screen.getByTestId("booking-unavailable-dates")).toHaveTextContent("2026-06-20");
     });
+  });
+
+  test("passes base availability and explicit available overrides to guest availability components", async () => {
+    mockProperty(
+      {
+        availableDateKeys: ["2026-06-10"],
+        unavailableDateKeys: ["2026-06-19"],
+      },
+      {
+        availability: [{ availableStartDate: 20260615, availableEndDate: 20260621 }],
+      }
+    );
+
+    renderListingDetails();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("booking-available-dates")).toHaveTextContent("2026-06-10");
+    });
+
+    expect(screen.getByTestId("booking-availability-ranges")).toHaveTextContent(
+      JSON.stringify([{ start: 20260615, end: 20260621 }])
+    );
+    expect(screen.getByTestId("property-available-dates")).toHaveTextContent("2026-06-10");
+    expect(screen.getByTestId("property-availability-ranges")).toHaveTextContent(
+      JSON.stringify([{ start: 20260615, end: 20260621 }])
+    );
+  });
+});
+
+describe("RangeCalendar effective availability", () => {
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-06-01T12:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  test("renders outside-base-window dates as unavailable with a visible marker", () => {
+    renderRangeCalendar();
+
+    const outsideWindowDate = screen.getByRole("button", { name: "June 10, 2026" });
+    const insideWindowDate = screen.getByRole("button", { name: "June 15, 2026" });
+
+    expect(outsideWindowDate).toBeDisabled();
+    expect(within(outsideWindowDate).getByText("--")).toBeInTheDocument();
+    expect(insideWindowDate).not.toBeDisabled();
+  });
+
+  test("shows a clear message when selected stay includes outside-window unavailable nights", () => {
+    const onRangeChange = renderRangeCalendar({ availableDateKeys: ["2026-06-10"] });
+
+    fireEvent.click(screen.getByRole("button", { name: "June 10, 2026" }));
+    fireEvent.click(screen.getByRole("button", { name: "June 15, 2026" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("This property has no availability for the selected dates.");
+    expect(onRangeChange).toHaveBeenLastCalledWith("2026-06-15", "");
+  });
+
+  test("keeps explicit available override outside base window selectable", () => {
+    const onRangeChange = renderRangeCalendar({ availableDateKeys: ["2026-06-10"] });
+
+    const availableOverrideDate = screen.getByRole("button", { name: "June 10, 2026" });
+
+    expect(availableOverrideDate).not.toBeDisabled();
+    fireEvent.click(availableOverrideDate);
+
+    expect(onRangeChange).toHaveBeenCalledWith("2026-06-10", "");
+  });
+
+  test("keeps explicit unavailable override inside base window unavailable", () => {
+    renderRangeCalendar({ unavailableDateKeys: ["2026-06-16"] });
+
+    const unavailableOverrideDate = screen.getByRole("button", { name: "June 16, 2026" });
+
+    expect(unavailableOverrideDate).toBeDisabled();
+    expect(within(unavailableOverrideDate).getByText("--")).toBeInTheDocument();
+  });
+
+  test("blocks active booking nights and keeps checkout date selectable", () => {
+    renderRangeCalendar({
+      availabilityRanges: [{ start: 20260619, end: 20260622 }],
+      unavailableDateKeys: ["2026-06-19", "2026-06-20", "2026-06-21"],
+    });
+
+    expect(screen.getByRole("button", { name: "June 19, 2026" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "June 20, 2026" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "June 21, 2026" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "June 22, 2026" })).not.toBeDisabled();
   });
 });

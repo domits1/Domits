@@ -47,6 +47,14 @@
   line-height: 1.35;
 }
 
+.availability-section__error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .rc {
   --rc-border: #dfe4ea;
   --rc-muted: #6b7280;
@@ -160,6 +168,8 @@
     background: #757575;
     border-color: #757575;
     cursor: not-allowed;
+    flex-direction: column;
+    gap: 2px;
 
     span {
       color: #fff;
@@ -196,6 +206,13 @@
     color: #3b4048;
     font-size: 1rem;
     font-weight: 500;
+  }
+
+  .rc-cell__unavailable-mark {
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
   }
 
   &.is-start span,

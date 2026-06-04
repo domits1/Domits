@@ -7,6 +7,7 @@ import Header from "../components/header";
 import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
+import { normalizeAvailabilityRanges } from "../utils/dateAvailability";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -96,6 +97,9 @@ const normalizeCalendarAvailability = (calendarAvailability) => {
   const safeCalendarAvailability = toPlainObject(calendarAvailability);
   return {
     ...safeCalendarAvailability,
+    availableDateKeys: normalizeDateKeyArray(
+      safeCalendarAvailability.availableDateKeys ?? safeCalendarAvailability.availableOverrideDateKeys
+    ),
     externalBlockedDates: normalizeDateKeyArray(safeCalendarAvailability.externalBlockedDates),
     unavailableDateKeys: normalizeDateKeyArray(safeCalendarAvailability.unavailableDateKeys),
   };
@@ -152,6 +156,7 @@ const normalizeListingProperty = (payload) => {
           })),
     property: nestedProperty,
     images: toArray(property.images),
+    availability: toArray(property.availability || nestedProperty.availability),
     pricing: toPlainObject(property.pricing),
     generalDetails: toArray(property.generalDetails),
     amenities: toArray(property.amenities),
@@ -206,6 +211,17 @@ const ListingDetails2 = () => {
       property?.calendarAvailability?.externalBlockedDates,
       property?.calendarAvailability?.unavailableDateKeys,
     ]
+  );
+  const availabilityRanges = useMemo(
+    () => normalizeAvailabilityRanges(property?.availability),
+    [property?.availability]
+  );
+  const availableDateKeys = useMemo(
+    () =>
+      Array.isArray(property?.calendarAvailability?.availableDateKeys)
+        ? property.calendarAvailability.availableDateKeys
+        : [],
+    [property?.calendarAvailability?.availableDateKeys]
   );
 
   useEffect(() => {
@@ -281,6 +297,8 @@ const ListingDetails2 = () => {
               : undefined
           }
           unavailableDateKeys={unavailableDateKeys}
+          availabilityRanges={availabilityRanges}
+          availableDateKeys={availableDateKeys}
           checkInDate={checkInDate}
           checkOutDate={checkOutDate}
           setCheckInDate={setCheckInDate}
@@ -291,6 +309,8 @@ const ListingDetails2 = () => {
             host={host}
             propertyId={id}
             unavailableDateKeys={unavailableDateKeys}
+            availabilityRanges={availabilityRanges}
+            availableDateKeys={availableDateKeys}
             checkInDate={checkInDate}
             setCheckInDate={setCheckInDate}
             checkOutDate={checkOutDate}
