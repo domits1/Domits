@@ -7,9 +7,15 @@ import { HostPropertyAvailabilityTab, HostPropertyTabContent } from "./HostPrope
 import { fetchPropertyAndListings } from "../services/hostPropertyApi";
 import { extractFetchedPropertyData } from "../utils/hostPropertyUtils";
 import { getAccessToken } from "../../../../services/getAccessToken";
+import getReservationsFromToken from "../../services/getReservationsFromToken";
 
 jest.mock("../../../../services/getAccessToken", () => ({
   getAccessToken: jest.fn(() => "test-token"),
+}));
+
+jest.mock("../../services/getReservationsFromToken", () => ({
+  __esModule: true,
+  default: jest.fn(() => Promise.resolve("Data not found")),
 }));
 
 const okJsonResponse = (body) => ({
@@ -54,6 +60,17 @@ const expectCalendarOverridePatch = async (expectedBody) => {
 
 const mockOverrideLoad = (overrides = []) => {
   globalThis.fetch.mockResolvedValueOnce(okJsonResponse({ overrides }));
+};
+
+const mockBookingLoad = (reservations = []) => {
+  getReservationsFromToken.mockResolvedValueOnce([
+    {
+      id: "property-1",
+      res: {
+        response: reservations,
+      },
+    },
+  ]);
 };
 
 const mockOverrideLoadThenSave = ({ savedOverrides, initialOverrides = [] }) => {
@@ -141,6 +158,7 @@ const buildTabContentProps = () => ({
 describe("HostPropertyAvailabilityTab", () => {
   beforeEach(() => {
     getAccessToken.mockReturnValue("test-token");
+    getReservationsFromToken.mockResolvedValue("Data not found");
     globalThis.fetch = jest.fn().mockResolvedValue(okJsonResponse({ overrides: [] }));
   });
 
@@ -291,6 +309,85 @@ describe("HostPropertyAvailabilityTab", () => {
       overrides: [{ date: 20260610, isAvailable: true }],
     });
     expect(await screen.findByText(/1 date marked available/i)).toBeInTheDocument();
+  });
+
+  test("shows booked dates over available overrides and excludes the checkout date", async () => {
+    mockOverrideLoad([
+      { date: 20260619, isAvailable: true },
+      { date: 20260620, isAvailable: true },
+      { date: 20260621, isAvailable: true },
+      { date: 20260622, isAvailable: true },
+    ]);
+    mockBookingLoad([
+      {
+        status: "Paid",
+        arrivaldate: "2026-06-19",
+        departuredate: "2026-06-22",
+      },
+    ]);
+
+    renderAvailabilityTab();
+
+    expect(
+      await screen.findByRole("gridcell", { name: /2026-06-19, Booked\/blocked/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("gridcell", { name: /2026-06-20, Booked\/blocked/i })).toBeInTheDocument();
+    expect(screen.getByRole("gridcell", { name: /2026-06-21, Booked\/blocked/i })).toBeInTheDocument();
+    expect(screen.getByRole("gridcell", { name: /2026-06-22, Available override/i })).toBeInTheDocument();
+  });
+
+  test("does not make a booked date appear available when marking it available", async () => {
+    mockOverrideLoad([{ date: 20260619, isAvailable: true }]);
+    mockBookingLoad([
+      {
+        status: "Paid",
+        arrivaldate: "2026-06-19",
+        departuredate: "2026-06-22",
+      },
+    ]);
+
+    renderAvailabilityTab();
+
+    await saveAvailabilityRange({
+      startDate: "2026-06-19",
+      endDate: "2026-06-19",
+      availability: "available",
+    });
+
+    expect(
+      await screen.findByText("Booked/blocked dates cannot be made available. Active bookings always block availability.")
+    ).toBeInTheDocument();
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("gridcell", { name: /2026-06-19, Booked\/blocked/i })).toBeInTheDocument();
+  });
+
+  test("skips booked dates when saving availability for a mixed selected range", async () => {
+    mockOverrideLoadThenSave({
+      savedOverrides: [{ date: 20260618, isAvailable: true }],
+    });
+    mockBookingLoad([
+      {
+        status: "Paid",
+        arrivaldate: "2026-06-19",
+        departuredate: "2026-06-22",
+      },
+    ]);
+
+    renderAvailabilityTab();
+
+    await saveAvailabilityRange({
+      startDate: "2026-06-18",
+      endDate: "2026-06-20",
+      availability: "available",
+    });
+
+    await expectCalendarOverridePatch({
+      propertyId: "property-1",
+      overrides: [{ date: 20260618, isAvailable: true }],
+    });
+    expect(await screen.findByText(/1 date marked available/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 booked\/blocked dates were skipped/i)).toBeInTheDocument();
+    expect(screen.getByRole("gridcell", { name: /2026-06-19, Booked\/blocked/i })).toBeInTheDocument();
   });
 
   test("shows backend authorization errors when saving availability is denied", async () => {
