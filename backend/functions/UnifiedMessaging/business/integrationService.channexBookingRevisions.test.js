@@ -29,6 +29,58 @@ const buildRevisionRow = channexBookingRevisionFixture.buildRevisionRow;
 const buildRoomTypeMapping = channexBookingRevisionFixture.buildRoomTypeMapping;
 const createService = channexBookingRevisionFixture.createService;
 
+const utcDateMs = (isoDate) => Date.parse(`${isoDate}T00:00:00.000Z`);
+
+const expectBridgeBooking = ({
+  id = "domits-booking-1",
+  includeId = true,
+  propertyId = "domits-property-1",
+  hostId = "host-1",
+  arrivalDateMs,
+  departureDateMs,
+  status,
+}) =>
+  expect.objectContaining({
+    ...(includeId ? { id } : {}),
+    property_id: propertyId,
+    hostid: hostId,
+    arrivaldate: arrivalDateMs,
+    departuredate: departureDateMs,
+    status,
+  });
+
+const expectAvailabilitySync = ({ bridge, trigger, bookingBefore, bookingAfter, userId = "host-1" }) => {
+  expect(bridge.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
+  expect(bridge.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
+    userId,
+    bookingBefore,
+    bookingAfter,
+    trigger,
+  });
+};
+
+const expectCallSequence = (...mocks) => {
+  for (let index = 0; index < mocks.length - 1; index += 1) {
+    expect(mocks[index].mock.invocationCallOrder[0]).toBeLessThan(mocks[index + 1].mock.invocationCallOrder[0]);
+  }
+};
+
+const expectChannexRevisionAcknowledged = (channexProviderClient, revisionId) => {
+  expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith({ apiKey: "secret" }, revisionId);
+};
+
+const expectImportItemAvailabilityEvidence = (item, trigger, extra = {}) => {
+  expect(item).toEqual(
+    expect.objectContaining({
+      ...extra,
+      channexAvailabilitySync: expect.objectContaining({
+        syncType: "booking-availability",
+        trigger,
+      }),
+    })
+  );
+};
+
 describe("IntegrationService Channex booking revision listing", () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -314,8 +366,8 @@ describe("IntegrationService Channex booking pull import", () => {
         hostId: "host-1",
         externalReservationId: "booking-ota-1",
         guestName: "External Guest",
-        arrivalDateMs: Date.parse("2026-06-01T00:00:00.000Z"),
-        departureDateMs: Date.parse("2026-06-03T00:00:00.000Z"),
+        arrivalDateMs: utcDateMs("2026-06-01"),
+        departureDateMs: utcDateMs("2026-06-03"),
       })
     );
     expect(resLinks.upsert).toHaveBeenCalledWith(
@@ -325,62 +377,46 @@ describe("IntegrationService Channex booking pull import", () => {
         externalReservationId: "booking-ota-1",
         domitsPropertyId: "domits-property-1",
         guestName: "External Guest",
-        checkInAt: Date.parse("2026-06-01T00:00:00.000Z"),
-        checkOutAt: Date.parse("2026-06-03T00:00:00.000Z"),
+        checkInAt: utcDateMs("2026-06-01"),
+        checkOutAt: utcDateMs("2026-06-03"),
         reservationStatus: "Paid",
         ratePlan: "Standard",
         paymentStatus: "EXTERNAL",
       })
     );
-    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
-      { apiKey: "secret" },
-      "revision-new-1"
-    );
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
-      userId: "host-1",
+    expectChannexRevisionAcknowledged(channexProviderClient, "revision-new-1");
+    expectAvailabilitySync({
+      bridge: channexBookingAvailabilityBridge,
+      trigger: "BOOKING_CREATED",
       bookingBefore: null,
-      bookingAfter: expect.objectContaining({
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        arrivaldate: Date.parse("2026-06-01T00:00:00.000Z"),
-        departuredate: Date.parse("2026-06-03T00:00:00.000Z"),
+      bookingAfter: expectBridgeBooking({
+        includeId: false,
+        arrivalDateMs: utcDateMs("2026-06-01"),
+        departureDateMs: utcDateMs("2026-06-03"),
         status: "Paid",
       }),
-      trigger: "BOOKING_CREATED",
     });
     expect(channexBookingRevisions.markAcknowledged).toHaveBeenCalledWith(
       "integration-account-1",
       "revision-new-1",
       expect.any(Number)
     );
-    expect(channexBookingRevisions.upsert.mock.invocationCallOrder[0]).toBeLessThan(
-      externalBookingImportRepository.createExternalBooking.mock.invocationCallOrder[0]
+    expectCallSequence(
+      channexBookingRevisions.upsert,
+      externalBookingImportRepository.createExternalBooking,
+      channexBookingAvailabilityBridge.syncAvailabilityForBookingChange,
+      resLinks.upsert,
+      channexProviderClient.acknowledgeBookingRevision
     );
-    expect(externalBookingImportRepository.createExternalBooking.mock.invocationCallOrder[0]).toBeLessThan(
-      channexBookingAvailabilityBridge.syncAvailabilityForBookingChange.mock.invocationCallOrder[0]
-    );
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange.mock.invocationCallOrder[0]).toBeLessThan(
-      resLinks.upsert.mock.invocationCallOrder[0]
-    );
-    expect(resLinks.upsert.mock.invocationCallOrder[0]).toBeLessThan(
-      channexProviderClient.acknowledgeBookingRevision.mock.invocationCallOrder[0]
-    );
-    expect(result.response.items[0]).toEqual(
-      expect.objectContaining({
-        revisionId: "revision-new-1",
-        bookingId: "booking-ota-1",
-        status: "new",
-        result: "created-and-acked",
-        createdBooking: true,
-        channexAvailabilitySync: expect.objectContaining({
-          syncType: "booking-availability",
-          trigger: "BOOKING_CREATED",
-        }),
-        acked: true,
-        unacked: false,
-      })
-    );
+    expectImportItemAvailabilityEvidence(result.response.items[0], "BOOKING_CREATED", {
+      revisionId: "revision-new-1",
+      bookingId: "booking-ota-1",
+      status: "new",
+      result: "created-and-acked",
+      createdBooking: true,
+      acked: true,
+      unacked: false,
+    });
   });
 
   test("does not call the feed or acknowledge when property mapping is missing", async () => {
@@ -600,8 +636,8 @@ describe("IntegrationService Channex booking pull import", () => {
     expect(externalBookingImportRepository.updateImportedBooking).toHaveBeenCalledWith({
       bookingId: "domits-booking-1",
       guestName: "Modified Guest",
-      arrivalDateMs: Date.parse("2026-06-02T00:00:00.000Z"),
-      departureDateMs: Date.parse("2026-06-04T00:00:00.000Z"),
+      arrivalDateMs: utcDateMs("2026-06-02"),
+      departureDateMs: utcDateMs("2026-06-04"),
     });
     expect(resLinks.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -610,51 +646,29 @@ describe("IntegrationService Channex booking pull import", () => {
         guestName: "Modified Guest",
       })
     );
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
-      userId: "host-1",
-      bookingBefore: expect.objectContaining({
-        id: "domits-booking-1",
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        arrivaldate: bookingBefore.arrivalDateMs,
-        departuredate: bookingBefore.departureDateMs,
-        status: "Paid",
-      }),
-      bookingAfter: expect.objectContaining({
-        id: "domits-booking-1",
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        arrivaldate: Date.parse("2026-06-02T00:00:00.000Z"),
-        departuredate: Date.parse("2026-06-04T00:00:00.000Z"),
-        status: "Paid",
-      }),
+    expectAvailabilitySync({
+      bridge: channexBookingAvailabilityBridge,
       trigger: "BOOKING_MODIFIED",
+      bookingBefore: expectBridgeBooking({
+        arrivalDateMs: bookingBefore.arrivalDateMs,
+        departureDateMs: bookingBefore.departureDateMs,
+        status: "Paid",
+      }),
+      bookingAfter: expectBridgeBooking({
+        arrivalDateMs: utcDateMs("2026-06-02"),
+        departureDateMs: utcDateMs("2026-06-04"),
+        status: "Paid",
+      }),
     });
-    expect(externalBookingImportRepository.getBookingById.mock.invocationCallOrder[0]).toBeLessThan(
-      externalBookingImportRepository.updateImportedBooking.mock.invocationCallOrder[0]
+    expectCallSequence(
+      externalBookingImportRepository.getBookingById,
+      externalBookingImportRepository.updateImportedBooking,
+      channexBookingAvailabilityBridge.syncAvailabilityForBookingChange,
+      resLinks.upsert,
+      channexProviderClient.acknowledgeBookingRevision
     );
-    expect(externalBookingImportRepository.updateImportedBooking.mock.invocationCallOrder[0]).toBeLessThan(
-      channexBookingAvailabilityBridge.syncAvailabilityForBookingChange.mock.invocationCallOrder[0]
-    );
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange.mock.invocationCallOrder[0]).toBeLessThan(
-      resLinks.upsert.mock.invocationCallOrder[0]
-    );
-    expect(resLinks.upsert.mock.invocationCallOrder[0]).toBeLessThan(
-      channexProviderClient.acknowledgeBookingRevision.mock.invocationCallOrder[0]
-    );
-    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
-      { apiKey: "secret" },
-      "revision-modified-1"
-    );
-    expect(result.response.items[0]).toEqual(
-      expect.objectContaining({
-        channexAvailabilitySync: expect.objectContaining({
-          syncType: "booking-availability",
-          trigger: "BOOKING_MODIFIED",
-        }),
-      })
-    );
+    expectChannexRevisionAcknowledged(channexProviderClient, "revision-modified-1");
+    expectImportItemAvailabilityEvidence(result.response.items[0], "BOOKING_MODIFIED");
   });
 
   test("linked cancelled revisions cancel the Domits booking, sync original dates, then acknowledge", async () => {
@@ -690,26 +704,19 @@ describe("IntegrationService Channex booking pull import", () => {
     });
     expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
     expect(externalBookingImportRepository.cancelImportedBooking).toHaveBeenCalledWith("domits-booking-1");
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
-      userId: "host-1",
-      bookingBefore: expect.objectContaining({
-        id: "domits-booking-1",
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        arrivaldate: bookingBefore.arrivalDateMs,
-        departuredate: bookingBefore.departureDateMs,
+    expectAvailabilitySync({
+      bridge: channexBookingAvailabilityBridge,
+      trigger: "BOOKING_CANCELLED",
+      bookingBefore: expectBridgeBooking({
+        arrivalDateMs: bookingBefore.arrivalDateMs,
+        departureDateMs: bookingBefore.departureDateMs,
         status: "Paid",
       }),
-      bookingAfter: expect.objectContaining({
-        id: "domits-booking-1",
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        arrivaldate: bookingBefore.arrivalDateMs,
-        departuredate: bookingBefore.departureDateMs,
+      bookingAfter: expectBridgeBooking({
+        arrivalDateMs: bookingBefore.arrivalDateMs,
+        departureDateMs: bookingBefore.departureDateMs,
         status: "Cancelled",
       }),
-      trigger: "BOOKING_CANCELLED",
     });
     expect(resLinks.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -717,30 +724,15 @@ describe("IntegrationService Channex booking pull import", () => {
         reservationStatus: "Cancelled",
       })
     );
-    expect(externalBookingImportRepository.getBookingById.mock.invocationCallOrder[0]).toBeLessThan(
-      externalBookingImportRepository.cancelImportedBooking.mock.invocationCallOrder[0]
+    expectCallSequence(
+      externalBookingImportRepository.getBookingById,
+      externalBookingImportRepository.cancelImportedBooking,
+      channexBookingAvailabilityBridge.syncAvailabilityForBookingChange,
+      resLinks.upsert,
+      channexProviderClient.acknowledgeBookingRevision
     );
-    expect(externalBookingImportRepository.cancelImportedBooking.mock.invocationCallOrder[0]).toBeLessThan(
-      channexBookingAvailabilityBridge.syncAvailabilityForBookingChange.mock.invocationCallOrder[0]
-    );
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange.mock.invocationCallOrder[0]).toBeLessThan(
-      resLinks.upsert.mock.invocationCallOrder[0]
-    );
-    expect(resLinks.upsert.mock.invocationCallOrder[0]).toBeLessThan(
-      channexProviderClient.acknowledgeBookingRevision.mock.invocationCallOrder[0]
-    );
-    expect(channexProviderClient.acknowledgeBookingRevision).toHaveBeenCalledWith(
-      { apiKey: "secret" },
-      "revision-cancelled-1"
-    );
-    expect(result.response.items[0]).toEqual(
-      expect.objectContaining({
-        channexAvailabilitySync: expect.objectContaining({
-          syncType: "booking-availability",
-          trigger: "BOOKING_CANCELLED",
-        }),
-      })
-    );
+    expectChannexRevisionAcknowledged(channexProviderClient, "revision-cancelled-1");
+    expectImportItemAvailabilityEvidence(result.response.items[0], "BOOKING_CANCELLED");
   });
 
   test("availability sync failure evidence is attached before acknowledging the imported revision", async () => {
@@ -782,8 +774,9 @@ describe("IntegrationService Channex booking pull import", () => {
         acked: true,
       })
     );
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange.mock.invocationCallOrder[0]).toBeLessThan(
-      channexProviderClient.acknowledgeBookingRevision.mock.invocationCallOrder[0]
+    expectCallSequence(
+      channexBookingAvailabilityBridge.syncAvailabilityForBookingChange,
+      channexProviderClient.acknowledgeBookingRevision
     );
   });
 
