@@ -28,8 +28,16 @@ const directRouteSpecs = [
   ["PATCH property overview request", "updatePropertyOverview", "PATCH", "/property/overview", 204],
   ["PATCH property calendar overrides request", "updatePropertyCalendarOverrides", "PATCH", "/property/calendar/overrides", 200],
   ["PATCH property activation request", "activateProperty", "PATCH", "/property", 204],
+  ["POST website analytics event request", "recordWebsiteAnalyticsEvent", "POST", "/property/website/event", 204],
+  ["POST website site publish request", "publishWebsiteSite", "POST", "/property/website/site/publish", 200],
+  ["POST website site unpublish request", "unpublishWebsiteSite", "POST", "/property/website/site/unpublish", 200],
   ["POST website draft upsert request", "upsertWebsiteDraft", "POST", "/property/website/draft", 200],
   ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],
+  ["GET public website resolve request", "resolvePublicWebsiteSite", "GET", "/property/website/public/resolve", 200],
+  ["GET public website render request", "getPublicWebsiteRenderModel", "GET", "/property/website/public/render", 200],
+  ["GET public website preview request", "getWebsitePreviewByDraftId", "GET", "/property/website/preview", 200],
+  ["GET website KPI summary request", "getWebsiteKpis", "GET", "/property/website/kpis", 200],
+  ["GET website site by property request", "getWebsiteSiteByPropertyId", "GET", "/property/website/site", 200],
   ["GET website drafts request", "getWebsiteDrafts", "GET", "/property/website/drafts", 200],
   ["GET website draft by property request", "getWebsiteDraftByPropertyId", "GET", "/property/website/draft", 200],
   ["DELETE website draft request", "deleteWebsiteDraft", "DELETE", "/property/website/draft", 204],
@@ -83,7 +91,44 @@ const bookingEngineCases = bookingEngineSpecs.map(([name, controllerMethod, subR
   })
 );
 
-const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases];
+const pathFallbackSpecs = [
+  buildCase({
+    name: "GET all hostDashboard properties from path fallback",
+    controllerMethod: "getFullOwnedProperties",
+    httpMethod: "GET",
+    resource: "/property/{proxy+}",
+    statusCode: 200,
+  }),
+  buildCase({
+    name: "GET all active properties from path fallback",
+    controllerMethod: "getActivePropertiesCard",
+    httpMethod: "GET",
+    resource: "/property/{proxy+}",
+    statusCode: 200,
+  }),
+];
+
+const pathFallbackCases = [
+  {
+    testCase: pathFallbackSpecs[0],
+    path: "/property/hostDashboard/all",
+    proxy: "hostDashboard/all",
+  },
+  {
+    testCase: pathFallbackSpecs[1],
+    path: "/property/bookingEngine/all",
+    proxy: "bookingEngine/all",
+  },
+].map(({ testCase, path, proxy }) => ({
+  ...testCase,
+  event: {
+    ...testCase.event,
+    path,
+    pathParameters: { proxy },
+  },
+}));
+
+const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases, ...pathFallbackCases];
 
 const notFoundCases = [
   {

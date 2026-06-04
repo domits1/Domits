@@ -1,19 +1,9 @@
-import React from 'react';
-import {Navigate} from 'react-router-dom';
-import { useUser } from '../UserContext';
+import React from "react";
+import ProtectedRoute from "../ProtectedRoute";
+import { GUEST_ROLES } from "../roles";
 
-const GuestProtectedRoute = ({ children }) => {
-    const { role, isLoading } = useUser();
-
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
-
-    if (role !== 'Host' && role !== 'Traveler') {
-        return <Navigate to="/" replace />;
-    }
-
-    return children;
-};
+const GuestProtectedRoute = ({ children }) => (
+  <ProtectedRoute allowedRoles={GUEST_ROLES}>{children}</ProtectedRoute>
+);
 
 export default GuestProtectedRoute;

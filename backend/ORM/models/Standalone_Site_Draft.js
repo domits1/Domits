@@ -41,6 +41,16 @@ export const Standalone_Site_Draft = new EntitySchema({
       generated: false,
       nullable: false,
     },
+    published_content_overrides_json: {
+      type: "text",
+      generated: false,
+      nullable: true,
+    },
+    published_theme_overrides_json: {
+      type: "text",
+      generated: false,
+      nullable: true,
+    },
     created_at: {
       type: "bigint",
       generated: false,

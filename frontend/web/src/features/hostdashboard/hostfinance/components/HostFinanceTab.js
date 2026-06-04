@@ -6,6 +6,7 @@ import { StatusBadge } from "./StatusBadge/StatusBadge";
 import { TablePager } from "./TabelPager/TablePager";
 import { pageSlice, MAX_ITEMS_PER_PAGE, getTotalPages } from "../utils/pagination";
 import { RefreshFunctions } from "../hooks/refreshFunctions.js";
+import InvoicesSection from "./InvoicesSection";
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
@@ -19,6 +20,8 @@ export default function HostFinanceTab() {
     charges,
     accountId,
     onboardingComplete,
+    chargesEnabled,
+    payoutsEnabled,
     isProcessing,
     processingStep,
     payoutInterval,
@@ -35,6 +38,15 @@ export default function HostFinanceTab() {
     handleStripeAction,
     handlePayoutSchedule,
   } = RefreshFunctions();
+
+  const stripeIssues = onboardingComplete && (!chargesEnabled || !payoutsEnabled);
+
+  let stripeAlertMessage = "Payouts are currently disabled on your Stripe account. You will not receive funds.";
+  if (!chargesEnabled && !payoutsEnabled) {
+    stripeAlertMessage = "Charges and payouts are currently disabled on your Stripe account.";
+  } else if (!chargesEnabled) {
+    stripeAlertMessage = "Charges are currently disabled on your Stripe account. Guests cannot complete payments.";
+  }
 
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
@@ -72,6 +84,23 @@ export default function HostFinanceTab() {
       <div className="page-Host-content">
         <section className="host-pc-finance">
           <div className="finance-content">
+            {stripeIssues && (
+              <div className="finance-stripe-alert">
+                <strong>⚠ Action required: Stripe account issue detected</strong>
+                <p>
+                  {stripeAlertMessage}{" "}
+                  Your listings with direct booking enabled are not accepting new reservations until this is resolved.
+                </p>
+                <button
+                  type="button"
+                  className={`finance-span ${isProcessing ? "disabled" : ""}`}
+                  onClick={isProcessing ? undefined : handleStripeAction}
+                  disabled={isProcessing}
+                >
+                  {renderCtaLabel("Open Stripe Dashboard to fix")}
+                </button>
+              </div>
+            )}
             <div className="finance-steps">
               <p className="finance-steps-title">Receive your payouts in 3 easy steps</p>
               <ul>
@@ -90,7 +119,7 @@ export default function HostFinanceTab() {
                       account to receive payments: &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        onClick={isProcessing ? undefined : handleStripeAction}>
                         {renderCtaLabel("Create Stripe account")}
                       </span>
                     </>
@@ -99,7 +128,7 @@ export default function HostFinanceTab() {
                       <strong>Step 2: </strong> &nbsp; Finish your Stripe onboarding to start receiving payouts: &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        onClick={isProcessing ? undefined : handleStripeAction}>
                         {renderCtaLabel("Continue Stripe onboarding")}
                       </span>
                     </>
@@ -108,7 +137,7 @@ export default function HostFinanceTab() {
                       <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done! &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        onClick={isProcessing ? undefined : handleStripeAction}>
                         {renderCtaLabel("Open Stripe Dashboard")}
                       </span>
                     </>
@@ -380,6 +409,7 @@ export default function HostFinanceTab() {
                 </div>
               </>
             )}
+            <InvoicesSection />
           </div>
         </section>
 

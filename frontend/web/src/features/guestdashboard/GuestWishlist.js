@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
@@ -255,6 +255,8 @@ const GuestWishlist = () => {
 
   const isEmpty = !Array.isArray(wishlist) || wishlist.length === 0;
   const refreshWishlist = () => setRefreshKey((key) => key + 1);
+  const handleListChange = useCallback((list) => setSelectedList(list), []);
+  const handleCreateList = useCallback((name) => setSelectedList(name), []);
 
   let content = (
     <WishlistCardGrid
@@ -286,9 +288,9 @@ const GuestWishlist = () => {
         <div className="wishlistActionsRow">
           <GuestActions
             selectedList={selectedList}
-            onListChange={(list) => setSelectedList(list)}
+            onListChange={handleListChange}
             onShare={() => {}}
-            onCreate={(name) => setSelectedList(name)}
+            onCreate={handleCreateList}
           />
         </div>
 

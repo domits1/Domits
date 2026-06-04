@@ -1,7 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SystemManagerRepository } from "../../data/repository/systemManagerRepository.js";
-import Database from "database";
-import { Property_Rule } from "database/models/Property_Rule";
 
 import { PropertyAmenityRepository } from "../../data/repository/propertyAmenityRepository.js";
 import { PropertyRepository } from "../../data/repository/propertyRepository.js";
@@ -28,6 +26,10 @@ import { PropertyCustomRuleRepository } from "../../data/repository/propertyCust
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
+import {
+  extractUnavailableOverrideDateKeys,
+  normalizeBlockedDateKeys,
+} from "../../util/calendarAvailability.js";
 
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
@@ -127,7 +129,8 @@ export class PropertyService {
       propertyId,
       title,
       resolvedSubtitle,
-      description
+      description,
+      updates?.bookingType
     );
     if (!updatedProperty) {
       throw new DatabaseException("Something went wrong while updating the property overview.");
@@ -155,10 +158,6 @@ export class PropertyService {
 
     if (updates?.rules) {
       await this.updateRules(propertyId, updates.rules);
-    }
-
-    if (updates?.checkIn) {
-      await this.updateCheckInTimeslotRule(propertyId, updates.checkIn);
     }
 
     if (updates?.checkIn) {
@@ -237,7 +236,9 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributesWithFullLocation(propertyId);
+    return await this.getFullPropertyAttributesWithFullLocation(propertyId, {
+      includeCalendarAvailability: true,
+    });
   }
 
   async getFullPropertyByBookingId(bookingId) {
@@ -370,10 +371,27 @@ export class PropertyService {
   }
 
   async getPublicCalendarAvailability(propertyId) {
-    const externalBlockedDates = await this.propertyExternalCalendarRepository.getBlockedDatesByPropertyId(propertyId);
+    const [availabilitySnapshot, calendarOverrides, blockedBookingDateKeys] = await Promise.all([
+      this.propertyExternalCalendarRepository.getAvailabilitySnapshotByPropertyId(propertyId),
+      this.propertyCalendarOverrideRepository.getOverridesByPropertyId(propertyId).catch(() => []),
+      this.bookingRepository.getBlockedDateKeysByPropertyId(propertyId).catch(() => []),
+    ]);
+    const unavailableDateKeys = Array.from(
+      new Set([
+        ...extractUnavailableOverrideDateKeys(calendarOverrides),
+        ...normalizeBlockedDateKeys(blockedBookingDateKeys),
+      ])
+    ).sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
 
     return {
-      externalBlockedDates: Array.isArray(externalBlockedDates) ? externalBlockedDates : [],
+      externalBlockedDates: Array.isArray(availabilitySnapshot?.externalBlockedDates)
+        ? availabilitySnapshot.externalBlockedDates
+        : [],
+      unavailableDateKeys,
+      hasExternalCalendarSync: availabilitySnapshot?.hasExternalCalendarSync === true,
+      syncedSourceCount: Math.max(0, Number(availabilitySnapshot?.syncedSourceCount || 0)),
+      lastSyncAt: Number(availabilitySnapshot?.lastSyncAt || 0) || null,
+      syncSources: Array.isArray(availabilitySnapshot?.syncSources) ? availabilitySnapshot.syncSources : [],
     };
   }
 
@@ -593,18 +611,7 @@ export class PropertyService {
   }
 
   async #upsertPropertyRule(propertyId, ruleName, value) {
-    const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
-    if (existing) {
-      const client = await Database.getInstance();
-      await client
-        .createQueryBuilder()
-        .update(Property_Rule)
-        .set({ value })
-        .where("property_id = :propertyId AND rule = :rule", { propertyId, rule: ruleName })
-        .execute();
-    } else {
-      await this.propertyRuleRepository.create({ property_id: propertyId, rule: ruleName, value });
-    }
+    await this.propertyRuleRepository.upsertRuleByPropertyId(propertyId, ruleName, value);
   }
 
   async updateCheckInTimeslotRule(propertyId, checkInData) {
@@ -665,9 +672,9 @@ export class PropertyService {
     if (!lateCheckinData || typeof lateCheckinData !== "object") return;
 
     const rulesToUpdate = [
-      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true ? "true" : "false" },
+      { rule: "LateCheckinEnabled", value: lateCheckinData.late_checkin_enabled === true },
       { rule: "LateCheckinTime", value: lateCheckinData.late_checkin_time || "18:00:00" },
-      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true ? "true" : "false" },
+      { rule: "LateCheckoutEnabled", value: lateCheckinData.late_checkout_enabled === true },
       { rule: "LateCheckoutTime", value: lateCheckinData.late_checkout_time || "10:00:00" },
     ];
 
@@ -710,7 +717,7 @@ export class PropertyService {
 
     for (const ruleName of houseRuleNames) {
       const isEnabled = (houseRules?.[ruleName] ?? false) === true;
-      await this.#upsertPropertyRule(propertyId, ruleName, isEnabled ? "true" : "false");
+      await this.#upsertPropertyRule(propertyId, ruleName, isEnabled);
     }
   }
 

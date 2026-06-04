@@ -9,6 +9,7 @@ import { Faq } from "../../models/Faq.js";
 import { General_Details } from "../../models/General_Details.js";
 import { Guest_Favorite } from "../../models/Guest_Favorite.js";
 import { Standalone_Site_Draft } from "../../models/Standalone_Site_Draft.js";
+import { Standalone_Site_Event } from "../../models/Standalone_Site_Event.js";
 import { Payment } from "../../models/Payment.js";
 import { Property } from "../../models/Property.js";
 import { Property_Amenity } from "../../models/Property_Amenity.js";
@@ -44,6 +45,9 @@ import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
+import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
+import { Team_Member } from "../../models/Team_Member.js";
+import { Invoice } from "../../models/Invoice.js";
 
 export const Tables = [
   Amenities,
@@ -55,6 +59,7 @@ export const Tables = [
   General_Details,
   Guest_Favorite,
   Standalone_Site_Draft,
+  Standalone_Site_Event,
   Payment,
   Property,
   Property_Amenity,
@@ -92,4 +97,7 @@ export const Tables = [
   Property_Task_Activity,
   Host_Settings,
   Kpi_Snapshot,
+  PriceLabs_Connection,
+  Team_Member,
+  Invoice,
 ];

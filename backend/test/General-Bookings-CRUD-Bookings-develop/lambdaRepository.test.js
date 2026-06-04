@@ -28,6 +28,7 @@ describe("LambdaRepository.getPropertiesFromHostId", () => {
         rate: 250,
         city: "Amsterdam",
         country: "Netherlands",
+        rules: [],
       },
     ]);
   });
@@ -55,6 +56,7 @@ describe("LambdaRepository.getPropertiesFromHostId", () => {
         rate: 180,
         city: "Rotterdam",
         country: "Netherlands",
+        rules: [],
       },
     ]);
   });

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Auth } from "aws-amplify";
 import PropTypes from "prop-types";
+import useEffectiveHostId from "../../hooks/useEffectiveHostId";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import styles from "./HostListings.module.scss";
@@ -108,52 +108,64 @@ HostListingCardActions.propTypes = {
 function HostListings() {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ACTIVE");
   const [processingPropertyId, setProcessingPropertyId] = useState("");
   const navigate = useNavigate();
+  const { effectiveHostId: userId, ownId, managedHostId, isPurelyPOM } = useEffectiveHostId();
   const { liveEligibility, liveEligibilityError, liveEligibilityLoading, fetchVerificationStatus } =
-    useSetLiveEligibility({ userId });
-
-  useEffect(() => {
-    const setUserIdAsync = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        setUserId(userInfo?.attributes?.sub || null);
-      } catch (error) {
-        console.error("Error setting user id:", error);
-      }
-    };
-
-    setUserIdAsync();
-  }, []);
+    useSetLiveEligibility({ userId: ownId });
 
   useEffect(() => {
     if (userId) {
       fetchVerificationStatus();
-      fetchAccommodations().catch(console.error);
+      fetchAccommodations();
     }
-  }, [userId]);
+  }, [fetchVerificationStatus, userId, managedHostId, isPurelyPOM]);
+
+  const fetchFromByHostId = async (hostId) => {
+    try {
+      const response = await fetch(
+        `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/byHostId?hostId=${hostId}`,
+        { method: "GET", headers: { Authorization: getAccessToken() } }
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  };
 
   const fetchAccommodations = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all",
-        {
-          method: "GET",
-          headers: {
-            Authorization: getAccessToken(),
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch host properties.");
+      let data = [];
+
+      if (isPurelyPOM) {
+        data = await fetchFromByHostId(userId);
+      } else if (managedHostId) {
+        const [ownResponse, managedResponse] = await Promise.all([
+          fetch(
+            "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all",
+            { method: "GET", headers: { Authorization: getAccessToken() } }
+          ),
+          fetchFromByHostId(managedHostId),
+        ]);
+        const ownData = ownResponse.ok ? await ownResponse.json() : [];
+        data = [...(Array.isArray(ownData) ? ownData : []), ...managedResponse];
+      } else {
+        const response = await fetch(
+          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all",
+          { method: "GET", headers: { Authorization: getAccessToken() } }
+        );
+        if (!response.ok) throw new Error("Failed to fetch host properties.");
+        const raw = await response.json();
+        data = Array.isArray(raw) ? raw : [];
       }
-      const data = await response.json();
-      setAccommodations(Array.isArray(data) ? data : []);
+
+      setAccommodations(data);
     } catch (error) {
-      console.error("Unexpected error:", error);
+
       toast.error(error?.message || "Failed to load listings.");
     } finally {
       setIsLoading(false);
@@ -181,23 +193,18 @@ function HostListings() {
 
   const visibleListings = listingsByStatus[activeFilter] || [];
 
-  const ensureLiveEligibility = async (propertyId) => {
+  const ensureLiveEligibility = () => {
     if (!userId) {
-      throw new Error("Host user is not loaded.");
+      toast.error("User is not loaded. Please refresh and try again.");
+      return false;
     }
     if (liveEligibilityLoading) {
-      throw new Error("Checking verification status. Please try again in a moment.");
+      toast.info("Checking verification status. Please try again in a moment.");
+      return false;
     }
-    if (liveEligibilityError) {
-      throw new Error(liveEligibilityError);
-    }
-    if (!liveEligibility) {
-      navigate("/verify", {
-        state: {
-          userId,
-          accommodationId: propertyId,
-        },
-      });
+    if (liveEligibilityError || !liveEligibility) {
+      toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
+      navigate("/hostdashboard/finance");
       return false;
     }
     return true;
@@ -209,7 +216,7 @@ function HostListings() {
     }
 
     if (nextStatus === "ACTIVE") {
-      const canProceed = await ensureLiveEligibility(propertyId);
+      const canProceed = ensureLiveEligibility();
       if (!canProceed) {
         return;
       }
@@ -221,7 +228,6 @@ function HostListings() {
       toast.success(successMessage);
       await fetchAccommodations();
     } catch (error) {
-      console.error(error);
       toast.error(error?.message || "Failed to update listing status.");
     } finally {
       setProcessingPropertyId("");
@@ -273,7 +279,7 @@ function HostListings() {
           const propertyCity = accommodation?.location?.city || "Unknown city";
           const propertyImage = getListingImage(accommodation);
           const isBusy = processingPropertyId === propertyId;
-          const actions = LISTING_ACTIONS[propertyStatus] || [];
+          const actions = isPurelyPOM ? [] : (LISTING_ACTIONS[propertyStatus] || []);
           const handleListingActionClick = (action) => executeListingAction(action, propertyId);
 
           return (
@@ -330,9 +336,11 @@ function HostListings() {
             <div className={styles.hostListingContainer}>
               <div className={styles.listingBody}>
                 <div className={styles.buttonBox}>
-                  <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
-                    Add new accommodation
-                  </button>
+                  {!isPurelyPOM && (
+                    <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
+                      Add new accommodation
+                    </button>
+                  )}
                   <button className={styles.greenBtn} onClick={fetchAccommodations}>
                     Refresh
                   </button>

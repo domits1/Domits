@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { PolicySection } from "../../../utils/policyDisplayUtils.js";
 
 const buildRuleKey = (() => {
   const separator = "::";
@@ -12,7 +11,7 @@ const buildRuleKey = (() => {
   };
 })();
 
-function HouseRules({ rules, cancellationPolicy }) {
+function HouseRules({ rules = [] }) {
   const ruleCounts = new Map();
 
   return (
@@ -33,34 +32,16 @@ function HouseRules({ rules, cancellationPolicy }) {
           </div>
         )}
       </div>
-
-      {cancellationPolicy ? (
-        <div className="policyBlock">
-          <h3>Cancellation Policy</h3>
-          <PolicySection
-            title="Cancellation Policy"
-            items={[cancellationPolicy.summary, ...cancellationPolicy.details]}
-            expandable={true}
-          />
-        </div>
-      ) : null}
     </div>
   );
 }
 
 HouseRules.propTypes = {
   rules: PropTypes.arrayOf(PropTypes.string),
-  cancellationPolicy: PropTypes.shape({
-    type: PropTypes.string,
-    description: PropTypes.string,
-    summary: PropTypes.string,
-    details: PropTypes.arrayOf(PropTypes.string),
-  }),
 };
 
 HouseRules.defaultProps = {
   rules: [],
-  cancellationPolicy: null,
 };
 
 export default HouseRules;

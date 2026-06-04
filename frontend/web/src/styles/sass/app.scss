@@ -145,6 +145,31 @@
   html {
     margin-top: 90px;
   }
+
+  html.directBookingWebsiteSurfaceHtml {
+    margin-top: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  body.directBookingWebsiteSurfaceBody {
+    margin: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html.directBookingWebsiteSurfaceHtml::-webkit-scrollbar,
+  body.directBookingWebsiteSurfaceBody::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    html {
+      margin-top: 0;
+    }
+  }
   
   code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',

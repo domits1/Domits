@@ -62,20 +62,38 @@ const getRestrictionValueWithFallbacks = (restrictionValueMap, restrictionName) 
   return matchedFallbackKey ? restrictionValueMap.get(matchedFallbackKey) : undefined;
 };
 
-export const fetchPropertyAndListings = async (propertyId) => {
-  const [response, hostPropertiesResponse] = await Promise.all([
+const fetchHostPropertyOptions = async (url) => {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: getAccessToken(),
+    },
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchPropertyAndListings = async (propertyId, managedHostId = null) => {
+  const hostPropertiesUrls = [`${PROPERTY_API_BASE}/hostDashboard/all`];
+  if (managedHostId) {
+    hostPropertiesUrls.push(
+      `${PROPERTY_API_BASE}/hostDashboard/byHostId?hostId=${encodeURIComponent(managedHostId)}`
+    );
+  }
+
+  const [response, ...hostPropertiesResults] = await Promise.all([
     fetch(`${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`, {
       method: "GET",
       headers: {
         Authorization: getAccessToken(),
       },
     }),
-    fetch(`${PROPERTY_API_BASE}/hostDashboard/all`, {
-      method: "GET",
-      headers: {
-        Authorization: getAccessToken(),
-      },
-    }),
+    ...hostPropertiesUrls.map(fetchHostPropertyOptions),
   ]);
 
   if (!response.ok) {
@@ -83,7 +101,7 @@ export const fetchPropertyAndListings = async (propertyId) => {
   }
 
   const data = await response.json();
-  const hostPropertiesData = hostPropertiesResponse.ok ? await hostPropertiesResponse.json() : [];
+  const hostPropertiesData = hostPropertiesResults.flat();
   return { data, hostPropertiesData };
 };
 
@@ -267,6 +285,7 @@ export const savePropertyChanges = async ({
   checkInDetails,
   policyAvailabilitySettings,
   pricingForm,
+  bookingType,
 }) => {
   const normalizedTitle = form.title.trim();
   const normalizedSubtitle = form.subtitle.trim();
@@ -312,6 +331,7 @@ export const savePropertyChanges = async ({
       title: normalizedTitle,
       subtitle: normalizedSubtitle,
       description: normalizedDescription,
+      bookingType: bookingType === "inquiry" || bookingType === "direct" ? bookingType : undefined,
       capacity: {
         spaceType: capacity.propertyType || "Entire house",
         guests: normalizeCapacityValue(capacity.guests),

@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { Auth } from "aws-amplify";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import CalendarIcon from "@mui/icons-material/CalendarToday";
 import EventIcon from "@mui/icons-material/Event";
@@ -12,6 +13,11 @@ import HomeIcon from "@mui/icons-material/Home";
 import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import {
+  CHANNEX_CERTIFICATION_ADMIN_ROUTE,
+  checkChannexCertificationAccess,
+} from "./channexadmin/channexCertificationAccess";
 
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
@@ -29,14 +35,47 @@ const NAV = [
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
-  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
+  {
+    key: "ChannexCertification",
+    label: "Channex Certification",
+    icon: <AdminPanelSettingsIcon />,
+    to: CHANNEX_CERTIFICATION_ADMIN_ROUTE,
+    internalOnly: true,
+  },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
 function Pages({ onNavigate }) {
   const [open, setOpen] = useState(false);
+  const [canSeeChannexCertification, setCanSeeChannexCertification] = useState(false);
   const location = useLocation();
   const btnRef = useRef(null);
+  const visibleNav = useMemo(
+    () => NAV.filter((item) => !item.internalOnly || canSeeChannexCertification),
+    [canSeeChannexCertification]
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadChannexCertificationAccess() {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        const userId = user?.attributes?.sub;
+        const isAllowed = await checkChannexCertificationAccess(userId);
+        if (mounted) setCanSeeChannexCertification(isAllowed);
+      } catch {
+        if (mounted) setCanSeeChannexCertification(false);
+      }
+    }
+
+    loadChannexCertificationAccess();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -82,11 +121,15 @@ function Pages({ onNavigate }) {
         aria-hidden={!open}
       />
 
-      <nav className={`sidebar ${open ? "open" : ""}`} aria-label="Host navigation" id="host-menu">
+      <nav
+        className={`sidebar ${open ? "open" : ""}`}
+        aria-label="Host navigation"
+        id="host-menu"
+      >
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
           <ul className="menu-list">
-            {NAV.map((item) => (
+            {visibleNav.map((item) => (
               <li key={item.key}>
                 <NavLink
                   to={item.to}

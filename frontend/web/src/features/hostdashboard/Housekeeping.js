@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { Auth } from 'aws-amplify';
+import useEffectiveHostId from '../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
     LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck, LuPartyPopper
 } from 'react-icons/lu';
 import './Housekeeping.css';
-import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, getAttachmentViewUrl } from './services/taskService';
 import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
+import { fetchTeamMembers, fetchMemberships, inviteTeamMember } from './services/teamService';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
     PieChart, Pie, Cell 
@@ -37,6 +40,35 @@ const DEFAULT_NEW_TASK = {
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
+const AttachmentThumb = ({ attachment }) => {
+    const [url, setUrl] = React.useState(null);
+
+    React.useEffect(() => {
+        if (attachment instanceof File) {
+            const objectUrl = URL.createObjectURL(attachment);
+            setUrl(objectUrl);
+            return () => URL.revokeObjectURL(objectUrl);
+        } else {
+            getAttachmentViewUrl(attachment).then(setUrl).catch(() => {});
+        }
+    }, [attachment]);
+
+    if (!url) return <div className="attachment-thumb attachment-loading" />;
+
+    const name = attachment instanceof File ? attachment.name : attachment.split('/').pop();
+    const isPdf = name.endsWith('.pdf');
+
+    return (
+        <a href={url} target="_blank" rel="noreferrer" className="attachment-thumb">
+            {isPdf ? <div className="attachment-pdf-icon">PDF</div> : <img src={url} alt={name} />}
+        </a>
+    );
+};
+
+
+AttachmentThumb.propTypes = {
+    attachment: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.string]).isRequired,
+};
 
 const isTaskOverdue = (task, todayStr) => (
     Boolean(task?.dueDate) &&
@@ -136,7 +168,13 @@ const matchesTaskFilters = (
 };
 
 const HostPropertyCare = () => {
-    const [activeTab, setActiveTab] = useState('Overview'); 
+    const { effectiveHostId, managedHostId, isPurelyPOM } = useEffectiveHostId();
+
+    const [taskContext, setTaskContext] = useState('own');
+    const asHostId = taskContext === 'managed' ? managedHostId : null;
+    const loadRequestRef = useRef(0);
+
+    const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -155,8 +193,14 @@ const HostPropertyCare = () => {
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
 
-    const [currentUser, setCurrentUser] = useState({ name: '', email: '' });
-    const [openDropdown, setOpenDropdown] = useState(null); 
+    const [currentUser, setCurrentUser] = useState({ name: '', email: '', group: '' });
+    const [openDropdown, setOpenDropdown] = useState(null);
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [teamMemberships, setTeamMemberships] = useState([]);
+    const [showTeamInviteModal, setShowTeamInviteModal] = useState(false);
+    const [teamInviteEmail, setTeamInviteEmail] = useState('');
+    const [teamInviteError, setTeamInviteError] = useState('');
+    const [teamInviteSent, setTeamInviteSent] = useState(false);
 
     useEffect(() => {
         Auth.currentAuthenticatedUser()
@@ -165,9 +209,15 @@ const HostPropertyCare = () => {
                 setCurrentUser({
                     name: attrs.given_name || attrs.name || u.username || '',
                     email: attrs.email || '',
+                    group: attrs['custom:group'] || '',
                 });
             })
             .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        fetchTeamMembers().then(setTeamMembers).catch(() => {});
+        fetchMemberships().then(setTeamMemberships).catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -246,9 +296,26 @@ const HostPropertyCare = () => {
         setSettingsDraft({ ...settings });
     };
 
-    const TEAM_MEMBERS = currentUser.name
-        ? [{ name: currentUser.name, role: 'Host', email: currentUser.email, properties: 'All', status: 'Active' }]
-        : [];
+    const TEAM_MEMBERS = useMemo(() => {
+        const rows = [];
+        if (taskContext === 'managed' && managedHostId) {
+            const membership = teamMemberships.find(m => m.host_id === managedHostId);
+            const hostName = membership?.host_name || membership?.host_email || managedHostId;
+            const hostEmail = membership?.host_email || managedHostId;
+            rows.push({ name: hostName, role: 'Host', email: hostEmail, properties: 'All', status: 'Active' });
+            if (currentUser.name) {
+                rows.push({ name: currentUser.name, role: 'Property Operations Manager', email: currentUser.email, properties: 'All', status: 'Active' });
+            }
+        } else {
+            if (currentUser.name) {
+                rows.push({ name: currentUser.name, role: 'Host', email: currentUser.email, properties: 'All', status: 'Active' });
+            }
+            teamMembers
+                .filter(m => m.status === 'active' && m.member_email !== currentUser.email)
+                .forEach(m => rows.push({ name: m.member_name || m.member_email, role: m.role, email: m.member_email, properties: 'All', status: 'Active' }));
+        }
+        return rows;
+    }, [currentUser, teamMembers, teamMemberships, taskContext, managedHostId]);
 
     const INTEGRATIONS = [
         { name: 'Airbnb', logo: '🏠', connected: false },
@@ -342,8 +409,9 @@ const HostPropertyCare = () => {
     }, [tasks, filters, timeView]);
 
     useEffect(() => {
-        fetchHostTaskPropertyOptions().then(setPropertyOptions);
-    }, []);
+        const hostIdForOptions = asHostId ?? effectiveHostId;
+        fetchHostTaskPropertyOptions(hostIdForOptions).then(setPropertyOptions);
+    }, [asHostId, effectiveHostId]);
     
     const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -373,7 +441,7 @@ const HostPropertyCare = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [asHostId]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -399,19 +467,25 @@ const HostPropertyCare = () => {
     }, [tasks]);
 
     const loadData = async () => {
+        const requestId = ++loadRequestRef.current;
         setIsLoading(true);
-        const data = await fetchTasks();
-        
-        const todayStr = new Date().toISOString().split('T')[0];
-        const processedTasks = data.map(task => {
-            if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
-                return { ...task, status: 'Overdue', priority: 'Urgent' };
-            }
-            return task;
-        });
-
-        setTasks(processedTasks);
-        setIsLoading(false);
+        try {
+            const data = await fetchTasks({}, asHostId);
+            if (requestId !== loadRequestRef.current) return;
+            const todayStr = new Date().toISOString().split('T')[0];
+            const processedTasks = data.map(task => {
+                if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
+                    return { ...task, status: 'Overdue', priority: 'Urgent' };
+                }
+                return task;
+            });
+            setTasks(processedTasks);
+        } catch {
+            if (requestId !== loadRequestRef.current) return;
+            setTasks([]);
+        } finally {
+            if (requestId === loadRequestRef.current) setIsLoading(false);
+        }
     };
 
     const handleCreateTask = async (e) => {
@@ -430,7 +504,12 @@ const HostPropertyCare = () => {
                 }]
             }; 
             
-            let created = await createTask(taskPayload);
+            let attachmentUrls = [];
+            if (newTask.attachments?.length > 0) {
+                attachmentUrls = await Promise.all(newTask.attachments.map(uploadTaskAttachment));
+            }
+
+            let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
             
             const todayStr = new Date().toISOString().split('T')[0];
             if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
@@ -448,6 +527,22 @@ const HostPropertyCare = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setNewTask(prev => ({
+            ...prev,
+            attachments: [...(prev.attachments || []), ...files],
+        }));
+    };
+
+    const handleEditFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setEditedTask(prev => ({
+            ...prev,
+            attachments: [...(prev.attachments || []), ...files],
+        }));
     };
 
     const handlePropertyChange = (e) => {
@@ -556,12 +651,22 @@ const HostPropertyCare = () => {
             activities: [...(editedTask.activities || []), ...newLogs]
         };
 
-        setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+        const newFiles = (editedTask.attachments || []).filter(a => a instanceof File);
+        let existingUrls = (editedTask.attachments || []).filter(a => typeof a === 'string');
+
+        if (newFiles.length > 0) {
+            const uploaded = await Promise.all(newFiles.map(uploadTaskAttachment));
+            existingUrls = [...existingUrls, ...uploaded];
+        }
+
+        const finalTask = { ...updatedTask, attachments: existingUrls };
+
+        setTasks(tasks.map(t => t.id === finalTask.id ? finalTask : t));
         setViewingTask(null);
         setEditedTask(null);
 
         try {
-            await updateTask(updatedTask.id, updatedTask);
+            await updateTask(finalTask.id, finalTask);
         } catch {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
         }
@@ -716,12 +821,8 @@ const HostPropertyCare = () => {
     const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
 
     let paginatedTasks = [];
-    if (activeTab === 'Overview') {
-        paginatedTasks = displayedTasks.slice(0, ITEMS_PER_PAGE);
-    } else {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        paginatedTasks = displayedTasks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    }
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    paginatedTasks = displayedTasks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     const handlePrevPage = () => setCurrentPage(p => Math.max(p - 1, 1));
     const handleNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
@@ -809,7 +910,9 @@ const HostPropertyCare = () => {
                     <div className="settings-card settings-team-card">
                         <div className="settings-card-header">
                             <h3 className="settings-card-title">Team Members</h3>
-                            <button className="btn-primary-green" disabled>+ Invite Member</button>
+                            {taskContext !== 'managed' && (
+                                <button className="btn-primary-green" onClick={() => setShowTeamInviteModal(true)}>+ Invite Member</button>
+                            )}
                         </div>
                         <table className="settings-team-table">
                             <thead>
@@ -911,6 +1014,51 @@ const HostPropertyCare = () => {
                 <button className="settings-cancel-btn" onClick={handleCancelSettings} disabled={!settingsChanged}>Cancel</button>
                 <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!settingsChanged}>Save changes</button>
             </div>
+
+            {showTeamInviteModal && (
+                <div className="team-modal-overlay">
+                    <dialog className="team-modal" open aria-modal="true" aria-labelledby="hk-invite-title">
+                        <h3 id="hk-invite-title">Invite team member</h3>
+                        {teamInviteSent ? (
+                            <p className="team-invite-success">✓ Invitation sent to {teamInviteEmail}</p>
+                        ) : (
+                            <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                setTeamInviteError('');
+                                try {
+                                    const created = await inviteTeamMember(teamInviteEmail, 'Property Operations Manager');
+                                    setTeamMembers(prev => [...prev, created]);
+                                    setTeamInviteSent(true);
+                                    setTimeout(() => {
+                                        setTeamInviteSent(false);
+                                        setTeamInviteEmail('');
+                                        setShowTeamInviteModal(false);
+                                    }, 2500);
+                                } catch {
+                                    setTeamInviteError('Failed to send invitation. Please try again.');
+                                }
+                            }}>
+                                <label className="team-modal-label">
+                                    <span>Email address</span>
+                                    <input
+                                        type="email"
+                                        className="team-modal-input"
+                                        placeholder="colleague@example.com"
+                                        value={teamInviteEmail}
+                                        onChange={(e) => setTeamInviteEmail(e.target.value)}
+                                        required
+                                    />
+                                </label>
+                                {teamInviteError && <p className="team-invite-error">{teamInviteError}</p>}
+                                <div className="team-modal-actions">
+                                    <button type="submit" className="team-invite-btn">Send invitation</button>
+                                    <button type="button" className="team-cancel-btn" onClick={() => setShowTeamInviteModal(false)}>Cancel</button>
+                                </div>
+                            </form>
+                        )}
+                    </dialog>
+                </div>
+            )}
         </div>
     );
 
@@ -1352,9 +1500,27 @@ const HostPropertyCare = () => {
         <main className="task-dashboard-v2">
             <div className="top-header">
                 <h2>Tasks</h2>
-                <button className="btn-create-green btn-create-desktop" onClick={() => setIsModalOpen(true)}>
-                    + Create Task
-                </button>
+                <div className="top-header-actions">
+                    {managedHostId && !isPurelyPOM && (
+                        <div className="task-context-toggle">
+                            <button
+                                className={`task-context-btn ${taskContext === 'own' ? 'active' : ''}`}
+                                onClick={() => setTaskContext('own')}
+                            >
+                                My tasks
+                            </button>
+                            <button
+                                className={`task-context-btn ${taskContext === 'managed' ? 'active' : ''}`}
+                                onClick={() => setTaskContext('managed')}
+                            >
+                                Co-host tasks
+                            </button>
+                        </div>
+                    )}
+                    <button className="btn-create-green btn-create-desktop" onClick={() => setIsModalOpen(true)}>
+                        + Create Task
+                    </button>
+                </div>
             </div>
 
             <button className="btn-create-fab" onClick={() => setIsModalOpen(true)} aria-label="Create Task">
@@ -1464,7 +1630,7 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-due-date'>Due Date</label>
-                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} onChange={handleInputChange} onClick={(e) => e.target.showPicker?.()} required />
+                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} min={getTodayString()} onChange={handleInputChange} onClick={(e) => e.target.showPicker?.()} required />
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-priority'>Priority</label>
@@ -1478,9 +1644,9 @@ const HostPropertyCare = () => {
                             <div className="form-group">
                                 <label htmlFor='task-attachments'>Attachments (optional)</label>
                                 <div className="custom-file-upload">
-                                    <input type="file" id="file-upload" />
+                                    <input type="file" id="file-upload" name="attachments" multiple accept="image/*,application/pdf" onChange={handleFileChange} />
                                     <label htmlFor="file-upload">
-                                        <span className="upload-text">Upload file...</span>
+                                        <span className="upload-text">{newTask.attachments?.length > 0 ? `${newTask.attachments.length} file(s) selected` : 'Upload file...'}</span>
                                     </label>
                                 </div>
                             </div>
@@ -1604,11 +1770,25 @@ const HostPropertyCare = () => {
 
                             <div className="form-group attachments-section">
                                 <div className="attachments-header">
-                                    <label htmlFor='task-attachments'>Attachments (optional)</label>
-                                    <span className="attachments-count">0 Attachments</span>
+                                    <label htmlFor='task-attachments-edit'>Attachments (optional)</label>
+                                    <span className="attachments-count">{(editedTask.attachments?.length || 0)} Attachments</span>
                                 </div>
                                 <div className="attachments-box">
-                                    <p className="no-attachments-text">No attachments yet.</p>
+                                    {(!editedTask.attachments || editedTask.attachments.length === 0) ? (
+                                        <p className="no-attachments-text">No attachments yet.</p>
+                                    ) : (
+                                        <div className="attachments-grid">
+                                            {editedTask.attachments.map((f) => (
+                                                <AttachmentThumb key={f instanceof File ? f.name : f} attachment={f} />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="custom-file-upload" style={{ marginTop: '8px' }}>
+                                    <input type="file" id="task-attachments-edit" name="attachments" multiple accept="image/*,application/pdf" onChange={handleEditFileChange} />
+                                    <label htmlFor="task-attachments-edit">
+                                        <span className="upload-text">Upload file...</span>
+                                    </label>
                                 </div>
                             </div>
 

@@ -1,5 +1,7 @@
-import { getTasks, createTask, updateTask, deleteTask } from "../business/service/taskService.js";
+import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl } from "../business/service/taskService.js";
+import { resolveEffectiveHostId } from "../business/service/pomService.js";
 import { AuthManager } from "../auth/authManager.js";
+import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 export class Controller {
@@ -7,17 +9,19 @@ export class Controller {
         this.authManager = new AuthManager();
     }
 
+    async resolveHost(event) {
+        const { username, role } = await this.authManager.getUser(event.headers?.Authorization);
+        const asHostId = event.queryStringParameters?.asHostId || null;
+        return await resolveEffectiveHostId(username, role, asHostId);
+    }
+
     async getTasks(event) {
         try {
-            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
-            const filters = event.queryStringParameters || {};
-
-            const tasks = await getTasks(hostId, filters);
-            return {
-                statusCode: 200,
-                headers: responseHeaders,
-                body: JSON.stringify(tasks)
-            };
+            const { effectiveHostId } = await this.resolveHost(event);
+            const filters = { ...event.queryStringParameters };
+            delete filters.asHostId;
+            const tasks = await getTasks(effectiveHostId, filters);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(tasks) };
         } catch (error) {
             return this.handleError(error);
         }
@@ -25,15 +29,10 @@ export class Controller {
 
     async createTask(event) {
         try {
-            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
+            const { effectiveHostId } = await this.resolveHost(event);
             const taskData = JSON.parse(event.body);
-
-            const result = await createTask(hostId, taskData);
-            return {
-                statusCode: 201,
-                headers: responseHeaders,
-                body: JSON.stringify(result)
-            };
+            const result = await createTask(effectiveHostId, taskData);
+            return { statusCode: 201, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
         }
@@ -41,11 +40,10 @@ export class Controller {
 
     async updateTask(event) {
         try {
-            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
+            const { effectiveHostId } = await this.resolveHost(event);
             const taskId = event.queryStringParameters?.id || event.pathParameters?.id;
             const updateData = JSON.parse(event.body);
-
-            const result = await updateTask(hostId, taskId, updateData);
+            const result = await updateTask(effectiveHostId, taskId, updateData);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
@@ -54,10 +52,38 @@ export class Controller {
 
     async deleteTask(event) {
         try {
-            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
+            const { effectiveHostId, isPOM } = await this.resolveHost(event);
+            if (isPOM) throw new UnauthorizedException("Co-hosts cannot delete tasks.");
             const taskId = event.queryStringParameters?.id || event.pathParameters?.id;
+            const result = await deleteTask(effectiveHostId, taskId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
 
-            const result = await deleteTask(hostId, taskId);
+    async getViewUrl(event) {
+        try {
+            await this.authManager.getHostId(event.headers?.Authorization);
+            const { key } = event.queryStringParameters || {};
+            if (!key) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "key is required" }) };
+            }
+            const viewUrl = await getViewUrl(key);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ viewUrl }) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async getUploadUrl(event) {
+        try {
+            const { effectiveHostId } = await this.resolveHost(event);
+            const { fileName, fileType } = event.queryStringParameters || {};
+            if (!fileName || !fileType) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "fileName and fileType are required" }) };
+            }
+            const result = await getUploadUrl(effectiveHostId, fileName, fileType);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);

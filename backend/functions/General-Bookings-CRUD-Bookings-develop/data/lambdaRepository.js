@@ -30,12 +30,33 @@ class LambdaRepository {
       throw new NotFoundException("User has no active properties.");
     }
 
+    const client = await Database.getInstance();
+    const propertyIds = propertyCards.map((p) => p.property.id);
+
+    const allRules = propertyIds.length
+      ? await client
+          .createQueryBuilder()
+          .select("pr.property_id", "property_id")
+          .addSelect("pr.rule", "rule")
+          .addSelect("pr.value", "value")
+          .from("property_rule", "pr")
+          .where("pr.property_id IN (:...ids)", { ids: propertyIds })
+          .getRawMany()
+      : [];
+
+    const rulesByPropertyId = allRules.reduce((acc, r) => {
+      acc[r.property_id] = acc[r.property_id] || [];
+      acc[r.property_id].push({ rule: r.rule, value: r.value === true || r.value === "true" });
+      return acc;
+    }, {});
+
     const properties = propertyCards.map((property) => ({
       id: property.property.id,
       title: property.property.title,
       rate: property.propertyPricing.roomRate,
       city: property.propertyLocation.city,
       country: property.propertyLocation.country,
+      rules: rulesByPropertyId[property.property.id] || [],
     }));
 
     return properties;

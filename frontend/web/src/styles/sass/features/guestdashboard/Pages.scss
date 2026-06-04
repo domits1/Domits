@@ -1,7 +1,7 @@
 :root {
   --gd-sidebar-w: 200px;
-  --gd-z-overlay: 900;   
-  --gd-z-sidebar: 1100;  
+  --gd-z-overlay: 1350;  
+  --gd-z-sidebar: 1400;
   --gd-z-navbar: 1300;   
 
   --gd-border: 1px solid #e5e7eb;
@@ -27,23 +27,38 @@
 
 .sidebar {
   position: fixed;
-  top: 0; left: 0;
-  height: 120dvh; 
+  top: 0;
+  left: 0;
+
+  height: 100dvh;
+
   width: var(--gd-sidebar-w);
+
+  z-index: 1400;
   background: var(--gd-bg);
   border-right: var(--gd-border);
   box-shadow: 2px 0 20px rgba(0,0,0,.08);
   transform: translateX(-100%);
   transition: transform .28s ease;
   will-change: transform;
-  z-index: var(--gd-z-sidebar);
   padding: 16px;
   display: flex;
   flex-direction: column;
 
   &.open { transform: translateX(0); }
 
-  .menu-content { display: grid; gap: 12px; }
+  .menu-content {
+    display: grid;
+    gap: 12px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    align-content: start;
+
+    @media (max-width: 1023px) {
+      padding-bottom: 32px;
+    }
+  }
   .sidebar-title {
     font-weight: 700;
     font-size: 1.5rem;
@@ -56,26 +71,28 @@
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 6px;
+    gap: 7px;
   }
 
   .label {
-    margin: 5px;
+    margin: 2px 5px;
     font-size: 1rem;
     line-height: 1.3;
   }
 
   .menu-item {
-    width: 100%;                
+    width: 100%;
     width: -webkit-fill-available;
     display: grid;
     grid-template-columns: 28px 1fr;
     align-items: center;
     gap: 10px;
-    padding: 10px 12px;
+    padding: 6px 12px;
     border-radius: 10px;
     border: var(--gd-border);
     background: var(--gd-surface);
+    color: #1b2430;
+    text-decoration: none;
     cursor: pointer;
     text-align: left;
     transition:
@@ -121,7 +138,7 @@
 
 .hamburger-btn {
   position: fixed;
-  top: 100px; 
+  top: 68px;
   left: 16px; 
   z-index: calc(var(--gd-z-sidebar) + 50);
   display: inline-flex; align-items: center; justify-content: center;

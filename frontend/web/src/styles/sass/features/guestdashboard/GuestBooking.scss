@@ -258,6 +258,28 @@ $text-muted: #6b7280;
         background: var(--primary-color);
         color: #ffffff;
         border: 1px solid var(--primary-color);
+
+        &--pending {
+          background: #f59e0b;
+          border-color: #f59e0b;
+        }
+
+        &--action {
+          background: #2563eb;
+          border-color: #2563eb;
+        }
+
+        &--declined {
+          background: #dc2626;
+          border-color: #dc2626;
+        }
+      }
+
+      .guest-booking-status-desc {
+        font-size: 11px;
+        color: $text-muted;
+        width: 100%;
+        margin-top: 2px;
       }
 
       .guest-booking-dates {
@@ -281,6 +303,21 @@ $text-muted: #6b7280;
   @media (max-width: 900px) {
     .guest-card--past {
       grid-column: auto;
+    }
+  }
+
+  .guest-card--cancelled {
+    .guest-card-header {
+      background: #f8fafc;
+      color: $text;
+    }
+
+    &::before {
+      background: transparent;
+    }
+
+    @media (min-width: 901px) {
+      justify-self: stretch;
     }
   }
 

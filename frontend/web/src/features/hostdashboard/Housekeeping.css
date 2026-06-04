@@ -23,6 +23,38 @@
     margin: 0;
 }
 
+.top-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.task-context-toggle {
+    display: flex;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.task-context-btn {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.task-context-btn.active {
+    background: #fff;
+    color: #111827;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
 
 .btn-create-green {
     background-color: #1e7e34; 
@@ -854,6 +886,44 @@
     margin: 0;
     font-size: 13px;
     color: #6c757d;
+}
+
+.attachments-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.attachment-thumb {
+    display: block;
+    width: 80px;
+    height: 80px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+    flex-shrink: 0;
+}
+
+.attachment-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.attachment-loading {
+    background-color: #f3f4f6;
+}
+
+.attachment-pdf-icon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fee2e2;
+    color: #991b1b;
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .activity-section {

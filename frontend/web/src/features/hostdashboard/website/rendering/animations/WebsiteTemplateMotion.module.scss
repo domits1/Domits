@@ -1,0 +1,26 @@
+.previewCanvasAnimated [data-scroll-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  filter: blur(6px);
+  transition:
+    opacity 0.72s ease,
+    transform 0.72s ease,
+    filter 0.72s ease;
+  transition-delay: var(--scroll-reveal-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+
+.scrollRevealVisible {
+  opacity: 1 !important;
+  transform: translate3d(0, 0, 0) !important;
+  filter: blur(0) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .previewCanvasAnimated [data-scroll-reveal] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
