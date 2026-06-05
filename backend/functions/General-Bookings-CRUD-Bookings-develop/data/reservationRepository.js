@@ -8,6 +8,7 @@ import Forbidden from "../util/exception/Forbidden.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
+import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
@@ -27,8 +28,8 @@ class ReservationRepository {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
-    const arrivalDate = new Date(requestBody.general.arrivalDate).getTime();
-    const departureDate = new Date(requestBody.general.departureDate).getTime();
+    const arrivalDate = parseBookingDateToMs(requestBody.general.arrivalDate, "arrivalDate");
+    const departureDate = parseBookingDateToMs(requestBody.general.departureDate, "departureDate");
     const client = await Database.getInstance();
     await client
       .createQueryBuilder()
@@ -36,9 +37,9 @@ class ReservationRepository {
       .into(Booking)
       .values({
         id: id,
-        arrivaldate: Number.parseFloat(arrivalDate),
+        arrivaldate: arrivalDate,
         createdat: date,
-        departuredate: Number.parseFloat(departureDate),
+        departuredate: departureDate,
         guestid: userId,
         hostid: hostId,
         hostname: "WIP-Host",
@@ -320,6 +321,27 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
+      .select([
+        "booking.id",
+        "booking.arrivaldate",
+        "booking.departuredate",
+        "booking.createdat",
+        "booking.guestid",
+        "booking.guests",
+        "booking.hostid",
+        "booking.latepayment",
+        "booking.paymentid",
+        "booking.property_id",
+        "booking.status",
+        "booking.guestname",
+        "booking.hostname",
+        "booking.cancellation_policy",
+        "booking.bookingtype",
+        "booking.total_price",
+        "booking.refunded_amount",
+        "booking.stripe_refund_id",
+        "booking.refund_error",
+      ])
       .where("booking.id = :id", { id: id })
       .getOne();
 
@@ -403,7 +425,7 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId) {
+  async cancelBookingByGuest(id, guestId, refundInfo = {}) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -420,7 +442,18 @@ class ReservationRepository {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    await client.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute();
+    const updateData = { status: "Cancelled" };
+    if (refundInfo.refundedAmount !== undefined) {
+      updateData.refunded_amount = refundInfo.refundedAmount;
+    }
+    if (refundInfo.stripeRefundId) {
+      updateData.stripe_refund_id = refundInfo.stripeRefundId;
+    }
+    if (refundInfo.refundError) {
+      updateData.refund_error = refundInfo.refundError;
+    }
+
+    await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
 
     const updated = await client
       .getRepository(Booking)

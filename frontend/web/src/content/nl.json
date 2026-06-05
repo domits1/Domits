@@ -1,4 +1,11 @@
 {
+  "listingDetails": {
+    "location": {
+      "title": "Waar je verblijft",
+      "disclaimer": "De exacte locatie wordt na boeking verstrekt.",
+      "unavailable": "Locatie-informatie is niet beschikbaar."
+    }
+  },
   "component": {
     "user": {
       "hello": "Hallo",
@@ -107,9 +114,13 @@
     },
     "features": {
       "securePayments": "Veilige betalingen",
+      "securePaymentsDesc": "Uw transacties zijn beschermd",
       "verifiedGuest": "Geverifieerde gasten/gastheren",
+      "verifiedDesc": "Elke accommodatie is geverifieerd",
       "quickPhone": "Snelle telefonische ondersteuning",
+      "quickSupportDesc": "24/7 klantenservice",
       "qualityGuarantee": "Domits kwaliteitsgarantie",
+      "qualityDesc": "Alleen premium verblijven",
       "bestPrice": "Beste prijsgarantie",
       "bestPriceDescription": "Wij streven ernaar u de best mogelijke prijs te bieden. Vindt u elders een lagere prijs, dan bekijken we die samen met u en passen we deze waar mogelijk aan.",
       "bookingGuarantee": "Garantie voor accommodatieboeking",
@@ -119,6 +130,7 @@
     },
     "sections": {
       "trending": "Populaire accommodaties deze maand",
+      "trendingNow": "Trending Nu",
       "rentBoat": "Huur een boot voor elke gelegenheid",
       "discoverCampers": "Ontdek prachtige campers",
       "becomeHost": {
@@ -224,6 +236,80 @@
         }
       }
     }
+  },
+  "regionBlocks": {
+    "europe": {
+      "title": "Europa",
+      "subtitle": "Ontdek luxe verblijven in Europese bestemmingen",
+      "footer": "Verken alle landen in Europa →"
+    },
+    "asia": {
+      "title": "Azië",
+      "subtitle": "Verken exotische Aziatische retraites en moderne metropolen",
+      "footer": "Verken alle landen in Azië →"
+    },
+    "caribbean": {
+      "title": "Eilanden in het Caribisch gebied",
+      "subtitle": "Paradijs wacht in deze tropische havens",
+      "footer": "Verken alle landen in het Caribisch gebied →"
+    },
+    "ski": {
+      "title": "Populaire skibestemmingen",
+      "subtitle": "Wereldklasse pistes en gezellige bergchalets",
+      "footer": "Verken alle populaire skibestemmingen →"
+    },
+    "seasons": {
+      "title": "Favorieten per seizoen",
+      "subtitle": "Perfecte accommodaties voor elk moment van het jaar",
+      "footer": "Verken alle favorieten per seizoen →"
+    },
+    "interests": {
+      "title": "Topkeuzes op interesse",
+      "subtitle": "Vind verblijven die passen bij uw passies",
+      "footer": "Verken alle topkeuzes op interesse →"
+    },
+    "groups": {
+      "title": "Accommodaties per groep",
+      "subtitle": "Het perfecte verblijf voor uw reisgezelschap",
+      "footer": "Verken alle accommodaties per groep →"
+    }
+  },
+  "guarantees": {
+    "sectionTitle": "Onze garanties, uw gemoedsrust",
+    "sectionSubtitle": "Wij staan achter elk verblijf met onze beloften aan u."
+  },
+  "hostSection": {
+    "title": "Deel uw ruimte, verdien premium inkomen",
+    "description": "Word lid van onze exclusieve community van luxe hosts. Vermeld uw villa, strandhuis of unieke accommodatie en verbind u met reizigers die op zoek zijn naar buitengewone ervaringen.",
+    "features": {
+      "earn": {
+        "title": "Verdien meer",
+        "text": "Premium prijzen voor luxe accommodaties"
+      },
+      "infrastructure": {
+        "title": "Infrastructuur",
+        "text": "Nieuwste industriestandaarden"
+      },
+      "support": {
+        "title": "Deskundige ondersteuning",
+        "text": "Toegewijd team om u te helpen slagen"
+      }
+    },
+    "stats": {
+      "hosts": {
+        "value": "500+",
+        "label": "Actieve hosts"
+      },
+      "rating": {
+        "value": "4.9",
+        "label": "Gem. beoordeling"
+      },
+      "earning": {
+        "value": "€2.5k",
+        "label": "Gem./maand"
+      }
+    },
+    "button": "Vermeld uw accommodatie"
   },
   "travelInnovationLabs": {
     "title": "Travel Innovation Labs",
@@ -595,6 +681,18 @@
     }
   },
   "landing": {
+    "hero": {
+      "badge": "Vertrouwd door veel hosts",
+      "titleLine1": "Uw accommodaties.",
+      "titleLine2": "Onze infrastructuur.",
+      "description": "Zet uw luxe vakantieverhuur om in een inkomstenstroom die zichzelf runt. Meer inkomsten. Minder werkdruk. Totaal vertrouwen.",
+      "primaryButton": "Begin met hosten →",
+      "secondaryButton": "Zie hoe het werkt",
+      "stat1Label": "meer inkomsten",
+      "stat2Label": "minder werkdruk",
+      "stat3Label": "ondersteuning",
+      "integratesLabel": "Integreert naadloos met"
+    },
     "list": "Plaats uw",
     "house": "Huis",
     "camper": "Camper",
@@ -612,6 +710,9 @@
       "title2": "is nog nooit zo ",
       "easier": "makkelijk",
       "subtitle": "Het kost slechts 3 stappen",
+      "stepsLabel": "HET PROCES",
+      "stepsTitleLine1": "Drie Stappen.",
+      "stepsTitleSpan": "Nul Wrijving.",
       "first": {
         "one": "1.",
         "title": "Plaats uw accommodatie",
@@ -633,7 +734,18 @@
       "domits": "Domits",
       "end": "?",
       "description": "Bij Domits zijn we niet zomaar een platform, we bouwen een toekomstgerichte, duurzame community met onze Travel Innovation Labs. Onze innovatieve aanpak zorgt ervoor dat uw accommodatie zowel voor reizigers als voor het milieu een betekenisvolle waarde toevoegt. U krijgt ook onbeperkte ondersteuning en gepersonaliseerde, moderne dashboards die het beheer van uw aanbiedingen eenvoudiger maken dan ooit. Maar wat Domits echt onderscheidt, is onze toewijding aan u. U bent meer dan slechts een klant of data; we geven oprecht om uw succes en staan elke stap van de weg voor u klaar om u te helpen floreren. Hosten met Domits betekent het afstemmen op diepgewortelde waarden zoals gezondheid, veiligheid en duurzaamheid, en het creëren van een toekomstbestendig pad voor uw onderneming.",
-      "btnHosting": "Begin met hosten"
+      "btnHosting": "Begin met hosten",
+      "sectionTitle": "Waarom",
+      "sectionDescription": "Domits transformeert de toekomst van luxe vakantieverhuurbeheer tot een naadloze ervaring. Van plaatsing tot uitbetaling, alles wordt op één centrale plek beheerd zodat u zich kunt richten op groei, niet op operaties.",
+      "rating": "4.9 ★",
+      "features": {
+        "pmsOta": "Domits PMS met OTA",
+        "revenueManagement": "Inkomstenbeheer",
+        "directReservations": "Directe Reserveringen",
+        "financeSuite": "Finance Suite",
+        "channelManagement": "Kanaalbeheer",
+        "taskAutomations": "Taakautomatisering"
+      }
     },
     "register": {
       "title": "Registreer uw accommodatie",
@@ -663,11 +775,15 @@
       "renting": {
         "title": "Internationaal verhuren",
         "description": "U verhuurt uw vakantiehuis op een internationale markt. Dit vergroot de kans dat uw vakantiehuis verhuurd wordt."
-      }
+      },
+      "subtitle": "Alles wat u nodig heeft om uw accommodatie met vertrouwen en gemoedsrust te verhuren.",
+      "cta": "Registreer uw accommodatie →"
     },
     "othersSay": {
       "title": "Wat anderen zeggen over",
-      "domits": "Domits"
+      "domits": "Domits",
+      "hearFrom": "Hoor van onze hosts.",
+      "trustText": "Veel hosts vertrouwen Domits"
     },
     "rentingOut": {
       "title": "Is uw accommodatie geschikt voor",
@@ -704,9 +820,62 @@
       "safety": {
         "title": "Veiligheid ✓",
         "description": "De accommodatie voldoet aan de veiligheidsnormen met functionerende rookmelders, beveiligde balkons, veilige speeltuinen en duidelijke toegangswegen."
+      },
+      "cta": "Klaar om uw accommodatie te plaatsen? Ons team begeleidt u bij elke stap.",
+      "ctaBadge": "✔ Geverifieerde accommodaties krijgen 3x meer boekingen"
+    },
+    "featuresSection": {
+      "title": "Resultaatgerichte",
+      "span": "Functies",
+      "pmsOta": {
+        "title": "Domits PMS met OTA",
+        "description": "Een gecentraliseerd Property Management System (PMS) met boekingskanalenintegratie."
+      },
+      "directReservation": {
+        "title": "Directe Reserveringsuite",
+        "description": "Een directe boekingswebsite-bouwer om OTA-kosten en afhankelijkheid te verminderen"
+      },
+      "channelManagement": {
+        "title": "Kanaalbeheer",
+        "description": "Distribueer naar kanalen zoals Airbnb, Domits, Booking, Vrbo en meer"
+      },
+      "revenueIntelligence": {
+        "title": "Inkomstenintelligentie",
+        "description": "Real-time inzichten in KPI's en dynamische prijsstelling."
+      },
+      "financeSuite": {
+        "title": "Finance Suite",
+        "description": "Gastbetalingen, hostuitbetalingen en precisiebeheerhulpmiddelen"
+      },
+      "taskAutomation": {
+        "title": "Taakautomatisering",
+        "description": "Automatiseer check-ins, schoonmaakschema en onderhoudsverzoeken"
       }
     },
+    "cta": {
+      "badge": "✦ Word lid van een community van hosts",
+      "title": "Klaar om uw accommodatieprestaties te verbeteren?",
+      "subtitle": "Begin vandaag nog meer te verdienen met uw luxe vakantieverhuur. Geen creditcard vereist.",
+      "button": "Begin nu met hosten →",
+      "benefit1": "● Gratis om te beginnen",
+      "benefit2": "● Geen verborgen kosten",
+      "benefit3": "● Op elk moment annuleren"
+    },
+    "partnerContact": {
+      "title": "Meer dan software.",
+      "subtitle": "Een toegewijde partner.",
+      "description": "Ons team staat klaar om uw vragen te beantwoorden, het potentieel van uw accommodatie te bespreken en u te helpen met moeiteloos verhuurinkomen.",
+      "emailLabel": "E-mail ons",
+      "emailValue": "teamdomits@gmail.com",
+      "phoneLabel": "Bel ons",
+      "phoneValue": "24/7 beschikbaar",
+      "addressLabel": "Bezoek ons",
+      "addressLine1": "Kinderhuissingel 6-K",
+      "addressLine2": "2013 AS, Haarlem"
+    },
     "answerTo": {
+      "faqTitle": "Antwoorden op",
+      "faqSpan": "uw vragen",
       "title": "Antwoorden op ",
       "your": "uw",
       "question": "vragen",
@@ -918,6 +1087,118 @@
         "cancel": "Annuleren",
         "success": "✓ Uitnodiging verstuurd naar",
         "error": "Uitnodiging verzenden mislukt. Probeer het opnieuw."
+      }
+    }
+  },
+  "hostDashboard": {
+    "reservationDetails": {
+      "pageTitle": "Reserveringsdetails",
+      "states": {
+        "failedToLoad": "Reservering laden mislukt.",
+        "noReservationFound": "Geen reservering gevonden."
+      },
+      "buttons": {
+        "back": "Terug naar reserveringen",
+        "messageGuest": "Stuur bericht",
+        "viewInCalendar": "Bekijk in kalender",
+        "downloadReceipt": "Download bon",
+        "preparingReceipt": "Bon voorbereiden..."
+      },
+      "headings": {
+        "property": "Accommodatie",
+        "guest": "Gast",
+        "payment": "Betaling",
+        "reservationInfo": "Reserveringsinfo",
+        "actions": "Acties",
+        "checkInInstructions": "Check-in instructies",
+        "houseRules": "Huisregels",
+        "cancellationPolicy": "Annuleringsbeleid",
+        "specialRequest": "Speciaal verzoek"
+      },
+      "labels": {
+        "bookedVia": "Geboekt via",
+        "checkIn": "Check-in",
+        "bookedOn": "Geboekt op",
+        "reservationId": "Reserverings-ID",
+        "confirmation": "Bevestiging",
+        "cleaningFee": "Schoonmaakkosten",
+        "totalPaid": "Totaal betaald",
+        "method": "Methode",
+        "propertyImageAlt": "Afbeelding van accommodatie",
+        "guestFallbackName": "Gast",
+        "loadingValue": "Laden...",
+        "unavailable": "onbeschikbaar",
+        "none": "Geen",
+        "locationUnavailable": "Locatie onbeschikbaar",
+        "loadingLocation": "Locatie laden...",
+        "night": "nacht",
+        "nights": "nachten",
+        "guest": "gast",
+        "guests": "gasten"
+      },
+      "loading": {
+        "status": "Laden",
+        "summary": "Reserveringsoverzicht laden...",
+        "reservationDetails": "Reserveringsdetails laden...",
+        "guestEmail": "E-mailadres van gast laden...",
+        "guestPhone": "Telefoonnummer van gast laden...",
+        "checkInInstructions": "Check-in instructies laden...",
+        "houseRules": "Huisregels laden...",
+        "cancellationPolicy": "Annuleringsbeleid laden...",
+        "payment": "Betaling laden",
+        "paymentStatus": "Betaalstatus laden"
+      },
+      "empty": {
+        "noCheckInInstructions": "Geen check-in instructies",
+        "noHouseRulesSpecified": "Geen huisregels opgegeven",
+        "noCancellationPolicySelected": "Geen annuleringsbeleid geselecteerd.",
+        "paymentStatusUnavailable": "Betaalstatus onbeschikbaar",
+        "reservation": "Reservering"
+      },
+      "status": {
+        "PAID": "Bevestigd",
+        "AWAITING_PAYMENT": "Wacht op betaling",
+        "FAILED": "Mislukt",
+        "DECLINED": "Geweigerd",
+        "INQUIRY": "Aanvraag"
+      },
+      "paymentStatus": {
+        "PAID": {
+          "label": "Betaling ontvangen",
+          "text": "Volledig betaald op"
+        },
+        "AWAITING_PAYMENT": {
+          "label": "Wacht op betaling",
+          "text": "Betaling in afwachting"
+        },
+        "FAILED": {
+          "label": "Betaling mislukt",
+          "text": "Betaling was niet succesvol"
+        },
+        "DECLINED": {
+          "label": "Betaling geweigerd",
+          "text": "Betaling is geweigerd"
+        },
+        "INQUIRY": {
+          "label": "Aanvraag in behandeling",
+          "text": "Wacht op beoordeling van host"
+        }
+      },
+      "requestActions": {
+        "title": "Boekingsaanvraag",
+        "subtitle": "Accepteer of wijs deze boekingsaanvraag af voordat deze naar betaling gaat.",
+        "accept": "Aanvraag accepteren",
+        "decline": "Aanvraag afwijzen",
+        "confirmAcceptTitle": "Deze aanvraag accepteren?",
+        "confirmAcceptNoOverlap": "Weet je zeker dat je deze aanvraag wilt accepteren?",
+        "confirmAcceptWithOverlap": "Er zijn {count} andere openstaande aanvragen met overlappende data voor deze accommodatie. Accepteren wijst die aanvragen automatisch af.",
+        "confirmDeclineTitle": "Deze aanvraag afwijzen?",
+        "confirmDeclineMessage": "Weet je zeker dat je deze boekingsaanvraag wilt afwijzen?",
+        "accepted": "Aanvraag geaccepteerd.",
+        "acceptedWithOverlap": "Aanvraag geaccepteerd. {count} overlappende aanvragen zijn automatisch afgewezen.",
+        "declined": "Aanvraag afgewezen.",
+        "updateFailed": "Aanvraagstatus bijwerken mislukt.",
+        "cancel": "Annuleren"
       }
     }
   }

@@ -221,6 +221,23 @@ class IntegrationController {
     return await this.integrationService.receiveChannexBookingRevisions(userId, domitsPropertyId);
   }
 
+  async pullLatestChannexBookings(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    return await this.integrationService.pullLatestChannexBookings(userId, domitsPropertyId);
+  }
+
+  async cancelChannexCertificationBooking(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.cancelChannexCertificationBooking(userId, domitsPropertyId, body);
+  }
+
+  async pollLatestChannexBookings(event) {
+    return await this.integrationService.pollLatestChannexBookings(event?.detail || event || {});
+  }
+
   async acknowledgeChannexBookingRevisions(event) {
     const userId = event.queryStringParameters?.userId || null;
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
@@ -257,6 +274,25 @@ class IntegrationController {
       statusCode: 200,
       response: evidence,
     };
+  }
+
+  async syncChannexCalendarChange(event) {
+    const expectedToken = requireStr(process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN);
+    const providedToken = requireStr(getHeader(event?.headers, "x-domits-internal-token"));
+    const allowWithoutToken = process.env.TEST === "true" && !expectedToken;
+
+    if (!allowWithoutToken && (!expectedToken || providedToken !== expectedToken)) {
+      return {
+        statusCode: 403,
+        response: {
+          error: "FORBIDDEN",
+          message: "Invalid internal calendar-change sync token.",
+        },
+      };
+    }
+
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.syncChannexCalendarChange(body);
   }
 
   async syncChannexRestrictions(event) {
@@ -340,6 +376,12 @@ class IntegrationController {
     const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
     const body = safeJson(event.body) || {};
     return await this.integrationService.syncChannexCertificationTestCase(userId, domitsPropertyId, body);
+  }
+
+  async saveChannexSetupMapping(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.saveChannexSetupMapping(userId, body);
   }
 
   async linkChannexProperty(event) {

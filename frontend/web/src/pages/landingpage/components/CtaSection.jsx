@@ -1,22 +1,13 @@
-import React, { useContext } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
-import FlowContext from "../../../services/FlowContext";
-import { startHostingFlow } from "../../../utils/hostFlow";
 
-function CtaSection({ isAuthenticated, group }) {
+function CtaSection({ content }) {
   const navigate = useNavigate();
-  const { setFlowState } = useContext(FlowContext);
 
-  const handleStartHosting = () =>
-    startHostingFlow({
-      isAuthenticated,
-      group,
-      navigate,
-      setFlowState,
-    });
+  const handleStartHosting = () => navigate("/register");
 
   return (
     <motion.section
@@ -29,16 +20,15 @@ function CtaSection({ isAuthenticated, group }) {
       <div className="cta-final__container">
 
         <motion.div className="cta-final__badge" variants={fadeUp}>
-          ✦ Join a community of hosts
+          {content.badge}
         </motion.div>
 
         <motion.h2 className="cta-final__title" variants={fadeUp}>
-          Ready to Elevate <br />
-          Your Property Performance?
+          {content.title}
         </motion.h2>
 
         <motion.p className="cta-final__subtitle" variants={fadeUp}>
-          Start earning more from your luxury vacation rentals today. No credit card required.
+          {content.subtitle}
         </motion.p>
 
         <motion.button
@@ -48,13 +38,13 @@ function CtaSection({ isAuthenticated, group }) {
           whileHover={{ scale: 1.07 }}
           whileTap={{ scale: 0.97 }}
         >
-          Start hosting now →
+          {content.button}
         </motion.button>
 
         <motion.div className="cta-final__benefits" variants={fadeUp}>
-          <span>● Free to get started</span>
-          <span>● No hidden fees</span>
-          <span>● Cancel anytime</span>
+          <span>{content.benefit1}</span>
+          <span>{content.benefit2}</span>
+          <span>{content.benefit3}</span>
         </motion.div>
 
       </div>
@@ -63,8 +53,7 @@ function CtaSection({ isAuthenticated, group }) {
 }
 
 CtaSection.propTypes = {
-  group: PropTypes.string,
-  isAuthenticated: PropTypes.bool,
+  content: PropTypes.object.isRequired,
 };
 
 export default CtaSection;
