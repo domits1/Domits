@@ -241,6 +241,11 @@
     overflow: visible;
   }
 
+  .panoramaTopBarShellInteractive,
+  .panoramaTopBarShellPublic {
+    width: 100%;
+  }
+
   .templateTopBar {
     flex-wrap: nowrap;
     align-items: center;
@@ -630,7 +635,8 @@
 
 .panoramaTopBarShellInteractive,
 .panoramaTopBarShellPublic {
-  width: 100%;
+  width: calc(100% + (var(--template-preview-frame-gutter, 0px) * 2));
+  max-width: none;
 }
 
 .panoramaTopBarShell .templateTopBar {
@@ -2490,6 +2496,11 @@
     height: 0;
     margin-bottom: calc(0px - var(--panorama-topbar-overlay-offset));
     overflow: visible;
+  }
+
+  .panoramaTopBarShellInteractive,
+  .panoramaTopBarShellPublic {
+    width: 100%;
   }
 
   .panoramaEditorialHeroWithTopBar {
