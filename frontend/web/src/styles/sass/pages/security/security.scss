@@ -26,7 +26,7 @@ $primary-text: #166534;
     }
 
     .security__title {
-      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-size: clamp(1.6rem, 5vw, 3.5rem);
       font-weight: 700;
       line-height: 1.2;
       margin: 0;
@@ -247,7 +247,7 @@ $primary-text: #166534;
 
     @media (max-width: 600px) {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
       padding: 24px 20px;
     }
 
@@ -279,6 +279,14 @@ $primary-text: #166534;
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
+
+      @media (max-width: 600px) {
+        flex-direction: column;
+
+        .security__cta-btn {
+          text-align: center;
+        }
+      }
 
       .security__cta-btn {
         padding: 10px 20px;

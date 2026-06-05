@@ -26,7 +26,7 @@ $primary-text: #166534;
     }
 
     .performance__title {
-      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-size: clamp(1.6rem, 5vw, 3.5rem);
       font-weight: 700;
       line-height: 1.2;
       margin: 0;
@@ -44,8 +44,9 @@ $primary-text: #166534;
     gap: 16px;
     margin-bottom: 40px;
 
-    @media (max-width: 600px) {
+    @media (max-width: 720px) {
       grid-template-columns: 1fr;
+      gap: 12px;
     }
 
     .performance__badge {
@@ -121,6 +122,7 @@ $primary-text: #166534;
         .performance__section-heading {
           display: flex;
           align-items: center;
+          flex-wrap: wrap;
           gap: 12px;
           margin-bottom: 16px;
 
