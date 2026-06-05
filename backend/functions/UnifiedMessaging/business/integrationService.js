@@ -802,6 +802,8 @@ const CHANNEX_CERTIFICATION_CANCEL_ACTION = "certification-cancel-booking";
 const CHANNEX_CERTIFICATION_CANCEL_MODE = "admin-certification-no-refund";
 const CHANNEX_CERTIFICATION_CANCEL_REFUND_SKIPPED_REASON =
   "Channex certification/admin cancellation does not process guest refunds.";
+const CHANNEX_BOOKING_CREATED_TRIGGER = "BOOKING_CREATED";
+const CHANNEX_BOOKING_MODIFIED_TRIGGER = "BOOKING_MODIFIED";
 const CHANNEX_BOOKING_CANCELLED_TRIGGER = "BOOKING_CANCELLED";
 const CHANNEL_CHANNEX = "CHANNEX";
 const CHANNEX_IMPORTED_BOOKING_STATUS = "Paid";
@@ -1061,6 +1063,8 @@ const buildChannexBookingLinkPayload = ({ revision, externalReservationId, domit
   importedBy: CHANNEX_BOOKING_IMPORT_SOURCE,
   action,
 });
+const withChannexAvailabilitySync = (itemPatch, channexAvailabilitySync) =>
+  channexAvailabilitySync === undefined ? itemPatch : { ...itemPatch, channexAvailabilitySync };
 const buildChannexBookingRevisionPersistencePayload = ({ revision, propertyMapping }) => ({
   provider: "CHANNEX",
   channel: CHANNEL_CHANNEX,
@@ -5935,6 +5939,16 @@ export default class IntegrationService {
     };
   }
 
+  async syncChannexImportedBookingAvailability({ bookingBefore = null, bookingAfter = null, trigger }) {
+    const referenceBooking = bookingAfter || bookingBefore || {};
+    return await this.channexBookingAvailabilityBridge.syncAvailabilityForBookingChange({
+      userId: referenceBooking.hostId,
+      bookingBefore: toBookingAvailabilityBridgeBooking(bookingBefore),
+      bookingAfter: toBookingAvailabilityBridgeBooking(bookingAfter),
+      trigger,
+    });
+  }
+
   async finalizeChannexBookingImportItem({
     baseItem,
     revision,
@@ -6022,6 +6036,13 @@ export default class IntegrationService {
       };
     }
 
+    const channexAvailabilitySync = bookingResult.created
+      ? await this.syncChannexImportedBookingAvailability({
+          bookingAfter: bookingResult.booking,
+          trigger: CHANNEX_BOOKING_CREATED_TRIGGER,
+        })
+      : undefined;
+
     return await this.finalizeChannexBookingImportItem({
       baseItem,
       integration,
@@ -6036,7 +6057,7 @@ export default class IntegrationService {
       normalizedDomitsPropertyId,
       propertyMapping,
       resultForAck: (ackOk) => buildImportedNewBookingResult({ ackOk, created: bookingResult.created }),
-      itemPatch: { createdBooking: bookingResult.created },
+      itemPatch: withChannexAvailabilitySync({ createdBooking: bookingResult.created }, channexAvailabilitySync),
     });
   }
 
@@ -6064,6 +6085,22 @@ export default class IntegrationService {
       };
     }
 
+    const bookingBefore = await this.externalBookingImportRepository.getBookingById(domitsBookingId);
+    if (!bookingBefore) {
+      return {
+        ...baseItem,
+        domitsBookingId,
+        result: "booking-update-failed-unacked",
+        unacked: true,
+        errors: [
+          buildChannexPullIssue(
+            "DOMITS_BOOKING_UPDATE_FAILED",
+            "Linked Domits booking could not be updated for this Channex modified revision."
+          ),
+        ],
+      };
+    }
+
     const updatedBooking = await this.externalBookingImportRepository.updateImportedBooking({
       bookingId: domitsBookingId,
       guestName: requireStr(revision?.guestName) || "Channex guest",
@@ -6085,6 +6122,12 @@ export default class IntegrationService {
       };
     }
 
+    const channexAvailabilitySync = await this.syncChannexImportedBookingAvailability({
+      bookingBefore,
+      bookingAfter: updatedBooking,
+      trigger: CHANNEX_BOOKING_MODIFIED_TRIGGER,
+    });
+
     return await this.finalizeChannexBookingImportItem({
       baseItem,
       integration,
@@ -6099,7 +6142,7 @@ export default class IntegrationService {
       normalizedDomitsPropertyId,
       propertyMapping,
       resultForAck: (ackOk) => (ackOk ? "updated-and-acked" : "updated-but-ack-failed"),
-      itemPatch: { updatedBooking: true },
+      itemPatch: withChannexAvailabilitySync({ updatedBooking: true }, channexAvailabilitySync),
     });
   }
 
@@ -6127,6 +6170,22 @@ export default class IntegrationService {
       };
     }
 
+    const bookingBefore = await this.externalBookingImportRepository.getBookingById(domitsBookingId);
+    if (!bookingBefore) {
+      return {
+        ...baseItem,
+        domitsBookingId,
+        result: "booking-cancel-failed-unacked",
+        unacked: true,
+        errors: [
+          buildChannexPullIssue(
+            "DOMITS_BOOKING_CANCEL_FAILED",
+            "Linked Domits booking could not be cancelled for this Channex cancelled revision."
+          ),
+        ],
+      };
+    }
+
     const cancelledBooking = await this.externalBookingImportRepository.cancelImportedBooking(domitsBookingId);
     if (!cancelledBooking) {
       return {
@@ -6143,6 +6202,12 @@ export default class IntegrationService {
       };
     }
 
+    const channexAvailabilitySync = await this.syncChannexImportedBookingAvailability({
+      bookingBefore,
+      bookingAfter: cancelledBooking,
+      trigger: CHANNEX_BOOKING_CANCELLED_TRIGGER,
+    });
+
     return await this.finalizeChannexBookingImportItem({
       baseItem,
       integration,
@@ -6157,7 +6222,7 @@ export default class IntegrationService {
       normalizedDomitsPropertyId,
       propertyMapping,
       resultForAck: (ackOk) => (ackOk ? "cancelled-and-acked" : "cancelled-but-ack-failed"),
-      itemPatch: { cancelledBooking: true },
+      itemPatch: withChannexAvailabilitySync({ cancelledBooking: true }, channexAvailabilitySync),
     });
   }
 

@@ -8,6 +8,7 @@ import Forbidden from "../util/exception/Forbidden.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
+import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
@@ -27,8 +28,8 @@ class ReservationRepository {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
-    const arrivalDate = new Date(requestBody.general.arrivalDate).getTime();
-    const departureDate = new Date(requestBody.general.departureDate).getTime();
+    const arrivalDate = parseBookingDateToMs(requestBody.general.arrivalDate, "arrivalDate");
+    const departureDate = parseBookingDateToMs(requestBody.general.departureDate, "departureDate");
     const client = await Database.getInstance();
     await client
       .createQueryBuilder()
@@ -36,9 +37,9 @@ class ReservationRepository {
       .into(Booking)
       .values({
         id: id,
-        arrivaldate: Number.parseFloat(arrivalDate),
+        arrivaldate: arrivalDate,
         createdat: date,
-        departuredate: Number.parseFloat(departureDate),
+        departuredate: departureDate,
         guestid: userId,
         hostid: hostId,
         hostname: "WIP-Host",

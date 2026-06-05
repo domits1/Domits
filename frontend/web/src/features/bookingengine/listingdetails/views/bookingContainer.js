@@ -6,6 +6,9 @@ import Pricing from "../components/pricing";
 import useHandleReservePress from "../hooks/handleReservePress";
 import {
   buildUnavailableDateSet,
+  DATE_AVAILABILITY_REASONS,
+  getDateAvailabilityReason,
+  getStayRangeAvailabilityIssue,
   hasUnavailableDateInStayRange,
   isUnavailableDate,
 } from "../utils/dateAvailability";
@@ -23,6 +26,8 @@ import ChatScreen from "../../../../components/messages/ChatScreen";
 import "../../../../components/messages/messagesV2.scss";
 
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const BOOKED_MESSAGE = "These dates are already booked.";
+const NO_AVAILABILITY_MESSAGE = "This property has no availability for the selected dates.";
 
 const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyId }) => {
   const { userId } = useAuth();
@@ -155,6 +160,9 @@ const BookingContainer = ({
   host = {},
   propertyId = null,
   unavailableDateKeys = [],
+  bookedDateKeys = [],
+  availabilityRanges = null,
+  availableDateKeys = null,
   checkInDate = "",
   setCheckInDate = () => {},
   checkOutDate = "",
@@ -175,6 +183,15 @@ const BookingContainer = ({
   const unavailableDateSet = useMemo(
     () => buildUnavailableDateSet(unavailableDateKeys),
     [unavailableDateKeys]
+  );
+  const bookedDateSet = useMemo(() => buildUnavailableDateSet(bookedDateKeys), [bookedDateKeys]);
+  const availabilityContext = useMemo(
+    () => ({
+      availabilityRanges,
+      availableDateKeys,
+      bookedDateKeys: bookedDateSet,
+    }),
+    [availabilityRanges, availableDateKeys, bookedDateSet]
   );
   const nights = useMemo(() => calculateNights(checkInDate, checkOutDate), [checkInDate, checkOutDate]);
 
@@ -251,13 +268,13 @@ const BookingContainer = ({
     }
 
     if (
-      isUnavailableDate(checkInDate, unavailableDateSet) ||
-      (checkOutDate && hasUnavailableDateInStayRange(checkInDate, checkOutDate, unavailableDateSet))
+      isUnavailableDate(checkInDate, unavailableDateSet, availabilityContext) ||
+      (checkOutDate && hasUnavailableDateInStayRange(checkInDate, checkOutDate, unavailableDateSet, availabilityContext))
     ) {
       setCheckInDate("");
       setCheckOutDate("");
     }
-  }, [checkInDate, checkOutDate, setCheckInDate, setCheckOutDate, unavailableDateSet]);
+  }, [availabilityContext, checkInDate, checkOutDate, setCheckInDate, setCheckOutDate, unavailableDateSet]);
 
   const handleCheckInDateChange = (value) => {
     if (!value) {
@@ -266,8 +283,9 @@ const BookingContainer = ({
       return;
     }
 
-    if (isUnavailableDate(value, unavailableDateSet)) {
-      alert("Check in date is unavailable.");
+    const availabilityReason = getDateAvailabilityReason(value, unavailableDateSet, availabilityContext);
+    if (availabilityReason !== DATE_AVAILABILITY_REASONS.AVAILABLE) {
+      alert(availabilityReason === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -276,8 +294,10 @@ const BookingContainer = ({
       return;
     }
 
-    if (checkOutDate && hasUnavailableDateInStayRange(value, checkOutDate, unavailableDateSet)) {
-      alert("Selected stay includes unavailable dates.");
+    const rangeIssue =
+      checkOutDate && getStayRangeAvailabilityIssue(value, checkOutDate, unavailableDateSet, availabilityContext);
+    if (rangeIssue) {
+      alert(rangeIssue === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -300,8 +320,9 @@ const BookingContainer = ({
       return;
     }
 
-    if (hasUnavailableDateInStayRange(checkInDate, value, unavailableDateSet)) {
-      alert("Selected stay includes unavailable dates.");
+    const rangeIssue = getStayRangeAvailabilityIssue(checkInDate, value, unavailableDateSet, availabilityContext);
+    if (rangeIssue) {
+      alert(rangeIssue === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -314,6 +335,9 @@ const BookingContainer = ({
     checkOutDate,
     setCheckOutDate: handleCheckOutDateChange,
     unavailableDateKeys,
+    bookedDateKeys,
+    availabilityRanges,
+    availableDateKeys,
     className: "date-container--mobile-sticky",
   };
 
@@ -351,6 +375,9 @@ const BookingContainer = ({
         checkOutDate={checkOutDate}
         setCheckOutDate={handleCheckOutDateChange}
         unavailableDateKeys={unavailableDateKeys}
+        bookedDateKeys={bookedDateKeys}
+        availabilityRanges={availabilityRanges}
+        availableDateKeys={availableDateKeys}
       />
 
       <GuestSelectionContainer setAdultsParent={setAdults} setKidsParent={setKids} maxGuests={maxGuests} />
@@ -461,6 +488,14 @@ BookingContainer.propTypes = {
   }),
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.arrayOf(PropTypes.string),
   checkInDate: PropTypes.string,
   setCheckInDate: PropTypes.func,
   checkOutDate: PropTypes.string,

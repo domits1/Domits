@@ -47,6 +47,14 @@
   line-height: 1.35;
 }
 
+.availability-section__error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .rc {
   --rc-border: #dfe4ea;
   --rc-muted: #6b7280;
@@ -140,6 +148,10 @@
   cursor: pointer;
   transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
 
+  &:disabled {
+    opacity: 1;
+  }
+
   &:hover {
     background: #eef2f6;
   }
@@ -160,6 +172,8 @@
     background: #757575;
     border-color: #757575;
     cursor: not-allowed;
+    flex-direction: column;
+    gap: 2px;
 
     span {
       color: #fff;
@@ -167,6 +181,22 @@
 
     &:hover {
       background: #757575;
+    }
+  }
+
+  &.is-booked {
+    background: #fff1e7;
+    border-color: #c2410c;
+    cursor: not-allowed;
+    flex-direction: column;
+    gap: 2px;
+
+    span {
+      color: #7c2d12;
+    }
+
+    &:hover {
+      background: #fff1e7;
     }
   }
 
@@ -198,6 +228,21 @@
     font-weight: 500;
   }
 
+  .rc-cell__unavailable-mark {
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .rc-cell__booked-mark {
+    color: #9a3412;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
   &.is-start span,
   &.is-end span {
     color: var(--rc-text);
@@ -209,6 +254,16 @@
 
     span {
       color: #fff;
+    }
+  }
+
+  &.is-booked.is-today {
+    background: #fff1e7;
+    border-color: #c2410c;
+    box-shadow: inset 0 0 0 2px rgba(36, 88, 255, 0.4);
+
+    span {
+      color: #7c2d12;
     }
   }
 }
