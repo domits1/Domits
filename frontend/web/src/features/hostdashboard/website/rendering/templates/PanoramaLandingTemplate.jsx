@@ -510,12 +510,16 @@ const renderPanoramaTopBar = ({
           </div>
         </TemplateTopBar>
       </div>
-      <div
+      <button
+        type="button"
         className={`${styles.panoramaTopBarDrawerOverlay} ${
           isNavDrawerOpen ? styles.panoramaTopBarDrawerOverlayOpen : ""
         }`.trim()}
         onClick={onCloseNavDrawer}
+        aria-label="Close section menu"
         aria-hidden={!isNavDrawerOpen}
+        disabled={!isNavDrawerOpen}
+        tabIndex={isNavDrawerOpen ? 0 : -1}
       />
       <aside
         id="panorama-site-menu"
