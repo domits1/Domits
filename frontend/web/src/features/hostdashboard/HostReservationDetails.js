@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   FiArrowLeft,
@@ -18,10 +19,6 @@ import { MdOutlineSmokeFree } from "react-icons/md";
 import { toast } from "react-toastify";
 
 import { LanguageContext } from "../../context/LanguageContext";
-import en from "../../content/en.json";
-import nl from "../../content/nl.json";
-import de from "../../content/de.json";
-import es from "../../content/es.json";
 import { getAccessToken, getCognitoUserId } from "../../services/getAccessToken.js";
 import {
   normalizeImageUrl,
@@ -47,6 +44,7 @@ import {
 import downloadReservationReceiptPdf from "./services/downloadReservationReceiptPdf.js";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { updateInquiryStatus } from "./services/reservationService.js";
+import hostReservationDetailsTranslations from "./translations/hostReservationDetailsTranslations.js";
 
 const STATUS_CLASS = {
   PAID: styles.statusPaid,
@@ -83,7 +81,6 @@ const RECEIPT_PAYMENT_STATUS_LABELS = {
 const DEFAULT_CHANNEL = "Direct";
 const DEFAULT_PAYMENT_METHOD = "Card";
 const DEFAULT_LAST4 = "****";
-const contentByLanguage = { en, nl, de, es };
 
 const getStatusConfig = (t) => ({
   PAID: { label: t.status.PAID, icon: <FiCheckCircle /> },
@@ -854,6 +851,126 @@ const buildReservationReceiptPayload = (reservation) => {
   };
 };
 
+const reservationTranslationShape = PropTypes.shape({
+  buttons: PropTypes.shape({
+    back: PropTypes.string.isRequired,
+    messageGuest: PropTypes.string.isRequired,
+    viewInCalendar: PropTypes.string.isRequired,
+    downloadReceipt: PropTypes.string.isRequired,
+    preparingReceipt: PropTypes.string.isRequired,
+  }).isRequired,
+  headings: PropTypes.shape({
+    property: PropTypes.string.isRequired,
+    guest: PropTypes.string.isRequired,
+    payment: PropTypes.string.isRequired,
+    reservationInfo: PropTypes.string.isRequired,
+    actions: PropTypes.string.isRequired,
+    checkInInstructions: PropTypes.string.isRequired,
+    houseRules: PropTypes.string.isRequired,
+    cancellationPolicy: PropTypes.string.isRequired,
+    specialRequest: PropTypes.string.isRequired,
+  }).isRequired,
+  labels: PropTypes.shape({
+    bookedVia: PropTypes.string.isRequired,
+    checkIn: PropTypes.string.isRequired,
+    bookedOn: PropTypes.string.isRequired,
+    reservationId: PropTypes.string.isRequired,
+    confirmation: PropTypes.string.isRequired,
+    cleaningFee: PropTypes.string.isRequired,
+    totalPaid: PropTypes.string.isRequired,
+    method: PropTypes.string.isRequired,
+    propertyImageAlt: PropTypes.string.isRequired,
+    guestFallbackName: PropTypes.string.isRequired,
+    loadingValue: PropTypes.string.isRequired,
+    unavailable: PropTypes.string.isRequired,
+    none: PropTypes.string.isRequired,
+    locationUnavailable: PropTypes.string.isRequired,
+    loadingLocation: PropTypes.string.isRequired,
+    night: PropTypes.string.isRequired,
+    nights: PropTypes.string.isRequired,
+    guest: PropTypes.string.isRequired,
+    guests: PropTypes.string.isRequired,
+  }).isRequired,
+  loading: PropTypes.shape({
+    status: PropTypes.string.isRequired,
+    summary: PropTypes.string.isRequired,
+    reservationDetails: PropTypes.string.isRequired,
+    guestEmail: PropTypes.string.isRequired,
+    guestPhone: PropTypes.string.isRequired,
+    checkInInstructions: PropTypes.string.isRequired,
+    houseRules: PropTypes.string.isRequired,
+    cancellationPolicy: PropTypes.string.isRequired,
+    payment: PropTypes.string.isRequired,
+    paymentStatus: PropTypes.string.isRequired,
+  }).isRequired,
+  empty: PropTypes.shape({
+    noCheckInInstructions: PropTypes.string.isRequired,
+    noHouseRulesSpecified: PropTypes.string.isRequired,
+    noCancellationPolicySelected: PropTypes.string.isRequired,
+    paymentStatusUnavailable: PropTypes.string.isRequired,
+    reservation: PropTypes.string.isRequired,
+  }).isRequired,
+  requestActions: PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    subtitle: PropTypes.string.isRequired,
+    accept: PropTypes.string.isRequired,
+    decline: PropTypes.string.isRequired,
+    confirmAcceptTitle: PropTypes.string.isRequired,
+    confirmAcceptNoOverlap: PropTypes.string.isRequired,
+    confirmAcceptWithOverlap: PropTypes.string.isRequired,
+    confirmDeclineTitle: PropTypes.string.isRequired,
+    confirmDeclineMessage: PropTypes.string.isRequired,
+    accepted: PropTypes.string.isRequired,
+    acceptedWithOverlap: PropTypes.string.isRequired,
+    declined: PropTypes.string.isRequired,
+    updateFailed: PropTypes.string.isRequired,
+    cancel: PropTypes.string.isRequired,
+  }).isRequired,
+});
+
+const reservationShape = PropTypes.shape({
+  image: PropTypes.string,
+  checkinInstructions: PropTypes.string,
+  houseRules: PropTypes.arrayOf(PropTypes.string),
+  cancellationType: PropTypes.string,
+  cancellationPolicy: PropTypes.string,
+  guestProfileImage: PropTypes.string,
+  guestemail: PropTypes.string,
+  guestphone: PropTypes.string,
+  specialRequest: PropTypes.string,
+  pricePerNight: PropTypes.number,
+  cleaningFee: PropTypes.number,
+  status: PropTypes.string,
+  reservationId: PropTypes.string,
+  confirmationCode: PropTypes.string,
+});
+
+const viewModelShape = PropTypes.shape({
+  title: PropTypes.string.isRequired,
+  locationLabel: PropTypes.string.isRequired,
+  arrivalLabel: PropTypes.string.isRequired,
+  departureLabel: PropTypes.string.isRequired,
+  nightCountText: PropTypes.string.isRequired,
+  guestCountText: PropTypes.string.isRequired,
+  bookedOnText: PropTypes.string.isRequired,
+  paymentDateText: PropTypes.string.isRequired,
+  paymentMethodLabel: PropTypes.string.isRequired,
+  reservationIdText: PropTypes.string.isRequired,
+  confirmationText: PropTypes.string.isRequired,
+  guestName: PropTypes.string.isRequired,
+  total: PropTypes.number.isRequired,
+  channelText: PropTypes.string.isRequired,
+  statusMeta: PropTypes.shape({
+    icon: PropTypes.node,
+    label: PropTypes.string.isRequired,
+  }).isRequired,
+  paymentMeta: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    text: PropTypes.string.isRequired,
+    className: PropTypes.string,
+  }).isRequired,
+});
+
 const findReservationBooking = async ({
   reservationId,
   initialBooking,
@@ -986,6 +1103,10 @@ const InlineLoader = ({ message }) => (
   <PulseBarsLoader inline message={message} className={styles.inlineLoader} />
 );
 
+InlineLoader.propTypes = {
+  message: PropTypes.string.isRequired,
+};
+
 const InlineTextOrLoader = ({
   value,
   isLoading,
@@ -1001,6 +1122,13 @@ const InlineTextOrLoader = ({
   }
 
   return emptyText;
+};
+
+InlineTextOrLoader.propTypes = {
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  isLoading: PropTypes.bool.isRequired,
+  loadingMessage: PropTypes.string.isRequired,
+  emptyText: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
 };
 
 const PropertyCheckInSummary = ({ checkinInstructions, isLoading, t }) => {
@@ -1019,6 +1147,12 @@ const PropertyCheckInSummary = ({ checkinInstructions, isLoading, t }) => {
   return null;
 };
 
+PropertyCheckInSummary.propTypes = {
+  checkinInstructions: PropTypes.string,
+  isLoading: PropTypes.bool.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
+
 const GuestContactLine = ({ icon, value, isLoading, loadingMessage, emptyText }) => (
   <div className={styles.guestLine}>
     {icon}{" "}
@@ -1030,6 +1164,14 @@ const GuestContactLine = ({ icon, value, isLoading, loadingMessage, emptyText })
     />
   </div>
 );
+
+GuestContactLine.propTypes = {
+  icon: PropTypes.node.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  isLoading: PropTypes.bool.isRequired,
+  loadingMessage: PropTypes.string.isRequired,
+  emptyText: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
+};
 
 const HouseRulesContent = ({ houseRules, isLoading, t }) => {
   if (houseRules.length > 0) {
@@ -1049,6 +1191,12 @@ const HouseRulesContent = ({ houseRules, isLoading, t }) => {
       <FiHome /> {t.empty.noHouseRulesSpecified}
     </div>
   );
+};
+
+HouseRulesContent.propTypes = {
+  houseRules: PropTypes.arrayOf(PropTypes.string).isRequired,
+  isLoading: PropTypes.bool.isRequired,
+  t: reservationTranslationShape.isRequired,
 };
 
 const CancellationPolicyContent = ({
@@ -1071,6 +1219,13 @@ const CancellationPolicyContent = ({
     </div>
   </>
 );
+
+CancellationPolicyContent.propTypes = {
+  cancellationType: PropTypes.string,
+  cancellationPolicy: PropTypes.string,
+  isLoading: PropTypes.bool.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
 
 const PropertyCard = ({ reservation, viewModel, loading, t }) => (
   <div className={styles.card}>
@@ -1124,6 +1279,13 @@ const PropertyCard = ({ reservation, viewModel, loading, t }) => (
     </div>
   </div>
 );
+
+PropertyCard.propTypes = {
+  reservation: reservationShape.isRequired,
+  viewModel: viewModelShape.isRequired,
+  loading: PropTypes.bool.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
 
 const GuestCard = ({ reservation, viewModel, loading, hasReservationData, t, onMessageGuest }) => (
   <div className={styles.card}>
@@ -1187,6 +1349,15 @@ const GuestCard = ({ reservation, viewModel, loading, hasReservationData, t, onM
     </div>
   </div>
 );
+
+GuestCard.propTypes = {
+  reservation: reservationShape.isRequired,
+  viewModel: viewModelShape.isRequired,
+  loading: PropTypes.bool.isRequired,
+  hasReservationData: PropTypes.bool.isRequired,
+  t: reservationTranslationShape.isRequired,
+  onMessageGuest: PropTypes.func.isRequired,
+};
 
 const PaymentCard = ({ reservation, viewModel, t }) => (
   <div className={styles.card}>
@@ -1252,6 +1423,12 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
   </div>
 );
 
+PaymentCard.propTypes = {
+  reservation: reservationShape.isRequired,
+  viewModel: viewModelShape.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
+
 const RequestActionsCard = ({
   isBusy,
   onAccept,
@@ -1284,6 +1461,13 @@ const RequestActionsCard = ({
     </div>
   </div>
 );
+
+RequestActionsCard.propTypes = {
+  isBusy: PropTypes.bool.isRequired,
+  onAccept: PropTypes.func.isRequired,
+  onDecline: PropTypes.func.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
 
 const RequestConfirmationModal = ({
   action,
@@ -1332,6 +1516,14 @@ const RequestConfirmationModal = ({
       </div>
     </div>
   );
+};
+
+RequestConfirmationModal.propTypes = {
+  action: PropTypes.string.isRequired,
+  overlappingCount: PropTypes.number.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  t: reservationTranslationShape.isRequired,
 };
 
 const ReservationInfoCard = ({ reservation, loading, t }) => (
@@ -1384,6 +1576,12 @@ const ReservationInfoCard = ({ reservation, loading, t }) => (
   </div>
 );
 
+ReservationInfoCard.propTypes = {
+  reservation: reservationShape.isRequired,
+  loading: PropTypes.bool.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
+
 const ActionsCard = ({
   hasReservationData,
   isDownloadingReceipt,
@@ -1417,6 +1615,14 @@ const ActionsCard = ({
   </div>
 );
 
+ActionsCard.propTypes = {
+  hasReservationData: PropTypes.bool.isRequired,
+  isDownloadingReceipt: PropTypes.bool.isRequired,
+  onViewInCalendar: PropTypes.func.isRequired,
+  onDownloadReceipt: PropTypes.func.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
+
 const HostReservationDetails = () => {
   const { language } = useContext(LanguageContext);
   const navigate = useNavigate();
@@ -1424,8 +1630,8 @@ const HostReservationDetails = () => {
   const { id } = useParams();
   const initialBooking = location.state?.booking || null;
   const t =
-    contentByLanguage[language]?.hostDashboard?.reservationDetails ||
-    contentByLanguage.en.hostDashboard.reservationDetails;
+    hostReservationDetailsTranslations[language] ||
+    hostReservationDetailsTranslations.en;
   const { reservationData, setReservationData, loading, error } = useReservationDetailsData(
     id,
     initialBooking
