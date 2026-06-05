@@ -104,6 +104,109 @@ FinanceFaqSkeleton.propTypes = {
   items: PropTypes.number,
 };
 
+const renderStripeActionLink = ({
+  isProcessing,
+  handleStripeAction,
+  renderCtaLabel,
+  label,
+}) => (
+  <span
+    className={`finance-span ${isProcessing ? "disabled" : ""}`}
+    onClick={isProcessing ? undefined : handleStripeAction}
+  >
+    {renderCtaLabel(label)}
+  </span>
+);
+
+const renderStripeStepContent = ({
+  isAccountLoading,
+  accountId,
+  onboardingComplete,
+  isProcessing,
+  handleStripeAction,
+  renderCtaLabel,
+}) => {
+  if (isAccountLoading) {
+    return (
+      <>
+        <strong>Step 2: </strong>
+        &nbsp;
+        <PulseBarsLoader inline message="Loading Stripe setup..." className="finance-inline-loader" />
+      </>
+    );
+  }
+
+  if (accountId && onboardingComplete) {
+    return (
+      <>
+        <strong>Step 2: </strong> &nbsp; You're connected to Stripe. Well done! &nbsp;
+        {renderStripeActionLink({
+          isProcessing,
+          handleStripeAction,
+          renderCtaLabel,
+          label: "Open Stripe Dashboard",
+        })}
+      </>
+    );
+  }
+
+  if (accountId) {
+    return (
+      <>
+        <strong>Step 2: </strong> &nbsp; Finish your Stripe onboarding to start receiving payouts: &nbsp;
+        {renderStripeActionLink({
+          isProcessing,
+          handleStripeAction,
+          renderCtaLabel,
+          label: "Continue Stripe onboarding",
+        })}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <strong>Step 2: </strong> &nbsp; Once your accommodation is created, you can create a Stripe account to receive
+      payments: &nbsp;
+      {renderStripeActionLink({
+        isProcessing,
+        handleStripeAction,
+        renderCtaLabel,
+        label: "Create Stripe account",
+      })}
+    </>
+  );
+};
+
+const buildFaqContent = ({ isFaqLoading, faqs }) => {
+  if (isFaqLoading) {
+    return (
+      <FinanceSectionLoader message="Loading FAQs...">
+        <FinanceFaqSkeleton />
+      </FinanceSectionLoader>
+    );
+  }
+
+  if (faqs.length > 0) {
+    return (
+      <ul className="faq-list">
+        {faqs.map((faq) => (
+          <li key={faq.faq_id} className="faq-item">
+            <details className="faq-details">
+              <summary className="faq-q">
+                <strong>{faq.question}</strong>
+              </summary>
+              <p className="faq-a">{faq.answer}</p>
+            </details>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return <p>No FAQs found.</p>;
+};
+
 export default function HostFinanceTab() {
   const navigate = useNavigate();
 
@@ -177,82 +280,7 @@ export default function HostFinanceTab() {
     return "Working on it...";
   };
 
-  const renderStripeStepContent = () => {
-    if (isAccountLoading) {
-      return (
-        <>
-          <strong>Step 2: </strong>
-          &nbsp;
-          <PulseBarsLoader inline message="Loading Stripe setup..." className="finance-inline-loader" />
-        </>
-      );
-    }
-
-    if (accountId) {
-      if (onboardingComplete) {
-        return (
-          <>
-            <strong>Step 2: </strong> &nbsp; You're connected to Stripe. Well done! &nbsp;
-            <span
-              className={`finance-span ${isProcessing ? "disabled" : ""}`}
-              onClick={isProcessing ? undefined : handleStripeAction}
-            >
-              {renderCtaLabel("Open Stripe Dashboard")}
-            </span>
-          </>
-        );
-      }
-
-      return (
-        <>
-          <strong>Step 2: </strong> &nbsp; Finish your Stripe onboarding to start receiving payouts: &nbsp;
-          <span
-            className={`finance-span ${isProcessing ? "disabled" : ""}`}
-            onClick={isProcessing ? undefined : handleStripeAction}
-          >
-            {renderCtaLabel("Continue Stripe onboarding")}
-          </span>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <strong>Step 2: </strong> &nbsp; Once your accommodation is created, you can create a Stripe account to
-        receive payments: &nbsp;
-        <span
-          className={`finance-span ${isProcessing ? "disabled" : ""}`}
-          onClick={isProcessing ? undefined : handleStripeAction}
-        >
-          {renderCtaLabel("Create Stripe account")}
-        </span>
-      </>
-    );
-  };
-
-  let faqContent = <p>No FAQs found.</p>;
-  if (isFaqLoading) {
-    faqContent = (
-      <FinanceSectionLoader message="Loading FAQs...">
-        <FinanceFaqSkeleton />
-      </FinanceSectionLoader>
-    );
-  } else if (faqs.length > 0) {
-    faqContent = (
-      <ul className="faq-list">
-        {faqs.map((faq) => (
-          <li key={faq.faq_id} className="faq-item">
-            <details className="faq-details">
-              <summary className="faq-q">
-                <strong>{faq.question}</strong>
-              </summary>
-              <p className="faq-a">{faq.answer}</p>
-            </details>
-          </li>
-        ))}
-      </ul>
-    );
-  }
+  const faqContent = buildFaqContent({ isFaqLoading, faqs });
 
   return (
     <main className="page-Host">
@@ -290,7 +318,14 @@ export default function HostFinanceTab() {
                 </li>
 
                 <li>
-                  {renderStripeStepContent()}
+                  {renderStripeStepContent({
+                    isAccountLoading,
+                    accountId,
+                    onboardingComplete,
+                    isProcessing,
+                    handleStripeAction,
+                    renderCtaLabel,
+                  })}
                 </li>
 
                 <li>
