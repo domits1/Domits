@@ -1,7 +1,124 @@
+$primary: var(--primary-color);
+$primary-light: #e8f5e9;
+// #0d9813 is only 3.5:1 on white; this darker shade meets WCAG AA (4.5:1) for small text
+$primary-text: #166534;
+
 .sustainability {
-    width: 90%;
-    margin: 40px auto auto;
-    color: #000;
-    font-size: 20px;
-    font-style: normal;
+  width: 90%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 0 60px;
+  font-family: "Arial", sans-serif;
+  color: #111;
+
+  // ─── Hero ────────────────────────────────────────────────────────────────
+  .sustainability__hero {
+    text-align: center;
+    margin-bottom: 40px;
+
+    @media (max-width: 480px) {
+      margin-bottom: 28px;
+    }
+
+    .sustainability__label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: $primary-text;
+      margin-bottom: 12px;
+    }
+
+    .sustainability__title {
+      font-size: clamp(1.6rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 0;
+
+      .sustainability__title--accent {
+        color: $primary;
+      }
+    }
+  }
+
+  // ─── Section Cards ───────────────────────────────────────────────────────
+  .sustainability__sections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .sustainability__section-card {
+      display: flex;
+      gap: 24px;
+      padding: 28px 32px;
+      border: 1px solid #e0e0e0;
+      border-radius: 14px;
+      background: #fff;
+
+      @media (max-width: 600px) {
+        flex-direction: column;
+        padding: 20px;
+      }
+
+      .sustainability__section-icon {
+        flex-shrink: 0;
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        background-color: $primary-light;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $primary;
+        align-self: flex-start;
+      }
+
+      .sustainability__section-content {
+        flex: 1;
+
+        .sustainability__section-heading {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 10px;
+
+          .sustainability__section-number {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: $primary;
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .sustainability__section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+            color: $primary;
+          }
+        }
+
+        .sustainability__section-subtitle {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #444;
+          margin: 0 0 12px;
+        }
+
+        .sustainability__section-description {
+          font-size: 0.92rem;
+          color: #333;
+          line-height: 1.65;
+          margin: 0;
+        }
+      }
+    }
+  }
 }
