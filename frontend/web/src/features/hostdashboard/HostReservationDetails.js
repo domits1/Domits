@@ -1286,32 +1286,44 @@ const RequestActionsCard = ({
 );
 
 const RequestConfirmationModal = ({
+  action,
   overlappingCount,
   onConfirm,
   onCancel,
   t,
 }) => {
-  const message =
-    overlappingCount > 0
-      ? formatTemplate(t.requestActions.confirmWithOverlap, {
+  const isDeclineAction = action === "decline-inquiry";
+  const title = isDeclineAction
+    ? t.requestActions.confirmDeclineTitle
+    : t.requestActions.confirmAcceptTitle;
+  const message = isDeclineAction
+    ? t.requestActions.confirmDeclineMessage
+    : overlappingCount > 0
+      ? formatTemplate(t.requestActions.confirmAcceptWithOverlap, {
           count: overlappingCount,
         })
-      : t.requestActions.confirmNoOverlap;
+      : t.requestActions.confirmAcceptNoOverlap;
+  const confirmButtonClass = isDeclineAction
+    ? styles.requestActionDecline
+    : styles.requestActionAccept;
+  const confirmButtonLabel = isDeclineAction
+    ? t.requestActions.decline
+    : t.requestActions.accept;
 
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalBox}>
-        <h3 className={styles.modalTitle}>{t.requestActions.confirmTitle}</h3>
+        <h3 className={styles.modalTitle}>{title}</h3>
         <p className={styles.modalText}>{message}</p>
         <div className={styles.modalActions}>
           <button
-            className={`${styles.requestActionButton} ${styles.requestActionAccept}`}
+            className={`${styles.requestActionButton} ${confirmButtonClass}`}
             onClick={onConfirm}
           >
-            {t.requestActions.accept}
+            {confirmButtonLabel}
           </button>
           <button
-            className={`${styles.requestActionButton} ${styles.requestActionDecline}`}
+            className={`${styles.requestActionButton} ${styles.secondaryActionBtn}`}
             onClick={onCancel}
           >
             {t.requestActions.cancel}
@@ -1420,7 +1432,7 @@ const HostReservationDetails = () => {
   );
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
   const [isUpdatingInquiry, setIsUpdatingInquiry] = useState(false);
-  const [confirmAccept, setConfirmAccept] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   if (error && !reservationData) {
     return <div className={styles.container}>{t.states.failedToLoad}</div>;
@@ -1550,22 +1562,40 @@ const HostReservationDetails = () => {
         isOverlappingInquiry(booking, reservationData)
       ).length;
 
-      setConfirmAccept({ overlappingCount });
+      setConfirmAction({
+        action: "accept-inquiry",
+        overlappingCount,
+      });
     } catch (loadError) {
       console.error("Failed to prepare inquiry confirmation:", loadError);
-      setConfirmAccept({ overlappingCount: 0 });
+      setConfirmAction({
+        action: "accept-inquiry",
+        overlappingCount: 0,
+      });
     } finally {
       setIsUpdatingInquiry(false);
     }
   };
 
-  const handleConfirmAccept = async () => {
-    setConfirmAccept(null);
-    await executeInquiryAction("accept-inquiry");
+  const handleConfirmAction = async () => {
+    if (!confirmAction?.action) {
+      return;
+    }
+
+    const action = confirmAction.action;
+    setConfirmAction(null);
+    await executeInquiryAction(action);
   };
 
   const handleDeclineRequest = async () => {
-    await executeInquiryAction("decline-inquiry");
+    if (!hasReservationData || isUpdatingInquiry) {
+      return;
+    }
+
+    setConfirmAction({
+      action: "decline-inquiry",
+      overlappingCount: 0,
+    });
   };
 
   const handleDownloadReceipt = async () => {
@@ -1649,11 +1679,12 @@ const HostReservationDetails = () => {
         </div>
       </div>
 
-      {confirmAccept ? (
+      {confirmAction ? (
         <RequestConfirmationModal
-          overlappingCount={confirmAccept.overlappingCount}
-          onConfirm={handleConfirmAccept}
-          onCancel={() => setConfirmAccept(null)}
+          action={confirmAction.action}
+          overlappingCount={confirmAction.overlappingCount}
+          onConfirm={handleConfirmAction}
+          onCancel={() => setConfirmAction(null)}
           t={t}
         />
       ) : null}
