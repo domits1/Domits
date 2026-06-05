@@ -57,20 +57,19 @@
         "about": "Über uns",
         "security": "Sicherheit",
         "performance": "Leistung",
+        "sustainability": "Nachhaltigkeit",
         "careers": "Karriere",
         "contact": "Kontakt"
       },
       "guest": {
         "title": "Gäste",
         "searchAndBook": "Suchen und buchen",
-        "helpDeskForGuests": "Hilfecenter für Gäste",
-        "sustainability": "Nachhaltigkeit"
+        "helpDeskForGuests": "Hilfecenter für Gäste"
       },
       "host": {
         "title": "Gastgeber",
         "becomeHost": "Gastgeber werden",
-        "helpdeskForHosts": "Hilfecenter für Gastgeber",
-        "sustainability": "Nachhaltigkeit"
+        "helpdeskForHosts": "Hilfecenter für Gastgeber"
       },
       "network": {
         "title": "Netzwerk",

@@ -57,20 +57,19 @@
         "about": "Sobre nosotros",
         "security": "Seguridad",
         "performance": "Rendimiento",
+        "sustainability": "Sostenibilidad",
         "careers": "Carreras",
         "contact": "Contacto"
       },
       "guest": {
         "title": "Huésped",
         "searchAndBook": "Buscar y reservar",
-        "helpDeskForGuests": "Ayuda para huéspedes",
-        "sustainability": "Sostenibilidad"
+        "helpDeskForGuests": "Ayuda para huéspedes"
       },
       "host": {
         "title": "Anfitriones",
         "becomeHost": "Conviértete en anfitrión",
-        "helpdeskForHosts": "Ayuda para anfitriones",
-        "sustainability": "Sostenibilidad"
+        "helpdeskForHosts": "Ayuda para anfitriones"
       },
       "network": {
         "title": "Red",

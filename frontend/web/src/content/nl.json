@@ -57,20 +57,19 @@
         "about": "Over ons",
         "security": "Beveiliging",
         "performance": "Prestatie",
+        "sustainability": "Duurzaamheid",
         "careers": "Carrières",
         "contact": "Contact"
       },
       "guest": {
         "title": "Gast",
         "searchAndBook": "Zoeken en boeken",
-        "helpDeskForGuests": "Helpdesk voor gasten",
-        "sustainability": "Duurzaamheid"
+        "helpDeskForGuests": "Helpdesk voor gasten"
       },
       "host": {
         "title": "Gastheren",
         "becomeHost": "Word gastheer",
-        "helpdeskForHosts": "Helpdesk voor hosts",
-        "sustainability": "Duurzaamheid"
+        "helpdeskForHosts": "Helpdesk voor hosts"
       },
       "network": {
         "title": "Netwerk",
