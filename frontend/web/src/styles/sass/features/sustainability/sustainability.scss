@@ -72,53 +72,53 @@ $primary-text: #166534;
         color: $primary;
         align-self: flex-start;
       }
-
-      .sustainability__section-content {
-        flex: 1;
-
-        .sustainability__section-heading {
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-bottom: 10px;
-
-          .sustainability__section-number {
-            flex-shrink: 0;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background-color: $primary;
-            color: #fff;
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-
-          .sustainability__section-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin: 0;
-            color: $primary;
-          }
-        }
-
-        .sustainability__section-subtitle {
-          font-size: 0.88rem;
-          font-weight: 700;
-          color: #444;
-          margin: 0 0 12px;
-        }
-
-        .sustainability__section-description {
-          font-size: 0.92rem;
-          color: #333;
-          line-height: 1.65;
-          margin: 0;
-        }
-      }
     }
+  }
+
+  .sustainability__section-content {
+    flex: 1;
+  }
+
+  .sustainability__section-heading {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+
+    .sustainability__section-number {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background-color: $primary;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sustainability__section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0;
+      color: $primary;
+    }
+  }
+
+  .sustainability__section-subtitle {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #444;
+    margin: 0 0 12px;
+  }
+
+  .sustainability__section-description {
+    font-size: 0.92rem;
+    color: #333;
+    line-height: 1.65;
+    margin: 0;
   }
 }

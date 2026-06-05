@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import { Link } from "react-router-dom";
 import {
   ShieldCheck,
   Lock,
@@ -103,12 +104,12 @@ function Security() {
           <h3 className="security__cta-title">{c.cta.title}</h3>
         </div>
         <div className="security__cta-buttons">
-          <a href="/contact" className="security__cta-btn security__cta-btn--outline">
+          <Link to="/contact" className="security__cta-btn security__cta-btn--outline">
             {c.cta.contactButton}
-          </a>
-          <a href="/how-it-works" className="security__cta-btn security__cta-btn--filled">
+          </Link>
+          <Link to="/how-it-works" className="security__cta-btn security__cta-btn--filled">
             {c.cta.learnMoreButton}
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -115,66 +115,66 @@ $primary-text: #166534;
         color: $primary;
         align-self: flex-start;
       }
+    }
+  }
 
-      .performance__section-content {
-        flex: 1;
+  .performance__section-content {
+    flex: 1;
+  }
 
-        .performance__section-heading {
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-bottom: 16px;
+  .performance__section-heading {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
 
-          .performance__section-number {
-            flex-shrink: 0;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background-color: $primary;
-            color: #fff;
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
+    .performance__section-number {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background-color: $primary;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-          .performance__section-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin: 0;
-            color: $primary;
-          }
-        }
+    .performance__section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0;
+      color: $primary;
+    }
+  }
 
-        .performance__section-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+  .performance__section-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 
-          li {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            font-size: 0.92rem;
-            color: #333;
-            line-height: 1.5;
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.92rem;
+      color: #333;
+      line-height: 1.5;
 
-            &::before {
-              content: "";
-              flex-shrink: 0;
-              width: 8px;
-              height: 8px;
-              border-radius: 50%;
-              background-color: $primary;
-              margin-top: 6px;
-            }
-          }
-        }
+      &::before {
+        content: "";
+        flex-shrink: 0;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: $primary;
+        margin-top: 6px;
       }
     }
   }
