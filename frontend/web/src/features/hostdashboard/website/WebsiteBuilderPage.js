@@ -54,6 +54,7 @@ import {
   DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
   DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
   DEFAULT_WEBSITE_CONTACT_TITLE,
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
 } from "./config/websiteContactSectionConfig";
@@ -403,7 +404,8 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
         note: "Saved website draft ready for continued editing.",
       },
       contactSection: {
-        title: DEFAULT_WEBSITE_CONTACT_TITLE,
+        title: DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
+        caption: DEFAULT_WEBSITE_CONTACT_TITLE,
         description: DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
         accentColor: DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
         backgroundColor: DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,

@@ -2,12 +2,14 @@ import {
   DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
   DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
   DEFAULT_WEBSITE_CONTACT_TITLE,
   WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAvatarMode,
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactBackgroundColor,
+  resolveWebsiteContactSectionCopy,
 } from "../config/websiteContactSectionConfig";
 import {
   DEFAULT_WEBSITE_AMENITY_LABEL,
@@ -60,6 +62,7 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "galleryPanelColor",
   "amenitiesTitle",
   "amenitiesDescription",
+  "contactLabel",
   "contactTitle",
   "contactDescription",
   "contactAccentColor",
@@ -403,6 +406,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const amenitiesTitle = cleanText(overrides.amenitiesTitle);
   const amenitiesDescription = cleanText(overrides.amenitiesDescription);
   const contactTitle = cleanText(overrides.contactTitle);
+  const contactLabel = cleanText(overrides.contactLabel);
   const contactDescription = cleanText(overrides.contactDescription);
   const contactAvatarModeOverride = cleanText(overrides.contactAvatarMode);
   const contactAvatarImage = cleanText(overrides.contactAvatarImage);
@@ -429,6 +433,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const mergedVisibility = mergeVisibility(model?.visibility, overrides.visibility);
   const mergedTrustCards = mergeCopyItems(model?.trustCards, overrides.trustCards);
   const mergedJourneyStops = mergeCopyItems(model?.journeyStops, overrides.journeyStops);
+  const resolvedContactSectionCopy = resolveWebsiteContactSectionCopy(model?.contactSection);
   const modelContactAvatarImage = cleanText(model?.contactSection?.avatarImage);
   const modelContactAvatarMode = resolveWebsiteContactAvatarMode(
     model?.contactSection?.avatarMode,
@@ -517,7 +522,8 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
     }),
     contactSection: {
       ...(model?.contactSection && typeof model.contactSection === "object" ? model.contactSection : {}),
-      title: contactTitle || model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE,
+      title: contactLabel || resolvedContactSectionCopy.title || DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
+      caption: contactTitle || resolvedContactSectionCopy.caption || DEFAULT_WEBSITE_CONTACT_TITLE,
       description:
         contactDescription ||
         model?.contactSection?.description ||
@@ -537,108 +543,113 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   };
 };
 
-export const buildWebsiteDraftEditorValues = (model, templateKey = "") => ({
-  common: {
-    siteTitle: String(model?.site?.title || ""),
-    heroEyebrow: String(model?.hero?.eyebrow || ""),
-    heroTitle: String(model?.hero?.title || ""),
-    heroDescription: String(model?.hero?.description || ""),
-    ctaLabel: String(model?.callToAction?.label || ""),
-    ctaNote: String(model?.callToAction?.note || ""),
-    residenceTitle: String(model?.residenceSection?.title || "The residence"),
-    residenceHeadline: String(
-      model?.residenceSection?.headline || "Designed to present the stay with clarity and confidence"
-    ),
-    residenceShowPanel: Boolean(model?.residenceSection?.showPanel),
-    residencePanelColor: resolveWebsiteResidencePanelColor(
-      model?.residenceSection?.panelColor || DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR
-    ),
-  },
-  calendar: {
-    title: String(
-      model?.calendarSection?.title || getDefaultWebsiteCalendarTitle(templateKey)
-    ),
-    description: String(
-      model?.calendarSection?.description ||
-        getDefaultWebsiteCalendarDescription({
-          templateKey,
-          propertyTitle: model?.site?.title,
-          blockedDateCount: model?.availability?.blockedDateCount,
-          availabilityCallout: model?.availability?.callout,
-        })
-    ),
-    showPanel: model?.calendarSection?.showPanel !== false,
-    panelColor: resolveWebsiteCalendarPanelColor(
-      model?.calendarSection?.panelColor,
-      templateKey
-    ),
-  },
-  gallerySection: {
-    title: String(model?.gallerySection?.title || "Gallery"),
-    description: String(
-      model?.gallerySection?.description || "A more editorial presentation of the property"
-    ),
-    browseLabel: String(model?.gallerySection?.browseLabel || "Browse"),
-    showPanel: model?.gallerySection?.showPanel !== false,
-    panelColor: resolveWebsiteGalleryPanelColor(
-      model?.gallerySection?.panelColor,
-      templateKey
-    ),
-  },
-  amenitiesSection: {
-    title: String(model?.amenitiesSection?.title || "Amenities"),
-    description: String(model?.amenitiesSection?.description || "Every Detail Considered"),
-  },
-  contact: {
-    title: String(model?.contactSection?.title || DEFAULT_WEBSITE_CONTACT_TITLE),
-    description: String(model?.contactSection?.description || DEFAULT_WEBSITE_CONTACT_DESCRIPTION),
-    avatarMode: resolveWebsiteContactAvatarMode(
-      model?.contactSection?.avatarMode,
-      cleanText(model?.contactSection?.avatarImage)
-        ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-        : WEBSITE_CONTACT_AVATAR_MODE_HOST
-    ),
-    avatarImage: String(model?.contactSection?.avatarImage || ""),
-    accentColor: resolveWebsiteContactAccentColor(model?.contactSection?.accentColor),
-    backgroundColor: resolveWebsiteContactBackgroundColor(model?.contactSection?.backgroundColor),
-  },
-  visibility: mergeVisibility({}, model?.visibility),
-  images: {
-    heroImage: String(model?.media?.heroImage || ""),
-    residenceImage: String(model?.media?.residenceImage || model?.media?.heroImage || ""),
-    gallery: Array.from(
-      {
-        length: Math.max(
-          DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
-          Array.isArray(model?.gallery?.images) ? model.gallery.images.length : 0
-        ),
-      },
-      (_, index) => String(model?.gallery?.images?.[index] || "")
-    ),
-    rotation: normalizeWebsiteImageRotationSettings(
-      model?.media?.imageRotation,
-      DEFAULT_WEBSITE_GALLERY_SLOT_COUNT
-    ),
-  },
-  amenitiesIconColor: resolveWebsiteAmenityIconColor(model?.amenities?.iconColor, templateKey),
-  amenities: getBaseAmenityItems(model).map((amenity) => ({
-    id: String(amenity?.id || ""),
-    iconAmenityId: String(amenity?.iconAmenityId || ""),
-    label: String(amenity?.label || DEFAULT_WEBSITE_AMENITY_LABEL),
-    category: String(amenity?.category || WEBSITE_AMENITY_FALLBACK_CATEGORY),
-  })),
-  trustCards: (Array.isArray(model?.trustCards) ? model.trustCards : []).map((card) => ({
-    id: String(card?.id || card?.title || ""),
-    iconAmenityId: String(card?.iconAmenityId || ""),
-    title: String(card?.title || ""),
-    description: String(card?.description || ""),
-  })),
-  journeyStops: (Array.isArray(model?.journeyStops) ? model.journeyStops : []).map((stop) => ({
-    id: String(stop?.id || stop?.title || ""),
-    title: String(stop?.title || ""),
-    description: String(stop?.description || ""),
-  })),
-});
+export const buildWebsiteDraftEditorValues = (model, templateKey = "") => {
+  const resolvedContactSectionCopy = resolveWebsiteContactSectionCopy(model?.contactSection);
+
+  return {
+    common: {
+      siteTitle: String(model?.site?.title || ""),
+      heroEyebrow: String(model?.hero?.eyebrow || ""),
+      heroTitle: String(model?.hero?.title || ""),
+      heroDescription: String(model?.hero?.description || ""),
+      ctaLabel: String(model?.callToAction?.label || ""),
+      ctaNote: String(model?.callToAction?.note || ""),
+      residenceTitle: String(model?.residenceSection?.title || "The residence"),
+      residenceHeadline: String(
+        model?.residenceSection?.headline || "Designed to present the stay with clarity and confidence"
+      ),
+      residenceShowPanel: Boolean(model?.residenceSection?.showPanel),
+      residencePanelColor: resolveWebsiteResidencePanelColor(
+        model?.residenceSection?.panelColor || DEFAULT_WEBSITE_RESIDENCE_PANEL_COLOR
+      ),
+    },
+    calendar: {
+      title: String(
+        model?.calendarSection?.title || getDefaultWebsiteCalendarTitle(templateKey)
+      ),
+      description: String(
+        model?.calendarSection?.description ||
+          getDefaultWebsiteCalendarDescription({
+            templateKey,
+            propertyTitle: model?.site?.title,
+            blockedDateCount: model?.availability?.blockedDateCount,
+            availabilityCallout: model?.availability?.callout,
+          })
+      ),
+      showPanel: model?.calendarSection?.showPanel !== false,
+      panelColor: resolveWebsiteCalendarPanelColor(
+        model?.calendarSection?.panelColor,
+        templateKey
+      ),
+    },
+    gallerySection: {
+      title: String(model?.gallerySection?.title || "Gallery"),
+      description: String(
+        model?.gallerySection?.description || "A more editorial presentation of the property"
+      ),
+      browseLabel: String(model?.gallerySection?.browseLabel || "Browse"),
+      showPanel: model?.gallerySection?.showPanel !== false,
+      panelColor: resolveWebsiteGalleryPanelColor(
+        model?.gallerySection?.panelColor,
+        templateKey
+      ),
+    },
+    amenitiesSection: {
+      title: String(model?.amenitiesSection?.title || "Amenities"),
+      description: String(model?.amenitiesSection?.description || "Every Detail Considered"),
+    },
+    contact: {
+      title: String(resolvedContactSectionCopy.title || DEFAULT_WEBSITE_CONTACT_SECTION_TITLE),
+      caption: String(resolvedContactSectionCopy.caption || DEFAULT_WEBSITE_CONTACT_TITLE),
+      description: String(model?.contactSection?.description || DEFAULT_WEBSITE_CONTACT_DESCRIPTION),
+      avatarMode: resolveWebsiteContactAvatarMode(
+        model?.contactSection?.avatarMode,
+        cleanText(model?.contactSection?.avatarImage)
+          ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
+          : WEBSITE_CONTACT_AVATAR_MODE_HOST
+      ),
+      avatarImage: String(model?.contactSection?.avatarImage || ""),
+      accentColor: resolveWebsiteContactAccentColor(model?.contactSection?.accentColor),
+      backgroundColor: resolveWebsiteContactBackgroundColor(model?.contactSection?.backgroundColor),
+    },
+    visibility: mergeVisibility({}, model?.visibility),
+    images: {
+      heroImage: String(model?.media?.heroImage || ""),
+      residenceImage: String(model?.media?.residenceImage || model?.media?.heroImage || ""),
+      gallery: Array.from(
+        {
+          length: Math.max(
+            DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
+            Array.isArray(model?.gallery?.images) ? model.gallery.images.length : 0
+          ),
+        },
+        (_, index) => String(model?.gallery?.images?.[index] || "")
+      ),
+      rotation: normalizeWebsiteImageRotationSettings(
+        model?.media?.imageRotation,
+        DEFAULT_WEBSITE_GALLERY_SLOT_COUNT
+      ),
+    },
+    amenitiesIconColor: resolveWebsiteAmenityIconColor(model?.amenities?.iconColor, templateKey),
+    amenities: getBaseAmenityItems(model).map((amenity) => ({
+      id: String(amenity?.id || ""),
+      iconAmenityId: String(amenity?.iconAmenityId || ""),
+      label: String(amenity?.label || DEFAULT_WEBSITE_AMENITY_LABEL),
+      category: String(amenity?.category || WEBSITE_AMENITY_FALLBACK_CATEGORY),
+    })),
+    trustCards: (Array.isArray(model?.trustCards) ? model.trustCards : []).map((card) => ({
+      id: String(card?.id || card?.title || ""),
+      iconAmenityId: String(card?.iconAmenityId || ""),
+      title: String(card?.title || ""),
+      description: String(card?.description || ""),
+    })),
+    journeyStops: (Array.isArray(model?.journeyStops) ? model.journeyStops : []).map((stop) => ({
+      id: String(stop?.id || stop?.title || ""),
+      title: String(stop?.title || ""),
+      description: String(stop?.description || ""),
+    })),
+  };
+};
 
 const TEXT_OVERRIDE_FIELDS = Object.freeze([
   {
@@ -747,9 +758,14 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
     baseValue: (baseModel) => baseModel?.amenitiesSection?.description || "Every Detail Considered",
   },
   {
-    patchKey: "contactTitle",
+    patchKey: "contactLabel",
     editorValue: (editorValues) => editorValues?.contact?.title,
-    baseValue: (baseModel) => baseModel?.contactSection?.title,
+    baseValue: (baseModel) => resolveWebsiteContactSectionCopy(baseModel?.contactSection).title,
+  },
+  {
+    patchKey: "contactTitle",
+    editorValue: (editorValues) => editorValues?.contact?.caption,
+    baseValue: (baseModel) => resolveWebsiteContactSectionCopy(baseModel?.contactSection).caption,
   },
   {
     patchKey: "contactDescription",

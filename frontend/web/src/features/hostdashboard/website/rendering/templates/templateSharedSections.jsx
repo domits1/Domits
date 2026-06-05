@@ -22,10 +22,17 @@ const buildImageSlotFrameClassName = ({
 const buildImageSlotImageClassName = (imageClassName, enableHoverEffect = false) =>
   `${imageClassName} ${enableHoverEffect ? styles.templateImageHoverImage : ""}`.trim();
 
-export const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
+export const getInteractiveTargetProps = (
+  className,
+  onSelectTarget,
+  target,
+  activeTargetId = "",
+  onActivate = undefined
+) => {
   const targetId = target?.targetId || "";
+  const hasInteraction = Boolean(onSelectTarget || onActivate);
 
-  if (!onSelectTarget) {
+  if (!hasInteraction) {
     return {
       className,
       "data-preview-target-id": targetId || undefined,
@@ -35,7 +42,13 @@ export const getInteractiveTargetProps = (className, onSelectTarget, target, act
   const isActiveTarget = targetId && targetId === activeTargetId;
   const handleActivate = (event) => {
     event?.stopPropagation?.();
-    onSelectTarget(target);
+    if (onSelectTarget) {
+      onSelectTarget(target);
+    }
+
+    if (onActivate) {
+      onActivate(event, target);
+    }
   };
 
   return {
@@ -195,6 +208,7 @@ export function TemplateImageSlotVisual({
   frameClassName = "",
   enableHoverEffect = false,
   onSelectTarget = undefined,
+  onActivate = undefined,
   activeTargetId = "",
   rotationIntervalMs = DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS,
   fadeDurationMs = DEFAULT_IMAGE_SLOT_FADE_DURATION_MS,
@@ -205,6 +219,18 @@ export function TemplateImageSlotVisual({
     imageSequence,
     isRotationEnabled,
   } = useWebsiteImageSlotRotation(slot, model?.media, rotationIntervalMs);
+  const buildInteractiveProps = (className) =>
+    getInteractiveTargetProps(
+      className,
+      onSelectTarget,
+      imageSlotTarget,
+      activeTargetId,
+      onActivate
+        ? (event) => {
+            onActivate(event, imageSlotTarget);
+          }
+        : undefined
+    );
 
   if (imageSequence.length < 1) {
     return null;
@@ -213,7 +239,7 @@ export function TemplateImageSlotVisual({
   if (!frameClassName && !isRotationEnabled && !enableHoverEffect) {
     return (
       <img
-        {...getInteractiveTargetProps(imageClassName, onSelectTarget, imageSlotTarget, activeTargetId)}
+        {...buildInteractiveProps(imageClassName)}
         src={imageSequence[0]}
         alt={alt}
       />
@@ -223,15 +249,12 @@ export function TemplateImageSlotVisual({
   if (!isRotationEnabled) {
     return (
       <div
-        {...getInteractiveTargetProps(
+        {...buildInteractiveProps(
           buildImageSlotFrameClassName({
             frameClassName,
             imageClassName,
             enableHoverEffect,
-          }),
-          onSelectTarget,
-          imageSlotTarget,
-          activeTargetId
+          })
         )}
       >
         <img
@@ -245,15 +268,12 @@ export function TemplateImageSlotVisual({
 
   return (
     <div
-      {...getInteractiveTargetProps(
+      {...buildInteractiveProps(
         buildImageSlotFrameClassName({
           frameClassName,
           imageClassName,
           enableHoverEffect,
-        }),
-        onSelectTarget,
-        imageSlotTarget,
-        activeTargetId
+        })
       )}
       style={{
         "--template-image-slot-fade-duration-ms": `${fadeDurationMs}ms`,
@@ -290,6 +310,7 @@ TemplateImageSlotVisual.propTypes = {
   imageClassName: PropTypes.string.isRequired,
   frameClassName: PropTypes.string,
   onSelectTarget: PropTypes.func,
+  onActivate: PropTypes.func,
   activeTargetId: PropTypes.string,
   rotationIntervalMs: PropTypes.number,
   fadeDurationMs: PropTypes.number,

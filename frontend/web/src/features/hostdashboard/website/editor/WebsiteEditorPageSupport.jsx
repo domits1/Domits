@@ -98,8 +98,9 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
     },
     contact: {
       ...bootstrapValues.contact,
-      title: getCleanText(contentOverrides.contactTitle),
-      description: getCleanText(contentOverrides.contactDescription),
+      title: getCleanText(contentOverrides.contactLabel) || bootstrapValues.contact.title,
+      caption: getCleanText(contentOverrides.contactTitle) || bootstrapValues.contact.caption,
+      description: getCleanText(contentOverrides.contactDescription) || bootstrapValues.contact.description,
       avatarMode: getCleanText(contentOverrides.contactAvatarMode) || bootstrapValues.contact.avatarMode,
       avatarImage: getCleanText(contentOverrides.contactAvatarImage),
       accentColor:

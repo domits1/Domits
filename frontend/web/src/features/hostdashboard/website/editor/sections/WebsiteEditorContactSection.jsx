@@ -131,6 +131,7 @@ WebsiteEditorContactSection.propTypes = {
   editorValues: PropTypes.shape({
     contact: PropTypes.shape({
       title: PropTypes.string,
+      caption: PropTypes.string,
       description: PropTypes.string,
       avatarMode: PropTypes.string,
       avatarImage: PropTypes.string,
