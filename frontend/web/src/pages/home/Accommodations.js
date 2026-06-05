@@ -115,6 +115,8 @@ const Accommodations = ({ searchResults }) => {
     setTimeout(() => {
       setAccolist(filteredResults);
       setCurrentPage(1);
+      setLastEvaluatedKeyCreatedAt(null);
+      setLastEvaluatedKeyId(null);
       setFilterLoading(false);
       setFiltersOpen(false);
     }, 500);
