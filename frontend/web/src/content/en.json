@@ -1088,5 +1088,135 @@
         "error": "Failed to send invitation. Please try again."
       }
     }
+  },
+  "performance": {
+    "label": "PERFORMANCE BUNDLES",
+    "title": "Grow your rental business with",
+    "titleAccent": "confidence.",
+    "badges": [
+      {
+        "title": "Starting host",
+        "subtitle": "1-9 properties"
+      },
+      {
+        "title": "Growing host",
+        "subtitle": "10-99 properties"
+      },
+      {
+        "title": "Scaling host",
+        "subtitle": "100+ properties"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Distribution & Marketing",
+        "bullets": [
+          "Multi-channel distribution across Booking.com, Airbnb, VRBO, and 100+ platforms.",
+          "AI-powered analytics, dashboards, and performance insights.",
+          "Inbound marketing, lead nurturing, customer journeys, and content.",
+          "SEO, SEA, CRO, and conversion-focused performance marketing.",
+          "CRM automation, email campaigns, segmentation, and communication flows."
+        ]
+      },
+      {
+        "title": "Streamline Operations",
+        "bullets": [
+          "Automate property management",
+          "Reservation management",
+          "Rate management",
+          "Housekeeping",
+          "Front desk",
+          "Reporting"
+        ]
+      },
+      {
+        "title": "Grow Revenue",
+        "bullets": [
+          "Dynamic pricing",
+          "Digital upselling",
+          "Occupancy rates",
+          "ADR (Average Daily Rate)",
+          "RevPAR (Revenue per Available Room)"
+        ]
+      },
+      {
+        "title": "Guest Experience",
+        "bullets": [
+          "Warmth and friendliness",
+          "Booking engine",
+          "Messaging",
+          "Reviews",
+          "Check-in",
+          "Support (FAQ, email, and phone)"
+        ]
+      }
+    ]
+  },
+  "security": {
+    "label": "SECURITY",
+    "title": "Your safety comes",
+    "titleAccent": "first.",
+    "badges": [
+      {
+        "title": "Secure Infrastructure",
+        "subtitle": "Reliable & monitored"
+      },
+      {
+        "title": "Encrypted Data",
+        "subtitle": "End-to-end protection"
+      },
+      {
+        "title": "Daily Backups",
+        "subtitle": "Always protected"
+      },
+      {
+        "title": "EU Hosted",
+        "subtitle": "GDPR complied"
+      }
+    ],
+    "sections": [
+      {
+        "title": "1. Infrastructure",
+        "description": "Our servers are securely housed in multiple European data centers. In the event of any malfunctions, technicians are always available to tackle the problem immediately. Amazon Web Services' online infrastructure guarantees the security and confidentiality of our cloud services.",
+        "bullets": [
+          "Our data is stored in two different data centers.",
+          "In the event of malfunctions, Domits automatically switches to another data center.",
+          "An uptime of 99.995%."
+        ]
+      },
+      {
+        "title": "2. Theft and Privacy",
+        "description": "Domits is fully committed to ensuring that your data is safe and protected from hackers. Each customer has their own, separate database at Domits, making it impossible for other users to access other people's data.",
+        "bullets": [
+          "When using Domits, the connection is secured.",
+          "GDPR compliant data handling and storage",
+          "It is impossible for outsiders to intercept data traffic."
+        ]
+      },
+      {
+        "title": "3. Back-ups",
+        "description": "At Domits, we do everything we can to ensure that our system is always operational and your data is always secured. Backups of the data are made daily so that nothing is ever lost. In the event of disruptions, all your data is stored securely and our team ensures that your account can be restored.",
+        "bullets": [
+          "Guarantee against data loss",
+          "Daily recovery of data up to six months ago",
+          "Secure data backups"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "title": "Vision",
+        "text": "We believe that everyone deserves transparent and accessible security. Our vision is to create a digital environment where users can trust that their data is protected without needing to understand complex technical details."
+      },
+      {
+        "title": "What We Do",
+        "text": "We continuously monitor, update, and improve our security infrastructure. Our dedicated team works around the clock to identify potential threats, implement the latest security standards, and ensure your data remains protected at all times."
+      }
+    ],
+    "cta": {
+      "title": "Questions about security?",
+      "contactButton": "Contact support",
+      "learnMoreButton": "Learn more"
+    }
   }
 }

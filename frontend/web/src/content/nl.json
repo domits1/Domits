@@ -1089,5 +1089,135 @@
         "error": "Uitnodiging verzenden mislukt. Probeer het opnieuw."
       }
     }
+  },
+  "performance": {
+    "label": "PRESTATIEPAKKETTEN",
+    "title": "Laat je verhuurbedrijf groeien met",
+    "titleAccent": "vertrouwen.",
+    "badges": [
+      {
+        "title": "Startende verhuurder",
+        "subtitle": "1-9 accommodaties"
+      },
+      {
+        "title": "Groeiende verhuurder",
+        "subtitle": "10-99 accommodaties"
+      },
+      {
+        "title": "Schaalbare verhuurder",
+        "subtitle": "100+ accommodaties"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Distributie & Marketing",
+        "bullets": [
+          "Multi-channel distributie via Booking.com, Airbnb, VRBO en 100+ platforms.",
+          "AI-gestuurde analyses, dashboards en prestatieoverzichten.",
+          "Inbound marketing, lead nurturing, klantenreizen en content.",
+          "SEO, SEA, CRO en conversiegerichte performance marketing.",
+          "CRM-automatisering, e-mailcampagnes, segmentatie en communicatiestromen."
+        ]
+      },
+      {
+        "title": "Operaties Stroomlijnen",
+        "bullets": [
+          "Vastgoedbeheer automatiseren",
+          "Reserveringsbeheer",
+          "Tarievenbeheer",
+          "Housekeeping",
+          "Receptie",
+          "Rapportage"
+        ]
+      },
+      {
+        "title": "Omzet Verhogen",
+        "bullets": [
+          "Dynamische prijzen",
+          "Digitale upselling",
+          "Bezettingsgraden",
+          "ADR (Gemiddelde Dagelijkse Prijs)",
+          "RevPAR (Opbrengst per Beschikbare Kamer)"
+        ]
+      },
+      {
+        "title": "Gastervaring",
+        "bullets": [
+          "Warmte en vriendelijkheid",
+          "Boekingsengine",
+          "Berichten",
+          "Beoordelingen",
+          "Inchecken",
+          "Ondersteuning (FAQ, e-mail en telefoon)"
+        ]
+      }
+    ]
+  },
+  "security": {
+    "label": "BEVEILIGING",
+    "title": "Jouw veiligheid staat",
+    "titleAccent": "voorop.",
+    "badges": [
+      {
+        "title": "Beveiligde Infrastructuur",
+        "subtitle": "Betrouwbaar & bewaakt"
+      },
+      {
+        "title": "Versleutelde Gegevens",
+        "subtitle": "End-to-end bescherming"
+      },
+      {
+        "title": "Dagelijkse Back-ups",
+        "subtitle": "Altijd beschermd"
+      },
+      {
+        "title": "EU Gehost",
+        "subtitle": "GDPR-conform"
+      }
+    ],
+    "sections": [
+      {
+        "title": "1. Infrastructuur",
+        "description": "Onze servers zijn veilig ondergebracht in meerdere Europese datacenters. Bij storingen staan technici altijd klaar om het probleem direct op te lossen. De online infrastructuur van Amazon Web Services garandeert de veiligheid en vertrouwelijkheid van onze clouddiensten.",
+        "bullets": [
+          "Onze gegevens zijn opgeslagen in twee verschillende datacenters.",
+          "Bij storingen schakelt Domits automatisch over naar een ander datacenter.",
+          "Een uptime van 99,995%."
+        ]
+      },
+      {
+        "title": "2. Diefstal en Privacy",
+        "description": "Domits zet zich volledig in om uw gegevens veilig te houden en te beschermen tegen hackers. Elke klant heeft zijn eigen, afzonderlijke database bij Domits, waardoor het onmogelijk is voor andere gebruikers om toegang te krijgen tot andermans gegevens.",
+        "bullets": [
+          "Bij gebruik van Domits is de verbinding beveiligd.",
+          "GDPR-conforme gegevensverwerking en -opslag",
+          "Het is onmogelijk voor buitenstaanders om dataverkeer te onderscheppen."
+        ]
+      },
+      {
+        "title": "3. Back-ups",
+        "description": "Bij Domits doen we er alles aan om ons systeem altijd operationeel te houden en uw gegevens altijd veilig te stellen. Back-ups worden dagelijks gemaakt zodat er nooit iets verloren gaat. Bij verstoringen worden al uw gegevens veilig opgeslagen en zorgt ons team ervoor dat uw account wordt hersteld.",
+        "bullets": [
+          "Garantie tegen gegevensverlies",
+          "Dagelijks herstel van gegevens tot zes maanden geleden",
+          "Veilige gegevensback-ups"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "title": "Visie",
+        "text": "Wij geloven dat iedereen recht heeft op transparante en toegankelijke beveiliging. Onze visie is een digitale omgeving te creëren waar gebruikers erop kunnen vertrouwen dat hun gegevens beschermd zijn zonder complexe technische details te hoeven begrijpen."
+      },
+      {
+        "title": "Wat We Doen",
+        "text": "We bewaken, updaten en verbeteren voortdurend onze beveiligingsinfrastructuur. Ons toegewijde team werkt dag en nacht om potentiële bedreigingen te identificeren, de nieuwste beveiligingsnormen te implementeren en ervoor te zorgen dat uw gegevens te allen tijde beschermd blijven."
+      }
+    ],
+    "cta": {
+      "title": "Vragen over beveiliging?",
+      "contactButton": "Contact opnemen",
+      "learnMoreButton": "Meer weten"
+    }
   }
 }
