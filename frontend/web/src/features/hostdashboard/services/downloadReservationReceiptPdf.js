@@ -67,13 +67,6 @@ const writeMutedText = (doc, text, x, y, options = {}) => {
   doc.text(String(text || ""), x, y, options.textOptions || {});
 };
 
-const writeBodyText = (doc, text, x, y, options = {}) => {
-  doc.setFont("helvetica", options.fontStyle || "normal");
-  doc.setFontSize(options.fontSize || 10);
-  doc.setTextColor(17, 24, 39);
-  doc.text(String(text || ""), x, y, options.textOptions || {});
-};
-
 const writeWrappedValue = (doc, cursor, label, value) => {
   const safeLabel = normalizeText(label, "");
   const safeValue = normalizeText(value);
@@ -134,13 +127,59 @@ const writeBulletList = (doc, cursor, items) => {
   });
 };
 
+const isAsciiWordCharacter = (character) => {
+  const code = character.charCodeAt(0);
+  return (
+    (code >= 48 && code <= 57) ||
+    (code >= 65 && code <= 90) ||
+    (code >= 97 && code <= 122) ||
+    code === 95
+  );
+};
+
+const trimWrappingUnderscores = (value) => {
+  let start = 0;
+  let end = value.length;
+
+  while (start < end && value[start] === "_") {
+    start += 1;
+  }
+
+  while (end > start && value[end - 1] === "_") {
+    end -= 1;
+  }
+
+  return value.slice(start, end);
+};
+
+const sanitizeFileNameSegment = (value) => {
+  const normalizedValue = String(value || "")
+    .normalize("NFKD")
+    .replaceAll("-", " ");
+  let sanitized = "";
+  let previousWasSeparator = false;
+
+  for (const character of normalizedValue) {
+    if (isAsciiWordCharacter(character)) {
+      sanitized += character;
+      previousWasSeparator = false;
+      continue;
+    }
+
+    if (!previousWasSeparator) {
+      sanitized += "_";
+      previousWasSeparator = true;
+    }
+  }
+
+  return trimWrappingUnderscores(sanitized);
+};
+
 const buildReceiptFileName = (receipt) => {
   const receiptTitle = buildReceiptTitle(receipt);
+  const sanitizedTitle = sanitizeFileNameSegment(receiptTitle) || "reservation_receipt";
 
-  return `${receiptTitle
-    .replace(/-/g, " ")
-    .replace(/[^\w]+/g, "_")
-    .replace(/^_+|_+$/g, "")}.pdf`;
+  return `${sanitizedTitle}.pdf`;
 };
 
 const loadImageElement = (src) =>
