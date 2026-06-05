@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
@@ -19,6 +20,11 @@ function FinanceSectionLoader({ message, children }) {
     </div>
   );
 }
+
+FinanceSectionLoader.propTypes = {
+  message: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
 
 function FinanceTableSkeleton({ columns = 4, rows = 4 }) {
   const gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
@@ -44,6 +50,11 @@ function FinanceTableSkeleton({ columns = 4, rows = 4 }) {
     </div>
   );
 }
+
+FinanceTableSkeleton.propTypes = {
+  columns: PropTypes.number,
+  rows: PropTypes.number,
+};
 
 function FinanceBalanceSkeleton() {
   return (
@@ -88,6 +99,10 @@ function FinanceFaqSkeleton({ items = 3 }) {
     </div>
   );
 }
+
+FinanceFaqSkeleton.propTypes = {
+  items: PropTypes.number,
+};
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -150,8 +165,94 @@ export default function HostFinanceTab() {
     setPayoutsPage((page) => Math.min(Math.max(1, page), payoutsTotalPages));
   }, [payouts.length, payoutsTotalPages]);
 
-  const renderCtaLabel = (idleText) =>
-    isProcessing ? (processingStep === "opening" ? "Opening link..." : "Working on it...") : idleText;
+  const renderCtaLabel = (idleText) => {
+    if (!isProcessing) {
+      return idleText;
+    }
+
+    if (processingStep === "opening") {
+      return "Opening link...";
+    }
+
+    return "Working on it...";
+  };
+
+  const renderStripeStepContent = () => {
+    if (isAccountLoading) {
+      return (
+        <>
+          <strong>Step 2: </strong>
+          &nbsp;
+          <PulseBarsLoader inline message="Loading Stripe setup..." className="finance-inline-loader" />
+        </>
+      );
+    }
+
+    if (accountId) {
+      if (onboardingComplete) {
+        return (
+          <>
+            <strong>Step 2: </strong> &nbsp; You're connected to Stripe. Well done! &nbsp;
+            <span
+              className={`finance-span ${isProcessing ? "disabled" : ""}`}
+              onClick={isProcessing ? undefined : handleStripeAction}
+            >
+              {renderCtaLabel("Open Stripe Dashboard")}
+            </span>
+          </>
+        );
+      }
+
+      return (
+        <>
+          <strong>Step 2: </strong> &nbsp; Finish your Stripe onboarding to start receiving payouts: &nbsp;
+          <span
+            className={`finance-span ${isProcessing ? "disabled" : ""}`}
+            onClick={isProcessing ? undefined : handleStripeAction}
+          >
+            {renderCtaLabel("Continue Stripe onboarding")}
+          </span>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <strong>Step 2: </strong> &nbsp; Once your accommodation is created, you can create a Stripe account to
+        receive payments: &nbsp;
+        <span
+          className={`finance-span ${isProcessing ? "disabled" : ""}`}
+          onClick={isProcessing ? undefined : handleStripeAction}
+        >
+          {renderCtaLabel("Create Stripe account")}
+        </span>
+      </>
+    );
+  };
+
+  let faqContent = <p>No FAQs found.</p>;
+  if (isFaqLoading) {
+    faqContent = (
+      <FinanceSectionLoader message="Loading FAQs...">
+        <FinanceFaqSkeleton />
+      </FinanceSectionLoader>
+    );
+  } else if (faqs.length > 0) {
+    faqContent = (
+      <ul className="faq-list">
+        {faqs.map((faq) => (
+          <li key={faq.faq_id} className="faq-item">
+            <details className="faq-details">
+              <summary className="faq-q">
+                <strong>{faq.question}</strong>
+              </summary>
+              <p className="faq-a">{faq.answer}</p>
+            </details>
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
   return (
     <main className="page-Host">
@@ -189,44 +290,7 @@ export default function HostFinanceTab() {
                 </li>
 
                 <li>
-                  {isAccountLoading ? (
-                    <>
-                      <strong>Step 2: </strong>
-                      &nbsp;
-                      <PulseBarsLoader inline message="Loading Stripe setup..." className="finance-inline-loader" />
-                    </>
-                  ) : !accountId ? (
-                    <>
-                      <strong>Step 2: </strong> &nbsp; Once your accommodation is created, you can create a Stripe
-                      account to receive payments: &nbsp;
-                      <span
-                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={isProcessing ? undefined : handleStripeAction}
-                      >
-                        {renderCtaLabel("Create Stripe account")}
-                      </span>
-                    </>
-                  ) : !onboardingComplete ? (
-                    <>
-                      <strong>Step 2: </strong> &nbsp; Finish your Stripe onboarding to start receiving payouts: &nbsp;
-                      <span
-                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={isProcessing ? undefined : handleStripeAction}
-                      >
-                        {renderCtaLabel("Continue Stripe onboarding")}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <strong>Step 2: </strong> &nbsp; You're connected to Stripe. Well done! &nbsp;
-                      <span
-                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                        onClick={isProcessing ? undefined : handleStripeAction}
-                      >
-                        {renderCtaLabel("Open Stripe Dashboard")}
-                      </span>
-                    </>
-                  )}
+                  {renderStripeStepContent()}
                 </li>
 
                 <li>
@@ -515,26 +579,7 @@ export default function HostFinanceTab() {
         <div className="faqs">
           <p className="faqs-title">FAQs</p>
 
-          {isFaqLoading ? (
-            <FinanceSectionLoader message="Loading FAQs...">
-              <FinanceFaqSkeleton />
-            </FinanceSectionLoader>
-          ) : faqs.length > 0 ? (
-            <ul className="faq-list">
-              {faqs.map((faq) => (
-                <li key={faq.faq_id} className="faq-item">
-                  <details className="faq-details">
-                    <summary className="faq-q">
-                      <strong>{faq.question}</strong>
-                    </summary>
-                    <p className="faq-a">{faq.answer}</p>
-                  </details>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No FAQs found.</p>
-          )}
+          {faqContent}
         </div>
       </div>
     </main>

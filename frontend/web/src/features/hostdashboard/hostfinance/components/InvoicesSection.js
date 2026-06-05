@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import { getInvoices } from "../services/invoiceService";
@@ -42,6 +43,10 @@ function InvoicesTableSkeleton({ rows = 4 }) {
     </div>
   );
 }
+
+InvoicesTableSkeleton.propTypes = {
+  rows: PropTypes.number,
+};
 
 function downloadInvoicePdf(invoice) {
   import("jspdf").then(({ jsPDF }) => {
