@@ -950,6 +950,7 @@ const viewModelShape = PropTypes.shape({
   locationLabel: PropTypes.string.isRequired,
   arrivalLabel: PropTypes.string.isRequired,
   departureLabel: PropTypes.string.isRequired,
+  nights: PropTypes.number.isRequired,
   nightCountText: PropTypes.string.isRequired,
   guestCountText: PropTypes.string.isRequired,
   bookedOnText: PropTypes.string.isRequired,
@@ -1480,13 +1481,16 @@ const RequestConfirmationModal = ({
   const title = isDeclineAction
     ? t.requestActions.confirmDeclineTitle
     : t.requestActions.confirmAcceptTitle;
-  const message = isDeclineAction
-    ? t.requestActions.confirmDeclineMessage
-    : overlappingCount > 0
-      ? formatTemplate(t.requestActions.confirmAcceptWithOverlap, {
-          count: overlappingCount,
-        })
-      : t.requestActions.confirmAcceptNoOverlap;
+  let message = t.requestActions.confirmAcceptNoOverlap;
+
+  if (isDeclineAction) {
+    message = t.requestActions.confirmDeclineMessage;
+  } else if (overlappingCount > 0) {
+    message = formatTemplate(t.requestActions.confirmAcceptWithOverlap, {
+      count: overlappingCount,
+    });
+  }
+
   const confirmButtonClass = isDeclineAction
     ? styles.requestActionDecline
     : styles.requestActionAccept;
