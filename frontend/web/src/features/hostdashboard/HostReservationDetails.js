@@ -38,6 +38,7 @@ import {
   fetchUserProfileById,
   getEmptyUserProfile,
 } from "./services/fetchUserProfileById.js";
+import downloadReservationReceiptPdf from "./services/downloadReservationReceiptPdf.js";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
 
 const STATUS_CLASS = {
@@ -586,6 +587,14 @@ const getRuleIcon = (rule) => {
   return <FiHome />;
 };
 
+const calculateReservationNights = (arrivalDate, departureDate) =>
+  Math.max(
+    0,
+    Math.round(
+      (new Date(departureDate) - new Date(arrivalDate)) / (1000 * 60 * 60 * 24)
+    )
+  );
+
 const HostReservationDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -594,6 +603,7 @@ const HostReservationDetails = () => {
   const [b, setB] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
 
   const formatDate = (dateValue) => {
     if (!dateValue) return "";
@@ -648,6 +658,57 @@ const HostReservationDetails = () => {
         },
       },
     });
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!b || isDownloadingReceipt) {
+      return;
+    }
+
+    setIsDownloadingReceipt(true);
+
+    try {
+      const nights = calculateReservationNights(b.arrivaldate, b.departuredate);
+
+      await downloadReservationReceiptPdf({
+        bookingId: getBookingId(b),
+        reservationId: b.reservationId,
+        confirmationCode: b.confirmationCode,
+        statusLabel: STATUS_CONFIG[b.status]?.label || "Reservation",
+        channel: b.channel || "Direct",
+        bookedOn: b.bookedOn,
+        title: b.title,
+        propertyId: b.propertyId || b.property_id,
+        locationLabel:
+          [b.city, b.country].filter(Boolean).join(", ") || "Location unavailable",
+        arrivalDate: b.arrivaldate,
+        departureDate: b.departuredate,
+        guestCountLabel: `${Number(b.guests || 0)} guest${Number(b.guests || 0) === 1 ? "" : "s"}`,
+        checkinInstructions: b.checkinInstructions || "No check-in instructions",
+        guestName: b.guestname,
+        guestEmail: b.guestemail,
+        guestPhone: b.guestphone,
+        specialRequest: b.specialRequest || "None",
+        pricePerNight: b.pricePerNight,
+        nights,
+        cleaningFee: b.cleaningFee,
+        total: nights * Number(b.pricePerNight || 0) + Number(b.cleaningFee || 0),
+        paymentStatusLabel:
+          PAYMENT_STATUS_CONFIG[b.status]?.label || "Payment status unavailable",
+        paymentDate: b.bookedOn,
+        paymentMethod:
+          b.last4 && b.last4 !== "****"
+            ? `**** ${b.last4} ${b.paymentMethod}`
+            : b.paymentMethod,
+        cancellationType: b.cancellationType || "Not specified",
+        cancellationPolicy: b.cancellationPolicy || "No cancellation policy selected.",
+        houseRules: b.houseRules,
+      });
+    } catch (downloadError) {
+      console.error("Failed to download reservation receipt:", downloadError);
+    } finally {
+      setIsDownloadingReceipt(false);
+    }
   };
 
   useEffect(() => {
@@ -753,12 +814,9 @@ const HostReservationDetails = () => {
   const reservation = b || EMPTY_RESERVATION_DETAILS;
   const isShellLoading = loading && !b;
   const hasReservationData = Boolean(b);
-  const nights = Math.max(
-    0,
-    Math.round(
-      (new Date(reservation.departuredate) - new Date(reservation.arrivaldate)) /
-        (1000 * 60 * 60 * 24)
-    )
+  const nights = calculateReservationNights(
+    reservation.arrivaldate,
+    reservation.departuredate
   );
   const total = reservation.pricePerNight * nights + reservation.cleaningFee;
   const locationLabel =
@@ -1090,8 +1148,12 @@ const HostReservationDetails = () => {
               <FiCalendar /> View in calendar
             </button>
 
-            <button className={styles.secondaryActionBtn}>
-              <FiDownload /> Download receipt
+            <button
+              className={styles.secondaryActionBtn}
+              onClick={handleDownloadReceipt}
+              disabled={!hasReservationData || isDownloadingReceipt}
+            >
+              <FiDownload /> {isDownloadingReceipt ? "Preparing receipt..." : "Download receipt"}
             </button>
           </div>
         </div>
