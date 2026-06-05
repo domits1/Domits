@@ -15,8 +15,13 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { MdOutlineSmokeFree } from "react-icons/md";
+import { toast } from "react-toastify";
 
 import { LanguageContext } from "../../context/LanguageContext";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 import { getAccessToken, getCognitoUserId } from "../../services/getAccessToken.js";
 import {
   normalizeImageUrl,
@@ -30,7 +35,6 @@ import {
 } from "../../utils/policyDisplayUtils.js";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader.jsx";
 import styles from "./HostReservationDetails.module.css";
-import hostReservationDetailsContent from "./hostReservationDetailsContent.js";
 import {
   persistCalendarFocusContext,
   persistSelectedPropertyId,
@@ -42,6 +46,7 @@ import {
 } from "./services/fetchUserProfileById.js";
 import downloadReservationReceiptPdf from "./services/downloadReservationReceiptPdf.js";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
+import { updateInquiryStatus } from "./services/reservationService.js";
 
 const STATUS_CLASS = {
   PAID: styles.statusPaid,
@@ -78,6 +83,7 @@ const RECEIPT_PAYMENT_STATUS_LABELS = {
 const DEFAULT_CHANNEL = "Direct";
 const DEFAULT_PAYMENT_METHOD = "Card";
 const DEFAULT_LAST4 = "****";
+const contentByLanguage = { en, nl, de, es };
 
 const getStatusConfig = (t) => ({
   PAID: { label: t.status.PAID, icon: <FiCheckCircle /> },
@@ -188,6 +194,20 @@ const mapReservations = (data) => {
       ),
     }));
   });
+};
+
+const isOverlappingInquiry = (candidateBooking, targetBooking) => {
+  if (!candidateBooking || !targetBooking) {
+    return false;
+  }
+
+  return (
+    candidateBooking.id !== targetBooking.id &&
+    candidateBooking.status === "INQUIRY" &&
+    getPropertyId(candidateBooking) === getPropertyId(targetBooking) &&
+    candidateBooking.arrivaldate < targetBooking.departuredate &&
+    candidateBooking.departuredate > targetBooking.arrivaldate
+  );
 };
 
 const firstDefined = (...candidates) =>
@@ -645,6 +665,13 @@ const buildCountLabel = (count, singular, plural) => {
   return `${normalizedCount} ${label}`;
 };
 
+const formatTemplate = (template, values) =>
+  Object.entries(values).reduce(
+    (currentText, [key, value]) =>
+      currentText.replaceAll(`{${key}}`, String(value)),
+    String(template || "")
+  );
+
 const hasDisplayValue = (value) => normalizeStringValue(value) !== "";
 
 const buildLoadingAwareText = (value, isLoading, loadingValue, emptyValue) => {
@@ -949,6 +976,7 @@ const useReservationDetailsData = (reservationId, initialBooking) => {
 
   return {
     reservationData,
+    setReservationData,
     loading,
     error,
   };
@@ -1224,6 +1252,76 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
   </div>
 );
 
+const RequestActionsCard = ({
+  isBusy,
+  onAccept,
+  onDecline,
+  t,
+}) => (
+  <div className={`${styles.card} ${styles.requestActionsCard}`}>
+    <div className={styles.blockHeader}>
+      <span>{t.requestActions.title}</span>
+    </div>
+
+    <p className={styles.requestActionsSubtitle}>{t.requestActions.subtitle}</p>
+
+    <div className={styles.requestActionsGrid}>
+      <button
+        className={`${styles.requestActionButton} ${styles.requestActionAccept}`}
+        onClick={onAccept}
+        disabled={isBusy}
+      >
+        {t.requestActions.accept}
+      </button>
+
+      <button
+        className={`${styles.requestActionButton} ${styles.requestActionDecline}`}
+        onClick={onDecline}
+        disabled={isBusy}
+      >
+        {t.requestActions.decline}
+      </button>
+    </div>
+  </div>
+);
+
+const RequestConfirmationModal = ({
+  overlappingCount,
+  onConfirm,
+  onCancel,
+  t,
+}) => {
+  const message =
+    overlappingCount > 0
+      ? formatTemplate(t.requestActions.confirmWithOverlap, {
+          count: overlappingCount,
+        })
+      : t.requestActions.confirmNoOverlap;
+
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalBox}>
+        <h3 className={styles.modalTitle}>{t.requestActions.confirmTitle}</h3>
+        <p className={styles.modalText}>{message}</p>
+        <div className={styles.modalActions}>
+          <button
+            className={`${styles.requestActionButton} ${styles.requestActionAccept}`}
+            onClick={onConfirm}
+          >
+            {t.requestActions.accept}
+          </button>
+          <button
+            className={`${styles.requestActionButton} ${styles.requestActionDecline}`}
+            onClick={onCancel}
+          >
+            {t.requestActions.cancel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ReservationInfoCard = ({ reservation, loading, t }) => (
   <div className={styles.card}>
     <div className={styles.blockHeader}>
@@ -1314,13 +1412,15 @@ const HostReservationDetails = () => {
   const { id } = useParams();
   const initialBooking = location.state?.booking || null;
   const t =
-    hostReservationDetailsContent[language] ||
-    hostReservationDetailsContent.en;
-  const { reservationData, loading, error } = useReservationDetailsData(
+    contentByLanguage[language]?.hostDashboard?.reservationDetails ||
+    contentByLanguage.en.hostDashboard.reservationDetails;
+  const { reservationData, setReservationData, loading, error } = useReservationDetailsData(
     id,
     initialBooking
   );
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
+  const [isUpdatingInquiry, setIsUpdatingInquiry] = useState(false);
+  const [confirmAccept, setConfirmAccept] = useState(null);
 
   if (error && !reservationData) {
     return <div className={styles.container}>{t.states.failedToLoad}</div>;
@@ -1339,6 +1439,7 @@ const HostReservationDetails = () => {
     isShellLoading,
     t,
   });
+  const showRequestActions = reservation.status === "INQUIRY";
 
   const handleViewInCalendar = () => {
     if (!hasReservationData) {
@@ -1373,6 +1474,98 @@ const HostReservationDetails = () => {
         messageContext: buildMessageContext(reservationData),
       },
     });
+  };
+
+  const executeInquiryAction = async (action) => {
+    if (!hasReservationData || isUpdatingInquiry) {
+      return;
+    }
+
+    const authToken = getAccessToken();
+    if (!authToken) {
+      toast.error(t.requestActions.updateFailed);
+      return;
+    }
+
+    setIsUpdatingInquiry(true);
+
+    try {
+      const result = await updateInquiryStatus(
+        getBookingId(reservationData),
+        action,
+        authToken
+      );
+      const nextStatus =
+        action === "accept-inquiry" ? "AWAITING_PAYMENT" : "DECLINED";
+      const declinedCount = Number(result?.declinedCount || 0);
+
+      setReservationData((currentReservation) => {
+        if (!currentReservation) {
+          return currentReservation;
+        }
+
+        return {
+          ...currentReservation,
+          status: nextStatus,
+        };
+      });
+
+      if (action === "accept-inquiry") {
+        if (declinedCount > 0) {
+          toast.success(
+            formatTemplate(t.requestActions.acceptedWithOverlap, {
+              count: declinedCount,
+            })
+          );
+        } else {
+          toast.success(t.requestActions.accepted);
+        }
+      } else {
+        toast.success(t.requestActions.declined);
+      }
+    } catch (updateError) {
+      console.error("Failed to update request status:", updateError);
+      toast.error(t.requestActions.updateFailed);
+    } finally {
+      setIsUpdatingInquiry(false);
+    }
+  };
+
+  const handleAcceptRequest = async () => {
+    if (!hasReservationData || isUpdatingInquiry) {
+      return;
+    }
+
+    const authToken = getAccessToken();
+    if (!authToken) {
+      toast.error(t.requestActions.updateFailed);
+      return;
+    }
+
+    setIsUpdatingInquiry(true);
+
+    try {
+      const bookingsPayload = await getReservationsFromToken(authToken);
+      const overlappingCount = mapReservations(bookingsPayload).filter((booking) =>
+        isOverlappingInquiry(booking, reservationData)
+      ).length;
+
+      setConfirmAccept({ overlappingCount });
+    } catch (loadError) {
+      console.error("Failed to prepare inquiry confirmation:", loadError);
+      setConfirmAccept({ overlappingCount: 0 });
+    } finally {
+      setIsUpdatingInquiry(false);
+    }
+  };
+
+  const handleConfirmAccept = async () => {
+    setConfirmAccept(null);
+    await executeInquiryAction("accept-inquiry");
+  };
+
+  const handleDeclineRequest = async () => {
+    await executeInquiryAction("decline-inquiry");
   };
 
   const handleDownloadReceipt = async () => {
@@ -1437,6 +1630,14 @@ const HostReservationDetails = () => {
         </div>
 
         <div className={styles.right}>
+          {showRequestActions ? (
+            <RequestActionsCard
+              isBusy={isUpdatingInquiry}
+              onAccept={handleAcceptRequest}
+              onDecline={handleDeclineRequest}
+              t={t}
+            />
+          ) : null}
           <ReservationInfoCard reservation={reservation} loading={loading} t={t} />
           <ActionsCard
             hasReservationData={hasReservationData}
@@ -1447,6 +1648,15 @@ const HostReservationDetails = () => {
           />
         </div>
       </div>
+
+      {confirmAccept ? (
+        <RequestConfirmationModal
+          overlappingCount={confirmAccept.overlappingCount}
+          onConfirm={handleConfirmAccept}
+          onCancel={() => setConfirmAccept(null)}
+          t={t}
+        />
+      ) : null}
     </div>
   );
 };
