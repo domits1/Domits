@@ -346,9 +346,22 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .panoramaResidenceCardRail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    justify-content: stretch;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .panoramaResidenceCardRail > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .panoramaResidenceCard {
-    min-width: 136px;
-    flex-basis: 136px;
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
   .galleryStrip,
@@ -2593,9 +2606,22 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .panoramaResidenceCardRail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    justify-content: stretch;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .panoramaResidenceCardRail > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .panoramaResidenceCard {
-    min-width: 136px;
-    flex-basis: 136px;
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
   .galleryStrip,
