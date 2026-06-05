@@ -1089,5 +1089,117 @@
         "error": "Einladung konnte nicht gesendet werden. Bitte versuche es erneut."
       }
     }
+  },
+  "hostDashboard": {
+    "reservationDetails": {
+      "pageTitle": "Reservierungsdetails",
+      "states": {
+        "failedToLoad": "Reservierung konnte nicht geladen werden.",
+        "noReservationFound": "Keine Reservierung gefunden."
+      },
+      "buttons": {
+        "back": "Zuruck zu Reservierungen",
+        "messageGuest": "Gast anschreiben",
+        "viewInCalendar": "Im Kalender ansehen",
+        "downloadReceipt": "Beleg herunterladen",
+        "preparingReceipt": "Beleg wird vorbereitet..."
+      },
+      "headings": {
+        "property": "Unterkunft",
+        "guest": "Gast",
+        "payment": "Zahlung",
+        "reservationInfo": "Reservierungsinfo",
+        "actions": "Aktionen",
+        "checkInInstructions": "Check-in Hinweise",
+        "houseRules": "Hausregeln",
+        "cancellationPolicy": "Stornierungsrichtlinie",
+        "specialRequest": "Besonderer Wunsch"
+      },
+      "labels": {
+        "bookedVia": "Gebucht uber",
+        "checkIn": "Check-in",
+        "bookedOn": "Gebucht am",
+        "reservationId": "Reservierungs-ID",
+        "confirmation": "Bestatigung",
+        "cleaningFee": "Reinigungsgebuhr",
+        "totalPaid": "Insgesamt bezahlt",
+        "method": "Methode",
+        "propertyImageAlt": "Unterkunftsbild",
+        "guestFallbackName": "Gast",
+        "loadingValue": "Wird geladen...",
+        "unavailable": "nicht verfugbar",
+        "none": "Keine",
+        "locationUnavailable": "Standort nicht verfugbar",
+        "loadingLocation": "Standort wird geladen...",
+        "night": "Nacht",
+        "nights": "Nachte",
+        "guest": "Gast",
+        "guests": "Gaste"
+      },
+      "loading": {
+        "status": "Wird geladen",
+        "summary": "Reservierungsubersicht wird geladen...",
+        "reservationDetails": "Reservierungsdetails werden geladen...",
+        "guestEmail": "E-Mail des Gasts wird geladen...",
+        "guestPhone": "Telefonnummer des Gasts wird geladen...",
+        "checkInInstructions": "Check-in Hinweise werden geladen...",
+        "houseRules": "Hausregeln werden geladen...",
+        "cancellationPolicy": "Stornierungsrichtlinie wird geladen...",
+        "payment": "Zahlung wird geladen",
+        "paymentStatus": "Zahlungsstatus wird geladen"
+      },
+      "empty": {
+        "noCheckInInstructions": "Keine Check-in Hinweise",
+        "noHouseRulesSpecified": "Keine Hausregeln angegeben",
+        "noCancellationPolicySelected": "Keine Stornierungsrichtlinie ausgewahlt.",
+        "paymentStatusUnavailable": "Zahlungsstatus nicht verfugbar",
+        "reservation": "Reservierung"
+      },
+      "status": {
+        "PAID": "Bestatigt",
+        "AWAITING_PAYMENT": "Wartet auf Zahlung",
+        "FAILED": "Fehlgeschlagen",
+        "DECLINED": "Abgelehnt",
+        "INQUIRY": "Anfrage"
+      },
+      "paymentStatus": {
+        "PAID": {
+          "label": "Zahlung erhalten",
+          "text": "Vollstandig bezahlt am"
+        },
+        "AWAITING_PAYMENT": {
+          "label": "Wartet auf Zahlung",
+          "text": "Zahlung ausstehend"
+        },
+        "FAILED": {
+          "label": "Zahlung fehlgeschlagen",
+          "text": "Zahlung war nicht erfolgreich"
+        },
+        "DECLINED": {
+          "label": "Zahlung abgelehnt",
+          "text": "Zahlung wurde abgelehnt"
+        },
+        "INQUIRY": {
+          "label": "Anfrage ausstehend",
+          "text": "Wartet auf Prufung durch den Host"
+        }
+      },
+      "requestActions": {
+        "title": "Buchungsanfrage",
+        "subtitle": "Nimm diese Buchungsanfrage an oder lehne sie ab, bevor sie zur Zahlung ubergeht.",
+        "accept": "Anfrage annehmen",
+        "decline": "Anfrage ablehnen",
+        "confirmAcceptTitle": "Diese Anfrage annehmen?",
+        "confirmAcceptNoOverlap": "Mochtest du diese Anfrage wirklich annehmen?",
+        "confirmAcceptWithOverlap": "Es gibt {count} weitere ausstehende Anfragen mit uberschneidenden Daten fur diese Unterkunft. Beim Annehmen werden diese Anfragen automatisch abgelehnt.",
+        "confirmDeclineTitle": "Diese Anfrage ablehnen?",
+        "confirmDeclineMessage": "Mochtest du diese Buchungsanfrage wirklich ablehnen?",
+        "accepted": "Anfrage angenommen.",
+        "acceptedWithOverlap": "{count} uberschneidende Anfragen wurden automatisch abgelehnt.",
+        "declined": "Anfrage abgelehnt.",
+        "updateFailed": "Anfragestatus konnte nicht aktualisiert werden.",
+        "cancel": "Abbrechen"
+      }
+    }
   }
 }
