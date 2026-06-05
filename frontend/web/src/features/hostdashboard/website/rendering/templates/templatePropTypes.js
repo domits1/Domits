@@ -81,6 +81,7 @@ export const hostPropType = PropTypes.shape({
 
 export const contactSectionPropType = PropTypes.shape({
   title: PropTypes.string.isRequired,
+  caption: PropTypes.string,
   description: PropTypes.string,
   accentColor: PropTypes.string,
   backgroundColor: PropTypes.string,

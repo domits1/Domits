@@ -5,6 +5,8 @@ const EMPTY_USER_PROFILE = {
   givenName: null,
   userId: null,
   profileImage: null,
+  email: null,
+  phoneNumber: null,
 };
 
 const safeJsonParse = (value) => {
@@ -13,6 +15,17 @@ const safeJsonParse = (value) => {
   } catch {
     return null;
   }
+};
+
+const pickFirstFilledValue = (...candidates) => {
+  for (const candidate of candidates) {
+    const normalizedCandidate = String(candidate || "").trim();
+    if (normalizedCandidate) {
+      return normalizedCandidate;
+    }
+  }
+
+  return null;
 };
 
 const parseCognitoAttributes = (attributesArray) => {
@@ -67,9 +80,19 @@ export async function fetchUserProfileById(targetUserId) {
       targetUserId;
 
     return {
-      givenName: attributes.given_name || attributes.name || null,
+      givenName: pickFirstFilledValue(attributes.given_name, attributes.name),
       userId: resolvedUserId,
-      profileImage: attributes.picture || null,
+      profileImage: pickFirstFilledValue(
+        attributes.picture,
+        attributes.profileImage,
+        attributes.profile_image,
+        attributes.avatar,
+        attributes.photo,
+        attributes["custom:profileImage"],
+        attributes["custom:profile_image"]
+      ),
+      email: pickFirstFilledValue(attributes.email),
+      phoneNumber: pickFirstFilledValue(attributes.phone_number, attributes.phone),
     };
   } catch {
     return getEmptyUserProfile(targetUserId);

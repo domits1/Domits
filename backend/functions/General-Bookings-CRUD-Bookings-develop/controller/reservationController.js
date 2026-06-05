@@ -63,7 +63,7 @@ class ReservationController {
       try {
         const secret =
           process.env.STRIPE_SECRET_KEY ||
-          (await this.systemManagerRepository.getSystemManagerParameter("/stripe/keys/secret/live"));
+          (await this.systemManagerRepository.getSystemManagerParameter("/stripe/keys/secret/test"));
         if (secret) {
           this.stripe = new Stripe(secret);
         } else {

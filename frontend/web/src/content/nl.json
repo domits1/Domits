@@ -57,19 +57,20 @@
         "about": "Over ons",
         "security": "Beveiliging",
         "performance": "Prestatie",
-        "sustainability": "Duurzaamheid",
         "careers": "Carrières",
         "contact": "Contact"
       },
       "guest": {
         "title": "Gast",
         "searchAndBook": "Zoeken en boeken",
-        "helpDeskForGuests": "Helpdesk voor gasten"
+        "helpDeskForGuests": "Helpdesk voor gasten",
+        "sustainability": "Duurzaamheid"
       },
       "host": {
         "title": "Gastheren",
         "becomeHost": "Word gastheer",
-        "helpdeskForHosts": "Helpdesk voor hosts"
+        "helpdeskForHosts": "Helpdesk voor hosts",
+        "sustainability": "Duurzaamheid"
       },
       "network": {
         "title": "Netwerk",
@@ -526,26 +527,22 @@
     }
   },
   "sustainability": {
-    "label": "DUURZAAMHEID",
-    "title": "Waarom kiezen voor Domits",
-    "titleAccent": "op het gebied van duurzaamheid?",
-    "sections": [
-      {
-        "title": "Duurzaam Ondernemen",
-        "subtitle": "Recyclingplan met afvalbakken",
-        "description": "Domits begint eenvoudig met bewuste keuzes, zoals het kiezen van energiezuinigere apparaten, en wil elke dag 1% verbeteren. Met ons beleid rond voedselverspilling willen we niet te streng zijn en starten we met een flexibel recyclingplan voor glas, papier, plastic en organisch afval. Voor biodiversiteit en ecosystemen streven we ernaar meer biologisch voedsel te eten, milieuvriendelijke schoonmaakproducten te gebruiken en papierloze procedures te hanteren."
-      },
-      {
-        "title": "Duurzame Accommodaties",
-        "subtitle": "Certificering",
-        "description": "Domits richt zich actief op het onboarden van hosts die al duurzaam zijn. Als dat nog niet het geval is, begeleiden we hen stap voor stap om het bewustzijn te vergroten. Uiteindelijk willen we hosts certificeringen geven als bewijs van duurzaamheid op het gebied van energie, afval, biodiversiteit, ecosystemen, bestemmingen en gemeenschap."
-      },
-      {
-        "title": "Duurzame Gastervaring",
-        "subtitle": "Milieuvriendelijk reizen",
-        "description": "Vanaf het eerste contactmoment met Domits willen we dat gasten voelen dat ze zo duurzaam mogelijk reizen. Domits begint met duurzaamheidsfilters en een uitgebreid overzicht van alle milieuvriendelijke voorzieningen."
-      }
-    ]
+    "title": "Duurzaamheid",
+    "subtitle": "Waarom kiezen voor Domits op het gebied van duurzaamheid?",
+    "business": {
+      "title": "1. Duurzaam **Ondernemen**",
+      "subtitle": "Recyclingplan met afvalbakken",
+      "description": "Domits begint eenvoudig met bewuste keuzes, zoals het kiezen van energiezuinigere apparaten, en wil elke dag 1% verbeteren. Met ons beleid rond voedselverspilling willen we niet te streng zijn en starten we met een flexibel recyclingplan voor glas, papier, plastic en organisch afval. Voor biodiversiteit en ecosystemen streven we ernaar meer biologisch voedsel te eten, milieuvriendelijke schoonmaakproducten te gebruiken en papierloze procedures te hanteren."
+    },
+    "accommodations": {
+      "title": "2. Duurzame **Accommodaties**",
+      "subtitle": "Certificering",
+      "description": "Domits richt zich actief op het onboarden van hosts die al duurzaam zijn. Als dat nog niet het geval is, begeleiden we hen stap voor stap om het bewustzijn te vergroten. Uiteindelijk willen we hosts certificeringen geven als bewijs van duurzaamheid op het gebied van energie, afval, biodiversiteit, ecosystemen, bestemmingen en gemeenschap."
+    },
+    "experience": {
+      "title": "3. Duurzame **Gastervaring**",
+      "description": "Vanaf het eerste contactmoment met Domits willen we dat gasten voelen dat ze zo duurzaam mogelijk reizen. Domits begint met duurzaamheidsfilters en een uitgebreid overzicht van alle milieuvriendelijke voorzieningen."
+    }
   },
   "howItWorksContent": {
     "title": "Hoe Domits Werkt",
@@ -1091,136 +1088,6 @@
         "success": "✓ Uitnodiging verstuurd naar",
         "error": "Uitnodiging verzenden mislukt. Probeer het opnieuw."
       }
-    }
-  },
-  "performance": {
-    "label": "PRESTATIEPAKKETTEN",
-    "title": "Laat je verhuurbedrijf groeien met",
-    "titleAccent": "vertrouwen.",
-    "badges": [
-      {
-        "title": "Startende verhuurder",
-        "subtitle": "1-9 accommodaties"
-      },
-      {
-        "title": "Groeiende verhuurder",
-        "subtitle": "10-99 accommodaties"
-      },
-      {
-        "title": "Schaalbare verhuurder",
-        "subtitle": "100+ accommodaties"
-      }
-    ],
-    "sections": [
-      {
-        "title": "Distributie & Marketing",
-        "bullets": [
-          "Multi-channel distributie via Booking.com, Airbnb, VRBO en 100+ platforms.",
-          "AI-gestuurde analyses, dashboards en prestatieoverzichten.",
-          "Inbound marketing, lead nurturing, klantenreizen en content.",
-          "SEO, SEA, CRO en conversiegerichte performance marketing.",
-          "CRM-automatisering, e-mailcampagnes, segmentatie en communicatiestromen."
-        ]
-      },
-      {
-        "title": "Operaties Stroomlijnen",
-        "bullets": [
-          "Vastgoedbeheer automatiseren",
-          "Reserveringsbeheer",
-          "Tarievenbeheer",
-          "Housekeeping",
-          "Receptie",
-          "Rapportage"
-        ]
-      },
-      {
-        "title": "Omzet Verhogen",
-        "bullets": [
-          "Dynamische prijzen",
-          "Digitale upselling",
-          "Bezettingsgraden",
-          "ADR (Gemiddelde Dagelijkse Prijs)",
-          "RevPAR (Opbrengst per Beschikbare Kamer)"
-        ]
-      },
-      {
-        "title": "Gastervaring",
-        "bullets": [
-          "Warmte en vriendelijkheid",
-          "Boekingsengine",
-          "Berichten",
-          "Beoordelingen",
-          "Inchecken",
-          "Ondersteuning (FAQ, e-mail en telefoon)"
-        ]
-      }
-    ]
-  },
-  "security": {
-    "label": "BEVEILIGING",
-    "title": "Jouw veiligheid staat",
-    "titleAccent": "voorop.",
-    "badges": [
-      {
-        "title": "Beveiligde Infrastructuur",
-        "subtitle": "Betrouwbaar & bewaakt"
-      },
-      {
-        "title": "Versleutelde Gegevens",
-        "subtitle": "End-to-end bescherming"
-      },
-      {
-        "title": "Dagelijkse Back-ups",
-        "subtitle": "Altijd beschermd"
-      },
-      {
-        "title": "EU Gehost",
-        "subtitle": "GDPR-conform"
-      }
-    ],
-    "sections": [
-      {
-        "title": "1. Infrastructuur",
-        "description": "Onze servers zijn veilig ondergebracht in meerdere Europese datacenters. Bij storingen staan technici altijd klaar om het probleem direct op te lossen. De online infrastructuur van Amazon Web Services garandeert de veiligheid en vertrouwelijkheid van onze clouddiensten.",
-        "bullets": [
-          "Onze gegevens zijn opgeslagen in twee verschillende datacenters.",
-          "Bij storingen schakelt Domits automatisch over naar een ander datacenter.",
-          "Een uptime van 99,995%."
-        ]
-      },
-      {
-        "title": "2. Diefstal en Privacy",
-        "description": "Domits zet zich volledig in om uw gegevens veilig te houden en te beschermen tegen hackers. Elke klant heeft zijn eigen, afzonderlijke database bij Domits, waardoor het onmogelijk is voor andere gebruikers om toegang te krijgen tot andermans gegevens.",
-        "bullets": [
-          "Bij gebruik van Domits is de verbinding beveiligd.",
-          "GDPR-conforme gegevensverwerking en -opslag",
-          "Het is onmogelijk voor buitenstaanders om dataverkeer te onderscheppen."
-        ]
-      },
-      {
-        "title": "3. Back-ups",
-        "description": "Bij Domits doen we er alles aan om ons systeem altijd operationeel te houden en uw gegevens altijd veilig te stellen. Back-ups worden dagelijks gemaakt zodat er nooit iets verloren gaat. Bij verstoringen worden al uw gegevens veilig opgeslagen en zorgt ons team ervoor dat uw account wordt hersteld.",
-        "bullets": [
-          "Garantie tegen gegevensverlies",
-          "Dagelijks herstel van gegevens tot zes maanden geleden",
-          "Veilige gegevensback-ups"
-        ]
-      }
-    ],
-    "facts": [
-      {
-        "title": "Visie",
-        "text": "Wij geloven dat iedereen recht heeft op transparante en toegankelijke beveiliging. Onze visie is een digitale omgeving te creëren waar gebruikers erop kunnen vertrouwen dat hun gegevens beschermd zijn zonder complexe technische details te hoeven begrijpen."
-      },
-      {
-        "title": "Wat We Doen",
-        "text": "We bewaken, updaten en verbeteren voortdurend onze beveiligingsinfrastructuur. Ons toegewijde team werkt dag en nacht om potentiële bedreigingen te identificeren, de nieuwste beveiligingsnormen te implementeren en ervoor te zorgen dat uw gegevens te allen tijde beschermd blijven."
-      }
-    ],
-    "cta": {
-      "title": "Vragen over beveiliging?",
-      "contactButton": "Contact opnemen",
-      "learnMoreButton": "Meer weten"
     }
   }
 }

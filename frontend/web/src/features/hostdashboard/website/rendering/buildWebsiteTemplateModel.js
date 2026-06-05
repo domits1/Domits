@@ -5,6 +5,7 @@ import {
   DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
   DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
   DEFAULT_WEBSITE_CONTACT_TITLE,
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
@@ -681,7 +682,8 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       panelColor: normalizeWebsiteCalendarPanelColorOverride(""),
     },
     contactSection: {
-      title: DEFAULT_WEBSITE_CONTACT_TITLE,
+      title: DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
+      caption: DEFAULT_WEBSITE_CONTACT_TITLE,
       description: DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
       accentColor: resolveWebsiteContactAccentColor(DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR),
       backgroundColor: resolveWebsiteContactBackgroundColor(DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR),

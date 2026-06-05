@@ -235,23 +235,27 @@
 }
 
 .panoramaCalendarCard {
+  --panorama-calendar-content-max-width: 900px;
+  --panorama-calendar-inline-padding: clamp(18px, 3vw, 30px);
   display: grid;
   gap: clamp(24px, 2.8vw, 36px);
   justify-items: center;
   width: 100%;
-  margin-inline: calc(var(--template-preview-frame-gutter) * -1);
-  padding:
+  box-sizing: border-box;
+  padding: var(
+    --panorama-calendar-card-padding,
     clamp(28px, 4vw, 54px)
-    calc(clamp(18px, 3vw, 30px) + var(--template-preview-frame-gutter))
-    clamp(22px, 3vw, 34px);
+      var(--panorama-calendar-inline-padding)
+      clamp(22px, 3vw, 34px)
+  );
   border: 0;
-  border-radius: 0;
+  border-radius: var(--panorama-calendar-card-radius, 0);
   background: transparent;
 }
 
 .panoramaCalendarCardPanelOff {
   margin-inline: 0;
-  padding-inline: clamp(18px, 3vw, 30px);
+  padding-inline: var(--panorama-calendar-inline-padding);
   border: 0;
   background: transparent;
 }
@@ -260,7 +264,8 @@
   display: grid;
   gap: 14px;
   justify-items: center;
-  width: min(100%, 620px);
+  width: min(100%, min(620px, var(--panorama-calendar-content-max-width)));
+  margin-inline: auto;
   text-align: center;
 }
 
@@ -309,9 +314,10 @@
 
 .panoramaCalendarMonths {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: var(--panorama-calendar-month-columns, repeat(2, minmax(0, 1fr)));
   gap: 22px;
-  width: min(100%, 900px);
+  width: min(100%, var(--panorama-calendar-content-max-width));
+  margin-inline: auto;
 }
 
 .panoramaCalendarMonthNavigation {
@@ -319,13 +325,14 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: clamp(14px, 2vw, 28px);
   align-items: center;
-  width: min(100%, 900px);
+  width: min(100%, var(--panorama-calendar-content-max-width));
+  margin-inline: auto;
 }
 
 .panoramaCalendarMonthNavigationLabels {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
+  grid-template-columns: var(--panorama-calendar-navigation-label-columns, repeat(2, minmax(0, 1fr)));
+  gap: var(--panorama-calendar-navigation-label-gap, 22px);
 }
 
 .panoramaCalendarMonthNavigationLabel {
@@ -361,7 +368,8 @@
   display: grid;
   gap: 20px;
   min-width: 0;
-  padding: 28px 24px 26px;
+  box-sizing: border-box;
+  padding: var(--panorama-calendar-month-card-padding, 28px 24px 26px);
   border: 1px solid rgba(208, 197, 178, 0.74);
   background: rgba(255, 255, 255, 0.7);
 }
@@ -389,12 +397,12 @@
   text-align: center;
   color: #7b8798;
   font-size: 0.74rem;
-  letter-spacing: 0.18em;
+  letter-spacing: var(--panorama-calendar-weekday-letter-spacing, 0.18em);
   text-transform: uppercase;
 }
 
 .panoramaCalendarCell {
-  min-height: 36px;
+  min-height: var(--panorama-calendar-cell-min-height, 36px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -412,7 +420,7 @@
 }
 
 .panoramaCalendarCellDay {
-  font-size: 1rem;
+  font-size: var(--panorama-calendar-cell-day-font-size, 1rem);
   line-height: 1;
 }
 
@@ -421,9 +429,11 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 24px;
+  width: min(100%, var(--panorama-calendar-content-max-width));
+  margin-inline: auto;
   color: #60708a;
   font-size: 0.82rem;
-  letter-spacing: 0.22em;
+  letter-spacing: var(--panorama-calendar-legend-letter-spacing, 0.22em);
   text-transform: uppercase;
 }
 
@@ -461,6 +471,7 @@
   }
 
   .panoramaCalendarCard {
+    --panorama-calendar-content-max-width: 100%;
     padding: 22px 14px 20px;
     border-radius: 24px;
   }

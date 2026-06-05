@@ -1,3 +1,4 @@
+export const DEFAULT_WEBSITE_CONTACT_SECTION_TITLE = "Contact";
 export const DEFAULT_WEBSITE_CONTACT_TITLE = "Plan the stay with the host";
 export const DEFAULT_WEBSITE_CONTACT_DESCRIPTION =
   "Questions about the layout, pricing, or availability? Send a message through Domits and the host can reply with the right details before you book.";
@@ -49,4 +50,35 @@ export const resolveWebsiteContactAvatarMode = (
   }
 
   return fallbackMode;
+};
+
+export const resolveWebsiteContactSectionCopy = (contactSection) => {
+  const normalizedTitle = String(contactSection?.title || "").trim();
+  const normalizedCaption = String(contactSection?.caption || "").trim();
+
+  if (normalizedCaption) {
+    return {
+      title: normalizedTitle || DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
+      caption: normalizedCaption,
+    };
+  }
+
+  if (!normalizedTitle) {
+    return {
+      title: DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
+      caption: DEFAULT_WEBSITE_CONTACT_TITLE,
+    };
+  }
+
+  if (normalizedTitle.toLowerCase() === DEFAULT_WEBSITE_CONTACT_SECTION_TITLE.toLowerCase()) {
+    return {
+      title: normalizedTitle,
+      caption: DEFAULT_WEBSITE_CONTACT_TITLE,
+    };
+  }
+
+  return {
+    title: DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
+    caption: normalizedTitle,
+  };
 };
