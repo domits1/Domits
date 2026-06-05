@@ -6,13 +6,29 @@
 }
 
 .back {
-  background: none;
-  border: none;
-  color: #16a34a;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  color: #111827;
   cursor: pointer;
-  margin-bottom: 12px;
-  font-weight: 500;
+  margin-bottom: 16px;
+  font-weight: 600;
   font-size: 14px;
+  border-radius: 999px;
+  padding: 10px 16px;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.back:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.back:focus-visible {
+  outline: 2px solid #111827;
+  outline-offset: 2px;
 }
 
 .title {
@@ -227,10 +243,25 @@
   background: #e5e7eb;
 }
 
+.secondaryBtnGuest:disabled,
+.secondaryActionBtn:disabled,
+.primaryBtn:disabled,
+.edit:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .guestRow {
   display: flex;
   align-items: stretch;
   gap: 16px;
+}
+
+.avatarWrap {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
 }
 
 .avatar {
@@ -244,6 +275,17 @@
   font-weight: 700;
   font-size: 22px;
   color: #166534;
+  border: 2px solid #16a34a;
+}
+
+.avatarImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f3f4f6;
   border: 2px solid #16a34a;
 }
 
@@ -283,6 +325,10 @@
 .request strong {
   font-weight: 700;
   margin-bottom: 4px;
+}
+
+.inlineLoader {
+  justify-content: flex-start;
 }
 
 .paymentWrapper {
