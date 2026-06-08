@@ -22,6 +22,23 @@ const buildImageSlotFrameClassName = ({
 const buildImageSlotImageClassName = (imageClassName, enableHoverEffect = false) =>
   `${imageClassName} ${enableHoverEffect ? styles.templateImageHoverImage : ""}`.trim();
 
+const buildImageLoadingProps = ({ slot, imageIndex = 0, isRotationEnabled = false, isInteractivePreview = false }) => {
+  if (isInteractivePreview) {
+    return {
+      decoding: "async",
+    };
+  }
+
+  const isHeroSlot = slot?.kind === "hero";
+  const isLeadHeroImage = isHeroSlot && (!isRotationEnabled || imageIndex === 0);
+
+  return {
+    loading: isLeadHeroImage ? "eager" : "lazy",
+    fetchPriority: isLeadHeroImage ? "high" : "low",
+    decoding: "async",
+  };
+};
+
 export const getInteractiveTargetProps = (
   className,
   onSelectTarget,
@@ -219,6 +236,7 @@ export function TemplateImageSlotVisual({
     imageSequence,
     isRotationEnabled,
   } = useWebsiteImageSlotRotation(slot, model?.media, rotationIntervalMs);
+  const isInteractivePreview = Boolean(onSelectTarget);
   const buildInteractiveProps = (className) =>
     getInteractiveTargetProps(
       className,
@@ -242,6 +260,12 @@ export function TemplateImageSlotVisual({
         {...buildInteractiveProps(imageClassName)}
         src={imageSequence[0]}
         alt={alt}
+        {...buildImageLoadingProps({
+          slot,
+          imageIndex: 0,
+          isRotationEnabled: false,
+          isInteractivePreview,
+        })}
       />
     );
   }
@@ -261,6 +285,12 @@ export function TemplateImageSlotVisual({
           src={imageSequence[0]}
           alt={alt}
           className={buildImageSlotImageClassName(imageClassName, enableHoverEffect)}
+          {...buildImageLoadingProps({
+            slot,
+            imageIndex: 0,
+            isRotationEnabled: false,
+            isInteractivePreview,
+          })}
         />
       </div>
     );
@@ -285,6 +315,12 @@ export function TemplateImageSlotVisual({
           src={imageUrl}
           alt={index === activeImageIndex ? alt : ""}
           aria-hidden={index === activeImageIndex ? undefined : "true"}
+          {...buildImageLoadingProps({
+            slot,
+            imageIndex: index,
+            isRotationEnabled,
+            isInteractivePreview,
+          })}
           className={`${styles.templateRotatingImageLayer} ${buildImageSlotImageClassName(
             "",
             enableHoverEffect

@@ -613,7 +613,6 @@ const renderPanoramaHeroSection = ({
     className={`${styles.panoramaEditorialHero} ${
       showTopBar ? styles.panoramaEditorialHeroWithTopBar : ""
     }`.trim()}
-    {...getScrollRevealProps(60)}
   >
     <div className={styles.panoramaHeroBackdropShell}>
       <TemplateImageSlotVisual
