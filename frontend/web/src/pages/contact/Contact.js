@@ -107,20 +107,10 @@ const faqItemShape = PropTypes.shape({
 const FaqAccordionItem = ({ question, answer }) => {
     const [open, setOpen] = useState(false);
     const bodyRef = useRef(null);
-    const [height, setHeight] = useState(0);
-
-    useEffect(() => {
-        if (bodyRef.current) setHeight(bodyRef.current.scrollHeight);
-    }, [open]);
-
     const toggle = () => setOpen(o => !o);
 
     return (
-        <button
-            type="button"
-            className="contact-faq-item"
-            onClick={toggle}
-        >
+        <button type="button" className="contact-faq-item" onClick={toggle}>
             <div className="contact-faq-item__header">
                 <span className="contact-faq-item__question">{question}</span>
                 <ChevronDown
@@ -130,7 +120,7 @@ const FaqAccordionItem = ({ question, answer }) => {
             </div>
             <div
                 className="contact-faq-item__body"
-                style={{ maxHeight: open ? `${height}px` : "0" }}
+                style={{ maxHeight: open ? `${bodyRef.current?.scrollHeight ?? 0}px` : "0" }}
             >
                 <div ref={bodyRef}>
                     <p>{answer}</p>
@@ -157,19 +147,14 @@ const FaqCategoryCard = ({ category, searchQuery, frequentlyAsked }) => {
           )
         : faqs;
 
-    const isExpanded = open || (searchQuery.length > 0 && visibleFaqs.length > 0);
-
     if (searchQuery.length > 0 && visibleFaqs.length === 0) return null;
 
+    const isExpanded = open || searchQuery.length > 0;
     const toggle = () => setOpen(o => !o);
 
     return (
         <div className={`contact-faq-card${isExpanded ? " contact-faq-card--open" : ""}`}>
-            <button
-                type="button"
-                className="contact-faq-card__header"
-                onClick={toggle}
-            >
+            <button type="button" className="contact-faq-card__header" onClick={toggle}>
                 <div className="contact-faq-card__icon">
                     <Icon size={20} />
                 </div>
@@ -203,6 +188,9 @@ FaqCategoryCard.propTypes = {
     frequentlyAsked: PropTypes.string.isRequired,
 };
 
+const API_BASE_URL = "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
+const isValidEmail = (email) => /^[^\s@]+@[^\s@.]+\.[^\s@.]+$/.test(email);
+
 function Contact() {
     const [searchQuery, setSearchQuery] = useState("");
     const [formOpen, setFormOpen] = useState(false);
@@ -211,21 +199,17 @@ function Contact() {
     const [feedbackMessage, setFeedbackMessage] = useState("");
     const [attachmentNames, setAttachmentNames] = useState([]);
     const formRef = useRef(null);
+    const nameRef = useRef(null);
+    const subjectRef = useRef(null);
+    const messageRef = useRef(null);
     const { language } = useContext(LanguageContext);
-    const contactContent = contentByLanguage[language]?.contact;
+    const t = contentByLanguage[language]?.contact || {};
 
-    const API_BASE_URL = "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
-
-    const isValidEmail = (email) => /^[^\s@]+@[^\s@.]+\.[^\s@.]+$/.test(email);
-
-    const scrollToForm = () => {
+    useEffect(() => {
         if (formOpen) {
-            setFormOpen(false);
-        } else {
-            setFormOpen(true);
-            setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+            formRef.current?.scrollIntoView({ behavior: "smooth" });
         }
-    };
+    }, [formOpen]);
 
     const handleAttachmentChange = (event) => {
         const files = [...event.target.files];
@@ -240,9 +224,9 @@ function Contact() {
         event.preventDefault();
         setIsSubmitting(true);
 
-        const name = document.getElementById("name").value.trim();
-        const subject = document.getElementById("subject").value.trim();
-        const message = document.getElementById("message").value.trim();
+        const name = nameRef.current.value.trim();
+        const subject = subjectRef.current.value.trim();
+        const message = messageRef.current.value.trim();
 
         if (!name || !subject || !sourceEmail || !message) {
             setFeedbackMessage("Please fill out all fields.");
@@ -285,9 +269,7 @@ function Contact() {
             .finally(() => setIsSubmitting(false));
     };
 
-    const t = contactContent || {};
     const categories = t.categories || {};
-
     const translatedFaqData = FAQ_DATA.map(cat => ({
         ...cat,
         label: categories[cat.key] || cat.label,
@@ -346,8 +328,8 @@ function Contact() {
                         <p>{t.supportSubtitle || "Our support team is here for you 24/7"}</p>
                     </div>
                 </div>
-                <button className="contact-cta__btn" onClick={scrollToForm}>
-                    {formOpen ? "↑ " : ""}{t.contactSupport || "Contact Support"}{formOpen ? "" : " →"}
+                <button className="contact-cta__btn" onClick={() => setFormOpen(o => !o)}>
+                    {t.contactSupport || "Contact Support"} {formOpen ? "−" : "+"}
                 </button>
             </div>
 
@@ -356,9 +338,9 @@ function Contact() {
                     <div className="contact-form-section__icon">
                         <Mail size={20} />
                     </div>
-                    <h2>{contactContent?.form?.title || "Contact Form"}</h2>
+                    <h2>{t.form?.title || "Contact Form"}</h2>
                 </div>
-                <p>{contactContent?.form?.description}</p>
+                <p>{t.form?.description}</p>
                 {feedbackMessage && (
                     <p className={`contact-feedback${feedbackMessage.includes("successfully") ? " contact-feedback--success" : " contact-feedback--error"}`}>
                         {feedbackMessage}
@@ -367,33 +349,33 @@ function Contact() {
                 <form onSubmit={handleSubmit}>
                     <div className="contact-form-grid">
                         <div className="contact-form-fields">
-                            <label htmlFor="name">{contactContent?.name || "Name"}</label>
-                            <input type="text" id="name" placeholder={contactContent?.name || "Name"} />
+                            <label htmlFor="name">{t.name || "Name"}</label>
+                            <input type="text" id="name" ref={nameRef} placeholder={t.name || "Name"} />
 
-                            <label htmlFor="subject">{contactContent?.subject || "Subject"}</label>
-                            <input type="text" id="subject" placeholder={contactContent?.subject || "Subject"} />
+                            <label htmlFor="subject">{t.subject || "Subject"}</label>
+                            <input type="text" id="subject" ref={subjectRef} placeholder={t.subject || "Subject"} />
 
-                            <label htmlFor="sourceEmail">{contactContent?.email || "Your Email"}</label>
+                            <label htmlFor="sourceEmail">{t.email || "Your Email"}</label>
                             <input
                                 type="email"
                                 id="sourceEmail"
-                                placeholder={contactContent?.email || "Your Email"}
+                                placeholder={t.email || "Your Email"}
                                 value={sourceEmail}
                                 onChange={(e) => setSourceEmail(e.target.value)}
                             />
                         </div>
                         <div className="contact-form-message">
-                            <label htmlFor="message">{contactContent?.message || "Message"}</label>
-                            <textarea id="message" placeholder={contactContent?.message || "Message"} />
+                            <label htmlFor="message">{t.message || "Message"}</label>
+                            <textarea id="message" ref={messageRef} placeholder={t.message || "Message"} />
                         </div>
                     </div>
                     <div className="contact-form-actions">
                         <input type="file" id="fileInput" style={{ display: "none" }} multiple onChange={handleAttachmentChange} />
                         <button type="button" className="contact-form-attach" onClick={() => document.getElementById("fileInput").click()}>
-                            {contactContent?.attachment || "Add attachments"}
+                            {t.attachment || "Add attachments"}
                         </button>
                         <button type="submit" className="contact-form-send" disabled={isSubmitting}>
-                            {isSubmitting ? "Sending..." : (contactContent?.send || "Send message")}
+                            {isSubmitting ? "Sending..." : (t.send || "Send message")}
                         </button>
                         {attachmentNames.length > 0 && (
                             <ul className="contact-form-files">
