@@ -1763,7 +1763,11 @@ export class PropertyController {
     }
 
     isPublicDirectBookingWebsiteReachable(site, domain) {
-        return Boolean(site) && site.status === "PUBLISHED" && domain?.status === "ACTIVE";
+        return (
+            Boolean(site) &&
+            site.status === "PUBLISHED" &&
+            resolveDirectBookingWebsiteFallbackDomainStatus(domain) === "ACTIVE"
+        );
     }
 
     async getDirectBookingWebsiteSummaryByPropertyId(propertyId, hostId) {
