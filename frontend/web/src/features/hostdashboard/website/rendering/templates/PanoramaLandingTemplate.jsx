@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import PhotoBrowserOverlay from "../../../../../components/gallery/PhotoBrowserOverlay";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getScrollRevealProps } from "../animations/scrollRevealProps";
 import { getAmenityIconNode } from "../amenityIconRegistry";
@@ -63,6 +62,8 @@ const PANORAMA_AMENITY_CATEGORY_LABELS = Object.freeze({
 });
 const PANORAMA_RESIDENCE_SECTION_LABEL = "The residence";
 const PANORAMA_JOURNEY_SECTION_LABEL = "The stay";
+const loadPhotoBrowserOverlay = () => import("../../../../../components/gallery/PhotoBrowserOverlay");
+const LazyPhotoBrowserOverlay = lazy(loadPhotoBrowserOverlay);
 
 const hexToRgbChannels = (hexColor) => {
   const normalizedHexColor = resolveWebsiteContactAccentColor(hexColor).slice(1);
@@ -154,6 +155,8 @@ const formatPanoramaAmenityCategory = (value) => {
 };
 
 const resolvePanoramaNavLabel = (value, fallbackLabel) => String(value || "").trim() || fallbackLabel;
+const buildPanoramaDeferredSectionClassName = (baseClassName, shouldDeferContent = false) =>
+  `${baseClassName} ${shouldDeferContent ? styles.panoramaDeferredRenderSection : ""}`.trim();
 
 const getAmenityMatchKey = (amenity) => {
   const normalizedId = String(amenity?.id || "").trim();
@@ -765,6 +768,7 @@ const renderPanoramaGallerySection = ({
   onSelectTarget,
   activeTargetId,
   onOpenGalleryBrowser,
+  shouldDeferContent = false,
 }) => {
   if (gallerySlots.length < 1) {
     return null;
@@ -791,9 +795,12 @@ const renderPanoramaGallerySection = ({
     <section
       id="gallery"
       {...getInteractiveTargetProps(
-        `${styles.panoramaGallerySection} ${
-          showGalleryPanel ? styles.panoramaGallerySectionPanel : ""
-        }`.trim(),
+        buildPanoramaDeferredSectionClassName(
+          `${styles.panoramaGallerySection} ${
+            showGalleryPanel ? styles.panoramaGallerySectionPanel : ""
+          }`.trim(),
+          shouldDeferContent
+        ),
         onSelectTarget,
         {
           sectionId: "gallery",
@@ -867,6 +874,7 @@ const renderPanoramaDetailsSection = ({
   onSelectTarget,
   activeTargetId,
   onShowAllAmenities,
+  shouldDeferContent = false,
 }) => {
   if (!showAmenitiesPanel || featuredAmenities.length < 1) {
     return null;
@@ -875,10 +883,15 @@ const renderPanoramaDetailsSection = ({
   return (
     <section
       id="features"
-      {...getInteractiveTargetProps(styles.panoramaAmenitiesSection, onSelectTarget, {
-        sectionId: "amenities",
-        targetId: "visibility.amenitiesPanel",
-      }, activeTargetId)}
+      {...getInteractiveTargetProps(
+        buildPanoramaDeferredSectionClassName(styles.panoramaAmenitiesSection, shouldDeferContent),
+        onSelectTarget,
+        {
+          sectionId: "amenities",
+          targetId: "visibility.amenitiesPanel",
+        },
+        activeTargetId
+      )}
       {...getScrollRevealProps(120)}
     >
       <div className={styles.panoramaAmenityIntro}>
@@ -951,13 +964,22 @@ const renderPanoramaDetailsSection = ({
   );
 };
 
-const renderPanoramaJourneySection = ({ featuredJourneyStops, onSelectTarget, activeTargetId }) => {
+const renderPanoramaJourneySection = ({
+  featuredJourneyStops,
+  onSelectTarget,
+  activeTargetId,
+  shouldDeferContent = false,
+}) => {
   if (featuredJourneyStops.length < 1) {
     return null;
   }
 
   return (
-    <section id="lifestyle" className={styles.sectionCard} {...getScrollRevealProps(140)}>
+    <section
+      id="lifestyle"
+      className={buildPanoramaDeferredSectionClassName(styles.sectionCard, shouldDeferContent)}
+      {...getScrollRevealProps(140)}
+    >
       <div className={styles.sectionHeading}>
         <p className={styles.sectionEyebrow}>The stay</p>
         <h2>From first impression to arrival, the flow stays easy to follow</h2>
@@ -988,6 +1010,7 @@ const renderPanoramaContactSection = ({
   model,
   onSelectTarget,
   activeTargetId,
+  shouldDeferContent = false,
 }) => {
   const resolvedContactSectionCopy = resolveWebsiteContactSectionCopy(model.contactSection);
   const contactTitle =
@@ -1023,7 +1046,11 @@ const renderPanoramaContactSection = ({
   };
 
   return (
-    <section id="contact" className={styles.panoramaContactShell} {...getScrollRevealProps(180)}>
+    <section
+      id="contact"
+      className={buildPanoramaDeferredSectionClassName(styles.panoramaContactShell, shouldDeferContent)}
+      {...getScrollRevealProps(180)}
+    >
       <div
         {...getPreviewTargetMarkerProps(
           styles.panoramaContactSection,
@@ -1090,6 +1117,8 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
   const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
+  const isInteractivePreview = Boolean(onSelectTarget);
+  const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
   const navItems = buildPanoramaNavItems(model, viewState);
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
@@ -1099,6 +1128,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
     const maxGalleryIndex = Math.max(normalizedGalleryImages.length - 1, 0);
     const nextGalleryIndex = Number.isInteger(imageIndex) ? imageIndex : 0;
 
+    void loadPhotoBrowserOverlay();
     setGalleryBrowserInitialIndex(Math.max(0, Math.min(nextGalleryIndex, maxGalleryIndex)));
     setIsGalleryBrowserOpen(true);
   };
@@ -1171,6 +1201,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               onSelectTarget,
               activeTargetId,
               onOpenGalleryBrowser: handleOpenGalleryBrowser,
+              shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
         {renderPanoramaDetailsSection({
@@ -1182,16 +1213,25 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
           onSelectTarget,
           activeTargetId,
           onShowAllAmenities: () => setShowAmenitiesModal(true),
+          shouldDeferContent: shouldDeferBelowFoldSections,
         })}
         {viewState.showJourneyStops
           ? renderPanoramaJourneySection({
               featuredJourneyStops: viewState.featuredJourneyStops,
               onSelectTarget,
               activeTargetId,
+              shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
         {viewState.showAvailabilityCalendar ? (
-          <section id="availability" className={styles.panoramaAvailabilityShell} {...getScrollRevealProps(160)}>
+          <section
+            id="availability"
+            className={buildPanoramaDeferredSectionClassName(
+              styles.panoramaAvailabilityShell,
+              shouldDeferBelowFoldSections
+            )}
+            {...getScrollRevealProps(160)}
+          >
             <TemplateAvailabilityCalendar
               model={model}
               variant="panorama"
@@ -1208,19 +1248,24 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               model,
               onSelectTarget,
               activeTargetId,
+              shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
       </article>
 
-      <PhotoBrowserOverlay
-        images={Array.isArray(model.media?.galleryImages) ? model.media.galleryImages : []}
-        initialIndex={galleryBrowserInitialIndex}
-        isOpen={isGalleryBrowserOpen}
-        onClose={() => setIsGalleryBrowserOpen(false)}
-        showSideZones={true}
-        alwaysShowSideZoneArrows={true}
-        resolveImageAlt={(index) => `${model.hero.title} gallery image ${index + 1}`}
-      />
+      {isGalleryBrowserOpen ? (
+        <Suspense fallback={null}>
+          <LazyPhotoBrowserOverlay
+            images={Array.isArray(model.media?.galleryImages) ? model.media.galleryImages : []}
+            initialIndex={galleryBrowserInitialIndex}
+            isOpen={isGalleryBrowserOpen}
+            onClose={() => setIsGalleryBrowserOpen(false)}
+            showSideZones={true}
+            alwaysShowSideZoneArrows={true}
+            resolveImageAlt={(index) => `${model.hero.title} gallery image ${index + 1}`}
+          />
+        </Suspense>
+      ) : null}
 
       {showAmenitiesModal && viewState.allAmenities.length > 0 ? (
         <PanoramaAmenitiesModal

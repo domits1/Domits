@@ -1,7 +1,6 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
-import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 import {
   buildWebsiteImageSlotTarget,
   useWebsiteImageSlotRotation,
@@ -9,6 +8,7 @@ import {
 
 const DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS = 3600;
 const DEFAULT_IMAGE_SLOT_FADE_DURATION_MS = 720;
+const LazyAvailabilityCalendarPreview = lazy(() => import("../AvailabilityCalendarPreview"));
 
 const buildImageSlotFrameClassName = ({
   frameClassName = "",
@@ -214,19 +214,28 @@ export function TemplateAvailabilityCalendar({
   }, activeTargetId);
 
   return (
-    <AvailabilityCalendarPreview
-      availability={model.availability}
-      calendarSection={model.calendarSection}
-      titleInteractiveTargetProps={titleInteractiveTargetProps}
-      descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
-      templateKey={templateKey}
-      variant={variant}
-      propertyTitle={propertyTitle}
-      interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
-        sectionId: "calendar",
-        targetId: "calendar.visibility",
-      }, activeTargetId)}
-    />
+    <Suspense
+      fallback={
+        <div
+          className={styles.availabilityCalendarDeferredFallback}
+          aria-hidden="true"
+        />
+      }
+    >
+      <LazyAvailabilityCalendarPreview
+        availability={model.availability}
+        calendarSection={model.calendarSection}
+        titleInteractiveTargetProps={titleInteractiveTargetProps}
+        descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
+        templateKey={templateKey}
+        variant={variant}
+        propertyTitle={propertyTitle}
+        interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
+          sectionId: "calendar",
+          targetId: "calendar.visibility",
+        }, activeTargetId)}
+      />
+    </Suspense>
   );
 }
 
