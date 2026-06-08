@@ -279,13 +279,9 @@ export class PriceLabsService {
     const hasSignature = Boolean(h("X-PL-SIGNED-HEADERS")) && Boolean(h("X-PL-SIGNED-BODY"));
 
     if (hasSignature) {
-      // Signature present — verify it (production / certified integrations)
       if (!verifyPriceLabsSignature(headers, rawBody, token)) {
         throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
       }
-    } else {
-      // No signature headers — development mode or unsigned call, log and continue
-      console.warn("[PriceLabs] Sync webhook received without signature headers (development mode)");
     }
 
     const body = JSON.parse(rawBody || "{}");
