@@ -115,7 +115,9 @@ export class Repository {
       await repo.save(repo.create({
         property_id,
         calendar_date:       calendarDate,
-        is_available:        true,
+        // is_available is intentionally omitted — PriceLabs prices should not
+        // force availability overrides on the calendar. Availability is
+        // determined separately by the host or the property availability ranges.
         nightly_price,
         min_stay:            min_stay || 1,
         closed_to_arrival:   closed_to_arrival   || false,

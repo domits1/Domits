@@ -40,10 +40,20 @@ export default function DynamicPricingCard({
 
   if (selectedDateKeys?.length > 0) {
     return (
-      <section className="hc-info-card hc-dynamic-pricing-card">
+      <section className="hc-info-card hc-info-card--interactive hc-dynamic-pricing-card">
+        {/* Background hit-area navigates to PriceLabs settings */}
+        <button
+          type="button"
+          className="hc-info-card-hitarea"
+          aria-label="Open PriceLabs dynamic pricing settings"
+          onClick={() => onOpenSettings?.()}
+        />
         <header className="hc-info-card-header">
           <h3 className="hc-info-card-title">Dynamic Pricing</h3>
           <span className="hc-dynamic-pricing-badge">Active</span>
+          <span className="hc-info-card-chevron" aria-hidden="true">
+            <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
+          </span>
         </header>
 
         {recommendedPrice == null ? (
@@ -67,7 +77,11 @@ export default function DynamicPricingCard({
             <button
               type="button"
               className="hc-dynamic-pricing-apply-btn"
-              onClick={() => onApplyPrice?.(selectedDateKeys, recommendedPrice)}
+              style={{ position: "relative", zIndex: 1 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onApplyPrice?.(selectedDateKeys, recommendedPrice);
+              }}
             >
               Apply price
             </button>
