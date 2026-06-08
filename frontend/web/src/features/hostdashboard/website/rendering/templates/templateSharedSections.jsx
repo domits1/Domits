@@ -10,6 +10,26 @@ const DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS = 3600;
 const DEFAULT_IMAGE_SLOT_FADE_DURATION_MS = 720;
 const LazyAvailabilityCalendarPreview = lazy(() => import("../AvailabilityCalendarPreview"));
 const ORIGINAL_FIRST_IMAGE_SOURCE_ORDER = Object.freeze(["originalSrc", "webSrc", "src", "thumbSrc"]);
+const WEBSITE_IMAGE_ASSET_PROP_TYPE = PropTypes.shape({
+  src: PropTypes.string,
+  webSrc: PropTypes.string,
+  originalSrc: PropTypes.string,
+  thumbSrc: PropTypes.string,
+  srcSet: PropTypes.string,
+  sizes: PropTypes.string,
+});
+const TEMPLATE_IMAGE_SLOT_MEDIA_PROP_TYPE = PropTypes.shape({
+  heroImage: PropTypes.string,
+  residenceImage: PropTypes.string,
+  galleryImages: PropTypes.arrayOf(PropTypes.string),
+  heroImageAsset: WEBSITE_IMAGE_ASSET_PROP_TYPE,
+  galleryImageAssets: PropTypes.arrayOf(WEBSITE_IMAGE_ASSET_PROP_TYPE),
+  imageRotation: PropTypes.shape({
+    hero: PropTypes.bool,
+    residence: PropTypes.bool,
+    gallery: PropTypes.arrayOf(PropTypes.bool),
+  }),
+});
 
 const buildImageSlotFrameClassName = ({
   frameClassName = "",
@@ -319,40 +339,12 @@ export function TemplateImageSlotVisual({
   const sourceVariantPreferenceKey = String(sourceVariantPreference || "").trim().toLowerCase();
   const shouldPreferOriginalHeroSource =
     slot?.kind === "hero" && sourceVariantPreferenceKey === "original-first";
-  const preferredHeroAssetKey = JSON.stringify(
-    shouldPreferOriginalHeroSource
-      ? [
-          model?.media?.heroImageAsset?.src,
-          model?.media?.heroImageAsset?.webSrc,
-          model?.media?.heroImageAsset?.originalSrc,
-          model?.media?.heroImageAsset?.thumbSrc,
-        ]
-      : []
-  );
-  const preferredGalleryAssetKey = JSON.stringify(
-    shouldPreferOriginalHeroSource
-      ? (Array.isArray(model?.media?.galleryImageAssets) ? model.media.galleryImageAssets : []).map(
-          (imageAsset) => [
-            imageAsset?.src,
-            imageAsset?.webSrc,
-            imageAsset?.originalSrc,
-            imageAsset?.thumbSrc,
-          ]
-        )
-      : []
-  );
   const preferredHeroImageSequence = React.useMemo(
     () =>
       shouldPreferOriginalHeroSource
         ? buildPreferredHeroImageSequence(model, ORIGINAL_FIRST_IMAGE_SOURCE_ORDER)
         : [],
-    [
-      model?.media?.heroImage,
-      model?.media?.galleryImages,
-      preferredGalleryAssetKey,
-      preferredHeroAssetKey,
-      shouldPreferOriginalHeroSource,
-    ]
+    [model, shouldPreferOriginalHeroSource]
   );
   const {
     activeImageIndex,
@@ -473,7 +465,7 @@ export function TemplateImageSlotVisual({
 TemplateImageSlotVisual.propTypes = {
   alt: PropTypes.string.isRequired,
   model: PropTypes.shape({
-    media: PropTypes.shape({}).isRequired,
+    media: TEMPLATE_IMAGE_SLOT_MEDIA_PROP_TYPE.isRequired,
   }).isRequired,
   slot: PropTypes.shape({
     kind: PropTypes.oneOf(["hero", "residence", "gallery"]).isRequired,
