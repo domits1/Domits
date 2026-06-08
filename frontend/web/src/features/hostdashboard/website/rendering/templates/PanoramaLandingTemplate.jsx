@@ -616,6 +616,7 @@ const renderPanoramaHeroSection = ({
     className={`${styles.panoramaEditorialHero} ${
       showTopBar ? styles.panoramaEditorialHeroWithTopBar : ""
     }`.trim()}
+    {...getScrollRevealProps(60)}
   >
     <div className={styles.panoramaHeroBackdropShell}>
       <TemplateImageSlotVisual
@@ -623,6 +624,7 @@ const renderPanoramaHeroSection = ({
         slot={{ kind: "hero" }}
         frameClassName={styles.panoramaHeroBackdropFrame}
         imageClassName={styles.panoramaHeroBackdrop}
+        sourceVariantPreference="original-first"
         alt={model.hero.title}
         onSelectTarget={onSelectTarget}
         activeTargetId={activeTargetId}
@@ -769,6 +771,7 @@ const renderPanoramaGallerySection = ({
   onSelectTarget,
   activeTargetId,
   onOpenGalleryBrowser,
+  canOpenGalleryBrowser = true,
   shouldDeferContent = false,
 }) => {
   if (gallerySlots.length < 1) {
@@ -842,13 +845,15 @@ const renderPanoramaGallerySection = ({
             enableHoverEffect
             alt={slot.alt}
             onSelectTarget={onSelectTarget}
-            onActivate={() => onOpenGalleryBrowser(index)}
+            onActivate={canOpenGalleryBrowser ? () => onOpenGalleryBrowser(index) : undefined}
             activeTargetId={activeTargetId}
           />
         ))}
       </div>
 
-      {Array.isArray(model.media?.galleryImages) && model.media.galleryImages.length > 0 ? (
+      {canOpenGalleryBrowser &&
+      Array.isArray(model.media?.galleryImages) &&
+      model.media.galleryImages.length > 0 ? (
         <div className={styles.panoramaGalleryActions}>
           <button
             type="button"
@@ -1119,10 +1124,15 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
   const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const isInteractivePreview = Boolean(onSelectTarget);
+  const canOpenGalleryBrowser = !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
   const navItems = buildPanoramaNavItems(model, viewState);
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
+    if (!canOpenGalleryBrowser) {
+      return;
+    }
+
     const normalizedGalleryImages = Array.isArray(model.media?.galleryImages)
       ? model.media.galleryImages.filter(Boolean)
       : [];
@@ -1202,6 +1212,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               onSelectTarget,
               activeTargetId,
               onOpenGalleryBrowser: handleOpenGalleryBrowser,
+              canOpenGalleryBrowser,
               shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
