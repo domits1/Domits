@@ -104,8 +104,10 @@ export class Repository {
     });
 
     if (existing) {
+      // Write to pricelabs_price (suggestion) — never overwrite host's nightly_price.
+      // Also update restrictions if provided (min_stay, check_in/out).
       await repo.update({ property_id, calendar_date: calendarDate }, {
-        nightly_price:       nightly_price ?? existing.nightly_price,
+        pricelabs_price:     nightly_price ?? existing.pricelabs_price,
         min_stay:            min_stay       ?? existing.min_stay,
         closed_to_arrival:   closed_to_arrival   ?? existing.closed_to_arrival,
         closed_to_departure: closed_to_departure ?? existing.closed_to_departure,
@@ -115,10 +117,11 @@ export class Repository {
       await repo.save(repo.create({
         property_id,
         calendar_date:       calendarDate,
-        // is_available is intentionally omitted — PriceLabs prices should not
-        // force availability overrides on the calendar. Availability is
-        // determined separately by the host or the property availability ranges.
-        nightly_price,
+        // is_available is intentionally omitted — PriceLabs should not force
+        // availability overrides. Availability is determined by the host.
+        // pricelabs_price holds the suggestion; host must explicitly apply it
+        // to nightly_price via the "Apply price" button in the calendar.
+        pricelabs_price:     nightly_price,
         min_stay:            min_stay || 1,
         closed_to_arrival:   closed_to_arrival   || false,
         closed_to_departure: closed_to_departure || false,

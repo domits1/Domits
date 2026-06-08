@@ -5,16 +5,17 @@ import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 export default function DynamicPricingCard({
   isConnected,
   selectedDateKeys,
-  priceOverrides,
+  priceLabsOverrides,
   onApplyPrice,
   onOpenSettings,
 }) {
   const firstDateKey = selectedDateKeys?.[0];
   const multipleSelected = selectedDateKeys?.length > 1;
 
+  // recommendedPrice: price from PriceLabs for the first selected date (suggestion only)
   const recommendedPrice =
-    firstDateKey && priceOverrides && Number(priceOverrides[firstDateKey]) > 0
-      ? Number(priceOverrides[firstDateKey])
+    firstDateKey && priceLabsOverrides && Number(priceLabsOverrides[firstDateKey]) > 0
+      ? Number(priceLabsOverrides[firstDateKey])
       : null;
 
   if (!isConnected) {
@@ -114,14 +115,14 @@ export default function DynamicPricingCard({
 DynamicPricingCard.propTypes = {
   isConnected: PropTypes.bool.isRequired,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string),
-  priceOverrides: PropTypes.object,
+  priceLabsOverrides: PropTypes.object,
   onApplyPrice: PropTypes.func,
   onOpenSettings: PropTypes.func,
 };
 
 DynamicPricingCard.defaultProps = {
   selectedDateKeys: [],
-  priceOverrides: {},
+  priceLabsOverrides: {},
   onApplyPrice: () => {},
   onOpenSettings: () => {},
 };

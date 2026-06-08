@@ -104,6 +104,10 @@ const mapRowToOverride = (row) => ({
     row?.nightly_price === null || row?.nightly_price === undefined
       ? null
       : toInteger(row.nightly_price),
+  priceLabsPrice:
+    row?.pricelabs_price === null || row?.pricelabs_price === undefined
+      ? null
+      : toInteger(row.pricelabs_price),
   stopSell:
     row?.stop_sell === null || row?.stop_sell === undefined
       ? null
@@ -159,6 +163,7 @@ export class PropertyCalendarOverrideRepository {
             calendar_date,
             is_available,
             nightly_price,
+            pricelabs_price,
             stop_sell,
             closed_to_arrival,
             closed_to_departure,
