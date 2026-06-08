@@ -1089,5 +1089,117 @@
         "error": "Uitnodiging verzenden mislukt. Probeer het opnieuw."
       }
     }
+  },
+  "hostDashboard": {
+    "reservationDetails": {
+      "pageTitle": "Reserveringsdetails",
+      "states": {
+        "failedToLoad": "Reservering laden mislukt.",
+        "noReservationFound": "Geen reservering gevonden."
+      },
+      "buttons": {
+        "back": "Terug naar reserveringen",
+        "messageGuest": "Stuur bericht",
+        "viewInCalendar": "Bekijk in kalender",
+        "downloadReceipt": "Download bon",
+        "preparingReceipt": "Bon voorbereiden..."
+      },
+      "headings": {
+        "property": "Accommodatie",
+        "guest": "Gast",
+        "payment": "Betaling",
+        "reservationInfo": "Reserveringsinfo",
+        "actions": "Acties",
+        "checkInInstructions": "Check-in instructies",
+        "houseRules": "Huisregels",
+        "cancellationPolicy": "Annuleringsbeleid",
+        "specialRequest": "Speciaal verzoek"
+      },
+      "labels": {
+        "bookedVia": "Geboekt via",
+        "checkIn": "Check-in",
+        "bookedOn": "Geboekt op",
+        "reservationId": "Reserverings-ID",
+        "confirmation": "Bevestiging",
+        "cleaningFee": "Schoonmaakkosten",
+        "totalPaid": "Totaal betaald",
+        "method": "Methode",
+        "propertyImageAlt": "Afbeelding van accommodatie",
+        "guestFallbackName": "Gast",
+        "loadingValue": "Laden...",
+        "unavailable": "onbeschikbaar",
+        "none": "Geen",
+        "locationUnavailable": "Locatie onbeschikbaar",
+        "loadingLocation": "Locatie laden...",
+        "night": "nacht",
+        "nights": "nachten",
+        "guest": "gast",
+        "guests": "gasten"
+      },
+      "loading": {
+        "status": "Laden",
+        "summary": "Reserveringsoverzicht laden...",
+        "reservationDetails": "Reserveringsdetails laden...",
+        "guestEmail": "E-mailadres van gast laden...",
+        "guestPhone": "Telefoonnummer van gast laden...",
+        "checkInInstructions": "Check-in instructies laden...",
+        "houseRules": "Huisregels laden...",
+        "cancellationPolicy": "Annuleringsbeleid laden...",
+        "payment": "Betaling laden",
+        "paymentStatus": "Betaalstatus laden"
+      },
+      "empty": {
+        "noCheckInInstructions": "Geen check-in instructies",
+        "noHouseRulesSpecified": "Geen huisregels opgegeven",
+        "noCancellationPolicySelected": "Geen annuleringsbeleid geselecteerd.",
+        "paymentStatusUnavailable": "Betaalstatus onbeschikbaar",
+        "reservation": "Reservering"
+      },
+      "status": {
+        "PAID": "Bevestigd",
+        "AWAITING_PAYMENT": "Wacht op betaling",
+        "FAILED": "Mislukt",
+        "DECLINED": "Geweigerd",
+        "INQUIRY": "Aanvraag"
+      },
+      "paymentStatus": {
+        "PAID": {
+          "label": "Betaling ontvangen",
+          "text": "Volledig betaald op"
+        },
+        "AWAITING_PAYMENT": {
+          "label": "Wacht op betaling",
+          "text": "Betaling in afwachting"
+        },
+        "FAILED": {
+          "label": "Betaling mislukt",
+          "text": "Betaling was niet succesvol"
+        },
+        "DECLINED": {
+          "label": "Betaling geweigerd",
+          "text": "Betaling is geweigerd"
+        },
+        "INQUIRY": {
+          "label": "Aanvraag in behandeling",
+          "text": "Wacht op beoordeling van host"
+        }
+      },
+      "requestActions": {
+        "title": "Boekingsaanvraag",
+        "subtitle": "Accepteer of wijs deze boekingsaanvraag af voordat deze naar betaling gaat.",
+        "accept": "Aanvraag accepteren",
+        "decline": "Aanvraag afwijzen",
+        "confirmAcceptTitle": "Deze aanvraag accepteren?",
+        "confirmAcceptNoOverlap": "Weet je zeker dat je deze aanvraag wilt accepteren?",
+        "confirmAcceptWithOverlap": "Er zijn {count} andere openstaande aanvragen met overlappende data voor deze accommodatie. Accepteren wijst die aanvragen automatisch af.",
+        "confirmDeclineTitle": "Deze aanvraag afwijzen?",
+        "confirmDeclineMessage": "Weet je zeker dat je deze boekingsaanvraag wilt afwijzen?",
+        "accepted": "Aanvraag geaccepteerd.",
+        "acceptedWithOverlap": "Aanvraag geaccepteerd. {count} overlappende aanvragen zijn automatisch afgewezen.",
+        "declined": "Aanvraag afgewezen.",
+        "updateFailed": "Aanvraagstatus bijwerken mislukt.",
+        "cancel": "Annuleren"
+      }
+    }
   }
 }

@@ -1,4 +1,6 @@
+import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
+import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import { getInvoices } from "../services/invoiceService";
 
 const STATUS_LABEL = { finalized: "Paid", draft: "Draft" };
@@ -10,8 +12,41 @@ function formatDate(ms) {
 }
 
 function formatMoney(amount) {
-  return `€${Number(amount).toFixed(2)}`;
+  return `EUR ${Number(amount).toFixed(2)}`;
 }
+
+function InvoicesTableSkeleton({ rows = 4 }) {
+  const gridTemplateColumns = "1.1fr 1.3fr 1fr 1fr 0.8fr 0.8fr 0.9fr 0.8fr 0.8fr 0.7fr";
+
+  return (
+    <div className="finance-section-loader" aria-hidden="true">
+      <div className="finance-skeleton-table">
+        <div className="finance-skeleton-table__header" style={{ gridTemplateColumns }}>
+          {Array.from({ length: 10 }, (_, index) => (
+            <span key={`invoice-header-${index}`} className="finance-skeleton-block finance-skeleton-block--table-cell" />
+          ))}
+        </div>
+
+        {Array.from({ length: rows }, (_, rowIndex) => (
+          <div key={`invoice-row-${rowIndex}`} className="finance-skeleton-table__row" style={{ gridTemplateColumns }}>
+            {Array.from({ length: 10 }, (_, cellIndex) => (
+              <span
+                key={`invoice-row-${rowIndex}-cell-${cellIndex}`}
+                className="finance-skeleton-block finance-skeleton-block--table-cell"
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <PulseBarsLoader inline message="Loading invoices..." />
+    </div>
+  );
+}
+
+InvoicesTableSkeleton.propTypes = {
+  rows: PropTypes.number,
+};
 
 function downloadInvoicePdf(invoice) {
   import("jspdf").then(({ jsPDF }) => {
@@ -25,9 +60,9 @@ function downloadInvoicePdf(invoice) {
 
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Domits Platform`, 140, y);
+    doc.text("Domits Platform", 140, y);
     y += 6;
-    doc.text(`domits.com`, 140, y);
+    doc.text("domits.com", 140, y);
 
     y += 14;
     doc.setFontSize(11);
@@ -86,7 +121,7 @@ function downloadInvoicePdf(invoice) {
     y += 5;
     doc.text(`Guest: ${invoice.guest_name}`, margin, y);
     y += 5;
-    doc.text(`Stay: ${formatDate(invoice.arrival_date)} – ${formatDate(invoice.departure_date)}`, margin, y);
+    doc.text(`Stay: ${formatDate(invoice.arrival_date)} - ${formatDate(invoice.departure_date)}`, margin, y);
 
     doc.save(`${invoice.invoice_number}.pdf`);
   });
@@ -105,32 +140,34 @@ export default function InvoicesSection() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = filter === "all" ? invoices : invoices.filter((inv) => inv.status === filter);
+  const filtered = filter === "all" ? invoices : invoices.filter((invoice) => invoice.status === filter);
 
   return (
     <div className="invoices-section">
       <h3>Invoices</h3>
 
       <div className="invoices-filters">
-        {["all", "finalized", "draft"].map((f) => (
+        {["all", "finalized", "draft"].map((value) => (
           <button
-            key={f}
-            className={`invoices-filter-btn${filter === f ? " active" : ""}`}
-            onClick={() => setFilter(f)}
+            key={value}
+            type="button"
+            className={`invoices-filter-btn${filter === value ? " active" : ""}`}
+            onClick={() => setFilter(value)}
+            disabled={loading}
           >
-            {FILTER_LABEL[f]}
+            {FILTER_LABEL[value]}
           </button>
         ))}
       </div>
 
-      {loading && <p className="invoices-loading">Loading invoices...</p>}
-      {error && <p className="invoices-error">{error}</p>}
+      {loading ? <InvoicesTableSkeleton /> : null}
+      {error ? <p className="invoices-error">{error}</p> : null}
 
-      {!loading && !error && filtered.length === 0 && (
+      {!loading && !error && filtered.length === 0 ? (
         <p className="invoices-empty">No invoices found.</p>
-      )}
+      ) : null}
 
-      {!loading && !error && filtered.length > 0 && (
+      {!loading && !error && filtered.length > 0 ? (
         <div className="table-wrap">
           <table className="payout-table">
             <thead>
@@ -148,25 +185,30 @@ export default function InvoicesSection() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((inv) => (
-                <tr key={inv.id}>
-                  <td>{inv.invoice_number}</td>
-                  <td>{inv.property_name}</td>
-                  <td>{inv.guest_name}</td>
-                  <td>{formatDate(inv.arrival_date)} – {formatDate(inv.departure_date)}</td>
-                  <td>{formatMoney(inv.gross_amount)}</td>
-                  <td>{formatMoney(inv.commission_amount)}</td>
-                  <td><strong>{formatMoney(inv.net_amount)}</strong></td>
+              {filtered.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td>{invoice.invoice_number}</td>
+                  <td>{invoice.property_name}</td>
+                  <td>{invoice.guest_name}</td>
                   <td>
-                    <span className={`invoice-status invoice-status--${inv.status}`}>
-                      {STATUS_LABEL[inv.status] || inv.status}
+                    {formatDate(invoice.arrival_date)} - {formatDate(invoice.departure_date)}
+                  </td>
+                  <td>{formatMoney(invoice.gross_amount)}</td>
+                  <td>{formatMoney(invoice.commission_amount)}</td>
+                  <td>
+                    <strong>{formatMoney(invoice.net_amount)}</strong>
+                  </td>
+                  <td>
+                    <span className={`invoice-status invoice-status--${invoice.status}`}>
+                      {STATUS_LABEL[invoice.status] || invoice.status}
                     </span>
                   </td>
-                  <td>{formatDate(inv.created_at)}</td>
+                  <td>{formatDate(invoice.created_at)}</td>
                   <td>
                     <button
+                      type="button"
                       className="invoice-download-btn"
-                      onClick={() => downloadInvoicePdf(inv)}
+                      onClick={() => downloadInvoicePdf(invoice)}
                     >
                       PDF
                     </button>
@@ -176,7 +218,7 @@ export default function InvoicesSection() {
             </tbody>
           </table>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

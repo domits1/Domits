@@ -371,11 +371,12 @@
 
 .previewSkeletonFrame {
   display: grid;
-  place-items: center;
+  place-items: start center;
+  align-content: start;
   width: 100%;
   min-width: 0;
   min-height: 640px;
-  padding: 12px 0 8px;
+  padding: 0 0 8px;
   box-sizing: border-box;
 }
 

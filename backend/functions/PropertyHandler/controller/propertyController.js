@@ -19,6 +19,8 @@ import responseHeaders from "../util/constant/responseHeader.json" with { type: 
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
+    isDirectBookingWebsiteFallbackDomain,
+    isDirectBookingWebsiteFallbackRoutingActive,
     getDirectBookingWebsiteFallbackRoutingStatus,
     resolveDirectBookingWebsiteFallbackDomainStatus,
 } from "../util/directBookingWebsiteRouting.js";
@@ -137,6 +139,17 @@ const getRequestHostHeaderValue = (headers = {}) =>
     headers.host ||
     headers.Host ||
     "";
+const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) => {
+    const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
+    const shouldTreatPublishedFallbackDomainAsActive =
+        String(site?.status || "").trim().toUpperCase() === "PUBLISHED" &&
+        isDirectBookingWebsiteFallbackRoutingActive() &&
+        isDirectBookingWebsiteFallbackDomain(domainEntry) &&
+        resolvedStatus === "DISABLED" &&
+        domainEntry?.verificationDetails?.disabledByHost === true;
+
+    return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
+};
 
 export class PropertyController {
 
@@ -1614,7 +1627,7 @@ export class PropertyController {
                 return domainEntry;
             }
 
-            const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
+            const resolvedStatus = resolveDirectBookingWebsiteRuntimeDomainStatus(site, domainEntry);
             if (!resolvedStatus || resolvedStatus === domainEntry.status) {
                 return domainEntry;
             }
@@ -1763,7 +1776,11 @@ export class PropertyController {
     }
 
     isPublicDirectBookingWebsiteReachable(site, domain) {
-        return Boolean(site) && site.status === "PUBLISHED" && domain?.status === "ACTIVE";
+        return (
+            Boolean(site) &&
+            site.status === "PUBLISHED" &&
+            resolveDirectBookingWebsiteRuntimeDomainStatus(site, domain) === "ACTIVE"
+        );
     }
 
     async getDirectBookingWebsiteSummaryByPropertyId(propertyId, hostId) {
@@ -1836,7 +1853,12 @@ export class PropertyController {
             },
         });
 
-        return this.buildDirectBookingWebsiteSummary(site, [liveDomain]);
+        const persistedSiteSummary = await this.getDirectBookingWebsiteSummaryByPropertyId(propertyId, hostId);
+        if (persistedSiteSummary) {
+            return persistedSiteSummary;
+        }
+
+        return this.buildDirectBookingWebsiteSummary(site, liveDomain ? [liveDomain] : []);
     }
 
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {

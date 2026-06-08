@@ -90,6 +90,7 @@ const PANORAMA_RESIDENCE_TOGGLE_FIELDS = Object.freeze([
 
 const PANORAMA_CONTACT_FIELDS = Object.freeze([
   createTextField("title", "Section title"),
+  createTextField("caption", "Section caption"),
   createTextField("description", "Section description", "textarea"),
 ]);
 
@@ -176,6 +177,7 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
   amenitiesIconColor: "amenities.iconColor",
   contact: {
     title: "contact.title",
+    caption: "contact.caption",
     description: "contact.description",
     avatarImage: "contact.avatarImage",
     accentColor: "contact.accentColor",
