@@ -51,3 +51,7 @@ src/ui-components/utils.js
 /backend/ORM/migrations/20260312_guest_favorite_placeholder_alignment.js
 /backend/ORM/migrations/20260312_guest_favorite_placeholder_alignment.sql
 /backend/ORM/migrations/20260312_guest_favorite.js
+
+# Local Obsidian vaults
+/Obsidian Brain/
+/docs/internal/context/domits_vault/

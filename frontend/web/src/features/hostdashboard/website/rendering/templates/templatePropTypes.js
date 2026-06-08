@@ -1,5 +1,14 @@
 import PropTypes from "prop-types";
 
+const responsiveImageAssetPropType = PropTypes.shape({
+  src: PropTypes.string.isRequired,
+  thumbSrc: PropTypes.string,
+  webSrc: PropTypes.string,
+  originalSrc: PropTypes.string,
+  srcSet: PropTypes.string,
+  sizes: PropTypes.string,
+});
+
 export const sitePropType = PropTypes.shape({
   title: PropTypes.string,
 });
@@ -12,8 +21,11 @@ export const heroPropType = PropTypes.shape({
 
 export const mediaPropType = PropTypes.shape({
   heroImage: PropTypes.string,
+  heroImageAsset: responsiveImageAssetPropType,
   residenceImage: PropTypes.string,
+  residenceImageAsset: responsiveImageAssetPropType,
   galleryImages: PropTypes.arrayOf(PropTypes.string),
+  galleryImageAssets: PropTypes.arrayOf(responsiveImageAssetPropType),
   imageRotation: PropTypes.shape({
     hero: PropTypes.bool,
     residence: PropTypes.bool,
@@ -81,6 +93,7 @@ export const hostPropType = PropTypes.shape({
 
 export const contactSectionPropType = PropTypes.shape({
   title: PropTypes.string.isRequired,
+  caption: PropTypes.string,
   description: PropTypes.string,
   accentColor: PropTypes.string,
   backgroundColor: PropTypes.string,
