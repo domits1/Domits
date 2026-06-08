@@ -39,18 +39,9 @@ export class Repository {
     );
   }
 
-  /**
-   * On disconnect: clear all PriceLabs-set data from the calendar overrides for
-   * all properties owned by this host. This restores the host's original prices
-   * and removes all PriceLabs-written restrictions.
-   *
-   * Only pricelabs_price, min_stay, closed_to_arrival, and closed_to_departure
-   * are cleared — nightly_price (host-set) and is_available are preserved.
-   */
   async clearPriceLabsDataForHost(hostId) {
     const ds = await this._ds();
 
-    // Get all property IDs for this host
     const properties = await ds.getRepository(Property).find({
       where: { hostid: hostId },
       select: ["id"],
@@ -131,7 +122,6 @@ export class Repository {
 
     const calendarDate = Number(String(date ?? "").replaceAll("-", ""));
     if (!calendarDate || calendarDate < 10000101 || calendarDate > 99991231) {
-      console.error("[PriceLabs] Invalid date received:", date);
       return;
     }
 
@@ -140,8 +130,6 @@ export class Repository {
     });
 
     if (existing) {
-      // Write to pricelabs_price (suggestion) — never overwrite host's nightly_price.
-      // Also update restrictions if provided (min_stay, check_in/out).
       await repo.update({ property_id, calendar_date: calendarDate }, {
         pricelabs_price:     nightly_price ?? existing.pricelabs_price,
         min_stay:            min_stay       ?? existing.min_stay,
@@ -153,10 +141,6 @@ export class Repository {
       await repo.save(repo.create({
         property_id,
         calendar_date:       calendarDate,
-        // is_available is intentionally omitted — PriceLabs should not force
-        // availability overrides. Availability is determined by the host.
-        // pricelabs_price holds the suggestion; host must explicitly apply it
-        // to nightly_price via the "Apply price" button in the calendar.
         pricelabs_price:     nightly_price,
         min_stay:            min_stay || 1,
         closed_to_arrival:   closed_to_arrival   || false,

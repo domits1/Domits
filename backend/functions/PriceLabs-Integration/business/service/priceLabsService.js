@@ -76,8 +76,6 @@ export class PriceLabsService {
 
   async disconnect(hostId) {
     await this.repo.deactivateConnection(hostId);
-    // Clear all PriceLabs-written data (pricelabs_price, min_stay, check-in/out
-    // restrictions) from the calendar so the host's original prices are restored.
     await this.repo.clearPriceLabsDataForHost(hostId);
     return { success: true, message: "PriceLabs disconnected." };
   }
@@ -357,8 +355,6 @@ export class PriceLabsService {
         throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
       }
     }
-
-    console.warn("[PriceLabs Hook]", JSON.stringify(payload));
 
     if (payload.listing_id) {
       const hostId = payload.listing_id.split("_").slice(0, 5).join("-");
