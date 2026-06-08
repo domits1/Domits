@@ -80,7 +80,7 @@ const scrollPreviewTargetIntoViewport = (previewTargetNode) => {
   });
 };
 
-const usePreviewScaleMetrics = (viewportWidth) => {
+const usePreviewScaleMetrics = (viewportWidth, contentVersion) => {
   const scaleShellRef = useRef(null);
   const scaleInnerRef = useRef(null);
   const [scaleMetrics, setScaleMetrics] = useState(DEFAULT_SCALE_METRICS);
@@ -125,7 +125,7 @@ const usePreviewScaleMetrics = (viewportWidth) => {
       shellObserver.disconnect();
       innerObserver.disconnect();
     };
-  }, [viewportWidth]);
+  }, [contentVersion, viewportWidth]);
 
   return {
     scaleShellRef,
@@ -279,7 +279,7 @@ export default function WebsiteTemplatePreview({
   const viewportWidth = isCompactVariant
     ? COMPACT_PREVIEW_VIEWPORT_WIDTH
     : resolveViewportWidth(viewport, templateId);
-  const { scaleShellRef, scaleInnerRef, scaleMetrics } = usePreviewScaleMetrics(viewportWidth);
+  const { scaleShellRef, scaleInnerRef, scaleMetrics } = usePreviewScaleMetrics(viewportWidth, model);
   const compactScale = COMPACT_PREVIEW_WIDTH / viewportWidth;
   const previewHeight = scaleMetrics.height ? `${scaleMetrics.height}px` : undefined;
   const compactShellStyle = {

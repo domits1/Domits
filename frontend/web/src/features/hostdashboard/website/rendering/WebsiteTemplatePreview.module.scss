@@ -153,6 +153,9 @@
 .previewCanvas {
   --template-preview-frame-gutter: clamp(18px, 2.4vw, 28px);
   position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: var(--template-preview-frame-gutter);
   background-color: var(--website-surface-background, #f8fbff);
   background-image: radial-gradient(circle at top left, rgba(31, 78, 121, 0.06), transparent 28%);
@@ -200,8 +203,8 @@
   .panoramaHeroBackdropShell,
   .heroVisual,
   .tallImage {
-    --panorama-hero-min-height: 520px;
-    --panorama-hero-aspect-ratio: 5 / 4;
+    --panorama-hero-min-height: 280px;
+    --panorama-hero-aspect-ratio: auto;
     min-height: var(--panorama-hero-min-height);
   }
 
@@ -224,9 +227,9 @@
 
 .previewCanvasViewportMobile {
   .panoramaHeroBackdropShell {
-    --panorama-hero-min-height: 560px;
-    --panorama-hero-aspect-ratio: 4 / 5;
-    --panorama-hero-object-position-y: 50%;
+    --panorama-hero-min-height: clamp(380px, 62vh, 500px);
+    --panorama-hero-aspect-ratio: auto;
+    --panorama-hero-object-position-y: 58%;
   }
 
   .panoramaHeroBackdrop {
@@ -2516,8 +2519,8 @@
   .panoramaHeroBackdropShell,
   .heroVisual,
   .tallImage {
-    --panorama-hero-min-height: 520px;
-    --panorama-hero-aspect-ratio: 5 / 4;
+    --panorama-hero-min-height: 280px;
+    --panorama-hero-aspect-ratio: auto;
     min-height: var(--panorama-hero-min-height);
   }
 
@@ -2777,9 +2780,9 @@
   }
 
   .panoramaHeroBackdropShell {
-    --panorama-hero-min-height: clamp(500px, 74vh, 640px);
-    --panorama-hero-aspect-ratio: 4 / 5;
-    --panorama-hero-object-position-y: 50%;
+    --panorama-hero-min-height: clamp(380px, 62vh, 500px);
+    --panorama-hero-aspect-ratio: auto;
+    --panorama-hero-object-position-y: 58%;
     min-height: var(--panorama-hero-min-height);
   }
 
