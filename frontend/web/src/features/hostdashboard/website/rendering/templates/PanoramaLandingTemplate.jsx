@@ -621,6 +621,7 @@ const renderPanoramaHeroSection = ({
       <TemplateImageSlotVisual
         model={model}
         slot={{ kind: "hero" }}
+        frameClassName={styles.panoramaHeroBackdropFrame}
         imageClassName={styles.panoramaHeroBackdrop}
         alt={model.hero.title}
         onSelectTarget={onSelectTarget}

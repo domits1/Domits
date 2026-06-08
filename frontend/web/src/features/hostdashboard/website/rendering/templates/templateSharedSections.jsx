@@ -368,7 +368,7 @@ export function TemplateImageSlotVisual({
             isInteractivePreview,
           })}
           className={`${styles.templateRotatingImageLayer} ${buildImageSlotImageClassName(
-            "",
+            imageClassName,
             enableHoverEffect
           )} ${
             index === activeImageIndex ? styles.templateRotatingImageLayerActive : ""
