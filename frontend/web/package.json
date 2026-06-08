@@ -146,7 +146,8 @@
   },
   "jest": {
     "moduleNameMapper": {
-      "^axios$": "axios/dist/node/axios.cjs"
+      "^axios$": "axios/dist/node/axios.cjs",
+      "^.+/content/(en|nl|de|es)\\.json$": "<rootDir>/__mocks__/fileMock.js"
     }
   }
 }

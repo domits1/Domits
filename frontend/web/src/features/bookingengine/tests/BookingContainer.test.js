@@ -1,7 +1,16 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import { LanguageContext } from "../../../context/LanguageContext.js";
 import BookingContainer from "../listingdetails/views/bookingContainer";
+
+const renderWithProviders = (ui) =>
+  render(
+    <LanguageContext.Provider value={{ language: "en" }}>
+      <BrowserRouter>{ui}</BrowserRouter>
+    </LanguageContext.Provider>
+  );
 
 const mockReservePress = jest.fn();
 
@@ -33,7 +42,7 @@ describe("BookingContainer", () => {
   });
 
   test("does not render undefined cancellation badge when policy type is missing", () => {
-    render(
+    renderWithProviders(
       <BookingContainer
         property={{ pricing: { roomRate: 120 }, rules: [] }}
         checkInDate="2026-06-01"
@@ -45,7 +54,7 @@ describe("BookingContainer", () => {
   });
 
   test("does not call reserve handler when property id is missing", () => {
-    render(
+    renderWithProviders(
       <BookingContainer
         property={{ pricing: { roomRate: 120 }, property: {}, rules: [] }}
         checkInDate="2026-06-01"

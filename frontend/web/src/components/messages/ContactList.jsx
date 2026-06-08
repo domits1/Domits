@@ -3,6 +3,13 @@ import PropTypes from "prop-types";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
 
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
@@ -173,6 +180,9 @@ const ContactList = ({
 
   activeThreadId = null,
 }) => {
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard?.messagesPage;
+
   const [selectedKey, setSelectedKey] = useState(null);
   const [tab, setTab] = useState("all");
   const socket = useContext(WebSocketContext);
@@ -295,9 +305,9 @@ const ContactList = ({
 
   let listContent = null;
   if (loading) {
-    listContent = <p className="contact-list-loading-text">Loading contacts...</p>;
+    listContent = <p className="contact-list-loading-text">{t?.loadingContacts || "Loading contacts..."}</p>;
   } else if (filteredContacts.length === 0) {
-    listContent = <p className="contact-list-empty-text">No contacts found.</p>;
+    listContent = <p className="contact-list-empty-text">{t?.noContacts || "No contacts found."}</p>;
   } else {
     listContent = filteredContacts.map((contact) => {
       const partnerId = resolvePartnerId(contact, userId);
@@ -326,7 +336,7 @@ const ContactList = ({
     <div className="messages-v2-contactlist">
       <div className="contactlist-top">
         <div className="contactlist-titlebar">
-          <h2 className="contactlist-title">Messages</h2>
+          <h2 className="contactlist-title">{t?.title || "Messages"}</h2>
 
           <div className="contactlist-actions">
             <button
@@ -344,7 +354,7 @@ const ContactList = ({
             <button
               type="button"
               className="icon-btn"
-              title={sortAlphabetically ? "Sort by latest" : "Sort A–Z"}
+              title={sortAlphabetically ? (t?.sortByLatest || "Sort by latest") : (t?.sortAZ || "Sort A–Z")}
               onClick={() => setSortAlphabetically((p) => !p)}
             >
               <FaSlidersH />
@@ -359,17 +369,17 @@ const ContactList = ({
         <input
           className="contactlist-search"
           type="text"
-          placeholder="Search or start new chat"
+          placeholder={t?.searchPlaceholder || "Search or start new chat"}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
 
         <div className="contactlist-tabs">
           <button className={`contactlist-tab ${tab === "all" ? "active" : ""}`} onClick={() => setTab("all")}>
-            All
+            {t?.allTab || "All"}
           </button>
           <button className={`contactlist-tab ${tab === "unread" ? "active" : ""}`} onClick={() => setTab("unread")}>
-            Unread
+            {t?.unreadTab || "Unread"}
           </button>
         </div>
       </div>
@@ -379,7 +389,7 @@ const ContactList = ({
       {contextMenu.visible && (
         <div className="contact-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} role="menu">
           <button type="button" onClick={handleCloseSelectedChat}>
-            Close chat
+            {t?.closeChat || "Close chat"}
           </button>
         </div>
       )}

@@ -1,10 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "../../styles/sass/features/guestdashboard/guestReservationDetail.scss";
 import "../../styles/sass/features/guestdashboard/mainDashboardGuest.scss";
 
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 import PropertyCard from "./components/PropertyCard";
 import CheckInInstructions from "./components/CheckInInstructions";
 import HouseRules from "./components/HouseRules";
@@ -32,6 +37,8 @@ import { normalizeImageUrl, placeholderImage } from "./utils/image";
 import { resolveAccommodationImageUrl, resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 import { getActiveCancellationPolicyId } from "../../utils/policyDisplayUtils.js";
 import { isValidDate, startOfDay } from "../../utils/dashboardShared";
+
+const contentByLanguage = { en, nl, de, es };
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -236,7 +243,7 @@ const resolveReservationCancellationPolicy = ({ booking, propertyDetails }) => {
   return fallbackPolicyId ? resolveGuestCancellationPolicy(fallbackPolicyId) : null;
 };
 
-function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm }) {
+function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm, t }) {
   const dialogRef = useRef(null);
 
   useEffect(() => {
@@ -275,10 +282,9 @@ function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm })
       aria-labelledby="cancel-booking-title"
       aria-describedby="cancel-booking-description"
       onCancel={handleCancel}>
-      <h2 id="cancel-booking-title">Cancel booking?</h2>
+      <h2 id="cancel-booking-title">{t?.reservation?.cancelTitle || "Cancel booking?"}</h2>
       <p id="cancel-booking-description">
-        Are you sure you want to cancel this booking? Your host will be notified and this action will update your
-        reservation status.
+        {t?.reservation?.cancelConfirm || "Are you sure you want to cancel this booking? Your host will be notified and this action will update your reservation status."}
       </p>
 
       {error && (
@@ -289,10 +295,10 @@ function CancelBookingModal({ isOpen, isSubmitting, error, onClose, onConfirm })
 
       <div className="cancelBookingModalActions">
         <button type="button" className="secondaryBtn modalActionBtn" onClick={onClose} disabled={isSubmitting}>
-          Keep booking
+          {t?.reservation?.keepBooking || "Keep booking"}
         </button>
         <button type="button" className="dangerBtn modalActionBtn" onClick={onConfirm} disabled={isSubmitting}>
-          {isSubmitting ? "Cancelling..." : "Yes, cancel booking"}
+          {isSubmitting ? (t?.reservation?.cancelling || "Cancelling...") : (t?.reservation?.yesCancelBooking || "Yes, cancel booking")}
         </button>
       </div>
     </dialog>
@@ -305,6 +311,7 @@ CancelBookingModal.propTypes = {
   isSubmitting: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
+  t: PropTypes.object,
 };
 
 CancelBookingModal.defaultProps = {
@@ -317,11 +324,12 @@ const buildReservationContent = ({
   reservation,
   handleMessageHost,
   handleOpenCancelBooking,
+  t,
 }) => {
   if (isPageLoading) {
     return (
       <div className="card reservationStateCard">
-        <PulseBarsLoader message="Loading reservation..." />
+        <PulseBarsLoader message={t?.reservation?.loading || "Loading reservation..."} />
       </div>
     );
   }
@@ -329,7 +337,7 @@ const buildReservationContent = ({
   if (pageError) {
     return (
       <div className="card reservationStateCard" role="alert">
-        <h3>Reservation unavailable</h3>
+        <h3>{t?.reservation?.unavailable || "Reservation unavailable"}</h3>
         <p>{pageError}</p>
       </div>
     );
@@ -343,13 +351,13 @@ const buildReservationContent = ({
         <div className="reservationHeader">
           <h1 className="reservationTitle">{reservation.property.title}</h1>
           <span className={`reservationStatus ${isCancelledReservation ? "cancelled" : "confirmed"}`}>
-            {isCancelledReservation ? "Cancelled" : reservation.stay.status}
+            {isCancelledReservation ? (t?.reservation?.cancelled || "Cancelled") : reservation.stay.status}
           </span>
         </div>
 
         {isCancelledReservation && (
           <output className="reservationCancelledBanner">
-            This reservation has been cancelled.
+            {t?.reservation?.cancelledMessage || "This reservation has been cancelled."}
           </output>
         )}
 
@@ -378,18 +386,18 @@ const buildReservationContent = ({
 
             {normalizeStayStatus(reservation.stay.status) !== "Cancelled" && (
               <div className="card cancelBookingCard">
-                <h3>Cancel reservation</h3>
-                <p>Review the cancellation policy above before cancelling this booking.</p>
+                <h3>{t?.reservation?.cancelReservationTitle || "Cancel reservation"}</h3>
+                <p>{t?.reservation?.cancelReservationDescription || "Review the cancellation policy above before cancelling this booking."}</p>
                 <button type="button" className="dangerOutlineBtn" onClick={handleOpenCancelBooking}>
-                  Cancel Booking
+                  {t?.reservation?.cancelBooking || "Cancel Booking"}
                 </button>
               </div>
             )}
 
             <div className="card helpCard">
-              <h3>Need help?</h3>
+              <h3>{t?.reservation?.needHelp || "Need help?"}</h3>
               <button type="button" className="primaryBtn" onClick={handleMessageHost}>
-                Message host
+                {t?.reservation?.messageHost || "Message host"}
               </button>
             </div>
 
@@ -408,8 +416,8 @@ const buildReservationContent = ({
 
   return (
     <div className="card reservationStateCard">
-      <h3>Reservation unavailable</h3>
-      <p>Reservation not found.</p>
+      <h3>{t?.reservation?.unavailable || "Reservation unavailable"}</h3>
+      <p>{t?.reservation?.notFound || "Reservation not found."}</p>
     </div>
   );
 };
@@ -496,6 +504,8 @@ function ReservationDetails() {
   const [cancelBookingLoading, setCancelBookingLoading] = useState(false);
   const [cancelBookingError, setCancelBookingError] = useState("");
   const { userId: guestId, loading: identityLoading, error: identityError } = useDashboardIdentity("Guest");
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   const reservationRouteId = useMemo(() => extractReservationIdFromPath(location.pathname), [location.pathname]);
 
@@ -504,7 +514,7 @@ function ReservationDetails() {
 
     const loadReservation = async () => {
       if (!reservationRouteId) {
-        setError("Reservation not found.");
+        setError(t?.reservation?.notFound || "Reservation not found.");
         setReservation(null);
         return;
       }
@@ -547,9 +557,9 @@ function ReservationDetails() {
         setReservation(buildReservationViewModel({ booking, propertyDetails }));
       } catch (loadError) {
         if (isMounted) {
-          let nextError = "Could not load this reservation.";
+          let nextError = t?.reservation?.loadError || "Could not load this reservation.";
           if (loadError?.message === "Reservation not found.") {
-            nextError = loadError.message;
+            nextError = t?.reservation?.notFound || loadError.message;
           }
           setError(nextError);
           setReservation(null);
@@ -632,10 +642,10 @@ function ReservationDetails() {
         });
       }
 
-      toast.success("Reservation cancelled.");
+      toast.success(t?.reservation?.cancelSuccess || "Reservation cancelled.");
     } catch (cancelError) {
       console.error("Failed to cancel booking:", cancelError);
-      setCancelBookingError("Could not cancel this booking. Please try again.");
+      setCancelBookingError(t?.reservation?.cancelError || "Could not cancel this booking. Please try again.");
     } finally {
       setCancelBookingLoading(false);
     }
@@ -647,13 +657,14 @@ function ReservationDetails() {
     reservation,
     handleMessageHost,
     handleOpenCancelBooking,
+    t,
   });
 
   return (
     <main className="dashboardContainer">
       <div className="dashboardLeft">
         <button type="button" className="viewAll" onClick={handleBack}>
-          {"<"} Back to all trips
+          {t?.reservation?.backToTrips || "< Back to all trips"}
         </button>
 
         {reservationContent}
@@ -665,6 +676,7 @@ function ReservationDetails() {
         isSubmitting={cancelBookingLoading}
         onClose={handleCloseCancelBooking}
         onConfirm={handleConfirmCancelBooking}
+        t={t}
       />
     </main>
   );

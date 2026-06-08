@@ -1,10 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
+import { LanguageContext } from "../../../context/LanguageContext.js";
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+import de from "../../../content/de.json";
+import es from "../../../content/es.json";
 import CloseIcon from "@mui/icons-material/Close";
 import { getAccessToken } from "../utils/authUtils";
 import { fetchWishlists, moveAccommodation } from "../services/wishlistService";
 import Toast from "../../../components/toast/Toast";
+
+const contentByLanguage = { en, nl, de, es };
 
 const sortWishlistNames = (names, defaultName = "My next trip") => {
   const safeNames = Array.isArray(names) ? [...names] : [];
@@ -28,6 +35,8 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
   const [newListName, setNewListName] = useState("");
   const [selectedList, setSelectedList] = useState(activeList || "My next trip");
   const [toast, setToast] = useState({ message: "", status: "" });
+  const { language } = useContext(LanguageContext);
+  const t = contentByLanguage[language]?.guestdashboard;
 
   const popupRef = useRef();
 
@@ -37,7 +46,7 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
         const data = await fetchWishlists();
         setWishlists(sortWishlistNames(Object.keys(data.wishlists || {})));
       } catch {
-        setToast({ message: "Failed to load wishlists. Please try again.", status: "error" });
+        setToast({ message: t?.wishlist?.loadListsError || "Failed to load wishlists. Please try again.", status: "error" });
       }
     };
 
@@ -79,7 +88,7 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
       if (onSave) onSave(listToUse);
       onClose();
     } catch {
-      setToast({ message: "Failed to move accommodation. Please try again.", status: "error" });
+      setToast({ message: t?.wishlist?.moveError || "Failed to move accommodation. Please try again.", status: "error" });
     }
   };
 
@@ -96,7 +105,7 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
       >
         <div className="wishlist-modal__header">
           <h2 className="wishlist-modal__title">
-            {showEdit ? "Save to wishlist" : "Saved to wishlist"}
+            {showEdit ? (t?.wishlist?.saveToWishlist || "Save to wishlist") : (t?.wishlist?.savedToWishlist || "Saved to wishlist")}
           </h2>
           <button
             type="button"
@@ -111,7 +120,7 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
         {!showEdit ? (
           <div className="wishlist-modal__confirm">
             <p className="wishlist-modal__saved-text">
-              Saved in: <strong>{selectedList}</strong>
+              {t?.wishlist?.savedIn || "Saved in:"} <strong>{selectedList}</strong>
             </p>
             <button
               type="button"
@@ -121,7 +130,7 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
                 setShowEdit(true);
               }}
             >
-              Edit
+              {t?.wishlist?.edit || "Edit"}
             </button>
           </div>
         ) : (
@@ -149,13 +158,13 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
                   checked={newListName !== ""}
                   onChange={() => setSelectedList("")}
                 />
-                <strong>Create new list</strong>
+                <strong>{t?.wishlist?.createNewList || "Create new list"}</strong>
               </label>
               {newListName !== "" || selectedList === "" ? (
                 <input
                   className="wishlist-modal__new-input"
                   type="text"
-                  placeholder="Give your list a name"
+                  placeholder={t?.wishlist?.giveListName || "Give your list a name"}
                   value={newListName}
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => {
@@ -170,7 +179,7 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose, onSave }) => {
               className="wishlist-modal__save-btn"
               onClick={handleConfirm}
             >
-              Save
+              {t?.wishlist?.save || "Save"}
             </button>
           </div>
         )}

@@ -234,6 +234,287 @@
           "blackForest": "Schwarzwald",
           "italyTrentino": "Italien Trentino"
         }
+      },
+      "guestdashboard": {
+        "nav": {
+          "dashboard": "Dashboard",
+          "bookings": "Buchungen",
+          "messages": "Nachrichten",
+          "wishlist": "Wunschliste",
+          "settings": "Einstellungen",
+          "menu": "Menü",
+          "closeMenu": "Menü schließen",
+          "openMenu": "Menü öffnen"
+        },
+        "overview": {
+          "welcomeBack": "Willkommen zurück,",
+          "tripsOverview": "Hier ist eine Übersicht Ihrer Reisen und bevorstehenden Reisen",
+          "currentStays": "Aktuelle Aufenthalte",
+          "upcomingStays": "Bevorstehende Aufenthalte",
+          "pastStays": "Vergangene Aufenthalte",
+          "messages": "Nachrichten",
+          "yourTripOverview": "Ihre Reiseübersicht",
+          "loadingTrips": "Reisen werden geladen...",
+          "pastTrips": "Vergangene Reisen",
+          "loadingTripHistory": "Reisegeschichte wird geladen...",
+          "tripReminders": "Reiseerinnerungen",
+          "loadingReminders": "Erinnerungen werden geladen..."
+        },
+        "bookings": {
+          "loading": "Laden...",
+          "refreshing": "Wird aktualisiert...",
+          "refresh": "Aktualisieren",
+          "sessionError": "Ihre Sitzung konnte nicht geladen werden.",
+          "bookingsError": "Ihre Buchungen konnten nicht geladen werden.",
+          "noBookings": "Sie haben noch keine Buchungen.",
+          "loadingPropertyDetails": "Unterkunftsdetails werden geladen...",
+          "inquiries": "Anfragen",
+          "noInquiries": "Keine Anfragen.",
+          "currentThisWeek": "Aktuell / Diese Woche",
+          "noCurrentBookings": "Keine aktuellen Buchungen diese Woche.",
+          "upcomingBookings": "Bevorstehende Buchungen",
+          "noUpcomingBookings": "Sie haben noch keine bevorstehenden Buchungen.",
+          "cancelledBookings": "Stornierte Buchungen",
+          "noCancelledBookings": "Sie haben noch keine stornierten Buchungen.",
+          "pastBookings": "Vergangene Buchungen",
+          "noPastBookings": "Sie haben noch keine vergangenen Buchungen.",
+          "host": "Gastgeber:"
+        },
+        "reservation": {
+          "loading": "Reservierung wird geladen...",
+          "unavailable": "Reservierung nicht verfügbar",
+          "notFound": "Reservierung nicht gefunden.",
+          "loadError": "Diese Reservierung konnte nicht geladen werden.",
+          "cancelled": "Storniert",
+          "cancelledMessage": "Diese Reservierung wurde storniert.",
+          "cancelReservationTitle": "Reservierung stornieren",
+          "cancelReservationDescription": "Überprüfen Sie die Stornierungsrichtlinie oben, bevor Sie diese Buchung stornieren.",
+          "cancelTitle": "Buchung stornieren?",
+          "cancelConfirm": "Sind Sie sicher, dass Sie diese Buchung stornieren möchten? Ihr Gastgeber wird benachrichtigt und diese Aktion aktualisiert Ihren Reservierungsstatus.",
+          "keepBooking": "Buchung behalten",
+          "yesCancelBooking": "Ja, Buchung stornieren",
+          "cancelling": "Wird storniert...",
+          "cancelBooking": "Buchung stornieren",
+          "cancelError": "Diese Buchung konnte nicht storniert werden. Bitte versuchen Sie es erneut.",
+          "cancelSuccess": "Reservierung storniert.",
+          "needHelp": "Hilfe benötigt?",
+          "messageHost": "Nachricht an Gastgeber",
+          "backToTrips": "< Zurück zu allen Reisen"
+        },
+        "payments": {
+          "title": "Zahlungen",
+          "fulfilled": "Abgeschlossene Zahlungen",
+          "paid": "Bezahlt:",
+          "total": "Gesamt:",
+          "completeBooking": "Buchung abschließen",
+          "inquiryAccepted": "Ihre Anfrage wurde vom Gastgeber akzeptiert. Schließen Sie Ihre Zahlung ab, um die Buchung zu bestätigen.",
+          "backToBookings": "Zurück zu Buchungen",
+          "invalidBookingId": "Ungültige Buchungs-ID.",
+          "loadError": "Zahlung konnte nicht geladen werden. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support."
+        },
+        "wishlist": {
+          "empty": "Ihre Wunschliste ist leer",
+          "emptyDescription": "Speichern Sie Ihre Lieblingsunterkünfte und planen Sie Ihre nächste Reise!",
+          "explore": "Unterkünfte entdecken",
+          "loadingSaved": "Gespeicherte Unterkünfte werden geladen...",
+          "noLongerAvailable": "Nicht mehr verfügbar",
+          "removedOrDraft": "Dieses gespeicherte Inserat wurde entfernt oder als Entwurf gespeichert.",
+          "removeFromWishlist": "Von Wunschliste entfernen",
+          "removed": "Von Wunschliste entfernt",
+          "savedCount": "gespeicherte Unterkünfte",
+          "loadError": "Wunschliste konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+          "removeError": "Entfernen von der Wunschliste fehlgeschlagen. Bitte versuchen Sie es erneut.",
+          "saveToWishlist": "Auf Wunschliste speichern",
+          "savedToWishlist": "Auf Wunschliste gespeichert",
+          "savedIn": "Gespeichert in:",
+          "edit": "Bearbeiten",
+          "createNewList": "Neue Liste erstellen",
+          "giveListName": "Geben Sie Ihrer Liste einen Namen",
+          "save": "Speichern",
+          "selectList": "Liste auswählen:",
+          "makeList": "Liste erstellen",
+          "shareList": "Liste teilen",
+          "giveNewListName": "Geben Sie Ihrer neuen Liste einen Namen",
+          "create": "Erstellen",
+          "shareableLink": "Teilbarer Link",
+          "copyLink": "Link kopieren",
+          "copied": "Kopiert!",
+          "loadListsError": "Wunschlisten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+          "createListError": "Wunschliste konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+          "renameListError": "Wunschliste konnte nicht umbenannt werden. Bitte versuchen Sie es erneut.",
+          "deleteListError": "Wunschliste konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
+          "copyLinkError": "Link kopieren fehlgeschlagen. Bitte versuchen Sie es erneut.",
+          "moveError": "Unterkunft verschieben fehlgeschlagen. Bitte versuchen Sie es erneut."
+        },
+        "reviews": {
+          "title": "Bewertungen",
+          "myReviews": "Meine Bewertungen",
+          "noWrittenReviews": "Es scheint, dass Sie noch keine Bewertungen geschrieben haben...",
+          "receivedReviews": "Erhaltene Bewertungen",
+          "noReceivedReviews": "Es scheint, dass Sie noch keine Bewertungen erhalten haben...",
+          "disputes": "Streitigkeiten",
+          "recentReviews": "Aktuelle Bewertungen",
+          "deleteConfirm": "Sind Sie sicher, dass Sie diese Bewertung löschen möchten?",
+          "writtenOn": "Geschrieben am:"
+        },
+        "stays": {
+          "currentStay": "Ihr aktueller Aufenthalt",
+          "upcomingStay": "Ihr bevorstehender Aufenthalt",
+          "viewAll": "Alle anzeigen >",
+          "pastTrips": "Vergangene Reisen",
+          "noPastTrips": "Noch keine vergangenen Reisen.",
+          "cancelledTrips": "Stornierte Reisen",
+          "noCancelledTrips": "Noch keine stornierten Reisen.",
+          "noUpcomingTrips": "Keine bevorstehenden Reisen",
+          "noUpcomingStays": "Sie haben keine bevorstehenden Aufenthalte. Entdecken Sie Reiseziele.",
+          "browseStays": "Aufenthalte durchsuchen",
+          "noActiveTrips": "Noch keine aktiven Reisen",
+          "tripReminders": "Reiseerinnerungen"
+        },
+        "stayCard": {
+          "status": "Status:",
+          "confirmed": "Bestätigt",
+          "ref": "Ref:",
+          "openReservation": "Reservierung öffnen",
+          "messageHost": "Nachricht an Gastgeber",
+          "downloadInvoice": "Rechnung herunterladen (Demnächst verfügbar)"
+        },
+        "propertyCard": {
+          "checkIn": "Check-in",
+          "checkOut": "Check-out",
+          "guests": "Gäste",
+          "guest": "Gast",
+          "guests_plural": "Gäste",
+          "reservationId": "Reservierungs-ID:",
+          "unavailable": "Gastdetails nicht verfügbar"
+        },
+        "checkIn": {
+          "title": "Check-in-Anweisungen",
+          "address": "Adresse:",
+          "addressUnavailable": "Adresse nicht verfügbar",
+          "noInstructions": "Es wurden noch keine zusätzlichen Check-in-Anweisungen geteilt.",
+          "nextStep": "Nächster Schritt:",
+          "checkSection": "Überprüfen Sie diesen Abschnitt vor der Ankunft erneut auf etwaige Updates des Gastgebers."
+        },
+        "houseRules": {
+          "title": "Hausregeln",
+          "noRules": "Es wurden keine zusätzlichen Hausregeln angegeben."
+        },
+        "cancellationPolicy": {
+          "title": "Stornierungsrichtlinie",
+          "hidePolicy": "Richtliniendetails ausblenden",
+          "viewPolicy": "Richtliniendetails anzeigen",
+          "policies": {
+            "flexible": {
+              "type": "Flexibel",
+              "summary": "Vollständige Rückerstattung 1 Tag vor der Ankunft.",
+              "details": [
+                "Gäste erhalten eine vollständige Rückerstattung, wenn sie mindestens 1 Tag vor dem Check-in stornieren.",
+                "Stornierungen weniger als 1 Tag vor dem Check-in werden nicht erstattet."
+              ]
+            },
+            "moderate": {
+              "type": "Moderat",
+              "summary": "Vollständige Rückerstattung 5 Tage vor der Ankunft.",
+              "details": [
+                "Gäste erhalten eine vollständige Rückerstattung, wenn sie mindestens 5 Tage vor dem Check-in stornieren.",
+                "Stornierungen weniger als 5 Tage vor dem Check-in können nur teilweise erstattet werden."
+              ]
+            },
+            "strict": {
+              "type": "Begrenzt",
+              "summary": "Rückerstattungen hängen davon ab, wie nah die Stornierung am Check-in liegt.",
+              "details": [
+                "Mindestens 14 Tage vor dem Check-in: Gast erhält 100% Rückerstattung (Sie behalten 0%).",
+                "Zwischen 7 und 14 Tagen vor dem Check-in: Gast erhält 50% Rückerstattung (Sie behalten 50%).",
+                "Weniger als 7 Tage vor dem Check-in: Gast erhält keine Rückerstattung (Sie behalten 100%)."
+              ]
+            },
+            "firm": {
+              "type": "Streng",
+              "summary": "Vollständige Rückerstattung bis zu 30 Tage vor dem Check-in.",
+              "details": [
+                "Gäste erhalten eine vollständige Rückerstattung, wenn sie mindestens 30 Tage vor dem Check-in stornieren.",
+                "Stornierungen näher am Ankunftsdatum können nur teilweise oder gar nicht erstattet werden, je nach Zeitpunkt."
+              ]
+            }
+          }
+        },
+        "paymentSummary": {
+          "title": "Zahlungsübersicht",
+          "cleaningFee": "Reinigungsgebühr",
+          "total": "Gesamt",
+          "nights": "Nächte"
+        },
+        "bookingDetails": {
+          "title": "Buchungsdetails",
+          "reservationId": "Reservierungs-ID",
+          "bookedOn": "Gebucht am",
+          "downloadReceipt": "Quittung herunterladen"
+        },
+        "guestSelector": {
+          "adults": "Erwachsene",
+          "children": "Kinder",
+          "rooms": "Zimmer",
+          "done": "Fertig"
+        },
+        "messagesPage": {
+          "title": "Nachrichten",
+          "searchPlaceholder": "Suchen oder neues Gespräch starten",
+          "allTab": "Alle",
+          "unreadTab": "Ungelesen",
+          "loadingContacts": "Kontakte werden geladen...",
+          "noContacts": "Keine Kontakte gefunden.",
+          "closeChat": "Chat schließen",
+          "sortByLatest": "Nach neuesten sortieren",
+          "sortAZ": "A–Z sortieren"
+        },
+        "chatScreen": {
+          "selectConversation": "Gespräch auswählen",
+          "chooseContact": "Wählen Sie einen Kontakt, um zu chatten.",
+          "noMessages": "Noch keine Nachrichten",
+          "startConversation": "Sagen Sie Hallo, um das Gespräch zu beginnen.",
+          "activeNow": "Jetzt aktiv",
+          "whatsappConversation": "WhatsApp-Gespräch",
+          "typePlaceholder": "Nachricht eingeben",
+          "typeWhatsappPlaceholder": "WhatsApp-Nachricht eingeben",
+          "attachments": "Anhänge",
+          "failedToSend": "Nachricht konnte nicht gesendet werden"
+        },
+        "settingsPage": {
+          "personalInfo": "Persönliche Informationen",
+          "profilePhoto": "Profilfoto:",
+          "upload": "Hochladen",
+          "working": "Wird verarbeitet...",
+          "remove": "Entfernen",
+          "titleLabel": "Anrede:",
+          "selectTitle": "Anrede auswählen",
+          "fullName": "Vollständiger Name:",
+          "email": "E-Mail:",
+          "codeSentEmail": "Code an Ihre E-Mail gesendet!",
+          "phone": "Telefon:",
+          "phoneNumber": "Telefonnummer",
+          "sex": "Geschlecht:",
+          "selectSex": "Geschlecht auswählen",
+          "dateOfBirth": "Geburtsdatum:",
+          "placeOfBirth": "Geburtsort:",
+          "selectCountry": "Land auswählen",
+          "nationality": "Nationalität:",
+          "nationalityPlaceholder": "z.B. Deutsch",
+          "preferences": "Einstellungen",
+          "defaultLanguage": "Standardsprache:",
+          "authentication": "Authentifizierung",
+          "emailLabel": "E-Mail",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "verified": "Verifiziert",
+          "notVerified": "Nicht verifiziert",
+          "phoneVerified": "Telefon verifiziert",
+          "yes": "Ja",
+          "no": "Nein",
+          "authenticatorApp": "Authenticator-App",
+          "totpSubtext": "App-basierte Codes (TOTP)"
+        }
       }
     }
   },
