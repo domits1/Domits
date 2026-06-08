@@ -111,8 +111,8 @@ export class PriceLabsService {
       name:               p.title || p.id,
       status:             "available",
       location: {
-        latitude:  p.latitude  !== null ? Number(p.latitude)  : 52.3676,
-        longitude: p.longitude !== null ? Number(p.longitude) : 4.9041,
+        latitude:  p.latitude  === null ? 52.3676 : Number(p.latitude),
+        longitude: p.longitude === null ? 4.9041  : Number(p.longitude),
         city:    p.city    || "Amsterdam",
         country: _toAlpha3(p.country),
       },
@@ -291,11 +291,7 @@ export class PriceLabsService {
 
     // Swagger v2: single object { listing_id, last_refreshed, data: [] }
     // Normalize to array for uniform handling
-    const listings = Array.isArray(body.listings)
-      ? body.listings
-      : body.listing_id
-        ? [{ listing_id: body.listing_id, data: body.data ?? [] }]
-        : [];
+    const listings = _normalizeListings(body);
 
     for (const listing of listings) {
       const { listing_id, data = [], prices = [] } = listing;
@@ -309,8 +305,8 @@ export class PriceLabsService {
           date:                entry.date,
           nightly_price:       entry.price,
           min_stay:            entry.min_stay,
-          closed_to_arrival:   entry.check_in  === false ? true : false,
-          closed_to_departure: entry.check_out === false ? true : false,
+          closed_to_arrival:   entry.check_in  === false,
+          closed_to_departure: entry.check_out === false,
         });
       }
     }
@@ -385,6 +381,12 @@ export class PriceLabsService {
 function _tsToDate(ts) {
   if (!ts) return null;
   return new Date(Number(ts)).toISOString().split("T")[0];
+}
+
+function _normalizeListings(body) {
+  if (Array.isArray(body.listings)) return body.listings;
+  if (body.listing_id) return [{ listing_id: body.listing_id, data: body.data ?? [] }];
+  return [];
 }
 
 function _intToDate(val) {

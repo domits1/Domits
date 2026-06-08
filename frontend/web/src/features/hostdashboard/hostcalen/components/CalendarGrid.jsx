@@ -451,7 +451,7 @@ export default function CalendarGrid({
                   )}
 
                   {(() => {
-                    const plPrice = priceLabsOverrides && priceLabsOverrides[dayPresentation.key];
+                    const plPrice = priceLabsOverrides?.[dayPresentation.key];
                     return plPrice > 0 ? (
                       <span className="hc-cell-pricelabs-suggestion" title="PriceLabs suggested price">
                         PL {formatEuroAmount(plPrice)}
