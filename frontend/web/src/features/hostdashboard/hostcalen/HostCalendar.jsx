@@ -208,7 +208,9 @@ function HostCalendarSidebar({
   priceLabsDisconnect,
   priceLabsSyncAll,
   priceOverrides,
+  priceLabsOverrides,
   onApplyPriceLabsPrice,
+  onIgnorePriceLabsPrice,
   selectedDateKeys,
   selectedAvailabilityStats,
   handleToggleAvailability,
@@ -300,8 +302,9 @@ function HostCalendarSidebar({
         <DynamicPricingCard
           isConnected={priceLabsConnected}
           selectedDateKeys={selectedDateKeys}
-          priceOverrides={priceOverrides}
+          priceLabsOverrides={priceLabsOverrides}
           onApplyPrice={onApplyPriceLabsPrice}
+          onIgnorePrice={onIgnorePriceLabsPrice}
           onOpenSettings={() => setSidebarMode("pricelabs")}
         />
       </>
@@ -506,7 +509,9 @@ HostCalendarSidebar.propTypes = {
   priceLabsDisconnect: PropTypes.func,
   priceLabsSyncAll: PropTypes.func,
   priceOverrides: PropTypes.objectOf(PropTypes.number),
+  priceLabsOverrides: PropTypes.objectOf(PropTypes.number),
   onApplyPriceLabsPrice: PropTypes.func,
+  onIgnorePriceLabsPrice: PropTypes.func,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedAvailabilityStats: selectedAvailabilityStatsShape.isRequired,
   handleToggleAvailability: PropTypes.func.isRequired,
@@ -659,6 +664,7 @@ export default function HostCalendar() {
     availabilityOverrides,
     restrictionOverrides,
     selectedPropertyPriceOverrides,
+    selectedPropertyPriceLabsOverrides,
     selectedDateKeys,
     pendingSelectionStartKey,
     bookedDateKeys,
@@ -674,6 +680,8 @@ export default function HostCalendar() {
     handleToggleAvailability,
     handleSelectionPriceChange,
     handleSaveSelectionPrice,
+    handleApplyPriceLabsSuggestion,
+    handleIgnorePriceLabsSuggestion,
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
   } = useCalendarSelection({
@@ -752,11 +760,15 @@ export default function HostCalendar() {
   } = usePriceLabs();
   const priceLabsConnected = Boolean(priceLabsStatus?.connected);
 
-  const handleApplyPriceLabsPrice = (dateKeys, price) => {
-    // Price already saved in Property_Calendar_Override via webhook — just update local state
-    // by triggering the existing selection price save with the PriceLabs price
-    handleSelectionPriceChange(price);
-    handleSaveSelectionPrice();
+  const handleApplyPriceLabsPrice = (dateKeys) => {
+    // Copies pricelabs_price → nightly_price for each selected date.
+    // The PriceLabs suggestion (pricelabs_price) is separate from the host price
+    // (nightly_price). The host must explicitly apply it here.
+    handleApplyPriceLabsSuggestion(dateKeys);
+  };
+
+  const handleIgnorePriceLabsPrice = (dateKeys) => {
+    handleIgnorePriceLabsSuggestion(dateKeys);
   };
 
   const openCalendarSync = () => setSidebarMode("calendar-sync");
@@ -825,6 +837,7 @@ export default function HostCalendar() {
             availabilityOverrides={availabilityOverrides}
             restrictionOverrides={restrictionOverrides}
             priceOverrides={selectedPropertyPriceOverrides}
+            priceLabsOverrides={selectedPropertyPriceLabsOverrides}
             bookedDateKeys={bookedDateKeys}
             onDateSelect={handleCalendarDateSelect}
           />
@@ -840,7 +853,9 @@ export default function HostCalendar() {
             priceLabsDisconnect={priceLabsDisconnect}
             priceLabsSyncAll={priceLabsSyncAll}
             priceOverrides={selectedPropertyPriceOverrides}
+            priceLabsOverrides={selectedPropertyPriceLabsOverrides}
             onApplyPriceLabsPrice={handleApplyPriceLabsPrice}
+            onIgnorePriceLabsPrice={handleIgnorePriceLabsPrice}
             selectedDateKeys={selectedDateKeys}
             selectedAvailabilityStats={selectedAvailabilityStats}
             handleToggleAvailability={handleToggleAvailability}

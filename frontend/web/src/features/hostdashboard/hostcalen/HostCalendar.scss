@@ -736,6 +736,22 @@ $accent: #2f6fed;
   color: #92400e;
 }
 
+.hc-cell-pricelabs-suggestion {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  margin-top: 3px;
+  border: 1px solid #99d1ca;
+  border-radius: 4px;
+  background: #ecfdf5;
+  color: #115e59;
+  padding: 2px 4px;
+  font-size: 10px;
+  line-height: 1.05;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .hc-cell-badge {
   position: absolute;
   top: 6px;
@@ -2314,4 +2330,22 @@ $accent: #2f6fed;
 
 .hc-dynamic-pricing-apply-btn:hover {
   background: #33a446;
+}
+
+.hc-dynamic-pricing-ignore-btn {
+  padding: 0.6rem 0.9rem;
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.hc-dynamic-pricing-ignore-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
 }

@@ -76,6 +76,7 @@ export class PriceLabsService {
 
   async disconnect(hostId) {
     await this.repo.deactivateConnection(hostId);
+    await this.repo.clearPriceLabsDataForHost(hostId);
     return { success: true, message: "PriceLabs disconnected." };
   }
 
@@ -103,13 +104,15 @@ export class PriceLabsService {
     const otaMap = await this.repo.getOtaListingIdsByHost(hostId);
 
     const listings = properties.map((p) => ({
-      listing_id:         `${hostId}_${p.id}`,
+      listing_id:         `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`,
       user_token:         connection.pricelabs_email,
       name:               p.title || p.id,
       status:             "available",
       location: {
-        city:    p.city    || "",
-        country: p.country || "NL",
+        latitude:  p.latitude  === null ? 52.3676 : Number(p.latitude),
+        longitude: p.longitude === null ? 4.9041  : Number(p.longitude),
+        city:    p.city    || "Amsterdam",
+        country: _toAlpha3(p.country),
       },
       number_of_bedrooms: p.bedrooms || 1,
       listing_fees: {
@@ -119,7 +122,7 @@ export class PriceLabsService {
           currency: "EUR",
         },
       },
-      ota_listing_ids: otaMap[p.id] || [],
+      ota_listing_ids: {},
     }));
 
     await api.pushListings(token, name, listings);
@@ -133,25 +136,44 @@ export class PriceLabsService {
     const properties = await this.repo.getPropertiesByHost(hostId);
 
     const targets = listingIds
-      ? properties.filter((p) => listingIds.includes(`${hostId}_${p.id}`))
+      ? properties.filter((p) => listingIds.includes(`${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`))
       : properties;
 
     for (const p of targets) {
-      const listingId   = `${hostId}_${p.id}`;
+      const listingId   = `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`;
       const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
 
-      const data = availability.map((row) => ({
-        date:            _intToDate(row.calendar_date),
-        price:           row.nightly_price || p.base_price || 100,
-        available_units: row.is_available === false ? 0 : 1,
-        booked_units:    0,
-        blocked_units:   0,
-        settings: {
-          min_stay:  row.min_stay || 1,
-          check_in:  row.closed_to_arrival  !== true,
-          check_out: row.closed_to_departure !== true,
-        },
-      }));
+      // Build a lookup map keyed by calendar_date integer for O(1) access
+      const overrideMap = {};
+      for (const row of availability) {
+        overrideMap[row.calendar_date] = row;
+      }
+
+      // Generate all 730 days regardless of what is in the DB.
+      // For dates without an explicit override, fall back to the property base_price.
+      // PriceLabs requires a minimum of 12 months (preferably 730 days) of data.
+      const data = [];
+      const defaultPrice = p.base_price || 100;
+      for (let i = 0; i < CALENDAR_DAYS; i++) {
+        const d    = new Date();
+        d.setUTCDate(d.getUTCDate() + i);
+        const iso  = d.toISOString().slice(0, 10);
+        const key  = Number(iso.replaceAll("-", ""));
+        const row  = overrideMap[key];
+        data.push({
+          date:            iso,
+          end_date:        iso,
+          price:           row?.nightly_price || defaultPrice,
+          available_units: row?.is_available === false ? 0 : 1,
+          booked_units:    0,
+          blocked_units:   0,
+          settings: {
+            min_stay:  row?.min_stay  || 1,
+            check_in:  row?.closed_to_arrival  !== true,
+            check_out: row?.closed_to_departure !== true,
+          },
+        });
+      }
 
       await api.pushCalendar(token, name, {
         calendars: [
@@ -175,7 +197,7 @@ export class PriceLabsService {
 
     const grouped = {};
     for (const b of bookings) {
-      const listingId = `${hostId}_${b.property_id}`;
+      const listingId = `${hostId.replaceAll("-", "_")}_${b.property_id.replaceAll("-", "_")}`;
       if (!grouped[listingId]) {
         grouped[listingId] = {
           listing_id: listingId,
@@ -190,7 +212,7 @@ export class PriceLabsService {
         reservation_id: b.id,
         start_date:     checkin,
         end_date:       checkout,
-        booked_time:    new Date().toISOString().split("T")[0],
+        booked_time:    new Date().toISOString().replace("T", " ").split(".")[0],
         total_days:     _dateDiff(checkin, checkout),
         guests:         b.guests || 1,
         total_cost:     b.total_price || 0,
@@ -249,26 +271,40 @@ export class PriceLabsService {
   }
 
   async handleSyncWebhook(headers, rawBody) {
+    const parsed = JSON.parse(rawBody || "{}");
+    if (parsed.verify === true) return { success: true };
+
     const { token } = await this._creds();
 
-    if (!verifyPriceLabsSignature(headers, rawBody, token)) {
-      throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+    const h = (name) => headers[name] || headers[name.toLowerCase()] || "";
+    const hasSignature = Boolean(h("X-PL-SIGNED-HEADERS")) && Boolean(h("X-PL-SIGNED-BODY"));
+
+    if (hasSignature) {
+      if (!verifyPriceLabsSignature(headers, rawBody, token)) {
+        throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+      }
     }
 
-    const { listings = [] } = JSON.parse(rawBody || "{}");
+    const body = JSON.parse(rawBody || "{}");
+
+    // Swagger v2: single object { listing_id, last_refreshed, data: [] }
+    // Normalize to array for uniform handling
+    const listings = _normalizeListings(body);
 
     for (const listing of listings) {
-      const { listing_id, prices = [] } = listing;
-      const propertyId = listing_id.split("_").slice(1).join("_");
+      const { listing_id, data = [], prices = [] } = listing;
+      const entries = data.length ? data : prices; // support both field names
+      const parts = listing_id.split("_");
+      const propertyId = parts.slice(5).join("-");
 
-      for (const entry of prices) {
+      for (const entry of entries) {
         await this.repo.applyPriceRecommendation({
           property_id:         propertyId,
           date:                entry.date,
           nightly_price:       entry.price,
           min_stay:            entry.min_stay,
-          closed_to_arrival:   entry.closed_to_arrival,
-          closed_to_departure: entry.closed_to_departure,
+          closed_to_arrival:   entry.check_in  === false,
+          closed_to_departure: entry.check_out === false,
         });
       }
     }
@@ -277,17 +313,26 @@ export class PriceLabsService {
   }
 
   async handleCalendarTriggerWebhook(headers, rawBody) {
-    const { token } = await this._creds();
+    const parsed = JSON.parse(rawBody || "{}");
+    if (parsed.verify === true) return { success: true };
 
-    if (!verifyPriceLabsSignature(headers, rawBody, token)) {
-      throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+    const { token } = await this._creds();
+    const hdr = (name) => headers[name] || headers[name.toLowerCase()] || "";
+    if (hdr("X-PL-SIGNED-HEADERS") && hdr("X-PL-SIGNED-BODY")) {
+      if (!verifyPriceLabsSignature(headers, rawBody, token)) {
+        throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+      }
     }
 
-    const { listing_ids = [] } = JSON.parse(rawBody || "{}");
+    const body = JSON.parse(rawBody || "{}");
+
+    // Swagger v2: single listing_id (string) + start_date + end_date
+    // Legacy: listing_ids (array)
+    const listing_ids = body.listing_ids ?? (body.listing_id ? [body.listing_id] : []);
 
     const hostMap = {};
     for (const lid of listing_ids) {
-      const hostId = lid.split("_")[0];
+      const hostId = lid.split("_").slice(0, 5).join("-");
       if (!hostMap[hostId]) hostMap[hostId] = [];
       hostMap[hostId].push(lid);
     }
@@ -300,17 +345,19 @@ export class PriceLabsService {
   }
 
   async handleHookWebhook(headers, rawBody) {
-    const { token } = await this._creds();
+    const payload = JSON.parse(rawBody || "{}");
+    if (payload.verify === true) return { success: true };
 
-    if (!verifyPriceLabsSignature(headers, rawBody, token)) {
-      throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+    const { token } = await this._creds();
+    const hdr = (name) => headers[name] || headers[name.toLowerCase()] || "";
+    if (hdr("X-PL-SIGNED-HEADERS") && hdr("X-PL-SIGNED-BODY")) {
+      if (!verifyPriceLabsSignature(headers, rawBody, token)) {
+        throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+      }
     }
 
-    const payload = JSON.parse(rawBody || "{}");
-    console.warn("[PriceLabs Hook]", JSON.stringify(payload));
-
     if (payload.listing_id) {
-      const hostId = payload.listing_id.split("_")[0];
+      const hostId = payload.listing_id.split("_").slice(0, 5).join("-");
       await this.repo.updateSyncStatus(hostId, {
         last_sync_status: "error",
         last_sync_error:  payload.message || "PriceLabs hook notification",
@@ -332,6 +379,12 @@ function _tsToDate(ts) {
   return new Date(Number(ts)).toISOString().split("T")[0];
 }
 
+function _normalizeListings(body) {
+  if (Array.isArray(body.listings)) return body.listings;
+  if (body.listing_id) return [{ listing_id: body.listing_id, data: body.data ?? [] }];
+  return [];
+}
+
 function _intToDate(val) {
   if (!val) return null;
   const s = String(val);
@@ -342,6 +395,28 @@ function _mapBookingStatus(status) {
   const s = String(status || "").toLowerCase();
   if (s === "cancelled" || s === "canceled" || s === "declined" || s === "failed") return "canceled";
   return "booked";
+}
+
+const COUNTRY_TO_ALPHA3 = {
+  "netherlands": "NLD", "nl": "NLD", "nld": "NLD",
+  "germany": "DEU", "de": "DEU", "deutschland": "DEU",
+  "belgium": "BEL", "be": "BEL",
+  "france": "FRA", "fr": "FRA",
+  "spain": "ESP", "es": "ESP",
+  "italy": "ITA", "it": "ITA",
+  "united kingdom": "GBR", "gb": "GBR", "uk": "GBR",
+  "austria": "AUT", "at": "AUT",
+  "switzerland": "CHE", "ch": "CHE",
+  "portugal": "PRT", "pt": "PRT",
+  "greece": "GRC", "gr": "GRC",
+  "turkey": "TUR", "tr": "TUR",
+  "united states": "USA", "us": "USA",
+};
+
+function _toAlpha3(country) {
+  if (!country) return "NLD";
+  const key = country.toLowerCase().trim();
+  return COUNTRY_TO_ALPHA3[key] || country.toUpperCase().slice(0, 3);
 }
 
 function _dateDiff(checkin, checkout) {

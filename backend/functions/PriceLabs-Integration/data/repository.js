@@ -1,6 +1,7 @@
 import Database from "database";
 import { PriceLabs_Connection } from "database/models/PriceLabs_Connection";
 import { Property } from "database/models/Property";
+import { Property_Location } from "database/models/Property_Location";
 import { Property_Calendar_Override } from "database/models/Property_Calendar_Override";
 import { Booking } from "database/models/Booking";
 import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
@@ -38,6 +39,33 @@ export class Repository {
     );
   }
 
+  async clearPriceLabsDataForHost(hostId) {
+    const ds = await this._ds();
+
+    const properties = await ds.getRepository(Property).find({
+      where: { hostid: hostId },
+      select: ["id"],
+    });
+    if (!properties.length) return;
+
+    const propertyIds = properties.map((p) => p.id);
+
+    const repo = ds.getRepository(Property_Calendar_Override);
+    for (const propertyId of propertyIds) {
+      await repo.createQueryBuilder()
+        .update()
+        .set({
+          pricelabs_price:     null,
+          min_stay:            null,
+          closed_to_arrival:   null,
+          closed_to_departure: null,
+          updated_at:          Date.now(),
+        })
+        .where("property_id = :propertyId", { propertyId })
+        .execute();
+    }
+  }
+
   async updateSyncStatus(hostId, fields) {
     const ds = await this._ds();
     await ds.getRepository(PriceLabs_Connection).update(
@@ -49,7 +77,27 @@ export class Repository {
 
   async getPropertiesByHost(hostId) {
     const ds = await this._ds();
-    return ds.getRepository(Property).find({ where: { hostid: hostId } });
+    const properties = await ds.getRepository(Property).find({ where: { hostid: hostId } });
+
+    const locationMap = {};
+    if (properties.length) {
+      const ids = properties.map((p) => p.id);
+      const locations = await ds.getRepository(Property_Location)
+        .createQueryBuilder("loc")
+        .where("loc.property_id IN (:...ids)", { ids })
+        .getMany();
+      for (const loc of locations) {
+        locationMap[loc.property_id] = loc;
+      }
+    }
+
+    return properties.map((p) => ({
+      ...p,
+      city:      locationMap[p.id]?.city      ?? "",
+      country:   locationMap[p.id]?.country   ?? "NL",
+      latitude:  locationMap[p.id]?.latitude  ?? null,
+      longitude: locationMap[p.id]?.longitude ?? null,
+    }));
   }
 
 
@@ -74,7 +122,6 @@ export class Repository {
 
     const calendarDate = Number(String(date ?? "").replaceAll("-", ""));
     if (!calendarDate || calendarDate < 10000101 || calendarDate > 99991231) {
-      console.error("[PriceLabs] Invalid date received:", date);
       return;
     }
 
@@ -84,7 +131,7 @@ export class Repository {
 
     if (existing) {
       await repo.update({ property_id, calendar_date: calendarDate }, {
-        nightly_price:       nightly_price ?? existing.nightly_price,
+        pricelabs_price:     nightly_price ?? existing.pricelabs_price,
         min_stay:            min_stay       ?? existing.min_stay,
         closed_to_arrival:   closed_to_arrival   ?? existing.closed_to_arrival,
         closed_to_departure: closed_to_departure ?? existing.closed_to_departure,
@@ -94,8 +141,7 @@ export class Repository {
       await repo.save(repo.create({
         property_id,
         calendar_date:       calendarDate,
-        is_available:        true,
-        nightly_price,
+        pricelabs_price:     nightly_price,
         min_stay:            min_stay || 1,
         closed_to_arrival:   closed_to_arrival   || false,
         closed_to_departure: closed_to_departure || false,

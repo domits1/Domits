@@ -5,16 +5,18 @@ import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 export default function DynamicPricingCard({
   isConnected,
   selectedDateKeys,
-  priceOverrides,
+  priceLabsOverrides,
   onApplyPrice,
+  onIgnorePrice,
   onOpenSettings,
 }) {
   const firstDateKey = selectedDateKeys?.[0];
   const multipleSelected = selectedDateKeys?.length > 1;
 
+  // recommendedPrice: price from PriceLabs for the first selected date (suggestion only)
   const recommendedPrice =
-    firstDateKey && priceOverrides && Number(priceOverrides[firstDateKey]) > 0
-      ? Number(priceOverrides[firstDateKey])
+    firstDateKey && priceLabsOverrides && Number(priceLabsOverrides[firstDateKey]) > 0
+      ? Number(priceLabsOverrides[firstDateKey])
       : null;
 
   if (!isConnected) {
@@ -40,10 +42,20 @@ export default function DynamicPricingCard({
 
   if (selectedDateKeys?.length > 0) {
     return (
-      <section className="hc-info-card hc-dynamic-pricing-card">
+      <section className="hc-info-card hc-info-card--interactive hc-dynamic-pricing-card">
+        {/* Background hit-area navigates to PriceLabs settings */}
+        <button
+          type="button"
+          className="hc-info-card-hitarea"
+          aria-label="Open PriceLabs dynamic pricing settings"
+          onClick={() => onOpenSettings?.()}
+        />
         <header className="hc-info-card-header">
           <h3 className="hc-info-card-title">Dynamic Pricing</h3>
           <span className="hc-dynamic-pricing-badge">Active</span>
+          <span className="hc-info-card-chevron" aria-hidden="true">
+            <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
+          </span>
         </header>
 
         {recommendedPrice == null ? (
@@ -64,13 +76,29 @@ export default function DynamicPricingCard({
               EUR {recommendedPrice.toFixed(2)}
               {multipleSelected ? " avg" : ""}
             </p>
-            <button
-              type="button"
-              className="hc-dynamic-pricing-apply-btn"
-              onClick={() => onApplyPrice?.(selectedDateKeys, recommendedPrice)}
-            >
-              Apply price
-            </button>
+            <div className="hc-dynamic-pricing-actions" style={{ position: "relative", zIndex: 1, display: "flex", gap: "8px" }}>
+              <button
+                type="button"
+                className="hc-dynamic-pricing-apply-btn"
+                style={{ flex: 1 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onApplyPrice?.(selectedDateKeys, recommendedPrice);
+                }}
+              >
+                Apply price
+              </button>
+              <button
+                type="button"
+                className="hc-dynamic-pricing-ignore-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onIgnorePrice?.(selectedDateKeys);
+                }}
+              >
+                Ignore
+              </button>
+            </div>
           </>
         )}
       </section>
@@ -100,14 +128,16 @@ export default function DynamicPricingCard({
 DynamicPricingCard.propTypes = {
   isConnected: PropTypes.bool.isRequired,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string),
-  priceOverrides: PropTypes.object,
+  priceLabsOverrides: PropTypes.object,
   onApplyPrice: PropTypes.func,
+  onIgnorePrice: PropTypes.func,
   onOpenSettings: PropTypes.func,
 };
 
 DynamicPricingCard.defaultProps = {
   selectedDateKeys: [],
-  priceOverrides: {},
+  priceLabsOverrides: {},
   onApplyPrice: () => {},
+  onIgnorePrice: () => {},
   onOpenSettings: () => {},
 };
