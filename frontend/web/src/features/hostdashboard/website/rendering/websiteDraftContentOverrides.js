@@ -39,6 +39,7 @@ import {
   DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
   normalizeWebsiteImageRotationSettings,
 } from "./websiteImageSlotUtils";
+import { buildAccommodationImageAssetFromUrl } from "../../../../utils/accommodationImage";
 
 const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "siteTitle",
@@ -133,6 +134,42 @@ const mergeGalleryImages = (baseImages = [], overrideImages = []) => {
     const overrideImage = cleanText(normalizedOverrideImages[index]);
     return overrideImage || baseImage;
   });
+};
+
+const buildMediaImageAssetLookup = (media = {}) => {
+  const imageAssetLookup = new Map();
+  const imageAssets = [
+    media?.heroImageAsset,
+    media?.residenceImageAsset,
+    ...(Array.isArray(media?.galleryImageAssets) ? media.galleryImageAssets : []),
+  ].filter(Boolean);
+
+  imageAssets.forEach((imageAsset) => {
+    [
+      imageAsset?.src,
+      imageAsset?.thumbSrc,
+      imageAsset?.webSrc,
+      imageAsset?.originalSrc,
+    ]
+      .map((value) => cleanText(value))
+      .filter(Boolean)
+      .forEach((imageUrl) => {
+        if (!imageAssetLookup.has(imageUrl)) {
+          imageAssetLookup.set(imageUrl, imageAsset);
+        }
+      });
+  });
+
+  return imageAssetLookup;
+};
+
+const resolveMediaImageAsset = (imageAssetLookup, imageUrl) => {
+  const normalizedImageUrl = cleanText(imageUrl);
+  if (!normalizedImageUrl) {
+    return null;
+  }
+
+  return imageAssetLookup.get(normalizedImageUrl) || buildAccommodationImageAssetFromUrl(normalizedImageUrl);
 };
 
 const mergeImageRotationSettings = (
@@ -355,6 +392,7 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
   },
   contact: {
     title: "",
+    caption: "",
     description: "",
     avatarMode: WEBSITE_CONTACT_AVATAR_MODE_HOST,
     avatarImage: "",
@@ -433,6 +471,12 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const mergedVisibility = mergeVisibility(model?.visibility, overrides.visibility);
   const mergedTrustCards = mergeCopyItems(model?.trustCards, overrides.trustCards);
   const mergedJourneyStops = mergeCopyItems(model?.journeyStops, overrides.journeyStops);
+  const mediaImageAssetLookup = buildMediaImageAssetLookup(model?.media);
+  const nextHeroImage = heroImage || model.media.heroImage;
+  const nextResidenceImage = residenceImage || model?.media?.residenceImage || nextHeroImage;
+  const mergedGalleryImageAssets = mergedGalleryImages
+    .map((imageUrl) => resolveMediaImageAsset(mediaImageAssetLookup, imageUrl))
+    .filter(Boolean);
   const resolvedContactSectionCopy = resolveWebsiteContactSectionCopy(model?.contactSection);
   const modelContactAvatarImage = cleanText(model?.contactSection?.avatarImage);
   const modelContactAvatarMode = resolveWebsiteContactAvatarMode(
@@ -467,9 +511,12 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
     },
     media: {
       ...model.media,
-      heroImage: heroImage || model.media.heroImage,
-      residenceImage: residenceImage || model?.media?.residenceImage || model?.media?.heroImage,
-      galleryImages: mergeGalleryImages(model?.media?.galleryImages, overrides.galleryImages),
+      heroImage: nextHeroImage,
+      heroImageAsset: resolveMediaImageAsset(mediaImageAssetLookup, nextHeroImage),
+      residenceImage: nextResidenceImage,
+      residenceImageAsset: resolveMediaImageAsset(mediaImageAssetLookup, nextResidenceImage),
+      galleryImages: mergedGalleryImages,
+      galleryImageAssets: mergedGalleryImageAssets,
       imageRotation: mergedImageRotation,
       featuredGalleryImages: mergedGalleryImages,
       previewImages: mergedGalleryImages.slice(0, 3),

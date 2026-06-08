@@ -1,7 +1,6 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
-import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 import {
   buildWebsiteImageSlotTarget,
   useWebsiteImageSlotRotation,
@@ -9,6 +8,7 @@ import {
 
 const DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS = 3600;
 const DEFAULT_IMAGE_SLOT_FADE_DURATION_MS = 720;
+const LazyAvailabilityCalendarPreview = lazy(() => import("../AvailabilityCalendarPreview"));
 
 const buildImageSlotFrameClassName = ({
   frameClassName = "",
@@ -21,6 +21,48 @@ const buildImageSlotFrameClassName = ({
 
 const buildImageSlotImageClassName = (imageClassName, enableHoverEffect = false) =>
   `${imageClassName} ${enableHoverEffect ? styles.templateImageHoverImage : ""}`.trim();
+
+const buildImageLoadingProps = ({ slot, imageIndex = 0, isRotationEnabled = false, isInteractivePreview = false }) => {
+  if (isInteractivePreview) {
+    return {
+      decoding: "async",
+    };
+  }
+
+  const isHeroSlot = slot?.kind === "hero";
+  const isLeadHeroImage = isHeroSlot && (!isRotationEnabled || imageIndex === 0);
+
+  return {
+    loading: isLeadHeroImage ? "eager" : "lazy",
+    fetchPriority: isLeadHeroImage ? "high" : "low",
+    decoding: "async",
+  };
+};
+
+const buildResponsiveImageProps = ({
+  slot,
+  model,
+  isRotationEnabled = false,
+  isInteractivePreview = false,
+}) => {
+  if (isInteractivePreview || isRotationEnabled || slot?.kind !== "hero") {
+    return {};
+  }
+
+  const heroImageAsset =
+    model?.media?.heroImageAsset && typeof model.media.heroImageAsset === "object"
+      ? model.media.heroImageAsset
+      : null;
+  const responsiveSrcSet = String(heroImageAsset?.srcSet || "").trim();
+  if (!responsiveSrcSet) {
+    return {};
+  }
+
+  return {
+    srcSet: responsiveSrcSet,
+    sizes: String(heroImageAsset?.sizes || "100vw").trim() || "100vw",
+  };
+};
 
 export const getInteractiveTargetProps = (
   className,
@@ -172,19 +214,28 @@ export function TemplateAvailabilityCalendar({
   }, activeTargetId);
 
   return (
-    <AvailabilityCalendarPreview
-      availability={model.availability}
-      calendarSection={model.calendarSection}
-      titleInteractiveTargetProps={titleInteractiveTargetProps}
-      descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
-      templateKey={templateKey}
-      variant={variant}
-      propertyTitle={propertyTitle}
-      interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
-        sectionId: "calendar",
-        targetId: "calendar.visibility",
-      }, activeTargetId)}
-    />
+    <Suspense
+      fallback={
+        <div
+          className={styles.availabilityCalendarDeferredFallback}
+          aria-hidden="true"
+        />
+      }
+    >
+      <LazyAvailabilityCalendarPreview
+        availability={model.availability}
+        calendarSection={model.calendarSection}
+        titleInteractiveTargetProps={titleInteractiveTargetProps}
+        descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
+        templateKey={templateKey}
+        variant={variant}
+        propertyTitle={propertyTitle}
+        interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
+          sectionId: "calendar",
+          targetId: "calendar.visibility",
+        }, activeTargetId)}
+      />
+    </Suspense>
   );
 }
 
@@ -219,6 +270,7 @@ export function TemplateImageSlotVisual({
     imageSequence,
     isRotationEnabled,
   } = useWebsiteImageSlotRotation(slot, model?.media, rotationIntervalMs);
+  const isInteractivePreview = Boolean(onSelectTarget);
   const buildInteractiveProps = (className) =>
     getInteractiveTargetProps(
       className,
@@ -242,6 +294,18 @@ export function TemplateImageSlotVisual({
         {...buildInteractiveProps(imageClassName)}
         src={imageSequence[0]}
         alt={alt}
+        {...buildResponsiveImageProps({
+          slot,
+          model,
+          isRotationEnabled: false,
+          isInteractivePreview,
+        })}
+        {...buildImageLoadingProps({
+          slot,
+          imageIndex: 0,
+          isRotationEnabled: false,
+          isInteractivePreview,
+        })}
       />
     );
   }
@@ -261,6 +325,18 @@ export function TemplateImageSlotVisual({
           src={imageSequence[0]}
           alt={alt}
           className={buildImageSlotImageClassName(imageClassName, enableHoverEffect)}
+          {...buildResponsiveImageProps({
+            slot,
+            model,
+            isRotationEnabled: false,
+            isInteractivePreview,
+          })}
+          {...buildImageLoadingProps({
+            slot,
+            imageIndex: 0,
+            isRotationEnabled: false,
+            isInteractivePreview,
+          })}
         />
       </div>
     );
@@ -285,6 +361,12 @@ export function TemplateImageSlotVisual({
           src={imageUrl}
           alt={index === activeImageIndex ? alt : ""}
           aria-hidden={index === activeImageIndex ? undefined : "true"}
+          {...buildImageLoadingProps({
+            slot,
+            imageIndex: index,
+            isRotationEnabled,
+            isInteractivePreview,
+          })}
           className={`${styles.templateRotatingImageLayer} ${buildImageSlotImageClassName(
             "",
             enableHoverEffect

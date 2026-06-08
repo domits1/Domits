@@ -26,6 +26,8 @@ export function TextField({
   onFocus = undefined,
   onBlur = undefined,
 }) {
+  const normalizedValue = typeof value === "string" ? value : "";
+
   if (field.component === "textarea") {
     return (
       <div
@@ -38,7 +40,7 @@ export function TextField({
         <textarea
           id={`website-editor-${field.key}`}
           className={styles.textArea}
-          value={value}
+          value={normalizedValue}
           onChange={onChange}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
@@ -59,7 +61,7 @@ export function TextField({
       <input
         id={`website-editor-${field.key}`}
         className={styles.textInput}
-        value={value}
+        value={normalizedValue}
         onChange={onChange}
         onKeyDown={onKeyDown}
         onFocus={onFocus}

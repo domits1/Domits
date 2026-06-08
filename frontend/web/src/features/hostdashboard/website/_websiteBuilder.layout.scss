@@ -381,6 +381,47 @@
   margin: 0;
 }
 
+.surfaceKpiViewportGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.surfaceKpiViewportPanel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.1);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.surfaceKpiViewportHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.surfaceKpiViewportHeader h4,
+.surfaceKpiViewportHeader p {
+  margin: 0;
+}
+
+.surfaceKpiViewportHeader h4 {
+  color: #153e64;
+  font-size: 0.98rem;
+}
+
+.surfaceKpiViewportHeader p {
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.surfaceKpiViewportMetricGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
 .surfaceKpiGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
