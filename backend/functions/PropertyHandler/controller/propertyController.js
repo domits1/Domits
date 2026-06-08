@@ -19,6 +19,8 @@ import responseHeaders from "../util/constant/responseHeader.json" with { type: 
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
+    isDirectBookingWebsiteFallbackDomain,
+    isDirectBookingWebsiteFallbackRoutingActive,
     getDirectBookingWebsiteFallbackRoutingStatus,
     resolveDirectBookingWebsiteFallbackDomainStatus,
 } from "../util/directBookingWebsiteRouting.js";
@@ -137,6 +139,17 @@ const getRequestHostHeaderValue = (headers = {}) =>
     headers.host ||
     headers.Host ||
     "";
+const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) => {
+    const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
+    const shouldTreatPublishedFallbackDomainAsActive =
+        String(site?.status || "").trim().toUpperCase() === "PUBLISHED" &&
+        isDirectBookingWebsiteFallbackRoutingActive() &&
+        isDirectBookingWebsiteFallbackDomain(domainEntry) &&
+        resolvedStatus === "DISABLED" &&
+        domainEntry?.verificationDetails?.disabledByHost === true;
+
+    return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
+};
 
 export class PropertyController {
 
@@ -1614,7 +1627,7 @@ export class PropertyController {
                 return domainEntry;
             }
 
-            const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
+            const resolvedStatus = resolveDirectBookingWebsiteRuntimeDomainStatus(site, domainEntry);
             if (!resolvedStatus || resolvedStatus === domainEntry.status) {
                 return domainEntry;
             }
@@ -1766,7 +1779,7 @@ export class PropertyController {
         return (
             Boolean(site) &&
             site.status === "PUBLISHED" &&
-            resolveDirectBookingWebsiteFallbackDomainStatus(domain) === "ACTIVE"
+            resolveDirectBookingWebsiteRuntimeDomainStatus(site, domain) === "ACTIVE"
         );
     }
 
