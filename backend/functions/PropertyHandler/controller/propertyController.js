@@ -1836,7 +1836,12 @@ export class PropertyController {
             },
         });
 
-        return this.buildDirectBookingWebsiteSummary(site, [liveDomain]);
+        const persistedSiteSummary = await this.getDirectBookingWebsiteSummaryByPropertyId(propertyId, hostId);
+        if (persistedSiteSummary) {
+            return persistedSiteSummary;
+        }
+
+        return this.buildDirectBookingWebsiteSummary(site, liveDomain ? [liveDomain] : []);
     }
 
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {

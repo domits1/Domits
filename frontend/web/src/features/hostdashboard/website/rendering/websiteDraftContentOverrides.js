@@ -355,6 +355,7 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
   },
   contact: {
     title: "",
+    caption: "",
     description: "",
     avatarMode: WEBSITE_CONTACT_AVATAR_MODE_HOST,
     avatarImage: "",
