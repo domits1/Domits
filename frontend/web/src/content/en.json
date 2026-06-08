@@ -409,7 +409,25 @@
     "attachment": "Add attachments",
     "send": "Send message",
     "guest": "Guest",
-    "host": "Host"
+    "host": "Host",
+    "heroLabel": "HELP CENTER",
+    "heroTitleStart": "How can we ",
+    "heroTitleEnd": "help you?",
+    "searchPlaceholder": "Search for answers, bookings, payments, support...",
+    "frequentlyAsked": "Frequently asked questions",
+    "stillNeedHelp": "Still need help?",
+    "supportSubtitle": "Our support team is here for you 24/7",
+    "contactSupport": "Contact Support",
+    "noResults": "No results found for \"{query}\". Try a different search term.",
+    "categories": {
+      "aboutDomits": "About Domits",
+      "manageAccount": "Manage Account",
+      "searchAndBook": "Search And Book",
+      "cancellations": "Cancellations",
+      "payments": "Payments",
+      "yourStay": "Your Stay",
+      "support": "Support"
+    }
   },
   "whyDomits": {
     "head": {

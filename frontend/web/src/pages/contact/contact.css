@@ -250,6 +250,7 @@
 .contact-cta__left p {
     margin: 0;
     font-size: 13px;
+    color: #fff;
     opacity: 0.85;
 }
 
@@ -271,17 +272,46 @@
 }
 
 /* ── Contact form section ─────────────────────────────── */
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 .contact-form-section {
     max-width: 720px;
-    margin: 0 auto;
-    padding: 0 24px 80px;
+    margin: 16px auto 48px;
+    padding: 32px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    animation: slideDown 0.25s ease;
+}
+
+.contact-form-section__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.contact-form-section__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #e8f5e9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    flex-shrink: 0;
 }
 
 .contact-form-section h2 {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 600;
     color: #111;
-    margin: 0 0 8px;
+    margin: 0;
 }
 
 .contact-form-section > p {
@@ -289,6 +319,7 @@
     color: #666;
     margin: 0 0 24px;
     line-height: 1.6;
+    padding-left: 60px;
 }
 
 .contact-feedback {

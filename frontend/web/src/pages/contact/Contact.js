@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import {
     Info, User, MapPin, XCircle, CreditCard, Home,
-    Headphones, Search, MessageCircle, ChevronDown, Plus, Minus
+    Headphones, Search, MessageCircle, ChevronDown, Plus, Minus, Mail
 } from "lucide-react";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -145,7 +145,7 @@ FaqAccordionItem.propTypes = {
     answer: PropTypes.string.isRequired,
 };
 
-const FaqCategoryCard = ({ category, searchQuery }) => {
+const FaqCategoryCard = ({ category, searchQuery, frequentlyAsked }) => {
     const [open, setOpen] = useState(false);
     const { label, Icon, faqs } = category;
 
@@ -175,7 +175,7 @@ const FaqCategoryCard = ({ category, searchQuery }) => {
                 </div>
                 <div className="contact-faq-card__info">
                     <h3>{label}</h3>
-                    <span>Frequently asked questions</span>
+                    <span>{frequentlyAsked}</span>
                 </div>
                 <span className="contact-faq-card__toggle" aria-hidden="true">
                     {isExpanded ? <Minus size={18} /> : <Plus size={18} />}
@@ -200,10 +200,12 @@ FaqCategoryCard.propTypes = {
         faqs: PropTypes.arrayOf(faqItemShape).isRequired,
     }).isRequired,
     searchQuery: PropTypes.string.isRequired,
+    frequentlyAsked: PropTypes.string.isRequired,
 };
 
 function Contact() {
     const [searchQuery, setSearchQuery] = useState("");
+    const [formOpen, setFormOpen] = useState(false);
     const [sourceEmail, setSourceEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -217,7 +219,12 @@ function Contact() {
     const isValidEmail = (email) => /^[^\s@]+@[^\s@.]+\.[^\s@.]+$/.test(email);
 
     const scrollToForm = () => {
-        formRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (formOpen) {
+            setFormOpen(false);
+        } else {
+            setFormOpen(true);
+            setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+        }
     };
 
     const handleAttachmentChange = (event) => {
@@ -278,26 +285,37 @@ function Contact() {
             .finally(() => setIsSubmitting(false));
     };
 
+    const t = contactContent || {};
+    const categories = t.categories || {};
+
+    const translatedFaqData = FAQ_DATA.map(cat => ({
+        ...cat,
+        label: categories[cat.key] || cat.label,
+    }));
+
     const lowerQuery = searchQuery.toLowerCase();
-    const hasNoResults = searchQuery.length > 0 && FAQ_DATA.every(cat =>
+    const hasNoResults = searchQuery.length > 0 && translatedFaqData.every(cat =>
         cat.faqs.every(f =>
             !f.question.toLowerCase().includes(lowerQuery) &&
             !f.answer.toLowerCase().includes(lowerQuery)
         )
     );
 
+    const noResultsMsg = (t.noResults || "No results found for \"{query}\". Try a different search term.")
+        .replace("{query}", searchQuery);
+
     return (
         <div className="contact-page">
             <div className="contact-hero">
-                <span className="contact-hero__label">HELP CENTER</span>
+                <span className="contact-hero__label">{t.heroLabel || "HELP CENTER"}</span>
                 <h1 className="contact-hero__title">
-                    How can we <span>help you?</span>
+                    {t.heroTitleStart || "How can we "}<span>{t.heroTitleEnd || "help you?"}</span>
                 </h1>
                 <div className="contact-hero__search">
                     <Search size={18} className="contact-hero__search-icon" />
                     <input
                         type="text"
-                        placeholder="Search for answers, bookings, payments, support..."
+                        placeholder={t.searchPlaceholder || "Search for answers, bookings, payments, support..."}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -305,15 +323,16 @@ function Contact() {
             </div>
 
             <div className="contact-faq-wrapper">
-                {FAQ_DATA.map((category) => (
+                {translatedFaqData.map((category) => (
                     <FaqCategoryCard
                         key={category.key}
                         category={category}
                         searchQuery={searchQuery}
+                        frequentlyAsked={t.frequentlyAsked || "Frequently asked questions"}
                     />
                 ))}
                 {hasNoResults && (
-                    <p className="contact-no-results">No results found for &quot;{searchQuery}&quot;. Try a different search term.</p>
+                    <p className="contact-no-results">{noResultsMsg}</p>
                 )}
             </div>
 
@@ -323,17 +342,22 @@ function Contact() {
                         <MessageCircle size={24} />
                     </div>
                     <div>
-                        <h3>Still need help?</h3>
-                        <p>Our support team is here for you 24/7</p>
+                        <h3>{t.stillNeedHelp || "Still need help?"}</h3>
+                        <p>{t.supportSubtitle || "Our support team is here for you 24/7"}</p>
                     </div>
                 </div>
                 <button className="contact-cta__btn" onClick={scrollToForm}>
-                    Contact Support →
+                    {formOpen ? "↑ " : ""}{t.contactSupport || "Contact Support"}{formOpen ? "" : " →"}
                 </button>
             </div>
 
-            <div className="contact-form-section" ref={formRef}>
-                <h2>{contactContent?.form?.title || "Contact Form"}</h2>
+            {formOpen && <div className="contact-form-section" ref={formRef}>
+                <div className="contact-form-section__header">
+                    <div className="contact-form-section__icon">
+                        <Mail size={20} />
+                    </div>
+                    <h2>{contactContent?.form?.title || "Contact Form"}</h2>
+                </div>
                 <p>{contactContent?.form?.description}</p>
                 {feedbackMessage && (
                     <p className={`contact-feedback${feedbackMessage.includes("successfully") ? " contact-feedback--success" : " contact-feedback--error"}`}>
@@ -378,7 +402,7 @@ function Contact() {
                         )}
                     </div>
                 </form>
-            </div>
+            </div>}
         </div>
     );
 }

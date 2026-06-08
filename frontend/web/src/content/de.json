@@ -410,7 +410,25 @@
     "attachment": "Anhänge hinzufügen",
     "send": "Nachricht senden",
     "guest": "Gast",
-    "host": "Gastgeber"
+    "host": "Gastgeber",
+    "heroLabel": "HILFEZENTRUM",
+    "heroTitleStart": "Wie können wir ",
+    "heroTitleEnd": "dir helfen?",
+    "searchPlaceholder": "Suche nach Antworten, Buchungen, Zahlungen, Support...",
+    "frequentlyAsked": "Häufig gestellte Fragen",
+    "stillNeedHelp": "Noch Hilfe benötigt?",
+    "supportSubtitle": "Unser Support-Team ist 24/7 für dich da",
+    "contactSupport": "Support kontaktieren",
+    "noResults": "Keine Ergebnisse für \"{query}\" gefunden. Versuche einen anderen Suchbegriff.",
+    "categories": {
+      "aboutDomits": "Über Domits",
+      "manageAccount": "Konto verwalten",
+      "searchAndBook": "Suchen und Buchen",
+      "cancellations": "Stornierungen",
+      "payments": "Zahlungen",
+      "yourStay": "Dein Aufenthalt",
+      "support": "Unterstützung"
+    }
   },
   "whyDomits": {
     "head": {

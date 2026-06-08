@@ -410,7 +410,25 @@
     "attachment": "Bijlagen toevoegen",
     "send": "Bericht verzenden",
     "guest": "Gast",
-    "host": "Gastheer"
+    "host": "Gastheer",
+    "heroLabel": "HULPCENTRUM",
+    "heroTitleStart": "Hoe kunnen we ",
+    "heroTitleEnd": "je helpen?",
+    "searchPlaceholder": "Zoek naar antwoorden, boekingen, betalingen, ondersteuning...",
+    "frequentlyAsked": "Veelgestelde vragen",
+    "stillNeedHelp": "Nog steeds hulp nodig?",
+    "supportSubtitle": "Ons supportteam staat 24/7 voor je klaar",
+    "contactSupport": "Contact opnemen",
+    "noResults": "Geen resultaten gevonden voor \"{query}\". Probeer een andere zoekterm.",
+    "categories": {
+      "aboutDomits": "Over Domits",
+      "manageAccount": "Account beheren",
+      "searchAndBook": "Zoeken en boeken",
+      "cancellations": "Annuleringen",
+      "payments": "Betalingen",
+      "yourStay": "Jouw verblijf",
+      "support": "Ondersteuning"
+    }
   },
   "whyDomits": {
     "head": {
