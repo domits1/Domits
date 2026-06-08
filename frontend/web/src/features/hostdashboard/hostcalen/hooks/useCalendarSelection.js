@@ -734,6 +734,23 @@ export const useCalendarSelection = ({
     });
   };
 
+  const handleIgnorePriceLabsSuggestion = (dateKeys) => {
+    if (!selectedPropertyId || !dateKeys?.length) {
+      return;
+    }
+    // Remove the PriceLabs suggestion from local state for these dates.
+    // The suggestion will reappear only after the next PriceLabs sync.
+    setPriceLabsOverridesByPropertyId((previous) => {
+      const existing = previous?.[selectedPropertyId];
+      if (!existing) return previous;
+      const next = { ...existing };
+      dateKeys.forEach((key) => {
+        delete next[key];
+      });
+      return { ...previous, [selectedPropertyId]: next };
+    });
+  };
+
   const handleApplyPriceLabsSuggestion = (dateKeys) => {
     if (!selectedPropertyId || !dateKeys?.length) {
       return;
@@ -868,6 +885,7 @@ export const useCalendarSelection = ({
     handleSelectionPriceChange,
     handleSaveSelectionPrice,
     handleApplyPriceLabsSuggestion,
+    handleIgnorePriceLabsSuggestion,
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
     resetSelectionState,

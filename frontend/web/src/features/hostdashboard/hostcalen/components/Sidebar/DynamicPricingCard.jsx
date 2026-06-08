@@ -7,6 +7,7 @@ export default function DynamicPricingCard({
   selectedDateKeys,
   priceLabsOverrides,
   onApplyPrice,
+  onIgnorePrice,
   onOpenSettings,
 }) {
   const firstDateKey = selectedDateKeys?.[0];
@@ -75,17 +76,29 @@ export default function DynamicPricingCard({
               EUR {recommendedPrice.toFixed(2)}
               {multipleSelected ? " avg" : ""}
             </p>
-            <button
-              type="button"
-              className="hc-dynamic-pricing-apply-btn"
-              style={{ position: "relative", zIndex: 1 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onApplyPrice?.(selectedDateKeys, recommendedPrice);
-              }}
-            >
-              Apply price
-            </button>
+            <div className="hc-dynamic-pricing-actions" style={{ position: "relative", zIndex: 1, display: "flex", gap: "8px" }}>
+              <button
+                type="button"
+                className="hc-dynamic-pricing-apply-btn"
+                style={{ flex: 1 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onApplyPrice?.(selectedDateKeys, recommendedPrice);
+                }}
+              >
+                Apply price
+              </button>
+              <button
+                type="button"
+                className="hc-dynamic-pricing-ignore-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onIgnorePrice?.(selectedDateKeys);
+                }}
+              >
+                Ignore
+              </button>
+            </div>
           </>
         )}
       </section>
@@ -117,6 +130,7 @@ DynamicPricingCard.propTypes = {
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string),
   priceLabsOverrides: PropTypes.object,
   onApplyPrice: PropTypes.func,
+  onIgnorePrice: PropTypes.func,
   onOpenSettings: PropTypes.func,
 };
 
@@ -124,5 +138,6 @@ DynamicPricingCard.defaultProps = {
   selectedDateKeys: [],
   priceLabsOverrides: {},
   onApplyPrice: () => {},
+  onIgnorePrice: () => {},
   onOpenSettings: () => {},
 };

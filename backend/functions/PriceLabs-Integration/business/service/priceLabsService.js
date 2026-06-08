@@ -76,6 +76,9 @@ export class PriceLabsService {
 
   async disconnect(hostId) {
     await this.repo.deactivateConnection(hostId);
+    // Clear all PriceLabs-written data (pricelabs_price, min_stay, check-in/out
+    // restrictions) from the calendar so the host's original prices are restored.
+    await this.repo.clearPriceLabsDataForHost(hostId);
     return { success: true, message: "PriceLabs disconnected." };
   }
 

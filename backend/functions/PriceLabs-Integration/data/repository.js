@@ -39,6 +39,42 @@ export class Repository {
     );
   }
 
+  /**
+   * On disconnect: clear all PriceLabs-set data from the calendar overrides for
+   * all properties owned by this host. This restores the host's original prices
+   * and removes all PriceLabs-written restrictions.
+   *
+   * Only pricelabs_price, min_stay, closed_to_arrival, and closed_to_departure
+   * are cleared — nightly_price (host-set) and is_available are preserved.
+   */
+  async clearPriceLabsDataForHost(hostId) {
+    const ds = await this._ds();
+
+    // Get all property IDs for this host
+    const properties = await ds.getRepository(Property).find({
+      where: { hostid: hostId },
+      select: ["id"],
+    });
+    if (!properties.length) return;
+
+    const propertyIds = properties.map((p) => p.id);
+
+    const repo = ds.getRepository(Property_Calendar_Override);
+    for (const propertyId of propertyIds) {
+      await repo.createQueryBuilder()
+        .update()
+        .set({
+          pricelabs_price:     null,
+          min_stay:            null,
+          closed_to_arrival:   null,
+          closed_to_departure: null,
+          updated_at:          Date.now(),
+        })
+        .where("property_id = :propertyId", { propertyId })
+        .execute();
+    }
+  }
+
   async updateSyncStatus(hostId, fields) {
     const ds = await this._ds();
     await ds.getRepository(PriceLabs_Connection).update(
