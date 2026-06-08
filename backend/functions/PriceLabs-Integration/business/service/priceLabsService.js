@@ -142,22 +142,37 @@ export class PriceLabsService {
       const listingId   = `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`;
       const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
 
-      const data = availability.map((row) => {
-        const date = _intToDate(row.calendar_date);
-        return {
-          date,
-          end_date:        date,
-          price:           row.nightly_price || p.base_price || 100,
-          available_units: row.is_available === false ? 0 : 1,
+      // Build a lookup map keyed by calendar_date integer for O(1) access
+      const overrideMap = {};
+      for (const row of availability) {
+        overrideMap[row.calendar_date] = row;
+      }
+
+      // Generate all 730 days regardless of what is in the DB.
+      // For dates without an explicit override, fall back to the property base_price.
+      // PriceLabs requires a minimum of 12 months (preferably 730 days) of data.
+      const data = [];
+      const defaultPrice = p.base_price || 100;
+      for (let i = 0; i < CALENDAR_DAYS; i++) {
+        const d    = new Date();
+        d.setUTCDate(d.getUTCDate() + i);
+        const iso  = d.toISOString().slice(0, 10);
+        const key  = Number(iso.replaceAll("-", ""));
+        const row  = overrideMap[key];
+        data.push({
+          date:            iso,
+          end_date:        iso,
+          price:           row?.nightly_price || defaultPrice,
+          available_units: row?.is_available === false ? 0 : 1,
           booked_units:    0,
           blocked_units:   0,
           settings: {
-            min_stay:  row.min_stay || 1,
-            check_in:  row.closed_to_arrival  !== true,
-            check_out: row.closed_to_departure !== true,
+            min_stay:  row?.min_stay  || 1,
+            check_in:  row?.closed_to_arrival  !== true,
+            check_out: row?.closed_to_departure !== true,
           },
-        };
-      });
+        });
+      }
 
       await api.pushCalendar(token, name, {
         calendars: [
