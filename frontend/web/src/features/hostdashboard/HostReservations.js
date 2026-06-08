@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import spinner from "../../images/spinnner.gif";
+import defaultThumb from "./image22.png";
 import { getAccessToken } from "../../services/getAccessToken.js";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
@@ -10,6 +11,8 @@ import { updateInquiryStatus } from "./services/reservationService.js";
 import { calculateTotalPayment } from "./utils/reservationCalculations.js";
 import { usePagination } from "./hooks/usePagination.js";
 import { FiSearch } from "react-icons/fi";
+import { resolvePrimaryAccommodationImageUrl } from "../guestdashboard/utils/image";
+import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
 
 const normalizeStatus = (status) => {
   if (!status) return "";
@@ -66,6 +69,7 @@ const mapReservations = (data) => {
         rate: property.rate,
         city: property.city,
         country: property.country,
+        property_meta: property,
         ...item,
         status: normalizeStatus(item.status),
         cancellationType: resolveCancellationType(item.cancellation_policy, propertyRules),
@@ -100,11 +104,47 @@ const mapStatusToClass = (status) => {
   return "statusOther";
 };
 
+const resolveImageUrl = (booking) => {
+  if (!booking) return defaultThumb;
+
+  const tryGet = (val) => {
+    if (!val) return null;
+    if (typeof val === "string") return val;
+    if (Array.isArray(val) && val.length > 0) {
+      const first = val[0];
+      if (typeof first === "string") return first;
+      if (first && typeof first === "object") return first.url || first.src || first.path || null;
+    }
+    if (typeof val === "object") return val.url || val.src || val.path || null;
+    return null;
+  };
+
+  const prop = booking.property_meta || booking.property || null;
+  const propImages = prop?.photos || prop?.images || prop?.media || prop?.gallery || null;
+  if (propImages) {
+    try {
+      const url = resolvePrimaryAccommodationImageUrl(propImages, "thumb");
+      if (url) return url;
+    } catch (err) {}
+  }
+
+  if (booking.property_image_url) {
+    return booking.property_image_url;
+  }
+
+  const resImages = booking.photos || booking.images || booking.media || booking.gallery || null;
+  if (resImages) {
+    try {
+      const url = resolvePrimaryAccommodationImageUrl(resImages, "thumb");
+      if (url) return url;
+    } catch (err) {}
+  }
+
+  return defaultThumb;
+};
+
 const TabButton = ({ tab, activeTab, onSelect, label }) => (
-  <button
-    className={activeTab === tab ? styles.active : ""}
-    onClick={() => onSelect(tab)}
-  >
+  <button className={activeTab === tab ? styles.active : ""} onClick={() => onSelect(tab)}>
     {label}
   </button>
 );
@@ -166,6 +206,38 @@ const HostReservations = () => {
         }
         const flat = mapReservations(data);
         setBookings(flat);
+
+        try {
+          const missingPropIds = Array.from(
+            new Set(
+              flat
+                .filter((b) => {
+                  const prop = b.property_meta || b.property;
+                  const hasPropImages =
+                    (prop && Array.isArray(prop.photos) && prop.photos.length > 0) ||
+                    (prop && Array.isArray(prop.images) && prop.images.length > 0) ||
+                    (prop && Array.isArray(prop.media) && prop.media.length > 0) ||
+                    (prop && Array.isArray(prop.gallery) && prop.gallery.length > 0);
+                  return !hasPropImages && b.property_id;
+                })
+                .map((b) => b.property_id)
+                .filter(Boolean)
+            )
+          );
+
+          if (missingPropIds.length > 0) {
+            const summaries = await fetchPropertySummaries(missingPropIds);
+            setBookings((prev) =>
+              prev.map((b) => {
+                const summary = summaries[b.property_id];
+                if (summary && summary.imageUrl) {
+                  return { ...b, property_image_url: summary.imageUrl };
+                }
+                return b;
+              })
+            );
+          }
+        } catch (err) {}
       } catch (error) {
         toast.error(error?.response?.data?.message || "Failed to load reservations");
         setBookings([]);
@@ -234,9 +306,7 @@ const HostReservations = () => {
     try {
       const result = await updateInquiryStatus(bookingId, action, authToken);
       const newStatus = action === "accept-inquiry" ? "AWAITING_PAYMENT" : "DECLINED";
-      setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
-      );
+      setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b)));
       if (action === "accept-inquiry") {
         const declined = result?.declinedCount || 0;
         let toastMsg = "Request accepted.";
@@ -247,9 +317,7 @@ const HostReservations = () => {
         toast.success(toastMsg);
         if (declined > 0) {
           setBookings((prev) =>
-            prev.map((b) =>
-              b.id !== bookingId && b.status === "INQUIRY" ? { ...b, status: "DECLINED" } : b
-            )
+            prev.map((b) => (b.id !== bookingId && b.status === "INQUIRY" ? { ...b, status: "DECLINED" } : b))
           );
         }
       } else {
@@ -310,16 +378,37 @@ const HostReservations = () => {
           <div className={styles.tabs}>
             <TabButton tab="ALL" activeTab={activeTab} onSelect={setActiveTab} label={`All (${count("ALL")})`} />
             <TabButton tab="PAID" activeTab={activeTab} onSelect={setActiveTab} label={`Upcoming (${count("PAID")})`} />
-            <TabButton tab="AWAITING_PAYMENT" activeTab={activeTab} onSelect={setActiveTab} label={`Awaiting payment (${count("AWAITING_PAYMENT")})`} />
-            <TabButton tab="INQUIRY" activeTab={activeTab} onSelect={setActiveTab} label={`Requests (${count("INQUIRY")})`} />
-            <TabButton tab="FAILED" activeTab={activeTab} onSelect={setActiveTab} label={`Failed (${count("FAILED")})`} />
-            <TabButton tab="DECLINED" activeTab={activeTab} onSelect={setActiveTab} label={`Declined (${count("DECLINED")})`} />
+            <TabButton
+              tab="AWAITING_PAYMENT"
+              activeTab={activeTab}
+              onSelect={setActiveTab}
+              label={`Awaiting payment (${count("AWAITING_PAYMENT")})`}
+            />
+            <TabButton
+              tab="INQUIRY"
+              activeTab={activeTab}
+              onSelect={setActiveTab}
+              label={`Requests (${count("INQUIRY")})`}
+            />
+            <TabButton
+              tab="FAILED"
+              activeTab={activeTab}
+              onSelect={setActiveTab}
+              label={`Failed (${count("FAILED")})`}
+            />
+            <TabButton
+              tab="DECLINED"
+              activeTab={activeTab}
+              onSelect={setActiveTab}
+              label={`Declined (${count("DECLINED")})`}
+            />
           </div>
 
           <div className={styles.list}>
             <section className={styles.reservationData}>
               <table className={styles.reservationTable}>
                 <colgroup>
+                  <col style={{ width: "6%" }} />
                   <col style={{ width: "8%" }} />
                   <col style={{ width: "14%" }} />
                   <col style={{ width: "10%" }} />
@@ -335,6 +424,7 @@ const HostReservations = () => {
 
                 <thead>
                   <tr>
+                    <th />
                     <th>Property ID</th>
                     <th>Accommodation Name</th>
                     <th>Location</th>
@@ -361,7 +451,7 @@ const HostReservations = () => {
                 <tbody>
                   {filteredBookings.length === 0 ? (
                     <tr>
-                      <td className={styles.noData} colSpan={11}>
+                      <td className={styles.noData} colSpan={13}>
                         No reservations yet
                       </td>
                     </tr>
@@ -369,11 +459,21 @@ const HostReservations = () => {
                     paginatedItems.map((b) => {
                       const total = calculateTotalPayment(b.rate, b.arrivaldate, b.departuredate);
                       const commission = (total * 0.1).toFixed(2);
-                      const isInquiryPending =
-                        inquiryLoading[b.id] || false;
+                      const isInquiryPending = inquiryLoading[b.id] || false;
 
                       return (
                         <tr key={`${b.id}-${b.property_id}`}>
+                          <td className={styles.thumbnailCell}>
+                            <img
+                              src={resolveImageUrl(b)}
+                              alt={b.title ? `${b.title} image` : "Listing image"}
+                              className={styles.thumbnailImage}
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = defaultThumb;
+                              }}
+                            />
+                          </td>
                           <td>{b.property_id}</td>
                           <td>{b.title}</td>
                           <td>
@@ -390,9 +490,7 @@ const HostReservations = () => {
                           </td>
                           <td>€{total}</td>
                           <td>€{commission}</td>
-                          <td>
-                            {renderPolicyDisplay(b.cancellationType)}
-                          </td>
+                          <td>{renderPolicyDisplay(b.cancellationType)}</td>
                           <td>{b.id}</td>
                           <td>{formatDate(b.createdat)}</td>
                           <td>
@@ -401,25 +499,13 @@ const HostReservations = () => {
                                 <button
                                   className={styles.btnAccept}
                                   disabled={isInquiryPending}
-                                  onClick={() =>
-                                    handleInquiryAction(
-                                      b.id,
-                                      "accept-inquiry"
-                                    )
-                                  }
-                                >
+                                  onClick={() => handleInquiryAction(b.id, "accept-inquiry")}>
                                   Accept
                                 </button>
                                 <button
                                   className={styles.btnDecline}
                                   disabled={isInquiryPending}
-                                  onClick={() =>
-                                    handleInquiryAction(
-                                      b.id,
-                                      "decline-inquiry"
-                                    )
-                                  }
-                                >
+                                  onClick={() => handleInquiryAction(b.id, "decline-inquiry")}>
                                   Decline
                                 </button>
                               </div>
@@ -472,14 +558,10 @@ const HostReservations = () => {
                   const { bookingId } = confirmAccept;
                   setConfirmAccept(null);
                   executeInquiryAction(bookingId, "accept-inquiry");
-                }}
-              >
+                }}>
                 Yes, accept
               </button>
-              <button
-                className={styles.btnDecline}
-                onClick={() => setConfirmAccept(null)}
-              >
+              <button className={styles.btnDecline} onClick={() => setConfirmAccept(null)}>
                 Cancel
               </button>
             </div>
