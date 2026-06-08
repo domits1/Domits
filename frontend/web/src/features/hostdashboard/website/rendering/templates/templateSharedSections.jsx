@@ -39,6 +39,31 @@ const buildImageLoadingProps = ({ slot, imageIndex = 0, isRotationEnabled = fals
   };
 };
 
+const buildResponsiveImageProps = ({
+  slot,
+  model,
+  isRotationEnabled = false,
+  isInteractivePreview = false,
+}) => {
+  if (isInteractivePreview || isRotationEnabled || slot?.kind !== "hero") {
+    return {};
+  }
+
+  const heroImageAsset =
+    model?.media?.heroImageAsset && typeof model.media.heroImageAsset === "object"
+      ? model.media.heroImageAsset
+      : null;
+  const responsiveSrcSet = String(heroImageAsset?.srcSet || "").trim();
+  if (!responsiveSrcSet) {
+    return {};
+  }
+
+  return {
+    srcSet: responsiveSrcSet,
+    sizes: String(heroImageAsset?.sizes || "100vw").trim() || "100vw",
+  };
+};
+
 export const getInteractiveTargetProps = (
   className,
   onSelectTarget,
@@ -260,6 +285,12 @@ export function TemplateImageSlotVisual({
         {...buildInteractiveProps(imageClassName)}
         src={imageSequence[0]}
         alt={alt}
+        {...buildResponsiveImageProps({
+          slot,
+          model,
+          isRotationEnabled: false,
+          isInteractivePreview,
+        })}
         {...buildImageLoadingProps({
           slot,
           imageIndex: 0,
@@ -285,6 +316,12 @@ export function TemplateImageSlotVisual({
           src={imageSequence[0]}
           alt={alt}
           className={buildImageSlotImageClassName(imageClassName, enableHoverEffect)}
+          {...buildResponsiveImageProps({
+            slot,
+            model,
+            isRotationEnabled: false,
+            isInteractivePreview,
+          })}
           {...buildImageLoadingProps({
             slot,
             imageIndex: 0,
