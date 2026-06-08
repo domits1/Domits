@@ -153,39 +153,25 @@ $border-color: #e5e7eb;
   background: #f9fafb;
 }
 
-<<<<<<< HEAD
-  td:nth-child(8),
-  td:nth-child(9) {
-    text-align: right;
-  }
-
-  .thumbnailCell {
-    padding: 8px;
-
-    img.thumbnailImage {
-      width: 72px;
-      height: 48px;
-      object-fit: cover;
-      border-radius: 6px;
-      display: block;
-    }
-  }
-
-  .noData {
-    text-align: center;
-    padding: 30px 20px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
-  }
-=======
 .reservationRow {
   transition: background-color 0.18s ease;
 }
 
-.reservationTable td:nth-child(7),
-.reservationTable td:nth-child(8) {
+.reservationTable td:nth-child(8),
+.reservationTable td:nth-child(9) {
   text-align: right;
+}
+
+.thumbnailCell {
+  padding: 8px;
+
+  img.thumbnailImage {
+    width: 72px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+  }
 }
 
 .noData {
@@ -194,7 +180,6 @@ $border-color: #e5e7eb;
   font-size: 16px;
   font-weight: 600;
   text-align: center;
->>>>>>> 67b5c52c0980d1516feeaeb7526438577b5d40f8
 }
 
 .status {
@@ -360,8 +345,6 @@ $border-color: #e5e7eb;
   display: flex;
   gap: 12px;
 }
-<<<<<<< HEAD
-=======
 
 @media (max-width: 1024px) {
   .container {
@@ -474,4 +457,3 @@ $border-color: #e5e7eb;
     justify-content: center;
   }
 }
->>>>>>> 67b5c52c0980d1516feeaeb7526438577b5d40f8
