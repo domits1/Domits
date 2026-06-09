@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import DateFormatterDD_MM_YYYY from "./DateFormatterDD_MM_YYYY";
+
+const getStatusColor = (status) => {
+  if (status === "Accepted") return "green";
+  if (status === "Cancelled") return "red";
+  if (status === "Reserved") return "#003366";
+  return "inherit";
+};
 
 const ReservationItem = ({ reservation, selectedOption, selectedReservations, handleCheckboxChange }) => {
   const [guestInfo, setGuestInfo] = useState(null);
@@ -48,23 +56,29 @@ const ReservationItem = ({ reservation, selectedOption, selectedReservations, ha
       <td>{reservation.Title ? reservation.Title : "None"}</td>
       <td>{`${DateFormatterDD_MM_YYYY(reservation.StartDate)} - ${DateFormatterDD_MM_YYYY(reservation.EndDate)}`}</td>
       {selectedOption === "All" && (
-        <td
-          style={{
-            color:
-              reservation.Status === "Accepted"
-                ? "green"
-                : reservation.Status === "Cancelled"
-                  ? "red"
-                  : reservation.Status === "Reserved"
-                    ? "#003366"
-                    : "inherit",
-          }}>
+        <td style={{ color: getStatusColor(reservation.Status) }}>
           {reservation.Status}
         </td>
       )}
       <td>€ {parseFloat(reservation.Price).toFixed(2)}</td>
     </tr>
   );
+};
+
+ReservationItem.propTypes = {
+  reservation: PropTypes.shape({
+    ID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    GuestID: PropTypes.string.isRequired,
+    createdAt: PropTypes.string.isRequired,
+    Title: PropTypes.string,
+    StartDate: PropTypes.string.isRequired,
+    EndDate: PropTypes.string.isRequired,
+    Status: PropTypes.string.isRequired,
+    Price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  }).isRequired,
+  selectedOption: PropTypes.string.isRequired,
+  selectedReservations: PropTypes.arrayOf(PropTypes.object).isRequired,
+  handleCheckboxChange: PropTypes.func.isRequired,
 };
 
 export default ReservationItem;

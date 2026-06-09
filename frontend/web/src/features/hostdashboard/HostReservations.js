@@ -131,25 +131,15 @@ const isOverlappingInquiry = (candidateBooking, targetBooking) => {
 const resolveImageUrl = (booking) => {
   if (!booking) return defaultThumb;
 
-  const tryGet = (val) => {
-    if (!val) return null;
-    if (typeof val === "string") return val;
-    if (Array.isArray(val) && val.length > 0) {
-      const first = val[0];
-      if (typeof first === "string") return first;
-      if (first && typeof first === "object") return first.url || first.src || first.path || null;
-    }
-    if (typeof val === "object") return val.url || val.src || val.path || null;
-    return null;
-  };
-
   const prop = booking.property_meta || booking.property || null;
   const propImages = prop?.photos || prop?.images || prop?.media || prop?.gallery || null;
   if (propImages) {
     try {
       const url = resolvePrimaryAccommodationImageUrl(propImages, "thumb");
       if (url) return url;
-    } catch (err) {}
+    } catch (err) {
+      console.warn("Failed to resolve property image:", err);
+    }
   }
 
   if (booking.property_image_url) {
@@ -161,7 +151,9 @@ const resolveImageUrl = (booking) => {
     try {
       const url = resolvePrimaryAccommodationImageUrl(resImages, "thumb");
       if (url) return url;
-    } catch (err) {}
+    } catch (err) {
+      console.warn("Failed to resolve reservation image:", err);
+    }
   }
 
   return defaultThumb;
@@ -249,10 +241,10 @@ const HostReservations = () => {
                 .filter((b) => {
                   const prop = b.property_meta || b.property;
                   const hasPropImages =
-                    (prop && Array.isArray(prop.photos) && prop.photos.length > 0) ||
-                    (prop && Array.isArray(prop.images) && prop.images.length > 0) ||
-                    (prop && Array.isArray(prop.media) && prop.media.length > 0) ||
-                    (prop && Array.isArray(prop.gallery) && prop.gallery.length > 0);
+                    prop?.photos?.length > 0 ||
+                    prop?.images?.length > 0 ||
+                    prop?.media?.length > 0 ||
+                    prop?.gallery?.length > 0;
                   return !hasPropImages && b.property_id;
                 })
                 .map((b) => b.property_id)
@@ -265,14 +257,16 @@ const HostReservations = () => {
             setBookings((prev) =>
               prev.map((b) => {
                 const summary = summaries[b.property_id];
-                if (summary && summary.imageUrl) {
+                if (summary?.imageUrl) {
                   return { ...b, property_image_url: summary.imageUrl };
                 }
                 return b;
               })
             );
           }
-        } catch (err) {}
+        } catch (err) {
+          console.warn("Failed to fetch property summaries:", err);
+        }
       } catch (error) {
         toast.error(error?.response?.data?.message || "Failed to load reservations");
         setBookings([]);
