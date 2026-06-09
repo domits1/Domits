@@ -70,6 +70,7 @@ describe("PropertyController calendar override normalization", () => {
       calendarDate: 20260501,
       isAvailable: false,
       nightlyPrice: 125,
+      priceLabsIgnored: null,
       stopSell: true,
       closedToArrival: true,
       closedToDeparture: false,
