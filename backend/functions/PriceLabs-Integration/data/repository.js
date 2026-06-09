@@ -55,6 +55,9 @@ export class Repository {
       await repo.createQueryBuilder()
         .update()
         .set({
+          // Revert nightly_price to null only where PriceLabs had applied it
+          // (nightly_price === pricelabs_price). Host-set prices are left untouched.
+          nightly_price:       () => "CASE WHEN nightly_price = pricelabs_price THEN NULL ELSE nightly_price END",
           pricelabs_price:     null,
           pricelabs_ignored:   false,
           min_stay:            null,

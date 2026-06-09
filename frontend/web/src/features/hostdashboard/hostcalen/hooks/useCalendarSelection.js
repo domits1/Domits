@@ -825,7 +825,7 @@ export const useCalendarSelection = ({
         const existing = previous?.[selectedPropertyId];
         if (!existing) return previous;
         const next = { ...existing };
-        dateKeys.forEach((key) => { delete next[key]; });
+        for (const key of dateKeys) { delete next[key]; }
         return { ...previous, [selectedPropertyId]: next };
       });
     };
@@ -905,7 +905,7 @@ export const useCalendarSelection = ({
         const existing = previous?.[selectedPropertyId];
         if (!existing) return previous;
         const next = { ...existing };
-        keysToApply.forEach((key) => { delete next[key]; });
+        for (const key of keysToApply) { delete next[key]; }
         return { ...previous, [selectedPropertyId]: next };
       });
     };
