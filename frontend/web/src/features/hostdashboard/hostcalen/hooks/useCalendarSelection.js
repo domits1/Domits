@@ -625,12 +625,12 @@ export const useCalendarSelection = ({
             : priceByKey,
         }));
 
-        // Detect applied dates (nightly_price === pricelabs_price)
+        // Detect applied dates (nightly_price === pricelabs_price, only if not ignored)
         const appliedByKey = {};
         Object.keys(priceLabsByKey).forEach((key) => {
           const pl = priceLabsByKey[key];
           const host = priceByKey[key];
-          if (pl > 0 && host > 0 && pl === host) {
+          if (pl > 0 && host > 0 && pl === host && !priceLabsIgnoredByKey[key]) {
             appliedByKey[key] = host;
           }
         });
@@ -818,6 +818,18 @@ export const useCalendarSelection = ({
     const priceLabsIgnoredByKey = {};
     dateKeys.forEach((key) => { priceLabsIgnoredByKey[key] = true; });
 
+    // After persistOverrides, the server response re-adds pricelabs_price to local state.
+    // Remove those keys again so the suggestion doesn't reappear.
+    const removePriceLabsKeysAfterIgnore = () => {
+      setPriceLabsOverridesByPropertyId((previous) => {
+        const existing = previous?.[selectedPropertyId];
+        if (!existing) return previous;
+        const next = { ...existing };
+        dateKeys.forEach((key) => { delete next[key]; });
+        return { ...previous, [selectedPropertyId]: next };
+      });
+    };
+
     void persistOverrides(
       selectedPropertyId,
       dateKeys,
@@ -825,7 +837,7 @@ export const useCalendarSelection = ({
       selectedPropertyPriceOverrides,
       restrictionOverrides,
       priceLabsIgnoredByKey
-    ).catch((error) => {
+    ).then(removePriceLabsKeysAfterIgnore).catch((error) => {
       console.error(error?.message || error);
     });
   };
