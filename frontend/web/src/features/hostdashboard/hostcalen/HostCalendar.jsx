@@ -294,6 +294,17 @@ function HostCalendarSidebar({
     );
   }
 
+  if (sidebarMode === "pricelabs" && !priceLabsConnected) {
+    return (
+      <PriceLabsConnect
+        onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
+        isLoading={false}
+        error={null}
+        successMessage={null}
+      />
+    );
+  }
+
   if (selectedDateKeys.length > 0) {
     return (
       <>
