@@ -96,7 +96,16 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
               onClick={() => openOverlayAtIndex(0)}
               aria-label="Open image 1"
             >
-              <img className="main-image" src={toMainSrc(main)} alt={getImageAltText(0)} />
+              <img
+                className="main-image"
+                src={toMainSrc(main)}
+                alt={getImageAltText(0)}
+                fetchPriority="high"
+                decoding="async"
+                width={1200}
+                height={765}
+                loading="eager"
+              />
             </button>
 
             <button
@@ -144,7 +153,15 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
               onClick={() => openOverlayAtIndex(index + 1)}
               aria-label={`Open image ${index + 2}`}
             >
-              <img className="small-image" src={toMainSrc(image)} alt={getImageAltText(index + 1)} />
+              <img
+                className="small-image"
+                src={toThumbSrc(img)}
+                alt={getImageAltText(index + 1)}
+                loading="lazy"
+                decoding="async"
+                width={400}
+                height={255}
+              />
             </button>
           ))}
         </div>
