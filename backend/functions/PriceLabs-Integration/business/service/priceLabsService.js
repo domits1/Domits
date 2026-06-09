@@ -143,15 +143,11 @@ export class PriceLabsService {
       const listingId   = `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`;
       const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
 
-      // Build a lookup map keyed by calendar_date integer for O(1) access
       const overrideMap = {};
       for (const row of availability) {
         overrideMap[row.calendar_date] = row;
       }
 
-      // Generate all 730 days regardless of what is in the DB.
-      // For dates without an explicit override, fall back to the property base_price.
-      // PriceLabs requires a minimum of 12 months (preferably 730 days) of data.
       const data = [];
       const defaultPrice = p.base_price || 100;
       for (let i = 0; i < CALENDAR_DAYS; i++) {
@@ -287,13 +283,11 @@ export class PriceLabsService {
 
     const body = JSON.parse(rawBody || "{}");
 
-    // Swagger v2: single object { listing_id, last_refreshed, data: [] }
-    // Normalize to array for uniform handling
     const listings = _normalizeListings(body);
 
     for (const listing of listings) {
       const { listing_id, data = [], prices = [] } = listing;
-      const entries = data.length ? data : prices; // support both field names
+      const entries = data.length ? data : prices;
       const parts = listing_id.split("_");
       const propertyId = parts.slice(5).join("-");
 
@@ -326,8 +320,6 @@ export class PriceLabsService {
 
     const body = JSON.parse(rawBody || "{}");
 
-    // Swagger v2: single listing_id (string) + start_date + end_date
-    // Legacy: listing_ids (array)
     const listing_ids = body.listing_ids ?? (body.listing_id ? [body.listing_id] : []);
 
     const hostMap = {};

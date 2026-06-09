@@ -295,6 +295,7 @@ export const useCalendarSelection = ({
   const [priceOverridesByPropertyId, setPriceOverridesByPropertyId] = useState({});
   const [priceLabsOverridesByPropertyId, setPriceLabsOverridesByPropertyId] = useState({});
   const [restrictionOverrides, setRestrictionOverrides] = useState({});
+  const [reloadKey, setReloadKey] = useState(0);
   const [selectionPriceInput, setSelectionPriceInput] = useState("");
   const [selectionPriceDirty, setSelectionPriceDirty] = useState(false);
   const [selectionRestrictionsForm, setSelectionRestrictionsForm] = useState(
@@ -613,7 +614,7 @@ export const useCalendarSelection = ({
     return () => {
       mounted = false;
     };
-  }, [selectedPropertyId]);
+  }, [selectedPropertyId, reloadKey]);
 
   useEffect(() => {
     setAvailabilityOverrides({});
@@ -889,5 +890,6 @@ export const useCalendarSelection = ({
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
     resetSelectionState,
+    reloadOverrides: () => setReloadKey((k) => k + 1),
   };
 };
