@@ -280,26 +280,26 @@ function HostCalendarSidebar({
     );
   }
 
-  if (selectedDateKeys.length > 0) {
-    if (sidebarMode === "pricelabs") {
-      return priceLabsConnected ? (
-        <PriceLabsStatusCard
-          status={priceLabsStatus}
-          onSync={priceLabsSyncAll}
-          onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
-          isSyncing={false}
-          isLoading={false}
-        />
-      ) : (
-        <PriceLabsConnect
-          onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
-          isLoading={false}
-          error={null}
-          successMessage={null}
-        />
-      );
-    }
+  if (sidebarMode === "pricelabs") {
+    return priceLabsConnected ? (
+      <PriceLabsStatusCard
+        status={priceLabsStatus}
+        onSync={priceLabsSyncAll}
+        onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
+        isSyncing={false}
+        isLoading={false}
+      />
+    ) : (
+      <PriceLabsConnect
+        onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
+        isLoading={false}
+        error={null}
+        successMessage={null}
+      />
+    );
+  }
 
+  if (selectedDateKeys.length > 0) {
     return (
       <>
         <SelectionCard
@@ -431,25 +431,6 @@ function HostCalendarSidebar({
         saveError={availabilitySettingsSaveError}
         onSave={handleSaveAvailabilitySettings}
         onBack={() => setSidebarMode("summary")}
-      />
-    );
-  }
-
-  if (sidebarMode === "pricelabs") {
-    return priceLabsConnected ? (
-      <PriceLabsStatusCard
-        status={priceLabsStatus}
-        onSync={priceLabsSyncAll}
-        onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
-        isSyncing={false}
-        isLoading={false}
-      />
-    ) : (
-      <PriceLabsConnect
-        onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
-        isLoading={false}
-        error={null}
-        successMessage={null}
       />
     );
   }

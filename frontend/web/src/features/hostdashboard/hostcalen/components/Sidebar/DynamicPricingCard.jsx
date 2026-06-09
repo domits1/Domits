@@ -2,6 +2,54 @@ import React from "react";
 import PropTypes from "prop-types";
 import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 
+const actionButtons = (label, dateKeys, onApplyPrice, onIgnorePrice) => (
+  <div className="hc-dynamic-pricing-actions" style={{ position: "relative", zIndex: 1, display: "flex", gap: "8px" }}>
+    <button
+      type="button"
+      className="hc-dynamic-pricing-apply-btn"
+      style={{ flex: 1 }}
+      onClick={(e) => { e.stopPropagation(); onApplyPrice?.(dateKeys); }}
+    >
+      {label}
+    </button>
+    <button
+      type="button"
+      className="hc-dynamic-pricing-ignore-btn"
+      onClick={(e) => { e.stopPropagation(); onIgnorePrice?.(dateKeys); }}
+    >
+      Ignore
+    </button>
+  </div>
+);
+
+const renderPricingContent = ({ hasAnySuggestion, recommendedPrice, selectedDateKeys, onApplyPrice, onIgnorePrice }) => {
+  if (hasAnySuggestion) {
+    return (
+      <>
+        <p className="hc-info-card-line">{`PriceLabs suggestions for ${selectedDateKeys.length} days`}</p>
+        {actionButtons("Apply prices", selectedDateKeys, onApplyPrice, onIgnorePrice)}
+      </>
+    );
+  }
+  if (recommendedPrice !== null) {
+    return (
+      <>
+        <p className="hc-info-card-line">PriceLabs suggested price</p>
+        <p className="hc-dynamic-pricing-amount">EUR {recommendedPrice.toFixed(2)}</p>
+        {actionButtons("Apply price", selectedDateKeys, onApplyPrice, onIgnorePrice)}
+      </>
+    );
+  }
+  return (
+    <>
+      <p className="hc-info-card-line">No suggestion for this day</p>
+      <p className="hc-info-card-line" style={{ fontSize: "0.78rem", color: "#aaa" }}>
+        Sync data to receive recommendations
+      </p>
+    </>
+  );
+};
+
 export default function DynamicPricingCard({
   isConnected,
   selectedDateKeys,
@@ -61,71 +109,13 @@ export default function DynamicPricingCard({
           </span>
         </header>
 
-        {hasAnySuggestion ? (
-          <>
-            <p className="hc-info-card-line">
-              {`PriceLabs suggestions for ${selectedDateKeys.length} days`}
-            </p>
-            <div className="hc-dynamic-pricing-actions" style={{ position: "relative", zIndex: 1, display: "flex", gap: "8px" }}>
-              <button
-                type="button"
-                className="hc-dynamic-pricing-apply-btn"
-                style={{ flex: 1 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onApplyPrice?.(selectedDateKeys);
-                }}
-              >
-                Apply prices
-              </button>
-              <button
-                type="button"
-                className="hc-dynamic-pricing-ignore-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onIgnorePrice?.(selectedDateKeys);
-                }}
-              >
-                Ignore
-              </button>
-            </div>
-          </>
-        ) : recommendedPrice != null ? (
-          <>
-            <p className="hc-info-card-line">PriceLabs suggested price</p>
-            <p className="hc-dynamic-pricing-amount">EUR {recommendedPrice.toFixed(2)}</p>
-            <div className="hc-dynamic-pricing-actions" style={{ position: "relative", zIndex: 1, display: "flex", gap: "8px" }}>
-              <button
-                type="button"
-                className="hc-dynamic-pricing-apply-btn"
-                style={{ flex: 1 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onApplyPrice?.(selectedDateKeys);
-                }}
-              >
-                Apply price
-              </button>
-              <button
-                type="button"
-                className="hc-dynamic-pricing-ignore-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onIgnorePrice?.(selectedDateKeys);
-                }}
-              >
-                Ignore
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="hc-info-card-line">No suggestion for this day</p>
-            <p className="hc-info-card-line" style={{ fontSize: "0.78rem", color: "#aaa" }}>
-              Sync data to receive recommendations
-            </p>
-          </>
-        )}
+        {renderPricingContent({
+          hasAnySuggestion,
+          recommendedPrice,
+          selectedDateKeys,
+          onApplyPrice,
+          onIgnorePrice,
+        })}
       </section>
     );
   }
