@@ -26,6 +26,7 @@ import { resolveWebsiteHeroContentAlignment } from "../config/websiteHeroSection
 
 const PANORAMA_TEMPLATE_KEY = "panorama-landing";
 const WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS = Object.freeze([
+  "callToAction",
   "amenitiesPanel",
   "availabilityCalendar",
   "gallerySection",
@@ -234,6 +235,8 @@ export const buildWebsiteEditorSectionData = ({
 
   return {
     heroImageSlot: normalizedImageSlots.find((slot) => slot.kind === "hero") || null,
+    heroCallToActionVisibilityField:
+      normalizedVisibilityFields.find((field) => field.key === "callToAction") || null,
     amenitiesVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "amenitiesPanel") || null,
     calendarVisibilityField:

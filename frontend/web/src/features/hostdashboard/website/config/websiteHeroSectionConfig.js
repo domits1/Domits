@@ -1,10 +1,14 @@
 export const DEFAULT_WEBSITE_HERO_CONTENT_ALIGNMENT = "center";
 
 export const WEBSITE_HERO_CONTENT_ALIGNMENT_OPTIONS = Object.freeze([
-  { value: "center", label: "Middle" },
   { value: "top-left", label: "Top left" },
+  { value: "top-center", label: "Top center" },
   { value: "top-right", label: "Top right" },
+  { value: "center-left", label: "Center left" },
+  { value: "center", label: "Center" },
+  { value: "center-right", label: "Center right" },
   { value: "bottom-left", label: "Bottom left" },
+  { value: "bottom-center", label: "Bottom center" },
   { value: "bottom-right", label: "Bottom right" },
 ]);
 

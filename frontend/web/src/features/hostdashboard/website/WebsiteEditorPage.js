@@ -221,6 +221,7 @@ function WebsiteEditorPage() {
   const showWhatsAppSetupHint = hasResolvedPropertyDetails && !hasWhatsAppWidget;
   const {
     heroImageSlot,
+    heroCallToActionVisibilityField,
     amenitiesVisibilityField,
     calendarVisibilityField,
     galleryVisibilityField,
@@ -1376,6 +1377,7 @@ function WebsiteEditorPage() {
               galleryVisibilityField={galleryVisibilityField}
               generalImageSlots={generalImageSlots}
               heroAlignmentOptions={heroAlignmentOptions}
+              heroCallToActionVisibilityField={heroCallToActionVisibilityField}
               heroImageSlot={heroImageSlot}
               handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
               handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}

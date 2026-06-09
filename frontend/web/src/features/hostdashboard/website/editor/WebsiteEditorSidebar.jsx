@@ -6,7 +6,7 @@ import {
   AmenityIconSelectField,
   BackgroundColorField,
   CollapsibleSection,
-  SelectField,
+  PositionMatrixField,
   TextField,
 } from "./WebsiteEditorFields";
 import { WebsiteEditorAmenitiesSection } from "./sections/WebsiteEditorAmenitiesSection";
@@ -57,6 +57,7 @@ export function WebsiteEditorSidebar({
   galleryVisibilityField,
   generalImageSlots,
   heroAlignmentOptions,
+  heroCallToActionVisibilityField,
   heroImageSlot,
   handleAmenitiesIconColorChange,
   handleAmenitiesIconColorInputChange,
@@ -278,11 +279,20 @@ export function WebsiteEditorSidebar({
 
           <div className={styles.fieldStack}>
             {heroAlignmentOptions.length > 0 ? (
-              <SelectField
-                field={{ key: "heroContentAlignment", label: "Content position" }}
+              <PositionMatrixField
+                field={{
+                  key: "heroContentAlignment",
+                  label: "Content position",
+                  description: "Choose where the hero eyebrow, title, and booking prompt sit inside the image.",
+                }}
                 value={editorValues.common.heroContentAlignment}
                 options={heroAlignmentOptions}
-                onChange={handleCommonFieldChange("heroContentAlignment")}
+                onChange={(nextValue) => {
+                  markEditorInteracted();
+                  handleCommonFieldChange("heroContentAlignment")({
+                    target: { value: nextValue },
+                  });
+                }}
                 fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common.heroContentAlignment)}
                 isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common.heroContentAlignment}
                 onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common.heroContentAlignment)}
@@ -304,6 +314,19 @@ export function WebsiteEditorSidebar({
               />
             ))}
           </div>
+
+          {heroCallToActionVisibilityField ? (
+            <div className={styles.toggleStack}>
+              <WebsiteEditorSectionVisibilityFieldCard
+                checked={Boolean(editorValues.visibility.callToAction)}
+                field={heroCallToActionVisibilityField}
+                handleVisibilityFieldChange={handleVisibilityFieldChange}
+                hasWhatsAppWidget={hasWhatsAppWidget}
+                highlightedTargetId={highlightedTargetId}
+                setTargetRef={setTargetRef}
+              />
+            </div>
+          ) : null}
         </CollapsibleSection>
 
         {renderedTrustCardsSection}
@@ -592,6 +615,7 @@ WebsiteEditorSidebar.propTypes = {
       value: PropTypes.string.isRequired,
     })
   ).isRequired,
+  heroCallToActionVisibilityField: PropTypes.object,
   heroImageSlot: PropTypes.object,
   handleAmenitiesIconColorChange: PropTypes.func.isRequired,
   handleAmenitiesIconColorInputChange: PropTypes.func.isRequired,
