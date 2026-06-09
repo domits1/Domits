@@ -280,21 +280,14 @@ function HostCalendarSidebar({
     );
   }
 
-  if (sidebarMode === "pricelabs") {
-    return priceLabsConnected ? (
+  if (sidebarMode === "pricelabs" && priceLabsConnected) {
+    return (
       <PriceLabsStatusCard
         status={priceLabsStatus}
         onSync={priceLabsSyncAll}
         onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
         isSyncing={false}
         isLoading={false}
-      />
-    ) : (
-      <PriceLabsConnect
-        onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
-        isLoading={false}
-        error={null}
-        successMessage={null}
       />
     );
   }
@@ -431,6 +424,17 @@ function HostCalendarSidebar({
         saveError={availabilitySettingsSaveError}
         onSave={handleSaveAvailabilitySettings}
         onBack={() => setSidebarMode("summary")}
+      />
+    );
+  }
+
+  if (sidebarMode === "pricelabs") {
+    return (
+      <PriceLabsConnect
+        onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
+        isLoading={false}
+        error={null}
+        successMessage={null}
       />
     );
   }
