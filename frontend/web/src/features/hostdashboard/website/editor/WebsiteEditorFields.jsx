@@ -82,6 +82,63 @@ TextField.propTypes = {
   onKeyDown: PropTypes.func,
 };
 
+const selectFieldOptionPropType = PropTypes.shape({
+  value: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+});
+
+export function SelectField({
+  field,
+  value,
+  options,
+  onChange,
+  fieldRef = null,
+  isHighlighted = false,
+  onFocus = undefined,
+  onBlur = undefined,
+}) {
+  const normalizedValue = typeof value === "string" ? value : "";
+
+  return (
+    <div
+      ref={fieldRef}
+      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+    >
+      <label className={styles.fieldLabel} htmlFor={`website-editor-${field.key}`}>
+        {field.label}
+      </label>
+      <select
+        id={`website-editor-${field.key}`}
+        className={styles.textInput}
+        value={normalizedValue}
+        onChange={onChange}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+SelectField.propTypes = {
+  field: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+  }).isRequired,
+  value: PropTypes.string.isRequired,
+  options: PropTypes.arrayOf(selectFieldOptionPropType).isRequired,
+  onChange: PropTypes.func.isRequired,
+  fieldRef: refPropType,
+  isHighlighted: PropTypes.bool,
+  onFocus: PropTypes.func,
+  onBlur: PropTypes.func,
+};
+
 const resolveContactImagePreview = ({
   normalizedMode,
   normalizedValue,

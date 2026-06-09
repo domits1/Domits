@@ -32,6 +32,7 @@ import {
   MAX_FEATURED_WEBSITE_AMENITIES,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
 } from "../config/websiteAmenitiesConfig";
+import { DEFAULT_WEBSITE_HERO_CONTENT_ALIGNMENT } from "../config/websiteHeroSectionConfig";
 import { normalizeWebsiteImageRotationSettings } from "./websiteImageSlotUtils";
 
 const DEFAULT_LOCALE = "en";
@@ -596,6 +597,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
         guestsLabel,
       }),
       imageUrl: galleryImages[0] || placeholderImage,
+      contentAlignment: DEFAULT_WEBSITE_HERO_CONTENT_ALIGNMENT,
     },
     stay: {
       propertyTypeLabel,

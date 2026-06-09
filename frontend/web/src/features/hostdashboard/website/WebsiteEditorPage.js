@@ -44,6 +44,7 @@ import {
   getGalleryFieldPreviewTargetId,
   getGalleryToggleFields,
   getGalleryTextFields,
+  getHeroAlignmentOptions,
   getImageSlotTargetId,
   getResidenceTextFields,
   getResidenceToggleFields,
@@ -211,15 +212,15 @@ function WebsiteEditorPage() {
   const calendarToggleFields = getCalendarToggleFields(draftRecord?.templateKey);
   const galleryPanelToggleFields = getGalleryToggleFields(draftRecord?.templateKey);
   const galleryTextFields = getGalleryTextFields(draftRecord?.templateKey);
+  const heroAlignmentOptions = getHeroAlignmentOptions(draftRecord?.templateKey);
   const residenceTextFields = getResidenceTextFields(draftRecord?.templateKey);
   const residenceToggleFields = getResidenceToggleFields(draftRecord?.templateKey);
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const hasResolvedPropertyDetails = Boolean(baseModel);
   const hasWhatsAppWidget = Boolean(baseModel?.host?.whatsapp?.isAvailable);
-  const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const showWhatsAppSetupHint = hasResolvedPropertyDetails && !hasWhatsAppWidget;
-  const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
   const {
+    heroImageSlot,
     amenitiesVisibilityField,
     calendarVisibilityField,
     galleryVisibilityField,
@@ -228,13 +229,17 @@ function WebsiteEditorPage() {
     galleryImageSlots,
     generalImageSlots,
   } = useMemo(
-    () =>
-      buildWebsiteEditorSectionData({
+    () => {
+      const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftTemplateKey] || [];
+      const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftTemplateKey] || [];
+
+      return buildWebsiteEditorSectionData({
         draftTemplateKey,
         imageSlots,
         visibilityFields,
-      }),
-    [draftTemplateKey, imageSlots, visibilityFields]
+      });
+    },
+    [draftTemplateKey]
   );
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
   const residenceSectionTitle = String(editorValues?.common?.residenceTitle || "").trim() || "The residence";
@@ -1370,6 +1375,8 @@ function WebsiteEditorPage() {
               galleryTextFields={galleryTextFields}
               galleryVisibilityField={galleryVisibilityField}
               generalImageSlots={generalImageSlots}
+              heroAlignmentOptions={heroAlignmentOptions}
+              heroImageSlot={heroImageSlot}
               handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
               handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
               handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}

@@ -22,6 +22,7 @@ import {
   getDraftWorkingContentOverrides,
   normalizeUiErrorMessage,
 } from "./websiteEditorUtils";
+import { resolveWebsiteHeroContentAlignment } from "../config/websiteHeroSectionConfig";
 
 const PANORAMA_TEMPLATE_KEY = "panorama-landing";
 const WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS = Object.freeze([
@@ -52,6 +53,10 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
       heroEyebrow: getCleanText(contentOverrides.heroEyebrow),
       heroTitle: getCleanText(contentOverrides.heroTitle),
       heroDescription: getCleanText(contentOverrides.heroDescription),
+      heroContentAlignment: resolveWebsiteHeroContentAlignment(
+        contentOverrides.heroContentAlignment,
+        bootstrapValues.common.heroContentAlignment
+      ),
       ctaLabel: getCleanText(contentOverrides.ctaLabel),
       ctaNote: getCleanText(contentOverrides.ctaNote),
       residenceTitle: getCleanText(contentOverrides.residenceTitle) || bootstrapValues.common.residenceTitle,
@@ -141,6 +146,10 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
 };
 
 export const getCommonFieldPreviewTargetId = (fieldKey, templateKey = "") => {
+  if (fieldKey === "heroContentAlignment") {
+    return EDITOR_TARGET_KEYS.common.heroContentAlignment;
+  }
+
   if (fieldKey === "residenceTitle") {
     return EDITOR_TARGET_KEYS.residence.title;
   }
@@ -224,6 +233,7 @@ export const buildWebsiteEditorSectionData = ({
   const isPanoramaTemplate = draftTemplateKey === PANORAMA_TEMPLATE_KEY;
 
   return {
+    heroImageSlot: normalizedImageSlots.find((slot) => slot.kind === "hero") || null,
     amenitiesVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "amenitiesPanel") || null,
     calendarVisibilityField:
@@ -238,6 +248,10 @@ export const buildWebsiteEditorSectionData = ({
       ? normalizedImageSlots.filter((slot) => slot.kind === "gallery")
       : [],
     generalImageSlots: normalizedImageSlots.filter((slot) => {
+      if (slot.kind === "hero") {
+        return false;
+      }
+
       if (slot.kind === "residence") {
         return false;
       }

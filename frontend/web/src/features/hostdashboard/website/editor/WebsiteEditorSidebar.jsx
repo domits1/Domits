@@ -2,13 +2,20 @@ import React from "react";
 import PropTypes from "prop-types";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
-import { AmenityIconSelectField, BackgroundColorField, CollapsibleSection, TextField } from "./WebsiteEditorFields";
+import {
+  AmenityIconSelectField,
+  BackgroundColorField,
+  CollapsibleSection,
+  SelectField,
+  TextField,
+} from "./WebsiteEditorFields";
 import { WebsiteEditorAmenitiesSection } from "./sections/WebsiteEditorAmenitiesSection";
 import { WebsiteEditorResidenceSection } from "./sections/WebsiteEditorResidenceSection";
 import { WebsiteEditorGallerySection } from "./sections/WebsiteEditorGallerySection";
 import { WebsiteEditorImageSlotsSection } from "./sections/WebsiteEditorImageSlotsSection";
 import { WebsiteEditorCalendarSection } from "./sections/WebsiteEditorCalendarSection";
 import { WebsiteEditorContactSection } from "./sections/WebsiteEditorContactSection";
+import { WebsiteEditorImageSlotCard } from "./WebsiteEditorImageSlotCard";
 import { WebsiteEditorSectionVisibilityFieldCard } from "./WebsiteEditorPageSupport";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
 import styles from "../WebsiteEditorPage.module.scss";
@@ -49,6 +56,8 @@ export function WebsiteEditorSidebar({
   galleryTextFields,
   galleryVisibilityField,
   generalImageSlots,
+  heroAlignmentOptions,
+  heroImageSlot,
   handleAmenitiesIconColorChange,
   handleAmenitiesIconColorInputChange,
   handleAmenitiesIconColorInputKeyDown,
@@ -165,6 +174,73 @@ export function WebsiteEditorSidebar({
     />
   ) : null;
 
+  const renderedTrustCardsSection = copyCollectionConfig.trustCards ? (
+    <CollapsibleSection
+      sectionId={EDITOR_SECTION_KEYS.trustCards}
+      title={copyCollectionConfig.trustCards.title}
+      description={copyCollectionConfig.trustCards.description}
+      isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.trustCards])}
+      onToggle={toggleSection}
+      sectionRef={setSectionRef(EDITOR_SECTION_KEYS.trustCards)}
+    >
+      <div className={styles.collectionStack}>
+        {editorValues.trustCards
+          .slice(0, copyCollectionConfig.trustCards.count)
+          .map((card, index) => (
+            <div
+              key={card.id}
+              ref={setTargetRef(EDITOR_TARGET_KEYS.trustCards(index))}
+              className={`${styles.collectionCard} ${
+                highlightedTargetId === EDITOR_TARGET_KEYS.trustCards(index)
+                  ? styles.editorTargetHighlighted
+                  : ""
+              }`.trim()}
+            >
+              <p className={styles.collectionTitle}>
+                {copyCollectionConfig.trustCards.itemLabel} {index + 1}
+              </p>
+              {copyCollectionConfig.trustCards.supportsIconSelection ? (
+                <AmenityIconSelectField
+                  fieldKey={`trust-card-icon-${index}`}
+                  label="Icon"
+                  value={card.iconAmenityId || ""}
+                  onOpenPicker={() =>
+                    onOpenIconPicker(
+                      "trustCards",
+                      index,
+                      `${copyCollectionConfig.trustCards.itemLabel} ${index + 1} icon`
+                    )
+                  }
+                  onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                  onBlur={clearActivePreviewTarget}
+                />
+              ) : null}
+              <TextField
+                field={{ key: `trust-card-title-${index}`, label: "Title", component: "input" }}
+                value={card.title}
+                onChange={handleCollectionFieldChange("trustCards", index, "title")}
+                onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
+                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                onBlur={clearActivePreviewTarget}
+              />
+              <TextField
+                field={{
+                  key: `trust-card-description-${index}`,
+                  label: "Description",
+                  component: "textarea",
+                }}
+                value={card.description}
+                onChange={handleCollectionFieldChange("trustCards", index, "description")}
+                onKeyDown={handleEditorFieldKeyDown({ component: "textarea" })}
+                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                onBlur={clearActivePreviewTarget}
+              />
+            </div>
+          ))}
+      </div>
+    </CollapsibleSection>
+  ) : null;
+
   return (
     <aside
       ref={editorPanelRef}
@@ -180,13 +256,40 @@ export function WebsiteEditorSidebar({
       <div className={styles.editorForm}>
         <CollapsibleSection
           sectionId={EDITOR_SECTION_KEYS.common}
-          title="Common content"
-          description="Shared copy fields that affect the rendered website directly."
+          title="Hero"
+          description="Control the top-of-page copy, hero image, and template-specific hero settings."
           isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.common])}
           onToggle={toggleSection}
           sectionRef={setSectionRef(EDITOR_SECTION_KEYS.common)}
         >
+          {heroImageSlot ? (
+            <div className={styles.imageSlotGrid}>
+              <WebsiteEditorImageSlotCard
+                slot={heroImageSlot}
+                editorValues={editorValues}
+                highlightedTargetId={highlightedTargetId}
+                importedImageOptions={importedImageOptions}
+                onChangeImageRotation={onChangeImageRotation}
+                onOpenImagePicker={onOpenImagePicker}
+                setTargetRef={setTargetRef}
+              />
+            </div>
+          ) : null}
+
           <div className={styles.fieldStack}>
+            {heroAlignmentOptions.length > 0 ? (
+              <SelectField
+                field={{ key: "heroContentAlignment", label: "Content position" }}
+                value={editorValues.common.heroContentAlignment}
+                options={heroAlignmentOptions}
+                onChange={handleCommonFieldChange("heroContentAlignment")}
+                fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common.heroContentAlignment)}
+                isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common.heroContentAlignment}
+                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common.heroContentAlignment)}
+                onBlur={clearActivePreviewTarget}
+              />
+            ) : null}
+
             {commonTextFields.map((field) => (
               <TextField
                 key={field.key}
@@ -202,6 +305,8 @@ export function WebsiteEditorSidebar({
             ))}
           </div>
         </CollapsibleSection>
+
+        {renderedTrustCardsSection}
 
         {residenceTextFields.length > 0 || residenceToggleFields.length > 0 || residenceImageSlot ? (
           <WebsiteEditorResidenceSection
@@ -323,73 +428,6 @@ export function WebsiteEditorSidebar({
           sectionRef={setSectionRef(EDITOR_SECTION_KEYS.images)}
           setTargetRef={setTargetRef}
         />
-
-        {copyCollectionConfig.trustCards ? (
-          <CollapsibleSection
-            sectionId={EDITOR_SECTION_KEYS.trustCards}
-            title={copyCollectionConfig.trustCards.title}
-            description={copyCollectionConfig.trustCards.description}
-            isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.trustCards])}
-            onToggle={toggleSection}
-            sectionRef={setSectionRef(EDITOR_SECTION_KEYS.trustCards)}
-          >
-            <div className={styles.collectionStack}>
-              {editorValues.trustCards
-                .slice(0, copyCollectionConfig.trustCards.count)
-                .map((card, index) => (
-                  <div
-                    key={card.id}
-                    ref={setTargetRef(EDITOR_TARGET_KEYS.trustCards(index))}
-                    className={`${styles.collectionCard} ${
-                      highlightedTargetId === EDITOR_TARGET_KEYS.trustCards(index)
-                        ? styles.editorTargetHighlighted
-                        : ""
-                    }`.trim()}
-                  >
-                    <p className={styles.collectionTitle}>
-                      {copyCollectionConfig.trustCards.itemLabel} {index + 1}
-                    </p>
-                    {copyCollectionConfig.trustCards.supportsIconSelection ? (
-                      <AmenityIconSelectField
-                        fieldKey={`trust-card-icon-${index}`}
-                        label="Icon"
-                        value={card.iconAmenityId || ""}
-                        onOpenPicker={() =>
-                          onOpenIconPicker(
-                            "trustCards",
-                            index,
-                            `${copyCollectionConfig.trustCards.itemLabel} ${index + 1} icon`
-                          )
-                        }
-                        onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
-                        onBlur={clearActivePreviewTarget}
-                      />
-                    ) : null}
-                    <TextField
-                      field={{ key: `trust-card-title-${index}`, label: "Title", component: "input" }}
-                      value={card.title}
-                      onChange={handleCollectionFieldChange("trustCards", index, "title")}
-                      onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
-                      onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
-                      onBlur={clearActivePreviewTarget}
-                    />
-                    <TextField
-                      field={{
-                        key: `trust-card-description-${index}`,
-                        label: "Description",
-                        component: "textarea",
-                      }}
-                      value={card.description}
-                      onChange={handleCollectionFieldChange("trustCards", index, "description")}
-                      onKeyDown={handleEditorFieldKeyDown({ component: "textarea" })}
-                      onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
-                      onBlur={clearActivePreviewTarget}
-                    />
-                  </div>
-                ))}
-            </div>
-          </CollapsibleSection>
-        ) : null}
 
         {copyCollectionConfig.amenities?.placement === "afterTrustCards" ? renderedAmenitiesSection : null}
 
@@ -548,6 +586,13 @@ WebsiteEditorSidebar.propTypes = {
   galleryTextFields: PropTypes.array.isRequired,
   galleryVisibilityField: PropTypes.object,
   generalImageSlots: PropTypes.array.isRequired,
+  heroAlignmentOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      value: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  heroImageSlot: PropTypes.object,
   handleAmenitiesIconColorChange: PropTypes.func.isRequired,
   handleAmenitiesIconColorInputChange: PropTypes.func.isRequired,
   handleAmenitiesIconColorInputKeyDown: PropTypes.func.isRequired,
