@@ -9,6 +9,27 @@ import {
 const DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS = 3600;
 const DEFAULT_IMAGE_SLOT_FADE_DURATION_MS = 720;
 const LazyAvailabilityCalendarPreview = lazy(() => import("../AvailabilityCalendarPreview"));
+const ORIGINAL_FIRST_IMAGE_SOURCE_ORDER = Object.freeze(["originalSrc", "webSrc", "src", "thumbSrc"]);
+const WEBSITE_IMAGE_ASSET_PROP_TYPE = PropTypes.shape({
+  src: PropTypes.string,
+  webSrc: PropTypes.string,
+  originalSrc: PropTypes.string,
+  thumbSrc: PropTypes.string,
+  srcSet: PropTypes.string,
+  sizes: PropTypes.string,
+});
+const TEMPLATE_IMAGE_SLOT_MEDIA_PROP_TYPE = PropTypes.shape({
+  heroImage: PropTypes.string,
+  residenceImage: PropTypes.string,
+  galleryImages: PropTypes.arrayOf(PropTypes.string),
+  heroImageAsset: WEBSITE_IMAGE_ASSET_PROP_TYPE,
+  galleryImageAssets: PropTypes.arrayOf(WEBSITE_IMAGE_ASSET_PROP_TYPE),
+  imageRotation: PropTypes.shape({
+    hero: PropTypes.bool,
+    residence: PropTypes.bool,
+    gallery: PropTypes.arrayOf(PropTypes.bool),
+  }),
+});
 
 const buildImageSlotFrameClassName = ({
   frameClassName = "",
@@ -44,8 +65,14 @@ const buildResponsiveImageProps = ({
   model,
   isRotationEnabled = false,
   isInteractivePreview = false,
+  disableResponsiveImageVariants = false,
 }) => {
-  if (isInteractivePreview || isRotationEnabled || slot?.kind !== "hero") {
+  if (
+    isInteractivePreview ||
+    isRotationEnabled ||
+    disableResponsiveImageVariants ||
+    slot?.kind !== "hero"
+  ) {
     return {};
   }
 
@@ -62,6 +89,49 @@ const buildResponsiveImageProps = ({
     srcSet: responsiveSrcSet,
     sizes: String(heroImageAsset?.sizes || "100vw").trim() || "100vw",
   };
+};
+
+const resolvePreferredImageAssetSource = (imageAsset, sourceOrder = ORIGINAL_FIRST_IMAGE_SOURCE_ORDER) => {
+  if (!imageAsset || typeof imageAsset !== "object") {
+    return "";
+  }
+
+  for (const sourceKey of sourceOrder) {
+    const sourceValue = String(imageAsset?.[sourceKey] || "").trim();
+    if (sourceValue) {
+      return sourceValue;
+    }
+  }
+
+  return "";
+};
+
+const buildPreferredHeroImageSequence = (model, sourceOrder = ORIGINAL_FIRST_IMAGE_SOURCE_ORDER) => {
+  const imageSequence = [];
+  const seenImageUrls = new Set();
+  const galleryImageAssets = Array.isArray(model?.media?.galleryImageAssets)
+    ? model.media.galleryImageAssets
+    : [];
+  const fallbackGalleryImages = Array.isArray(model?.media?.galleryImages) ? model.media.galleryImages : [];
+
+  const appendImageUrl = (imageUrl) => {
+    const normalizedImageUrl = String(imageUrl || "").trim();
+    if (!normalizedImageUrl || seenImageUrls.has(normalizedImageUrl)) {
+      return;
+    }
+
+    seenImageUrls.add(normalizedImageUrl);
+    imageSequence.push(normalizedImageUrl);
+  };
+
+  appendImageUrl(resolvePreferredImageAssetSource(model?.media?.heroImageAsset, sourceOrder));
+  galleryImageAssets.forEach((imageAsset) =>
+    appendImageUrl(resolvePreferredImageAssetSource(imageAsset, sourceOrder))
+  );
+  appendImageUrl(model?.media?.heroImage);
+  fallbackGalleryImages.forEach((imageUrl) => appendImageUrl(imageUrl));
+
+  return imageSequence;
 };
 
 export const getInteractiveTargetProps = (
@@ -263,13 +333,24 @@ export function TemplateImageSlotVisual({
   activeTargetId = "",
   rotationIntervalMs = DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS,
   fadeDurationMs = DEFAULT_IMAGE_SLOT_FADE_DURATION_MS,
+  sourceVariantPreference = "default",
 }) {
   const imageSlotTarget = buildWebsiteImageSlotTarget(slot);
+  const sourceVariantPreferenceKey = String(sourceVariantPreference || "").trim().toLowerCase();
+  const shouldPreferOriginalHeroSource =
+    slot?.kind === "hero" && sourceVariantPreferenceKey === "original-first";
+  const preferredHeroImageSequence = React.useMemo(
+    () =>
+      shouldPreferOriginalHeroSource
+        ? buildPreferredHeroImageSequence(model, ORIGINAL_FIRST_IMAGE_SOURCE_ORDER)
+        : [],
+    [model, shouldPreferOriginalHeroSource]
+  );
   const {
     activeImageIndex,
     imageSequence,
     isRotationEnabled,
-  } = useWebsiteImageSlotRotation(slot, model?.media, rotationIntervalMs);
+  } = useWebsiteImageSlotRotation(slot, model?.media, rotationIntervalMs, preferredHeroImageSequence);
   const isInteractivePreview = Boolean(onSelectTarget);
   const buildInteractiveProps = (className) =>
     getInteractiveTargetProps(
@@ -299,6 +380,7 @@ export function TemplateImageSlotVisual({
           model,
           isRotationEnabled: false,
           isInteractivePreview,
+          disableResponsiveImageVariants: shouldPreferOriginalHeroSource,
         })}
         {...buildImageLoadingProps({
           slot,
@@ -330,6 +412,7 @@ export function TemplateImageSlotVisual({
             model,
             isRotationEnabled: false,
             isInteractivePreview,
+            disableResponsiveImageVariants: shouldPreferOriginalHeroSource,
           })}
           {...buildImageLoadingProps({
             slot,
@@ -382,7 +465,7 @@ export function TemplateImageSlotVisual({
 TemplateImageSlotVisual.propTypes = {
   alt: PropTypes.string.isRequired,
   model: PropTypes.shape({
-    media: PropTypes.shape({}).isRequired,
+    media: TEMPLATE_IMAGE_SLOT_MEDIA_PROP_TYPE.isRequired,
   }).isRequired,
   slot: PropTypes.shape({
     kind: PropTypes.oneOf(["hero", "residence", "gallery"]).isRequired,
@@ -396,6 +479,7 @@ TemplateImageSlotVisual.propTypes = {
   activeTargetId: PropTypes.string,
   rotationIntervalMs: PropTypes.number,
   fadeDurationMs: PropTypes.number,
+  sourceVariantPreference: PropTypes.oneOf(["default", "original-first"]),
 };
 
 export function TemplateSoftCallout({
