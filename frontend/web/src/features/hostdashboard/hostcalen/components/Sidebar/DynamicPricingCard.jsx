@@ -47,7 +47,6 @@ export default function DynamicPricingCard({
   if (selectedDateKeys?.length > 0) {
     return (
       <section className="hc-info-card hc-info-card--interactive hc-dynamic-pricing-card">
-        {/* Background hit-area navigates to PriceLabs settings */}
         <button
           type="button"
           className="hc-info-card-hitarea"
