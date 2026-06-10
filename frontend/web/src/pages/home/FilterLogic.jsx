@@ -97,6 +97,7 @@ export default function useFilterLogic(props) {
     const nextPriceValues = overrides.priceValues ?? priceValues;
     const nextRoomsAndBeds = overrides.roomsAndBeds ?? roomsAndBeds;
     const nextBookingOptions = overrides.bookingOptions ?? bookingOptions;
+    const nextSelectedAmenities = overrides.selectedAmenities ?? selectedAmenities;
 
     try {
       setLoading(true);
@@ -108,6 +109,10 @@ export default function useFilterLogic(props) {
       appendPositiveNumberParam(url.searchParams, "bedrooms", nextRoomsAndBeds.bedrooms);
       appendPositiveNumberParam(url.searchParams, "beds", nextRoomsAndBeds.beds);
       appendPositiveNumberParam(url.searchParams, "bathrooms", nextRoomsAndBeds.bathrooms);
+
+      if (nextSelectedAmenities.length > 0) {
+        url.searchParams.append("amenities", nextSelectedAmenities.join(","));
+      }
 
       if (nextBookingOptions.bookInstantly && !nextBookingOptions.bookingRequest) {
         url.searchParams.append("bookingType", "direct");
@@ -166,6 +171,7 @@ export default function useFilterLogic(props) {
       priceValues: defaultPriceValues,
       roomsAndBeds: defaultRoomsAndBeds,
       bookingOptions: defaultBookingOptions,
+      selectedAmenities: [],
     });
   };
 

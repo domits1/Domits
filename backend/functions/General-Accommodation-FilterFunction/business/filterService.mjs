@@ -2,6 +2,7 @@ import { fetchAllProperties } from '../data/propertyRepository.mjs';
 import { filterByPrice, getNightlyDisplayPrice } from '../filters/priceFilter.mjs';
 import { filterByRoomsAndBeds } from '../filters/roomFilter.mjs';
 import { filterByBookingType } from '../filters/bookingTypeFilter.mjs';
+import { filterByAmenities } from '../filters/amenitiesFilter.mjs';
 import { filterByGuests } from '../search/guestAmountFilter.mjs';
 import { filterByLocation } from '../search/locationFilter.mjs';
 
@@ -34,6 +35,7 @@ export class FilterService {
     beds,
     bathrooms,
     bookingType,
+    amenities,
   }) {
     let properties = await fetchAllProperties();
     const priceRange = computePriceRange(properties);
@@ -52,6 +54,7 @@ export class FilterService {
 
     properties = filterByRoomsAndBeds(properties, { bedrooms, beds, bathrooms });
     properties = filterByBookingType(properties, bookingType);
+    properties = filterByAmenities(properties, amenities);
 
     return { properties, priceRange, lastEvaluatedKey: null };
   }

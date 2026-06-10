@@ -18,7 +18,12 @@ export class FilterController {
       beds,
       bathrooms,
       bookingType,
+      amenities: amenitiesParam,
     } = queryParams;
+
+    const amenities = amenitiesParam
+      ? amenitiesParam.split(",").map((id) => id.trim()).filter(Boolean)
+      : [];
 
     try {
       const result = await this.service.getFilteredProperties({
@@ -31,6 +36,7 @@ export class FilterController {
         beds,
         bathrooms,
         bookingType,
+        amenities,
       });
       return ok(result);
     } catch (err) {
