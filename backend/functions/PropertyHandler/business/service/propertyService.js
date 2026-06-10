@@ -274,18 +274,20 @@ export class PropertyService {
   }
 
   async getCardPropertyAttributes(propertyId) {
-    const [basePropertyInfo, generalDetails, pricing, images, location, testStatus, amenities] = await Promise.all([
+    const [basePropertyInfo, generalDetails, pricing, images, location, testStatus] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getGeneralDetails(propertyId),
       this.getPricing(propertyId),
       this.getImages(propertyId),
       this.getLocation(propertyId),
       this.getPropertyTestStatus(propertyId),
-      this.getAmenities(propertyId),
     ]);
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
     }
+    // Amenities are fetched separately and degrade to [] so a failure here can
+    // never take down the listing endpoints (see getCardAmenities).
+    const amenities = await this.getCardAmenities(propertyId);
     return {
       property: basePropertyInfo,
       propertyGeneralDetails: generalDetails,
@@ -293,8 +295,18 @@ export class PropertyService {
       propertyImages: images,
       propertyLocation: location,
       propertyTestStatus: testStatus,
-      propertyAmenities: amenities ?? [],
+      propertyAmenities: amenities,
     };
+  }
+
+  async getCardAmenities(propertyId) {
+    try {
+      const amenities = await this.getAmenities(propertyId);
+      return amenities ?? [];
+    } catch (error) {
+      console.error(`Failed to load amenities for property ${propertyId}:`, error);
+      return [];
+    }
   }
 
   async getFullPropertyAttributes(propertyId, options = {}) {
