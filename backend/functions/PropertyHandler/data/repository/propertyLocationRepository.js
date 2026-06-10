@@ -96,12 +96,12 @@ export class PropertyLocationRepository {
         if (result.length < 1) {
             throw new NotFoundException(`No property found.`)
         } else {
-            const items = result.map(item => item.property_id);
+            const items = result.map(item => item.id);
 
             const lastItem = result[result.length - 1];
             const lastEvaluatedKey = {
                 createdAt: lastItem.createdat,
-                id: lastItem.property_id,
+                id: lastItem.id,
             }
 
             return {
