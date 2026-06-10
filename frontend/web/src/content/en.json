@@ -409,7 +409,25 @@
     "attachment": "Add attachments",
     "send": "Send message",
     "guest": "Guest",
-    "host": "Host"
+    "host": "Host",
+    "heroLabel": "HELP CENTER",
+    "heroTitleStart": "How can we ",
+    "heroTitleEnd": "help you?",
+    "searchPlaceholder": "Search for answers, bookings, payments, support...",
+    "frequentlyAsked": "Frequently asked questions",
+    "stillNeedHelp": "Still need help?",
+    "supportSubtitle": "Our support team is here for you 24/7",
+    "contactSupport": "Contact Support",
+    "noResults": "No results found for \"{query}\". Try a different search term.",
+    "categories": {
+      "aboutDomits": "About Domits",
+      "manageAccount": "Manage Account",
+      "searchAndBook": "Search And Book",
+      "cancellations": "Cancellations",
+      "payments": "Payments",
+      "yourStay": "Your Stay",
+      "support": "Support"
+    }
   },
   "whyDomits": {
     "head": {
@@ -526,22 +544,26 @@
     }
   },
   "sustainability": {
-    "title": "Sustainability",
-    "subtitle": "Why choose Domits for sustainability?",
-    "business": {
-      "title": "1. Sustainable **Business**",
-      "subtitle": "Recycling plan with bins",
-      "description": "Domits is starting out simple with making conscious decisions like choosing more energy-saving appliances and will continue to improve this 1% every day. With our food waste policy we don’t want to be to rigid and starting with a flexible recycling plan for glass, paper, plastic and organic. For biodiversity and ecosystems we’re aiming to eat more organic food, use Eco-friendly cleaning products and have paperless procedures."
-    },
-    "accommodations": {
-      "title": "2. Sustainable **Accommodations**",
-      "subtitle": "Certification",
-      "description": "Domits is actively focusing on onboarding hosts that are already sustainable. If they’re not yet, we’re supporting them step-by-step to increase awareness. At a certain point we want to give hosts certifications as a proof of sustainability with energy, waste, biodiversity, ecosystems, destinations and community."
-    },
-    "experience": {
-      "title": "3. Sustainable **Guest Experience**",
-      "description": "From the first touch point with Domits for guest we want to let them feel that they are traveling as sustainable as possible. Domits begins with having sustainability filters and a large overview of all eco-friendly amenities."
-    }
+    "label": "SUSTAINABILITY",
+    "title": "Why choose Domits",
+    "titleAccent": "for sustainability?",
+    "sections": [
+      {
+        "title": "Sustainable Business",
+        "subtitle": "Recycling plan with bins",
+        "description": "Domits is starting out simple with making conscious decisions like choosing more energy-saving appliances and will continue to improve this 1% every day. With our food waste policy we don't want to be to rigid and starting with a flexible recycling plan for glass, paper, plastic and organic. For biodiversity and ecosystems we're aiming to eat more organic food, use Eco-friendly cleaning products and have paperless procedures."
+      },
+      {
+        "title": "Sustainable Accommodations",
+        "subtitle": "Certification",
+        "description": "Domits is actively focusing on onboarding hosts that are already sustainable. If they're not yet, we're supporting them step-by-step to increase awareness. At a certain point we want to give hosts certifications as a proof of sustainability with energy, waste, biodiversity, ecosystems, destinations and community."
+      },
+      {
+        "title": "Sustainable Guest Experience",
+        "subtitle": "Eco-friendly travel",
+        "description": "From the first touch point with Domits for guest we want to let them feel that they are traveling as sustainable as possible. Domits begins with having sustainability filters and a large overview of all eco-friendly amenities."
+      }
+    ]
   },
   "howItWorksContent": {
     "title": "How Domits Works",
@@ -1089,116 +1111,134 @@
       }
     }
   },
-  "hostDashboard": {
-    "reservationDetails": {
-      "pageTitle": "Reservation details",
-      "states": {
-        "failedToLoad": "Failed to load reservation.",
-        "noReservationFound": "No reservation found."
+  "performance": {
+    "label": "PERFORMANCE BUNDLES",
+    "title": "Grow your rental business with",
+    "titleAccent": "confidence.",
+    "badges": [
+      {
+        "title": "Starting host",
+        "subtitle": "1-9 properties"
       },
-      "buttons": {
-        "back": "Back to reservations",
-        "messageGuest": "Message guest",
-        "viewInCalendar": "View in calendar",
-        "downloadReceipt": "Download receipt",
-        "preparingReceipt": "Preparing receipt..."
+      {
+        "title": "Growing host",
+        "subtitle": "10-99 properties"
       },
-      "headings": {
-        "property": "Property",
-        "guest": "Guest",
-        "payment": "Payment",
-        "reservationInfo": "Reservation Info",
-        "actions": "Actions",
-        "checkInInstructions": "Check-in instructions",
-        "houseRules": "House Rules",
-        "cancellationPolicy": "Cancellation Policy",
-        "specialRequest": "Special request"
-      },
-      "labels": {
-        "bookedVia": "Booked via",
-        "checkIn": "Check-in",
-        "bookedOn": "Booked on",
-        "reservationId": "Reservation ID",
-        "confirmation": "Confirmation",
-        "cleaningFee": "Cleaning fee",
-        "totalPaid": "Total paid",
-        "method": "Method",
-        "propertyImageAlt": "Property image",
-        "guestFallbackName": "Guest",
-        "loadingValue": "Loading...",
-        "unavailable": "unavailable",
-        "none": "None",
-        "locationUnavailable": "Location unavailable",
-        "loadingLocation": "Loading location...",
-        "night": "night",
-        "nights": "nights",
-        "guest": "guest",
-        "guests": "guests"
-      },
-      "loading": {
-        "status": "Loading",
-        "summary": "Loading reservation summary...",
-        "reservationDetails": "Loading reservation details...",
-        "guestEmail": "Loading guest email...",
-        "guestPhone": "Loading guest phone...",
-        "checkInInstructions": "Loading check-in instructions...",
-        "houseRules": "Loading house rules...",
-        "cancellationPolicy": "Loading cancellation policy...",
-        "payment": "Loading payment",
-        "paymentStatus": "Loading payment status"
-      },
-      "empty": {
-        "noCheckInInstructions": "No check-in instructions",
-        "noHouseRulesSpecified": "No house rules specified",
-        "noCancellationPolicySelected": "No cancellation policy selected.",
-        "paymentStatusUnavailable": "Payment status unavailable",
-        "reservation": "Reservation"
-      },
-      "status": {
-        "PAID": "Confirmed",
-        "AWAITING_PAYMENT": "Awaiting payment",
-        "FAILED": "Failed",
-        "DECLINED": "Declined",
-        "INQUIRY": "Request"
-      },
-      "paymentStatus": {
-        "PAID": {
-          "label": "Payment received",
-          "text": "Paid in full on"
-        },
-        "AWAITING_PAYMENT": {
-          "label": "Awaiting payment",
-          "text": "Payment pending"
-        },
-        "FAILED": {
-          "label": "Payment failed",
-          "text": "Payment was not successful"
-        },
-        "DECLINED": {
-          "label": "Payment declined",
-          "text": "Payment was declined"
-        },
-        "INQUIRY": {
-          "label": "Pending request",
-          "text": "Waiting for host review"
-        }
-      },
-      "requestActions": {
-        "title": "Booking request",
-        "subtitle": "Accept or decline this booking request before it moves to payment.",
-        "accept": "Accept request",
-        "decline": "Decline request",
-        "confirmAcceptTitle": "Accept this request?",
-        "confirmAcceptNoOverlap": "Are you sure you want to accept this request?",
-        "confirmAcceptWithOverlap": "There are {count} other pending requests for overlapping dates on this property. Accepting will automatically decline those requests.",
-        "confirmDeclineTitle": "Decline this request?",
-        "confirmDeclineMessage": "Are you sure you want to decline this booking request?",
-        "accepted": "Request accepted.",
-        "acceptedWithOverlap": "Request accepted. {count} overlapping requests were automatically declined.",
-        "declined": "Request declined.",
-        "updateFailed": "Failed to update request status.",
-        "cancel": "Cancel"
+      {
+        "title": "Scaling host",
+        "subtitle": "100+ properties"
       }
+    ],
+    "sections": [
+      {
+        "title": "Distribution & Marketing",
+        "bullets": [
+          "Multi-channel distribution across Booking.com, Airbnb, VRBO, and 100+ platforms.",
+          "AI-powered analytics, dashboards, and performance insights.",
+          "Inbound marketing, lead nurturing, customer journeys, and content.",
+          "SEO, SEA, CRO, and conversion-focused performance marketing.",
+          "CRM automation, email campaigns, segmentation, and communication flows."
+        ]
+      },
+      {
+        "title": "Streamline Operations",
+        "bullets": [
+          "Automate property management",
+          "Reservation management",
+          "Rate management",
+          "Housekeeping",
+          "Front desk",
+          "Reporting"
+        ]
+      },
+      {
+        "title": "Grow Revenue",
+        "bullets": [
+          "Dynamic pricing",
+          "Digital upselling",
+          "Occupancy rates",
+          "ADR (Average Daily Rate)",
+          "RevPAR (Revenue per Available Room)"
+        ]
+      },
+      {
+        "title": "Guest Experience",
+        "bullets": [
+          "Warmth and friendliness",
+          "Booking engine",
+          "Messaging",
+          "Reviews",
+          "Check-in",
+          "Support (FAQ, email, and phone)"
+        ]
+      }
+    ]
+  },
+  "security": {
+    "label": "SECURITY",
+    "title": "Your safety comes",
+    "titleAccent": "first.",
+    "badges": [
+      {
+        "title": "Secure Infrastructure",
+        "subtitle": "Reliable & monitored"
+      },
+      {
+        "title": "Encrypted Data",
+        "subtitle": "End-to-end protection"
+      },
+      {
+        "title": "Daily Backups",
+        "subtitle": "Always protected"
+      },
+      {
+        "title": "EU Hosted",
+        "subtitle": "GDPR complied"
+      }
+    ],
+    "sections": [
+      {
+        "title": "1. Infrastructure",
+        "description": "Our servers are securely housed in multiple European data centers. In the event of any malfunctions, technicians are always available to tackle the problem immediately. Amazon Web Services' online infrastructure guarantees the security and confidentiality of our cloud services.",
+        "bullets": [
+          "Our data is stored in two different data centers.",
+          "In the event of malfunctions, Domits automatically switches to another data center.",
+          "An uptime of 99.995%."
+        ]
+      },
+      {
+        "title": "2. Theft and Privacy",
+        "description": "Domits is fully committed to ensuring that your data is safe and protected from hackers. Each customer has their own, separate database at Domits, making it impossible for other users to access other people's data.",
+        "bullets": [
+          "When using Domits, the connection is secured.",
+          "GDPR compliant data handling and storage",
+          "It is impossible for outsiders to intercept data traffic."
+        ]
+      },
+      {
+        "title": "3. Back-ups",
+        "description": "At Domits, we do everything we can to ensure that our system is always operational and your data is always secured. Backups of the data are made daily so that nothing is ever lost. In the event of disruptions, all your data is stored securely and our team ensures that your account can be restored.",
+        "bullets": [
+          "Guarantee against data loss",
+          "Daily recovery of data up to six months ago",
+          "Secure data backups"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "title": "Vision",
+        "text": "We believe that everyone deserves transparent and accessible security. Our vision is to create a digital environment where users can trust that their data is protected without needing to understand complex technical details."
+      },
+      {
+        "title": "What We Do",
+        "text": "We continuously monitor, update, and improve our security infrastructure. Our dedicated team works around the clock to identify potential threats, implement the latest security standards, and ensure your data remains protected at all times."
+      }
+    ],
+    "cta": {
+      "title": "Questions about security?",
+      "contactButton": "Contact support",
+      "learnMoreButton": "Learn more"
     }
   }
 }
