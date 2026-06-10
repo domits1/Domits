@@ -1,84 +1,81 @@
-import React from "react";
+import React, { useContext } from "react";
+import {
+  House,
+  BarChart2,
+  Building2,
+  Megaphone,
+  Settings,
+  TrendingUp,
+  Heart,
+} from "lucide-react";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 
-// DEZE PAGINA IS NIET IN GEBRUIK
+const contentByLanguage = { en, nl, de, es };
+
+const ICON_SIZE = 28;
+
+const BADGE_ICONS   = [House, BarChart2, Building2];
+const SECTION_ICONS = [Megaphone, Settings, TrendingUp, Heart];
+
 function Performance() {
+  const { language } = useContext(LanguageContext);
+  const c = contentByLanguage[language]?.performance;
+
+  if (!c) return null;
+
   return (
-    <div className="security">
-      <div className="security__title-container">
-        <h2 className="security__title">
-          <span>Performance Bundles</span>
-        </h2>
-        <p className="security__text">
-          Our performance team loves to help you start, grow and scale in your
-          short-term rental journey. It doesn’t matter if you use Domits or
-          other tools. We're ready to increase revenue, reduce workload, and
-          deliver beautiful experiences.
-        </p>
+    <div className="performance">
+      <div className="performance__hero">
+        <span className="performance__label">{c.label}</span>
+        <h1 className="performance__title">
+          {c.title}{" "}
+          <span className="performance__title--accent">{c.titleAccent}</span>
+        </h1>
       </div>
 
-      <div className="security__factsbox">
-        <p className="security__fact-title">
-          Starting host 1-9 properties | Growing host 10-99 properties | Scaling
-          host 100+ properties
-        </p>
+      <div className="performance__badges">
+        {c.badges.map(({ title, subtitle }, i) => {
+          const Icon = BADGE_ICONS[i];
+          return (
+            <div className="performance__badge" key={title}>
+              <div className="performance__badge-icon">
+                <Icon size={ICON_SIZE} />
+              </div>
+              <div>
+                <p className="performance__badge-title">{title}</p>
+                <p className="performance__badge-subtitle">{subtitle}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="security__text-container">
-        <h3 className="security__subtitle">1. Distribution & Marketing</h3>
-        <ul className="security__list">
-          <li>
-            Channel management for distribution with Booking.com, Airbnb, VRBO,
-            and 100+ channels.
-          </li>
-          <li>
-            AI, data, and intelligence with analytics, dashboards, and
-            measurement plans.
-          </li>
-          <li>
-            Inbound marketing with lead generation, lead nurturing, customer
-            journeys, community, and content.
-          </li>
-          <li>Performance marketing with SEO, SEA, CRO, and user tracking.</li>
-          <li>
-            Marketing automation and CRM with engagement, e-mail marketing, user
-            segments, and communication flows.
-          </li>
-        </ul>
-      </div>
-
-      <div className="security__text-container">
-        <h3 className="security__subtitle">2. Streamline Operations</h3>
-        <ul className="security__list">
-          <li>Automate property management</li>
-          <li>Reservation management</li>
-          <li>Rate management</li>
-          <li>Housekeeping</li>
-          <li>Front desk</li>
-          <li>Reporting</li>
-        </ul>
-      </div>
-
-      <div className="security__text-container">
-        <h3 className="security__subtitle">3. Grow Revenue</h3>
-        <ul className="security__list">
-          <li>Dynamic pricing</li>
-          <li>Digital upselling</li>
-          <li>Occupancy rates</li>
-          <li>ADR (Average Daily Rate)</li>
-          <li>RevPAR (Revenue per Available Room)</li>
-        </ul>
-      </div>
-
-      <div className="security__text-container">
-        <h3 className="security__subtitle">4. Guest Experience</h3>
-        <ul className="security__list">
-          <li>Warmth and friendliness</li>
-          <li>Booking engine</li>
-          <li>Messaging</li>
-          <li>Reviews</li>
-          <li>Check-in</li>
-          <li>Support (FAQ, email, and phone)</li>
-        </ul>
+      <div className="performance__sections">
+        {c.sections.map(({ title, bullets }, i) => {
+          const Icon = SECTION_ICONS[i];
+          return (
+            <div className="performance__section-card" key={title}>
+              <div className="performance__section-icon">
+                <Icon size={ICON_SIZE} />
+              </div>
+              <div className="performance__section-content">
+                <div className="performance__section-heading">
+                  <span className="performance__section-number">{i + 1}</span>
+                  <h2 className="performance__section-title">{title}</h2>
+                </div>
+                <ul className="performance__section-list">
+                  {bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
