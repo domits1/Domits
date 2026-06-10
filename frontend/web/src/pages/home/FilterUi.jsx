@@ -221,14 +221,17 @@ const FilterUi = ({ onFilterApplied }) => {
         <div
           className="amenities-modal-overlay"
           role="presentation"
-          onClick={() => setAmenitiesModalOpen(false)}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setAmenitiesModalOpen(false);
+            }
+          }}
         >
           <div
             className="amenities-modal"
             role="dialog"
             aria-modal="true"
             aria-label="All amenities"
-            onClick={(event) => event.stopPropagation()}
           >
             <div className="amenities-modal-header">
               <span>Amenities</span>
