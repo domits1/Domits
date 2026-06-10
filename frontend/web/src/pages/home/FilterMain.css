@@ -5,6 +5,49 @@
   border-radius: 8px;
 }
 
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.filter-apply-btn,
+.filter-reset-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-apply-btn {
+  border: none;
+  background-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.filter-reset-btn {
+  border: 1px solid var(--primary-color);
+  background-color: #ffffff;
+  color: var(--primary-color);
+}
+
+.filter-apply-btn:hover,
+.filter-reset-btn:hover {
+  opacity: 0.9;
+}
+
+.filter-message {
+  margin-top: 15px;
+  padding: 10px 12px;
+  border: 1px solid #e0a800;
+  background-color: #fff8e1;
+  color: #7a5c00;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
 .slider-container {
   width: 100%;
   display: flex;

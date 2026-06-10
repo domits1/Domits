@@ -18,8 +18,6 @@ export class FilterController {
       beds,
       bathrooms,
       bookingType,
-      lastEvaluatedKeyCreatedAt,
-      lastEvaluatedKeyId,
     } = queryParams;
 
     try {
@@ -33,8 +31,6 @@ export class FilterController {
         beds,
         bathrooms,
         bookingType,
-        lastEvaluatedKeyCreatedAt,
-        lastEvaluatedKeyId,
       });
       return ok(result);
     } catch (err) {

@@ -1,4 +1,4 @@
-import { fetchProperties } from '../data/propertyRepository.mjs';
+import { fetchAllProperties } from '../data/propertyRepository.mjs';
 import { filterByPrice } from '../filters/priceFilter.mjs';
 import { filterByRoomsAndBeds } from '../filters/roomFilter.mjs';
 import { filterByBookingType } from '../filters/bookingTypeFilter.mjs';
@@ -16,11 +16,8 @@ export class FilterService {
     beds,
     bathrooms,
     bookingType,
-    lastEvaluatedKeyCreatedAt,
-    lastEvaluatedKeyId,
   }) {
-    const { properties: raw, lastEvaluatedKey } = await fetchProperties(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
-    let properties = raw;
+    let properties = await fetchAllProperties();
 
     if (min != null || max != null) {
       properties = filterByPrice(properties, min, max);
@@ -37,6 +34,6 @@ export class FilterService {
     properties = filterByRoomsAndBeds(properties, { bedrooms, beds, bathrooms });
     properties = filterByBookingType(properties, bookingType);
 
-    return { properties, lastEvaluatedKey };
+    return { properties, lastEvaluatedKey: null };
   }
 }

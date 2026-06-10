@@ -29,11 +29,13 @@ const FilterUi = ({ onFilterApplied }) => {
     showMoreFacilities,
     setShowMoreFacilities,
     handlePriceChange,
+    handleResetFilters,
     fetchFilteredAccommodations,
     roomsAndBeds,
     handleRoomChange,
     bookingOptions,
     handleBookingOptionChange,
+    error,
   } = FilterLogic({ onFilterApplied });
 
   const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
@@ -48,10 +50,6 @@ const FilterUi = ({ onFilterApplied }) => {
     setPriceValues(newValues);
   };
 
-  const handleSliderChangeCommitted = () => {
-    fetchFilteredAccommodations();
-  };
-
   const handleMinInputChange = (event) => {
     const rawValue = event.target.value;
     setMinInputValue(rawValue);
@@ -61,8 +59,7 @@ const FilterUi = ({ onFilterApplied }) => {
     if (numericValue) {
       const newValue = Number.parseInt(numericValue, 10);
       if (newValue >= MIN_PRICE && newValue <= priceValues[1]) {
-        const nextPriceValues = handlePriceChange(0, newValue);
-        fetchFilteredAccommodations({ priceValues: nextPriceValues });
+        handlePriceChange(0, newValue);
       }
     }
   };
@@ -76,8 +73,7 @@ const FilterUi = ({ onFilterApplied }) => {
     if (numericValue) {
       const newValue = Number.parseInt(numericValue, 10);
       if (newValue <= MAX_PRICE && newValue >= priceValues[0]) {
-        const nextPriceValues = handlePriceChange(1, newValue);
-        fetchFilteredAccommodations({ priceValues: nextPriceValues });
+        handlePriceChange(1, newValue);
       }
     }
   };
@@ -89,6 +85,7 @@ const FilterUi = ({ onFilterApplied }) => {
 
   return (
     <div>
+      {error && <div className="filter-message" role="status">{error}</div>}
       <div className="filter-section">
         <div className="FilterTitle">Price Range</div>
         <div className="slider-container">
@@ -113,7 +110,6 @@ const FilterUi = ({ onFilterApplied }) => {
             }}
             value={priceValues}
             onChange={handleSliderChange}
-            onChangeCommitted={handleSliderChangeCommitted}
             valueLabelDisplay="auto"
             min={MIN_PRICE}
             max={MAX_PRICE}
@@ -247,6 +243,22 @@ const FilterUi = ({ onFilterApplied }) => {
         </div>
       </div>
 
+      <div className="filter-actions">
+        <button
+          type="button"
+          className="filter-reset-btn"
+          onClick={handleResetFilters}
+        >
+          Reset filter
+        </button>
+        <button
+          type="button"
+          className="filter-apply-btn"
+          onClick={() => fetchFilteredAccommodations()}
+        >
+          Filter toepassen
+        </button>
+      </div>
     </div>
   );
 };

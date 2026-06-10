@@ -41,7 +41,6 @@ export default function useFilterLogic(props) {
       [key]: Math.max(0, roomsAndBeds[key] + delta),
     };
     setRoomsAndBeds(nextRoomsAndBeds);
-    fetchFilteredAccommodations({ roomsAndBeds: nextRoomsAndBeds });
   };
 
   const [bookingOptions, setBookingOptions] = useState({
@@ -55,7 +54,6 @@ export default function useFilterLogic(props) {
       [event.target.name]: event.target.checked,
     };
     setBookingOptions(nextBookingOptions);
-    fetchFilteredAccommodations({ bookingOptions: nextBookingOptions });
   };
 
   const [loading, setLoading] = useState(false);
@@ -87,18 +85,19 @@ export default function useFilterLogic(props) {
 
       const response = await fetch(url);
       const data = await response.json();
-      const properties = data?.properties ?? [];
+      const properties = Array.isArray(data) ? data : (data?.properties ?? []);
+      const lastEvaluatedKey = Array.isArray(data) ? null : (data?.lastEvaluatedKey ?? null);
 
-      if (properties.length > 0) {
-        if (onFilterApplied) {
-          onFilterApplied(properties, data?.lastEvaluatedKey ?? null, {
-            minPrice: nextPriceValues[0],
-            maxPrice: nextPriceValues[1],
-            roomsAndBeds: nextRoomsAndBeds,
-            bookingOptions: nextBookingOptions,
-          });
-        }
-      } else {
+      if (onFilterApplied) {
+        onFilterApplied(properties, lastEvaluatedKey, {
+          minPrice: nextPriceValues[0],
+          maxPrice: nextPriceValues[1],
+          roomsAndBeds: nextRoomsAndBeds,
+          bookingOptions: nextBookingOptions,
+        });
+      }
+
+      if (properties.length === 0) {
         setError("No accommodations found for these criteria");
       }
     } catch (err) {
@@ -118,6 +117,26 @@ export default function useFilterLogic(props) {
     return priceValues;
   };
 
+  const handleResetFilters = () => {
+    const defaultPriceValues = [MIN_PRICE, MAX_PRICE];
+    const defaultRoomsAndBeds = { bedrooms: 0, beds: 0, bathrooms: 0 };
+    const defaultBookingOptions = { bookInstantly: false, bookingRequest: false };
+
+    setPriceValues(defaultPriceValues);
+    setRoomsAndBeds(defaultRoomsAndBeds);
+    setBookingOptions(defaultBookingOptions);
+    setSelectedAmenities((prev) =>
+      Object.fromEntries(Object.keys(prev).map((key) => [key, false]))
+    );
+    setError(null);
+
+    fetchFilteredAccommodations({
+      priceValues: defaultPriceValues,
+      roomsAndBeds: defaultRoomsAndBeds,
+      bookingOptions: defaultBookingOptions,
+    });
+  };
+
   const handleAmenityChange = (event) => {
     setSelectedAmenities({
       ...selectedAmenities,
@@ -133,6 +152,7 @@ export default function useFilterLogic(props) {
     showMoreFacilities,
     setShowMoreFacilities,
     handlePriceChange,
+    handleResetFilters,
     roomsAndBeds,
     handleRoomChange,
     bookingOptions,

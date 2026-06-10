@@ -19,3 +19,16 @@ export const fetchProperties = async (lastEvaluatedKeyCreatedAt, lastEvaluatedKe
     throw new Error("failed to fetch properties");
   }
 };
+
+export const fetchAllProperties = async () => {
+  const all = [];
+  let key = null;
+
+  do {
+    const { properties, lastEvaluatedKey } = await fetchProperties(key?.createdAt, key?.id);
+    all.push(...properties);
+    key = lastEvaluatedKey;
+  } while (key);
+
+  return all;
+};
