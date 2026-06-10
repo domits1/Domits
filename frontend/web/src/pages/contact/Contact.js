@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
     Info, User, MapPin, XCircle, CreditCard, Home,
@@ -134,21 +134,20 @@ FaqAccordionItem.propTypes = {
     answer: PropTypes.string.isRequired,
 };
 
-const FaqCategoryCard = ({ category, searchQuery, frequentlyAsked }) => {
+const FaqCategoryCard = ({ category, lowerQuery, frequentlyAsked }) => {
     const [open, setOpen] = useState(false);
     const { label, Icon, faqs } = category;
 
-    const lowerQuery = searchQuery.toLowerCase();
-    const visibleFaqs = searchQuery
+    const visibleFaqs = lowerQuery
         ? faqs.filter(f =>
             f.question.toLowerCase().includes(lowerQuery) ||
             f.answer.toLowerCase().includes(lowerQuery)
           )
         : faqs;
 
-    if (searchQuery.length > 0 && visibleFaqs.length === 0) return null;
+    if (lowerQuery.length > 0 && visibleFaqs.length === 0) return null;
 
-    const isExpanded = open || searchQuery.length > 0;
+    const isExpanded = open || lowerQuery.length > 0;
 
     return (
         <div className={`contact-faq-card${isExpanded ? " contact-faq-card--open" : ""}`}>
@@ -182,7 +181,7 @@ FaqCategoryCard.propTypes = {
         Icon: PropTypes.elementType.isRequired,
         faqs: PropTypes.arrayOf(faqItemShape).isRequired,
     }).isRequired,
-    searchQuery: PropTypes.string.isRequired,
+    lowerQuery: PropTypes.string.isRequired,
     frequentlyAsked: PropTypes.string.isRequired,
 };
 
@@ -266,10 +265,10 @@ function Contact() {
     };
 
     const categories = t.categories || {};
-    const translatedFaqData = FAQ_DATA.map(cat => ({
-        ...cat,
-        label: categories[cat.key] || cat.label,
-    }));
+    const translatedFaqData = useMemo(
+        () => FAQ_DATA.map(cat => ({ ...cat, label: categories[cat.key] || cat.label })),
+        [language] // eslint-disable-line react-hooks/exhaustive-deps
+    );
 
     const lowerQuery = searchQuery.toLowerCase();
     const hasNoResults = searchQuery.length > 0 && translatedFaqData.every(cat =>
@@ -306,7 +305,7 @@ function Contact() {
                     <FaqCategoryCard
                         key={category.key}
                         category={category}
-                        searchQuery={searchQuery}
+                        lowerQuery={lowerQuery}
                         frequentlyAsked={t.frequentlyAsked || "Frequently asked questions"}
                     />
                 ))}
