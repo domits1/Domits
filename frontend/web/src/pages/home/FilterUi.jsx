@@ -17,7 +17,10 @@ const EURO_SYMBOL = '\u20AC';
 // Group the canonical amenity list (src/store/amenities.js) by category so the
 // filter always reflects every amenity a host can select.
 const amenitiesByCategory = amenities.reduce((groups, amenity) => {
-  (groups[amenity.category] ??= []).push(amenity);
+  if (!groups[amenity.category]) {
+    groups[amenity.category] = [];
+  }
+  groups[amenity.category].push(amenity);
   return groups;
 }, {});
 
@@ -130,7 +133,7 @@ const FilterUi = ({ onFilterApplied }) => {
     const button = event.currentTarget;
     button.classList.remove('is-clicked');
     // Force reflow so the animation restarts on every click.
-    void button.offsetWidth;
+    button.getBoundingClientRect();
     button.classList.add('is-clicked');
   };
 
@@ -146,7 +149,7 @@ const FilterUi = ({ onFilterApplied }) => {
 
   return (
     <div>
-      {error && <div className="filter-message" role="status">{error}</div>}
+      {error && <output className="filter-message">{error}</output>}
       <div className="filter-section">
         <div className="FilterTitle">Price Range</div>
         <div className="slider-container">
@@ -218,18 +221,16 @@ const FilterUi = ({ onFilterApplied }) => {
       </div>
 
       {amenitiesModalOpen && (
-        <div
-          className="amenities-modal-overlay"
-          role="presentation"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              setAmenitiesModalOpen(false);
-            }
-          }}
-        >
-          <div
+        <div className="amenities-modal-overlay">
+          <button
+            type="button"
+            className="amenities-modal-backdrop"
+            aria-label="Close amenities"
+            onClick={() => setAmenitiesModalOpen(false)}
+          />
+          <dialog
             className="amenities-modal"
-            role="dialog"
+            open
             aria-modal="true"
             aria-label="All amenities"
           >
@@ -260,7 +261,7 @@ const FilterUi = ({ onFilterApplied }) => {
                 {panelLabels.apply}
               </button>
             </div>
-          </div>
+          </dialog>
         </div>
       )}
 

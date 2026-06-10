@@ -41,10 +41,13 @@ export default function useFilterLogic(props) {
         // Prefer the price range computed by the backend; fall back to deriving
         // it client-side if the endpoint doesn't provide it yet.
         const range = data?.priceRange;
-        const bounds =
-          range && Number.isFinite(range.min) && Number.isFinite(range.max)
-            ? [range.min, range.max]
-            : computePriceBounds(Array.isArray(data) ? data : (data?.properties ?? []));
+        let bounds;
+        if (range && Number.isFinite(range.min) && Number.isFinite(range.max)) {
+          bounds = [range.min, range.max];
+        } else {
+          const properties = Array.isArray(data) ? data : (data?.properties ?? []);
+          bounds = computePriceBounds(properties);
+        }
 
         setPriceBounds(bounds);
         setPriceValues(bounds);

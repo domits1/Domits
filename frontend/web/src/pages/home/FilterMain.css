@@ -20,7 +20,20 @@
   padding: 20px;
 }
 
+.amenities-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+}
+
 .amenities-modal {
+  position: relative;
+  border: none;
+  padding: 0;
+  margin: 0;
   background-color: #ffffff;
   border-radius: 12px;
   width: 100%;
@@ -155,6 +168,7 @@
 }
 
 .filter-message {
+  display: block;
   margin-top: 15px;
   padding: 10px 12px;
   border: 1px solid #e0a800;
