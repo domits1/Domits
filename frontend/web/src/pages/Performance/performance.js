@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import PropTypes from "prop-types";
 import {
   House,
   BarChart2,
@@ -54,6 +55,12 @@ const SectionCard = ({ title, bullets, index }) => {
       </div>
     </div>
   );
+};
+
+SectionCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  bullets: PropTypes.arrayOf(PropTypes.string).isRequired,
+  index: PropTypes.number.isRequired,
 };
 
 function Performance() {

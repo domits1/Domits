@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
   ShieldCheck,
@@ -60,6 +61,13 @@ const SectionCard = ({ title, description, bullets, index }) => {
       </div>
     </div>
   );
+};
+
+SectionCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  bullets: PropTypes.arrayOf(PropTypes.string).isRequired,
+  index: PropTypes.number.isRequired,
 };
 
 function Security() {

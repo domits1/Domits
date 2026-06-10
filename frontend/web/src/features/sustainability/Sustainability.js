@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import PropTypes from "prop-types";
 import { Recycle, Award, Leaf, ChevronDown } from "lucide-react";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -40,6 +41,13 @@ const SectionCard = ({ title, subtitle, description, index }) => {
       </div>
     </div>
   );
+};
+
+SectionCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
+  description: PropTypes.string.isRequired,
+  index: PropTypes.number.isRequired,
 };
 
 function Sustainability() {
