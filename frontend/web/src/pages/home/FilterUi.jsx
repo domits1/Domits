@@ -8,7 +8,6 @@ import de from '../../content/de.json';
 import es from '../../content/es.json';
 import FilterLogic from './FilterLogic';
 import './FilterMain.css';
-import { MAX_PRICE, MIN_PRICE } from '../../constants/searchFilters';
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -29,6 +28,7 @@ const AMENITY_LABELS = {
 
 const FilterUi = ({ onFilterApplied }) => {
   const {
+    priceBounds,
     priceValues,
     setPriceValues,
     selectedAmenities,
@@ -70,7 +70,7 @@ const FilterUi = ({ onFilterApplied }) => {
 
     if (numericValue) {
       const newValue = Number.parseInt(numericValue, 10);
-      if (newValue >= MIN_PRICE && newValue <= priceValues[1]) {
+      if (newValue >= priceBounds[0] && newValue <= priceValues[1]) {
         handlePriceChange(0, newValue);
       }
     }
@@ -84,7 +84,7 @@ const FilterUi = ({ onFilterApplied }) => {
 
     if (numericValue) {
       const newValue = Number.parseInt(numericValue, 10);
-      if (newValue <= MAX_PRICE && newValue >= priceValues[0]) {
+      if (newValue <= priceBounds[1] && newValue >= priceValues[0]) {
         handlePriceChange(1, newValue);
       }
     }
@@ -141,8 +141,8 @@ const FilterUi = ({ onFilterApplied }) => {
             value={priceValues}
             onChange={handleSliderChange}
             valueLabelDisplay="auto"
-            min={MIN_PRICE}
-            max={MAX_PRICE}
+            min={priceBounds[0]}
+            max={priceBounds[1]}
             step={1}
             valueLabelFormat={(value) => `${EURO_SYMBOL}${value}`}
             disableSwap

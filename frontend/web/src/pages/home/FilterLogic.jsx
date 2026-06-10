@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MAX_PRICE, MIN_PRICE } from "../../constants/searchFilters";
+import { getListingPricingBreakdown } from "../../features/bookingengine/listingdetails/utils/pricing";
 
 const FILTER_URL = "https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction";
 
@@ -9,10 +10,53 @@ const appendPositiveNumberParam = (params, key, value) => {
   }
 };
 
+const computePriceBounds = (properties) => {
+  const prices = properties
+    .map((p) => getListingPricingBreakdown(p?.propertyPricing, 1).nightlyDisplayPrice)
+    .filter((price) => Number.isFinite(price) && price > 0);
+
+  if (prices.length === 0) {
+    return [MIN_PRICE, MAX_PRICE];
+  }
+
+  return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
+};
+
 export default function useFilterLogic(props) {
   const { onFilterApplied } = props || {};
 
+  const [priceBounds, setPriceBounds] = useState([MIN_PRICE, MAX_PRICE]);
   const [priceValues, setPriceValues] = useState([MIN_PRICE, MAX_PRICE]);
+
+  // Derive the slider's min/max from the actual catalog prices on mount.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const response = await fetch(FILTER_URL);
+        const data = await response.json();
+        if (cancelled) return;
+
+        // Prefer the price range computed by the backend; fall back to deriving
+        // it client-side if the endpoint doesn't provide it yet.
+        const range = data?.priceRange;
+        const bounds =
+          range && Number.isFinite(range.min) && Number.isFinite(range.max)
+            ? [range.min, range.max]
+            : computePriceBounds(Array.isArray(data) ? data : (data?.properties ?? []));
+
+        setPriceBounds(bounds);
+        setPriceValues(bounds);
+      } catch {
+        // Keep the default bounds if the lookup fails.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [selectedAmenities, setSelectedAmenities] = useState({
     wifi: false,
@@ -118,7 +162,7 @@ export default function useFilterLogic(props) {
   };
 
   const handleResetFilters = () => {
-    const defaultPriceValues = [MIN_PRICE, MAX_PRICE];
+    const defaultPriceValues = [...priceBounds];
     const defaultRoomsAndBeds = { bedrooms: 0, beds: 0, bathrooms: 0 };
     const defaultBookingOptions = { bookInstantly: false, bookingRequest: false };
 
@@ -145,6 +189,7 @@ export default function useFilterLogic(props) {
   };
 
   return {
+    priceBounds,
     priceValues,
     setPriceValues,
     selectedAmenities,
