@@ -113,11 +113,32 @@
     min-width: 0;
   }
 
+  &__section-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  &__section-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: $green-hex;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   &__section-title {
     font-size: 1.35rem;
     font-weight: 800;
-    margin: 0 0 10px;
-    color: $text;
+    margin: 0;
+    color: $green-hex;
   }
 
   &__section-description {

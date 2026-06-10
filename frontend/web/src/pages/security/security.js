@@ -68,7 +68,10 @@ function Security() {
                 <Icon size={ICON_SIZE} />
               </div>
               <div className="security__section-content">
-                <h2 className="security__section-title">{title}</h2>
+                <div className="security__section-heading">
+                  <span className="security__section-number">{i + 1}</span>
+                  <h2 className="security__section-title">{title}</h2>
+                </div>
                 <p className="security__section-description">{description}</p>
                 <ul className="security__section-list">
                   {bullets.map((bullet) => (
