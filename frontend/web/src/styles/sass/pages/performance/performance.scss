@@ -230,14 +230,18 @@
     }
 
     &__section-card {
-      flex-direction: column;
-      padding: 20px;
-      gap: 16px;
+      align-items: flex-start;
+      padding: 16px;
+      gap: 12px;
     }
 
     &__section-icon {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
+    }
+
+    &__section-heading {
+      gap: 8px;
     }
 
     &__section-number {
@@ -247,7 +251,7 @@
     }
 
     &__section-title {
-      font-size: 0.875rem;
+      font-size: 0.8rem;
     }
   }
 }
