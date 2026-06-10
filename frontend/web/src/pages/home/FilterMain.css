@@ -24,8 +24,8 @@
   background-color: #ffffff;
   border-radius: 12px;
   width: 100%;
-  max-width: 520px;
-  max-height: 85vh;
+  max-width: 820px;
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -50,8 +50,34 @@
 }
 
 .amenities-modal-body {
-  padding: 8px 20px 16px;
+  padding: 16px 20px;
   overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.amenities-modal-body .amenity-category {
+  margin: 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.amenities-modal-body .amenity-category-title {
+  margin-bottom: 10px;
+}
+
+.amenities-modal-body .facility-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 0;
+}
+
+.amenities-modal-body .facility-item {
+  margin-bottom: 0;
 }
 
 .amenities-modal-footer {
