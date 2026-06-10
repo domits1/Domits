@@ -34,8 +34,6 @@ const FilterUi = ({ onFilterApplied }) => {
     setPriceValues,
     selectedAmenities,
     handleAmenityChange,
-    showMoreFacilities,
-    setShowMoreFacilities,
     handlePriceChange,
     handleResetFilters,
     fetchFilteredAccommodations,
@@ -51,12 +49,30 @@ const FilterUi = ({ onFilterApplied }) => {
     contentByLanguage[language]?.homepage?.filters?.panel ??
     en.homepage.filters.panel;
 
-  const visibleCategories = useMemo(
-    () =>
-      showMoreFacilities
-        ? amenityCategories
-        : amenityCategories.slice(0, PREVIEW_CATEGORY_COUNT),
-    [showMoreFacilities]
+  const previewCategories = useMemo(
+    () => amenityCategories.slice(0, PREVIEW_CATEGORY_COUNT),
+    []
+  );
+
+  const [amenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
+
+  const renderAmenityCategory = (category) => (
+    <div key={category} className="amenity-category">
+      <div className="amenity-category-title">{category}</div>
+      <div className="facility-list">
+        {amenitiesByCategory[category].map((amenity) => (
+          <label key={amenity.id} className="facility-item">
+            <input
+              type="checkbox"
+              checked={selectedAmenities.includes(amenity.id)}
+              onChange={() => handleAmenityChange(amenity.id)}
+              className="filter-select-option"
+            />
+            {amenity.amenity}
+          </label>
+        ))}
+      </div>
+    </div>
   );
 
   const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
@@ -183,32 +199,59 @@ const FilterUi = ({ onFilterApplied }) => {
 
       <div className="filter-section">
         <div className="FilterTitle">Amenities</div>
-        {visibleCategories.map((category) => (
-          <div key={category} className="amenity-category">
-            <div className="amenity-category-title">{category}</div>
-            <div className="facility-list">
-              {amenitiesByCategory[category].map((amenity) => (
-                <label key={amenity.id} className="facility-item">
-                  <input
-                    type="checkbox"
-                    checked={selectedAmenities.includes(amenity.id)}
-                    onChange={() => handleAmenityChange(amenity.id)}
-                    className="filter-select-option"
-                  />
-                  {amenity.amenity}
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
+        {previewCategories.map(renderAmenityCategory)}
         <button
           type="button"
-          onClick={() => setShowMoreFacilities(!showMoreFacilities)}
+          onClick={() => setAmenitiesModalOpen(true)}
           className="show-more-text"
         >
-          {showMoreFacilities ? 'Show Less' : 'Show More'}
+          Show More
         </button>
       </div>
+
+      {amenitiesModalOpen && (
+        <div
+          className="amenities-modal-overlay"
+          role="presentation"
+          onClick={() => setAmenitiesModalOpen(false)}
+        >
+          <div
+            className="amenities-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="All amenities"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="amenities-modal-header">
+              <span>Amenities</span>
+              <button
+                type="button"
+                className="amenities-modal-close"
+                aria-label="Close amenities"
+                onClick={() => setAmenitiesModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="amenities-modal-body">
+              {amenityCategories.map(renderAmenityCategory)}
+            </div>
+            <div className="amenities-modal-footer">
+              <button
+                type="button"
+                className="filter-apply-btn"
+                onClick={(event) => {
+                  triggerClickAnimation(event);
+                  setAmenitiesModalOpen(false);
+                  fetchFilteredAccommodations();
+                }}
+              >
+                {panelLabels.apply}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="filter-section">
         <div className="FilterTitle">Rooms &amp; Beds</div>
