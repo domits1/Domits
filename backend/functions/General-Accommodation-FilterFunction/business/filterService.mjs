@@ -5,6 +5,7 @@ import { filterByBookingType } from '../filters/bookingTypeFilter.mjs';
 import { filterByAmenities } from '../filters/amenitiesFilter.mjs';
 import { filterByGuests } from '../search/guestAmountFilter.mjs';
 import { filterByLocation } from '../search/locationFilter.mjs';
+import { filterByType } from '../search/typeFilter.mjs';
 
 // Fee-inclusive min/max nightly price across the full catalog, used as the
 // slider bounds on the frontend. Computed before filtering so the bounds stay
@@ -31,6 +32,7 @@ export class FilterService {
     guests,
     country,
     city,
+    type,
     bedrooms,
     beds,
     bathrooms,
@@ -50,6 +52,10 @@ export class FilterService {
 
     if (city || country) {
       properties = filterByLocation(properties, country, city);
+    }
+
+    if (type) {
+      properties = filterByType(properties, type);
     }
 
     properties = filterByRoomsAndBeds(properties, { bedrooms, beds, bathrooms });
