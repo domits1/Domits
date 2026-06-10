@@ -752,6 +752,22 @@ $accent: #2f6fed;
   white-space: nowrap;
 }
 
+.hc-cell-pricelabs-applied {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  margin-top: 3px;
+  border: 1px solid #4ade80;
+  border-radius: 4px;
+  background: #166534;
+  color: #fff;
+  padding: 2px 4px;
+  font-size: 10px;
+  line-height: 1.05;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .hc-cell-badge {
   position: absolute;
   top: 6px;
@@ -2316,7 +2332,7 @@ $accent: #2f6fed;
 }
 
 .hc-dynamic-pricing-apply-btn {
-  width: 100%;
+  flex: 1;
   padding: 0.6rem 1rem;
   background: #2e7d32;
   color: #fff;
@@ -2348,4 +2364,43 @@ $accent: #2f6fed;
 .hc-dynamic-pricing-ignore-btn:hover {
   background: #f3f4f6;
   color: #374151;
+}
+
+.hc-dynamic-pricing-actions {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+}
+
+.hc-dynamic-pricing-status {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.hc-dynamic-pricing-status--applied {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.hc-dynamic-pricing-status--declined {
+  background: #fce4ec;
+  color: #b71c1c;
+}
+
+.hc-info-card-line--applied {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.hc-info-card-line--ignored {
+  color: #b71c1c;
+  font-weight: 600;
+}
+
+.hc-dynamic-pricing-amount--applied {
+  color: #2e7d32;
 }
