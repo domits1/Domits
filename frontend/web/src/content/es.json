@@ -1107,5 +1107,135 @@
         "error": "Error al enviar la invitación. Por favor, inténtalo de nuevo."
       }
     }
+  },
+  "performance": {
+    "label": "PAQUETES DE RENDIMIENTO",
+    "title": "Haz crecer tu negocio de alquiler con",
+    "titleAccent": "confianza.",
+    "badges": [
+      {
+        "title": "Anfitrión inicial",
+        "subtitle": "1-9 propiedades"
+      },
+      {
+        "title": "Anfitrión en crecimiento",
+        "subtitle": "10-99 propiedades"
+      },
+      {
+        "title": "Anfitrión escalando",
+        "subtitle": "100+ propiedades"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Distribución y Marketing",
+        "bullets": [
+          "Distribución multicanal a través de Booking.com, Airbnb, VRBO y 100+ plataformas.",
+          "Análisis impulsado por IA, paneles y perspectivas de rendimiento.",
+          "Marketing de entrada, nutrición de leads, recorridos del cliente y contenido.",
+          "SEO, SEA, CRO y marketing de rendimiento orientado a la conversión.",
+          "Automatización de CRM, campañas de correo electrónico, segmentación y flujos de comunicación."
+        ]
+      },
+      {
+        "title": "Optimizar Operaciones",
+        "bullets": [
+          "Automatizar la gestión de propiedades",
+          "Gestión de reservas",
+          "Gestión de tarifas",
+          "Housekeeping",
+          "Recepción",
+          "Informes"
+        ]
+      },
+      {
+        "title": "Aumentar Ingresos",
+        "bullets": [
+          "Precios dinámicos",
+          "Upselling digital",
+          "Tasas de ocupación",
+          "ADR (Tarifa Diaria Promedio)",
+          "RevPAR (Ingresos por Habitación Disponible)"
+        ]
+      },
+      {
+        "title": "Experiencia del Huésped",
+        "bullets": [
+          "Calidez y amabilidad",
+          "Motor de reservas",
+          "Mensajería",
+          "Reseñas",
+          "Check-in",
+          "Soporte (FAQ, correo electrónico y teléfono)"
+        ]
+      }
+    ]
+  },
+  "security": {
+    "label": "SEGURIDAD",
+    "title": "Tu seguridad es lo que",
+    "titleAccent": "más importa.",
+    "badges": [
+      {
+        "title": "Infraestructura Segura",
+        "subtitle": "Fiable y monitoreada"
+      },
+      {
+        "title": "Datos Cifrados",
+        "subtitle": "Protección de extremo a extremo"
+      },
+      {
+        "title": "Copias de Seguridad Diarias",
+        "subtitle": "Siempre protegido"
+      },
+      {
+        "title": "Alojado en la UE",
+        "subtitle": "Cumple con el RGPD"
+      }
+    ],
+    "sections": [
+      {
+        "title": "1. Infraestructura",
+        "description": "Nuestros servidores están alojados de forma segura en múltiples centros de datos europeos. En caso de cualquier fallo, los técnicos siempre están disponibles para resolver el problema de inmediato. La infraestructura en línea de Amazon Web Services garantiza la seguridad y confidencialidad de nuestros servicios en la nube.",
+        "bullets": [
+          "Nuestros datos se almacenan en dos centros de datos diferentes.",
+          "En caso de fallos, Domits cambia automáticamente a otro centro de datos.",
+          "Una disponibilidad del 99,995 %."
+        ]
+      },
+      {
+        "title": "2. Robo y Privacidad",
+        "description": "Domits se compromete plenamente a garantizar que sus datos estén seguros y protegidos de los hackers. Cada cliente tiene su propia base de datos separada en Domits, lo que hace imposible que otros usuarios accedan a los datos ajenos.",
+        "bullets": [
+          "Al usar Domits, la conexión está asegurada.",
+          "Gestión y almacenamiento de datos conformes con el RGPD",
+          "Es imposible que terceros intercepten el tráfico de datos."
+        ]
+      },
+      {
+        "title": "3. Copias de Seguridad",
+        "description": "En Domits hacemos todo lo posible para garantizar que nuestro sistema esté siempre operativo y sus datos siempre seguros. Las copias de seguridad se realizan diariamente para que nunca se pierda nada. En caso de interrupciones, todos sus datos se almacenan de forma segura y nuestro equipo garantiza que su cuenta pueda ser restaurada.",
+        "bullets": [
+          "Garantía contra la pérdida de datos",
+          "Recuperación diaria de datos de hasta seis meses atrás",
+          "Copias de seguridad de datos seguras"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "title": "Visión",
+        "text": "Creemos que todos merecen una seguridad transparente y accesible. Nuestra visión es crear un entorno digital donde los usuarios puedan confiar en que sus datos están protegidos sin necesidad de entender detalles técnicos complejos."
+      },
+      {
+        "title": "Lo Que Hacemos",
+        "text": "Supervisamos, actualizamos y mejoramos continuamente nuestra infraestructura de seguridad. Nuestro equipo dedicado trabaja las 24 horas del día para identificar amenazas potenciales, implementar los últimos estándares de seguridad y garantizar que sus datos permanezcan protegidos en todo momento."
+      }
+    ],
+    "cta": {
+      "title": "¿Preguntas sobre seguridad?",
+      "contactButton": "Contactar soporte",
+      "learnMoreButton": "Más información"
+    }
   }
 }

@@ -1107,5 +1107,135 @@
         "error": "Einladung konnte nicht gesendet werden. Bitte versuche es erneut."
       }
     }
+  },
+  "performance": {
+    "label": "LEISTUNGSPAKETE",
+    "title": "Lassen Sie Ihr Vermietungsgeschäft wachsen mit",
+    "titleAccent": "Zuversicht.",
+    "badges": [
+      {
+        "title": "Anfänger-Gastgeber",
+        "subtitle": "1-9 Unterkünfte"
+      },
+      {
+        "title": "Wachsender Gastgeber",
+        "subtitle": "10-99 Unterkünfte"
+      },
+      {
+        "title": "Skalierender Gastgeber",
+        "subtitle": "100+ Unterkünfte"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Vertrieb & Marketing",
+        "bullets": [
+          "Multi-Channel-Vertrieb über Booking.com, Airbnb, VRBO und 100+ Plattformen.",
+          "KI-gestützte Analysen, Dashboards und Leistungseinblicke.",
+          "Inbound-Marketing, Lead-Nurturing, Kundenreisen und Content.",
+          "SEO, SEA, CRO und konversionsorientiertes Performance-Marketing.",
+          "CRM-Automatisierung, E-Mail-Kampagnen, Segmentierung und Kommunikationsabläufe."
+        ]
+      },
+      {
+        "title": "Betrieb Optimieren",
+        "bullets": [
+          "Immobilienverwaltung automatisieren",
+          "Reservierungsmanagement",
+          "Preismanagement",
+          "Housekeeping",
+          "Rezeption",
+          "Berichterstattung"
+        ]
+      },
+      {
+        "title": "Umsatz Steigern",
+        "bullets": [
+          "Dynamische Preisgestaltung",
+          "Digitales Upselling",
+          "Belegungsraten",
+          "ADR (Durchschnittliche Tagesrate)",
+          "RevPAR (Umsatz pro verfügbarem Zimmer)"
+        ]
+      },
+      {
+        "title": "Gästeerlebnis",
+        "bullets": [
+          "Wärme und Freundlichkeit",
+          "Buchungsmaschine",
+          "Nachrichten",
+          "Bewertungen",
+          "Check-in",
+          "Support (FAQ, E-Mail und Telefon)"
+        ]
+      }
+    ]
+  },
+  "security": {
+    "label": "SICHERHEIT",
+    "title": "Ihre Sicherheit steht",
+    "titleAccent": "an erster Stelle.",
+    "badges": [
+      {
+        "title": "Sichere Infrastruktur",
+        "subtitle": "Zuverlässig & überwacht"
+      },
+      {
+        "title": "Verschlüsselte Daten",
+        "subtitle": "End-to-End-Schutz"
+      },
+      {
+        "title": "Tägliche Backups",
+        "subtitle": "Immer geschützt"
+      },
+      {
+        "title": "EU-Hosting",
+        "subtitle": "DSGVO-konform"
+      }
+    ],
+    "sections": [
+      {
+        "title": "1. Infrastruktur",
+        "description": "Unsere Server sind sicher in mehreren europäischen Rechenzentren untergebracht. Im Falle von Störungen stehen Techniker jederzeit bereit, das Problem sofort zu beheben. Die Online-Infrastruktur von Amazon Web Services gewährleistet die Sicherheit und Vertraulichkeit unserer Cloud-Dienste.",
+        "bullets": [
+          "Unsere Daten werden in zwei verschiedenen Rechenzentren gespeichert.",
+          "Bei Störungen wechselt Domits automatisch zu einem anderen Rechenzentrum.",
+          "Eine Betriebszeit von 99,995 %."
+        ]
+      },
+      {
+        "title": "2. Diebstahl und Datenschutz",
+        "description": "Domits setzt sich vollständig dafür ein, dass Ihre Daten sicher und vor Hackern geschützt sind. Jeder Kunde hat seine eigene, separate Datenbank bei Domits, sodass es anderen Nutzern unmöglich ist, auf fremde Daten zuzugreifen.",
+        "bullets": [
+          "Bei der Nutzung von Domits ist die Verbindung gesichert.",
+          "DSGVO-konforme Datenverarbeitung und -speicherung",
+          "Es ist für Außenstehende unmöglich, den Datenverkehr abzufangen."
+        ]
+      },
+      {
+        "title": "3. Backups",
+        "description": "Bei Domits tun wir alles, um sicherzustellen, dass unser System stets betriebsbereit ist und Ihre Daten immer gesichert sind. Datensicherungen werden täglich durchgeführt, damit nichts verloren geht. Bei Störungen werden alle Ihre Daten sicher gespeichert und unser Team stellt sicher, dass Ihr Konto wiederhergestellt werden kann.",
+        "bullets": [
+          "Garantie gegen Datenverlust",
+          "Tägliche Wiederherstellung von Daten bis zu sechs Monate zurück",
+          "Sichere Datensicherungen"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "title": "Vision",
+        "text": "Wir glauben, dass jeder transparente und zugängliche Sicherheit verdient. Unsere Vision ist es, eine digitale Umgebung zu schaffen, in der Nutzer darauf vertrauen können, dass ihre Daten geschützt sind, ohne komplexe technische Details verstehen zu müssen."
+      },
+      {
+        "title": "Was Wir Tun",
+        "text": "Wir überwachen, aktualisieren und verbessern kontinuierlich unsere Sicherheitsinfrastruktur. Unser engagiertes Team arbeitet rund um die Uhr, um potenzielle Bedrohungen zu identifizieren, die neuesten Sicherheitsstandards umzusetzen und sicherzustellen, dass Ihre Daten jederzeit geschützt bleiben."
+      }
+    ],
+    "cta": {
+      "title": "Fragen zur Sicherheit?",
+      "contactButton": "Support kontaktieren",
+      "learnMoreButton": "Mehr erfahren"
+    }
   }
 }
