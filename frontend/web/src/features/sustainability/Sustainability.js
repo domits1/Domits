@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { Recycle, Award, Leaf } from "lucide-react";
+import React, { useState, useContext } from "react";
+import { Recycle, Award, Leaf, ChevronDown } from "lucide-react";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
@@ -10,6 +10,37 @@ const contentByLanguage = { en, nl, de, es };
 
 const ICON_SIZE = 28;
 const SECTION_ICONS = [Recycle, Award, Leaf];
+
+const SectionCard = ({ title, subtitle, description, index }) => {
+  const [open, setOpen] = useState(false);
+  const Icon = SECTION_ICONS[index];
+  return (
+    <div className={`sustainability__section-card${open ? " sustainability__section-card--open" : ""}`}>
+      <div className="sustainability__section-icon">
+        <Icon size={ICON_SIZE} />
+      </div>
+      <div className="sustainability__section-content">
+        <button
+          type="button"
+          className="sustainability__section-heading"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+        >
+          <span className="sustainability__section-number">{index + 1}</span>
+          <span className="sustainability__section-title">{title}</span>
+          <ChevronDown
+            className={`sustainability__section-chevron${open ? " sustainability__section-chevron--open" : ""}`}
+            size={18}
+          />
+        </button>
+        <div className="sustainability__section-body">
+          {subtitle && <p className="sustainability__section-subtitle">{subtitle}</p>}
+          <p className="sustainability__section-description">{description}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function Sustainability() {
   const { language } = useContext(LanguageContext);
@@ -28,26 +59,9 @@ function Sustainability() {
       </div>
 
       <div className="sustainability__sections">
-        {c.sections.map(({ title, subtitle, description }, i) => {
-          const Icon = SECTION_ICONS[i];
-          return (
-            <div className="sustainability__section-card" key={title}>
-              <div className="sustainability__section-icon">
-                <Icon size={ICON_SIZE} />
-              </div>
-              <div className="sustainability__section-content">
-                <div className="sustainability__section-heading">
-                  <span className="sustainability__section-number">{i + 1}</span>
-                  <h2 className="sustainability__section-title">{title}</h2>
-                </div>
-                {subtitle && (
-                  <p className="sustainability__section-subtitle">{subtitle}</p>
-                )}
-                <p className="sustainability__section-description">{description}</p>
-              </div>
-            </div>
-          );
-        })}
+        {c.sections.map(({ title, subtitle, description }, i) => (
+          <SectionCard key={title} title={title} subtitle={subtitle} description={description} index={i} />
+        ))}
       </div>
     </div>
   );

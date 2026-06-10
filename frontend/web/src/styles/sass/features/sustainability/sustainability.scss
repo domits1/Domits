@@ -73,6 +73,13 @@
     align-items: center;
     gap: 12px;
     margin-bottom: 10px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+    cursor: default;
   }
 
   &__section-number {
@@ -96,6 +103,18 @@
     color: $green-hex;
   }
 
+  &__section-chevron {
+    display: none;
+    margin-left: auto;
+    flex-shrink: 0;
+    color: $muted;
+    transition: transform 0.25s ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
   &__section-subtitle {
     font-size: 0.9rem;
     font-weight: 600;
@@ -111,7 +130,7 @@
     max-width: 680px;
   }
 
-  // Tablet
+  // Tablet + mobile accordion
   @media (max-width: 768px) {
     margin: 32px auto 60px;
     padding: 0 16px;
@@ -123,6 +142,24 @@
     &__section-card {
       padding: 24px;
       gap: 20px;
+    }
+
+    &__section-heading {
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+
+    &__section-chevron {
+      display: block;
+    }
+
+    &__section-body {
+      display: none;
+      margin-top: 12px;
+    }
+
+    &__section-card--open &__section-body {
+      display: block;
     }
   }
 

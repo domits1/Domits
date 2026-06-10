@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useState, useContext } from "react";
 import {
   House,
   BarChart2,
@@ -7,6 +7,7 @@ import {
   Settings,
   TrendingUp,
   Heart,
+  ChevronDown,
 } from "lucide-react";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -20,6 +21,40 @@ const ICON_SIZE = 28;
 
 const BADGE_ICONS   = [House, BarChart2, Building2];
 const SECTION_ICONS = [Megaphone, Settings, TrendingUp, Heart];
+
+const SectionCard = ({ title, bullets, index }) => {
+  const [open, setOpen] = useState(false);
+  const Icon = SECTION_ICONS[index];
+  return (
+    <div className={`performance__section-card${open ? " performance__section-card--open" : ""}`}>
+      <div className="performance__section-icon">
+        <Icon size={ICON_SIZE} />
+      </div>
+      <div className="performance__section-content">
+        <button
+          type="button"
+          className="performance__section-heading"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+        >
+          <span className="performance__section-number">{index + 1}</span>
+          <span className="performance__section-title">{title}</span>
+          <ChevronDown
+            className={`performance__section-chevron${open ? " performance__section-chevron--open" : ""}`}
+            size={18}
+          />
+        </button>
+        <div className="performance__section-body">
+          <ul className="performance__section-list">
+            {bullets.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function Performance() {
   const { language } = useContext(LanguageContext);
@@ -55,27 +90,9 @@ function Performance() {
       </div>
 
       <div className="performance__sections">
-        {c.sections.map(({ title, bullets }, i) => {
-          const Icon = SECTION_ICONS[i];
-          return (
-            <div className="performance__section-card" key={title}>
-              <div className="performance__section-icon">
-                <Icon size={ICON_SIZE} />
-              </div>
-              <div className="performance__section-content">
-                <div className="performance__section-heading">
-                  <span className="performance__section-number">{i + 1}</span>
-                  <h2 className="performance__section-title">{title}</h2>
-                </div>
-                <ul className="performance__section-list">
-                  {bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          );
-        })}
+        {c.sections.map(({ title, bullets }, i) => (
+          <SectionCard key={title} title={title} bullets={bullets} index={i} />
+        ))}
       </div>
     </div>
   );

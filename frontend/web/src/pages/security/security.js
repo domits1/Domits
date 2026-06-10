@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import {
   ShieldCheck,
@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Settings,
   Headphones,
+  ChevronDown,
 } from "lucide-react";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -25,6 +26,41 @@ const ICON_SIZE = 28;
 const BADGE_ICONS   = [ShieldCheck, Lock, RefreshCw, MapPin];
 const SECTION_ICONS = [Server, Shield, CloudUpload];
 const FACT_ICONS    = [CheckCircle, Settings];
+
+const SectionCard = ({ title, description, bullets, index }) => {
+  const [open, setOpen] = useState(false);
+  const Icon = SECTION_ICONS[index];
+  return (
+    <div className={`security__section-card${open ? " security__section-card--open" : ""}`}>
+      <div className="security__section-icon">
+        <Icon size={ICON_SIZE} />
+      </div>
+      <div className="security__section-content">
+        <button
+          type="button"
+          className="security__section-heading"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+        >
+          <span className="security__section-number">{index + 1}</span>
+          <span className="security__section-title">{title}</span>
+          <ChevronDown
+            className={`security__section-chevron${open ? " security__section-chevron--open" : ""}`}
+            size={18}
+          />
+        </button>
+        <div className="security__section-body">
+          <p className="security__section-description">{description}</p>
+          <ul className="security__section-list">
+            {bullets.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function Security() {
   const { language } = useContext(LanguageContext);
@@ -60,28 +96,9 @@ function Security() {
       </div>
 
       <div className="security__sections">
-        {c.sections.map(({ title, description, bullets }, i) => {
-          const Icon = SECTION_ICONS[i];
-          return (
-            <div className="security__section-card" key={title}>
-              <div className="security__section-icon">
-                <Icon size={ICON_SIZE} />
-              </div>
-              <div className="security__section-content">
-                <div className="security__section-heading">
-                  <span className="security__section-number">{i + 1}</span>
-                  <h2 className="security__section-title">{title}</h2>
-                </div>
-                <p className="security__section-description">{description}</p>
-                <ul className="security__section-list">
-                  {bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          );
-        })}
+        {c.sections.map(({ title, description, bullets }, i) => (
+          <SectionCard key={title} title={title} description={description} bullets={bullets} index={i} />
+        ))}
       </div>
 
       <div className="security__factsbox">

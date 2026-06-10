@@ -117,6 +117,13 @@
     align-items: center;
     gap: 12px;
     margin-bottom: 14px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+    cursor: default;
   }
 
   &__section-number {
@@ -138,6 +145,18 @@
     font-weight: 800;
     margin: 0;
     color: $green-hex;
+  }
+
+  &__section-chevron {
+    display: none;
+    margin-left: auto;
+    flex-shrink: 0;
+    color: $muted;
+    transition: transform 0.25s ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
   }
 
   &__section-list {
@@ -165,7 +184,7 @@
     }
   }
 
-  // Tablet
+  // Tablet + mobile accordion
   @media (max-width: 768px) {
     margin: 32px auto 60px;
     padding: 0 16px;
@@ -177,6 +196,24 @@
     &__badges {
       grid-template-columns: 1fr;
       gap: 10px;
+    }
+
+    &__section-heading {
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+
+    &__section-chevron {
+      display: block;
+    }
+
+    &__section-body {
+      display: none;
+      margin-top: 12px;
+    }
+
+    &__section-card--open &__section-body {
+      display: block;
     }
   }
 
