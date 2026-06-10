@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { MAX_PRICE, MIN_PRICE } from "../../constants/searchFilters";
 import { getListingPricingBreakdown } from "../../features/bookingengine/listingdetails/utils/pricing";
 
@@ -24,6 +25,7 @@ const computePriceBounds = (properties) => {
 
 export default function useFilterLogic(props) {
   const { onFilterApplied } = props || {};
+  const location = useLocation();
 
   const [priceBounds, setPriceBounds] = useState([MIN_PRICE, MAX_PRICE]);
   const [priceValues, setPriceValues] = useState([MIN_PRICE, MAX_PRICE]);
@@ -107,6 +109,18 @@ export default function useFilterLogic(props) {
       setError(null);
 
       const url = new URL(FILTER_URL);
+
+      // Keep the active search (e.g. /home?country=Thailand&guests=2) so
+      // applying filters narrows the search results instead of replacing
+      // them with the full catalog.
+      const activeSearch = new URLSearchParams(location.search);
+      for (const key of ["country", "type", "guests"]) {
+        const value = activeSearch.get(key);
+        if (value) {
+          url.searchParams.append(key, value);
+        }
+      }
+
       url.searchParams.append("minPrice", nextPriceValues[0]);
       url.searchParams.append("maxPrice", nextPriceValues[1]);
       appendPositiveNumberParam(url.searchParams, "bedrooms", nextRoomsAndBeds.bedrooms);
