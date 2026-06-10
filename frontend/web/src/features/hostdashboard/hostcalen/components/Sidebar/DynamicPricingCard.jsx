@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 
 const actionButtons = (label, dateKeys, onApplyPrice, onIgnorePrice) => (
-  <div className="hc-dynamic-pricing-actions" style={{ position: "relative", zIndex: 1, display: "flex", gap: "8px" }}>
+  <div className="hc-dynamic-pricing-actions" style={{ position: "relative", zIndex: 4, display: "flex", gap: "8px" }}>
     <button
       type="button"
       className="hc-dynamic-pricing-apply-btn"
@@ -22,7 +22,16 @@ const actionButtons = (label, dateKeys, onApplyPrice, onIgnorePrice) => (
   </div>
 );
 
-const renderPricingContent = ({ hasAnySuggestion, recommendedPrice, selectedDateKeys, onApplyPrice, onIgnorePrice }) => {
+const renderPricingContent = ({
+  hasAnySuggestion,
+  recommendedPrice,
+  hasAnyApplied,
+  hasAnyIgnored,
+  selectedDateKeys,
+  onApplyPrice,
+  onIgnorePrice,
+}) => {
+  // 1. Active suggestion takes priority
   if (hasAnySuggestion) {
     return (
       <>
@@ -40,6 +49,29 @@ const renderPricingContent = ({ hasAnySuggestion, recommendedPrice, selectedDate
       </>
     );
   }
+  // 2. Applied state
+  if (hasAnyApplied) {
+    return (
+      <>
+        <p className="hc-info-card-line hc-info-card-line--applied">Price applied</p>
+        <p className="hc-info-card-line" style={{ fontSize: "0.78rem", color: "#aaa" }}>
+          PriceLabs price is active
+        </p>
+      </>
+    );
+  }
+  // 3. Ignored state
+  if (hasAnyIgnored) {
+    return (
+      <>
+        <p className="hc-info-card-line hc-info-card-line--ignored">Suggestion ignored</p>
+        <p className="hc-info-card-line" style={{ fontSize: "0.78rem", color: "#aaa" }}>
+          Your own price is active
+        </p>
+      </>
+    );
+  }
+  // 4. No suggestion
   return (
     <>
       <p className="hc-info-card-line">No suggestion for this day</p>
@@ -54,6 +86,8 @@ export default function DynamicPricingCard({
   isConnected,
   selectedDateKeys,
   priceLabsOverrides,
+  priceLabsApplied,
+  priceLabsIgnored,
   onApplyPrice,
   onIgnorePrice,
   onOpenSettings,
@@ -70,6 +104,14 @@ export default function DynamicPricingCard({
     multipleSelected &&
     Array.isArray(selectedDateKeys) &&
     selectedDateKeys.some((key) => Number(priceLabsOverrides?.[key]) > 0);
+
+  const hasAnyApplied =
+    Array.isArray(selectedDateKeys) &&
+    selectedDateKeys.some((key) => priceLabsApplied?.[key]);
+
+  const hasAnyIgnored =
+    Array.isArray(selectedDateKeys) &&
+    selectedDateKeys.some((key) => priceLabsIgnored?.[key]);
 
   if (!isConnected) {
     return (
@@ -112,6 +154,8 @@ export default function DynamicPricingCard({
         {renderPricingContent({
           hasAnySuggestion,
           recommendedPrice,
+          hasAnyApplied,
+          hasAnyIgnored,
           selectedDateKeys,
           onApplyPrice,
           onIgnorePrice,
@@ -144,6 +188,8 @@ DynamicPricingCard.propTypes = {
   isConnected: PropTypes.bool.isRequired,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string),
   priceLabsOverrides: PropTypes.object,
+  priceLabsApplied: PropTypes.object,
+  priceLabsIgnored: PropTypes.object,
   onApplyPrice: PropTypes.func,
   onIgnorePrice: PropTypes.func,
   onOpenSettings: PropTypes.func,
@@ -152,6 +198,8 @@ DynamicPricingCard.propTypes = {
 DynamicPricingCard.defaultProps = {
   selectedDateKeys: [],
   priceLabsOverrides: {},
+  priceLabsApplied: {},
+  priceLabsIgnored: {},
   onApplyPrice: () => {},
   onIgnorePrice: () => {},
   onOpenSettings: () => {},

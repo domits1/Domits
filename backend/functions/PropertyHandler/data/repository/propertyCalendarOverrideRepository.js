@@ -108,6 +108,7 @@ const mapRowToOverride = (row) => ({
     row?.pricelabs_price === null || row?.pricelabs_price === undefined
       ? null
       : toInteger(row.pricelabs_price),
+  priceLabsIgnored: Boolean(row?.pricelabs_ignored ?? false),
   stopSell:
     row?.stop_sell === null || row?.stop_sell === undefined
       ? null
@@ -164,6 +165,7 @@ export class PropertyCalendarOverrideRepository {
             is_available,
             nightly_price,
             pricelabs_price,
+            pricelabs_ignored,
             stop_sell,
             closed_to_arrival,
             closed_to_departure,
@@ -226,6 +228,7 @@ export class PropertyCalendarOverrideRepository {
                 calendarDate,
                 isAvailable: normalizeOptionalAvailability(override?.isAvailable),
                 nightlyPrice: normalizeOptionalPrice(override?.nightlyPrice),
+                priceLabsIgnored: override?.priceLabsIgnored ?? override?.pricelabs_ignored ?? null,
                 stopSell: normalizeOptionalAvailability(override?.stopSell),
                 closedToArrival: normalizeOptionalAvailability(override?.closedToArrival),
                 closedToDeparture: normalizeOptionalAvailability(override?.closedToDeparture),
@@ -255,6 +258,7 @@ export class PropertyCalendarOverrideRepository {
           if (
             override.isAvailable === null &&
             override.nightlyPrice === null &&
+            override.priceLabsIgnored === null &&
             override.stopSell === null &&
             override.closedToArrival === null &&
             override.closedToDeparture === null &&
@@ -279,6 +283,7 @@ export class PropertyCalendarOverrideRepository {
                   calendar_date,
                   is_available,
                   nightly_price,
+                  pricelabs_ignored,
                   stop_sell,
                   closed_to_arrival,
                   closed_to_departure,
@@ -287,11 +292,12 @@ export class PropertyCalendarOverrideRepository {
                   updated_at
                 )
               VALUES
-                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
               ON CONFLICT (property_id, calendar_date)
               DO UPDATE SET
                 is_available = EXCLUDED.is_available,
                 nightly_price = EXCLUDED.nightly_price,
+                pricelabs_ignored = COALESCE(EXCLUDED.pricelabs_ignored, "property_calendar_override".pricelabs_ignored),
                 stop_sell = EXCLUDED.stop_sell,
                 closed_to_arrival = EXCLUDED.closed_to_arrival,
                 closed_to_departure = EXCLUDED.closed_to_departure,
@@ -304,6 +310,7 @@ export class PropertyCalendarOverrideRepository {
               override.calendarDate,
               override.isAvailable,
               override.nightlyPrice,
+              override.priceLabsIgnored ?? null,
               override.stopSell,
               override.closedToArrival,
               override.closedToDeparture,

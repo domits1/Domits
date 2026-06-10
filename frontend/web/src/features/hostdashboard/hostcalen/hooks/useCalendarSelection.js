@@ -140,7 +140,7 @@ const getRestrictionForKey = (restrictionsByKey, key) => {
   return normalizeRestrictionOverride(restrictionsByKey[key]);
 };
 
-const buildOverridePayload = (dateKeys, availabilityByKey, priceByKey, restrictionsByKey) =>
+const buildOverridePayload = (dateKeys, availabilityByKey, priceByKey, restrictionsByKey, priceLabsIgnoredByKey = {}) =>
   (Array.isArray(dateKeys) ? dateKeys : [])
     .map((key) => {
       const date = keyToDateNumber(key);
@@ -150,10 +150,12 @@ const buildOverridePayload = (dateKeys, availabilityByKey, priceByKey, restricti
       const nightlyPriceRaw = Number(priceByKey?.[key]);
       const nightlyPrice =
         Number.isFinite(nightlyPriceRaw) && nightlyPriceRaw > 0 ? Math.trunc(nightlyPriceRaw) : null;
+      const priceLabsIgnored = Object.hasOwn(priceLabsIgnoredByKey, key) ? priceLabsIgnoredByKey[key] : null;
       return {
         date,
         isAvailable: Object.hasOwn(availabilityByKey, key) ? Boolean(availabilityByKey[key]) : null,
         nightlyPrice,
+        priceLabsIgnored,
         ...getRestrictionForKey(restrictionsByKey, key),
       };
     })
@@ -163,6 +165,8 @@ const parseOverrideResponse = (overrides) => {
   const availabilityByKey = {};
   const priceByKey = {};
   const priceLabsByKey = {};
+  const appliedByKey = {};
+  const ignoredByKey = {};
   const restrictionsByKey = {};
   (Array.isArray(overrides) ? overrides : []).forEach((override) => {
     const key = dateNumberToKey(
@@ -181,7 +185,21 @@ const parseOverrideResponse = (overrides) => {
     }
     // PriceLabs price suggestion (set by webhook, requires host approval)
     const priceLabsPrice = Number(readOverrideField(override, "priceLabsPrice", "pricelabs_price"));
-    if (Number.isFinite(priceLabsPrice) && priceLabsPrice > 0) {
+    const isIgnored = Boolean(readOverrideField(override, "priceLabsIgnored", "pricelabs_ignored"));
+    const isApplied =
+      Number.isFinite(priceLabsPrice) && priceLabsPrice > 0 &&
+      Number.isFinite(nightlyPrice) && nightlyPrice > 0 &&
+      Math.trunc(nightlyPrice) === Math.trunc(priceLabsPrice) &&
+      !isIgnored;
+
+    if (isApplied) {
+      appliedByKey[key] = Math.trunc(priceLabsPrice);
+    }
+    if (isIgnored) {
+      ignoredByKey[key] = true;
+    }
+    // Only show as active suggestion if: pl price exists, not applied, not ignored
+    if (Number.isFinite(priceLabsPrice) && priceLabsPrice > 0 && !isApplied && !isIgnored) {
       priceLabsByKey[key] = Math.trunc(priceLabsPrice);
     }
     const restriction = normalizeRestrictionOverride(override);
@@ -189,7 +207,7 @@ const parseOverrideResponse = (overrides) => {
       restrictionsByKey[key] = restriction;
     }
   });
-  return { availabilityByKey, priceByKey, priceLabsByKey, restrictionsByKey };
+  return { availabilityByKey, priceByKey, priceLabsByKey, appliedByKey, ignoredByKey, restrictionsByKey };
 };
 
 const valuesAreEqual = (left, right) => left === right;
@@ -294,6 +312,8 @@ export const useCalendarSelection = ({
   const [availabilityOverrides, setAvailabilityOverrides] = useState({});
   const [priceOverridesByPropertyId, setPriceOverridesByPropertyId] = useState({});
   const [priceLabsOverridesByPropertyId, setPriceLabsOverridesByPropertyId] = useState({});
+  const [priceLabsAppliedByPropertyId, setPriceLabsAppliedByPropertyId] = useState({});
+  const [priceLabsIgnoredByPropertyId, setPriceLabsIgnoredByPropertyId] = useState({});
   const [restrictionOverrides, setRestrictionOverrides] = useState({});
   const [reloadKey, setReloadKey] = useState(0);
   const [selectionPriceInput, setSelectionPriceInput] = useState("");
@@ -321,14 +341,15 @@ export const useCalendarSelection = ({
     dateKeys,
     availabilityByKey,
     priceByKey,
-    restrictionsByKey
+    restrictionsByKey,
+    priceLabsIgnoredByKey = {}
   ) => {
     const token = getAccessToken();
     if (!token || !propertyId) {
       return false;
     }
 
-    const overrides = buildOverridePayload(dateKeys, availabilityByKey, priceByKey, restrictionsByKey);
+    const overrides = buildOverridePayload(dateKeys, availabilityByKey, priceByKey, restrictionsByKey, priceLabsIgnoredByKey);
     if (!overrides.length) {
       return false;
     }
@@ -354,6 +375,8 @@ export const useCalendarSelection = ({
       availabilityByKey: confirmedAvailability,
       priceByKey: confirmedPrice,
       priceLabsByKey: confirmedPriceLabs,
+      appliedByKey: confirmedApplied,
+      ignoredByKey: confirmedIgnored,
       restrictionsByKey: confirmedRestrictions,
     } = parseOverrideResponse(body?.overrides);
 
@@ -389,11 +412,48 @@ export const useCalendarSelection = ({
     setPriceLabsOverridesByPropertyId((previous) => {
       const next = { ...previous };
       const existing = next[propertyId];
-      const propertyPriceLabs = existing && typeof existing === "object" ? { ...existing } : {};
-      Object.entries(confirmedPriceLabs).forEach(([key, value]) => {
-        propertyPriceLabs[key] = value;
+      const propertyLabsPrices = existing && typeof existing === "object" ? { ...existing } : {};
+      dateKeys.forEach((key) => {
+        if (Object.hasOwn(propertyLabsPrices, key)) {
+          delete propertyLabsPrices[key];
+        }
       });
-      next[propertyId] = propertyPriceLabs;
+      Object.entries(confirmedPriceLabs).forEach(([key, value]) => {
+        propertyLabsPrices[key] = value;
+      });
+      next[propertyId] = propertyLabsPrices;
+      return next;
+    });
+
+    setPriceLabsAppliedByPropertyId((previous) => {
+      const next = { ...previous };
+      const existing = next[propertyId];
+      const propertyApplied = existing && typeof existing === "object" ? { ...existing } : {};
+      dateKeys.forEach((key) => {
+        if (Object.hasOwn(propertyApplied, key)) {
+          delete propertyApplied[key];
+        }
+      });
+      Object.entries(confirmedApplied).forEach(([key, value]) => {
+        propertyApplied[key] = value;
+      });
+      next[propertyId] = propertyApplied;
+      return next;
+    });
+
+    setPriceLabsIgnoredByPropertyId((previous) => {
+      const next = { ...previous };
+      const existing = next[propertyId];
+      const propertyIgnored = existing && typeof existing === "object" ? { ...existing } : {};
+      dateKeys.forEach((key) => {
+        if (Object.hasOwn(propertyIgnored, key)) {
+          delete propertyIgnored[key];
+        }
+      });
+      Object.entries(confirmedIgnored).forEach(([key, value]) => {
+        propertyIgnored[key] = value;
+      });
+      next[propertyId] = propertyIgnored;
       return next;
     });
 
@@ -438,6 +498,16 @@ export const useCalendarSelection = ({
   const selectedPropertyPriceLabsOverrides = useMemo(
     () => priceLabsOverridesByPropertyId?.[selectedPropertyId] || EMPTY_PRICE_OVERRIDES,
     [priceLabsOverridesByPropertyId, selectedPropertyId]
+  );
+
+  const selectedPropertyPriceLabsApplied = useMemo(
+    () => priceLabsAppliedByPropertyId?.[selectedPropertyId] || EMPTY_PRICE_OVERRIDES,
+    [priceLabsAppliedByPropertyId, selectedPropertyId]
+  );
+
+  const selectedPropertyPriceLabsIgnored = useMemo(
+    () => priceLabsIgnoredByPropertyId?.[selectedPropertyId] || EMPTY_PRICE_OVERRIDES,
+    [priceLabsIgnoredByPropertyId, selectedPropertyId]
   );
 
   const getBasePriceForDateKey = (key) => {
@@ -573,7 +643,7 @@ export const useCalendarSelection = ({
         if (!mounted) {
           return;
         }
-        const { availabilityByKey, priceByKey, priceLabsByKey, restrictionsByKey } = parseOverrideResponse(body?.overrides);
+        const { availabilityByKey, priceByKey, priceLabsByKey, appliedByKey, ignoredByKey, restrictionsByKey } = parseOverrideResponse(body?.overrides);
         const localOverridesChangedDuringRequest =
           localOverrideVersionRef.current !== requestStartedAtLocalVersion;
         const selectedKeysToPreserve = localOverridesChangedDuringRequest
@@ -604,6 +674,14 @@ export const useCalendarSelection = ({
           ...previous,
           [selectedPropertyId]: priceLabsByKey,
         }));
+        setPriceLabsAppliedByPropertyId((previous) => ({
+          ...previous,
+          [selectedPropertyId]: appliedByKey,
+        }));
+        setPriceLabsIgnoredByPropertyId((previous) => ({
+          ...previous,
+          [selectedPropertyId]: ignoredByKey,
+        }));
       } catch (error) {
         console.error(error?.message || error);
       }
@@ -620,6 +698,8 @@ export const useCalendarSelection = ({
     setAvailabilityOverrides({});
     setRestrictionOverrides({});
     setPriceLabsOverridesByPropertyId({});
+    setPriceLabsAppliedByPropertyId({});
+    setPriceLabsIgnoredByPropertyId({});
     setSelectionPriceInput("");
     setSelectionPriceDirty(false);
     setSelectionRestrictionsForm(createSelectionRestrictionsForm());
@@ -735,20 +815,42 @@ export const useCalendarSelection = ({
     });
   };
 
-  const handleIgnorePriceLabsSuggestion = (dateKeys) => {
-    if (!selectedPropertyId || !dateKeys?.length) {
-      return;
-    }
-    // Remove the PriceLabs suggestion from local state for these dates.
-    // The suggestion will reappear only after the next PriceLabs sync.
+  const removePriceLabsKeysAfterIgnore = (ignoredKeys) => {
     setPriceLabsOverridesByPropertyId((previous) => {
       const existing = previous?.[selectedPropertyId];
       if (!existing) return previous;
       const next = { ...existing };
-      dateKeys.forEach((key) => {
+      for (const key of ignoredKeys) {
         delete next[key];
-      });
+      }
       return { ...previous, [selectedPropertyId]: next };
+    });
+    setPriceLabsIgnoredByPropertyId((previous) => {
+      const next = { ...(previous?.[selectedPropertyId] ?? {}) };
+      for (const key of ignoredKeys) {
+        next[key] = true;
+      }
+      return { ...previous, [selectedPropertyId]: next };
+    });
+  };
+
+  const handleIgnorePriceLabsSuggestion = (dateKeys) => {
+    if (!selectedPropertyId || !dateKeys?.length) {
+      return;
+    }
+    // Optimistically update local state immediately so the user sees feedback right away
+    removePriceLabsKeysAfterIgnore(dateKeys);
+    // Persist to DB in the background
+    const priceLabsIgnoredByKey = Object.fromEntries(dateKeys.map((k) => [k, true]));
+    void persistOverrides(
+      selectedPropertyId,
+      dateKeys,
+      availabilityOverrides,
+      selectedPropertyPriceOverrides,
+      restrictionOverrides,
+      priceLabsIgnoredByKey
+    ).catch((error) => {
+      console.error(error?.message || error);
     });
   };
 
@@ -780,14 +882,27 @@ export const useCalendarSelection = ({
       ...previous,
       [selectedPropertyId]: nextPropertyPriceOverrides,
     }));
+    // Optimistically remove suggestions and mark as applied
+    setPriceLabsOverridesByPropertyId((previous) => {
+      const next = { ...(previous?.[selectedPropertyId] ?? {}) };
+      for (const key of keysToApply) { delete next[key]; }
+      return { ...previous, [selectedPropertyId]: next };
+    });
+    setPriceLabsAppliedByPropertyId((previous) => {
+      const next = { ...(previous?.[selectedPropertyId] ?? {}) };
+      for (const key of keysToApply) { next[key] = nextPropertyPriceOverrides[key]; }
+      return { ...previous, [selectedPropertyId]: next };
+    });
     markLocalOverrideTouched();
 
+    const priceLabsIgnoredByKey = Object.fromEntries(keysToApply.map((k) => [k, false]));
     void persistOverrides(
       selectedPropertyId,
       keysToApply,
       availabilityOverrides,
       nextPropertyPriceOverrides,
-      restrictionOverrides
+      restrictionOverrides,
+      priceLabsIgnoredByKey
     ).catch((error) => {
       console.error(error?.message || error);
     });
@@ -870,6 +985,8 @@ export const useCalendarSelection = ({
     restrictionOverrides,
     selectedPropertyPriceOverrides,
     selectedPropertyPriceLabsOverrides,
+    selectedPropertyPriceLabsApplied,
+    selectedPropertyPriceLabsIgnored,
     selectedDateKeys,
     pendingSelectionStartKey,
     bookedDateKeys,

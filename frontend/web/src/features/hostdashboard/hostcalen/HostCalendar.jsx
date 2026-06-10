@@ -209,6 +209,8 @@ function HostCalendarSidebar({
   priceLabsSyncAll,
   priceOverrides,
   priceLabsOverrides,
+  priceLabsApplied,
+  priceLabsIgnored,
   onApplyPriceLabsPrice,
   onIgnorePriceLabsPrice,
   selectedDateKeys,
@@ -292,6 +294,17 @@ function HostCalendarSidebar({
     );
   }
 
+  if (sidebarMode === "pricelabs" && !priceLabsConnected) {
+    return (
+      <PriceLabsConnect
+        onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
+        isLoading={false}
+        error={null}
+        successMessage={null}
+      />
+    );
+  }
+
   if (selectedDateKeys.length > 0) {
     return (
       <>
@@ -315,6 +328,8 @@ function HostCalendarSidebar({
           isConnected={priceLabsConnected}
           selectedDateKeys={selectedDateKeys}
           priceLabsOverrides={priceLabsOverrides}
+          priceLabsApplied={priceLabsApplied}
+          priceLabsIgnored={priceLabsIgnored}
           onApplyPrice={onApplyPriceLabsPrice}
           onIgnorePrice={onIgnorePriceLabsPrice}
           onOpenSettings={() => setSidebarMode("pricelabs")}
@@ -497,6 +512,8 @@ function HostCalendarSidebar({
         isConnected={priceLabsConnected}
         selectedDateKeys={selectedDateKeys}
         priceLabsOverrides={priceLabsOverrides}
+        priceLabsApplied={priceLabsApplied}
+        priceLabsIgnored={priceLabsIgnored}
         onApplyPrice={onApplyPriceLabsPrice}
         onIgnorePrice={onIgnorePriceLabsPrice}
         onOpenSettings={() => setSidebarMode("pricelabs")}
@@ -515,6 +532,8 @@ HostCalendarSidebar.propTypes = {
   priceLabsSyncAll: PropTypes.func,
   priceOverrides: PropTypes.objectOf(PropTypes.number),
   priceLabsOverrides: PropTypes.objectOf(PropTypes.number),
+  priceLabsApplied: PropTypes.object,
+  priceLabsIgnored: PropTypes.object,
   onApplyPriceLabsPrice: PropTypes.func,
   onIgnorePriceLabsPrice: PropTypes.func,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -670,6 +689,8 @@ export default function HostCalendar() {
     restrictionOverrides,
     selectedPropertyPriceOverrides,
     selectedPropertyPriceLabsOverrides,
+    selectedPropertyPriceLabsApplied,
+    selectedPropertyPriceLabsIgnored,
     selectedDateKeys,
     pendingSelectionStartKey,
     bookedDateKeys,
@@ -848,7 +869,9 @@ export default function HostCalendar() {
             availabilityOverrides={availabilityOverrides}
             restrictionOverrides={restrictionOverrides}
             priceOverrides={selectedPropertyPriceOverrides}
-            priceLabsOverrides={selectedPropertyPriceLabsOverrides}
+            priceLabsOverrides={priceLabsConnected ? selectedPropertyPriceLabsOverrides : {}}
+            priceLabsApplied={priceLabsConnected ? selectedPropertyPriceLabsApplied : {}}
+            priceLabsIgnored={priceLabsConnected ? selectedPropertyPriceLabsIgnored : {}}
             bookedDateKeys={bookedDateKeys}
             onDateSelect={handleCalendarDateSelect}
           />
@@ -865,6 +888,8 @@ export default function HostCalendar() {
             priceLabsSyncAll={priceLabsSyncAll}
             priceOverrides={selectedPropertyPriceOverrides}
             priceLabsOverrides={selectedPropertyPriceLabsOverrides}
+            priceLabsApplied={selectedPropertyPriceLabsApplied}
+            priceLabsIgnored={selectedPropertyPriceLabsIgnored}
             onApplyPriceLabsPrice={handleApplyPriceLabsPrice}
             onIgnorePriceLabsPrice={handleIgnorePriceLabsPrice}
             selectedDateKeys={selectedDateKeys}
