@@ -172,6 +172,10 @@
         "solo": "Solo",
         "senior": "Mayores",
         "petFriendly": "Apto para mascotas"
+      },
+      "panel": {
+        "apply": "Aplicar filtro",
+        "reset": "Restablecer filtro"
       }
     },
     "destinations": {

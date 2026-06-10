@@ -172,6 +172,10 @@
         "solo": "Solo",
         "senior": "Senior",
         "petFriendly": "Huisdiervriendelijk"
+      },
+      "panel": {
+        "apply": "Filter toepassen",
+        "reset": "Filter resetten"
       }
     },
     "destinations": {

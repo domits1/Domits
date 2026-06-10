@@ -172,6 +172,10 @@
         "solo": "Alleinreisende",
         "senior": "Senioren",
         "petFriendly": "Haustierfreundlich"
+      },
+      "panel": {
+        "apply": "Filter anwenden",
+        "reset": "Filter zurücksetzen"
       }
     },
     "destinations": {

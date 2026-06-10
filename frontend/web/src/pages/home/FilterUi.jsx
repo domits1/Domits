@@ -1,9 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import Slider from '@mui/material/Slider';
+import { LanguageContext } from '../../context/LanguageContext';
+import en from '../../content/en.json';
+import nl from '../../content/nl.json';
+import de from '../../content/de.json';
+import es from '../../content/es.json';
 import FilterLogic from './FilterLogic';
 import './FilterMain.css';
 import { MAX_PRICE, MIN_PRICE } from '../../constants/searchFilters';
+
+const contentByLanguage = { en, nl, de, es };
 
 const EURO_SYMBOL = '\u20AC';
 
@@ -37,6 +44,11 @@ const FilterUi = ({ onFilterApplied }) => {
     handleBookingOptionChange,
     error,
   } = FilterLogic({ onFilterApplied });
+
+  const { language } = useContext(LanguageContext);
+  const panelLabels =
+    contentByLanguage[language]?.homepage?.filters?.panel ??
+    en.homepage.filters.panel;
 
   const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
   const [maxInputValue, setMaxInputValue] = useState(`${EURO_SYMBOL}${priceValues[1]}`);
@@ -81,6 +93,24 @@ const FilterUi = ({ onFilterApplied }) => {
   const handleBlur = () => {
     setMinInputValue(`${EURO_SYMBOL}${priceValues[0]}`);
     setMaxInputValue(`${EURO_SYMBOL}${priceValues[1]}`);
+  };
+
+  const triggerClickAnimation = (event) => {
+    const button = event.currentTarget;
+    button.classList.remove('is-clicked');
+    // Force reflow so the animation restarts on every click.
+    void button.offsetWidth;
+    button.classList.add('is-clicked');
+  };
+
+  const handleApplyClick = (event) => {
+    triggerClickAnimation(event);
+    fetchFilteredAccommodations();
+  };
+
+  const handleResetClick = (event) => {
+    triggerClickAnimation(event);
+    handleResetFilters();
   };
 
   return (
@@ -247,16 +277,18 @@ const FilterUi = ({ onFilterApplied }) => {
         <button
           type="button"
           className="filter-reset-btn"
-          onClick={handleResetFilters}
+          onClick={handleResetClick}
+          onAnimationEnd={(event) => event.currentTarget.classList.remove('is-clicked')}
         >
-          Reset filter
+          {panelLabels.reset}
         </button>
         <button
           type="button"
           className="filter-apply-btn"
-          onClick={() => fetchFilteredAccommodations()}
+          onClick={handleApplyClick}
+          onAnimationEnd={(event) => event.currentTarget.classList.remove('is-clicked')}
         >
-          Filter toepassen
+          {panelLabels.apply}
         </button>
       </div>
     </div>

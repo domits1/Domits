@@ -27,18 +27,23 @@
   transform: scale(0.95);
 }
 
-.filter-apply-btn:focus-visible,
-.filter-reset-btn:focus-visible {
-  outline: none;
-  animation: filter-btn-pulse 0.35s ease;
+.filter-apply-btn.is-clicked,
+.filter-reset-btn.is-clicked {
+  animation: filter-btn-click 0.4s ease;
 }
 
-@keyframes filter-btn-pulse {
+@keyframes filter-btn-click {
   0% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.45);
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.5);
+  }
+  40% {
+    transform: scale(0.93);
+    box-shadow: 0 0 0 6px rgba(76, 175, 80, 0.25);
   }
   100% {
-    box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
+    transform: scale(1);
+    box-shadow: 0 0 0 12px rgba(76, 175, 80, 0);
   }
 }
 
