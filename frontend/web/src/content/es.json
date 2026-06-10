@@ -410,7 +410,25 @@
     "attachment": "Agregar archivos adjuntos",
     "send": "Enviar mensaje",
     "guest": "Huésped",
-    "host": "Anfitrión"
+    "host": "Anfitrión",
+    "heroLabel": "CENTRO DE AYUDA",
+    "heroTitleStart": "¿Cómo podemos ",
+    "heroTitleEnd": "ayudarte?",
+    "searchPlaceholder": "Busca respuestas, reservas, pagos, soporte...",
+    "frequentlyAsked": "Preguntas frecuentes",
+    "stillNeedHelp": "¿Todavía necesitas ayuda?",
+    "supportSubtitle": "Nuestro equipo de soporte está disponible 24/7",
+    "contactSupport": "Contactar soporte",
+    "noResults": "No se encontraron resultados para \"{query}\". Intenta con otro término.",
+    "categories": {
+      "aboutDomits": "Sobre Domits",
+      "manageAccount": "Gestionar cuenta",
+      "searchAndBook": "Buscar y reservar",
+      "cancellations": "Cancelaciones",
+      "payments": "Pagos",
+      "yourStay": "Tu estancia",
+      "support": "Soporte"
+    }
   },
   "whyDomits": {
     "head": {
@@ -1087,118 +1105,6 @@
         "cancel": "Cancelar",
         "success": "✓ Invitación enviada a",
         "error": "Error al enviar la invitación. Por favor, inténtalo de nuevo."
-      }
-    }
-  },
-  "hostDashboard": {
-    "reservationDetails": {
-      "pageTitle": "Detalles de la reserva",
-      "states": {
-        "failedToLoad": "No se pudo cargar la reserva.",
-        "noReservationFound": "No se encontro ninguna reserva."
-      },
-      "buttons": {
-        "back": "Volver a reservas",
-        "messageGuest": "Enviar mensaje",
-        "viewInCalendar": "Ver en calendario",
-        "downloadReceipt": "Descargar recibo",
-        "preparingReceipt": "Preparando recibo..."
-      },
-      "headings": {
-        "property": "Alojamiento",
-        "guest": "Huesped",
-        "payment": "Pago",
-        "reservationInfo": "Informacion de la reserva",
-        "actions": "Acciones",
-        "checkInInstructions": "Instrucciones de check-in",
-        "houseRules": "Normas de la casa",
-        "cancellationPolicy": "Politica de cancelacion",
-        "specialRequest": "Solicitud especial"
-      },
-      "labels": {
-        "bookedVia": "Reservado mediante",
-        "checkIn": "Check-in",
-        "bookedOn": "Reservado el",
-        "reservationId": "ID de reserva",
-        "confirmation": "Confirmacion",
-        "cleaningFee": "Tarifa de limpieza",
-        "totalPaid": "Total pagado",
-        "method": "Metodo",
-        "propertyImageAlt": "Imagen del alojamiento",
-        "guestFallbackName": "Huesped",
-        "loadingValue": "Cargando...",
-        "unavailable": "no disponible",
-        "none": "Ninguno",
-        "locationUnavailable": "Ubicacion no disponible",
-        "loadingLocation": "Cargando ubicacion...",
-        "night": "noche",
-        "nights": "noches",
-        "guest": "huesped",
-        "guests": "huespedes"
-      },
-      "loading": {
-        "status": "Cargando",
-        "summary": "Cargando resumen de la reserva...",
-        "reservationDetails": "Cargando detalles de la reserva...",
-        "guestEmail": "Cargando correo del huesped...",
-        "guestPhone": "Cargando telefono del huesped...",
-        "checkInInstructions": "Cargando instrucciones de check-in...",
-        "houseRules": "Cargando normas de la casa...",
-        "cancellationPolicy": "Cargando politica de cancelacion...",
-        "payment": "Cargando pago",
-        "paymentStatus": "Cargando estado del pago"
-      },
-      "empty": {
-        "noCheckInInstructions": "No hay instrucciones de check-in",
-        "noHouseRulesSpecified": "No se especificaron normas de la casa",
-        "noCancellationPolicySelected": "No se selecciono ninguna politica de cancelacion.",
-        "paymentStatusUnavailable": "Estado del pago no disponible",
-        "reservation": "Reserva"
-      },
-      "status": {
-        "PAID": "Confirmada",
-        "AWAITING_PAYMENT": "Pago pendiente",
-        "FAILED": "Fallida",
-        "DECLINED": "Rechazada",
-        "INQUIRY": "Solicitud"
-      },
-      "paymentStatus": {
-        "PAID": {
-          "label": "Pago recibido",
-          "text": "Pagado por completo el"
-        },
-        "AWAITING_PAYMENT": {
-          "label": "Pago pendiente",
-          "text": "Pago pendiente"
-        },
-        "FAILED": {
-          "label": "Pago fallido",
-          "text": "El pago no fue exitoso"
-        },
-        "DECLINED": {
-          "label": "Pago rechazado",
-          "text": "El pago fue rechazado"
-        },
-        "INQUIRY": {
-          "label": "Solicitud pendiente",
-          "text": "Esperando revision del anfitrion"
-        }
-      },
-      "requestActions": {
-        "title": "Solicitud de reserva",
-        "subtitle": "Acepta o rechaza esta solicitud de reserva antes de que pase al pago.",
-        "accept": "Aceptar solicitud",
-        "decline": "Rechazar solicitud",
-        "confirmAcceptTitle": "Aceptar esta solicitud?",
-        "confirmAcceptNoOverlap": "Seguro que quieres aceptar esta solicitud?",
-        "confirmAcceptWithOverlap": "Hay {count} otras solicitudes pendientes con fechas superpuestas para este alojamiento. Al aceptar, esas solicitudes se rechazaran automaticamente.",
-        "confirmDeclineTitle": "Rechazar esta solicitud?",
-        "confirmDeclineMessage": "Seguro que quieres rechazar esta solicitud de reserva?",
-        "accepted": "Solicitud aceptada.",
-        "acceptedWithOverlap": "Solicitud aceptada. {count} solicitudes superpuestas fueron rechazadas automaticamente.",
-        "declined": "Solicitud rechazada.",
-        "updateFailed": "No se pudo actualizar el estado de la solicitud.",
-        "cancel": "Cancelar"
       }
     }
   }
