@@ -150,6 +150,7 @@ export function PositionMatrixField({
   onBlur = undefined,
 }) {
   const normalizedValue = typeof value === "string" ? value : "";
+  const descriptionId = field.description ? `website-editor-${field.key}-description` : undefined;
   const handleGroupBlur = (event) => {
     if (event.currentTarget.contains(event.relatedTarget)) {
       return;
@@ -159,19 +160,22 @@ export function PositionMatrixField({
   };
 
   return (
-    <div
+    <fieldset
       ref={fieldRef}
-      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+      className={`${styles.fieldGroup} ${styles.positionMatrixFieldset} ${
+        isHighlighted ? styles.editorTargetHighlighted : ""
+      }`.trim()}
+      aria-describedby={descriptionId}
+      onFocus={onFocus}
+      onBlur={handleGroupBlur}
     >
-      <label className={styles.fieldLabel}>{field.label}</label>
-      {field.description ? <p className={styles.helperText}>{field.description}</p> : null}
-      <div
-        className={styles.positionMatrixGrid}
-        role="group"
-        aria-label={field.label}
-        onFocus={onFocus}
-        onBlur={handleGroupBlur}
-      >
+      <legend className={`${styles.fieldLabel} ${styles.positionMatrixLegend}`.trim()}>{field.label}</legend>
+      {field.description ? (
+        <p id={descriptionId} className={styles.helperText}>
+          {field.description}
+        </p>
+      ) : null}
+      <div className={styles.positionMatrixGrid}>
         {options.map((option) => {
           const isSelected = normalizedValue === option.value;
 
@@ -197,7 +201,7 @@ export function PositionMatrixField({
           );
         })}
       </div>
-    </div>
+    </fieldset>
   );
 }
 

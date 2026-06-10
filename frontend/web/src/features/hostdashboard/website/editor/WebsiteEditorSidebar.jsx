@@ -26,6 +26,103 @@ const EMPTY_PREVIEW_MODEL = {
   },
 };
 
+const renderHeroEditorSection = ({
+  commonTextFields,
+  editorValues,
+  expandedSections,
+  handleCommonFieldChange,
+  handleEditorFieldKeyDown,
+  handleVisibilityFieldChange,
+  hasWhatsAppWidget,
+  heroAlignmentOptions,
+  heroCallToActionVisibilityField,
+  heroImageSlot,
+  highlightedTargetId,
+  importedImageOptions,
+  markEditorInteracted,
+  onChangeImageRotation,
+  onOpenImagePicker,
+  activatePreviewTarget,
+  clearActivePreviewTarget,
+  setSectionRef,
+  setTargetRef,
+  toggleSection,
+}) => (
+  <CollapsibleSection
+    sectionId={EDITOR_SECTION_KEYS.common}
+    title="Hero"
+    description="Control the top-of-page copy, hero image, and template-specific hero settings."
+    isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.common])}
+    onToggle={toggleSection}
+    sectionRef={setSectionRef(EDITOR_SECTION_KEYS.common)}
+  >
+    {heroImageSlot ? (
+      <div className={styles.imageSlotGrid}>
+        <WebsiteEditorImageSlotCard
+          slot={heroImageSlot}
+          editorValues={editorValues}
+          highlightedTargetId={highlightedTargetId}
+          importedImageOptions={importedImageOptions}
+          onChangeImageRotation={onChangeImageRotation}
+          onOpenImagePicker={onOpenImagePicker}
+          setTargetRef={setTargetRef}
+        />
+      </div>
+    ) : null}
+
+    <div className={styles.fieldStack}>
+      {heroAlignmentOptions.length > 0 ? (
+        <PositionMatrixField
+          field={{
+            key: "heroContentAlignment",
+            label: "Content position",
+            description: "Choose where the hero eyebrow, title, and booking prompt sit inside the image.",
+          }}
+          value={editorValues.common.heroContentAlignment}
+          options={heroAlignmentOptions}
+          onChange={(nextValue) => {
+            markEditorInteracted();
+            handleCommonFieldChange("heroContentAlignment")({
+              target: { value: nextValue },
+            });
+          }}
+          fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common.heroContentAlignment)}
+          isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common.heroContentAlignment}
+          onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common.heroContentAlignment)}
+          onBlur={clearActivePreviewTarget}
+        />
+      ) : null}
+
+      {commonTextFields.map((field) => (
+        <TextField
+          key={field.key}
+          field={field}
+          value={editorValues.common[field.key]}
+          onChange={handleCommonFieldChange(field.key)}
+          onKeyDown={handleEditorFieldKeyDown(field)}
+          fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common[field.key])}
+          isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common[field.key]}
+          onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common[field.key])}
+          onBlur={clearActivePreviewTarget}
+        />
+      ))}
+    </div>
+
+    {heroCallToActionVisibilityField ? (
+      <div className={styles.toggleStack}>
+        <WebsiteEditorSectionVisibilityFieldCard
+          checked={Boolean(editorValues.visibility.callToAction)}
+          field={heroCallToActionVisibilityField}
+          handleVisibilityFieldChange={handleVisibilityFieldChange}
+          hasWhatsAppWidget={hasWhatsAppWidget}
+          highlightedTargetId={highlightedTargetId}
+          setTargetRef={setTargetRef}
+        />
+      </div>
+    ) : null}
+  </CollapsibleSection>
+);
+
 export function WebsiteEditorSidebar({
   activatePreviewTarget,
   addAmenityItem,
@@ -255,79 +352,28 @@ export function WebsiteEditorSidebar({
       </div>
 
       <div className={styles.editorForm}>
-        <CollapsibleSection
-          sectionId={EDITOR_SECTION_KEYS.common}
-          title="Hero"
-          description="Control the top-of-page copy, hero image, and template-specific hero settings."
-          isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.common])}
-          onToggle={toggleSection}
-          sectionRef={setSectionRef(EDITOR_SECTION_KEYS.common)}
-        >
-          {heroImageSlot ? (
-            <div className={styles.imageSlotGrid}>
-              <WebsiteEditorImageSlotCard
-                slot={heroImageSlot}
-                editorValues={editorValues}
-                highlightedTargetId={highlightedTargetId}
-                importedImageOptions={importedImageOptions}
-                onChangeImageRotation={onChangeImageRotation}
-                onOpenImagePicker={onOpenImagePicker}
-                setTargetRef={setTargetRef}
-              />
-            </div>
-          ) : null}
-
-          <div className={styles.fieldStack}>
-            {heroAlignmentOptions.length > 0 ? (
-              <PositionMatrixField
-                field={{
-                  key: "heroContentAlignment",
-                  label: "Content position",
-                  description: "Choose where the hero eyebrow, title, and booking prompt sit inside the image.",
-                }}
-                value={editorValues.common.heroContentAlignment}
-                options={heroAlignmentOptions}
-                onChange={(nextValue) => {
-                  markEditorInteracted();
-                  handleCommonFieldChange("heroContentAlignment")({
-                    target: { value: nextValue },
-                  });
-                }}
-                fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common.heroContentAlignment)}
-                isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common.heroContentAlignment}
-                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common.heroContentAlignment)}
-                onBlur={clearActivePreviewTarget}
-              />
-            ) : null}
-
-            {commonTextFields.map((field) => (
-              <TextField
-                key={field.key}
-                field={field}
-                value={editorValues.common[field.key]}
-                onChange={handleCommonFieldChange(field.key)}
-                onKeyDown={handleEditorFieldKeyDown(field)}
-                fieldRef={setTargetRef(EDITOR_TARGET_KEYS.common[field.key])}
-                isHighlighted={highlightedTargetId === EDITOR_TARGET_KEYS.common[field.key]}
-                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.common[field.key])}
-                onBlur={clearActivePreviewTarget}
-              />
-            ))}
-          </div>
-
-          {heroCallToActionVisibilityField ? (
-            <div className={styles.toggleStack}>
-              <WebsiteEditorSectionVisibilityFieldCard
-                checked={Boolean(editorValues.visibility.callToAction)}
-                field={heroCallToActionVisibilityField}
-                handleVisibilityFieldChange={handleVisibilityFieldChange}
-                hasWhatsAppWidget={hasWhatsAppWidget}
-                highlightedTargetId={highlightedTargetId}
-                setTargetRef={setTargetRef}
-              />
-            </div>
-          ) : null}
-        </CollapsibleSection>
+        {renderHeroEditorSection({
+          commonTextFields,
+          editorValues,
+          expandedSections,
+          handleCommonFieldChange,
+          handleEditorFieldKeyDown,
+          handleVisibilityFieldChange,
+          hasWhatsAppWidget,
+          heroAlignmentOptions,
+          heroCallToActionVisibilityField,
+          heroImageSlot,
+          highlightedTargetId,
+          importedImageOptions,
+          markEditorInteracted,
+          onChangeImageRotation,
+          onOpenImagePicker,
+          activatePreviewTarget,
+          clearActivePreviewTarget,
+          setSectionRef,
+          setTargetRef,
+          toggleSection,
+        })}
 
         {renderedTrustCardsSection}
 

@@ -627,6 +627,18 @@
   min-width: 0;
 }
 
+.positionMatrixFieldset {
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  border: 0;
+}
+
+.positionMatrixLegend {
+  margin: 0;
+  padding: 0;
+}
+
 .positionMatrixGrid {
   width: fit-content;
   max-width: 100%;
