@@ -22,6 +22,19 @@ const actionButtons = (label, dateKeys, onApplyPrice, onIgnorePrice) => (
   </div>
 );
 
+const undoButton = (dateKeys, onUndoPrice) => (
+  <div className="hc-dynamic-pricing-actions" style={{ position: "relative", zIndex: 4, display: "flex" }}>
+    <button
+      type="button"
+      className="hc-dynamic-pricing-undo-btn"
+      style={{ flex: 1 }}
+      onClick={(e) => { e.stopPropagation(); onUndoPrice?.(dateKeys); }}
+    >
+      Undo
+    </button>
+  </div>
+);
+
 const renderPricingContent = ({
   hasAnySuggestion,
   recommendedPrice,
@@ -30,6 +43,7 @@ const renderPricingContent = ({
   selectedDateKeys,
   onApplyPrice,
   onIgnorePrice,
+  onUndoPrice,
 }) => {
   // 1. Active suggestion takes priority
   if (hasAnySuggestion) {
@@ -57,6 +71,7 @@ const renderPricingContent = ({
         <p className="hc-info-card-line" style={{ fontSize: "0.78rem", color: "#aaa" }}>
           PriceLabs price is active
         </p>
+        {undoButton(selectedDateKeys, onUndoPrice)}
       </>
     );
   }
@@ -68,6 +83,7 @@ const renderPricingContent = ({
         <p className="hc-info-card-line" style={{ fontSize: "0.78rem", color: "#aaa" }}>
           Your own price is active
         </p>
+        {undoButton(selectedDateKeys, onUndoPrice)}
       </>
     );
   }
@@ -90,6 +106,7 @@ export default function DynamicPricingCard({
   priceLabsIgnored,
   onApplyPrice,
   onIgnorePrice,
+  onUndoPrice,
   onOpenSettings,
 }) {
   const firstDateKey = selectedDateKeys?.[0];
@@ -159,6 +176,7 @@ export default function DynamicPricingCard({
           selectedDateKeys,
           onApplyPrice,
           onIgnorePrice,
+          onUndoPrice,
         })}
       </section>
     );
@@ -192,6 +210,7 @@ DynamicPricingCard.propTypes = {
   priceLabsIgnored: PropTypes.object,
   onApplyPrice: PropTypes.func,
   onIgnorePrice: PropTypes.func,
+  onUndoPrice: PropTypes.func,
   onOpenSettings: PropTypes.func,
 };
 
@@ -202,5 +221,6 @@ DynamicPricingCard.defaultProps = {
   priceLabsIgnored: {},
   onApplyPrice: () => {},
   onIgnorePrice: () => {},
+  onUndoPrice: () => {},
   onOpenSettings: () => {},
 };

@@ -2391,3 +2391,22 @@ $accent: #2f6fed;
   background: #f3f4f6;
   color: #374151;
 }
+
+.hc-dynamic-pricing-undo-btn {
+  margin-top: 6px;
+  padding: 0.6rem 0.9rem;
+  background: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.hc-dynamic-pricing-undo-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}

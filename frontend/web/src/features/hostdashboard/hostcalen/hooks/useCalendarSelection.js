@@ -196,7 +196,9 @@ const parseOverrideResponse = (overrides) => {
       appliedByKey[key] = Math.trunc(priceLabsPrice);
     }
     if (isIgnored) {
-      ignoredByKey[key] = true;
+      // Store the suggested price (when known) so an undo can restore the suggestion instantly.
+      ignoredByKey[key] =
+        Number.isFinite(priceLabsPrice) && priceLabsPrice > 0 ? Math.trunc(priceLabsPrice) : true;
     }
     // Only show as active suggestion if: pl price exists, not applied, not ignored
     if (Number.isFinite(priceLabsPrice) && priceLabsPrice > 0 && !isApplied && !isIgnored) {
@@ -828,7 +830,8 @@ export const useCalendarSelection = ({
     setPriceLabsIgnoredByPropertyId((previous) => {
       const next = { ...previous?.[selectedPropertyId] };
       for (const key of ignoredKeys) {
-        next[key] = true;
+        const price = Number(selectedPropertyPriceLabsOverrides?.[key]);
+        next[key] = Number.isFinite(price) && price > 0 ? Math.trunc(price) : true;
       }
       return { ...previous, [selectedPropertyId]: next };
     });
@@ -840,6 +843,7 @@ export const useCalendarSelection = ({
     }
     // Optimistically update local state immediately so the user sees feedback right away
     removePriceLabsKeysAfterIgnore(dateKeys);
+    markLocalOverrideTouched();
     // Persist to DB in the background
     const priceLabsIgnoredByKey = Object.fromEntries(dateKeys.map((k) => [k, true]));
     void persistOverrides(
@@ -899,6 +903,71 @@ export const useCalendarSelection = ({
     void persistOverrides(
       selectedPropertyId,
       keysToApply,
+      availabilityOverrides,
+      nextPropertyPriceOverrides,
+      restrictionOverrides,
+      priceLabsIgnoredByKey
+    ).catch((error) => {
+      console.error(error?.message || error);
+    });
+  };
+
+  const handleUndoPriceLabsSuggestion = (dateKeys) => {
+    if (!selectedPropertyId || !dateKeys?.length) {
+      return;
+    }
+    const appliedMap = selectedPropertyPriceLabsApplied;
+    const ignoredMap = selectedPropertyPriceLabsIgnored;
+    const keysToUndo = dateKeys.filter((key) => appliedMap?.[key] || ignoredMap?.[key]);
+    if (!keysToUndo.length) {
+      return;
+    }
+
+    // For applied dates: remove the copied nightly price so the host's base price applies again.
+    const nextPropertyPriceOverrides = { ...selectedPropertyPriceOverrides };
+    for (const key of keysToUndo) {
+      if (appliedMap?.[key]) {
+        delete nextPropertyPriceOverrides[key];
+      }
+    }
+
+    // Optimistically restore the suggestion and clear applied/ignored state.
+    setPriceOverridesByPropertyId((previous) => ({
+      ...previous,
+      [selectedPropertyId]: nextPropertyPriceOverrides,
+    }));
+    setPriceLabsOverridesByPropertyId((previous) => {
+      const next = { ...previous?.[selectedPropertyId] };
+      for (const key of keysToUndo) {
+        const restored = Number(appliedMap?.[key] ?? ignoredMap?.[key]);
+        if (Number.isFinite(restored) && restored > 0) {
+          next[key] = Math.trunc(restored);
+        }
+      }
+      return { ...previous, [selectedPropertyId]: next };
+    });
+    setPriceLabsAppliedByPropertyId((previous) => {
+      const next = { ...previous?.[selectedPropertyId] };
+      for (const key of keysToUndo) {
+        delete next[key];
+      }
+      return { ...previous, [selectedPropertyId]: next };
+    });
+    setPriceLabsIgnoredByPropertyId((previous) => {
+      const next = { ...previous?.[selectedPropertyId] };
+      for (const key of keysToUndo) {
+        delete next[key];
+      }
+      return { ...previous, [selectedPropertyId]: next };
+    });
+    markLocalOverrideTouched();
+
+    // Persist: pricelabs_ignored = false; for applied dates the nightly price is cleared,
+    // so the row keeps its pricelabs_price and the suggestion becomes active again after reload.
+    const priceLabsIgnoredByKey = Object.fromEntries(keysToUndo.map((key) => [key, false]));
+    void persistOverrides(
+      selectedPropertyId,
+      keysToUndo,
       availabilityOverrides,
       nextPropertyPriceOverrides,
       restrictionOverrides,
@@ -1004,6 +1073,7 @@ export const useCalendarSelection = ({
     handleSaveSelectionPrice,
     handleApplyPriceLabsSuggestion,
     handleIgnorePriceLabsSuggestion,
+    handleUndoPriceLabsSuggestion,
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
     resetSelectionState,

@@ -291,16 +291,16 @@ export class PriceLabsService {
       const parts = listing_id.split("_");
       const propertyId = parts.slice(5).join("-");
 
-      for (const entry of entries) {
-        await this.repo.applyPriceRecommendation({
-          property_id:         propertyId,
+      await this.repo.applyPriceRecommendations(
+        propertyId,
+        entries.map((entry) => ({
           date:                entry.date,
           nightly_price:       entry.price,
           min_stay:            entry.min_stay,
           closed_to_arrival:   entry.check_in  === false,
           closed_to_departure: entry.check_out === false,
-        });
-      }
+        }))
+      );
     }
 
     return { success: true };

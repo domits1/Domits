@@ -213,6 +213,7 @@ function HostCalendarSidebar({
   priceLabsIgnored,
   onApplyPriceLabsPrice,
   onIgnorePriceLabsPrice,
+  onUndoPriceLabsPrice,
   selectedDateKeys,
   selectedAvailabilityStats,
   handleToggleAvailability,
@@ -287,7 +288,7 @@ function HostCalendarSidebar({
       <PriceLabsStatusCard
         status={priceLabsStatus}
         onSync={priceLabsSyncAll}
-        onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
+        onDisconnect={async () => { await priceLabsDisconnect(); setSidebarMode("summary"); }}
         isSyncing={false}
         isLoading={false}
       />
@@ -332,6 +333,7 @@ function HostCalendarSidebar({
           priceLabsIgnored={priceLabsIgnored}
           onApplyPrice={onApplyPriceLabsPrice}
           onIgnorePrice={onIgnorePriceLabsPrice}
+          onUndoPrice={onUndoPriceLabsPrice}
           onOpenSettings={() => setSidebarMode("pricelabs")}
         />
       </>
@@ -516,6 +518,7 @@ function HostCalendarSidebar({
         priceLabsIgnored={priceLabsIgnored}
         onApplyPrice={onApplyPriceLabsPrice}
         onIgnorePrice={onIgnorePriceLabsPrice}
+        onUndoPrice={onUndoPriceLabsPrice}
         onOpenSettings={() => setSidebarMode("pricelabs")}
       />
     </>
@@ -536,6 +539,7 @@ HostCalendarSidebar.propTypes = {
   priceLabsIgnored: PropTypes.object,
   onApplyPriceLabsPrice: PropTypes.func,
   onIgnorePriceLabsPrice: PropTypes.func,
+  onUndoPriceLabsPrice: PropTypes.func,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedAvailabilityStats: selectedAvailabilityStatsShape.isRequired,
   handleToggleAvailability: PropTypes.func.isRequired,
@@ -708,6 +712,7 @@ export default function HostCalendar() {
     handleSaveSelectionPrice,
     handleApplyPriceLabsSuggestion,
     handleIgnorePriceLabsSuggestion,
+    handleUndoPriceLabsSuggestion,
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
     reloadOverrides,
@@ -793,6 +798,10 @@ export default function HostCalendar() {
 
   const handleIgnorePriceLabsPrice = (dateKeys) => {
     handleIgnorePriceLabsSuggestion(dateKeys);
+  };
+
+  const handleUndoPriceLabsPrice = (dateKeys) => {
+    handleUndoPriceLabsSuggestion(dateKeys);
   };
 
   const handlePriceLabsDisconnect = async () => {
@@ -892,6 +901,7 @@ export default function HostCalendar() {
             priceLabsIgnored={selectedPropertyPriceLabsIgnored}
             onApplyPriceLabsPrice={handleApplyPriceLabsPrice}
             onIgnorePriceLabsPrice={handleIgnorePriceLabsPrice}
+            onUndoPriceLabsPrice={handleUndoPriceLabsPrice}
             selectedDateKeys={selectedDateKeys}
             selectedAvailabilityStats={selectedAvailabilityStats}
             handleToggleAvailability={handleToggleAvailability}
