@@ -1,56 +1,63 @@
 import React, { useContext } from "react";
-import { Recycle, Award, Leaf } from "lucide-react";
-import { LanguageContext } from "../../context/LanguageContext.js";
+import {submitAccommodation} from "../hostonboarding/services/SubmitAccommodation";
+import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import ReactMarkDown from "react-markdown";
 
-const contentByLanguage = { en, nl, de, es };
+const contentByLanguage = {
+  en,
+  nl,
+  de,
+  es,
+};
 
-const ICON_SIZE = 28;
-const SECTION_ICONS = [Recycle, Award, Leaf];
+const Sustainability = () => {
+  const {language} =  useContext(LanguageContext);
+  const sustainabilityContent = contentByLanguage[language]?.sustainability;
 
-function Sustainability() {
-  const { language } = useContext(LanguageContext);
-  const c = contentByLanguage[language]?.sustainability;
+    return (
+        <div className="sustainability">
+            <h1>{sustainabilityContent.title}</h1>
+            <hr/>
+            <h2>{sustainabilityContent.subtitle}</h2>
+            <hr/>
 
-  if (!c) return null;
+            <section id="sustainable-business">
+                <h3>
+                <ReactMarkDown>{sustainabilityContent.business.title}</ReactMarkDown>
+                </h3>
+                <strong>{sustainabilityContent.business.subtitle}</strong>
+                <p>
+                    {sustainabilityContent.business.description}
+                </p>
+            </section>
 
-  return (
-    <div className="sustainability">
-      <div className="sustainability__hero">
-        <span className="sustainability__label">{c.label}</span>
-        <h1 className="sustainability__title">
-          {c.title}{" "}
-          <span className="sustainability__title--accent">{c.titleAccent}</span>
-        </h1>
-      </div>
+            <hr/>
+            <section id="sustainable-accommodations">
+                <h3>
+                    <ReactMarkDown>{sustainabilityContent.accommodations.title}</ReactMarkDown>
+                </h3>
+                <strong>{sustainabilityContent.accommodations.subtitle}</strong>
+                <p>
+                   {sustainabilityContent.accommodations.description}
+                </p>
+            </section>
+            <hr/>
+            <section id="sustainable-guest-experience">
+                <h3>
+                    <ReactMarkDown>{sustainabilityContent.experience.title}</ReactMarkDown>
+                </h3>
+                <p>
+                    {sustainabilityContent.experience.description}
+                </p>
 
-      <div className="sustainability__sections">
-        {c.sections.map(({ title, subtitle, description }, i) => {
-          const Icon = SECTION_ICONS[i];
-          return (
-            <div className="sustainability__section-card" key={title}>
-              <div className="sustainability__section-icon">
-                <Icon size={ICON_SIZE} />
-              </div>
-              <div className="sustainability__section-content">
-                <div className="sustainability__section-heading">
-                  <span className="sustainability__section-number">{i + 1}</span>
-                  <h2 className="sustainability__section-title">{title}</h2>
-                </div>
-                {subtitle && (
-                  <p className="sustainability__section-subtitle">{subtitle}</p>
-                )}
-                <p className="sustainability__section-description">{description}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+            </section>
+            <hr/>
+        </div>
+    );
+};
 
 export default Sustainability;
