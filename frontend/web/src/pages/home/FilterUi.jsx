@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useMemo } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import Slider from '@mui/material/Slider';
 import { LanguageContext } from '../../context/LanguageContext';
@@ -25,7 +25,16 @@ const amenityCategories = Object.keys(amenitiesByCategory).sort((a, b) =>
   a.localeCompare(b)
 );
 
-const PREVIEW_CATEGORY_COUNT = 2;
+const amenityById = amenities.reduce((map, amenity) => {
+  map[amenity.id] = amenity;
+  return map;
+}, {});
+
+// Most-commonly-filtered amenities shown in the collapsed sidebar preview.
+// ids match src/store/amenities.js.
+const POPULAR_AMENITY_IDS = ['1', '2', '3', '4', '59', '60', '82', '83', '92', '93'];
+
+const popularAmenities = POPULAR_AMENITY_IDS.map((id) => amenityById[id]).filter(Boolean);
 
 const FilterUi = ({ onFilterApplied }) => {
   const {
@@ -49,28 +58,25 @@ const FilterUi = ({ onFilterApplied }) => {
     contentByLanguage[language]?.homepage?.filters?.panel ??
     en.homepage.filters.panel;
 
-  const previewCategories = useMemo(
-    () => amenityCategories.slice(0, PREVIEW_CATEGORY_COUNT),
-    []
-  );
-
   const [amenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
+
+  const renderAmenityCheckbox = (amenity) => (
+    <label key={amenity.id} className="facility-item">
+      <input
+        type="checkbox"
+        checked={selectedAmenities.includes(amenity.id)}
+        onChange={() => handleAmenityChange(amenity.id)}
+        className="filter-select-option"
+      />
+      {amenity.amenity}
+    </label>
+  );
 
   const renderAmenityCategory = (category) => (
     <div key={category} className="amenity-category">
       <div className="amenity-category-title">{category}</div>
       <div className="facility-list">
-        {amenitiesByCategory[category].map((amenity) => (
-          <label key={amenity.id} className="facility-item">
-            <input
-              type="checkbox"
-              checked={selectedAmenities.includes(amenity.id)}
-              onChange={() => handleAmenityChange(amenity.id)}
-              className="filter-select-option"
-            />
-            {amenity.amenity}
-          </label>
-        ))}
+        {amenitiesByCategory[category].map(renderAmenityCheckbox)}
       </div>
     </div>
   );
@@ -199,7 +205,9 @@ const FilterUi = ({ onFilterApplied }) => {
 
       <div className="filter-section">
         <div className="FilterTitle">Amenities</div>
-        {previewCategories.map(renderAmenityCategory)}
+        <div className="facility-list">
+          {popularAmenities.map(renderAmenityCheckbox)}
+        </div>
         <button
           type="button"
           onClick={() => setAmenitiesModalOpen(true)}
