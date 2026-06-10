@@ -4,9 +4,17 @@ import { motion } from "framer-motion";
 import { fadeUp } from "../../pages/landingpage/utils/animations";
 
 const RegionCard = ({ item, link = "/home", useMotion = false }) => {
+  // For country cards, reuse the SearchBar's flow: navigate to /home with the
+  // country as a search param so the results grid loads that country.
+  const to = item.country ? "/home" : link;
+  const state = item.country
+    ? { searchParams: { accommodation: "", address: item.country, totalGuests: 0 } }
+    : undefined;
+
   const content = (
     <Link
-      to={link}
+      to={to}
+      state={state}
       className="region-card"
       style={{ textDecoration: "none", color: "inherit" }}
     >
@@ -31,6 +39,7 @@ RegionCard.propTypes = {
     img: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
     description: PropTypes.string,
+    country: PropTypes.string,
   }).isRequired,
   link: PropTypes.string,
   useMotion: PropTypes.bool,

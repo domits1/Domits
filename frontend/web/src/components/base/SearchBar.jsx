@@ -214,12 +214,14 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
         return;
       }
       const data = await response.json();
-      if (data.length === 0) {
+      // The filter endpoint may return a bare array or { properties: [...] }.
+      const properties = Array.isArray(data) ? data : (data?.properties ?? []);
+      if (properties.length === 0) {
         setTimeout(() => {
           setError('No results have been found...');
         }, 500);
       } else {
-        setSearchResults(data);
+        setSearchResults(properties);
       }
     } catch {
       setError('Er is een fout opgetreden bij het ophalen van de gegevens.');
