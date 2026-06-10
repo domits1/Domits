@@ -162,22 +162,23 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
   };
 
   useEffect(() => {
-    const locationState = location.state;
-    const searchParams = locationState?.searchParams;
-
-    if (locationState?.searchResults) {
-      setSearchResults(locationState.searchResults);
+    if (location.state?.searchResults) {
+      setSearchResults(location.state.searchResults);
+      return;
     }
-    else if (
+
+    const params = new URLSearchParams(location.search);
+    const country = params.get('country') || '';
+    const type = params.get('type') || '';
+    const guests = Number(params.get('guests')) || 0;
+
+    if (
       (location.pathname === '/' || location.pathname === '/home') &&
-      searchParams
+      (country || type || guests)
     ) {
-      const { accommodation, address, totalGuests } = searchParams;
-      setAccommodation(accommodation || '');
-      setAddress(address || '');
-      setTimeout(() => {
-        performSearch(accommodation, address, totalGuests);
-      }, 1);
+      setAccommodation(type);
+      setAddress(country);
+      performSearch(type, country, guests);
     }
   }, [location]);
 
@@ -233,17 +234,15 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
   };
   
   const handleSearch = () => {
-    const shouldNavigate = location.pathname !== '/home';
-    if (shouldNavigate) {
-      setSearchResults([]);
-      navigate('/home', {
-        state: {
-          searchParams: { accommodation, address, totalGuests }
-        }
-      });
-    } else {
-      performSearch(accommodation, address, totalGuests);
-    }
+    const params = new URLSearchParams();
+    if (accommodation) params.set('type', accommodation);
+    if (address) params.set('country', address);
+    if (totalGuests > 0) params.set('guests', totalGuests);
+
+    setSearchResults([]);
+    // Navigate to the results page with the query in the URL; the effect above
+    // reads it and runs the search (also fires when already on /home).
+    navigate(`/home?${params.toString()}`);
   };
 
   function handleKeyDown(e){
