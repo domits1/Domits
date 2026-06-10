@@ -55,11 +55,7 @@ export class Repository {
       await repo.createQueryBuilder()
         .update()
         .set({
-          // Revert nightly_price to null only where PriceLabs had applied it
-          // (nightly_price === pricelabs_price). Host-set prices are left untouched.
-          nightly_price:       () => "CASE WHEN nightly_price = pricelabs_price THEN NULL ELSE nightly_price END",
           pricelabs_price:     null,
-          pricelabs_ignored:   false,
           min_stay:            null,
           closed_to_arrival:   null,
           closed_to_departure: null,
@@ -136,7 +132,6 @@ export class Repository {
     if (existing) {
       await repo.update({ property_id, calendar_date: calendarDate }, {
         pricelabs_price:     nightly_price ?? existing.pricelabs_price,
-        pricelabs_ignored:   false,   // new PL sync always resets the ignore flag
         min_stay:            min_stay       ?? existing.min_stay,
         closed_to_arrival:   closed_to_arrival   ?? existing.closed_to_arrival,
         closed_to_departure: closed_to_departure ?? existing.closed_to_departure,
@@ -147,7 +142,6 @@ export class Repository {
         property_id,
         calendar_date:       calendarDate,
         pricelabs_price:     nightly_price,
-        pricelabs_ignored:   false,
         min_stay:            min_stay || 1,
         closed_to_arrival:   closed_to_arrival   || false,
         closed_to_departure: closed_to_departure || false,
