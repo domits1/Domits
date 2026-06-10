@@ -183,11 +183,38 @@ export class PropertyService {
     return updatedProperty;
   }
 
+  // Attach amenities to a page of cards with a single batched query.
+  // Fault-isolated: any failure degrades to empty amenities so it can never
+  // take down the listing endpoints (per-property lookups previously did).
+  async attachAmenities(cards) {
+    try {
+      const ids = cards.map((card) => card?.property?.id).filter(Boolean);
+      if (ids.length === 0) return cards;
+
+      const rows = await this.propertyAmenityRepository.getAmenitiesByPropertyIds(ids);
+      const byProperty = new Map();
+      for (const row of rows) {
+        if (!byProperty.has(row.property_id)) byProperty.set(row.property_id, []);
+        byProperty.get(row.property_id).push(row);
+      }
+      for (const card of cards) {
+        card.propertyAmenities = byProperty.get(card?.property?.id) ?? [];
+      }
+    } catch (error) {
+      console.error("Failed to attach amenities to property cards:", error);
+      for (const card of cards) {
+        card.propertyAmenities = card.propertyAmenities ?? [];
+      }
+    }
+    return cards;
+  }
+
   async getActivePropertyCards(lastEvaluatedKey) {
     const propertyIdentifiers = await this.propertyRepository.getActiveProperties(lastEvaluatedKey);
     const properties = await Promise.all(
       propertyIdentifiers.identifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
+    await this.attachAmenities(properties);
     return {
       properties: properties,
       lastEvaluatedKey: propertyIdentifiers.lastEvaluatedKey,
@@ -196,9 +223,10 @@ export class PropertyService {
 
   async getActivePropertyCardsByType(type) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByType(type);
-    return await Promise.all(
+    const properties = await Promise.all(
       propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
+    return await this.attachAmenities(properties);
   }
 
   async getActivePropertyCardsByCountry(country, lastEvaluatedKey) {
@@ -217,6 +245,7 @@ export class PropertyService {
     const properties = await Promise.all(
       propertyIdentifiers.identifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
+    await this.attachAmenities(properties);
     return {
       properties: properties,
       lastEvaluatedKey: propertyIdentifiers.lastEvaluatedKey,
@@ -260,9 +289,10 @@ export class PropertyService {
 
   async getActivePropertyCardsByHostId(hostId) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByHostId(hostId);
-    return await Promise.all(
+    const properties = await Promise.all(
       propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
+    return await this.attachAmenities(properties);
   }
 
   async getActivePropertyCardById(propertyId) {
@@ -270,7 +300,9 @@ export class PropertyService {
     if (basePropertyInfo?.status !== "ACTIVE") {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getCardPropertyAttributes(propertyId);
+    const card = await this.getCardPropertyAttributes(propertyId);
+    await this.attachAmenities([card]);
+    return card;
   }
 
   async getCardPropertyAttributes(propertyId) {
