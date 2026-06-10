@@ -5,6 +5,16 @@
   border-radius: 8px;
 }
 
+.amenity-category {
+  margin-top: 12px;
+}
+
+.amenity-category-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
 .filter-actions {
   display: flex;
   gap: 10px;

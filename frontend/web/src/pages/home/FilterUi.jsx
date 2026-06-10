@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Slider from '@mui/material/Slider';
 import { LanguageContext } from '../../context/LanguageContext';
@@ -6,6 +6,7 @@ import en from '../../content/en.json';
 import nl from '../../content/nl.json';
 import de from '../../content/de.json';
 import es from '../../content/es.json';
+import amenities from '../../store/amenities';
 import FilterLogic from './FilterLogic';
 import './FilterMain.css';
 
@@ -13,18 +14,18 @@ const contentByLanguage = { en, nl, de, es };
 
 const EURO_SYMBOL = '\u20AC';
 
-const AMENITY_LABELS = {
-  wifi: 'WiFi',
-  parking: 'Parking',
-  gym: 'Gym',
-  spa: 'Spa',
-  swimmingPool: 'Swimming Pool',
-  restaurant: 'Restaurant',
-  petFriendly: 'Pet Friendly',
-  airConditioning: 'Air Conditioning',
-  breakfast: 'Breakfast',
-  bar: 'Bar',
-};
+// Group the canonical amenity list (src/store/amenities.js) by category so the
+// filter always reflects every amenity a host can select.
+const amenitiesByCategory = amenities.reduce((groups, amenity) => {
+  (groups[amenity.category] ??= []).push(amenity);
+  return groups;
+}, {});
+
+const amenityCategories = Object.keys(amenitiesByCategory).sort((a, b) =>
+  a.localeCompare(b)
+);
+
+const PREVIEW_CATEGORY_COUNT = 2;
 
 const FilterUi = ({ onFilterApplied }) => {
   const {
@@ -49,6 +50,14 @@ const FilterUi = ({ onFilterApplied }) => {
   const panelLabels =
     contentByLanguage[language]?.homepage?.filters?.panel ??
     en.homepage.filters.panel;
+
+  const visibleCategories = useMemo(
+    () =>
+      showMoreFacilities
+        ? amenityCategories
+        : amenityCategories.slice(0, PREVIEW_CATEGORY_COUNT),
+    [showMoreFacilities]
+  );
 
   const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
   const [maxInputValue, setMaxInputValue] = useState(`${EURO_SYMBOL}${priceValues[1]}`);
@@ -174,35 +183,24 @@ const FilterUi = ({ onFilterApplied }) => {
 
       <div className="filter-section">
         <div className="FilterTitle">Amenities</div>
-        <div className="facility-list">
-          {Object.keys(selectedAmenities).slice(0, 5).map((key) => (
-            <label key={key} className="facility-item">
-              <input
-                type="checkbox"
-                name={key}
-                checked={selectedAmenities[key]}
-                onChange={handleAmenityChange}
-                className="filter-select-option"
-              />
-              {AMENITY_LABELS[key] ?? key}
-            </label>
-          ))}
-          {showMoreFacilities &&
-            Object.keys(selectedAmenities)
-              .slice(5)
-              .map((key) => (
-                <label key={key} className="facility-item">
+        {visibleCategories.map((category) => (
+          <div key={category} className="amenity-category">
+            <div className="amenity-category-title">{category}</div>
+            <div className="facility-list">
+              {amenitiesByCategory[category].map((amenity) => (
+                <label key={amenity.id} className="facility-item">
                   <input
                     type="checkbox"
-                    name={key}
-                    checked={selectedAmenities[key]}
-                    onChange={handleAmenityChange}
+                    checked={selectedAmenities.includes(amenity.id)}
+                    onChange={() => handleAmenityChange(amenity.id)}
                     className="filter-select-option"
                   />
-                  {AMENITY_LABELS[key] ?? key}
+                  {amenity.amenity}
                 </label>
               ))}
-        </div>
+            </div>
+          </div>
+        ))}
         <button
           type="button"
           onClick={() => setShowMoreFacilities(!showMoreFacilities)}

@@ -58,18 +58,8 @@ export default function useFilterLogic(props) {
     };
   }, []);
 
-  const [selectedAmenities, setSelectedAmenities] = useState({
-    wifi: false,
-    parking: false,
-    gym: false,
-    spa: false,
-    swimmingPool: false,
-    restaurant: false,
-    petFriendly: false,
-    airConditioning: false,
-    breakfast: false,
-    bar: false,
-  });
+  // Selected amenity ids (matching the ids in src/store/amenities.js).
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
 
   const [showMoreFacilities, setShowMoreFacilities] = useState(false);
 
@@ -169,9 +159,7 @@ export default function useFilterLogic(props) {
     setPriceValues(defaultPriceValues);
     setRoomsAndBeds(defaultRoomsAndBeds);
     setBookingOptions(defaultBookingOptions);
-    setSelectedAmenities((prev) =>
-      Object.fromEntries(Object.keys(prev).map((key) => [key, false]))
-    );
+    setSelectedAmenities([]);
     setError(null);
 
     fetchFilteredAccommodations({
@@ -181,11 +169,12 @@ export default function useFilterLogic(props) {
     });
   };
 
-  const handleAmenityChange = (event) => {
-    setSelectedAmenities({
-      ...selectedAmenities,
-      [event.target.name]: event.target.checked,
-    });
+  const handleAmenityChange = (amenityId) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(amenityId)
+        ? prev.filter((id) => id !== amenityId)
+        : [...prev, amenityId]
+    );
   };
 
   return {
