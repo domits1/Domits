@@ -19,6 +19,27 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-apply-btn:active,
+.filter-reset-btn:active {
+  transform: scale(0.95);
+}
+
+.filter-apply-btn:focus-visible,
+.filter-reset-btn:focus-visible {
+  outline: none;
+  animation: filter-btn-pulse 0.35s ease;
+}
+
+@keyframes filter-btn-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
+  }
 }
 
 .filter-apply-btn {
