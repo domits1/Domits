@@ -5,7 +5,6 @@ import { FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import spinner from "../../images/spinnner.gif";
-import defaultThumb from "./image22.png";
 import { getAccessToken } from "../../services/getAccessToken.js";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import { updateInquiryStatus } from "./services/reservationService.js";
@@ -129,9 +128,7 @@ const isOverlappingInquiry = (candidateBooking, targetBooking) => {
 };
 
 const resolveImageUrl = (booking) => {
-  if (!booking) return defaultThumb;
-
-  const prop = booking.property_meta || booking.property || null;
+  const prop = booking?.property_meta || booking?.property || null;
   const propImages = prop?.photos || prop?.images || prop?.media || prop?.gallery || null;
   if (propImages) {
     try {
@@ -142,11 +139,11 @@ const resolveImageUrl = (booking) => {
     }
   }
 
-  if (booking.property_image_url) {
+  if (booking?.property_image_url) {
     return booking.property_image_url;
   }
 
-  const resImages = booking.photos || booking.images || booking.media || booking.gallery || null;
+  const resImages = booking?.photos || booking?.images || booking?.media || booking?.gallery || null;
   if (resImages) {
     try {
       const url = resolvePrimaryAccommodationImageUrl(resImages, "thumb");
@@ -156,7 +153,7 @@ const resolveImageUrl = (booking) => {
     }
   }
 
-  return defaultThumb;
+  return null;
 };
 
 const TabButton = ({ tab, activeTab, onSelect, label }) => (
@@ -218,6 +215,16 @@ const HostReservations = () => {
     setSortDirection("asc");
   };
 
+  const updateBookingsWithSummaries = (prev, summaries) => {
+    return prev.map((b) => {
+      const summary = summaries[b.property_id];
+      if (summary?.imageUrl) {
+        return { ...b, property_image_url: summary.imageUrl };
+      }
+      return b;
+    });
+  };
+
   useEffect(() => {
     const fetchBookings = async () => {
       setIsLoading(true);
@@ -254,15 +261,7 @@ const HostReservations = () => {
 
           if (missingPropIds.length > 0) {
             const summaries = await fetchPropertySummaries(missingPropIds);
-            setBookings((prev) =>
-              prev.map((b) => {
-                const summary = summaries[b.property_id];
-                if (summary?.imageUrl) {
-                  return { ...b, property_image_url: summary.imageUrl };
-                }
-                return b;
-              })
-            );
+            setBookings((prev) => updateBookingsWithSummaries(prev, summaries));
           }
         } catch (err) {
           console.warn("Failed to fetch property summaries:", err);
@@ -545,15 +544,15 @@ const HostReservations = () => {
                         return (
                           <tr key={`${booking.id}-${booking.property_id}`}>
                             <td className={styles.thumbnailCell}>
-                              <img
-                                src={resolveImageUrl(booking)}
-                                alt={booking.title ? `${booking.title} image` : "Listing image"}
-                                className={styles.thumbnailImage}
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = defaultThumb;
-                                }}
-                              />
+                              {resolveImageUrl(booking) ? (
+                                <img
+                                  src={resolveImageUrl(booking)}
+                                  alt={booking.title ? `${booking.title} image` : "Listing image"}
+                                  className={styles.thumbnailImage}
+                                />
+                              ) : (
+                                <div className={styles.thumbnailPlaceholder}>No Image</div>
+                              )}
                             </td>
                             <td>{booking.property_id}</td>
                             <td>{booking.title}</td>

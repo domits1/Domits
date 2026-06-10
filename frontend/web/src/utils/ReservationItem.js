@@ -52,8 +52,8 @@ const ReservationItem = ({ reservation, selectedOption, selectedReservations, ha
         </td>
       )}
       <td>{DateFormatterDD_MM_YYYY(reservation.createdAt)}</td>
-      <td>{guestInfo ? guestInfo : "loading..."}</td>
-      <td>{reservation.Title ? reservation.Title : "None"}</td>
+      <td>{guestInfo || "loading..."}</td>
+      <td>{reservation.Title || "None"}</td>
       <td>{`${DateFormatterDD_MM_YYYY(reservation.StartDate)} - ${DateFormatterDD_MM_YYYY(reservation.EndDate)}`}</td>
       {selectedOption === "All" && (
         <td style={{ color: getStatusColor(reservation.Status) }}>
