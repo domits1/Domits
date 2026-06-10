@@ -826,7 +826,7 @@ export const useCalendarSelection = ({
       return { ...previous, [selectedPropertyId]: next };
     });
     setPriceLabsIgnoredByPropertyId((previous) => {
-      const next = { ...(previous?.[selectedPropertyId] ?? {}) };
+      const next = { ...previous?.[selectedPropertyId] };
       for (const key of ignoredKeys) {
         next[key] = true;
       }
@@ -884,12 +884,12 @@ export const useCalendarSelection = ({
     }));
     // Optimistically remove suggestions and mark as applied
     setPriceLabsOverridesByPropertyId((previous) => {
-      const next = { ...(previous?.[selectedPropertyId] ?? {}) };
+      const next = { ...previous?.[selectedPropertyId] };
       for (const key of keysToApply) { delete next[key]; }
       return { ...previous, [selectedPropertyId]: next };
     });
     setPriceLabsAppliedByPropertyId((previous) => {
-      const next = { ...(previous?.[selectedPropertyId] ?? {}) };
+      const next = { ...previous?.[selectedPropertyId] };
       for (const key of keysToApply) { next[key] = nextPropertyPriceOverrides[key]; }
       return { ...previous, [selectedPropertyId]: next };
     });
