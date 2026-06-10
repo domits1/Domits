@@ -109,7 +109,7 @@ const FaqAccordionItem = ({ question, answer }) => {
     const bodyRef = useRef(null);
 
     return (
-        <button type="button" className="contact-faq-item" onClick={() => setOpen(o => !o)}>
+        <button type="button" className="contact-faq-item" aria-expanded={open} onClick={() => setOpen(o => !o)}>
             <div className="contact-faq-item__header">
                 <span className="contact-faq-item__question">{question}</span>
                 <ChevronDown
@@ -151,7 +151,13 @@ const FaqCategoryCard = ({ category, lowerQuery, frequentlyAsked }) => {
 
     return (
         <div className={`contact-faq-card${isExpanded ? " contact-faq-card--open" : ""}`}>
-            <button type="button" className="contact-faq-card__header" onClick={() => setOpen(o => !o)}>
+            <button
+                type="button"
+                className="contact-faq-card__header"
+                aria-expanded={isExpanded}
+                aria-controls={`contact-faq-category-${category.key}`}
+                onClick={() => setOpen(o => !o)}
+            >
                 <div className="contact-faq-card__icon">
                     <Icon size={20} />
                 </div>
@@ -164,7 +170,7 @@ const FaqCategoryCard = ({ category, lowerQuery, frequentlyAsked }) => {
                 </span>
             </button>
             {isExpanded && (
-                <div className="contact-faq-card__body">
+                <div className="contact-faq-card__body" id={`contact-faq-category-${category.key}`}>
                     {visibleFaqs.map((faq) => (
                         <FaqAccordionItem key={faq.question} question={faq.question} answer={faq.answer} />
                     ))}
@@ -188,7 +194,7 @@ FaqCategoryCard.propTypes = {
 const API_BASE_URL =
     process.env.REACT_APP_CONTACT_EMAIL_ENDPOINT ||
     "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
-const isValidEmail = (email) => /^[^\s@]+@[^\s@.]+\.[^\s@.]+$/.test(email);
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 function Contact() {
     const [searchQuery, setSearchQuery] = useState("");

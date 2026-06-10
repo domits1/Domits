@@ -21,7 +21,7 @@
     margin-bottom: 16px;
 }
 
-.contact-hero__title {
+.contact-page .contact-hero__title {
     font-size: clamp(32px, 5vw, 52px);
     font-weight: 700;
     color: #111;
