@@ -1,4 +1,4 @@
-import Database from "../ORM/index.js";
+import Database from "../../integrations/ORM/index.js";
 import { randomUUID } from "node:crypto";
 
 import { ChannexBookingRevision } from "database/models/unified/integrations/ChannexBookingRevision";

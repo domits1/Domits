@@ -1,9 +1,9 @@
 import IntegrationService from "../business/integrationService.js";
-import ChannexBookingAvailabilityBridge from "../business/channexBookingAvailabilityBridge.js";
+import ChannexBookingAvailabilityBridge from "../.shared/channelManagement/channexBookingAvailabilityBridge.js";
 import {
   CHANNEX_RESTRICTIONS_SYNC_MODE,
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
-} from "../business/channexRestrictionsSyncVersion.js";
+} from "../.shared/channelManagement/utils/channexRestrictionsSyncVersion.js";
 import { extractIntegrationId, extractLastPathSegment, safeJson } from "./controllerUtils.js";
 
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";

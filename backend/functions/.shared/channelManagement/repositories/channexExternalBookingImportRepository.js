@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import Database from "../ORM/index.js";
+import Database from "../../integrations/ORM/index.js";
 
 const CHANNEL_CHANNEX = "CHANNEX";
 const BOOKING_STATUS_PAID = "Paid";

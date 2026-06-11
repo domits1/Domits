@@ -2,11 +2,11 @@ import MessageController from "./controller/messageController.js";
 import IntegrationController from "./controller/integrationController.js";
 import IngestionController from "./controller/ingestionController.js";
 import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
-import { isChannexCertificationUserAllowed } from "./business/channexCertificationAccess.js";
+import { isChannexCertificationUserAllowed } from "./.shared/channelManagement/utils/channexCertificationAccess.js";
 import {
   CHANNEX_RESTRICTIONS_SYNC_MODE,
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
-} from "./business/channexRestrictionsSyncVersion.js";
+} from "./.shared/channelManagement/utils/channexRestrictionsSyncVersion.js";
 
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
 const CHANNEX_BOOKING_POLL_EVENT_SOURCE = "domits.channex.booking-poll";

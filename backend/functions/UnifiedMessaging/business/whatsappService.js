@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import IngestionService from "./ingestionService.js";
-import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
+import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
 import MessageRepository from "../data/messageRepository.js";
 import publishRealtimeMessage from "./publishRealtimeMessage.js";
 

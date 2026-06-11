@@ -4,7 +4,7 @@ jest.mock(
   { virtual: true }
 );
 
-jest.mock("../ORM/index.js", () => ({
+jest.mock("../.shared/integrations/ORM/index.js", () => ({
   __esModule: true,
   default: {
     getInstance: jest.fn(),
@@ -16,8 +16,8 @@ const {
   ChannexBookingAvailabilityRepository,
   getAffectedDateKeysForBookingChange,
   countActiveBookingsByNight,
-} = require("./channexBookingAvailabilityBridge.js");
-const Database = require("../ORM/index.js").default;
+} = require("../.shared/channelManagement/channexBookingAvailabilityBridge.js");
+const Database = require("../.shared/integrations/ORM/index.js").default;
 
 const DOMITS_PROPERTY_ID = "domits-property-1";
 const EXTERNAL_PROPERTY_ID = "external-property-1";

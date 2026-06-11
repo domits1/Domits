@@ -1,61 +1,44 @@
 import { randomUUID } from "node:crypto";
 
-import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
-import IntegrationPropertyRepository from "../data/integrationPropertyRepository.js";
-import IntegrationRatePlanRepository from "../data/integrationRatePlanRepository.js";
-import IntegrationRoomTypeRepository from "../data/integrationRoomTypeRepository.js";
-import IntegrationSyncRepository from "../data/integrationSyncRepository.js";
-import ReservationLinkRepository from "../data/reservationLinkRepository.js";
-import ChannexSyncEvidenceRepository from "../data/channexSyncEvidenceRepository.js";
-import ChannexBookingRevisionRepository from "../data/channexBookingRevisionRepository.js";
+import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
+import IntegrationPropertyRepository from "../.shared/integrations/repositories/integrationPropertyRepository.js";
+import IntegrationRatePlanRepository from "../.shared/integrations/repositories/integrationRatePlanRepository.js";
+import IntegrationRoomTypeRepository from "../.shared/integrations/repositories/integrationRoomTypeRepository.js";
+import IntegrationSyncRepository from "../.shared/integrations/repositories/integrationSyncRepository.js";
+import ReservationLinkRepository from "../.shared/integrations/repositories/reservationLinkRepository.js";
+import { shapeCredentialIntegrationForResponse } from "../.shared/integrations/integrationResponse.js";
+import ChannexSyncEvidenceRepository from "../.shared/channelManagement/repositories/channexSyncEvidenceRepository.js";
+import ChannexBookingRevisionRepository from "../.shared/channelManagement/repositories/channexBookingRevisionRepository.js";
 import ChannexExternalBookingImportRepository, {
   buildDeterministicChannexBookingId,
-} from "../data/channexExternalBookingImportRepository.js";
-import Database from "../ORM/index.js";
+} from "../.shared/channelManagement/repositories/channexExternalBookingImportRepository.js";
+import Database from "../.shared/integrations/ORM/index.js";
 
 import SyncRunner from "./syncRunner.js";
 import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
-import HoliduCredentialStore from "./holiduCredentialStore.js";
-import HoliduProviderClient from "./holiduProviderClient.js";
-import ChannexCredentialStore from "./channexCredentialStore.js";
-import ChannexProviderClient from "./channexProviderClient.js";
+import HoliduCredentialStore from "../.shared/channelManagement/providers/holidu/credentialStore.js";
+import HoliduProviderClient from "../.shared/channelManagement/providers/holidu/providerClient.js";
+import ChannexCredentialStore from "../.shared/channelManagement/providers/channex/credentialStore.js";
+import ChannexProviderClient from "../.shared/channelManagement/providers/channex/providerClient.js";
+import ChannelManagementService from "../.shared/channelManagement/channelManagementService.js";
+import { CHANNEX_STATUS } from "../.shared/channelManagement/channelManagementConstants.js";
+import ChannexBookingPollingService from "../.shared/channelManagement/services/channexBookingPollingService.js";
 import {
   CHANNEL_CHANNEX,
   CHANNEX_BOOKING_POLL_ACTION,
   CHANNEX_BOOKING_POLL_SYNC_TYPE,
   CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT,
-  allowlistIncludes,
-  applyChannexBookingPollPropertyResult,
-  buildChannexBookingPollConfig as createChannexBookingPollConfig,
-  buildChannexBookingPollPropertySummary as createChannexBookingPollPropertySummary,
-  createEmptyChannexBookingPollResponse,
-  hasRequiredChannexBookingPollAllowlists,
-  isActiveChannexPropertyMapping,
-} from "./channexBookingPollUtils.js";
+} from "../.shared/channelManagement/utils/channexBookingPollUtils.js";
+import { buildChannexPullIssue } from "../.shared/channelManagement/utils/channexBookingRevisionUtils.js";
 import {
   CHANNEX_RESTRICTIONS_SYNC_MODE,
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
-} from "./channexRestrictionsSyncVersion.js";
-import {
-  normalizeHoliduCredentials,
-  buildHoliduSecretPayload,
-  buildHoliduCredentialSummary,
-  hasHoliduRequiredCredentialFields,
-  summarizeHoliduRequiredFields,
-  normalizeHoliduProviderValidation,
-} from "./holiduCredentialUtils.js";
-import {
-  normalizeChannexCredentials,
-  buildChannexCredentialSummary,
-  hasChannexRequiredCredentialFields,
-  summarizeChannexRequiredFields,
-  normalizeChannexProviderValidation,
-  buildDefaultChannexProviderValidation,
-} from "./channexCredentialUtils.js";
+} from "../.shared/channelManagement/utils/channexRestrictionsSyncVersion.js";
+import { hasChannexRequiredCredentialFields } from "../.shared/channelManagement/providers/channex/credentialUtils.js";
 import ChannexBookingAvailabilityBridge, {
   ChannexBookingAvailabilityRepository,
   countActiveBookingsByNight,
-} from "./channexBookingAvailabilityBridge.js";
+} from "../.shared/channelManagement/channexBookingAvailabilityBridge.js";
 
 const nowMs = () => Date.now();
 const daysToMs = (days) => days * 24 * 60 * 60 * 1000;
@@ -787,16 +770,6 @@ const parseStructuredEvidenceField = (value) => {
   if (value === undefined || value === null || value === "") return null;
   return parseJsonSafely(value) ?? value;
 };
-const HOLIDU_ACCOUNT_POLICY = "SINGLE_ACCOUNT_PER_USER";
-const HOLIDU_STATUS = {
-  NOT_CONNECTED: "NOT_CONNECTED",
-  PENDING_PROVIDER_VALIDATION: "PENDING_PROVIDER_VALIDATION",
-  VALIDATION_FAILED: "VALIDATION_FAILED",
-  RECONNECT_REQUIRED: "RECONNECT_REQUIRED",
-  DISCONNECTED: "DISCONNECTED",
-  CONNECTED: "CONNECTED",
-};
-const CHANNEX_ACCOUNT_POLICY = "SINGLE_ACCOUNT_PER_USER";
 const CHANNEX_CERTIFICATION_FULL_SYNC_DAYS = 500;
 const CHANNEX_ARI_PAYLOAD_PREVIEW_DEFAULT_PAGE_SIZE_DAYS = 30;
 const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_PAGE_SIZE_DAYS = 60;
@@ -853,14 +826,6 @@ const CHANNEX_PAYMENT_CONTEXT_KEYS = new Set([
   "paymentcredentials",
   "guarantee",
 ]);
-const CHANNEX_STATUS = {
-  NOT_CONNECTED: "NOT_CONNECTED",
-  PENDING_PROVIDER_VALIDATION: "PENDING_PROVIDER_VALIDATION",
-  VALIDATION_FAILED: "VALIDATION_FAILED",
-  RECONNECT_REQUIRED: "RECONNECT_REQUIRED",
-  DISCONNECTED: "DISCONNECTED",
-  CONNECTED: "CONNECTED",
-};
 const normalizePayloadKey = (key) => String(key || "").trim().toLowerCase();
 const shouldRedactChannexPayloadKey = (key, path) => {
   const normalizedKey = normalizePayloadKey(key);
@@ -942,11 +907,6 @@ const getDomitsBookingIdFromLink = (link) => {
   const payload = parseStructuredEvidenceField(link?.rawPayload);
   return requireStr(payload?.domits?.bookingId);
 };
-const buildChannexPullIssue = (code, message, extra = {}) => ({
-  code,
-  message,
-  ...extra,
-});
 const buildChannexRoomLineMappingFailure = (roomLineCount) => {
   if (roomLineCount > 1) {
     return {
@@ -2594,14 +2554,6 @@ const normalizeEvidenceDateFilters = (dateFrom, dateTo) => {
     error: null,
   };
 };
-const shapeCredentialIntegrationForResponse = (integration) => {
-  if (!integration || typeof integration !== "object") {
-    return integration;
-  }
-
-  const { credentialsRef, ...safeIntegration } = integration;
-  return safeIntegration;
-};
 const resolveSelectedWhatsAppNumber = (secret, integration) => {
   const selectableNumbers = Array.isArray(secret?.selectableNumbers) ? secret.selectableNumbers : [];
   const selectedPhoneNumberId =
@@ -2616,113 +2568,6 @@ const resolveSelectedWhatsAppNumber = (secret, integration) => {
 };
 const resolveWhatsAppPublicPhoneNumber = (secret, integration) =>
   requireStr(secret?.selectedPhoneNumber) || requireStr(resolveSelectedWhatsAppNumber(secret, integration)?.phoneNumber);
-const buildHoliduProviderValidationRecord = (validationResult, attemptedAt) => {
-  if (validationResult?.success) {
-    return normalizeHoliduProviderValidation({
-      validationState: HOLIDU_STATUS.CONNECTED,
-      providerStatus: validationResult.providerStatus || "VALIDATED",
-      validationMethod: "PROVIDER_VALIDATION",
-      attemptedAt,
-      validatedAt: attemptedAt,
-      externalAccountId: validationResult.externalAccountId ?? null,
-      errorCode: null,
-      errorMessage: null,
-    });
-  }
-
-  if (validationResult?.canValidate === false) {
-    return normalizeHoliduProviderValidation({
-      validationState: HOLIDU_STATUS.PENDING_PROVIDER_VALIDATION,
-      providerStatus: validationResult.providerStatus || "UNSUPPORTED_IN_REPO_DOCS",
-      validationMethod: "PROVIDER_VALIDATION_UNAVAILABLE",
-      attemptedAt,
-      validatedAt: null,
-      externalAccountId: null,
-      errorCode: null,
-      errorMessage: validationResult.errorMessage ?? null,
-    });
-  }
-
-  return normalizeHoliduProviderValidation({
-    validationState: HOLIDU_STATUS.VALIDATION_FAILED,
-    providerStatus: validationResult?.providerStatus || "VALIDATION_FAILED",
-    validationMethod: "PROVIDER_VALIDATION",
-    attemptedAt,
-    validatedAt: null,
-    externalAccountId: null,
-    errorCode: validationResult?.errorCode || "HOLIDU_PROVIDER_VALIDATION_FAILED",
-    errorMessage: validationResult?.errorMessage || "Holidu provider validation failed.",
-  });
-};
-const deriveHoliduPersistedState = (validationResult) => {
-  if (validationResult?.success) {
-    return {
-      status: HOLIDU_STATUS.CONNECTED,
-      externalAccountId: validationResult.externalAccountId ?? null,
-      lastErrorCode: null,
-      lastErrorMessage: null,
-    };
-  }
-
-  if (validationResult?.canValidate === false) {
-    return {
-      status: HOLIDU_STATUS.PENDING_PROVIDER_VALIDATION,
-      externalAccountId: null,
-      lastErrorCode: null,
-      lastErrorMessage: null,
-    };
-  }
-
-  return {
-    status: HOLIDU_STATUS.VALIDATION_FAILED,
-    externalAccountId: null,
-    lastErrorCode: validationResult?.errorCode || "HOLIDU_PROVIDER_VALIDATION_FAILED",
-    lastErrorMessage: validationResult?.errorMessage || "Holidu provider validation failed.",
-  };
-};
-const buildChannexProviderValidationRecord = (validationResult, attemptedAt) => {
-  if (validationResult?.success) {
-    return normalizeChannexProviderValidation({
-      validationState: CHANNEX_STATUS.CONNECTED,
-      providerStatus: validationResult.providerStatus || "ACTIVE",
-      validationMethod: "PROVIDER_VALIDATION",
-      attemptedAt,
-      validatedAt: attemptedAt,
-      externalAccountId: validationResult.externalAccountId ?? null,
-      errorCode: null,
-      errorMessage: null,
-    });
-  }
-
-  return normalizeChannexProviderValidation({
-    validationState: CHANNEX_STATUS.VALIDATION_FAILED,
-    providerStatus: validationResult?.providerStatus || "VALIDATION_FAILED",
-    validationMethod: "PROVIDER_VALIDATION",
-    attemptedAt,
-    validatedAt: null,
-    externalAccountId: null,
-    errorCode: validationResult?.errorCode || "CHANNEX_PROVIDER_VALIDATION_FAILED",
-    errorMessage: validationResult?.errorMessage || "Channex provider validation failed.",
-  });
-};
-const deriveChannexPersistedState = (validationResult) => {
-  if (validationResult?.success) {
-    return {
-      status: CHANNEX_STATUS.CONNECTED,
-      externalAccountId: validationResult.externalAccountId ?? null,
-      lastErrorCode: null,
-      lastErrorMessage: null,
-    };
-  }
-
-  return {
-    status: CHANNEX_STATUS.VALIDATION_FAILED,
-    externalAccountId: null,
-    lastErrorCode: validationResult?.errorCode || "CHANNEX_PROVIDER_VALIDATION_FAILED",
-    lastErrorMessage: validationResult?.errorMessage || "Channex provider validation failed.",
-  };
-};
-
 export default class IntegrationService {
   constructor({
     accounts = new IntegrationAccountRepository(),
@@ -2742,6 +2587,8 @@ export default class IntegrationService {
     holiduProviderClient = new HoliduProviderClient(),
     channexCredentialStore = new ChannexCredentialStore(),
     channexProviderClient = new ChannexProviderClient(),
+    channelManagementService = null,
+    channexBookingPollingService = null,
   } = {}) {
     this.accounts = accounts;
     this.props = props;
@@ -2756,10 +2603,28 @@ export default class IntegrationService {
     this.channexBookingAvailabilityBridge = channexBookingAvailabilityBridge;
     this.runner = runner;
     this.credentialStore = credentialStore;
-    this.holiduCredentialStore = holiduCredentialStore;
-    this.holiduProviderClient = holiduProviderClient;
     this.channexCredentialStore = channexCredentialStore;
     this.channexProviderClient = channexProviderClient;
+    this.channelManagementService =
+      channelManagementService ||
+      new ChannelManagementService({
+        accounts,
+        sync,
+        holiduCredentialStore,
+        holiduProviderClient,
+        channexCredentialStore,
+        channexProviderClient,
+      });
+    this.channexBookingPollingService =
+      channexBookingPollingService ||
+      new ChannexBookingPollingService({
+        accounts,
+        props,
+        sync,
+        channexCredentialStore,
+        pullLatestChannexBookingsForResolvedContext: (context) =>
+          this.pullLatestChannexBookingsForResolvedContext(context),
+      });
   }
 
   logTokenLifecycle(level, message, integration, cause, extra = {}) {
@@ -3371,464 +3236,28 @@ export default class IntegrationService {
     });
   }
 
-  async persistCredentialIntegrationRecord({
-    existing,
-    integrationAccountId,
-    userId,
-    channel,
-    displayName,
-    persistedState,
-    credentialsRef,
-    connectedAt,
-    updatedAt,
-  }) {
-    if (existing) {
-      return this.accounts.update(existing.id, {
-        displayName,
-        externalAccountId: persistedState.externalAccountId,
-        status: persistedState.status,
-        credentialsRef,
-        lastErrorCode: persistedState.lastErrorCode,
-        lastErrorMessage: persistedState.lastErrorMessage,
-      });
-    }
-
-    const integration = await this.accounts.create({
-      id: integrationAccountId,
-      userId,
-      channel,
-      externalAccountId: persistedState.externalAccountId,
-      displayName,
-      status: persistedState.status,
-      credentialsRef,
-      lastSuccessfulSyncAt: null,
-      lastFailedSyncAt: null,
-      lastErrorCode: persistedState.lastErrorCode,
-      lastErrorMessage: persistedState.lastErrorMessage,
-      createdAt: connectedAt,
-      updatedAt,
-    });
-
-    await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
-    await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
-    return integration;
-  }
-
-  async connectCredentialIntegration(body, config) {
-    const userId = requireStr(body.userId);
-    const displayName = requireStr(body.displayName) || config.defaultDisplayName;
-    const credentials = config.normalizeCredentials(body.credentials);
-
-    if (!userId) return bad(400, { error: "Missing required field: userId" });
-    if (!credentials || !config.hasRequiredCredentialFields(credentials)) {
-      return bad(400, {
-        error: config.invalidCredentialsError,
-      });
-    }
-
-    try {
-      const existing = await this.accounts.findByUserIdAndChannel(userId, config.channel);
-      const integrationAccountId = existing?.id || randomUUID();
-      const connectedAt = existing?.createdAt || nowMs();
-      const updatedAt = nowMs();
-      const secretPayload = config.buildSecretPayload({
-        credentials,
-        connectedAt,
-        updatedAt,
-      });
-
-      let credentialsRef;
-      try {
-        credentialsRef = await config.credentialStore.ensureSecret({
-          userId,
-          integrationAccountId,
-          payload: secretPayload,
-        });
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(503, {
-          error: config.secretStoreError,
-          errorCode: config.secretStoreErrorCode,
-          details,
-        });
-      }
-
-      const validationAttemptedAt = nowMs();
-      const validationResult = await config.validateProvider(credentials);
-      const providerValidation = config.buildProviderValidationRecord(validationResult, validationAttemptedAt);
-      const persistedState = config.derivePersistedState(validationResult);
-
-      try {
-        await config.credentialStore.writeSecret(credentialsRef, {
-          ...secretPayload,
-          updatedAt: validationAttemptedAt,
-          providerValidation,
-        });
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(503, {
-          error: config.secretUpdateError,
-          errorCode: config.secretUpdateErrorCode,
-          details,
-        });
-      }
-
-      let integration;
-      try {
-        integration = await this.persistCredentialIntegrationRecord({
-          existing,
-          integrationAccountId,
-          userId,
-          channel: config.channel,
-          displayName,
-          persistedState,
-          credentialsRef,
-          connectedAt,
-          updatedAt,
-        });
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(500, {
-          error: config.connectionPersistError,
-          errorCode: config.connectionPersistErrorCode,
-          details,
-        });
-      }
-
-      return ok({
-        connected: persistedState.status === config.status.CONNECTED,
-        channel: config.channel,
-        integration: shapeCredentialIntegrationForResponse(integration),
-        credentialsSummary: config.buildCredentialSummary(credentials),
-        validationMode: config.getValidationMode(validationResult),
-        validationState: persistedState.status,
-        providerStatus: providerValidation.providerStatus,
-        accountPolicy: config.accountPolicy,
-        multiAccountDeferred: true,
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      return bad(500, {
-        error: config.unexpectedConnectError,
-        errorCode: config.unexpectedConnectErrorCode,
-        details,
-      });
-    }
-  }
-
-  buildCredentialStatusResponse(config, {
-    integration = null,
-    integrationAccountId = integration?.id ?? null,
-    status,
-    validationMode,
-    validationState,
-    reason,
-    externalAccountId = integration?.externalAccountId ?? null,
-    credentialsRefPresent = false,
-    secretPresent = false,
-    requiredFieldsPresent = false,
-  }) {
-    return ok({
-      channel: config.channel,
-      integrationAccountId,
-      status,
-      validationMode,
-      validationState,
-      reason,
-      displayName: integration?.displayName ?? null,
-      externalAccountId,
-      credentialsRefPresent,
-      secretPresent,
-      requiredFieldsPresent,
-    });
-  }
-
-  async checkCredentialIntegrationStatus(userId, config) {
-    const normalizedUserId = requireStr(userId);
-    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
-
-    try {
-      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, config.channel);
-      if (!integration) {
-        return this.buildCredentialStatusResponse(config, {
-          integrationAccountId: null,
-          status: config.status.NOT_CONNECTED,
-          validationMode: "LOCAL_AND_PROVIDER_STATE",
-          validationState: config.status.NOT_CONNECTED,
-          reason: `No ${config.providerName} integration row exists for this user.`,
-        });
-      }
-
-      if (String(integration.status || "").toUpperCase() === config.status.DISCONNECTED) {
-        return this.buildCredentialStatusResponse(config, {
-          integration,
-          status: config.status.DISCONNECTED,
-          validationMode: "LOCAL_AND_PROVIDER_STATE",
-          validationState: config.status.DISCONNECTED,
-          reason: `${config.providerName} integration is disconnected in Domits and is not locally usable.`,
-        });
-      }
-
-      const credentialsRefPresent = !!requireStr(integration.credentialsRef);
-      if (!credentialsRefPresent) {
-        return this.buildCredentialStatusResponse(config, {
-          integration,
-          status: config.status.RECONNECT_REQUIRED,
-          validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: config.status.RECONNECT_REQUIRED,
-          reason: "Integration row exists but credentialsRef is missing.",
-          credentialsRefPresent,
-        });
-      }
-
-      let secret;
-      try {
-        secret = await config.credentialStore.readSecretOrNull(integration.credentialsRef);
-      } catch (error) {
-        const details = describeLocalError(error);
-        return this.buildCredentialStatusResponse(config, {
-          integration,
-          status: config.status.RECONNECT_REQUIRED,
-          validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: config.status.RECONNECT_REQUIRED,
-          reason: `Stored ${config.providerName} secret could not be read locally: ${details.message}`,
-          credentialsRefPresent,
-        });
-      }
-
-      if (!secret || typeof secret !== "object" || Array.isArray(secret)) {
-        return this.buildCredentialStatusResponse(config, {
-          integration,
-          status: config.status.RECONNECT_REQUIRED,
-          validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: config.status.RECONNECT_REQUIRED,
-          reason: `Stored ${config.providerName} secret is missing, unreadable, or malformed.`,
-          credentialsRefPresent,
-        });
-      }
-
-      const requiredFieldSummary = config.summarizeRequiredFields(secret);
-      if (!config.hasRequiredCredentialFields(secret)) {
-        return this.buildCredentialStatusResponse(config, {
-          integration,
-          status: config.status.RECONNECT_REQUIRED,
-          validationMode: "LOCAL_SECRET_VALIDATION",
-          validationState: config.status.RECONNECT_REQUIRED,
-          reason: `Stored ${config.providerName} secret is present but required local credential fields are incomplete.`,
-          credentialsRefPresent,
-          secretPresent: true,
-          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-        });
-      }
-
-      const providerValidation = config.normalizeProviderValidation(secret.providerValidation);
-      const normalizedStatus = String(integration.status || "").toUpperCase();
-      if (
-        normalizedStatus === config.status.CONNECTED &&
-        providerValidation.validationState === config.status.CONNECTED
-      ) {
-        return this.buildCredentialStatusResponse(config, {
-          integration,
-          status: config.status.CONNECTED,
-          validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-          validationState: config.status.CONNECTED,
-          reason: `Stored ${config.providerName} credentials are locally valid and provider validation has explicitly succeeded.`,
-          externalAccountId: integration.externalAccountId ?? providerValidation.externalAccountId ?? null,
-          credentialsRefPresent,
-          secretPresent: true,
-          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-        });
-      }
-
-      if (normalizedStatus === config.status.VALIDATION_FAILED) {
-        return this.buildCredentialStatusResponse(config, {
-          integration,
-          status: config.status.VALIDATION_FAILED,
-          validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-          validationState: config.status.VALIDATION_FAILED,
-          reason: integration.lastErrorMessage || providerValidation.errorMessage || "Provider validation failed.",
-          externalAccountId: null,
-          credentialsRefPresent,
-          secretPresent: true,
-          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-        });
-      }
-
-      return this.buildCredentialStatusResponse(config, {
-        integration,
-        status: config.status.PENDING_PROVIDER_VALIDATION,
-        validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-        validationState: config.status.PENDING_PROVIDER_VALIDATION,
-        reason:
-          providerValidation.errorMessage ||
-          `Stored ${config.providerName} credentials are locally valid, but provider validation has not explicitly succeeded.`,
-        externalAccountId: null,
-        credentialsRefPresent,
-        secretPresent: true,
-        requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      return bad(500, {
-        error: config.statusCheckError,
-        errorCode: config.statusCheckErrorCode,
-        details,
-      });
-    }
-  }
-
-  async disconnectCredentialIntegration(body, config) {
-    const userId = requireStr(body.userId);
-    if (!userId) return bad(400, { error: "Missing required field: userId" });
-
-    try {
-      const existing = await this.accounts.findByUserIdAndChannel(userId, config.channel);
-      if (!existing) return bad(404, { error: config.notFoundError });
-
-      let disconnected;
-      try {
-        disconnected = await this.accounts.disconnect(existing.id);
-      } catch (error) {
-        const details = describeLocalError(error);
-        return bad(500, {
-          error: config.disconnectPersistError,
-          errorCode: config.disconnectPersistErrorCode,
-          details,
-        });
-      }
-
-      if (!disconnected) return bad(404, { error: config.notFoundError });
-
-      return ok({
-        disconnected: true,
-        channel: config.channel,
-        integrationAccountId: disconnected.id,
-        status: disconnected.status,
-        message: config.disconnectMessage,
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      return bad(500, {
-        error: config.unexpectedDisconnectError,
-        errorCode: config.unexpectedDisconnectErrorCode,
-        details,
-      });
-    }
-  }
-
-  getHoliduCredentialLifecycleConfig() {
-    return {
-      channel: "HOLIDU",
-      providerName: "Holidu",
-      defaultDisplayName: "Holidu",
-      status: HOLIDU_STATUS,
-      accountPolicy: HOLIDU_ACCOUNT_POLICY,
-      credentialStore: this.holiduCredentialStore,
-      normalizeCredentials: normalizeHoliduCredentials,
-      hasRequiredCredentialFields: hasHoliduRequiredCredentialFields,
-      summarizeRequiredFields: summarizeHoliduRequiredFields,
-      normalizeProviderValidation: normalizeHoliduProviderValidation,
-      buildSecretPayload: ({ credentials, connectedAt, updatedAt }) =>
-        buildHoliduSecretPayload({
-          credentials,
-          connectedAt,
-          updatedAt,
-        }),
-      validateProvider: (credentials) => this.holiduProviderClient.validateAccount(credentials),
-      buildProviderValidationRecord: buildHoliduProviderValidationRecord,
-      derivePersistedState: deriveHoliduPersistedState,
-      buildCredentialSummary: buildHoliduCredentialSummary,
-      getValidationMode: (validationResult) =>
-        validationResult?.canValidate === false ? "PROVIDER_VALIDATION_UNAVAILABLE" : "PROVIDER_VALIDATION",
-      invalidCredentialsError: "Holidu credentials must include apiKey, or both clientId and clientSecret.",
-      secretStoreError: "Failed to store Holidu credentials in Secrets Manager.",
-      secretStoreErrorCode: "HOLIDU_SECRET_STORE_FAILED",
-      secretUpdateError: "Holidu credentials were stored, but provider validation metadata could not be persisted.",
-      secretUpdateErrorCode: "HOLIDU_SECRET_UPDATE_FAILED",
-      connectionPersistError: "Holidu credentials were stored, but the integration record could not be persisted.",
-      connectionPersistErrorCode: "HOLIDU_CONNECTION_PERSIST_FAILED",
-      unexpectedConnectError: "Unexpected Holidu connection failure.",
-      unexpectedConnectErrorCode: "HOLIDU_CONNECT_FAILED",
-      statusCheckError: "Failed to evaluate Holidu local connectivity state.",
-      statusCheckErrorCode: "HOLIDU_STATUS_CHECK_FAILED",
-      notFoundError: "Holidu integration not found",
-      disconnectPersistError: "Failed to persist Holidu disconnect state in Domits.",
-      disconnectPersistErrorCode: "HOLIDU_DISCONNECT_PERSIST_FAILED",
-      unexpectedDisconnectError: "Unexpected Holidu disconnect failure.",
-      unexpectedDisconnectErrorCode: "HOLIDU_DISCONNECT_FAILED",
-      disconnectMessage:
-        "Holidu integration disconnected in Domits. credentialsRef was cleared on the integration row; the underlying secret is not deleted by this flow.",
-    };
-  }
-
   async connectHolidu(body) {
-    return this.connectCredentialIntegration(body, this.getHoliduCredentialLifecycleConfig());
+    return this.channelManagementService.connectHolidu(body);
   }
 
   async checkHoliduStatus(userId) {
-    return this.checkCredentialIntegrationStatus(userId, this.getHoliduCredentialLifecycleConfig());
+    return this.channelManagementService.checkHoliduStatus(userId);
   }
 
   async disconnectHolidu(body) {
-    return this.disconnectCredentialIntegration(body, this.getHoliduCredentialLifecycleConfig());
-  }
-
-  getChannexCredentialLifecycleConfig() {
-    return {
-      channel: "CHANNEX",
-      providerName: "Channex",
-      defaultDisplayName: "Channex",
-      status: CHANNEX_STATUS,
-      accountPolicy: CHANNEX_ACCOUNT_POLICY,
-      credentialStore: this.channexCredentialStore,
-      normalizeCredentials: normalizeChannexCredentials,
-      hasRequiredCredentialFields: hasChannexRequiredCredentialFields,
-      summarizeRequiredFields: summarizeChannexRequiredFields,
-      normalizeProviderValidation: normalizeChannexProviderValidation,
-      buildSecretPayload: ({ credentials, connectedAt, updatedAt }) => ({
-        provider: "CHANNEX",
-        credentialType: "MANUAL_CONNECT",
-        ...credentials,
-        connectedAt,
-        updatedAt,
-        providerValidation: buildDefaultChannexProviderValidation(),
-      }),
-      validateProvider: (credentials) => this.channexProviderClient.validateApiKey(credentials),
-      buildProviderValidationRecord: buildChannexProviderValidationRecord,
-      derivePersistedState: deriveChannexPersistedState,
-      buildCredentialSummary: buildChannexCredentialSummary,
-      getValidationMode: () => "PROVIDER_VALIDATION",
-      invalidCredentialsError: "Channex credentials must include apiKey.",
-      secretStoreError: "Failed to store Channex credentials in Secrets Manager.",
-      secretStoreErrorCode: "CHANNEX_SECRET_STORE_FAILED",
-      secretUpdateError: "Channex credentials were stored, but provider validation metadata could not be persisted.",
-      secretUpdateErrorCode: "CHANNEX_SECRET_UPDATE_FAILED",
-      connectionPersistError: "Channex credentials were stored, but the integration record could not be persisted.",
-      connectionPersistErrorCode: "CHANNEX_CONNECTION_PERSIST_FAILED",
-      unexpectedConnectError: "Unexpected Channex connection failure.",
-      unexpectedConnectErrorCode: "CHANNEX_CONNECT_FAILED",
-      statusCheckError: "Failed to evaluate Channex local connectivity state.",
-      statusCheckErrorCode: "CHANNEX_STATUS_CHECK_FAILED",
-      notFoundError: "Channex integration not found",
-      disconnectPersistError: "Failed to persist Channex disconnect state in Domits.",
-      disconnectPersistErrorCode: "CHANNEX_DISCONNECT_PERSIST_FAILED",
-      unexpectedDisconnectError: "Unexpected Channex disconnect failure.",
-      unexpectedDisconnectErrorCode: "CHANNEX_DISCONNECT_FAILED",
-      disconnectMessage:
-        "Channex integration disconnected in Domits. credentialsRef was cleared on the integration row; the underlying secret is not deleted by this flow.",
-    };
+    return this.channelManagementService.disconnectHolidu(body);
   }
 
   async connectChannex(body) {
-    return this.connectCredentialIntegration(body, this.getChannexCredentialLifecycleConfig());
+    return this.channelManagementService.connectChannex(body);
   }
 
   async checkChannexStatus(userId) {
-    return this.checkCredentialIntegrationStatus(userId, this.getChannexCredentialLifecycleConfig());
+    return this.channelManagementService.checkChannexStatus(userId);
   }
 
   async disconnectChannex(body) {
-    return this.disconnectCredentialIntegration(body, this.getChannexCredentialLifecycleConfig());
+    return this.channelManagementService.disconnectChannex(body);
   }
 
   async resolveUsableChannexIntegration(
@@ -6970,363 +6399,8 @@ export default class IntegrationService {
     }
   }
 
-  buildChannexBookingPollConfig(options = {}) {
-    return createChannexBookingPollConfig(options);
-  }
-
-  buildChannexBookingPollPropertySummary({
-    integration,
-    propertyMapping,
-    result,
-    statusCode = 200,
-    overallSuccess = false,
-    counts = {},
-    evidenceId = null,
-    warnings = [],
-    errors = [],
-  }) {
-    return createChannexBookingPollPropertySummary({
-      integration,
-      propertyMapping,
-      result,
-      statusCode,
-      overallSuccess,
-      counts,
-      evidenceId,
-      warnings,
-      errors,
-    });
-  }
-
-  async writeChannexBookingPollLog({ integration, startedAt, status, summary, error = null }) {
-    if (typeof this.sync?.insertLog !== "function") return null;
-
-    const finishedAt = nowMs();
-    const details = error
-      ? { summary, error: describeLocalError(error) }
-      : { summary };
-
-    try {
-      return await this.sync.insertLog({
-        id: randomUUID(),
-        integrationAccountId: integration?.id ?? null,
-        syncType: CHANNEX_BOOKING_POLL_SYNC_TYPE,
-        direction: "IMPORT",
-        status,
-        startedAt,
-        finishedAt,
-        itemsProcessed: Number(summary?.fetchedCount || 0),
-        errorCode: error?.code || null,
-        errorMessage: error?.message || null,
-        details: stringifyJsonOrNull(details),
-      });
-    } catch {
-      return null;
-    }
-  }
-
-  async acquireChannexBookingPollLock(integration, domitsPropertyId, lockStaleMs) {
-    const syncType = `${CHANNEX_BOOKING_POLL_SYNC_TYPE}:${domitsPropertyId}`;
-    if (typeof this.sync?.tryAcquireLock !== "function") {
-      return {
-        acquired: true,
-        syncType,
-        bestEffortOnly: true,
-      };
-    }
-
-    const lock = await this.sync.tryAcquireLock(integration.id, syncType, {
-      staleBeforeMs: nowMs() - lockStaleMs,
-    });
-    return {
-      ...lock,
-      syncType,
-    };
-  }
-
-  async releaseChannexBookingPollLock({ integration, syncType, status, lastSuccessfulItemAt = null }) {
-    if (typeof this.sync?.releaseLock !== "function") return null;
-
-    try {
-      return await this.sync.releaseLock(integration.id, syncType, {
-        status,
-        lastSyncedAt: nowMs(),
-        lastSuccessfulItemAt,
-      });
-    } catch {
-      return null;
-    }
-  }
-
-  applyChannexBookingPollPropertyResult(aggregate, propertySummary, propertyResponse = {}) {
-    applyChannexBookingPollPropertyResult(aggregate, propertySummary, propertyResponse);
-  }
-
-  async pollChannexBookingProperty({
-    integration,
-    propertyMapping,
-    secret,
-    config,
-    startedAt,
-    aggregate,
-    accountResult,
-  }) {
-    const domitsPropertyId = requireStr(propertyMapping?.domitsPropertyId);
-    const lock = await this.acquireChannexBookingPollLock(integration, domitsPropertyId, config.lockStaleMs);
-    if (!lock.acquired) {
-      const warning = buildChannexPullIssue(
-        "CHANNEX_BOOKING_POLL_LOCKED",
-        "Channex booking poll skipped because another poll is already running for this property."
-      );
-      const lockedSummary = this.buildChannexBookingPollPropertySummary({
-        integration,
-        propertyMapping,
-        result: "skipped-locked",
-        warnings: [warning],
-      });
-      aggregate.propertiesSkippedCount += 1;
-      aggregate.warnings.push(warning);
-      aggregate.propertyResults.push(lockedSummary);
-      accountResult.propertiesSkippedCount += 1;
-      await this.writeChannexBookingPollLog({
-        integration,
-        startedAt,
-        status: "SKIPPED",
-        summary: lockedSummary,
-      });
-      return;
-    }
-
-    let lockStatus = "FAILED";
-    let lastSuccessfulItemAt = null;
-    try {
-      const pullResult = await this.pullLatestChannexBookingsForResolvedContext({
-        normalizedUserId: requireStr(integration?.userId),
-        normalizedDomitsPropertyId: domitsPropertyId,
-        integration,
-        propertyMapping,
-        secret,
-        startedAt,
-        syncType: CHANNEX_BOOKING_POLL_SYNC_TYPE,
-        action: CHANNEX_BOOKING_POLL_ACTION,
-        trigger: config.trigger,
-      });
-      const propertyResponse = pullResult?.response || {};
-      const propertySummary = this.buildChannexBookingPollPropertySummary({
-        integration,
-        propertyMapping,
-        result: propertyResponse.overallSuccess ? "processed" : "processed-with-issues",
-        statusCode: pullResult?.statusCode ?? 200,
-        overallSuccess: propertyResponse.overallSuccess === true,
-        counts: propertyResponse,
-        evidenceId: propertyResponse.evidenceId ?? null,
-        warnings: Array.isArray(propertyResponse.warnings) ? propertyResponse.warnings : [],
-        errors: Array.isArray(propertyResponse.errors) ? propertyResponse.errors : [],
-      });
-
-      this.applyChannexBookingPollPropertyResult(aggregate, propertySummary, propertyResponse);
-      if (propertyResponse.overallSuccess) {
-        lockStatus = "SUCCESS";
-      } else if (propertyResponse.ackedCount > 0) {
-        lockStatus = "PARTIAL";
-      }
-      lastSuccessfulItemAt = propertyResponse.ackedCount > 0 ? nowMs() : null;
-      await this.writeChannexBookingPollLog({
-        integration,
-        startedAt,
-        status: lockStatus,
-        summary: propertySummary,
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      const propertySummary = this.buildChannexBookingPollPropertySummary({
-        integration,
-        propertyMapping,
-        result: "failed",
-        statusCode: 500,
-        errors: [
-          buildChannexPullIssue(
-            details.code || "CHANNEX_BOOKING_POLL_PROPERTY_FAILED",
-            details.message || "Channex booking poll failed for this property.",
-            { details }
-          ),
-        ],
-      });
-      aggregate.errors.push(...propertySummary.errors);
-      aggregate.propertyResults.push(propertySummary);
-      await this.writeChannexBookingPollLog({
-        integration,
-        startedAt,
-        status: "FAILED",
-        summary: propertySummary,
-        error,
-      });
-    } finally {
-      await this.releaseChannexBookingPollLock({
-        integration,
-        syncType: lock.syncType,
-        status: lockStatus,
-        lastSuccessfulItemAt,
-      });
-    }
-  }
-
-  async readChannexBookingPollSecret(integration) {
-    try {
-      const secret = await this.channexCredentialStore.readSecretOrNull(integration.credentialsRef);
-      if (secret && typeof secret === "object" && !Array.isArray(secret) && hasChannexRequiredCredentialFields(secret)) {
-        return { ok: true, secret };
-      }
-      return {
-        ok: false,
-        warning: buildChannexPullIssue(
-          "CHANNEX_SECRET_INVALID",
-          "Stored Channex secret is missing, unreadable, or incomplete. Poll skipped for this account."
-        ),
-      };
-    } catch (error) {
-      return {
-        ok: false,
-        warning: buildChannexPullIssue(
-          "CHANNEX_SECRET_READ_FAILED",
-          "Stored Channex secret could not be read. Poll skipped for this account.",
-          { details: describeLocalError(error) }
-        ),
-      };
-    }
-  }
-
-  async pollChannexBookingAccount({ integration, config, startedAt, aggregate }) {
-    const accountId = requireStr(integration?.id);
-    if (!allowlistIncludes(config.accountIds, accountId)) return;
-
-    const accountResult = {
-      integrationAccountId: accountId,
-      userId: requireStr(integration?.userId),
-      status: requireStr(integration?.status),
-      result: "processed",
-      propertiesChecked: 0,
-      propertiesSkippedCount: 0,
-      warnings: [],
-      errors: [],
-    };
-    aggregate.accountResults.push(accountResult);
-
-    if (String(integration?.status || "").toUpperCase() !== CHANNEX_STATUS.CONNECTED) {
-      const warning = buildChannexPullIssue(
-        "CHANNEX_ACCOUNT_NOT_CONNECTED",
-        "Channex booking poll skipped because the integration account is not connected."
-      );
-      accountResult.result = "skipped";
-      accountResult.warnings.push(warning);
-      aggregate.warnings.push(warning);
-      return;
-    }
-
-    if (!requireStr(integration?.credentialsRef)) {
-      const warning = buildChannexPullIssue(
-        "CHANNEX_RECONNECT_REQUIRED",
-        "Channex booking poll skipped because credentials are missing."
-      );
-      accountResult.result = "skipped";
-      accountResult.warnings.push(warning);
-      aggregate.warnings.push(warning);
-      return;
-    }
-
-    const secretResult = await this.readChannexBookingPollSecret(integration);
-    if (!secretResult.ok) {
-      accountResult.result = "skipped";
-      accountResult.warnings.push(secretResult.warning);
-      aggregate.warnings.push(secretResult.warning);
-      return;
-    }
-
-    const propertyMappings = await this.props.listByAccountId(accountId);
-    const activeMappings = (Array.isArray(propertyMappings) ? propertyMappings : []).filter(
-      (mapping) =>
-        isActiveChannexPropertyMapping(mapping) &&
-        requireStr(mapping?.domitsPropertyId) &&
-        requireStr(mapping?.externalPropertyId) &&
-        allowlistIncludes(config.domitsPropertyIds, mapping.domitsPropertyId)
-    );
-
-    accountResult.propertiesChecked = activeMappings.length;
-    aggregate.propertiesChecked += activeMappings.length;
-    for (const propertyMapping of activeMappings) {
-      await this.pollChannexBookingProperty({
-        integration,
-        propertyMapping,
-        secret: secretResult.secret,
-        config,
-        startedAt,
-        aggregate,
-        accountResult,
-      });
-    }
-  }
-
   async pollLatestChannexBookings(options = {}) {
-    const startedAt = nowMs();
-    const config = this.buildChannexBookingPollConfig(options);
-    const aggregate = createEmptyChannexBookingPollResponse({
-      enabled: config.enabled,
-      trigger: config.trigger,
-    });
-
-    if (!config.enabled) {
-      aggregate.notes = [
-        "Automatic Channex booking polling is disabled. Set CHANNEX_BOOKING_POLL_ENABLED=true and keep the scheduled event enabled=true for staging polling.",
-      ];
-      return ok(aggregate);
-    }
-
-    try {
-      if (!hasRequiredChannexBookingPollAllowlists(config)) {
-        aggregate.overallSuccess = false;
-        aggregate.warnings.push(
-          buildChannexPullIssue(
-            "CHANNEX_BOOKING_POLL_ALLOWLIST_REQUIRED",
-            "Automatic Channex booking polling requires both account and Domits property allowlists before it will call Channex."
-          )
-        );
-        aggregate.notes = [
-          "Set CHANNEX_BOOKING_POLL_ACCOUNT_IDS and CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS before enabling scheduled polling.",
-        ];
-        return ok(aggregate);
-      }
-
-      const accounts = await this.accounts.listByChannel(CHANNEL_CHANNEX);
-      aggregate.accountsChecked = Array.isArray(accounts) ? accounts.length : 0;
-      for (const integration of Array.isArray(accounts) ? accounts : []) {
-        await this.pollChannexBookingAccount({
-          integration,
-          config,
-          startedAt,
-          aggregate,
-        });
-      }
-      aggregate.overallSuccess =
-        aggregate.errors.length === 0 &&
-        aggregate.warnings.length === 0 &&
-        aggregate.unackedCount === 0 &&
-        aggregate.propertiesSkippedCount === 0;
-      return ok(aggregate);
-    } catch (error) {
-      const details = describeLocalError(error);
-      return bad(500, {
-        ...aggregate,
-        overallSuccess: false,
-        errors: [
-          ...aggregate.errors,
-          buildChannexPullIssue(
-            details.code || "CHANNEX_BOOKING_POLL_FAILED",
-            details.message || "Channex booking poll failed.",
-            { details }
-          ),
-        ],
-      });
-    }
+    return this.channexBookingPollingService.pollLatestChannexBookings(options);
   }
 
   async acknowledgeChannexBookingRevisions(userId, domitsPropertyId, body = {}, options = {}) {

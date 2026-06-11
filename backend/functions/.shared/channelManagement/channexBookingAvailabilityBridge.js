@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 
-import Database from "../ORM/index.js";
-import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
-import IntegrationPropertyRepository from "../data/integrationPropertyRepository.js";
-import IntegrationRoomTypeRepository from "../data/integrationRoomTypeRepository.js";
-import ChannexSyncEvidenceRepository from "../data/channexSyncEvidenceRepository.js";
-import ChannexCredentialStore from "./channexCredentialStore.js";
-import ChannexProviderClient from "./channexProviderClient.js";
-import { hasChannexRequiredCredentialFields } from "./channexCredentialUtils.js";
+import Database from "../integrations/ORM/index.js";
+import IntegrationAccountRepository from "../integrations/repositories/integrationAccountRepository.js";
+import IntegrationPropertyRepository from "../integrations/repositories/integrationPropertyRepository.js";
+import IntegrationRoomTypeRepository from "../integrations/repositories/integrationRoomTypeRepository.js";
+import ChannexSyncEvidenceRepository from "./repositories/channexSyncEvidenceRepository.js";
+import ChannexCredentialStore from "./providers/channex/credentialStore.js";
+import ChannexProviderClient from "./providers/channex/providerClient.js";
+import { hasChannexRequiredCredentialFields } from "./providers/channex/credentialUtils.js";
 
 const CHANNEL_CHANNEX = "CHANNEX";
 const SYNC_TYPE_BOOKING_AVAILABILITY = "booking-availability";

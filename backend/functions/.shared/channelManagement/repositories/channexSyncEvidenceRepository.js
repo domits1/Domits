@@ -1,4 +1,4 @@
-import Database from "../ORM/index.js";
+import Database from "../../integrations/ORM/index.js";
 
 import { ChannexSyncEvidence } from "database/models/unified/sync/ChannexSyncEvidence";
 

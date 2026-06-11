@@ -1,4 +1,4 @@
-import Database from "../ORM/index.js";
+import Database from "../.shared/integrations/ORM/index.js";
 import { UnifiedThread } from "database/models/unified/messaging/UnifiedThread";
 import { randomUUID } from "node:crypto";
 

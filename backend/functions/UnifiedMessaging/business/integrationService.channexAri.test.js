@@ -4,14 +4,14 @@ jest.mock(
   { virtual: true }
 );
 
-jest.mock("../ORM/index.js", () => ({
+jest.mock("../.shared/integrations/ORM/index.js", () => ({
   __esModule: true,
   default: {
     getInstance: jest.fn(),
   },
 }));
 
-const Database = require("../ORM/index.js").default;
+const Database = require("../.shared/integrations/ORM/index.js").default;
 const IntegrationService = require("./integrationService.js").default;
 const CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS = 8000;
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";

@@ -1,4 +1,4 @@
-import IntegrationCredentialStore, { createSecretsClient } from "./integrationCredentialStore.js";
+import IntegrationCredentialStore, { createSecretsClient } from "../integrationCredentialStore.js";
 
 const REGION = process.env.AWS_REGION || "eu-north-1";
 const SECRET_PREFIX = process.env.CHANNEX_SECRET_PREFIX || "domits/channex";
