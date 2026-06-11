@@ -49,6 +49,7 @@ import {
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
   resolveWebsiteAmenityIconColor,
 } from "../../config/websiteAmenitiesConfig";
+import { resolveWebsiteHeroContentAlignment } from "../../config/websiteHeroSectionConfig";
 
 const PANORAMA_TOP_BAR_SOLID_THRESHOLD_PX = 24;
 const PANORAMA_TOP_BAR_SELECTOR = "[data-panorama-top-bar]";
@@ -609,66 +610,83 @@ const renderPanoramaHeroSection = ({
   showCallToAction,
   showTrustCards,
   featuredTrustCards,
-}) => (
-  <section
-    id="overview"
-    ref={heroSectionRef}
-    className={`${styles.panoramaEditorialHero} ${
-      showTopBar ? styles.panoramaEditorialHeroWithTopBar : ""
-    }`.trim()}
-    {...getScrollRevealProps(60)}
-  >
-    <div className={styles.panoramaHeroBackdropShell}>
-      <TemplateImageSlotVisual
-        model={model}
-        slot={{ kind: "hero" }}
-        frameClassName={styles.panoramaHeroBackdropFrame}
-        imageClassName={styles.panoramaHeroBackdrop}
-        sourceVariantPreference="original-first"
-        alt={model.hero.title}
-        onSelectTarget={onSelectTarget}
-        activeTargetId={activeTargetId}
-      />
-      <div className={styles.panoramaHeroOverlay} aria-hidden="true" />
-      <div className={styles.panoramaHeroInner}>
-        <div className={styles.panoramaHeroCopyBlock}>
-          <p
-            {...getInteractiveTargetProps(styles.panoramaHeroEyebrow, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroEyebrow",
-            }, activeTargetId)}
-          >
-            {model.hero.eyebrow}
-          </p>
-          <h1
-            {...getInteractiveTargetProps(styles.panoramaHeroHeadline, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroTitle",
-            }, activeTargetId)}
-          >
-            {model.hero.title}
-          </h1>
+}) => {
+  const heroContentAlignment = resolveWebsiteHeroContentAlignment(model?.hero?.contentAlignment);
 
-          <div className={styles.panoramaHeroActionRow}>
-            {showCallToAction ? (
-              <div
-                {...getInteractiveTargetProps(styles.panoramaHeroPrimaryAction, onSelectTarget, {
-                  sectionId: "common",
-                  targetId: "common.ctaLabel",
-                }, activeTargetId)}
-              >
-                <strong>{model.callToAction.label}</strong>
-                <span>{model.callToAction.note || model.stay?.nightlyRateLabel || "Direct booking website"}</span>
-              </div>
-            ) : null}
+  return (
+    <section
+      id="overview"
+      ref={heroSectionRef}
+      className={`${styles.panoramaEditorialHero} ${
+        showTopBar ? styles.panoramaEditorialHeroWithTopBar : ""
+      }`.trim()}
+      {...getScrollRevealProps(60)}
+    >
+      <div className={styles.panoramaHeroBackdropShell}>
+        <TemplateImageSlotVisual
+          model={model}
+          slot={{ kind: "hero", sectionId: "common" }}
+          frameClassName={styles.panoramaHeroBackdropFrame}
+          imageClassName={styles.panoramaHeroBackdrop}
+          sourceVariantPreference="original-first"
+          alt={model.hero.title}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
+        />
+        <div className={styles.panoramaHeroOverlay} aria-hidden="true" />
+        <div
+          className={styles.panoramaHeroInner}
+          data-panorama-hero-alignment={heroContentAlignment}
+        >
+          <div
+            {...getPreviewTargetMarkerProps(
+              styles.panoramaHeroCopyBlock,
+              "common.heroContentAlignment",
+              activeTargetId
+            )}
+            data-panorama-hero-alignment={heroContentAlignment}
+          >
+            <p
+              {...getInteractiveTargetProps(styles.panoramaHeroEyebrow, onSelectTarget, {
+                sectionId: "common",
+                targetId: "common.heroEyebrow",
+              }, activeTargetId)}
+            >
+              {model.hero.eyebrow}
+            </p>
+            <h1
+              {...getInteractiveTargetProps(styles.panoramaHeroHeadline, onSelectTarget, {
+                sectionId: "common",
+                targetId: "common.heroTitle",
+              }, activeTargetId)}
+            >
+              {model.hero.title}
+            </h1>
+
+            <div
+              className={styles.panoramaHeroActionRow}
+              data-panorama-hero-alignment={heroContentAlignment}
+            >
+              {showCallToAction ? (
+                <div
+                  {...getInteractiveTargetProps(styles.panoramaHeroPrimaryAction, onSelectTarget, {
+                    sectionId: "common",
+                    targetId: "common.ctaLabel",
+                  }, activeTargetId)}
+                >
+                  <strong>{model.callToAction.label}</strong>
+                  <span>{model.callToAction.note || model.stay?.nightlyRateLabel || "Direct booking website"}</span>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    {showTrustCards ? renderPanoramaTrustCards({ featuredTrustCards, onSelectTarget, activeTargetId }) : null}
-  </section>
-);
+      {showTrustCards ? renderPanoramaTrustCards({ featuredTrustCards, onSelectTarget, activeTargetId }) : null}
+    </section>
+  );
+};
 
 const renderPanoramaResidenceSection = ({
   model,

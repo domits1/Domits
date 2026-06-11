@@ -951,15 +951,59 @@
   position: absolute;
   inset: 0;
   display: grid;
-  align-items: end;
+  align-items: center;
+  justify-items: center;
   padding: clamp(22px, 3.4vw, 42px);
   pointer-events: none;
+}
+
+.panoramaHeroInner[data-panorama-hero-alignment="top-left"],
+.panoramaHeroInner[data-panorama-hero-alignment="top-center"],
+.panoramaHeroInner[data-panorama-hero-alignment="top-right"] {
+  align-items: start;
+}
+
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-left"],
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-center"],
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-right"] {
+  align-items: end;
+}
+
+.panoramaHeroInner[data-panorama-hero-alignment="top-left"],
+.panoramaHeroInner[data-panorama-hero-alignment="center-left"],
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-left"] {
+  justify-items: start;
+}
+
+.panoramaHeroInner[data-panorama-hero-alignment="top-right"],
+.panoramaHeroInner[data-panorama-hero-alignment="center-right"],
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-right"] {
+  justify-items: end;
 }
 
 .panoramaHeroCopyBlock {
   display: grid;
   gap: 16px;
   max-width: min(720px, 100%);
+  justify-items: center;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="top-left"],
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="center-left"],
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="bottom-left"] {
+  justify-items: start;
+  margin-inline: 0;
+  text-align: left;
+}
+
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="top-right"],
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="center-right"],
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="bottom-right"] {
+  justify-items: end;
+  margin-inline: 0;
+  text-align: right;
 }
 
 .panoramaHeroCopyBlock > * {
@@ -999,14 +1043,29 @@
   flex-wrap: wrap;
   gap: 14px;
   align-items: center;
+  justify-content: center;
+}
+
+.panoramaHeroActionRow[data-panorama-hero-alignment="top-left"],
+.panoramaHeroActionRow[data-panorama-hero-alignment="center-left"],
+.panoramaHeroActionRow[data-panorama-hero-alignment="bottom-left"] {
+  justify-content: flex-start;
+}
+
+.panoramaHeroActionRow[data-panorama-hero-alignment="top-right"],
+.panoramaHeroActionRow[data-panorama-hero-alignment="center-right"],
+.panoramaHeroActionRow[data-panorama-hero-alignment="bottom-right"] {
+  justify-content: flex-end;
 }
 
 .panoramaHeroPrimaryAction {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 50px;
   border-radius: 999px;
   font-weight: 700;
+  text-align: center;
 }
 
 .panoramaHeroPrimaryAction {
