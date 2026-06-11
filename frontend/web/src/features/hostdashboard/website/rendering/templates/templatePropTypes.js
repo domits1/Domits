@@ -17,6 +17,7 @@ export const heroPropType = PropTypes.shape({
   eyebrow: PropTypes.string,
   title: PropTypes.string,
   description: PropTypes.string,
+  contentAlignment: PropTypes.string,
 });
 
 export const mediaPropType = PropTypes.shape({
