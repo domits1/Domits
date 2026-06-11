@@ -142,6 +142,7 @@ export function WebsiteEditorSidebar({
   commitThemeBackgroundColorInput,
   commonTextFields,
   contactSectionFields,
+  trustCardsVisibilityField,
   contactSectionVisibilityField,
   contactWidgetVisibilityField,
   copyCollectionConfig,
@@ -283,6 +284,18 @@ export function WebsiteEditorSidebar({
       onToggle={toggleSection}
       sectionRef={setSectionRef(EDITOR_SECTION_KEYS.trustCards)}
     >
+      {trustCardsVisibilityField ? (
+        <div className={styles.toggleStack}>
+          <WebsiteEditorSectionVisibilityFieldCard
+            checked={Boolean(editorValues.visibility.trustCards)}
+            field={trustCardsVisibilityField}
+            handleVisibilityFieldChange={handleVisibilityFieldChange}
+            hasWhatsAppWidget={hasWhatsAppWidget}
+            highlightedTargetId={highlightedTargetId}
+            setTargetRef={setTargetRef}
+          />
+        </div>
+      ) : null}
       <div className={styles.collectionStack}>
         {editorValues.trustCards
           .slice(0, copyCollectionConfig.trustCards.count)
@@ -652,6 +665,7 @@ WebsiteEditorSidebar.propTypes = {
   commitThemeBackgroundColorInput: PropTypes.func.isRequired,
   commonTextFields: PropTypes.array.isRequired,
   contactSectionFields: PropTypes.array.isRequired,
+  trustCardsVisibilityField: PropTypes.object,
   contactSectionVisibilityField: PropTypes.object,
   contactWidgetVisibilityField: PropTypes.object,
   copyCollectionConfig: PropTypes.object.isRequired,

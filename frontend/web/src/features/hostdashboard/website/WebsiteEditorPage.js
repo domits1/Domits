@@ -213,6 +213,7 @@ function WebsiteEditorPage() {
     amenitiesVisibilityField,
     calendarVisibilityField,
     galleryVisibilityField,
+    trustCardsVisibilityField,
     contactSectionVisibilityField,
     contactWidgetVisibilityField,
     standaloneVisibilityFields,
@@ -1126,6 +1127,7 @@ function WebsiteEditorPage() {
               commitThemeBackgroundColorInput={commitThemeBackgroundColorInput}
               commonTextFields={commonTextFields}
               contactSectionFields={contactSectionFields}
+              trustCardsVisibilityField={trustCardsVisibilityField}
               contactSectionVisibilityField={contactSectionVisibilityField}
               contactWidgetVisibilityField={contactWidgetVisibilityField}
               copyCollectionConfig={copyCollectionConfig}
