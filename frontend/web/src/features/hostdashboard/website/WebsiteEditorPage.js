@@ -213,6 +213,8 @@ function WebsiteEditorPage() {
     amenitiesVisibilityField,
     calendarVisibilityField,
     galleryVisibilityField,
+    contactSectionVisibilityField,
+    contactWidgetVisibilityField,
     standaloneVisibilityFields,
     residenceImageSlot,
     galleryImageSlots,
@@ -1124,6 +1126,8 @@ function WebsiteEditorPage() {
               commitThemeBackgroundColorInput={commitThemeBackgroundColorInput}
               commonTextFields={commonTextFields}
               contactSectionFields={contactSectionFields}
+              contactSectionVisibilityField={contactSectionVisibilityField}
+              contactWidgetVisibilityField={contactWidgetVisibilityField}
               copyCollectionConfig={copyCollectionConfig}
               draftTemplateKey={draftTemplateKey}
               editorPanelRef={editorPanelRef}

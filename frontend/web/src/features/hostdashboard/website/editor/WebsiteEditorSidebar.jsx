@@ -142,6 +142,8 @@ export function WebsiteEditorSidebar({
   commitThemeBackgroundColorInput,
   commonTextFields,
   contactSectionFields,
+  contactSectionVisibilityField,
+  contactWidgetVisibilityField,
   copyCollectionConfig,
   draftTemplateKey,
   editorPanelRef,
@@ -464,7 +466,8 @@ export function WebsiteEditorSidebar({
             sectionRef={setSectionRef(EDITOR_SECTION_KEYS.visibility)}
           >
             <div className={styles.toggleStack}>
-              {showWhatsAppSetupHint ? (
+              {showWhatsAppSetupHint &&
+              standaloneVisibilityFields.some((field) => field.key === "chatWidget") ? (
                 <p className={styles.helperText}>
                   Connect WhatsApp in the integrations marketplace to unlock direct guest contact on the
                   website.
@@ -529,6 +532,8 @@ export function WebsiteEditorSidebar({
           commitContactAccentColorInput={commitContactAccentColorInput}
           commitContactBackgroundColorInput={commitContactBackgroundColorInput}
           contactSectionFields={contactSectionFields}
+          contactSectionVisibilityField={contactSectionVisibilityField}
+          contactWidgetVisibilityField={contactWidgetVisibilityField}
           editorValues={editorValues}
           handleContactAccentColorChange={handleContactAccentColorChange}
           handleContactAccentColorInputChange={handleContactAccentColorInputChange}
@@ -541,12 +546,15 @@ export function WebsiteEditorSidebar({
           handleContactImageUseInitials={handleContactImageUseInitials}
           handleContactImageUseProfilePhoto={handleContactImageUseProfilePhoto}
           handleEditorFieldKeyDown={handleEditorFieldKeyDown}
+          handleVisibilityFieldChange={handleVisibilityFieldChange}
+          hasWhatsAppWidget={hasWhatsAppWidget}
           highlightedTargetId={highlightedTargetId}
           isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.contact])}
           onToggle={toggleSection}
           previewModel={previewModel || EMPTY_PREVIEW_MODEL}
           sectionRef={setSectionRef(EDITOR_SECTION_KEYS.contact)}
           setTargetRef={setTargetRef}
+          showWhatsAppSetupHint={showWhatsAppSetupHint}
         />
 
         {copyCollectionConfig.journeyStops ? (
@@ -644,6 +652,8 @@ WebsiteEditorSidebar.propTypes = {
   commitThemeBackgroundColorInput: PropTypes.func.isRequired,
   commonTextFields: PropTypes.array.isRequired,
   contactSectionFields: PropTypes.array.isRequired,
+  contactSectionVisibilityField: PropTypes.object,
+  contactWidgetVisibilityField: PropTypes.object,
   copyCollectionConfig: PropTypes.object.isRequired,
   draftTemplateKey: PropTypes.string.isRequired,
   editorPanelRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]),

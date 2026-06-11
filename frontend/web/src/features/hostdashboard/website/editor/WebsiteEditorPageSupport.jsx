@@ -232,6 +232,12 @@ export const buildWebsiteEditorSectionData = ({
   const normalizedVisibilityFields = Array.isArray(visibilityFields) ? visibilityFields : [];
   const normalizedImageSlots = Array.isArray(imageSlots) ? imageSlots : [];
   const isPanoramaTemplate = draftTemplateKey === PANORAMA_TEMPLATE_KEY;
+  const contactSectionVisibilityField = isPanoramaTemplate
+    ? normalizedVisibilityFields.find((field) => field.key === "contactSection") || null
+    : null;
+  const contactWidgetVisibilityField = isPanoramaTemplate
+    ? normalizedVisibilityFields.find((field) => field.key === "chatWidget") || null
+    : null;
 
   return {
     heroImageSlot: normalizedImageSlots.find((slot) => slot.kind === "hero") || null,
@@ -243,8 +249,13 @@ export const buildWebsiteEditorSectionData = ({
       normalizedVisibilityFields.find((field) => field.key === "availabilityCalendar") || null,
     galleryVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "gallerySection") || null,
+    contactSectionVisibilityField,
+    contactWidgetVisibilityField,
     standaloneVisibilityFields: normalizedVisibilityFields.filter(
-      (field) => !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key)
+      (field) =>
+        !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key) &&
+        (!contactWidgetVisibilityField || field.key !== "chatWidget") &&
+        (!contactSectionVisibilityField || field.key !== "contactSection")
     ),
     residenceImageSlot: normalizedImageSlots.find((slot) => slot.kind === "residence") || null,
     galleryImageSlots: isPanoramaTemplate
