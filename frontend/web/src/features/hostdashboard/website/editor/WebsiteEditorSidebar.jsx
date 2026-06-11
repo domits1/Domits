@@ -123,6 +123,107 @@ const renderHeroEditorSection = ({
   </CollapsibleSection>
 );
 
+const renderTrustCardsEditorSection = ({
+  activatePreviewTarget,
+  clearActivePreviewTarget,
+  copyCollectionConfig,
+  editorValues,
+  expandedSections,
+  handleCollectionFieldChange,
+  handleEditorFieldKeyDown,
+  handleVisibilityFieldChange,
+  hasWhatsAppWidget,
+  highlightedTargetId,
+  onOpenIconPicker,
+  setSectionRef,
+  setTargetRef,
+  toggleSection,
+  trustCardsVisibilityField,
+}) => {
+  if (!copyCollectionConfig.trustCards) {
+    return null;
+  }
+
+  return (
+    <CollapsibleSection
+      sectionId={EDITOR_SECTION_KEYS.trustCards}
+      title={copyCollectionConfig.trustCards.title}
+      description={copyCollectionConfig.trustCards.description}
+      isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.trustCards])}
+      onToggle={toggleSection}
+      sectionRef={setSectionRef(EDITOR_SECTION_KEYS.trustCards)}
+    >
+      {trustCardsVisibilityField ? (
+        <div className={styles.toggleStack}>
+          <WebsiteEditorSectionVisibilityFieldCard
+            checked={Boolean(editorValues.visibility.trustCards)}
+            field={trustCardsVisibilityField}
+            handleVisibilityFieldChange={handleVisibilityFieldChange}
+            hasWhatsAppWidget={hasWhatsAppWidget}
+            highlightedTargetId={highlightedTargetId}
+            setTargetRef={setTargetRef}
+          />
+        </div>
+      ) : null}
+      <div className={styles.collectionStack}>
+        {editorValues.trustCards
+          .slice(0, copyCollectionConfig.trustCards.count)
+          .map((card, index) => (
+            <div
+              key={card.id}
+              ref={setTargetRef(EDITOR_TARGET_KEYS.trustCards(index))}
+              className={`${styles.collectionCard} ${
+                highlightedTargetId === EDITOR_TARGET_KEYS.trustCards(index)
+                  ? styles.editorTargetHighlighted
+                  : ""
+              }`.trim()}
+            >
+              <p className={styles.collectionTitle}>
+                {copyCollectionConfig.trustCards.itemLabel} {index + 1}
+              </p>
+              {copyCollectionConfig.trustCards.supportsIconSelection ? (
+                <AmenityIconSelectField
+                  fieldKey={`trust-card-icon-${index}`}
+                  label="Icon"
+                  value={card.iconAmenityId || ""}
+                  onOpenPicker={() =>
+                    onOpenIconPicker(
+                      "trustCards",
+                      index,
+                      `${copyCollectionConfig.trustCards.itemLabel} ${index + 1} icon`
+                    )
+                  }
+                  onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                  onBlur={clearActivePreviewTarget}
+                />
+              ) : null}
+              <TextField
+                field={{ key: `trust-card-title-${index}`, label: "Title", component: "input" }}
+                value={card.title}
+                onChange={handleCollectionFieldChange("trustCards", index, "title")}
+                onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
+                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                onBlur={clearActivePreviewTarget}
+              />
+              <TextField
+                field={{
+                  key: `trust-card-description-${index}`,
+                  label: "Description",
+                  component: "textarea",
+                }}
+                value={card.description}
+                onChange={handleCollectionFieldChange("trustCards", index, "description")}
+                onKeyDown={handleEditorFieldKeyDown({ component: "textarea" })}
+                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
+                onBlur={clearActivePreviewTarget}
+              />
+            </div>
+          ))}
+      </div>
+    </CollapsibleSection>
+  );
+};
+
 export function WebsiteEditorSidebar({
   activatePreviewTarget,
   addAmenityItem,
@@ -275,84 +376,23 @@ export function WebsiteEditorSidebar({
     />
   ) : null;
 
-  const renderedTrustCardsSection = copyCollectionConfig.trustCards ? (
-    <CollapsibleSection
-      sectionId={EDITOR_SECTION_KEYS.trustCards}
-      title={copyCollectionConfig.trustCards.title}
-      description={copyCollectionConfig.trustCards.description}
-      isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.trustCards])}
-      onToggle={toggleSection}
-      sectionRef={setSectionRef(EDITOR_SECTION_KEYS.trustCards)}
-    >
-      {trustCardsVisibilityField ? (
-        <div className={styles.toggleStack}>
-          <WebsiteEditorSectionVisibilityFieldCard
-            checked={Boolean(editorValues.visibility.trustCards)}
-            field={trustCardsVisibilityField}
-            handleVisibilityFieldChange={handleVisibilityFieldChange}
-            hasWhatsAppWidget={hasWhatsAppWidget}
-            highlightedTargetId={highlightedTargetId}
-            setTargetRef={setTargetRef}
-          />
-        </div>
-      ) : null}
-      <div className={styles.collectionStack}>
-        {editorValues.trustCards
-          .slice(0, copyCollectionConfig.trustCards.count)
-          .map((card, index) => (
-            <div
-              key={card.id}
-              ref={setTargetRef(EDITOR_TARGET_KEYS.trustCards(index))}
-              className={`${styles.collectionCard} ${
-                highlightedTargetId === EDITOR_TARGET_KEYS.trustCards(index)
-                  ? styles.editorTargetHighlighted
-                  : ""
-              }`.trim()}
-            >
-              <p className={styles.collectionTitle}>
-                {copyCollectionConfig.trustCards.itemLabel} {index + 1}
-              </p>
-              {copyCollectionConfig.trustCards.supportsIconSelection ? (
-                <AmenityIconSelectField
-                  fieldKey={`trust-card-icon-${index}`}
-                  label="Icon"
-                  value={card.iconAmenityId || ""}
-                  onOpenPicker={() =>
-                    onOpenIconPicker(
-                      "trustCards",
-                      index,
-                      `${copyCollectionConfig.trustCards.itemLabel} ${index + 1} icon`
-                    )
-                  }
-                  onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
-                  onBlur={clearActivePreviewTarget}
-                />
-              ) : null}
-              <TextField
-                field={{ key: `trust-card-title-${index}`, label: "Title", component: "input" }}
-                value={card.title}
-                onChange={handleCollectionFieldChange("trustCards", index, "title")}
-                onKeyDown={handleEditorFieldKeyDown({ component: "input" })}
-                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
-                onBlur={clearActivePreviewTarget}
-              />
-              <TextField
-                field={{
-                  key: `trust-card-description-${index}`,
-                  label: "Description",
-                  component: "textarea",
-                }}
-                value={card.description}
-                onChange={handleCollectionFieldChange("trustCards", index, "description")}
-                onKeyDown={handleEditorFieldKeyDown({ component: "textarea" })}
-                onFocus={activatePreviewTarget(EDITOR_TARGET_KEYS.trustCards(index))}
-                onBlur={clearActivePreviewTarget}
-              />
-            </div>
-          ))}
-      </div>
-    </CollapsibleSection>
-  ) : null;
+  const renderedTrustCardsSection = renderTrustCardsEditorSection({
+    activatePreviewTarget,
+    clearActivePreviewTarget,
+    copyCollectionConfig,
+    editorValues,
+    expandedSections,
+    handleCollectionFieldChange,
+    handleEditorFieldKeyDown,
+    handleVisibilityFieldChange,
+    hasWhatsAppWidget,
+    highlightedTargetId,
+    onOpenIconPicker,
+    setSectionRef,
+    setTargetRef,
+    toggleSection,
+    trustCardsVisibilityField,
+  });
 
   return (
     <aside
