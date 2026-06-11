@@ -45,8 +45,7 @@ function PriceLabsConnect({ onConnect, isLoading = false, error = null, successM
             disabled={loading}
           />
           <p className="pl-connect__hint">
-            This is the email you registered with PriceLabs. Make sure PriceLabs
-            has enabled the Domits integration on your account.
+            This is the email you registered with PriceLabs.
           </p>
         </div>
 
@@ -65,6 +64,19 @@ function PriceLabsConnect({ onConnect, isLoading = false, error = null, successM
             </span>
           ) : "Connect PriceLabs"}
         </button>
+
+        <p className="pl-connect__signup">
+          Don&apos;t have a PriceLabs account yet?{" "}
+          <a
+            href="https://hello.pricelabs.co/signup/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pl-connect__signup-link"
+          >
+            Create a free account
+          </a>
+          {" "}and come back here to connect it.
+        </p>
       </form>
     </div>
   );
