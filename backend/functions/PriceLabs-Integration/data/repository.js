@@ -5,6 +5,7 @@ import { Property_Location } from "database/models/Property_Location";
 import { Property_Calendar_Override } from "database/models/Property_Calendar_Override";
 import { Booking } from "database/models/Booking";
 import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
+import { ChannelIntegrationAccount } from "database/models/unified/integrations/ChannelIntegrationAccount";
 import { ChannelReservationLink } from "database/models/unified/integrations/ChannelReservationLink";
 
 export class Repository {
@@ -186,6 +187,10 @@ export class Repository {
   }
 
 
+  /**
+   * Returns a map of propertyId → ota_listing_ids in the shape PriceLabs expects:
+   * { airbnb: { id }, bookingcom: { id }, vrbo: { id }, other: { <channel>: { id } } }
+   */
   async getOtaListingIdsByHost(hostId) {
     const ds = await this._ds();
 
@@ -196,17 +201,31 @@ export class Repository {
     const propertyIds = properties.map((p) => p.id);
     if (!propertyIds.length) return {};
 
-    const links = await ds
+    const rows = await ds
       .getRepository(ChannelIntegrationProperty)
       .createQueryBuilder("cip")
+      .innerJoin(ChannelIntegrationAccount, "acc", "acc.id = cip.integrationAccountId")
+      .select("cip.domitsPropertyId", "domitsPropertyId")
+      .addSelect("cip.externalPropertyId", "externalPropertyId")
+      .addSelect("acc.channel", "channel")
       .where("cip.domitsPropertyId IN (:...ids)", { ids: propertyIds })
       .andWhere("cip.status = :status", { status: "active" })
-      .getMany();
+      .getRawMany();
+
+    const KNOWN_CHANNELS = { airbnb: "airbnb", bookingcom: "bookingcom", vrbo: "vrbo" };
 
     const map = {};
-    for (const link of links) {
-      if (!map[link.domitsPropertyId]) map[link.domitsPropertyId] = [];
-      map[link.domitsPropertyId].push(link.externalPropertyId);
+    for (const row of rows) {
+      const normalized = String(row.channel || "").toLowerCase().replaceAll(/[^a-z]/g, "");
+      const key = KNOWN_CHANNELS[normalized];
+      if (!map[row.domitsPropertyId]) map[row.domitsPropertyId] = {};
+      const entry = { id: String(row.externalPropertyId) };
+      if (key) {
+        map[row.domitsPropertyId][key] = entry;
+      } else {
+        if (!map[row.domitsPropertyId].other) map[row.domitsPropertyId].other = {};
+        map[row.domitsPropertyId].other[normalized || "unknown"] = entry;
+      }
     }
     return map;
   }

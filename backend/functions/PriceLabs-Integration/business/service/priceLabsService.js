@@ -122,7 +122,7 @@ export class PriceLabsService {
           currency: "EUR",
         },
       },
-      ota_listing_ids: {},
+      ota_listing_ids: otaMap[p.id] || {},
     }));
 
     await api.pushListings(token, name, listings);
