@@ -175,7 +175,20 @@
       },
       "panel": {
         "apply": "Filter anwenden",
-        "reset": "Filter zurücksetzen"
+        "reset": "Filter zurücksetzen",
+        "priceRange": "Preisspanne",
+        "min": "Min",
+        "max": "Max",
+        "amenities": "Ausstattung",
+        "showMore": "Mehr anzeigen",
+        "roomsAndBeds": "Zimmer & Betten",
+        "bedrooms": "Schlafzimmer",
+        "beds": "Betten",
+        "bathrooms": "Badezimmer",
+        "any": "Beliebig",
+        "bookingOptions": "Buchungsoptionen",
+        "bookInstantly": "Sofort buchen",
+        "bookingRequest": "Buchungsanfrage"
       }
     },
     "destinations": {

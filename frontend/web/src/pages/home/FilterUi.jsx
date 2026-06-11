@@ -151,7 +151,7 @@ const FilterUi = ({ onFilterApplied }) => {
     <div>
       {error && <output className="filter-message">{error}</output>}
       <div className="filter-section">
-        <div className="FilterTitle">Price Range</div>
+        <div className="FilterTitle">{panelLabels.priceRange}</div>
         <div className="slider-container">
           <Slider
             sx={{
@@ -183,7 +183,7 @@ const FilterUi = ({ onFilterApplied }) => {
           />
           <div className="price-inputs">
             <div>
-              <label htmlFor="filter-price-min">Min:</label>
+              <label htmlFor="filter-price-min">{panelLabels.min}:</label>
               <input
                 id="filter-price-min"
                 type="text"
@@ -193,7 +193,7 @@ const FilterUi = ({ onFilterApplied }) => {
               />
             </div>
             <div>
-              <label htmlFor="filter-price-max">Max:</label>
+              <label htmlFor="filter-price-max">{panelLabels.max}:</label>
               <input
                 id="filter-price-max"
                 type="text"
@@ -207,7 +207,7 @@ const FilterUi = ({ onFilterApplied }) => {
       </div>
 
       <div className="filter-section">
-        <div className="FilterTitle">Amenities</div>
+        <div className="FilterTitle">{panelLabels.amenities}</div>
         <div className="facility-list">
           {popularAmenities.map(renderAmenityCheckbox)}
         </div>
@@ -216,7 +216,7 @@ const FilterUi = ({ onFilterApplied }) => {
           onClick={() => setAmenitiesModalOpen(true)}
           className="show-more-text"
         >
-          Show More
+          {panelLabels.showMore}
         </button>
       </div>
 
@@ -235,7 +235,7 @@ const FilterUi = ({ onFilterApplied }) => {
             aria-label="All amenities"
           >
             <div className="amenities-modal-header">
-              <span>Amenities</span>
+              <span>{panelLabels.amenities}</span>
               <button
                 type="button"
                 className="amenities-modal-close"
@@ -266,11 +266,11 @@ const FilterUi = ({ onFilterApplied }) => {
       )}
 
       <div className="filter-section">
-        <div className="FilterTitle">Rooms &amp; Beds</div>
+        <div className="FilterTitle">{panelLabels.roomsAndBeds}</div>
         {[
-          { key: 'bedrooms', label: 'Bedrooms' },
-          { key: 'beds', label: 'Beds' },
-          { key: 'bathrooms', label: 'Bathrooms' },
+          { key: 'bedrooms', label: panelLabels.bedrooms },
+          { key: 'beds', label: panelLabels.beds },
+          { key: 'bathrooms', label: panelLabels.bathrooms },
         ].map(({ key, label }) => (
           <div key={key} className="room-counter">
             <span className="room-counter-label">{label}</span>
@@ -285,7 +285,7 @@ const FilterUi = ({ onFilterApplied }) => {
                 −
               </button>
               <span className="counter-value">
-                {roomsAndBeds[key] === 0 ? 'Any' : roomsAndBeds[key]}
+                {roomsAndBeds[key] === 0 ? panelLabels.any : roomsAndBeds[key]}
               </span>
               <button
                 type="button"
@@ -301,7 +301,7 @@ const FilterUi = ({ onFilterApplied }) => {
       </div>
 
       <div className="filter-section">
-        <div className="FilterTitle">Booking Options</div>
+        <div className="FilterTitle">{panelLabels.bookingOptions}</div>
         <div className="facility-list">
           <label className="facility-item">
             <input
@@ -311,7 +311,7 @@ const FilterUi = ({ onFilterApplied }) => {
               onChange={handleBookingOptionChange}
               className="filter-select-option"
             />
-            <span>Book Instantly</span>
+            <span>{panelLabels.bookInstantly}</span>
           </label>
           <label className="facility-item">
             <input
@@ -321,7 +321,7 @@ const FilterUi = ({ onFilterApplied }) => {
               onChange={handleBookingOptionChange}
               className="filter-select-option"
             />
-            <span>Booking Request</span>
+            <span>{panelLabels.bookingRequest}</span>
           </label>
         </div>
       </div>

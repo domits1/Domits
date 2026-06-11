@@ -174,7 +174,20 @@
       },
       "panel": {
         "apply": "Apply filter",
-        "reset": "Reset filter"
+        "reset": "Reset filter",
+        "priceRange": "Price Range",
+        "min": "Min",
+        "max": "Max",
+        "amenities": "Amenities",
+        "showMore": "Show More",
+        "roomsAndBeds": "Rooms & Beds",
+        "bedrooms": "Bedrooms",
+        "beds": "Beds",
+        "bathrooms": "Bathrooms",
+        "any": "Any",
+        "bookingOptions": "Booking Options",
+        "bookInstantly": "Book Instantly",
+        "bookingRequest": "Booking Request"
       }
     },
     "destinations": {

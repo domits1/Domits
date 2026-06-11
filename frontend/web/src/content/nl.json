@@ -175,7 +175,20 @@
       },
       "panel": {
         "apply": "Filter toepassen",
-        "reset": "Filter resetten"
+        "reset": "Filter resetten",
+        "priceRange": "Prijsklasse",
+        "min": "Min",
+        "max": "Max",
+        "amenities": "Voorzieningen",
+        "showMore": "Meer tonen",
+        "roomsAndBeds": "Kamers & bedden",
+        "bedrooms": "Slaapkamers",
+        "beds": "Bedden",
+        "bathrooms": "Badkamers",
+        "any": "Alle",
+        "bookingOptions": "Boekingsopties",
+        "bookInstantly": "Direct boeken",
+        "bookingRequest": "Boekingsverzoek"
       }
     },
     "destinations": {
