@@ -1,4 +1,3 @@
-import {} from "lodash";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAccessToken } from "../../services/getAccessToken";
