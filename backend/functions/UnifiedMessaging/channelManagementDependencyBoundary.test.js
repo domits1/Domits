@@ -37,6 +37,11 @@ describe("shared ChannelManagement dependency boundary", () => {
         path.join(sharedRoot, "services", "channexBookingPollingService.js")
       )
     ).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(sharedRoot, "services", "channexBookingRevisionImportService.js")
+      )
+    ).toBe(true);
   });
 
   test("does not import UnifiedMessaging or Lambda handlers", () => {
