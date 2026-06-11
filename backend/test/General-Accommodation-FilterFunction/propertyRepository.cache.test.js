@@ -13,12 +13,12 @@ describe("fetchAllProperties catalog cache", () => {
   beforeEach(() => {
     jest.resetModules();
     jest.useFakeTimers();
-    global.fetch = jest.fn().mockResolvedValue(singlePage());
+    globalThis.fetch = jest.fn().mockResolvedValue(singlePage());
   });
 
   afterEach(() => {
     jest.useRealTimers();
-    delete global.fetch;
+    delete globalThis.fetch;
   });
 
   test("serves a warm cache without re-fetching within the TTL", async () => {
@@ -28,7 +28,7 @@ describe("fetchAllProperties catalog cache", () => {
     const second = await fetchAllProperties();
 
     expect(second).toEqual(first);
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
   test("re-fetches once the TTL has elapsed", async () => {
@@ -38,7 +38,7 @@ describe("fetchAllProperties catalog cache", () => {
     jest.advanceTimersByTime(60_001);
     await fetchAllProperties();
 
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 
   test("dedupes concurrent cold fetches into a single download", async () => {
@@ -46,6 +46,6 @@ describe("fetchAllProperties catalog cache", () => {
 
     await Promise.all([fetchAllProperties(), fetchAllProperties(), fetchAllProperties()]);
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 });
