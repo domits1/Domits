@@ -1,7 +1,7 @@
 import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
-import { ChannelIntegrationRoomType } from "../models/unified/integrations/ChannelIntegrationRoomType.js";
+import { ChannelIntegrationRoomType } from "database/models/unified/integrations/ChannelIntegrationRoomType";
 
 class IntegrationRoomTypeRepository {
   async upsert({

@@ -1,7 +1,7 @@
 import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
-import { ChannelIntegrationRatePlan } from "../models/unified/integrations/ChannelIntegrationRatePlan.js";
+import { ChannelIntegrationRatePlan } from "database/models/unified/integrations/ChannelIntegrationRatePlan";
 
 class IntegrationRatePlanRepository {
   async upsert({

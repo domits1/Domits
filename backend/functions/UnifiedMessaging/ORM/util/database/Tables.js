@@ -1,16 +1,16 @@
-import { UnifiedThread } from "../../../models/unified/messaging/UnifiedThread.js";
-import { UnifiedMessage } from "../../../models/unified/messaging/UnifiedMessage.js";
+import { UnifiedThread } from "database/models/unified/messaging/UnifiedThread";
+import { UnifiedMessage } from "database/models/unified/messaging/UnifiedMessage";
 
-import { ChannelIntegrationAccount } from "../../../models/unified/integrations/ChannelIntegrationAccount.js";
-import { ChannelIntegrationProperty } from "../../../models/unified/integrations/ChannelIntegrationProperty.js";
-import { ChannelIntegrationRatePlan } from "../../../models/unified/integrations/ChannelIntegrationRatePlan.js";
-import { ChannelIntegrationRoomType } from "../../../models/unified/integrations/ChannelIntegrationRoomType.js";
-import { ChannelReservationLink } from "../../../models/unified/integrations/ChannelReservationLink.js";
-import { ChannexBookingRevision } from "../../../models/unified/integrations/ChannexBookingRevision.js";
+import { ChannelIntegrationAccount } from "database/models/unified/integrations/ChannelIntegrationAccount";
+import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
+import { ChannelIntegrationRatePlan } from "database/models/unified/integrations/ChannelIntegrationRatePlan";
+import { ChannelIntegrationRoomType } from "database/models/unified/integrations/ChannelIntegrationRoomType";
+import { ChannelReservationLink } from "database/models/unified/integrations/ChannelReservationLink";
+import { ChannexBookingRevision } from "database/models/unified/integrations/ChannexBookingRevision";
 
-import { IntegrationSyncState } from "../../../models/unified/sync/IntegrationSyncState.js";
-import { IntegrationSyncLog } from "../../../models/unified/sync/IntegrationSyncLog.js";
-import { ChannexSyncEvidence } from "../../../models/unified/sync/ChannexSyncEvidence.js";
+import { IntegrationSyncState } from "database/models/unified/sync/IntegrationSyncState";
+import { IntegrationSyncLog } from "database/models/unified/sync/IntegrationSyncLog";
+import { ChannexSyncEvidence } from "database/models/unified/sync/ChannexSyncEvidence";
 
 export const Tables = [
 

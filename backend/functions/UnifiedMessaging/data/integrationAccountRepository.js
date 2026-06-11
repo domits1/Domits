@@ -1,6 +1,6 @@
 import Database from "../ORM/index.js";
 
-import { ChannelIntegrationAccount } from "../models/unified/integrations/ChannelIntegrationAccount.js";
+import { ChannelIntegrationAccount } from "database/models/unified/integrations/ChannelIntegrationAccount";
 
 const getPatchedValue = (patch, key, fallback) => (Object.hasOwn(patch, key) ? patch[key] : fallback);
 

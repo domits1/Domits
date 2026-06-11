@@ -1,5 +1,5 @@
 {
-  "name": "database",
+  "name": "unified-messaging-database",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",

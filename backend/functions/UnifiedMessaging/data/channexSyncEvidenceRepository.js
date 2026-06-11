@@ -1,6 +1,6 @@
 import Database from "../ORM/index.js";
 
-import { ChannexSyncEvidence } from "../models/unified/sync/ChannexSyncEvidence.js";
+import { ChannexSyncEvidence } from "database/models/unified/sync/ChannexSyncEvidence";
 
 class ChannexSyncEvidenceRepository {
   async create(row) {

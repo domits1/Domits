@@ -1,7 +1,7 @@
 import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
-import { ChannelReservationLink } from "../models/unified/integrations/ChannelReservationLink.js";
+import { ChannelReservationLink } from "database/models/unified/integrations/ChannelReservationLink";
 
 class ReservationLinkRepository {
   async getByIntegrationAccountIdAndExternalReservation({ integrationAccountId, channel, externalReservationId } = {}) {

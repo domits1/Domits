@@ -20,6 +20,19 @@ import HoliduProviderClient from "./holiduProviderClient.js";
 import ChannexCredentialStore from "./channexCredentialStore.js";
 import ChannexProviderClient from "./channexProviderClient.js";
 import {
+  CHANNEL_CHANNEX,
+  CHANNEX_BOOKING_POLL_ACTION,
+  CHANNEX_BOOKING_POLL_SYNC_TYPE,
+  CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT,
+  allowlistIncludes,
+  applyChannexBookingPollPropertyResult,
+  buildChannexBookingPollConfig as createChannexBookingPollConfig,
+  buildChannexBookingPollPropertySummary as createChannexBookingPollPropertySummary,
+  createEmptyChannexBookingPollResponse,
+  hasRequiredChannexBookingPollAllowlists,
+  isActiveChannexPropertyMapping,
+} from "./channexBookingPollUtils.js";
+import {
   CHANNEX_RESTRICTIONS_SYNC_MODE,
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
 } from "./channexRestrictionsSyncVersion.js";
@@ -791,12 +804,7 @@ const CHANNEX_ARI_PAYLOAD_PREVIEW_MAX_REQUESTED_DAYS = CHANNEX_CERTIFICATION_FUL
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
 const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
 const CHANNEX_BOOKING_PULL_ACTION = "pull-latest-bookings";
-const CHANNEX_BOOKING_POLL_ACTION = "poll-latest-bookings";
-const CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT = "/api/v1/booking_revisions/feed";
 const CHANNEX_BOOKING_PULL_SYNC_TYPE = "booking_pull";
-const CHANNEX_BOOKING_POLL_SYNC_TYPE = "booking_poll";
-const CHANNEX_BOOKING_POLL_TRIGGER = "EVENTBRIDGE_POLL";
-const CHANNEX_BOOKING_POLL_LOCK_STALE_MS = 5 * 60 * 1000;
 const CHANNEX_BOOKING_IMPORT_SOURCE = "channex-booking-pull";
 const CHANNEX_CERTIFICATION_CANCEL_ACTION = "certification-cancel-booking";
 const CHANNEX_CERTIFICATION_CANCEL_MODE = "admin-certification-no-refund";
@@ -805,7 +813,6 @@ const CHANNEX_CERTIFICATION_CANCEL_REFUND_SKIPPED_REASON =
 const CHANNEX_BOOKING_CREATED_TRIGGER = "BOOKING_CREATED";
 const CHANNEX_BOOKING_MODIFIED_TRIGGER = "BOOKING_MODIFIED";
 const CHANNEX_BOOKING_CANCELLED_TRIGGER = "BOOKING_CANCELLED";
-const CHANNEL_CHANNEX = "CHANNEX";
 const CHANNEX_IMPORTED_BOOKING_STATUS = "Paid";
 const CHANNEX_CANCELLED_BOOKING_STATUS = "Cancelled";
 const CHANNEX_EXTERNAL_PAYMENT_STATUS = "EXTERNAL";
@@ -854,65 +861,7 @@ const CHANNEX_STATUS = {
   DISCONNECTED: "DISCONNECTED",
   CONNECTED: "CONNECTED",
 };
-const CHANNEX_BOOKING_PULL_COUNT_FIELDS = [
-  "fetchedCount",
-  "rawPersistedCount",
-  "createdBookingCount",
-  "updatedBookingCount",
-  "cancelledBookingCount",
-  "skippedCount",
-  "ackedCount",
-  "unackedCount",
-];
 const normalizePayloadKey = (key) => String(key || "").trim().toLowerCase();
-const parseBooleanEnvLikeValue = (value) => ["1", "true", "yes", "on"].includes(String(value || "").trim().toLowerCase());
-const parseCsvAllowlist = (value) => {
-  if (Array.isArray(value)) {
-    return new Set(value.map((item) => requireStr(item)).filter(Boolean));
-  }
-
-  return new Set(
-    String(value || "")
-      .split(",")
-      .map((item) => requireStr(item))
-      .filter(Boolean)
-  );
-};
-const allowlistIncludes = (allowlist, value) => allowlist.size === 0 || allowlist.has(requireStr(value));
-const hasRequiredChannexBookingPollAllowlists = (config) =>
-  config.accountIds.size > 0 && config.domitsPropertyIds.size > 0;
-const isActiveChannexPropertyMapping = (mapping) => String(mapping?.status || "").toUpperCase() === "ACTIVE";
-const createEmptyChannexBookingPollResponse = ({ enabled, trigger }) => ({
-  channel: CHANNEL_CHANNEX,
-  action: CHANNEX_BOOKING_POLL_ACTION,
-  trigger,
-  syncType: CHANNEX_BOOKING_POLL_SYNC_TYPE,
-  endpointCalled: CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT,
-  enabled,
-  calledProvider: false,
-  accountsChecked: 0,
-  propertiesChecked: 0,
-  propertiesSkippedCount: 0,
-  fetchedCount: 0,
-  rawPersistedCount: 0,
-  createdBookingCount: 0,
-  updatedBookingCount: 0,
-  cancelledBookingCount: 0,
-  skippedCount: 0,
-  ackedCount: 0,
-  unackedCount: 0,
-  accountResults: [],
-  propertyResults: [],
-  items: [],
-  warnings: [],
-  errors: [],
-  overallSuccess: true,
-});
-const mergeChannexBookingPollCounts = (target, source) => {
-  for (const field of CHANNEX_BOOKING_PULL_COUNT_FIELDS) {
-    target[field] += Number(source?.[field] || 0);
-  }
-};
 const shouldRedactChannexPayloadKey = (key, path) => {
   const normalizedKey = normalizePayloadKey(key);
   if (CHANNEX_SENSITIVE_PAYLOAD_KEYS.has(normalizedKey)) return true;
@@ -7022,22 +6971,7 @@ export default class IntegrationService {
   }
 
   buildChannexBookingPollConfig(options = {}) {
-    const envEnabled = parseBooleanEnvLikeValue(process.env.CHANNEX_BOOKING_POLL_ENABLED);
-    const eventAllowsPolling = Object.hasOwn(options, "enabled") ? parseBooleanEnvLikeValue(options.enabled) : true;
-    const lockStaleMs = Number(options.lockStaleMs ?? process.env.CHANNEX_BOOKING_POLL_LOCK_STALE_MS);
-
-    return {
-      enabled: envEnabled && eventAllowsPolling,
-      trigger: requireStr(options.trigger) || CHANNEX_BOOKING_POLL_TRIGGER,
-      accountIds: parseCsvAllowlist(
-        options.accountIds ?? options.integrationAccountIds ?? process.env.CHANNEX_BOOKING_POLL_ACCOUNT_IDS
-      ),
-      domitsPropertyIds: parseCsvAllowlist(
-        options.domitsPropertyIds ?? process.env.CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS
-      ),
-      lockStaleMs:
-        Number.isFinite(lockStaleMs) && lockStaleMs > 0 ? lockStaleMs : CHANNEX_BOOKING_POLL_LOCK_STALE_MS,
-    };
+    return createChannexBookingPollConfig(options);
   }
 
   buildChannexBookingPollPropertySummary({
@@ -7051,25 +6985,17 @@ export default class IntegrationService {
     warnings = [],
     errors = [],
   }) {
-    return {
-      integrationAccountId: integration?.id ?? null,
-      domitsPropertyId: propertyMapping?.domitsPropertyId ?? null,
-      externalPropertyId: propertyMapping?.externalPropertyId ?? null,
+    return createChannexBookingPollPropertySummary({
+      integration,
+      propertyMapping,
       result,
       statusCode,
       overallSuccess,
+      counts,
       evidenceId,
-      fetchedCount: Number(counts.fetchedCount || 0),
-      rawPersistedCount: Number(counts.rawPersistedCount || 0),
-      createdBookingCount: Number(counts.createdBookingCount || 0),
-      updatedBookingCount: Number(counts.updatedBookingCount || 0),
-      cancelledBookingCount: Number(counts.cancelledBookingCount || 0),
-      skippedCount: Number(counts.skippedCount || 0),
-      ackedCount: Number(counts.ackedCount || 0),
-      unackedCount: Number(counts.unackedCount || 0),
       warnings,
       errors,
-    };
+    });
   }
 
   async writeChannexBookingPollLog({ integration, startedAt, status, summary, error = null }) {
@@ -7133,12 +7059,7 @@ export default class IntegrationService {
   }
 
   applyChannexBookingPollPropertyResult(aggregate, propertySummary, propertyResponse = {}) {
-    aggregate.propertyResults.push(propertySummary);
-    aggregate.calledProvider = aggregate.calledProvider || propertyResponse.calledProvider === true;
-    mergeChannexBookingPollCounts(aggregate, propertyResponse);
-    aggregate.items.push(...(Array.isArray(propertyResponse.items) ? propertyResponse.items : []));
-    aggregate.warnings.push(...(Array.isArray(propertyResponse.warnings) ? propertyResponse.warnings : []));
-    aggregate.errors.push(...(Array.isArray(propertyResponse.errors) ? propertyResponse.errors : []));
+    applyChannexBookingPollPropertyResult(aggregate, propertySummary, propertyResponse);
   }
 
   async pollChannexBookingProperty({

@@ -1,7 +1,7 @@
 import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
-import { ChannexBookingRevision } from "../models/unified/integrations/ChannexBookingRevision.js";
+import { ChannexBookingRevision } from "database/models/unified/integrations/ChannexBookingRevision";
 
 class ChannexBookingRevisionRepository {
   async getByIntegrationAccountIdAndRevisionId(integrationAccountId, revisionId) {
