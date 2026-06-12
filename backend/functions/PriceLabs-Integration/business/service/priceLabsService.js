@@ -146,23 +146,10 @@ export class PriceLabsService {
       ? properties.filter((p) => listingIds.includes(`${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`))
       : properties;
 
-    // Build a set of booked dates per property so PriceLabs can distinguish
-    // booked nights (reservations) from blocked nights (host-made unavailable).
+    // Booked dates per property so PriceLabs can distinguish booked nights
+    // (reservations) from blocked nights (host-made unavailable).
     const bookings = await this.repo.getBookingsByHost(hostId);
-    const bookedDatesByProperty = {};
-    for (const b of bookings) {
-      if (_mapBookingStatus(b.status) !== "booked") continue;
-      const start = _tsToDate(b.arrivaldate);
-      const end   = _tsToDate(b.departuredate);
-      if (!start || !end) continue;
-      const cursor = new Date(`${start}T00:00:00Z`);
-      const stop   = new Date(`${end}T00:00:00Z`);
-      while (cursor < stop) { // checkout day itself is not a booked night
-        if (!bookedDatesByProperty[b.property_id]) bookedDatesByProperty[b.property_id] = new Set();
-        bookedDatesByProperty[b.property_id].add(cursor.toISOString().slice(0, 10));
-        cursor.setUTCDate(cursor.getUTCDate() + 1);
-      }
-    }
+    const bookedDatesByProperty = _bookedDatesByProperty(bookings);
 
     for (const p of targets) {
       const listingId   = `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`;
@@ -173,30 +160,7 @@ export class PriceLabsService {
         overrideMap[row.calendar_date] = row;
       }
 
-      const data = [];
-      const defaultPrice = p.base_price || 100;
-      for (let i = 0; i < CALENDAR_DAYS; i++) {
-        const d    = new Date();
-        d.setUTCDate(d.getUTCDate() + i);
-        const iso  = d.toISOString().slice(0, 10);
-        const key  = Number(iso.replaceAll("-", ""));
-        const row  = overrideMap[key];
-        const isBooked  = bookedDatesByProperty[p.id]?.has(iso) === true;
-        const isBlocked = !isBooked && row?.is_available === false;
-        data.push({
-          date:            iso,
-          end_date:        iso,
-          price:           row?.nightly_price || defaultPrice,
-          available_units: isBooked || isBlocked ? 0 : 1,
-          booked_units:    isBooked  ? 1 : 0,
-          blocked_units:   isBlocked ? 1 : 0,
-          settings: {
-            min_stay:  row?.min_stay  || 1,
-            check_in:  row?.closed_to_arrival  !== true,
-            check_out: row?.closed_to_departure !== true,
-          },
-        });
-      }
+      const data = _buildCalendarData(p, overrideMap, bookedDatesByProperty[p.id]);
 
       await api.pushCalendar(token, name, {
         calendars: [
@@ -414,6 +378,57 @@ function _mapBookingStatus(status) {
   const s = String(status || "").toLowerCase();
   if (s === "cancelled" || s === "canceled" || s === "declined" || s === "failed") return "canceled";
   return "booked";
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * Maps bookings to a per-property Set of booked ISO dates (checkout day excluded).
+ */
+function _bookedDatesByProperty(bookings) {
+  const map = {};
+  for (const b of bookings) {
+    if (_mapBookingStatus(b.status) !== "booked") continue;
+    const start = _tsToDate(b.arrivaldate);
+    const end   = _tsToDate(b.departuredate);
+    if (!start || !end) continue;
+    const startMs = Date.parse(`${start}T00:00:00Z`);
+    const endMs   = Date.parse(`${end}T00:00:00Z`);
+    for (let ms = startMs; ms < endMs; ms += MS_PER_DAY) {
+      if (!map[b.property_id]) map[b.property_id] = new Set();
+      map[b.property_id].add(new Date(ms).toISOString().slice(0, 10));
+    }
+  }
+  return map;
+}
+
+/**
+ * Builds the per-day calendar payload for one property, reporting
+ * available/booked/blocked units per date.
+ */
+function _buildCalendarData(property, overrideMap, bookedDates) {
+  const defaultPrice = property.base_price || 100;
+  const data = [];
+  for (let i = 0; i < CALENDAR_DAYS; i++) {
+    const iso = new Date(Date.now() + i * MS_PER_DAY).toISOString().slice(0, 10);
+    const row = overrideMap[Number(iso.replaceAll("-", ""))];
+    const isBooked  = bookedDates?.has(iso) === true;
+    const isBlocked = !isBooked && row?.is_available === false;
+    data.push({
+      date:            iso,
+      end_date:        iso,
+      price:           row?.nightly_price || defaultPrice,
+      available_units: isBooked || isBlocked ? 0 : 1,
+      booked_units:    isBooked  ? 1 : 0,
+      blocked_units:   isBlocked ? 1 : 0,
+      settings: {
+        min_stay:  row?.min_stay  || 1,
+        check_in:  row?.closed_to_arrival  !== true,
+        check_out: row?.closed_to_departure !== true,
+      },
+    });
+  }
+  return data;
 }
 
 const COUNTRY_TO_ALPHA3 = {
