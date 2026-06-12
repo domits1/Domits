@@ -41,7 +41,7 @@ const LocationSection = ({ location }) => {
 
       {hasUsableLocation ? (
         <>
-          <div className="location-section__map-shell" style={{ position: "relative" }}>
+          <div className="location-section__map-shell">
             <iframe
               className="location-section__map"
               title={t.title}
@@ -54,19 +54,6 @@ const LocationSection = ({ location }) => {
             <div
               className="location-section__approx-overlay"
               aria-hidden="true"
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: "180px",
-                height: "180px",
-                borderRadius: "50%",
-                background: "rgba(100, 110, 120, 0.28)",
-                border: "2px solid rgba(100, 110, 120, 0.45)",
-                pointerEvents: "none",
-                zIndex: 2,
-              }}
             />
           </div>
           <p className="location-section__disclaimer">{t.disclaimer}</p>

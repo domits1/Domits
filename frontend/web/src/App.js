@@ -217,7 +217,7 @@ function App() {
                   <Header setSearchResults={setSearchResults} setLoading={setLoading} />
                 ) : null}
                 <Routes>
-                  <Route path="/home" element={<Home searchResults={searchResults} />} />
+                  <Route path="/home" element={<Home searchResults={searchResults} searchInProgress={loading} />} />
                   <Route path="/" element={isDirectBookingWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/data-safety" element={<Datasafety />} />
