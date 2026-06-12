@@ -1,10 +1,16 @@
-const TEMPLATE_DEFINITIONS = [
-  [
-    "panorama-landing",
-    "Panorama Landing",
-    "Large hero image with fast trust signals and a guided booking call-to-action.",
-    "panorama",
-  ],
+const TEMPLATE_BUILDER_ENABLED_OPTIONS = Object.freeze({
+  builderEnabled: true,
+});
+
+const TEMPLATE_COMING_SOON_OPTIONS = Object.freeze({
+  builderEnabled: false,
+});
+
+const TEMPLATE_HIDDEN_OPTIONS = Object.freeze({
+  hidden: true,
+});
+
+const COMING_SOON_TEMPLATE_DEFINITIONS = [
   [
     "trust-signals",
     "Trust Signals",
@@ -23,7 +29,12 @@ const TEMPLATE_DEFINITIONS = [
     "A feature-led layout that puts standout amenities and property strengths front and center.",
     "amenitiesSpotlight",
   ],
-  ["gallery-grid", "Gallery Grid", "Photo-first browsing with a clean grid for guests who compare on visuals.", "galleryGrid"],
+  [
+    "gallery-grid",
+    "Gallery Grid",
+    "Photo-first browsing with a clean grid for guests who compare on visuals.",
+    "galleryGrid",
+  ],
   [
     "editorial-split",
     "Editorial Split",
@@ -48,13 +59,6 @@ const TEMPLATE_DEFINITIONS = [
     "A location-led page that highlights the area, nearby spots, and the context around the stay.",
     "localGuide",
   ],
-  [
-    "feature-stack",
-    "Feature Stack",
-    "A landing page with quick checks, value blocks, and a simple flow down the page.",
-    "featureStack",
-    { hidden: true },
-  ],
 ];
 
 const buildTemplateOption = ([id, name, description, layout, extraOptions = {}]) => ({
@@ -65,7 +69,34 @@ const buildTemplateOption = ([id, name, description, layout, extraOptions = {}])
   ...extraOptions,
 });
 
+const buildComingSoonTemplateDefinition = ([id, name, description, layout]) => [
+  id,
+  name,
+  description,
+  layout,
+  TEMPLATE_COMING_SOON_OPTIONS,
+];
+
+const TEMPLATE_DEFINITIONS = [
+  [
+    "panorama-landing",
+    "Panorama Landing",
+    "Large hero image with fast trust signals and a guided booking call-to-action.",
+    "panorama",
+    TEMPLATE_BUILDER_ENABLED_OPTIONS,
+  ],
+  ...COMING_SOON_TEMPLATE_DEFINITIONS.map(buildComingSoonTemplateDefinition),
+  [
+    "feature-stack",
+    "Feature Stack",
+    "A landing page with quick checks, value blocks, and a simple flow down the page.",
+    "featureStack",
+    TEMPLATE_HIDDEN_OPTIONS,
+  ],
+];
+
 const WEBSITE_TEMPLATE_CATALOG = TEMPLATE_DEFINITIONS.map(buildTemplateOption);
+export const DEFAULT_WEBSITE_TEMPLATE_ID = "panorama-landing";
 
 export const WEBSITE_TEMPLATE_OPTIONS = WEBSITE_TEMPLATE_CATALOG.filter(
   (templateOption) => !templateOption.hidden
@@ -79,3 +110,6 @@ export const WEBSITE_TEMPLATE_LAYOUTS = [...new Set(WEBSITE_TEMPLATE_CATALOG.map
 
 export const getWebsiteTemplateById = (templateId) =>
   WEBSITE_TEMPLATE_LOOKUP.get(templateId) || WEBSITE_TEMPLATE_OPTIONS[0];
+
+export const isWebsiteTemplateBuilderEnabled = (templateId) =>
+  WEBSITE_TEMPLATE_LOOKUP.get(templateId)?.builderEnabled === true;

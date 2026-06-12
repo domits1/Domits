@@ -1,6 +1,6 @@
 import "./styles/sass/app.scss";
 import { ApolloClient, ApolloProvider, HttpLink, InMemoryCache } from "@apollo/client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import Modal from "react-modal";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -132,19 +132,40 @@ function App() {
   const shouldRenderStandardHeader = currentPath !== "/admin" && isDirectBookingWebsiteSurface === false;
   const shouldRenderNavbar = isDirectBookingWebsiteSurface === false;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const documentElement = globalThis.document?.documentElement;
     const body = globalThis.document?.body;
     if (!documentElement || !body) {
       return undefined;
     }
 
+    const previousHtmlMarginTop = documentElement.style.marginTop;
+    const previousHtmlPaddingTop = documentElement.style.paddingTop;
+    const previousBodyMargin = body.style.margin;
+    const previousBodyPaddingTop = body.style.paddingTop;
+
     documentElement.classList.toggle("directBookingWebsiteSurfaceHtml", isDirectBookingWebsiteSurface);
     body.classList.toggle("directBookingWebsiteSurfaceBody", isDirectBookingWebsiteSurface);
+
+    if (isDirectBookingWebsiteSurface) {
+      documentElement.style.marginTop = "0";
+      documentElement.style.paddingTop = "0";
+      body.style.margin = "0";
+      body.style.paddingTop = "0";
+    } else {
+      documentElement.style.marginTop = previousHtmlMarginTop;
+      documentElement.style.paddingTop = previousHtmlPaddingTop;
+      body.style.margin = previousBodyMargin;
+      body.style.paddingTop = previousBodyPaddingTop;
+    }
 
     return () => {
       documentElement.classList.remove("directBookingWebsiteSurfaceHtml");
       body.classList.remove("directBookingWebsiteSurfaceBody");
+      documentElement.style.marginTop = previousHtmlMarginTop;
+      documentElement.style.paddingTop = previousHtmlPaddingTop;
+      body.style.margin = previousBodyMargin;
+      body.style.paddingTop = previousBodyPaddingTop;
     };
   }, [isDirectBookingWebsiteSurface]);
 

@@ -6,6 +6,7 @@ import {
   CollapsibleSection,
   TextField,
 } from "../WebsiteEditorFields";
+import { WebsiteEditorSectionVisibilityFieldCard } from "../WebsiteEditorPageSupport";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../../websiteEditorConfig";
 import {
   resolveWebsiteContactAccentColor,
@@ -14,8 +15,13 @@ import {
 import styles from "../../WebsiteEditorPage.module.scss";
 
 export function WebsiteEditorContactSection({
+  activatePreviewTarget,
   clearActivePreviewTarget,
+  commitContactAccentColorInput,
+  commitContactBackgroundColorInput,
   contactSectionFields,
+  contactSectionVisibilityField,
+  contactWidgetVisibilityField,
   editorValues,
   handleContactAccentColorChange,
   handleContactAccentColorInputChange,
@@ -28,17 +34,21 @@ export function WebsiteEditorContactSection({
   handleContactImageUseInitials,
   handleContactImageUseProfilePhoto,
   handleEditorFieldKeyDown,
+  handleVisibilityFieldChange,
+  hasWhatsAppWidget,
   highlightedTargetId,
   isOpen,
   onToggle,
   previewModel,
   sectionRef,
   setTargetRef,
-  activatePreviewTarget,
-  commitContactAccentColorInput,
-  commitContactBackgroundColorInput,
+  showWhatsAppSetupHint,
 }) {
-  if (contactSectionFields.length < 1) {
+  if (
+    contactSectionFields.length < 1 &&
+    !contactSectionVisibilityField &&
+    !contactWidgetVisibilityField
+  ) {
     return null;
   }
 
@@ -52,6 +62,37 @@ export function WebsiteEditorContactSection({
       sectionRef={sectionRef}
     >
       <div className={styles.fieldStack}>
+        {contactWidgetVisibilityField || contactSectionVisibilityField ? (
+          <div className={styles.toggleStack}>
+            {showWhatsAppSetupHint ? (
+              <p className={styles.helperText}>
+                Connect WhatsApp in the integrations marketplace to unlock direct guest contact on the
+                website.
+              </p>
+            ) : null}
+            {contactWidgetVisibilityField ? (
+              <WebsiteEditorSectionVisibilityFieldCard
+                checked={Boolean(editorValues.visibility.chatWidget)}
+                field={contactWidgetVisibilityField}
+                handleVisibilityFieldChange={handleVisibilityFieldChange}
+                hasWhatsAppWidget={hasWhatsAppWidget}
+                highlightedTargetId={highlightedTargetId}
+                setTargetRef={setTargetRef}
+              />
+            ) : null}
+            {contactSectionVisibilityField ? (
+              <WebsiteEditorSectionVisibilityFieldCard
+                checked={Boolean(editorValues.visibility.contactSection)}
+                field={contactSectionVisibilityField}
+                handleVisibilityFieldChange={handleVisibilityFieldChange}
+                hasWhatsAppWidget={hasWhatsAppWidget}
+                highlightedTargetId={highlightedTargetId}
+                setTargetRef={setTargetRef}
+              />
+            ) : null}
+          </div>
+        ) : null}
+
         {contactSectionFields.map((field) => (
           <TextField
             key={field.key}
@@ -128,14 +169,29 @@ WebsiteEditorContactSection.propTypes = {
       component: PropTypes.oneOf(["input", "textarea"]).isRequired,
     })
   ).isRequired,
+  contactSectionVisibilityField: PropTypes.shape({
+    description: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+  }),
+  contactWidgetVisibilityField: PropTypes.shape({
+    description: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+  }),
   editorValues: PropTypes.shape({
     contact: PropTypes.shape({
       title: PropTypes.string,
+      caption: PropTypes.string,
       description: PropTypes.string,
       avatarMode: PropTypes.string,
       avatarImage: PropTypes.string,
       accentColor: PropTypes.string,
       backgroundColor: PropTypes.string,
+    }).isRequired,
+    visibility: PropTypes.shape({
+      contactSection: PropTypes.bool,
+      chatWidget: PropTypes.bool,
     }).isRequired,
   }).isRequired,
   handleContactAccentColorChange: PropTypes.func.isRequired,
@@ -149,6 +205,8 @@ WebsiteEditorContactSection.propTypes = {
   handleContactImageUseInitials: PropTypes.func.isRequired,
   handleContactImageUseProfilePhoto: PropTypes.func.isRequired,
   handleEditorFieldKeyDown: PropTypes.func.isRequired,
+  handleVisibilityFieldChange: PropTypes.func.isRequired,
+  hasWhatsAppWidget: PropTypes.bool.isRequired,
   highlightedTargetId: PropTypes.string.isRequired,
   isOpen: PropTypes.bool.isRequired,
   onToggle: PropTypes.func.isRequired,
@@ -164,4 +222,5 @@ WebsiteEditorContactSection.propTypes = {
     }),
   ]),
   setTargetRef: PropTypes.func.isRequired,
+  showWhatsAppSetupHint: PropTypes.bool.isRequired,
 };

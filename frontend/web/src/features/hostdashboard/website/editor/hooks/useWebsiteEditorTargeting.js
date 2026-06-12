@@ -15,6 +15,22 @@ import {
 const SECTION_HIGHLIGHT_RESET_DURATION_MS = 1800;
 const IMAGE_PICKER_OPEN_DELAY_MS = 140;
 
+const resolveImageSlotSectionId = (imageSlot, sectionId) => {
+  if (sectionId) {
+    return sectionId;
+  }
+
+  if (imageSlot?.kind === "hero") {
+    return EDITOR_SECTION_KEYS.common;
+  }
+
+  if (imageSlot?.kind === "residence") {
+    return EDITOR_SECTION_KEYS.residence;
+  }
+
+  return EDITOR_SECTION_KEYS.images;
+};
+
 export const useWebsiteEditorTargeting = ({
   editorPanelRef,
   expandedSections,
@@ -162,7 +178,7 @@ export const useWebsiteEditorTargeting = ({
     imageSlot,
   } = {}) => {
     if (imageSlot) {
-      const targetSectionId = sectionId || EDITOR_SECTION_KEYS.images;
+      const targetSectionId = resolveImageSlotSectionId(imageSlot, sectionId);
       focusEditorTarget({
         sectionId: targetSectionId,
         targetId: targetId || resolveEditorPreviewTargetId({ imageSlot, sectionId: targetSectionId }),

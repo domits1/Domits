@@ -40,29 +40,22 @@ import {
   getCalendarToggleFields,
   getCommonTextFields,
   getContactSectionFields,
-  getCollectionTargetId,
   getGalleryFieldPreviewTargetId,
   getGalleryToggleFields,
   getGalleryTextFields,
-  getImageSlotTargetId,
+  getHeroAlignmentOptions,
   getResidenceTextFields,
   getResidenceToggleFields,
 } from "./websiteEditorConfig";
 import {
-  WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
-  WEBSITE_CONTACT_AVATAR_MODE_HOST,
-  WEBSITE_CONTACT_AVATAR_MODE_INITIALS,
   resolveWebsiteContactAccentColor,
-  resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
 } from "./config/websiteContactSectionConfig";
 import {
   resolveWebsiteResidencePanelColor,
 } from "./config/websiteResidenceSectionConfig";
 import {
-  MAX_WEBSITE_CONFIGURABLE_AMENITIES,
   resolveWebsiteAmenityIconColor,
-  WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "./config/websiteAmenitiesConfig";
 import {
   resolveWebsiteCalendarPanelColor,
@@ -70,7 +63,6 @@ import {
 import {
   resolveWebsiteGalleryPanelColor,
 } from "./config/websiteGallerySectionConfig";
-import { setWebsiteImageSlotRotationEnabled } from "./rendering/websiteImageSlotUtils";
 import { WebsitePreviewSkeleton } from "./rendering/WebsitePreviewSkeleton";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
@@ -82,8 +74,9 @@ import {
   WebsiteEditorPublicSitePanel,
 } from "./editor/WebsiteEditorStates";
 import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTargeting";
+import { useWebsiteEditorAssets } from "./editor/hooks/useWebsiteEditorAssets";
+import { useWebsiteEditorCollections } from "./editor/hooks/useWebsiteEditorCollections";
 import {
-  buildNextEditorImageState,
   buildWebsiteEditorSectionData,
   getCommonFieldPreviewTargetId,
   notifyOpenedLiveSiteWindow,
@@ -94,7 +87,6 @@ import {
 import {
   buildEditorValuesFromDraft,
   confirmDiscardDraftChanges,
-  createAmenityEditorItem,
   createCommitAndSaveOnEnterHandler,
   createEditorFieldKeyDownHandler,
   formatStatusLabel,
@@ -106,8 +98,6 @@ import {
   getLiveLinkStatus,
   getPrimaryWebsiteDomain,
   getPreviewTargetIdForVisibilityField,
-  normalizeUiErrorMessage,
-  readImageFileAsDataUrl,
   resolveWindowTargetOrigin,
   runAfterNextPaint,
 } from "./editor/websiteEditorUtils";
@@ -149,18 +139,22 @@ function WebsiteEditorPage() {
     isOpen: false,
     slot: null,
   });
-  const [iconPickerState, setIconPickerState] = useState({
-    isOpen: false,
-    collectionKey: "",
-    itemIndex: -1,
-    label: "",
-  });
   const actionMenuRef = useRef(null);
   const editorPanelRef = useRef(null);
   const editorHydrationLockedRef = useRef(false);
   const openedLiveSiteWindowRef = useRef(null);
   const openedLiveSiteWindowOriginRef = useRef("");
   const amenityIconOptions = useMemo(() => getAmenityIconOptions(), []);
+  const openPreviewImagePicker = (slot) => {
+    if (!slot) {
+      return;
+    }
+
+    setImagePickerState({
+      isOpen: true,
+      slot,
+    });
+  };
   const markEditorInteracted = () => {
     editorHydrationLockedRef.current = true;
   };
@@ -180,12 +174,7 @@ function WebsiteEditorPage() {
   } = useWebsiteEditorTargeting({
     editorPanelRef,
     expandedSections,
-    onSelectImageSlot: (imageSlot) => {
-      setImagePickerState({
-        isOpen: true,
-        slot: imageSlot,
-      });
-    },
+    onSelectImageSlot: openPreviewImagePicker,
     setExpandedSections,
   });
 
@@ -211,30 +200,38 @@ function WebsiteEditorPage() {
   const calendarToggleFields = getCalendarToggleFields(draftRecord?.templateKey);
   const galleryPanelToggleFields = getGalleryToggleFields(draftRecord?.templateKey);
   const galleryTextFields = getGalleryTextFields(draftRecord?.templateKey);
+  const heroAlignmentOptions = getHeroAlignmentOptions(draftRecord?.templateKey);
   const residenceTextFields = getResidenceTextFields(draftRecord?.templateKey);
   const residenceToggleFields = getResidenceToggleFields(draftRecord?.templateKey);
   const contactSectionFields = getContactSectionFields(draftRecord?.templateKey);
   const hasResolvedPropertyDetails = Boolean(baseModel);
   const hasWhatsAppWidget = Boolean(baseModel?.host?.whatsapp?.isAvailable);
-  const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftRecord?.templateKey] || [];
   const showWhatsAppSetupHint = hasResolvedPropertyDetails && !hasWhatsAppWidget;
-  const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftRecord?.templateKey] || [];
   const {
+    heroImageSlot,
+    heroCallToActionVisibilityField,
     amenitiesVisibilityField,
     calendarVisibilityField,
     galleryVisibilityField,
+    trustCardsVisibilityField,
+    contactSectionVisibilityField,
+    contactWidgetVisibilityField,
     standaloneVisibilityFields,
     residenceImageSlot,
     galleryImageSlots,
     generalImageSlots,
   } = useMemo(
-    () =>
-      buildWebsiteEditorSectionData({
+    () => {
+      const visibilityFields = TEMPLATE_VISIBILITY_FIELD_MAP[draftTemplateKey] || [];
+      const imageSlots = TEMPLATE_IMAGE_SLOT_MAP[draftTemplateKey] || [];
+
+      return buildWebsiteEditorSectionData({
         draftTemplateKey,
         imageSlots,
         visibilityFields,
-      }),
-    [draftTemplateKey, imageSlots, visibilityFields]
+      });
+    },
+    [draftTemplateKey]
   );
   const copyCollectionConfig = TEMPLATE_COPY_COLLECTION_CONFIG[draftRecord?.templateKey] || {};
   const residenceSectionTitle = String(editorValues?.common?.residenceTitle || "").trim() || "The residence";
@@ -242,6 +239,38 @@ function WebsiteEditorPage() {
     const rawImageOptions = Array.isArray(baseModel?.media?.galleryImages) ? baseModel.media.galleryImages : [];
     return Array.from(new Set(rawImageOptions.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)));
   }, [baseModel]);
+  const {
+    addAmenityItem,
+    closeIconPicker,
+    handleCollectionFieldChange,
+    iconPickerState,
+    moveAmenityItemDown,
+    moveAmenityItemUp,
+    openIconPicker,
+    removeAmenityItem,
+    selectIconFromPicker,
+  } = useWebsiteEditorCollections({
+    amenityIconOptions,
+    editorValues,
+    focusEditorTarget,
+    setEditorValues,
+    setPreviewTargetId,
+  });
+  const {
+    closeImagePicker,
+    handleContactImageFileChange,
+    handleContactImageUseInitials,
+    handleContactImageUseProfilePhoto,
+    openImagePicker,
+    selectImageFromPicker,
+    updateImageSlotRotation,
+  } = useWebsiteEditorAssets({
+    imagePickerState,
+    importedImageOptions,
+    setEditorValues,
+    setImagePickerState,
+    setPreviewTargetId,
+  });
 
   const contentOverridePatch = useMemo(() => {
     if (!baseModel) {
@@ -600,53 +629,6 @@ function WebsiteEditorPage() {
     saveDraftChanges
   );
 
-  const handleContactImageFileChange = async (event) => {
-    const nextFile = event.target.files?.[0];
-    event.target.value = "";
-
-    if (!nextFile) {
-      return;
-    }
-
-    setPreviewTargetId(EDITOR_TARGET_KEYS.contact.avatarImage);
-
-    try {
-      const nextAvatarImage = await readImageFileAsDataUrl(nextFile);
-      setEditorValues((currentValues) => ({
-        ...currentValues,
-        contact: {
-          ...currentValues.contact,
-          avatarMode: WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
-          avatarImage: nextAvatarImage,
-        },
-      }));
-    } catch (error) {
-      toast.error(
-        normalizeUiErrorMessage(error?.message, "We could not upload that image for the contact footer.")
-      );
-    }
-  };
-
-  const updateContactAvatarMode = (avatarMode) => {
-    setPreviewTargetId(EDITOR_TARGET_KEYS.contact.avatarImage);
-    setEditorValues((currentValues) => ({
-      ...currentValues,
-      contact: {
-        ...currentValues.contact,
-        avatarMode: resolveWebsiteContactAvatarMode(avatarMode, WEBSITE_CONTACT_AVATAR_MODE_HOST),
-        avatarImage: "",
-      },
-    }));
-  };
-
-  const handleContactImageUseInitials = () => {
-    updateContactAvatarMode(WEBSITE_CONTACT_AVATAR_MODE_INITIALS);
-  };
-
-  const handleContactImageUseProfilePhoto = () => {
-    updateContactAvatarMode(WEBSITE_CONTACT_AVATAR_MODE_HOST);
-  };
-
   const handleThemeBackgroundColorChange = (backgroundColor) => {
     setPreviewTargetId(EDITOR_TARGET_KEYS.common.siteTitle);
     const resolvedBackgroundColor = resolveWebsiteBackgroundColor(backgroundColor);
@@ -701,161 +683,6 @@ function WebsiteEditorPage() {
     clearActivePreviewTarget();
     runAfterNextPaint(() => {
       flashPreviewTarget(previewTargetId);
-    });
-  };
-
-  const updateImageSlotSelection = (slot, nextValue) => {
-    if (!slot) {
-      return;
-    }
-
-    setPreviewTargetId(getImageSlotTargetId(slot));
-    setEditorValues((currentValues) => buildNextEditorImageState(currentValues, slot, nextValue));
-  };
-
-  const openImagePicker = (slot) => {
-    if (!slot || importedImageOptions.length < 1) {
-      return;
-    }
-
-    setPreviewTargetId(getImageSlotTargetId(slot));
-    setImagePickerState({
-      isOpen: true,
-      slot,
-    });
-  };
-
-  const closeImagePicker = () => {
-    setImagePickerState({
-      isOpen: false,
-      slot: null,
-    });
-  };
-
-  const selectImageFromPicker = (imageUrl) => {
-    if (!imagePickerState.slot || !imageUrl) {
-      return;
-    }
-
-    updateImageSlotSelection(imagePickerState.slot, imageUrl);
-    closeImagePicker();
-  };
-
-  const updateCollectionFieldValue = (collectionKey, itemIndex, fieldKey, nextValue) => {
-    const targetId = getCollectionTargetId(collectionKey, itemIndex);
-
-    setPreviewTargetId(targetId);
-    setEditorValues((currentValues) => {
-      const nextCollection = [...currentValues[collectionKey]];
-      const currentItem = nextCollection[itemIndex];
-      if (!currentItem) {
-        return currentValues;
-      }
-
-      nextCollection[itemIndex] = {
-        ...currentItem,
-        [fieldKey]: nextValue,
-      };
-
-      return {
-        ...currentValues,
-        [collectionKey]: nextCollection,
-      };
-    });
-  };
-
-  const handleCollectionFieldChange = (collectionKey, itemIndex, fieldKey) => (event) => {
-    updateCollectionFieldValue(collectionKey, itemIndex, fieldKey, event.target.value);
-  };
-
-  const openIconPicker = (collectionKey, itemIndex, label) => {
-    if (!collectionKey || itemIndex < 0 || amenityIconOptions.length < 1) {
-      return;
-    }
-
-    setPreviewTargetId(getCollectionTargetId(collectionKey, itemIndex));
-    setIconPickerState({
-      isOpen: true,
-      collectionKey,
-      itemIndex,
-      label,
-    });
-  };
-
-  const closeIconPicker = () => {
-    setIconPickerState({
-      isOpen: false,
-      collectionKey: "",
-      itemIndex: -1,
-      label: "",
-    });
-  };
-
-  const selectIconFromPicker = (iconAmenityId) => {
-    if (!iconPickerState.collectionKey || iconPickerState.itemIndex < 0 || !iconAmenityId) {
-      return;
-    }
-
-    if (iconPickerState.collectionKey === EDITOR_SECTION_KEYS.amenities) {
-      const selectedIconOption = amenityIconOptions.find(
-        (iconOption) => String(iconOption.id || "") === String(iconAmenityId || "")
-      );
-      setPreviewTargetId(EDITOR_TARGET_KEYS.amenities(iconPickerState.itemIndex));
-      setEditorValues((currentValues) => {
-        const nextAmenities = [...currentValues.amenities];
-        const currentAmenity = nextAmenities[iconPickerState.itemIndex];
-        if (!currentAmenity) {
-          return currentValues;
-        }
-
-        nextAmenities[iconPickerState.itemIndex] = {
-          ...currentAmenity,
-          iconAmenityId,
-          category:
-            String(selectedIconOption?.category || "").trim() ||
-            currentAmenity.category ||
-            WEBSITE_AMENITY_FALLBACK_CATEGORY,
-        };
-
-        return {
-          ...currentValues,
-          amenities: nextAmenities,
-        };
-      });
-      closeIconPicker();
-      return;
-    }
-
-    updateCollectionFieldValue(
-      iconPickerState.collectionKey,
-      iconPickerState.itemIndex,
-      "iconAmenityId",
-      iconAmenityId
-    );
-    closeIconPicker();
-  };
-
-  const moveCollectionItem = (collectionKey, itemIndex, nextIndex) => {
-    if (!collectionKey || itemIndex === nextIndex || itemIndex < 0 || nextIndex < 0) {
-      return;
-    }
-
-    const nextTargetId = getCollectionTargetId(collectionKey, nextIndex);
-    setPreviewTargetId(nextTargetId);
-    setEditorValues((currentValues) => {
-      const currentCollection = Array.isArray(currentValues[collectionKey]) ? currentValues[collectionKey] : [];
-      if (nextIndex >= currentCollection.length || itemIndex >= currentCollection.length) {
-        return currentValues;
-      }
-
-      const nextCollection = [...currentCollection];
-      const [movedItem] = nextCollection.splice(itemIndex, 1);
-      nextCollection.splice(nextIndex, 0, movedItem);
-
-      return {
-        ...currentValues,
-        [collectionKey]: nextCollection,
-      };
     });
   };
 
@@ -946,26 +773,6 @@ function WebsiteEditorPage() {
     commitGalleryPanelColorInput,
     saveDraftChanges
   );
-
-  const updateImageSlotRotation = (slot, nextEnabled) => {
-    if (!slot) {
-      return;
-    }
-
-    setPreviewTargetId(getImageSlotTargetId(slot));
-    setEditorValues((currentValues) => ({
-      ...currentValues,
-      images: {
-        ...currentValues.images,
-        rotation: setWebsiteImageSlotRotationEnabled(
-          currentValues?.images?.rotation,
-          slot,
-          nextEnabled,
-          currentValues?.images?.gallery?.length
-        ),
-      },
-    }));
-  };
 
   const reloadDraftRecord = async () => {
     const persistedDraft = await fetchWebsiteDraftByPropertyId(propertyId);
@@ -1149,45 +956,6 @@ function WebsiteEditorPage() {
 
   const handleEditorFieldKeyDown = (field) => createEditorFieldKeyDownHandler(field, saveDraftChanges);
 
-  const addAmenityItem = () => {
-    const nextAmenityIndex = editorValues.amenities.length;
-    if (nextAmenityIndex >= MAX_WEBSITE_CONFIGURABLE_AMENITIES) {
-      return;
-    }
-
-    setPreviewTargetId(EDITOR_TARGET_KEYS.amenities(nextAmenityIndex));
-    setEditorValues((currentValues) => ({
-      ...currentValues,
-      amenities: [
-        ...currentValues.amenities,
-        createAmenityEditorItem(amenityIconOptions, currentValues.amenities.length),
-      ],
-    }));
-
-    runAfterNextPaint(() => {
-      focusEditorTarget({
-        sectionId: EDITOR_SECTION_KEYS.amenities,
-        targetId: EDITOR_TARGET_KEYS.amenities(nextAmenityIndex),
-      });
-    });
-  };
-
-  const removeAmenityItem = (itemIndex) => {
-    setPreviewTargetId("visibility.amenitiesPanel");
-    setEditorValues((currentValues) => ({
-      ...currentValues,
-      amenities: currentValues.amenities.filter((_, currentIndex) => currentIndex !== itemIndex),
-    }));
-  };
-
-  const moveAmenityItemUp = (itemIndex) => {
-    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex - 1);
-  };
-
-  const moveAmenityItemDown = (itemIndex) => {
-    moveCollectionItem(EDITOR_SECTION_KEYS.amenities, itemIndex, itemIndex + 1);
-  };
-
   const handleThemeBackgroundColorInputKeyDown = createCommitAndSaveOnEnterHandler(
     commitThemeBackgroundColorInput,
     saveDraftChanges
@@ -1359,6 +1127,9 @@ function WebsiteEditorPage() {
               commitThemeBackgroundColorInput={commitThemeBackgroundColorInput}
               commonTextFields={commonTextFields}
               contactSectionFields={contactSectionFields}
+              trustCardsVisibilityField={trustCardsVisibilityField}
+              contactSectionVisibilityField={contactSectionVisibilityField}
+              contactWidgetVisibilityField={contactWidgetVisibilityField}
               copyCollectionConfig={copyCollectionConfig}
               draftTemplateKey={draftTemplateKey}
               editorPanelRef={editorPanelRef}
@@ -1370,6 +1141,9 @@ function WebsiteEditorPage() {
               galleryTextFields={galleryTextFields}
               galleryVisibilityField={galleryVisibilityField}
               generalImageSlots={generalImageSlots}
+              heroAlignmentOptions={heroAlignmentOptions}
+              heroCallToActionVisibilityField={heroCallToActionVisibilityField}
+              heroImageSlot={heroImageSlot}
               handleAmenitiesIconColorChange={handleAmenitiesIconColorChange}
               handleAmenitiesIconColorInputChange={handleAmenitiesIconColorInputChange}
               handleAmenitiesIconColorInputKeyDown={handleAmenitiesIconColorInputKeyDown}
