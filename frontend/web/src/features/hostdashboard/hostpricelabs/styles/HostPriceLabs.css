@@ -44,6 +44,9 @@
 .pl-connect__input:focus    { border-color: var(--pl-primary); background: #fff; }
 .pl-connect__input:disabled { opacity: .6; cursor: not-allowed; }
 .pl-connect__hint           { font-size: .8rem; color: #888; margin: 0; }
+.pl-connect__signup         { font-size: .85rem; color: #555; margin: .75rem 0 0; text-align: center; }
+.pl-connect__signup-link    { color: #2e7d32; font-weight: 600; text-decoration: underline; }
+.pl-connect__signup-link:hover { color: #33a446; }
 
 .pl-card {
   background: #fff; border-radius: 12px; padding: 1.5rem;

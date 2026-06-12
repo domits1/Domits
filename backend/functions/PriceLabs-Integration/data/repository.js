@@ -5,6 +5,7 @@ import { Property_Location } from "database/models/Property_Location";
 import { Property_Calendar_Override } from "database/models/Property_Calendar_Override";
 import { Booking } from "database/models/Booking";
 import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
+import { ChannelIntegrationAccount } from "database/models/unified/integrations/ChannelIntegrationAccount";
 import { ChannelReservationLink } from "database/models/unified/integrations/ChannelReservationLink";
 
 export class Repository {
@@ -55,7 +56,9 @@ export class Repository {
       await repo.createQueryBuilder()
         .update()
         .set({
+          nightly_price:       () => "CASE WHEN nightly_price = pricelabs_price THEN NULL ELSE nightly_price END",
           pricelabs_price:     null,
+          pricelabs_ignored:   false,
           min_stay:            null,
           closed_to_arrival:   null,
           closed_to_departure: null,
@@ -116,41 +119,78 @@ export class Repository {
   }
 
 
-  async applyPriceRecommendation({ property_id, date, nightly_price, min_stay, closed_to_arrival, closed_to_departure }) {
+  /**
+   * Batch variant of the old applyPriceRecommendation. The PriceLabs sync webhook
+   * pushes 12-18 months of prices per listing; writing those one date at a time
+   * (SELECT + UPDATE per date) exceeded the Lambda timeout. This writes them with
+   * one SELECT and chunked multi-row upserts instead.
+   */
+  async applyPriceRecommendations(property_id, items) {
     const ds = await this._ds();
     const repo = ds.getRepository(Property_Calendar_Override);
 
-    const calendarDate = Number(String(date ?? "").replaceAll("-", ""));
-    if (!calendarDate || calendarDate < 10000101 || calendarDate > 99991231) {
-      return;
+    const normalized = [];
+    for (const item of Array.isArray(items) ? items : []) {
+      const calendarDate = Number(String(item.date ?? "").replaceAll("-", ""));
+      if (!calendarDate || calendarDate < 10000101 || calendarDate > 99991231) {
+        continue;
+      }
+      normalized.push({ ...item, calendar_date: calendarDate });
     }
+    if (!normalized.length) return;
 
-    const existing = await repo.findOne({
-      where: { property_id, calendar_date: calendarDate },
+    const dates = normalized.map((n) => n.calendar_date);
+    const existingRows = await repo.createQueryBuilder("cal")
+      .where("cal.property_id = :property_id", { property_id })
+      .andWhere("cal.calendar_date IN (:...dates)", { dates })
+      .getMany();
+    const existingByDate = new Map(existingRows.map((row) => [Number(row.calendar_date), row]));
+
+    const now = Date.now();
+    const rows = normalized.map((n) => {
+      const existing = existingByDate.get(n.calendar_date);
+      if (existing) {
+        return {
+          property_id,
+          calendar_date:       n.calendar_date,
+          pricelabs_price:     n.nightly_price ?? existing.pricelabs_price,
+          pricelabs_ignored:   false,
+          min_stay:            n.min_stay ?? existing.min_stay,
+          closed_to_arrival:   n.closed_to_arrival   ?? existing.closed_to_arrival,
+          closed_to_departure: n.closed_to_departure ?? existing.closed_to_departure,
+          updated_at:          now,
+        };
+      }
+      return {
+        property_id,
+        calendar_date:       n.calendar_date,
+        pricelabs_price:     n.nightly_price,
+        pricelabs_ignored:   false,
+        min_stay:            n.min_stay || 1,
+        closed_to_arrival:   n.closed_to_arrival   || false,
+        closed_to_departure: n.closed_to_departure || false,
+        updated_at:          now,
+      };
     });
 
-    if (existing) {
-      await repo.update({ property_id, calendar_date: calendarDate }, {
-        pricelabs_price:     nightly_price ?? existing.pricelabs_price,
-        min_stay:            min_stay       ?? existing.min_stay,
-        closed_to_arrival:   closed_to_arrival   ?? existing.closed_to_arrival,
-        closed_to_departure: closed_to_departure ?? existing.closed_to_departure,
-        updated_at:          Date.now(),
-      });
-    } else {
-      await repo.save(repo.create({
-        property_id,
-        calendar_date:       calendarDate,
-        pricelabs_price:     nightly_price,
-        min_stay:            min_stay || 1,
-        closed_to_arrival:   closed_to_arrival   || false,
-        closed_to_departure: closed_to_departure || false,
-        updated_at:          Date.now(),
-      }));
+    const CHUNK_SIZE = 250;
+    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+      await repo.createQueryBuilder()
+        .insert()
+        .values(rows.slice(i, i + CHUNK_SIZE))
+        .orUpdate(
+          ["pricelabs_price", "pricelabs_ignored", "min_stay", "closed_to_arrival", "closed_to_departure", "updated_at"],
+          ["property_id", "calendar_date"]
+        )
+        .execute();
     }
   }
 
 
+  /**
+   * Returns a map of propertyId → ota_listing_ids in the shape PriceLabs expects:
+   * { airbnb: { id }, bookingcom: { id }, vrbo: { id }, other: { <channel>: { id } } }
+   */
   async getOtaListingIdsByHost(hostId) {
     const ds = await this._ds();
 
@@ -161,17 +201,31 @@ export class Repository {
     const propertyIds = properties.map((p) => p.id);
     if (!propertyIds.length) return {};
 
-    const links = await ds
+    const rows = await ds
       .getRepository(ChannelIntegrationProperty)
       .createQueryBuilder("cip")
+      .innerJoin(ChannelIntegrationAccount, "acc", "acc.id = cip.integrationAccountId")
+      .select("cip.domitsPropertyId", "domitsPropertyId")
+      .addSelect("cip.externalPropertyId", "externalPropertyId")
+      .addSelect("acc.channel", "channel")
       .where("cip.domitsPropertyId IN (:...ids)", { ids: propertyIds })
       .andWhere("cip.status = :status", { status: "active" })
-      .getMany();
+      .getRawMany();
+
+    const KNOWN_CHANNELS = { airbnb: "airbnb", bookingcom: "bookingcom", vrbo: "vrbo" };
 
     const map = {};
-    for (const link of links) {
-      if (!map[link.domitsPropertyId]) map[link.domitsPropertyId] = [];
-      map[link.domitsPropertyId].push(link.externalPropertyId);
+    for (const row of rows) {
+      const normalized = String(row.channel || "").toLowerCase().replaceAll(/[^a-z]/g, "");
+      const key = KNOWN_CHANNELS[normalized];
+      if (!map[row.domitsPropertyId]) map[row.domitsPropertyId] = {};
+      const entry = { id: String(row.externalPropertyId) };
+      if (key) {
+        map[row.domitsPropertyId][key] = entry;
+      } else {
+        if (!map[row.domitsPropertyId].other) map[row.domitsPropertyId].other = {};
+        map[row.domitsPropertyId].other[normalized || "unknown"] = entry;
+      }
     }
     return map;
   }

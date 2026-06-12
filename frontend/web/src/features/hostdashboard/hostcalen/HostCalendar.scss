@@ -752,6 +752,48 @@ $accent: #2f6fed;
   white-space: nowrap;
 }
 
+.hc-cell-pricelabs-applied {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  margin-top: 3px;
+  border: 1px solid #166534;
+  border-radius: 4px;
+  background: #166534;
+  color: #fff;
+  padding: 2px 4px;
+  font-size: 10px;
+  line-height: 1.05;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hc-cell-pricelabs-ignored {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  margin-top: 3px;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 2px 4px;
+  font-size: 10px;
+  line-height: 1.05;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hc-info-card-line--applied {
+  color: #166534;
+  font-weight: 600;
+}
+
+.hc-info-card-line--ignored {
+  color: #b71c1c;
+  font-weight: 600;
+}
+
 .hc-cell-badge {
   position: absolute;
   top: 6px;
@@ -2348,4 +2390,23 @@ $accent: #2f6fed;
 .hc-dynamic-pricing-ignore-btn:hover {
   background: #f3f4f6;
   color: #374151;
+}
+
+.hc-dynamic-pricing-undo-btn {
+  margin-top: 6px;
+  padding: 0.6rem 0.9rem;
+  background: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.hc-dynamic-pricing-undo-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
 }
