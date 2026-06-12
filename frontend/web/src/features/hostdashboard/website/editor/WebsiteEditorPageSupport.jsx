@@ -25,6 +25,7 @@ import {
 import { resolveWebsiteHeroContentAlignment } from "../config/websiteHeroSectionConfig";
 
 const PANORAMA_TEMPLATE_KEY = "panorama-landing";
+const TRUST_SIGNALS_TEMPLATE_KEY = "trust-signals";
 const WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS = Object.freeze([
   "callToAction",
   "amenitiesPanel",
@@ -232,6 +233,17 @@ export const buildWebsiteEditorSectionData = ({
   const normalizedVisibilityFields = Array.isArray(visibilityFields) ? visibilityFields : [];
   const normalizedImageSlots = Array.isArray(imageSlots) ? imageSlots : [];
   const isPanoramaTemplate = draftTemplateKey === PANORAMA_TEMPLATE_KEY;
+  const hasDedicatedTrustCardsSection =
+    draftTemplateKey === PANORAMA_TEMPLATE_KEY || draftTemplateKey === TRUST_SIGNALS_TEMPLATE_KEY;
+  const trustCardsVisibilityField = hasDedicatedTrustCardsSection
+    ? normalizedVisibilityFields.find((field) => field.key === "trustCards") || null
+    : null;
+  const contactSectionVisibilityField = isPanoramaTemplate
+    ? normalizedVisibilityFields.find((field) => field.key === "contactSection") || null
+    : null;
+  const contactWidgetVisibilityField = isPanoramaTemplate
+    ? normalizedVisibilityFields.find((field) => field.key === "chatWidget") || null
+    : null;
 
   return {
     heroImageSlot: normalizedImageSlots.find((slot) => slot.kind === "hero") || null,
@@ -243,8 +255,15 @@ export const buildWebsiteEditorSectionData = ({
       normalizedVisibilityFields.find((field) => field.key === "availabilityCalendar") || null,
     galleryVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "gallerySection") || null,
+    trustCardsVisibilityField,
+    contactSectionVisibilityField,
+    contactWidgetVisibilityField,
     standaloneVisibilityFields: normalizedVisibilityFields.filter(
-      (field) => !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key)
+      (field) =>
+        !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key) &&
+        (!trustCardsVisibilityField || field.key !== "trustCards") &&
+        (!contactWidgetVisibilityField || field.key !== "chatWidget") &&
+        (!contactSectionVisibilityField || field.key !== "contactSection")
     ),
     residenceImageSlot: normalizedImageSlots.find((slot) => slot.kind === "residence") || null,
     galleryImageSlots: isPanoramaTemplate
