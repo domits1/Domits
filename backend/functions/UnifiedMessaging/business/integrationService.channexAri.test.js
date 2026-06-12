@@ -257,6 +257,9 @@ const createService = (overrides = {}) => {
   });
 
   jest.spyOn(service, "getChannexAriTargets").mockResolvedValue(buildReadyAriTargets());
+  jest
+    .spyOn(service.channexMappingService, "getChannexAriTargets")
+    .mockResolvedValue(buildReadyAriTargets());
   return service;
 };
 
@@ -463,7 +466,7 @@ describe("IntegrationService Channex setup mapping", () => {
   test("upserts property, room type, and rate plan mappings and returns readiness", async () => {
     const repositories = buildMappingRepositories();
     const service = createService(repositories);
-    service.getChannexAriTargets.mockResolvedValue({
+    service.channexMappingService.getChannexAriTargets.mockResolvedValue({
       statusCode: 200,
       response: {
         channel: "CHANNEX",
@@ -513,7 +516,10 @@ describe("IntegrationService Channex setup mapping", () => {
       externalRatePlanName: "Standard rate",
       status: "ACTIVE",
     });
-    expect(service.getChannexAriTargets).toHaveBeenCalledWith("user-1", "domits-property-1");
+    expect(service.channexMappingService.getChannexAriTargets).toHaveBeenCalledWith(
+      "user-1",
+      "domits-property-1"
+    );
     expect(JSON.stringify(result.response)).not.toContain("channex-secret-1");
     expect(JSON.stringify(result.response)).not.toContain("credentialsRef");
   });
@@ -530,7 +536,7 @@ describe("IntegrationService Channex setup mapping", () => {
     expect(result.response.savedMappings.property).toEqual(expect.objectContaining({ id: "property-mapping-1" }));
     expect(result.response.savedMappings.roomType).toEqual(expect.objectContaining({ id: "room-type-mapping-1" }));
     expect(result.response.savedMappings.ratePlan).toBeNull();
-    expect(service.getChannexAriTargets).not.toHaveBeenCalled();
+    expect(service.channexMappingService.getChannexAriTargets).not.toHaveBeenCalled();
   });
 });
 
@@ -916,6 +922,61 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       min_stay_through: 4,
     });
     expect(value).not.toHaveProperty("rate");
+  });
+
+  test("host calendar changes persist calendar-change evidence through the existing finalizer", async () => {
+    const channexEvidence = {
+      create: jest.fn(async (row) => row),
+    };
+    const { service } = createCalendarChangeService({
+      pushAvailability: createAvailabilityPush(),
+    });
+    service.channexEvidence = channexEvidence;
+
+    const result = await service.syncChannexCalendarChange(buildCalendarChangeRequest());
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        syncType: "calendar-change",
+        evidencePersisted: true,
+        evidenceId: expect.any(String),
+      })
+    );
+    expect(channexEvidence.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        syncType: "calendar-change",
+        domitsPropertyId: "domits-property-1",
+        status: "SUCCESS",
+        overallSuccess: true,
+      })
+    );
+  });
+
+  test("host calendar provider exceptions retain the controlled failure response", async () => {
+    const providerError = new Error("Calendar provider unavailable");
+    providerError.status = 503;
+    providerError.endpoint = "/api/v1/availability";
+    providerError.method = "POST";
+    const { service } = createCalendarChangeService({
+      pushAvailability: jest.fn().mockRejectedValue(providerError),
+    });
+
+    const result = await syncCalendarChangeForTest(service);
+
+    expect(result).toEqual({
+      statusCode: 500,
+      response: expect.objectContaining({
+        error: "Failed to sync Channex host calendar change.",
+        errorCode: "CHANNEX_CALENDAR_CHANGE_SYNC_FAILED",
+        details: expect.objectContaining({
+          message: "Calendar provider unavailable",
+          httpStatus: 503,
+          endpoint: "/api/v1/availability",
+          method: "POST",
+        }),
+      }),
+    });
   });
 
   test("restrictions sync supports a 500-day range and sends one combined provider request", async () => {

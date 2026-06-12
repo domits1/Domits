@@ -17,12 +17,32 @@ const buildCalendarChangeEvent = ({ token, body = {} } = {}) => ({
   }),
 });
 
-describe("IntegrationController Channex calendar-change internal guard", () => {
+const buildBookingAvailabilityEvent = ({ token, body = {} } = {}) => ({
+  headers: token ? { "x-domits-internal-token": token } : {},
+  body: JSON.stringify({
+    userId: "host-1",
+    trigger: "BOOKING_CREATED",
+    bookingAfter: {
+      id: "booking-1",
+      property_id: "property-1",
+    },
+    ...body,
+  }),
+});
+
+describe("IntegrationController Channex availability internal guards", () => {
   const originalToken = process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN;
   const originalTestEnv = process.env.TEST;
 
   const createController = () => {
     const integrationService = {
+      syncChannexBookingAvailability: jest.fn().mockResolvedValue({
+        statusCode: 200,
+        response: {
+          syncType: "booking-availability",
+          requestCount: 1,
+        },
+      }),
       syncChannexCalendarChange: jest.fn().mockResolvedValue({
         statusCode: 200,
         response: {
@@ -32,10 +52,7 @@ describe("IntegrationController Channex calendar-change internal guard", () => {
       }),
     };
     return {
-      controller: new IntegrationController({
-        integrationService,
-        channexBookingAvailabilityBridge: { syncAvailabilityForBookingChange: jest.fn() },
-      }),
+      controller: new IntegrationController({ integrationService }),
       integrationService,
     };
   };
@@ -105,5 +122,35 @@ describe("IntegrationController Channex calendar-change internal guard", () => {
       changeTypes: ["availability"],
       source: "HOST_CALENDAR_OVERRIDES_CHANGED",
     });
+  });
+
+  test("rejects an invalid token before syncing booking availability", async () => {
+    const { controller, integrationService } = createController();
+
+    const result = await controller.syncChannexBookingAvailability(
+      buildBookingAvailabilityEvent({ token: "wrong-token" })
+    );
+
+    expect(result).toEqual({
+      statusCode: 403,
+      response: {
+        error: "FORBIDDEN",
+        message: "Invalid internal booking availability sync token.",
+      },
+    });
+    expect(integrationService.syncChannexBookingAvailability).not.toHaveBeenCalled();
+  });
+
+  test("accepts matching internal token and forwards booking availability body", async () => {
+    const { controller, integrationService } = createController();
+    const event = buildBookingAvailabilityEvent({ token: "expected-token" });
+
+    const result = await controller.syncChannexBookingAvailability(event);
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.syncType).toBe("booking-availability");
+    expect(integrationService.syncChannexBookingAvailability).toHaveBeenCalledWith(
+      JSON.parse(event.body)
+    );
   });
 });

@@ -1,5 +1,4 @@
 import IntegrationService from "../business/integrationService.js";
-import ChannexBookingAvailabilityBridge from "../.shared/channelManagement/channexBookingAvailabilityBridge.js";
 import {
   CHANNEX_RESTRICTIONS_SYNC_MODE,
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
@@ -21,12 +20,8 @@ const summarizeErrorStack = (error) =>
     .filter(Boolean);
 
 class IntegrationController {
-  constructor({
-    integrationService = new IntegrationService(),
-    channexBookingAvailabilityBridge = new ChannexBookingAvailabilityBridge(),
-  } = {}) {
+  constructor({ integrationService = new IntegrationService() } = {}) {
     this.integrationService = integrationService;
-    this.channexBookingAvailabilityBridge = channexBookingAvailabilityBridge;
   }
 
   async createIntegration(event) {
@@ -269,11 +264,7 @@ class IntegrationController {
     }
 
     const body = safeJson(event.body) || {};
-    const evidence = await this.channexBookingAvailabilityBridge.syncAvailabilityForBookingChange(body);
-    return {
-      statusCode: 200,
-      response: evidence,
-    };
+    return await this.integrationService.syncChannexBookingAvailability(body);
   }
 
   async syncChannexCalendarChange(event) {

@@ -1,6 +1,17 @@
 import fs from "node:fs";
 import path from "node:path";
 
+jest.mock(
+  "@aws-sdk/client-secrets-manager",
+  () => require("./business/integrationService.secretsManagerMock.js"),
+  { virtual: true }
+);
+
+const ChannexAriExecutionService =
+  require("../.shared/channelManagement/services/channexAriExecutionService.js").default;
+const ChannexFullSyncService =
+  require("../.shared/channelManagement/services/channexFullSyncService.js").default;
+
 const functionsRoot = path.join(process.cwd(), "functions");
 const sharedRoot = path.join(functionsRoot, ".shared", "channelManagement");
 const importPattern = /(?:from\s+|import\s*\(\s*|require\(\s*)["']([^"']+)["']/g;
@@ -29,6 +40,8 @@ const isLambdaHandlerImport = (filePath, specifier) => {
 
 describe("shared ChannelManagement dependency boundary", () => {
   test("contains an importable shared service boundary", () => {
+    expect(typeof ChannexAriExecutionService).toBe("function");
+    expect(typeof ChannexFullSyncService).toBe("function");
     expect(
       fs.existsSync(path.join(sharedRoot, "channelManagementService.js"))
     ).toBe(true);
@@ -41,6 +54,32 @@ describe("shared ChannelManagement dependency boundary", () => {
       fs.existsSync(
         path.join(sharedRoot, "services", "channexBookingRevisionImportService.js")
       )
+    ).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(sharedRoot, "services", "channexAvailabilitySyncService.js")
+      )
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "services", "channexMappingService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "services", "channexAriPayloadService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "services", "channexAriExecutionService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "services", "channexFullSyncService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "utils", "channexAriDateUtils.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "utils", "channexAriPayloadUtils.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "utils", "channexAriExecutionUtils.js"))
     ).toBe(true);
   });
 
