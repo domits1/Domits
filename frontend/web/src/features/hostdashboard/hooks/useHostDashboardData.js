@@ -108,9 +108,10 @@ const flattenBookingsPayload = (payload) => {
     return [];
   }
 
+  const directPayload = Array.isArray(payload) ? payload : [];
   const properties = Array.isArray(payload?.response) 
     ? payload.response 
-    : (Array.isArray(payload) ? payload : []);
+    : directPayload;
 
   return properties.flatMap((property) => {
     const reservations = Array.isArray(property?.res?.response) ? property.res.response : [];
