@@ -11,6 +11,10 @@ const ChannexAriExecutionService =
   require("../.shared/channelManagement/services/channexAriExecutionService.js").default;
 const ChannexFullSyncService =
   require("../.shared/channelManagement/services/channexFullSyncService.js").default;
+const ChannexCertificationService =
+  require("../.shared/channelManagement/services/channexCertificationService.js").default;
+const ChannexDiagnosticsService =
+  require("../.shared/channelManagement/services/channexDiagnosticsService.js").default;
 
 const functionsRoot = path.join(process.cwd(), "functions");
 const sharedRoot = path.join(functionsRoot, ".shared", "channelManagement");
@@ -42,6 +46,8 @@ describe("shared ChannelManagement dependency boundary", () => {
   test("contains an importable shared service boundary", () => {
     expect(typeof ChannexAriExecutionService).toBe("function");
     expect(typeof ChannexFullSyncService).toBe("function");
+    expect(typeof ChannexCertificationService).toBe("function");
+    expect(typeof ChannexDiagnosticsService).toBe("function");
     expect(
       fs.existsSync(path.join(sharedRoot, "channelManagementService.js"))
     ).toBe(true);
@@ -71,6 +77,12 @@ describe("shared ChannelManagement dependency boundary", () => {
     ).toBe(true);
     expect(
       fs.existsSync(path.join(sharedRoot, "services", "channexFullSyncService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "services", "channexCertificationService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "services", "channexDiagnosticsService.js"))
     ).toBe(true);
     expect(
       fs.existsSync(path.join(sharedRoot, "utils", "channexAriDateUtils.js"))
