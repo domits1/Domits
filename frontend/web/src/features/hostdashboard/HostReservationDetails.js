@@ -410,6 +410,31 @@ const hasCheckInInstructionsData = ({ booking, propertyDetails }) =>
     )
   );
 
+const resolvePropertyLocation = (propertyDetails, bookingProperty, booking) => {
+  const location =
+    propertyDetails?.location ||
+    propertyDetails?.propertyLocation ||
+    bookingProperty?.location ||
+    booking?.propertyLocation ||
+    {};
+
+  return {
+    city: normalizeStringValue(firstDefined(location?.city, bookingProperty?.city, booking?.city)),
+    country: normalizeStringValue(firstDefined(location?.country, bookingProperty?.country, booking?.country)),
+  };
+};
+
+const resolvePropertyTitle = (propertyDetails, bookingProperty, booking) =>
+  normalizeStringValue(
+    firstDefined(
+      propertyDetails?.property?.title,
+      propertyDetails?.title,
+      bookingProperty?.title,
+      booking?.title,
+      booking?.Title
+    )
+  );
+
 const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }) => {
   const propertyId = getPropertyId(booking);
   const guestId = getGuestId(booking);
@@ -417,12 +442,7 @@ const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }
     firstDefined(booking?.reservationId, booking?.bookingId, booking?.booking_id, booking?.id, booking?.ID)
   );
   const bookingProperty = booking?.property_meta || booking?.property;
-  const location =
-    propertyDetails?.location ||
-    propertyDetails?.propertyLocation ||
-    bookingProperty?.location ||
-    booking?.propertyLocation ||
-    {};
+  const locationData = resolvePropertyLocation(propertyDetails, bookingProperty, booking);
   const cancellationPolicy = resolveActiveCancellationPolicy({
     booking,
     propertyDetails,
@@ -438,17 +458,9 @@ const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }
     guestId,
     channel: buildChannelLabel(booking),
     status: normalizeStatus(booking?.status),
-    title: normalizeStringValue(
-      firstDefined(
-        propertyDetails?.property?.title,
-        propertyDetails?.title,
-        bookingProperty?.title,
-        booking?.title,
-        booking?.Title
-      )
-    ),
-    city: normalizeStringValue(firstDefined(location?.city, bookingProperty?.city, booking?.city)),
-    country: normalizeStringValue(firstDefined(location?.country, bookingProperty?.country, booking?.country)),
+    title: resolvePropertyTitle(propertyDetails, bookingProperty, booking),
+    city: locationData.city,
+    country: locationData.country,
     image: resolveReservationImage({ booking, propertyDetails }),
     arrivaldate: firstDefined(booking?.arrivaldate, booking?.arrivalDate),
     departuredate: firstDefined(booking?.departuredate, booking?.departureDate),

@@ -34,7 +34,7 @@ const resolveCancellationType = (cancellationPolicy, rules = []) => {
   }
 
   const matchingRule = (rules || []).find(
-    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && (rule.value === true || rule.value === "true")
+    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && (rule?.value === true || rule?.value === "true")
   );
 
   if (matchingRule) {

@@ -108,7 +108,9 @@ const flattenBookingsPayload = (payload) => {
     return [];
   }
 
-  const properties = Array.isArray(payload?.response) ? payload.response : Array.isArray(payload) ? payload : [];
+  const properties = Array.isArray(payload?.response) 
+    ? payload.response 
+    : (Array.isArray(payload) ? payload : []);
 
   return properties.flatMap((property) => {
     const reservations = Array.isArray(property?.res?.response) ? property.res.response : [];
@@ -138,7 +140,9 @@ const flattenBookingsPayload = (payload) => {
           null,
         guest: String(reservation?.guestname || reservation?.guestName || "Guest").trim(),
         avatar: null,
-        property: propertyTitle ? String(propertyTitle).trim() : `Property #${String(propertyId).substring(0, 8)}...`,
+        property: propertyTitle 
+          ? String(propertyTitle).trim() 
+          : `Property #${String(propertyId).substring(0, 8)}...`,
         address: [city, country].filter(Boolean).join(", ") || "Unknown city",
         dates: formatReservationDateRange(arrivalDate, departureDate),
         arrivalDate,

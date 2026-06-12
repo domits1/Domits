@@ -461,7 +461,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
         resolvePrimaryAccommodationImageUrl(images, "thumb") ||
         resolveAccommodationImageUrl(booking?.images?.[0], "thumb") ||
         resolveAccommodationImageUrl(booking?.property?.images?.[0], "thumb") ||
-        normalizeImageUrl(booking?.propertyImage || booking?.image || booking?.property?.coverImage || null) ||
+        normalizeImageUrl(booking?.propertyImage || booking?.image || booking?.property?.coverImage) ||
         placeholderImage,
     },
     host: {
@@ -491,6 +491,76 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     rules: buildRuleLabels(propertyDetails),
     instructions: [],
   };
+};
+
+const shouldFetchPropertySummary = (booking, bookingTitle, propertyDetails) => {
+  const propertyIdForSummary = getPropertyId(booking);
+  if (!propertyIdForSummary) {
+    return false;
+  }
+
+  const bookingHasImages =
+    (Array.isArray(booking?.images) && booking.images.length > 0) ||
+    (Array.isArray(booking?.property?.images) && booking.property.images.length > 0) ||
+    Boolean(booking?.property_image_url) ||
+    Boolean(booking?.propertyImage) ||
+    Boolean(propertyDetails?.images && propertyDetails.images.length > 0);
+
+  return isFallbackTitle(bookingTitle, propertyIdForSummary) || !booking?.city || !bookingHasImages;
+};
+
+const enrichPropertyDetailsWithSummary = (propertyDetails, summary) => {
+  const enrichedDetails = propertyDetails || {};
+  enrichedDetails.property = enrichedDetails.property || {};
+  enrichedDetails.location = enrichedDetails.location || {};
+
+  if (!enrichedDetails.property.title && summary.title) {
+    enrichedDetails.property.title = summary.title;
+    enrichedDetails.property.name = enrichedDetails.property.name || summary.title;
+  }
+
+  if (
+    (!enrichedDetails.location.city || !enrichedDetails.location.country) &&
+    (summary.city || summary.country)
+  ) {
+    enrichedDetails.location.city = enrichedDetails.location.city || summary.city || "";
+    enrichedDetails.location.country = enrichedDetails.location.country || summary.country || "";
+  }
+
+  if (
+    (!Array.isArray(enrichedDetails.images) || enrichedDetails.images.length === 0) &&
+    summary.imageUrl
+  ) {
+    enrichedDetails.images = [summary.imageUrl];
+  }
+
+  if (!enrichedDetails.host && (summary.hostName || summary.hostImage || summary.hostId)) {
+    enrichedDetails.host = {
+      givenName: summary.hostName || "",
+      profileImage: summary.hostImage || null,
+      id: summary.hostId || null,
+    };
+  }
+
+  return enrichedDetails;
+};
+
+const attemptPropertySummaryEnrichment = async (booking, bookingTitle, propertyDetails) => {
+  try {
+    const propertyIdForSummary = getPropertyId(booking);
+    const needSummary = shouldFetchPropertySummary(booking, bookingTitle, propertyDetails);
+
+    if (needSummary) {
+      const summaries = await fetchPropertySummaries([propertyIdForSummary]);
+      const summary = summaries?.[propertyIdForSummary];
+      if (summary) {
+        return enrichPropertyDetailsWithSummary(propertyDetails, summary);
+      }
+    }
+  } catch (summaryErr) {
+    console.warn("Failed to fetch property summary for guest reservation details:", summaryErr);
+  }
+  return propertyDetails;
 };
 
 function ReservationDetails() {
@@ -551,69 +621,12 @@ function ReservationDetails() {
           console.warn("Falling back to booking-only reservation details:", propertyDetailsError);
         }
 
-        // If the booking or property details are missing title/city/image, try fetching a lightweight summary
-        try {
-          const propertyIdForSummary = getPropertyId(booking);
-          const bookingHasImages =
-            (Array.isArray(booking?.images) && booking.images.length > 0) ||
-            (Array.isArray(booking?.property?.images) && booking.property.images.length > 0) ||
-            Boolean(booking?.property_image_url) ||
-            Boolean(booking?.propertyImage) ||
-            Boolean(propertyDetails?.images && propertyDetails.images.length > 0);
+        const bookingTitle = booking?.title || booking?.Title || booking?.property?.title || "";
 
-          const bookingTitle = booking?.title || booking?.Title || booking?.property?.title || "";
+        let enrichedPropertyDetails = propertyDetails;
+        enrichedPropertyDetails = await attemptPropertySummaryEnrichment(booking, bookingTitle, enrichedPropertyDetails);
 
-          const needSummary = Boolean(
-            propertyIdForSummary &&
-            (isFallbackTitle(bookingTitle, propertyIdForSummary) || !booking?.city || !bookingHasImages)
-          );
-
-          if (needSummary) {
-            try {
-              const summaries = await fetchPropertySummaries([propertyIdForSummary]);
-              const summary = summaries && summaries[propertyIdForSummary];
-              if (summary) {
-                propertyDetails = propertyDetails || {};
-                propertyDetails.property = propertyDetails.property || {};
-                propertyDetails.location = propertyDetails.location || {};
-
-                if (!propertyDetails.property.title && summary.title) {
-                  propertyDetails.property.title = summary.title;
-                  propertyDetails.property.name = propertyDetails.property.name || summary.title;
-                }
-
-                if (
-                  (!propertyDetails.location.city || !propertyDetails.location.country) &&
-                  (summary.city || summary.country)
-                ) {
-                  propertyDetails.location.city = propertyDetails.location.city || summary.city || "";
-                  propertyDetails.location.country = propertyDetails.location.country || summary.country || "";
-                }
-
-                if (
-                  (!Array.isArray(propertyDetails.images) || propertyDetails.images.length === 0) &&
-                  summary.imageUrl
-                ) {
-                  propertyDetails.images = [summary.imageUrl];
-                }
-
-                if (!propertyDetails.host && (summary.hostName || summary.hostImage || summary.hostId)) {
-                  propertyDetails.host = {
-                    givenName: summary.hostName || "",
-                    profileImage: summary.hostImage || null,
-                    id: summary.hostId || null,
-                  };
-                }
-              }
-            } catch (summaryErr) {
-              console.warn("Failed to fetch property summary for guest reservation details:", summaryErr);
-            }
-          }
-        } catch (err) {
-          console.warn("Error while preparing reservation summary:", err);
-        }
-
-        setReservation(buildReservationViewModel({ booking, propertyDetails }));
+        setReservation(buildReservationViewModel({ booking, propertyDetails: enrichedPropertyDetails }));
       } catch (loadError) {
         if (isMounted) {
           let nextError = "Could not load this reservation.";
