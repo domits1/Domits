@@ -19,6 +19,20 @@ export class PropertyAmenityRepository {
         return result.length > 0 ? result.map(item => AmenityMapping.mapDatabaseEntryToAmenity(item)) : null;
     }
 
+    // Batched lookup for many properties in a single query. Returns plain
+    // { property_id, amenityId } objects (no strict model) so a malformed row
+    // can never throw and take down a listing endpoint.
+    async getAmenitiesByPropertyIds(ids) {
+        if (!Array.isArray(ids) || ids.length === 0) return [];
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Amenity)
+            .createQueryBuilder("property_amenity")
+            .where("property_id IN (:...ids)", { ids })
+            .getMany();
+        return result.map(item => ({ property_id: item.property_id, amenityId: item.amenityid }));
+    }
+
     async getAmenityAndCategoryById(id) {
         const client = await Database.getInstance();
         const result = await client

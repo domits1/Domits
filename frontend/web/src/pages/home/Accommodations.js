@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import PageSwitcher from "../../utils/PageSwitcher.module.css";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AccommodationCard from "./AccommodationCard";
 import FilterUi from "./FilterUi";
 import { FetchAllPropertyTypes } from "./services/fetchProperties";
@@ -27,7 +27,12 @@ const getPageNumbers = (current, total) => {
   return result;
 };
 
-const Accommodations = ({ searchResults }) => {
+const Accommodations = ({ searchResults, searchInProgress = false }) => {
+  const location = useLocation();
+  // A search is active when the URL carries country/type/guests params.
+  const searchParams = new URLSearchParams(location.search);
+  const hasSearchQuery = ["country", "type", "guests"].some((key) => searchParams.get(key));
+
   const [accolist, setAccolist] = useState([]);
 
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
@@ -115,6 +120,8 @@ const Accommodations = ({ searchResults }) => {
     setTimeout(() => {
       setAccolist(filteredResults);
       setCurrentPage(1);
+      setLastEvaluatedKeyCreatedAt(null);
+      setLastEvaluatedKeyId(null);
       setFilterLoading(false);
       setFiltersOpen(false);
     }, 500);
@@ -124,12 +131,14 @@ const Accommodations = ({ searchResults }) => {
     async function loadData() {
       setSearchLoading(true);
 
-      if (searchResults && searchResults.length > 0) {
-        setTimeout(() => {
-          setAccolist(searchResults);
-          setCurrentPage(1);
-          setSearchLoading(false);
-        }, 500);
+      if (hasSearchQuery) {
+        // A search is active: show its results, even when empty, instead of
+        // falling back to all listings.
+        setAccolist(searchResults ?? []);
+        setCurrentPage(1);
+        setLastEvaluatedKeyCreatedAt(null);
+        setLastEvaluatedKeyId(null);
+        setSearchLoading(false);
       } else {
         const result = await FetchAllPropertyTypes(null, null);
         if (result.lastEvaluatedKey) {
@@ -144,7 +153,7 @@ const Accommodations = ({ searchResults }) => {
       }
     }
     loadData();
-  }, [searchResults]);
+  }, [searchResults, hasSearchQuery]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -170,41 +179,7 @@ const Accommodations = ({ searchResults }) => {
     };
   }, [currentPage, totalPages, hasMore, searchResults, loadMoreProperties]);
 
-  if (filterLoading || searchLoading) {
-    return (
-      <div id="container" className={filtersOpen ? "filters-open" : ""}>
-        <div className="filters-mobile-bar">
-          <button className="filters-open-btn" type="button" onClick={() => setFiltersOpen(true)}>
-            Filters <span>☰</span>
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="filters-overlay"
-          aria-label="Close filters"
-          onClick={() => setFiltersOpen(false)}
-        />
-
-        <div id="filters-sidebar">
-          <div className="filters-drawer-header">
-            <span>Filters</span>
-            <button type="button" className="filters-close-btn" onClick={() => setFiltersOpen(false)}>
-              ✕
-            </button>
-          </div>
-
-          <FilterUi onFilterApplied={handleFilterApplied} />
-        </div>
-
-        <div id="card-visibility">
-          {SKELETON_IDS.map((id) => (
-            <SkeletonLoader key={id} />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const isLoading = filterLoading || searchLoading || searchInProgress;
 
   const handleClick = (e, ID) => {
     if (!e?.target) return;
@@ -213,6 +188,34 @@ const Accommodations = ({ searchResults }) => {
       return;
     }
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
+  };
+
+  const renderCards = () => {
+    if (isLoading) {
+      return SKELETON_IDS.map((id) => <SkeletonLoader key={id} />);
+    }
+    if (displayedAccolist.length > 0) {
+      return displayedAccolist.map((accommodation) => (
+        <AccommodationCard
+          key={getAccommodationKey(accommodation)}
+          accommodation={accommodation}
+          onClick={handleClick}
+          imageVariant="web"
+          variant="listing"
+        />
+      ));
+    }
+    if (hasSearchQuery) {
+      return (
+        <div
+          className="accommodations-empty"
+          style={{ gridColumn: "1 / -1", padding: "40px 0", textAlign: "center", color: "#555" }}
+        >
+          No accommodations found for this search.
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -242,70 +245,60 @@ const Accommodations = ({ searchResults }) => {
           <FilterUi onFilterApplied={handleFilterApplied} />
         </div>
 
-        <div id="card-visibility">
-          {displayedAccolist.length > 0
-            ? displayedAccolist.map((accommodation) => {
-                return (
-                  <AccommodationCard
-                    key={getAccommodationKey(accommodation)}
-                    accommodation={accommodation}
-                    onClick={handleClick}
-                    imageVariant="web"
-                    variant="listing"
-                  />
-                );
-              })
-            : null}
+        <div id="card-visibility">{renderCards()}</div>
+      </div>
+
+      {!isLoading && (
+        <div className={PageSwitcher.pagination}>
+          <button
+            type="button"
+            className={PageSwitcher.arrow}
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || loadingMore}
+            aria-label="Previous page"
+          >
+            ‹
+          </button>
+
+          {getPageNumbers(currentPage, totalPages).map((item) => {
+            if (typeof item === "string") {
+              return <span key={item} className={PageSwitcher.ellipsis}>…</span>;
+            }
+            return (
+              <button
+                key={`page-${item}`}
+                type="button"
+                onClick={() => handlePageChange(item)}
+                className={currentPage === item ? PageSwitcher.active : PageSwitcher.page}
+              >
+                {item}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            className={PageSwitcher.arrow}
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={(currentPage === totalPages && !hasMore) || loadingMore}
+            aria-label="Next page"
+          >
+            {loadingMore ? "…" : "›"}
+          </button>
         </div>
-      </div>
-
-      <div className={PageSwitcher.pagination}>
-        <button
-          type="button"
-          className={PageSwitcher.arrow}
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1 || loadingMore}
-          aria-label="Previous page"
-        >
-          ‹
-        </button>
-
-        {getPageNumbers(currentPage, totalPages).map((item) => {
-          if (typeof item === "string") {
-            return <span key={item} className={PageSwitcher.ellipsis}>…</span>;
-          }
-          return (
-            <button
-              key={`page-${item}`}
-              type="button"
-              onClick={() => handlePageChange(item)}
-              className={currentPage === item ? PageSwitcher.active : PageSwitcher.page}
-            >
-              {item}
-            </button>
-          );
-        })}
-
-        <button
-          type="button"
-          className={PageSwitcher.arrow}
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={(currentPage === totalPages && !hasMore) || loadingMore}
-          aria-label="Next page"
-        >
-          {loadingMore ? "…" : "›"}
-        </button>
-      </div>
+      )}
     </>
   );
 };
 
 Accommodations.propTypes = {
   searchResults: PropTypes.arrayOf(PropTypes.object),
+  searchInProgress: PropTypes.bool,
 };
 
 Accommodations.defaultProps = {
   searchResults: [],
+  searchInProgress: false,
 };
 
 export default Accommodations;

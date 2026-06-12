@@ -14,13 +14,17 @@ export class FilterController {
       guests,
       country,
       city,
+      type,
       bedrooms,
       beds,
       bathrooms,
       bookingType,
-      lastEvaluatedKeyCreatedAt,
-      lastEvaluatedKeyId,
+      amenities: amenitiesParam,
     } = queryParams;
+
+    const amenities = amenitiesParam
+      ? amenitiesParam.split(",").map((id) => id.trim()).filter(Boolean)
+      : [];
 
     try {
       const result = await this.service.getFilteredProperties({
@@ -29,12 +33,12 @@ export class FilterController {
         guests,
         country,
         city,
+        type,
         bedrooms,
         beds,
         bathrooms,
         bookingType,
-        lastEvaluatedKeyCreatedAt,
-        lastEvaluatedKeyId,
+        amenities,
       });
       return ok(result);
     } catch (err) {
