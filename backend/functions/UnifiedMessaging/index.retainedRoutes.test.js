@@ -40,6 +40,11 @@ jest.mock("./controller/whatsappWebhookController.js", () => ({
   default: jest.fn().mockImplementation(() => mockWhatsAppWebhookControllerMethods),
 }));
 
+jest.mock("../.shared/channelManagement/handler/channelManagementHandler.js", () => ({
+  __esModule: true,
+  handleChannelManagementEvent: jest.fn().mockResolvedValue(null),
+}));
+
 const { handler } = require("./index.js");
 
 const allControllerMethods = [

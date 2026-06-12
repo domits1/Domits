@@ -1,5 +1,6 @@
 const mockIntegrationControllerMethods = {
   checkChannexStatus: jest.fn(),
+  checkHoliduStatus: jest.fn(),
   listChannexProperties: jest.fn(),
   listChannexRoomTypes: jest.fn(),
   listChannexRatePlans: jest.fn(),
@@ -28,6 +29,11 @@ jest.mock("./controller/messageController.js", () => ({
 }));
 
 jest.mock("./controller/integrationController.js", () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockIntegrationControllerMethods),
+}));
+
+jest.mock("../.shared/channelManagement/controller/channelManagementController.js", () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => mockIntegrationControllerMethods),
 }));
@@ -86,6 +92,26 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
     expect(parseBody(response)).toEqual({ channel: "CHANNEX", status: "CONNECTED" });
     expect(mockIntegrationControllerMethods.checkChannexStatus).toHaveBeenCalledTimes(1);
+  });
+
+  test("Holidu routes continue through the shared channel router", async () => {
+    mockIntegrationControllerMethods.checkHoliduStatus.mockResolvedValue({
+      statusCode: 200,
+      response: { channel: "HOLIDU", status: "CONNECTED" },
+    });
+    const event = buildEvent({
+      path: "/default/integrations/holidu/status",
+      query: { userId: "user-1" },
+    });
+
+    const response = await handler(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({
+      channel: "HOLIDU",
+      status: "CONNECTED",
+    });
+    expect(mockIntegrationControllerMethods.checkHoliduStatus).toHaveBeenCalledWith(event);
   });
 
   test("not-allowed user gets 403 before Channex status controller logic runs", async () => {

@@ -1,7 +1,4 @@
-const mockMessageControllerMethods = {
-  getMessages: jest.fn(),
-};
-const mockIntegrationControllerMethods = {
+const mockChannelManagementControllerMethods = {
   checkChannexStatus: jest.fn(),
   checkHoliduStatus: jest.fn(),
   syncChannexBookingAvailability: jest.fn(),
@@ -9,32 +6,14 @@ const mockIntegrationControllerMethods = {
   pollLatestChannexBookings: jest.fn(),
 };
 
-jest.mock("../UnifiedMessaging/controller/messageController.js", () => ({
+jest.mock("../.shared/channelManagement/controller/channelManagementController.js", () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(() => mockMessageControllerMethods),
-}));
-
-jest.mock("../UnifiedMessaging/controller/integrationController.js", () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => mockIntegrationControllerMethods),
-}));
-
-jest.mock("../UnifiedMessaging/controller/ingestionController.js", () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => ({})),
-}));
-
-jest.mock("../UnifiedMessaging/controller/whatsappWebhookController.js", () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => ({})),
+  default: jest.fn().mockImplementation(() => mockChannelManagementControllerMethods),
 }));
 
 const { handler } = require("./index.js");
 
-const allControllerMethods = [
-  ...Object.values(mockMessageControllerMethods),
-  ...Object.values(mockIntegrationControllerMethods),
-];
+const allControllerMethods = Object.values(mockChannelManagementControllerMethods);
 
 const buildHttpEvent = ({ method = "GET", path, query = {}, body = null, headers = {} }) => ({
   httpMethod: method,
@@ -51,15 +30,22 @@ describe("ChannelManagement handler contracts", () => {
     allControllerMethods.forEach((method) => method.mockReset());
   });
 
+  test("entry point has no UnifiedMessaging dependency", () => {
+    const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
+
+    expect(source).not.toContain("UnifiedMessaging");
+    expect(source).not.toContain("unifiedMessagingHandler");
+  });
+
   test.each([
     [
       "/default/integrations/channex/status",
-      mockIntegrationControllerMethods.checkChannexStatus,
+      mockChannelManagementControllerMethods.checkChannexStatus,
       { channel: "CHANNEX", status: "CONNECTED" },
     ],
     [
       "/default/integrations/holidu/status",
-      mockIntegrationControllerMethods.checkHoliduStatus,
+      mockChannelManagementControllerMethods.checkHoliduStatus,
       { channel: "HOLIDU", status: "CONNECTED" },
     ],
   ])("GET %s delegates through the existing integration controller", async (path, controllerMethod, body) => {
@@ -72,18 +58,18 @@ describe("ChannelManagement handler contracts", () => {
     expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
     expect(parseBody(response)).toEqual(body);
     expect(controllerMethod).toHaveBeenCalledWith(event);
-    expect(mockIntegrationControllerMethods.pollLatestChannexBookings).not.toHaveBeenCalled();
+    expect(mockChannelManagementControllerMethods.pollLatestChannexBookings).not.toHaveBeenCalled();
   });
 
   test.each([
     [
       "/integrations/channex/booking-availability/sync",
-      mockIntegrationControllerMethods.syncChannexBookingAvailability,
+      mockChannelManagementControllerMethods.syncChannexBookingAvailability,
       { syncType: "booking-availability", overallSuccess: true },
     ],
     [
       "/integrations/channex/calendar-change/sync",
-      mockIntegrationControllerMethods.syncChannexCalendarChange,
+      mockChannelManagementControllerMethods.syncChannexCalendarChange,
       { syncType: "calendar-change", overallSuccess: true },
     ],
   ])("POST %s preserves the direct invocation contract", async (path, controllerMethod, evidence) => {
@@ -100,7 +86,7 @@ describe("ChannelManagement handler contracts", () => {
     expect(response.statusCode).toBe(200);
     expect(parseBody(response)).toEqual(evidence);
     expect(controllerMethod).toHaveBeenCalledWith(event);
-    expect(mockIntegrationControllerMethods.pollLatestChannexBookings).not.toHaveBeenCalled();
+    expect(mockChannelManagementControllerMethods.pollLatestChannexBookings).not.toHaveBeenCalled();
   });
 
   test("explicit EventBridge polling preserves the existing disabled response", async () => {
@@ -111,7 +97,7 @@ describe("ChannelManagement handler contracts", () => {
       calledProvider: false,
       overallSuccess: true,
     };
-    mockIntegrationControllerMethods.pollLatestChannexBookings.mockResolvedValue({
+    mockChannelManagementControllerMethods.pollLatestChannexBookings.mockResolvedValue({
       statusCode: 200,
       response: disabledResponse,
     });
@@ -126,19 +112,20 @@ describe("ChannelManagement handler contracts", () => {
 
     expect(response.statusCode).toBe(200);
     expect(parseBody(response)).toEqual(disabledResponse);
-    expect(mockIntegrationControllerMethods.pollLatestChannexBookings).toHaveBeenCalledWith(event);
+    expect(mockChannelManagementControllerMethods.pollLatestChannexBookings).toHaveBeenCalledWith(event);
   });
 
-  test("unsupported messaging routes return 404 without invoking messaging or polling", async () => {
+  test("unsupported channel routes return a clean 404 without invoking polling", async () => {
     const response = await handler(
       buildHttpEvent({
-        path: "/default/messages",
+        path: "/default/integrations/channex/unsupported",
       })
     );
 
     expect(response.statusCode).toBe(404);
     expect(parseBody(response)).toBe("Not Found");
-    expect(mockMessageControllerMethods.getMessages).not.toHaveBeenCalled();
-    expect(mockIntegrationControllerMethods.pollLatestChannexBookings).not.toHaveBeenCalled();
+    expect(mockChannelManagementControllerMethods.pollLatestChannexBookings).not.toHaveBeenCalled();
   });
 });
+const fs = require("node:fs");
+const path = require("node:path");

@@ -15,6 +15,8 @@ const ChannexCertificationService =
   require("../.shared/channelManagement/services/channexCertificationService.js").default;
 const ChannexDiagnosticsService =
   require("../.shared/channelManagement/services/channexDiagnosticsService.js").default;
+const ChannelManagementApiService =
+  require("../.shared/channelManagement/channelManagementApiService.js").default;
 
 const functionsRoot = path.join(process.cwd(), "functions");
 const sharedRoot = path.join(functionsRoot, ".shared", "channelManagement");
@@ -44,6 +46,7 @@ const isLambdaHandlerImport = (filePath, specifier) => {
 
 describe("shared ChannelManagement dependency boundary", () => {
   test("contains an importable shared service boundary", () => {
+    expect(() => new ChannelManagementApiService()).not.toThrow();
     expect(typeof ChannexAriExecutionService).toBe("function");
     expect(typeof ChannexFullSyncService).toBe("function");
     expect(typeof ChannexCertificationService).toBe("function");
@@ -83,6 +86,18 @@ describe("shared ChannelManagement dependency boundary", () => {
     ).toBe(true);
     expect(
       fs.existsSync(path.join(sharedRoot, "services", "channexDiagnosticsService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "services", "channexAriOrchestrationService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "channelManagementApiService.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "controller", "channelManagementController.js"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(sharedRoot, "handler", "channelManagementHandler.js"))
     ).toBe(true);
     expect(
       fs.existsSync(path.join(sharedRoot, "utils", "channexAriDateUtils.js"))

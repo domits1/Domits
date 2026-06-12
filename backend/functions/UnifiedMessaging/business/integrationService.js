@@ -24,10 +24,10 @@ import ChannexAvailabilitySyncService from "../.shared/channelManagement/service
 import ChannexMappingService from "../.shared/channelManagement/services/channexMappingService.js";
 import ChannexAriPayloadService from "../.shared/channelManagement/services/channexAriPayloadService.js";
 import ChannexAriExecutionService from "../.shared/channelManagement/services/channexAriExecutionService.js";
+import ChannexAriOrchestrationService from "../.shared/channelManagement/services/channexAriOrchestrationService.js";
 import ChannexFullSyncService from "../.shared/channelManagement/services/channexFullSyncService.js";
 import ChannexCertificationService from "../.shared/channelManagement/services/channexCertificationService.js";
 import ChannexDiagnosticsService from "../.shared/channelManagement/services/channexDiagnosticsService.js";
-import { parseIsoDateParam } from "../.shared/channelManagement/utils/channexAriDateUtils.js";
 import {
   summarizeChannexGroupedPayloads,
 } from "../.shared/channelManagement/utils/channexAriPayloadUtils.js";
@@ -36,12 +36,9 @@ import {
   collectErrorsFromResultList,
   collectTaskIdsFromResultList,
   collectWarningsFromResultList,
-  dedupeByJson,
   deriveEvidenceOutcome,
   formatChannexAvailabilityProviderResult,
   formatChannexRestrictionProviderResult,
-  getCombinedSyncStatus,
-  getInvalidRequestOrFailedStatus,
   resultListHasErrors,
   resultListHasWarnings,
 } from "../.shared/channelManagement/utils/channexAriExecutionUtils.js";
@@ -174,89 +171,12 @@ const describeLocalError = (error) => ({
   responseBody: error?.responseBody ?? error?.providerResponse ?? null,
 });
 
-const appendUniqueNotes = (baseNotes, extraNotes) => {
-  for (const note of Array.isArray(extraNotes) ? extraNotes : []) {
-    if (note && !baseNotes.includes(note)) baseNotes.push(note);
-  }
-};
-const getRestrictionSkipNote = ({ availabilityStep, availabilityCalledProvider, availabilityWarnings, availabilityErrors }) => {
-  if (availabilityStep?.statusCode === 200 && !availabilityCalledProvider) {
-    return "Restrictions sync was skipped because availability sync did not make a provider call.";
-  }
-  if (availabilityWarnings || availabilityErrors) {
-    return "Restrictions sync was skipped because availability sync returned warnings or errors.";
-  }
-  if (availabilityStep?.statusCode === 200) {
-    return null;
-  }
-  return "Restrictions sync was skipped because availability sync did not complete successfully.";
-};
-const buildFailedStepErrors = (step, response, fallbackCode, fallbackMessage, options = {}) => {
-  if (step?.statusCode === 200 || (options.optional && (step === null || step === undefined))) {
-    return [];
-  }
-  return [
-    {
-      errorCode: response?.errorCode ?? fallbackCode,
-      errorMessage: response?.error ?? fallbackMessage,
-    },
-  ];
-};
-const getStepResponse = (step, response) => (step?.statusCode === 200 ? response : step);
-const getOptionalStepResponse = (step, response) => {
-  if (step === null || step === undefined) {
-    return null;
-  }
-  return getStepResponse(step, response);
-};
-const getSuccessfulStepSummary = (response) => ({
-  requestCount: response?.requestCount ?? 0,
-  calledProvider: response?.calledProvider ?? false,
-  results: response?.results ?? [],
-});
-const getStepRequestCount = (step, response) =>
-  step && Number.isFinite(Number(response?.requestCount))
-    ? Number(response.requestCount)
-    : 0;
-const getStepSummary = (step, response) =>
-  step?.statusCode === 200 ? getSuccessfulStepSummary(response) : step;
-const getOptionalStepSummary = (step, response) => {
-  if (step === null || step === undefined) {
-    return null;
-  }
-  return getStepSummary(step, response);
-};
-
 const appendMissingMappingNotes = (notes, missingMappings) => {
   if (Array.isArray(missingMappings) && missingMappings.length) {
     return [...notes, `Missing mappings: ${missingMappings.join(", ")}`];
   }
   return notes;
 };
-const getCapturedGroupedOutboundPayloadSnapshot = (captureState) =>
-  Array.isArray(captureState?.groupedOutboundPayloadSnapshot)
-    ? captureState.groupedOutboundPayloadSnapshot
-    : [];
-const getAriSyncOverallSuccess = ({
-  availabilityStep,
-  availabilityCalledProvider,
-  availabilityWarnings,
-  availabilityErrors,
-  restrictionsStep,
-  restrictionsCalledProvider,
-  restrictionsWarnings,
-  restrictionsErrors,
-}) =>
-  [
-    availabilityStep?.statusCode === 200,
-    availabilityCalledProvider,
-    !availabilityWarnings,
-    !availabilityErrors,
-    restrictionsStep?.statusCode === 200,
-    restrictionsCalledProvider,
-    !restrictionsWarnings,
-    !restrictionsErrors,
-  ].every(Boolean);
 
 const resolveSelectedWhatsAppNumber = (secret, integration) => {
   const selectableNumbers = Array.isArray(secret?.selectableNumbers) ? secret.selectableNumbers : [];
@@ -295,6 +215,7 @@ export default class IntegrationService {
     channexMappingService = null,
     channexAriPayloadService = null,
     channexAriExecutionService = null,
+    channexAriOrchestrationService = null,
     channexFullSyncService = null,
     channexCertificationService = null,
     channexDiagnosticsService = null,
@@ -366,6 +287,14 @@ export default class IntegrationService {
           this.previewChannexAvailabilityPayloads(...args),
         previewChannexRestrictionRatePayloads: (...args) =>
           this.previewChannexRestrictionRatePayloads(...args),
+      });
+    this.channexAriOrchestrationService =
+      channexAriOrchestrationService ||
+      new ChannexAriOrchestrationService({
+        createChannexSyncFinalizer: (...args) => this.createChannexSyncFinalizer(...args),
+        getChannexAriTargets: (...args) => this.getChannexAriTargets(...args),
+        syncChannexAvailability: (...args) => this.syncChannexAvailability(...args),
+        syncChannexRestrictions: (...args) => this.syncChannexRestrictions(...args),
       });
     this.channexFullSyncService =
       channexFullSyncService ||
@@ -1260,58 +1189,13 @@ export default class IntegrationService {
   }
 
   async runGatedChannexAriSteps({ userId, domitsPropertyId, dateFrom, dateTo, baseNotes }) {
-    const availabilityCaptureState = {};
-    const availabilityStep = await this.syncChannexAvailability(userId, domitsPropertyId, dateFrom, dateTo, {
-      skipEvidence: true,
-      includeEvidenceMetadata: false,
-      captureState: availabilityCaptureState,
+    return this.channexAriOrchestrationService.runGatedChannexAriSteps({
+      userId,
+      domitsPropertyId,
+      dateFrom,
+      dateTo,
+      baseNotes,
     });
-    const availabilityResponse = availabilityStep?.response || {};
-    const availabilityCalledProvider = !!availabilityResponse.calledProvider;
-    const availabilityWarnings = resultListHasWarnings(availabilityResponse.results);
-    const availabilityErrors = resultListHasErrors(availabilityResponse.results);
-
-    let restrictionsStep = null;
-    let restrictionsCaptureState = null;
-    if (
-      availabilityStep?.statusCode === 200 &&
-      availabilityResponse.ready !== false &&
-      availabilityCalledProvider &&
-      !availabilityWarnings &&
-      !availabilityErrors
-    ) {
-      restrictionsCaptureState = {};
-      restrictionsStep = await this.syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo, {
-        skipEvidence: true,
-        includeEvidenceMetadata: false,
-        captureState: restrictionsCaptureState,
-      });
-    } else {
-      const skipNote = getRestrictionSkipNote({
-        availabilityStep,
-        availabilityCalledProvider,
-        availabilityWarnings,
-        availabilityErrors,
-      });
-      if (skipNote) baseNotes.push(skipNote);
-    }
-
-    const restrictionsResponse = restrictionsStep?.response || null;
-    appendUniqueNotes(baseNotes, restrictionsResponse?.notes);
-    return {
-      availabilityCaptureState,
-      restrictionsCaptureState,
-      availabilityStep,
-      restrictionsStep,
-      availabilityResponse,
-      restrictionsResponse,
-      availabilityCalledProvider,
-      restrictionsCalledProvider: !!restrictionsResponse?.calledProvider,
-      availabilityWarnings,
-      availabilityErrors,
-      restrictionsWarnings: resultListHasWarnings(restrictionsResponse?.results),
-      restrictionsErrors: resultListHasErrors(restrictionsResponse?.results),
-    };
   }
 
   normalizeChannexFullSyncDateContext(...args) {
@@ -1338,496 +1222,52 @@ export default class IntegrationService {
     return this.channexCertificationService.syncChannexCertificationTestCase(...args);
   }
 
-  buildChannexMultiStepMappingSnapshot(readiness) {
-    return {
-      missingMappings: Array.isArray(readiness.missingMappings) ? readiness.missingMappings : [],
-      propertyMapping: readiness.propertyMapping ?? null,
-      roomTypeMappings: Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : [],
-      ratePlanMappings: Array.isArray(readiness.ratePlanMappings) ? readiness.ratePlanMappings : [],
-    };
+  buildChannexMultiStepMappingSnapshot(...args) {
+    return this.channexAriOrchestrationService.buildChannexMultiStepMappingSnapshot(...args);
   }
 
-  buildChannexAriTargetsFailureEvidencePatch(readinessResult) {
-    const readinessResponse = readinessResult?.response || {};
-    return {
-      integrationAccountId: readinessResponse.integrationAccountId ?? null,
-      status: getInvalidRequestOrFailedStatus(readinessResult?.statusCode),
-      overallSuccess: false,
-      mappingSnapshot: {
-        missingMappings: Array.isArray(readinessResponse.missingMappings) ? readinessResponse.missingMappings : [],
-      },
-      errors: [
-        {
-          errorCode: readinessResponse.errorCode ?? "CHANNEX_ARI_TARGETS_FAILED",
-          errorMessage: readinessResponse.error ?? "Failed to get Channex ARI targets.",
-          details: readinessResponse.details ?? null,
-        },
-      ],
-      rawDetails: { readinessResult },
-    };
+  buildChannexAriTargetsFailureEvidencePatch(...args) {
+    return this.channexAriOrchestrationService.buildChannexAriTargetsFailureEvidencePatch(...args);
   }
 
-  buildBlockedChannexMultiStepSyncResult({
-    readiness,
-    normalizedDomitsPropertyId,
-    normalizedDateFrom,
-    normalizedDateTo,
-    baseNotes,
-    mappingSnapshot,
-    config,
-    dateContext,
-  }) {
-    const responseBody = {
-      channel: readiness.channel || "CHANNEX",
-      integrationAccountId: readiness.integrationAccountId || null,
-      domitsPropertyId: normalizedDomitsPropertyId,
-      dateFrom: normalizedDateFrom,
-      dateTo: normalizedDateTo,
-    };
-    const blockedFieldsBeforeReady = config.getBlockedResponseFieldsBeforeReady?.(dateContext);
-    if (blockedFieldsBeforeReady) Object.assign(responseBody, blockedFieldsBeforeReady);
-    responseBody.ready = false;
-    const blockedFieldsAfterReady = config.getBlockedResponseFieldsAfterReady?.(dateContext);
-    if (blockedFieldsAfterReady) Object.assign(responseBody, blockedFieldsAfterReady);
-    responseBody.calledProvider = false;
-    responseBody.steps = {
-      availability: null,
-      restrictions: null,
-    };
-    if (config.includeCombinedFieldsInBlockedResponse) {
-      Object.assign(responseBody, {
-        requestCount: 0,
-        taskIds: [],
-        warnings: [],
-        errors: [],
-      });
-    }
-    responseBody.overallSuccess = false;
-    responseBody.notes = appendMissingMappingNotes(baseNotes, readiness.missingMappings);
-
-    const response = ok(responseBody);
-
-    return {
-      response,
-      evidencePatch: {
-        integrationAccountId: readiness.integrationAccountId ?? null,
-        status: "BLOCKED",
-        overallSuccess: false,
-        mappingSnapshot,
-        groupedOutboundPayloadSnapshot: {
-          availability: [],
-          restrictions: [],
-        },
-        providerResponseSummary: {
-          calledProvider: false,
-          requestCount: 0,
-          steps: {
-            availability: null,
-            restrictions: null,
-          },
-        },
-        notes: response.response.notes,
-        rawDetails: { readiness },
-      },
-    };
+  buildBlockedChannexMultiStepSyncResult(...args) {
+    return this.channexAriOrchestrationService.buildBlockedChannexMultiStepSyncResult(...args);
   }
 
-  collectChannexMultiStepSyncResults({
-    availabilityStep,
-    restrictionsStep,
-    availabilityResponse,
-    restrictionsResponse,
-    restrictionsOptional = false,
-  }) {
-    const restrictionsResults = restrictionsOptional ? restrictionsResponse?.results : restrictionsResponse.results;
-    const combinedTaskIds = dedupeByJson([
-      ...collectTaskIdsFromResultList(availabilityResponse.results),
-      ...collectTaskIdsFromResultList(restrictionsResults),
-    ]);
-    const combinedWarnings = dedupeByJson([
-      ...collectWarningsFromResultList(availabilityResponse.results),
-      ...collectWarningsFromResultList(restrictionsResults),
-    ]);
-    const combinedErrors = dedupeByJson([
-      ...collectErrorsFromResultList(availabilityResponse.results),
-      ...collectErrorsFromResultList(restrictionsResults),
-      ...buildFailedStepErrors(
-        availabilityStep,
-        availabilityResponse,
-        "CHANNEX_AVAILABILITY_STEP_FAILED",
-        "Availability step failed."
-      ),
-      ...buildFailedStepErrors(
-        restrictionsStep,
-        restrictionsResponse,
-        "CHANNEX_RESTRICTIONS_STEP_FAILED",
-        "Restrictions step failed.",
-        { optional: restrictionsOptional }
-      ),
-    ]);
-
-    return {
-      combinedTaskIds,
-      combinedWarnings,
-      combinedErrors,
-    };
+  collectChannexMultiStepSyncResults(...args) {
+    return this.channexAriOrchestrationService.collectChannexMultiStepSyncResults(...args);
   }
 
-  buildChannexMultiStepValidationInput({
-    normalizedUserId,
-    normalizedDomitsPropertyId,
-    normalizedDateFrom,
-    normalizedDateTo,
-    dateContext,
-    config,
-  }) {
-    const validationInput = {
-      normalizedUserId,
-      normalizedDomitsPropertyId,
-      normalizedDateFrom,
-      normalizedDateTo,
-    };
-    const validationFields = config.getValidationFields?.(dateContext);
-    if (validationFields) Object.assign(validationInput, validationFields);
-    return validationInput;
+  buildChannexMultiStepValidationInput(...args) {
+    return this.channexAriOrchestrationService.buildChannexMultiStepValidationInput(...args);
   }
 
-  buildChannexMultiStepSuccessResponseBody({
-    readiness,
-    normalizedDomitsPropertyId,
-    normalizedDateFrom,
-    normalizedDateTo,
-    dateContext,
-    config,
-    availabilityStep,
-    restrictionsStep,
-    availabilityResponse,
-    restrictionsResponse,
-    restrictionsIntegrationAccountId,
-    getRestrictionsResponse,
-    calledProvider,
-    combinedRequestCount,
-    combinedTaskIds,
-    combinedWarnings,
-    combinedErrors,
-    overallSuccess,
-    baseNotes,
-  }) {
-    const responseBody = {
-      channel: readiness.channel || "CHANNEX",
-      integrationAccountId:
-        availabilityResponse.integrationAccountId ??
-        restrictionsIntegrationAccountId ??
-        readiness.integrationAccountId ??
-        null,
-      domitsPropertyId: normalizedDomitsPropertyId,
-      dateFrom: normalizedDateFrom,
-      dateTo: normalizedDateTo,
-    };
-    const successFieldsBeforeReady = config.getSuccessResponseFieldsBeforeReady?.(dateContext);
-    if (successFieldsBeforeReady) Object.assign(responseBody, successFieldsBeforeReady);
-    responseBody.ready = true;
-    const successFieldsAfterReady = config.getSuccessResponseFieldsAfterReady?.(dateContext);
-    if (successFieldsAfterReady) Object.assign(responseBody, successFieldsAfterReady);
-    responseBody.calledProvider = calledProvider;
-    responseBody.steps = {
-      availability: getStepResponse(availabilityStep, availabilityResponse),
-      restrictions: getRestrictionsResponse(restrictionsStep, restrictionsResponse),
-    };
-    if (config.includeCombinedFieldsInSuccessResponse) {
-      Object.assign(responseBody, {
-        requestCount: combinedRequestCount,
-        taskIds: combinedTaskIds,
-        warnings: combinedWarnings,
-        errors: combinedErrors,
-      });
-    }
-    responseBody.overallSuccess = overallSuccess;
-    responseBody.notes = baseNotes;
-    return responseBody;
+  buildChannexMultiStepSuccessResponseBody(...args) {
+    return this.channexAriOrchestrationService.buildChannexMultiStepSuccessResponseBody(...args);
   }
 
-  buildChannexMultiStepResponse({ responseBody, combinedErrors, config }) {
-    if (!config.providerFailureStatusCode || !combinedErrors.length) return ok(responseBody);
-    return bad(config.providerFailureStatusCode, {
-      ...responseBody,
-      error: config.providerFailureMessage ?? config.catchErrorMessage,
-      errorCode: config.providerFailureCode ?? config.catchErrorCode,
-    });
+  buildChannexMultiStepResponse(...args) {
+    return this.channexAriOrchestrationService.buildChannexMultiStepResponse(...args);
   }
 
-  buildChannexMultiStepRestrictionsContext({ config, restrictionsResponse }) {
-    return {
-      getRestrictionsResponse: config.restrictionsOptional ? getOptionalStepResponse : getStepResponse,
-      getRestrictionsSummary: config.restrictionsOptional ? getOptionalStepSummary : getStepSummary,
-      restrictionsIntegrationAccountId: config.restrictionsOptional
-        ? restrictionsResponse?.integrationAccountId
-        : restrictionsResponse.integrationAccountId,
-    };
+  buildChannexMultiStepRestrictionsContext(...args) {
+    return this.channexAriOrchestrationService.buildChannexMultiStepRestrictionsContext(...args);
   }
 
-  buildChannexMultiStepRawDetails({
-    readiness,
-    config,
-    preStepContext,
-    dateContext,
-    availabilityStep,
-    restrictionsStep,
-  }) {
-    const rawDetails = {
-      readiness,
-    };
-    const rawDetailsBeforeSteps = config.getRawDetailsBeforeSteps?.(preStepContext, dateContext);
-    if (rawDetailsBeforeSteps) Object.assign(rawDetails, rawDetailsBeforeSteps);
-    rawDetails.availabilityStep = availabilityStep;
-    rawDetails.restrictionsStep = restrictionsStep;
-    const rawDetailsAfterSteps = config.getRawDetailsAfterSteps?.(dateContext);
-    if (rawDetailsAfterSteps) Object.assign(rawDetails, rawDetailsAfterSteps);
-    return rawDetails;
+  buildChannexMultiStepRawDetails(...args) {
+    return this.channexAriOrchestrationService.buildChannexMultiStepRawDetails(...args);
   }
 
-  buildChannexMultiStepCaughtRawDetails({ config, dateContext, details }) {
-    const rawDetails = {
-      caughtError: details,
-    };
-    const caughtRawDetails = config.getCaughtRawDetails?.(dateContext);
-    if (caughtRawDetails) Object.assign(rawDetails, caughtRawDetails);
-    return rawDetails;
+  buildChannexMultiStepCaughtRawDetails(...args) {
+    return this.channexAriOrchestrationService.buildChannexMultiStepCaughtRawDetails(...args);
   }
 
-  async runChannexMultiStepSync({ userId, domitsPropertyId, dateFrom, dateTo, options, config }) {
-    const startedAt = nowMs();
-    const normalizedUserId = requireStr(userId);
-    const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
-    const dateContext = config.normalizeDateRange({ dateFrom, dateTo });
-    const { normalizedDateFrom, normalizedDateTo, rawDateFrom, rawDateTo } = dateContext;
-    const finalize = this.createChannexSyncFinalizer({
-      normalizedUserId,
-      normalizedDomitsPropertyId,
-      normalizedDateFrom,
-      normalizedDateTo,
-      rawDateFrom,
-      rawDateTo,
-      startedAt,
-      syncType: config.syncType,
-      options,
-    });
-
-    const validationInput = this.buildChannexMultiStepValidationInput({
-      normalizedUserId,
-      normalizedDomitsPropertyId,
-      normalizedDateFrom,
-      normalizedDateTo,
-      dateContext,
-      config,
-    });
-    const validationFailure = buildSyncDateRangeValidationFailure(validationInput);
-    if (validationFailure) return await finalize(validationFailure.response, validationFailure.evidencePatch);
-
-    try {
-      const readinessResult = await this.getChannexAriTargets(normalizedUserId, normalizedDomitsPropertyId);
-      if (readinessResult?.statusCode !== 200) {
-        return await finalize(readinessResult, this.buildChannexAriTargetsFailureEvidencePatch(readinessResult));
-      }
-
-      const readiness = readinessResult.response || {};
-      const baseNotes = config.createBaseNotes(dateContext);
-      const mappingSnapshot = this.buildChannexMultiStepMappingSnapshot(readiness);
-
-      if (!readiness.ready) {
-        const blocked = this.buildBlockedChannexMultiStepSyncResult({
-          readiness,
-          normalizedDomitsPropertyId,
-          normalizedDateFrom,
-          normalizedDateTo,
-          baseNotes,
-          mappingSnapshot,
-          config,
-          dateContext,
-        });
-        return await finalize(blocked.response, blocked.evidencePatch);
-      }
-
-      const preStepContext =
-        (await config.beforeRunSteps?.({
-          normalizedUserId,
-          normalizedDomitsPropertyId,
-          normalizedDateFrom,
-          normalizedDateTo,
-          dateContext,
-        })) || {};
-
-      const {
-        availabilityCaptureState,
-        restrictionsCaptureState,
-        availabilityStep,
-        restrictionsStep,
-        availabilityResponse,
-        restrictionsResponse,
-        availabilityCalledProvider,
-        restrictionsCalledProvider,
-        availabilityWarnings,
-        availabilityErrors,
-        restrictionsWarnings,
-        restrictionsErrors,
-      } = await config.runSteps({
-        userId: normalizedUserId,
-        domitsPropertyId: normalizedDomitsPropertyId,
-        dateFrom: normalizedDateFrom,
-        dateTo: normalizedDateTo,
-        baseNotes,
-      });
-
-      const { combinedTaskIds, combinedWarnings, combinedErrors } = this.collectChannexMultiStepSyncResults({
-        availabilityStep,
-        restrictionsStep,
-        availabilityResponse,
-        restrictionsResponse,
-        restrictionsOptional: config.restrictionsOptional,
-      });
-
-      const overallSuccess = config.getOverallSuccess({
-        availabilityStep,
-        restrictionsStep,
-        availabilityCalledProvider,
-        restrictionsCalledProvider,
-        availabilityWarnings,
-        availabilityErrors,
-        restrictionsWarnings,
-        restrictionsErrors,
-        combinedWarnings,
-        combinedErrors,
-      });
-      const calledProvider = availabilityCalledProvider || restrictionsCalledProvider;
-      const combinedRequestCount =
-        getStepRequestCount(availabilityStep, availabilityResponse) +
-        getStepRequestCount(restrictionsStep, restrictionsResponse);
-      const {
-        getRestrictionsResponse,
-        getRestrictionsSummary,
-        restrictionsIntegrationAccountId,
-      } = this.buildChannexMultiStepRestrictionsContext({
-        config,
-        restrictionsResponse,
-      });
-
-      const responseBody = this.buildChannexMultiStepSuccessResponseBody({
-        readiness,
-        normalizedDomitsPropertyId,
-        normalizedDateFrom,
-        normalizedDateTo,
-        dateContext,
-        config,
-        availabilityStep,
-        restrictionsStep,
-        availabilityResponse,
-        restrictionsResponse,
-        restrictionsIntegrationAccountId,
-        getRestrictionsResponse,
-        calledProvider,
-        combinedRequestCount,
-        combinedTaskIds,
-        combinedWarnings,
-        combinedErrors,
-        overallSuccess,
-        baseNotes,
-      });
-      const response = this.buildChannexMultiStepResponse({ responseBody, combinedErrors, config });
-
-      const combinedStatus = getCombinedSyncStatus({
-        overallSuccess,
-        providerCalled: calledProvider,
-        combinedErrors,
-        combinedWarnings,
-        blockNoProviderWithErrors: !!config.blockNoProviderWithErrors,
-      });
-
-      const rawDetails = this.buildChannexMultiStepRawDetails({
-        readiness,
-        config,
-        preStepContext,
-        dateContext,
-        availabilityStep,
-        restrictionsStep,
-      });
-
-      return await finalize(response, {
-        integrationAccountId:
-          response.response.integrationAccountId ?? readiness.integrationAccountId ?? null,
-        status: combinedStatus,
-        overallSuccess,
-        mappingSnapshot,
-        groupedOutboundPayloadSnapshot: {
-          availability: getCapturedGroupedOutboundPayloadSnapshot(availabilityCaptureState),
-          restrictions: getCapturedGroupedOutboundPayloadSnapshot(restrictionsCaptureState),
-        },
-        providerResponseSummary: {
-          calledProvider: response.response.calledProvider,
-          requestCount: combinedRequestCount,
-          steps: {
-            availability: getStepSummary(availabilityStep, availabilityResponse),
-            restrictions: getRestrictionsSummary(restrictionsStep, restrictionsResponse),
-          },
-        },
-        taskIds: combinedTaskIds,
-        warnings: combinedWarnings,
-        errors: combinedErrors,
-        notes: baseNotes,
-        rawDetails,
-      });
-    } catch (error) {
-      const details = describeLocalError(error);
-      const rawDetails = this.buildChannexMultiStepCaughtRawDetails({ config, dateContext, details });
-
-      return await finalize(
-        bad(500, {
-          ...(config.getCaughtResponseFields?.(dateContext) ?? undefined),
-          error: config.catchErrorMessage,
-          errorCode: config.catchErrorCode,
-          details,
-        }),
-        {
-          status: "FAILED",
-          overallSuccess: false,
-          errors: [
-            {
-              errorCode: config.catchErrorCode,
-              errorMessage: config.catchErrorMessage,
-              details,
-            },
-          ],
-          rawDetails,
-        }
-      );
-    }
+  async runChannexMultiStepSync(...args) {
+    return this.channexAriOrchestrationService.runChannexMultiStepSync(...args);
   }
 
-  async syncChannexAri(userId, domitsPropertyId, dateFrom, dateTo, options = {}) {
-    return this.runChannexMultiStepSync({
-      userId,
-      domitsPropertyId,
-      dateFrom,
-      dateTo,
-      options,
-      config: {
-        syncType: "ari",
-        normalizeDateRange: ({ dateFrom: rawDateFrom, dateTo: rawDateTo }) => ({
-          rawDateFrom,
-          rawDateTo,
-          normalizedDateFrom: parseIsoDateParam(rawDateFrom),
-          normalizedDateTo: parseIsoDateParam(rawDateTo),
-        }),
-        createBaseNotes: () => [
-          "Manual staging orchestration only. This endpoint runs the existing availability sync first and the Channex restrictions sync second.",
-          "Restrictions sync sends rate values and can include mapped stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay fields when supported Domits calendar/global restrictions are present.",
-        ],
-        runSteps: (stepContext) => this.runGatedChannexAriSteps(stepContext),
-        getOverallSuccess: getAriSyncOverallSuccess,
-        restrictionsOptional: true,
-        catchErrorCode: "CHANNEX_ARI_SYNC_FAILED",
-        catchErrorMessage: "Failed to run combined Channex ARI sync.",
-      },
-    });
+  async syncChannexAri(...args) {
+    return this.channexAriOrchestrationService.syncChannexAri(...args);
   }
 
   async syncChannexFull(...args) {
