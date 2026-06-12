@@ -1,5 +1,6 @@
 import { LocationMapping } from "../../util/mapping/location.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
+import { geocodeAddress } from "../../util/geocoding.js";
 import Database from "database";
 import {Property_Location} from "database/models/Property_Location";
 import {Property} from "database/models/Property";
@@ -32,6 +33,9 @@ export class PropertyLocationRepository {
 
     async create(location) {
         const client = await Database.getInstance();
+        // Derive coordinates from the address (best effort — null on failure).
+        // External integrations such as PriceLabs require latitude/longitude.
+        const coords = await geocodeAddress(location);
         await client
             .createQueryBuilder()
             .insert()
@@ -43,7 +47,9 @@ export class PropertyLocationRepository {
                 housenumber: location.houseNumber,
                 housenumberextension: location.houseNumberExtension,
                 postalcode: location.postalCode,
-                street: location.street
+                street: location.street,
+                latitude: coords?.latitude ?? null,
+                longitude: coords?.longitude ?? null
             })
             .execute();
         const result = await this.getPropertyLocationById(location.property_id);
@@ -52,17 +58,24 @@ export class PropertyLocationRepository {
 
     async updatePropertyLocationById(propertyId, location) {
         const client = await Database.getInstance();
+        // Address may have changed — re-derive coordinates (best effort).
+        const coords = await geocodeAddress(location);
+        const fields = {
+            city: location.city,
+            country: location.country,
+            housenumber: location.houseNumber,
+            housenumberextension: location.houseNumberExtension || "",
+            postalcode: location.postalCode,
+            street: location.street,
+        };
+        if (coords) {
+            fields.latitude = coords.latitude;
+            fields.longitude = coords.longitude;
+        }
         await client
             .createQueryBuilder()
             .update(Property_Location)
-            .set({
-                city: location.city,
-                country: location.country,
-                housenumber: location.houseNumber,
-                housenumberextension: location.houseNumberExtension || "",
-                postalcode: location.postalCode,
-                street: location.street,
-            })
+            .set(fields)
             .where("property_id = :propertyId", { propertyId })
             .execute();
 
