@@ -36,6 +36,10 @@ import {
   resolveWebsiteGalleryPanelColor,
 } from "../config/websiteGallerySectionConfig";
 import {
+  DEFAULT_WEBSITE_HERO_CONTENT_ALIGNMENT,
+  resolveWebsiteHeroContentAlignment,
+} from "../config/websiteHeroSectionConfig";
+import {
   DEFAULT_WEBSITE_GALLERY_SLOT_COUNT,
   normalizeWebsiteImageRotationSettings,
 } from "./websiteImageSlotUtils";
@@ -46,6 +50,7 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "heroEyebrow",
   "heroTitle",
   "heroDescription",
+  "heroContentAlignment",
   "ctaLabel",
   "ctaNote",
   "residenceHeadline",
@@ -366,6 +371,7 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
     heroEyebrow: "",
     heroTitle: "",
     heroDescription: "",
+    heroContentAlignment: DEFAULT_WEBSITE_HERO_CONTENT_ALIGNMENT,
     ctaLabel: "",
     ctaNote: "",
     residenceTitle: "",
@@ -423,6 +429,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
   const heroEyebrow = cleanText(overrides.heroEyebrow);
   const heroTitle = cleanText(overrides.heroTitle);
   const heroDescription = cleanText(overrides.heroDescription);
+  const heroContentAlignment = cleanText(overrides.heroContentAlignment);
   const ctaLabel = cleanText(overrides.ctaLabel);
   const ctaNote = cleanText(overrides.ctaNote);
   const residenceTitle = cleanText(overrides.residenceTitle);
@@ -508,6 +515,10 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
       eyebrow: heroEyebrow || model.hero.eyebrow,
       title: heroTitle || model.hero.title,
       description: heroDescription || model.hero.description,
+      contentAlignment: resolveWebsiteHeroContentAlignment(
+        heroContentAlignment,
+        model?.hero?.contentAlignment
+      ),
     },
     media: {
       ...model.media,
@@ -599,6 +610,7 @@ export const buildWebsiteDraftEditorValues = (model, templateKey = "") => {
       heroEyebrow: String(model?.hero?.eyebrow || ""),
       heroTitle: String(model?.hero?.title || ""),
       heroDescription: String(model?.hero?.description || ""),
+      heroContentAlignment: resolveWebsiteHeroContentAlignment(model?.hero?.contentAlignment),
       ctaLabel: String(model?.callToAction?.label || ""),
       ctaNote: String(model?.callToAction?.note || ""),
       residenceTitle: String(model?.residenceSection?.title || "The residence"),
@@ -713,6 +725,11 @@ const TEXT_OVERRIDE_FIELDS = Object.freeze([
     patchKey: "heroTitle",
     editorValue: (editorValues) => editorValues?.common?.heroTitle,
     baseValue: (baseModel) => baseModel?.hero?.title,
+  },
+  {
+    patchKey: "heroContentAlignment",
+    editorValue: (editorValues) => resolveWebsiteHeroContentAlignment(editorValues?.common?.heroContentAlignment),
+    baseValue: (baseModel) => resolveWebsiteHeroContentAlignment(baseModel?.hero?.contentAlignment),
   },
   {
     patchKey: "heroDescription",

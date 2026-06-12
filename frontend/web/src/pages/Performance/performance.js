@@ -1,84 +1,105 @@
-import React from "react";
+import React, { useState, useContext } from "react";
+import PropTypes from "prop-types";
+import {
+  House,
+  BarChart2,
+  Building2,
+  Megaphone,
+  Settings,
+  TrendingUp,
+  Heart,
+  ChevronDown,
+} from "lucide-react";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 
-// DEZE PAGINA IS NIET IN GEBRUIK
-function Performance() {
+const contentByLanguage = { en, nl, de, es };
+
+const ICON_SIZE = 28;
+
+const BADGE_ICONS   = [House, BarChart2, Building2];
+const SECTION_ICONS = [Megaphone, Settings, TrendingUp, Heart];
+
+const SectionCard = ({ title, bullets, index }) => {
+  const [open, setOpen] = useState(false);
+  const Icon = SECTION_ICONS[index];
   return (
-    <div className="security">
-      <div className="security__title-container">
-        <h2 className="security__title">
-          <span>Performance Bundles</span>
-        </h2>
-        <p className="security__text">
-          Our performance team loves to help you start, grow and scale in your
-          short-term rental journey. It doesn’t matter if you use Domits or
-          other tools. We're ready to increase revenue, reduce workload, and
-          deliver beautiful experiences.
-        </p>
+    <div className={`performance__section-card${open ? " performance__section-card--open" : ""}`}>
+      <div className="performance__section-icon">
+        <Icon size={ICON_SIZE} />
+      </div>
+      <div className="performance__section-content">
+        <button
+          type="button"
+          className="performance__section-heading"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+        >
+          <span className="performance__section-number">{index + 1}</span>
+          <span className="performance__section-title">{title}</span>
+          <ChevronDown
+            className={`performance__section-chevron${open ? " performance__section-chevron--open" : ""}`}
+            size={18}
+          />
+        </button>
+        <div className="performance__section-body">
+          <ul className="performance__section-list">
+            {bullets.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+SectionCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  bullets: PropTypes.arrayOf(PropTypes.string).isRequired,
+  index: PropTypes.number.isRequired,
+};
+
+function Performance() {
+  const { language } = useContext(LanguageContext);
+  const c = contentByLanguage[language]?.performance;
+
+  if (!c) return null;
+
+  return (
+    <div className="performance">
+      <div className="performance__hero">
+        <span className="performance__label">{c.label}</span>
+        <h1 className="performance__title">
+          {c.title}{" "}
+          <span className="performance__title--accent">{c.titleAccent}</span>
+        </h1>
       </div>
 
-      <div className="security__factsbox">
-        <p className="security__fact-title">
-          Starting host 1-9 properties | Growing host 10-99 properties | Scaling
-          host 100+ properties
-        </p>
+      <div className="performance__badges">
+        {c.badges.map(({ title, subtitle }, i) => {
+          const Icon = BADGE_ICONS[i];
+          return (
+            <div className="performance__badge" key={title}>
+              <div className="performance__badge-icon">
+                <Icon size={ICON_SIZE} />
+              </div>
+              <div>
+                <p className="performance__badge-title">{title}</p>
+                <p className="performance__badge-subtitle">{subtitle}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="security__text-container">
-        <h3 className="security__subtitle">1. Distribution & Marketing</h3>
-        <ul className="security__list">
-          <li>
-            Channel management for distribution with Booking.com, Airbnb, VRBO,
-            and 100+ channels.
-          </li>
-          <li>
-            AI, data, and intelligence with analytics, dashboards, and
-            measurement plans.
-          </li>
-          <li>
-            Inbound marketing with lead generation, lead nurturing, customer
-            journeys, community, and content.
-          </li>
-          <li>Performance marketing with SEO, SEA, CRO, and user tracking.</li>
-          <li>
-            Marketing automation and CRM with engagement, e-mail marketing, user
-            segments, and communication flows.
-          </li>
-        </ul>
-      </div>
-
-      <div className="security__text-container">
-        <h3 className="security__subtitle">2. Streamline Operations</h3>
-        <ul className="security__list">
-          <li>Automate property management</li>
-          <li>Reservation management</li>
-          <li>Rate management</li>
-          <li>Housekeeping</li>
-          <li>Front desk</li>
-          <li>Reporting</li>
-        </ul>
-      </div>
-
-      <div className="security__text-container">
-        <h3 className="security__subtitle">3. Grow Revenue</h3>
-        <ul className="security__list">
-          <li>Dynamic pricing</li>
-          <li>Digital upselling</li>
-          <li>Occupancy rates</li>
-          <li>ADR (Average Daily Rate)</li>
-          <li>RevPAR (Revenue per Available Room)</li>
-        </ul>
-      </div>
-
-      <div className="security__text-container">
-        <h3 className="security__subtitle">4. Guest Experience</h3>
-        <ul className="security__list">
-          <li>Warmth and friendliness</li>
-          <li>Booking engine</li>
-          <li>Messaging</li>
-          <li>Reviews</li>
-          <li>Check-in</li>
-          <li>Support (FAQ, email, and phone)</li>
-        </ul>
+      <div className="performance__sections">
+        {c.sections.map(({ title, bullets }, i) => (
+          <SectionCard key={title} title={title} bullets={bullets} index={i} />
+        ))}
       </div>
     </div>
   );

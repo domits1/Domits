@@ -627,6 +627,116 @@
   min-width: 0;
 }
 
+.positionMatrixFieldset {
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  border: 0;
+}
+
+.positionMatrixLegend {
+  margin: 0;
+  padding: 0;
+}
+
+.positionMatrixGrid {
+  width: fit-content;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-self: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid #dbe5ef;
+  background:
+    radial-gradient(circle at top left, rgba(31, 78, 121, 0.06), transparent 36%),
+    #f8fbff;
+}
+
+.positionMatrixButton {
+  appearance: none;
+  width: 54px;
+  height: 54px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  border-radius: 14px;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.positionMatrixButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.positionMatrixButton:focus-visible {
+  outline: none;
+  border-color: rgba(31, 78, 121, 0.38);
+  box-shadow: 0 0 0 4px rgba(31, 78, 121, 0.12);
+}
+
+.positionMatrixButtonSelected {
+  background: #f2f8fe;
+  border-color: rgba(31, 78, 121, 0.36);
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.1);
+}
+
+.positionMatrixButtonFrame {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.46);
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.98)),
+    #f8fafc;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: 4px;
+}
+
+.positionMatrixButtonDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #1f4e79;
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.12);
+}
+
+.positionMatrixButton[data-position-value="top-left"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="top-center"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="top-right"] .positionMatrixButtonFrame {
+  align-items: start;
+}
+
+.positionMatrixButton[data-position-value="bottom-left"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="bottom-center"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="bottom-right"] .positionMatrixButtonFrame {
+  align-items: end;
+}
+
+.positionMatrixButton[data-position-value="top-left"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="center-left"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="bottom-left"] .positionMatrixButtonFrame {
+  justify-items: start;
+}
+
+.positionMatrixButton[data-position-value="top-right"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="center-right"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="bottom-right"] .positionMatrixButtonFrame {
+  justify-items: end;
+}
+
 .fieldLabel {
   font-size: 0.92rem;
   font-weight: 700;

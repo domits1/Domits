@@ -22,9 +22,12 @@ import {
   getDraftWorkingContentOverrides,
   normalizeUiErrorMessage,
 } from "./websiteEditorUtils";
+import { resolveWebsiteHeroContentAlignment } from "../config/websiteHeroSectionConfig";
 
 const PANORAMA_TEMPLATE_KEY = "panorama-landing";
+const TRUST_SIGNALS_TEMPLATE_KEY = "trust-signals";
 const WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS = Object.freeze([
+  "callToAction",
   "amenitiesPanel",
   "availabilityCalendar",
   "gallerySection",
@@ -52,6 +55,10 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
       heroEyebrow: getCleanText(contentOverrides.heroEyebrow),
       heroTitle: getCleanText(contentOverrides.heroTitle),
       heroDescription: getCleanText(contentOverrides.heroDescription),
+      heroContentAlignment: resolveWebsiteHeroContentAlignment(
+        contentOverrides.heroContentAlignment,
+        bootstrapValues.common.heroContentAlignment
+      ),
       ctaLabel: getCleanText(contentOverrides.ctaLabel),
       ctaNote: getCleanText(contentOverrides.ctaNote),
       residenceTitle: getCleanText(contentOverrides.residenceTitle) || bootstrapValues.common.residenceTitle,
@@ -141,6 +148,10 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
 };
 
 export const getCommonFieldPreviewTargetId = (fieldKey, templateKey = "") => {
+  if (fieldKey === "heroContentAlignment") {
+    return EDITOR_TARGET_KEYS.common.heroContentAlignment;
+  }
+
   if (fieldKey === "residenceTitle") {
     return EDITOR_TARGET_KEYS.residence.title;
   }
@@ -222,22 +233,47 @@ export const buildWebsiteEditorSectionData = ({
   const normalizedVisibilityFields = Array.isArray(visibilityFields) ? visibilityFields : [];
   const normalizedImageSlots = Array.isArray(imageSlots) ? imageSlots : [];
   const isPanoramaTemplate = draftTemplateKey === PANORAMA_TEMPLATE_KEY;
+  const hasDedicatedTrustCardsSection =
+    draftTemplateKey === PANORAMA_TEMPLATE_KEY || draftTemplateKey === TRUST_SIGNALS_TEMPLATE_KEY;
+  const trustCardsVisibilityField = hasDedicatedTrustCardsSection
+    ? normalizedVisibilityFields.find((field) => field.key === "trustCards") || null
+    : null;
+  const contactSectionVisibilityField = isPanoramaTemplate
+    ? normalizedVisibilityFields.find((field) => field.key === "contactSection") || null
+    : null;
+  const contactWidgetVisibilityField = isPanoramaTemplate
+    ? normalizedVisibilityFields.find((field) => field.key === "chatWidget") || null
+    : null;
 
   return {
+    heroImageSlot: normalizedImageSlots.find((slot) => slot.kind === "hero") || null,
+    heroCallToActionVisibilityField:
+      normalizedVisibilityFields.find((field) => field.key === "callToAction") || null,
     amenitiesVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "amenitiesPanel") || null,
     calendarVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "availabilityCalendar") || null,
     galleryVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "gallerySection") || null,
+    trustCardsVisibilityField,
+    contactSectionVisibilityField,
+    contactWidgetVisibilityField,
     standaloneVisibilityFields: normalizedVisibilityFields.filter(
-      (field) => !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key)
+      (field) =>
+        !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key) &&
+        (!trustCardsVisibilityField || field.key !== "trustCards") &&
+        (!contactWidgetVisibilityField || field.key !== "chatWidget") &&
+        (!contactSectionVisibilityField || field.key !== "contactSection")
     ),
     residenceImageSlot: normalizedImageSlots.find((slot) => slot.kind === "residence") || null,
     galleryImageSlots: isPanoramaTemplate
       ? normalizedImageSlots.filter((slot) => slot.kind === "gallery")
       : [],
     generalImageSlots: normalizedImageSlots.filter((slot) => {
+      if (slot.kind === "hero") {
+        return false;
+      }
+
       if (slot.kind === "residence") {
         return false;
       }

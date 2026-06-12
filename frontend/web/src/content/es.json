@@ -427,7 +427,25 @@
     "attachment": "Agregar archivos adjuntos",
     "send": "Enviar mensaje",
     "guest": "Huésped",
-    "host": "Anfitrión"
+    "host": "Anfitrión",
+    "heroLabel": "CENTRO DE AYUDA",
+    "heroTitleStart": "¿Cómo podemos ",
+    "heroTitleEnd": "ayudarte?",
+    "searchPlaceholder": "Busca respuestas, reservas, pagos, soporte...",
+    "frequentlyAsked": "Preguntas frecuentes",
+    "stillNeedHelp": "¿Todavía necesitas ayuda?",
+    "supportSubtitle": "Nuestro equipo de soporte está disponible 24/7",
+    "contactSupport": "Contactar soporte",
+    "noResults": "No se encontraron resultados para \"{query}\". Intenta con otro término.",
+    "categories": {
+      "aboutDomits": "Sobre Domits",
+      "manageAccount": "Gestionar cuenta",
+      "searchAndBook": "Buscar y reservar",
+      "cancellations": "Cancelaciones",
+      "payments": "Pagos",
+      "yourStay": "Tu estancia",
+      "support": "Soporte"
+    }
   },
   "whyDomits": {
     "head": {
@@ -544,22 +562,26 @@
     }
   },
   "sustainability": {
-    "title": "Sostenibilidad",
-    "subtitle": "¿Por qué elegir Domits por su sostenibilidad?",
-    "business": {
-      "title": "1. **Negocio** Sostenible",
-      "subtitle": "Plan de reciclaje con contenedores",
-      "description": "Domits empieza de forma sencilla tomando decisiones conscientes, como elegir electrodomésticos de bajo consumo, y continuará mejorando un 1% cada día. Con nuestra política de residuos alimentarios no queremos ser demasiado estrictos y comenzamos con un plan de reciclaje flexible para vidrio, papel, plástico y orgánico. En cuanto a biodiversidad y ecosistemas, buscamos consumir más alimentos orgánicos, usar productos de limpieza ecológicos y aplicar procedimientos sin papel."
-    },
-    "accommodations": {
-      "title": "2. **Alojamientos** Sostenibles",
-      "subtitle": "Certificación",
-      "description": "Domits se enfoca activamente en incorporar anfitriones que ya son sostenibles. Si aún no lo son, los apoyamos paso a paso para aumentar su conciencia. En una etapa posterior, queremos otorgarles certificaciones como prueba de sostenibilidad en energía, residuos, biodiversidad, ecosistemas, destinos y comunidad."
-    },
-    "experience": {
-      "title": "3. **Experiencia del Huésped** Sostenible",
-      "description": "Desde el primer punto de contacto con Domits, queremos que los huéspedes sientan que están viajando de la manera más sostenible posible. Domits comienza con filtros de sostenibilidad y una amplia vista general de todas las comodidades ecológicas."
-    }
+    "label": "SOSTENIBILIDAD",
+    "title": "¿Por qué elegir Domits",
+    "titleAccent": "por su sostenibilidad?",
+    "sections": [
+      {
+        "title": "Negocio Sostenible",
+        "subtitle": "Plan de reciclaje con contenedores",
+        "description": "Domits empieza de forma sencilla tomando decisiones conscientes, como elegir electrodomésticos de bajo consumo, y continuará mejorando un 1% cada día. Con nuestra política de residuos alimentarios no queremos ser demasiado estrictos y comenzamos con un plan de reciclaje flexible para vidrio, papel, plástico y orgánico. En cuanto a biodiversidad y ecosistemas, buscamos consumir más alimentos orgánicos, usar productos de limpieza ecológicos y aplicar procedimientos sin papel."
+      },
+      {
+        "title": "Alojamientos Sostenibles",
+        "subtitle": "Certificación",
+        "description": "Domits se enfoca activamente en incorporar anfitriones que ya son sostenibles. Si aún no lo son, los apoyamos paso a paso para aumentar su conciencia. En una etapa posterior, queremos otorgarles certificaciones como prueba de sostenibilidad en energía, residuos, biodiversidad, ecosistemas, destinos y comunidad."
+      },
+      {
+        "title": "Experiencia del Huésped Sostenible",
+        "subtitle": "Viajes ecológicos",
+        "description": "Desde el primer punto de contacto con Domits, queremos que los huéspedes sientan que están viajando de la manera más sostenible posible. Domits comienza con filtros de sostenibilidad y una amplia vista general de todas las comodidades ecológicas."
+      }
+    ]
   },
   "howItWorksContent": {
     "title": "Cómo Funciona Domits",
@@ -1107,116 +1129,134 @@
       }
     }
   },
-  "hostDashboard": {
-    "reservationDetails": {
-      "pageTitle": "Detalles de la reserva",
-      "states": {
-        "failedToLoad": "No se pudo cargar la reserva.",
-        "noReservationFound": "No se encontro ninguna reserva."
+  "performance": {
+    "label": "PAQUETES DE RENDIMIENTO",
+    "title": "Haz crecer tu negocio de alquiler con",
+    "titleAccent": "confianza.",
+    "badges": [
+      {
+        "title": "Anfitrión inicial",
+        "subtitle": "1-9 propiedades"
       },
-      "buttons": {
-        "back": "Volver a reservas",
-        "messageGuest": "Enviar mensaje",
-        "viewInCalendar": "Ver en calendario",
-        "downloadReceipt": "Descargar recibo",
-        "preparingReceipt": "Preparando recibo..."
+      {
+        "title": "Anfitrión en crecimiento",
+        "subtitle": "10-99 propiedades"
       },
-      "headings": {
-        "property": "Alojamiento",
-        "guest": "Huesped",
-        "payment": "Pago",
-        "reservationInfo": "Informacion de la reserva",
-        "actions": "Acciones",
-        "checkInInstructions": "Instrucciones de check-in",
-        "houseRules": "Normas de la casa",
-        "cancellationPolicy": "Politica de cancelacion",
-        "specialRequest": "Solicitud especial"
-      },
-      "labels": {
-        "bookedVia": "Reservado mediante",
-        "checkIn": "Check-in",
-        "bookedOn": "Reservado el",
-        "reservationId": "ID de reserva",
-        "confirmation": "Confirmacion",
-        "cleaningFee": "Tarifa de limpieza",
-        "totalPaid": "Total pagado",
-        "method": "Metodo",
-        "propertyImageAlt": "Imagen del alojamiento",
-        "guestFallbackName": "Huesped",
-        "loadingValue": "Cargando...",
-        "unavailable": "no disponible",
-        "none": "Ninguno",
-        "locationUnavailable": "Ubicacion no disponible",
-        "loadingLocation": "Cargando ubicacion...",
-        "night": "noche",
-        "nights": "noches",
-        "guest": "huesped",
-        "guests": "huespedes"
-      },
-      "loading": {
-        "status": "Cargando",
-        "summary": "Cargando resumen de la reserva...",
-        "reservationDetails": "Cargando detalles de la reserva...",
-        "guestEmail": "Cargando correo del huesped...",
-        "guestPhone": "Cargando telefono del huesped...",
-        "checkInInstructions": "Cargando instrucciones de check-in...",
-        "houseRules": "Cargando normas de la casa...",
-        "cancellationPolicy": "Cargando politica de cancelacion...",
-        "payment": "Cargando pago",
-        "paymentStatus": "Cargando estado del pago"
-      },
-      "empty": {
-        "noCheckInInstructions": "No hay instrucciones de check-in",
-        "noHouseRulesSpecified": "No se especificaron normas de la casa",
-        "noCancellationPolicySelected": "No se selecciono ninguna politica de cancelacion.",
-        "paymentStatusUnavailable": "Estado del pago no disponible",
-        "reservation": "Reserva"
-      },
-      "status": {
-        "PAID": "Confirmada",
-        "AWAITING_PAYMENT": "Pago pendiente",
-        "FAILED": "Fallida",
-        "DECLINED": "Rechazada",
-        "INQUIRY": "Solicitud"
-      },
-      "paymentStatus": {
-        "PAID": {
-          "label": "Pago recibido",
-          "text": "Pagado por completo el"
-        },
-        "AWAITING_PAYMENT": {
-          "label": "Pago pendiente",
-          "text": "Pago pendiente"
-        },
-        "FAILED": {
-          "label": "Pago fallido",
-          "text": "El pago no fue exitoso"
-        },
-        "DECLINED": {
-          "label": "Pago rechazado",
-          "text": "El pago fue rechazado"
-        },
-        "INQUIRY": {
-          "label": "Solicitud pendiente",
-          "text": "Esperando revision del anfitrion"
-        }
-      },
-      "requestActions": {
-        "title": "Solicitud de reserva",
-        "subtitle": "Acepta o rechaza esta solicitud de reserva antes de que pase al pago.",
-        "accept": "Aceptar solicitud",
-        "decline": "Rechazar solicitud",
-        "confirmAcceptTitle": "Aceptar esta solicitud?",
-        "confirmAcceptNoOverlap": "Seguro que quieres aceptar esta solicitud?",
-        "confirmAcceptWithOverlap": "Hay {count} otras solicitudes pendientes con fechas superpuestas para este alojamiento. Al aceptar, esas solicitudes se rechazaran automaticamente.",
-        "confirmDeclineTitle": "Rechazar esta solicitud?",
-        "confirmDeclineMessage": "Seguro que quieres rechazar esta solicitud de reserva?",
-        "accepted": "Solicitud aceptada.",
-        "acceptedWithOverlap": "Solicitud aceptada. {count} solicitudes superpuestas fueron rechazadas automaticamente.",
-        "declined": "Solicitud rechazada.",
-        "updateFailed": "No se pudo actualizar el estado de la solicitud.",
-        "cancel": "Cancelar"
+      {
+        "title": "Anfitrión escalando",
+        "subtitle": "100+ propiedades"
       }
+    ],
+    "sections": [
+      {
+        "title": "Distribución y Marketing",
+        "bullets": [
+          "Distribución multicanal a través de Booking.com, Airbnb, VRBO y 100+ plataformas.",
+          "Análisis impulsado por IA, paneles y perspectivas de rendimiento.",
+          "Marketing de entrada, nutrición de leads, recorridos del cliente y contenido.",
+          "SEO, SEA, CRO y marketing de rendimiento orientado a la conversión.",
+          "Automatización de CRM, campañas de correo electrónico, segmentación y flujos de comunicación."
+        ]
+      },
+      {
+        "title": "Optimizar Operaciones",
+        "bullets": [
+          "Automatizar la gestión de propiedades",
+          "Gestión de reservas",
+          "Gestión de tarifas",
+          "Housekeeping",
+          "Recepción",
+          "Informes"
+        ]
+      },
+      {
+        "title": "Aumentar Ingresos",
+        "bullets": [
+          "Precios dinámicos",
+          "Upselling digital",
+          "Tasas de ocupación",
+          "ADR (Tarifa Diaria Promedio)",
+          "RevPAR (Ingresos por Habitación Disponible)"
+        ]
+      },
+      {
+        "title": "Experiencia del Huésped",
+        "bullets": [
+          "Calidez y amabilidad",
+          "Motor de reservas",
+          "Mensajería",
+          "Reseñas",
+          "Check-in",
+          "Soporte (FAQ, correo electrónico y teléfono)"
+        ]
+      }
+    ]
+  },
+  "security": {
+    "label": "SEGURIDAD",
+    "title": "Tu seguridad es lo que",
+    "titleAccent": "más importa.",
+    "badges": [
+      {
+        "title": "Infraestructura Segura",
+        "subtitle": "Fiable y monitoreada"
+      },
+      {
+        "title": "Datos Cifrados",
+        "subtitle": "Protección de extremo a extremo"
+      },
+      {
+        "title": "Copias de Seguridad Diarias",
+        "subtitle": "Siempre protegido"
+      },
+      {
+        "title": "Alojado en la UE",
+        "subtitle": "Cumple con el RGPD"
+      }
+    ],
+    "sections": [
+      {
+        "title": "1. Infraestructura",
+        "description": "Nuestros servidores están alojados de forma segura en múltiples centros de datos europeos. En caso de cualquier fallo, los técnicos siempre están disponibles para resolver el problema de inmediato. La infraestructura en línea de Amazon Web Services garantiza la seguridad y confidencialidad de nuestros servicios en la nube.",
+        "bullets": [
+          "Nuestros datos se almacenan en dos centros de datos diferentes.",
+          "En caso de fallos, Domits cambia automáticamente a otro centro de datos.",
+          "Una disponibilidad del 99,995 %."
+        ]
+      },
+      {
+        "title": "2. Robo y Privacidad",
+        "description": "Domits se compromete plenamente a garantizar que sus datos estén seguros y protegidos de los hackers. Cada cliente tiene su propia base de datos separada en Domits, lo que hace imposible que otros usuarios accedan a los datos ajenos.",
+        "bullets": [
+          "Al usar Domits, la conexión está asegurada.",
+          "Gestión y almacenamiento de datos conformes con el RGPD",
+          "Es imposible que terceros intercepten el tráfico de datos."
+        ]
+      },
+      {
+        "title": "3. Copias de Seguridad",
+        "description": "En Domits hacemos todo lo posible para garantizar que nuestro sistema esté siempre operativo y sus datos siempre seguros. Las copias de seguridad se realizan diariamente para que nunca se pierda nada. En caso de interrupciones, todos sus datos se almacenan de forma segura y nuestro equipo garantiza que su cuenta pueda ser restaurada.",
+        "bullets": [
+          "Garantía contra la pérdida de datos",
+          "Recuperación diaria de datos de hasta seis meses atrás",
+          "Copias de seguridad de datos seguras"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "title": "Visión",
+        "text": "Creemos que todos merecen una seguridad transparente y accesible. Nuestra visión es crear un entorno digital donde los usuarios puedan confiar en que sus datos están protegidos sin necesidad de entender detalles técnicos complejos."
+      },
+      {
+        "title": "Lo Que Hacemos",
+        "text": "Supervisamos, actualizamos y mejoramos continuamente nuestra infraestructura de seguridad. Nuestro equipo dedicado trabaja las 24 horas del día para identificar amenazas potenciales, implementar los últimos estándares de seguridad y garantizar que sus datos permanezcan protegidos en todo momento."
+      }
+    ],
+    "cta": {
+      "title": "¿Preguntas sobre seguridad?",
+      "contactButton": "Contactar soporte",
+      "learnMoreButton": "Más información"
     }
   }
 }

@@ -31,6 +31,10 @@ export const Property_Calendar_Override = new EntitySchema({
       type: "int",
       nullable: true,
     },
+    pricelabs_ignored: {
+      type: "boolean",
+      nullable: true,
+    },
     stop_sell: {
       type: "boolean",
       nullable: true,
