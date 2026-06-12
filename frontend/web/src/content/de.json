@@ -351,6 +351,55 @@
     }
   },
   "about": {
+    "redesign": {
+      "eyebrow": "Warum Domits",
+      "hero": {
+        "line1": "Wir glauben, dass Reisen",
+        "line2": "",
+        "highlight": "einfach, fair und menschlich",
+        "suffix": " sein sollte."
+      },
+      "features": {
+        "fairHosts": "Fair für Gastgeber",
+        "securePayments": "Sichere Zahlungen",
+        "humanSupport": "Menschlicher Support",
+        "aiTools": "KI-gestützte Tools"
+      },
+      "mission": {
+        "label": "Unsere Mission",
+        "titleStart": "Wir fördern ",
+        "titleHighlight": "bedeutungsvolle",
+        "titleEnd": " Reiseverbindungen.",
+        "description": "Wir machen Reisen einfach für Gäste und nachhaltiger für Gastgeber.",
+        "cta": "Mehr über uns erfahren",
+        "meetTheTeam": "Lerne das Team kennen"
+      },
+      "effortless": "Entwickelt, damit sich Gastgeben und Reisen mühelos anfühlen.",
+      "pills": {
+        "instantBooking": "Sofortbuchung",
+        "smartTools": "Smarte Tools",
+        "securePayments": "Sichere Zahlungen"
+      },
+      "techBand": {
+        "title": "Technologie mit Sinn.",
+        "aiTools": "KI-gestützte Tools",
+        "humanSupport": "Menschlicher Support",
+        "sustainableTravel": "Nachhaltiges Reisen"
+      },
+      "stats": {
+        "countriesValue": "50+",
+        "countriesLabel": "Länder",
+        "guestsValue": "2K+",
+        "guestsLabel": "Zufriedene Gäste",
+        "ratingValue": "4.8/5",
+        "ratingLabel": "Durchschnittliche Bewertung"
+      },
+      "cta": {
+        "title": "Lass uns gemeinsam die Zukunft des Reisens gestalten.",
+        "explore": "Unterkünfte entdecken",
+        "list": "Unterkunft anbieten"
+      }
+    },
     "title": "Über Domits",
     "description": "Maßgeschneiderte Reisepartnerschaften",
     "mission": {

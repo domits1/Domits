@@ -351,6 +351,55 @@
     }
   },
   "about": {
+    "redesign": {
+      "eyebrow": "Waarom Domits",
+      "hero": {
+        "line1": "Wij geloven dat reizen",
+        "line2": "",
+        "highlight": "simpel, eerlijk en menselijk",
+        "suffix": " moet zijn."
+      },
+      "features": {
+        "fairHosts": "Eerlijk voor hosts",
+        "securePayments": "Veilige betalingen",
+        "humanSupport": "Menselijke support",
+        "aiTools": "AI-gedreven tools"
+      },
+      "mission": {
+        "label": "Onze missie",
+        "titleStart": "Wij versterken ",
+        "titleHighlight": "betekenisvolle",
+        "titleEnd": " reisverbindingen.",
+        "description": "Wij maken reizen simpel voor gasten en duurzamer voor hosts.",
+        "cta": "Lees meer over ons",
+        "meetTheTeam": "Ontmoet het team"
+      },
+      "effortless": "Gebouwd om hosten en reizen moeiteloos te maken.",
+      "pills": {
+        "instantBooking": "Direct boeken",
+        "smartTools": "Slimme tools",
+        "securePayments": "Veilige betalingen"
+      },
+      "techBand": {
+        "title": "Technologie met een doel.",
+        "aiTools": "AI-gedreven tools",
+        "humanSupport": "Menselijke support",
+        "sustainableTravel": "Duurzaam reizen"
+      },
+      "stats": {
+        "countriesValue": "50+",
+        "countriesLabel": "Landen",
+        "guestsValue": "2K+",
+        "guestsLabel": "Tevreden gasten",
+        "ratingValue": "4.8/5",
+        "ratingLabel": "Gemiddelde beoordeling"
+      },
+      "cta": {
+        "title": "Laten we samen de toekomst van reizen bouwen.",
+        "explore": "Ontdek verblijven",
+        "list": "Verhuur je accommodatie"
+      }
+    },
     "title": "Over Domits",
     "description": "Reispartners op maat",
     "mission": {

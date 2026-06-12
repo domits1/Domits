@@ -1,29 +1,28 @@
 import React, { useContext } from "react";
-import vision from "../../images/icons/vision.png";
-import whatwedo from "../../images/icons/route.png";
+import { Link } from "react-router-dom";
+import {
+  Users,
+  ShieldCheck,
+  Headphones,
+  Zap,
+  Wrench,
+  CreditCard,
+  Sparkles,
+  Leaf,
+  Earth,
+  Heart,
+  Star,
+  ArrowRight,
+  Home,
+  BarChart3,
+  KeyRound,
+  RefreshCw,
+} from "lucide-react";
 
 import stefan from "../../images/about-img/stefan.jpeg";
 import tim from "../../images/about-img/tim.png";
-
-import standard from "../../images/standard.png";
-import nick from "../../images/nick.png";
-
-import Ales from "../../images/about-img/Ales.jpg";
-import Chant from "../../images/about-img/Chant.jpg";
-import Chiel from "../../images/about-img/Chiel.png";
-import Justin from "../../images/about-img/Justin.jpg";
 import Robert from "../../images/about-img/Robert.jpg";
-import Robin from "../../images/about-img/Robin.jpg";
-import Sam from "../../images/about-img/Sam.jpg";
-import Jared from "../../images/about-img/Jared.jpg";
-import Sander from "../../images/about-img/Sander.png";
-import Bekir from "../../images/about-img/Bekir.png";
-import Kacper from "../../images/about-img/Kacper.png";
-import Valentijn from "../../images/about-img/valentijn.png";
-import Sakhi from "../../images/about-img/Sakhi.png";
 import Denisa from "../../images/about-img/Denisa.jpeg";
-import Omer from "../../images/about-img/Omer.jpg";
-import Ameen from "../../images/about-img/Ameen.jpg";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -33,210 +32,147 @@ import es from "../../content/es.json";
 
 const contentByLanguage = { en, nl, de, es };
 
-// Handy tool for editing the images:
-// https://imageresizer.com/image-compressor
-
 function About() {
   const { language } = useContext(LanguageContext);
-  const aboutContent = contentByLanguage[language]?.about;
+  const content = contentByLanguage[language]?.about?.redesign;
 
-  if (!aboutContent) return null;
+  if (!content) return null;
 
-  const founderMembers = [
-    { name: "Stefan", src: stefan, role: aboutContent.crew.founder },
-    { name: "Robert", src: Robert, role: aboutContent.crew.engineeringManager },
+  const features = [
+    { icon: Users, label: content.features.fairHosts },
+    { icon: ShieldCheck, label: content.features.securePayments },
+    { icon: Headphones, label: content.features.humanSupport },
+    { icon: Zap, label: content.features.aiTools },
   ];
 
-  const developerMembers = [
-    { name: "Tim H.", src: tim, role: aboutContent.crew.developer },
-    { name: "Ales", src: Ales, role: aboutContent.crew.developer },
-    { name: "Bekir", src: Bekir, role: aboutContent.crew.developer },
-    { name: "Chant", src: Chant, role: aboutContent.crew.developer },
-    { name: "Justin", src: Justin, role: aboutContent.crew.developerDistribution },
-    { name: "Kacper", src: Kacper, role: aboutContent.crew.developer },
-    { name: "Nick Ryan", src: nick, role: aboutContent.crew.developer },
-    { name: "Raman", src: standard, role: aboutContent.crew.developer },
-    { name: "Robin", src: Robin, role: aboutContent.crew.security },
-    { name: "Sam", src: Sam, role: aboutContent.crew.developer },
-    { name: "Sander", src: Sander, role: aboutContent.crew.developer },
-    { name: "Sem", src: standard, role: aboutContent.crew.developer },
+  const pills = [
+    { icon: Zap, label: content.pills.instantBooking },
+    { icon: Wrench, label: content.pills.smartTools },
+    { icon: CreditCard, label: content.pills.securePayments },
+  ];
 
-    // New developers
-    { name: "Ahsanul", src: standard, role: aboutContent.crew.developer },
-    { name: "Alessio", src: standard, role: aboutContent.crew.developer },
-    { name: "Asif", src: standard, role: aboutContent.crew.developer },
-    { name: "Burak", src: standard, role: aboutContent.crew.developer },
-    { name: "Chiel", src: Chiel, role: aboutContent.crew.developer},
-    { name: "Gurpreet", src: standard, role: aboutContent.crew.developer },
-    { name: "Ho Tin", src: standard, role: aboutContent.crew.developer },
-    { name: "Ken", src: standard, role: aboutContent.crew.developer },
-    { name: "Moncef", src: standard, role: aboutContent.crew.developer },
-    { name: "Stephanie", src: standard, role: aboutContent.crew.developer },
-    { name: "Tom", src: standard, role: aboutContent.crew.developer },
-    { name: "Valentijn", src: Valentijn, role: aboutContent.crew.developer },
-    { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
-    { name: "Sakhi", src: Sakhi, role: aboutContent.crew.developer },
-    { name: "Denisa", src: Denisa, role: aboutContent.crew.designer },
-    { name: "Omer", src: Omer, role: aboutContent.crew.developer },
-    { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
-    { name: "Hadeel", src: standard, role: aboutContent.crew.developer },
-   
-  ]
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const techItems = [
+    { icon: Sparkles, label: content.techBand.aiTools },
+    { icon: Users, label: content.techBand.humanSupport },
+    { icon: Leaf, label: content.techBand.sustainableTravel },
+  ];
 
-  const marketingMembers = [
-    { name: "Jared", src: Jared, role: aboutContent.crew.growth },
-    { name: "Julian", src: standard, role: aboutContent.crew.growth },
-    { name: "Maroan", src: standard, role: aboutContent.crew.growth },
-    { name: "Thijmen", src: standard, role: aboutContent.crew.growth },
-    {
-      name: aboutContent.crew.canBeYou,
-      src: standard,
-      role: aboutContent.crew.hiring,
-    },
-  ].sort((a, b) => a.name.localeCompare(b.name));
+  const stats = [
+    { icon: Earth, value: content.stats.countriesValue, label: content.stats.countriesLabel },
+    { icon: Heart, value: content.stats.guestsValue, label: content.stats.guestsLabel },
+    { icon: Star, value: content.stats.ratingValue, label: content.stats.ratingLabel },
+  ];
+
+  const orbitMembers = [
+    { src: stefan, alt: "Stefan", position: "top-left", badge: Home },
+    { src: Robert, alt: "Robert", position: "top-right", badge: BarChart3 },
+    { src: Denisa, alt: "Denisa", position: "bottom-left", badge: KeyRound },
+    { src: tim, alt: "Tim", position: "bottom-right", badge: RefreshCw },
+  ];
 
   return (
     <div className="about">
-      <div className="about__title-container">
-        <h2 className="about__title">
-          <span className="highlightH2">{aboutContent.title}</span>
-        </h2>
-        <h3 className="about__title">{aboutContent.description}</h3>
-      </div>
-
-      <div className="about__subtitle-container">
-        <h4>{aboutContent.mission.title}</h4>
-      </div>
-
-      <div className="about__text-container">
-        <p className="about__text about__text--margintop">
-          {aboutContent.mission.description}
-        </p>
-
-        <p className="about__text about__text--margintop">
-          {aboutContent.mission.readHere}
-          <a className="ref" href="/how-it-works">
-            {aboutContent.mission.howItWorks}
-          </a>
-          {aboutContent.mission.and}
-          <a className="ref" href="/why-domits">
-            {aboutContent.mission.whyDomits}
-          </a>
-          .
-        </p>
-      </div>
-
-      <br />
-
-      <div className="about__factsbox">
-        <div className="about__fact">
-          <div className="about__fact-header">
-            <p className="about__fact-title">{aboutContent.vision.title}</p>
-            <img className="about__fact-image" src={vision} alt="Vision" />
-          </div>
-          <p className="about__fact-subtitle">{aboutContent.vision.subTitle}</p>
-          <p className="about__fact-text">{aboutContent.vision.description}</p>
-        </div>
-
-        <div className="about__fact">
-          <div className="about__fact-header">
-            <p className="about__fact-title">{aboutContent.whatWeDo.title}</p>
-            <img className="about__fact-image" src={whatwedo} alt="What we do" />
-          </div>
-          <p className="about__fact-subtitle">{aboutContent.whatWeDo.subTitle}</p>
-          <p className="about__fact-text">
-            {aboutContent.whatWeDo.description}
-            <a className="ref" href="/travelinnovation">
-              {aboutContent.whatWeDo.travelInnovation}
-            </a>
-            .
-          </p>
-        </div>
-      </div>
-
-      <div className="about__crew">
-        <h1 className="about__who-we-are-title about__who-we-are-title--margintop">
-          {aboutContent.crew.whoWeAre}
+      <section className="about__hero">
+        <p className="about__eyebrow">{content.eyebrow}</p>
+        <h1 className="about__hero-title">
+          {content.hero.line1}
+          <br />
+          {content.hero.line2}
+          <span className="about__hero-highlight">{content.hero.highlight}</span>
+          {content.hero.suffix}
         </h1>
-        <p className="about__who-we-are-subtitle about__who-we-are-subtitle--marginbottom">
-          {aboutContent.crew.weAreAll}
-        </p>
 
-        {/* ===================== Founder Section ===================== */}
-        <div className="about__group">
-          <h2 className="about__group-title">Management</h2>
+        <div className="about__features">
+          {features.map(({ icon: Icon, label }) => (
+            <div className="about__feature" key={label}>
+              <div className="about__feature-icon">
+                <Icon size={28} strokeWidth={1.8} />
+              </div>
+              <p className="about__feature-label">{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="about__team about__team--founder">
-            {founderMembers
-              .slice()
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((member) => (
-                <div className="about__member" key={member.name}>
-                  <div className="about__avatar">
-                    <img
-                      className="about__avatar-image"
-                      src={member.src}
-                      alt={member.name}
-                      loading="lazy"
-                    />
-                  </div>
-                  <p className="about__member-name">{member.name}</p>
-                  <p className="about__member-role">{member.role}</p>
-                </div>
-              ))}
-          </div>
+      <section className="about__mission">
+        <div className="about__mission-text">
+          <p className="about__mission-label">{content.mission.label}</p>
+          <h2 className="about__mission-title">
+            {content.mission.titleStart}
+            <span className="about__mission-highlight">{content.mission.titleHighlight}</span>
+            {content.mission.titleEnd}
+          </h2>
+          <p className="about__mission-description">{content.mission.description}</p>
+          <Link to="/how-it-works" className="about__mission-cta">
+            {content.mission.cta} <ArrowRight size={18} />
+          </Link>
+          <Link to="/team" className="about__mission-team-link">
+            {content.mission.meetTheTeam} <ArrowRight size={16} />
+          </Link>
         </div>
 
-        {/* ===================== Developer Section ===================== */}
-        <div className="about__group">
-          <h2 className="about__group-title">Engineering</h2>
-
-          <div className="about__team about__team--developer">
-            {developerMembers.map((member) => (
-              <div className="about__member" key={member.name}>
-                <div className="about__avatar">
-                  <img
-                    className="about__avatar-image"
-                    src={member.src}
-                    alt={member.name}
-                    loading="lazy"
-                  />
-                </div>
-                <p className="about__member-name">{member.name}</p>
-                <p className="about__member-role">{member.role}</p>
+        <div className="about__mission-visual">
+          <div className="about__orbit">
+            <Earth className="about__orbit-globe" strokeWidth={0.6} />
+            {orbitMembers.map(({ src, alt, position, badge: Badge }) => (
+              <div className={`about__orbit-member about__orbit-member--${position}`} key={alt}>
+                <img className="about__orbit-photo" src={src} alt={alt} loading="lazy" />
+                <span className="about__orbit-badge">
+                  <Badge size={14} strokeWidth={2} />
+                </span>
               </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* ===================== Marketing Section ===================== */}
-        <div className="about__group">
-          <h2 className="about__group-title">Marketing, Contracting, Partnerships, Support</h2>
+      <section className="about__effortless">
+        <p className="about__effortless-text">{content.effortless}</p>
+        <div className="about__pills">
+          {pills.map(({ icon: Icon, label }) => (
+            <div className="about__pill" key={label}>
+              <Icon size={20} strokeWidth={1.8} />
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="about__team about__team--marketing">
-            {marketingMembers.map((member) => (
-              <div className="about__member" key={member.name}>
-                <div className="about__avatar">
-                  <img
-                    className="about__avatar-image"
-                    src={member.src}
-                    alt={member.name}
-                    loading="lazy"
-                  />
-                </div>
-                <p className="about__member-name">{member.name}</p>
-                <p className="about__member-role">{member.role}</p>
-              </div>
-            ))}
+      <section className="about__tech-band">
+        <h2 className="about__tech-title">{content.techBand.title}</h2>
+        <div className="about__tech-items">
+          {techItems.map(({ icon: Icon, label }) => (
+            <div className="about__tech-item" key={label}>
+              <Icon size={32} strokeWidth={1.6} />
+              <p>{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="about__stats">
+        {stats.map(({ icon: Icon, value, label }) => (
+          <div className="about__stat" key={label}>
+            <Icon className="about__stat-icon" size={40} strokeWidth={1.6} />
+            <div className="about__stat-text">
+              <p className="about__stat-value">{value}</p>
+              <p className="about__stat-label">{label}</p>
+            </div>
           </div>
-        </div>
+        ))}
+      </section>
 
-        <div className="about__footer">
-          <p className="about__footer-text">{aboutContent.footerText.description}</p>
-          <p className="about__footer-text">{aboutContent.footerText.description2}</p>
+      <section className="about__cta-band">
+        <h2 className="about__cta-title">{content.cta.title}</h2>
+        <div className="about__cta-buttons">
+          <Link to="/home" className="about__cta-button about__cta-button--primary">
+            {content.cta.explore} <ArrowRight size={18} />
+          </Link>
+          <Link to="/landing" className="about__cta-button about__cta-button--secondary">
+            {content.cta.list}
+          </Link>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -350,6 +350,55 @@
     }
   },
   "about": {
+    "redesign": {
+      "eyebrow": "Why Domits",
+      "hero": {
+        "line1": "We believe travel",
+        "line2": "should be ",
+        "highlight": "simple, fair and human.",
+        "suffix": ""
+      },
+      "features": {
+        "fairHosts": "Fair for hosts",
+        "securePayments": "Secure payments",
+        "humanSupport": "Human support",
+        "aiTools": "AI-powered tools"
+      },
+      "mission": {
+        "label": "Our mission",
+        "titleStart": "Empowering ",
+        "titleHighlight": "meaningful",
+        "titleEnd": " travel connections.",
+        "description": "We make travel simple for guests and more sustainable for hosts.",
+        "cta": "Learn more about us",
+        "meetTheTeam": "Meet the team"
+      },
+      "effortless": "Built to make hosting and traveling feel effortless.",
+      "pills": {
+        "instantBooking": "Instant booking",
+        "smartTools": "Smart tools",
+        "securePayments": "Secure payments"
+      },
+      "techBand": {
+        "title": "Technology with purpose.",
+        "aiTools": "AI-powered tools",
+        "humanSupport": "Human support",
+        "sustainableTravel": "Sustainable travel"
+      },
+      "stats": {
+        "countriesValue": "50+",
+        "countriesLabel": "Countries",
+        "guestsValue": "2K+",
+        "guestsLabel": "Happy guests",
+        "ratingValue": "4.8/5",
+        "ratingLabel": "Average rating"
+      },
+      "cta": {
+        "title": "Let's build the future of travel together.",
+        "explore": "Explore stays",
+        "list": "List your property"
+      }
+    },
     "title": "About Domits",
     "description": "Tailor-made travel partnerships",
     "mission": {

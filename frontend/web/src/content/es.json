@@ -351,6 +351,55 @@
     }
   },
   "about": {
+    "redesign": {
+      "eyebrow": "Por qué Domits",
+      "hero": {
+        "line1": "Creemos que viajar",
+        "line2": "debe ser ",
+        "highlight": "simple, justo y humano.",
+        "suffix": ""
+      },
+      "features": {
+        "fairHosts": "Justo para anfitriones",
+        "securePayments": "Pagos seguros",
+        "humanSupport": "Soporte humano",
+        "aiTools": "Herramientas con IA"
+      },
+      "mission": {
+        "label": "Nuestra misión",
+        "titleStart": "Impulsamos conexiones de viaje ",
+        "titleHighlight": "significativas",
+        "titleEnd": ".",
+        "description": "Hacemos que viajar sea simple para los huéspedes y más sostenible para los anfitriones.",
+        "cta": "Conoce más sobre nosotros",
+        "meetTheTeam": "Conoce al equipo"
+      },
+      "effortless": "Creado para que hospedar y viajar sea sencillo.",
+      "pills": {
+        "instantBooking": "Reserva instantánea",
+        "smartTools": "Herramientas inteligentes",
+        "securePayments": "Pagos seguros"
+      },
+      "techBand": {
+        "title": "Tecnología con propósito.",
+        "aiTools": "Herramientas con IA",
+        "humanSupport": "Soporte humano",
+        "sustainableTravel": "Viajes sostenibles"
+      },
+      "stats": {
+        "countriesValue": "50+",
+        "countriesLabel": "Países",
+        "guestsValue": "2K+",
+        "guestsLabel": "Huéspedes felices",
+        "ratingValue": "4.8/5",
+        "ratingLabel": "Valoración media"
+      },
+      "cta": {
+        "title": "Construyamos juntos el futuro de los viajes.",
+        "explore": "Explorar estancias",
+        "list": "Publica tu propiedad"
+      }
+    },
     "title": "Acerca de Domits",
     "description": "Alianzas de viaje a medida",
     "mission": {
