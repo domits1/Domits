@@ -32,6 +32,7 @@ import { normalizeImageUrl, placeholderImage } from "./utils/image";
 import { resolveAccommodationImageUrl, resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 import { getActiveCancellationPolicyId } from "../../utils/policyDisplayUtils.js";
 import { isValidDate, startOfDay } from "../../utils/dashboardShared";
+import { fetchPropertySummaries } from "./services/propertySummaryService";
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -195,6 +196,14 @@ const resolveFallbackLocationLabel = ({ location, booking }) => {
   return "Unknown location";
 };
 
+const isFallbackTitle = (title, propertyId) => {
+  if (!title) return true;
+  const t = String(title).trim();
+  if (/^Property #/i.test(t)) return true;
+  if (propertyId && t === String(propertyId)) return true;
+  return false;
+};
+
 const resolveCleaningFee = (pricing) => {
   const cleaningFeeRaw = Number(pricing?.cleaning);
   if (Number.isFinite(cleaningFeeRaw)) {
@@ -348,9 +357,7 @@ const buildReservationContent = ({
         </div>
 
         {isCancelledReservation && (
-          <output className="reservationCancelledBanner">
-            This reservation has been cancelled.
-          </output>
+          <output className="reservationCancelledBanner">This reservation has been cancelled.</output>
         )}
 
         <div className="reservationPage">
@@ -542,6 +549,68 @@ function ReservationDetails() {
           }
         } catch (propertyDetailsError) {
           console.warn("Falling back to booking-only reservation details:", propertyDetailsError);
+        }
+
+        // If the booking or property details are missing title/city/image, try fetching a lightweight summary
+        try {
+          const propertyIdForSummary = getPropertyId(booking);
+          const bookingHasImages =
+            (Array.isArray(booking?.images) && booking.images.length > 0) ||
+            (Array.isArray(booking?.property?.images) && booking.property.images.length > 0) ||
+            Boolean(booking?.property_image_url) ||
+            Boolean(booking?.propertyImage) ||
+            Boolean(propertyDetails?.images && propertyDetails.images.length > 0);
+
+          const bookingTitle = booking?.title || booking?.Title || booking?.property?.title || "";
+
+          const needSummary = Boolean(
+            propertyIdForSummary &&
+            (isFallbackTitle(bookingTitle, propertyIdForSummary) || !booking?.city || !bookingHasImages)
+          );
+
+          if (needSummary) {
+            try {
+              const summaries = await fetchPropertySummaries([propertyIdForSummary]);
+              const summary = summaries && summaries[propertyIdForSummary];
+              if (summary) {
+                propertyDetails = propertyDetails || {};
+                propertyDetails.property = propertyDetails.property || {};
+                propertyDetails.location = propertyDetails.location || {};
+
+                if (!propertyDetails.property.title && summary.title) {
+                  propertyDetails.property.title = summary.title;
+                  propertyDetails.property.name = propertyDetails.property.name || summary.title;
+                }
+
+                if (
+                  (!propertyDetails.location.city || !propertyDetails.location.country) &&
+                  (summary.city || summary.country)
+                ) {
+                  propertyDetails.location.city = propertyDetails.location.city || summary.city || "";
+                  propertyDetails.location.country = propertyDetails.location.country || summary.country || "";
+                }
+
+                if (
+                  (!Array.isArray(propertyDetails.images) || propertyDetails.images.length === 0) &&
+                  summary.imageUrl
+                ) {
+                  propertyDetails.images = [summary.imageUrl];
+                }
+
+                if (!propertyDetails.host && (summary.hostName || summary.hostImage || summary.hostId)) {
+                  propertyDetails.host = {
+                    givenName: summary.hostName || "",
+                    profileImage: summary.hostImage || null,
+                    id: summary.hostId || null,
+                  };
+                }
+              }
+            } catch (summaryErr) {
+              console.warn("Failed to fetch property summary for guest reservation details:", summaryErr);
+            }
+          }
+        } catch (err) {
+          console.warn("Error while preparing reservation summary:", err);
         }
 
         setReservation(buildReservationViewModel({ booking, propertyDetails }));

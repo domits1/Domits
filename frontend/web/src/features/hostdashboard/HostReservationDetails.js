@@ -32,19 +32,14 @@ import {
 } from "../../utils/policyDisplayUtils.js";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader.jsx";
 import styles from "./HostReservationDetails.module.css";
-import {
-  persistCalendarFocusContext,
-  persistSelectedPropertyId,
-} from "./hostcalen/hooks/hostCalendarHelpers.js";
+import { persistCalendarFocusContext, persistSelectedPropertyId } from "./hostcalen/hooks/hostCalendarHelpers.js";
 import { PROPERTY_API_BASE } from "./hostproperty/constants.js";
-import {
-  fetchUserProfileById,
-  getEmptyUserProfile,
-} from "./services/fetchUserProfileById.js";
+import { fetchUserProfileById, getEmptyUserProfile } from "./services/fetchUserProfileById.js";
 import downloadReservationReceiptPdf from "./services/downloadReservationReceiptPdf.js";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { updateInquiryStatus } from "./services/reservationService.js";
 import hostReservationDetailsTranslations from "./translations/hostReservationDetailsTranslations.js";
+import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
 
 const STATUS_CLASS = {
   PAID: styles.statusPaid,
@@ -138,9 +133,7 @@ const resolveCancellationType = (cancellationPolicy, rules = []) => {
   }
 
   const matchingRule = (rules || []).find(
-    (rule) =>
-      rule?.rule?.startsWith("CancellationPolicy:") &&
-      (rule?.value === true || rule?.value === "true")
+    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && (rule?.value === true || rule?.value === "true")
   );
 
   if (matchingRule?.rule) {
@@ -185,10 +178,7 @@ const mapReservations = (data) => {
       country: property?.country,
       ...reservation,
       status: normalizeStatus(reservation?.status),
-      cancellationType: resolveCancellationType(
-        reservation?.cancellation_policy,
-        propertyRules
-      ),
+      cancellationType: resolveCancellationType(reservation?.cancellation_policy, propertyRules),
     }));
   });
 };
@@ -210,13 +200,19 @@ const isOverlappingInquiry = (candidateBooking, targetBooking) => {
 const firstDefined = (...candidates) =>
   candidates.find(
     (candidate) =>
-      candidate !== undefined &&
-      candidate !== null &&
-      !(typeof candidate === "string" && candidate.trim() === "")
+      candidate !== undefined && candidate !== null && !(typeof candidate === "string" && candidate.trim() === "")
   );
 
 const firstNonEmptyArray = (...candidates) =>
   candidates.find((candidate) => Array.isArray(candidate) && candidate.length > 0) || [];
+
+const isFallbackTitle = (title, propertyId) => {
+  if (!title) return true;
+  const t = String(title).trim();
+  if (/^Property #/i.test(t)) return true;
+  if (propertyId && t === String(propertyId)) return true;
+  return false;
+};
 
 const normalizeStringValue = (value) => String(value || "").trim();
 
@@ -226,42 +222,17 @@ const toDisplayValue = (value, fallback = "") => {
 };
 
 const getBookingId = (booking) =>
-  normalizeStringValue(
-    firstDefined(
-      booking?.id,
-      booking?.ID,
-      booking?.bookingId,
-      booking?.booking_id
-    )
-  );
+  normalizeStringValue(firstDefined(booking?.id, booking?.ID, booking?.bookingId, booking?.booking_id));
 
 const getPropertyId = (booking) =>
-  normalizeStringValue(
-    firstDefined(
-      booking?.property_id,
-      booking?.propertyId,
-      booking?.property?.id
-    )
-  );
+  normalizeStringValue(firstDefined(booking?.property_id, booking?.propertyId, booking?.property?.id));
 
 const getGuestId = (booking) =>
-  normalizeStringValue(
-    firstDefined(
-      booking?.guestid,
-      booking?.guestId,
-      booking?.guest_id,
-      booking?.GuestID
-    )
-  );
+  normalizeStringValue(firstDefined(booking?.guestid, booking?.guestId, booking?.guest_id, booking?.GuestID));
 
 const buildChannelLabel = (booking) => {
   const rawChannel = normalizeStringValue(
-    firstDefined(
-      booking?.channel,
-      booking?.bookingtype,
-      booking?.bookingType,
-      DEFAULT_CHANNEL
-    )
+    firstDefined(booking?.channel, booking?.bookingtype, booking?.bookingType, DEFAULT_CHANNEL)
   );
 
   if (!rawChannel) {
@@ -277,24 +248,25 @@ const buildChannelLabel = (booking) => {
 };
 
 const resolveReservationImage = ({ booking, propertyDetails }) => {
-  const detailImages = firstNonEmptyArray(
-    propertyDetails?.images,
-    propertyDetails?.propertyImages
-  );
+  const detailImages = firstNonEmptyArray(propertyDetails?.images, propertyDetails?.propertyImages);
   if (detailImages.length > 0) {
     return resolvePrimaryAccommodationImageUrl(detailImages, "thumb");
   }
 
-  const bookingImages = firstNonEmptyArray(
+  const bookingProperty = booking?.property_meta || booking?.property;
+  const bookingPropertyImages = firstNonEmptyArray(
+    bookingProperty?.photos,
+    bookingProperty?.images,
     booking?.images,
     booking?.property?.images
   );
-  if (bookingImages.length > 0) {
-    return resolvePrimaryAccommodationImageUrl(bookingImages, "thumb");
+  if (bookingPropertyImages.length > 0) {
+    return resolvePrimaryAccommodationImageUrl(bookingPropertyImages, "thumb");
   }
 
   const fallbackImage = firstDefined(
     booking?.propertyImage,
+    booking?.property_image_url,
     booking?.image,
     booking?.property?.coverImage,
     booking?.property?.image
@@ -323,20 +295,10 @@ const buildCheckInInstructions = ({ booking, propertyDetails }) => {
   const checkInData = propertyDetails?.checkIn || booking?.checkIn || {};
   const checkInWindow = checkInData?.checkIn || {};
   const from = normalizeStringValue(
-    firstDefined(
-      checkInWindow?.from,
-      checkInData?.from,
-      booking?.checkinFrom,
-      booking?.checkin_from
-    )
+    firstDefined(checkInWindow?.from, checkInData?.from, booking?.checkinFrom, booking?.checkin_from)
   );
   const till = normalizeStringValue(
-    firstDefined(
-      checkInWindow?.till,
-      checkInData?.till,
-      booking?.checkinTill,
-      booking?.checkin_till
-    )
+    firstDefined(checkInWindow?.till, checkInData?.till, booking?.checkinTill, booking?.checkin_till)
   );
 
   if (from && till) {
@@ -351,10 +313,7 @@ const buildCheckInInstructions = ({ booking, propertyDetails }) => {
 };
 
 const buildHouseRuleLabels = (propertyDetails) => {
-  const parsedRules = parseHouseRules(
-    propertyDetails?.rules || [],
-    propertyDetails?.property || {}
-  );
+  const parsedRules = parseHouseRules(propertyDetails?.rules || [], propertyDetails?.property || {});
 
   return parsedRules
     .map((ruleItem) => {
@@ -364,9 +323,7 @@ const buildHouseRuleLabels = (propertyDetails) => {
       }
 
       if (typeof ruleItem?.value === "boolean") {
-        return ruleItem.value
-          ? label
-          : `No ${label.charAt(0).toLowerCase()}${label.slice(1)}`;
+        return ruleItem.value ? label : `No ${label.charAt(0).toLowerCase()}${label.slice(1)}`;
       }
 
       const ruleValue = normalizeStringValue(ruleItem?.value);
@@ -387,11 +344,7 @@ const resolveHouseRules = (booking, propertyDetails) => {
   return [];
 };
 
-const resolveGuestContactValue = ({
-  bookingValue,
-  profileValue,
-  isGuestProfilePending,
-}) => {
+const resolveGuestContactValue = ({ bookingValue, profileValue, isGuestProfilePending }) => {
   if (bookingValue) {
     return toDisplayValue(bookingValue);
   }
@@ -405,20 +358,14 @@ const resolveGuestContactValue = ({
 
 const resolveActiveCancellationPolicy = ({ booking, propertyDetails }) => {
   const bookingPolicyCandidate = normalizeStringValue(
-    firstDefined(
-      booking?.cancellationPolicy,
-      booking?.cancellation_policy,
-      booking?.cancellationType
-    )
+    firstDefined(booking?.cancellationPolicy, booking?.cancellation_policy, booking?.cancellationType)
   );
 
   const parsedPropertyPolicy = propertyDetails?.cancellationPolicy
     ? parseCancellationPolicyString(propertyDetails.cancellationPolicy)
     : parseCancellationPolicy(propertyDetails?.rules || []);
 
-  const parsedBookingPolicy = bookingPolicyCandidate
-    ? parseCancellationPolicyString(bookingPolicyCandidate)
-    : null;
+  const parsedBookingPolicy = bookingPolicyCandidate ? parseCancellationPolicyString(bookingPolicyCandidate) : null;
 
   const activePolicy = parsedPropertyPolicy || parsedBookingPolicy;
 
@@ -433,15 +380,12 @@ const fetchHostPropertyDetails = async (propertyId, token) => {
     return null;
   }
 
-  const response = await fetch(
-    `${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: token,
-      },
-    }
-  );
+  const response = await fetch(`${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`, {
+    method: "GET",
+    headers: {
+      Authorization: token,
+    },
+  });
 
   if (!response.ok) {
     throw new Error(`Could not load listing details (${response.status}).`);
@@ -466,25 +410,17 @@ const hasCheckInInstructionsData = ({ booking, propertyDetails }) =>
     )
   );
 
-const buildReservationDetailsModel = ({
-  booking,
-  propertyDetails,
-  guestProfile,
-}) => {
+const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }) => {
   const propertyId = getPropertyId(booking);
   const guestId = getGuestId(booking);
   const reservationId = normalizeStringValue(
-    firstDefined(
-      booking?.reservationId,
-      booking?.bookingId,
-      booking?.booking_id,
-      booking?.id,
-      booking?.ID
-    )
+    firstDefined(booking?.reservationId, booking?.bookingId, booking?.booking_id, booking?.id, booking?.ID)
   );
+  const bookingProperty = booking?.property_meta || booking?.property;
   const location =
     propertyDetails?.location ||
     propertyDetails?.propertyLocation ||
+    bookingProperty?.location ||
     booking?.propertyLocation ||
     {};
   const cancellationPolicy = resolveActiveCancellationPolicy({
@@ -506,28 +442,19 @@ const buildReservationDetailsModel = ({
       firstDefined(
         propertyDetails?.property?.title,
         propertyDetails?.title,
+        bookingProperty?.title,
         booking?.title,
         booking?.Title
       )
     ),
-    city: normalizeStringValue(firstDefined(location?.city, booking?.city)),
-    country: normalizeStringValue(firstDefined(location?.country, booking?.country)),
+    city: normalizeStringValue(firstDefined(location?.city, bookingProperty?.city, booking?.city)),
+    country: normalizeStringValue(firstDefined(location?.country, bookingProperty?.country, booking?.country)),
     image: resolveReservationImage({ booking, propertyDetails }),
     arrivaldate: firstDefined(booking?.arrivaldate, booking?.arrivalDate),
     departuredate: firstDefined(booking?.departuredate, booking?.departureDate),
-    bookedOn: firstDefined(
-      booking?.bookedOn,
-      booking?.createdAt,
-      booking?.createdat
-    ),
+    bookedOn: firstDefined(booking?.bookedOn, booking?.createdAt, booking?.createdat),
     guests: firstDefined(booking?.guests, booking?.guestCount, 0),
-    guestname: normalizeStringValue(
-      firstDefined(
-        booking?.guestname,
-        booking?.guestName,
-        guestProfile?.givenName
-      )
-    ),
+    guestname: normalizeStringValue(firstDefined(booking?.guestname, booking?.guestName, guestProfile?.givenName)),
     guestProfileImage: resolveGuestProfileImage({ booking, guestProfile }),
     guestemail: resolveGuestContactValue({
       bookingValue: bookingGuestEmail,
@@ -539,9 +466,7 @@ const buildReservationDetailsModel = ({
       profileValue: firstDefined(guestProfile?.phoneNumber),
       isGuestProfilePending,
     }),
-    specialRequest: normalizeStringValue(
-      firstDefined(booking?.specialRequest, booking?.special_request)
-    ),
+    specialRequest: normalizeStringValue(firstDefined(booking?.specialRequest, booking?.special_request)),
     pricePerNight:
       Number(
         firstDefined(
@@ -552,27 +477,13 @@ const buildReservationDetailsModel = ({
           0
         )
       ) || 0,
-    cleaningFee:
-      Number(
-        firstDefined(
-          booking?.cleaningFee,
-          propertyDetails?.pricing?.cleaning,
-          0
-        )
-      ) || 0,
+    cleaningFee: Number(firstDefined(booking?.cleaningFee, propertyDetails?.pricing?.cleaning, 0)) || 0,
     paymentMethod:
-      normalizeStringValue(
-        firstDefined(booking?.paymentMethod, booking?.payment?.method)
-      ) || DEFAULT_PAYMENT_METHOD,
-    last4:
-      normalizeStringValue(
-        firstDefined(booking?.last4, booking?.payment?.last4)
-      ) || DEFAULT_LAST4,
+      normalizeStringValue(firstDefined(booking?.paymentMethod, booking?.payment?.method)) || DEFAULT_PAYMENT_METHOD,
+    last4: normalizeStringValue(firstDefined(booking?.last4, booking?.payment?.last4)) || DEFAULT_LAST4,
     reservationId,
     confirmationCode: reservationId ? reservationId.slice(0, 6) : "",
-    checkinInstructions: checkInAvailable
-      ? buildCheckInInstructions({ booking, propertyDetails })
-      : "",
+    checkinInstructions: checkInAvailable ? buildCheckInInstructions({ booking, propertyDetails }) : "",
     houseRules: resolveHouseRules(booking, propertyDetails),
     cancellationPolicy: cancellationPolicy.summary,
     cancellationType: cancellationPolicy.type,
@@ -641,12 +552,7 @@ const getRuleIcon = (rule) => {
 };
 
 const calculateReservationNights = (arrivalDate, departureDate) =>
-  Math.max(
-    0,
-    Math.round(
-      (new Date(departureDate) - new Date(arrivalDate)) / (1000 * 60 * 60 * 24)
-    )
-  );
+  Math.max(0, Math.round((new Date(departureDate) - new Date(arrivalDate)) / (1000 * 60 * 60 * 24)));
 
 const buildMaskedPaymentMethodLabel = (reservation) => {
   if (reservation.last4 && reservation.last4 !== DEFAULT_LAST4) {
@@ -664,8 +570,7 @@ const buildCountLabel = (count, singular, plural) => {
 
 const formatTemplate = (template, values) =>
   Object.entries(values).reduce(
-    (currentText, [key, value]) =>
-      currentText.replaceAll(`{${key}}`, String(value)),
+    (currentText, [key, value]) => currentText.replaceAll(`{${key}}`, String(value)),
     String(template || "")
   );
 
@@ -694,18 +599,10 @@ const buildBookedOnText = (bookedOn, isShellLoading, t) => {
   return `${t.labels.bookedOn} ${value}`;
 };
 
-const buildReservationViewModel = ({
-  reservation,
-  hasReservationData,
-  isShellLoading,
-  t,
-}) => {
+const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoading, t }) => {
   const statusConfig = getStatusConfig(t);
   const paymentStatusConfig = getPaymentStatusConfig(t);
-  const nights = calculateReservationNights(
-    reservation.arrivaldate,
-    reservation.departuredate
-  );
+  const nights = calculateReservationNights(reservation.arrivaldate, reservation.departuredate);
   const total = reservation.pricePerNight * nights + reservation.cleaningFee;
   const statusMeta = statusConfig[reservation.status] || {
     label: isShellLoading ? t.loading.status : t.empty.reservation,
@@ -713,15 +610,11 @@ const buildReservationViewModel = ({
   };
   const paymentMeta = paymentStatusConfig[reservation.status] || {
     label: isShellLoading ? t.loading.payment : t.headings.payment,
-    text: isShellLoading
-      ? t.loading.paymentStatus
-      : t.empty.paymentStatusUnavailable,
+    text: isShellLoading ? t.loading.paymentStatus : t.empty.paymentStatusUnavailable,
     className: "",
   };
   const title = hasDisplayValue(reservation.title) ? reservation.title : t.pageTitle;
-  const guestName = hasDisplayValue(reservation.guestname)
-    ? reservation.guestname
-    : t.labels.guestFallbackName;
+  const guestName = hasDisplayValue(reservation.guestname) ? reservation.guestname : t.labels.guestFallbackName;
 
   return {
     title,
@@ -751,9 +644,7 @@ const buildReservationViewModel = ({
       t.labels.loadingValue,
       t.labels.unavailable
     ),
-    paymentMethodLabel: hasReservationData
-      ? buildMaskedPaymentMethodLabel(reservation)
-      : t.labels.loadingValue,
+    paymentMethodLabel: hasReservationData ? buildMaskedPaymentMethodLabel(reservation) : t.labels.loadingValue,
     reservationIdText: buildLoadingAwareText(
       reservation.reservationId,
       isShellLoading,
@@ -767,27 +658,18 @@ const buildReservationViewModel = ({
       t.labels.unavailable
     ),
     nightCountText: buildCountLabel(nights, t.labels.night, t.labels.nights),
-    guestCountText: buildCountLabel(
-      reservation.guests,
-      t.labels.guest,
-      t.labels.guests
-    ),
+    guestCountText: buildCountLabel(reservation.guests, t.labels.guest, t.labels.guests),
   };
 };
 
 const buildCalendarContext = (reservation) => {
-  const propertyId = normalizeStringValue(
-    reservation?.propertyId || reservation?.property_id
-  );
+  const propertyId = normalizeStringValue(reservation?.propertyId || reservation?.property_id);
 
   return {
     bookingId: getBookingId(reservation),
     propertyId,
     arrivalDate: firstDefined(reservation?.arrivaldate, reservation?.arrivalDate),
-    departureDate: firstDefined(
-      reservation?.departuredate,
-      reservation?.departureDate
-    ),
+    departureDate: firstDefined(reservation?.departuredate, reservation?.departureDate),
   };
 };
 
@@ -801,10 +683,7 @@ const buildMessageContext = (reservation) => ({
 });
 
 const buildReservationReceiptPayload = (reservation) => {
-  const nights = calculateReservationNights(
-    reservation.arrivaldate,
-    reservation.departuredate
-  );
+  const nights = calculateReservationNights(reservation.arrivaldate, reservation.departuredate);
   const total = nights * Number(reservation.pricePerNight || 0) + Number(reservation.cleaningFee || 0);
 
   return {
@@ -816,18 +695,11 @@ const buildReservationReceiptPayload = (reservation) => {
     bookedOn: reservation.bookedOn,
     title: reservation.title || "Listing",
     propertyId: reservation.propertyId || reservation.property_id,
-    locationLabel:
-      [reservation.city, reservation.country].filter(Boolean).join(", ") ||
-      "Location unavailable",
+    locationLabel: [reservation.city, reservation.country].filter(Boolean).join(", ") || "Location unavailable",
     arrivalDate: reservation.arrivaldate,
     departureDate: reservation.departuredate,
-    guestCountLabel: buildCountLabel(
-      reservation.guests,
-      "guest",
-      "guests"
-    ),
-    checkinInstructions:
-      reservation.checkinInstructions || "No check-in instructions",
+    guestCountLabel: buildCountLabel(reservation.guests, "guest", "guests"),
+    checkinInstructions: reservation.checkinInstructions || "No check-in instructions",
     guestName: reservation.guestname || "Guest",
     guestEmail: reservation.guestemail || "unavailable",
     guestPhone: reservation.guestphone || "unavailable",
@@ -836,18 +708,12 @@ const buildReservationReceiptPayload = (reservation) => {
     nights,
     cleaningFee: reservation.cleaningFee,
     total,
-    paymentStatusLabel:
-      RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] ||
-      "Payment status unavailable",
+    paymentStatusLabel: RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
     paymentDate: reservation.bookedOn,
     paymentMethod: buildMaskedPaymentMethodLabel(reservation),
     cancellationType: reservation.cancellationType || "Not specified",
-    cancellationPolicy:
-      reservation.cancellationPolicy || "No cancellation policy selected.",
-    houseRules:
-      reservation.houseRules?.length > 0
-        ? reservation.houseRules
-        : ["No house rules specified"],
+    cancellationPolicy: reservation.cancellationPolicy || "No cancellation policy selected.",
+    houseRules: reservation.houseRules?.length > 0 ? reservation.houseRules : ["No house rules specified"],
   };
 };
 
@@ -972,11 +838,7 @@ const viewModelShape = PropTypes.shape({
   }).isRequired,
 });
 
-const findReservationBooking = async ({
-  reservationId,
-  initialBooking,
-  authToken,
-}) => {
+const findReservationBooking = async ({ reservationId, initialBooking, authToken }) => {
   if (initialBooking) {
     return initialBooking;
   }
@@ -987,8 +849,7 @@ const findReservationBooking = async ({
 
   const reservationData = await getReservationsFromToken(authToken);
   const booking = mapReservations(reservationData).find(
-    (candidateBooking) =>
-      getBookingId(candidateBooking) === normalizeStringValue(reservationId)
+    (candidateBooking) => getBookingId(candidateBooking) === normalizeStringValue(reservationId)
   );
 
   if (!booking) {
@@ -1000,23 +861,13 @@ const findReservationBooking = async ({
 
 const loadReservationEnrichment = async ({ authToken, propertyId, guestId }) => {
   const [propertyDetailsResult, guestProfileResult] = await Promise.allSettled([
-    authToken && propertyId
-      ? fetchHostPropertyDetails(propertyId, authToken)
-      : Promise.resolve(null),
-    guestId
-      ? fetchUserProfileById(guestId)
-      : Promise.resolve(getEmptyUserProfile(guestId)),
+    authToken && propertyId ? fetchHostPropertyDetails(propertyId, authToken) : Promise.resolve(null),
+    guestId ? fetchUserProfileById(guestId) : Promise.resolve(getEmptyUserProfile(guestId)),
   ]);
 
   return {
-    propertyDetails:
-      propertyDetailsResult.status === "fulfilled"
-        ? propertyDetailsResult.value
-        : null,
-    guestProfile:
-      guestProfileResult.status === "fulfilled"
-        ? guestProfileResult.value
-        : getEmptyUserProfile(guestId),
+    propertyDetails: propertyDetailsResult.status === "fulfilled" ? propertyDetailsResult.value : null,
+    guestProfile: guestProfileResult.status === "fulfilled" ? guestProfileResult.value : getEmptyUserProfile(guestId),
   };
 };
 
@@ -1035,11 +886,60 @@ const useReservationDetailsData = (reservationId, initialBooking) => {
 
       try {
         const authToken = getAccessToken();
-        const booking = await findReservationBooking({
+        let booking = await findReservationBooking({
           reservationId,
           initialBooking,
           authToken,
         });
+
+        // try to fetch a lightweight property summary to fill missing title/city/image
+        try {
+          const propertyIdForSummary = getPropertyId(booking);
+          const hasImages =
+            firstNonEmptyArray(
+              booking?.photos,
+              booking?.images,
+              booking?.media,
+              booking?.gallery,
+              booking?.property?.images,
+              booking?.property?.photos
+            ).length > 0 ||
+            Boolean(booking?.property_image_url) ||
+            Boolean(booking?.propertyImage);
+
+          const needSummary = Boolean(
+            propertyIdForSummary &&
+            (isFallbackTitle(booking?.title, propertyIdForSummary) || !booking?.city || !hasImages)
+          );
+
+          if (needSummary) {
+            try {
+              const summaries = await fetchPropertySummaries([propertyIdForSummary]);
+              const summary = summaries[propertyIdForSummary];
+              if (summary) {
+                booking = { ...booking };
+                if (summary.imageUrl) {
+                  booking.property_image_url = booking.property_image_url || summary.imageUrl;
+                }
+                if (summary.title && isFallbackTitle(booking.title, propertyIdForSummary)) {
+                  booking.title = summary.title;
+                }
+                if (
+                  (!booking.city || String(booking.city).toLowerCase().includes("unknown")) &&
+                  (summary.city || summary.country)
+                ) {
+                  booking.city = booking.city || summary.city || "";
+                  booking.country = booking.country || summary.country || "";
+                }
+              }
+            } catch (summaryErr) {
+              console.warn("Failed to fetch property summary for reservation details:", summaryErr);
+            }
+          }
+        } catch (err) {
+          console.warn("Error while preparing reservation summary:", err);
+        }
+
         const propertyId = getPropertyId(booking);
         const guestId = getGuestId(booking);
         const baseReservationModel = buildReservationDetailsModel({
@@ -1100,20 +1000,13 @@ const useReservationDetailsData = (reservationId, initialBooking) => {
   };
 };
 
-const InlineLoader = ({ message }) => (
-  <PulseBarsLoader inline message={message} className={styles.inlineLoader} />
-);
+const InlineLoader = ({ message }) => <PulseBarsLoader inline message={message} className={styles.inlineLoader} />;
 
 InlineLoader.propTypes = {
   message: PropTypes.string.isRequired,
 };
 
-const InlineTextOrLoader = ({
-  value,
-  isLoading,
-  loadingMessage,
-  emptyText,
-}) => {
+const InlineTextOrLoader = ({ value, isLoading, loadingMessage, emptyText }) => {
   if (hasDisplayValue(value)) {
     return value;
   }
@@ -1157,12 +1050,7 @@ PropertyCheckInSummary.propTypes = {
 const GuestContactLine = ({ icon, value, isLoading, loadingMessage, emptyText }) => (
   <div className={styles.guestLine}>
     {icon}{" "}
-    <InlineTextOrLoader
-      value={value}
-      isLoading={isLoading}
-      loadingMessage={loadingMessage}
-      emptyText={emptyText}
-    />
+    <InlineTextOrLoader value={value} isLoading={isLoading} loadingMessage={loadingMessage} emptyText={emptyText} />
   </div>
 );
 
@@ -1200,16 +1088,9 @@ HouseRulesContent.propTypes = {
   t: reservationTranslationShape.isRequired,
 };
 
-const CancellationPolicyContent = ({
-  cancellationType,
-  cancellationPolicy,
-  isLoading,
-  t,
-}) => (
+const CancellationPolicyContent = ({ cancellationType, cancellationPolicy, isLoading, t }) => (
   <>
-    {hasDisplayValue(cancellationType) ? (
-      <span className={styles.policyTag}>{cancellationType}</span>
-    ) : null}
+    {hasDisplayValue(cancellationType) ? <span className={styles.policyTag}>{cancellationType}</span> : null}
     <div className={styles.grayBox}>
       <InlineTextOrLoader
         value={cancellationPolicy}
@@ -1255,11 +1136,7 @@ const PropertyCard = ({ reservation, viewModel, loading, t }) => (
           {viewModel.arrivalLabel} {"\u2192"} {viewModel.departureLabel}
         </p>
 
-        <PropertyCheckInSummary
-          checkinInstructions={reservation.checkinInstructions}
-          isLoading={loading}
-          t={t}
-        />
+        <PropertyCheckInSummary checkinInstructions={reservation.checkinInstructions} isLoading={loading} t={t} />
 
         <div className={styles.metaLine}>
           <span>{viewModel.nightCountText}</span>
@@ -1295,20 +1172,14 @@ const GuestCard = ({ reservation, viewModel, loading, hasReservationData, t, onM
         <span>{t.headings.guest}</span>
       </div>
 
-      <button
-        className={styles.secondaryBtnGuest}
-        onClick={onMessageGuest}
-        disabled={!hasReservationData}
-      >
+      <button className={styles.secondaryBtnGuest} onClick={onMessageGuest} disabled={!hasReservationData}>
         <FiMessageCircle /> {t.buttons.messageGuest}
       </button>
     </div>
 
     <div className={styles.guestRow}>
       <div className={styles.avatarWrap}>
-        <div className={styles.avatar}>
-          {viewModel.guestName.charAt(0).toUpperCase()}
-        </div>
+        <div className={styles.avatar}>{viewModel.guestName.charAt(0).toUpperCase()}</div>
         {reservation.guestProfileImage ? (
           <img
             src={reservation.guestProfileImage}
@@ -1398,20 +1269,14 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
         </div>
       </div>
 
-      <div
-        className={`${styles.paymentBox} ${
-          PAYMENT_BOX_CLASS[reservation.status] || ""
-        }`}
-      >
+      <div className={`${styles.paymentBox} ${PAYMENT_BOX_CLASS[reservation.status] || ""}`}>
         <div className={styles.paymentHeader}>
           <FiCheckCircle />
           <span>{viewModel.paymentMeta.label}</span>
         </div>
 
         <div className={styles.paymentStatus}>
-          <span className={viewModel.paymentMeta.className}>
-            {viewModel.paymentMeta.text}
-          </span>
+          <span className={viewModel.paymentMeta.className}>{viewModel.paymentMeta.text}</span>
           <span className={styles.date}>{viewModel.paymentDateText}</span>
         </div>
 
@@ -1430,12 +1295,7 @@ PaymentCard.propTypes = {
   t: reservationTranslationShape.isRequired,
 };
 
-const RequestActionsCard = ({
-  isBusy,
-  onAccept,
-  onDecline,
-  t,
-}) => (
+const RequestActionsCard = ({ isBusy, onAccept, onDecline, t }) => (
   <div className={`${styles.card} ${styles.requestActionsCard}`}>
     <div className={styles.blockHeader}>
       <span>{t.requestActions.title}</span>
@@ -1447,16 +1307,14 @@ const RequestActionsCard = ({
       <button
         className={`${styles.requestActionButton} ${styles.requestActionAccept}`}
         onClick={onAccept}
-        disabled={isBusy}
-      >
+        disabled={isBusy}>
         {t.requestActions.accept}
       </button>
 
       <button
         className={`${styles.requestActionButton} ${styles.requestActionDecline}`}
         onClick={onDecline}
-        disabled={isBusy}
-      >
+        disabled={isBusy}>
         {t.requestActions.decline}
       </button>
     </div>
@@ -1470,17 +1328,9 @@ RequestActionsCard.propTypes = {
   t: reservationTranslationShape.isRequired,
 };
 
-const RequestConfirmationModal = ({
-  action,
-  overlappingCount,
-  onConfirm,
-  onCancel,
-  t,
-}) => {
+const RequestConfirmationModal = ({ action, overlappingCount, onConfirm, onCancel, t }) => {
   const isDeclineAction = action === "decline-inquiry";
-  const title = isDeclineAction
-    ? t.requestActions.confirmDeclineTitle
-    : t.requestActions.confirmAcceptTitle;
+  const title = isDeclineAction ? t.requestActions.confirmDeclineTitle : t.requestActions.confirmAcceptTitle;
   let message = t.requestActions.confirmAcceptNoOverlap;
 
   if (isDeclineAction) {
@@ -1491,12 +1341,8 @@ const RequestConfirmationModal = ({
     });
   }
 
-  const confirmButtonClass = isDeclineAction
-    ? styles.requestActionDecline
-    : styles.requestActionAccept;
-  const confirmButtonLabel = isDeclineAction
-    ? t.requestActions.decline
-    : t.requestActions.accept;
+  const confirmButtonClass = isDeclineAction ? styles.requestActionDecline : styles.requestActionAccept;
+  const confirmButtonLabel = isDeclineAction ? t.requestActions.decline : t.requestActions.accept;
 
   return (
     <div className={styles.modalOverlay}>
@@ -1504,16 +1350,10 @@ const RequestConfirmationModal = ({
         <h3 className={styles.modalTitle}>{title}</h3>
         <p className={styles.modalText}>{message}</p>
         <div className={styles.modalActions}>
-          <button
-            className={`${styles.requestActionButton} ${confirmButtonClass}`}
-            onClick={onConfirm}
-          >
+          <button className={`${styles.requestActionButton} ${confirmButtonClass}`} onClick={onConfirm}>
             {confirmButtonLabel}
           </button>
-          <button
-            className={`${styles.requestActionButton} ${styles.secondaryActionBtn}`}
-            onClick={onCancel}
-          >
+          <button className={`${styles.requestActionButton} ${styles.secondaryActionBtn}`} onClick={onCancel}>
             {t.requestActions.cancel}
           </button>
         </div>
@@ -1557,11 +1397,7 @@ const ReservationInfoCard = ({ reservation, loading, t }) => (
       </div>
 
       <div className={styles.grayBox}>
-        <HouseRulesContent
-          houseRules={reservation.houseRules || []}
-          isLoading={loading}
-          t={t}
-        />
+        <HouseRulesContent houseRules={reservation.houseRules || []} isLoading={loading} t={t} />
       </div>
     </div>
 
@@ -1586,35 +1422,21 @@ ReservationInfoCard.propTypes = {
   t: reservationTranslationShape.isRequired,
 };
 
-const ActionsCard = ({
-  hasReservationData,
-  isDownloadingReceipt,
-  onViewInCalendar,
-  onDownloadReceipt,
-  t,
-}) => (
+const ActionsCard = ({ hasReservationData, isDownloadingReceipt, onViewInCalendar, onDownloadReceipt, t }) => (
   <div className={styles.card}>
     <div className={styles.blockHeader}>
       <span>{t.headings.actions}</span>
     </div>
 
-    <button
-      className={styles.primaryBtn}
-      onClick={onViewInCalendar}
-      disabled={!hasReservationData}
-    >
+    <button className={styles.primaryBtn} onClick={onViewInCalendar} disabled={!hasReservationData}>
       <FiCalendar /> {t.buttons.viewInCalendar}
     </button>
 
     <button
       className={styles.secondaryActionBtn}
       onClick={onDownloadReceipt}
-      disabled={!hasReservationData || isDownloadingReceipt}
-    >
-      <FiDownload />{" "}
-      {isDownloadingReceipt
-        ? t.buttons.preparingReceipt
-        : t.buttons.downloadReceipt}
+      disabled={!hasReservationData || isDownloadingReceipt}>
+      <FiDownload /> {isDownloadingReceipt ? t.buttons.preparingReceipt : t.buttons.downloadReceipt}
     </button>
   </div>
 );
@@ -1633,13 +1455,8 @@ const HostReservationDetails = () => {
   const location = useLocation();
   const { id } = useParams();
   const initialBooking = location.state?.booking || null;
-  const t =
-    hostReservationDetailsTranslations[language] ||
-    hostReservationDetailsTranslations.en;
-  const { reservationData, setReservationData, loading, error } = useReservationDetailsData(
-    id,
-    initialBooking
-  );
+  const t = hostReservationDetailsTranslations[language] || hostReservationDetailsTranslations.en;
+  const { reservationData, setReservationData, loading, error } = useReservationDetailsData(id, initialBooking);
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
   const [isUpdatingInquiry, setIsUpdatingInquiry] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -1712,13 +1529,8 @@ const HostReservationDetails = () => {
     setIsUpdatingInquiry(true);
 
     try {
-      const result = await updateInquiryStatus(
-        getBookingId(reservationData),
-        action,
-        authToken
-      );
-      const nextStatus =
-        action === "accept-inquiry" ? "AWAITING_PAYMENT" : "DECLINED";
+      const result = await updateInquiryStatus(getBookingId(reservationData), action, authToken);
+      const nextStatus = action === "accept-inquiry" ? "AWAITING_PAYMENT" : "DECLINED";
       const declinedCount = Number(result?.declinedCount || 0);
 
       setReservationData((currentReservation) => {
@@ -1816,9 +1628,7 @@ const HostReservationDetails = () => {
     setIsDownloadingReceipt(true);
 
     try {
-      await downloadReservationReceiptPdf(
-        buildReservationReceiptPayload(reservationData)
-      );
+      await downloadReservationReceiptPdf(buildReservationReceiptPayload(reservationData));
     } catch (downloadError) {
       console.error("Failed to download reservation receipt:", downloadError);
     } finally {
@@ -1852,12 +1662,7 @@ const HostReservationDetails = () => {
 
       <div className={styles.layout}>
         <div className={styles.left}>
-          <PropertyCard
-            reservation={reservation}
-            viewModel={viewModel}
-            loading={loading}
-            t={t}
-          />
+          <PropertyCard reservation={reservation} viewModel={viewModel} loading={loading} t={t} />
           <GuestCard
             reservation={reservation}
             viewModel={viewModel}
