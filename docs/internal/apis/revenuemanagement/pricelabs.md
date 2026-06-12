@@ -232,7 +232,7 @@ SSM Parameters:
 - Base URL is `https://api.pricelabs.co/v2/integration/api` — **not** `/v2/integration`.
 - The `/integration` body requires an `integration` wrapper object.
 - `regenerate_token`: omitting the field = no regeneration, but sending it **empty/blank regenerates the token** (default true). Always send `regenerate_token: false` explicitly, or the stored SSM token becomes invalid.
-- `latitude`/`longitude` are **mandatory** on listings (fallback: Amsterdam 52.3676 / 4.9041).
+- `latitude`/`longitude` are **mandatory** on listings (fallback: Amsterdam 52.3676 / 4.9041). Since June 2026 the PropertyHandler geocodes the address on property create/update via OpenStreetMap Nominatim (`PropertyHandler/util/geocoding.js`, best-effort — null on failure) so real coordinates are stored automatically.
 - `country` must be ISO 3166-1 **alpha-3** (`NLD`, not `Netherlands`).
 - Calendar dates must be `YYYY-MM-DD` (internally stored as integer `20260615` — convert).
 - The URL-verification ping `{"verify": true}` has **no signature headers** — verification must be skipped for it or the URLs never register (returns 401 otherwise).
