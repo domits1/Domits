@@ -883,6 +883,65 @@ const loadReservationEnrichment = async ({ authToken, propertyId, guestId }) => 
   };
 };
 
+const checkPropertyImageAvailability = (booking) => {
+  return (
+    firstNonEmptyArray(
+      booking?.photos,
+      booking?.images,
+      booking?.media,
+      booking?.gallery,
+      booking?.property?.images,
+      booking?.property?.photos
+    ).length > 0 ||
+    Boolean(booking?.property_image_url) ||
+    Boolean(booking?.propertyImage)
+  );
+};
+
+const shouldEnrichWithSummary = (booking, propertyId) => {
+  const hasImages = checkPropertyImageAvailability(booking);
+  return Boolean(
+    propertyId && (isFallbackTitle(booking?.title, propertyId) || !booking?.city || !hasImages)
+  );
+};
+
+const enrichBookingWithSummary = (booking, summary, propertyId) => {
+  const enrichedBooking = { ...booking };
+
+  if (summary.imageUrl) {
+    enrichedBooking.property_image_url = booking.property_image_url || summary.imageUrl;
+  }
+
+  if (summary.title && isFallbackTitle(booking.title, propertyId)) {
+    enrichedBooking.title = summary.title;
+  }
+
+  if ((!booking.city || String(booking.city).toLowerCase().includes("unknown")) && (summary.city || summary.country)) {
+    enrichedBooking.city = booking.city || summary.city || "";
+    enrichedBooking.country = booking.country || summary.country || "";
+  }
+
+  return enrichedBooking;
+};
+
+const attemptBookingEnrichment = async (booking) => {
+  try {
+    const propertyIdForSummary = getPropertyId(booking);
+    const needSummary = shouldEnrichWithSummary(booking, propertyIdForSummary);
+
+    if (needSummary) {
+      const summaries = await fetchPropertySummaries([propertyIdForSummary]);
+      const summary = summaries[propertyIdForSummary];
+      if (summary) {
+        return enrichBookingWithSummary(booking, summary, propertyIdForSummary);
+      }
+    }
+  } catch (summaryErr) {
+    console.warn("Failed to fetch property summary for reservation details:", summaryErr);
+  }
+  return booking;
+};
+
 const useReservationDetailsData = (reservationId, initialBooking) => {
   const [reservationData, setReservationData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -904,53 +963,7 @@ const useReservationDetailsData = (reservationId, initialBooking) => {
           authToken,
         });
 
-        // try to fetch a lightweight property summary to fill missing title/city/image
-        try {
-          const propertyIdForSummary = getPropertyId(booking);
-          const hasImages =
-            firstNonEmptyArray(
-              booking?.photos,
-              booking?.images,
-              booking?.media,
-              booking?.gallery,
-              booking?.property?.images,
-              booking?.property?.photos
-            ).length > 0 ||
-            Boolean(booking?.property_image_url) ||
-            Boolean(booking?.propertyImage);
-
-          const needSummary = Boolean(
-            propertyIdForSummary &&
-            (isFallbackTitle(booking?.title, propertyIdForSummary) || !booking?.city || !hasImages)
-          );
-
-          if (needSummary) {
-            try {
-              const summaries = await fetchPropertySummaries([propertyIdForSummary]);
-              const summary = summaries[propertyIdForSummary];
-              if (summary) {
-                booking = { ...booking };
-                if (summary.imageUrl) {
-                  booking.property_image_url = booking.property_image_url || summary.imageUrl;
-                }
-                if (summary.title && isFallbackTitle(booking.title, propertyIdForSummary)) {
-                  booking.title = summary.title;
-                }
-                if (
-                  (!booking.city || String(booking.city).toLowerCase().includes("unknown")) &&
-                  (summary.city || summary.country)
-                ) {
-                  booking.city = booking.city || summary.city || "";
-                  booking.country = booking.country || summary.country || "";
-                }
-              }
-            } catch (summaryErr) {
-              console.warn("Failed to fetch property summary for reservation details:", summaryErr);
-            }
-          }
-        } catch (err) {
-          console.warn("Error while preparing reservation summary:", err);
-        }
+        booking = await attemptBookingEnrichment(booking);
 
         const propertyId = getPropertyId(booking);
         const guestId = getGuestId(booking);

@@ -271,7 +271,7 @@ const HostReservations = () => {
                     Boolean(b.property_image_url);
 
                   const hasTitle = Boolean(b.title || prop.title || prop.name);
-                  const hasCity = Boolean(b.city || prop.city || (prop.location && prop.location.city));
+                  const hasCity = Boolean(b.city || prop?.city || prop?.location?.city);
 
                   // fetch summaries when images, title or city are missing
                   return (!hasPropImages || !hasTitle || !hasCity) && b.property_id;
