@@ -314,7 +314,6 @@ export default function CalendarGrid({
   restrictionOverrides = EMPTY_OBJECT,
   priceOverrides = EMPTY_OBJECT,
   priceLabsOverrides = EMPTY_OBJECT,
-  priceLabsApplied = EMPTY_OBJECT,
   bookedDateKeys = EMPTY_SET,
   onDateSelect = null,
   loadingMessage = "",
@@ -453,21 +452,11 @@ export default function CalendarGrid({
 
                   {(() => {
                     const plPrice = priceLabsOverrides?.[dayPresentation.key];
-                    if (plPrice > 0) {
-                      return (
-                        <span className="hc-cell-pricelabs-suggestion" title="PriceLabs suggested price">
-                          PL {formatEuroAmount(plPrice)}
-                        </span>
-                      );
-                    }
-                    if (priceLabsApplied?.[dayPresentation.key] > 0) {
-                      return (
-                        <span className="hc-cell-pricelabs-applied" title="PriceLabs price applied">
-                          ✓ PL
-                        </span>
-                      );
-                    }
-                    return null;
+                    return plPrice > 0 ? (
+                      <span className="hc-cell-pricelabs-suggestion" title="PriceLabs suggested price">
+                        PL {formatEuroAmount(plPrice)}
+                      </span>
+                    ) : null;
                   })()}
 
                   {restrictionIndicators.length > 0 ? (
@@ -610,7 +599,6 @@ CalendarGrid.propTypes = {
   ),
   priceOverrides: PropTypes.objectOf(PropTypes.number),
   priceLabsOverrides: PropTypes.objectOf(PropTypes.number),
-  priceLabsApplied: PropTypes.objectOf(PropTypes.number),
   bookedDateKeys: PropTypes.instanceOf(Set),
   onDateSelect: PropTypes.func,
   loadingMessage: PropTypes.string,

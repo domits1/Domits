@@ -1139,20 +1139,12 @@ export class PropertyController {
                             "maxStay"
                         );
 
-                        const priceLabsIgnoredRaw =
-                            entry.priceLabsIgnored ?? entry.pricelabs_ignored;
-                        const priceLabsIgnored =
-                            priceLabsIgnoredRaw === null || priceLabsIgnoredRaw === undefined
-                                ? null
-                                : Boolean(priceLabsIgnoredRaw);
-
                         return [
                             calendarDate,
                             {
                                 calendarDate,
                                 isAvailable,
                                 nightlyPrice,
-                                priceLabsIgnored,
                                 stopSell,
                                 closedToArrival,
                                 closedToDeparture,
