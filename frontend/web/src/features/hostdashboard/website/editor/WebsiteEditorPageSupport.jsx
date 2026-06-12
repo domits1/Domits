@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { fetchWebsiteDraftByPropertyId } from "../services/websiteDraftService";
 import { fetchWebsiteSiteByPropertyId } from "../services/websiteSiteService";
@@ -98,8 +98,9 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
     },
     contact: {
       ...bootstrapValues.contact,
-      title: getCleanText(contentOverrides.contactTitle),
-      description: getCleanText(contentOverrides.contactDescription),
+      title: getCleanText(contentOverrides.contactLabel) || bootstrapValues.contact.title,
+      caption: getCleanText(contentOverrides.contactTitle) || bootstrapValues.contact.caption,
+      description: getCleanText(contentOverrides.contactDescription) || bootstrapValues.contact.description,
       avatarMode: getCleanText(contentOverrides.contactAvatarMode) || bootstrapValues.contact.avatarMode,
       avatarImage: getCleanText(contentOverrides.contactAvatarImage),
       accentColor:
@@ -288,6 +289,14 @@ export const useWebsiteEditorOverlayLock = ({
   isIconPickerOpen,
   isImagePickerOpen,
 }) => {
+  const closeIconPickerRef = useRef(closeIconPicker);
+  const closeImagePickerRef = useRef(closeImagePicker);
+
+  useEffect(() => {
+    closeIconPickerRef.current = closeIconPicker;
+    closeImagePickerRef.current = closeImagePicker;
+  }, [closeIconPicker, closeImagePicker]);
+
   useEffect(() => {
     const isOverlayOpen = isImagePickerOpen || isIconPickerOpen;
     if (!isOverlayOpen) {
@@ -295,8 +304,13 @@ export const useWebsiteEditorOverlayLock = ({
     }
 
     const documentBody = globalThis.document?.body;
-    const previousOverflow = documentBody?.style.overflow ?? "";
     if (documentBody) {
+      const activeLockCount = Number(documentBody.dataset.websiteEditorOverlayLockCount || "0");
+      if (activeLockCount < 1) {
+        documentBody.dataset.websiteEditorOverlayPreviousOverflow = documentBody.style.overflow ?? "";
+      }
+
+      documentBody.dataset.websiteEditorOverlayLockCount = String(activeLockCount + 1);
       documentBody.style.overflow = "hidden";
     }
 
@@ -306,22 +320,33 @@ export const useWebsiteEditorOverlayLock = ({
       }
 
       if (isIconPickerOpen) {
-        closeIconPicker();
+        closeIconPickerRef.current?.();
         return;
       }
 
-      closeImagePicker();
+      closeImagePickerRef.current?.();
     };
 
     globalThis.addEventListener("keydown", handleKeyDown);
 
     return () => {
       if (documentBody) {
-        documentBody.style.overflow = previousOverflow;
+        const activeLockCount = Math.max(
+          0,
+          Number(documentBody.dataset.websiteEditorOverlayLockCount || "1") - 1
+        );
+
+        if (activeLockCount < 1) {
+          documentBody.style.overflow = documentBody.dataset.websiteEditorOverlayPreviousOverflow || "";
+          delete documentBody.dataset.websiteEditorOverlayLockCount;
+          delete documentBody.dataset.websiteEditorOverlayPreviousOverflow;
+        } else {
+          documentBody.dataset.websiteEditorOverlayLockCount = String(activeLockCount);
+        }
       }
       globalThis.removeEventListener("keydown", handleKeyDown);
     };
-  }, [closeIconPicker, closeImagePicker, isIconPickerOpen, isImagePickerOpen]);
+  }, [isIconPickerOpen, isImagePickerOpen]);
 };
 
 export const useWebsiteEditorDataLoader = ({

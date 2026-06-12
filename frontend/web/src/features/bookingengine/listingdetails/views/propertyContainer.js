@@ -35,6 +35,10 @@ const PropertyContainer = ({
   location = {},
   onContactHost,
   unavailableDateKeys = [],
+  bookedDateKeys = [],
+  externalBlockedDateKeys = [],
+  availabilityRanges = null,
+  availableDateKeys = [],
   checkInDate = "",
   checkOutDate = "",
   setCheckInDate,
@@ -134,6 +138,10 @@ const PropertyContainer = ({
         <section id="listing-availability" className="listing-section-block">
           <RangeCalendar
             unavailableDateKeys={unavailableDateKeys}
+            bookedDateKeys={bookedDateKeys}
+            externalBlockedDateKeys={externalBlockedDateKeys}
+            availabilityRanges={availabilityRanges}
+            availableDateKeys={availableDateKeys}
             checkInDate={checkInDate}
             checkOutDate={checkOutDate}
             onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
@@ -218,6 +226,15 @@ PropertyContainer.propTypes = {
   onContactHost: PropTypes.func,
   children: PropTypes.node,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  externalBlockedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.arrayOf(PropTypes.string),
   checkInDate: PropTypes.string,
   checkOutDate: PropTypes.string,
   setCheckInDate: PropTypes.func.isRequired,

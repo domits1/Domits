@@ -39,6 +39,11 @@ const getChannexCertificationAdminAccess = (event) => ({
 
 const protectedChannexCertificationAdminRoutes = [
   { methods: ["GET"], pattern: /\/integrations\/channex\/status$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/properties$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/room-types$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/rate-plans$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/linked-room-types$/ },
+  { methods: ["GET"], pattern: /\/integrations\/channex\/linked-rate-plans$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/ari-targets$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/ari-preview$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/ari-payload-preview$/ },
@@ -55,6 +60,10 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/receive$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/pull$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/bookings\/ack$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/setup\/mapping$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/properties$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/room-types$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/rate-plans$/ },
 ];
 
 const pathIncludesOrEndsWith = (path, suffix) => {
@@ -205,6 +214,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.listChannexBookingRevisions(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/setup/mapping"),
+    handle: (event) => integrationController.saveChannexSetupMapping(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/bookings/receive"),
     handle: (event) => integrationController.receiveChannexBookingRevisions(event),
   },
@@ -220,6 +233,11 @@ const routeDefinitions = [
     matches: (method, path) =>
       method === "POST" && String(path || "").endsWith("/integrations/channex/booking-availability/sync"),
     handle: (event) => integrationController.syncChannexBookingAvailability(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").endsWith("/integrations/channex/calendar-change/sync"),
+    handle: (event) => integrationController.syncChannexCalendarChange(event),
   },
   {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/channex/sync/availability"),

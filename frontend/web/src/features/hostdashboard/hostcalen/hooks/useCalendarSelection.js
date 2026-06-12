@@ -162,6 +162,7 @@ const buildOverridePayload = (dateKeys, availabilityByKey, priceByKey, restricti
 const parseOverrideResponse = (overrides) => {
   const availabilityByKey = {};
   const priceByKey = {};
+  const priceLabsByKey = {};
   const restrictionsByKey = {};
   (Array.isArray(overrides) ? overrides : []).forEach((override) => {
     const key = dateNumberToKey(
@@ -178,12 +179,17 @@ const parseOverrideResponse = (overrides) => {
     if (Number.isFinite(nightlyPrice) && nightlyPrice > 0) {
       priceByKey[key] = Math.trunc(nightlyPrice);
     }
+    // PriceLabs price suggestion (set by webhook, requires host approval)
+    const priceLabsPrice = Number(readOverrideField(override, "priceLabsPrice", "pricelabs_price"));
+    if (Number.isFinite(priceLabsPrice) && priceLabsPrice > 0) {
+      priceLabsByKey[key] = Math.trunc(priceLabsPrice);
+    }
     const restriction = normalizeRestrictionOverride(override);
     if (hasRestrictionOverrideValue(restriction)) {
       restrictionsByKey[key] = restriction;
     }
   });
-  return { availabilityByKey, priceByKey, restrictionsByKey };
+  return { availabilityByKey, priceByKey, priceLabsByKey, restrictionsByKey };
 };
 
 const valuesAreEqual = (left, right) => left === right;
@@ -287,7 +293,9 @@ export const useCalendarSelection = ({
 }) => {
   const [availabilityOverrides, setAvailabilityOverrides] = useState({});
   const [priceOverridesByPropertyId, setPriceOverridesByPropertyId] = useState({});
+  const [priceLabsOverridesByPropertyId, setPriceLabsOverridesByPropertyId] = useState({});
   const [restrictionOverrides, setRestrictionOverrides] = useState({});
+  const [reloadKey, setReloadKey] = useState(0);
   const [selectionPriceInput, setSelectionPriceInput] = useState("");
   const [selectionPriceDirty, setSelectionPriceDirty] = useState(false);
   const [selectionRestrictionsForm, setSelectionRestrictionsForm] = useState(
@@ -345,6 +353,7 @@ export const useCalendarSelection = ({
     const {
       availabilityByKey: confirmedAvailability,
       priceByKey: confirmedPrice,
+      priceLabsByKey: confirmedPriceLabs,
       restrictionsByKey: confirmedRestrictions,
     } = parseOverrideResponse(body?.overrides);
 
@@ -374,6 +383,17 @@ export const useCalendarSelection = ({
         propertyPrices[key] = value;
       });
       next[propertyId] = propertyPrices;
+      return next;
+    });
+
+    setPriceLabsOverridesByPropertyId((previous) => {
+      const next = { ...previous };
+      const existing = next[propertyId];
+      const propertyPriceLabs = existing && typeof existing === "object" ? { ...existing } : {};
+      Object.entries(confirmedPriceLabs).forEach(([key, value]) => {
+        propertyPriceLabs[key] = value;
+      });
+      next[propertyId] = propertyPriceLabs;
       return next;
     });
 
@@ -413,6 +433,11 @@ export const useCalendarSelection = ({
   const selectedPropertyPriceOverrides = useMemo(
     () => priceOverridesByPropertyId?.[selectedPropertyId] || EMPTY_PRICE_OVERRIDES,
     [priceOverridesByPropertyId, selectedPropertyId]
+  );
+
+  const selectedPropertyPriceLabsOverrides = useMemo(
+    () => priceLabsOverridesByPropertyId?.[selectedPropertyId] || EMPTY_PRICE_OVERRIDES,
+    [priceLabsOverridesByPropertyId, selectedPropertyId]
   );
 
   const getBasePriceForDateKey = (key) => {
@@ -548,7 +573,7 @@ export const useCalendarSelection = ({
         if (!mounted) {
           return;
         }
-        const { availabilityByKey, priceByKey, restrictionsByKey } = parseOverrideResponse(body?.overrides);
+        const { availabilityByKey, priceByKey, priceLabsByKey, restrictionsByKey } = parseOverrideResponse(body?.overrides);
         const localOverridesChangedDuringRequest =
           localOverrideVersionRef.current !== requestStartedAtLocalVersion;
         const selectedKeysToPreserve = localOverridesChangedDuringRequest
@@ -575,6 +600,10 @@ export const useCalendarSelection = ({
               )
             : priceByKey,
         }));
+        setPriceLabsOverridesByPropertyId((previous) => ({
+          ...previous,
+          [selectedPropertyId]: priceLabsByKey,
+        }));
       } catch (error) {
         console.error(error?.message || error);
       }
@@ -585,11 +614,12 @@ export const useCalendarSelection = ({
     return () => {
       mounted = false;
     };
-  }, [selectedPropertyId]);
+  }, [selectedPropertyId, reloadKey]);
 
   useEffect(() => {
     setAvailabilityOverrides({});
     setRestrictionOverrides({});
+    setPriceLabsOverridesByPropertyId({});
     setSelectionPriceInput("");
     setSelectionPriceDirty(false);
     setSelectionRestrictionsForm(createSelectionRestrictionsForm());
@@ -705,6 +735,64 @@ export const useCalendarSelection = ({
     });
   };
 
+  const handleIgnorePriceLabsSuggestion = (dateKeys) => {
+    if (!selectedPropertyId || !dateKeys?.length) {
+      return;
+    }
+    // Remove the PriceLabs suggestion from local state for these dates.
+    // The suggestion will reappear only after the next PriceLabs sync.
+    setPriceLabsOverridesByPropertyId((previous) => {
+      const existing = previous?.[selectedPropertyId];
+      if (!existing) return previous;
+      const next = { ...existing };
+      dateKeys.forEach((key) => {
+        delete next[key];
+      });
+      return { ...previous, [selectedPropertyId]: next };
+    });
+  };
+
+  const handleApplyPriceLabsSuggestion = (dateKeys) => {
+    if (!selectedPropertyId || !dateKeys?.length) {
+      return;
+    }
+
+    // For each selected date, copy the pricelabs_price into nightly_price.
+    const nextPropertyPriceOverrides = { ...selectedPropertyPriceOverrides };
+    const keysToApply = [];
+
+    dateKeys.forEach((key) => {
+      if (externalBlockedDates.has(key) || bookedDateKeys.has(key)) {
+        return;
+      }
+      const labsPrice = Number(selectedPropertyPriceLabsOverrides[key]);
+      if (Number.isFinite(labsPrice) && labsPrice > 0) {
+        nextPropertyPriceOverrides[key] = Math.trunc(labsPrice);
+        keysToApply.push(key);
+      }
+    });
+
+    if (!keysToApply.length) {
+      return;
+    }
+
+    setPriceOverridesByPropertyId((previous) => ({
+      ...previous,
+      [selectedPropertyId]: nextPropertyPriceOverrides,
+    }));
+    markLocalOverrideTouched();
+
+    void persistOverrides(
+      selectedPropertyId,
+      keysToApply,
+      availabilityOverrides,
+      nextPropertyPriceOverrides,
+      restrictionOverrides
+    ).catch((error) => {
+      console.error(error?.message || error);
+    });
+  };
+
   const handleSelectionRestrictionChange = (field, nextValue) => {
     if (!CALENDAR_RESTRICTION_FIELDS.includes(field)) {
       return;
@@ -781,6 +869,7 @@ export const useCalendarSelection = ({
     availabilityOverrides,
     restrictionOverrides,
     selectedPropertyPriceOverrides,
+    selectedPropertyPriceLabsOverrides,
     selectedDateKeys,
     pendingSelectionStartKey,
     bookedDateKeys,
@@ -796,8 +885,11 @@ export const useCalendarSelection = ({
     handleToggleAvailability,
     handleSelectionPriceChange,
     handleSaveSelectionPrice,
+    handleApplyPriceLabsSuggestion,
+    handleIgnorePriceLabsSuggestion,
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
     resetSelectionState,
+    reloadOverrides: () => setReloadKey((k) => k + 1),
   };
 };

@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { AuthManager } from "../../functions/PropertyHandler/auth/authManager.js";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
+import { PropertyService } from "../../functions/PropertyHandler/business/service/propertyService.js";
 
 const buildAuthManager = ({ username = "caller-user", property, membership = null }) => {
   const authManager = new AuthManager();
@@ -14,7 +15,18 @@ const buildAuthManager = ({ username = "caller-user", property, membership = nul
   return authManager;
 };
 
-const buildCalendarController = ({ authorizeResult = "owner-host", authorizeError = null } = {}) => {
+const buildCalendarController = ({
+  authorizeResult = "owner-host",
+  authorizeError = null,
+  previousOverrides = [{ date: 20260610, isAvailable: true }],
+  updatedOverrides = [{ date: 20260610, isAvailable: true }],
+  channexSyncResult = {
+    syncType: "calendar-change",
+    requestCount: 1,
+    taskIds: ["task-calendar-1"],
+    overallSuccess: true,
+  },
+} = {}) => {
   const controller = new PropertyController();
   controller.authManager = {
     authorizePropertyCalendarOverrideRequest: authorizeError
@@ -22,8 +34,11 @@ const buildCalendarController = ({ authorizeResult = "owner-host", authorizeErro
       : jest.fn().mockResolvedValue(authorizeResult),
   };
   controller.propertyService = {
-    getPropertyCalendarOverrides: jest.fn().mockResolvedValue([{ date: 20260610, isAvailable: true }]),
-    updatePropertyCalendarOverrides: jest.fn().mockResolvedValue([{ date: 20260610, isAvailable: true }]),
+    getPropertyCalendarOverrides: jest.fn().mockResolvedValue(previousOverrides),
+    updatePropertyCalendarOverrides: jest.fn().mockResolvedValue(updatedOverrides),
+  };
+  controller.channexCalendarChangeSyncClient = {
+    syncCalendarChange: jest.fn().mockResolvedValue(channexSyncResult),
   };
   return controller;
 };
@@ -176,6 +191,100 @@ describe("Property calendar override authorization", () => {
       ],
       {}
     );
+    expect(controller.channexCalendarChangeSyncClient.syncCalendarChange).not.toHaveBeenCalled();
+    expect(JSON.parse(patchResponse.body).channexCalendarChangeSync).toEqual(
+      expect.objectContaining({
+        syncType: "calendar-change",
+        reason: "NO_CHANNEX_RELEVANT_CALENDAR_CHANGES",
+      })
+    );
+  });
+
+  it("notifies Channex when host calendar availability changes", async () => {
+    const controller = buildCalendarController({
+      previousOverrides: [{ date: 20260610, isAvailable: false }],
+      updatedOverrides: [{ date: 20260610, isAvailable: true }],
+    });
+
+    const response = await controller.updatePropertyCalendarOverrides({
+      headers: { Authorization: "token" },
+      body: JSON.stringify({
+        propertyId: "property-1",
+        overrides: [{ date: 20260610, isAvailable: true }],
+      }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(controller.channexCalendarChangeSyncClient.syncCalendarChange).toHaveBeenCalledWith({
+      userId: "owner-host",
+      domitsPropertyId: "property-1",
+      changedDates: ["2026-06-10"],
+      changeTypes: ["availability"],
+      source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+    });
+    expect(JSON.parse(response.body).channexCalendarChangeSync).toEqual(
+      expect.objectContaining({
+        requestCount: 1,
+        taskIds: ["task-calendar-1"],
+      })
+    );
+  });
+
+  it("notifies Channex when host calendar rates and restrictions change", async () => {
+    const controller = buildCalendarController({
+      previousOverrides: [
+        {
+          date: 20260610,
+          isAvailable: true,
+          nightlyPrice: 100,
+          stopSell: false,
+          closedToArrival: false,
+          closedToDeparture: false,
+          minStay: 1,
+          maxStay: 0,
+        },
+      ],
+      updatedOverrides: [
+        {
+          date: 20260610,
+          isAvailable: true,
+          nightlyPrice: 125,
+          stopSell: true,
+          closedToArrival: true,
+          closedToDeparture: false,
+          minStay: 2,
+          maxStay: 5,
+        },
+      ],
+    });
+
+    const response = await controller.updatePropertyCalendarOverrides({
+      headers: { Authorization: "token" },
+      body: JSON.stringify({
+        propertyId: "property-1",
+        overrides: [
+          {
+            date: 20260610,
+            isAvailable: true,
+            nightlyPrice: 125,
+            stopSell: true,
+            closedToArrival: true,
+            closedToDeparture: false,
+            minStay: 2,
+            maxStay: 5,
+          },
+        ],
+      }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(controller.channexCalendarChangeSyncClient.syncCalendarChange).toHaveBeenCalledWith({
+      userId: "owner-host",
+      domitsPropertyId: "property-1",
+      changedDates: ["2026-06-10"],
+      changeTypes: ["rates", "restrictions"],
+      source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+    });
   });
 
   it("keeps unauthorized calendar override requests forbidden", async () => {
@@ -194,5 +303,31 @@ describe("Property calendar override authorization", () => {
     expect(response.statusCode).toBe(403);
     expect(JSON.parse(response.body)).toBe("You must be the owner or an active co-host of the property to access it.");
     expect(controller.propertyService.updatePropertyCalendarOverrides).not.toHaveBeenCalled();
+  });
+});
+
+describe("Property public calendar availability response", () => {
+  it("includes explicit available override dates for guest listing availability", async () => {
+    const service = new PropertyService();
+    service.propertyExternalCalendarRepository = {
+      getAvailabilitySnapshotByPropertyId: jest.fn().mockResolvedValue({
+        externalBlockedDates: ["2026-06-18"],
+      }),
+    };
+    service.propertyCalendarOverrideRepository = {
+      getOverridesByPropertyId: jest.fn().mockResolvedValue([
+        { date: 20260610, isAvailable: true },
+        { date: 20260619, isAvailable: false },
+      ]),
+    };
+    service.bookingRepository = {
+      getBlockedDateKeysByPropertyId: jest.fn().mockResolvedValue(["2026-06-20"]),
+    };
+
+    const response = await service.getPublicCalendarAvailability("property-1");
+
+    expect(response.availableDateKeys).toEqual(["2026-06-10"]);
+    expect(response.unavailableDateKeys).toEqual(["2026-06-19", "2026-06-20"]);
+    expect(response.externalBlockedDates).toEqual(["2026-06-18"]);
   });
 });

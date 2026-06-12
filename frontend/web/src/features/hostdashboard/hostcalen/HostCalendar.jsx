@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
+import { useLocation } from "react-router-dom";
 import "./HostCalendar.scss";
 import PriceLabsConnect from "../hostpricelabs/components/PriceLabsConnect";
 import PriceLabsStatusCard from "../hostpricelabs/components/PriceLabsStatusCard";
@@ -23,7 +24,13 @@ import {
   subMonthsUTC,
 } from "./utils/date";
 import { createInitialPricingForm } from "../hostproperty/constants";
-import { buildPricingSnapshot, normalizeAvailabilityRanges } from "./hooks/hostCalendarHelpers";
+import {
+  buildPricingSnapshot,
+  clearPersistedCalendarFocusContext,
+  normalizeAvailabilityRanges,
+  normalizeTimestampLike,
+  readPersistedCalendarFocusContext,
+} from "./hooks/hostCalendarHelpers";
 import { useAvailabilitySettings } from "./hooks/useAvailabilitySettings";
 import { useCalendarBookings } from "./hooks/useCalendarBookings";
 import { useCalendarListings } from "./hooks/useCalendarListings";
@@ -95,6 +102,32 @@ const availabilitySettingsFormShape = PropTypes.shape({
 });
 
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const parseCalendarFocusDate = (value) => {
+  const parsedDate = normalizeTimestampLike(value);
+  if (!parsedDate) {
+    return null;
+  }
+
+  return new Date(
+    Date.UTC(
+      parsedDate.getUTCFullYear(),
+      parsedDate.getUTCMonth(),
+      parsedDate.getUTCDate()
+    )
+  );
+};
+
+const resolveInitialCalendarCursor = ({ focusedArrivalDate, hostUserId }) => {
+  const persistedFocusContext = focusedArrivalDate
+    ? null
+    : readPersistedCalendarFocusContext(hostUserId);
+  const focusDate = parseCalendarFocusDate(
+    focusedArrivalDate || persistedFocusContext?.arrivalDate
+  );
+
+  return startOfMonthUTC(focusDate || new Date());
+};
 
 const toUtcDateFromDateNumber = (dateNumber) => {
   const normalized = String(Math.trunc(Number(dateNumber) || 0));
@@ -175,7 +208,9 @@ function HostCalendarSidebar({
   priceLabsDisconnect,
   priceLabsSyncAll,
   priceOverrides,
+  priceLabsOverrides,
   onApplyPriceLabsPrice,
+  onIgnorePriceLabsPrice,
   selectedDateKeys,
   selectedAvailabilityStats,
   handleToggleAvailability,
@@ -245,6 +280,18 @@ function HostCalendarSidebar({
     );
   }
 
+  if (sidebarMode === "pricelabs" && priceLabsConnected) {
+    return (
+      <PriceLabsStatusCard
+        status={priceLabsStatus}
+        onSync={priceLabsSyncAll}
+        onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
+        isSyncing={false}
+        isLoading={false}
+      />
+    );
+  }
+
   if (selectedDateKeys.length > 0) {
     return (
       <>
@@ -267,8 +314,9 @@ function HostCalendarSidebar({
         <DynamicPricingCard
           isConnected={priceLabsConnected}
           selectedDateKeys={selectedDateKeys}
-          priceOverrides={priceOverrides}
+          priceLabsOverrides={priceLabsOverrides}
           onApplyPrice={onApplyPriceLabsPrice}
+          onIgnorePrice={onIgnorePriceLabsPrice}
           onOpenSettings={() => setSidebarMode("pricelabs")}
         />
       </>
@@ -381,15 +429,7 @@ function HostCalendarSidebar({
   }
 
   if (sidebarMode === "pricelabs") {
-    return priceLabsConnected ? (
-      <PriceLabsStatusCard
-        status={priceLabsStatus}
-        onSync={priceLabsSyncAll}
-        onDisconnect={() => { priceLabsDisconnect(); setSidebarMode("summary"); }}
-        isSyncing={false}
-        isLoading={false}
-      />
-    ) : (
+    return (
       <PriceLabsConnect
         onConnect={async (email) => { await priceLabsConnect(email); setSidebarMode("summary"); }}
         isLoading={false}
@@ -456,8 +496,9 @@ function HostCalendarSidebar({
       <DynamicPricingCard
         isConnected={priceLabsConnected}
         selectedDateKeys={selectedDateKeys}
-        priceOverrides={priceOverrides}
+        priceLabsOverrides={priceLabsOverrides}
         onApplyPrice={onApplyPriceLabsPrice}
+        onIgnorePrice={onIgnorePriceLabsPrice}
         onOpenSettings={() => setSidebarMode("pricelabs")}
       />
     </>
@@ -473,7 +514,9 @@ HostCalendarSidebar.propTypes = {
   priceLabsDisconnect: PropTypes.func,
   priceLabsSyncAll: PropTypes.func,
   priceOverrides: PropTypes.objectOf(PropTypes.number),
+  priceLabsOverrides: PropTypes.objectOf(PropTypes.number),
   onApplyPriceLabsPrice: PropTypes.func,
+  onIgnorePriceLabsPrice: PropTypes.func,
   selectedDateKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedAvailabilityStats: selectedAvailabilityStatsShape.isRequired,
   handleToggleAvailability: PropTypes.func.isRequired,
@@ -537,8 +580,17 @@ HostCalendarSidebar.propTypes = {
 };
 
 export default function HostCalendar() {
+  const location = useLocation();
+  const hostUserId = String(getCognitoUserId() || "").trim();
+  const focusedCalendarContext = location.state?.calendarContext || null;
+  const focusedArrivalDate = focusedCalendarContext?.arrivalDate || "";
   const [view, setView] = useState("month");
-  const [cursor, setCursor] = useState(startOfMonthUTC(new Date()));
+  const [cursor, setCursor] = useState(() =>
+    resolveInitialCalendarCursor({
+      focusedArrivalDate,
+      hostUserId,
+    })
+  );
   const [sidebarMode, setSidebarMode] = useState("summary");
 
   const {
@@ -617,6 +669,7 @@ export default function HostCalendar() {
     availabilityOverrides,
     restrictionOverrides,
     selectedPropertyPriceOverrides,
+    selectedPropertyPriceLabsOverrides,
     selectedDateKeys,
     pendingSelectionStartKey,
     bookedDateKeys,
@@ -632,8 +685,11 @@ export default function HostCalendar() {
     handleToggleAvailability,
     handleSelectionPriceChange,
     handleSaveSelectionPrice,
+    handleApplyPriceLabsSuggestion,
+    handleIgnorePriceLabsSuggestion,
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
+    reloadOverrides,
   } = useCalendarSelection({
     cursor,
     monthGrid,
@@ -684,6 +740,24 @@ export default function HostCalendar() {
     setCursor((currentCursor) => addMonthsUTC(currentCursor, view === "year" ? 12 : 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
 
+  useEffect(() => {
+    const persistedFocusContext = focusedArrivalDate
+      ? focusedCalendarContext
+      : readPersistedCalendarFocusContext(hostUserId);
+    const focusDate = parseCalendarFocusDate(
+      focusedArrivalDate || persistedFocusContext?.arrivalDate
+    );
+    if (focusedCalendarContext || persistedFocusContext) {
+      clearPersistedCalendarFocusContext(hostUserId);
+    }
+    if (!focusDate) {
+      return;
+    }
+
+    setView("month");
+    setCursor(startOfMonthUTC(focusDate));
+  }, [focusedArrivalDate, focusedCalendarContext, hostUserId]);
+
   const {
     status: priceLabsStatus,
     connect: priceLabsConnect,
@@ -692,11 +766,20 @@ export default function HostCalendar() {
   } = usePriceLabs();
   const priceLabsConnected = Boolean(priceLabsStatus?.connected);
 
-  const handleApplyPriceLabsPrice = (dateKeys, price) => {
-    // Price already saved in Property_Calendar_Override via webhook — just update local state
-    // by triggering the existing selection price save with the PriceLabs price
-    handleSelectionPriceChange(price);
-    handleSaveSelectionPrice();
+  const handleApplyPriceLabsPrice = (dateKeys) => {
+    handleApplyPriceLabsSuggestion(dateKeys);
+  };
+
+  const handleIgnorePriceLabsPrice = (dateKeys) => {
+    handleIgnorePriceLabsSuggestion(dateKeys);
+  };
+
+  const handlePriceLabsDisconnect = async () => {
+    try {
+      await priceLabsDisconnect();
+    } finally {
+      reloadOverrides();
+    }
   };
 
   const openCalendarSync = () => setSidebarMode("calendar-sync");
@@ -765,6 +848,7 @@ export default function HostCalendar() {
             availabilityOverrides={availabilityOverrides}
             restrictionOverrides={restrictionOverrides}
             priceOverrides={selectedPropertyPriceOverrides}
+            priceLabsOverrides={selectedPropertyPriceLabsOverrides}
             bookedDateKeys={bookedDateKeys}
             onDateSelect={handleCalendarDateSelect}
           />
@@ -777,10 +861,12 @@ export default function HostCalendar() {
             priceLabsConnected={priceLabsConnected}
             priceLabsStatus={priceLabsStatus}
             priceLabsConnect={priceLabsConnect}
-            priceLabsDisconnect={priceLabsDisconnect}
+            priceLabsDisconnect={handlePriceLabsDisconnect}
             priceLabsSyncAll={priceLabsSyncAll}
             priceOverrides={selectedPropertyPriceOverrides}
+            priceLabsOverrides={selectedPropertyPriceLabsOverrides}
             onApplyPriceLabsPrice={handleApplyPriceLabsPrice}
+            onIgnorePriceLabsPrice={handleIgnorePriceLabsPrice}
             selectedDateKeys={selectedDateKeys}
             selectedAvailabilityStats={selectedAvailabilityStats}
             handleToggleAvailability={handleToggleAvailability}

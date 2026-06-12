@@ -14,7 +14,6 @@ import {
   buildWebsiteMetricGroups,
   buildWebsiteMetricDeltaMap,
   EMPTY_WEBSITE_KPIS,
-  PERFORMANCE_VIEWPORT_TAB_MOBILE,
   PERFORMANCE_VIEWPORT_TAB_OPTIONS,
 } from "./websiteKpiConfig";
 import styles from "../WebsiteBuilderPage.module.scss";
@@ -32,6 +31,7 @@ const KPI_VIEW_TAB_OPTIONS = Object.freeze([
 ]);
 const WEBSITE_KPI_POLL_INTERVAL_MS = 60000;
 const WEBSITE_KPI_HIGHLIGHT_DURATION_MS = 4200;
+
 const formatWebsiteKpiSyncTime = (timestamp) =>
   new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
@@ -168,7 +168,6 @@ function WebsiteKpiDashboardPage() {
   const [websiteKpisError, setWebsiteKpisError] = useState("");
   const [websiteKpisRefreshError, setWebsiteKpisRefreshError] = useState("");
   const [lastWebsiteKpiRefreshAt, setLastWebsiteKpiRefreshAt] = useState(0);
-  const [performanceViewportTab, setPerformanceViewportTab] = useState(PERFORMANCE_VIEWPORT_TAB_MOBILE);
   const [kpiViewTab, setKpiViewTab] = useState(KPI_VIEW_TAB_OVERVIEW);
   const [highlightedMetricIds, setHighlightedMetricIds] = useState([]);
   const [metricDeltaMap, setMetricDeltaMap] = useState({});
@@ -287,7 +286,19 @@ function WebsiteKpiDashboardPage() {
   }, []);
 
   const metricGroups = buildWebsiteMetricGroups(websiteKpis);
-  const performanceCards = buildPerformanceCards(websiteKpis, performanceViewportTab);
+  const performanceViewportCards = useMemo(
+    () =>
+      PERFORMANCE_VIEWPORT_TAB_OPTIONS.map((viewportOption) => ({
+        ...viewportOption,
+        ...buildPerformanceCards(websiteKpis, viewportOption.id),
+      })),
+    [websiteKpis]
+  );
+  const performanceCards = performanceViewportCards[0] || {
+    title: "Website performance",
+    description: "",
+    metrics: [],
+  };
   const researchKpiCards = buildResearchKpiCards(websiteKpis);
   const deletionReasonRows = useMemo(
     () => buildDeletionReasonRows(websiteKpis.deletionReasonBreakdown),
@@ -389,43 +400,29 @@ function WebsiteKpiDashboardPage() {
       </div>
 
       <div className={styles.surfaceKpiBody}>
-        <div className={styles.surfaceKpiViewportSection}>
-          <div className={styles.surfaceKpiTabRow} role="tablist" aria-label="Website viewport KPI tabs">
-            {PERFORMANCE_VIEWPORT_TAB_OPTIONS.map(({ id, label }) => {
-              const isActiveTab = performanceViewportTab === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActiveTab}
-                  className={`${styles.surfaceKpiTabButton} ${
-                    isActiveTab ? styles.surfaceKpiTabButtonActive : ""
-                  }`.trim()}
-                  onClick={() => setPerformanceViewportTab(id)}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <p className={styles.surfaceKpiDescription}>
-          {performanceCards.viewportDescription}
-        </p>
-        <div className={styles.surfaceKpiGrid}>
-          {performanceCards.metrics.map((surfaceMetric) => (
-            <WebsiteKpiMetricCard
-              key={surfaceMetric.id}
-              title={surfaceMetric.title}
-              value={surfaceMetric.value}
-              meta={surfaceMetric.meta}
-              isLoading={isInitialKpiLoad}
-              loadingMeta="Loading surface performance metrics..."
-              isHighlighted={highlightedMetricIds.includes(surfaceMetric.id)}
-              sampleLabel={surfaceMetric.sampleLabel}
-              deltaLabel={metricDeltaMap[surfaceMetric.id] || ""}
-            />
+        <div className={styles.surfaceKpiViewportGrid}>
+          {performanceViewportCards.map((viewportCard) => (
+            <section key={viewportCard.id} className={styles.surfaceKpiViewportPanel}>
+              <div className={styles.surfaceKpiViewportHeader}>
+                <h4>{viewportCard.label}</h4>
+              </div>
+
+              <div className={styles.surfaceKpiViewportMetricGrid}>
+                {viewportCard.metrics.map((surfaceMetric) => (
+                  <WebsiteKpiMetricCard
+                    key={surfaceMetric.id}
+                    title={surfaceMetric.title}
+                    value={surfaceMetric.value}
+                    meta={surfaceMetric.meta}
+                    isLoading={isInitialKpiLoad}
+                    loadingMeta="Loading surface performance metrics..."
+                    isHighlighted={highlightedMetricIds.includes(surfaceMetric.id)}
+                    sampleLabel={surfaceMetric.sampleLabel}
+                    deltaLabel={metricDeltaMap[surfaceMetric.id] || ""}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       </div>
