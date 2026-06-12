@@ -221,34 +221,34 @@ const FilterUi = ({ onFilterApplied }) => {
       </div>
 
       {amenitiesModalOpen && (
-        <div className="amenities-modal-overlay">
+        <div className="filter-amenities-modal-overlay">
           <button
             type="button"
-            className="amenities-modal-backdrop"
+            className="filter-amenities-modal-backdrop"
             aria-label="Close amenities"
             onClick={() => setAmenitiesModalOpen(false)}
           />
           <dialog
-            className="amenities-modal"
+            className="filter-amenities-modal"
             open
             aria-modal="true"
             aria-label="All amenities"
           >
-            <div className="amenities-modal-header">
+            <div className="filter-amenities-modal-header">
               <span>{panelLabels.amenities}</span>
               <button
                 type="button"
-                className="amenities-modal-close"
+                className="filter-amenities-modal-close"
                 aria-label="Close amenities"
                 onClick={() => setAmenitiesModalOpen(false)}
               >
                 ✕
               </button>
             </div>
-            <div className="amenities-modal-body">
+            <div className="filter-amenities-modal-body">
               {amenityCategories.map(renderAmenityCategory)}
             </div>
-            <div className="amenities-modal-footer">
+            <div className="filter-amenities-modal-footer">
               <button
                 type="button"
                 className="filter-apply-btn"

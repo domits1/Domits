@@ -9,7 +9,7 @@
   margin-top: 12px;
 }
 
-.amenities-modal-overlay {
+.filter-amenities-modal-overlay {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
@@ -20,7 +20,7 @@
   padding: 20px;
 }
 
-.amenities-modal-backdrop {
+.filter-amenities-modal-backdrop {
   position: absolute;
   inset: 0;
   background: none;
@@ -29,7 +29,7 @@
   cursor: default;
 }
 
-.amenities-modal {
+.filter-amenities-modal {
   position: relative;
   border: none;
   padding: 0;
@@ -44,7 +44,7 @@
   overflow: hidden;
 }
 
-.amenities-modal-header {
+.filter-amenities-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -54,7 +54,7 @@
   font-size: 16px;
 }
 
-.amenities-modal-close {
+.filter-amenities-modal-close {
   background: none;
   border: none;
   font-size: 18px;
@@ -62,7 +62,7 @@
   line-height: 1;
 }
 
-.amenities-modal-body {
+.filter-amenities-modal-body {
   padding: 16px 20px;
   overflow-y: auto;
   display: grid;
@@ -71,34 +71,34 @@
   align-items: start;
 }
 
-.amenities-modal-body .amenity-category {
+.filter-amenities-modal-body .amenity-category {
   margin: 0;
   border: 1px solid #e0e0e0;
   border-radius: 10px;
   padding: 14px 16px;
 }
 
-.amenities-modal-body .amenity-category-title {
+.filter-amenities-modal-body .amenity-category-title {
   margin-bottom: 10px;
 }
 
-.amenities-modal-body .facility-list {
+.filter-amenities-modal-body .facility-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-top: 0;
 }
 
-.amenities-modal-body .facility-item {
+.filter-amenities-modal-body .facility-item {
   margin-bottom: 0;
 }
 
-.amenities-modal-footer {
+.filter-amenities-modal-footer {
   padding: 16px 20px;
   border-top: 1px solid #e6e6e6;
 }
 
-.amenities-modal-footer .filter-apply-btn {
+.filter-amenities-modal-footer .filter-apply-btn {
   width: 100%;
 }
 
