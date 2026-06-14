@@ -1,38 +1,6 @@
-jest.mock(
-  "@aws-sdk/client-secrets-manager",
-  () => require("./integrationService.secretsManagerMock.js"),
-  { virtual: true }
-);
-
-const IntegrationService = require("./integrationService.js").default;
-
-const createService = (channexAriExecutionService) =>
-  new IntegrationService({
-    accounts: {},
-    props: {},
-    ratePlans: {},
-    roomTypes: {},
-    sync: {},
-    resLinks: {},
-    channexEvidence: {},
-    channexBookingRevisions: {},
-    bookingAvailabilityRepository: {},
-    externalBookingImportRepository: {},
-    channexBookingAvailabilityBridge: {},
-    runner: {},
-    credentialStore: {},
-    holiduCredentialStore: {},
-    holiduProviderClient: {},
-    channexCredentialStore: {},
-    channexProviderClient: {},
-    channelManagementService: {},
-    channexMappingService: {},
-    channexAriPayloadService: {},
-    channexAriExecutionService,
-    channexBookingRevisionImportService: {},
-    channexAvailabilitySyncService: {},
-    channexBookingPollingService: {},
-  });
+const {
+  expectIntegrationServiceDelegation,
+} = require("./integrationServiceDelegationTestUtils.js");
 
 describe("IntegrationService Channex ARI execution delegation", () => {
   test.each([
@@ -54,12 +22,11 @@ describe("IntegrationService Channex ARI execution delegation", () => {
     ],
   ])("%s delegates to the shared ARI execution service", async (methodName, args) => {
     const expected = { delegated: methodName };
-    const channexAriExecutionService = {
-      [methodName]: jest.fn().mockResolvedValue(expected),
-    };
-    const service = createService(channexAriExecutionService);
-
-    await expect(service[methodName](...args)).resolves.toBe(expected);
-    expect(channexAriExecutionService[methodName]).toHaveBeenCalledWith(...args);
+    await expectIntegrationServiceDelegation({
+      dependencyName: "channexAriExecutionService",
+      methodName,
+      args,
+      expected,
+    });
   });
 });

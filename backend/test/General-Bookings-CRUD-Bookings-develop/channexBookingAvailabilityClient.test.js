@@ -1,35 +1,15 @@
-import { jest } from "@jest/globals";
-
 import ChannexBookingAvailabilityClient, {
   CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
 } from "../../functions/General-Bookings-CRUD-Bookings-develop/business/channexBookingAvailabilityClient.js";
-
-const encodeLambdaResponse = (body) =>
-  new TextEncoder().encode(
-    JSON.stringify({
-      statusCode: 200,
-      body: JSON.stringify(body),
-    })
-  );
+import {
+  createLambdaMock,
+  expectChannexLambdaInvocation,
+  expectMissingInternalTokenSkip,
+  useChannexLambdaClientTestEnvironment,
+} from "../util/channexLambdaClientTestUtils.js";
 
 describe("ChannexBookingAvailabilityClient", () => {
-  const originalToken = process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN;
-
-  beforeEach(() => {
-    process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN = "internal-token";
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    if (originalToken === undefined) {
-      delete process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN;
-    } else {
-      process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN = originalToken;
-    }
-  });
+  useChannexLambdaClientTestEnvironment();
 
   it("invokes UnifiedMessaging with the existing synthetic HTTP event and returns evidence", async () => {
     const evidence = {
@@ -37,44 +17,35 @@ describe("ChannexBookingAvailabilityClient", () => {
       bookingId: "booking-1",
       overallSuccess: true,
     };
-    const lambda = {
-      send: jest.fn().mockResolvedValue({ Payload: encodeLambdaResponse(evidence) }),
-    };
+    const lambda = createLambdaMock({ body: evidence });
     const client = new ChannexBookingAvailabilityClient({ lambda });
     const payload = { trigger: "BOOKING_CREATED", bookingAfter: { id: "booking-1" } };
 
     await expect(client.syncAvailabilityForBookingChange(payload)).resolves.toEqual(evidence);
-
-    const command = lambda.send.mock.calls[0][0];
-    expect(command.input.FunctionName).toBe("UnifiedMessaging");
-    expect(JSON.parse(command.input.Payload)).toEqual({
-      httpMethod: "POST",
+    expectChannexLambdaInvocation(lambda, {
       path: "/integrations/channex/booking-availability/sync",
-      headers: { "x-domits-internal-token": "internal-token" },
-      queryStringParameters: {},
-      body: JSON.stringify(payload),
+      payload,
     });
   });
 
   it("keeps the existing fallback evidence when Lambda reports a function error", async () => {
-    const lambda = {
-      send: jest.fn().mockResolvedValue({
-        FunctionError: "Unhandled",
-        Payload: new TextEncoder().encode(
-          JSON.stringify({
-            statusCode: 500,
-            body: JSON.stringify({ message: "Sync failed." }),
-          })
-        ),
-      }),
-    };
-    const client = new ChannexBookingAvailabilityClient({ lambda, functionName: "CustomUnifiedMessaging" });
-
-    const result = await client.syncAvailabilityForBookingChange({
-      bookingAfter: { id: "booking-1", property_id: "property-1" },
+    const lambda = createLambdaMock({
+      body: { message: "Sync failed." },
+      statusCode: 500,
+      functionError: "Unhandled",
     });
+    const client = new ChannexBookingAvailabilityClient({ lambda, functionName: "CustomUnifiedMessaging" });
+    const payload = {
+      bookingAfter: { id: "booking-1", property_id: "property-1" },
+    };
 
-    expect(lambda.send.mock.calls[0][0].input.FunctionName).toBe("CustomUnifiedMessaging");
+    const result = await client.syncAvailabilityForBookingChange(payload);
+
+    expectChannexLambdaInvocation(lambda, {
+      path: "/integrations/channex/booking-availability/sync",
+      payload,
+      functionName: "CustomUnifiedMessaging",
+    });
     expect(result).toEqual(
       expect.objectContaining({
         bookingId: "booking-1",
@@ -94,18 +65,14 @@ describe("ChannexBookingAvailabilityClient", () => {
   });
 
   it("does not invoke Lambda when the internal token is missing", async () => {
-    delete process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN;
-    const lambda = { send: jest.fn() };
+    const lambda = createLambdaMock();
     const client = new ChannexBookingAvailabilityClient({ lambda });
-
-    const result = await client.syncAvailabilityForBookingChange({ bookingAfter: { id: "booking-1" } });
-
-    expect(lambda.send).not.toHaveBeenCalled();
-    expect(result).toEqual(
-      expect.objectContaining({
-        skipped: true,
-        reason: "CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN_MISSING",
-      })
-    );
+    await expectMissingInternalTokenSkip({
+      lambda,
+      invoke: () =>
+        client.syncAvailabilityForBookingChange({
+          bookingAfter: { id: "booking-1" },
+        }),
+    });
   });
 });

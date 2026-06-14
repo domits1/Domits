@@ -1,41 +1,6 @@
-jest.mock(
-  "@aws-sdk/client-secrets-manager",
-  () => require("./integrationService.secretsManagerMock.js"),
-  { virtual: true }
-);
-
-const IntegrationService = require("./integrationService.js").default;
-
-const createService = (channexDiagnosticsService) =>
-  new IntegrationService({
-    accounts: {},
-    props: {},
-    ratePlans: {},
-    roomTypes: {},
-    sync: {},
-    resLinks: {},
-    channexEvidence: {},
-    channexBookingRevisions: {},
-    bookingAvailabilityRepository: {},
-    externalBookingImportRepository: {},
-    channexBookingAvailabilityBridge: {},
-    runner: {},
-    credentialStore: {},
-    holiduCredentialStore: {},
-    holiduProviderClient: {},
-    channexCredentialStore: {},
-    channexProviderClient: {},
-    channelManagementService: {},
-    channexMappingService: {},
-    channexAriPayloadService: {},
-    channexAriExecutionService: {},
-    channexFullSyncService: {},
-    channexCertificationService: {},
-    channexDiagnosticsService,
-    channexBookingRevisionImportService: {},
-    channexAvailabilitySyncService: {},
-    channexBookingPollingService: {},
-  });
+const {
+  expectIntegrationServiceDelegation,
+} = require("./integrationServiceDelegationTestUtils.js");
 
 describe("IntegrationService Channex diagnostics delegation", () => {
   test.each([
@@ -51,12 +16,11 @@ describe("IntegrationService Channex diagnostics delegation", () => {
     ["getLatestChannexSyncEvidenceSummary", ["user-1", "property-1"]],
   ])("%s delegates to the shared diagnostics service", async (methodName, args) => {
     const expected = { delegated: methodName };
-    const channexDiagnosticsService = {
-      [methodName]: jest.fn().mockReturnValue(expected),
-    };
-    const service = createService(channexDiagnosticsService);
-
-    await expect(Promise.resolve(service[methodName](...args))).resolves.toBe(expected);
-    expect(channexDiagnosticsService[methodName]).toHaveBeenCalledWith(...args);
+    await expectIntegrationServiceDelegation({
+      dependencyName: "channexDiagnosticsService",
+      methodName,
+      args,
+      expected,
+    });
   });
 });

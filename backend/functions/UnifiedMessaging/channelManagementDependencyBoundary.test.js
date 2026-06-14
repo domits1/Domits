@@ -21,6 +21,31 @@ const ChannelManagementApiService =
 const functionsRoot = path.join(process.cwd(), "functions");
 const sharedRoot = path.join(functionsRoot, ".shared", "channelManagement");
 const importPattern = /(?:from\s+|import\s*\(\s*|require\(\s*)["']([^"']+)["']/g;
+const sharedServiceConstructors = [
+  ChannexAriExecutionService,
+  ChannexFullSyncService,
+  ChannexCertificationService,
+  ChannexDiagnosticsService,
+];
+const requiredSharedFiles = [
+  "channelManagementService.js",
+  "services/channexBookingPollingService.js",
+  "services/channexBookingRevisionImportService.js",
+  "services/channexAvailabilitySyncService.js",
+  "services/channexMappingService.js",
+  "services/channexAriPayloadService.js",
+  "services/channexAriExecutionService.js",
+  "services/channexFullSyncService.js",
+  "services/channexCertificationService.js",
+  "services/channexDiagnosticsService.js",
+  "services/channexAriOrchestrationService.js",
+  "channelManagementApiService.js",
+  "controller/channelManagementController.js",
+  "handler/channelManagementHandler.js",
+  "utils/channexAriDateUtils.js",
+  "utils/channexAriPayloadUtils.js",
+  "utils/channexAriExecutionUtils.js",
+];
 
 const listJavaScriptFiles = (directory) =>
   fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -47,67 +72,14 @@ const isLambdaHandlerImport = (filePath, specifier) => {
 describe("shared ChannelManagement dependency boundary", () => {
   test("contains an importable shared service boundary", () => {
     expect(() => new ChannelManagementApiService()).not.toThrow();
-    expect(typeof ChannexAriExecutionService).toBe("function");
-    expect(typeof ChannexFullSyncService).toBe("function");
-    expect(typeof ChannexCertificationService).toBe("function");
-    expect(typeof ChannexDiagnosticsService).toBe("function");
-    expect(
-      fs.existsSync(path.join(sharedRoot, "channelManagementService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(sharedRoot, "services", "channexBookingPollingService.js")
-      )
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(sharedRoot, "services", "channexBookingRevisionImportService.js")
-      )
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(sharedRoot, "services", "channexAvailabilitySyncService.js")
-      )
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "services", "channexMappingService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "services", "channexAriPayloadService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "services", "channexAriExecutionService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "services", "channexFullSyncService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "services", "channexCertificationService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "services", "channexDiagnosticsService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "services", "channexAriOrchestrationService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "channelManagementApiService.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "controller", "channelManagementController.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "handler", "channelManagementHandler.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "utils", "channexAriDateUtils.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "utils", "channexAriPayloadUtils.js"))
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(sharedRoot, "utils", "channexAriExecutionUtils.js"))
-    ).toBe(true);
+    for (const ServiceConstructor of sharedServiceConstructors) {
+      expect(typeof ServiceConstructor).toBe("function");
+    }
+
+    const missingFiles = requiredSharedFiles.filter(
+      (relativePath) => !fs.existsSync(path.join(sharedRoot, relativePath))
+    );
+    expect(missingFiles).toEqual([]);
   });
 
   test("does not import UnifiedMessaging or Lambda handlers", () => {

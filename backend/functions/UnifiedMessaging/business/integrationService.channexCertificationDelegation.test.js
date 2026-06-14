@@ -1,41 +1,6 @@
-jest.mock(
-  "@aws-sdk/client-secrets-manager",
-  () => require("./integrationService.secretsManagerMock.js"),
-  { virtual: true }
-);
-
-const IntegrationService = require("./integrationService.js").default;
-
-const createService = (channexCertificationService) =>
-  new IntegrationService({
-    accounts: {},
-    props: {},
-    ratePlans: {},
-    roomTypes: {},
-    sync: {},
-    resLinks: {},
-    channexEvidence: {},
-    channexBookingRevisions: {},
-    bookingAvailabilityRepository: {},
-    externalBookingImportRepository: {},
-    channexBookingAvailabilityBridge: {},
-    runner: {},
-    credentialStore: {},
-    holiduCredentialStore: {},
-    holiduProviderClient: {},
-    channexCredentialStore: {},
-    channexProviderClient: {},
-    channelManagementService: {},
-    channexMappingService: {},
-    channexAriPayloadService: {},
-    channexAriExecutionService: {},
-    channexFullSyncService: {},
-    channexCertificationService,
-    channexDiagnosticsService: {},
-    channexBookingRevisionImportService: {},
-    channexAvailabilitySyncService: {},
-    channexBookingPollingService: {},
-  });
+const {
+  expectIntegrationServiceDelegation,
+} = require("./integrationServiceDelegationTestUtils.js");
 
 describe("IntegrationService Channex certification delegation", () => {
   test.each([
@@ -57,12 +22,11 @@ describe("IntegrationService Channex certification delegation", () => {
     ],
   ])("%s delegates to the shared certification service", async (methodName, args) => {
     const expected = { delegated: methodName };
-    const channexCertificationService = {
-      [methodName]: jest.fn().mockReturnValue(expected),
-    };
-    const service = createService(channexCertificationService);
-
-    await expect(Promise.resolve(service[methodName](...args))).resolves.toBe(expected);
-    expect(channexCertificationService[methodName]).toHaveBeenCalledWith(...args);
+    await expectIntegrationServiceDelegation({
+      dependencyName: "channexCertificationService",
+      methodName,
+      args,
+      expected,
+    });
   });
 });
