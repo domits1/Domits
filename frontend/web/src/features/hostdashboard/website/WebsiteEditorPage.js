@@ -1010,7 +1010,8 @@ function WebsiteEditorPage() {
     const publishedWebsiteHref = buildPublishedWebsiteHref(
       primarySiteDomain?.domain,
       siteSummary?.site?.id,
-      primarySiteDomain?.status
+      primarySiteDomain?.status,
+      siteSummary?.site?.siteName
     );
     if (!publishedWebsiteHref) {
       toast.error("This website does not have a live link yet.");
