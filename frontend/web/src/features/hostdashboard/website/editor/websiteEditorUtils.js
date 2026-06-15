@@ -277,16 +277,20 @@ export const resolvePublicSiteLinkPresentation = ({
 }) => {
   const normalizedDraftId = String(draftId || "").trim();
   const hasPreviewLink = Boolean(normalizedDraftId);
+  const publishedSiteHref = buildPublishedWebsiteHref(
+    primarySiteDomain?.domain,
+    siteSummary?.site?.id,
+    primarySiteDomain?.status
+  );
+  const primaryLiveLinkValue = primarySiteDomain?.domain || publishedSiteHref;
 
   if (hasLiveSite) {
     return {
       primaryLinkLabel: "Domits live link",
-      primaryLinkValue: primarySiteDomain?.domain || "Available after first publish",
-      secondaryLinkHref: primarySiteDomain?.domain
-        ? buildPublishedWebsiteHref(primarySiteDomain.domain, siteSummary?.site?.id, primarySiteDomain.status)
-        : "",
+      primaryLinkValue: primaryLiveLinkValue || "Available after first publish",
+      secondaryLinkHref: publishedSiteHref,
       secondaryLinkCopy: "Live site URL",
-      secondaryLinkText: primarySiteDomain?.domain || "",
+      secondaryLinkText: primaryLiveLinkValue || "",
     };
   }
 

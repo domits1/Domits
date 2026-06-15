@@ -1,6 +1,11 @@
-export const buildPublishedWebsitePath = (domain, siteId = "") => {
-  const path = `/website-live/${encodeURIComponent(domain)}`;
+export const buildPublishedWebsitePath = (domain = "", siteId = "") => {
+  const normalizedDomain = String(domain || "").trim().toLowerCase();
   const normalizedSiteId = String(siteId || "").trim();
+  if (!normalizedDomain) {
+    return normalizedSiteId ? `/website-live?siteId=${encodeURIComponent(normalizedSiteId)}` : "";
+  }
+
+  const path = `/website-live/${encodeURIComponent(normalizedDomain)}`;
   return normalizedSiteId ? `${path}?siteId=${encodeURIComponent(normalizedSiteId)}` : path;
 };
 
@@ -9,11 +14,8 @@ export const buildWebsitePreviewPath = (draftId) =>
 
 export const buildPublishedWebsiteHref = (domain, siteId = "", domainStatus = "") => {
   const normalizedDomain = String(domain || "").trim().toLowerCase();
-  if (!normalizedDomain) {
-    return "";
-  }
 
-  if (String(domainStatus || "").trim().toUpperCase() === "ACTIVE") {
+  if (normalizedDomain && String(domainStatus || "").trim().toUpperCase() === "ACTIVE") {
     return `https://${normalizedDomain}`;
   }
 

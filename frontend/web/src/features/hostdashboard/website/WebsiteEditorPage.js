@@ -1007,18 +1007,17 @@ function WebsiteEditorPage() {
   );
 
   const openLiveWebsiteLink = () => {
-    const publishedDomain = String(primarySiteDomain?.domain || "").trim();
-    if (!publishedDomain) {
+    const publishedWebsiteHref = buildPublishedWebsiteHref(
+      primarySiteDomain?.domain,
+      siteSummary?.site?.id,
+      primarySiteDomain?.status
+    );
+    if (!publishedWebsiteHref) {
       toast.error("This website does not have a live link yet.");
       return;
     }
 
     setIsActionMenuOpen(false);
-    const publishedWebsiteHref = buildPublishedWebsiteHref(
-      publishedDomain,
-      siteSummary?.site?.id,
-      primarySiteDomain?.status
-    );
     const openedLiveSiteWindow = globalThis.open(publishedWebsiteHref, "_blank", "noopener,noreferrer");
 
     openedLiveSiteWindowRef.current = openedLiveSiteWindow;
