@@ -3,8 +3,9 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
-import { fetchWebsiteDraftByPropertyId, upsertWebsiteDraft } from "./services/websiteDraftService";
+import { upsertWebsiteDraft } from "./services/websiteDraftService";
 import {
+  fetchWebsiteSiteByPropertyId,
   publishWebsiteSite,
   unpublishWebsiteSite,
 } from "./services/websiteSiteService";
@@ -774,15 +775,55 @@ function WebsiteEditorPage() {
     saveDraftChanges
   );
 
-  const reloadDraftRecord = async () => {
-    const persistedDraft = await fetchWebsiteDraftByPropertyId(propertyId);
-    if (!persistedDraft) {
-      throw new Error("Draft update completed, but the website draft could not be reloaded.");
+  const recoverPublishedSiteSummary = async () => {
+    const normalizedPropertyId = String(draftRecord?.propertyId || "").trim();
+    if (!normalizedPropertyId) {
+      return null;
     }
+
+    for (const retryDelayMs of [0, 250, 750]) {
+      if (retryDelayMs > 0) {
+        await new Promise((resolve) => {
+          globalThis.setTimeout(resolve, retryDelayMs);
+        });
+      }
+
+      try {
+        const nextSiteSummary = await fetchWebsiteSiteByPropertyId(normalizedPropertyId);
+        if (String(nextSiteSummary?.site?.status || "").trim().toUpperCase() !== "PUBLISHED") {
+          continue;
+        }
+
+        setSiteSummary(nextSiteSummary);
+        setSiteSummaryError("");
+        announceWebsiteLiveSiteUpdate({
+          siteId: nextSiteSummary?.site?.id,
+          domain: nextSiteSummary?.primaryDomain?.domain,
+        });
+        notifyOpenedLiveSiteWindow({
+          nextSiteSummary,
+          openedLiveSiteWindowOriginRef,
+          openedLiveSiteWindowRef,
+        });
+        return nextSiteSummary;
+      } catch {
+        // Keep retrying briefly so the editor can reflect a completed publish without a hard refresh.
+      }
+    }
+
+    return null;
+  };
+
+  const hydratePersistedDraftRecord = (persistedDraft) => {
+    if (!persistedDraft) {
+      throw new Error("Draft update completed, but no website draft was returned.");
+    }
+
+    const nextTemplateKey = String(persistedDraft.templateKey || draftTemplateKey).trim();
 
     setDraftRecord(persistedDraft);
     if (baseModel) {
-      setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft, draftTemplateKey));
+      setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft, nextTemplateKey));
     }
     setThemeValues(buildWebsiteDraftThemeEditorValues(getDraftThemeOverrides(persistedDraft)));
 
@@ -794,7 +835,7 @@ function WebsiteEditorPage() {
       throw new Error("Website draft not found.");
     }
 
-    await upsertWebsiteDraft({
+    const persistedDraft = await upsertWebsiteDraft({
       propertyId: draftRecord.propertyId,
       templateKey: draftRecord.templateKey,
       status: draftRecord.status || "DRAFT",
@@ -803,8 +844,7 @@ function WebsiteEditorPage() {
       publishedContentOverrides: syncPublishedState ? mergedContentOverrides : publishedContentOverrides,
       publishedThemeOverrides: syncPublishedState ? mergedThemeOverrides : publishedThemeOverrides,
     });
-
-    const nextDraft = await reloadDraftRecord();
+    const nextDraft = hydratePersistedDraftRecord(persistedDraft);
 
     announceWebsitePreviewUpdate(nextDraft?.id || draftRecord.id);
 
@@ -842,15 +882,14 @@ function WebsiteEditorPage() {
     setIsDiscardingChanges(true);
 
     try {
-      await upsertWebsiteDraft({
+      const persistedDraft = await upsertWebsiteDraft({
         propertyId: draftRecord.propertyId,
         templateKey: draftRecord.templateKey,
         status: draftRecord.status || "DRAFT",
         contentOverrides: publishedContentOverrides,
         themeOverrides: publishedThemeOverrides,
       });
-
-      await reloadDraftRecord();
+      hydratePersistedDraftRecord(persistedDraft);
       toast.success("Draft reverted to the current published version.");
     } catch (error) {
       toast.error(error?.message || "We could not discard your draft changes.");
@@ -915,6 +954,12 @@ function WebsiteEditorPage() {
       });
       toast.success("Live site published.");
     } catch (error) {
+      const recoveredSiteSummary = await recoverPublishedSiteSummary();
+      if (recoveredSiteSummary) {
+        toast.success("Live site published.");
+        return;
+      }
+
       const errorMessage = error?.message || "We could not publish the live site.";
       setSiteSummaryError(errorMessage);
       toast.error(errorMessage);
