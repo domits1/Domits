@@ -123,6 +123,17 @@ const buildLiveSiteDomainLabel = (siteName, siteId) => {
 };
 const buildLiveSiteDomain = (siteName, siteId) =>
     `${buildLiveSiteDomainLabel(siteName, siteId)}.${getDirectBookingWebsiteFallbackDomainSuffix()}`;
+const extractLiveSiteDomainIdSuffix = (domain) => {
+    const normalizedDomain = normalizeDirectBookingWebsiteDomainInput(domain);
+    const suffix = getDirectBookingWebsiteFallbackDomainSuffix();
+    if (!normalizedDomain || !normalizedDomain.endsWith(`.${suffix}`)) {
+        return "";
+    }
+
+    const hostLabel = normalizedDomain.slice(0, -(suffix.length + 1));
+    const labelParts = hostLabel.split("-").filter(Boolean);
+    return labelParts[labelParts.length - 1] || "";
+};
 const normalizeDirectBookingWebsiteDomainInput = (value) => {
     const normalizedValue = cleanWebsiteText(value).toLowerCase();
     if (!normalizedValue) {
@@ -1744,7 +1755,21 @@ export class PropertyController {
             throw new TypeError("Missing website domain.");
         }
 
-        const domain = await this.directBookingWebsiteDomainRepository.getDomainByName(normalizedDomain);
+        let domain = await this.directBookingWebsiteDomainRepository.getDomainByName(normalizedDomain);
+        if (!domain) {
+            const publishedSite = await this.resolvePublishedSiteByFallbackDomain(normalizedDomain);
+            if (!publishedSite) {
+                return null;
+            }
+
+            domain = await this.resolveOrCreatePrimaryLiveDomain(publishedSite);
+            if (!domain || normalizeDirectBookingWebsiteDomainInput(domain.domain) !== normalizedDomain) {
+                return null;
+            }
+
+            return { site: publishedSite, domain };
+        }
+
         if (!domain) {
             return null;
         }
@@ -1773,10 +1798,12 @@ export class PropertyController {
             domains.find((domainEntry) => domainEntry?.isPrimary) ||
             domains.find((domainEntry) => Boolean(domainEntry?.domain)) ||
             null;
+        const healedPrimaryDomain =
+            primaryDomain || (site.status === "PUBLISHED" ? await this.resolveOrCreatePrimaryLiveDomain(site) : null);
 
         return {
             site,
-            domain: primaryDomain,
+            domain: healedPrimaryDomain,
         };
     }
 
@@ -1794,8 +1821,85 @@ export class PropertyController {
             return null;
         }
 
-        const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        let domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        if (site.status === "PUBLISHED" && domains.length < 1) {
+            const healedDomain = await this.resolveOrCreatePrimaryLiveDomain(site);
+            domains = healedDomain ? [healedDomain] : [];
+        }
+
         return this.buildDirectBookingWebsiteSummary(site, domains);
+    }
+
+    buildFallbackLiveDomainVerificationDetails(status) {
+        return {
+            activationMode: "internal",
+            domainKind: "live",
+            routingConfigured: status === "ACTIVE",
+            activationStatus: status,
+            domainSuffix: getDirectBookingWebsiteFallbackDomainSuffix(),
+        };
+    }
+
+    buildSyntheticPrimaryLiveDomain(site, status = getDirectBookingWebsiteFallbackRoutingStatus()) {
+        const now = Date.now();
+        return {
+            id: `synthetic-${site.id}`,
+            siteId: site.id,
+            domain: buildLiveSiteDomain(site.siteName, site.id),
+            domainType: DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK,
+            status,
+            isPrimary: true,
+            verificationDetails: this.buildFallbackLiveDomainVerificationDetails(status),
+            lastCheckedAt: now,
+            createdAt: now,
+            updatedAt: now,
+        };
+    }
+
+    async resolveOrCreatePrimaryLiveDomain(site) {
+        if (!site?.id) {
+            return null;
+        }
+
+        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        if (existingLiveDomain?.domain) {
+            return existingLiveDomain;
+        }
+
+        const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(
+            getDirectBookingWebsiteFallbackRoutingStatus()
+        );
+        const syntheticDomain = this.buildSyntheticPrimaryLiveDomain(site, liveDomainStatus);
+
+        try {
+            const persistedDomain = await this.directBookingWebsiteDomainRepository.ensureDomain({
+                siteId: site.id,
+                domain: syntheticDomain.domain,
+                domainType: DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK,
+                status: liveDomainStatus,
+                isPrimary: true,
+                verificationDetails: this.buildFallbackLiveDomainVerificationDetails(liveDomainStatus),
+            });
+            return persistedDomain || syntheticDomain;
+        } catch (error) {
+            console.error("Failed to heal direct booking website fallback domain.", error);
+            return syntheticDomain;
+        }
+    }
+
+    async resolvePublishedSiteByFallbackDomain(domainInput) {
+        const normalizedDomain = normalizeDirectBookingWebsiteDomainInput(domainInput);
+        const idSuffix = extractLiveSiteDomainIdSuffix(normalizedDomain);
+        if (!normalizedDomain || !idSuffix) {
+            return null;
+        }
+
+        const site = await this.directBookingWebsiteSiteRepository.getPublishedSiteByNormalizedIdPrefix(idSuffix);
+        if (!site) {
+            return null;
+        }
+
+        return buildLiveSiteDomain(site.siteName, site.id) === normalizedDomain ? site : null;
     }
 
     async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId }) {
@@ -1835,13 +1939,7 @@ export class PropertyController {
             domainType: DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK,
             status: liveDomainStatus,
             isPrimary: true,
-            verificationDetails: {
-                activationMode: "internal",
-                domainKind: "live",
-                routingConfigured: liveDomainStatus === "ACTIVE",
-                activationStatus: liveDomainStatus,
-                domainSuffix: getLiveSiteDomainSuffix(),
-            },
+            verificationDetails: this.buildFallbackLiveDomainVerificationDetails(liveDomainStatus),
         });
 
         await this.recordStandaloneWebsiteEventSafely({
