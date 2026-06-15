@@ -177,6 +177,23 @@
         "solo": "Solo",
         "senior": "Mayores",
         "petFriendly": "Apto para mascotas"
+      },
+      "panel": {
+        "apply": "Aplicar filtro",
+        "reset": "Restablecer filtro",
+        "priceRange": "Rango de precios",
+        "min": "Mín",
+        "max": "Máx",
+        "amenities": "Servicios",
+        "showMore": "Mostrar más",
+        "roomsAndBeds": "Habitaciones y camas",
+        "bedrooms": "Dormitorios",
+        "beds": "Camas",
+        "bathrooms": "Baños",
+        "any": "Cualquiera",
+        "bookingOptions": "Opciones de reserva",
+        "bookInstantly": "Reserva instantánea",
+        "bookingRequest": "Solicitud de reserva"
       }
     },
     "destinations": {

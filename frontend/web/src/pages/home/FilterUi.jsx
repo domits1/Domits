@@ -1,33 +1,88 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import Slider from '@mui/material/Slider';
+import { LanguageContext } from '../../context/LanguageContext';
+import en from '../../content/en.json';
+import nl from '../../content/nl.json';
+import de from '../../content/de.json';
+import es from '../../content/es.json';
+import amenities from '../../store/amenities';
 import FilterLogic from './FilterLogic';
 import './FilterMain.css';
-import { MAX_PRICE, MIN_PRICE } from '../../constants/searchFilters';
+
+const contentByLanguage = { en, nl, de, es };
 
 const EURO_SYMBOL = '\u20AC';
 
+// Group the canonical amenity list (src/store/amenities.js) by category so the
+// filter always reflects every amenity a host can select.
+const amenitiesByCategory = amenities.reduce((groups, amenity) => {
+  if (!groups[amenity.category]) {
+    groups[amenity.category] = [];
+  }
+  groups[amenity.category].push(amenity);
+  return groups;
+}, {});
+
+const amenityCategories = Object.keys(amenitiesByCategory).sort((a, b) =>
+  a.localeCompare(b)
+);
+
+const amenityById = amenities.reduce((map, amenity) => {
+  map[amenity.id] = amenity;
+  return map;
+}, {});
+
+// Most-commonly-filtered amenities shown in the collapsed sidebar preview.
+// ids match src/store/amenities.js.
+const POPULAR_AMENITY_IDS = ['1', '2', '3', '4', '59', '60', '82', '83', '92', '93'];
+
+const popularAmenities = POPULAR_AMENITY_IDS.map((id) => amenityById[id]).filter(Boolean);
+
 const FilterUi = ({ onFilterApplied }) => {
   const {
+    priceBounds,
     priceValues,
     setPriceValues,
-    selectedFacilities,
-    handleFacilityChange,
-    selectedPropertyTypes,
-    handlePropertyTypeChange,
-    showMoreFacilities,
-    setShowMoreFacilities,
-    showMorePropertyTypes,
-    setShowMorePropertyTypes,
+    selectedAmenities,
+    handleAmenityChange,
     handlePriceChange,
+    handleResetFilters,
     fetchFilteredAccommodations,
-    handleSeasonChange,
-    seasonFilter,
-    setShowMoreSeasonTypes,
-    showMoreSeasonTypes,
-    handleEcoChange,
-    ecoScore,
+    roomsAndBeds,
+    handleRoomChange,
+    bookingOptions,
+    handleBookingOptionChange,
+    error,
   } = FilterLogic({ onFilterApplied });
+
+  const { language } = useContext(LanguageContext);
+  const panelLabels =
+    contentByLanguage[language]?.homepage?.filters?.panel ??
+    en.homepage.filters.panel;
+
+  const [amenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
+
+  const renderAmenityCheckbox = (amenity) => (
+    <label key={amenity.id} className="facility-item">
+      <input
+        type="checkbox"
+        checked={selectedAmenities.includes(amenity.id)}
+        onChange={() => handleAmenityChange(amenity.id)}
+        className="filter-select-option"
+      />
+      {amenity.amenity}
+    </label>
+  );
+
+  const renderAmenityCategory = (category) => (
+    <div key={category} className="amenity-category">
+      <div className="amenity-category-title">{category}</div>
+      <div className="facility-list">
+        {amenitiesByCategory[category].map(renderAmenityCheckbox)}
+      </div>
+    </div>
+  );
 
   const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
   const [maxInputValue, setMaxInputValue] = useState(`${EURO_SYMBOL}${priceValues[1]}`);
@@ -41,10 +96,6 @@ const FilterUi = ({ onFilterApplied }) => {
     setPriceValues(newValues);
   };
 
-  const handleSliderChangeCommitted = () => {
-    fetchFilteredAccommodations();
-  };
-
   const handleMinInputChange = (event) => {
     const rawValue = event.target.value;
     setMinInputValue(rawValue);
@@ -53,9 +104,8 @@ const FilterUi = ({ onFilterApplied }) => {
 
     if (numericValue) {
       const newValue = Number.parseInt(numericValue, 10);
-      if (newValue >= MIN_PRICE && newValue <= priceValues[1]) {
+      if (newValue >= priceBounds[0] && newValue <= priceValues[1]) {
         handlePriceChange(0, newValue);
-        fetchFilteredAccommodations();
       }
     }
   };
@@ -68,9 +118,8 @@ const FilterUi = ({ onFilterApplied }) => {
 
     if (numericValue) {
       const newValue = Number.parseInt(numericValue, 10);
-      if (newValue <= MAX_PRICE && newValue >= priceValues[0]) {
+      if (newValue <= priceBounds[1] && newValue >= priceValues[0]) {
         handlePriceChange(1, newValue);
-        fetchFilteredAccommodations();
       }
     }
   };
@@ -80,10 +129,29 @@ const FilterUi = ({ onFilterApplied }) => {
     setMaxInputValue(`${EURO_SYMBOL}${priceValues[1]}`);
   };
 
+  const triggerClickAnimation = (event) => {
+    const button = event.currentTarget;
+    button.classList.remove('is-clicked');
+    // Force reflow so the animation restarts on every click.
+    button.getBoundingClientRect();
+    button.classList.add('is-clicked');
+  };
+
+  const handleApplyClick = (event) => {
+    triggerClickAnimation(event);
+    fetchFilteredAccommodations();
+  };
+
+  const handleResetClick = (event) => {
+    triggerClickAnimation(event);
+    handleResetFilters();
+  };
+
   return (
     <div>
+      {error && <output className="filter-message">{error}</output>}
       <div className="filter-section">
-        <div className="FilterTitle">Price Range</div>
+        <div className="FilterTitle">{panelLabels.priceRange}</div>
         <div className="slider-container">
           <Slider
             sx={{
@@ -106,17 +174,16 @@ const FilterUi = ({ onFilterApplied }) => {
             }}
             value={priceValues}
             onChange={handleSliderChange}
-            onChangeCommitted={handleSliderChangeCommitted}
             valueLabelDisplay="auto"
-            min={MIN_PRICE}
-            max={MAX_PRICE}
+            min={priceBounds[0]}
+            max={priceBounds[1]}
             step={1}
             valueLabelFormat={(value) => `${EURO_SYMBOL}${value}`}
             disableSwap
           />
           <div className="price-inputs">
             <div>
-              <label htmlFor="filter-price-min">Min:</label>
+              <label htmlFor="filter-price-min">{panelLabels.min}:</label>
               <input
                 id="filter-price-min"
                 type="text"
@@ -126,7 +193,7 @@ const FilterUi = ({ onFilterApplied }) => {
               />
             </div>
             <div>
-              <label htmlFor="filter-price-max">Max:</label>
+              <label htmlFor="filter-price-max">{panelLabels.max}:</label>
               <input
                 id="filter-price-max"
                 type="text"
@@ -140,141 +207,142 @@ const FilterUi = ({ onFilterApplied }) => {
       </div>
 
       <div className="filter-section">
-        <div className="FilterTitle">Facilities</div>
+        <div className="FilterTitle">{panelLabels.amenities}</div>
         <div className="facility-list">
-          {Object.keys(selectedFacilities).slice(0, 5).map((facility) => (
-            <label key={facility} className="facility-item">
-              <input
-                type="checkbox"
-                name={facility}
-                checked={selectedFacilities[facility]}
-                onChange={handleFacilityChange}
-                className="filter-select-option"
-              />
-              {facility.charAt(0).toUpperCase() + facility.slice(1)}
-            </label>
-          ))}
-          {showMoreFacilities &&
-            Object.keys(selectedFacilities)
-              .slice(5)
-              .map((facility) => (
-                <label key={facility} className="facility-item">
-                  <input
-                    type="checkbox"
-                    name={facility}
-                    checked={selectedFacilities[facility]}
-                    onChange={handleFacilityChange}
-                    className="filter-select-option"
-                  />
-                  {facility.charAt(0).toUpperCase() + facility.slice(1)}
-                </label>
-              ))}
+          {popularAmenities.map(renderAmenityCheckbox)}
         </div>
         <button
           type="button"
-          onClick={() => setShowMoreFacilities(!showMoreFacilities)}
+          onClick={() => setAmenitiesModalOpen(true)}
           className="show-more-text"
         >
-          {showMoreFacilities ? 'Show Less' : 'Show More'}
+          {panelLabels.showMore}
         </button>
       </div>
 
-      <div className="filter-section">
-        <div className="FilterTitle">Property Type</div>
-        <div className="facility-list">
-          {Object.keys(selectedPropertyTypes).slice(0, 5).map((propertyType) => (
-            <label key={propertyType} className="facility-item">
-              <input
-                type="checkbox"
-                name={propertyType}
-                checked={selectedPropertyTypes[propertyType]}
-                onChange={handlePropertyTypeChange}
-                className="filter-select-option"
-              />
-              {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
-            </label>
-          ))}
-          {showMorePropertyTypes &&
-            Object.keys(selectedPropertyTypes)
-              .slice(5)
-              .map((propertyType) => (
-                <label key={propertyType} className="facility-item">
-                  <input
-                    type="checkbox"
-                    name={propertyType}
-                    checked={selectedPropertyTypes[propertyType]}
-                    onChange={handlePropertyTypeChange}
-                    className="filter-select-option"
-                  />
-                  {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
-                </label>
-              ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowMorePropertyTypes(!showMorePropertyTypes)}
-          className="show-more-text"
-        >
-          {showMorePropertyTypes ? 'Show Less' : 'Show More'}
-        </button>
-      </div>
-
-      <div className="filter-section">
-        <div className="FilterTitle">Seasons</div>
-        <div className="facility-list">
-          {Object.keys(seasonFilter).slice(0, 5).map((season) => (
-            <label key={season} className="facility-item">
-              <input
-                type="checkbox"
-                name={season}
-                checked={seasonFilter[season]}
-                onChange={handleSeasonChange}
-                className="filter-select-option"
-              />
-              {season.charAt(0).toUpperCase() + season.slice(1)}
-            </label>
-          ))}
-          {showMoreSeasonTypes &&
-            Object.keys(seasonFilter)
-              .slice(5)
-              .map((season) => (
-                <label key={season} className="facility-item">
-                  <input
-                    type="checkbox"
-                    name={season}
-                    checked={seasonFilter[season]}
-                    onChange={handleSeasonChange}
-                    className="filter-select-option"
-                  />
-                  {season.charAt(0).toUpperCase() + season.slice(1)}
-                </label>
-              ))}
+      {amenitiesModalOpen && (
+        <div className="filter-amenities-modal-overlay">
           <button
             type="button"
-            onClick={() => setShowMoreSeasonTypes(!showMoreSeasonTypes)}
-            className="show-more-text"
+            className="filter-amenities-modal-backdrop"
+            aria-label="Close amenities"
+            onClick={() => setAmenitiesModalOpen(false)}
+          />
+          <dialog
+            className="filter-amenities-modal"
+            open
+            aria-modal="true"
+            aria-label="All amenities"
           >
-            {showMoreSeasonTypes ? 'Show Less' : 'Show More'}
-          </button>
+            <div className="filter-amenities-modal-header">
+              <span>{panelLabels.amenities}</span>
+              <button
+                type="button"
+                className="filter-amenities-modal-close"
+                aria-label="Close amenities"
+                onClick={() => setAmenitiesModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="filter-amenities-modal-body">
+              {amenityCategories.map(renderAmenityCategory)}
+            </div>
+            <div className="filter-amenities-modal-footer">
+              <button
+                type="button"
+                className="filter-apply-btn"
+                onClick={(event) => {
+                  triggerClickAnimation(event);
+                  setAmenitiesModalOpen(false);
+                  fetchFilteredAccommodations();
+                }}
+              >
+                {panelLabels.apply}
+              </button>
+            </div>
+          </dialog>
         </div>
+      )}
+
+      <div className="filter-section">
+        <div className="FilterTitle">{panelLabels.roomsAndBeds}</div>
+        {[
+          { key: 'bedrooms', label: panelLabels.bedrooms },
+          { key: 'beds', label: panelLabels.beds },
+          { key: 'bathrooms', label: panelLabels.bathrooms },
+        ].map(({ key, label }) => (
+          <div key={key} className="room-counter">
+            <span className="room-counter-label">{label}</span>
+            <div className="counter-controls">
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => handleRoomChange(key, -1)}
+                disabled={roomsAndBeds[key] === 0}
+                aria-label={`Decrease ${label}`}
+              >
+                −
+              </button>
+              <span className="counter-value">
+                {roomsAndBeds[key] === 0 ? panelLabels.any : roomsAndBeds[key]}
+              </span>
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => handleRoomChange(key, 1)}
+                aria-label={`Increase ${label}`}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="filter-section">
-        <div className="FilterTitle">Eco Score</div>
+        <div className="FilterTitle">{panelLabels.bookingOptions}</div>
         <div className="facility-list">
-          {Object.keys(ecoScore).slice(0, 5).map((eco) => (
-            <label key={eco} className="facility-item">
-              <input
-                type="checkbox"
-                name={eco}
-                checked={ecoScore[eco]}
-                onChange={handleEcoChange}
-                className="filter-select-option"
-              />
-              {eco.charAt(0).toUpperCase() + eco.slice(1)}
-            </label>
-          ))}
+          <label className="facility-item">
+            <input
+              type="checkbox"
+              name="bookInstantly"
+              checked={bookingOptions.bookInstantly}
+              onChange={handleBookingOptionChange}
+              className="filter-select-option"
+            />
+            <span>{panelLabels.bookInstantly}</span>
+          </label>
+          <label className="facility-item">
+            <input
+              type="checkbox"
+              name="bookingRequest"
+              checked={bookingOptions.bookingRequest}
+              onChange={handleBookingOptionChange}
+              className="filter-select-option"
+            />
+            <span>{panelLabels.bookingRequest}</span>
+          </label>
         </div>
+      </div>
+
+      <div className="filter-actions">
+        <button
+          type="button"
+          className="filter-reset-btn"
+          onClick={handleResetClick}
+          onAnimationEnd={(event) => event.currentTarget.classList.remove('is-clicked')}
+        >
+          {panelLabels.reset}
+        </button>
+        <button
+          type="button"
+          className="filter-apply-btn"
+          onClick={handleApplyClick}
+          onAnimationEnd={(event) => event.currentTarget.classList.remove('is-clicked')}
+        >
+          {panelLabels.apply}
+        </button>
       </div>
     </div>
   );
