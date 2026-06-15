@@ -188,7 +188,6 @@ export class PriceLabsService {
       if (!grouped[listingId]) {
         grouped[listingId] = {
           listing_id: listingId,
-          user_token: connection.pricelabs_email,
           data:       [],
         };
       }
