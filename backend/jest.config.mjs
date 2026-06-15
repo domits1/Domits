@@ -1,6 +1,6 @@
 export default {
     transform: {
-        '^.+\\.js$': 'babel-jest',
+        '^.+\\.(js|mjs)$': 'babel-jest',
     },
     testEnvironment: 'node',
     moduleNameMapper: {

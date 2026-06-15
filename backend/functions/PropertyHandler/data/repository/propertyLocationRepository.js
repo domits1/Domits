@@ -1,4 +1,5 @@
 import { LocationMapping } from "../../util/mapping/location.js";
+import { PaginatedPropertyMapping } from "../../util/mapping/paginatedProperty.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { geocodeAddress } from "../../util/geocoding.js";
 import Database from "database";
@@ -108,20 +109,9 @@ export class PropertyLocationRepository {
 
         if (result.length < 1) {
             throw new NotFoundException(`No property found.`)
-        } else {
-            const items = result.map(item => item.property_id);
-
-            const lastItem = result[result.length - 1];
-            const lastEvaluatedKey = {
-                createdAt: lastItem.createdat,
-                id: lastItem.property_id,
-            }
-
-            return {
-                identifiers: items,
-                lastEvaluatedKey: lastEvaluatedKey,
-            };
         }
+
+        return PaginatedPropertyMapping.mapDatabaseEntriesToPaginatedIdentifiers(result);
     }
 
 }
