@@ -83,7 +83,7 @@ const slugifyWebsiteDomainLabel = (value) => {
     let previousCharacterWasHyphen = false;
 
     for (const currentCharacter of normalizedValue) {
-        const isAsciiCharacter = (currentCharacter.codePointAt(0) || 0) <= 0x7f;
+        const isAsciiCharacter = (currentCharacter.codePointAt?.(0) ?? 0) <= 0x7f;
         if (!isAsciiCharacter) {
             continue;
         }
@@ -132,7 +132,7 @@ const extractLiveSiteDomainIdSuffix = (domain) => {
 
     const hostLabel = normalizedDomain.slice(0, -(suffix.length + 1));
     const labelParts = hostLabel.split("-").filter(Boolean);
-    return labelParts[labelParts.length - 1] || "";
+    return labelParts.at(-1) || "";
 };
 const normalizeDirectBookingWebsiteDomainInput = (value) => {
     const normalizedValue = cleanWebsiteText(value).toLowerCase();

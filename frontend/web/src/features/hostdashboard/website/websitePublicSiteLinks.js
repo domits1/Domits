@@ -1,64 +1,38 @@
-const DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com";
+const DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com";
+const WEBSITE_DOMAIN_SLUG_MAX_LENGTH = 40;
+const WEBSITE_DOMAIN_ID_SUFFIX_LENGTH = 8;
+const WEBSITE_DOMAIN_LABEL_MAX_LENGTH = 63;
+const WEBSITE_DOMAIN_LABEL_EDGE_HYPHENS_PATTERN = /^-+|-+$/g;
+const WEBSITE_DOMAIN_LABEL_SEPARATOR_PATTERN = /[^a-z0-9]+/g;
+const WEBSITE_NON_ASCII_PATTERN = /[^\x00-\x7f]/g;
+const WEBSITE_ID_SUFFIX_SANITIZER_PATTERN = /[^a-z0-9]/g;
 
 const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
-const isAsciiLowercaseLetter = (value) => value >= "a" && value <= "z";
-const isAsciiDigit = (value) => value >= "0" && value <= "9";
-const isAsciiLowercaseLetterOrDigit = (value) => isAsciiLowercaseLetter(value) || isAsciiDigit(value);
 
-const trimRepeatedCharacterEdges = (value, character) => {
-  let startIndex = 0;
-  let endIndex = value.length;
+const getDirectBookingWebsiteFallbackDomainSuffix = () =>
+  cleanWebsiteText(process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX).toLowerCase() ||
+  DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX;
 
-  while (startIndex < endIndex && value[startIndex] === character) {
-    startIndex += 1;
-  }
+const trimWebsiteDomainLabelEdges = (value) =>
+  String(value || "").replace(WEBSITE_DOMAIN_LABEL_EDGE_HYPHENS_PATTERN, "");
 
-  while (endIndex > startIndex && value[endIndex - 1] === character) {
-    endIndex -= 1;
-  }
+const normalizeAsciiWebsiteText = (value) =>
+  cleanWebsiteText(value).normalize("NFKD").toLowerCase().replace(WEBSITE_NON_ASCII_PATTERN, "");
 
-  return value.slice(startIndex, endIndex);
-};
-
-const slugifyWebsiteDomainLabel = (value) => {
-  const normalizedValue = cleanWebsiteText(value).normalize("NFKD").toLowerCase();
-  let sanitizedValue = "";
-  let previousCharacterWasHyphen = false;
-
-  for (const currentCharacter of normalizedValue) {
-    const isAsciiCharacter = (currentCharacter.codePointAt(0) || 0) <= 0x7f;
-    if (!isAsciiCharacter) {
-      continue;
-    }
-
-    if (isAsciiLowercaseLetterOrDigit(currentCharacter)) {
-      sanitizedValue += currentCharacter;
-      previousCharacterWasHyphen = false;
-      continue;
-    }
-
-    if (!previousCharacterWasHyphen) {
-      sanitizedValue += "-";
-      previousCharacterWasHyphen = true;
-    }
-  }
-
-  sanitizedValue = trimRepeatedCharacterEdges(sanitizedValue, "-");
-  return sanitizedValue || "site";
-};
+const slugifyWebsiteDomainLabel = (value) =>
+  trimWebsiteDomainLabelEdges(
+    normalizeAsciiWebsiteText(value).replace(WEBSITE_DOMAIN_LABEL_SEPARATOR_PATTERN, "-")
+  ) || "site";
 
 const normalizePublishedWebsiteIdSuffix = (value) =>
-  cleanWebsiteText(value)
-    .toLowerCase()
-    .split("")
-    .filter((currentCharacter) => isAsciiLowercaseLetterOrDigit(currentCharacter))
-    .join("");
+  cleanWebsiteText(value).toLowerCase().replace(WEBSITE_ID_SUFFIX_SANITIZER_PATTERN, "");
 
 const buildPublishedWebsiteDomainLabel = (siteName, siteId) => {
-  const slugBase = trimRepeatedCharacterEdges(slugifyWebsiteDomainLabel(siteName).slice(0, 40), "-") || "site";
-  const idSuffix = normalizePublishedWebsiteIdSuffix(siteId).slice(0, 8) || "domits";
-  const combinedLabel = `${slugBase}-${idSuffix}`;
-  return trimRepeatedCharacterEdges(combinedLabel.slice(0, 63), "-");
+  const slugBase =
+    trimWebsiteDomainLabelEdges(slugifyWebsiteDomainLabel(siteName).slice(0, WEBSITE_DOMAIN_SLUG_MAX_LENGTH)) ||
+    "site";
+  const idSuffix = normalizePublishedWebsiteIdSuffix(siteId).slice(0, WEBSITE_DOMAIN_ID_SUFFIX_LENGTH) || "domits";
+  return trimWebsiteDomainLabelEdges(`${slugBase}-${idSuffix}`.slice(0, WEBSITE_DOMAIN_LABEL_MAX_LENGTH));
 };
 
 export const resolvePublishedWebsiteDomain = (domain = "", siteName = "", siteId = "") => {
@@ -72,7 +46,7 @@ export const resolvePublishedWebsiteDomain = (domain = "", siteName = "", siteId
     return "";
   }
 
-  return `${buildPublishedWebsiteDomainLabel(siteName, normalizedSiteId)}.${DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX}`;
+  return `${buildPublishedWebsiteDomainLabel(siteName, normalizedSiteId)}.${getDirectBookingWebsiteFallbackDomainSuffix()}`;
 };
 
 export const buildPublishedWebsitePath = (domain = "", siteId = "", siteName = "") => {
