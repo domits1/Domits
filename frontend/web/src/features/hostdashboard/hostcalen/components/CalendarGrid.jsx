@@ -158,7 +158,13 @@ const buildRestrictionIndicators = (restriction) => {
     .filter(({ field }) => safeRestriction[field] === true)
     .map(({ field, label, text }) => ({ key: field, label, text }));
   const stayIndicators = STAY_RESTRICTION_INDICATORS
-    .filter(({ field }) => safeRestriction[field] !== null && safeRestriction[field] !== undefined)
+    .filter(({ field }) => {
+      const value = safeRestriction[field];
+      if (value === null || value === undefined) return false;
+      // Hide "Min 1" — minimum stay of 1 is the default and adds visual noise
+      if (field === "minStay" && value === 1) return false;
+      return true;
+    })
     .map(({ field, labelPrefix, textPrefix }) => ({
       key: field,
       label: `${labelPrefix} ${safeRestriction[field]}`,
@@ -307,6 +313,9 @@ export default function CalendarGrid({
   availabilityOverrides = EMPTY_OBJECT,
   restrictionOverrides = EMPTY_OBJECT,
   priceOverrides = EMPTY_OBJECT,
+  priceLabsOverrides = EMPTY_OBJECT,
+  priceLabsApplied = EMPTY_OBJECT,
+  priceLabsIgnored = EMPTY_OBJECT,
   bookedDateKeys = EMPTY_SET,
   onDateSelect = null,
   loadingMessage = "",
@@ -442,6 +451,34 @@ export default function CalendarGrid({
                   {dayPresentation.displayPrice !== null && (
                     <span className="hc-cell-price">{formatEuroAmount(dayPresentation.displayPrice)}</span>
                   )}
+
+                  {(() => {
+                    const plPrice = priceLabsOverrides?.[dayPresentation.key];
+                    const isApplied = Boolean(priceLabsApplied?.[dayPresentation.key]);
+                    const isIgnored = Boolean(priceLabsIgnored?.[dayPresentation.key]);
+                    if (plPrice > 0) {
+                      return (
+                        <span className="hc-cell-pricelabs-suggestion" title="PriceLabs suggested price">
+                          PL {formatEuroAmount(plPrice)}
+                        </span>
+                      );
+                    }
+                    if (isApplied) {
+                      return (
+                        <span className="hc-cell-pricelabs-applied" title="PriceLabs price applied">
+                          ✓ PL
+                        </span>
+                      );
+                    }
+                    if (isIgnored) {
+                      return (
+                        <span className="hc-cell-pricelabs-ignored" title="PriceLabs suggestion ignored">
+                          ✗ PL
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
 
                   {restrictionIndicators.length > 0 ? (
                     <span className="hc-cell-restrictions" aria-hidden="true">
@@ -582,6 +619,9 @@ CalendarGrid.propTypes = {
     })
   ),
   priceOverrides: PropTypes.objectOf(PropTypes.number),
+  priceLabsOverrides: PropTypes.objectOf(PropTypes.number),
+  priceLabsApplied: PropTypes.object,
+  priceLabsIgnored: PropTypes.object,
   bookedDateKeys: PropTypes.instanceOf(Set),
   onDateSelect: PropTypes.func,
   loadingMessage: PropTypes.string,
