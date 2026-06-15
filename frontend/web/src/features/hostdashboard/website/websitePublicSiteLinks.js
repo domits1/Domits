@@ -2,7 +2,6 @@ const DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com
 const WEBSITE_DOMAIN_SLUG_MAX_LENGTH = 40;
 const WEBSITE_DOMAIN_ID_SUFFIX_LENGTH = 8;
 const WEBSITE_DOMAIN_LABEL_MAX_LENGTH = 63;
-const WEBSITE_DOMAIN_LABEL_EDGE_HYPHENS_PATTERN = /^-+|-+$/g;
 const WEBSITE_DOMAIN_LABEL_SEPARATOR_PATTERN = /[^a-z0-9]+/g;
 const WEBSITE_NON_ASCII_PATTERN = /[^\x00-\x7f]/g;
 const WEBSITE_ID_SUFFIX_SANITIZER_PATTERN = /[^a-z0-9]/g;
@@ -13,8 +12,21 @@ const getDirectBookingWebsiteFallbackDomainSuffix = () =>
   cleanWebsiteText(process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX).toLowerCase() ||
   DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX;
 
-const trimWebsiteDomainLabelEdges = (value) =>
-  String(value || "").replace(WEBSITE_DOMAIN_LABEL_EDGE_HYPHENS_PATTERN, "");
+const trimWebsiteDomainLabelEdges = (value) => {
+  const normalizedValue = String(value || "");
+  let startIndex = 0;
+  let endIndex = normalizedValue.length;
+
+  while (startIndex < endIndex && normalizedValue[startIndex] === "-") {
+    startIndex += 1;
+  }
+
+  while (endIndex > startIndex && normalizedValue[endIndex - 1] === "-") {
+    endIndex -= 1;
+  }
+
+  return normalizedValue.slice(startIndex, endIndex);
+};
 
 const normalizeAsciiWebsiteText = (value) =>
   cleanWebsiteText(value).normalize("NFKD").toLowerCase().replace(WEBSITE_NON_ASCII_PATTERN, "");
