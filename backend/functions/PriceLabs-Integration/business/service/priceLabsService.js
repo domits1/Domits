@@ -180,6 +180,10 @@ export class PriceLabsService {
   async pushReservations(hostId) {
     const { token, name } = await this._creds();
     const connection = await this._requireActiveConnection(hostId);
+    if (!connection.last_listings_sync_at) {
+      console.log(`[PriceLabs] pushReservations skipped for host ${hostId}: listings not yet synced.`);
+      return { skipped: true, reason: "Listings not yet synced to PriceLabs for this host." };
+    }
     const bookings   = await this.repo.getBookingsByHost(hostId);
 
     const grouped = {};
@@ -214,6 +218,7 @@ export class PriceLabsService {
     }
 
     const reservations = Object.values(grouped);
+    console.log(`[PriceLabs] pushReservations for host ${hostId}: ${reservations.reduce((sum, r) => sum + r.data.length, 0)} reservation(s) across ${reservations.length} listing(s).`);
     if (reservations.length) {
       await api.pushReservations(token, name, reservations);
     }
