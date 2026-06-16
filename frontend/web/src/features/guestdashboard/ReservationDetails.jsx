@@ -21,7 +21,6 @@ import {
   getBookingId,
   getBookingTotal,
   getDepartureDate,
-  getPaidBookings,
   normalizeGuestBookingsResponse,
   getPropertyId,
   getReservationNumber,

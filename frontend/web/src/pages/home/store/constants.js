@@ -130,6 +130,28 @@ export const buildGuarantees = (content) => [
   { icon: "stay", title: content.stayGuarantee, text: content.stayGuaranteeDescription },
 ];
 
+// Image filenames double as the English country slug. The query the backend
+// expects is the English country name, so derive it here (the visible card
+// label stays localized via `name`). Multi-word names need an override.
+const COUNTRY_NAME_OVERRIDES = {
+  unitedkingdom: "United Kingdom",
+  czech: "Czechia",
+  srilanka: "Sri Lanka",
+  costarica: "Costa Rica",
+  dominicanrepublic: "Dominican Republic",
+  puertrorico: "Puerto Rico",
+  stmaarten: "Sint Maarten",
+  saintbarthelemy: "Saint Barthelemy",
+  frenchalps: "France",
+};
+
+const countryFromImg = (img) => {
+  const slug = img.split("/Images/").pop().replace(".webp", "").toLowerCase();
+  return COUNTRY_NAME_OVERRIDES[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1);
+};
+
+const withCountry = (items) => items.map((item) => ({ ...item, country: countryFromImg(item.img) }));
+
 export const buildHomepageLists = (homePageContent) => {
   const desc = homePageContent.filters.groups.description;
 
@@ -347,13 +369,13 @@ export const buildHomepageLists = (homePageContent) => {
 ];
   
   return {
-    countries,
-    smallCountries,
-    asiaCountries,
-    smallAsiaCountries,
-    caribbeanCountries,
-    smallCaribbeanCountries,
-    skiCountries,
+    countries: withCountry(countries),
+    smallCountries: withCountry(smallCountries),
+    asiaCountries: withCountry(asiaCountries),
+    smallAsiaCountries: withCountry(smallAsiaCountries),
+    caribbeanCountries: withCountry(caribbeanCountries),
+    smallCaribbeanCountries: withCountry(smallCaribbeanCountries),
+    skiCountries: withCountry(skiCountries),
     seasons,
     interests,
   };
