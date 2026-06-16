@@ -1,5 +1,5 @@
-import Database from "../ORM/index.js";
-import { UnifiedMessage } from "../models/unified/messaging/UnifiedMessage.js";
+import Database from "../.shared/integrations/ORM/index.js";
+import { UnifiedMessage } from "database/models/unified/messaging/UnifiedMessage";
 import { randomUUID } from "node:crypto";
 
 class MessageRepository {

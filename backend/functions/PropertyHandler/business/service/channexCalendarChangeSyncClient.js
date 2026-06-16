@@ -1,4 +1,5 @@
-import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
+import { LambdaClient } from "@aws-sdk/client-lambda";
+import { invokeLambdaHttpEvent } from "../../.shared/lambdaHttpInvocation.js";
 
 const REGION = process.env.AWS_REGION || "eu-north-1";
 const DEFAULT_UNIFIED_MESSAGING_FUNCTION_NAME = "UnifiedMessaging";
@@ -8,21 +9,6 @@ export const CHANNEX_CALENDAR_CHANGE_SYNC_FAILED = "CHANNEX_CALENDAR_CHANGE_SYNC
 
 const lambdaClient = new LambdaClient({ region: REGION });
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
-
-const parseJsonSafely = (value) => {
-    try {
-        if (!value) return null;
-        return typeof value === "string" ? JSON.parse(value) : value;
-    } catch {
-        return null;
-    }
-};
-
-const decodePayload = (payload) => {
-    if (!payload) return null;
-    if (typeof payload === "string") return payload;
-    return new TextDecoder("utf-8").decode(payload);
-};
 
 const buildFallbackError = ({ code, message, httpStatus }) => ({
     code,
@@ -71,14 +57,6 @@ const createCalendarChangeFailureEvidence = ({ payload, error }) =>
         errors: [buildFallbackError(error)],
     });
 
-const parseUnifiedMessagingCalendarChangeResponse = (response) => {
-    const lambdaBody = parseJsonSafely(decodePayload(response?.Payload)) || {};
-    return {
-        lambdaBody,
-        evidence: parseJsonSafely(lambdaBody?.body) || lambdaBody?.response || null,
-    };
-};
-
 export default class ChannexCalendarChangeSyncClient {
     constructor({ lambda = lambdaClient, functionName = process.env.UNIFIED_MESSAGING_FUNCTION_NAME } = {}) {
         this.lambda = lambda;
@@ -96,14 +74,11 @@ export default class ChannexCalendarChangeSyncClient {
         }
 
         try {
-            const response = await this.lambda.send(
-                new InvokeCommand({
-                    FunctionName: this.functionName,
-                    Payload: JSON.stringify(buildCalendarChangeSyncPayload(payload, internalToken)),
-                })
-            );
-
-            const { lambdaBody, evidence } = parseUnifiedMessagingCalendarChangeResponse(response);
+            const { response, lambdaBody, responseBody: evidence } = await invokeLambdaHttpEvent({
+                lambda: this.lambda,
+                functionName: this.functionName,
+                event: buildCalendarChangeSyncPayload(payload, internalToken),
+            });
             if (response?.FunctionError || Number(lambdaBody?.statusCode) >= 400 || !evidence) {
                 return createCalendarChangeFailureEvidence({
                     payload,
