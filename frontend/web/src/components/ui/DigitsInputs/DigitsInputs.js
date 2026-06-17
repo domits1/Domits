@@ -66,7 +66,7 @@ function DigitInputs({ amount, inputRef, onComplete, error }) {
   function onChange(e) {
     let isInputValid = false;
     Object.keys(digitInputMap).forEach((validInput) =>
-      e.target.value == validInput ? (isInputValid = true) : null
+      e.target.value === validInput ? (isInputValid = true) : null
     );
 
     validateInputs();

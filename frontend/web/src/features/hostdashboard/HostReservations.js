@@ -34,7 +34,7 @@ const resolveCancellationType = (cancellationPolicy, rules = []) => {
   }
 
   const matchingRule = (rules || []).find(
-    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && (rule.value === true || rule.value === "true")
+    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && (rule?.value === true || rule?.value === "true")
   );
 
   if (matchingRule) {
@@ -78,6 +78,8 @@ const mapReservations = (data) => {
       city: property.city,
       country: property.country,
       property_meta: property,
+      property: property,
+      images: property.photos || property.images || [],
       ...reservation,
       status: normalizeStatus(reservation.status),
       cancellationType: resolveCancellationType(reservation.cancellation_policy, propertyRules),
@@ -240,10 +242,24 @@ const HostReservations = () => {
   const updateBookingsWithSummaries = (prev, summaries) => {
     return prev.map((b) => {
       const summary = summaries[b.property_id];
+      if (!summary) return b;
+
+      const updated = { ...b };
+
       if (summary?.imageUrl) {
-        return { ...b, property_image_url: summary.imageUrl };
+        updated.property_image_url = summary.imageUrl;
       }
-      return b;
+
+      if (!updated.title && summary?.title) {
+        updated.title = summary.title;
+      }
+
+      if ((!updated.city || !updated.country) && (summary?.city || summary?.country)) {
+        updated.city = updated.city || summary.city || "";
+        updated.country = updated.country || summary.country || "";
+      }
+
+      return updated;
     });
   };
 
@@ -268,13 +284,19 @@ const HostReservations = () => {
             new Set(
               flat
                 .filter((b) => {
-                  const prop = b.property_meta || b.property;
+                  const prop = b.property_meta || b.property || {};
                   const hasPropImages =
-                    prop?.photos?.length > 0 ||
-                    prop?.images?.length > 0 ||
-                    prop?.media?.length > 0 ||
-                    prop?.gallery?.length > 0;
-                  return !hasPropImages && b.property_id;
+                    (Array.isArray(prop?.photos) && prop.photos.length > 0) ||
+                    (Array.isArray(prop?.images) && prop.images.length > 0) ||
+                    (Array.isArray(prop?.media) && prop.media.length > 0) ||
+                    (Array.isArray(prop?.gallery) && prop.gallery.length > 0) ||
+                    Boolean(b.property_image_url);
+
+                  const hasTitle = Boolean(b.title || prop.title || prop.name);
+                  const hasCity = Boolean(b.city || prop?.city || prop?.location?.city);
+
+                  // fetch summaries when images, title or city are missing
+                  return (!hasPropImages || !hasTitle || !hasCity) && b.property_id;
                 })
                 .map((b) => b.property_id)
                 .filter(Boolean)
