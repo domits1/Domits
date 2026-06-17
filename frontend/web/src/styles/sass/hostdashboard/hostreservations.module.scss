@@ -154,7 +154,25 @@ $border-color: #e5e7eb;
 }
 
 .reservationRow {
+  cursor: pointer;
   transition: background-color 0.18s ease;
+}
+
+.reservationRow:focus-visible {
+  outline: 2px solid #15803d;
+  outline-offset: -2px;
+}
+
+.reservationLinkButton {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #166534;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .reservationTable td:nth-child(8),

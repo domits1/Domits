@@ -205,6 +205,28 @@ const HostReservations = () => {
   const authToken = useMemo(() => getAccessToken(), []);
   const itemsPerPage = 10;
 
+  const openReservationDetails = (booking) => {
+    const reservationId = String(booking?.id || "").trim();
+    if (!reservationId) {
+      return;
+    }
+
+    navigate(`/hostdashboard/reservations/${encodeURIComponent(reservationId)}`, {
+      state: {
+        booking,
+      },
+    });
+  };
+
+  const handleReservationRowKeyDown = (event, booking) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    openReservationDetails(booking);
+  };
+
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection((currentDirection) => (currentDirection === "asc" ? "desc" : "asc"));
@@ -542,8 +564,15 @@ const HostReservations = () => {
                         const isInquiryPending = inquiryLoading[booking.id] || false;
 
                         return (
-                          <tr key={`${booking.id}-${booking.property_id}`}>
-                            <td className={styles.thumbnailCell}>
+                          <tr
+                            key={`${booking.id}-${booking.property_id}`}
+                            className={styles.reservationRow}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Open reservation ${booking.id}`}
+                            onClick={() => openReservationDetails(booking)}
+                            onKeyDown={(event) => handleReservationRowKeyDown(event, booking)}>
+                            <td className={styles.thumbnailCell} data-label="Image">
                               {resolveImageUrl(booking) ? (
                                 <img
                                   src={resolveImageUrl(booking)}
@@ -554,38 +583,56 @@ const HostReservations = () => {
                                 <div className={styles.thumbnailPlaceholder}>No Image</div>
                               )}
                             </td>
-                            <td>{booking.property_id}</td>
-                            <td>{booking.title}</td>
-                            <td>
+                            <td data-label="Property ID">{booking.property_id}</td>
+                            <td data-label="Accommodation Name">{booking.title}</td>
+                            <td data-label="Location">
                               {booking.city}, {booking.country}
                             </td>
-                            <td>{booking.guestname}</td>
-                            <td>
+                            <td data-label="Guest Name">{booking.guestname}</td>
+                            <td data-label="Dates">
                               {formatDate(booking.arrivaldate)} - {formatDate(booking.departuredate)}
                             </td>
-                            <td>
+                            <td data-label="Status">
                               <span className={`${styles.status} ${styles[mapStatusToClass(booking.status)]}`}>
                                 {labelMap[booking.status]}
                               </span>
                             </td>
-                            <td>€{total}</td>
-                            <td>€{commission}</td>
-                            <td>{renderPolicyDisplay(booking.cancellationType)}</td>
-                            <td>{booking.id}</td>
-                            <td>{formatDate(booking.createdat)}</td>
-                            <td>
+                            <td data-label="Total">€{total}</td>
+                            <td data-label="Commission">€{commission}</td>
+                            <td data-label="Policy">{renderPolicyDisplay(booking.cancellationType)}</td>
+                            <td data-label="Reservation">
+                              <button
+                                type="button"
+                                className={styles.reservationLinkButton}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  openReservationDetails(booking);
+                                }}>
+                                {booking.id}
+                              </button>
+                            </td>
+                            <td data-label="Booked">{formatDate(booking.createdat)}</td>
+                            <td data-label="Actions">
                               {booking.status === "INQUIRY" && (
                                 <div className={styles.inquiryActions}>
                                   <button
+                                    type="button"
                                     className={styles.btnAccept}
                                     disabled={isInquiryPending}
-                                    onClick={() => handleInquiryAction(booking.id, "accept-inquiry")}>
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleInquiryAction(booking.id, "accept-inquiry");
+                                    }}>
                                     Accept
                                   </button>
                                   <button
+                                    type="button"
                                     className={styles.btnDecline}
                                     disabled={isInquiryPending}
-                                    onClick={() => handleInquiryAction(booking.id, "decline-inquiry")}>
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleInquiryAction(booking.id, "decline-inquiry");
+                                    }}>
                                     Decline
                                   </button>
                                 </div>
