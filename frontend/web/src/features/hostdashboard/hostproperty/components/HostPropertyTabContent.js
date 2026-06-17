@@ -61,72 +61,89 @@ const CAPACITY_COUNTER_FIELDS = [
 const CANCELLATION_POLICIES = [
   {
     id: "flexible",
+    ruleKey: "CancellationPolicy:Flexible",
     name: "Flexible",
     summary: "Full refund until 1 day before check-in",
     rules: [
-      "At least 1 day before check-in, they will receive 100% refund ( you will keep 0% of the booking)",
-      "Less than 1 day before check-in, they will receive no refund ( you will keep 100% of the booking)",
+      "100% refund up to 1 day before check-in.",
+      "No refund less than 1 day before check-in.",
     ],
     important:
-      "your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
+      "Your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
   },
   {
     id: "moderate",
+    ruleKey: "CancellationPolicy:Moderate",
     name: "Moderate",
     summary: "Full refund until 5 days before check-in",
     rules: [
-      "At least 5 days before check-in, they will receive 100% refund (you will keep 0% of the booking)",
-      "Less than 5 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
+      "100% refund up to 5 days before check-in.",
+      "No refund less than 5 days before check-in.",
     ],
     important: null,
   },
   {
-    id: "semi-strict",
-    name: "Semi-strict",
-    summary: "Full refund until 60 days before check-in",
+    id: "limited",
+    ruleKey: "CancellationPolicy:Limited",
+    name: "Limited",
+    summary: "Full refund until 14 days before check-in",
     rules: [
-      "At least 60 days before check-in, guests receive 100% refund (you will keep 0% of the booking)",
-      "Less than 60 days before check-in, guests receive no refund (you will keep 100% of the booking)",
-    ],
-    important: null,
-  },
-  {
-    id: "strict",
-    name: "Strict",
-    summary: "Full refund until 90 days before check-in",
-    rules: [
-      "At least 90 days before check-in, guests receive 100% refund (you will keep 0% of the booking)",
-      "Less than 90 days before check-in, guests receive no refund (you will keep 100% of the booking)",
-    ],
-    important: null,
-  },
-  {
-    id: "super-strict",
-    name: "Super-strict",
-    summary: "Full refund until 180 days before check-in",
-    rules: [
-      "At least 180 days before check-in, guests receive 100% refund (you will keep 0% of the booking)",
-      "Less than 180 days before check-in, guests receive no refund (you will keep 100% of the booking)",
+      "100% refund up to 14 days before check-in.",
+      "No refund less than 14 days before check-in.",
     ],
     important: null,
   },
   {
     id: "firm",
+    ruleKey: "CancellationPolicy:Firm",
     name: "Firm",
     summary: "Full refund until 30 days before check-in",
     rules: [
-      "At least 30 days before check-in, they will receive a 100% refund (you will keep 0% of the booking)",
-      "Less than 30 days but more than 7 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
-      "Less than 7 days before check-in, they will receive no refund (you will keep 100% of the booking)",
+      "100% refund up to 30 days before check-in.",
+      "No refund less than 30 days before check-in.",
+    ],
+    important: null,
+  },
+  {
+    id: "semi-strict",
+    ruleKey: "CancellationPolicy:Semi-strict",
+    name: "Semi-strict",
+    summary: "Full refund until 60 days before check-in",
+    rules: [
+      "100% refund up to 60 days before check-in.",
+      "No refund less than 60 days before check-in.",
+    ],
+    important: null,
+  },
+  {
+    id: "strict",
+    ruleKey: "CancellationPolicy:Strict",
+    name: "Strict",
+    summary: "Full refund until 90 days before check-in",
+    rules: [
+      "100% refund up to 90 days before check-in.",
+      "No refund less than 90 days before check-in.",
+    ],
+    important: null,
+  },
+  {
+    id: "super-strict",
+    ruleKey: "CancellationPolicy:Super-strict",
+    name: "Super-strict",
+    summary: "Full refund until 180 days before check-in",
+    rules: [
+      "100% refund up to 180 days before check-in.",
+      "No refund less than 180 days before check-in.",
     ],
     important: null,
   },
   {
     id: "non-refundable",
+    ruleKey: "CancellationPolicy:Non-refundable",
     name: "Non-refundable",
     summary: "No refunds provided",
     rules: [
-      "No refunds are provided for any cancellations (you will keep 100% of the booking)",
+      "No refunds provided.",
     ],
     important: null,
   },
@@ -1716,15 +1733,12 @@ export default function HostPropertyPoliciesTab(props) {
 
   // Sync cancellation policy from policyRules
   useEffect(() => {
-    const policyOrder = ["Super-strict", "Strict", "Semi-strict", "Firm", "Moderate", "Flexible", "Non-refundable"];
-    for (const policyName of policyOrder) {
-      if (policyRules[`CancellationPolicy:${policyName}`]) {
-        const policyId = policyName.toLowerCase();
-        setCancellationPolicy(policyId);
+    for (const policy of CANCELLATION_POLICIES) {
+      if (policyRules[policy.ruleKey]) {
+        setCancellationPolicy(policy.id);
         return;
       }
     }
-    // No policy selected, reset to default
     setCancellationPolicy("flexible");
   }, [policyRules]);
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
@@ -1736,10 +1750,13 @@ export default function HostPropertyPoliciesTab(props) {
   });
 
   const handleSelectPolicy = (id) => {
+    const selectedPolicy = CANCELLATION_POLICIES.find((policy) => policy.id === id);
+    if (!selectedPolicy) {
+      return;
+    }
     setCancellationPolicy(id);
-    updatePolicyRule(`CancellationPolicy:${id.charAt(0).toUpperCase() + id.slice(1)}`, true);
-    CANCELLATION_POLICIES.filter((p) => p.id !== id).forEach((p) => {
-      updatePolicyRule(`CancellationPolicy:${p.id.charAt(0).toUpperCase() + p.id.slice(1)}`, false);
+    CANCELLATION_POLICIES.forEach((policy) => {
+      updatePolicyRule(policy.ruleKey, policy.id === selectedPolicy.id);
     });
     setExpandedPolicy(id);
   };

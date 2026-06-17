@@ -41,6 +41,28 @@ const generateFirmPolicyRules = () => [
   "Less than 7 days before check-in, Guests will receive No refund.",
 ];
 
+const generateSemiStrictPolicyRules = () => [
+  "At least 60 days before check-in, Guests will receive 100% refund.",
+  "Between 30 and 60 days before check-in, Guests will receive 50% refund.",
+  "Less than 30 days before check-in, Guests will receive No refund.",
+];
+
+const generateStrictPolicyRules = () => [
+  "At least 90 days before check-in, Guests will receive 100% refund.",
+  "Between 30 and 90 days before check-in, Guests will receive 50% refund.",
+  "Less than 30 days before check-in, Guests will receive No refund.",
+];
+
+const generateSuperStrictPolicyRules = () => [
+  "At least 180 days before check-in, Guests will receive 100% refund.",
+  "Between 60 and 180 days before check-in, Guests will receive 50% refund.",
+  "Less than 60 days before check-in, Guests will receive No refund.",
+];
+
+const generateNonRefundablePolicyRules = () => [
+  "No refunds provided under any circumstances.",
+];
+
 export const CANCELLATION_POLICIES = [
   {
     id: "flexible",
@@ -59,7 +81,7 @@ export const CANCELLATION_POLICIES = [
       "Your payout is processed once the booking becomes non-refundable (5 days before check-in). You should receive your payout within 3 days of processing.",
   },
   {
-    id: "strict",
+    id: "limited",
     name: "Limited",
     summary: "Full refund until 14 days before check-in",
     rules: generateLimitedPolicyRules(),
@@ -74,6 +96,38 @@ export const CANCELLATION_POLICIES = [
     important:
       "Your payout is processed once the booking becomes non-refundable (30 days before check-in). You should receive your payout within 3 days of processing.",
   },
+  {
+    id: "semi_strict",
+    name: "Semi-strict",
+    summary: "Full refund until 60 days before check-in",
+    rules: generateSemiStrictPolicyRules(),
+    important:
+      "Your payout is processed once the booking becomes non-refundable (60 days before check-in). You should receive your payout within 3 days of processing.",
+  },
+  {
+    id: "strict",
+    name: "Strict",
+    summary: "Full refund until 90 days before check-in",
+    rules: generateStrictPolicyRules(),
+    important:
+      "Your payout is processed once the booking becomes non-refundable (90 days before check-in). You should receive your payout within 3 days of processing.",
+  },
+  {
+    id: "super_strict",
+    name: "Super-strict",
+    summary: "Full refund until 180 days before check-in",
+    rules: generateSuperStrictPolicyRules(),
+    important:
+      "Your payout is processed once the booking becomes non-refundable (180 days before check-in). You should receive your payout within 3 days of processing.",
+  },
+  {
+    id: "non_refundable",
+    name: "Non-refundable",
+    summary: "No refunds provided",
+    rules: generateNonRefundablePolicyRules(),
+    important:
+      "Your payout is processed immediately upon booking confirmation. You should receive your payout within 3 days of processing.",
+  },
 ];
 
 const toNormalizedPolicyId = (value = "") =>
@@ -86,8 +140,13 @@ const toNormalizedPolicyId = (value = "") =>
 const getCancellationPolicyColor = (policyId = "") => {
   const normalizedId = toNormalizedPolicyId(policyId);
   if (normalizedId === "flexible") return "#4CAF50";
-  if (normalizedId === "moderate") return "#00BCD4";
-  if (normalizedId === "strict" || normalizedId === "firm") return "#FF7043";
+  if (normalizedId === "moderate") return "#8BC34A";
+  if (normalizedId === "limited") return "#00BCD4";
+  if (normalizedId === "firm") return "#FFC107";
+  if (normalizedId === "semi_strict") return "#FF9800";
+  if (normalizedId === "strict") return "#FF7043";
+  if (normalizedId === "super_strict") return "#F44336";
+  if (normalizedId === "non_refundable") return "#9E9E9E";
   return "#6b7280";
 };
 

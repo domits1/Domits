@@ -2,9 +2,9 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import { createInitialPricingForm } from "../constants";
+import { createInitialPolicyRules, createInitialPricingForm } from "../constants";
 import { HostPropertyAvailabilityTab, HostPropertyTabContent } from "./HostPropertyTabContent";
-import { fetchPropertyAndListings } from "../services/hostPropertyApi";
+import { fetchPropertyAndListings, savePropertyChanges } from "../services/hostPropertyApi";
 import { extractFetchedPropertyData } from "../utils/hostPropertyUtils";
 import { getAccessToken } from "../../../../services/getAccessToken";
 import getReservationsFromToken from "../../services/getReservationsFromToken";
@@ -475,5 +475,122 @@ describe("Listing Editor cohost availability context", () => {
       { id: "cohost-listing", title: "Cohost draft", status: "INACTIVE" },
       { id: "owner-listing", title: "Owner listing", status: "INACTIVE" },
     ]);
+  });
+});
+
+describe("Listing Editor cancellation policies", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+    delete globalThis.fetch;
+  });
+
+  test("defaults to flexible as the only selected cancellation policy", () => {
+    const policyRules = createInitialPolicyRules();
+
+    expect(policyRules["CancellationPolicy:flexible"]).toBe(true);
+    expect(policyRules["CancellationPolicy:moderate"]).toBe(false);
+    expect(policyRules["CancellationPolicy:limited"]).toBe(false);
+    expect(policyRules["CancellationPolicy:firm"]).toBe(false);
+    expect(policyRules["CancellationPolicy:semi-strict"]).toBe(false);
+    expect(policyRules["CancellationPolicy:strict"]).toBe(false);
+    expect(policyRules["CancellationPolicy:super-strict"]).toBe(false);
+    expect(policyRules["CancellationPolicy:non-refundable"]).toBe(false);
+  });
+
+  test("loads legacy title-case cancellation policy rules into canonical saved values", () => {
+    const fetchedPropertyData = extractFetchedPropertyData(
+      {
+        property: { id: "property-1", title: "Demo listing" },
+        rules: [{ rule: "CancellationPolicy:Semi-strict", value: true }],
+      },
+      []
+    );
+
+    expect(fetchedPropertyData.policyRules["CancellationPolicy:flexible"]).toBe(false);
+    expect(fetchedPropertyData.policyRules["CancellationPolicy:semi-strict"]).toBe(true);
+  });
+
+  test("renders all cancellation options and saves the selected policy with the canonical string value", () => {
+    const updatePolicyRule = jest.fn();
+
+    render(
+      <HostPropertyTabContent
+        {...buildTabContentProps()}
+        selectedTab="Policies"
+        policyRules={createInitialPolicyRules()}
+        updatePolicyRule={updatePolicyRule}
+      />
+    );
+
+    expect(screen.getByText("Limited")).toBeInTheDocument();
+    expect(screen.getByText("Semi-strict")).toBeInTheDocument();
+    expect(screen.getByText("Strict")).toBeInTheDocument();
+    expect(screen.getByText("Super-strict")).toBeInTheDocument();
+    expect(screen.getByText("Non-refundable")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /super-strict/i }));
+
+    expect(updatePolicyRule).toHaveBeenCalledWith("CancellationPolicy:super-strict", true);
+    expect(updatePolicyRule).toHaveBeenCalledWith("CancellationPolicy:flexible", false);
+    expect(updatePolicyRule).not.toHaveBeenCalledWith("CancellationPolicy:Super-strict", true);
+  });
+
+  test("sends the selected cancellation policy string in the property save payload", async () => {
+    const policyRules = {
+      ...createInitialPolicyRules(),
+      "CancellationPolicy:flexible": false,
+      "CancellationPolicy:super-strict": true,
+    };
+    const expectedRules = Object.keys(policyRules).map((rule) => ({
+      rule,
+      value: Boolean(policyRules[rule]),
+    }));
+
+    globalThis.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(okJsonResponse({}))
+      .mockResolvedValueOnce(
+        okJsonResponse({
+          rules: expectedRules,
+          checkIn: {
+            checkIn: { from: "15:00", till: "15:00" },
+            checkOut: { from: "11:00", till: "11:00" },
+          },
+          availabilityRestrictions: [
+            { restriction: "MinimumAdvanceReservation", value: 0 },
+            { restriction: "PreparationTimeDays", value: 0 },
+          ],
+        })
+      );
+
+    await savePropertyChanges({
+      selectedTab: "Policies",
+      propertyId: "property-1",
+      form: { title: "Demo listing", subtitle: "", description: "A fine place to stay." },
+      capacity: { propertyType: "Entire house", guests: 2, bedrooms: 1, beds: 1, bathrooms: 1 },
+      address: { street: "", houseNumber: "", postalCode: "", city: "", country: "" },
+      selectedAmenityIds: [],
+      policyRules,
+      checkInDetails: { checkIn: {}, checkOut: {} },
+      policyAvailabilitySettings: {
+        advanceNoticeDays: 0,
+        preparationTimeDays: 0,
+        advanceNoticeRestrictionKey: "MinimumAdvanceReservation",
+        preparationTimeRestrictionKey: "PreparationTimeDays",
+      },
+      pricingForm: createInitialPricingForm(),
+      bookingType: "direct",
+    });
+
+    const [, options] = globalThis.fetch.mock.calls[0];
+    expect(JSON.parse(options.body)).toEqual(
+      expect.objectContaining({
+        cancellationPolicy: "super-strict",
+        rules: expect.arrayContaining([
+          { rule: "CancellationPolicy:super-strict", value: true },
+          { rule: "CancellationPolicy:flexible", value: false },
+        ]),
+      })
+    );
   });
 });

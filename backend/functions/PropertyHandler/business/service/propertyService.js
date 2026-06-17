@@ -679,7 +679,29 @@ export class PropertyService {
   async updateCancellationPolicy(propertyId, policyType) {
     if (!policyType) return;
 
-    const ruleName = `CancellationPolicy:${policyType}`;
+    const normalizedPolicyType = String(policyType || "")
+      .trim()
+      .toLowerCase()
+      .replaceAll(/\s+/g, "-")
+      .replaceAll("_", "-");
+    const policyRuleNameMap = {
+      flexible: "Flexible",
+      moderate: "Moderate",
+      limited: "Limited",
+      firm: "Firm",
+      "semi-strict": "Semi-strict",
+      strict: "Strict",
+      "super-strict": "Super-strict",
+      "non-refundable": "Non-refundable",
+    };
+    const ruleName = `CancellationPolicy:${policyRuleNameMap[normalizedPolicyType] || policyType}`;
+    const existingRules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+    const activeCancellationRules = (existingRules || []).filter(
+      (rule) => rule?.rule?.startsWith("CancellationPolicy:") && rule.rule !== ruleName
+    );
+    for (const rule of activeCancellationRules) {
+      await this.#upsertPropertyRule(propertyId, rule.rule, false);
+    }
     await this.#upsertPropertyRule(propertyId, ruleName, true);
   }
 

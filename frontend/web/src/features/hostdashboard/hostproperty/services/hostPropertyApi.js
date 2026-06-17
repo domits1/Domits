@@ -41,6 +41,20 @@ const CHECK_IN_RULE_NAMES = Object.freeze({
   }),
 });
 
+const getSelectedCancellationPolicy = (rulesPayload = []) => {
+  const activePolicyRule = rulesPayload.find(
+    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && Boolean(rule.value)
+  );
+  return activePolicyRule
+    ? activePolicyRule.rule
+        .replace("CancellationPolicy:", "")
+        .trim()
+        .toLowerCase()
+        .replaceAll(/\s+/g, "-")
+        .replaceAll("_", "-")
+    : undefined;
+};
+
 const sleep = (delayMs) => new Promise((resolve) => setTimeout(resolve, delayMs));
 
 const normalizeBooleanLike = (value) => {
@@ -319,6 +333,7 @@ export const savePropertyChanges = async ({
       }))
     : undefined;
   const checkInPayload = isSavingPolicies ? normalizedCheckInDetails : undefined;
+  const cancellationPolicyPayload = isSavingPolicies ? getSelectedCancellationPolicy(rulesPayload) : undefined;
 
   const response = await fetch(`${PROPERTY_API_BASE}/overview`, {
     method: "PATCH",
@@ -342,6 +357,7 @@ export const savePropertyChanges = async ({
       location: getLocationPayload(address),
       amenities: amenitiesPayload,
       rules: rulesPayload,
+      cancellationPolicy: cancellationPolicyPayload,
       checkIn: checkInPayload,
       pricing: pricingPayload,
       availabilityRestrictions: availabilityRestrictionsPayload,
