@@ -180,6 +180,10 @@ export class PriceLabsService {
   async pushReservations(hostId) {
     const { token, name } = await this._creds();
     const connection = await this._requireActiveConnection(hostId);
+    if (!connection.last_listings_sync_at) {
+      console.log(`[PriceLabs] pushReservations skipped for host ${hostId}: listings not yet synced.`);
+      return { skipped: true, reason: "Listings not yet synced to PriceLabs for this host." };
+    }
     const bookings   = await this.repo.getBookingsByHost(hostId);
 
     const grouped = {};
@@ -198,11 +202,9 @@ export class PriceLabsService {
         reservation_id: b.id,
         start_date:     checkin,
         end_date:       checkout,
-        booked_time:    new Date().toISOString().replace("T", " ").split(".")[0],
+        booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
         total_days:     _dateDiff(checkin, checkout),
-        guests:         b.guests || 1,
         total_cost:     b.total_price || 0,
-        rental_revenue: b.nightly_revenue || 0,
         currency:       "EUR",
         status,
         booking_source: b.booking_source || "direct",
@@ -214,8 +216,16 @@ export class PriceLabsService {
     }
 
     const reservations = Object.values(grouped);
+    const totalCount = reservations.reduce((sum, r) => sum + r.data.length, 0);
+    console.log(`[PriceLabs] pushReservations for host ${hostId}: ${totalCount} reservation(s) across ${reservations.length} listing(s).`);
     if (reservations.length) {
-      await api.pushReservations(token, name, reservations);
+      const pushResult = await api.pushReservations(token, name, reservations);
+      const successCount = Array.isArray(pushResult?.success) ? pushResult.success.length : "?";
+      const failureCount = Array.isArray(pushResult?.failure) ? pushResult.failure.length : 0;
+      console.log(`[PriceLabs] pushReservations API result for host ${hostId}: ${successCount} accepted, ${failureCount} failed.`);
+      if (failureCount > 0) {
+        console.error(`[PriceLabs] pushReservations failures for host ${hostId}:`, JSON.stringify(pushResult.failure));
+      }
     }
 
     await this.repo.updateSyncStatus(hostId, {
