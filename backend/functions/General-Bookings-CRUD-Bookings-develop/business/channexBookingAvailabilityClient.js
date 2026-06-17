@@ -1,4 +1,5 @@
-import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
+import { LambdaClient } from "@aws-sdk/client-lambda";
+import { invokeLambdaHttpEvent } from "../.shared/lambdaHttpInvocation.js";
 
 const REGION = process.env.AWS_REGION || "eu-north-1";
 const DEFAULT_UNIFIED_MESSAGING_FUNCTION_NAME = "UnifiedMessaging";
@@ -46,21 +47,6 @@ export const createBookingAvailabilityFallbackEvidence = ({
   };
 };
 
-const parseJsonSafely = (value) => {
-  try {
-    if (!value) return null;
-    return typeof value === "string" ? JSON.parse(value) : value;
-  } catch {
-    return null;
-  }
-};
-
-const decodePayload = (payload) => {
-  if (!payload) return null;
-  if (typeof payload === "string") return payload;
-  return new TextDecoder("utf-8").decode(payload);
-};
-
 export default class ChannexBookingAvailabilityClient {
   constructor({ lambda = lambdaClient, functionName = process.env.UNIFIED_MESSAGING_FUNCTION_NAME } = {}) {
     this.lambda = lambda;
@@ -78,23 +64,19 @@ export default class ChannexBookingAvailabilityClient {
     }
 
     try {
-      const response = await this.lambda.send(
-        new InvokeCommand({
-          FunctionName: this.functionName,
-          Payload: JSON.stringify({
-            httpMethod: "POST",
-            path: "/integrations/channex/booking-availability/sync",
-            headers: {
-              "x-domits-internal-token": internalToken,
-            },
-            queryStringParameters: {},
-            body: JSON.stringify(payload),
-          }),
-        })
-      );
-
-      const lambdaBody = parseJsonSafely(decodePayload(response?.Payload)) || {};
-      const evidence = parseJsonSafely(lambdaBody?.body) || lambdaBody?.response || null;
+      const { response, lambdaBody, responseBody: evidence } = await invokeLambdaHttpEvent({
+        lambda: this.lambda,
+        functionName: this.functionName,
+        event: {
+          httpMethod: "POST",
+          path: "/integrations/channex/booking-availability/sync",
+          headers: {
+            "x-domits-internal-token": internalToken,
+          },
+          queryStringParameters: {},
+          body: JSON.stringify(payload),
+        },
+      });
       if (response?.FunctionError || Number(lambdaBody?.statusCode) >= 400 || !evidence) {
         return createBookingAvailabilityFallbackEvidence({
           payload,

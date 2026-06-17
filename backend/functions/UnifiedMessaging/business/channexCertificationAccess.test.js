@@ -1,7 +1,7 @@
 const {
   isChannexCertificationUserAllowed,
   parseChannexCertificationUserIds,
-} = require("./channexCertificationAccess.js");
+} = require("../.shared/channelManagement/utils/channexCertificationAccess.js");
 
 describe("Channex certification access", () => {
   const originalEnv = process.env.CHANNEX_CERTIFICATION_USER_IDS;
