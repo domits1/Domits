@@ -14,7 +14,13 @@ const KPI_EMPTY_VALUE = "No data yet";
 const RESEARCH_KPI_EMPTY_VALUE = "Pending";
 const KPI_STATUS_READY = "Instrumented";
 const KPI_STATUS_PENDING = "Not instrumented yet";
+const KPI_STATUS_PROXY = "Proxy metric";
+const KPI_STATUS_NEEDS_CONFIG = "Needs config";
 const KPI_DELTA_EPSILON = 0.0001;
+const KPI_READINESS_STATE_INSTRUMENTED = "instrumented";
+const KPI_READINESS_STATE_PENDING = "pending";
+const KPI_READINESS_STATE_PROXY = "proxy";
+const KPI_READINESS_STATE_NEEDS_CONFIG = "needs_config";
 
 const createFixedPrecisionFormatter = (suffix, scale = 1) => (value) => `${(value / scale).toFixed(2)}${suffix}`;
 const createWholeMinutesFormatter = () => (value) => `${value.toFixed(1)} min`;
@@ -186,10 +192,16 @@ const buildDeltaMapFromDefinitions = (definitions, previousWebsiteKpis, nextWebs
 
 const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
   createMetricCardDefinition(
+    "draft-created",
+    "Website drafts created",
+    "draftCreatedCount",
+    "How many direct booking website drafts have been created across Domits"
+  ),
+  createMetricCardDefinition(
     "active-websites",
     "Active website drafts",
     "currentDraftCount",
-    (websiteKpis) => `${websiteKpis.draftCreatedCount} drafts created across Domits`
+    "Saved website drafts that still remain active in the workspace"
   ),
   createMetricCardDefinition(
     "build-started",
@@ -267,6 +279,37 @@ const WEBSITE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "deletedWebsiteCount",
     "Website drafts removed from the direct booking website workspace"
   ),
+]);
+
+const WEBSITE_METRIC_GROUP_DEFINITIONS = Object.freeze([
+  {
+    id: "usage-in-practice",
+    title: "Usage in practice",
+    description:
+      "These KPIs show whether hosts actually use the feature as an ongoing editor instead of only as a one-time builder.",
+    metricCardIds: ["draft-created", "active-websites", "draft-saves"],
+  },
+  {
+    id: "builder-funnel",
+    title: "Builder and preview funnel",
+    description:
+      "These KPIs show how often hosts start the builder, reach a saved preview, and how reliable that flow remains.",
+    metricCardIds: [
+      "build-started",
+      "build-succeeded",
+      "time-to-first-preview",
+      "build-success-rate",
+      "build-failure-rate",
+      "build-abandonment-rate",
+    ],
+  },
+  {
+    id: "live-site-activity",
+    title: "Live-site activity",
+    description:
+      "These KPIs show whether published websites continue to be opened, updated, and maintained over time.",
+    metricCardIds: ["unique-live-sites", "live-site-opens", "live-site-updates", "deleted-websites"],
+  },
 ]);
 
 const PERFORMANCE_DEFINITIONS = Object.freeze({
@@ -367,6 +410,31 @@ const RESEARCH_KPI_DEFINITIONS = Object.freeze([
   ),
 ]);
 
+const RESEARCH_KPI_NOTE_SUFFIX_BY_STATE = Object.freeze({
+  cost_per_active_site_per_month: {
+    [KPI_READINESS_STATE_NEEDS_CONFIG]:
+      " Set the DIRECT_BOOKING_WEBSITE_MONTHLY_* and DIRECT_BOOKING_WEBSITE_COST_* env inputs for this environment to activate this KPI.",
+  },
+  fallback_subdomain_availability: {
+    [KPI_READINESS_STATE_NEEDS_CONFIG]:
+      " Set DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE=true once direct.domits.com routing is active for this environment.",
+  },
+});
+
+const RESEARCH_KPI_STATUS_LABEL_BY_STATE = Object.freeze({
+  [KPI_READINESS_STATE_INSTRUMENTED]: KPI_STATUS_READY,
+  [KPI_READINESS_STATE_PENDING]: KPI_STATUS_PENDING,
+  [KPI_READINESS_STATE_PROXY]: KPI_STATUS_PROXY,
+  [KPI_READINESS_STATE_NEEDS_CONFIG]: KPI_STATUS_NEEDS_CONFIG,
+});
+
+const RESEARCH_KPI_STATUS_TONE_BY_STATE = Object.freeze({
+  [KPI_READINESS_STATE_INSTRUMENTED]: "ready",
+  [KPI_READINESS_STATE_PENDING]: "pending",
+  [KPI_READINESS_STATE_PROXY]: "proxy",
+  [KPI_READINESS_STATE_NEEDS_CONFIG]: "warning",
+});
+
 export const formatKpiTimestamp = (timestamp) => {
   const parsedValue = Number(timestamp);
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
@@ -391,6 +459,18 @@ export const formatNullableDurationMs = (value) => formatKpiValue(value, "second
 
 export const buildWebsiteMetricCards = (websiteKpis) =>
   buildMetricCardsFromDefinitions(WEBSITE_METRIC_CARD_DEFINITIONS, websiteKpis);
+
+export const buildWebsiteMetricGroups = (websiteKpis) => {
+  const metricCards = buildWebsiteMetricCards(websiteKpis);
+  const metricCardMap = new Map(metricCards.map((metricCard) => [metricCard.id, metricCard]));
+
+  return WEBSITE_METRIC_GROUP_DEFINITIONS.map((groupDefinition) => ({
+    ...groupDefinition,
+    metricCards: groupDefinition.metricCardIds
+      .map((metricCardId) => metricCardMap.get(metricCardId))
+      .filter(Boolean),
+  }));
+};
 
 export const buildWebsiteMetricDeltaMap = (previousWebsiteKpis, nextWebsiteKpis) =>
   buildDeltaMapFromDefinitions(
@@ -422,7 +502,13 @@ export const buildPerformanceMetricDeltaMap = (previousWebsiteKpis, nextWebsiteK
     nextWebsiteKpis
   );
 
-const resolveResearchKpiValue = ({ hasNumericValue, rawValue, formatterKey, hasSamples }) => {
+const resolveResearchKpiValue = ({
+  hasNumericValue,
+  rawValue,
+  formatterKey,
+  hasSamples,
+  readinessState,
+}) => {
   if (hasNumericValue) {
     return formatters[formatterKey](rawValue);
   }
@@ -431,7 +517,36 @@ const resolveResearchKpiValue = ({ hasNumericValue, rawValue, formatterKey, hasS
     return "No valid samples";
   }
 
+  if (readinessState === KPI_READINESS_STATE_NEEDS_CONFIG) {
+    return "Config required";
+  }
+
+  if (
+    readinessState === KPI_READINESS_STATE_INSTRUMENTED ||
+    readinessState === KPI_READINESS_STATE_PROXY
+  ) {
+    return KPI_EMPTY_VALUE;
+  }
+
   return RESEARCH_KPI_EMPTY_VALUE;
+};
+
+const resolveResearchKpiReadinessState = ({ researchKpiId, websiteKpis, hasNumericValue, hasSamples }) => {
+  const explicitState = String(websiteKpis?.kpiReadiness?.[researchKpiId]?.state || "")
+    .trim()
+    .toLowerCase();
+  if (explicitState) {
+    return explicitState;
+  }
+
+  return hasNumericValue || hasSamples
+    ? KPI_READINESS_STATE_INSTRUMENTED
+    : KPI_READINESS_STATE_PENDING;
+};
+
+const resolveResearchKpiNote = ({ researchKpi, readinessState }) => {
+  const noteSuffix = RESEARCH_KPI_NOTE_SUFFIX_BY_STATE[researchKpi.id]?.[readinessState] || "";
+  return `${researchKpi.note}${noteSuffix}`;
 };
 
 export const buildResearchKpiCards = (websiteKpis) =>
@@ -440,21 +555,33 @@ export const buildResearchKpiCards = (websiteKpis) =>
     const sampleCount = Number(websiteKpis[researchKpi.sampleCountKey] || 0);
     const hasSamples = Number.isFinite(sampleCount) && sampleCount > 0;
     const hasNumericValue = typeof rawValue === "number" && Number.isFinite(rawValue);
-    const isInstrumented = hasNumericValue || hasSamples;
+    const readinessState = resolveResearchKpiReadinessState({
+      researchKpiId: researchKpi.id,
+      websiteKpis,
+      hasNumericValue,
+      hasSamples,
+    });
+    const isInstrumented = readinessState === KPI_READINESS_STATE_INSTRUMENTED;
 
     return {
       ...researchKpi,
       isInstrumented,
+      statusTone: RESEARCH_KPI_STATUS_TONE_BY_STATE[readinessState] || "pending",
       value: resolveResearchKpiValue({
         hasNumericValue,
         rawValue,
         formatterKey: researchKpi.formatterKey,
         hasSamples,
+        readinessState,
       }),
-      statusLabel: isInstrumented ? KPI_STATUS_READY : KPI_STATUS_PENDING,
-      sampleLabel: isInstrumented
+      statusLabel: RESEARCH_KPI_STATUS_LABEL_BY_STATE[readinessState] || KPI_STATUS_PENDING,
+      sampleLabel: hasSamples
         ? resolveMetricSampleLabel(researchKpi.sampleLabel, websiteKpis)
         : "",
+      note: resolveResearchKpiNote({
+        researchKpi,
+        readinessState,
+      }),
     };
   });
 

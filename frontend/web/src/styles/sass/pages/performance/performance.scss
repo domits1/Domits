@@ -1,73 +1,257 @@
-.security {
-  font-family: "Arial", sans-serif;
-  color: #000;
+@use "../../_variables" as *;
+
+.performance {
+  max-width: 860px;
+  margin: 48px auto 80px;
+  padding: 0 24px;
+  color: $text;
   line-height: 1.6;
-  margin: 20px auto;
-  padding: 0 20px;
-  max-width: 800px;
 
+  // Hero
+  &__hero {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  &__label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: $green;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  &__title {
+    font-size: 3.2rem;
+    font-weight: 900;
+    line-height: 1.18;
+    margin: 0;
+    color: $text;
+  }
+
+  &__title--accent {
+    color: $green;
+  }
+
+  // Badges
+  &__badges {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  &__badge {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border: 1px solid $border;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  &__badge-icon {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    background: $green-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $green-hex;
+  }
+
+  &__badge-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 3px;
+    color: $text;
+  }
+
+  &__badge-subtitle {
+    font-size: 0.78rem;
+    color: $muted;
+    margin: 0;
+  }
+
+  // Section cards
+  &__sections {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__section-card {
+    display: flex;
+    gap: 24px;
+    padding: 28px;
+    border: 1px solid $border;
+    border-radius: 14px;
+    background: #fff;
+  }
+
+  &__section-icon {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: $green-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $green-hex;
+  }
+
+  &__section-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__section-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+    cursor: default;
+  }
+
+  &__section-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: $green-hex;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__section-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0;
+    color: $green-hex;
+  }
+
+  &__section-chevron {
+    display: none;
+    margin-left: auto;
+    flex-shrink: 0;
+    color: $muted;
+    transition: transform 0.25s ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__section-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 0.9rem;
+      color: $text;
+      margin-bottom: 6px;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 7px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: $green-hex;
+      }
+    }
+  }
+
+  // Tablet + mobile accordion
   @media (max-width: 768px) {
-    padding: 0 10px;
-  }
+    margin: 32px auto 60px;
+    padding: 0 16px;
 
-  .security__title-container {
-    .security__title {
-      font-size: 2rem;
-      font-weight: bold;
-      margin-bottom: 20px;
-      text-align: center;
+    &__title {
+      font-size: 2.4rem;
+    }
 
-      @media (max-width: 768px) {
-        font-size: 1.5rem;
-      }
+    &__badges {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
 
-      @media (max-width: 480px) {
-        font-size: 1rem;
-      }
+    &__section-heading {
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+
+    &__section-chevron {
+      display: block;
+    }
+
+    &__section-body {
+      display: none;
+      margin-top: 12px;
+    }
+
+    &__section-card--open &__section-body {
+      display: block;
     }
   }
 
-  .security__factsbox {
-    .security__fact-title {
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin-right: 10px;
+  // Mobile
+  @media (max-width: 480px) {
+    padding: 0 12px;
 
-      @media (max-width: 768px) {
-        margin-bottom: 5px;
-      }
-
-      @media (max-width: 480px) {
-        font-size: 1rem;
-      }
-    }
-  }
-
-  .security__text-container {
-    .security__subtitle {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #003366;
-      margin-bottom: 15px;
-
-      @media (max-width: 768px) {
-        font-size: 1.2rem;
-      }
-
-      @media (max-width: 480px) {
-        font-size: 0.9rem;
-      }
+    &__title {
+      font-size: 1.9rem;
     }
 
-    .security__list {
-      list-style-type: disc;
-      margin: 15px 0 0 20px;
-      padding-left: 20px;
-      color: #000;
+    &__badges {
+      gap: 8px;
+    }
 
-      li {
-        margin-bottom: 10px;
-      }
+    &__section-card {
+      align-items: flex-start;
+      padding: 16px;
+      gap: 12px;
+    }
+
+    &__section-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    &__section-heading {
+      gap: 8px;
+    }
+
+    &__section-number {
+      width: 26px;
+      height: 26px;
+      font-size: 0.8rem;
+    }
+
+    &__section-title {
+      font-size: 0.8rem;
     }
   }
 }

@@ -3,7 +3,14 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import BookingOverview, { buildBookingRequestEvent, normalizeBookingDateForRequest } from '../BookingOverview';
+import BookingOverview, {
+    BOOKINGS_ENDPOINT,
+    buildBookingPostRequest,
+    buildBookingRequestEvent,
+    getBookingErrorMessage,
+    normalizeBookingDateForRequest,
+    parseBookingResponseBody,
+} from '../BookingOverview';
 
 jest.mock('aws-amplify');
 jest.mock('react-router-dom', () => ({
@@ -52,6 +59,54 @@ describe('BookingOverview booking request payload', () => {
                 guestName: 'Guest',
             },
         });
+    });
+
+    test('sends full YYYY-MM-DD dates in the POST /bookings request body', () => {
+        const event = buildBookingRequestEvent({
+            propertyId: 'property-1',
+            userName: 'Guest',
+            bookingDetails: {
+                guests: '2',
+                checkInDate: '2026-06-15',
+                checkOutDate: '2026-06-17',
+            },
+        });
+
+        const request = buildBookingPostRequest({ event, authToken: 'Bearer token' });
+        const body = JSON.parse(request.options.body);
+
+        expect(request.url).toBe(BOOKINGS_ENDPOINT);
+        expect(request.url).toContain('/bookings');
+        expect(body.general.arrivalDate).toBe('2026-06-15');
+        expect(body.general.departureDate).toBe('2026-06-17');
+        expect(body.general.arrivaldate).toBeUndefined();
+        expect(body.general.departuredate).toBeUndefined();
+        expect(body.general.checkIn).toBeUndefined();
+        expect(body.general.checkOut).toBeUndefined();
+    });
+
+    test('parses an empty error response body safely', async () => {
+        const response = {
+            status: 500,
+            text: jest.fn().mockResolvedValue(''),
+        };
+
+        const body = await parseBookingResponseBody(response);
+
+        expect(body).toBeNull();
+        expect(getBookingErrorMessage(response, body)).toBe('HTTP error! Status: 500');
+    });
+
+    test('uses backend error messages from non-empty response bodies', async () => {
+        const response = {
+            status: 400,
+            text: jest.fn().mockResolvedValue(JSON.stringify({ message: 'arrivalDate is invalid.' })),
+        };
+
+        const body = await parseBookingResponseBody(response);
+
+        expect(body).toEqual({ message: 'arrivalDate is invalid.' });
+        expect(getBookingErrorMessage(response, body)).toBe('arrivalDate is invalid.');
     });
 });
 

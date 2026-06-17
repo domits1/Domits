@@ -1,5 +1,5 @@
-import IntegrationSyncRepository from "../data/integrationSyncRepository.js";
-import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
+import IntegrationSyncRepository from "../.shared/integrations/repositories/integrationSyncRepository.js";
+import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
 import { randomUUID } from "node:crypto";
 
 const nowMs = () => Date.now();

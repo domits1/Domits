@@ -4,9 +4,15 @@ import { motion } from "framer-motion";
 import { fadeUp } from "../../pages/landingpage/utils/animations";
 
 const RegionCard = ({ item, link = "/home", useMotion = false }) => {
+  // For country cards, link to the results page with the country as a URL
+  // query param so the link is shareable and survives a refresh.
+  const to = item.country
+    ? `/home?country=${encodeURIComponent(item.country)}`
+    : link;
+
   const content = (
     <Link
-      to={link}
+      to={to}
       className="region-card"
       style={{ textDecoration: "none", color: "inherit" }}
     >
@@ -31,6 +37,7 @@ RegionCard.propTypes = {
     img: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
     description: PropTypes.string,
+    country: PropTypes.string,
   }).isRequired,
   link: PropTypes.string,
   useMotion: PropTypes.bool,

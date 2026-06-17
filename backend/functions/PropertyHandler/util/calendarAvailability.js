@@ -91,3 +91,9 @@ export const extractUnavailableOverrideDateKeys = (overrides) =>
     (Array.isArray(overrides) ? overrides : []).filter((override) => override?.isAvailable === false),
     (override) => normalizeOverrideDateKey(override?.date)
   );
+
+export const extractAvailableOverrideDateKeys = (overrides) =>
+  collectNormalizedDateKeys(
+    (Array.isArray(overrides) ? overrides : []).filter((override) => override?.isAvailable === true),
+    (override) => normalizeOverrideDateKey(override?.date)
+  );

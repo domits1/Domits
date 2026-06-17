@@ -1,96 +1,143 @@
-import React from "react";
+import React, { useState, useContext } from "react";
+import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
+import {
+  ShieldCheck,
+  Lock,
+  RefreshCw,
+  MapPin,
+  Server,
+  Shield,
+  CloudUpload,
+  CheckCircle,
+  Settings,
+  Headphones,
+  ChevronDown,
+} from "lucide-react";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
 
-import vision from "../../images/icons/vision-secondarycolor.png";
-import whatwedo from "../../images/icons/route-secondarycolor.png";
+const contentByLanguage = { en, nl, de, es };
+
+const ICON_SIZE = 28;
+
+const BADGE_ICONS   = [ShieldCheck, Lock, RefreshCw, MapPin];
+const SECTION_ICONS = [Server, Shield, CloudUpload];
+const FACT_ICONS    = [CheckCircle, Settings];
+
+const SectionCard = ({ title, description, bullets, index }) => {
+  const [open, setOpen] = useState(false);
+  const Icon = SECTION_ICONS[index];
+  return (
+    <div className={`security__section-card${open ? " security__section-card--open" : ""}`}>
+      <div className="security__section-icon">
+        <Icon size={ICON_SIZE} />
+      </div>
+      <div className="security__section-content">
+        <button
+          type="button"
+          className="security__section-heading"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+        >
+          <span className="security__section-number">{index + 1}</span>
+          <span className="security__section-title">{title}</span>
+          <ChevronDown
+            className={`security__section-chevron${open ? " security__section-chevron--open" : ""}`}
+            size={18}
+          />
+        </button>
+        <div className="security__section-body">
+          <p className="security__section-description">{description}</p>
+          <ul className="security__section-list">
+            {bullets.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+SectionCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  bullets: PropTypes.arrayOf(PropTypes.string).isRequired,
+  index: PropTypes.number.isRequired,
+};
 
 function Security() {
+  const { language } = useContext(LanguageContext);
+  const c = contentByLanguage[language]?.security;
+
+  if (!c) return null;
+
   return (
     <div className="security">
-      <div className="security__title-container">
-        <h2 className="security__title">
-          <span className="highlightH2">Security</span>
-        </h2>
+      <div className="security__hero">
+        <span className="security__label">{c.label}</span>
+        <h1 className="security__title">
+          {c.title}{" "}
+          <span className="security__title--accent">{c.titleAccent}</span>
+        </h1>
       </div>
 
-      <div className="security__text-container">
-        <h3 className="security__subtitle">1. Infrastructure</h3>
-        <p className="security__text security__text--margintop">
-          Our servers are securely housed in multiple European data centers. In
-          the event of any malfunctions, technicians are always available to
-          tackle the problem immediately. Amazon Web Services' online
-          infrastructure guarantees the security and confidentiality of our
-          cloud services. Learn more about AWS cloud infrastructure security:
-        </p>
-        <ul className="security__list">
-          <li>Our data is stored in two different data centers.</li>
-          <li>
-            In the event of malfunctions, Domits automatically switches to
-            another data center.
-          </li>
-          <li>An uptime of 99.995%.</li>
-        </ul>
+      <div className="security__badges">
+        {c.badges.map(({ title, subtitle }, i) => {
+          const Icon = BADGE_ICONS[i];
+          return (
+            <div className="security__badge" key={title}>
+              <div className="security__badge-icon">
+                <Icon size={ICON_SIZE} />
+              </div>
+              <div>
+                <p className="security__badge-title">{title}</p>
+                <p className="security__badge-subtitle">{subtitle}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-        <h3 className="security__subtitle">2. Theft and Privacy</h3>
-        <p className="security__text">
-          Domits is fully committed to ensuring that your data is safe and
-          protected from hackers. Each customer has their own, separate database
-          at Domits, making it impossible for other users to access other
-          people's data.
-        </p>
-        <ul className="security__list">
-          <li>When using Domits, the connection is secured.</li>
-          <li>It is impossible for outsiders to intercept data traffic.</li>
-        </ul>
-
-        <h3 className="security__subtitle">3. Back-ups</h3>
-        <p className="security__text">
-          At Domits, we do everything we can to ensure that our system is always
-          operational and your data is always secured. Backups of the data are
-          made daily so that nothing is ever lost. In the event of disruptions,
-          all your data is stored securely and our team ensures that your
-          account can be restored.
-        </p>
-        <ul className="security__list">
-          <li>Guarantee against data loss</li>
-          <li>Daily recovery of data up to six months ago</li>
-          <li>Secure data backups</li>
-        </ul>
+      <div className="security__sections">
+        {c.sections.map(({ title, description, bullets }, i) => (
+          <SectionCard key={title} title={title} description={description} bullets={bullets} index={i} />
+        ))}
       </div>
 
       <div className="security__factsbox">
-        <div className="security__fact">
-          <div className="security__fact-header">
-            <p className="security__fact-title">Vision</p>
-            <img className="security__fact-image" src={vision} alt="Vision" />
-          </div>
-          <p className="security__fact-subtitle">
-            Securing your data is our highest priority.
-          </p>
-          <p className="security__fact-text">
-            Our commitment to innovation and data protection keeps your
-            information safe.
-          </p>
-        </div>
+        {c.facts.map(({ title, text }, i) => {
+          const Icon = FACT_ICONS[i];
+          return (
+            <div className="security__fact" key={title}>
+              <div className="security__fact-icon">
+                <Icon size={ICON_SIZE} />
+              </div>
+              <p className="security__fact-title">{title}</p>
+              <p className="security__fact-text">{text}</p>
+            </div>
+          );
+        })}
+      </div>
 
-        <div className="security__fact">
-          <div className="security__fact-header">
-            <p className="security__fact-title">What We Do</p>
-            <img
-              className="security__fact-image"
-              src={whatwedo}
-              alt="What We Do"
-            />
+      <div className="security__cta">
+        <div className="security__cta-left">
+          <div className="security__cta-icon">
+            <Headphones size={ICON_SIZE} />
           </div>
-          <p className="security__fact-subtitle">
-            Constant vigilance and security measures.
-          </p>
-          <p className="security__fact-text">
-            Learn more about how we innovate for your security{" "}
-            <a className="ref" href="/travelinnovation">
-              here
-            </a>
-            .
-          </p>
+          <h3 className="security__cta-title">{c.cta.title}</h3>
+        </div>
+        <div className="security__cta-buttons">
+          <Link to="/contact" className="security__cta-btn security__cta-btn--outline">
+            {c.cta.contactButton}
+          </Link>
+          <Link to="/how-it-works" className="security__cta-btn security__cta-btn--filled">
+            {c.cta.learnMoreButton}
+          </Link>
         </div>
       </div>
     </div>

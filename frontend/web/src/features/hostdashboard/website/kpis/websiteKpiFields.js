@@ -60,6 +60,7 @@ export const WEBSITE_KPI_NULLABLE_FIELD_KEYS = Object.freeze([
 const buildEmptyWebsiteKpis = () => ({
   ...Object.fromEntries(WEBSITE_KPI_COUNT_FIELD_KEYS.map((fieldKey) => [fieldKey, 0])),
   ...Object.fromEntries(WEBSITE_KPI_NULLABLE_FIELD_KEYS.map((fieldKey) => [fieldKey, null])),
+  kpiReadiness: {},
   deletionReasonBreakdown: [],
 });
 

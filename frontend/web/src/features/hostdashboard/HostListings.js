@@ -76,11 +76,15 @@ const createListingActionClickHandler = (action, onActionClick) => (event) => {
 
 function HostListingCardActions({ actions, isBusy, onActionClick }) {
   return (
-    <div className={styles.buttonBox}>
+    <div className={styles.cardButtons}>
       {actions.map((action) => (
         <button
           key={action.id}
-          className={styles.greenBtn}
+          className={
+            action.id === "edit"
+              ? styles.secondaryBtn
+              : styles.greenBtn
+          }
           onClick={createListingActionClickHandler(action, onActionClick)}
           disabled={isBusy}
         >
@@ -328,26 +332,22 @@ function HostListings() {
 
   return (
     <main className="page-Host">
-      <p className="page-Host-title">Listings</p>
 
       <div className="page-Host-content">
         <section className="host-pc-dashboard">
           <div className={styles.dashboardHost}>
             <div className={styles.hostListingContainer}>
               <div className={styles.listingBody}>
-                <div className={styles.buttonBox}>
+                <div className={styles.topHeader}>
+                  <h2 className={styles.pageTitle}>Listings</h2>
                   {!isPurelyPOM && (
                     <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
-                      Add new accommodation
+                      + Add property
                     </button>
                   )}
-                  <button className={styles.greenBtn} onClick={fetchAccommodations}>
-                    Refresh
-                  </button>
                 </div>
 
-                <section className={styles.listingsDisplay}>
-                  <div className={styles.listingFilters}>
+                <div className={styles.tabsNav}>
                     {LISTING_FILTERS.map((filterOption) => {
                       const count = listingsByStatus[filterOption.key]?.length || 0;
                       const isActive = activeFilter === filterOption.key;
@@ -355,7 +355,7 @@ function HostListings() {
                         <button
                           key={filterOption.key}
                           type="button"
-                          className={`${styles.listingFilterButton} ${isActive ? styles.listingFilterButtonActive : ""}`}
+                          className={`${styles.tabBtn} ${isActive ? styles.tabBtnActive : ""}`}
                           onClick={() => setActiveFilter(filterOption.key)}
                           disabled={isLoading}
                         >
@@ -363,9 +363,11 @@ function HostListings() {
                         </button>
                       );
                     })}
-                  </div>
+                </div>
 
-                  <p className={styles.header}>{LISTING_FILTERS.find((item) => item.key === activeFilter)?.label}</p>
+                <section className={styles.listingsDisplay}>
+
+                  {/* <p className={styles.header}>{LISTING_FILTERS.find((item) => item.key === activeFilter)?.label}</p> */}
 
                   {renderListingsContent()}
                 </section>

@@ -64,21 +64,30 @@ function WebsitePublicPreviewPage() {
 
       try {
         const nextPayload = await fetchWebsitePreviewByDraftId(draftId);
-        const nextPropertyDetails = nextPayload?.propertyDetails
-          ? await enrichWebsitePropertyDetails(nextPayload.propertyDetails)
-          : nextPayload?.propertyDetails;
 
         if (!isMounted) {
           return;
         }
 
-        setPayload(
-          nextPropertyDetails === nextPayload?.propertyDetails
-            ? nextPayload
-            : {
-                ...nextPayload,
+        setPayload(nextPayload);
+        setIsLoading(false);
+
+        if (!nextPayload?.propertyDetails) {
+          return;
+        }
+
+        const nextPropertyDetails = await enrichWebsitePropertyDetails(nextPayload.propertyDetails);
+        if (!isMounted || nextPropertyDetails === nextPayload.propertyDetails) {
+          return;
+        }
+
+        setPayload((currentPayload) =>
+          currentPayload
+            ? {
+                ...currentPayload,
                 propertyDetails: nextPropertyDetails,
               }
+            : currentPayload
         );
       } catch (error) {
         if (!isMounted) {
@@ -87,10 +96,7 @@ function WebsitePublicPreviewPage() {
 
         setPayload(null);
         setLoadError(error?.message || "We could not load this website preview.");
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 

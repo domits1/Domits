@@ -1,9 +1,11 @@
 export default {
     transform: {
-        '^.+\\.js$': 'babel-jest',
+        '^.+\\.(js|mjs)$': 'babel-jest',
     },
     testEnvironment: 'node',
     moduleNameMapper: {
+      '^database/models/(.*)$': '<rootDir>/ORM/models/$1.js',
+      '^\\./\\.shared/(.*)$': '<rootDir>/functions/.shared/$1',
       '^\\.\\./\\.shared/(.*)$': '<rootDir>/functions/.shared/$1',
       '^\\.\\./\\.\\./\\.shared/(.*)$': '<rootDir>/functions/.shared/$1',
       '^\\.\\./\\.\\./\\.\\./\\.shared/(.*)$': '<rootDir>/functions/.shared/$1'
