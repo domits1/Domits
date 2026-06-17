@@ -32,8 +32,11 @@ export const POLICY_RULE_CONFIG = [
   { rule: "SuitableForInfants", label: "Suitable for infants", invert: false },
   { rule: "CancellationPolicy:Flexible", label: "Flexible (Cancel up to 1 day before)", invert: false },
   { rule: "CancellationPolicy:Moderate", label: "Moderate (Cancel up to 5 days before)", invert: false },
-  { rule: "CancellationPolicy:Strict", label: "Limited (Cancel up to 14 days before)", invert: false },
+  { rule: "CancellationPolicy:Semi-strict", label: "Semi-strict (Cancel up to 60 days before)", invert: false },
+  { rule: "CancellationPolicy:Strict", label: "Strict (Cancel up to 90 days before)", invert: false },
+  { rule: "CancellationPolicy:Super-strict", label: "Super-strict (Cancel up to 180 days before)", invert: false },
   { rule: "CancellationPolicy:Firm", label: "Firm (Cancel up to 30 days before)", invert: false },
+  { rule: "CancellationPolicy:Non-refundable", label: "Non-refundable (No refunds)", invert: false },
 ];
 export const PRICING_RESTRICTION_KEYS = {
   minimumStay: "MinimumStay",

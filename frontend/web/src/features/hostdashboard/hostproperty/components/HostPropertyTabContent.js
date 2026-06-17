@@ -81,13 +81,32 @@ const CANCELLATION_POLICIES = [
     important: null,
   },
   {
-    id: "strict",
-    name: "Limited",
-    summary: "Full refund until 14 days before check-in",
+    id: "semi-strict",
+    name: "Semi-strict",
+    summary: "Full refund until 60 days before check-in",
     rules: [
-      "At least 14 days before check-in, they will receive 100% refund (you will keep 0% of the booking)",
-      "Between 7 and 14 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
-      "Less than 7 days before check-in, they will receive no refund (you will keep 100% of the booking)",
+      "At least 60 days before check-in, guests receive 100% refund (you will keep 0% of the booking)",
+      "Less than 60 days before check-in, guests receive no refund (you will keep 100% of the booking)",
+    ],
+    important: null,
+  },
+  {
+    id: "strict",
+    name: "Strict",
+    summary: "Full refund until 90 days before check-in",
+    rules: [
+      "At least 90 days before check-in, guests receive 100% refund (you will keep 0% of the booking)",
+      "Less than 90 days before check-in, guests receive no refund (you will keep 100% of the booking)",
+    ],
+    important: null,
+  },
+  {
+    id: "super-strict",
+    name: "Super-strict",
+    summary: "Full refund until 180 days before check-in",
+    rules: [
+      "At least 180 days before check-in, guests receive 100% refund (you will keep 0% of the booking)",
+      "Less than 180 days before check-in, guests receive no refund (you will keep 100% of the booking)",
     ],
     important: null,
   },
@@ -99,6 +118,15 @@ const CANCELLATION_POLICIES = [
       "At least 30 days before check-in, they will receive a 100% refund (you will keep 0% of the booking)",
       "Less than 30 days but more than 7 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
       "Less than 7 days before check-in, they will receive no refund (you will keep 100% of the booking)",
+    ],
+    important: null,
+  },
+  {
+    id: "non-refundable",
+    name: "Non-refundable",
+    summary: "No refunds provided",
+    rules: [
+      "No refunds are provided for any cancellations (you will keep 100% of the booking)",
     ],
     important: null,
   },
@@ -1688,7 +1716,7 @@ export default function HostPropertyPoliciesTab(props) {
 
   // Sync cancellation policy from policyRules
   useEffect(() => {
-    const policyOrder = ["Strict", "Firm", "Moderate", "Flexible"];
+    const policyOrder = ["Super-strict", "Strict", "Semi-strict", "Firm", "Moderate", "Flexible", "Non-refundable"];
     for (const policyName of policyOrder) {
       if (policyRules[`CancellationPolicy:${policyName}`]) {
         const policyId = policyName.toLowerCase();
