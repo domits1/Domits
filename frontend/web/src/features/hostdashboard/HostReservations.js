@@ -220,15 +220,6 @@ const HostReservations = () => {
     });
   };
 
-  const handleReservationRowKeyDown = (event, booking) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    openReservationDetails(booking);
-  };
-
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection((currentDirection) => (currentDirection === "asc" ? "desc" : "asc"));
@@ -588,13 +579,14 @@ const HostReservations = () => {
                         return (
                           <tr
                             key={`${booking.id}-${booking.property_id}`}
-                            className={styles.reservationRow}
-                            role="button"
-                            tabIndex={0}
-                            aria-label={`Open reservation ${booking.id}`}
-                            onClick={() => openReservationDetails(booking)}
-                            onKeyDown={(event) => handleReservationRowKeyDown(event, booking)}>
+                            className={styles.reservationRow}>
                             <td className={styles.thumbnailCell} data-label="Image">
+                              <button
+                                type="button"
+                                className={styles.rowLinkOverlay}
+                                aria-label={`Open reservation ${booking.id}`}
+                                onClick={() => openReservationDetails(booking)}
+                              />
                               {resolveImageUrl(booking) ? (
                                 <img
                                   src={resolveImageUrl(booking)}
@@ -622,39 +614,23 @@ const HostReservations = () => {
                             <td data-label="Total">€{total}</td>
                             <td data-label="Commission">€{commission}</td>
                             <td data-label="Policy">{renderPolicyDisplay(booking.cancellationType)}</td>
-                            <td data-label="Reservation">
-                              <button
-                                type="button"
-                                className={styles.reservationLinkButton}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  openReservationDetails(booking);
-                                }}>
-                                {booking.id}
-                              </button>
-                            </td>
+                            <td data-label="Reservation">{booking.id}</td>
                             <td data-label="Booked">{formatDate(booking.createdat)}</td>
-                            <td data-label="Actions">
+                            <td data-label="Actions" className={styles.actionsCell}>
                               {booking.status === "INQUIRY" && (
                                 <div className={styles.inquiryActions}>
                                   <button
                                     type="button"
                                     className={styles.btnAccept}
                                     disabled={isInquiryPending}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleInquiryAction(booking.id, "accept-inquiry");
-                                    }}>
+                                    onClick={() => handleInquiryAction(booking.id, "accept-inquiry")}>
                                     Accept
                                   </button>
                                   <button
                                     type="button"
                                     className={styles.btnDecline}
                                     disabled={isInquiryPending}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleInquiryAction(booking.id, "decline-inquiry");
-                                    }}>
+                                    onClick={() => handleInquiryAction(booking.id, "decline-inquiry")}>
                                     Decline
                                   </button>
                                 </div>
