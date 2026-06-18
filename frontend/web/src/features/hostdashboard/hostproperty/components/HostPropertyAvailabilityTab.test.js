@@ -487,14 +487,14 @@ describe("Listing Editor cancellation policies", () => {
   test("defaults to flexible as the only selected cancellation policy", () => {
     const policyRules = createInitialPolicyRules();
 
-    expect(policyRules["CancellationPolicy:flexible"]).toBe(true);
-    expect(policyRules["CancellationPolicy:moderate"]).toBe(false);
-    expect(policyRules["CancellationPolicy:limited"]).toBe(false);
-    expect(policyRules["CancellationPolicy:firm"]).toBe(false);
-    expect(policyRules["CancellationPolicy:semi-strict"]).toBe(false);
-    expect(policyRules["CancellationPolicy:strict"]).toBe(false);
-    expect(policyRules["CancellationPolicy:super-strict"]).toBe(false);
-    expect(policyRules["CancellationPolicy:non-refundable"]).toBe(false);
+    expect(policyRules["CancellationPolicy:Flexible"]).toBe(true);
+    expect(policyRules["CancellationPolicy:Moderate"]).toBe(false);
+    expect(policyRules["CancellationPolicy:Limited"]).toBe(false);
+    expect(policyRules["CancellationPolicy:Firm"]).toBe(false);
+    expect(policyRules["CancellationPolicy:Semi-strict"]).toBe(false);
+    expect(policyRules["CancellationPolicy:Strict"]).toBe(false);
+    expect(policyRules["CancellationPolicy:Super-strict"]).toBe(false);
+    expect(policyRules["CancellationPolicy:Non-refundable"]).toBe(false);
   });
 
   test("loads legacy title-case cancellation policy rules into canonical saved values", () => {
@@ -506,8 +506,8 @@ describe("Listing Editor cancellation policies", () => {
       []
     );
 
-    expect(fetchedPropertyData.policyRules["CancellationPolicy:flexible"]).toBe(false);
-    expect(fetchedPropertyData.policyRules["CancellationPolicy:semi-strict"]).toBe(true);
+    expect(fetchedPropertyData.policyRules["CancellationPolicy:Flexible"]).toBe(false);
+    expect(fetchedPropertyData.policyRules["CancellationPolicy:Semi-strict"]).toBe(true);
   });
 
   test("renders all cancellation options and saves the selected policy with the canonical string value", () => {
@@ -530,16 +530,16 @@ describe("Listing Editor cancellation policies", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /super-strict/i }));
 
-    expect(updatePolicyRule).toHaveBeenCalledWith("CancellationPolicy:super-strict", true);
-    expect(updatePolicyRule).toHaveBeenCalledWith("CancellationPolicy:flexible", false);
-    expect(updatePolicyRule).not.toHaveBeenCalledWith("CancellationPolicy:Super-strict", true);
+    expect(updatePolicyRule).toHaveBeenCalledWith("CancellationPolicy:Super-strict", true);
+    expect(updatePolicyRule).toHaveBeenCalledWith("CancellationPolicy:Flexible", false);
+    expect(updatePolicyRule).not.toHaveBeenCalledWith("CancellationPolicy:super-strict", true);
   });
 
   test("sends the selected cancellation policy string in the property save payload", async () => {
     const policyRules = {
       ...createInitialPolicyRules(),
-      "CancellationPolicy:flexible": false,
-      "CancellationPolicy:super-strict": true,
+      "CancellationPolicy:Flexible": false,
+      "CancellationPolicy:Super-strict": true,
     };
     const expectedRules = Object.keys(policyRules).map((rule) => ({
       rule,
@@ -587,8 +587,8 @@ describe("Listing Editor cancellation policies", () => {
       expect.objectContaining({
         cancellationPolicy: "super-strict",
         rules: expect.arrayContaining([
-          { rule: "CancellationPolicy:super-strict", value: true },
-          { rule: "CancellationPolicy:flexible", value: false },
+          { rule: "CancellationPolicy:Super-strict", value: true },
+          { rule: "CancellationPolicy:Flexible", value: false },
         ]),
       })
     );

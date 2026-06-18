@@ -58,93 +58,44 @@ const CAPACITY_COUNTER_FIELDS = [
   { key: "bathrooms", label: "Bathrooms" },
 ];
 
+const FLEXIBLE_PAYOUT_NOTE =
+  "Your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.";
+
+const REFUNDABLE_CANCELLATION_POLICY_DEFINITIONS = [
+  { id: "flexible", name: "Flexible", refundUntilDays: 1, important: FLEXIBLE_PAYOUT_NOTE },
+  { id: "moderate", name: "Moderate", refundUntilDays: 5 },
+  { id: "limited", name: "Limited", refundUntilDays: 14 },
+  { id: "firm", name: "Firm", refundUntilDays: 30 },
+  { id: "semi-strict", name: "Semi-strict", refundUntilDays: 60 },
+  { id: "strict", name: "Strict", refundUntilDays: 90 },
+  { id: "super-strict", name: "Super-strict", refundUntilDays: 180 },
+];
+
+const formatPolicyDayLabel = (days) => `${days} day${days === 1 ? "" : "s"}`;
+
+const buildRefundableCancellationPolicy = ({ id, name, refundUntilDays, important = null }) => {
+  const dayLabel = formatPolicyDayLabel(refundUntilDays);
+  return {
+    id,
+    ruleKey: `CancellationPolicy:${name}`,
+    name,
+    summary: `Full refund until ${dayLabel} before check-in`,
+    rules: [
+      `100% refund up to ${dayLabel} before check-in.`,
+      `No refund less than ${dayLabel} before check-in.`,
+    ],
+    important,
+  };
+};
+
 const CANCELLATION_POLICIES = [
-  {
-    id: "flexible",
-    ruleKey: "CancellationPolicy:Flexible",
-    name: "Flexible",
-    summary: "Full refund until 1 day before check-in",
-    rules: [
-      "100% refund up to 1 day before check-in.",
-      "No refund less than 1 day before check-in.",
-    ],
-    important:
-      "Your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
-  },
-  {
-    id: "moderate",
-    ruleKey: "CancellationPolicy:Moderate",
-    name: "Moderate",
-    summary: "Full refund until 5 days before check-in",
-    rules: [
-      "100% refund up to 5 days before check-in.",
-      "No refund less than 5 days before check-in.",
-    ],
-    important: null,
-  },
-  {
-    id: "limited",
-    ruleKey: "CancellationPolicy:Limited",
-    name: "Limited",
-    summary: "Full refund until 14 days before check-in",
-    rules: [
-      "100% refund up to 14 days before check-in.",
-      "No refund less than 14 days before check-in.",
-    ],
-    important: null,
-  },
-  {
-    id: "firm",
-    ruleKey: "CancellationPolicy:Firm",
-    name: "Firm",
-    summary: "Full refund until 30 days before check-in",
-    rules: [
-      "100% refund up to 30 days before check-in.",
-      "No refund less than 30 days before check-in.",
-    ],
-    important: null,
-  },
-  {
-    id: "semi-strict",
-    ruleKey: "CancellationPolicy:Semi-strict",
-    name: "Semi-strict",
-    summary: "Full refund until 60 days before check-in",
-    rules: [
-      "100% refund up to 60 days before check-in.",
-      "No refund less than 60 days before check-in.",
-    ],
-    important: null,
-  },
-  {
-    id: "strict",
-    ruleKey: "CancellationPolicy:Strict",
-    name: "Strict",
-    summary: "Full refund until 90 days before check-in",
-    rules: [
-      "100% refund up to 90 days before check-in.",
-      "No refund less than 90 days before check-in.",
-    ],
-    important: null,
-  },
-  {
-    id: "super-strict",
-    ruleKey: "CancellationPolicy:Super-strict",
-    name: "Super-strict",
-    summary: "Full refund until 180 days before check-in",
-    rules: [
-      "100% refund up to 180 days before check-in.",
-      "No refund less than 180 days before check-in.",
-    ],
-    important: null,
-  },
+  ...REFUNDABLE_CANCELLATION_POLICY_DEFINITIONS.map(buildRefundableCancellationPolicy),
   {
     id: "non-refundable",
     ruleKey: "CancellationPolicy:Non-refundable",
     name: "Non-refundable",
     summary: "No refunds provided",
-    rules: [
-      "No refunds provided.",
-    ],
+    rules: ["No refunds provided."],
     important: null,
   },
 ];

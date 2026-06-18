@@ -124,7 +124,7 @@ export class PropertyRuleRepository {
           .forEach((ruleName) => {
             ruleDefinitionMap.set(ruleName, {
               rule: ruleName,
-              value_type: "boolean",
+              value_type: "text",
             });
           });
         return ruleDefinitionMap;
@@ -150,7 +150,7 @@ export class PropertyRuleRepository {
           .forEach((ruleName) => {
             ruleDefinitionMap.set(ruleName, {
               rule: ruleName,
-              value_type: "boolean",
+              value_type: "text",
             });
           });
         return ruleDefinitionMap;
