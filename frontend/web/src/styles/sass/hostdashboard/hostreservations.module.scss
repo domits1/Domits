@@ -154,7 +154,30 @@ $border-color: #e5e7eb;
 }
 
 .reservationRow {
+  position: relative;
   transition: background-color 0.18s ease;
+}
+
+.rowLinkOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rowLinkOverlay:focus-visible {
+  outline: 2px solid #15803d;
+  outline-offset: -2px;
+}
+
+.actionsCell,
+.inquiryActions,
+.btnAccept,
+.btnDecline {
+  position: relative;
+  z-index: 2;
 }
 
 .reservationTable td:nth-child(8),
