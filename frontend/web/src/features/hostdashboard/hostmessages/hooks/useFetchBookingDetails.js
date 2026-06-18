@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
 import { getAccessToken } from '../../../../services/getAccessToken';
-import { getGuestBookingDetails, getAccommodationByPropertyId } from '../services/messagingService';
+import { getBookingPropertyId, getGuestBookingDetailsByBookingId } from '../services/messagingService';
+
+const formatBookingDate = (value) => {
+    if (value == null || value === "") return null;
+    const numeric = Number(value);
+    const date = Number.isFinite(numeric) ? new Date(numeric) : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('en-GB').replace(/\//g, '-');
+};
 
 const useFetchBookingDetails = (hostId, guestId, {
     withAuth = false,
     accommodationEndpoint = '',
+    bookingId = null,
 } = {}) => {
     const [bookingDetails, setBookingDetails] = useState(null);
     const [accommodation, setAccommodation] = useState(null);
@@ -12,23 +21,26 @@ const useFetchBookingDetails = (hostId, guestId, {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!hostId || !guestId) {
+        if (!bookingId || withAuth) {
+            setBookingDetails(null);
+            setAccommodation(null);
+            setError(null);
+            setLoading(false);
             return;
         }
-        const token = withAuth ? getAccessToken(hostId) : getAccessToken(guestId);
+        const token = getAccessToken(guestId);
         
         const fetchData = async () => {
             setLoading(true);
             setError(null);
             try {
 
-                const bookingData = await getGuestBookingDetails(hostId, guestId);
-                if (bookingData?.arrivalDate) {
-                    bookingData.arrivalDate = new Date(bookingData.arrivalDate).toLocaleDateString('en-GB').replace(/\//g, '-');
-                }
-                if (bookingData?.departureDate) {
-                    bookingData.departureDate = new Date(bookingData.departureDate).toLocaleDateString('en-GB').replace(/\//g, '-');
-                }
+                const { bookingDetails: bookingData, accommodation: accommodationData } =
+                    await getGuestBookingDetailsByBookingId({ bookingId, guestId, token });
+                const arrivalDate = formatBookingDate(bookingData?.arrivalDate || bookingData?.arrivaldate);
+                const departureDate = formatBookingDate(bookingData?.departureDate || bookingData?.departuredate);
+                if (arrivalDate) bookingData.arrivalDate = arrivalDate;
+                if (departureDate) bookingData.departureDate = departureDate;
 
                 const Nights = (() => {
                     if (!bookingData?.arrivalDate || !bookingData?.departureDate) return 0;
@@ -45,9 +57,11 @@ const useFetchBookingDetails = (hostId, guestId, {
 
                 setBookingDetails({ ...bookingData, Nights });
 
-                if (bookingData.property_id && accommodationEndpoint) {
-                    const accoRaw = await getAccommodationByPropertyId(accommodationEndpoint, bookingData.property_id, token);
-                    setAccommodation(accoRaw);
+                const bookingPropertyId = getBookingPropertyId(bookingData);
+                if (bookingPropertyId && accommodationEndpoint) {
+                    setAccommodation(accommodationData);
+                } else {
+                    setAccommodation(null);
                 }
 
             } catch (err) {
@@ -60,7 +74,7 @@ const useFetchBookingDetails = (hostId, guestId, {
         };
 
         fetchData();
-    }, [hostId, guestId, withAuth, accommodationEndpoint]);
+    }, [bookingId, guestId, withAuth, accommodationEndpoint]);
 
     return { bookingDetails, accommodation, loading, error };
 };

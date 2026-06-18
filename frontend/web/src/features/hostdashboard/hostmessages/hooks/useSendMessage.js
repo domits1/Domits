@@ -5,7 +5,13 @@ import { getAccessToken } from "../../../../services/getAccessToken";
 
 const pick = (...vals) => vals.find((v) => v !== undefined && v !== null);
 
-export const useSendMessage = (userId) => {
+const requireToken = (token) => {
+  const normalized = String(token || "").trim();
+  if (!normalized) throw new Error("Authentication token is required.");
+  return normalized;
+};
+
+export const useSendMessage = (userId, accessToken = null) => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
 
@@ -26,11 +32,14 @@ export const useSendMessage = (userId) => {
     setSending(true);
     setError(null);
 
-    let token = null;
+    let token = accessToken || null;
     try {
-      token = await Promise.resolve(getAccessToken(userId));
-    } catch {
-      token = null;
+      token = requireToken(token || (await Promise.resolve(getAccessToken(userId))));
+    } catch (authError) {
+      const errorMsg = authError?.message || "Authentication token is required.";
+      setError(errorMsg);
+      setSending(false);
+      return { success: false, error: errorMsg };
     }
 
     const platform = String(options.platform || "DOMITS").toUpperCase();
@@ -47,12 +56,14 @@ export const useSendMessage = (userId) => {
         fileUrls,
         propertyId: options.propertyId ?? null,
         threadId: options.threadId ?? null,
+        bookingId: options.bookingId ?? null,
         hostId: options.hostId ?? null,
         guestId: options.guestId ?? null,
         metadata,
         platform,
         integrationAccountId: options.integrationAccountId ?? null,
         externalThreadId: options.externalThreadId ?? null,
+        token,
       });
 
       const savedId = pick(saved?.id, saved?.messageId, saved?.message?.id);
@@ -72,6 +83,7 @@ export const useSendMessage = (userId) => {
             channelId: channelID,
             threadId: savedThreadId,
             propertyId: options.propertyId ?? null,
+            bookingId: options.bookingId ?? null,
             hostId: options.hostId ?? null,
             guestId: options.guestId ?? null,
             metadata,
@@ -92,6 +104,7 @@ export const useSendMessage = (userId) => {
           platform,
           integrationAccountId: options.integrationAccountId ?? null,
           externalThreadId: options.externalThreadId ?? null,
+          bookingId: options.bookingId ?? null,
         },
       };
     } catch (err) {
