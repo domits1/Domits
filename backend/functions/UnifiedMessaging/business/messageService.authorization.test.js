@@ -13,6 +13,7 @@ const mockThreadRepository = {
 };
 const mockBookingRepository = {
   getBookingById: jest.fn(),
+  findBookingsForGuestHost: jest.fn(),
   findBookingsForGuestHostProperty: jest.fn(),
 };
 
@@ -108,6 +109,21 @@ describe("MessageService authorization and booking scoping", () => {
     });
   });
 
+  test("allows legacy guest threads without propertyId when exactly one host reservation exists", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null, propertyId: null }));
+    mockBookingRepository.findBookingsForGuestHost.mockResolvedValue([booking()]);
+    mockMessageRepository.getMessagesByThreadId.mockResolvedValue([{ id: "message-legacy-1" }]);
+
+    const result = await service.getMessages("thread-1", guestAuth);
+
+    expect(result).toEqual({ statusCode: 200, response: [{ id: "message-legacy-1" }] });
+    expect(mockBookingRepository.findBookingsForGuestHost).toHaveBeenCalledWith({
+      guestId: "guest-1",
+      hostId: "host-1",
+    });
+    expect(mockMessageRepository.getMessagesByThreadId).toHaveBeenCalledWith("thread-1");
+  });
+
   test("rejects legacy guest threads when no matching reservation exists", async () => {
     mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null }));
     mockBookingRepository.findBookingsForGuestHostProperty.mockResolvedValue([]);
@@ -131,6 +147,69 @@ describe("MessageService authorization and booking scoping", () => {
       code: "FORBIDDEN",
     });
     expect(mockMessageRepository.getMessagesByThreadId).not.toHaveBeenCalled();
+  });
+
+  test("rejects ambiguous legacy guest threads without propertyId", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null, propertyId: null }));
+    mockBookingRepository.findBookingsForGuestHost.mockResolvedValue([
+      booking({ id: "booking-1", property_id: "property-1" }),
+      booking({ id: "booking-2", property_id: "property-2" }),
+    ]);
+
+    await expect(service.getMessages("thread-1", guestAuth)).rejects.toMatchObject({
+      statusCode: 403,
+      code: "FORBIDDEN",
+    });
+    expect(mockMessageRepository.getMessagesByThreadId).not.toHaveBeenCalled();
+  });
+
+  test("keeps host old and external conversations visible in /threads", async () => {
+    mockThreadRepository.getThreadsForUser.mockResolvedValue([
+      thread({ id: "legacy-thread", bookingId: null, propertyId: null }),
+      thread({
+        id: "external-thread",
+        bookingId: null,
+        guestId: "+31612345678",
+        propertyId: null,
+        platform: "WHATSAPP",
+        externalThreadId: "wa-thread-1",
+        integrationAccountId: "integration-1",
+      }),
+    ]);
+
+    const result = await service.getThreads(hostAuth);
+
+    expect(result.response).toEqual([
+      expect.objectContaining({ id: "legacy-thread", bookingId: null }),
+      expect.objectContaining({
+        id: "external-thread",
+        platform: "WHATSAPP",
+        externalThreadId: "wa-thread-1",
+        bookingId: null,
+      }),
+    ]);
+    expect(mockBookingRepository.findBookingsForGuestHost).not.toHaveBeenCalled();
+    expect(mockBookingRepository.findBookingsForGuestHostProperty).not.toHaveBeenCalled();
+  });
+
+  test("keeps valid guest reservation conversations visible and hides unauthorized ones in /threads", async () => {
+    mockThreadRepository.getThreadsForUser.mockResolvedValue([
+      thread({ id: "valid-booking-thread", bookingId: "booking-1", propertyId: null }),
+      thread({ id: "valid-legacy-thread", bookingId: null, propertyId: null }),
+      thread({ id: "unauthorized-thread", bookingId: "booking-unauthorized" }),
+    ]);
+    mockBookingRepository.getBookingById
+      .mockResolvedValueOnce(booking({ id: "booking-1" }))
+      .mockResolvedValueOnce(booking({ id: "booking-unauthorized", guestid: "other-guest" }));
+    mockBookingRepository.findBookingsForGuestHost.mockResolvedValue([booking({ id: "booking-legacy" })]);
+
+    const result = await service.getThreads(guestAuth);
+
+    expect(result.response.map((item) => item.id)).toEqual(["valid-booking-thread", "valid-legacy-thread"]);
+    expect(result.response).toEqual([
+      expect.objectContaining({ id: "valid-booking-thread", bookingId: "booking-1" }),
+      expect.objectContaining({ id: "valid-legacy-thread", bookingId: null }),
+    ]);
   });
 
   test("preserves host access to legacy threads without booking lookups", async () => {

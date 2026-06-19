@@ -35,7 +35,7 @@ const validateBookingMatchesThread = (booking, thread, authenticatedUserId) => {
   if (!booking) return false;
   if (!idsEqual(booking.guestid, authenticatedUserId)) return false;
   if (!idsEqual(booking.hostid, thread?.hostId)) return false;
-  if (!idsEqual(booking.property_id, thread?.propertyId)) return false;
+  if (thread?.propertyId && !idsEqual(booking.property_id, thread.propertyId)) return false;
   return true;
 };
 
@@ -134,7 +134,13 @@ class MessageService {
   }
 
   async getMatchingLegacyBookings(thread, authenticatedUserId) {
-    if (!thread?.hostId || !thread?.propertyId) return [];
+    if (!thread?.hostId) return [];
+    if (!thread?.propertyId) {
+      return await this.bookingRepository.findBookingsForGuestHost({
+        guestId: authenticatedUserId,
+        hostId: thread.hostId,
+      });
+    }
     return await this.bookingRepository.findBookingsForGuestHostProperty({
       guestId: authenticatedUserId,
       hostId: thread.hostId,

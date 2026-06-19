@@ -263,6 +263,38 @@ const hydrateContacts = async ({ contactsList, userId, role, token = null }) => 
   return Promise.all(safeContacts.map((c) => hydrateOneContact({ contact: c, userId, role, token })));
 };
 
+const getContactMergeKey = (contact, userId) => {
+  if (contact?.threadId) return `thread:${contact.threadId}`;
+
+  const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
+  const propertyId = contact?.propertyId || contact?.AccoId || "";
+  const bookingId = contact?.bookingId || contact?.bookingid || "";
+  const platform = String(contact?.platform || "DOMITS").toUpperCase();
+
+  return [
+    "participants",
+    userId,
+    partnerId,
+    propertyId,
+    bookingId,
+    platform,
+  ].join(":");
+};
+
+const mergeContacts = ({ primaryContacts, secondaryContacts, userId }) => {
+  const merged = [];
+  const seen = new Set();
+
+  for (const contact of [...(primaryContacts || []), ...(secondaryContacts || [])]) {
+    const key = getContactMergeKey(contact, userId);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    merged.push(contact);
+  }
+
+  return merged;
+};
+
 const normalizeLegacy = ({ raw, isHostLegacy, userId }) => {
   const partnerId = isHostLegacy ? raw?.userId : raw?.hostId;
 
@@ -311,14 +343,14 @@ const useFetchContacts = (userId, role) => {
         }
       } catch {}
 
-      if (unifiedContacts.length > 0) {
-        const accepted = await hydrateContacts({ contactsList: unifiedContacts, userId, role, token });
-        setContacts(accepted);
-        setPendingContacts([]);
-        return;
-      }
-
       if (role === "guest") {
+        if (unifiedContacts.length > 0) {
+          const accepted = await hydrateContacts({ contactsList: unifiedContacts, userId, role, token });
+          setContacts(accepted);
+          setPendingContacts([]);
+          return;
+        }
+
         setContacts([]);
         setPendingContacts([]);
         return;
@@ -347,7 +379,13 @@ const useFetchContacts = (userId, role) => {
         normalizeLegacy({ raw: r, isHostLegacy, userId })
       );
 
-      const accepted = await hydrateContacts({ contactsList: acceptedNormalized, userId, role, token });
+      const acceptedContacts = mergeContacts({
+        primaryContacts: unifiedContacts,
+        secondaryContacts: acceptedNormalized,
+        userId,
+      });
+
+      const accepted = await hydrateContacts({ contactsList: acceptedContacts, userId, role, token });
       const pending = await hydrateContacts({ contactsList: pendingNormalized, userId, role, token });
 
       setContacts(accepted);

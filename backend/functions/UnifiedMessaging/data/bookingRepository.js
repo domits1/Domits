@@ -36,6 +36,20 @@ class BookingRepository {
 
     return bookings.map(normalizeBooking).filter(Boolean);
   }
+
+  async findBookingsForGuestHost({ guestId, hostId }) {
+    if (!guestId || !hostId) return [];
+
+    const client = await Database.getInstance();
+    const bookings = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.guestid = :guestId", { guestId })
+      .andWhere("booking.hostid = :hostId", { hostId })
+      .getMany();
+
+    return bookings.map(normalizeBooking).filter(Boolean);
+  }
 }
 
 export default BookingRepository;
