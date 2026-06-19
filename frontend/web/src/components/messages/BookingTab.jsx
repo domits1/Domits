@@ -5,7 +5,7 @@ import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBoo
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
 
-const BookingTab = ({ userId, contactId, dashboardType, bookingId = null }) => {
+const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, propertyId = null }) => {
     const isGuest = dashboardType === 'guest';
     const hostId = isGuest ? contactId : userId;
     const guestId = isGuest ? userId : contactId;
@@ -20,6 +20,7 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null }) => {
                 : 'hostDashboard/single',
             withAuth: !isGuest,
             bookingId,
+            propertyId,
         }
     );
     if (bookingDetails?.message === "No data found for the given hostId and guestId") {

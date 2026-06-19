@@ -299,6 +299,7 @@ const ChatScreen = ({
             contactName={headerName}
             dashboardType={dashboardType}
             bookingId={bookingId || null}
+            propertyId={propertyId || null}
           />
         )}
 
