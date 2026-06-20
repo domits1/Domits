@@ -3,6 +3,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import useFetchContacts from "./useFetchContacts";
@@ -48,6 +49,11 @@ const Harness = ({ userId = "host-1", role = "host" }) => {
   );
 };
 
+Harness.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  role: PropTypes.string,
+};
+
 const okJson = (payload) => ({
   ok: true,
   json: async () => payload,
@@ -62,7 +68,7 @@ describe("useFetchContacts history merging", () => {
       givenName: `Profile ${userId}`,
     }));
 
-    global.fetch = jest.fn(async (url) => {
+    globalThis.fetch = jest.fn(async (url) => {
       const requestUrl = String(url);
 
       if (requestUrl.includes("/threads")) {
@@ -127,14 +133,14 @@ describe("useFetchContacts history merging", () => {
     expect(screen.getByTestId("contacts")).toHaveTextContent("legacy:legacy-guest-1:DOMITS");
     expect(screen.getByTestId("pending")).toHaveTextContent("0");
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.stringContaining("/threads"),
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({ Authorization: "Bearer host-token-1" }),
       })
     );
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.stringContaining("FetchContacts"),
       expect.objectContaining({
         method: "POST",

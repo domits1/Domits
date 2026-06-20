@@ -37,7 +37,19 @@ jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttach
   <button type="button">Attach</button>
 ));
 
-jest.mock("./BookingTab", () => ({ bookingId }) => <div data-testid="booking-tab" data-booking-id={bookingId || ""} />);
+jest.mock("./BookingTab", () => {
+  const PropTypes = require("prop-types");
+
+  function MockBookingTab({ bookingId }) {
+    return <div data-testid="booking-tab" data-booking-id={bookingId || ""} />;
+  }
+
+  MockBookingTab.propTypes = {
+    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  };
+
+  return MockBookingTab;
+});
 
 describe("ChatScreen reservation messaging", () => {
   beforeEach(() => {

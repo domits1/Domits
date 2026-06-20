@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { FaHome } from 'react-icons/fa';
 import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails";
 import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBookingTab.scss';
@@ -150,6 +151,14 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
 
         </div>
     );
+};
+
+BookingTab.propTypes = {
+    userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    contactId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    dashboardType: PropTypes.string,
+    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default BookingTab;

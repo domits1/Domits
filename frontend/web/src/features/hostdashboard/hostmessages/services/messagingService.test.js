@@ -2,7 +2,7 @@ import { getGuestBookingDetailsByBookingId, getHostBookingDetails, sendUnifiedMe
 
 describe("messagingService unified REST client", () => {
   beforeEach(() => {
-    global.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ id: "message-1", threadId: "thread-1" }),
     });
@@ -22,7 +22,7 @@ describe("messagingService unified REST client", () => {
       token: "access-token-1",
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/send",
       expect.objectContaining({
         method: "POST",
@@ -33,7 +33,7 @@ describe("messagingService unified REST client", () => {
       })
     );
 
-    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
     expect(body).toEqual(
       expect.objectContaining({
         senderId: "guest-1",
@@ -46,7 +46,7 @@ describe("messagingService unified REST client", () => {
   });
 
   test("sendUnifiedMessage does not call /send without a token", async () => {
-    global.fetch.mockClear();
+    globalThis.fetch.mockClear();
 
     await expect(
       sendUnifiedMessage({
@@ -60,11 +60,11 @@ describe("messagingService unified REST client", () => {
       code: "AUTH_TOKEN_REQUIRED",
     });
 
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   test("getGuestBookingDetailsByBookingId loads the exact authorized booking", async () => {
-    global.fetch
+    globalThis.fetch
       .mockResolvedValueOnce({
         ok: true,
         text: async () =>
@@ -98,7 +98,7 @@ describe("messagingService unified REST client", () => {
 
     expect(result.bookingDetails.id).toBe("booking-2");
     expect(result.accommodation.property.title).toBe("Exact stay");
-    expect(global.fetch).toHaveBeenNthCalledWith(
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining("guestId=guest-1"),
       expect.objectContaining({
@@ -109,7 +109,7 @@ describe("messagingService unified REST client", () => {
         },
       })
     );
-    expect(global.fetch).toHaveBeenNthCalledWith(
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2,
       expect.stringContaining("bookingId=booking-2"),
       expect.objectContaining({
@@ -123,7 +123,7 @@ describe("messagingService unified REST client", () => {
   });
 
   test("getGuestBookingDetailsByBookingId rejects a booking owned by another guest", async () => {
-    global.fetch.mockResolvedValueOnce({
+    globalThis.fetch.mockResolvedValueOnce({
       ok: true,
       text: async () =>
         JSON.stringify([
@@ -145,11 +145,11 @@ describe("messagingService unified REST client", () => {
       })
     ).rejects.toThrow("Booking not found.");
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
   test("getHostBookingDetails does not randomly choose between multiple legacy matches", async () => {
-    global.fetch.mockResolvedValueOnce({
+    globalThis.fetch.mockResolvedValueOnce({
       ok: true,
       text: async () =>
         JSON.stringify([
@@ -184,6 +184,6 @@ describe("messagingService unified REST client", () => {
       })
     ).rejects.toThrow("Multiple bookings match this host conversation; bookingId is required.");
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 });

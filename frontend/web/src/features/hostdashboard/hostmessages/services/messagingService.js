@@ -75,6 +75,18 @@ const getBookingGuestId = (booking) => booking?.guestid || booking?.guestId || b
 
 const idsEqual = (left, right) => String(left || "") === String(right || "");
 
+const getHostBookingList = (payload) => {
+  if (Array.isArray(payload?.response)) return payload.response;
+  if (Array.isArray(payload)) return payload;
+  return [];
+};
+
+const getNestedReservations = (item) => {
+  if (Array.isArray(item?.res?.response)) return item.res.response;
+  if (Array.isArray(item?.reservations)) return item.reservations;
+  return null;
+};
+
 const normalizeHostBookingsResponse = (bookingData) => {
   const payload =
     typeof bookingData?.body === "string"
@@ -87,14 +99,10 @@ const normalizeHostBookingsResponse = (bookingData) => {
         })()
       : bookingData?.body || bookingData;
 
-  const list = Array.isArray(payload?.response) ? payload.response : Array.isArray(payload) ? payload : [];
+  const list = getHostBookingList(payload);
 
   return list.flatMap((item) => {
-    const nestedReservations = Array.isArray(item?.res?.response)
-      ? item.res.response
-      : Array.isArray(item?.reservations)
-        ? item.reservations
-        : null;
+    const nestedReservations = getNestedReservations(item);
 
     if (!nestedReservations) return [item];
 

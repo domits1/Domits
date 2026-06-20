@@ -234,27 +234,25 @@ class MessageService {
     }
   }
 
-  async sendMessage(payload, authenticatedUser) {
-    if (!payload || typeof payload !== "object") throw badRequest("Request body is required.");
-    this.validateMessagePayload(payload);
-    this.assertNoSpoofedSender(payload, authenticatedUser.userId);
+  async resolveExistingThreadMessageContext(payload, authenticatedUser, senderId) {
+    const threadId = payload.threadId;
+    const thread = await this.threadRepository.getThreadById(threadId);
+    const access = await this.assertThreadAccess(thread, authenticatedUser);
+    const recipientId = idsEqual(access.thread.hostId, senderId) ? access.thread.guestId : access.thread.hostId;
 
-    const senderId = authenticatedUser.userId;
-    let recipientId = payload.recipientId;
-    let threadId = payload.threadId || null;
-    let resolvedPayload = { ...payload, senderId };
+    this.assertConsistentOptionalId(payload.recipientId, recipientId, "recipientId");
+    this.assertConsistentOptionalId(payload.hostId, access.thread.hostId, "hostId");
+    this.assertConsistentOptionalId(payload.guestId, access.thread.guestId, "guestId");
+    this.assertConsistentOptionalId(payload.propertyId, access.thread.propertyId, "propertyId");
+    this.assertConsistentOptionalId(payload.bookingId, getThreadBookingId(access.thread), "bookingId");
 
-    if (threadId) {
-      const thread = await this.threadRepository.getThreadById(threadId);
-      const access = await this.assertThreadAccess(thread, authenticatedUser);
-      recipientId = idsEqual(access.thread.hostId, senderId) ? access.thread.guestId : access.thread.hostId;
-      this.assertConsistentOptionalId(payload.recipientId, recipientId, "recipientId");
-      this.assertConsistentOptionalId(payload.hostId, access.thread.hostId, "hostId");
-      this.assertConsistentOptionalId(payload.guestId, access.thread.guestId, "guestId");
-      this.assertConsistentOptionalId(payload.propertyId, access.thread.propertyId, "propertyId");
-      this.assertConsistentOptionalId(payload.bookingId, getThreadBookingId(access.thread), "bookingId");
-      resolvedPayload = {
-        ...resolvedPayload,
+    return {
+      senderId,
+      recipientId,
+      threadId,
+      resolvedPayload: {
+        ...payload,
+        senderId,
         recipientId,
         hostId: access.thread.hostId,
         guestId: access.thread.guestId,
@@ -263,54 +261,97 @@ class MessageService {
         platform: access.thread.platform || payload.platform || "DOMITS",
         integrationAccountId: access.thread.integrationAccountId ?? payload.integrationAccountId ?? null,
         externalThreadId: access.thread.externalThreadId ?? payload.externalThreadId ?? null,
-      };
-    } else if (payload.bookingId) {
-      const booking = await this.loadBookingOr404(payload.bookingId);
-      const isGuestStarter = idsEqual(booking.guestid, senderId);
-      const isHostStarter = idsEqual(booking.hostid, senderId);
+      },
+    };
+  }
 
-      if (!isGuestStarter && !isHostStarter) {
-        throw forbidden("This booking does not belong to the authenticated user.");
-      }
+  async resolveBookingMessageContext(payload, senderId) {
+    const booking = await this.loadBookingOr404(payload.bookingId);
+    const isGuestStarter = idsEqual(booking.guestid, senderId);
+    const isHostStarter = idsEqual(booking.hostid, senderId);
 
-      const hostId = booking.hostid;
-      const guestId = booking.guestid;
-      recipientId = isGuestStarter ? hostId : guestId;
+    if (!isGuestStarter && !isHostStarter) {
+      throw forbidden("This booking does not belong to the authenticated user.");
+    }
 
-      this.assertConsistentOptionalId(payload.recipientId, recipientId, "recipientId");
-      this.assertConsistentOptionalId(payload.hostId, hostId, "hostId");
-      this.assertConsistentOptionalId(payload.guestId, guestId, "guestId");
-      this.assertConsistentOptionalId(payload.propertyId, booking.property_id, "propertyId");
+    const hostId = booking.hostid;
+    const guestId = booking.guestid;
+    const recipientId = isGuestStarter ? hostId : guestId;
 
-      resolvedPayload = {
-        ...resolvedPayload,
+    this.assertConsistentOptionalId(payload.recipientId, recipientId, "recipientId");
+    this.assertConsistentOptionalId(payload.hostId, hostId, "hostId");
+    this.assertConsistentOptionalId(payload.guestId, guestId, "guestId");
+    this.assertConsistentOptionalId(payload.propertyId, booking.property_id, "propertyId");
+
+    return {
+      senderId,
+      recipientId,
+      threadId: null,
+      resolvedPayload: {
+        ...payload,
+        senderId,
         recipientId,
         hostId,
         guestId,
         propertyId: booking.property_id,
         bookingId: booking.id,
         platform: payload.platform || "DOMITS",
-      };
-    } else {
-      if (!authenticatedUser.isHost) {
-        throw badRequest("bookingId is required to start a guest conversation.");
-      }
+      },
+    };
+  }
 
-      if (!recipientId || idsEqual(recipientId, senderId)) {
-        throw badRequest("recipientId is required.");
-      }
+  resolveHostMessageContext(payload, authenticatedUser, senderId) {
+    const recipientId = payload.recipientId;
 
-      this.assertConsistentOptionalId(payload.hostId, senderId, "hostId");
-      resolvedPayload = {
-        ...resolvedPayload,
+    if (!authenticatedUser.isHost) {
+      throw badRequest("bookingId is required to start a guest conversation.");
+    }
+
+    if (!recipientId || idsEqual(recipientId, senderId)) {
+      throw badRequest("recipientId is required.");
+    }
+
+    this.assertConsistentOptionalId(payload.hostId, senderId, "hostId");
+    return {
+      senderId,
+      recipientId,
+      threadId: null,
+      resolvedPayload: {
+        ...payload,
+        senderId,
         recipientId,
         hostId: senderId,
         guestId: payload.guestId || recipientId,
         propertyId: payload.propertyId ?? null,
         bookingId: null,
         platform: payload.platform || "DOMITS",
-      };
+      },
+    };
+  }
+
+  async resolveMessageContext(payload, authenticatedUser) {
+    const senderId = authenticatedUser.userId;
+
+    if (payload.threadId) {
+      return await this.resolveExistingThreadMessageContext(payload, authenticatedUser, senderId);
     }
+
+    if (payload.bookingId) {
+      return await this.resolveBookingMessageContext(payload, senderId);
+    }
+
+    return this.resolveHostMessageContext(payload, authenticatedUser, senderId);
+  }
+
+  async sendMessage(payload, authenticatedUser) {
+    if (!payload || typeof payload !== "object") throw badRequest("Request body is required.");
+    this.validateMessagePayload(payload);
+    this.assertNoSpoofedSender(payload, authenticatedUser.userId);
+
+    const { senderId, recipientId, threadId, resolvedPayload } = await this.resolveMessageContext(
+      payload,
+      authenticatedUser
+    );
 
     const { threadId: resolvedThreadId } = threadId
       ? { threadId }

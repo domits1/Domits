@@ -7,7 +7,7 @@ const formatBookingDate = (value) => {
     const numeric = Number(value);
     const date = Number.isFinite(numeric) ? new Date(numeric) : new Date(value);
     if (Number.isNaN(date.getTime())) return null;
-    return date.toLocaleDateString('en-GB').replace(/\//g, '-');
+    return date.toLocaleDateString('en-GB').replaceAll('/', '-');
 };
 
 const useFetchBookingDetails = (hostId, guestId, {

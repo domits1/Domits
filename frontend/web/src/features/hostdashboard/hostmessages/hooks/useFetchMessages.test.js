@@ -3,6 +3,7 @@
  */
 
 import React, { useEffect } from "react";
+import PropTypes from "prop-types";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import { WebSocketContext } from "../context/webSocketContext";
@@ -23,6 +24,10 @@ const Harness = ({ accessToken = null }) => {
   return <div data-testid="state" data-error={error?.message || ""} />;
 };
 
+Harness.propTypes = {
+  accessToken: PropTypes.string,
+};
+
 const renderHarness = (accessToken = null) =>
   render(
     <WebSocketContext.Provider value={{ messages: [] }}>
@@ -33,7 +38,7 @@ const renderHarness = (accessToken = null) =>
 describe("useFetchMessages protected REST calls", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    global.fetch = jest.fn();
+    globalThis.fetch = jest.fn();
   });
 
   afterEach(() => {
@@ -48,12 +53,12 @@ describe("useFetchMessages protected REST calls", () => {
     await waitFor(() => {
       expect(screen.getByTestId("state")).toHaveAttribute("data-error", "Authentication token is required.");
     });
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   test("does not fetch /messages when /threads rejects authorization", async () => {
     getAccessToken.mockReturnValue("access-token-1");
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: false,
       status: 403,
       text: async () => "Forbidden",
@@ -62,10 +67,10 @@ describe("useFetchMessages protected REST calls", () => {
     renderHarness("access-token-1");
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     });
 
-    expect(global.fetch.mock.calls[0][0]).toContain("/threads");
-    expect(global.fetch.mock.calls[0][1].headers.Authorization).toBe("Bearer access-token-1");
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("/threads");
+    expect(globalThis.fetch.mock.calls[0][1].headers.Authorization).toBe("Bearer access-token-1");
   });
 });

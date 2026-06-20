@@ -10,14 +10,38 @@ import Messages from "./Messages";
 
 let mockContacts = [];
 
-jest.mock("../../features/hostdashboard/hostmessages/context/AuthContext", () => ({
-  UserProvider: ({ children }) => <>{children}</>,
-  useUser: () => ({ userId: "guest-1", accessToken: "access-token-1" }),
-}));
+jest.mock("../../features/hostdashboard/hostmessages/context/AuthContext", () => {
+  const React = require("react");
+  const PropTypes = require("prop-types");
 
-jest.mock("../../features/hostdashboard/hostmessages/context/webSocketContext", () => ({
-  WebSocketProvider: ({ children }) => <>{children}</>,
-}));
+  function MockUserProvider({ children }) {
+    return React.createElement(React.Fragment, null, children);
+  }
+
+  MockUserProvider.propTypes = {
+    children: PropTypes.node,
+  };
+
+  return {
+    UserProvider: MockUserProvider,
+    useUser: () => ({ userId: "guest-1", accessToken: "access-token-1" }),
+  };
+});
+
+jest.mock("../../features/hostdashboard/hostmessages/context/webSocketContext", () => {
+  const React = require("react");
+  const PropTypes = require("prop-types");
+
+  function MockWebSocketProvider({ children }) {
+    return React.createElement(React.Fragment, null, children);
+  }
+
+  MockWebSocketProvider.propTypes = {
+    children: PropTypes.node,
+  };
+
+  return { WebSocketProvider: MockWebSocketProvider };
+});
 
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useAuth", () => ({
   useAuth: () => ({ userId: "guest-1", accessToken: "access-token-1" }),
@@ -33,43 +57,71 @@ jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchContacts", ()
   }),
 }));
 
-jest.mock("./ContactList", () => (props) => (
-  <div data-testid="contact-list">
-    {(props.contacts || []).map((contact) => (
-      <button
-        key={contact.threadId || contact.partnerId}
-        type="button"
-        onClick={() =>
-          props.onContactClick(
-            contact.partnerId,
-            contact.givenName,
-            contact.profileImage,
-            contact.threadId,
-            contact.propertyId,
-            contact.bookingId,
-            contact.propertyTitle,
-            contact.accoImage,
-            contact.platform || "DOMITS",
-            contact.integrationAccountId || null,
-            contact.externalThreadId || null
-          )
-        }
-      >
-        {contact.givenName}
-      </button>
-    ))}
-  </div>
-));
+jest.mock("./ContactList", () => {
+  const PropTypes = require("prop-types");
 
-jest.mock("./ChatScreen", () => (props) => (
-  <div
-    data-testid="chat-screen"
-    data-contact-id={props.contactId || ""}
-    data-thread-id={props.threadId || ""}
-    data-booking-id={props.bookingId || ""}
-    data-property-id={props.propertyId || ""}
-  />
-));
+  function MockContactList({ contacts, onContactClick }) {
+    return (
+      <div data-testid="contact-list">
+        {(contacts || []).map((contact) => (
+          <button
+            key={contact.threadId || contact.partnerId}
+            type="button"
+            onClick={() =>
+              onContactClick(
+                contact.partnerId,
+                contact.givenName,
+                contact.profileImage,
+                contact.threadId,
+                contact.propertyId,
+                contact.bookingId,
+                contact.propertyTitle,
+                contact.accoImage,
+                contact.platform || "DOMITS",
+                contact.integrationAccountId || null,
+                contact.externalThreadId || null
+              )
+            }
+          >
+            {contact.givenName}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  MockContactList.propTypes = {
+    contacts: PropTypes.arrayOf(PropTypes.object),
+    onContactClick: PropTypes.func,
+  };
+
+  return MockContactList;
+});
+
+jest.mock("./ChatScreen", () => {
+  const PropTypes = require("prop-types");
+
+  function MockChatScreen({ contactId, threadId, bookingId, propertyId }) {
+    return (
+      <div
+        data-testid="chat-screen"
+        data-contact-id={contactId || ""}
+        data-thread-id={threadId || ""}
+        data-booking-id={bookingId || ""}
+        data-property-id={propertyId || ""}
+      />
+    );
+  }
+
+  MockChatScreen.propTypes = {
+    contactId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    threadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  };
+
+  return MockChatScreen;
+});
 
 jest.mock("./NewContactModal", () => () => null);
 jest.mock("./ListingPanel", () => () => <div data-testid="listing-panel" />);

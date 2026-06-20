@@ -42,7 +42,7 @@ const accommodation = (title) => ({
 describe("BookingTab booking details", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    global.fetch = jest.fn();
+    globalThis.fetch = jest.fn();
     getAccessToken.mockImplementation((userId) => (userId === "host-1" ? "host-token-1" : "guest-token-1"));
   });
 
@@ -51,7 +51,7 @@ describe("BookingTab booking details", () => {
   });
 
   test("host BookingTab fetches and displays booking details without bookingId when the match is unambiguous", async () => {
-    global.fetch
+    globalThis.fetch
       .mockResolvedValueOnce(
         okText([
           {
@@ -83,7 +83,7 @@ describe("BookingTab booking details", () => {
     expect(screen.getByText("Booking ID: booking-host-1")).toBeInTheDocument();
     expect(screen.getByText("$100 x 3 nights")).toBeInTheDocument();
 
-    expect(global.fetch).toHaveBeenNthCalledWith(
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining("readType=hostId"),
       expect.objectContaining({
@@ -91,7 +91,7 @@ describe("BookingTab booking details", () => {
         headers: { Authorization: "host-token-1" },
       })
     );
-    expect(global.fetch).toHaveBeenNthCalledWith(
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2,
       expect.stringContaining("/hostDashboard/single?property=property-1"),
       expect.objectContaining({
@@ -99,11 +99,11 @@ describe("BookingTab booking details", () => {
         headers: { Authorization: "host-token-1" },
       })
     );
-    expect(global.fetch.mock.calls.some(([url]) => String(url).includes("/messages?threadId="))).toBe(false);
+    expect(globalThis.fetch.mock.calls.some(([url]) => String(url).includes("/messages?threadId="))).toBe(false);
   });
 
   test("guest BookingTab loads the exact bookingId and does not use host/guest pseudo-thread lookup", async () => {
-    global.fetch
+    globalThis.fetch
       .mockResolvedValueOnce(
         okText([
           {
@@ -134,9 +134,9 @@ describe("BookingTab booking details", () => {
     expect(screen.getByText("Booking ID: booking-2")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
 
-    expect(global.fetch.mock.calls[0][0]).toContain("readType=guest");
-    expect(global.fetch.mock.calls[0][0]).toContain("guestId=guest-1");
-    expect(global.fetch.mock.calls[1][0]).toContain("bookingId=booking-2");
-    expect(global.fetch.mock.calls.some(([url]) => String(url).includes("/messages?threadId="))).toBe(false);
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("readType=guest");
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("guestId=guest-1");
+    expect(globalThis.fetch.mock.calls[1][0]).toContain("bookingId=booking-2");
+    expect(globalThis.fetch.mock.calls.some(([url]) => String(url).includes("/messages?threadId="))).toBe(false);
   });
 });
