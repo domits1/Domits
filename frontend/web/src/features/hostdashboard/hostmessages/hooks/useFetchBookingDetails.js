@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
 import { getAccessToken } from '../../../../services/getAccessToken';
-import { getGuestBookingDetails, getAccommodationByPropertyId } from '../services/messagingService';
+import { getBookingPropertyId, getGuestBookingDetailsByBookingId, getHostBookingDetails } from '../services/messagingService';
+
+const formatBookingDate = (value) => {
+    if (value == null || value === "") return null;
+    const numeric = Number(value);
+    const date = Number.isFinite(numeric) ? new Date(numeric) : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('en-GB').replaceAll('/', '-');
+};
 
 const useFetchBookingDetails = (hostId, guestId, {
     withAuth = false,
     accommodationEndpoint = '',
+    bookingId = null,
+    propertyId = null,
 } = {}) => {
     const [bookingDetails, setBookingDetails] = useState(null);
     const [accommodation, setAccommodation] = useState(null);
@@ -12,7 +22,14 @@ const useFetchBookingDetails = (hostId, guestId, {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!hostId || !guestId) {
+        const shouldFetchHostBooking = withAuth && hostId && guestId;
+        const shouldFetchGuestBooking = !withAuth && bookingId;
+
+        if (!shouldFetchHostBooking && !shouldFetchGuestBooking) {
+            setBookingDetails(null);
+            setAccommodation(null);
+            setError(null);
+            setLoading(false);
             return;
         }
         const token = withAuth ? getAccessToken(hostId) : getAccessToken(guestId);
@@ -22,19 +39,29 @@ const useFetchBookingDetails = (hostId, guestId, {
             setError(null);
             try {
 
-                const bookingData = await getGuestBookingDetails(hostId, guestId);
-                if (bookingData?.arrivalDate) {
-                    bookingData.arrivalDate = new Date(bookingData.arrivalDate).toLocaleDateString('en-GB').replace(/\//g, '-');
-                }
-                if (bookingData?.departureDate) {
-                    bookingData.departureDate = new Date(bookingData.departureDate).toLocaleDateString('en-GB').replace(/\//g, '-');
-                }
+                const { bookingDetails: bookingData, accommodation: accommodationData } = withAuth
+                    ? await getHostBookingDetails({
+                        hostId,
+                        guestId,
+                        propertyId,
+                        bookingId,
+                        token,
+                        accommodationEndpoint,
+                    })
+                    : await getGuestBookingDetailsByBookingId({ bookingId, guestId, token });
+                const arrivalDate = formatBookingDate(bookingData?.arrivalDate || bookingData?.arrivaldate);
+                const departureDate = formatBookingDate(bookingData?.departureDate || bookingData?.departuredate);
+                const normalizedBookingData = {
+                    ...bookingData,
+                    ...(arrivalDate ? { arrivalDate } : {}),
+                    ...(departureDate ? { departureDate } : {}),
+                };
 
                 const Nights = (() => {
-                    if (!bookingData?.arrivalDate || !bookingData?.departureDate) return 0;
+                    if (!normalizedBookingData?.arrivalDate || !normalizedBookingData?.departureDate) return 0;
 
-                    const [startDay, startMonth, startYear] = bookingData.arrivalDate.split('-').map(Number);
-                    const [endDay, endMonth, endYear] = bookingData.departureDate.split('-').map(Number);
+                    const [startDay, startMonth, startYear] = normalizedBookingData.arrivalDate.split('-').map(Number);
+                    const [endDay, endMonth, endYear] = normalizedBookingData.departureDate.split('-').map(Number);
 
                     const start = new Date(startYear, startMonth - 1, startDay);
                     const end = new Date(endYear, endMonth - 1, endDay);
@@ -43,11 +70,13 @@ const useFetchBookingDetails = (hostId, guestId, {
                     return diffDays > 0 ? diffDays : 0;
                 })();
 
-                setBookingDetails({ ...bookingData, Nights });
+                setBookingDetails({ ...normalizedBookingData, Nights });
 
-                if (bookingData.property_id && accommodationEndpoint) {
-                    const accoRaw = await getAccommodationByPropertyId(accommodationEndpoint, bookingData.property_id, token);
-                    setAccommodation(accoRaw);
+                const bookingPropertyId = getBookingPropertyId(normalizedBookingData);
+                if (bookingPropertyId && accommodationEndpoint) {
+                    setAccommodation(accommodationData);
+                } else {
+                    setAccommodation(null);
                 }
 
             } catch (err) {
@@ -60,7 +89,7 @@ const useFetchBookingDetails = (hostId, guestId, {
         };
 
         fetchData();
-    }, [hostId, guestId, withAuth, accommodationEndpoint]);
+    }, [accommodationEndpoint, bookingId, guestId, hostId, propertyId, withAuth]);
 
     return { bookingDetails, accommodation, loading, error };
 };

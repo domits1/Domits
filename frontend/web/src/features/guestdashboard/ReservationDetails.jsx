@@ -657,13 +657,18 @@ function ReservationDetails() {
   };
 
   const handleMessageHost = () => {
+    const bookingId = reservation?.stay?.bookingId || reservationRouteId || null;
     if (reservation?.host?.id) {
-      navigate("/guestdashboard/messages", {
+      const messagesPath = bookingId
+        ? `/guestdashboard/messages?bookingId=${encodeURIComponent(bookingId)}`
+        : "/guestdashboard/messages";
+      navigate(messagesPath, {
         state: {
           messageContext: {
             contactId: reservation.host.id,
             contactName: reservation.host.name,
             contactImage: reservation.host.image,
+            bookingId,
             propertyId: reservation.property.id,
             propertyTitle: reservation.property.title,
             accoImage: reservation.property.image,

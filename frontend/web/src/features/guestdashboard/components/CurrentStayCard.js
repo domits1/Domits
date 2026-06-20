@@ -5,12 +5,17 @@ import StayOverviewCard, { stayShape } from "./StayOverviewCard";
 function CurrentStayCard({ stay }) {
   const navigate = useNavigate();
   const handleMessageHost = () => {
-    navigate("/guestdashboard/messages", {
+    const bookingId = stay.bookingId || stay.id || null;
+    const messagesPath = bookingId
+      ? `/guestdashboard/messages?bookingId=${encodeURIComponent(bookingId)}`
+      : "/guestdashboard/messages";
+    navigate(messagesPath, {
       state: {
         messageContext: {
           contactId: stay.hostId || null,
           contactName: stay.hostName || "Host",
           contactImage: stay.hostImage || null,
+          bookingId,
           propertyId: stay.propertyId || null,
           propertyTitle: stay.name || null,
           accoImage: stay.image || null,
