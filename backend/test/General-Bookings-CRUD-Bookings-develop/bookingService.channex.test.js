@@ -71,6 +71,7 @@ const buildService = ({
         status: "Awaiting Payment",
       }),
       updateBookingStatus: jest.fn(),
+      markBookingPaidWithOutbox: jest.fn(),
       getBookingById: jest.fn(),
       updateBookingDates: jest.fn(),
       ...reservationRepository,
@@ -311,7 +312,7 @@ describe("BookingService Channex booking availability hooks", () => {
 
     await expect(service.confirmPayment("pi_1")).resolves.toBe(true);
 
-    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Paid");
+    expect(dependencies.reservationRepository.markBookingPaidWithOutbox).toHaveBeenCalledWith("booking-1");
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
   });
 
