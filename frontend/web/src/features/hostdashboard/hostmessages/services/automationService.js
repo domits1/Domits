@@ -1,6 +1,17 @@
 import { Auth } from "aws-amplify";
 
-const API_BASE = String(process.env.REACT_APP_AUTOMATED_MESSAGING_API_URL || "").replace(/\/$/, "");
+const AUTOMATED_MESSAGING_FALLBACK_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const KNOWN_WRONG_AUTOMATED_MESSAGING_API_ID = "543s1lwby8";
+
+// Scoped fallback for AutomatedMessaging acceptance routing; other API clients are unaffected.
+export const resolveAutomationApiBase = (configuredBase) => {
+  const normalized = String(configuredBase || "").replace(/\/$/, "");
+  return !normalized || normalized.includes(KNOWN_WRONG_AUTOMATED_MESSAGING_API_ID)
+    ? AUTOMATED_MESSAGING_FALLBACK_API
+    : normalized;
+};
+
+const API_BASE = resolveAutomationApiBase(process.env.REACT_APP_AUTOMATED_MESSAGING_API_URL);
 
 export class AutomationApiError extends Error {
   constructor(message, { status = 500, code = "REQUEST_FAILED", details = null } = {}) {
