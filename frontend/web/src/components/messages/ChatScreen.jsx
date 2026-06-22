@@ -8,6 +8,7 @@ import { useFetchMessages } from "../../features/hostdashboard/hostmessages/hook
 import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
 import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
+import { getMessageCapabilities } from "./messageCapabilities";
 
 import fallbackAvatar from "./domits-logo.jpg";
 
@@ -37,16 +38,22 @@ const ChatScreen = ({
   contactImage,
   threadId,
   propertyId,
+  bookingId = null,
   platform = "DOMITS",
   integrationAccountId = null,
   externalThreadId = null,
   onBack,
   onClose,
   dashboardType,
+  capabilities: providedCapabilities = null,
   handleContactListMessage,
   testMessages = [],
 }) => {
   const { accessToken } = useAuth();
+  const capabilities = useMemo(
+    () => providedCapabilities || getMessageCapabilities(dashboardType),
+    [dashboardType, providedCapabilities]
+  );
 
   const [newMessage, setNewMessage] = useState("");
   const [error, setError] = useState("");
@@ -76,12 +83,16 @@ const ChatScreen = ({
       return;
     }
 
-    const key = `${resolvedContactId}::${threadId || ""}`;
+    const key = `${resolvedContactId}::${threadId || ""}::${bookingId || ""}::${propertyId || ""}`;
     if (lastFetchKeyRef.current === key) return;
     lastFetchKeyRef.current = key;
 
-    fetchMessages(resolvedContactId, threadId || null);
-  }, [resolvedContactId, threadId, fetchMessages]);
+    fetchMessages(resolvedContactId, threadId || null, {
+      bookingId: bookingId || null,
+      propertyId: propertyId || null,
+      accessToken,
+    });
+  }, [accessToken, bookingId, fetchMessages, propertyId, resolvedContactId, threadId]);
 
   const mergedMessages = useMemo(() => {
     const base = threadId ? messagesByThread?.[threadId] : messagesByRecipient?.[resolvedContactId];
@@ -164,6 +175,7 @@ const ChatScreen = ({
       fileUrls: uploadedFileUrls,
       threadId: threadId || null,
       propertyId: effectivePropertyId,
+      bookingId: bookingId || null,
       isSent: true,
       platform: resolvedPlatform,
     };
@@ -175,6 +187,7 @@ const ChatScreen = ({
       const result = await sendMessage(resolvedContactId, newMessage.trim(), uploadedFileUrls, {
         threadId: threadId || null,
         propertyId: effectivePropertyId,
+        bookingId: bookingId || null,
         hostId,
         guestId,
         metadata: { isAutomated: false },
@@ -191,6 +204,7 @@ const ChatScreen = ({
         id: saved?.id || optimisticId,
         createdAt: saved?.createdAt ? new Date(saved.createdAt).toISOString() : nowIso,
         threadId: saved?.threadId || optimistic.threadId,
+        bookingId: saved?.bookingId || optimistic.bookingId,
         platform: saved?.platform || resolvedPlatform,
       };
 
@@ -278,18 +292,20 @@ const ChatScreen = ({
       </div>
 
       <div className="chat-footer">
-        {isWhatsApp ? null : (
+        {isWhatsApp || !capabilities.canViewBookingContext ? null : (
           <BookingTab
             userId={userId}
             contactId={resolvedContactId}
             contactName={headerName}
             dashboardType={dashboardType}
+            bookingId={bookingId || null}
+            propertyId={propertyId || null}
           />
         )}
 
         <div className="chat-input">
           <div className="attachment-area">
-            <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+            {capabilities.canUseAttachments ? <ChatUploadAttachment onUploadComplete={handleUploadComplete} /> : null}
 
             {uploadedFileUrls.length > 0 && (
               <button
@@ -362,12 +378,14 @@ ChatScreen.propTypes = {
   contactImage: PropTypes.string,
   threadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   platform: PropTypes.string,
   integrationAccountId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   externalThreadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onBack: PropTypes.func,
   onClose: PropTypes.func,
   dashboardType: PropTypes.string,
+  capabilities: PropTypes.object,
   handleContactListMessage: PropTypes.func,
   testMessages: PropTypes.arrayOf(PropTypes.object),
 };

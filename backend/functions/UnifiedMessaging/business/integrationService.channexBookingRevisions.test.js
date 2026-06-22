@@ -4,7 +4,7 @@ jest.mock(
   { virtual: true }
 );
 
-jest.mock("../ORM/index.js", () => ({
+jest.mock("../.shared/integrations/ORM/index.js", () => ({
   __esModule: true,
   default: {
     getInstance: jest.fn(),

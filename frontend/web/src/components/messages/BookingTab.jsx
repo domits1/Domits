@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { FaHome } from 'react-icons/fa';
 import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails";
 import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBookingTab.scss';
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
 
-const BookingTab = ({ userId, contactId, dashboardType }) => {
+const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, propertyId = null }) => {
     const isGuest = dashboardType === 'guest';
     const hostId = isGuest ? contactId : userId;
     const guestId = isGuest ? userId : contactId;
@@ -19,6 +20,8 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
                 ? 'bookingEngine/listingDetails'
                 : 'hostDashboard/single',
             withAuth: !isGuest,
+            bookingId,
+            propertyId,
         }
     );
     if (bookingDetails?.message === "No data found for the given hostId and guestId") {
@@ -148,6 +151,14 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
 
         </div>
     );
+};
+
+BookingTab.propTypes = {
+    userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    contactId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    dashboardType: PropTypes.string,
+    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default BookingTab;

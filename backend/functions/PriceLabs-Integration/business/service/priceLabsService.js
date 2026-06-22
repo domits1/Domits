@@ -125,9 +125,16 @@ export class PriceLabsService {
       ota_listing_ids: otaMap[p.id] || {},
     }));
 
-    await api.pushListings(token, name, listings);
+    const pushResult = await api.pushListings(token, name, listings);
+    if (Array.isArray(pushResult?.errors) && pushResult.errors.length) {
+      console.error("[PriceLabs] listings push rejected:", JSON.stringify(pushResult.errors));
+    }
     await this.repo.updateSyncStatus(hostId, { last_listings_sync_at: Date.now(), last_sync_status: "synced" });
-    return { success: true, listings_pushed: listings.length };
+    return {
+      success: true,
+      listings_pushed: listings.length,
+      rejected: Array.isArray(pushResult?.errors) ? pushResult.errors.length : 0,
+    };
   }
 
   async pushCalendar(hostId, listingIds = null) {
@@ -139,6 +146,11 @@ export class PriceLabsService {
       ? properties.filter((p) => listingIds.includes(`${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`))
       : properties;
 
+    // Booked dates per property so PriceLabs can distinguish booked nights
+    // (reservations) from blocked nights (host-made unavailable).
+    const bookings = await this.repo.getBookingsByHost(hostId);
+    const bookedDatesByProperty = _bookedDatesByProperty(bookings);
+
     for (const p of targets) {
       const listingId   = `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`;
       const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
@@ -148,28 +160,7 @@ export class PriceLabsService {
         overrideMap[row.calendar_date] = row;
       }
 
-      const data = [];
-      const defaultPrice = p.base_price || 100;
-      for (let i = 0; i < CALENDAR_DAYS; i++) {
-        const d    = new Date();
-        d.setUTCDate(d.getUTCDate() + i);
-        const iso  = d.toISOString().slice(0, 10);
-        const key  = Number(iso.replaceAll("-", ""));
-        const row  = overrideMap[key];
-        data.push({
-          date:            iso,
-          end_date:        iso,
-          price:           row?.nightly_price || defaultPrice,
-          available_units: row?.is_available === false ? 0 : 1,
-          booked_units:    0,
-          blocked_units:   0,
-          settings: {
-            min_stay:  row?.min_stay  || 1,
-            check_in:  row?.closed_to_arrival  !== true,
-            check_out: row?.closed_to_departure !== true,
-          },
-        });
-      }
+      const data = _buildCalendarData(p, overrideMap, bookedDatesByProperty[p.id]);
 
       await api.pushCalendar(token, name, {
         calendars: [
@@ -189,6 +180,10 @@ export class PriceLabsService {
   async pushReservations(hostId) {
     const { token, name } = await this._creds();
     const connection = await this._requireActiveConnection(hostId);
+    if (!connection.last_listings_sync_at) {
+      console.log(`[PriceLabs] pushReservations skipped for host ${hostId}: listings not yet synced.`);
+      return { skipped: true, reason: "Listings not yet synced to PriceLabs for this host." };
+    }
     const bookings   = await this.repo.getBookingsByHost(hostId);
 
     const grouped = {};
@@ -197,7 +192,6 @@ export class PriceLabsService {
       if (!grouped[listingId]) {
         grouped[listingId] = {
           listing_id: listingId,
-          user_token: connection.pricelabs_email,
           data:       [],
         };
       }
@@ -208,11 +202,9 @@ export class PriceLabsService {
         reservation_id: b.id,
         start_date:     checkin,
         end_date:       checkout,
-        booked_time:    new Date().toISOString().replace("T", " ").split(".")[0],
+        booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
         total_days:     _dateDiff(checkin, checkout),
-        guests:         b.guests || 1,
         total_cost:     b.total_price || 0,
-        rental_revenue: b.nightly_revenue || 0,
         currency:       "EUR",
         status,
         booking_source: b.booking_source || "direct",
@@ -224,8 +216,16 @@ export class PriceLabsService {
     }
 
     const reservations = Object.values(grouped);
+    const totalCount = reservations.reduce((sum, r) => sum + r.data.length, 0);
+    console.log(`[PriceLabs] pushReservations for host ${hostId}: ${totalCount} reservation(s) across ${reservations.length} listing(s).`);
     if (reservations.length) {
-      await api.pushReservations(token, name, reservations);
+      const pushResult = await api.pushReservations(token, name, reservations);
+      const successCount = Array.isArray(pushResult?.success) ? pushResult.success.length : "?";
+      const failureCount = Array.isArray(pushResult?.failure) ? pushResult.failure.length : 0;
+      console.log(`[PriceLabs] pushReservations API result for host ${hostId}: ${successCount} accepted, ${failureCount} failed.`);
+      if (failureCount > 0) {
+        console.error(`[PriceLabs] pushReservations failures for host ${hostId}:`, JSON.stringify(pushResult.failure));
+      }
     }
 
     await this.repo.updateSyncStatus(hostId, {
@@ -389,6 +389,57 @@ function _mapBookingStatus(status) {
   return "booked";
 }
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * Maps bookings to a per-property Set of booked ISO dates (checkout day excluded).
+ */
+function _bookedDatesByProperty(bookings) {
+  const map = {};
+  for (const b of bookings) {
+    if (_mapBookingStatus(b.status) !== "booked") continue;
+    const start = _tsToDate(b.arrivaldate);
+    const end   = _tsToDate(b.departuredate);
+    if (!start || !end) continue;
+    const startMs = Date.parse(`${start}T00:00:00Z`);
+    const endMs   = Date.parse(`${end}T00:00:00Z`);
+    for (let ms = startMs; ms < endMs; ms += MS_PER_DAY) {
+      if (!map[b.property_id]) map[b.property_id] = new Set();
+      map[b.property_id].add(new Date(ms).toISOString().slice(0, 10));
+    }
+  }
+  return map;
+}
+
+/**
+ * Builds the per-day calendar payload for one property, reporting
+ * available/booked/blocked units per date.
+ */
+function _buildCalendarData(property, overrideMap, bookedDates) {
+  const defaultPrice = property.base_price || 100;
+  const data = [];
+  for (let i = 0; i < CALENDAR_DAYS; i++) {
+    const iso = new Date(Date.now() + i * MS_PER_DAY).toISOString().slice(0, 10);
+    const row = overrideMap[Number(iso.replaceAll("-", ""))];
+    const isBooked  = bookedDates?.has(iso) === true;
+    const isBlocked = !isBooked && row?.is_available === false;
+    data.push({
+      date:            iso,
+      end_date:        iso,
+      price:           row?.nightly_price || defaultPrice,
+      available_units: isBooked || isBlocked ? 0 : 1,
+      booked_units:    isBooked  ? 1 : 0,
+      blocked_units:   isBlocked ? 1 : 0,
+      settings: {
+        min_stay:  row?.min_stay  || 1,
+        check_in:  row?.closed_to_arrival  !== true,
+        check_out: row?.closed_to_departure !== true,
+      },
+    });
+  }
+  return data;
+}
+
 const COUNTRY_TO_ALPHA3 = {
   "netherlands": "NLD", "nl": "NLD", "nld": "NLD",
   "germany": "DEU", "de": "DEU", "deutschland": "DEU",
@@ -403,6 +454,11 @@ const COUNTRY_TO_ALPHA3 = {
   "greece": "GRC", "gr": "GRC",
   "turkey": "TUR", "tr": "TUR",
   "united states": "USA", "us": "USA",
+  // Dutch country names (the Domits UI stores these)
+  "nederland": "NLD", "duitsland": "DEU", "belgië": "BEL", "belgie": "BEL",
+  "frankrijk": "FRA", "spanje": "ESP", "italië": "ITA", "italie": "ITA",
+  "verenigd koninkrijk": "GBR", "oostenrijk": "AUT", "zwitserland": "CHE",
+  "griekenland": "GRC", "turkije": "TUR", "verenigde staten": "USA",
 };
 
 function _toAlpha3(country) {

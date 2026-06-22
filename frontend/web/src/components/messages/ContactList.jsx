@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
+import { getMessageCapabilities } from "./messageCapabilities";
 
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
@@ -172,7 +173,9 @@ const ContactList = ({
   onNewMessage,
 
   activeThreadId = null,
+  capabilities: providedCapabilities = null,
 }) => {
+  const capabilities = providedCapabilities || getMessageCapabilities(dashboardType);
   const [selectedKey, setSelectedKey] = useState(null);
   const [tab, setTab] = useState("all");
   const socket = useContext(WebSocketContext);
@@ -235,6 +238,7 @@ const ContactList = ({
       contact?.profileImage,
       threadId,
       contact?.propertyId || contact?.AccoId || null,
+      contact?.bookingId || contact?.bookingid || null,
       contact?.propertyTitle || contact?.propertyName || null,
       contact?.accoImage || null,
       contact?.platform || "DOMITS",
@@ -244,6 +248,7 @@ const ContactList = ({
   };
 
   const handleContextMenu = (event, contact) => {
+    if (!capabilities.canManageConversation) return;
     event.preventDefault();
     const partnerId = resolvePartnerId(contact, userId);
     if (!partnerId) return;
@@ -279,19 +284,21 @@ const ContactList = ({
   const filteredContacts = useMemo(() => {
     let list = Array.isArray(contacts) ? [...contacts] : [];
 
-    if (searchTerm) {
+    if (capabilities.canSearch && searchTerm) {
       list = list.filter((c) => resolveContactName(c).toLowerCase().includes(searchTerm.toLowerCase()));
     }
-    if (tab === "unread") list = list.filter((c) => (c.unreadCount || 0) > 0);
+    if (capabilities.canFilterByReadStatus && tab === "unread") {
+      list = list.filter((c) => (c.unreadCount || 0) > 0);
+    }
 
-    if (sortAlphabetically) {
+    if (capabilities.canSort && sortAlphabetically) {
       list.sort((a, b) => resolveContactName(a).localeCompare(resolveContactName(b)));
     } else {
       list.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
     }
 
     return list;
-  }, [contacts, searchTerm, tab, sortAlphabetically]);
+  }, [capabilities, contacts, searchTerm, tab, sortAlphabetically]);
 
   let listContent = null;
   if (loading) {
@@ -313,7 +320,7 @@ const ContactList = ({
           key={key}
           className={`contact-list-list-item ${isActive ? "active" : ""}`}
           onClick={() => handleClick(contact)}
-          onContextMenu={(event) => handleContextMenu(event, contact)}
+          onContextMenu={capabilities.canManageConversation ? (event) => handleContextMenu(event, contact) : undefined}
           style={{ cursor: "pointer" }}
         >
           <ContactItem contact={contact} selected={isActive} />
@@ -329,54 +336,64 @@ const ContactList = ({
           <h2 className="contactlist-title">Messages</h2>
 
           <div className="contactlist-actions">
-            <button
-              type="button"
-              className="icon-btn"
-              title="Search"
-              onClick={() => {
-                const el = document.querySelector(".contactlist-search");
-                if (el) el.focus();
-              }}
-            >
-              <FaSearch />
-            </button>
+            {capabilities.canSearch ? (
+              <button
+                type="button"
+                className="icon-btn"
+                title="Search"
+                onClick={() => {
+                  const el = document.querySelector(".contactlist-search");
+                  if (el) el.focus();
+                }}
+              >
+                <FaSearch />
+              </button>
+            ) : null}
 
-            <button
-              type="button"
-              className="icon-btn"
-              title={sortAlphabetically ? "Sort by latest" : "Sort A–Z"}
-              onClick={() => setSortAlphabetically((p) => !p)}
-            >
-              <FaSlidersH />
-            </button>
+            {capabilities.canSort ? (
+              <button
+                type="button"
+                className="icon-btn"
+                title={sortAlphabetically ? "Sort by latest" : "Sort A-Z"}
+                onClick={() => setSortAlphabetically((p) => !p)}
+              >
+                <FaSlidersH />
+              </button>
+            ) : null}
 
-            <button type="button" className="icon-btn primary" title="New message" onClick={onNewMessage}>
-              <FaPlus />
-            </button>
+            {capabilities.canCreateContact ? (
+              <button type="button" className="icon-btn primary" title="New message" onClick={onNewMessage}>
+                <FaPlus />
+              </button>
+            ) : null}
           </div>
         </div>
 
-        <input
-          className="contactlist-search"
-          type="text"
-          placeholder="Search or start new chat"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        {capabilities.canSearch ? (
+          <input
+            className="contactlist-search"
+            type="text"
+            placeholder="Search or start new chat"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        ) : null}
 
-        <div className="contactlist-tabs">
-          <button className={`contactlist-tab ${tab === "all" ? "active" : ""}`} onClick={() => setTab("all")}>
-            All
-          </button>
-          <button className={`contactlist-tab ${tab === "unread" ? "active" : ""}`} onClick={() => setTab("unread")}>
-            Unread
-          </button>
-        </div>
+        {capabilities.canFilterByReadStatus ? (
+          <div className="contactlist-tabs">
+            <button className={`contactlist-tab ${tab === "all" ? "active" : ""}`} onClick={() => setTab("all")}>
+              All
+            </button>
+            <button className={`contactlist-tab ${tab === "unread" ? "active" : ""}`} onClick={() => setTab("unread")}>
+              Unread
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <ul className="contact-list-list">{listContent}</ul>
 
-      {contextMenu.visible && (
+      {capabilities.canManageConversation && contextMenu.visible && (
         <div className="contact-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} role="menu">
           <button type="button" onClick={handleCloseSelectedChat}>
             Close chat
@@ -413,6 +430,7 @@ ContactList.propTypes = {
   setContacts: PropTypes.func,
   onNewMessage: PropTypes.func,
   activeThreadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  capabilities: PropTypes.object,
 };
 
 export default ContactList;

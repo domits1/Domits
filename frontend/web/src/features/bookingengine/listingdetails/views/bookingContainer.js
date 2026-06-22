@@ -6,9 +6,6 @@ import Pricing from "../components/pricing";
 import useHandleReservePress from "../hooks/handleReservePress";
 import {
   buildUnavailableDateSet,
-  DATE_AVAILABILITY_REASONS,
-  getDateAvailabilityReason,
-  getStayRangeAvailabilityIssue,
   hasUnavailableDateInStayRange,
   isUnavailableDate,
 } from "../utils/dateAvailability";
@@ -26,7 +23,6 @@ import ChatScreen from "../../../../components/messages/ChatScreen";
 import "../../../../components/messages/messagesV2.scss";
 
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
-const BOOKED_MESSAGE = "These dates are already booked.";
 const NO_AVAILABILITY_MESSAGE = "This property has no availability for the selected dates.";
 
 const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyId }) => {
@@ -283,9 +279,8 @@ const BookingContainer = ({
       return;
     }
 
-    const availabilityReason = getDateAvailabilityReason(value, unavailableDateSet, availabilityContext);
-    if (availabilityReason !== DATE_AVAILABILITY_REASONS.AVAILABLE) {
-      alert(availabilityReason === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
+    if (isUnavailableDate(value, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -294,10 +289,8 @@ const BookingContainer = ({
       return;
     }
 
-    const rangeIssue =
-      checkOutDate && getStayRangeAvailabilityIssue(value, checkOutDate, unavailableDateSet, availabilityContext);
-    if (rangeIssue) {
-      alert(rangeIssue === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
+    if (checkOutDate && hasUnavailableDateInStayRange(value, checkOutDate, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -320,9 +313,8 @@ const BookingContainer = ({
       return;
     }
 
-    const rangeIssue = getStayRangeAvailabilityIssue(checkInDate, value, unavailableDateSet, availabilityContext);
-    if (rangeIssue) {
-      alert(rangeIssue === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
+    if (hasUnavailableDateInStayRange(checkInDate, value, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
