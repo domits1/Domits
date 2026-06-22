@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
   Users,
@@ -176,5 +177,9 @@ function AboutRedesign({ missionCtaTo = "/how-it-works" }) {
     </div>
   );
 }
+
+AboutRedesign.propTypes = {
+  missionCtaTo: PropTypes.string,
+};
 
 export default AboutRedesign;
