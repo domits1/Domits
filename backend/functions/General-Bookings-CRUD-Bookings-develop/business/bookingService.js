@@ -180,7 +180,7 @@ class BookingService {
     }
     const paymentIntent = await this.stripeRepository.getPaymentIntentByPaymentId(paymentid);
     if (paymentIntent.status === "succeeded") {
-      await this.reservationRepository.updateBookingStatus(booking.id, BOOKING_STATUS_PAID);
+      await this.reservationRepository.markBookingPaidWithOutbox(booking.id);
       return true;
     } else {
       return false;

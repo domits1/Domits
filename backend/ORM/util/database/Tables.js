@@ -44,6 +44,9 @@ import { ChannexSyncEvidence } from "../../models/unified/sync/ChannexSyncEviden
 import { IntegrationSyncState } from "../../models/unified/sync/IntegrationSyncState.js";
 import { IntegrationSyncLog } from "../../models/unified/sync/IntegrationSyncLog.js";
 import { UnifiedThreadNote } from "../../models/unified/collaboration/UnifiedThreadNote.js";
+import { MessageAutomation } from "../../models/automation/MessageAutomation.js";
+import { MessageAutomationDelivery } from "../../models/automation/MessageAutomationDelivery.js";
+import { BookingAutomationOutbox } from "../../models/automation/BookingAutomationOutbox.js";
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
@@ -99,6 +102,9 @@ export const Tables = [
   IntegrationSyncState,
   IntegrationSyncLog,
   UnifiedThreadNote,
+  MessageAutomation,
+  MessageAutomationDelivery,
+  BookingAutomationOutbox,
 
   User_Table,
   PropertyTask,

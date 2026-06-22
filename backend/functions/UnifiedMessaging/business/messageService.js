@@ -2,6 +2,7 @@ import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository, { isDomitsBookingThreadUniqueError } from "../data/threadRepository.js";
 import BookingRepository from "../data/bookingRepository.js";
 import WhatsAppProviderAdapter from "./whatsappProviderAdapter.js";
+import publishRealtimeMessage from "./publishRealtimeMessage.js";
 import { badRequest, forbidden, notFound } from "../util/httpErrors.js";
 
 const isWhatsAppPayload = (payload) => payload.platform === "WHATSAPP";
@@ -75,11 +76,12 @@ const buildStoredMetadata = (payload, providerResult) => {
 };
 
 class MessageService {
-  constructor() {
+  constructor({ realtimePublisher = publishRealtimeMessage } = {}) {
     this.messageRepository = new MessageRepository();
     this.threadRepository = new ThreadRepository();
     this.bookingRepository = new BookingRepository();
     this.whatsAppProviderAdapter = new WhatsAppProviderAdapter();
+    this.realtimePublisher = realtimePublisher;
   }
 
   async resolveDomitsBookingThread(payload, senderId, recipientId) {
@@ -405,6 +407,119 @@ class MessageService {
         providerResult,
       },
     };
+  }
+
+  async sendAutomatedDomitsMessage(payload) {
+    if (!payload?.deliveryId || !payload?.automationId || !payload?.bookingId || !payload?.hostId) {
+      throw badRequest("Validated automation context is incomplete.");
+    }
+    const content = String(payload.content || "");
+    if (!content.trim()) throw badRequest("Automated message content is required.");
+
+    const booking = await this.loadBookingOr404(payload.bookingId);
+    if (!idsEqual(booking.hostid, payload.hostId)) {
+      throw forbidden("Automation host does not own this booking.");
+    }
+    if (!idsEqual(booking.property_id, payload.propertyId)) {
+      throw forbidden("Automation property does not match this booking.");
+    }
+    const existing = await this.messageRepository.findByAutomationDeliveryId(payload.deliveryId);
+    if (existing) {
+      const existingThread = await this.threadRepository.getThreadById(existing.threadId);
+      if (
+        !existingThread ||
+        !idsEqual(existingThread.bookingId, booking.id) ||
+        !idsEqual(existingThread.hostId, booking.hostid) ||
+        !idsEqual(existingThread.guestId, booking.guestid) ||
+        !idsEqual(existingThread.propertyId, booking.property_id)
+      ) {
+        throw forbidden("Existing automated message does not match this booking context.");
+      }
+      return {
+        statusCode: 200,
+        response: {
+          ...existing,
+          threadId: existing.threadId,
+          reused: true,
+          diagnostic: "Existing automated message reconciled.",
+        },
+      };
+    }
+    if (String(booking.status || "").trim().toLowerCase() !== "paid") {
+      throw forbidden("Booking is not eligible for automated messaging.");
+    }
+
+    const resolvedPayload = {
+      bookingId: booking.id,
+      hostId: booking.hostid,
+      guestId: booking.guestid,
+      propertyId: booking.property_id,
+      platform: "DOMITS",
+      content,
+      metadata: JSON.stringify({
+        isAutomated: true,
+        messageType: "booking_paid",
+        automationId: payload.automationId,
+        automationDeliveryId: payload.deliveryId,
+      }),
+    };
+    const { threadId } = await this.resolveThread(resolvedPayload, booking.hostid, booking.guestid);
+    const createdAt = Date.now();
+    const stored = await this.messageRepository.createAutomatedMessageIfEligible({
+      threadId,
+      senderId: booking.hostid,
+      recipientId: booking.guestid,
+      content,
+      automationDeliveryId: payload.deliveryId,
+      automationId: payload.automationId,
+      bookingId: booking.id,
+      propertyId: booking.property_id,
+      metadata: resolvedPayload.metadata,
+      deliveryStatus: "delivered",
+      direction: "OUTBOUND",
+      createdAt,
+    });
+    if (!stored.message) {
+      throw forbidden("Automation or booking became ineligible before message creation.");
+    }
+    const message = stored.message;
+    if (!stored.created) {
+      if (!idsEqual(message.threadId, threadId)) {
+        throw forbidden("Concurrent automated message does not match this booking thread.");
+      }
+      return {
+        statusCode: 200,
+        response: {
+          ...message,
+          threadId: message.threadId,
+          reused: true,
+          diagnostic: "Concurrent automated message reconciled.",
+        },
+      };
+    }
+
+    const sideEffectFailures = [];
+    try {
+      await this.threadRepository.updateThreadActivity({ threadId, direction: "OUTBOUND", eventAt: createdAt });
+    } catch {
+      sideEffectFailures.push("thread activity");
+    }
+    try {
+      await this.realtimePublisher({
+        ...message,
+        threadId,
+        platform: "DOMITS",
+        metadata: resolvedPayload.metadata,
+      });
+    } catch {
+      sideEffectFailures.push("realtime publish");
+    }
+
+    const diagnostic = sideEffectFailures.length
+      ? `Message stored; post-insert side effects incomplete: ${sideEffectFailures.join(", ")}.`
+      : null;
+
+    return { statusCode: 201, response: { ...message, threadId, reused: false, diagnostic } };
   }
 
   async getThreads(authenticatedUser) {
