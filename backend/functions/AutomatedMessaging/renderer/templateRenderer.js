@@ -5,6 +5,31 @@ const APPROVED_VARIABLE_SET = new Set(APPROVED_VARIABLES);
 
 const normalizeValue = (value) => String(value ?? "").replaceAll("\0", "");
 
+const readVariableToken = (text, start) => {
+  let cursor = start + 2;
+  const contentStart = cursor;
+
+  while (cursor < text.length && !text.startsWith("}}", cursor)) {
+    if (text[cursor] === "{" || text[cursor] === "}") {
+      throw badRequest("Message template contains nested or malformed variable braces.");
+    }
+    cursor += 1;
+  }
+  if (cursor >= text.length) {
+    throw badRequest("Message template contains an unclosed variable.");
+  }
+
+  const variable = text.slice(contentStart, cursor).trim();
+  if (!variable) throw badRequest("Message template contains an empty variable.");
+  return { start, end: cursor + 2, variable };
+};
+
+const addVariable = (variable, variables, seenVariables) => {
+  if (seenVariables.has(variable)) return;
+  seenVariables.add(variable);
+  variables.push(variable);
+};
+
 const scanTemplate = (template) => {
   const text = String(template || "");
   const variables = [];
@@ -21,28 +46,10 @@ const scanTemplate = (template) => {
       continue;
     }
 
-    const start = cursor;
-    cursor += 2;
-    const contentStart = cursor;
-    while (cursor < text.length && !text.startsWith("}}", cursor)) {
-      if (text[cursor] === "{" || text[cursor] === "}") {
-        throw badRequest("Message template contains nested or malformed variable braces.");
-      }
-      cursor += 1;
-    }
-    if (cursor >= text.length) {
-      throw badRequest("Message template contains an unclosed variable.");
-    }
-
-    const variable = text.slice(contentStart, cursor).trim();
-    if (!variable) throw badRequest("Message template contains an empty variable.");
-    const end = cursor + 2;
-    tokens.push({ start, end, variable });
-    if (!seenVariables.has(variable)) {
-      seenVariables.add(variable);
-      variables.push(variable);
-    }
-    cursor = end;
+    const token = readVariableToken(text, cursor);
+    tokens.push(token);
+    addVariable(token.variable, variables, seenVariables);
+    cursor = token.end;
   }
 
   return { text, tokens, variables };

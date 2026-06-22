@@ -28,7 +28,7 @@ export default class DeliveryWorker {
 
   async processDelivery(delivery, now) {
     const automation = await this.automations.getById(delivery.automationId);
-    if (!automation || automation.status !== "ACTIVE") {
+    if (automation?.status !== "ACTIVE") {
       await this.deliveries.markCancelled(delivery.id, "Automation is not active.");
       return { id: delivery.id, status: "CANCELLED" };
     }
