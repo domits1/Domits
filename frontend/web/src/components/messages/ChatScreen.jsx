@@ -134,7 +134,9 @@ const ChatScreen = ({
   }, []);
 
   const scrollToBottom = useCallback((behavior = "auto") => {
-    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+    if (typeof messagesEndRef.current?.scrollIntoView === "function") {
+      messagesEndRef.current.scrollIntoView({ behavior, block: "end" });
+    }
   }, []);
 
   const handleScroll = useCallback(() => {
