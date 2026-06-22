@@ -42,25 +42,71 @@ const createResponse = ({ statusCode = 200, response }) => ({
   body: JSON.stringify(response),
 });
 
+const notFoundResponse = () => ({ statusCode: 404, response: { error: "NOT_FOUND", message: "Not Found" } });
+
+const getAutomationRoute = (event) => {
+  const segments = String(event?.path || event?.rawPath || "").split("/").filter(Boolean);
+  const rootIndex = segments.lastIndexOf("automations");
+  return rootIndex === -1 ? null : segments.slice(rootIndex + 1);
+};
+
+const routeDefinitions = [
+  { method: "GET", matches: (route) => route.length === 0, handle: (event) => controller.list(event) },
+  { method: "POST", matches: (route) => route.length === 0, handle: (event) => controller.create(event) },
+  {
+    method: "POST",
+    matches: (route) => route.length === 1 && route[0] === "preview",
+    handle: (event) => controller.preview(event),
+  },
+  {
+    method: "GET",
+    matches: (route) => route.length === 1 && route[0] === "health",
+    handle: (event) => controller.health(event),
+  },
+  {
+    method: "GET",
+    matches: (route) => route.length === 1,
+    handle: (event, route) => controller.get(event, route[0]),
+  },
+  {
+    method: "PATCH",
+    matches: (route) => route.length === 1,
+    handle: (event, route) => controller.update(event, route[0]),
+  },
+  {
+    method: "POST",
+    matches: (route) => route.length === 2 && route[1] === "activate",
+    handle: (event, route) => controller.activate(event, route[0]),
+  },
+  {
+    method: "POST",
+    matches: (route) => route.length === 2 && route[1] === "pause",
+    handle: (event, route) => controller.pause(event, route[0]),
+  },
+  {
+    method: "POST",
+    matches: (route) => route.length === 2 && route[1] === "preview",
+    handle: (event, route) => controller.preview(event, route[0]),
+  },
+  {
+    method: "GET",
+    matches: (route) => route.length === 2 && route[1] === "deliveries",
+    handle: (event, route) => controller.deliveries(event, route[0]),
+  },
+];
+
+const findRouteDefinition = (method, route) =>
+  routeDefinitions.find((definition) => definition.method === method && definition.matches(route));
+
 const routeHttpRequest = async (event) => {
   const method = event?.httpMethod || event?.requestContext?.http?.method;
   if (method === "OPTIONS") return { statusCode: 200, response: null };
 
-  const segments = String(event?.path || event?.rawPath || "").split("/").filter(Boolean);
-  const rootIndex = segments.lastIndexOf("automations");
-  const route = rootIndex === -1 ? [] : segments.slice(rootIndex + 1);
+  const route = getAutomationRoute(event);
+  if (!route) return notFoundResponse();
 
-  if (method === "GET" && route.length === 0) return controller.list(event);
-  if (method === "POST" && route.length === 0) return controller.create(event);
-  if (method === "POST" && route[0] === "preview") return controller.preview(event);
-  if (method === "GET" && route[0] === "health" && route.length === 1) return controller.health(event);
-  if (method === "GET" && route.length === 1) return controller.get(event, route[0]);
-  if (method === "PATCH" && route.length === 1) return controller.update(event, route[0]);
-  if (method === "POST" && route[1] === "activate") return controller.activate(event, route[0]);
-  if (method === "POST" && route[1] === "pause") return controller.pause(event, route[0]);
-  if (method === "POST" && route[1] === "preview") return controller.preview(event, route[0]);
-  if (method === "GET" && route[1] === "deliveries") return controller.deliveries(event, route[0]);
-  return { statusCode: 404, response: { error: "NOT_FOUND", message: "Not Found" } };
+  const definition = findRouteDefinition(method, route);
+  return definition ? definition.handle(event, route) : notFoundResponse();
 };
 
 export const handler = async (event) => {

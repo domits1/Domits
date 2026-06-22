@@ -232,13 +232,13 @@ export const AutomationsContent = () => {
             <h2>Events &amp; Triggers</h2>
             <div className="automation-fields two-columns">
               <label>
-                Trigger
+                <span>Trigger</span>
                 <select aria-label="Trigger" value="BOOKING_PAID" disabled>
                   <option value="BOOKING_PAID">Booking Paid</option>
                 </select>
               </label>
               <label>
-                Property
+                <span>Property</span>
                 <select value={form.propertyId} onChange={(event) => updateField("propertyId", event.target.value)}>
                   <option value="">All owned properties</option>
                   {properties.map((property) => <option key={property.id} value={property.id}>{property.title}</option>)}
@@ -250,7 +250,7 @@ export const AutomationsContent = () => {
           <section className="automation-section">
             <h2>Customization</h2>
             <label>
-              Message template
+              <span>Message template</span>
               <textarea
                 aria-label="Message template"
                 rows={7}
@@ -269,7 +269,7 @@ export const AutomationsContent = () => {
             <h2>Scheduling</h2>
             <div className="automation-fields three-columns">
               <label>
-                Amount
+                <span>Amount</span>
                 <input
                   aria-label="Offset amount"
                   type="number"
@@ -280,7 +280,7 @@ export const AutomationsContent = () => {
                 />
               </label>
               <label>
-                Unit
+                <span>Unit</span>
                 <select
                   aria-label="Offset unit"
                   value={Number(form.offsetAmount || 0) === 0 ? "MINUTES" : form.offsetUnit}
@@ -293,7 +293,7 @@ export const AutomationsContent = () => {
                 </select>
               </label>
               <label>
-                Channel
+                <span>Channel</span>
                 <select aria-label="Channel" value="DOMITS_DIRECT" disabled>
                   <option value="DOMITS_DIRECT">Domits Direct</option>
                 </select>

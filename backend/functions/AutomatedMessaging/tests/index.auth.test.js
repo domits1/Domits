@@ -36,4 +36,22 @@ describe("AutomatedMessaging HTTP authorization responses", () => {
       message: "Host access is required.",
     });
   });
+
+  test("keeps OPTIONS unauthenticated", async () => {
+    const response = await handler({ httpMethod: "OPTIONS", path: "/automations" });
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toBeNull();
+  });
+
+  test.each([
+    { httpMethod: "GET", path: "/not-automations" },
+    { httpMethod: "POST", path: "/automations/id/activate/extra" },
+    { httpMethod: "DELETE", path: "/automations/id" },
+  ])("returns 404 for invalid route $httpMethod $path", async (event) => {
+    const response = await handler(event);
+
+    expect(response.statusCode).toBe(404);
+    expect(parseBody(response)).toEqual({ error: "NOT_FOUND", message: "Not Found" });
+  });
 });

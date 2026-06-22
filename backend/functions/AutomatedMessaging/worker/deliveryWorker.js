@@ -34,7 +34,7 @@ export default class DeliveryWorker {
     }
 
     const context = await this.bookings.getBookingContext(delivery.bookingId);
-    if (!context || !isPaid(context.booking)) {
+    if (!isPaid(context?.booking)) {
       await this.deliveries.markCancelled(delivery.id, "Booking is no longer eligible for this automation.");
       return { id: delivery.id, status: "CANCELLED" };
     }
