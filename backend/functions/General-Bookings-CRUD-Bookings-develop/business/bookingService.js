@@ -238,14 +238,26 @@ class BookingService {
       }
       case "getPayment": {
         const user = await this.authManager.authenticateUser(event.Authorization);
-        const booking = await this.reservationRepository.getBookingById(event.event.bookingId);
-        if (booking.guestId !== user.sub) {
+        const bookingResult = await this.reservationRepository.getBookingById(event.event.bookingId);
+        const booking = bookingResult?.response || bookingResult;
+
+        if (!booking?.id) {
+          throw new NotFoundException("Booking not found.");
+        }
+
+        if ((booking.guestid || booking.guestId) !== user.sub) {
           throw new Forbidden("Only the guest of this booking may view payment information.");
         }
-        const payment = await this.stripeRepository.getPaymentByBookingId(event.event.bookingId);
+
+        const paymentId = requireStr(booking.paymentid || booking.paymentId);
+        if (!paymentId || paymentId.startsWith("FAILED")) {
+          throw new NotFoundException("Payment not found.");
+        }
+
+        const payment = await this.stripeRepository.getPaymentByPaymentId(paymentId);
         return {
           statusCode: 200,
-          response: payment.stripeClientSecret,
+          response: payment.stripeclientsecret || payment.stripeClientSecret,
         };
       }
       default: {
