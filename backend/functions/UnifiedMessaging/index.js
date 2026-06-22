@@ -221,6 +221,15 @@ export const handler = async (event) => {
     return createLambdaResponse(await routeHandler(event));
   } catch (error) {
     console.error("Error in handler:", error);
+    if (error?.statusCode) {
+      return createLambdaResponse({
+        statusCode: error.statusCode,
+        response: {
+          error: error.code || "REQUEST_FAILED",
+          message: error.message,
+        },
+      });
+    }
     return createLambdaResponse(internalError);
   }
 };

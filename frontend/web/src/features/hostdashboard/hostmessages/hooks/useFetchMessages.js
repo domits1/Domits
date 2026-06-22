@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useContext } from "react";
 import { WebSocketContext } from "../context/webSocketContext";
+import { getAccessToken } from "../../../../services/getAccessToken";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
@@ -17,6 +18,17 @@ const safeJsonParse = (v) => {
     return null;
   }
 };
+
+const requireToken = (token) => {
+  const normalized = String(token || "").trim();
+  if (!normalized) throw new Error("Authentication token is required.");
+  return normalized;
+};
+
+const buildAuthHeaders = (token = null) => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${requireToken(token)}`,
+});
 
 const normalizeMetadata = (metadata) => {
   if (!metadata) return {};
@@ -79,13 +91,14 @@ const normalizeWs = (raw) => {
   };
 };
 
-const resolveThreadIdForPartner = async (userId, partnerId) => {
+const resolveThreadIdForPartner = async (userId, partnerId, token = null, options = {}) => {
   if (!userId || !partnerId) return null;
+  if (!token) return null;
 
   try {
-    const res = await fetch(`${UNIFIED_API}/threads?userId=${encodeURIComponent(userId)}`, {
+    const res = await fetch(`${UNIFIED_API}/threads`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: buildAuthHeaders(token),
     });
 
     if (!res.ok) return null;
@@ -99,7 +112,18 @@ const resolveThreadIdForPartner = async (userId, partnerId) => {
     const candidates = threads.filter((t) => {
       const a = String(t?.hostId || "");
       const b = String(t?.guestId || "");
-      return (a === u && b === p) || (a === p && b === u);
+      const participantsMatch = (a === u && b === p) || (a === p && b === u);
+      if (!participantsMatch) return false;
+
+      if (options.bookingId) {
+        return String(t?.bookingId || t?.bookingid || "") === String(options.bookingId);
+      }
+
+      if (options.propertyId) {
+        return String(t?.propertyId || "") === String(options.propertyId);
+      }
+
+      return true;
     });
 
     if (!candidates.length) return null;
@@ -200,7 +224,7 @@ export const useFetchMessages = (userId) => {
   }, [wsMessages, upsertIntoStores]);
 
   const fetchMessages = useCallback(
-    async (recipientId, threadId = null) => {
+    async (recipientId, threadId = null, options = {}) => {
       if (!recipientId) {
         console.error("Recipient ID is undefined");
         return;
@@ -210,7 +234,20 @@ export const useFetchMessages = (userId) => {
       setActiveThreadId(threadId || null);
       setError(null);
 
-      const cacheKey = threadId || recipientId;
+      let token = null;
+      try {
+        token = requireToken(options.accessToken || getAccessToken());
+      } catch (authError) {
+        setError(authError);
+        setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: prev[recipientId] || [] }));
+        if (threadId) {
+          setMessagesByThread((prev) => ({ ...prev, [threadId]: prev[threadId] || [] }));
+        }
+        setLoading(false);
+        return;
+      }
+
+      const cacheKey = threadId || options.bookingId || recipientId;
       const cached = cacheRef.current[cacheKey];
       if (Array.isArray(cached) && cached.length > 0) {
         setLoading(false);
@@ -225,7 +262,10 @@ export const useFetchMessages = (userId) => {
 
         let useThreadId = threadId || null;
         if (!useThreadId) {
-          useThreadId = await resolveThreadIdForPartner(userId, recipientId);
+          useThreadId = await resolveThreadIdForPartner(userId, recipientId, token, {
+            bookingId: options.bookingId || null,
+            propertyId: options.propertyId || null,
+          });
           setActiveThreadId(useThreadId || null);
         }
 
@@ -239,7 +279,7 @@ export const useFetchMessages = (userId) => {
 
         const response = await fetch(`${UNIFIED_API}/messages?threadId=${encodeURIComponent(useThreadId)}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: buildAuthHeaders(token),
           signal: controller.signal,
         });
 
