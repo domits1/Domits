@@ -142,13 +142,18 @@ class ReservationRepository {
   async readByDate(createdAt, property_id) {
     //only returns arrivaldate and departureDate
     const client = await Database.getInstance();
+    const startOfDay = new Date(Number(createdAt));
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = startOfDay.getTime() + 24 * 60 * 60 * 1000;
+
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
 
       .select(["booking.arrivaldate", "booking.departuredate", "booking.cancellation_policy"])
       .where("booking.property_id = :property_id", { property_id: property_id })
-      .andWhere("booking.createdat = :createdAt", { createdAt: createdAt })
+      .andWhere("booking.createdat >= :startOfDay", { startOfDay: startOfDay.getTime() })
+      .andWhere("booking.createdat < :endOfDay", { endOfDay })
 
       .getMany();
     if (!query) {
