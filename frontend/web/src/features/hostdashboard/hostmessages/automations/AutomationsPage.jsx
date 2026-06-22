@@ -60,7 +60,7 @@ export const AutomationsContent = () => {
     setLoading(true);
     setError("");
     try {
-      setAutomations(asArray(await listAutomations(accessToken)));
+      setAutomations(asArray(await listAutomations()));
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -87,7 +87,7 @@ export const AutomationsContent = () => {
       setDeliveries([]);
       return;
     }
-    listAutomationDeliveries(accessToken, form.id)
+    listAutomationDeliveries(form.id)
       .then((items) => setDeliveries(asArray(items)))
       .catch((requestError) => setError(requestError.message));
   }, [accessToken, form.id]);
@@ -125,8 +125,8 @@ export const AutomationsContent = () => {
     setError("");
     try {
       const saved = form.id
-        ? await updateAutomation(accessToken, form.id, payload())
-        : await createAutomation(accessToken, payload());
+        ? await updateAutomation(form.id, payload())
+        : await createAutomation(payload());
       setAutomations((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
       selectAutomation(saved);
       return saved;
@@ -146,8 +146,8 @@ export const AutomationsContent = () => {
     setError("");
     try {
       const updated = nextStatus === "ACTIVE"
-        ? await activateAutomation(accessToken, target.id)
-        : await pauseAutomation(accessToken, target.id);
+        ? await activateAutomation(target.id)
+        : await pauseAutomation(target.id);
       setAutomations((current) => current.map((item) => (item.id === updated.id ? updated : item)));
       selectAutomation(updated);
     } catch (requestError) {
@@ -158,7 +158,7 @@ export const AutomationsContent = () => {
   const renderPreview = async () => {
     setError("");
     try {
-      setPreview(await previewAutomation(accessToken, payload(), form.id));
+      setPreview(await previewAutomation(payload(), form.id));
     } catch (requestError) {
       const unknown = requestError.details?.unknownVariables;
       setError(unknown?.length ? `Unsupported variables: ${unknown.join(", ")}` : requestError.message);
