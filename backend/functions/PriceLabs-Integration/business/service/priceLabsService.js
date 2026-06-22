@@ -190,53 +190,8 @@ export class PriceLabsService {
       this.repo.getPropertiesByHost(hostId),
     ]);
 
-    const cleaningFeeByProperty = {};
-    for (const p of properties) {
-      cleaningFeeByProperty[p.id] = p.cleaning_fee != null ? Number(p.cleaning_fee) : null;
-    }
-
-    const grouped = {};
-    for (const b of bookings) {
-      const listingId = `${hostId.replaceAll("-", "_")}_${b.property_id.replaceAll("-", "_")}`;
-      if (!grouped[listingId]) {
-        grouped[listingId] = {
-          listing_id: listingId,
-          data:       [],
-        };
-      }
-
-      const status   = _mapBookingStatus(b.status);
-
-      const checkin  = _tsToDate(b.arrivaldate);
-      const checkout = _tsToDate(b.departuredate);
-
-      const entry = {
-        reservation_id: b.id,
-        start_date:     checkin,
-        end_date:       checkout,
-        booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
-        total_days:     _dateDiff(checkin, checkout),
-        total_cost:     b.total_price || 0,
-        currency:       "EUR",
-        status,
-        booking_source: b.booking_source || "direct",
-      };
-
-      if (b.channel_reservation_id) {
-        entry.channel_reservation_id = b.channel_reservation_id;
-      }
-
-      const cleaningFee = cleaningFeeByProperty[b.property_id];
-      if (cleaningFee != null) {
-        entry.cleaning_fees = cleaningFee;
-      }
-
-      if (status === "canceled") {
-        entry.cancel_time = new Date().toISOString().split("T")[0];
-      }
-
-      grouped[listingId].data.push(entry);
-    }
+    const cleaningFeeByProperty = _cleaningFeeMap(properties);
+    const grouped = _groupReservationsByListing(hostId, bookings, cleaningFeeByProperty);
 
     const reservations = Object.values(grouped);
     const totalCount = reservations.reduce((sum, r) => sum + r.data.length, 0);
@@ -396,6 +351,59 @@ export class PriceLabsService {
 function _tsToDate(ts) {
   if (!ts) return null;
   return new Date(Number(ts)).toISOString().split("T")[0];
+}
+
+function _cleaningFeeMap(properties) {
+  const map = {};
+  for (const p of properties) {
+    map[p.id] = p.cleaning_fee == null ? null : Number(p.cleaning_fee);
+  }
+  return map;
+}
+
+function _buildReservationEntry(b, cleaningFeeByProperty) {
+  const status   = _mapBookingStatus(b.status);
+  const checkin  = _tsToDate(b.arrivaldate);
+  const checkout = _tsToDate(b.departuredate);
+
+  const entry = {
+    reservation_id: b.id,
+    start_date:     checkin,
+    end_date:       checkout,
+    booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
+    total_days:     _dateDiff(checkin, checkout),
+    total_cost:     b.total_price || 0,
+    currency:       "EUR",
+    status,
+    booking_source: b.booking_source || "direct",
+  };
+
+  if (b.channel_reservation_id) {
+    entry.channel_reservation_id = b.channel_reservation_id;
+  }
+
+  const cleaningFee = cleaningFeeByProperty[b.property_id];
+  if (cleaningFee != null) {
+    entry.cleaning_fees = cleaningFee;
+  }
+
+  if (status === "canceled") {
+    entry.cancel_time = new Date().toISOString().split("T")[0];
+  }
+
+  return entry;
+}
+
+function _groupReservationsByListing(hostId, bookings, cleaningFeeByProperty) {
+  const grouped = {};
+  for (const b of bookings) {
+    const listingId = `${hostId.replaceAll("-", "_")}_${b.property_id.replaceAll("-", "_")}`;
+    if (!grouped[listingId]) {
+      grouped[listingId] = { listing_id: listingId, data: [] };
+    }
+    grouped[listingId].data.push(_buildReservationEntry(b, cleaningFeeByProperty));
+  }
+  return grouped;
 }
 
 function _normalizeListings(body) {
