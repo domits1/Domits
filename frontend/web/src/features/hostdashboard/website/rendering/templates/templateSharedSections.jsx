@@ -1,7 +1,6 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
-import AvailabilityCalendarPreview from "../AvailabilityCalendarPreview";
 import {
   buildWebsiteImageSlotTarget,
   useWebsiteImageSlotRotation,
@@ -9,11 +8,143 @@ import {
 
 const DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS = 3600;
 const DEFAULT_IMAGE_SLOT_FADE_DURATION_MS = 720;
+const LazyAvailabilityCalendarPreview = lazy(() => import("../AvailabilityCalendarPreview"));
+const ORIGINAL_FIRST_IMAGE_SOURCE_ORDER = Object.freeze(["originalSrc", "webSrc", "src", "thumbSrc"]);
+const WEBSITE_IMAGE_ASSET_PROP_TYPE = PropTypes.shape({
+  src: PropTypes.string,
+  webSrc: PropTypes.string,
+  originalSrc: PropTypes.string,
+  thumbSrc: PropTypes.string,
+  srcSet: PropTypes.string,
+  sizes: PropTypes.string,
+});
+const TEMPLATE_IMAGE_SLOT_MEDIA_PROP_TYPE = PropTypes.shape({
+  heroImage: PropTypes.string,
+  residenceImage: PropTypes.string,
+  galleryImages: PropTypes.arrayOf(PropTypes.string),
+  heroImageAsset: WEBSITE_IMAGE_ASSET_PROP_TYPE,
+  galleryImageAssets: PropTypes.arrayOf(WEBSITE_IMAGE_ASSET_PROP_TYPE),
+  imageRotation: PropTypes.shape({
+    hero: PropTypes.bool,
+    residence: PropTypes.bool,
+    gallery: PropTypes.arrayOf(PropTypes.bool),
+  }),
+});
 
-export const getInteractiveTargetProps = (className, onSelectTarget, target, activeTargetId = "") => {
+const buildImageSlotFrameClassName = ({
+  frameClassName = "",
+  imageClassName = "",
+  enableHoverEffect = false,
+}) =>
+  `${frameClassName || imageClassName} ${styles.templateRotatingImageFrame} ${
+    enableHoverEffect ? styles.templateImageHoverFrame : ""
+  }`.trim();
+
+const buildImageSlotImageClassName = (imageClassName, enableHoverEffect = false) =>
+  `${imageClassName} ${enableHoverEffect ? styles.templateImageHoverImage : ""}`.trim();
+
+const buildImageLoadingProps = ({ slot, imageIndex = 0, isRotationEnabled = false, isInteractivePreview = false }) => {
+  if (isInteractivePreview) {
+    return {
+      decoding: "async",
+    };
+  }
+
+  const isHeroSlot = slot?.kind === "hero";
+  const isLeadHeroImage = isHeroSlot && (!isRotationEnabled || imageIndex === 0);
+
+  return {
+    loading: isLeadHeroImage ? "eager" : "lazy",
+    fetchPriority: isLeadHeroImage ? "high" : "low",
+    decoding: "async",
+  };
+};
+
+const buildResponsiveImageProps = ({
+  slot,
+  model,
+  isRotationEnabled = false,
+  isInteractivePreview = false,
+  disableResponsiveImageVariants = false,
+}) => {
+  if (
+    isInteractivePreview ||
+    isRotationEnabled ||
+    disableResponsiveImageVariants ||
+    slot?.kind !== "hero"
+  ) {
+    return {};
+  }
+
+  const heroImageAsset =
+    model?.media?.heroImageAsset && typeof model.media.heroImageAsset === "object"
+      ? model.media.heroImageAsset
+      : null;
+  const responsiveSrcSet = String(heroImageAsset?.srcSet || "").trim();
+  if (!responsiveSrcSet) {
+    return {};
+  }
+
+  return {
+    srcSet: responsiveSrcSet,
+    sizes: String(heroImageAsset?.sizes || "100vw").trim() || "100vw",
+  };
+};
+
+const resolvePreferredImageAssetSource = (imageAsset, sourceOrder = ORIGINAL_FIRST_IMAGE_SOURCE_ORDER) => {
+  if (!imageAsset || typeof imageAsset !== "object") {
+    return "";
+  }
+
+  for (const sourceKey of sourceOrder) {
+    const sourceValue = String(imageAsset?.[sourceKey] || "").trim();
+    if (sourceValue) {
+      return sourceValue;
+    }
+  }
+
+  return "";
+};
+
+const buildPreferredHeroImageSequence = (model, sourceOrder = ORIGINAL_FIRST_IMAGE_SOURCE_ORDER) => {
+  const imageSequence = [];
+  const seenImageUrls = new Set();
+  const galleryImageAssets = Array.isArray(model?.media?.galleryImageAssets)
+    ? model.media.galleryImageAssets
+    : [];
+  const fallbackGalleryImages = Array.isArray(model?.media?.galleryImages) ? model.media.galleryImages : [];
+
+  const appendImageUrl = (imageUrl) => {
+    const normalizedImageUrl = String(imageUrl || "").trim();
+    if (!normalizedImageUrl || seenImageUrls.has(normalizedImageUrl)) {
+      return;
+    }
+
+    seenImageUrls.add(normalizedImageUrl);
+    imageSequence.push(normalizedImageUrl);
+  };
+
+  appendImageUrl(resolvePreferredImageAssetSource(model?.media?.heroImageAsset, sourceOrder));
+  galleryImageAssets.forEach((imageAsset) =>
+    appendImageUrl(resolvePreferredImageAssetSource(imageAsset, sourceOrder))
+  );
+  appendImageUrl(model?.media?.heroImage);
+  fallbackGalleryImages.forEach((imageUrl) => appendImageUrl(imageUrl));
+
+  return imageSequence;
+};
+
+export const getInteractiveTargetProps = (
+  className,
+  onSelectTarget,
+  target,
+  activeTargetId = "",
+  onActivate = undefined
+) => {
   const targetId = target?.targetId || "";
+  const hasInteraction = Boolean(onSelectTarget || onActivate);
 
-  if (!onSelectTarget) {
+  if (!hasInteraction) {
     return {
       className,
       "data-preview-target-id": targetId || undefined,
@@ -23,7 +154,13 @@ export const getInteractiveTargetProps = (className, onSelectTarget, target, act
   const isActiveTarget = targetId && targetId === activeTargetId;
   const handleActivate = (event) => {
     event?.stopPropagation?.();
-    onSelectTarget(target);
+    if (onSelectTarget) {
+      onSelectTarget(target);
+    }
+
+    if (onActivate) {
+      onActivate(event, target);
+    }
   };
 
   return {
@@ -147,19 +284,28 @@ export function TemplateAvailabilityCalendar({
   }, activeTargetId);
 
   return (
-    <AvailabilityCalendarPreview
-      availability={model.availability}
-      calendarSection={model.calendarSection}
-      titleInteractiveTargetProps={titleInteractiveTargetProps}
-      descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
-      templateKey={templateKey}
-      variant={variant}
-      propertyTitle={propertyTitle}
-      interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
-        sectionId: "calendar",
-        targetId: "calendar.visibility",
-      }, activeTargetId)}
-    />
+    <Suspense
+      fallback={
+        <div
+          className={styles.availabilityCalendarDeferredFallback}
+          aria-hidden="true"
+        />
+      }
+    >
+      <LazyAvailabilityCalendarPreview
+        availability={model.availability}
+        calendarSection={model.calendarSection}
+        titleInteractiveTargetProps={titleInteractiveTargetProps}
+        descriptionInteractiveTargetProps={descriptionInteractiveTargetProps}
+        templateKey={templateKey}
+        variant={variant}
+        propertyTitle={propertyTitle}
+        interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
+          sectionId: "calendar",
+          targetId: "calendar.visibility",
+        }, activeTargetId)}
+      />
+    </Suspense>
   );
 }
 
@@ -181,28 +327,67 @@ export function TemplateImageSlotVisual({
   slot,
   imageClassName,
   frameClassName = "",
+  enableHoverEffect = false,
   onSelectTarget = undefined,
+  onActivate = undefined,
   activeTargetId = "",
   rotationIntervalMs = DEFAULT_IMAGE_SLOT_ROTATION_INTERVAL_MS,
   fadeDurationMs = DEFAULT_IMAGE_SLOT_FADE_DURATION_MS,
+  sourceVariantPreference = "default",
 }) {
   const imageSlotTarget = buildWebsiteImageSlotTarget(slot);
+  const sourceVariantPreferenceKey = String(sourceVariantPreference || "").trim().toLowerCase();
+  const shouldPreferOriginalHeroSource =
+    slot?.kind === "hero" && sourceVariantPreferenceKey === "original-first";
+  const preferredHeroImageSequence = React.useMemo(
+    () =>
+      shouldPreferOriginalHeroSource
+        ? buildPreferredHeroImageSequence(model, ORIGINAL_FIRST_IMAGE_SOURCE_ORDER)
+        : [],
+    [model, shouldPreferOriginalHeroSource]
+  );
   const {
     activeImageIndex,
     imageSequence,
     isRotationEnabled,
-  } = useWebsiteImageSlotRotation(slot, model?.media, rotationIntervalMs);
+  } = useWebsiteImageSlotRotation(slot, model?.media, rotationIntervalMs, preferredHeroImageSequence);
+  const isInteractivePreview = Boolean(onSelectTarget);
+  const buildInteractiveProps = (className) =>
+    getInteractiveTargetProps(
+      className,
+      onSelectTarget,
+      imageSlotTarget,
+      activeTargetId,
+      onActivate
+        ? (event) => {
+            onActivate(event, imageSlotTarget);
+          }
+        : undefined
+    );
 
   if (imageSequence.length < 1) {
     return null;
   }
 
-  if (!frameClassName && !isRotationEnabled) {
+  if (!frameClassName && !isRotationEnabled && !enableHoverEffect) {
     return (
       <img
-        {...getInteractiveTargetProps(imageClassName, onSelectTarget, imageSlotTarget, activeTargetId)}
+        {...buildInteractiveProps(imageClassName)}
         src={imageSequence[0]}
         alt={alt}
+        {...buildResponsiveImageProps({
+          slot,
+          model,
+          isRotationEnabled: false,
+          isInteractivePreview,
+          disableResponsiveImageVariants: shouldPreferOriginalHeroSource,
+        })}
+        {...buildImageLoadingProps({
+          slot,
+          imageIndex: 0,
+          isRotationEnabled: false,
+          isInteractivePreview,
+        })}
       />
     );
   }
@@ -210,25 +395,44 @@ export function TemplateImageSlotVisual({
   if (!isRotationEnabled) {
     return (
       <div
-        {...getInteractiveTargetProps(
-          `${frameClassName || imageClassName} ${styles.templateRotatingImageFrame}`.trim(),
-          onSelectTarget,
-          imageSlotTarget,
-          activeTargetId
+        {...buildInteractiveProps(
+          buildImageSlotFrameClassName({
+            frameClassName,
+            imageClassName,
+            enableHoverEffect,
+          })
         )}
       >
-        <img src={imageSequence[0]} alt={alt} className={imageClassName} />
+        <img
+          src={imageSequence[0]}
+          alt={alt}
+          className={buildImageSlotImageClassName(imageClassName, enableHoverEffect)}
+          {...buildResponsiveImageProps({
+            slot,
+            model,
+            isRotationEnabled: false,
+            isInteractivePreview,
+            disableResponsiveImageVariants: shouldPreferOriginalHeroSource,
+          })}
+          {...buildImageLoadingProps({
+            slot,
+            imageIndex: 0,
+            isRotationEnabled: false,
+            isInteractivePreview,
+          })}
+        />
       </div>
     );
   }
 
   return (
     <div
-      {...getInteractiveTargetProps(
-        `${frameClassName || imageClassName} ${styles.templateRotatingImageFrame}`.trim(),
-        onSelectTarget,
-        imageSlotTarget,
-        activeTargetId
+      {...buildInteractiveProps(
+        buildImageSlotFrameClassName({
+          frameClassName,
+          imageClassName,
+          enableHoverEffect,
+        })
       )}
       style={{
         "--template-image-slot-fade-duration-ms": `${fadeDurationMs}ms`,
@@ -240,7 +444,16 @@ export function TemplateImageSlotVisual({
           src={imageUrl}
           alt={index === activeImageIndex ? alt : ""}
           aria-hidden={index === activeImageIndex ? undefined : "true"}
-          className={`${styles.templateRotatingImageLayer} ${
+          {...buildImageLoadingProps({
+            slot,
+            imageIndex: index,
+            isRotationEnabled,
+            isInteractivePreview,
+          })}
+          className={`${styles.templateRotatingImageLayer} ${buildImageSlotImageClassName(
+            imageClassName,
+            enableHoverEffect
+          )} ${
             index === activeImageIndex ? styles.templateRotatingImageLayerActive : ""
           }`.trim()}
         />
@@ -252,18 +465,21 @@ export function TemplateImageSlotVisual({
 TemplateImageSlotVisual.propTypes = {
   alt: PropTypes.string.isRequired,
   model: PropTypes.shape({
-    media: PropTypes.shape({}).isRequired,
+    media: TEMPLATE_IMAGE_SLOT_MEDIA_PROP_TYPE.isRequired,
   }).isRequired,
   slot: PropTypes.shape({
     kind: PropTypes.oneOf(["hero", "residence", "gallery"]).isRequired,
     index: PropTypes.number,
   }).isRequired,
+  enableHoverEffect: PropTypes.bool,
   imageClassName: PropTypes.string.isRequired,
   frameClassName: PropTypes.string,
   onSelectTarget: PropTypes.func,
+  onActivate: PropTypes.func,
   activeTargetId: PropTypes.string,
   rotationIntervalMs: PropTypes.number,
   fadeDurationMs: PropTypes.number,
+  sourceVariantPreference: PropTypes.oneOf(["default", "original-first"]),
 };
 
 export function TemplateSoftCallout({

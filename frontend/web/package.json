@@ -107,6 +107,7 @@
     "framer-motion": "^12.38.0",
     "graphql": "^16.9.0",
     "immer": "^10.0.4",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.503.0",
     "node-fetch": "^2.7.0",
     "pdfjs-dist": "^2.14.305",
@@ -145,8 +146,7 @@
   },
   "jest": {
     "moduleNameMapper": {
-      "^axios$": "axios/dist/node/axios.cjs",
-      "^.+/content/(en|nl|de|es)\\.json$": "<rootDir>/__mocks__/fileMock.js"
+      "^axios$": "axios/dist/node/axios.cjs"
     }
   }
 }

@@ -4,14 +4,14 @@ jest.mock(
   { virtual: true }
 );
 
-jest.mock("../ORM/index.js", () => ({
+jest.mock("../.shared/integrations/ORM/index.js", () => ({
   __esModule: true,
   default: {
     getInstance: jest.fn(),
   },
 }));
 
-const Database = require("../ORM/index.js").default;
+const Database = require("../.shared/integrations/ORM/index.js").default;
 const IntegrationService = require("./integrationService.js").default;
 const CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS = 8000;
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
@@ -61,6 +61,7 @@ const buildDatabaseClient = ({
       weekendrate: 120,
     },
   ],
+  bookings = [],
 } = {}) => ({
   options: { schema: "main" },
   query: jest.fn(async (sql) => {
@@ -84,6 +85,10 @@ const buildDatabaseClient = ({
 
     if (query.includes("property_pricing")) {
       return pricing;
+    }
+
+    if (query.includes('"booking"')) {
+      return bookings;
     }
 
     return [];
@@ -117,6 +122,36 @@ const buildTwoRatePlanMappings = () => [
   buildRatePlanMapping("room-type-1", "rate-plan-1"),
   buildRatePlanMapping("room-type-2", "rate-plan-2"),
 ];
+
+const buildBookingRow = ({ id = "booking-1", arrivaldate, departuredate, status } = {}) => ({
+  id,
+  property_id: "domits-property-1",
+  arrivaldate,
+  departuredate,
+  status,
+});
+
+const buildAvailableWindow = (availableStartDate, availableEndDate) => ({
+  property_id: "domits-property-1",
+  availablestartdate: availableStartDate,
+  availableenddate: availableEndDate,
+});
+
+const extractAvailabilityByDate = (pushAvailability) => {
+  const values = pushAvailability.mock.calls[0]?.[1]?.[0]?.values || [];
+  return Object.fromEntries(values.map((value) => [value.date, value.availability]));
+};
+
+const expectAvailabilityByDate = (pushAvailability, expectedAvailabilityByDate) => {
+  expect(extractAvailabilityByDate(pushAvailability)).toEqual(expectedAvailabilityByDate);
+};
+
+const expectSuccessfulFullSyncProviderCalls = (result, pushAvailability, pushRestrictions) => {
+  expect(result.statusCode).toBe(200);
+  expect(result.response.requestCount).toBe(2);
+  expect(pushAvailability).toHaveBeenCalledTimes(1);
+  expect(pushRestrictions).toHaveBeenCalledTimes(1);
+};
 
 const buildReadyAriTargets = (overrides = {}) => ({
   statusCode: 200,
@@ -222,6 +257,9 @@ const createService = (overrides = {}) => {
   });
 
   jest.spyOn(service, "getChannexAriTargets").mockResolvedValue(buildReadyAriTargets());
+  jest
+    .spyOn(service.channexMappingService, "getChannexAriTargets")
+    .mockResolvedValue(buildReadyAriTargets());
   return service;
 };
 
@@ -286,6 +324,80 @@ const createSuccessfulRestrictionsPush = () => createRestrictionsPush();
 
 const createSuccessfulAvailabilityPush = () => createAvailabilityPush();
 
+const BOOKED_CALENDAR_DATES = ["2026-06-01", "2026-06-02"];
+
+const mockAvailabilityWindowWithPaidBooking = () => {
+  Database.getInstance.mockResolvedValue(
+    buildDatabaseClient({
+      availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
+      bookings: [
+        buildBookingRow({
+          arrivaldate: "2026-06-01",
+          departuredate: "2026-06-03",
+          status: "Paid",
+        }),
+      ],
+    })
+  );
+};
+
+const buildCalendarChangeRequest = (overrides = {}) => ({
+  userId: "user-1",
+  domitsPropertyId: "domits-property-1",
+  changedDates: ["2026-05-01"],
+  changeTypes: ["availability"],
+  source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+  ...overrides,
+});
+
+const createCalendarChangeService = ({
+  pushAvailability = jest.fn().mockResolvedValue({ results: [] }),
+  pushRestrictions = jest.fn().mockResolvedValue({ results: [] }),
+} = {}) => ({
+  pushAvailability,
+  pushRestrictions,
+  service: createService({
+    channexProviderClient: {
+      pushAvailability,
+      pushRestrictions,
+    },
+  }),
+});
+
+const syncCalendarChangeForTest = (service, overrides = {}) =>
+  service.syncChannexCalendarChange(buildCalendarChangeRequest(overrides), { skipEvidence: true });
+
+const extractFirstRestrictionsValue = (pushRestrictions) => pushRestrictions.mock.calls[0]?.[1]?.[0]?.values?.[0];
+
+const expectOnlyAvailabilityCalendarChange = ({ result, pushAvailability, pushRestrictions, expectedAvailability }) => {
+  expect(result.statusCode).toBe(200);
+  expect(result.response.syncType).toBe("calendar-change");
+  expect(result.response.requestTypes).toEqual(["availability"]);
+  expect(result.response.requestCount).toBe(1);
+  expect(pushAvailability).toHaveBeenCalledTimes(1);
+  expect(pushRestrictions).not.toHaveBeenCalled();
+  expectAvailabilityByDate(pushAvailability, expectedAvailability);
+};
+
+const expectOnlyRestrictionsCalendarChange = ({ result, pushAvailability, pushRestrictions }) => {
+  expect(result.statusCode).toBe(200);
+  expect(result.response.requestTypes).toEqual(["restrictions/rates"]);
+  expect(pushAvailability).not.toHaveBeenCalled();
+  expect(pushRestrictions).toHaveBeenCalledTimes(1);
+};
+
+const syncRestrictionsCalendarChangeForTest = async (changeTypes) => {
+  const calendarChange = createCalendarChangeService({
+    pushRestrictions: createRestrictionsPush(),
+  });
+  const result = await syncCalendarChangeForTest(calendarChange.service, { changeTypes });
+  return {
+    ...calendarChange,
+    result,
+    value: extractFirstRestrictionsValue(calendarChange.pushRestrictions),
+  };
+};
+
 const expectValidChannexRestrictionProviderValues = (payloads) => {
   for (const payload of Array.isArray(payloads) ? payloads : []) {
     for (const value of Array.isArray(payload?.values) ? payload.values : []) {
@@ -313,6 +425,120 @@ const expectValidChannexRestrictionProviderValues = (payloads) => {
     }
   }
 };
+
+describe("IntegrationService Channex setup mapping", () => {
+  const setupPayload = {
+    domitsPropertyId: "domits-property-1",
+    externalPropertyId: "external-property-1",
+    externalPropertyName: "Demo Channex property",
+    externalRoomTypeId: "room-type-1",
+    externalRoomTypeName: "Demo room",
+    externalRatePlanId: "rate-plan-1",
+    externalRatePlanName: "Standard rate",
+    status: "ACTIVE",
+    scope: "SINGLE_UNIT",
+  };
+
+  const buildMappingRepositories = () => ({
+    props: {
+      upsert: jest.fn(async (row) => ({ id: "property-mapping-1", ...row })),
+    },
+    roomTypes: {
+      upsert: jest.fn(async (row) => ({ id: "room-type-mapping-1", ...row })),
+    },
+    ratePlans: {
+      upsert: jest.fn(async (row) => ({ id: "rate-plan-mapping-1", ...row })),
+    },
+  });
+
+  test("validates required setup mapping fields", async () => {
+    const service = createService();
+
+    const result = await service.saveChannexSetupMapping("user-1", {
+      ...setupPayload,
+      externalRatePlanId: "",
+    });
+
+    expect(result.statusCode).toBe(400);
+    expect(result.response.error).toBe("Missing required field: externalRatePlanId");
+  });
+
+  test("upserts property, room type, and rate plan mappings and returns readiness", async () => {
+    const repositories = buildMappingRepositories();
+    const service = createService(repositories);
+    service.channexMappingService.getChannexAriTargets.mockResolvedValue({
+      statusCode: 200,
+      response: {
+        channel: "CHANNEX",
+        integrationAccountId: "integration-account-1",
+        domitsPropertyId: "domits-property-1",
+        ready: true,
+        missingMappings: [],
+      },
+    });
+
+    const result = await service.saveChannexSetupMapping("user-1", setupPayload);
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        channel: "CHANNEX",
+        action: "setup-mapping",
+        scope: "SINGLE_UNIT",
+        saved: true,
+        integrationAccountId: "integration-account-1",
+        domitsPropertyId: "domits-property-1",
+        readinessStatusCode: 200,
+        ready: true,
+      })
+    );
+    expect(repositories.props.upsert).toHaveBeenCalledWith({
+      integrationAccountId: "integration-account-1",
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalPropertyName: "Demo Channex property",
+      status: "ACTIVE",
+    });
+    expect(repositories.roomTypes.upsert).toHaveBeenCalledWith({
+      integrationAccountId: "integration-account-1",
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalRoomTypeId: "room-type-1",
+      externalRoomTypeName: "Demo room",
+      status: "ACTIVE",
+    });
+    expect(repositories.ratePlans.upsert).toHaveBeenCalledWith({
+      integrationAccountId: "integration-account-1",
+      domitsPropertyId: "domits-property-1",
+      externalPropertyId: "external-property-1",
+      externalRoomTypeId: "room-type-1",
+      externalRatePlanId: "rate-plan-1",
+      externalRatePlanName: "Standard rate",
+      status: "ACTIVE",
+    });
+    expect(service.channexMappingService.getChannexAriTargets).toHaveBeenCalledWith(
+      "user-1",
+      "domits-property-1"
+    );
+    expect(JSON.stringify(result.response)).not.toContain("channex-secret-1");
+    expect(JSON.stringify(result.response)).not.toContain("credentialsRef");
+  });
+
+  test("returns saved mapping progress if setup mapping persistence fails", async () => {
+    const repositories = buildMappingRepositories();
+    repositories.ratePlans.upsert.mockRejectedValueOnce(new Error("rate plan write failed"));
+    const service = createService(repositories);
+
+    const result = await service.saveChannexSetupMapping("user-1", setupPayload);
+
+    expect(result.statusCode).toBe(500);
+    expect(result.response.errorCode).toBe("CHANNEX_SETUP_MAPPING_FAILED");
+    expect(result.response.savedMappings.property).toEqual(expect.objectContaining({ id: "property-mapping-1" }));
+    expect(result.response.savedMappings.roomType).toEqual(expect.objectContaining({ id: "room-type-mapping-1" }));
+    expect(result.response.savedMappings.ratePlan).toBeNull();
+    expect(service.channexMappingService.getChannexAriTargets).not.toHaveBeenCalled();
+  });
+});
 
 describe("IntegrationService Channex ARI restriction mapping", () => {
   beforeEach(() => {
@@ -616,6 +842,143 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     );
   });
 
+  test("availability sync sends booking-aware effective availability", async () => {
+    const pushAvailability = createAvailabilityPush();
+    mockAvailabilityWindowWithPaidBooking();
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions: jest.fn().mockResolvedValue({ results: [] }),
+      },
+    });
+
+    const result = await service.syncChannexAvailability(
+      "user-1",
+      "domits-property-1",
+      "2026-06-01",
+      "2026-06-03",
+      { skipEvidence: true }
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.requestCount).toBe(1);
+    expect(pushAvailability).toHaveBeenCalledTimes(1);
+    expectAvailabilityByDate(pushAvailability, {
+      "2026-06-01": 0,
+      "2026-06-02": 0,
+      "2026-06-03": 1,
+    });
+  });
+
+  test("host calendar availability changes send booking-aware change-only availability", async () => {
+    mockAvailabilityWindowWithPaidBooking();
+    const { service, pushAvailability, pushRestrictions } = createCalendarChangeService({
+      pushAvailability: createAvailabilityPush(),
+    });
+
+    const result = await syncCalendarChangeForTest(service, {
+      changedDates: BOOKED_CALENDAR_DATES,
+      changeTypes: ["availability"],
+    });
+
+    expectOnlyAvailabilityCalendarChange({
+      result,
+      pushAvailability,
+      pushRestrictions,
+      expectedAvailability: {
+        "2026-06-01": 0,
+        "2026-06-02": 0,
+      },
+    });
+  });
+
+  test("host calendar rate changes send rates only through restrictions endpoint", async () => {
+    const { result, pushAvailability, pushRestrictions, value } = await syncRestrictionsCalendarChangeForTest([
+      "rates",
+    ]);
+
+    expectOnlyRestrictionsCalendarChange({ result, pushAvailability, pushRestrictions });
+    expect(value).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-1",
+      date: "2026-05-01",
+      rate: "123.00",
+    });
+  });
+
+  test("host calendar restriction changes include explicit false values without rate", async () => {
+    const { result, pushAvailability, pushRestrictions, value } = await syncRestrictionsCalendarChangeForTest([
+      "restrictions",
+    ]);
+
+    expectOnlyRestrictionsCalendarChange({ result, pushAvailability, pushRestrictions });
+    expect(value).toEqual({
+      property_id: "external-property-1",
+      rate_plan_id: "rate-plan-1",
+      date: "2026-05-01",
+      stop_sell: true,
+      closed_to_arrival: true,
+      closed_to_departure: false,
+      min_stay_through: 4,
+    });
+    expect(value).not.toHaveProperty("rate");
+  });
+
+  test("host calendar changes persist calendar-change evidence through the existing finalizer", async () => {
+    const channexEvidence = {
+      create: jest.fn(async (row) => row),
+    };
+    const { service } = createCalendarChangeService({
+      pushAvailability: createAvailabilityPush(),
+    });
+    service.channexEvidence = channexEvidence;
+
+    const result = await service.syncChannexCalendarChange(buildCalendarChangeRequest());
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        syncType: "calendar-change",
+        evidencePersisted: true,
+        evidenceId: expect.any(String),
+      })
+    );
+    expect(channexEvidence.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        syncType: "calendar-change",
+        domitsPropertyId: "domits-property-1",
+        status: "SUCCESS",
+        overallSuccess: true,
+      })
+    );
+  });
+
+  test("host calendar provider exceptions retain the controlled failure response", async () => {
+    const providerError = new Error("Calendar provider unavailable");
+    providerError.status = 503;
+    providerError.endpoint = "/api/v1/availability";
+    providerError.method = "POST";
+    const { service } = createCalendarChangeService({
+      pushAvailability: jest.fn().mockRejectedValue(providerError),
+    });
+
+    const result = await syncCalendarChangeForTest(service);
+
+    expect(result).toEqual({
+      statusCode: 500,
+      response: expect.objectContaining({
+        error: "Failed to sync Channex host calendar change.",
+        errorCode: "CHANNEX_CALENDAR_CHANGE_SYNC_FAILED",
+        details: expect.objectContaining({
+          message: "Calendar provider unavailable",
+          httpStatus: 503,
+          endpoint: "/api/v1/availability",
+          method: "POST",
+        }),
+      }),
+    });
+  });
+
   test("restrictions sync supports a 500-day range and sends one combined provider request", async () => {
     const pushRestrictions = createSuccessfulRestrictionsPush();
     const service = createService({
@@ -698,11 +1061,8 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       { skipEvidence: true }
     );
 
-    expect(result.statusCode).toBe(200);
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
     expect(result.response.fullCertificationSyncVersion).toBe(CHANNEX_FULL_CERTIFICATION_SYNC_VERSION);
-    expect(result.response.requestCount).toBe(2);
-    expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
     expect(pushAvailability.mock.calls[0][2]).toEqual(
       expect.objectContaining({
         requestTimeoutMs: CHANNEX_FULL_CERTIFICATION_PROVIDER_REQUEST_TIMEOUT_MS,
@@ -722,6 +1082,141 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     expect(JSON.stringify(result.response)).not.toMatch(/pageDateFrom|pageSizeDays|chunkIndex|chunkCount|syncRunId/);
     expect(result.response.steps.availability.results[0]).not.toHaveProperty("chunkIndex");
     expect(result.response.steps.restrictions.results[0]).not.toHaveProperty("chunkIndex");
+  });
+
+  test("full certification sync subtracts active bookings and excludes the check-out date", async () => {
+    const pushAvailability = createAvailabilityPush();
+    const pushRestrictions = createRestrictionsPush();
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
+        bookings: [
+          buildBookingRow({
+            arrivaldate: "2026-06-01",
+            departuredate: "2026-06-03",
+            status: "Paid",
+          }),
+        ],
+      })
+    );
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-06-01",
+      "2026-06-03",
+      { skipEvidence: true }
+    );
+
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
+    expectAvailabilityByDate(pushAvailability, {
+      "2026-06-01": 0,
+      "2026-06-02": 0,
+      "2026-06-03": 1,
+    });
+  });
+
+  test("full certification sync blocks paid and awaiting payment bookings only", async () => {
+    const pushAvailability = createAvailabilityPush();
+    const pushRestrictions = createRestrictionsPush();
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityWindows: [buildAvailableWindow(20260601, 20260604)],
+        bookings: [
+          buildBookingRow({
+            id: "paid-booking",
+            arrivaldate: "2026-06-01",
+            departuredate: "2026-06-02",
+            status: "Paid",
+          }),
+          buildBookingRow({
+            id: "awaiting-payment-booking",
+            arrivaldate: "2026-06-02",
+            departuredate: "2026-06-03",
+            status: "Awaiting Payment",
+          }),
+          buildBookingRow({
+            id: "failed-booking",
+            arrivaldate: "2026-06-03",
+            departuredate: "2026-06-04",
+            status: "Failed",
+          }),
+          buildBookingRow({
+            id: "inquiry-booking",
+            arrivaldate: "2026-06-04",
+            departuredate: "2026-06-05",
+            status: "Inquiry",
+          }),
+        ],
+      })
+    );
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-06-01",
+      "2026-06-04",
+      { skipEvidence: true }
+    );
+
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
+    expectAvailabilityByDate(pushAvailability, {
+      "2026-06-01": 0,
+      "2026-06-02": 0,
+      "2026-06-03": 1,
+      "2026-06-04": 1,
+    });
+  });
+
+  test("full certification sync does not block cancelled booking nights", async () => {
+    const pushAvailability = createAvailabilityPush();
+    const pushRestrictions = createRestrictionsPush();
+    Database.getInstance.mockResolvedValue(
+      buildDatabaseClient({
+        availabilityWindows: [buildAvailableWindow(20260601, 20260603)],
+        bookings: [
+          buildBookingRow({
+            id: "cancelled-booking",
+            arrivaldate: "2026-06-01",
+            departuredate: "2026-06-03",
+            status: "Cancelled",
+          }),
+        ],
+      })
+    );
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability,
+        pushRestrictions,
+      },
+    });
+
+    const result = await service.syncChannexFull(
+      "user-1",
+      "domits-property-1",
+      "2026-06-01",
+      "2026-06-03",
+      { skipEvidence: true }
+    );
+
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
+    expectAvailabilityByDate(pushAvailability, {
+      "2026-06-01": 1,
+      "2026-06-02": 1,
+      "2026-06-03": 1,
+    });
   });
 
   test("full certification sync provider warnings keep overallSuccess false", async () => {
@@ -749,10 +1244,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       { skipEvidence: true }
     );
 
-    expect(result.statusCode).toBe(200);
-    expect(result.response.requestCount).toBe(2);
-    expect(pushAvailability).toHaveBeenCalledTimes(1);
-    expect(pushRestrictions).toHaveBeenCalledTimes(1);
+    expectSuccessfulFullSyncProviderCalls(result, pushAvailability, pushRestrictions);
     expect(result.response.overallSuccess).toBe(false);
     expect(result.response.warnings).toEqual(["Provided value was accepted with warnings."]);
     expect(result.response.errors).toEqual([]);

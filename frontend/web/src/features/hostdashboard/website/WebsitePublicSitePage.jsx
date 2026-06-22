@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
   WEBSITE_ANALYTICS_SURFACE_LIVE,
@@ -12,13 +11,16 @@ import {
 } from "./analytics/websitePreviewAnalytics";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import { getWebsiteTemplateRenderer } from "./rendering/templateRegistry";
+import {
+  resolveWebsitePreviewSkeletonViewport,
+  WebsitePreviewSkeleton,
+} from "./rendering/WebsitePreviewSkeleton";
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
-  fetchPublicWebsiteSiteResolution,
 } from "./services/websitePublicSiteService";
 import {
   subscribeToWebsiteLiveSiteUpdates,
@@ -108,10 +110,7 @@ function WebsitePublicSitePage() {
 
     return normalizeWebsiteDomain(globalThis.location?.host || "");
   }, [routeDomain]);
-  const requestedSiteId = useMemo(() => {
-    const searchParameters = new URLSearchParams(globalThis.location?.search || "");
-    return String(searchParameters.get("siteId") || "").trim();
-  }, [routeDomain]);
+  const requestedSiteId = String(new URLSearchParams(globalThis.location?.search || "").get("siteId") || "").trim();
 
   useEffect(() => {
     let isMounted = true;
@@ -121,29 +120,11 @@ function WebsitePublicSitePage() {
       setLoadError("");
 
       try {
-        let nextResolution = null;
-        let nextRenderPayload = null;
-
-        if (requestedSiteId) {
-          nextRenderPayload = await fetchPublicWebsiteRenderModel({
-            siteId: requestedSiteId,
-            domain: requestedDomain,
-          });
-          nextResolution = nextRenderPayload?.resolution || null;
-        } else {
-          nextResolution = await fetchPublicWebsiteSiteResolution(requestedDomain);
-          nextRenderPayload = await fetchPublicWebsiteRenderModel({
-            siteId: nextResolution?.siteId,
-            domain: requestedDomain,
-          });
-        }
-
-        if (nextRenderPayload?.propertySnapshot) {
-          nextRenderPayload = {
-            ...nextRenderPayload,
-            propertySnapshot: await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot),
-          };
-        }
+        const nextRenderPayload = await fetchPublicWebsiteRenderModel({
+          siteId: requestedSiteId,
+          domain: requestedDomain,
+        });
+        const nextResolution = nextRenderPayload?.resolution || null;
 
         if (!isMounted) {
           return;
@@ -151,6 +132,25 @@ function WebsitePublicSitePage() {
 
         setResolution(nextResolution);
         setRenderPayload(nextRenderPayload);
+        setIsLoading(false);
+
+        if (!nextRenderPayload?.propertySnapshot) {
+          return;
+        }
+
+        const nextPropertySnapshot = await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot);
+        if (!isMounted || nextPropertySnapshot === nextRenderPayload.propertySnapshot) {
+          return;
+        }
+
+        setRenderPayload((currentPayload) =>
+          currentPayload
+            ? {
+                ...currentPayload,
+                propertySnapshot: nextPropertySnapshot,
+              }
+            : currentPayload
+        );
       } catch (error) {
         if (!isMounted) {
           return;
@@ -159,10 +159,7 @@ function WebsitePublicSitePage() {
         setResolution(null);
         setRenderPayload(null);
         setLoadError(error?.message || "We could not load this published website.");
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
@@ -195,6 +192,7 @@ function WebsitePublicSitePage() {
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
   const isPanoramaTemplate = templateId === "panorama-landing";
+  const skeletonViewport = resolveWebsitePreviewSkeletonViewport();
 
   const resolvedSiteId = String(renderPayload?.site?.id || resolution?.siteId || requestedSiteId || "").trim();
   const resolvedDomain = normalizeWebsiteDomain(
@@ -214,7 +212,7 @@ function WebsitePublicSitePage() {
     requestedDomain: resolvedDomain || requestedDomain,
   });
 
-  const clearRefreshRetryWindow = () => {
+  const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
       globalThis.clearInterval(refreshRetryIntervalRef.current);
       refreshRetryIntervalRef.current = null;
@@ -224,13 +222,13 @@ function WebsitePublicSitePage() {
       globalThis.clearTimeout(refreshRetryTimeoutRef.current);
       refreshRetryTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const triggerPublishedSiteRefresh = () => {
+  const triggerPublishedSiteRefresh = useCallback(() => {
     setRefreshVersion((currentVersion) => currentVersion + 1);
-  };
+  }, []);
 
-  const startRefreshRetryWindow = () => {
+  const startRefreshRetryWindow = useCallback(() => {
     clearRefreshRetryWindow();
 
     if (globalThis.document?.visibilityState === "hidden") {
@@ -248,7 +246,7 @@ function WebsitePublicSitePage() {
     refreshRetryTimeoutRef.current = globalThis.setTimeout(() => {
       clearRefreshRetryWindow();
     }, LIVE_SITE_REFRESH_WINDOW_MS);
-  };
+  }, [clearRefreshRetryWindow, triggerPublishedSiteRefresh]);
 
   useEffect(() => {
     const unsubscribeStorage = subscribeToWebsiteLiveSiteUpdates(
@@ -293,13 +291,13 @@ function WebsitePublicSitePage() {
       globalThis.removeEventListener("message", handleMessage);
       globalThis.document?.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [resolvedDomain, resolvedSiteId]);
+  }, [resolvedDomain, resolvedSiteId, startRefreshRetryWindow, clearRefreshRetryWindow]);
 
   useEffect(() => {
     return () => {
       clearRefreshRetryWindow();
     };
-  }, []);
+  }, [clearRefreshRetryWindow]);
 
   useEffect(() => {
     if (!publicModel?.site?.title) {
@@ -336,10 +334,10 @@ function WebsitePublicSitePage() {
 
   if (isLoading) {
     return (
-      <main className={styles.publicPreviewStatePage}>
-        <section className={styles.publicPreviewStateCard}>
-          <PulseBarsLoader message="Loading published website..." />
-        </section>
+      <main className={styles.publicPreviewPage}>
+        <div className={styles.publicPreviewCanvas}>
+          <WebsitePreviewSkeleton viewport={skeletonViewport} />
+        </div>
       </main>
     );
   }

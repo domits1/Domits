@@ -26,6 +26,11 @@ import { PropertyCustomRuleRepository } from "../../data/repository/propertyCust
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
+import {
+  extractAvailableOverrideDateKeys,
+  extractUnavailableOverrideDateKeys,
+  normalizeBlockedDateKeys,
+} from "../../util/calendarAvailability.js";
 
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
@@ -179,11 +184,38 @@ export class PropertyService {
     return updatedProperty;
   }
 
+  // Attach amenities to a page of cards with a single batched query.
+  // Fault-isolated: any failure degrades to empty amenities so it can never
+  // take down the listing endpoints (per-property lookups previously did).
+  async attachAmenities(cards) {
+    try {
+      const ids = cards.map((card) => card?.property?.id).filter(Boolean);
+      if (ids.length === 0) return cards;
+
+      const rows = await this.propertyAmenityRepository.getAmenitiesByPropertyIds(ids);
+      const byProperty = new Map();
+      for (const row of rows) {
+        if (!byProperty.has(row.property_id)) byProperty.set(row.property_id, []);
+        byProperty.get(row.property_id).push(row);
+      }
+      for (const card of cards) {
+        card.propertyAmenities = byProperty.get(card?.property?.id) ?? [];
+      }
+    } catch (error) {
+      console.error("Failed to attach amenities to property cards:", error);
+      for (const card of cards) {
+        card.propertyAmenities = card.propertyAmenities ?? [];
+      }
+    }
+    return cards;
+  }
+
   async getActivePropertyCards(lastEvaluatedKey) {
     const propertyIdentifiers = await this.propertyRepository.getActiveProperties(lastEvaluatedKey);
     const properties = await Promise.all(
       propertyIdentifiers.identifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
+    await this.attachAmenities(properties);
     return {
       properties: properties,
       lastEvaluatedKey: propertyIdentifiers.lastEvaluatedKey,
@@ -192,9 +224,10 @@ export class PropertyService {
 
   async getActivePropertyCardsByType(type) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByType(type);
-    return await Promise.all(
+    const properties = await Promise.all(
       propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
+    return await this.attachAmenities(properties);
   }
 
   async getActivePropertyCardsByCountry(country, lastEvaluatedKey) {
@@ -213,6 +246,7 @@ export class PropertyService {
     const properties = await Promise.all(
       propertyIdentifiers.identifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
+    await this.attachAmenities(properties);
     return {
       properties: properties,
       lastEvaluatedKey: propertyIdentifiers.lastEvaluatedKey,
@@ -256,9 +290,10 @@ export class PropertyService {
 
   async getActivePropertyCardsByHostId(hostId) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByHostId(hostId);
-    return await Promise.all(
+    const properties = await Promise.all(
       propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
+    return await this.attachAmenities(properties);
   }
 
   async getActivePropertyCardById(propertyId) {
@@ -266,17 +301,20 @@ export class PropertyService {
     if (basePropertyInfo?.status !== "ACTIVE") {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getCardPropertyAttributes(propertyId);
+    const card = await this.getCardPropertyAttributes(propertyId);
+    await this.attachAmenities([card]);
+    return card;
   }
 
   async getCardPropertyAttributes(propertyId) {
-    const [basePropertyInfo, generalDetails, pricing, images, location, testStatus] = await Promise.all([
+    const [basePropertyInfo, generalDetails, pricing, images, location, testStatus, propertyType] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getGeneralDetails(propertyId),
       this.getPricing(propertyId),
       this.getImages(propertyId),
       this.getLocation(propertyId),
       this.getPropertyTestStatus(propertyId),
+      this.getPropertyType(propertyId),
     ]);
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
@@ -288,6 +326,7 @@ export class PropertyService {
       propertyImages: images,
       propertyLocation: location,
       propertyTestStatus: testStatus,
+      propertyType: propertyType,
     };
   }
 
@@ -367,13 +406,24 @@ export class PropertyService {
   }
 
   async getPublicCalendarAvailability(propertyId) {
-    const availabilitySnapshot =
-      await this.propertyExternalCalendarRepository.getAvailabilitySnapshotByPropertyId(propertyId);
+    const [availabilitySnapshot, calendarOverrides, blockedBookingDateKeys] = await Promise.all([
+      this.propertyExternalCalendarRepository.getAvailabilitySnapshotByPropertyId(propertyId),
+      this.propertyCalendarOverrideRepository.getOverridesByPropertyId(propertyId).catch(() => []),
+      this.bookingRepository.getBlockedDateKeysByPropertyId(propertyId).catch(() => []),
+    ]);
+    const unavailableDateKeys = Array.from(
+      new Set([
+        ...extractUnavailableOverrideDateKeys(calendarOverrides),
+        ...normalizeBlockedDateKeys(blockedBookingDateKeys),
+      ])
+    ).sort((leftDateKey, rightDateKey) => leftDateKey.localeCompare(rightDateKey));
 
     return {
       externalBlockedDates: Array.isArray(availabilitySnapshot?.externalBlockedDates)
         ? availabilitySnapshot.externalBlockedDates
         : [],
+      availableDateKeys: extractAvailableOverrideDateKeys(calendarOverrides),
+      unavailableDateKeys,
       hasExternalCalendarSync: availabilitySnapshot?.hasExternalCalendarSync === true,
       syncedSourceCount: Math.max(0, Number(availabilitySnapshot?.syncedSourceCount || 0)),
       lastSyncAt: Number(availabilitySnapshot?.lastSyncAt || 0) || null,

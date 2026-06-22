@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-export const DEFAULT_WEBSITE_GALLERY_SLOT_COUNT = 3;
+export const DEFAULT_WEBSITE_GALLERY_SLOT_COUNT = 6;
 
 export const normalizeWebsiteImageRotationSettings = (
   imageRotation = {},
@@ -95,6 +95,9 @@ export const resolveWebsiteImageSlotImageUrl = (slot, media = {}) => {
 };
 
 export const buildWebsiteImageSlotTarget = (slot) => {
+  const slotSectionId = String(slot?.sectionId || "").trim();
+  const slotTargetId = String(slot?.targetId || "").trim();
+
   if (slot?.kind === "hero") {
     return {
       sectionId: "images",
@@ -113,8 +116,8 @@ export const buildWebsiteImageSlotTarget = (slot) => {
 
   const galleryIndex = Number.isInteger(slot?.index) ? slot.index : 0;
   return {
-    sectionId: "images",
-    targetId: `images.gallery.${galleryIndex}`,
+    sectionId: slotSectionId || "images",
+    targetId: slotTargetId || `images.gallery.${galleryIndex}`,
     imageSlot: { kind: "gallery", index: galleryIndex },
   };
 };
@@ -148,12 +151,16 @@ export const buildWebsiteImageSlotSequence = (slot, media = {}) => {
 export const useWebsiteImageSlotRotation = (
   slot,
   media,
-  rotationIntervalMs
+  rotationIntervalMs,
+  imageSequenceOverride = undefined
 ) => {
   const slotKind = String(slot?.kind || "").trim();
   const slotIndex = Number.isInteger(slot?.index) ? slot.index : -1;
   const galleryImagesKey = JSON.stringify(
     Array.isArray(media?.galleryImages) ? media.galleryImages : []
+  );
+  const imageSequenceOverrideKey = JSON.stringify(
+    Array.isArray(imageSequenceOverride) ? imageSequenceOverride : []
   );
   const imageRotationKey = JSON.stringify(
     normalizeWebsiteImageRotationSettings(
@@ -162,8 +169,25 @@ export const useWebsiteImageSlotRotation = (
     )
   );
   const imageSequence = useMemo(
-    () => buildWebsiteImageSlotSequence(slot, media),
-    [galleryImagesKey, media?.heroImage, media?.residenceImage, slotIndex, slotKind]
+    () => {
+      const normalizedSequenceOverride = Array.isArray(imageSequenceOverride)
+        ? imageSequenceOverride.map((imageUrl) => String(imageUrl || "").trim()).filter(Boolean)
+        : [];
+
+      if (normalizedSequenceOverride.length > 0) {
+        return normalizedSequenceOverride;
+      }
+
+      return buildWebsiteImageSlotSequence(slot, media);
+    },
+    [
+      galleryImagesKey,
+      imageSequenceOverrideKey,
+      media?.heroImage,
+      media?.residenceImage,
+      slotIndex,
+      slotKind,
+    ]
   );
   const isRotationEnabled = useMemo(
     () => getWebsiteImageSlotRotationEnabled(slot, media?.imageRotation) && imageSequence.length > 1,

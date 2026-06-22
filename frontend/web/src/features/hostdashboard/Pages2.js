@@ -16,7 +16,7 @@ import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstruct
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
-  isChannexCertificationUser,
+  checkChannexCertificationAccess,
 } from "./channexadmin/channexCertificationAccess";
 
 const NAV = [
@@ -60,17 +60,18 @@ function Pages({ onNavigate }) {
   useEffect(() => {
     let mounted = true;
 
-    async function checkChannexCertificationAccess() {
+    async function loadChannexCertificationAccess() {
       try {
         const user = await Auth.currentAuthenticatedUser();
         const userId = user?.attributes?.sub;
-        if (mounted) setCanSeeChannexCertification(isChannexCertificationUser(userId));
+        const isAllowed = await checkChannexCertificationAccess(userId);
+        if (mounted) setCanSeeChannexCertification(isAllowed);
       } catch {
         if (mounted) setCanSeeChannexCertification(false);
       }
     }
 
-    checkChannexCertificationAccess();
+    loadChannexCertificationAccess();
     return () => {
       mounted = false;
     };

@@ -1,12 +1,8 @@
 import React, { useContext } from "react";
 import logo from "../../images/logo.svg";
-import Appstorebadge from "../../images/assets/appstorebadge.svg";
-import Playstorebadge from "../../images/assets/playstorebadge.svg";
-import Instagram from "../../images/icons/Instagram.jpg";
 import linkedinIcon from "../../images/icons/LinkedIn.png";
 import instagramIcon from "../../images/icons/Instagram.jpg";
 import xIcon from "../../images/icons/x.png";
-import { ReactComponent as InstagramIcon } from "../../images/instagram.svg";
 import { Link } from "react-router-dom";
 import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";

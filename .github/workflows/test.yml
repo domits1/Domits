@@ -128,6 +128,11 @@ jobs:
           for func_dir in backend/functions/*/; do
             FUNC_NAME=$(basename "$func_dir")
 
+            if [ -f "${func_dir}.deployment-disabled" ]; then
+              echo "AWS validation is disabled for $FUNC_NAME – skipping."
+              continue
+            fi
+
             # Check if this function was modified in this PR
             if grep -qE "^[^D]\s+backend/functions/$FUNC_NAME/" changed_files.txt; then
               echo "Function '$FUNC_NAME' was changed."

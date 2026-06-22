@@ -7,7 +7,11 @@ import {
   DEFAULT_WEBSITE_AMENITY_LABEL,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "../config/websiteAmenitiesConfig";
-import { buildPublishedWebsiteHref, buildWebsitePreviewPath } from "../websitePublicSiteLinks";
+import {
+  buildPublishedWebsiteHref,
+  buildWebsitePreviewPath,
+  resolvePublishedWebsiteDomain,
+} from "../websitePublicSiteLinks";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
 
 export const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
@@ -277,16 +281,25 @@ export const resolvePublicSiteLinkPresentation = ({
 }) => {
   const normalizedDraftId = String(draftId || "").trim();
   const hasPreviewLink = Boolean(normalizedDraftId);
+  const publishedSiteDomain = resolvePublishedWebsiteDomain(
+    primarySiteDomain?.domain,
+    siteSummary?.site?.siteName,
+    siteSummary?.site?.id
+  );
+  const publishedSiteHref = buildPublishedWebsiteHref(
+    primarySiteDomain?.domain,
+    siteSummary?.site?.id,
+    primarySiteDomain?.status,
+    siteSummary?.site?.siteName
+  );
 
   if (hasLiveSite) {
     return {
       primaryLinkLabel: "Domits live link",
-      primaryLinkValue: primarySiteDomain?.domain || "Available after first publish",
-      secondaryLinkHref: primarySiteDomain?.domain
-        ? buildPublishedWebsiteHref(primarySiteDomain.domain, siteSummary?.site?.id, primarySiteDomain.status)
-        : "",
+      primaryLinkValue: publishedSiteDomain || "Available after first publish",
+      secondaryLinkHref: publishedSiteHref,
       secondaryLinkCopy: "Live site URL",
-      secondaryLinkText: primarySiteDomain?.domain || "",
+      secondaryLinkText: publishedSiteDomain || "",
     };
   }
 
@@ -329,6 +342,10 @@ export const resolveEditorPreviewTargetId = ({ targetId, imageSlot, sectionId } 
     return EDITOR_TARGET_KEYS.calendar.visibility;
   }
 
+  if (sectionId === EDITOR_SECTION_KEYS.gallery) {
+    return EDITOR_TARGET_KEYS.gallery.title;
+  }
+
   if (sectionId === EDITOR_SECTION_KEYS.amenities) {
     return EDITOR_TARGET_KEYS.amenities(0);
   }
@@ -354,6 +371,16 @@ export const createEditorFieldKeyDownHandler = (field, saveDraftChanges) => asyn
   }
 
   event.preventDefault();
+  await saveDraftChanges();
+};
+
+export const createCommitAndSaveOnEnterHandler = (commitChange, saveDraftChanges) => async (event) => {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  commitChange();
   await saveDraftChanges();
 };
 
@@ -399,7 +426,7 @@ export const getPreviewTargetIdForVisibilityField = (fieldKey) => {
     case "trustCards":
       return "visibility.trustCards";
     case "gallerySection":
-      return EDITOR_TARGET_KEYS.images.gallery(0);
+      return EDITOR_TARGET_KEYS.gallery.visibility;
     case "amenitiesPanel":
       return "visibility.amenitiesPanel";
     case "availabilityCalendar":

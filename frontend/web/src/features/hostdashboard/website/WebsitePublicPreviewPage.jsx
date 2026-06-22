@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
+import {
+  resolveWebsitePreviewSkeletonViewport,
+  WebsitePreviewSkeleton,
+} from "./rendering/WebsitePreviewSkeleton";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
 import { getWebsiteTemplateById } from "./websiteTemplates";
@@ -61,21 +64,30 @@ function WebsitePublicPreviewPage() {
 
       try {
         const nextPayload = await fetchWebsitePreviewByDraftId(draftId);
-        const nextPropertyDetails = nextPayload?.propertyDetails
-          ? await enrichWebsitePropertyDetails(nextPayload.propertyDetails)
-          : nextPayload?.propertyDetails;
 
         if (!isMounted) {
           return;
         }
 
-        setPayload(
-          nextPropertyDetails === nextPayload?.propertyDetails
-            ? nextPayload
-            : {
-                ...nextPayload,
+        setPayload(nextPayload);
+        setIsLoading(false);
+
+        if (!nextPayload?.propertyDetails) {
+          return;
+        }
+
+        const nextPropertyDetails = await enrichWebsitePropertyDetails(nextPayload.propertyDetails);
+        if (!isMounted || nextPropertyDetails === nextPayload.propertyDetails) {
+          return;
+        }
+
+        setPayload((currentPayload) =>
+          currentPayload
+            ? {
+                ...currentPayload,
                 propertyDetails: nextPropertyDetails,
               }
+            : currentPayload
         );
       } catch (error) {
         if (!isMounted) {
@@ -84,10 +96,7 @@ function WebsitePublicPreviewPage() {
 
         setPayload(null);
         setLoadError(error?.message || "We could not load this website preview.");
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
@@ -127,6 +136,7 @@ function WebsitePublicPreviewPage() {
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPreview = !loadError && previewModel && TemplateComponent;
   const isPanoramaTemplate = templateId === "panorama-landing";
+  const skeletonViewport = resolveWebsitePreviewSkeletonViewport();
 
   useEffect(() => {
     if (!previewModel?.site?.title) {
@@ -161,10 +171,10 @@ function WebsitePublicPreviewPage() {
 
   if (isLoading) {
     return (
-      <main className={styles.publicPreviewStatePage}>
-        <section className={styles.publicPreviewStateCard}>
-          <PulseBarsLoader message="Loading website preview..." />
-        </section>
+      <main className={styles.publicPreviewPage}>
+        <div className={styles.publicPreviewCanvas}>
+          <WebsitePreviewSkeleton viewport={skeletonViewport} />
+        </div>
       </main>
     );
   }

@@ -26,7 +26,6 @@ import {
   getBookingId,
   getBookingTotal,
   getDepartureDate,
-  getPaidBookings,
   normalizeGuestBookingsResponse,
   getPropertyId,
   getReservationNumber,
@@ -37,6 +36,7 @@ import { normalizeImageUrl, placeholderImage } from "./utils/image";
 import { resolveAccommodationImageUrl, resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 import { getActiveCancellationPolicyId } from "../../utils/policyDisplayUtils.js";
 import { isValidDate, startOfDay } from "../../utils/dashboardShared";
+import { fetchPropertySummaries } from "./services/propertySummaryService";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -200,6 +200,14 @@ const resolveFallbackLocationLabel = ({ location, booking }) => {
   }
 
   return "Unknown location";
+};
+
+const isFallbackTitle = (title, propertyId) => {
+  if (!title) return true;
+  const t = String(title).trim();
+  if (/^Property #/i.test(t)) return true;
+  if (propertyId && t === String(propertyId)) return true;
+  return false;
 };
 
 const resolveCleaningFee = (pricing) => {
@@ -462,7 +470,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
         resolvePrimaryAccommodationImageUrl(images, "thumb") ||
         resolveAccommodationImageUrl(booking?.images?.[0], "thumb") ||
         resolveAccommodationImageUrl(booking?.property?.images?.[0], "thumb") ||
-        normalizeImageUrl(booking?.propertyImage || booking?.image || booking?.property?.coverImage || null) ||
+        normalizeImageUrl(booking?.propertyImage || booking?.image || booking?.property?.coverImage) ||
         placeholderImage,
     },
     host: {
@@ -492,6 +500,76 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     rules: buildRuleLabels(propertyDetails),
     instructions: [],
   };
+};
+
+const shouldFetchPropertySummary = (booking, bookingTitle, propertyDetails) => {
+  const propertyIdForSummary = getPropertyId(booking);
+  if (!propertyIdForSummary) {
+    return false;
+  }
+
+  const bookingHasImages =
+    (Array.isArray(booking?.images) && booking.images.length > 0) ||
+    (Array.isArray(booking?.property?.images) && booking.property.images.length > 0) ||
+    Boolean(booking?.property_image_url) ||
+    Boolean(booking?.propertyImage) ||
+    Boolean(propertyDetails?.images && propertyDetails.images.length > 0);
+
+  return isFallbackTitle(bookingTitle, propertyIdForSummary) || !booking?.city || !bookingHasImages;
+};
+
+const enrichPropertyDetailsWithSummary = (propertyDetails, summary) => {
+  const enrichedDetails = propertyDetails || {};
+  enrichedDetails.property = enrichedDetails.property || {};
+  enrichedDetails.location = enrichedDetails.location || {};
+
+  if (!enrichedDetails.property.title && summary.title) {
+    enrichedDetails.property.title = summary.title;
+    enrichedDetails.property.name = enrichedDetails.property.name || summary.title;
+  }
+
+  if (
+    (!enrichedDetails.location.city || !enrichedDetails.location.country) &&
+    (summary.city || summary.country)
+  ) {
+    enrichedDetails.location.city = enrichedDetails.location.city || summary.city || "";
+    enrichedDetails.location.country = enrichedDetails.location.country || summary.country || "";
+  }
+
+  if (
+    (!Array.isArray(enrichedDetails.images) || enrichedDetails.images.length === 0) &&
+    summary.imageUrl
+  ) {
+    enrichedDetails.images = [summary.imageUrl];
+  }
+
+  if (!enrichedDetails.host && (summary.hostName || summary.hostImage || summary.hostId)) {
+    enrichedDetails.host = {
+      givenName: summary.hostName || "",
+      profileImage: summary.hostImage || null,
+      id: summary.hostId || null,
+    };
+  }
+
+  return enrichedDetails;
+};
+
+const attemptPropertySummaryEnrichment = async (booking, bookingTitle, propertyDetails) => {
+  try {
+    const propertyIdForSummary = getPropertyId(booking);
+    const needSummary = shouldFetchPropertySummary(booking, bookingTitle, propertyDetails);
+
+    if (needSummary) {
+      const summaries = await fetchPropertySummaries([propertyIdForSummary]);
+      const summary = summaries?.[propertyIdForSummary];
+      if (summary) {
+        return enrichPropertyDetailsWithSummary(propertyDetails, summary);
+      }
+    }
+  } catch (summaryErr) {
+    console.warn("Failed to fetch property summary for guest reservation details:", summaryErr);
+  }
+  return propertyDetails;
 };
 
 function ReservationDetails() {
@@ -554,7 +632,12 @@ function ReservationDetails() {
           console.warn("Falling back to booking-only reservation details:", propertyDetailsError);
         }
 
-        setReservation(buildReservationViewModel({ booking, propertyDetails }));
+        const bookingTitle = booking?.title || booking?.Title || booking?.property?.title || "";
+
+        let enrichedPropertyDetails = propertyDetails;
+        enrichedPropertyDetails = await attemptPropertySummaryEnrichment(booking, bookingTitle, enrichedPropertyDetails);
+
+        setReservation(buildReservationViewModel({ booking, propertyDetails: enrichedPropertyDetails }));
       } catch (loadError) {
         if (isMounted) {
           let nextError = t?.reservation?.loadError || "Could not load this reservation.";
@@ -576,7 +659,7 @@ function ReservationDetails() {
     return () => {
       isMounted = false;
     };
-  }, [guestId, reservationRouteId]);
+  }, [guestId, reservationRouteId, t?.reservation?.loadError, t?.reservation?.notFound]);
 
   const isPageLoading = identityLoading || loading;
   const pageError = error || identityError;
@@ -586,13 +669,18 @@ function ReservationDetails() {
   };
 
   const handleMessageHost = () => {
+    const bookingId = reservation?.stay?.bookingId || reservationRouteId || null;
     if (reservation?.host?.id) {
-      navigate("/guestdashboard/messages", {
+      const messagesPath = bookingId
+        ? `/guestdashboard/messages?bookingId=${encodeURIComponent(bookingId)}`
+        : "/guestdashboard/messages";
+      navigate(messagesPath, {
         state: {
           messageContext: {
             contactId: reservation.host.id,
             contactName: reservation.host.name,
             contactImage: reservation.host.image,
+            bookingId,
             propertyId: reservation.property.id,
             propertyTitle: reservation.property.title,
             accoImage: reservation.property.image,

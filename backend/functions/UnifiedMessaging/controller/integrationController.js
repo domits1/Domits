@@ -1,32 +1,16 @@
 import IntegrationService from "../business/integrationService.js";
-import ChannexBookingAvailabilityBridge from "../business/channexBookingAvailabilityBridge.js";
-import {
-  CHANNEX_RESTRICTIONS_SYNC_MODE,
-  CHANNEX_RESTRICTIONS_SYNC_VERSION,
-} from "../business/channexRestrictionsSyncVersion.js";
-import { extractIntegrationId, extractLastPathSegment, safeJson } from "./controllerUtils.js";
-
-const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
-const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
-const getHeader = (headers, name) => {
-  const expected = String(name || "").toLowerCase();
-  const match = Object.entries(headers || {}).find(([key]) => String(key || "").toLowerCase() === expected);
-  return match?.[1] ?? null;
-};
-const summarizeErrorStack = (error) =>
-  (typeof error?.stack === "string" ? error.stack : "")
-    .split("\n")
-    .slice(0, 6)
-    .map((line) => line.trim())
-    .filter(Boolean);
+import ChannelManagementController from "../.shared/channelManagement/controller/channelManagementController.js";
+import { extractIntegrationId, safeJson } from "./controllerUtils.js";
 
 class IntegrationController {
   constructor({
     integrationService = new IntegrationService(),
-    channexBookingAvailabilityBridge = new ChannexBookingAvailabilityBridge(),
+    channelManagementController = new ChannelManagementController({
+      channelManagementApiService: integrationService,
+    }),
   } = {}) {
     this.integrationService = integrationService;
-    this.channexBookingAvailabilityBridge = channexBookingAvailabilityBridge;
+    this.channelManagementController = channelManagementController;
   }
 
   async createIntegration(event) {
@@ -87,287 +71,139 @@ class IntegrationController {
   }
 
   async connectHolidu(event) {
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.connectHolidu(body);
+    return this.channelManagementController.connectHolidu(event);
   }
 
   async connectChannex(event) {
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.connectChannex(body);
+    return this.channelManagementController.connectChannex(event);
   }
 
   async checkHoliduStatus(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    return await this.integrationService.checkHoliduStatus(userId);
+    return this.channelManagementController.checkHoliduStatus(event);
   }
 
   async checkChannexStatus(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    return await this.integrationService.checkChannexStatus(userId);
+    return this.channelManagementController.checkChannexStatus(event);
   }
 
   async listChannexProperties(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    return await this.integrationService.listChannexProperties(userId);
+    return this.channelManagementController.listChannexProperties(event);
   }
 
   async listChannexRoomTypes(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const externalPropertyId = event.queryStringParameters?.externalPropertyId || null;
-    return await this.integrationService.listChannexRoomTypes(userId, externalPropertyId);
+    return this.channelManagementController.listChannexRoomTypes(event);
   }
 
   async listChannexRatePlans(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const externalRoomTypeId = event.queryStringParameters?.externalRoomTypeId || null;
-    return await this.integrationService.listChannexRatePlans(userId, externalRoomTypeId);
+    return this.channelManagementController.listChannexRatePlans(event);
   }
 
   async listLinkedChannexRoomTypes(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    return await this.integrationService.listLinkedChannexRoomTypes(userId);
+    return this.channelManagementController.listLinkedChannexRoomTypes(event);
   }
 
   async listLinkedChannexRatePlans(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    return await this.integrationService.listLinkedChannexRatePlans(userId);
+    return this.channelManagementController.listLinkedChannexRatePlans(event);
   }
 
   async getChannexAriTargets(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    return await this.integrationService.getChannexAriTargets(userId, domitsPropertyId);
+    return this.channelManagementController.getChannexAriTargets(event);
   }
 
   async previewChannexAri(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const dateFrom = event.queryStringParameters?.dateFrom || null;
-    const dateTo = event.queryStringParameters?.dateTo || null;
-    return await this.integrationService.previewChannexAri(userId, domitsPropertyId, dateFrom, dateTo);
+    return this.channelManagementController.previewChannexAri(event);
   }
 
   async previewChannexAriPayloads(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const dateFrom = event.queryStringParameters?.dateFrom || null;
-    const dateTo = event.queryStringParameters?.dateTo || null;
-    const pageDateFrom = event.queryStringParameters?.pageDateFrom || null;
-    const pageSizeDays = event.queryStringParameters?.pageSizeDays || null;
-    return await this.integrationService.previewChannexAriPayloads(
-      userId,
-      domitsPropertyId,
-      dateFrom,
-      dateTo,
-      {
-        paginate: true,
-        pageDateFrom,
-        pageSizeDays,
-      }
-    );
+    return this.channelManagementController.previewChannexAriPayloads(event);
   }
 
   async listChannexSyncEvidence(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const integrationAccountId = event.queryStringParameters?.integrationAccountId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const syncType = event.queryStringParameters?.syncType || null;
-    const status = event.queryStringParameters?.status || null;
-    const dateFrom = event.queryStringParameters?.dateFrom || null;
-    const dateTo = event.queryStringParameters?.dateTo || null;
-    const limitRaw = event.queryStringParameters?.limit;
-    const limit = limitRaw ? Number(limitRaw) : 50;
-
-    return await this.integrationService.listChannexSyncEvidence(userId, {
-      integrationAccountId,
-      domitsPropertyId,
-      syncType,
-      status,
-      dateFrom,
-      dateTo,
-      limit,
-    });
+    return this.channelManagementController.listChannexSyncEvidence(event);
   }
 
   async getChannexSyncEvidence(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const evidenceId = extractLastPathSegment(event.path);
-    return await this.integrationService.getChannexSyncEvidence(userId, evidenceId);
+    return this.channelManagementController.getChannexSyncEvidence(event);
   }
 
   async getLatestChannexSyncEvidenceSummary(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    return await this.integrationService.getLatestChannexSyncEvidenceSummary(userId, domitsPropertyId);
+    return this.channelManagementController.getLatestChannexSyncEvidenceSummary(event);
   }
 
   async listChannexBookingRevisions(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const limitRaw = event.queryStringParameters?.limit;
-    const limit = limitRaw ? Number(limitRaw) : 50;
-    const includeRawPayload = String(event.queryStringParameters?.includeRawPayload || "").toLowerCase() === "true";
-
-    return await this.integrationService.listChannexBookingRevisions(userId, {
-      domitsPropertyId,
-      limit,
-      includeRawPayload,
-    });
+    return this.channelManagementController.listChannexBookingRevisions(event);
   }
 
   async receiveChannexBookingRevisions(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    return await this.integrationService.receiveChannexBookingRevisions(userId, domitsPropertyId);
+    return this.channelManagementController.receiveChannexBookingRevisions(event);
+  }
+
+  async pullLatestChannexBookings(event) {
+    return this.channelManagementController.pullLatestChannexBookings(event);
+  }
+
+  async cancelChannexCertificationBooking(event) {
+    return this.channelManagementController.cancelChannexCertificationBooking(event);
+  }
+
+  async pollLatestChannexBookings(event) {
+    return this.channelManagementController.pollLatestChannexBookings(event);
   }
 
   async acknowledgeChannexBookingRevisions(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.acknowledgeChannexBookingRevisions(userId, domitsPropertyId, body);
+    return this.channelManagementController.acknowledgeChannexBookingRevisions(event);
   }
 
   async syncChannexAvailability(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const dateFrom = event.queryStringParameters?.dateFrom || null;
-    const dateTo = event.queryStringParameters?.dateTo || null;
-    return await this.integrationService.syncChannexAvailability(userId, domitsPropertyId, dateFrom, dateTo);
+    return this.channelManagementController.syncChannexAvailability(event);
   }
 
   async syncChannexBookingAvailability(event) {
-    const expectedToken = requireStr(process.env.CHANNEX_BOOKING_AVAILABILITY_INTERNAL_TOKEN);
-    const providedToken = requireStr(getHeader(event?.headers, "x-domits-internal-token"));
-    const allowWithoutToken = process.env.TEST === "true" && !expectedToken;
+    return this.channelManagementController.syncChannexBookingAvailability(event);
+  }
 
-    if (!allowWithoutToken && (!expectedToken || providedToken !== expectedToken)) {
-      return {
-        statusCode: 403,
-        response: {
-          error: "FORBIDDEN",
-          message: "Invalid internal booking availability sync token.",
-        },
-      };
-    }
-
-    const body = safeJson(event.body) || {};
-    const evidence = await this.channexBookingAvailabilityBridge.syncAvailabilityForBookingChange(body);
-    return {
-      statusCode: 200,
-      response: evidence,
-    };
+  async syncChannexCalendarChange(event) {
+    return this.channelManagementController.syncChannexCalendarChange(event);
   }
 
   async syncChannexRestrictions(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const dateFrom = event.queryStringParameters?.dateFrom || null;
-    const dateTo = event.queryStringParameters?.dateTo || null;
-    console.info(
-      JSON.stringify({
-        event: "CHANNEX_RESTRICTIONS_SYNC_DIAGNOSTIC",
-        restrictionsSyncVersion: CHANNEX_RESTRICTIONS_SYNC_VERSION,
-        restrictionsSyncMode: CHANNEX_RESTRICTIONS_SYNC_MODE,
-        stage: "controller_entry",
-        userId,
-        domitsPropertyId,
-        dateFrom,
-        dateTo,
-      })
-    );
-    return await this.integrationService.syncChannexRestrictions(userId, domitsPropertyId, dateFrom, dateTo);
+    return this.channelManagementController.syncChannexRestrictions(event);
   }
 
   async syncChannexAri(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const dateFrom = event.queryStringParameters?.dateFrom || null;
-    const dateTo = event.queryStringParameters?.dateTo || null;
-    return await this.integrationService.syncChannexAri(userId, domitsPropertyId, dateFrom, dateTo);
+    return this.channelManagementController.syncChannexAri(event);
   }
 
   async syncChannexFull(event) {
-    try {
-      const userId = event.queryStringParameters?.userId || null;
-      const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-      const dateFrom = event.queryStringParameters?.dateFrom || null;
-      const dateTo = event.queryStringParameters?.dateTo || null;
-      const dryRun = event.queryStringParameters?.dryRun || null;
-      const providerMode = event.queryStringParameters?.providerMode || null;
-      const debugStage = event.queryStringParameters?.debugStage || null;
-      const persistEvidence = event.queryStringParameters?.persistEvidence || null;
-      console.info(
-        JSON.stringify({
-          event: "CHANNEX_FULL_CERTIFICATION_SYNC_DIAGNOSTIC",
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-          stage: "controller_reached",
-          userId,
-          domitsPropertyId,
-          dateFrom,
-          dateTo,
-          dryRun,
-          providerMode,
-          debugStage,
-          persistEvidence,
-        })
-      );
-      return await this.integrationService.syncChannexFull(userId, domitsPropertyId, dateFrom, dateTo, {
-        dryRun,
-        providerMode,
-        debugStage,
-        persistEvidence,
-      });
-    } catch (error) {
-      console.error("Error in Channex full certification sync controller:", error);
-      return {
-        statusCode: 500,
-        response: {
-          fullCertificationSyncVersion: CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
-          stage: "controller_catch",
-          error: "Failed to run Channex certification full sync.",
-          errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_CONTROLLER_FAILED",
-          errorName: error?.name ?? null,
-          errorMessage: error?.message ?? "Unhandled Channex full certification sync controller error.",
-          stackSummary: summarizeErrorStack(error),
-        },
-      };
-    }
+    return this.channelManagementController.syncChannexFull(event);
   }
 
   async syncChannexCertificationTestCase(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const domitsPropertyId = event.queryStringParameters?.domitsPropertyId || null;
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.syncChannexCertificationTestCase(userId, domitsPropertyId, body);
+    return this.channelManagementController.syncChannexCertificationTestCase(event);
+  }
+
+  async saveChannexSetupMapping(event) {
+    return this.channelManagementController.saveChannexSetupMapping(event);
   }
 
   async linkChannexProperty(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.linkChannexProperty(userId, body);
+    return this.channelManagementController.linkChannexProperty(event);
   }
 
   async linkChannexRoomType(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.linkChannexRoomType(userId, body);
+    return this.channelManagementController.linkChannexRoomType(event);
   }
 
   async linkChannexRatePlan(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.linkChannexRatePlan(userId, body);
+    return this.channelManagementController.linkChannexRatePlan(event);
   }
 
   async disconnectHolidu(event) {
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.disconnectHolidu(body);
+    return this.channelManagementController.disconnectHolidu(event);
   }
 
   async disconnectChannex(event) {
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.disconnectChannex(body);
+    return this.channelManagementController.disconnectChannex(event);
   }
 
   async completeWhatsAppConnect(event) {

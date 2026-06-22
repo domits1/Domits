@@ -1,5 +1,6 @@
 .publicPreviewPage {
   min-height: 100vh;
+  width: 100%;
   background:
     radial-gradient(circle at top left, rgba(31, 78, 121, 0.08), transparent 30%),
     linear-gradient(
@@ -16,7 +17,10 @@
 }
 
 .publicPreviewCanvas {
-  width: min(100%, 1440px);
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: clamp(16px, 3vw, 36px);
 }
@@ -33,6 +37,8 @@
 
 .publicPreviewStatePage {
   min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -43,6 +49,8 @@
 
 .publicPreviewStateCard {
   width: min(640px, 100%);
+  min-width: 0;
+  box-sizing: border-box;
   display: grid;
   gap: 14px;
   padding: clamp(22px, 4vw, 36px);
@@ -94,6 +102,8 @@
 
 .publicPreviewActionButton {
   appearance: none;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid rgba(31, 78, 121, 0.18);
   border-radius: 18px;
   padding: 1rem 1.45rem;
@@ -121,12 +131,15 @@
   font-size: clamp(2.4rem, 1.8rem + 2vw, 4rem);
   line-height: 1.04;
   letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .publicPreviewErrorCopy {
   max-width: 30rem;
   font-size: clamp(1.02rem, 0.96rem + 0.2vw, 1.16rem);
   line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 720px) {

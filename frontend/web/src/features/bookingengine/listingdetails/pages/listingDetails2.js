@@ -7,8 +7,10 @@ import Header from "../components/header";
 import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
+import { normalizeAvailabilityRanges } from "../utils/dateAvailability";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 const startOfUtcDay = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
@@ -76,6 +78,18 @@ const toPlainObject = (value) => (value && typeof value === "object" ? value : {
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
 
+const normalizeDateKey = (value) => {
+  const normalized = String(value || "").trim();
+  return DATE_KEY_PATTERN.test(normalized) ? normalized : "";
+};
+
+const normalizeDateKeyArray = (value) => toArray(value).map(normalizeDateKey).filter(Boolean);
+
+const normalizeOptionalDateKeyArray = (...values) => {
+  const providedValue = values.find((value) => Array.isArray(value));
+  return Array.isArray(providedValue) ? normalizeDateKeyArray(providedValue) : null;
+};
+
 const normalizeCheckInSection = (checkIn) => {
   const safeCheckIn = toPlainObject(checkIn);
   return {
@@ -88,7 +102,12 @@ const normalizeCalendarAvailability = (calendarAvailability) => {
   const safeCalendarAvailability = toPlainObject(calendarAvailability);
   return {
     ...safeCalendarAvailability,
-    externalBlockedDates: toArray(safeCalendarAvailability.externalBlockedDates),
+    availableDateKeys: normalizeOptionalDateKeyArray(
+      safeCalendarAvailability.availableDateKeys,
+      safeCalendarAvailability.availableOverrideDateKeys
+    ),
+    externalBlockedDates: normalizeDateKeyArray(safeCalendarAvailability.externalBlockedDates),
+    unavailableDateKeys: normalizeDateKeyArray(safeCalendarAvailability.unavailableDateKeys),
   };
 };
 
@@ -143,6 +162,7 @@ const normalizeListingProperty = (payload) => {
           })),
     property: nestedProperty,
     images: toArray(property.images),
+    availability: toArray(property.availability || nestedProperty.availability),
     pricing: toPlainObject(property.pricing),
     generalDetails: toArray(property.generalDetails),
     amenities: toArray(property.amenities),
@@ -179,17 +199,41 @@ const ListingDetails2 = () => {
   const [error, setError] = useState(null);
   const [showMessageHost, setShowMessageHost] = useState(false);
 
+  const externalBlockedDateKeys = useMemo(
+    () =>
+      Array.isArray(property?.calendarAvailability?.externalBlockedDates)
+        ? property.calendarAvailability.externalBlockedDates
+        : [],
+    [property?.calendarAvailability?.externalBlockedDates]
+  );
+  const calendarUnavailableDateKeys = useMemo(
+    () =>
+      Array.isArray(property?.calendarAvailability?.unavailableDateKeys)
+        ? property.calendarAvailability.unavailableDateKeys
+        : [],
+    [property?.calendarAvailability?.unavailableDateKeys]
+  );
   const unavailableDateKeys = useMemo(
     () =>
       Array.from(
         new Set([
-          ...(Array.isArray(property?.calendarAvailability?.externalBlockedDates)
-            ? property.calendarAvailability.externalBlockedDates
-            : []),
+          ...externalBlockedDateKeys,
+          ...calendarUnavailableDateKeys,
           ...(Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : []),
         ])
       ),
-    [acceptedBookingDateKeys, property?.calendarAvailability?.externalBlockedDates]
+    [acceptedBookingDateKeys, calendarUnavailableDateKeys, externalBlockedDateKeys]
+  );
+  const availabilityRanges = useMemo(
+    () => normalizeAvailabilityRanges(property?.availability),
+    [property?.availability]
+  );
+  const availableDateKeys = useMemo(
+    () =>
+      Array.isArray(property?.calendarAvailability?.availableDateKeys)
+        ? property.calendarAvailability.availableDateKeys
+        : null,
+    [property?.calendarAvailability?.availableDateKeys]
   );
 
   useEffect(() => {
@@ -235,11 +279,13 @@ const ListingDetails2 = () => {
   }
 
   const hasAmenities = Array.isArray(property?.amenities) && property.amenities.length > 0;
+  const hasLocation = Boolean(property?.location?.city || property?.location?.country);
 
   const sectionItems = [
     { id: "photos", label: "Photos", targetId: "listing-photos" },
     ...(hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
     { id: "host", label: "Host", targetId: "listing-host" },
+    ...(hasLocation ? [{ id: "location", label: "Location", targetId: "listing-location" }] : []),
     { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];
 
@@ -256,12 +302,17 @@ const ListingDetails2 = () => {
         <PropertyContainer
           property={property}
           host={host}
+          location={property.location}
           onContactHost={
             (property?.property?.hostId || property?.property?.hostID)
               ? () => setShowMessageHost(true)
               : undefined
           }
-          unavailableDateKeys={unavailableDateKeys}
+          unavailableDateKeys={calendarUnavailableDateKeys}
+          bookedDateKeys={acceptedBookingDateKeys}
+          externalBlockedDateKeys={externalBlockedDateKeys}
+          availabilityRanges={availabilityRanges}
+          availableDateKeys={availableDateKeys}
           checkInDate={checkInDate}
           checkOutDate={checkOutDate}
           setCheckInDate={setCheckInDate}
@@ -272,6 +323,9 @@ const ListingDetails2 = () => {
             host={host}
             propertyId={id}
             unavailableDateKeys={unavailableDateKeys}
+            bookedDateKeys={acceptedBookingDateKeys}
+            availabilityRanges={availabilityRanges}
+            availableDateKeys={availableDateKeys}
             checkInDate={checkInDate}
             setCheckInDate={setCheckInDate}
             checkOutDate={checkOutDate}

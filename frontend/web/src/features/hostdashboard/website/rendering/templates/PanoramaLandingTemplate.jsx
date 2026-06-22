@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getScrollRevealProps } from "../animations/scrollRevealProps";
 import { getAmenityIconNode } from "../amenityIconRegistry";
@@ -13,12 +15,14 @@ import {
 } from "./templateSharedSections";
 import {
   amenityPropType,
+  amenitiesSectionPropType,
   availabilityPropType,
   calendarSectionPropType,
   callToActionPropType,
   contactSectionPropType,
   copyItemPropType,
   galleryPropType,
+  gallerySectionPropType,
   heroPropType,
   hostPropType,
   mediaPropType,
@@ -29,21 +33,27 @@ import {
 } from "./templatePropTypes";
 import {
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
   DEFAULT_WEBSITE_CONTACT_TITLE,
   WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
   resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
+  resolveWebsiteContactSectionCopy,
 } from "../../config/websiteContactSectionConfig";
+import { getDefaultWebsiteCalendarTitle } from "../../config/websiteCalendarSectionConfig";
 import { resolveWebsiteResidencePanelColor } from "../../config/websiteResidenceSectionConfig";
+import { resolveWebsiteGalleryPanelColor } from "../../config/websiteGallerySectionConfig";
 import {
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
   resolveWebsiteAmenityIconColor,
 } from "../../config/websiteAmenitiesConfig";
+import { resolveWebsiteHeroContentAlignment } from "../../config/websiteHeroSectionConfig";
 
 const PANORAMA_TOP_BAR_SOLID_THRESHOLD_PX = 24;
 const PANORAMA_TOP_BAR_SELECTOR = "[data-panorama-top-bar]";
+const PANORAMA_TOP_BAR_INNER_SELECTOR = "[data-panorama-top-bar-inner]";
 const PANORAMA_TOP_BAR_SCROLL_OFFSET_PX = 18;
 const PANORAMA_AMENITY_CATEGORY_LABELS = Object.freeze({
   EcoFriendly: "Eco Friendly",
@@ -51,6 +61,10 @@ const PANORAMA_AMENITY_CATEGORY_LABELS = Object.freeze({
   FamilyFriendly: "Family Friendly",
   LivingArea: "Living Area",
 });
+const PANORAMA_RESIDENCE_SECTION_LABEL = "The residence";
+const PANORAMA_JOURNEY_SECTION_LABEL = "The stay";
+const loadPhotoBrowserOverlay = () => import("../../../../../components/gallery/PhotoBrowserOverlay");
+const LazyPhotoBrowserOverlay = lazy(loadPhotoBrowserOverlay);
 
 const hexToRgbChannels = (hexColor) => {
   const normalizedHexColor = resolveWebsiteContactAccentColor(hexColor).slice(1);
@@ -60,7 +74,7 @@ const hexToRgbChannels = (hexColor) => {
   return `${redChannel} ${greenChannel} ${blueChannel}`;
 };
 
-const handlePanoramaNavItemClick = (href) => (event) => {
+const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event) => {
   const normalizedHref = String(href || "").trim();
   if (!normalizedHref.startsWith("#")) {
     return;
@@ -75,7 +89,9 @@ const handlePanoramaNavItemClick = (href) => (event) => {
   event.preventDefault();
 
   const topBarElement = globalThis.document.querySelector(PANORAMA_TOP_BAR_SELECTOR);
-  const topBarHeight = topBarElement?.getBoundingClientRect().height || 0;
+  const topBarInnerElement =
+    topBarElement?.querySelector(PANORAMA_TOP_BAR_INNER_SELECTOR) || topBarElement;
+  const topBarHeight = topBarInnerElement?.getBoundingClientRect().height || 0;
   const prefersReducedMotion =
     typeof globalThis.matchMedia === "function" &&
     globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -93,15 +109,17 @@ const handlePanoramaNavItemClick = (href) => (event) => {
     top: Math.max(0, nextScrollTop),
     behavior: prefersReducedMotion ? "auto" : "smooth",
   });
+
+  onAfterNavigate?.();
 };
 
-const renderPanoramaNavItem = ({ href, label }, isInteractivePreview) => {
+const renderPanoramaNavItem = ({ href, label }, isInteractivePreview, onAfterNavigate = undefined) => {
   if (isInteractivePreview) {
     return <span key={href}>{label}</span>;
   }
 
   return (
-    <a key={href} href={href} onClick={handlePanoramaNavItemClick(href)}>
+    <a key={href} href={href} onClick={handlePanoramaNavItemClick(href, onAfterNavigate)}>
       {label}
     </a>
   );
@@ -111,10 +129,10 @@ const buildPanoramaGallerySlots = (model) => {
   const galleryImages = Array.isArray(model.gallery?.images) ? model.gallery.images.filter(Boolean) : [];
 
   if (galleryImages.length > 0) {
-    return galleryImages.slice(0, 5).map((imageUrl, index) => ({
+    return galleryImages.slice(0, 6).map((imageUrl, index) => ({
       key: `${model.site.title}-${index}-${imageUrl}`,
       alt: `${model.hero.title} view ${index + 1}`,
-      slot: { kind: "gallery", index },
+      slot: { kind: "gallery", index, sectionId: "gallery" },
     }));
   }
 
@@ -127,7 +145,7 @@ const buildPanoramaGallerySlots = (model) => {
     {
       key: `${model.site.title}-hero-fallback`,
       alt: model.hero.title,
-      slot: { kind: "hero" },
+      slot: { kind: "hero", sectionId: "gallery" },
     },
   ];
 };
@@ -136,6 +154,10 @@ const formatPanoramaAmenityCategory = (value) => {
   const normalizedValue = String(value || "").trim();
   return PANORAMA_AMENITY_CATEGORY_LABELS[normalizedValue] || normalizedValue || "Amenities";
 };
+
+const resolvePanoramaNavLabel = (value, fallbackLabel) => String(value || "").trim() || fallbackLabel;
+const buildPanoramaDeferredSectionClassName = (baseClassName, shouldDeferContent = false) =>
+  `${baseClassName} ${shouldDeferContent ? styles.panoramaDeferredRenderSection : ""}`.trim();
 
 const getAmenityMatchKey = (amenity) => {
   const normalizedId = String(amenity?.id || "").trim();
@@ -285,17 +307,46 @@ const usePanoramaTopBarSolidState = (enabled) => {
   };
 };
 
-const buildPanoramaNavItems = (viewState) =>
+const buildPanoramaNavItems = (model, viewState) =>
   [
     { href: "#overview", label: "Overview" },
+    {
+      href: "#about",
+      label: resolvePanoramaNavLabel(model.residenceSection?.title, PANORAMA_RESIDENCE_SECTION_LABEL),
+    },
     ...(viewState.showGallerySection && viewState.gallerySlots.length > 0
-      ? [{ href: "#gallery", label: "Gallery" }]
+      ? [{
+        href: "#gallery",
+        label: resolvePanoramaNavLabel(model.gallerySection?.title, "Gallery"),
+      }]
       : []),
     ...(viewState.showAmenitiesPanel && viewState.featuredAmenities.length > 0
-      ? [{ href: "#features", label: "Amenities" }]
+      ? [{
+        href: "#features",
+        label: resolvePanoramaNavLabel(model.amenitiesSection?.title, "Amenities"),
+      }]
       : []),
-    ...(viewState.showAvailabilityCalendar ? [{ href: "#availability", label: "Availability" }] : []),
-    ...(viewState.showContactSection ? [{ href: "#contact", label: "Contact" }] : []),
+    ...(viewState.showJourneyStops && viewState.featuredJourneyStops.length > 0
+      ? [{ href: "#lifestyle", label: PANORAMA_JOURNEY_SECTION_LABEL }]
+      : []),
+    ...(viewState.showAvailabilityCalendar
+      ? [{
+        href: "#availability",
+        label: resolvePanoramaNavLabel(
+          model.calendarSection?.title,
+          getDefaultWebsiteCalendarTitle("panorama-landing")
+        ),
+      }]
+      : []),
+    ...(viewState.showContactSection
+      ? [{
+        href: "#contact",
+        label: resolvePanoramaNavLabel(
+          resolveWebsiteContactSectionCopy(model.contactSection).title,
+          DEFAULT_WEBSITE_CONTACT_SECTION_TITLE
+        ),
+      }]
+      : []),
   ];
 
 function PanoramaAmenitiesModal({ amenities, amenityIconColor, onClose }) {
@@ -417,25 +468,96 @@ PanoramaAmenitiesModal.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
-const renderPanoramaTopBar = ({ model, onSelectTarget, activeTargetId, isTopBarSolid, navItems }) => (
-  <div
-    data-panorama-top-bar="true"
-    className={`${styles.panoramaTopBarShell} ${
-      isTopBarSolid ? styles.panoramaTopBarShellSolid : styles.panoramaTopBarShellTransparent
-    }`.trim()}
-  >
-    <TemplateTopBar
-      model={model}
-      onSelectTarget={onSelectTarget}
-      activeTargetId={activeTargetId}
-      showMark={false}
+const renderPanoramaTopBar = ({
+  model,
+  onSelectTarget,
+  activeTargetId,
+  isTopBarSolid,
+  navItems,
+  isNavDrawerOpen,
+  onToggleNavDrawer,
+  onCloseNavDrawer,
+}) => {
+  const isInteractivePreview = Boolean(onSelectTarget);
+
+  return (
+    <div
+      data-panorama-top-bar="true"
+      className={`${styles.panoramaTopBarShell} ${
+        isTopBarSolid ? styles.panoramaTopBarShellSolid : styles.panoramaTopBarShellTransparent
+      } ${
+        isInteractivePreview ? styles.panoramaTopBarShellInteractive : styles.panoramaTopBarShellPublic
+      }`.trim()}
     >
-      <div className={styles.templateTopBarNav}>
-        {navItems.map((item) => renderPanoramaNavItem(item, Boolean(onSelectTarget)))}
+      <div data-panorama-top-bar-inner="true">
+        <TemplateTopBar
+          model={model}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
+          showMark={false}
+        >
+          <div className={styles.panoramaTopBarActions}>
+            <div className={styles.templateTopBarNav}>
+              {navItems.map((item) => renderPanoramaNavItem(item, isInteractivePreview))}
+            </div>
+            <button
+              type="button"
+              className={styles.panoramaTopBarMenuButton}
+              onClick={onToggleNavDrawer}
+              aria-label={isNavDrawerOpen ? "Close section menu" : "Open section menu"}
+              aria-expanded={isNavDrawerOpen}
+              aria-controls="panorama-site-menu"
+            >
+              {isNavDrawerOpen ? <CloseRoundedIcon fontSize="small" /> : <MenuRoundedIcon fontSize="small" />}
+              <span>{isNavDrawerOpen ? "Close" : "Sections"}</span>
+            </button>
+          </div>
+        </TemplateTopBar>
       </div>
-    </TemplateTopBar>
-  </div>
-);
+      <button
+        type="button"
+        className={`${styles.panoramaTopBarDrawerOverlay} ${
+          isNavDrawerOpen ? styles.panoramaTopBarDrawerOverlayOpen : ""
+        }`.trim()}
+        onClick={onCloseNavDrawer}
+        aria-label="Close section menu"
+        aria-hidden={!isNavDrawerOpen}
+        disabled={!isNavDrawerOpen}
+        tabIndex={isNavDrawerOpen ? 0 : -1}
+      />
+      <aside
+        id="panorama-site-menu"
+        className={`${styles.panoramaTopBarDrawer} ${
+          isNavDrawerOpen ? styles.panoramaTopBarDrawerOpen : ""
+        }`.trim()}
+        aria-label="Website section navigation"
+        aria-hidden={!isNavDrawerOpen}
+      >
+        <div className={styles.panoramaTopBarDrawerHeader}>
+          <div className={styles.panoramaTopBarDrawerTitleBlock}>
+            <span className={styles.panoramaTopBarDrawerLabel}>Sections</span>
+            <strong className={styles.panoramaTopBarDrawerTitle}>{model.site.title}</strong>
+          </div>
+          <button
+            type="button"
+            className={styles.panoramaTopBarDrawerCloseButton}
+            onClick={onCloseNavDrawer}
+            aria-label="Close section menu"
+          >
+            <CloseRoundedIcon fontSize="small" />
+          </button>
+        </div>
+        <nav className={styles.panoramaTopBarDrawerNav}>
+          {navItems.map((item) =>
+            renderPanoramaNavItem(item, isInteractivePreview, () => {
+              onCloseNavDrawer();
+            })
+          )}
+        </nav>
+      </aside>
+    </div>
+  );
+};
 
 const renderPanoramaTrustCards = ({ featuredTrustCards, onSelectTarget, activeTargetId }) => {
   if (featuredTrustCards.length < 1) {
@@ -484,65 +606,87 @@ const renderPanoramaHeroSection = ({
   onSelectTarget,
   activeTargetId,
   heroSectionRef,
+  showTopBar,
   showCallToAction,
   showTrustCards,
   featuredTrustCards,
-}) => (
-  <section
-    id="overview"
-    ref={heroSectionRef}
-    className={styles.panoramaEditorialHero}
-    {...getScrollRevealProps(60)}
-  >
-    <div className={styles.panoramaHeroBackdropShell}>
-      <TemplateImageSlotVisual
-        model={model}
-        slot={{ kind: "hero" }}
-        imageClassName={styles.panoramaHeroBackdrop}
-        alt={model.hero.title}
-        onSelectTarget={onSelectTarget}
-        activeTargetId={activeTargetId}
-      />
-      <div className={styles.panoramaHeroOverlay} aria-hidden="true" />
-      <div className={styles.panoramaHeroInner}>
-        <div className={styles.panoramaHeroCopyBlock}>
-          <p
-            {...getInteractiveTargetProps(styles.panoramaHeroEyebrow, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroEyebrow",
-            }, activeTargetId)}
-          >
-            {model.hero.eyebrow}
-          </p>
-          <h1
-            {...getInteractiveTargetProps(styles.panoramaHeroHeadline, onSelectTarget, {
-              sectionId: "common",
-              targetId: "common.heroTitle",
-            }, activeTargetId)}
-          >
-            {model.hero.title}
-          </h1>
+}) => {
+  const heroContentAlignment = resolveWebsiteHeroContentAlignment(model?.hero?.contentAlignment);
 
-          <div className={styles.panoramaHeroActionRow}>
-            {showCallToAction ? (
-              <div
-                {...getInteractiveTargetProps(styles.panoramaHeroPrimaryAction, onSelectTarget, {
-                  sectionId: "common",
-                  targetId: "common.ctaLabel",
-                }, activeTargetId)}
-              >
-                <strong>{model.callToAction.label}</strong>
-                <span>{model.callToAction.note || model.stay?.nightlyRateLabel || "Direct booking website"}</span>
-              </div>
-            ) : null}
+  return (
+    <section
+      id="overview"
+      ref={heroSectionRef}
+      className={`${styles.panoramaEditorialHero} ${
+        showTopBar ? styles.panoramaEditorialHeroWithTopBar : ""
+      }`.trim()}
+      {...getScrollRevealProps(60)}
+    >
+      <div className={styles.panoramaHeroBackdropShell}>
+        <TemplateImageSlotVisual
+          model={model}
+          slot={{ kind: "hero", sectionId: "common" }}
+          frameClassName={styles.panoramaHeroBackdropFrame}
+          imageClassName={styles.panoramaHeroBackdrop}
+          sourceVariantPreference="original-first"
+          alt={model.hero.title}
+          onSelectTarget={onSelectTarget}
+          activeTargetId={activeTargetId}
+        />
+        <div className={styles.panoramaHeroOverlay} aria-hidden="true" />
+        <div
+          className={styles.panoramaHeroInner}
+          data-panorama-hero-alignment={heroContentAlignment}
+        >
+          <div
+            {...getPreviewTargetMarkerProps(
+              styles.panoramaHeroCopyBlock,
+              "common.heroContentAlignment",
+              activeTargetId
+            )}
+            data-panorama-hero-alignment={heroContentAlignment}
+          >
+            <p
+              {...getInteractiveTargetProps(styles.panoramaHeroEyebrow, onSelectTarget, {
+                sectionId: "common",
+                targetId: "common.heroEyebrow",
+              }, activeTargetId)}
+            >
+              {model.hero.eyebrow}
+            </p>
+            <h1
+              {...getInteractiveTargetProps(styles.panoramaHeroHeadline, onSelectTarget, {
+                sectionId: "common",
+                targetId: "common.heroTitle",
+              }, activeTargetId)}
+            >
+              {model.hero.title}
+            </h1>
+
+            <div
+              className={styles.panoramaHeroActionRow}
+              data-panorama-hero-alignment={heroContentAlignment}
+            >
+              {showCallToAction ? (
+                <div
+                  {...getInteractiveTargetProps(styles.panoramaHeroPrimaryAction, onSelectTarget, {
+                    sectionId: "common",
+                    targetId: "common.ctaLabel",
+                  }, activeTargetId)}
+                >
+                  <strong>{model.callToAction.label}</strong>
+                  <span>{model.callToAction.note || model.stay?.nightlyRateLabel || "Direct booking website"}</span>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    {showTrustCards ? renderPanoramaTrustCards({ featuredTrustCards, onSelectTarget, activeTargetId }) : null}
-  </section>
-);
+      {showTrustCards ? renderPanoramaTrustCards({ featuredTrustCards, onSelectTarget, activeTargetId }) : null}
+    </section>
+  );
+};
 
 const renderPanoramaResidenceSection = ({
   model,
@@ -606,6 +750,7 @@ const renderPanoramaResidenceSection = ({
           slot={{ kind: "residence" }}
           frameClassName={styles.panoramaResidenceVisualFrame}
           imageClassName={styles.panoramaResidenceImage}
+          enableHoverEffect
           alt={`${model.hero.title} residence view`}
           onSelectTarget={onSelectTarget}
           activeTargetId={activeTargetId}
@@ -638,45 +783,122 @@ const renderPanoramaResidenceSection = ({
   );
 };
 
-const renderPanoramaGallerySection = ({ model, gallerySlots, onSelectTarget, activeTargetId }) => {
+const renderPanoramaGallerySection = ({
+  model,
+  gallerySlots,
+  onSelectTarget,
+  activeTargetId,
+  onOpenGalleryBrowser,
+  canOpenGalleryBrowser = true,
+  shouldDeferContent = false,
+}) => {
   if (gallerySlots.length < 1) {
     return null;
   }
 
+  const galleryRevealProps = getScrollRevealProps(100);
+  const showGalleryPanel = model.gallerySection?.showPanel !== false;
+  const galleryPanelStyle = showGalleryPanel
+    ? {
+        backgroundColor: resolveWebsiteGalleryPanelColor(
+          model.gallerySection?.panelColor,
+          "panorama-landing"
+        ),
+      }
+    : undefined;
+  const gallerySectionStyle = galleryPanelStyle
+    ? {
+        ...galleryRevealProps.style,
+        ...galleryPanelStyle,
+      }
+    : galleryRevealProps.style;
+
   return (
-    <section id="gallery" className={styles.sectionCard} {...getScrollRevealProps(100)}>
-      <div className={styles.sectionHeading}>
-        <p className={styles.sectionEyebrow}>Gallery</p>
-        <h2>A more editorial presentation of the property</h2>
+    <section
+      id="gallery"
+      {...getInteractiveTargetProps(
+        buildPanoramaDeferredSectionClassName(
+          `${styles.panoramaGallerySection} ${
+            showGalleryPanel ? styles.panoramaGallerySectionPanel : ""
+          }`.trim(),
+          shouldDeferContent
+        ),
+        onSelectTarget,
+        {
+          sectionId: "gallery",
+          targetId: "gallery.visibility",
+        },
+        activeTargetId
+      )}
+      {...galleryRevealProps}
+      style={gallerySectionStyle}
+    >
+      <div className={styles.panoramaGalleryHeading}>
+        <p
+          {...getInteractiveTargetProps(styles.sectionEyebrow, onSelectTarget, {
+            sectionId: "gallery",
+            targetId: "gallery.title",
+          }, activeTargetId)}
+        >
+          {model.gallerySection?.title || "Gallery"}
+        </p>
+        <h2
+          {...getInteractiveTargetProps(styles.panoramaGalleryHeadingTitle, onSelectTarget, {
+            sectionId: "gallery",
+            targetId: "gallery.description",
+          }, activeTargetId)}
+        >
+          {model.gallerySection?.description || "A more editorial presentation of the property"}
+        </h2>
       </div>
 
-      <div className={styles.panoramaGalleryMosaic}>
+      <div className={styles.panoramaGalleryGrid}>
         {gallerySlots.map((slot, index) => (
           <TemplateImageSlotVisual
             key={slot.key}
             model={model}
             slot={slot.slot}
-            imageClassName={`${styles.panoramaGalleryTile} ${
-              index === 0 ? styles.panoramaGalleryTileLarge : ""
-            }`.trim()}
+            frameClassName={styles.panoramaGalleryTileFrame}
+            imageClassName={styles.panoramaGalleryTile}
+            enableHoverEffect
             alt={slot.alt}
             onSelectTarget={onSelectTarget}
+            onActivate={canOpenGalleryBrowser ? () => onOpenGalleryBrowser(index) : undefined}
             activeTargetId={activeTargetId}
           />
         ))}
       </div>
+
+      {canOpenGalleryBrowser &&
+      Array.isArray(model.media?.galleryImages) &&
+      model.media.galleryImages.length > 0 ? (
+        <div className={styles.panoramaGalleryActions}>
+          <button
+            type="button"
+            className={styles.panoramaAmenityShowAllButton}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenGalleryBrowser(0);
+            }}
+          >
+            {model.gallerySection?.browseLabel || "Browse"}
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 };
 
 const renderPanoramaDetailsSection = ({
   showAmenitiesPanel,
+  amenitiesSection,
   featuredAmenities,
   allAmenities,
   amenityIconColor,
   onSelectTarget,
   activeTargetId,
   onShowAllAmenities,
+  shouldDeferContent = false,
 }) => {
   if (!showAmenitiesPanel || featuredAmenities.length < 1) {
     return null;
@@ -685,15 +907,34 @@ const renderPanoramaDetailsSection = ({
   return (
     <section
       id="features"
-      {...getInteractiveTargetProps(styles.panoramaAmenitiesSection, onSelectTarget, {
-        sectionId: "amenities",
-        targetId: "visibility.amenitiesPanel",
-      }, activeTargetId)}
+      {...getInteractiveTargetProps(
+        buildPanoramaDeferredSectionClassName(styles.panoramaAmenitiesSection, shouldDeferContent),
+        onSelectTarget,
+        {
+          sectionId: "amenities",
+          targetId: "visibility.amenitiesPanel",
+        },
+        activeTargetId
+      )}
       {...getScrollRevealProps(120)}
     >
       <div className={styles.panoramaAmenityIntro}>
-        <p className={styles.panoramaAmenityEyebrow}>Amenities</p>
-        <h2 className={styles.panoramaAmenityTitle}>Every Detail Considered</h2>
+        <p
+          {...getInteractiveTargetProps(styles.panoramaAmenityEyebrow, onSelectTarget, {
+            sectionId: "amenities",
+            targetId: "amenities.title",
+          }, activeTargetId)}
+        >
+          {amenitiesSection?.title || "Amenities"}
+        </p>
+        <h2
+          {...getInteractiveTargetProps(styles.panoramaAmenityTitle, onSelectTarget, {
+            sectionId: "amenities",
+            targetId: "amenities.description",
+          }, activeTargetId)}
+        >
+          {amenitiesSection?.description || "Every Detail Considered"}
+        </h2>
         <span className={styles.panoramaAmenityDivider} aria-hidden="true" />
       </div>
 
@@ -747,13 +988,22 @@ const renderPanoramaDetailsSection = ({
   );
 };
 
-const renderPanoramaJourneySection = ({ featuredJourneyStops, onSelectTarget, activeTargetId }) => {
+const renderPanoramaJourneySection = ({
+  featuredJourneyStops,
+  onSelectTarget,
+  activeTargetId,
+  shouldDeferContent = false,
+}) => {
   if (featuredJourneyStops.length < 1) {
     return null;
   }
 
   return (
-    <section id="lifestyle" className={styles.sectionCard} {...getScrollRevealProps(140)}>
+    <section
+      id="lifestyle"
+      className={buildPanoramaDeferredSectionClassName(styles.sectionCard, shouldDeferContent)}
+      {...getScrollRevealProps(140)}
+    >
       <div className={styles.sectionHeading}>
         <p className={styles.sectionEyebrow}>The stay</p>
         <h2>From first impression to arrival, the flow stays easy to follow</h2>
@@ -784,8 +1034,13 @@ const renderPanoramaContactSection = ({
   model,
   onSelectTarget,
   activeTargetId,
+  shouldDeferContent = false,
 }) => {
-  const contactTitle = String(model.contactSection?.title || "").trim() || DEFAULT_WEBSITE_CONTACT_TITLE;
+  const resolvedContactSectionCopy = resolveWebsiteContactSectionCopy(model.contactSection);
+  const contactTitle =
+    String(resolvedContactSectionCopy.title || "").trim() || DEFAULT_WEBSITE_CONTACT_SECTION_TITLE;
+  const contactCaption =
+    String(resolvedContactSectionCopy.caption || "").trim() || DEFAULT_WEBSITE_CONTACT_TITLE;
   const contactDescription =
     String(model.contactSection?.description || "").trim() || DEFAULT_WEBSITE_CONTACT_DESCRIPTION;
   const hostName = String(model.host?.name || "").trim() || "Host";
@@ -815,7 +1070,11 @@ const renderPanoramaContactSection = ({
   };
 
   return (
-    <section id="contact" className={styles.panoramaContactShell} {...getScrollRevealProps(180)}>
+    <section
+      id="contact"
+      className={buildPanoramaDeferredSectionClassName(styles.panoramaContactShell, shouldDeferContent)}
+      {...getScrollRevealProps(180)}
+    >
       <div
         {...getPreviewTargetMarkerProps(
           styles.panoramaContactSection,
@@ -828,18 +1087,18 @@ const renderPanoramaContactSection = ({
           <p
             {...getInteractiveTargetProps(styles.panoramaContactEyebrow, onSelectTarget, {
               sectionId: "contact",
-              targetId: "contact.accentColor",
-            }, activeTargetId)}
-          >
-            Contact
-          </p>
-          <h2
-            {...getInteractiveTargetProps(styles.panoramaContactTitle, onSelectTarget, {
-              sectionId: "contact",
               targetId: "contact.title",
             }, activeTargetId)}
           >
             {contactTitle}
+          </p>
+          <h2
+            {...getInteractiveTargetProps(styles.panoramaContactTitle, onSelectTarget, {
+              sectionId: "contact",
+              targetId: "contact.caption",
+            }, activeTargetId)}
+          >
+            {contactCaption}
           </h2>
           <p
             {...getInteractiveTargetProps(styles.panoramaContactDescription, onSelectTarget, {
@@ -879,20 +1138,81 @@ const renderPanoramaContactSection = ({
 export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
+  const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
+  const isInteractivePreview = Boolean(onSelectTarget);
+  const canOpenGalleryBrowser = !isInteractivePreview;
+  const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
-  const navItems = buildPanoramaNavItems(viewState);
+  const navItems = buildPanoramaNavItems(model, viewState);
+  const handleOpenGalleryBrowser = (imageIndex = 0) => {
+    if (!canOpenGalleryBrowser) {
+      return;
+    }
+
+    const normalizedGalleryImages = Array.isArray(model.media?.galleryImages)
+      ? model.media.galleryImages.filter(Boolean)
+      : [];
+    const maxGalleryIndex = Math.max(normalizedGalleryImages.length - 1, 0);
+    const nextGalleryIndex = Number.isInteger(imageIndex) ? imageIndex : 0;
+
+    void loadPhotoBrowserOverlay();
+    setGalleryBrowserInitialIndex(Math.max(0, Math.min(nextGalleryIndex, maxGalleryIndex)));
+    setIsGalleryBrowserOpen(true);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsNavDrawerOpen(false);
+      }
+    };
+
+    globalThis.document?.addEventListener("keydown", handleKeyDown);
+    return () => {
+      globalThis.document?.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isNavDrawerOpen) {
+      return undefined;
+    }
+
+    const originalOverflow = globalThis.document?.body?.style?.overflow;
+    if (globalThis.document?.body?.style) {
+      globalThis.document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      if (globalThis.document?.body?.style) {
+        globalThis.document.body.style.overflow = originalOverflow || "";
+      }
+    };
+  }, [isNavDrawerOpen]);
 
   return (
     <>
-      <article className={styles.templateSite}>
+      <article className={`${styles.templateSite} ${styles.templateSitePanorama}`.trim()}>
         {viewState.showTopBar
-          ? renderPanoramaTopBar({ model, onSelectTarget, activeTargetId, isTopBarSolid, navItems })
+          ? renderPanoramaTopBar({
+              model,
+              onSelectTarget,
+              activeTargetId,
+              isTopBarSolid,
+              navItems,
+              isNavDrawerOpen,
+              onToggleNavDrawer: () => setIsNavDrawerOpen((currentState) => !currentState),
+              onCloseNavDrawer: () => setIsNavDrawerOpen(false),
+            })
           : null}
         {renderPanoramaHeroSection({
           model,
           onSelectTarget,
           activeTargetId,
           heroSectionRef,
+          showTopBar: viewState.showTopBar,
           showCallToAction: viewState.showCallToAction,
           showTrustCards: viewState.showTrustCards,
           featuredTrustCards: viewState.featuredTrustCards,
@@ -909,26 +1229,39 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               gallerySlots: viewState.gallerySlots,
               onSelectTarget,
               activeTargetId,
+              onOpenGalleryBrowser: handleOpenGalleryBrowser,
+              canOpenGalleryBrowser,
+              shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
         {renderPanoramaDetailsSection({
           showAmenitiesPanel: viewState.showAmenitiesPanel,
+          amenitiesSection: model.amenitiesSection,
           featuredAmenities: viewState.featuredAmenities,
           allAmenities: viewState.allAmenities,
           amenityIconColor: viewState.amenityIconColor,
           onSelectTarget,
           activeTargetId,
           onShowAllAmenities: () => setShowAmenitiesModal(true),
+          shouldDeferContent: shouldDeferBelowFoldSections,
         })}
         {viewState.showJourneyStops
           ? renderPanoramaJourneySection({
               featuredJourneyStops: viewState.featuredJourneyStops,
               onSelectTarget,
               activeTargetId,
+              shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
         {viewState.showAvailabilityCalendar ? (
-          <section id="availability" className={styles.panoramaAvailabilityShell} {...getScrollRevealProps(160)}>
+          <section
+            id="availability"
+            className={buildPanoramaDeferredSectionClassName(
+              styles.panoramaAvailabilityShell,
+              shouldDeferBelowFoldSections
+            )}
+            {...getScrollRevealProps(160)}
+          >
             <TemplateAvailabilityCalendar
               model={model}
               variant="panorama"
@@ -945,9 +1278,24 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               model,
               onSelectTarget,
               activeTargetId,
+              shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
       </article>
+
+      {isGalleryBrowserOpen ? (
+        <Suspense fallback={null}>
+          <LazyPhotoBrowserOverlay
+            images={Array.isArray(model.media?.galleryImages) ? model.media.galleryImages : []}
+            initialIndex={galleryBrowserInitialIndex}
+            isOpen={isGalleryBrowserOpen}
+            onClose={() => setIsGalleryBrowserOpen(false)}
+            showSideZones={true}
+            alwaysShowSideZoneArrows={true}
+            resolveImageAlt={(index) => `${model.hero.title} gallery image ${index + 1}`}
+          />
+        </Suspense>
+      ) : null}
 
       {showAmenitiesModal && viewState.allAmenities.length > 0 ? (
         <PanoramaAmenitiesModal
@@ -992,12 +1340,14 @@ PanoramaLandingTemplate.propTypes = {
     trustCards: PropTypes.arrayOf(copyItemPropType).isRequired,
     journeyStops: PropTypes.arrayOf(copyItemPropType).isRequired,
     gallery: galleryPropType.isRequired,
+    gallerySection: gallerySectionPropType,
     amenities: PropTypes.shape({
       imported: PropTypes.arrayOf(amenityPropType),
       iconColor: PropTypes.string,
       featured: PropTypes.arrayOf(amenityPropType).isRequired,
       all: PropTypes.arrayOf(amenityPropType),
     }).isRequired,
+    amenitiesSection: amenitiesSectionPropType,
     availability: availabilityPropType.isRequired,
     visibility: visibilityPropType.isRequired,
     host: hostPropType.isRequired,

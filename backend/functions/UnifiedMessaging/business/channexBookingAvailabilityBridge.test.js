@@ -4,7 +4,7 @@ jest.mock(
   { virtual: true }
 );
 
-jest.mock("../ORM/index.js", () => ({
+jest.mock("../.shared/integrations/ORM/index.js", () => ({
   __esModule: true,
   default: {
     getInstance: jest.fn(),
@@ -16,8 +16,8 @@ const {
   ChannexBookingAvailabilityRepository,
   getAffectedDateKeysForBookingChange,
   countActiveBookingsByNight,
-} = require("./channexBookingAvailabilityBridge.js");
-const Database = require("../ORM/index.js").default;
+} = require("../.shared/channelManagement/channexBookingAvailabilityBridge.js");
+const Database = require("../.shared/integrations/ORM/index.js").default;
 
 const DOMITS_PROPERTY_ID = "domits-property-1";
 const EXTERNAL_PROPERTY_ID = "external-property-1";
@@ -141,6 +141,24 @@ describe("ChannexBookingAvailabilityBridge", () => {
         }),
       })
     ).toEqual(["2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04"]);
+  });
+
+  test("cancel affected nights use the original booking dates and exclude checkout", () => {
+    expect(
+      getAffectedDateKeysForBookingChange({
+        trigger: "BOOKING_CANCELLED",
+        bookingBefore: buildBooking({
+          arrivaldate: "2026-06-01",
+          departuredate: "2026-06-03",
+          status: "Paid",
+        }),
+        bookingAfter: buildBooking({
+          arrivaldate: "2026-06-01",
+          departuredate: "2026-06-03",
+          status: "Cancelled",
+        }),
+      })
+    ).toEqual(["2026-06-01", "2026-06-02"]);
   });
 
   test("counts only active bookings per night", () => {
@@ -287,6 +305,48 @@ describe("ChannexBookingAvailabilityBridge", () => {
       { date: "2026-06-02", availability: 1 },
       { date: "2026-06-04", availability: 0 },
       { date: "2026-06-05", availability: 0 },
+    ]);
+  });
+
+  test("cancel recalculates current active bookings and restores availability without full sync or restrictions", async () => {
+    const bookingBefore = buildBooking({
+      arrivaldate: "2026-06-01",
+      departuredate: "2026-06-03",
+      status: "Paid",
+    });
+    const bookingAfter = buildBooking({
+      arrivaldate: "2026-06-01",
+      departuredate: "2026-06-03",
+      status: "Cancelled",
+    });
+    const { bridge, fakes } = buildBridge({
+      countOfRooms: 1,
+      activeBookings: [],
+    });
+
+    const evidence = await bridge.syncAvailabilityForBookingChange({
+      userId: "host-1",
+      trigger: "BOOKING_CANCELLED",
+      bookingBefore,
+      bookingAfter,
+    });
+
+    expect(fakes.channexProviderClient.pushAvailability).toHaveBeenCalledTimes(1);
+    expect(fakes.channexProviderClient.pushRestrictions).not.toHaveBeenCalled();
+    expect(fakes.channexProviderClient.pushRates).not.toHaveBeenCalled();
+    expect(fakes.channexProviderClient.syncChannexFull).not.toHaveBeenCalled();
+    expect(evidence).toMatchObject({
+      trigger: "BOOKING_CANCELLED",
+      syncType: "booking-availability",
+      affectedDates: ["2026-06-01", "2026-06-02"],
+      requestCount: 1,
+      taskIds: ["task-1"],
+      overallSuccess: true,
+      skipped: false,
+    });
+    expect(evidence.availabilityValuesSent.map(({ date, availability }) => ({ date, availability }))).toEqual([
+      { date: "2026-06-01", availability: 1 },
+      { date: "2026-06-02", availability: 1 },
     ]);
   });
 
