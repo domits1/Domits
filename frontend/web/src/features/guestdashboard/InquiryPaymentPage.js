@@ -55,7 +55,22 @@ const InquiryPaymentPage = () => {
   }, [bookingId]);
 
   if (loading) return <img src={spinner} alt="Loading..." className="centerObject" />;
-  if (error) return <div className="error-message">{error}</div>;
+  if (error) {
+    return (
+      <main className="PaymentOverview">
+        <div className="right-panel">
+          <h1>Payment unavailable</h1>
+          <p className="error-message">{error}</p>
+          <button
+            className="view-booking-button"
+            onClick={() => navigate(`/guestdashboard/reservation/${encodeURIComponent(bookingId || "")}`)}
+          >
+            View booking details
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="PaymentOverview">

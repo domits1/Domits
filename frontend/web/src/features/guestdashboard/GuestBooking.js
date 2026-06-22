@@ -245,13 +245,7 @@ function GuestBooking() {
   const handleBookingClick = (bookingItem) => {
     const bookingId = getBookingId(bookingItem);
     const propertyId = getPropertyId(bookingItem);
-    const status = String(bookingItem?.status ?? "").toLowerCase();
-    const bookingType = String(bookingItem?.bookingtype ?? "direct").toLowerCase();
 
-    if (bookingId && status === "awaiting payment" && bookingType === "inquiry") {
-      navigate(`/guestdashboard/pay/${encodeURIComponent(bookingId)}`);
-      return;
-    }
     if (bookingId) {
       navigate(`/guestdashboard/reservation/${encodeURIComponent(bookingId)}`);
       return;
