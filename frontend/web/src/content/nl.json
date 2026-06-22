@@ -686,6 +686,29 @@
   "howItWorksContent": {
     "title": "Hoe Domits Werkt",
     "subtitle": "Ontdek hoe Domits het gemakkelijk maakt voor zowel gasten als hosts.",
+    "redesign": {
+      "eyebrow": "Hoe het werkt",
+      "heroStart": "Reizen en hosten gemaakt ",
+      "heroHighlight": "eenvoudig.",
+      "guests": {
+        "eyebrow": "Voor gasten",
+        "heading": "Vind je perfecte verblijf in 3 eenvoudige stappen",
+        "steps": [
+          { "title": "Zoek je bestemming", "description": "Ontdek vakantieverhuur met slimme filters voor locatie, datums, prijs en voorzieningen." },
+          { "title": "Boek je verblijf", "description": "Kies je favoriete accommodatie en bevestig je boeking in slechts een paar klikken." },
+          { "title": "Beleef Domits", "description": "Stuur je host een bericht, beheer je reis en geniet van persoonlijke ondersteuning." }
+        ]
+      },
+      "hosts": {
+        "eyebrow": "Voor hosts",
+        "heading": "Laat je verhuurbedrijf moeiteloos groeien",
+        "steps": [
+          { "title": "Plaats je accommodatie", "description": "Voeg foto's, beschrijving en voorzieningen toe en stel in enkele minuten je prijs en beschikbaarheid in." },
+          { "title": "Beheer boekingen", "description": "Volg boekingen, beheer je agenda en communiceer eenvoudig met gasten." },
+          { "title": "Word veilig betaald", "description": "Ontvang betalingen veilig en volg je inkomsten en inzichten in realtime." }
+        ]
+      }
+    },
     "guest": {
       "title": "Gasten",
       "destination": {

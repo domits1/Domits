@@ -686,6 +686,29 @@
   "howItWorksContent": {
     "title": "Cómo Funciona Domits",
     "subtitle": "Descubre cómo Domits facilita todo para huéspedes y anfitriones.",
+    "redesign": {
+      "eyebrow": "Cómo funciona",
+      "heroStart": "Viajar y hospedar de forma ",
+      "heroHighlight": "sencilla.",
+      "guests": {
+        "eyebrow": "Para huéspedes",
+        "heading": "Encuentra tu estancia perfecta en 3 sencillos pasos",
+        "steps": [
+          { "title": "Busca tu destino", "description": "Explora alquileres vacacionales con filtros inteligentes por ubicación, fechas, precio y comodidades." },
+          { "title": "Reserva tu estancia", "description": "Elige tu alojamiento preferido y confirma tu reserva en solo unos clics." },
+          { "title": "Vive Domits", "description": "Escribe a tu anfitrión, gestiona tu viaje y disfruta de soporte personalizado." }
+        ]
+      },
+      "hosts": {
+        "eyebrow": "Para anfitriones",
+        "heading": "Haz crecer tu negocio de alquiler con facilidad",
+        "steps": [
+          { "title": "Publica tu propiedad", "description": "Añade fotos, descripción y comodidades y fija tu precio y disponibilidad en minutos." },
+          { "title": "Gestiona reservas", "description": "Haz seguimiento de las reservas, gestiona tu calendario y comunícate fácilmente con los huéspedes." },
+          { "title": "Cobra de forma segura", "description": "Recibe pagos de forma segura y haz seguimiento de tus ingresos e información en tiempo real." }
+        ]
+      }
+    },
     "guest": {
       "title": "Huéspedes",
       "destination": {
