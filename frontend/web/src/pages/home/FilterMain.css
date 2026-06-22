@@ -46,6 +46,7 @@
 
 .filter-amenities-modal-header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
@@ -64,6 +65,8 @@
 
 .filter-amenities-modal-body {
   padding: 16px 20px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -94,6 +97,7 @@
 }
 
 .filter-amenities-modal-footer {
+  flex-shrink: 0;
   padding: 16px 20px;
   border-top: 1px solid #e6e6e6;
 }
