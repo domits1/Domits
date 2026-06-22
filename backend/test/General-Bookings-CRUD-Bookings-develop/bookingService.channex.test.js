@@ -78,6 +78,7 @@ const buildService = ({
     },
     stripeRepository: {
       getPaymentIntentByPaymentId: jest.fn().mockResolvedValue({ status: "succeeded" }),
+      getPaymentByPaymentId: jest.fn().mockResolvedValue({ stripeclientsecret: "secret_1" }),
       ...stripeRepository,
     },
     cognitoRepository: {},
@@ -314,6 +315,40 @@ describe("BookingService Channex booking availability hooks", () => {
 
     expect(dependencies.reservationRepository.markBookingPaidWithOutbox).toHaveBeenCalledWith("booking-1");
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
+  });
+
+  test("getPayment read returns the stored client secret for the booking guest", async () => {
+    const { service, dependencies } = buildService({
+      reservationRepository: {
+        getBookingById: jest.fn().mockResolvedValue({
+          response: {
+            id: "booking-1",
+            guestid: "guest-1",
+            paymentid: "pi_1",
+          },
+        }),
+      },
+      stripeRepository: {
+        getPaymentByPaymentId: jest.fn().mockResolvedValue({
+          stripeclientsecret: "secret_1",
+        }),
+      },
+    });
+
+    const result = await service.read({
+      Authorization: "Bearer guest-token",
+      event: {
+        readType: "getPayment",
+        bookingId: "booking-1",
+      },
+    });
+
+    expect(dependencies.reservationRepository.getBookingById).toHaveBeenCalledWith("booking-1");
+    expect(dependencies.stripeRepository.getPaymentByPaymentId).toHaveBeenCalledWith("pi_1");
+    expect(result).toEqual({
+      statusCode: 200,
+      response: "secret_1",
+    });
   });
 
   test("booking response keeps existing payment fields and adds optional evidence", async () => {
