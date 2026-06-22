@@ -10,20 +10,29 @@ import {
   toDateKey,
 } from "../utils/dateAvailability";
 
+const fixedPopperProps = { strategy: "fixed" };
+
 const CheckOut = ({
   checkOutDate = "",
   setCheckOutDate = () => {},
   checkInDate = "",
   unavailableDateKeys = [],
+  bookedDateKeys = [],
+  availabilityRanges = null,
+  availableDateKeys = null,
 }) => {
   const minCheckOutDate = checkInDate ? addDaysToDateKey(checkInDate, 1) : getFutureDateKey(2);
+
   const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
+  const bookedDateSet = buildUnavailableDateSet(bookedDateKeys);
+
   const selectedCheckOutDate = normalizeDateValue(checkOutDate);
   const selectedCheckInDate = normalizeDateValue(checkInDate);
 
   return (
     <div className="date-box">
       <p className="label">Check out</p>
+
       <div className="date-picker-field">
         <DatePicker
           selected={selectedCheckOutDate}
@@ -36,12 +45,19 @@ const CheckOut = ({
               return false;
             }
 
-            return !hasUnavailableDateInStayRange(selectedCheckInDate, date, unavailableDateSet);
+            return !hasUnavailableDateInStayRange(selectedCheckInDate, date, unavailableDateSet, {
+              availabilityRanges,
+              availableDateKeys,
+              bookedDateKeys: bookedDateSet,
+            });
           }}
           dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
           dateFormat="yyyy-MM-dd"
           placeholderText="YYYY-MM-DD"
+          portalId="datepicker-portal"
+          popperProps={fixedPopperProps}
         />
+
         <span className="date-picker-icon" aria-hidden="true">
           <FaCalendarAlt />
         </span>
@@ -55,6 +71,14 @@ CheckOut.propTypes = {
   setCheckOutDate: PropTypes.func,
   checkInDate: PropTypes.string,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default CheckOut;

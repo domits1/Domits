@@ -162,6 +162,16 @@
   text-decoration: none;
 }
 
+.publicSiteValueLink {
+  align-self: flex-start;
+  color: #1f4e79;
+  display: inline-block;
+}
+
+.publicSiteValueLink .publicSiteValue {
+  color: inherit;
+}
+
 .publicSiteLink:hover,
 .publicSiteLink:focus-visible {
   text-decoration: underline;
@@ -227,6 +237,19 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+}
+
+.previewPanelHeaderCopy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.previewPanelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .panelTitle {
@@ -346,6 +369,237 @@
   min-height: 420px;
 }
 
+.previewSkeletonFrame {
+  display: grid;
+  place-items: start center;
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+  min-height: 640px;
+  padding: 0 0 8px;
+  box-sizing: border-box;
+}
+
+.previewSkeletonViewport {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  transition: max-width 0.2s ease;
+}
+
+.previewSkeletonViewportDesktop {
+  max-width: 1100px;
+}
+
+.previewSkeletonViewportTablet {
+  max-width: 820px;
+}
+
+.previewSkeletonViewportMobile {
+  max-width: 420px;
+}
+
+.previewSkeletonSurface {
+  display: grid;
+  gap: clamp(20px, 2.8vw, 32px);
+  width: 100%;
+  min-width: 0;
+  padding: clamp(18px, 2.2vw, 28px);
+  box-sizing: border-box;
+  border-radius: 36px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background:
+    radial-gradient(circle at top left, rgba(31, 78, 121, 0.06), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.98)),
+    #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.previewSkeletonSection,
+.previewSkeletonFooterSection {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+.previewSkeletonPiece {
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(226, 232, 240, 0.72) 0%,
+      rgba(248, 250, 252, 0.98) 46%,
+      rgba(226, 232, 240, 0.72) 100%
+    );
+  background-size: 220% 100%;
+  animation:
+    previewSkeletonReveal 0.48s ease forwards,
+    previewSkeletonShimmer 2.2s linear infinite;
+  animation-delay:
+    calc(var(--preview-skeleton-order, 0) * 0.08s),
+    calc(var(--preview-skeleton-order, 0) * 0.08s);
+}
+
+.previewSkeletonHero {
+  width: 100%;
+  aspect-ratio: 16 / 8.2;
+  border-radius: 30px;
+}
+
+.previewSkeletonEyebrow {
+  width: 128px;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.previewSkeletonHeading {
+  width: min(72%, 560px);
+  height: clamp(34px, 4vw, 56px);
+  border-radius: 18px;
+}
+
+.previewSkeletonHeadingMedium {
+  width: min(64%, 420px);
+  height: clamp(26px, 3vw, 40px);
+  border-radius: 16px;
+}
+
+.previewSkeletonLine {
+  width: min(76%, 640px);
+  height: 14px;
+  border-radius: 999px;
+}
+
+.previewSkeletonLineShort {
+  width: min(48%, 360px);
+  height: 14px;
+  border-radius: 999px;
+}
+
+.previewSkeletonPillRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.previewSkeletonPill {
+  min-height: 84px;
+  border-radius: 22px;
+}
+
+.previewSkeletonSplitSection {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: center;
+  gap: clamp(20px, 3vw, 36px);
+}
+
+.previewSkeletonMediaCard {
+  width: 100%;
+  aspect-ratio: 1.18 / 1;
+  border-radius: 30px;
+}
+
+.previewSkeletonCopyColumn {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+}
+
+.previewSkeletonCopyColumn .previewSkeletonEyebrow,
+.previewSkeletonCopyColumn .previewSkeletonHeadingMedium,
+.previewSkeletonCopyColumn .previewSkeletonLine,
+.previewSkeletonCopyColumn .previewSkeletonLineShort {
+  width: 100%;
+  max-width: none;
+}
+
+.previewSkeletonButton {
+  width: 154px;
+  height: 48px;
+  border-radius: 999px;
+}
+
+.previewSkeletonGalleryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.previewSkeletonGalleryCard {
+  aspect-ratio: 1.08 / 1;
+  border-radius: 24px;
+}
+
+.previewSkeletonFooterCard {
+  width: min(90%, 960px);
+  min-height: 158px;
+  border-radius: 30px;
+}
+
+@keyframes previewSkeletonReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes previewSkeletonShimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .previewSkeletonPillRow,
+  .previewSkeletonGalleryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .previewSkeletonSplitSection {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .previewSkeletonCopyColumn {
+    justify-items: center;
+  }
+
+  .previewSkeletonCopyColumn .previewSkeletonEyebrow,
+  .previewSkeletonCopyColumn .previewSkeletonHeadingMedium,
+  .previewSkeletonCopyColumn .previewSkeletonLine,
+  .previewSkeletonCopyColumn .previewSkeletonLineShort {
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 560px) {
+  .previewSkeletonFrame {
+    min-height: 520px;
+  }
+
+  .previewSkeletonPillRow,
+  .previewSkeletonGalleryGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .previewSkeletonSurface {
+    border-radius: 28px;
+  }
+}
+
 .sectionBlockTitle {
   margin: 0;
   font-size: 1rem;
@@ -371,6 +625,116 @@
   display: grid;
   gap: 8px;
   min-width: 0;
+}
+
+.positionMatrixFieldset {
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  border: 0;
+}
+
+.positionMatrixLegend {
+  margin: 0;
+  padding: 0;
+}
+
+.positionMatrixGrid {
+  width: fit-content;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-self: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid #dbe5ef;
+  background:
+    radial-gradient(circle at top left, rgba(31, 78, 121, 0.06), transparent 36%),
+    #f8fbff;
+}
+
+.positionMatrixButton {
+  appearance: none;
+  width: 54px;
+  height: 54px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  border-radius: 14px;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.positionMatrixButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.positionMatrixButton:focus-visible {
+  outline: none;
+  border-color: rgba(31, 78, 121, 0.38);
+  box-shadow: 0 0 0 4px rgba(31, 78, 121, 0.12);
+}
+
+.positionMatrixButtonSelected {
+  background: #f2f8fe;
+  border-color: rgba(31, 78, 121, 0.36);
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.1);
+}
+
+.positionMatrixButtonFrame {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.46);
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.98)),
+    #f8fafc;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: 4px;
+}
+
+.positionMatrixButtonDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #1f4e79;
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.12);
+}
+
+.positionMatrixButton[data-position-value="top-left"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="top-center"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="top-right"] .positionMatrixButtonFrame {
+  align-items: start;
+}
+
+.positionMatrixButton[data-position-value="bottom-left"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="bottom-center"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="bottom-right"] .positionMatrixButtonFrame {
+  align-items: end;
+}
+
+.positionMatrixButton[data-position-value="top-left"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="center-left"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="bottom-left"] .positionMatrixButtonFrame {
+  justify-items: start;
+}
+
+.positionMatrixButton[data-position-value="top-right"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="center-right"] .positionMatrixButtonFrame,
+.positionMatrixButton[data-position-value="bottom-right"] .positionMatrixButtonFrame {
+  justify-items: end;
 }
 
 .fieldLabel {
@@ -524,6 +888,12 @@
   align-items: center;
 }
 
+.colorPickerControlGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .colorPickerShell {
   width: 58px;
   height: 58px;
@@ -552,6 +922,45 @@
   box-shadow:
     0 0 0 3px rgba(31, 78, 121, 0.1),
     0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.colorPickerEyeDropperButton {
+  appearance: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid #d6e1ec;
+  background: #ffffff;
+  color: #1f4e79;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease,
+    color 0.16s ease;
+  cursor: pointer;
+}
+
+.colorPickerEyeDropperButton:hover:not(:disabled),
+.colorPickerEyeDropperButton:focus-visible {
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow:
+    0 0 0 3px rgba(31, 78, 121, 0.1),
+    0 12px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.colorPickerEyeDropperButton:focus-visible {
+  outline: none;
+}
+
+.colorPickerEyeDropperButton:disabled {
+  opacity: 0.58;
+  cursor: wait;
 }
 
 .colorPickerInput {
@@ -646,6 +1055,18 @@
   transform: translateY(-1px);
 }
 
+.toggleCardDisabled {
+  cursor: not-allowed;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.toggleCardDisabled:hover {
+  border-color: #e2e8f0;
+  box-shadow: none;
+  transform: none;
+}
+
 .toggleCopy {
   display: grid;
   gap: 4px;
@@ -663,11 +1084,65 @@
   line-height: 1.5;
 }
 
+.toggleDescription a {
+  color: #1f4e79;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.toggleDescription a:hover {
+  color: #163d61;
+}
+
 .toggleInput {
   width: 20px;
   height: 20px;
   accent-color: #1f4e79;
   cursor: pointer;
+}
+
+.toggleInput:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.collectionActionRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 52px;
+  gap: 8px;
+}
+
+.collectionSectionFooter {
+  display: grid;
+  gap: 12px;
+}
+
+.collectionAddButton {
+  justify-self: flex-start;
+}
+
+.collectionActionButton {
+  width: 100%;
+  min-width: 0;
+  padding: 0.68rem 0.5rem;
+  border-radius: 13px;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.collectionActionMoveButton {
+  font-size: 0.76rem;
+}
+
+.secondaryButton.collectionActionDeleteButton {
+  background: #dc2626;
+  color: #ffffff;
+  padding-inline: 0;
+}
+
+.secondaryButton.collectionActionDeleteButton:not(:disabled):hover {
+  background: #b91c1c;
 }
 
 .imageSlotGrid {
@@ -676,11 +1151,50 @@
 }
 
 .imageSlotMeta {
+  display: grid;
+  gap: 12px;
+}
+
+.imageSlotMetaHeader {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+}
+
+.compactToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 0.38rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid #d7e3ef;
+  background: #f8fbff;
+  color: #153e64;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+.compactToggle:hover {
+  border-color: rgba(31, 78, 121, 0.28);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+  background: #ffffff;
+}
+
+.compactToggleInput {
+  width: 14px;
+  height: 14px;
+  accent-color: #1f4e79;
+  cursor: pointer;
+}
+
+.compactToggleLabel {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .imageSlotPreview {
@@ -1045,6 +1559,11 @@
   height: 14px;
   display: block;
   filter: brightness(0) saturate(100%) invert(100%);
+  transition: transform 0.2s ease;
+}
+
+.actionMenuButtonIconOpen {
+  transform: rotate(180deg);
 }
 
 .actionMenuList {
@@ -1060,6 +1579,22 @@
   border: 1px solid rgba(31, 78, 121, 0.14);
   background: #ffffff;
   box-shadow: 0 22px 36px rgba(15, 23, 42, 0.16);
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.actionMenuListOpen {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .actionMenuItem {
@@ -1242,10 +1777,6 @@
 }
 
 @media (max-width: 860px) {
-  .heroMeta {
-    width: 100%;
-  }
-
   .actionMenuContainer {
     margin-left: 0;
     width: 100%;

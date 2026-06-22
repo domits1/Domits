@@ -1,14 +1,63 @@
-import {
-  buildAuthorizedWebsiteHostHeaders,
-  buildWebsiteHostApiUrl,
-  getWebsiteHostApiErrorMessage,
-} from "./websiteHostApi";
-import { normalizeWebsiteSiteSummary } from "./websiteSiteSummary";
+import { getAccessToken } from "../../../../services/getAccessToken";
+import { PROPERTY_API_BASE } from "../../hostproperty/constants";
+import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
 
 const buildWebsiteSiteUrl = (propertyId) =>
-  `${buildWebsiteHostApiUrl("/website/site")}?property=${encodeURIComponent(propertyId)}`;
-const buildWebsiteSitePublishUrl = () => buildWebsiteHostApiUrl("/website/site/publish");
-const buildWebsiteSiteUnpublishUrl = () => buildWebsiteHostApiUrl("/website/site/unpublish");
+  `${PROPERTY_API_BASE}/website/site?property=${encodeURIComponent(propertyId)}`;
+const buildWebsiteSitePublishUrl = () => `${PROPERTY_API_BASE}/website/site/publish`;
+const buildWebsiteSiteUnpublishUrl = () => `${PROPERTY_API_BASE}/website/site/unpublish`;
+
+const getRequiredAccessToken = () => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("You must be signed in to manage website publishing.");
+  }
+
+  return accessToken;
+};
+
+const buildAuthorizedHeaders = (contentType = null) => {
+  const headers = {
+    Authorization: getRequiredAccessToken(),
+  };
+
+  if (contentType) {
+    headers["Content-Type"] = contentType;
+  }
+
+  return headers;
+};
+
+const normalizeWebsiteSiteSummary = (payload) => {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const site = payload.site && typeof payload.site === "object" ? payload.site : null;
+  const primaryDomain =
+    payload.primaryDomain && typeof payload.primaryDomain === "object" ? payload.primaryDomain : null;
+  const domains = Array.isArray(payload.domains) ? payload.domains : [];
+
+  return {
+    site,
+    primaryDomain,
+    domains,
+    isReachable: Boolean(payload.isReachable),
+  };
+};
+
+const tryRecoverPublishedWebsiteSiteSummary = async (propertyId) => {
+  try {
+    const siteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
+    if (siteSummary?.site?.status === "PUBLISHED") {
+      return siteSummary;
+    }
+  } catch {
+    // Fall back to the original publish error when recovery is not possible.
+  }
+
+  return null;
+};
 
 export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
@@ -19,9 +68,7 @@ export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   const response = await fetch(buildWebsiteSiteUrl(normalizedPropertyId), {
     method: "GET",
     cache: "no-store",
-    headers: buildAuthorizedWebsiteHostHeaders({
-      unauthorizedMessage: "You must be signed in to manage website publishing.",
-    }),
+    headers: buildAuthorizedHeaders(),
   });
 
   if (response.status === 404) {
@@ -29,9 +76,9 @@ export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   }
 
   if (!response.ok) {
-    const errorMessage = await getWebsiteHostApiErrorMessage(
+    const errorMessage = await getApiErrorMessage(
       response,
-      "We could not load the standalone site status for this listing."
+      "We could not load the direct booking website status for this listing."
     );
     throw new Error(errorMessage);
   }
@@ -48,19 +95,21 @@ export const publishWebsiteSite = async (propertyId) => {
   const response = await fetch(buildWebsiteSitePublishUrl(), {
     method: "POST",
     cache: "no-store",
-    headers: buildAuthorizedWebsiteHostHeaders({
-      contentType: "application/json",
-      unauthorizedMessage: "You must be signed in to manage website publishing.",
-    }),
+    headers: buildAuthorizedHeaders("application/json"),
     body: JSON.stringify({
       propertyId: normalizedPropertyId,
     }),
   });
 
   if (!response.ok) {
-    const errorMessage = await getWebsiteHostApiErrorMessage(
+    const recoveredSiteSummary = await tryRecoverPublishedWebsiteSiteSummary(normalizedPropertyId);
+    if (recoveredSiteSummary) {
+      return recoveredSiteSummary;
+    }
+
+    const errorMessage = await getApiErrorMessage(
       response,
-      "We could not publish the standalone site for this listing."
+      "We could not publish the direct booking website for this listing."
     );
     throw new Error(errorMessage);
   }
@@ -77,19 +126,16 @@ export const unpublishWebsiteSite = async (propertyId) => {
   const response = await fetch(buildWebsiteSiteUnpublishUrl(), {
     method: "POST",
     cache: "no-store",
-    headers: buildAuthorizedWebsiteHostHeaders({
-      contentType: "application/json",
-      unauthorizedMessage: "You must be signed in to manage website publishing.",
-    }),
+    headers: buildAuthorizedHeaders("application/json"),
     body: JSON.stringify({
       propertyId: normalizedPropertyId,
     }),
   });
 
   if (!response.ok) {
-    const errorMessage = await getWebsiteHostApiErrorMessage(
+    const errorMessage = await getApiErrorMessage(
       response,
-      "We could not unpublish the standalone site for this listing."
+      "We could not unpublish the direct booking website for this listing."
     );
     throw new Error(errorMessage);
   }

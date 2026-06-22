@@ -2,11 +2,12 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import ImageGallery from "../components/imageGallery";
-import PricingPerNight from "../components/pricingPerNight";
-import GeneralDetails from "../components/generalDetails";
 import AmenitiesContainer from "./amenitiesContainer";
 import Description from "../components/description";
 import RangeCalendar from "./RangeCalendar";
+import WhereYoullStay from "../components/WhereYoullStay";
+import HostSection from "../components/HostSection";
+import LocationSection from "./locationSection";
 import {
   getActiveCancellationPolicyId,
   parseHouseRules,
@@ -30,11 +31,19 @@ const PropertyContainer = ({
     rules: [],
     checkIn: { checkIn: {}, checkOut: {} },
   },
+  host = {},
+  location = {},
+  onContactHost,
   unavailableDateKeys = [],
+  bookedDateKeys = [],
+  externalBlockedDateKeys = [],
+  availabilityRanges = null,
+  availableDateKeys = [],
   checkInDate = "",
   checkOutDate = "",
   setCheckInDate,
   setCheckOutDate,
+  children,
 }) => {
   const policyRules = React.useMemo(
     () =>
@@ -67,6 +76,7 @@ const PropertyContainer = ({
     () => getActiveCancellationPolicyId(property?.rules || []) || getActiveCancellationPolicyId(policyRules),
     [property?.rules, policyRules]
   );
+  const hasAmenities = Array.isArray(property?.amenities) && property.amenities.length > 0;
   const fallbackCancellationPolicy = React.useMemo(() => {
     if (property?.cancellationPolicy) {
       return parseCancellationPolicyString(property.cancellationPolicy);
@@ -106,56 +116,85 @@ const PropertyContainer = ({
           propertyTitle={property?.property?.title}
           propertyId={property?.property?.id}
         />
-        <PricingPerNight pricing={property.pricing} />
-        <GeneralDetails generalDetails={property.generalDetails} />
       </section>
-      <section id="listing-about" className="listing-section-block">
-        <Description description={property?.property?.description} />
-      </section>
-      <section id="listing-amenities" className="listing-section-block">
-        <AmenitiesContainer amenityIds={property.amenities} />
-      </section>
-      <section id="listing-availability" className="listing-section-block">
-        <RangeCalendar
-          unavailableDateKeys={unavailableDateKeys}
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
-            setCheckInDate(nextCheckInDate);
-            setCheckOutDate(nextCheckOutDate);
-          }}
-        />
-      </section>
-      <section id="listing-policies" className="listing-section-block">
-        {cancellationPolicy && (
-          <PolicySection
-            title="Cancellation Policy"
-            items={[
-              {
-                summary: cancellationPolicy.summary,
-                badge: cancellationPolicy.type
-                  ? {
-                      label: cancellationPolicy.type,
-                      color: cancellationPolicy.color,
-                    }
-                  : null,
-              },
-              ...(cancellationPolicy.details || []),
-            ]}
-            expandable={true}
-          />
+
+      {children}
+
+      <div className="listing-details-content-stack">
+        <section className="listing-section-block">
+          <Description description={property?.property?.description} />
+        </section>
+
+        <section className="listing-section-block">
+          <WhereYoullStay generalDetails={property.generalDetails} />
+        </section>
+
+        {hasAmenities && (
+          <section id="listing-amenities" className="listing-section-block">
+            <AmenitiesContainer amenityIds={property.amenities} />
+          </section>
         )}
-        {parsedHouseRules.length > 0 && <PolicySection title="House Rules" items={parsedHouseRules} />}
-        {parsedPropertyRules.length > 0 && <PolicySection title="Property Rules" items={parsedPropertyRules} />}
-        {parsedSafetyFeatures.length > 0 && <PolicySection title="Safety & Property" items={parsedSafetyFeatures} />}
-        {checkInItems.length > 0 && <PolicySection title="Check-in / Check-out" items={checkInItems} />}
-        {/* <RulesContainer rules={property.rules} checkIn={property.checkIn} /> */}
-      </section>
+
+        <section id="listing-availability" className="listing-section-block">
+          <RangeCalendar
+            unavailableDateKeys={unavailableDateKeys}
+            bookedDateKeys={bookedDateKeys}
+            externalBlockedDateKeys={externalBlockedDateKeys}
+            availabilityRanges={availabilityRanges}
+            availableDateKeys={availableDateKeys}
+            checkInDate={checkInDate}
+            checkOutDate={checkOutDate}
+            onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
+              setCheckInDate(nextCheckInDate);
+              setCheckOutDate(nextCheckOutDate);
+            }}
+          />
+        </section>
+
+        <section id="listing-host" className="listing-section-block">
+          <HostSection host={host} onContactHost={onContactHost} />
+        </section>
+
+        <section id="listing-location" className="listing-section-block">
+          <LocationSection location={location} />
+        </section>
+
+        <section id="listing-policies" className="listing-section-block">
+          {cancellationPolicy && (
+            <PolicySection
+              title="Cancellation Policy"
+              items={[
+                {
+                  summary: cancellationPolicy.summary,
+                  badge: cancellationPolicy.type
+                    ? {
+                        label: cancellationPolicy.type,
+                        color: cancellationPolicy.color,
+                      }
+                    : null,
+                },
+                ...(cancellationPolicy.details || []),
+              ]}
+              expandable={true}
+            />
+          )}
+          {parsedHouseRules.length > 0 && <PolicySection title="House Rules" items={parsedHouseRules} />}
+          {parsedPropertyRules.length > 0 && <PolicySection title="Property Rules" items={parsedPropertyRules} />}
+          {parsedSafetyFeatures.length > 0 && <PolicySection title="Safety & Property" items={parsedSafetyFeatures} />}
+          {checkInItems.length > 0 && <PolicySection title="Check-in / Check-out" items={checkInItems} />}
+        </section>
+      </div>
     </div>
   );
 };
 
 PropertyContainer.propTypes = {
+  location: PropTypes.shape({
+    street: PropTypes.string,
+    houseNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    city: PropTypes.string,
+    country: PropTypes.string,
+  }),
   property: PropTypes.shape({
     images: PropTypes.array,
     pricing: PropTypes.shape({
@@ -183,7 +222,19 @@ PropertyContainer.propTypes = {
       }),
     }),
   }),
+  host: PropTypes.object,
+  onContactHost: PropTypes.func,
+  children: PropTypes.node,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  externalBlockedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.arrayOf(PropTypes.string),
   checkInDate: PropTypes.string,
   checkOutDate: PropTypes.string,
   setCheckInDate: PropTypes.func.isRequired,

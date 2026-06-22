@@ -27,6 +27,14 @@ $color-muted: #6b7280;
   }
 }
 
+@mixin skeleton-block {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: finance-skeleton-wave 1.25s ease-in-out infinite;
+}
+
 .page-Host--loading {
   position: fixed;
   inset: 0;
@@ -74,6 +82,124 @@ $color-muted: #6b7280;
   @include up($bp-md) {
     gap: 24px;
   }
+}
+
+.finance-inline-loader {
+  display: inline-flex;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.finance-section-loader {
+  display: grid;
+  gap: 14px;
+  align-items: start;
+}
+
+.finance-skeleton-block {
+  @include skeleton-block;
+  display: block;
+  border-radius: 10px;
+
+  &--table-cell {
+    height: 14px;
+  }
+
+  &--meter {
+    height: 14px;
+    border-radius: 999px;
+  }
+
+  &--label {
+    height: 14px;
+    width: min(180px, 48%);
+  }
+
+  &--value {
+    height: 14px;
+    width: 92px;
+    margin-left: auto;
+  }
+
+  &--input {
+    height: 44px;
+    width: 100%;
+  }
+
+  &--faq-title {
+    height: 18px;
+    width: min(260px, 72%);
+  }
+
+  &--faq-body {
+    height: 12px;
+    width: 100%;
+  }
+
+  &--faq-body-short {
+    width: min(380px, 84%);
+  }
+}
+
+.finance-skeleton-table {
+  display: grid;
+  gap: 10px;
+
+  &__header,
+  &__row {
+    display: grid;
+    gap: 10px;
+  }
+}
+
+.finance-balance-skeleton {
+  display: grid;
+  gap: 14px;
+
+  &__list {
+    display: grid;
+    gap: 10px;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.finance-form-skeleton {
+  display: grid;
+  gap: 14px;
+
+  &__row {
+    display: grid;
+    gap: 8px;
+
+    @include up($bp-md) {
+      grid-template-columns: 220px 1fr;
+      align-items: center;
+      gap: 16px;
+    }
+  }
+}
+
+.faq-skeleton-list {
+  display: grid;
+  gap: 12px;
+
+  @include up($bp-md) {
+    gap: 14px;
+  }
+}
+
+.faq-skeleton-item {
+  background: $muted;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  display: grid;
+  gap: 10px;
 }
 
 .finance-steps {
@@ -675,5 +801,122 @@ $color-muted: #6b7280;
 @include up($bp-sm) {
   .faq-item {
     padding: 16px 16px 14px;
+  }
+}
+
+.finance-stripe-alert {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-left: 4px solid $color-danger;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  color: #7f1d1d;
+
+  strong {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0 0 12px;
+    color: #991b1b;
+  }
+}
+
+.invoices-section {
+  margin-top: 32px;
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+}
+
+.invoices-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.invoices-filter-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid $color-success;
+  background: transparent;
+  color: $color-success;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &.active {
+    background: $color-success;
+    color: #fff;
+  }
+
+  &:hover:not(.active) {
+    background: rgba($color-success, 0.08);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.invoices-loading,
+.invoices-empty {
+  color: $color-muted;
+  font-size: 0.9rem;
+}
+
+.invoices-error {
+  color: $color-danger;
+  font-size: 0.9rem;
+}
+
+.invoice-status {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  &--finalized {
+    background: rgba($color-success, 0.12);
+    color: $color-success;
+  }
+
+  &--draft {
+    background: rgba($color-pending, 0.16);
+    color: $color-pending;
+  }
+}
+
+.invoice-download-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid $color-success;
+  background: transparent;
+  color: $color-success;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-success;
+    color: #fff;
+  }
+}
+
+@keyframes finance-skeleton-wave {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
   }
 }

@@ -1,16 +1,14 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
-import {
-  Globe,
-  DollarSign,
-  Mail,
-  CreditCard,
-  BarChart3,
-  Zap
-} from "lucide-react";
+import { Globe, DollarSign, Mail, CreditCard, BarChart3, Zap } from "lucide-react";
 
-function WhySection() {
+const FEATURE_ICONS = [Globe, DollarSign, Mail, CreditCard, BarChart3, Zap];
+
+function WhySection({ content }) {
+  const features = content?.features ? Object.values(content.features) : [];
+
   return (
     <motion.section
       className="why"
@@ -24,47 +22,23 @@ function WhySection() {
         <motion.div className="why__content" variants={staggerContainer}>
 
           <motion.h2 variants={fadeUp}>
-            Why <span>Domits</span>
+            {content.sectionTitle} <span>Domits</span>
           </motion.h2>
 
           <motion.p variants={fadeUp}>
-            Domits transforms the future of luxury vacation rental management into
-            a seamless experience. From listing to payout, everything is handled in
-            one centralized place so you can focus on growth, not operations.
+            {content.sectionDescription}
           </motion.p>
 
           <motion.div className="why__features" variants={staggerContainer}>
-
-            <motion.div className="why__feature" variants={fadeUp}>
-              <div className="why__icon"><Globe size={16} /></div>
-              <span>Domits PMS with OTA</span>
-            </motion.div>
-
-            <motion.div className="why__feature" variants={fadeUp}>
-              <div className="why__icon"><DollarSign size={16} /></div>
-              <span>Revenue Management</span>
-            </motion.div>
-
-            <motion.div className="why__feature" variants={fadeUp}>
-              <div className="why__icon"><Mail size={16} /></div>
-              <span>Direct Reservations</span>
-            </motion.div>
-
-            <motion.div className="why__feature" variants={fadeUp}>
-              <div className="why__icon"><CreditCard size={16} /></div>
-              <span>Finance Suite</span>
-            </motion.div>
-
-            <motion.div className="why__feature" variants={fadeUp}>
-              <div className="why__icon"><BarChart3 size={16} /></div>
-              <span>Channel Management</span>
-            </motion.div>
-
-            <motion.div className="why__feature" variants={fadeUp}>
-              <div className="why__icon"><Zap size={16} /></div>
-              <span>Task Automations</span>
-            </motion.div>
-
+            {features.map((label, i) => {
+              const Icon = FEATURE_ICONS[i];
+              return (
+                <motion.div className="why__feature" variants={fadeUp} key={label}>
+                  <div className="why__icon">{Icon && <Icon size={16} />}</div>
+                  <span>{label}</span>
+                </motion.div>
+              );
+            })}
           </motion.div>
 
         </motion.div>
@@ -84,7 +58,7 @@ function WhySection() {
 
             <div className="why__badge">
               <span>Average rating</span>
-              <strong>4.9 ★</strong>
+              <strong>{content.rating}</strong>
             </div>
 
           </div>
@@ -94,5 +68,9 @@ function WhySection() {
     </motion.section>
   );
 }
+
+WhySection.propTypes = {
+  content: PropTypes.object.isRequired,
+};
 
 export default WhySection;

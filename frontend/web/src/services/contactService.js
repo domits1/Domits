@@ -1,5 +1,7 @@
 // Contact Service - Handles contact form submission to backend
-const API_BASE_URL = "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
+const API_BASE_URL =
+  process.env.REACT_APP_CONTACT_EMAIL_ENDPOINT ||
+  "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 

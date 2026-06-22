@@ -1,6 +1,6 @@
 import "./styles/sass/app.scss";
 import { ApolloClient, ApolloProvider, HttpLink, InMemoryCache } from "@apollo/client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import Modal from "react-modal";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -8,7 +8,6 @@ import "react-toastify/dist/ReactToastify.css";
 import "./styles/toast-notifications.scss";
 import Footer from "./components/base/Footer";
 import Header from "./components/base/Header";
-import MenuBar from "./components/base/MenuBar";
 import { AuthProvider } from "./features/auth/AuthContext";
 import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
@@ -25,27 +24,12 @@ import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
-import PropertyRateView from "./features/hostonboarding/views/10_PropertyRateView.js";
-import PropertyAvailabilityView from "./features/hostonboarding/views/11_PropertyAvailabilityView.js";
-import SummaryViewAndSubmit from "./features/hostonboarding/views/12_SummarySubmitView.js";
-import AccommodationTypeView from "./features/hostonboarding/views/1_AccommodationTypeView.js";
-import BoatTypeView from "./features/hostonboarding/views/1b_BoatTypeView.js";
-import CamperTypeView from "./features/hostonboarding/views/1c_CamperTypeView.js";
-import HouseTypeView from "./features/hostonboarding/views/2_HouseTypeView.js";
-import AddressInputView from "./features/hostonboarding/views/3_AddressInputView.js";
-import PropertyGuestAmountView from "./features/hostonboarding/views/4_PropertyCapacityView";
-import CapacityView from "./features/hostonboarding/views/4_PropertyCapacityView.js";
-import PropertyHouseRulesView from "./features/hostonboarding/views/6_PropertyHouseRulesView.js";
-import PhotosView from "./features/hostonboarding/views/7_PropertyPhotosView.js";
-import PropertyTitleView from "./features/hostonboarding/views/8_PropertyTitleView.js";
-import PropertyDescriptionView from "./features/hostonboarding/views/9_PropertyDescriptionView.js";
 import ReviewPage from "./features/review/ReviewPage";
 import StripeCallback from "./features/stripe/StripeCallback";
 import Sustainability from "./features/sustainability/Sustainability";
 import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
 import PhoneNumberView from "./features/verification/hostverification/HostVerifyPhoneNumber.js";
 import PhoneNumberConfirmView from "./features/verification/hostverification/HostVerifyPhoneNumberConfirm.js";
-import RegistrationNumberView from "./features/verification/hostverification/HostVerifyRegistrationNumber.js";
 import About from "./pages/about/About";
 import Careers from "./pages/careers/Careers";
 import JobDetails from "./pages/careers/jobDetails.js";
@@ -68,9 +52,6 @@ import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
-import { BuilderProvider } from "./context/propertyBuilderContext";
-import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
-import OnboardingLayout from "./features/hostonboarding/OnboardingLayout";
 import Navbar from "./components/base/navbar";
 import publicKeys from "./utils/const/publicKeys.json";
 import { loadStripe } from "@stripe/stripe-js";
@@ -79,9 +60,10 @@ import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
 import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
+import AcceptInvite from "./features/hostdashboard/AcceptInvite";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
-const DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX = "standalone.domits.com";
+const DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com";
 const apolloClient = new ApolloClient({
   link: new HttpLink({
     uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
@@ -99,7 +81,7 @@ function RedirectHostOnboardingCatchAll() {
   return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
 }
 
-const normalizeStandaloneHostName = (value) => {
+const normalizeDirectBookingWebsiteHostName = (value) => {
   const normalizedValue = String(value || "").trim().toLowerCase();
   if (!normalizedValue) {
     return "";
@@ -108,11 +90,15 @@ const normalizeStandaloneHostName = (value) => {
   return normalizedValue.split(":")[0] || "";
 };
 
-const isStandaloneWebsiteHostName = (hostName) => {
-  const normalizedHostName = normalizeStandaloneHostName(hostName);
-  const fallbackDomainSuffix = normalizeStandaloneHostName(
-    process.env.REACT_APP_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX || DEFAULT_STANDALONE_SITE_FALLBACK_DOMAIN_SUFFIX
+const getDirectBookingWebsiteFallbackDomainSuffix = () =>
+  normalizeDirectBookingWebsiteHostName(
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX ||
+      DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX
   );
+
+const isDirectBookingWebsiteHostName = (hostName) => {
+  const normalizedHostName = normalizeDirectBookingWebsiteHostName(hostName);
+  const fallbackDomainSuffix = getDirectBookingWebsiteFallbackDomainSuffix();
 
   if (!normalizedHostName || !fallbackDomainSuffix) {
     return false;
@@ -141,16 +127,53 @@ function App() {
   const currentHostName = currentLocation.hostname;
   const isWebsitePreviewPath = currentPath.startsWith("/website-preview");
   const isWebsiteLivePath = currentPath.startsWith("/website-live");
-  const isStandaloneWebsiteHost = isStandaloneWebsiteHostName(currentHostName);
-  const isStandaloneWebsiteSurface = isWebsitePreviewPath || isWebsiteLivePath || isStandaloneWebsiteHost;
-  const shouldRenderStandardHeader = currentPath !== "/admin" && isStandaloneWebsiteSurface === false;
-  const shouldRenderNavbar = isStandaloneWebsiteSurface === false;
+  const isDirectBookingWebsiteHost = isDirectBookingWebsiteHostName(currentHostName);
+  const isDirectBookingWebsiteSurface = isWebsitePreviewPath || isWebsiteLivePath || isDirectBookingWebsiteHost;
+  const shouldRenderStandardHeader = currentPath !== "/admin" && isDirectBookingWebsiteSurface === false;
+  const shouldRenderNavbar = isDirectBookingWebsiteSurface === false;
+
+  useLayoutEffect(() => {
+    const documentElement = globalThis.document?.documentElement;
+    const body = globalThis.document?.body;
+    if (!documentElement || !body) {
+      return undefined;
+    }
+
+    const previousHtmlMarginTop = documentElement.style.marginTop;
+    const previousHtmlPaddingTop = documentElement.style.paddingTop;
+    const previousBodyMargin = body.style.margin;
+    const previousBodyPaddingTop = body.style.paddingTop;
+
+    documentElement.classList.toggle("directBookingWebsiteSurfaceHtml", isDirectBookingWebsiteSurface);
+    body.classList.toggle("directBookingWebsiteSurfaceBody", isDirectBookingWebsiteSurface);
+
+    if (isDirectBookingWebsiteSurface) {
+      documentElement.style.marginTop = "0";
+      documentElement.style.paddingTop = "0";
+      body.style.margin = "0";
+      body.style.paddingTop = "0";
+    } else {
+      documentElement.style.marginTop = previousHtmlMarginTop;
+      documentElement.style.paddingTop = previousHtmlPaddingTop;
+      body.style.margin = previousBodyMargin;
+      body.style.paddingTop = previousBodyPaddingTop;
+    }
+
+    return () => {
+      documentElement.classList.remove("directBookingWebsiteSurfaceHtml");
+      body.classList.remove("directBookingWebsiteSurfaceBody");
+      documentElement.style.marginTop = previousHtmlMarginTop;
+      documentElement.style.paddingTop = previousHtmlPaddingTop;
+      body.style.margin = previousBodyMargin;
+      body.style.paddingTop = previousBodyPaddingTop;
+    };
+  }, [isDirectBookingWebsiteSurface]);
 
   const renderFooter = () => {
     if (
       ["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(currentPath) ||
       currentPath.startsWith("/verify") ||
-      isStandaloneWebsiteSurface
+      isDirectBookingWebsiteSurface
     ) {
       return null;
     }
@@ -158,13 +181,14 @@ function App() {
   };
 
   const renderChatWidget = () => {
-    if (currentPath.startsWith("/verify") || isStandaloneWebsiteSurface) {
+    if (currentPath.startsWith("/verify") || isDirectBookingWebsiteSurface) {
       return null;
     }
     return <ChatWidget />;
   };
 
   const [flowState, setFlowState] = useState({ isHost: false });
+  const flowContextValue = useMemo(() => ({ flowState, setFlowState }), [flowState]);
 
   return (
     <ApolloProvider client={apolloClient}>
@@ -183,7 +207,7 @@ function App() {
         pauseOnHover
         theme="light"
       />
-      <FlowContext.Provider value={{ flowState, setFlowState }}>
+      <FlowContext.Provider value={flowContextValue}>
         <Router>
           <ScrollToTop />
           <AuthProvider>
@@ -193,8 +217,8 @@ function App() {
                   <Header setSearchResults={setSearchResults} setLoading={setLoading} />
                 ) : null}
                 <Routes>
-                  <Route path="/home" element={<Home searchResults={searchResults} />} />
-                  <Route path="/" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
+                  <Route path="/home" element={<Home searchResults={searchResults} searchInProgress={loading} />} />
+                  <Route path="/" element={isDirectBookingWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/data-safety" element={<Datasafety />} />
                   <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
@@ -278,6 +302,7 @@ function App() {
                     }
                   />
 
+                  <Route path="/team/accept" element={<AcceptInvite />} />
                   <Route path="/stripe/callback" element={<StripeCallback />} />
 
                   {/* Career, Policies, and Terms */}
@@ -294,10 +319,9 @@ function App() {
                   <Route path="/hostonboarding/*" element={<RedirectHostOnboardingCatchAll />} />
 
                   {/* 404 */}
-                  <Route path="/*" element={isStandaloneWebsiteHost ? <WebsitePublicSitePage /> : <PageNotFound />} />
+                  <Route path="/*" element={isDirectBookingWebsiteHost ? <WebsitePublicSitePage /> : <PageNotFound />} />
                 </Routes>
                 {renderFooter()}
-                {shouldRenderStandardHeader ? <MenuBar /> : null}
                 {renderChatWidget()}
               </div>
             </UserProvider>

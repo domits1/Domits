@@ -10,15 +10,18 @@ import {
   getFaqs,
 } from "../services/stripeAccountService";
 
-const REFRESH_INTERVAL_MS = 1000;
+// Finance data does not need second-by-second polling. Focus refreshes still run,
+// and a slower background interval reduces dashboard churn while keeping data fresh.
+const REFRESH_INTERVAL_MS = 30000;
 
 export function RefreshFunctions() {
-  const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
   const [charges, setCharges] = useState([]);
   const [hostBalance, setHostBalance] = useState({ available: [], pending: [] });
   const [accountId, setAccountId] = useState(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [chargesEnabled, setChargesEnabled] = useState(true);
+  const [payoutsEnabled, setPayoutsEnabled] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
   const [payoutInterval, setPayoutInterval] = useState(null);
@@ -27,22 +30,24 @@ export function RefreshFunctions() {
   const [faqs, setFaqs] = useState([]);
   const [loadingStates, setLoadingStates] = useState({
     account: true,
-    charges: false,
-    payouts: false,
-    hostBalance: false,
-    getPayoutSchedule: false,
+    charges: true,
+    payouts: true,
+    hostBalance: true,
+    getPayoutSchedule: true,
+    faqs: true,
   });
 
   const [toast, setToast] = useState(null);
 
   const isMountedRef = useRef(false);
+  const toastTimeoutRef = useRef(null);
 
   const updateLoadingState = (key, value) => setLoadingStates((prev) => ({ ...prev, [key]: value }));
 
   function showToast(message, type = "success") {
     setToast({ message, type });
-    clearTimeout(showToast);
-    showToast = setTimeout(() => setToast(null), 2000);
+    clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2000);
   }
 
   useEffect(() => {
@@ -55,10 +60,11 @@ export function RefreshFunctions() {
         if (!details) return;
         setAccountId(details.accountId);
         setOnboardingComplete(details.onboardingComplete);
+        setChargesEnabled(details.chargesEnabled ?? true);
+        setPayoutsEnabled(details.payoutsEnabled ?? true);
       } catch (error) {
         console.error("Error fetching user data or Stripe status:", error);
       } finally {
-        setLoading(false);
         updateLoadingState("account", false);
       }
     })();
@@ -71,7 +77,6 @@ export function RefreshFunctions() {
       } catch (error) {
         console.error("Error fetching charges:", error);
       } finally {
-        setLoading(false);
         updateLoadingState("charges", false);
       }
     })();
@@ -84,7 +89,6 @@ export function RefreshFunctions() {
       } catch (error) {
         console.error("Error fetching host balance:", error);
       } finally {
-        setLoading(false);
         updateLoadingState("hostBalance", false);
       }
     })();
@@ -97,7 +101,6 @@ export function RefreshFunctions() {
       } catch (error) {
         console.error("Error fetching payouts:", error);
       } finally {
-        setLoading(false);
         updateLoadingState("payouts", false);
       }
     })();
@@ -112,7 +115,6 @@ export function RefreshFunctions() {
       } catch (error) {
         console.error("Error fetching host payout schedule:", error);
       } finally {
-        setLoading(false);
         updateLoadingState("getPayoutSchedule", false);
       }
     })();
@@ -125,13 +127,13 @@ export function RefreshFunctions() {
       } catch (error) {
         console.error("Error fetching FAQs:", error);
       } finally {
-        setLoading(false);
         updateLoadingState("faqs", false);
       }
     })();
 
     return () => {
       isMountedRef.current = false;
+      clearTimeout(toastTimeoutRef.current);
     };
   }, []);
 
@@ -141,6 +143,8 @@ export function RefreshFunctions() {
       if (!isMountedRef.current) return;
       setAccountId(details?.accountId ?? null);
       setOnboardingComplete(!!details?.onboardingComplete);
+      setChargesEnabled(details?.chargesEnabled ?? true);
+      setPayoutsEnabled(details?.payoutsEnabled ?? true);
     } catch (e) {
       console.error("silent account refresh failed:", e);
     }
@@ -283,12 +287,13 @@ export function RefreshFunctions() {
 
   return {
     toast,
-    loading,
     payouts,
     charges,
     hostBalance,
     accountId,
     onboardingComplete,
+    chargesEnabled,
+    payoutsEnabled,
     isProcessing,
     processingStep,
     payoutInterval,

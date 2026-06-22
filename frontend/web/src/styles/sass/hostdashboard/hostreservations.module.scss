@@ -3,9 +3,18 @@ $secondary-color: #374151;
 $highlight-color: #4a647c;
 $border-color: #e5e7eb;
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .container {
-  padding: 40px 50px;
+  width: 100%;
   max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 50px;
+  overflow-x: hidden;
 }
 
 .title {
@@ -25,21 +34,21 @@ $border-color: #e5e7eb;
 }
 
 .searchBox {
-  flex: 1;
   position: relative;
   display: flex;
+  flex: 1;
   align-items: center;
-  background: #ffffff;
+  padding: 10px 14px;
   border: 1px solid $border-color;
   border-radius: 10px;
-  padding: 10px 14px;
+  background: #ffffff;
 }
 
 .searchBox input {
-  border: none;
   width: 100%;
-  outline: none;
   padding-left: 30px;
+  border: none;
+  outline: none;
   font-size: 14px;
 }
 
@@ -50,26 +59,28 @@ $border-color: #e5e7eb;
 }
 
 .dropdown {
-  border-radius: 10px;
   padding: 10px 14px;
   border: 1px solid $border-color;
-  background: #fff;
+  border-radius: 10px;
+  background: #ffffff;
 }
 
 .tabs {
   display: flex;
   gap: 24px;
-  border-bottom: 1px solid $border-color;
   margin-bottom: 25px;
+  overflow-x: auto;
+  border-bottom: 1px solid $border-color;
 }
 
 .tabs button {
-  background: none;
-  border: none;
   padding: 10px 0;
-  cursor: pointer;
+  border: none;
+  background: none;
   color: #6b7280;
   font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .tabs .active {
@@ -80,6 +91,7 @@ $border-color: #e5e7eb;
 .list {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .CenterMe {
@@ -98,54 +110,114 @@ $border-color: #e5e7eb;
   opacity: 0.7;
 }
 
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .reservationTable {
   width: 100%;
   border-collapse: collapse;
+}
 
-  th,
-  td {
-    border-right: 1px solid $border-color;
+.reservationTable th,
+.reservationTable td {
+  border-right: 1px solid $border-color;
+}
+
+.reservationTable th:last-child,
+.reservationTable td:last-child {
+  border-right: none;
+}
+
+.reservationTable thead th {
+  padding: 14px;
+  border-bottom: 2px solid $border-color;
+  background: $primary-color;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.reservationTable tbody td {
+  padding: 14px;
+  border: 1px solid #b2b6ba;
+  color: #374151;
+  font-size: 13px;
+}
+
+.reservationTable tbody tr:hover {
+  background: #f9fafb;
+}
+
+.reservationRow {
+  position: relative;
+  transition: background-color 0.18s ease;
+}
+
+.rowLinkOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rowLinkOverlay:focus-visible {
+  outline: 2px solid #15803d;
+  outline-offset: -2px;
+}
+
+.actionsCell,
+.inquiryActions,
+.btnAccept,
+.btnDecline {
+  position: relative;
+  z-index: 2;
+}
+
+.reservationTable td:nth-child(8),
+.reservationTable td:nth-child(9) {
+  text-align: right;
+}
+
+.thumbnailCell {
+  padding: 8px;
+
+  img.thumbnailImage {
+    width: 72px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
   }
 
-  th:last-child,
-  td:last-child {
-    border-right: none;
-  }
-
-  thead th {
-    background: $primary-color;
-    color: #ffffff;
-    font-weight: 600;
-    padding: 14px;
-    font-size: 13px;
-    text-align: left;
-    border-bottom: 2px solid $border-color;
-    white-space: nowrap;
-  }
-
-  tbody td {
-    padding: 14px;
-    font-size: 13px;
+  .thumbnailPlaceholder {
+    width: 72px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
     color: #374151;
-    border-bottom: 1px solid #f1f5f9;
+    font-size: 10px;
+    font-weight: 500;
+    text-align: center;
   }
+}
 
-  tbody tr:hover {
-    background: #f9fafb;
-  }
-
-  td:nth-child(7),
-  td:nth-child(8) {
-    text-align: right;
-  }
-
-  .noData {
-  text-align: center;
+.noData {
   padding: 30px 20px;
+  color: #111827;
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
-}
+  text-align: center;
 }
 
 .status {
@@ -185,68 +257,80 @@ $border-color: #e5e7eb;
   color: #374151;
 }
 
+.cancellationBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .inquiryActions {
   display: flex;
   gap: 6px;
   flex-wrap: nowrap;
 }
 
-.btnAccept {
+.btnAccept,
+.btnDecline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 4px 10px;
-  border-radius: 6px;
   border: none;
-  background: #166534;
-  color: #fff;
+  border-radius: 6px;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
   white-space: nowrap;
+  cursor: pointer;
+}
 
-  &:hover {
-    background: #14532d;
-  }
+.btnAccept {
+  background: #166534;
+}
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+.btnAccept:hover {
+  background: #14532d;
 }
 
 .btnDecline {
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: none;
   background: #991b1b;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
+}
 
-  &:hover {
-    background: #7f1d1d;
-  }
+.btnDecline:hover {
+  background: #7f1d1d;
+}
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+.btnAccept:disabled,
+.btnDecline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actionPlaceholder {
+  color: #9ca3af;
 }
 
 .paginationControls {
-  margin-top: 25px;
   display: flex;
   justify-content: center;
   gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 25px;
 }
 
 .paginationButton {
   padding: 8px 12px;
+  border: none;
   border-radius: 8px;
   background: #f3f4f6;
-  border: none;
-  cursor: pointer;
   font-size: 13px;
+  cursor: pointer;
 }
 
 .paginationButton:hover {
@@ -259,6 +343,155 @@ $border-color: #e5e7eb;
 }
 
 .activePage {
-  background: #16a34a;
-  color: #000;
+  background: #166534;
+  color: #ffffff;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalBox {
+  width: min(440px, 90%);
+  padding: 28px 32px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.modalTitle {
+  margin: 0 0 12px;
+  color: $secondary-color;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.modalText {
+  margin: 0 0 20px;
+  color: $secondary-color;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: 30px 24px;
+  }
+
+  .searchRow {
+    flex-direction: column;
+  }
+
+  .dropdown {
+    width: 100%;
+  }
+
+  .tableWrapper {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 16px;
+  }
+
+  .list {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .reservationTable,
+  .reservationTable thead,
+  .reservationTable tbody,
+  .reservationTable tr,
+  .reservationTable td {
+    display: block !important;
+    width: 100%;
+  }
+
+  .reservationTable thead {
+    display: none !important;
+  }
+
+  .reservationTable tbody tr {
+    max-width: 100%;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #ffffff;
+  }
+
+  .reservationTable tbody td {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border: none !important;
+    word-break: break-word;
+  }
+
+  .reservationTable tbody td::before {
+    content: attr(data-label);
+    color: #111827;
+    font-weight: 600;
+  }
+
+  .reservationTable th,
+  .reservationTable td {
+    border: none !important;
+  }
+
+  .reservationTable td[data-label="Actions"] {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .inquiryActions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .noData {
+    display: flex !important;
+    align-items: center;
+    justify-content: center !important;
+    width: 100%;
+    text-align: center;
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 20px;
+  }
+
+  .paginationButton {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .btnAccept,
+  .btnDecline {
+    width: 100%;
+    justify-content: center;
+  }
 }

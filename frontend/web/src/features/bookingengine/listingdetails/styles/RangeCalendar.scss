@@ -1,12 +1,11 @@
 .availability-section {
-  margin-top: 30px;
-  padding: 28px 30px 26px;
+  margin: 0;
+  padding: 20px;
   border: 1px solid #d7dde5;
   border-radius: 8px;
   background: #fff;
 
   @media (max-width: 768px) {
-    margin-top: 18px;
     padding: 20px;
   }
 }
@@ -45,6 +44,14 @@
   margin: 0;
   color: #4f5663;
   font-size: 1.1rem;
+  line-height: 1.35;
+}
+
+.availability-section__error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.98rem;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -141,6 +148,10 @@
   cursor: pointer;
   transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
 
+  &:disabled {
+    opacity: 1;
+  }
+
   &:hover {
     background: #eef2f6;
   }
@@ -161,6 +172,8 @@
     background: #757575;
     border-color: #757575;
     cursor: not-allowed;
+    flex-direction: column;
+    gap: 2px;
 
     span {
       color: #fff;
@@ -199,6 +212,13 @@
     font-weight: 500;
   }
 
+  .rc-cell__unavailable-mark {
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
   &.is-start span,
   &.is-end span {
     color: var(--rc-text);
@@ -212,6 +232,7 @@
       color: #fff;
     }
   }
+
 }
 
 .rc-chevron {
@@ -234,6 +255,20 @@
   .rc-panels {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rc-panels {
+    gap: 16px;
+  }
+
+  .rc-cell {
+    min-height: 40px;
+  }
+
+  .rc-cell--head {
+    font-size: 0.75rem;
   }
 }
 

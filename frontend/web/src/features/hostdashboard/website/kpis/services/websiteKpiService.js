@@ -43,7 +43,7 @@ export const fetchWebsiteKpis = async () => {
   if (!response.ok) {
     const errorMessage = await getApiErrorMessage(
       response,
-      "We could not load the standalone website KPI overview."
+      "We could not load the direct booking website KPI overview."
     );
     throw new Error(errorMessage);
   }
@@ -57,11 +57,23 @@ export const fetchWebsiteKpis = async () => {
         }))
         .filter((entry) => entry.reason)
     : [];
+  const kpiReadiness =
+    parsedBody?.kpiReadiness && typeof parsedBody.kpiReadiness === "object"
+      ? Object.fromEntries(
+          Object.entries(parsedBody.kpiReadiness).map(([kpiId, readiness]) => [
+            String(kpiId || "").trim(),
+            {
+              state: String(readiness?.state || "").trim().toLowerCase(),
+            },
+          ])
+        )
+      : {};
 
   return {
     ...EMPTY_WEBSITE_KPIS,
     ...normalizeMetricGroup(parsedBody, WEBSITE_KPI_COUNT_FIELD_KEYS, normalizeNumericMetric),
     ...normalizeMetricGroup(parsedBody, WEBSITE_KPI_NULLABLE_FIELD_KEYS, normalizeNullableMetric),
+    kpiReadiness,
     deletionReasonBreakdown,
   };
 };

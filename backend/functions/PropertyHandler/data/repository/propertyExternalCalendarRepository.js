@@ -1,6 +1,6 @@
 import Database from "database";
+import { normalizeBlockedDateKeys } from "../../util/calendarAvailability.js";
 
-const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SELECT_COLUMNS_WITH_PROVIDER = `
   property_id AS "propertyId",
   source_id AS "sourceId",
@@ -136,22 +136,6 @@ const listSourcesByProperty = async (
   }
 };
 
-const buildBlockedDateKeys = (rows) => {
-  const blockedDateKeys = new Set();
-
-  (Array.isArray(rows) ? rows : []).forEach((row) => {
-    const blockedDates = safeParseJson(row?.blockedDates);
-    (Array.isArray(blockedDates) ? blockedDates : []).forEach((dateKey) => {
-      const normalizedKey = String(dateKey || "").trim();
-      if (DATE_KEY_PATTERN.test(normalizedKey)) {
-        blockedDateKeys.add(normalizedKey);
-      }
-    });
-  });
-
-  return Array.from(blockedDateKeys).sort((left, right) => left.localeCompare(right));
-};
-
 const mapCalendarSyncSource = (row) => ({
   propertyId: String(row?.propertyId || "").trim(),
   sourceId: String(row?.sourceId || "").trim(),
@@ -194,7 +178,12 @@ export class PropertyExternalCalendarRepository {
       tolerateMissingTable: true,
     });
 
-    const blockedDateKeys = buildBlockedDateKeys(rows);
+    const blockedDateKeys = normalizeBlockedDateKeys(
+      (Array.isArray(rows) ? rows : []).flatMap((row) => {
+        const blockedDates = safeParseJson(row?.blockedDates);
+        return Array.isArray(blockedDates) ? blockedDates : [];
+      })
+    );
     const syncSources = (Array.isArray(rows) ? rows : []).map(mapCalendarSyncSource);
     const syncedSourceCount = syncSources.length;
     const lastSyncAt = getLatestSyncTimestamp(syncSources);

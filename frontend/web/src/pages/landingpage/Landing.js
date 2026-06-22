@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Auth } from "aws-amplify";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -22,12 +21,22 @@ import { handleContactFormSubmission } from "../../services/contactService";
 
 const contentByLanguage = { en, nl, de, es };
 
+const buildFaqs = (content) => {
+  if (!content) return [];
+  return [
+    { id: "host", question: content.answerTo.host.title, answer: content.answerTo.host.description, isOpen: false },
+    { id: "how", question: content.answerTo.how.title, answer: content.answerTo.how.description, isOpen: false },
+    { id: "manage", question: content.answerTo.manage.title, answer: content.answerTo.manage.description, isOpen: false },
+    { id: "payout", question: content.answerTo.payout.title, answer: content.answerTo.payout.description, isOpen: false },
+    { id: "calendar", question: content.answerTo.calendar.title, answer: content.answerTo.calendar.description, isOpen: false },
+  ];
+};
+
 function Landing() {
   const { language } = useContext(LanguageContext);
   const landingContent = contentByLanguage[language]?.landing;
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [faqs, setFaqs] = useState([]);
+  const [faqs, setFaqs] = useState(() => buildFaqs(contentByLanguage[language]?.landing));
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -43,49 +52,11 @@ function Landing() {
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
   useEffect(() => {
-    checkAuthentication();
-  }, []);
-
-  useEffect(() => {
     if (!landingContent) return;
-
-    setFaqs([
-      {
-        question: landingContent.answerTo.host.title,
-        answer: landingContent.answerTo.host.description,
-        isOpen: false,
-      },
-      {
-        question: landingContent.answerTo.how.title,
-        answer: landingContent.answerTo.how.description,
-        isOpen: false,
-      },
-      {
-        question: landingContent.answerTo.manage.title,
-        answer: landingContent.answerTo.manage.description,
-        isOpen: false,
-      },
-      {
-        question: landingContent.answerTo.payout.title,
-        answer: landingContent.answerTo.payout.description,
-        isOpen: false,
-      },
-      {
-        question: landingContent.answerTo.calendar.title,
-        answer: landingContent.answerTo.calendar.description,
-        isOpen: false,
-      },
-    ]);
+    setFaqs((prev) =>
+      buildFaqs(landingContent).map((faq, i) => ({ ...faq, isOpen: prev[i]?.isOpen ?? false }))
+    );
   }, [landingContent]);
-
-  const checkAuthentication = async () => {
-    try {
-      await Auth.currentAuthenticatedUser();
-      setIsAuthenticated(true);
-    } catch {
-      setIsAuthenticated(false);
-    }
-  };
 
   const toggleOpen = (index) => {
     setFaqs((prev) =>
@@ -128,35 +99,53 @@ function Landing() {
   return (
     <main className="landing">
 
-      <HeroSection landingContent={landingContent} />
+      <div id="hero">
+        <HeroSection landingContent={landingContent} />
+      </div>
 
-      <StepsSection landingContent={landingContent} />
+      <div id="steps">
+        <StepsSection landingContent={landingContent} />
+      </div>
 
-      <WhySection />
+      <div id="why">
+        <WhySection content={landingContent.why} />
+      </div>
 
-      <ChecklistSection />
+      <div id="checklist">
+        <ChecklistSection content={landingContent.rentingOut} />
+      </div>
 
-      <RegisterSection />
+      <div id="register">
+        <RegisterSection content={landingContent.register} />
+      </div>
 
-      <TestimonialsSection />
+       <div id="testimonials">
+         <TestimonialsSection content={landingContent.othersSay} />
+      </div>
 
-      <FeaturesSection />
+      <div id="features">
+        <FeaturesSection content={landingContent.featuresSection} />
+      </div>
 
-      <FaqSection faqs={faqs} toggleOpen={toggleOpen} />
+      <div id="faq">
+        <FaqSection faqs={faqs} toggleOpen={toggleOpen} content={landingContent.answerTo} />
+      </div>
 
-      <CtaSection />
+      <div id="cta">
+        <CtaSection content={landingContent.cta} />
+      </div>
 
-      <section className="contact-section">
+      <section id="contact" className="contact-section">
         <div className="contact-section__container">
 
           <div className="contact-section__left">
             <h2>
-              More than software.<br />
-              A dedicated partner.
+              {landingContent.partnerContact.title}<br />
+              {landingContent.partnerContact.subtitle}
             </h2>
 
             <p>
-              Our team is here to answer your questions, discuss your property's potential, and help you get started on the path to effortless rental income.
+              {landingContent.partnerContact.description}
             </p>
 
             <div className="contact-section__info">
@@ -164,24 +153,24 @@ function Landing() {
               <div className="contact-item">
                 <div className="icon">✉</div>
                 <div>
-                  <span>Email us</span>
-                  <strong>teamdomits@gmail.com</strong>
+                  <span>{landingContent.partnerContact.emailLabel}</span>
+                  <strong>{landingContent.partnerContact.emailValue}</strong>
                 </div>
               </div>
 
               <div className="contact-item">
                 <div className="icon">☎</div>
                 <div>
-                  <span>Call us</span>
-                  <strong>Available 24/7</strong>
+                  <span>{landingContent.partnerContact.phoneLabel}</span>
+                  <strong>{landingContent.partnerContact.phoneValue}</strong>
                 </div>
               </div>
 
               <div className="contact-item">
                 <div className="icon">📍</div>
                 <div>
-                  <span>Visit us</span>
-                  <strong>Kinderhuissingel 6-K<br />2013 AS, Haarlem</strong>
+                  <span>{landingContent.partnerContact.addressLabel}</span>
+                  <strong>{landingContent.partnerContact.addressLine1}<br />{landingContent.partnerContact.addressLine2}</strong>
                 </div>
               </div>
 

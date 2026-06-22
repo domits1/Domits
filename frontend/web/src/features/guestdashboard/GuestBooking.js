@@ -18,6 +18,8 @@ import {
   getPropertyId,
   normalizeGuestBookingsResponse,
   splitBookingsByTime,
+  normalizeStayStatus,
+  getInquiryStatusInfo,
 } from "./utils/guestDashboardUtils";
 
 const formatBookingDates = (bookingItem) => {
@@ -47,7 +49,7 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
   const bookingCity = propertyInfo?.city || bookingItem?.city || bookingItem?.location?.city || "Unknown city";
   const bookingStatus = String(bookingItem?.status || bookingItem?.Status || "");
   const bookingType = String(bookingItem?.bookingtype ?? "direct").toLowerCase();
-  const isPaymentRequired = bookingStatus.toLowerCase() === "awaiting payment" && bookingType === "inquiry";
+  const inquiryStatusInfo = getInquiryStatusInfo(bookingStatus, bookingType);
   const hostName =
     propertyInfo?.hostName ||
     bookingItem?.hostName ||
@@ -80,9 +82,15 @@ const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
           )}
 
           <div className="guest-booking-row-meta">
-            <span className="guest-booking-status">{bookingStatus || "-"}</span>
-            {isPaymentRequired && (
-              <span className="guest-booking-pay-now">Pay Now →</span>
+            {inquiryStatusInfo ? (
+              <>
+                <span className={`guest-booking-status guest-booking-status--${inquiryStatusInfo.variant}`}>
+                  {inquiryStatusInfo.label}
+                </span>
+                <span className="guest-booking-status-desc">{inquiryStatusInfo.description}</span>
+              </>
+            ) : (
+              <span className="guest-booking-status">{normalizeStayStatus(bookingStatus) || "-"}</span>
             )}
             <span className="guest-booking-dates">{formatBookingDates(bookingItem)}</span>
           </div>
@@ -214,15 +222,25 @@ function GuestBooking() {
     [propertyMap]
   );
 
-  const paidBookings = useMemo(() => getPaidBookings(bookings), [bookings]);
+  const cancelledBookings = useMemo(
+    () => bookings.filter((b) => normalizeStayStatus(b?.status) === "Cancelled"),
+    [bookings]
+  );
+
+  const paidBookings = useMemo(
+    () => getPaidBookings(bookings).filter((b) => normalizeStayStatus(b?.status) !== "Cancelled"),
+    [bookings]
+  );
+
   const inquiryBookings = useMemo(() => getInquiryBookings(bookings), [bookings]);
 
   useEffect(() => {
-    if (!paidBookings.length) return;
+    const combined = [...paidBookings, ...cancelledBookings];
+    if (!combined.length) return;
 
-    const ids = Array.from(new Set(paidBookings.map(getPropertyId).filter(Boolean)));
+    const ids = Array.from(new Set(combined.map((b) => getPropertyId(b)).filter(Boolean)));
     if (ids.length) fetchPropertyDetails(ids);
-  }, [paidBookings, fetchPropertyDetails]);
+  }, [paidBookings, cancelledBookings, fetchPropertyDetails]);
 
   const handleBookingClick = (bookingItem) => {
     const bookingId = getBookingId(bookingItem);
@@ -271,9 +289,9 @@ function GuestBooking() {
         {inquiryBookings.length > 0 && (
           <div className="guest-booking-summary-grid">
             <BookingSection
-              title="Inquiries"
+              title="Requests"
               bookings={inquiryBookings}
-              emptyMessage="No inquiries."
+              emptyMessage="No requests."
               propertyMap={propertyMap}
               handleBookingClick={handleBookingClick}
             />
@@ -295,6 +313,15 @@ function GuestBooking() {
             emptyMessage="You do not have any upcoming bookings yet."
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
+          />
+
+          <BookingSection
+            title="Cancelled Bookings"
+            bookings={cancelledBookings}
+            emptyMessage="You do not have any cancelled bookings yet."
+            propertyMap={propertyMap}
+            handleBookingClick={handleBookingClick}
+            extraClassName="guest-card--cancelled"
           />
 
           <BookingSection

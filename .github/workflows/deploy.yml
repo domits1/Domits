@@ -15,15 +15,7 @@ jobs:
       # Check out code with enough history to compare changes
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 100
-
-      # Find the previous commit to compare against for detecting changes
-      - name: Get base commit for comparison
-        id: get-base-commit
-        run: |
-          PREVIOUS_COMMIT=$(git rev-parse HEAD^1)
-          echo "PREVIOUS_COMMIT=$PREVIOUS_COMMIT" >> $GITHUB_ENV
-          echo "Using previous commit for comparison: $PREVIOUS_COMMIT"
+          fetch-depth: 0
 
       # Set up Node.js environment
       - uses: actions/setup-node@v3
@@ -46,17 +38,46 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'eu-north-1' }}
 
-      # Identify which files have changed since the previous commit
+      # Identify every file changed in this push, including earlier commits in a multi-commit push
       - name: Get changed files
         id: changed-files
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
         run: |
-          # Compare current commit with previous commit
-          CHANGED_FILES=$(git diff --name-only $PREVIOUS_COMMIT HEAD)
+          set -euo pipefail
+
+          ZERO_SHA="0000000000000000000000000000000000000000"
+          FORCE_GLOBAL_LAMBDA_DEPLOY=false
+
+          if [[ -n "$BEFORE_SHA" && "$BEFORE_SHA" != "$ZERO_SHA" ]]; then
+            if ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+              git fetch --no-tags --depth=1 origin "$BEFORE_SHA" || true
+            fi
+
+            if git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+              git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA" > changed_files.txt
+            else
+              echo "::warning ::Unable to resolve the push's before SHA; deploying all Lambdas as a safe fallback."
+              git diff-tree --root --no-commit-id --name-only -r "$CURRENT_SHA" > changed_files.txt
+              FORCE_GLOBAL_LAMBDA_DEPLOY=true
+            fi
+          else
+            echo "::warning ::No prior push SHA is available; deploying all Lambdas as a safe fallback."
+            git diff-tree --root --no-commit-id --name-only -r "$CURRENT_SHA" > changed_files.txt
+            FORCE_GLOBAL_LAMBDA_DEPLOY=true
+          fi
+
           echo "Changed files:"
-          echo "$CHANGED_FILES"
-          
-          # Save changed files to a file for easier processing
-          echo "$CHANGED_FILES" > changed_files.txt
+          cat changed_files.txt
+
+          if [[ "$FORCE_GLOBAL_LAMBDA_DEPLOY" == "true" ]] || \
+             grep -qE '^(backend/functions/\.shared/|backend/ORM/|backend/(package\.json|package-lock\.json|yarn\.lock)$)' changed_files.txt; then
+            echo "GLOBAL_LAMBDA_DEPLOY=true" >> "$GITHUB_ENV"
+            echo "Shared backend change detected; all Lambda artifacts will be rebuilt."
+          else
+            echo "GLOBAL_LAMBDA_DEPLOY=false" >> "$GITHUB_ENV"
+          fi
 
       # Find and deploy all modified Lambda functions
       - name: Find and deploy modified Lambda functions
@@ -70,11 +91,15 @@ jobs:
           for func_dir in backend/functions/*/; do
             FUNC_NAME=$(basename "$func_dir")
             echo "Checking function: $FUNC_NAME"
+
+            if [ -f "${func_dir}.deployment-disabled" ]; then
+              echo "Deployment is disabled for $FUNC_NAME – skipping."
+              continue
+            fi
           
-            # Check if this function has changes or if package files were changed
-            if grep -q "^backend/functions/$FUNC_NAME/" changed_files.txt || \
-               grep -q "^backend/test/$FUNC_NAME/" changed_files.txt || \
-               grep -qE "^(package.json|package-lock.json|yarn.lock)" changed_files.txt; then
+            if [[ "${GLOBAL_LAMBDA_DEPLOY:-false}" == "true" ]] || \
+               grep -q "^backend/functions/$FUNC_NAME/" changed_files.txt || \
+               grep -q "^backend/test/$FUNC_NAME/" changed_files.txt; then
           
               echo "Changes detected for $FUNC_NAME – preparing deployment..."
           

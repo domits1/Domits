@@ -36,7 +36,11 @@ import { UnifiedMessage } from "../../models/unified/messaging/UnifiedMessage.js
 
 import { ChannelIntegrationAccount } from "../../models/unified/integrations/ChannelIntegrationAccount.js";
 import { ChannelIntegrationProperty } from "../../models/unified/integrations/ChannelIntegrationProperty.js";
+import { ChannelIntegrationRatePlan } from "../../models/unified/integrations/ChannelIntegrationRatePlan.js";
+import { ChannelIntegrationRoomType } from "../../models/unified/integrations/ChannelIntegrationRoomType.js";
 import { ChannelReservationLink } from "../../models/unified/integrations/ChannelReservationLink.js";
+import { ChannexBookingRevision } from "../../models/unified/integrations/ChannexBookingRevision.js";
+import { ChannexSyncEvidence } from "../../models/unified/sync/ChannexSyncEvidence.js";
 import { IntegrationSyncState } from "../../models/unified/sync/IntegrationSyncState.js";
 import { IntegrationSyncLog } from "../../models/unified/sync/IntegrationSyncLog.js";
 import { UnifiedThreadNote } from "../../models/unified/collaboration/UnifiedThreadNote.js";
@@ -45,6 +49,9 @@ import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
+import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
+import { Team_Member } from "../../models/Team_Member.js";
+import { Invoice } from "../../models/Invoice.js";
 
 export const Tables = [
   Amenities,
@@ -84,7 +91,11 @@ export const Tables = [
 
   ChannelIntegrationAccount,
   ChannelIntegrationProperty,
+  ChannelIntegrationRatePlan,
+  ChannelIntegrationRoomType,
   ChannelReservationLink,
+  ChannexBookingRevision,
+  ChannexSyncEvidence,
   IntegrationSyncState,
   IntegrationSyncLog,
   UnifiedThreadNote,
@@ -94,4 +105,7 @@ export const Tables = [
   Property_Task_Activity,
   Host_Settings,
   Kpi_Snapshot,
+  PriceLabs_Connection,
+  Team_Member,
+  Invoice,
 ];

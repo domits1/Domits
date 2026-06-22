@@ -1,3 +1,4 @@
+import hostImg from "../Images/become-a-host.png";
 export const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/images";
 
 export const categories = [
@@ -102,31 +103,75 @@ export const reviews = [
   },
 ];
 
-export const hostImages = [
-  { src: `${S3_URL}/Images/waterman.webp`, alt: "Waterman" },
-  { src: `${S3_URL}/Images/sleutelvrouw.webp`, alt: "Sleutelvrouw" },
+export const buildHostSection = (content) => ({
+  title: content.title,
+  description: content.description,
+  features: [
+    { icon: "money", title: content.features.earn.title, text: content.features.earn.text },
+    { icon: "shield", title: content.features.infrastructure.title, text: content.features.infrastructure.text },
+    { icon: "home", title: content.features.support.title, text: content.features.support.text },
+  ],
+  stats: [
+    { value: content.stats.hosts.value, label: content.stats.hosts.label },
+    { value: content.stats.rating.value, label: content.stats.rating.label },
+    { value: content.stats.earning.value, label: content.stats.earning.label },
+  ],
+  button: content.button,
+});
+
+export const hostImage = {
+  src: hostImg,
+  alt: "Become a host",
+};
+
+export const buildGuarantees = (content) => [
+  { icon: "price", title: content.bestPrice, text: content.bestPriceDescription },
+  { icon: "booking", title: content.bookingGuarantee, text: content.bookingGuaranteeDescription },
+  { icon: "stay", title: content.stayGuarantee, text: content.stayGuaranteeDescription },
 ];
+
+// Image filenames double as the English country slug. The query the backend
+// expects is the English country name, so derive it here (the visible card
+// label stays localized via `name`). Multi-word names need an override.
+const COUNTRY_NAME_OVERRIDES = {
+  unitedkingdom: "United Kingdom",
+  czech: "Czechia",
+  srilanka: "Sri Lanka",
+  costarica: "Costa Rica",
+  dominicanrepublic: "Dominican Republic",
+  puertrorico: "Puerto Rico",
+  stmaarten: "Sint Maarten",
+  saintbarthelemy: "Saint Barthelemy",
+  frenchalps: "France",
+};
+
+const countryFromImg = (img) => {
+  const slug = img.split("/Images/").pop().replace(".webp", "").toLowerCase();
+  return COUNTRY_NAME_OVERRIDES[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1);
+};
+
+const withCountry = (items) => items.map((item) => ({ ...item, country: countryFromImg(item.img) }));
 
 export const buildHomepageLists = (homePageContent) => {
   const desc = homePageContent.filters.groups.description;
 
   const countries = [
-    {
-      name: homePageContent.destinations.europe.countries.netherlands,
-      img: `${S3_URL}/Images/netherlands.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.europe.countries.france,
-      img: `${S3_URL}/Images/france.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.europe.countries.spain,
-      img: `${S3_URL}/Images/spain.webp`,
-      description: desc,
-    },
-  ];
+  {
+    name: homePageContent.destinations.europe.countries.netherlands,
+    img: `${S3_URL}/Images/netherlands.webp`,
+    description: "Vacation houses and apartments",
+  },
+  {
+    name: homePageContent.destinations.europe.countries.france,
+    img: `${S3_URL}/Images/france.webp`,
+    description: "Luxury villas & countryside escapes",
+  },
+  {
+    name: homePageContent.destinations.europe.countries.spain,
+    img: `${S3_URL}/Images/spain.webp`,
+    description: "Beachfront stays & sunny getaways",
+  },
+];
 
   const smallCountries = [
     {
@@ -182,22 +227,22 @@ export const buildHomepageLists = (homePageContent) => {
   ];
 
   const asiaCountries = [
-    {
-      name: homePageContent.destinations.asia.countries.philippines,
-      img: `${S3_URL}/Images/philippines.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.asia.countries.thailand,
-      img: `${S3_URL}/Images/thailand.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.asia.countries.indonesia,
-      img: `${S3_URL}/Images/indonesia.webp`,
-      description: desc,
-    },
-  ];
+  {
+    name: homePageContent.destinations.asia.countries.philippines,
+    img: `${S3_URL}/Images/philippines.webp`,
+    description: "Tropical island escapes",
+  },
+  {
+    name: homePageContent.destinations.asia.countries.thailand,
+    img: `${S3_URL}/Images/thailand.webp`,
+    description: "Beach resorts & vibrant culture",
+  },
+  {
+    name: homePageContent.destinations.asia.countries.indonesia,
+    img: `${S3_URL}/Images/indonesia.webp`,
+    description: "Luxury villas & jungle retreats",
+  },
+];
 
   const smallAsiaCountries = [
     { name: homePageContent.destinations.asia.countries.india, img: `${S3_URL}/Images/india.webp`, description: desc },
@@ -224,22 +269,22 @@ export const buildHomepageLists = (homePageContent) => {
   ];
 
   const caribbeanCountries = [
-    {
-      name: homePageContent.destinations.caribbean.locations.aruba,
-      img: `${S3_URL}/Images/aruba.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.caribbean.locations.bonaire,
-      img: `${S3_URL}/Images/bonaire.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.caribbean.locations.curacao,
-      img: `${S3_URL}/Images/curacao.webp`,
-      description: desc,
-    },
-  ];
+  {
+    name: homePageContent.destinations.caribbean.locations.aruba,
+    img: `${S3_URL}/Images/aruba.webp`,
+    description: "Crystal-clear waters & white sand",
+  },
+  {
+    name: homePageContent.destinations.caribbean.locations.bonaire,
+    img: `${S3_URL}/Images/bonaire.webp`,
+    description: "Diving paradise",
+  },
+  {
+    name: homePageContent.destinations.caribbean.locations.curacao,
+    img: `${S3_URL}/Images/curacao.webp`,
+    description: "Colorful island charm",
+  },
+];
 
   const smallCaribbeanCountries = [
     {
@@ -270,65 +315,67 @@ export const buildHomepageLists = (homePageContent) => {
   ];
 
   const skiCountries = [
-    {
-      name: homePageContent.destinations.ski.locations.austria,
-      img: `${S3_URL}/Images/austria.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.ski.locations.frenchAlps,
-      img: `${S3_URL}/Images/frenchalps.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.ski.locations.switzerland,
-      img: `${S3_URL}/Images/switzerland.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.ski.locations.chamonix,
-      img: `${S3_URL}/Images/Chamonix-Mont-Blanc.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.ski.locations.blackForest,
-      img: `${S3_URL}/Images/blackforest.webp`,
-      description: desc,
-    },
-    {
-      name: homePageContent.destinations.ski.locations.italyTrentino,
-      img: `${S3_URL}/Images/italytretinio.webp`,
-      description: desc,
-    },
-  ];
+  {
+    name: homePageContent.destinations.ski.locations.austria,
+    img: `${S3_URL}/Images/austria.webp`,
+    description: "Alpine ski resorts",
+  },
+  {
+    name: homePageContent.destinations.ski.locations.frenchAlps,
+    img: `${S3_URL}/Images/frenchalps.webp`,
+    description: "World-class slopes",
+  },
+  {
+    name: homePageContent.destinations.ski.locations.switzerland,
+    img: `${S3_URL}/Images/switzerland.webp`,
+    description: "Luxury mountain chalets",
+  },
+];
 
   const seasons = [
-    { name: homePageContent.filters.season.spring, img: `${S3_URL}/Images/spring.webp` },
-    { name: homePageContent.filters.season.summer, img: `${S3_URL}/Images/summer.webp` },
-    { name: homePageContent.filters.season.fall, img: `${S3_URL}/Images/fall.webp` },
-    { name: homePageContent.filters.season.winter, img: `${S3_URL}/Images/winter.webp` },
-  ];
+  {
+    name: homePageContent.filters.season.spring,
+    img: `${S3_URL}/Images/spring.webp`,
+    description: "Blooming nature escapes",
+  },
+  {
+    name: homePageContent.filters.season.summer,
+    img: `${S3_URL}/Images/summer.webp`,
+    description: "Beach & coastal escapes",
+  },
+  {
+    name: homePageContent.filters.season.winter,
+    img: `${S3_URL}/Images/winter.webp`,
+    description: "Ski chalets & retreats",
+  },
+];
 
   const interests = [
-    { name: homePageContent.filters.interest.luxury, img: `${S3_URL}/Images/luxury.webp`, description: desc },
-    { name: homePageContent.filters.interest.beach, img: `${S3_URL}/Images/beach.webp`, description: desc },
-    { name: homePageContent.filters.interest.lastMinute, img: `${S3_URL}/Images/lastminute.webp`, description: desc },
-    { name: homePageContent.filters.interest.wellness, img: `${S3_URL}/Images/wellness.webp`, description: desc },
-    { name: homePageContent.filters.interest.romantic, img: `${S3_URL}/Images/romantic.webp`, description: desc },
-    { name: homePageContent.filters.interest.adventure, img: `${S3_URL}/Images/adventure.webp`, description: desc },
-    { name: homePageContent.filters.interest.nature, img: `${S3_URL}/Images/nature.webp`, description: desc },
-    { name: homePageContent.filters.interest.culture, img: `${S3_URL}/Images/culture.webp`, description: desc },
-    { name: homePageContent.filters.interest.culinary, img: `${S3_URL}/Images/culinary.webp`, description: desc },
-  ];
-
+  {
+    name: homePageContent.filters.interest.wellness,
+    img: `${S3_URL}/Images/wellness.webp`,
+    description: "Spa & relaxation",
+  },
+  {
+    name: homePageContent.filters.interest.adventure,
+    img: `${S3_URL}/Images/adventure.webp`,
+    description: "Outdoor experiences",
+  },
+  {
+    name: homePageContent.filters.interest.culture,
+    img: `${S3_URL}/Images/culture.webp`,
+    description: "Historic properties",
+  },
+];
+  
   return {
-    countries,
-    smallCountries,
-    asiaCountries,
-    smallAsiaCountries,
-    caribbeanCountries,
-    smallCaribbeanCountries,
-    skiCountries,
+    countries: withCountry(countries),
+    smallCountries: withCountry(smallCountries),
+    asiaCountries: withCountry(asiaCountries),
+    smallAsiaCountries: withCountry(smallAsiaCountries),
+    caribbeanCountries: withCountry(caribbeanCountries),
+    smallCaribbeanCountries: withCountry(smallCaribbeanCountries),
+    skiCountries: withCountry(skiCountries),
     seasons,
     interests,
   };

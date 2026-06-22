@@ -84,6 +84,7 @@ const BookingConfirmationOverview = () => {
             departureDate: bookingData.departuredate,
             guests: bookingData.guests,
             guestId: bookingData.guestid,
+            bookingId: bookingData.id || bookingData.bookingId || bookingData.booking_id || null,
             id: bookingData.property_id,
             hostId: accommodationData.property.hostId,
             status: bookingData.status,
@@ -117,6 +118,26 @@ const BookingConfirmationOverview = () => {
     }, [addUserToContactList, bookingDetails, contactAdded]);
     
 
+    const navigateToInbox = () => {
+        if (bookingDetails?.hostId && bookingDetails?.bookingId) {
+            navigate(`/guestdashboard/messages?bookingId=${encodeURIComponent(bookingDetails.bookingId)}`, {
+                state: {
+                    messageContext: {
+                        contactId: bookingDetails.hostId,
+                        contactName: "Host",
+                        bookingId: bookingDetails.bookingId,
+                        propertyId: bookingDetails.id || null,
+                        propertyTitle: bookingDetails.title || null,
+                        accoImage: bookingDetails.images?.[0] || null,
+                    },
+                },
+            });
+            return;
+        }
+
+        navigate("/guestdashboard/messages");
+    };
+
     if (loading) return <p>Loading booking details...</p>;
     if (error) return <p>{error}</p>;
 
@@ -125,15 +146,15 @@ const BookingConfirmationOverview = () => {
         return (
             <main className="PaymentOverview">
                 <div className="right-panel">
-                    <h1>Inquiry Sent</h1>
+                    <h1>Request Sent</h1>
                     <div className="confirmInformation">
                         <div>
                             <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 50, color: "green" }} />
-                            <h3>Your inquiry has been received</h3>
-                            <p>The host will review your request and get back to you. You will be notified once the host accepts or declines your inquiry.</p>
+                            <h3>Your request has been received</h3>
+                            <p>The host will review your request and get back to you. You will be notified once the host accepts or declines your request.</p>
                         </div>
                     </div>
-                    <button className="view-booking-button" onClick={() => navigate("/guestdashboard/messages")}>
+                    <button className="view-booking-button" onClick={navigateToInbox}>
                         Go to Inbox
                     </button>
                 </div>
@@ -234,7 +255,7 @@ const BookingConfirmationOverview = () => {
                     </div>
                 </div>
 
-                <button className="view-booking-button" onClick={() => navigate("/guestdashboard/messages")}>
+                <button className="view-booking-button" onClick={navigateToInbox}>
                     Go to Inbox
                 </button>
             </div>

@@ -1,0 +1,6 @@
+{
+  "source": "domits.channex.booking-poll",
+  "action": "CHANNEX_BOOKING_POLL",
+  "enabled": true,
+  "trigger": "EVENTBRIDGE_POLL"
+}

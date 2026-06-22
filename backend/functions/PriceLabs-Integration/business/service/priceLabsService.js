@@ -1,0 +1,476 @@
+import * as api     from "./priceLabsApiClient.js";
+import { verifyPriceLabsSignature } from "./priceLabsWebhookVerifier.js";
+import { Repository }               from "../../data/repository.js";
+import { SystemManagerRepository }  from "../../data/systemManagerRepository.js";
+
+const SSM_TOKEN_KEY = "/pricelabs/integration_token";
+const SSM_NAME_KEY  = "/pricelabs/integration_name";
+
+const SYNC_URL             = process.env.PL_SYNC_URL             || "";
+const CALENDAR_TRIGGER_URL = process.env.PL_CALENDAR_TRIGGER_URL || "";
+const HOOK_URL             = process.env.PL_HOOK_URL             || "";
+
+const CALENDAR_DAYS = 730;
+
+export class PriceLabsService {
+  constructor() {
+    this.repo = new Repository();
+    this.ssm  = new SystemManagerRepository();
+  }
+
+  async _creds() {
+    const [token, name] = await Promise.all([
+      this.ssm.getParameter(SSM_TOKEN_KEY),
+      this.ssm.getParameter(SSM_NAME_KEY),
+    ]);
+    return { token, name };
+  }
+
+  async connect(hostId, priceLabsEmail) {
+    const { token, name } = await this._creds();
+
+    const integrationRes = await api.updateIntegration(token, name, {
+      syncUrl:            SYNC_URL,
+      calendarTriggerUrl: CALENDAR_TRIGGER_URL,
+      hookUrl:            HOOK_URL,
+      regenerateToken:    false,
+      features: {
+        min_stay:                 true,
+        check_in:                 true,
+        check_out:                true,
+        monthly_weekly_discounts: false,
+        extra_person_fee:         false,
+        los_pricing:              false,
+        delta_only:               false,
+      },
+    });
+
+    if (integrationRes?.token) {
+      await this.ssm.putParameter(SSM_TOKEN_KEY, integrationRes.token);
+    }
+
+    await this.repo.upsertConnection({
+      host_id:          hostId,
+      pricelabs_email:  priceLabsEmail,
+      is_active:        true,
+      connected_at:     Date.now(),
+      last_sync_status: "connected",
+    });
+
+    const [listingsResult, calendarResult, reservationsResult] = await Promise.allSettled([
+      this.pushListings(hostId),
+      this.pushCalendar(hostId),
+      this.pushReservations(hostId),
+    ]);
+
+    return {
+      success: true,
+      message: "PriceLabs connected successfully.",
+      initial_sync: {
+        listings:     listingsResult.status     === "fulfilled" ? listingsResult.value     : { error: listingsResult.reason?.message },
+        calendar:     calendarResult.status     === "fulfilled" ? calendarResult.value     : { error: calendarResult.reason?.message },
+        reservations: reservationsResult.status === "fulfilled" ? reservationsResult.value : { error: reservationsResult.reason?.message },
+      },
+    };
+  }
+
+  async disconnect(hostId) {
+    await this.repo.deactivateConnection(hostId);
+    await this.repo.clearPriceLabsDataForHost(hostId);
+    return { success: true, message: "PriceLabs disconnected." };
+  }
+
+  async getStatus(hostId) {
+    const connection = await this.repo.getConnectionByHost(hostId);
+    if (!connection) return { connected: false };
+    return {
+      connected:                 connection.is_active,
+      pricelabs_email:           connection.pricelabs_email,
+      last_sync_status:          connection.last_sync_status,
+      last_sync_error:           connection.last_sync_error,
+      last_listings_sync_at:     connection.last_listings_sync_at,
+      last_calendar_sync_at:     connection.last_calendar_sync_at,
+      last_reservations_sync_at: connection.last_reservations_sync_at,
+    };
+  }
+
+  async pushListings(hostId) {
+    const { token, name } = await this._creds();
+    const connection = await this._requireActiveConnection(hostId);
+    const properties = await this.repo.getPropertiesByHost(hostId);
+
+    if (!properties.length) throw Object.assign(new Error("No properties found for this host."), { status: 404 });
+
+    const otaMap = await this.repo.getOtaListingIdsByHost(hostId);
+
+    const listings = properties.map((p) => ({
+      listing_id:         `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`,
+      user_token:         connection.pricelabs_email,
+      name:               p.title || p.id,
+      status:             "available",
+      location: {
+        latitude:  p.latitude  === null ? 52.3676 : Number(p.latitude),
+        longitude: p.longitude === null ? 4.9041  : Number(p.longitude),
+        city:    p.city    || "Amsterdam",
+        country: _toAlpha3(p.country),
+      },
+      number_of_bedrooms: p.bedrooms || 1,
+      listing_fees: {
+        cleaning_fee: {
+          type:     "fixed",
+          value:    p.cleaning_fee == null ? 0 : Number(p.cleaning_fee),
+          currency: "EUR",
+        },
+      },
+      ota_listing_ids: otaMap[p.id] || {},
+    }));
+
+    const pushResult = await api.pushListings(token, name, listings);
+    if (Array.isArray(pushResult?.errors) && pushResult.errors.length) {
+      console.error("[PriceLabs] listings push rejected:", JSON.stringify(pushResult.errors));
+    }
+    await this.repo.updateSyncStatus(hostId, { last_listings_sync_at: Date.now(), last_sync_status: "synced" });
+    return {
+      success: true,
+      listings_pushed: listings.length,
+      rejected: Array.isArray(pushResult?.errors) ? pushResult.errors.length : 0,
+    };
+  }
+
+  async pushCalendar(hostId, listingIds = null) {
+    const { token, name } = await this._creds();
+    const connection = await this._requireActiveConnection(hostId);
+    const properties = await this.repo.getPropertiesByHost(hostId);
+
+    const targets = listingIds
+      ? properties.filter((p) => listingIds.includes(`${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`))
+      : properties;
+
+    // Booked dates per property so PriceLabs can distinguish booked nights
+    // (reservations) from blocked nights (host-made unavailable).
+    const bookings = await this.repo.getBookingsByHost(hostId);
+    const bookedDatesByProperty = _bookedDatesByProperty(bookings);
+
+    for (const p of targets) {
+      const listingId   = `${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`;
+      const availability = await this.repo.getAvailabilityForProperty(p.id, CALENDAR_DAYS);
+
+      const overrideMap = {};
+      for (const row of availability) {
+        overrideMap[row.calendar_date] = row;
+      }
+
+      const data = _buildCalendarData(p, overrideMap, bookedDatesByProperty[p.id]);
+
+      await api.pushCalendar(token, name, {
+        calendars: [
+          {
+            listing_id: listingId,
+            currency:   "EUR",
+            data,
+          },
+        ],
+      });
+    }
+
+    await this.repo.updateSyncStatus(hostId, { last_calendar_sync_at: Date.now(), last_sync_status: "synced" });
+    return { success: true, properties_pushed: targets.length };
+  }
+
+  async pushReservations(hostId) {
+    const { token, name } = await this._creds();
+    const connection = await this._requireActiveConnection(hostId);
+    if (!connection.last_listings_sync_at) {
+      console.log(`[PriceLabs] pushReservations skipped for host ${hostId}: listings not yet synced.`);
+      return { skipped: true, reason: "Listings not yet synced to PriceLabs for this host." };
+    }
+    const bookings   = await this.repo.getBookingsByHost(hostId);
+
+    const grouped = {};
+    for (const b of bookings) {
+      const listingId = `${hostId.replaceAll("-", "_")}_${b.property_id.replaceAll("-", "_")}`;
+      if (!grouped[listingId]) {
+        grouped[listingId] = {
+          listing_id: listingId,
+          data:       [],
+        };
+      }
+      const status   = _mapBookingStatus(b.status);
+      const checkin  = _tsToDate(b.arrivaldate);
+      const checkout = _tsToDate(b.departuredate);
+      const entry = {
+        reservation_id: b.id,
+        start_date:     checkin,
+        end_date:       checkout,
+        booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
+        total_days:     _dateDiff(checkin, checkout),
+        total_cost:     b.total_price || 0,
+        currency:       "EUR",
+        status,
+        booking_source: b.booking_source || "direct",
+      };
+      if (status === "canceled") {
+        entry.cancel_time = new Date().toISOString().split("T")[0];
+      }
+      grouped[listingId].data.push(entry);
+    }
+
+    const reservations = Object.values(grouped);
+    const totalCount = reservations.reduce((sum, r) => sum + r.data.length, 0);
+    console.log(`[PriceLabs] pushReservations for host ${hostId}: ${totalCount} reservation(s) across ${reservations.length} listing(s).`);
+    if (reservations.length) {
+      const pushResult = await api.pushReservations(token, name, reservations);
+      const successCount = Array.isArray(pushResult?.success) ? pushResult.success.length : "?";
+      const failureCount = Array.isArray(pushResult?.failure) ? pushResult.failure.length : 0;
+      console.log(`[PriceLabs] pushReservations API result for host ${hostId}: ${successCount} accepted, ${failureCount} failed.`);
+      if (failureCount > 0) {
+        console.error(`[PriceLabs] pushReservations failures for host ${hostId}:`, JSON.stringify(pushResult.failure));
+      }
+    }
+
+    await this.repo.updateSyncStatus(hostId, {
+      last_reservations_sync_at: Date.now(),
+      last_sync_status: "synced",
+    });
+    const totalReservations = reservations.reduce((sum, r) => sum + r.data.length, 0);
+    return { success: true, reservations_pushed: totalReservations };
+  }
+
+  async syncForBookingChange(hostId, trigger) {
+    const connection = await this.repo.getConnectionByHost(hostId);
+    if (!connection?.is_active) {
+      return { skipped: true, reason: "No active PriceLabs connection for this host." };
+    }
+
+    if (trigger === "listing_updated") {
+      const [listingsResult, calendarResult] = await Promise.allSettled([
+        this.pushListings(hostId),
+        this.pushCalendar(hostId),
+      ]);
+      return {
+        trigger,
+        listings: listingsResult.status === "fulfilled" ? listingsResult.value : { error: listingsResult.reason?.message },
+        calendar: calendarResult.status === "fulfilled" ? calendarResult.value : { error: calendarResult.reason?.message },
+      };
+    }
+
+    const [reservationsResult, calendarResult] = await Promise.allSettled([
+      this.pushReservations(hostId),
+      this.pushCalendar(hostId),
+    ]);
+
+    return {
+      trigger,
+      reservations: reservationsResult.status === "fulfilled" ? reservationsResult.value : { error: reservationsResult.reason?.message },
+      calendar:     calendarResult.status     === "fulfilled" ? calendarResult.value     : { error: calendarResult.reason?.message },
+    };
+  }
+
+  async handleSyncWebhook(headers, rawBody) {
+    const parsed = JSON.parse(rawBody || "{}");
+    if (parsed.verify === true) return { success: true };
+
+    const { token } = await this._creds();
+
+    const h = (name) => headers[name] || headers[name.toLowerCase()] || "";
+    const hasSignature = Boolean(h("X-PL-SIGNED-HEADERS")) && Boolean(h("X-PL-SIGNED-BODY"));
+
+    if (hasSignature) {
+      if (!verifyPriceLabsSignature(headers, rawBody, token)) {
+        throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+      }
+    }
+
+    const body = JSON.parse(rawBody || "{}");
+
+    const listings = _normalizeListings(body);
+
+    for (const listing of listings) {
+      const { listing_id, data = [], prices = [] } = listing;
+      const entries = data.length ? data : prices;
+      const parts = listing_id.split("_");
+      const propertyId = parts.slice(5).join("-");
+
+      await this.repo.applyPriceRecommendations(
+        propertyId,
+        entries.map((entry) => ({
+          date:                entry.date,
+          nightly_price:       entry.price,
+          min_stay:            entry.min_stay,
+          closed_to_arrival:   entry.check_in  === false,
+          closed_to_departure: entry.check_out === false,
+        }))
+      );
+    }
+
+    return { success: true };
+  }
+
+  async handleCalendarTriggerWebhook(headers, rawBody) {
+    const parsed = JSON.parse(rawBody || "{}");
+    if (parsed.verify === true) return { success: true };
+
+    const { token } = await this._creds();
+    const hdr = (name) => headers[name] || headers[name.toLowerCase()] || "";
+    if (hdr("X-PL-SIGNED-HEADERS") && hdr("X-PL-SIGNED-BODY")) {
+      if (!verifyPriceLabsSignature(headers, rawBody, token)) {
+        throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+      }
+    }
+
+    const body = JSON.parse(rawBody || "{}");
+
+    const listing_ids = body.listing_ids ?? (body.listing_id ? [body.listing_id] : []);
+
+    const hostMap = {};
+    for (const lid of listing_ids) {
+      const hostId = lid.split("_").slice(0, 5).join("-");
+      if (!hostMap[hostId]) hostMap[hostId] = [];
+      hostMap[hostId].push(lid);
+    }
+
+    for (const [hostId, ids] of Object.entries(hostMap)) {
+      await this.pushCalendar(hostId, ids);
+    }
+
+    return { success: true };
+  }
+
+  async handleHookWebhook(headers, rawBody) {
+    const payload = JSON.parse(rawBody || "{}");
+    if (payload.verify === true) return { success: true };
+
+    const { token } = await this._creds();
+    const hdr = (name) => headers[name] || headers[name.toLowerCase()] || "";
+    if (hdr("X-PL-SIGNED-HEADERS") && hdr("X-PL-SIGNED-BODY")) {
+      if (!verifyPriceLabsSignature(headers, rawBody, token)) {
+        throw Object.assign(new Error("Invalid PriceLabs signature"), { status: 401 });
+      }
+    }
+
+    if (payload.listing_id) {
+      const hostId = payload.listing_id.split("_").slice(0, 5).join("-");
+      await this.repo.updateSyncStatus(hostId, {
+        last_sync_status: "error",
+        last_sync_error:  payload.message || "PriceLabs hook notification",
+      });
+    }
+
+    return { success: true };
+  }
+
+  async _requireActiveConnection(hostId) {
+    const c = await this.repo.getConnectionByHost(hostId);
+    if (c?.is_active) return c;
+    throw Object.assign(new Error("No active PriceLabs connection for this host."), { status: 400 });
+  }
+}
+
+function _tsToDate(ts) {
+  if (!ts) return null;
+  return new Date(Number(ts)).toISOString().split("T")[0];
+}
+
+function _normalizeListings(body) {
+  if (Array.isArray(body.listings)) return body.listings;
+  if (body.listing_id) return [{ listing_id: body.listing_id, data: body.data ?? [] }];
+  return [];
+}
+
+function _intToDate(val) {
+  if (!val) return null;
+  const s = String(val);
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+}
+
+function _mapBookingStatus(status) {
+  const s = String(status || "").toLowerCase();
+  if (s === "cancelled" || s === "canceled" || s === "declined" || s === "failed") return "canceled";
+  return "booked";
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * Maps bookings to a per-property Set of booked ISO dates (checkout day excluded).
+ */
+function _bookedDatesByProperty(bookings) {
+  const map = {};
+  for (const b of bookings) {
+    if (_mapBookingStatus(b.status) !== "booked") continue;
+    const start = _tsToDate(b.arrivaldate);
+    const end   = _tsToDate(b.departuredate);
+    if (!start || !end) continue;
+    const startMs = Date.parse(`${start}T00:00:00Z`);
+    const endMs   = Date.parse(`${end}T00:00:00Z`);
+    for (let ms = startMs; ms < endMs; ms += MS_PER_DAY) {
+      if (!map[b.property_id]) map[b.property_id] = new Set();
+      map[b.property_id].add(new Date(ms).toISOString().slice(0, 10));
+    }
+  }
+  return map;
+}
+
+/**
+ * Builds the per-day calendar payload for one property, reporting
+ * available/booked/blocked units per date.
+ */
+function _buildCalendarData(property, overrideMap, bookedDates) {
+  const defaultPrice = property.base_price || 100;
+  const data = [];
+  for (let i = 0; i < CALENDAR_DAYS; i++) {
+    const iso = new Date(Date.now() + i * MS_PER_DAY).toISOString().slice(0, 10);
+    const row = overrideMap[Number(iso.replaceAll("-", ""))];
+    const isBooked  = bookedDates?.has(iso) === true;
+    const isBlocked = !isBooked && row?.is_available === false;
+    data.push({
+      date:            iso,
+      end_date:        iso,
+      price:           row?.nightly_price || defaultPrice,
+      available_units: isBooked || isBlocked ? 0 : 1,
+      booked_units:    isBooked  ? 1 : 0,
+      blocked_units:   isBlocked ? 1 : 0,
+      settings: {
+        min_stay:  row?.min_stay  || 1,
+        check_in:  row?.closed_to_arrival  !== true,
+        check_out: row?.closed_to_departure !== true,
+      },
+    });
+  }
+  return data;
+}
+
+const COUNTRY_TO_ALPHA3 = {
+  "netherlands": "NLD", "nl": "NLD", "nld": "NLD",
+  "germany": "DEU", "de": "DEU", "deutschland": "DEU",
+  "belgium": "BEL", "be": "BEL",
+  "france": "FRA", "fr": "FRA",
+  "spain": "ESP", "es": "ESP",
+  "italy": "ITA", "it": "ITA",
+  "united kingdom": "GBR", "gb": "GBR", "uk": "GBR",
+  "austria": "AUT", "at": "AUT",
+  "switzerland": "CHE", "ch": "CHE",
+  "portugal": "PRT", "pt": "PRT",
+  "greece": "GRC", "gr": "GRC",
+  "turkey": "TUR", "tr": "TUR",
+  "united states": "USA", "us": "USA",
+  // Dutch country names (the Domits UI stores these)
+  "nederland": "NLD", "duitsland": "DEU", "belgië": "BEL", "belgie": "BEL",
+  "frankrijk": "FRA", "spanje": "ESP", "italië": "ITA", "italie": "ITA",
+  "verenigd koninkrijk": "GBR", "oostenrijk": "AUT", "zwitserland": "CHE",
+  "griekenland": "GRC", "turkije": "TUR", "verenigde staten": "USA",
+};
+
+function _toAlpha3(country) {
+  if (!country) return "NLD";
+  const key = country.toLowerCase().trim();
+  return COUNTRY_TO_ALPHA3[key] || country.toUpperCase().slice(0, 3);
+}
+
+function _dateDiff(checkin, checkout) {
+  if (!checkin || !checkout) return 1;
+  const a = new Date(checkin);
+  const b = new Date(checkout);
+  const diff = Math.round((b - a) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? diff : 1;
+}

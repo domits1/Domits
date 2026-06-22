@@ -9,6 +9,11 @@ import {
   hasUnavailableDateInStayRange,
   isUnavailableDate,
 } from "../utils/dateAvailability";
+import {
+  getActiveCancellationPolicyId,
+  parseCancellationPolicyString,
+  parseCancellationPolicy,
+} from "../../../../utils/policyDisplayUtils";
 
 import { UserProvider } from "../../../hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../../hostdashboard/hostmessages/context/webSocketContext";
@@ -18,6 +23,7 @@ import ChatScreen from "../../../../components/messages/ChatScreen";
 import "../../../../components/messages/messagesV2.scss";
 
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const NO_AVAILABILITY_MESSAGE = "This property has no availability for the selected dates.";
 
 const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyId }) => {
   const { userId } = useAuth();
@@ -39,12 +45,11 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
 
     const findThreadIdForListing = (threads) => {
       const list = Array.isArray(threads) ? threads : [];
-      const matches = list.filter((t) => {
-        const isMatch =
+      const matches = list.filter(
+        (t) =>
           ((t?.hostId === hostId && t?.guestId === userId) || (t?.hostId === userId && t?.guestId === hostId)) &&
-          String(t?.propertyId || "") === String(propertyId || "");
-        return isMatch;
-      });
+          String(t?.propertyId || "") === String(propertyId || "")
+      );
 
       if (!matches.length) return null;
 
@@ -68,7 +73,11 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
           headers: { "Content-Type": "application/json" },
         });
 
-        if (!res.ok) throw new Error(`threads fetch failed ${res.status}`);
+        if (!res.ok) {
+          console.warn(`Threads fetch failed: ${res.status}`);
+          if (!cancelled) setResolvedThreadId(null);
+          return;
+        }
 
         const threads = await res.json();
         const found = findThreadIdForListing(threads);
@@ -147,26 +156,64 @@ const BookingContainer = ({
   host = {},
   propertyId = null,
   unavailableDateKeys = [],
+  bookedDateKeys = [],
+  availabilityRanges = null,
+  availableDateKeys = null,
   checkInDate = "",
   setCheckInDate = () => {},
   checkOutDate = "",
   setCheckOutDate = () => {},
+  showMessageHost: showMessageHostProp,
+  setShowMessageHost: setShowMessageHostProp,
 }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
+  const [showMobileStickyBar, setShowMobileStickyBar] = useState(false);
+  const [localShowMessageHost, setLocalShowMessageHost] = useState(false);
+  const bookingCardRef = useRef(null);
+
+  const showMessageHost = showMessageHostProp === undefined ? localShowMessageHost : showMessageHostProp;
+  const setShowMessageHost = setShowMessageHostProp === undefined ? setLocalShowMessageHost : setShowMessageHostProp;
 
   const handleReservePress = useHandleReservePress();
-  const [showMessageHost, setShowMessageHost] = useState(false);
   const unavailableDateSet = useMemo(
     () => buildUnavailableDateSet(unavailableDateKeys),
     [unavailableDateKeys]
   );
+  const bookedDateSet = useMemo(() => buildUnavailableDateSet(bookedDateKeys), [bookedDateKeys]);
+  const availabilityContext = useMemo(
+    () => ({
+      availabilityRanges,
+      availableDateKeys,
+      bookedDateKeys: bookedDateSet,
+    }),
+    [availabilityRanges, availableDateKeys, bookedDateSet]
+  );
   const nights = useMemo(() => calculateNights(checkInDate, checkOutDate), [checkInDate, checkOutDate]);
 
   const hostId = property?.property?.hostId || property?.property?.hostID || null;
-  const hostName = host?.givenName || host?.name || "Host";
+  const hostFirstName = host?.givenName || host?.given_name || "";
+  const hostLastName = host?.familyName || host?.family_name || "";
+  const hostName = hostFirstName || hostLastName
+    ? `${hostFirstName} ${hostLastName}`.trim()
+    : host?.name || "Host";
   const hostImage = host?.profileImage || null;
   const resolvedPropertyId = propertyId || property?.property?.id || property?.property?.ID || null;
+
+  const maxGuests = Number(
+    property?.property?.maxGuests ||
+    property?.policyRules?.maxGuests ||
+    property?.policyRules?.MaxGuests ||
+    0
+  );
+
+  const cancellationPolicy = useMemo(() => {
+    const rules = property?.rules || [];
+    const policyId = getActiveCancellationPolicyId(rules) || getActiveCancellationPolicyId(property?.policyRules || {});
+    if (policyId) return parseCancellationPolicyString(policyId);
+    if (property?.cancellationPolicy) return parseCancellationPolicyString(property.cancellationPolicy);
+    return parseCancellationPolicy(rules);
+  }, [property?.rules, property?.policyRules, property?.cancellationPolicy]);
 
   useEffect(() => {
     if (!showMessageHost) return;
@@ -175,7 +222,7 @@ const BookingContainer = ({
     const prevOverflow = body.style.overflow;
     const prevPaddingRight = body.style.paddingRight;
 
-    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollBarWidth = globalThis.innerWidth - document.documentElement.clientWidth;
     body.style.overflow = "hidden";
     if (scrollBarWidth > 0) body.style.paddingRight = `${scrollBarWidth}px`;
 
@@ -186,18 +233,44 @@ const BookingContainer = ({
   }, [showMessageHost]);
 
   useEffect(() => {
+    const updateStickyBarVisibility = () => {
+      const bookingCard = bookingCardRef.current;
+      const isMobile = globalThis.innerWidth <= 768;
+
+      if (!bookingCard || !isMobile) {
+        setShowMobileStickyBar(false);
+        return;
+      }
+
+      const cardBottom = bookingCard.getBoundingClientRect().bottom;
+      setShowMobileStickyBar(cardBottom < globalThis.innerHeight - 24);
+    };
+
+    updateStickyBarVisibility();
+    const frameId = globalThis.requestAnimationFrame(updateStickyBarVisibility);
+    globalThis.addEventListener("scroll", updateStickyBarVisibility, { passive: true });
+    globalThis.addEventListener("resize", updateStickyBarVisibility);
+
+    return () => {
+      globalThis.cancelAnimationFrame(frameId);
+      globalThis.removeEventListener("scroll", updateStickyBarVisibility);
+      globalThis.removeEventListener("resize", updateStickyBarVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!checkInDate) {
       return;
     }
 
     if (
-      isUnavailableDate(checkInDate, unavailableDateSet) ||
-      (checkOutDate && hasUnavailableDateInStayRange(checkInDate, checkOutDate, unavailableDateSet))
+      isUnavailableDate(checkInDate, unavailableDateSet, availabilityContext) ||
+      (checkOutDate && hasUnavailableDateInStayRange(checkInDate, checkOutDate, unavailableDateSet, availabilityContext))
     ) {
       setCheckInDate("");
       setCheckOutDate("");
     }
-  }, [checkInDate, checkOutDate, setCheckInDate, setCheckOutDate, unavailableDateSet]);
+  }, [availabilityContext, checkInDate, checkOutDate, setCheckInDate, setCheckOutDate, unavailableDateSet]);
 
   const handleCheckInDateChange = (value) => {
     if (!value) {
@@ -206,8 +279,8 @@ const BookingContainer = ({
       return;
     }
 
-    if (isUnavailableDate(value, unavailableDateSet)) {
-      alert("Check in date is unavailable.");
+    if (isUnavailableDate(value, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -216,8 +289,8 @@ const BookingContainer = ({
       return;
     }
 
-    if (checkOutDate && hasUnavailableDateInStayRange(value, checkOutDate, unavailableDateSet)) {
-      alert("Selected stay includes unavailable dates.");
+    if (checkOutDate && hasUnavailableDateInStayRange(value, checkOutDate, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -240,17 +313,53 @@ const BookingContainer = ({
       return;
     }
 
-    if (hasUnavailableDateInStayRange(checkInDate, value, unavailableDateSet)) {
-      alert("Selected stay includes unavailable dates.");
+    if (hasUnavailableDateInStayRange(checkInDate, value, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
     setCheckOutDate(value);
   };
 
+  const mobileStickyDateProps = {
+    checkInDate,
+    setCheckInDate: handleCheckInDateChange,
+    checkOutDate,
+    setCheckOutDate: handleCheckOutDateChange,
+    unavailableDateKeys,
+    bookedDateKeys,
+    availabilityRanges,
+    availableDateKeys,
+    className: "date-container--mobile-sticky",
+  };
+
+  const handleReserveClick = () => {
+    if (!resolvedPropertyId) {
+      return;
+    }
+
+    const checkInTime = new Date(checkInDate).getTime();
+    const checkOutTime = new Date(checkOutDate).getTime();
+    if (!Number.isFinite(checkInTime) || !Number.isFinite(checkOutTime) || nights < 1) {
+      return;
+    }
+
+    handleReservePress(
+      resolvedPropertyId,
+      checkInTime,
+      checkOutTime,
+      adults + kids
+    );
+  };
+
   return (
-    <div className="booking-container">
-      <h3 className="booking-title">Booking details</h3>
+    <div className="listing-booking-card" ref={bookingCardRef}>
+      <div className="listing-booking-card__price-header">
+        <span className="listing-booking-card__price">
+          €{Number(property?.pricing?.roomRate || 0).toFixed(0)}
+        </span>
+        <span className="listing-booking-card__per-night">per night</span>
+      </div>
 
       <DateSelectionContainer
         checkInDate={checkInDate}
@@ -258,37 +367,71 @@ const BookingContainer = ({
         checkOutDate={checkOutDate}
         setCheckOutDate={handleCheckOutDateChange}
         unavailableDateKeys={unavailableDateKeys}
+        bookedDateKeys={bookedDateKeys}
+        availabilityRanges={availabilityRanges}
+        availableDateKeys={availableDateKeys}
       />
 
-      <br />
+      <GuestSelectionContainer setAdultsParent={setAdults} setKidsParent={setKids} maxGuests={maxGuests} />
 
-      <GuestSelectionContainer setAdultsParent={setAdults} setKidsParent={setKids} />
-
-      <br />
+      <Pricing pricing={property.pricing} nights={nights} />
 
       <button
         className="reserve-btn"
         disabled={adults < 1 || nights < 1}
-        onClick={() => {
-          handleReservePress(
-            property.property.id,
-            new Date(checkInDate).getTime(),
-            new Date(checkOutDate).getTime(),
-            adults + kids
-          );
-        }}>
+        onClick={handleReserveClick}
+      >
         Reserve
       </button>
 
-      <p className="note">*You won’t be charged yet</p>
+      <p className="note">You won’t be charged yet</p>
 
-      <button className="message-host-btn" disabled={!hostId} onClick={() => setShowMessageHost(true)}>
-        Message host
-      </button>
+      {hostId && (
+        <button
+          type="button"
+          className="listing-booking-card__message-host"
+          onClick={() => setShowMessageHost(true)}
+        >
+          Message host
+        </button>
+      )}
 
-      <hr />
+      <div className="listing-booking-card__trust-badges">
+        {cancellationPolicy?.id && (
+          <div className="listing-booking-card__trust-item">
+            <span className="listing-booking-card__trust-check">✓</span>{" "}{cancellationPolicy.type} cancellation
+          </div>
+        )}
+        <div className="listing-booking-card__trust-item">
+          <span className="listing-booking-card__trust-check">✓</span>{" "}Instant confirmation
+        </div>
+        <div className="listing-booking-card__trust-item">
+          <span className="listing-booking-card__trust-check">✓</span>{" "}Secure payment
+        </div>
+      </div>
 
-      <Pricing pricing={property.pricing} nights={nights} />
+      <div
+        className={`listing-booking-card__mobile-sticky${
+          showMobileStickyBar ? " listing-booking-card__mobile-sticky--visible" : ""
+        }`}
+      >
+        <div className="listing-booking-card__mobile-sticky-price">
+          <span className="listing-booking-card__price">
+            €{Number(property?.pricing?.roomRate || 0).toFixed(0)}
+          </span>
+          <span className="listing-booking-card__per-night">per night</span>
+        </div>
+
+        <DateSelectionContainer {...mobileStickyDateProps} />
+
+        <button
+          className="reserve-btn listing-booking-card__mobile-sticky-reserve"
+          disabled={adults < 1 || nights < 1}
+          onClick={handleReserveClick}
+        >
+          Reserve
+        </button>
+      </div>
 
       {showMessageHost && hostId && (
         <UserProvider>
@@ -316,11 +459,18 @@ MessageHostModalInner.propTypes = {
 BookingContainer.propTypes = {
   property: PropTypes.shape({
     pricing: PropTypes.object,
+    rules: PropTypes.array,
+    cancellationPolicy: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    policyRules: PropTypes.shape({
+      maxGuests: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      MaxGuests: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
     property: PropTypes.shape({
       hostId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       hostID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       ID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      maxGuests: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     }),
   }).isRequired,
   host: PropTypes.shape({
@@ -330,10 +480,20 @@ BookingContainer.propTypes = {
   }),
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.arrayOf(PropTypes.string),
   checkInDate: PropTypes.string,
   setCheckInDate: PropTypes.func,
   checkOutDate: PropTypes.string,
   setCheckOutDate: PropTypes.func,
+  showMessageHost: PropTypes.bool,
+  setShowMessageHost: PropTypes.func,
 };
 
 export default BookingContainer;

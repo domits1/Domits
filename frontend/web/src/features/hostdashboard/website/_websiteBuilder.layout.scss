@@ -165,6 +165,42 @@
   gap: 14px;
 }
 
+.kpiSectionGroupList {
+  display: grid;
+  gap: 18px;
+}
+
+.kpiSectionGroup {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 1)),
+    #ffffff;
+}
+
+.kpiSectionGroupHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.kpiSectionGroupHeader h3,
+.kpiSectionGroupHeader p {
+  margin: 0;
+}
+
+.kpiSectionGroupHeader h3 {
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.kpiSectionGroupHeader p {
+  color: #64748b;
+  line-height: 1.55;
+}
+
 .kpiCard {
   display: grid;
   gap: 10px;
@@ -180,7 +216,7 @@
 
 .kpiCardUpdated,
 .researchKpiCardUpdated {
-  animation: kpiCardHuePulse 1.9s ease;
+  animation: kpiCardHuePulse 3.8s ease;
 }
 
 .kpiCardHeader {
@@ -218,6 +254,37 @@
   font-size: clamp(1.9rem, 1.4rem + 1vw, 2.5rem);
   font-weight: 800;
   line-height: 1;
+}
+
+.kpiCardValueWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.kpiDeltaBadge {
+  position: absolute;
+  top: -0.8rem;
+  right: -0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0.16rem 0.48rem;
+  border-radius: 999px;
+  background: #d6e6f4;
+  color: #123957;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow:
+    0 8px 20px rgba(31, 78, 121, 0.14),
+    0 0 0 1px rgba(18, 57, 87, 0.08);
+  pointer-events: none;
+  animation: kpiDeltaFloat 3.2s cubic-bezier(0.18, 0.8, 0.22, 1) both;
 }
 
 .kpiCardLoader,
@@ -314,6 +381,47 @@
   margin: 0;
 }
 
+.surfaceKpiViewportGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.surfaceKpiViewportPanel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.1);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.surfaceKpiViewportHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.surfaceKpiViewportHeader h4,
+.surfaceKpiViewportHeader p {
+  margin: 0;
+}
+
+.surfaceKpiViewportHeader h4 {
+  color: #153e64;
+  font-size: 0.98rem;
+}
+
+.surfaceKpiViewportHeader p {
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.surfaceKpiViewportMetricGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
 .surfaceKpiGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -391,7 +499,7 @@
 }
 
 .deletionReasonRowUpdated {
-  animation: kpiTableCellHuePulse 1.9s ease;
+  animation: kpiTableCellHuePulse 3.8s ease;
 }
 
 .researchKpiPanel {
@@ -496,6 +604,28 @@
   }
 }
 
+@keyframes kpiDeltaFloat {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.88);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translate3d(0, -2px, 0) scale(1);
+  }
+
+  82% {
+    opacity: 1;
+    transform: translate3d(0, -12px, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0) scale(0.98);
+  }
+}
+
 .researchKpiCardHeader {
   display: flex;
   align-items: flex-start;
@@ -532,6 +662,16 @@
 .researchKpiStatusBadgePending {
   background: #eef3f8;
   color: #46627f;
+}
+
+.researchKpiStatusBadgeWarning {
+  background: #fff3e8;
+  color: #9a4c00;
+}
+
+.researchKpiStatusBadgeProxy {
+  background: #f6efe8;
+  color: #87552d;
 }
 
 .researchKpiCardValue {

@@ -75,6 +75,14 @@
   overflow: hidden;
 }
 
+.previewBrowserPanorama {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
 .previewBrowserCompact {
   border-radius: 24px;
   box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
@@ -84,6 +92,16 @@
   position: relative;
   width: 100%;
   overflow: hidden;
+}
+
+.previewScaleShellViewportTablet {
+  max-width: 834px;
+  margin-inline: auto;
+}
+
+.previewScaleShellViewportMobile {
+  max-width: 390px;
+  margin-inline: auto;
 }
 
 .previewScaleShellCompact {
@@ -133,10 +151,363 @@
 }
 
 .previewCanvas {
+  --template-preview-frame-gutter: clamp(18px, 2.4vw, 28px);
   position: relative;
-  padding: clamp(18px, 2.4vw, 28px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--template-preview-frame-gutter);
   background-color: var(--website-surface-background, #f8fbff);
   background-image: radial-gradient(circle at top left, rgba(31, 78, 121, 0.06), transparent 28%);
+}
+
+.previewCanvasPanorama {
+  padding-top: 0;
+  background-image: none;
+}
+
+.previewCanvasViewportTablet,
+.previewCanvasViewportMobile {
+  .panoramaTrustRail,
+  .panoramaJourneyGrid,
+  .experienceFooter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaResidenceGrid,
+  .panoramaContactSection {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .experienceJourneyRow,
+  .experienceJourneyRowReversed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .experienceJourneyRowReversed .experienceJourneyCopy,
+  .experienceJourneyRowReversed .experienceJourneyVisual {
+    order: initial;
+  }
+
+  .heroSection,
+  .trustHeroSection,
+  .sectionSplit,
+  .galleryAndAmenities {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cardGridThree {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaHeroBackdropShell,
+  .heroVisual,
+  .tallImage {
+    --panorama-hero-min-height: 280px;
+    --panorama-hero-aspect-ratio: auto;
+    min-height: var(--panorama-hero-min-height);
+  }
+
+  .panoramaHeroBackdrop {
+    min-height: var(--panorama-hero-min-height);
+  }
+
+  .panoramaGalleryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panoramaAmenitiesModalItems {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panoramaHostCard {
+    justify-self: start;
+  }
+}
+
+.previewCanvasViewportMobile {
+  .panoramaHeroBackdropShell {
+    --panorama-hero-min-height: clamp(380px, 62vh, 500px);
+    --panorama-hero-aspect-ratio: auto;
+    --panorama-hero-object-position-y: 58%;
+  }
+
+  .panoramaHeroBackdrop {
+    min-height: var(--panorama-hero-min-height);
+  }
+
+  --panorama-calendar-card-padding: 22px 14px 20px;
+  --panorama-calendar-card-radius: 24px;
+  --panorama-calendar-content-max-width: 100%;
+  --panorama-calendar-month-columns: minmax(0, 1fr);
+  --panorama-calendar-navigation-label-columns: minmax(0, 1fr);
+  --panorama-calendar-navigation-label-gap: 10px;
+  --panorama-calendar-month-card-padding: 22px 14px 20px;
+  --panorama-calendar-weekday-letter-spacing: 0.14em;
+  --panorama-calendar-legend-letter-spacing: 0.14em;
+  --panorama-calendar-cell-min-height: 32px;
+  --panorama-calendar-cell-day-font-size: 0.92rem;
+  padding: 14px;
+
+  .panoramaTopBarShell {
+    --panorama-topbar-overlay-offset: 70px;
+    height: 0;
+    margin-bottom: calc(0px - var(--panorama-topbar-overlay-offset));
+    overflow: visible;
+  }
+
+  .panoramaTopBarShellInteractive,
+  .panoramaTopBarShellPublic {
+    width: 100%;
+  }
+
+  .templateTopBar {
+    flex-wrap: nowrap;
+    align-items: center;
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
+
+  .templateTopBarNav,
+  .templateTopBarMeta {
+    justify-content: flex-start;
+  }
+
+  .templateTopBarBrand {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .templateTopBarBrand span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .templateTopBarNav {
+    display: none;
+  }
+
+  .panoramaTopBarActions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
+  .panoramaTopBarMenuButton {
+    display: inline-flex;
+  }
+
+  .panoramaEditorialHeroWithTopBar {
+    margin-top: -18px;
+  }
+
+  .panoramaHeroCopyBlock {
+    gap: 14px;
+  }
+
+  .panoramaHeroPrimaryAction {
+    min-height: 0;
+    max-width: min(100%, clamp(165px, 50vw, 220px));
+    gap: clamp(4px, 1vw, 6px);
+    padding:
+      clamp(0.3rem, 0.18rem + 0.5vw, 0.42rem)
+      clamp(0.48rem, 0.28rem + 0.9vw, 0.68rem);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.14);
+  }
+
+  .panoramaHeroPrimaryAction strong {
+    font-size: clamp(0.6rem, 0.48rem + 0.35vw, 0.74rem);
+    line-height: 1.2;
+  }
+
+  .panoramaHeroPrimaryAction span {
+    font-size: clamp(0.5rem, 0.4rem + 0.28vw, 0.62rem);
+    line-height: 1.3;
+  }
+
+  .panoramaHeroBackdropShell {
+    --panorama-hero-min-height: clamp(380px, 62vh, 500px);
+    min-height: var(--panorama-hero-min-height);
+  }
+
+  .panoramaHeroBackdrop {
+    min-height: var(--panorama-hero-min-height);
+    object-position: center 58%;
+  }
+
+  .panoramaTopBarDrawer {
+    width: min(300px, calc(100% - 20px));
+    padding: 16px 14px 20px;
+  }
+
+  .panoramaTopBarShellSolid .templateTopBar {
+    box-shadow: none;
+    border-bottom: 1px solid rgba(208, 197, 178, 0.72);
+  }
+
+  .previewBrowserBar {
+    padding: 12px 14px;
+  }
+
+  .heroTitle {
+    font-size: 1.42rem;
+  }
+
+  .statGrid,
+  .journeyGrid,
+  .heroBannerMeta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaResidenceCardRail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    justify-content: stretch;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .panoramaResidenceCardRail > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .panoramaResidenceCard {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .galleryStrip,
+  .galleryColumn {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panoramaAmenityGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 10px;
+    width: 100%;
+  }
+
+  .panoramaAmenityCard {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    padding: 6px 0;
+    gap: 10px;
+  }
+
+  .panoramaAmenityIcon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .panoramaAmenityLabel {
+    max-width: none;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+  }
+
+  .panoramaContactSection {
+    padding: 22px 18px;
+    border-radius: 24px;
+  }
+
+  .panoramaHostCard {
+    flex-direction: row;
+    width: 100%;
+    justify-self: stretch;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .panoramaHostCopy {
+    flex: 1 1 auto;
+  }
+
+  .panoramaHostAvatarShell,
+  .panoramaHostAvatarFallback {
+    width: 76px;
+    height: 76px;
+    flex-basis: 76px;
+  }
+
+  .panoramaHeroHeadline {
+    font-size: 2rem;
+  }
+
+  .panoramaHeroActionRow,
+  .panoramaTrustCard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaTrustRail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(6px, 1.8vw, 8px);
+    align-items: stretch;
+  }
+
+  .panoramaTrustCard {
+    justify-items: center;
+    text-align: center;
+    gap: clamp(6px, 1.8vw, 8px);
+    padding: clamp(8px, 2vw, 10px) clamp(6px, 1.8vw, 8px);
+    border-radius: 16px;
+  }
+
+  .panoramaTrustCardIcon {
+    width: clamp(22px, 5.5vw, 26px);
+    height: clamp(22px, 5.5vw, 26px);
+    border-radius: 10px;
+  }
+
+  .panoramaTrustCardCopy {
+    gap: 4px;
+  }
+
+  .panoramaTrustCardTitle {
+    font-size: clamp(0.58rem, 1.9vw, 0.7rem);
+    line-height: 1.2;
+  }
+
+  .panoramaTrustCardDescription {
+    font-size: clamp(0.46rem, 1.55vw, 0.56rem);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .panoramaGalleryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .panoramaJourneyGrid,
+  .galleryStrip,
+  .galleryColumn {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaAmenityShowAllButton {
+    width: 100%;
+  }
+
+  .panoramaHostName {
+    font-size: 1.8rem;
+  }
+
+  .panoramaAmenitiesModalItems {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sectionCard,
+  .heroBanner {
+    padding: 16px;
+  }
 }
 
 .previewInteractiveTarget {
@@ -155,8 +526,62 @@
   transform: translateY(-1px);
 }
 
+.templateRotatingImageFrame {
+  position: relative;
+  overflow: hidden;
+}
+
+.templateImageHoverFrame {
+  --template-image-hover-lift-y: -3px;
+  --template-image-hover-shadow: 0 22px 40px rgba(15, 23, 42, 0.12);
+  --template-image-hover-scale: 1.035;
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.templateImageHoverFrame:hover {
+  transform: translateY(var(--template-image-hover-lift-y));
+  box-shadow: var(--template-image-hover-shadow);
+}
+
+.templateImageHoverImage {
+  transition: transform 0.48s ease, filter 0.48s ease;
+  will-change: transform;
+}
+
+.templateImageHoverFrame:hover .templateImageHoverImage {
+  transform: scale(var(--template-image-hover-scale));
+}
+
+.templateRotatingImageLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  opacity: 0;
+  transition:
+    opacity var(--template-image-slot-fade-duration-ms, 720ms) ease,
+    transform 0.48s ease,
+    filter 0.48s ease;
+  will-change: opacity, transform;
+}
+
+.templateRotatingImageLayerActive {
+  opacity: 1;
+}
+
 .availabilityCalendarTarget {
   border-radius: 24px;
+}
+
+.availabilityCalendarDeferredFallback {
+  min-height: 360px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94)),
+    #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(203, 213, 225, 0.42);
 }
 
 .previewUnsupported {
@@ -168,6 +593,10 @@
 
 .templateSite {
   display: grid;
+  gap: 18px;
+}
+
+.templateSitePanorama {
   gap: 18px;
 }
 
@@ -207,6 +636,7 @@
 }
 
 .templateTopBarNav span,
+.templateTopBarNav a,
 .templateTopBarMeta span {
   display: inline-flex;
   align-items: center;
@@ -218,23 +648,1261 @@
   font-weight: 700;
 }
 
-.panoramaIntro,
+.templateTopBarNav a {
+  text-decoration: none;
+}
+
+.panoramaTopBarShell {
+  --panorama-topbar-overlay-offset: clamp(86px, 9vw, 122px);
+  position: sticky;
+  top: 0;
+  z-index: 24;
+  align-self: start;
+  margin:
+    0
+    calc(0px - var(--template-preview-frame-gutter))
+    calc(0px - var(--panorama-topbar-overlay-offset) - 18px);
+  padding: 0;
+  pointer-events: none;
+}
+
+.panoramaTopBarShell > * {
+  pointer-events: auto;
+}
+
+.panoramaTopBarShellInteractive,
+.panoramaTopBarShellPublic {
+  width: calc(100% + (var(--template-preview-frame-gutter, 0px) * 2));
+  max-width: none;
+}
+
+.panoramaTopBarShell .templateTopBar {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px clamp(18px, 2.5vw, 30px);
+  border-radius: 0;
+  border: 0;
+  transition:
+    background 0.28s ease,
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    color 0.28s ease;
+}
+
+.panoramaTopBarShell .templateTopBarBrand {
+  flex: 0 1 auto;
+}
+
+.panoramaTopBarShell .templateTopBarNav {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
+.panoramaTopBarShell .templateTopBarNav span,
+.panoramaTopBarShell .templateTopBarNav a {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+.panoramaTopBarActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.panoramaTopBarMenuButton,
+.panoramaTopBarDrawerCloseButton {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(30, 49, 80, 0.72);
+  color: #fffaf3;
+  box-shadow: inset 0 0 0 1px rgba(248, 244, 237, 0.18);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0.68rem 0.96rem;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background-color 0.22s ease;
+}
+
+.panoramaTopBarMenuButton:hover,
+.panoramaTopBarDrawerCloseButton:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 0 0 1px rgba(248, 244, 237, 0.22),
+    0 12px 24px rgba(15, 23, 42, 0.18);
+}
+
+.panoramaTopBarMenuButton span {
+  white-space: nowrap;
+}
+
+.panoramaTopBarDrawerOverlay {
+  appearance: none;
+  border: 0;
+  position: fixed;
+  inset: 0;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s ease;
+  z-index: 28;
+}
+
+.panoramaTopBarDrawerOverlayOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.panoramaTopBarDrawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(320px, calc(100% - 28px));
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 18px;
+  padding: 18px 16px 22px;
+  background: #ffffff;
+  box-shadow: -20px 0 42px rgba(15, 23, 42, 0.18);
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+  z-index: 29;
+  overflow-y: auto;
+}
+
+.panoramaTopBarDrawerOpen {
+  transform: translateX(0);
+}
+
+.panoramaTopBarDrawerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panoramaTopBarDrawerTitleBlock {
+  display: grid;
+  gap: 6px;
+}
+
+.panoramaTopBarDrawerLabel {
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.panoramaTopBarDrawerTitle {
+  color: #0f172a;
+  font-size: 1.08rem;
+  line-height: 1.35;
+}
+
+.panoramaTopBarDrawerCloseButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0.54rem 0.7rem;
+  background: #f8fafc;
+  color: #1e3150;
+  box-shadow: inset 0 0 0 1px rgba(31, 78, 121, 0.12);
+}
+
+.panoramaTopBarDrawerNav {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.panoramaTopBarDrawerNav span,
+.panoramaTopBarDrawerNav a {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.8rem 1rem;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(31, 78, 121, 0.12);
+  color: #0f172a;
+  font-size: 0.96rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.panoramaTopBarDrawerNav a:hover,
+.panoramaTopBarDrawerNav a:focus-visible {
+  background: #f8fbff;
+  box-shadow: inset 0 0 0 1px rgba(31, 78, 121, 0.18);
+}
+
+.panoramaTopBarShellTransparent .templateTopBar {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.panoramaTopBarShellTransparent .templateTopBarBrand {
+  color: #f8f4ed;
+}
+
+.panoramaTopBarShellTransparent .templateTopBarMark {
+  background: rgba(255, 248, 237, 0.92);
+  box-shadow: 0 0 0 5px rgba(255, 248, 237, 0.14);
+}
+
+.panoramaTopBarShellTransparent .templateTopBarNav span,
+.panoramaTopBarShellTransparent .templateTopBarNav a,
+.panoramaTopBarShellTransparent .templateTopBarMeta span {
+  background: transparent;
+  color: #fffaf3;
+  box-shadow: none;
+  text-shadow: 0 1px 2px rgba(15, 23, 42, 0.34);
+}
+
+.panoramaTopBarShellSolid .templateTopBar {
+  background: #fbf8f2;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.panoramaTopBarShellSolid .templateTopBarNav span,
+.panoramaTopBarShellSolid .templateTopBarNav a,
+.panoramaTopBarShellSolid .templateTopBarMeta span {
+  color: #334155;
+}
+
+.panoramaEditorialHero {
+  display: grid;
+  gap: 20px;
+}
+
+.panoramaEditorialHeroWithTopBar {
+  margin-top: 0;
+}
+
+.panoramaHeroBackdropShell {
+  --panorama-hero-min-height: 600px;
+  --panorama-hero-aspect-ratio: 16 / 9;
+  --panorama-hero-object-position-y: 48%;
+  margin:
+    calc(0px - var(--template-preview-frame-gutter))
+    calc(0px - var(--template-preview-frame-gutter))
+    0;
+  position: relative;
+  aspect-ratio: var(--panorama-hero-aspect-ratio);
+  min-height: var(--panorama-hero-min-height);
+  border-radius: 0;
+  overflow: hidden;
+  border: 0;
+  background: #111827;
+}
+
+.panoramaHeroBackdrop {
+  width: 100%;
+  height: 100%;
+  min-height: var(--panorama-hero-min-height);
+  display: block;
+  object-fit: cover;
+  object-position: center var(--panorama-hero-object-position-y);
+}
+
+.panoramaHeroBackdropFrame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: var(--panorama-hero-min-height);
+  display: block;
+}
+
+.panoramaHeroOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.74)),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.12));
+  pointer-events: none;
+}
+
+.panoramaHeroInner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: clamp(22px, 3.4vw, 42px);
+  pointer-events: none;
+}
+
+.panoramaHeroInner[data-panorama-hero-alignment="top-left"],
+.panoramaHeroInner[data-panorama-hero-alignment="top-center"],
+.panoramaHeroInner[data-panorama-hero-alignment="top-right"] {
+  align-items: start;
+}
+
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-left"],
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-center"],
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-right"] {
+  align-items: end;
+}
+
+.panoramaHeroInner[data-panorama-hero-alignment="top-left"],
+.panoramaHeroInner[data-panorama-hero-alignment="center-left"],
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-left"] {
+  justify-items: start;
+}
+
+.panoramaHeroInner[data-panorama-hero-alignment="top-right"],
+.panoramaHeroInner[data-panorama-hero-alignment="center-right"],
+.panoramaHeroInner[data-panorama-hero-alignment="bottom-right"] {
+  justify-items: end;
+}
+
+.panoramaHeroCopyBlock {
+  display: grid;
+  gap: 16px;
+  max-width: min(720px, 100%);
+  justify-items: center;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="top-left"],
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="center-left"],
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="bottom-left"] {
+  justify-items: start;
+  margin-inline: 0;
+  text-align: left;
+}
+
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="top-right"],
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="center-right"],
+.panoramaHeroCopyBlock[data-panorama-hero-alignment="bottom-right"] {
+  justify-items: end;
+  margin-inline: 0;
+  text-align: right;
+}
+
+.panoramaHeroCopyBlock > * {
+  pointer-events: auto;
+}
+
+.panoramaHeroEyebrow,
+.panoramaHeroHeadline,
+.panoramaHeroBlurb {
+  margin: 0;
+  color: #f8f4ed;
+}
+
+.panoramaHeroEyebrow {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(248, 244, 237, 0.72);
+}
+
+.panoramaHeroHeadline {
+  font-size: clamp(2.35rem, 1.8rem + 2vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.panoramaHeroBlurb {
+  max-width: 56ch;
+  color: rgba(248, 244, 237, 0.86);
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+.panoramaHeroActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+}
+
+.panoramaHeroActionRow[data-panorama-hero-alignment="top-left"],
+.panoramaHeroActionRow[data-panorama-hero-alignment="center-left"],
+.panoramaHeroActionRow[data-panorama-hero-alignment="bottom-left"] {
+  justify-content: flex-start;
+}
+
+.panoramaHeroActionRow[data-panorama-hero-alignment="top-right"],
+.panoramaHeroActionRow[data-panorama-hero-alignment="center-right"],
+.panoramaHeroActionRow[data-panorama-hero-alignment="bottom-right"] {
+  justify-content: flex-end;
+}
+
+.panoramaHeroPrimaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.panoramaHeroPrimaryAction {
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0.88rem 1.12rem;
+  background: rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #f8f4ed;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 18px 32px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.panoramaHeroPrimaryAction strong,
+.panoramaHeroPrimaryAction span {
+  color: inherit;
+}
+
+.panoramaHeroPrimaryAction span {
+  color: rgba(248, 244, 237, 0.82);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.panoramaTrustRail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.panoramaTrustRail.previewInteractiveTarget:hover {
+  box-shadow: none;
+}
+
+.panoramaTrustRail.previewInteractiveTargetActive {
+  box-shadow: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.18));
+  border-radius: 28px;
+}
+
+.panoramaTrustCard {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(123, 101, 65, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 244, 237, 0.96));
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.panoramaTrustCard:hover {
+  transform: translateY(-6px);
+  border-color: rgba(183, 138, 66, 0.28);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(251, 246, 238, 0.98));
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+}
+
+.panoramaTrustCardIcon {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(191, 165, 122, 0.16);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.panoramaTrustCard:hover .panoramaTrustCardIcon {
+  transform: scale(1.06);
+  background: rgba(191, 165, 122, 0.24);
+  box-shadow: 0 14px 28px rgba(183, 138, 66, 0.14);
+}
+
+.panoramaTrustCardCopy {
+  display: grid;
+  gap: 6px;
+}
+
+.panoramaTrustCardTitle,
+.panoramaTrustCardDescription {
+  margin: 0;
+}
+
+.panoramaTrustCardTitle {
+  color: #0f172a;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.panoramaTrustCardDescription {
+  color: #475569;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.panoramaTrustCard.previewInteractiveTarget:hover {
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+}
+
+.panoramaTrustCard.previewInteractiveTargetActive {
+  transform: translateY(-4px);
+  border-color: rgba(183, 138, 66, 0.34);
+  box-shadow:
+    0 18px 36px rgba(15, 23, 42, 0.1),
+    0 0 0 2px rgba(183, 138, 66, 0.14);
+}
+
+.panoramaTrustCard.previewInteractiveTargetActive .panoramaTrustCardIcon {
+  background: rgba(191, 165, 122, 0.26);
+  box-shadow: 0 14px 28px rgba(183, 138, 66, 0.12);
+}
+
+.panoramaResidenceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.92fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.panoramaResidenceSection {
+  display: grid;
+  gap: 14px;
+  padding-block: clamp(20px, 3vw, 44px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.panoramaResidenceSectionPanel {
+  margin-inline: calc(var(--template-preview-frame-gutter) * -1);
+  padding-inline: var(--template-preview-frame-gutter);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.panoramaResidenceHeading {
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+.panoramaResidenceEyebrow {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1f4e79;
+}
+
+.panoramaResidenceHeadline {
+  margin: 0;
+  font-size: clamp(1.28rem, 1.08rem + 0.48vw, 1.62rem);
+  color: #0f172a;
+}
+
+.panoramaResidenceCopy,
+.panoramaResidenceVisualColumn,
+.panoramaInfoStack {
+  display: grid;
+  gap: 16px;
+}
+
+.panoramaResidenceCopy {
+  align-self: center;
+}
+
+.panoramaResidenceVisualColumn {
+  justify-items: center;
+  align-content: center;
+  padding-block: clamp(16px, 2.4vw, 34px);
+}
+
+.panoramaResidenceVisualFrame {
+  --template-image-hover-lift-y: -1px;
+  --template-image-hover-shadow: 0 20px 36px rgba(15, 23, 42, 0.1);
+  --template-image-hover-scale: 1.02;
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  min-height: 420px;
+  aspect-ratio: 16 / 11;
+  display: block;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(123, 101, 65, 0.12);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.09);
+  background: linear-gradient(180deg, rgba(248, 245, 239, 0.95), rgba(235, 229, 219, 0.9));
+}
+
+.panoramaResidenceImage {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  display: block;
+  object-fit: cover;
+}
+
+.panoramaResidenceCardRail {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.panoramaResidenceCardRail::-webkit-scrollbar {
+  display: none;
+}
+
+.panoramaResidenceCard {
+  min-width: 148px;
+  flex: 0 0 148px;
+  border-radius: 18px;
+  gap: 12px;
+}
+
+.panoramaGalleryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  width: min(100%, 1080px);
+  justify-self: center;
+}
+
+.panoramaDeferredRenderSection {
+  @supports (content-visibility: auto) {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 720px;
+  }
+}
+
+.sectionHeadingTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.1rem, 0.98rem + 0.35vw, 1.4rem);
+}
+
+.panoramaGallerySection {
+  display: grid;
+  gap: 18px;
+  padding: clamp(22px, 3vw, 34px) 0;
+}
+
+.panoramaGalleryHeading {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+
+.panoramaGalleryHeadingTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.2rem, 1.05rem + 0.55vw, 1.7rem);
+  text-align: center;
+}
+
+.panoramaGalleryTileFrame {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(123, 101, 65, 0.12);
+}
+
+.panoramaGalleryTile {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.panoramaGalleryActions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.panoramaAmenitiesSection {
+  display: grid;
+  gap: clamp(28px, 3.2vw, 40px);
+  justify-items: center;
+  padding: clamp(22px, 3vw, 36px) 0;
+}
+
+.panoramaAmenityIntro {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  text-align: center;
+}
+
+.panoramaAmenityEyebrow,
+.panoramaAmenityTitle,
+.panoramaAmenityLabel {
+  margin: 0;
+}
+
+.panoramaAmenityEyebrow {
+  color: #b78a42;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.panoramaAmenityTitle {
+  color: #1e3150;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: clamp(2rem, 1.45rem + 1.5vw, 3.35rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.panoramaAmenityDivider {
+  width: 64px;
+  height: 1px;
+  background: rgba(183, 138, 66, 0.65);
+}
+
+.panoramaAmenityGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px clamp(18px, 2vw, 34px);
+  width: min(100%, 1080px);
+}
+
+.panoramaAmenityActions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.panoramaAmenityShowAllButton {
+  min-height: 48px;
+  padding: 0.82rem 1.5rem;
+  border: 1px solid rgba(208, 197, 178, 0.94);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1e3150;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.panoramaAmenityShowAllButton:hover {
+  background: #ffffff;
+  border-color: rgba(183, 138, 66, 0.72);
+  transform: translateY(-1px);
+}
+
+.panoramaAmenityCard {
+  display: grid;
+  flex: 0 1 170px;
+  justify-items: center;
+  align-content: start;
+  gap: 14px;
+  width: 100%;
+  max-width: 170px;
+  padding: 10px 8px;
+  border-radius: 24px;
+  text-align: center;
+  transition: transform 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.panoramaAmenityCard:hover {
+  transform: translateY(-6px);
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.panoramaAmenityCard:hover .panoramaAmenityIcon {
+  transform: scale(1.08);
+  box-shadow: 0 16px 32px rgba(183, 138, 66, 0.16);
+  background: #ffffff;
+  border-color: rgba(183, 138, 66, 0.72);
+}
+
+.panoramaAmenityIcon {
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(208, 197, 178, 0.9);
+  background: rgba(255, 255, 255, 0.84);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.panoramaAmenityIconGlyph {
+  width: 22px;
+  height: 22px;
+}
+
+.panoramaAmenityLabel {
+  max-width: 18ch;
+  color: #1e3150;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.panoramaAmenityCard.previewInteractiveTarget:hover {
+  box-shadow: none;
+}
+
+.panoramaAmenityCard.previewInteractiveTargetActive {
+  box-shadow: none;
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.panoramaAmenityCard.previewInteractiveTargetActive .panoramaAmenityIcon {
+  border-color: rgba(183, 138, 66, 0.84);
+  box-shadow:
+    0 0 0 3px rgba(183, 138, 66, 0.12),
+    0 16px 32px rgba(183, 138, 66, 0.14);
+  background: #ffffff;
+}
+
+.panoramaAmenitiesModalOverlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  z-index: 3200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.44);
+}
+
+.panoramaAmenitiesModalOverlay::backdrop {
+  background: transparent;
+}
+
+.panoramaAmenitiesModalBackdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.panoramaAmenitiesModal {
+  position: relative;
+  z-index: 1;
+  width: min(940px, 100%);
+  max-height: min(82vh, 900px);
+  overflow-y: auto;
+  padding: 34px 34px 30px;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.2);
+}
+
+.panoramaAmenitiesModalCloseButton {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(244, 244, 245, 0.96);
+  color: #475569;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.panoramaAmenitiesModalTitle,
+.panoramaAmenitiesModalCategoryTitle,
+.panoramaAmenitiesModalItemLabel {
+  margin: 0;
+}
+
+.panoramaAmenitiesModalTitle {
+  color: #1e3150;
+  text-align: center;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: clamp(1.8rem, 1.4rem + 0.8vw, 2.4rem);
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.panoramaAmenitiesModalGroups {
+  display: grid;
+  gap: 26px;
+  margin-top: 28px;
+}
+
+.panoramaAmenitiesModalGroup {
+  display: grid;
+  gap: 14px;
+}
+
+.panoramaAmenitiesModalCategoryTitle {
+  color: #1e3150;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.panoramaAmenitiesModalItems {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 18px;
+}
+
+.panoramaAmenitiesModalItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.panoramaAmenitiesModalItemIcon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: rgba(191, 165, 122, 0.12);
+}
+
+.panoramaAmenitiesModalItemIconGlyph {
+  width: 18px;
+  height: 18px;
+}
+
+.panoramaAmenitiesModalItemLabel {
+  color: #475569;
+  font-size: 0.96rem;
+  line-height: 1.4;
+}
+
+.panoramaJourneyGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.panoramaJourneyGrid.previewInteractiveTarget:hover {
+  box-shadow: none;
+}
+
+.panoramaJourneyGrid.previewInteractiveTargetActive {
+  box-shadow: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.16));
+  border-radius: 28px;
+}
+
+.panoramaJourneyCard {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 220px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(123, 101, 65, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(191, 165, 122, 0.16), transparent 34%),
+    #ffffff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.panoramaJourneyCard:hover {
+  transform: translateY(-7px);
+  border-color: rgba(183, 138, 66, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(191, 165, 122, 0.24), transparent 40%),
+    linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(251, 247, 240, 0.98));
+  box-shadow: 0 22px 42px rgba(15, 23, 42, 0.08);
+}
+
+.panoramaJourneyIndex {
+  color: #b08c56;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.panoramaJourneyCard:hover .panoramaJourneyIndex {
+  transform: translateX(2px);
+  color: #946f37;
+}
+
+.panoramaJourneyTitle,
+.panoramaJourneyDescription {
+  margin: 0;
+}
+
+.panoramaJourneyTitle {
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.panoramaJourneyDescription {
+  color: #475569;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.panoramaJourneyCard.previewInteractiveTarget:hover {
+  box-shadow: 0 22px 42px rgba(15, 23, 42, 0.08);
+}
+
+.panoramaJourneyCard.previewInteractiveTargetActive {
+  transform: translateY(-4px);
+  border-color: rgba(183, 138, 66, 0.3);
+  box-shadow:
+    0 20px 38px rgba(15, 23, 42, 0.08),
+    0 0 0 2px rgba(183, 138, 66, 0.12);
+}
+
+.panoramaAvailabilityShell,
+.panoramaClosingShell {
+  display: grid;
+}
+
+.panoramaAvailabilityShell {
+  justify-items: stretch;
+}
+
+.panoramaContactShell {
+  display: grid;
+}
+
+.panoramaContactSection {
+  --panorama-contact-accent: #f5e5cb;
+  --panorama-contact-accent-rgb: 245 229 203;
+  --panorama-contact-background: #1b2436;
+  --panorama-contact-background-rgb: 27 36 54;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.92fr);
+  gap: clamp(18px, 2.8vw, 34px);
+  align-items: center;
+  padding: clamp(24px, 3vw, 40px);
+  border-radius: 30px;
+  border: 1px solid rgb(var(--panorama-contact-accent-rgb) / 0.16);
+  background:
+    radial-gradient(circle at top right, rgb(var(--panorama-contact-accent-rgb) / 0.18), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.06), transparent 42%),
+    linear-gradient(
+      135deg,
+      rgb(var(--panorama-contact-background-rgb) / 0.98),
+      rgb(var(--panorama-contact-background-rgb) / 0.92)
+    );
+  box-shadow: 0 22px 46px rgba(15, 23, 42, 0.12);
+}
+
+.panoramaContactSection.previewInteractiveTarget:hover {
+  box-shadow: 0 22px 46px rgba(15, 23, 42, 0.12);
+}
+
+.panoramaContactSection.previewInteractiveTargetActive {
+  border-color: rgb(var(--panorama-contact-accent-rgb) / 0.34);
+  box-shadow:
+    0 22px 46px rgba(15, 23, 42, 0.12),
+    0 0 0 2px rgb(var(--panorama-contact-accent-rgb) / 0.14);
+}
+
+.panoramaContactEyebrow,
+.panoramaContactTitle,
+.panoramaContactDescription,
+.panoramaHostLabel,
+.panoramaHostName {
+  margin: 0;
+}
+
+.panoramaContactCopy {
+  display: grid;
+  gap: 12px;
+  max-width: 60ch;
+}
+
+.panoramaContactEyebrow {
+  color: rgb(var(--panorama-contact-accent-rgb) / 0.76);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.panoramaContactTitle {
+  color: #fffaf3;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: clamp(2rem, 1.45rem + 1vw, 3rem);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.panoramaContactDescription {
+  color: rgba(248, 244, 237, 0.82);
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+.panoramaHostCard {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2vw, 24px);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  justify-self: end;
+  padding: clamp(16px, 2vw, 22px);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(248, 244, 237, 0.06);
+}
+
+.panoramaHostAvatarShell,
+.panoramaHostAvatarFallback {
+  width: 88px;
+  height: 88px;
+  flex: 0 0 88px;
+  border-radius: 999px;
+}
+
+.panoramaHostAvatarShell {
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: rgb(var(--panorama-contact-accent-rgb) / 0.1);
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--panorama-contact-accent-rgb) / 0.16),
+    0 18px 36px rgba(15, 23, 42, 0.16);
+}
+
+.panoramaHostAvatar {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.panoramaHostAvatarFallback {
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(135deg, rgb(var(--panorama-contact-accent-rgb) / 0.28), rgb(var(--panorama-contact-accent-rgb) / 0.58));
+  color: #fffaf3;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.panoramaHostCopy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.panoramaHostLabel {
+  color: rgb(var(--panorama-contact-accent-rgb) / 0.74);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.panoramaHostName {
+  color: #fffaf3;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: clamp(2rem, 1.45rem + 1vw, 3rem);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+.panoramaClosingCallout {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 26px;
+  border: 1px solid rgba(123, 101, 65, 0.16);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 237, 0.98), rgba(255, 255, 255, 0.98)),
+    #ffffff;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.06);
+}
+
+.panoramaClosingCallout strong {
+  color: #0f172a;
+}
+
 .trustSignalsIntro,
 .experienceIntro {
   display: grid;
   justify-items: start;
-}
-
-.panoramaIntroCopy {
-  display: grid;
-  gap: 12px;
-  width: 100%;
-  max-width: none;
-}
-
-.panoramaIntroCopy .heroDescription {
-  width: 100%;
-  max-width: none;
 }
 
 .experienceIntroCopy {
@@ -243,14 +1911,6 @@
   max-width: 62ch;
 }
 
-.panoramaHeroCard {
-  position: relative;
-  display: grid;
-  gap: 0;
-  padding-bottom: 14px;
-}
-
-.panoramaHeroImage,
 .trustSignalsHeroImage,
 .experienceJourneyVisual {
   width: 100%;
@@ -260,104 +1920,6 @@
   border: 1px solid rgba(31, 78, 121, 0.12);
 }
 
-.panoramaHeroImage {
-  min-height: 340px;
-  box-shadow: 0 22px 42px rgba(15, 23, 42, 0.08);
-}
-
-.panoramaSearchStub {
-  position: relative;
-  z-index: 1;
-  justify-self: center;
-  margin-top: -24px;
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  align-items: center;
-  min-height: 48px;
-  padding: 0.78rem 1rem;
-  border-radius: 999px;
-  border: 1px solid rgba(31, 78, 121, 0.14);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
-  text-align: center;
-}
-
-.panoramaSearchStub strong {
-  color: #0f172a;
-}
-
-.panoramaSearchStub span {
-  color: #64748b;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.panoramaFeatureGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.panoramaFeatureCard {
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 10px;
-  padding: 18px 16px;
-  border-radius: 20px;
-  border: 1px solid rgba(31, 78, 121, 0.12);
-  background: rgba(249, 252, 246, 0.92);
-  text-align: center;
-}
-
-.panoramaFeatureIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: #f4f7fb;
-  color: #1f2937;
-  box-sizing: border-box;
-  flex-shrink: 0;
-}
-
-.panoramaFeatureIconGlyph {
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
-  line-height: 1;
-}
-
-.panoramaFeatureIconGlyphLarge {
-  width: 28px;
-  height: 28px;
-  font-size: 28px;
-}
-
-.panoramaFeatureIconGlyph path {
-  vector-effect: non-scaling-stroke;
-}
-
-.panoramaFeatureTitle,
-.panoramaFeatureDescription {
-  margin: 0;
-  line-height: 1.6;
-}
-
-.panoramaFeatureTitle {
-  color: #0f172a;
-  font-weight: 800;
-}
-
-.panoramaFeatureDescription {
-  color: #475569;
-}
-
-.panoramaFeatureDescription,
 .heroDescription,
 .signalCard p,
 .trustSignalsCard p,
@@ -614,14 +2176,26 @@
   font-weight: 600;
 }
 
+@mixin website-section-surface {
+  border: 1px solid rgba(31, 78, 121, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.05);
+}
+
 .sectionCard {
   display: grid;
   gap: 14px;
   padding: 20px;
   border-radius: 24px;
-  border: 1px solid rgba(31, 78, 121, 0.12);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.05);
+  @include website-section-surface;
+}
+
+.panoramaGallerySectionPanel {
+  margin-inline: calc(var(--template-preview-frame-gutter) * -1);
+  padding-inline: var(--template-preview-frame-gutter);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .sectionHeading {
@@ -826,23 +2400,25 @@
   border: 0;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-height: 48px;
   padding: 0 18px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #1f4e79, #163d61);
+  background: linear-gradient(135deg, #25d366, #128c43);
   color: #ffffff;
+  text-decoration: none;
   font: inherit;
   font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 18px 32px rgba(31, 78, 121, 0.28);
+  box-shadow: 0 18px 32px rgba(18, 140, 67, 0.28);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .visitorChatLauncher:hover {
   transform: translateY(-1px);
-  box-shadow: 0 22px 38px rgba(31, 78, 121, 0.34);
+  box-shadow: 0 22px 38px rgba(18, 140, 67, 0.34);
 }
 
 .visitorChatPanel {
@@ -967,8 +2543,14 @@
 }
 
 @media (max-width: 920px) {
-  .panoramaFeatureGrid,
+  .panoramaTrustRail,
+  .panoramaJourneyGrid,
   .experienceFooter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaResidenceGrid,
+  .panoramaContactSection {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -993,9 +2575,32 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .panoramaHeroBackdropShell,
   .heroVisual,
   .tallImage {
-    min-height: 280px;
+    --panorama-hero-min-height: 280px;
+    --panorama-hero-aspect-ratio: auto;
+    min-height: var(--panorama-hero-min-height);
+  }
+
+  .panoramaHeroBackdrop {
+    min-height: var(--panorama-hero-min-height);
+  }
+
+  .panoramaGalleryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panoramaAmenityGrid {
+    gap: 24px 20px;
+  }
+
+  .panoramaAmenitiesModalItems {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panoramaHostCard {
+    justify-self: start;
   }
 }
 
@@ -1004,13 +2609,100 @@
     padding: 14px;
   }
 
+  .panoramaTopBarShell {
+    --panorama-topbar-overlay-offset: 76px;
+    height: 0;
+    margin-bottom: calc(0px - var(--panorama-topbar-overlay-offset));
+    overflow: visible;
+  }
+
+  .panoramaTopBarShellInteractive,
+  .panoramaTopBarShellPublic {
+    width: 100%;
+  }
+
+  .panoramaEditorialHeroWithTopBar {
+    margin-top: -18px;
+  }
+
   .templateTopBar {
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
+    position: absolute;
+    inset: 0 0 auto 0;
   }
 
   .templateTopBarNav,
   .templateTopBarMeta {
     justify-content: flex-start;
+  }
+
+  .templateTopBarBrand {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .templateTopBarBrand span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .templateTopBarNav {
+    display: none;
+  }
+
+  .panoramaTopBarActions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
+  .panoramaTopBarMenuButton {
+    display: inline-flex;
+  }
+
+  .panoramaTopBarShellPublic {
+    position: relative;
+    top: auto;
+    height: var(--panorama-topbar-overlay-offset);
+    margin-bottom: calc(0px - var(--panorama-topbar-overlay-offset));
+  }
+
+  .panoramaTopBarShellPublic > [data-panorama-top-bar-inner="true"] {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 24;
+  }
+
+  .panoramaTopBarShellPublic .templateTopBar {
+    position: relative;
+    inset: auto;
+  }
+
+  .panoramaHeroCopyBlock {
+    gap: 14px;
+  }
+
+  .panoramaHeroPrimaryAction {
+    min-height: 0;
+    max-width: min(100%, clamp(165px, 50vw, 220px));
+    gap: clamp(4px, 1vw, 6px);
+    padding:
+      clamp(0.3rem, 0.18rem + 0.5vw, 0.42rem)
+      clamp(0.48rem, 0.28rem + 0.9vw, 0.68rem);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.14);
+  }
+
+  .panoramaHeroPrimaryAction strong {
+    font-size: clamp(0.6rem, 0.48rem + 0.35vw, 0.74rem);
+    line-height: 1.2;
+  }
+
+  .panoramaHeroPrimaryAction span {
+    font-size: clamp(0.5rem, 0.4rem + 0.28vw, 0.62rem);
+    line-height: 1.3;
   }
 
   .statGrid,
@@ -1019,9 +2711,102 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .panoramaResidenceCardRail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    justify-content: stretch;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .panoramaResidenceCardRail > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .panoramaResidenceCard {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
   .galleryStrip,
   .galleryColumn {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panoramaAmenityGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px 12px;
+    width: 100%;
+  }
+
+  .panoramaAmenityCard {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    padding: 8px 4px;
+    gap: 12px;
+  }
+
+  .panoramaAmenityGrid .panoramaAmenityCard:nth-child(n + 10) {
+    display: none;
+  }
+
+  .panoramaAmenityLabel {
+    max-width: none;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+  }
+
+  .panoramaContactSection {
+    padding: 22px 18px;
+    border-radius: 24px;
+  }
+
+  .panoramaHostCard {
+    width: 100%;
+    justify-self: stretch;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .panoramaHostCopy {
+    flex: 1 1 auto;
+  }
+
+  .panoramaHostAvatarShell,
+  .panoramaHostAvatarFallback {
+    width: 76px;
+    height: 76px;
+    flex-basis: 76px;
+  }
+
+  .panoramaAmenitiesModalOverlay {
+    padding: 12px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .panoramaAmenitiesModal {
+    width: min(420px, 100%);
+    max-height: 86vh;
+    padding: 24px 18px 18px;
+    border-radius: 20px;
+  }
+
+  .panoramaAmenitiesModalCloseButton {
+    top: 10px;
+    right: 10px;
+  }
+
+  .panoramaAmenitiesModalItems {
+    gap: 10px 14px;
+  }
+
+  .panoramaTopBarShellSolid .templateTopBar {
+    box-shadow: none;
+    border-bottom: 1px solid rgba(208, 197, 178, 0.72);
   }
 
   .visitorChatLauncher,
@@ -1049,6 +2834,26 @@
     border-radius: 22px;
   }
 
+  .panoramaTopBarShell {
+    --panorama-topbar-overlay-offset: 70px;
+  }
+
+  .panoramaHeroBackdropShell {
+    --panorama-hero-min-height: clamp(380px, 62vh, 500px);
+    --panorama-hero-aspect-ratio: auto;
+    --panorama-hero-object-position-y: 58%;
+    min-height: var(--panorama-hero-min-height);
+  }
+
+  .panoramaHeroBackdrop {
+    min-height: var(--panorama-hero-min-height);
+  }
+
+  .panoramaTopBarDrawer {
+    width: min(300px, calc(100% - 20px));
+    padding: 16px 14px 20px;
+  }
+
   .previewBrowserBar {
     padding: 12px 14px;
   }
@@ -1057,12 +2862,97 @@
     font-size: 1.42rem;
   }
 
-  .panoramaFeatureGrid {
+  .panoramaHeroHeadline {
+    font-size: 2rem;
+  }
+
+  .panoramaHeroActionRow,
+  .panoramaTrustCard {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .panoramaTrustRail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(6px, 1.8vw, 8px);
+    align-items: stretch;
+  }
+
+  .panoramaTrustCard {
+    justify-items: center;
+    text-align: center;
+    gap: clamp(6px, 1.8vw, 8px);
+    padding: clamp(8px, 2vw, 10px) clamp(6px, 1.8vw, 8px);
+    border-radius: 16px;
+  }
+
+  .panoramaTrustCardIcon {
+    width: clamp(22px, 5.5vw, 26px);
+    height: clamp(22px, 5.5vw, 26px);
+    border-radius: 10px;
+  }
+
+  .panoramaTrustCardCopy {
+    gap: 4px;
+  }
+
+  .panoramaTrustCardTitle {
+    font-size: clamp(0.58rem, 1.9vw, 0.7rem);
+    line-height: 1.2;
+  }
+
+  .panoramaTrustCardDescription {
+    font-size: clamp(0.46rem, 1.55vw, 0.56rem);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .panoramaJourneyGrid,
   .galleryStrip,
   .galleryColumn {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panoramaAmenityCard {
+    padding: 6px 0;
+    gap: 10px;
+  }
+
+  .panoramaAmenityGrid .panoramaAmenityCard:nth-child(n + 10) {
+    display: none;
+  }
+
+  .panoramaAmenityGrid {
+    gap: 16px 10px;
+  }
+
+  .panoramaAmenityIcon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .panoramaAmenityLabel {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+  }
+
+  .panoramaAmenityShowAllButton {
+    width: 100%;
+  }
+
+  .panoramaHostCard {
+    flex-direction: row;
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .panoramaHostName {
+    font-size: 1.8rem;
+  }
+
+  .panoramaAmenitiesModalItems {
     grid-template-columns: minmax(0, 1fr);
   }
 

@@ -61,7 +61,7 @@ const InquiryPaymentPage = () => {
     <main className="PaymentOverview">
       <div className="right-panel">
         <h1>Complete Your Booking</h1>
-        <p>Your inquiry has been accepted by the host. Complete your payment to confirm the booking.</p>
+        <p>Your request has been accepted by the host. Complete your payment to confirm the booking.</p>
         {stripeClientSecret && (
           <Elements stripe={stripePromise} options={{ clientSecret: stripeClientSecret }}>
             <SetupForm bookingId={bookingId} loading={false} handleConfirmAndPay={() => {}} />
