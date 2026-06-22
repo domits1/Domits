@@ -3,7 +3,11 @@
  */
 
 import { Auth } from "aws-amplify";
-import { createAutomation, listAutomations } from "./automationService";
+import {
+  createAutomation,
+  listAutomations,
+  resolveAutomationApiBase,
+} from "./automationService";
 
 jest.mock("aws-amplify", () => ({
   Auth: {
@@ -39,6 +43,19 @@ describe("AutomatedMessaging API authentication", () => {
           Authorization: "Bearer id-token-1",
         },
       })
+    );
+  });
+
+  test("uses the verified API for missing or known-wrong acceptance configuration", () => {
+    const verifiedApi = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+
+    expect(resolveAutomationApiBase()).toBe(verifiedApi);
+    expect(resolveAutomationApiBase("https://543s1lwby8.execute-api.eu-north-1.amazonaws.com/default")).toBe(verifiedApi);
+  });
+
+  test("preserves other configured API URLs and removes a trailing slash", () => {
+    expect(resolveAutomationApiBase("https://example.execute-api.eu-north-1.amazonaws.com/default/")).toBe(
+      "https://example.execute-api.eu-north-1.amazonaws.com/default"
     );
   });
 
