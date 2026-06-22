@@ -20,6 +20,12 @@ const contentByLanguage = { en, nl, de, es };
 const GUEST_ICONS = [Search, Calendar, MessageSquare];
 const HOST_ICONS = [Home, Calendar, DollarSign];
 
+const CALENDAR_CELLS = Array.from({ length: 14 }, (_, i) => ({
+  id: `cell-${i}`,
+  active: i === 5,
+}));
+const REVENUE_BAR_HEIGHTS = [40, 55, 50, 70, 80, 95];
+
 const MOCKUPS = {
   guests: [
     // Search bar
@@ -64,10 +70,10 @@ const MOCKUPS = {
     </div>,
     // Calendar grid
     <div className="how-it-works__mockup how-it-works__mockup--calendar" key="h1">
-      {Array.from({ length: 14 }).map((_, i) => (
+      {CALENDAR_CELLS.map((cell) => (
         <span
-          className={`how-it-works__mockup-cell${i === 5 ? " how-it-works__mockup-cell--active" : ""}`}
-          key={i}
+          className={`how-it-works__mockup-cell${cell.active ? " how-it-works__mockup-cell--active" : ""}`}
+          key={cell.id}
         />
       ))}
     </div>,
@@ -75,8 +81,8 @@ const MOCKUPS = {
     <div className="how-it-works__mockup how-it-works__mockup--revenue" key="h2">
       <span className="how-it-works__mockup-amount">$12,750</span>
       <span className="how-it-works__mockup-bars">
-        {[40, 55, 50, 70, 80, 95].map((h, i) => (
-          <span className="how-it-works__mockup-col" style={{ height: `${h}%` }} key={i} />
+        {REVENUE_BAR_HEIGHTS.map((h) => (
+          <span className="how-it-works__mockup-col" style={{ height: `${h}%` }} key={`bar-${h}`} />
         ))}
       </span>
     </div>,
