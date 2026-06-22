@@ -1138,6 +1138,8 @@
       },
       "fields": {
         "fullName": "Nombre completo",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
         "title": "Título",
         "selectTitle": "Seleccionar título",
         "email": "Correo electrónico",

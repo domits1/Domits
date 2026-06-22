@@ -1138,6 +1138,8 @@
       },
       "fields": {
         "fullName": "Volledige naam",
+        "firstName": "Voornaam",
+        "lastName": "Achternaam",
         "title": "Aanspreektitel",
         "selectTitle": "Selecteer aanspreektitel",
         "email": "E-mail",

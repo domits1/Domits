@@ -1137,6 +1137,8 @@
       },
       "fields": {
         "fullName": "Full name",
+        "firstName": "First name",
+        "lastName": "Last name",
         "title": "Title",
         "selectTitle": "Select title",
         "email": "Email",

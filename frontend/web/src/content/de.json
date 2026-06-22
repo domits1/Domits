@@ -1138,6 +1138,8 @@
       },
       "fields": {
         "fullName": "Vollständiger Name",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
         "title": "Anrede",
         "selectTitle": "Anrede auswählen",
         "email": "E-Mail",
