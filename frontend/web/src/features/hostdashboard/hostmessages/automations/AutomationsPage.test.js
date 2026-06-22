@@ -134,14 +134,12 @@ describe("host automated messages v1", () => {
 
     await waitFor(() => expect(createAutomation).toHaveBeenCalled());
     expect(createAutomation).toHaveBeenCalledWith(
-      "access-token-1",
       expect.objectContaining({ name: "New welcome", offsetAmount: 1, offsetUnit: "DAYS", channel: "DOMITS_DIRECT" })
     );
 
     fireEvent.change(screen.getByLabelText("Automation name"), { target: { value: "Edited welcome" } });
     fireEvent.click(screen.getByText("Save"));
     await waitFor(() => expect(updateAutomation).toHaveBeenCalledWith(
-      "access-token-1",
       "automation-2",
       expect.objectContaining({ name: "Edited welcome" })
     ));
@@ -152,10 +150,10 @@ describe("host automated messages v1", () => {
     fireEvent.click(await screen.findByText("Paid booking welcome"));
     await screen.findByRole("option", { name: "Canal Loft" });
     fireEvent.click(screen.getByText("Activate"));
-    await waitFor(() => expect(activateAutomation).toHaveBeenCalledWith("access-token-1", "automation-1"));
+    await waitFor(() => expect(activateAutomation).toHaveBeenCalledWith("automation-1"));
 
     fireEvent.click(await screen.findByText("Pause"));
-    await waitFor(() => expect(pauseAutomation).toHaveBeenCalledWith("access-token-1", "automation-1"));
+    await waitFor(() => expect(pauseAutomation).toHaveBeenCalledWith("automation-1"));
   });
 
   test("uses the backend renderer for preview and reports invalid variables", async () => {
@@ -165,7 +163,6 @@ describe("host automated messages v1", () => {
     fireEvent.click(screen.getByText("Render preview"));
     expect(await screen.findByText("Hi Taylor at Canal Loft")).toBeInTheDocument();
     expect(previewAutomation).toHaveBeenCalledWith(
-      "access-token-1",
       expect.objectContaining({ template: expect.stringContaining("guestName") }),
       null
     );

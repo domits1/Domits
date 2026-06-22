@@ -1,3 +1,5 @@
+import { Auth } from "aws-amplify";
+
 const API_BASE = String(process.env.REACT_APP_AUTOMATED_MESSAGING_API_URL || "").replace(/\/$/, "");
 
 export class AutomationApiError extends Error {
@@ -16,12 +18,18 @@ const requireToken = (token) => {
   return normalized;
 };
 
-const request = async (path, { method = "GET", token, body } = {}) => {
+const getIdToken = async () => {
+  const session = await Auth.currentSession();
+  return requireToken(session.getIdToken().getJwtToken());
+};
+
+const request = async (path, { method = "GET", body } = {}) => {
+  const idToken = await getIdToken();
   const response = await fetch(`${API_BASE}/automations${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${requireToken(token)}`,
+      Authorization: `Bearer ${idToken}`,
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
@@ -36,15 +44,15 @@ const request = async (path, { method = "GET", token, body } = {}) => {
   return payload;
 };
 
-export const listAutomations = (token) => request("", { token });
-export const createAutomation = (token, automation) => request("", { method: "POST", token, body: automation });
-export const updateAutomation = (token, id, automation) =>
-  request(`/${encodeURIComponent(id)}`, { method: "PATCH", token, body: automation });
-export const activateAutomation = (token, id) =>
-  request(`/${encodeURIComponent(id)}/activate`, { method: "POST", token });
-export const pauseAutomation = (token, id) =>
-  request(`/${encodeURIComponent(id)}/pause`, { method: "POST", token });
-export const previewAutomation = (token, automation, id = null) =>
-  request(id ? `/${encodeURIComponent(id)}/preview` : "/preview", { method: "POST", token, body: automation });
-export const listAutomationDeliveries = (token, id) =>
-  request(`/${encodeURIComponent(id)}/deliveries`, { token });
+export const listAutomations = () => request("");
+export const createAutomation = (automation) => request("", { method: "POST", body: automation });
+export const updateAutomation = (id, automation) =>
+  request(`/${encodeURIComponent(id)}`, { method: "PATCH", body: automation });
+export const activateAutomation = (id) =>
+  request(`/${encodeURIComponent(id)}/activate`, { method: "POST" });
+export const pauseAutomation = (id) =>
+  request(`/${encodeURIComponent(id)}/pause`, { method: "POST" });
+export const previewAutomation = (automation, id = null) =>
+  request(id ? `/${encodeURIComponent(id)}/preview` : "/preview", { method: "POST", body: automation });
+export const listAutomationDeliveries = (id) =>
+  request(`/${encodeURIComponent(id)}/deliveries`);
