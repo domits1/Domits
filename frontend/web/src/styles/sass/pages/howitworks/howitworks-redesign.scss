@@ -124,6 +124,184 @@
           color: #555;
           margin: 0;
         }
+
+        .how-it-works__mockup {
+          margin-top: 24px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-height: 48px;
+        }
+
+        // Guest: search bar
+        .how-it-works__mockup--search {
+          border: 1px solid #e8eae8;
+          border-radius: 10px;
+          padding: 8px 8px 8px 12px;
+          background: #fff;
+
+          .how-it-works__mockup-pin {
+            color: var(--primary-color);
+            flex-shrink: 0;
+          }
+
+          .how-it-works__mockup-line {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #eceeec;
+          }
+
+          .how-it-works__mockup-search {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+          }
+        }
+
+        // Guest: booking row
+        .how-it-works__mockup--booking {
+          .how-it-works__mockup-thumb {
+            width: 44px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #cfe8d4, #a9d6b3);
+            flex-shrink: 0;
+          }
+
+          .how-it-works__mockup-lines {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+
+            .how-it-works__mockup-bar {
+              height: 7px;
+              border-radius: 4px;
+              background: #eceeec;
+
+              &--short {
+                width: 60%;
+              }
+            }
+          }
+
+          .how-it-works__mockup-check {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+          }
+        }
+
+        // Guest: chat
+        .how-it-works__mockup--chat {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+
+          .how-it-works__mockup-msg {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .how-it-works__mockup-avatar {
+              width: 22px;
+              height: 22px;
+              border-radius: 50%;
+              background: #cfe8d4;
+              flex-shrink: 0;
+
+              &--alt {
+                background: #f3d9c8;
+              }
+            }
+
+            .how-it-works__mockup-bubble {
+              height: 14px;
+              border-radius: 7px;
+              background: #eceeec;
+              flex: 1;
+
+              &--short {
+                flex: 0 0 55%;
+              }
+            }
+          }
+        }
+
+        // Host: gallery
+        .how-it-works__mockup--gallery {
+          gap: 8px;
+
+          .how-it-works__mockup-photo {
+            flex: 1;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #e2e8f3, #c7d3ea);
+
+            &--add {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #eef2f9;
+              color: var(--secondary-color);
+            }
+          }
+        }
+
+        // Host: calendar
+        .how-it-works__mockup--calendar {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 5px;
+
+          .how-it-works__mockup-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background: #eef0f4;
+
+            &--active {
+              background: var(--secondary-color);
+            }
+          }
+        }
+
+        // Host: revenue
+        .how-it-works__mockup--revenue {
+          justify-content: space-between;
+
+          .how-it-works__mockup-amount {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #111;
+          }
+
+          .how-it-works__mockup-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 44px;
+
+            .how-it-works__mockup-col {
+              width: 7px;
+              border-radius: 3px 3px 0 0;
+              background: var(--secondary-color);
+              opacity: 0.85;
+            }
+          }
+        }
       }
     }
 
