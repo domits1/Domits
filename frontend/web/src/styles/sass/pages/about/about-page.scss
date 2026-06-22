@@ -1,0 +1,329 @@
+.about-page {
+  width: min(1100px, 92%);
+  margin: 0 auto;
+  padding: 48px 0 80px;
+  color: #111;
+  font-family: inherit;
+
+  .about-page__hero {
+    text-align: center;
+    padding: 24px 0 32px;
+
+    .about-page__eyebrow {
+      color: var(--primary-color);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 0 0 18px;
+    }
+
+    .about-page__hero-title {
+      font-size: clamp(2rem, 4vw + 1rem, 3.2rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin: 0;
+
+      .about-page__hero-highlight {
+        color: var(--primary-color);
+      }
+    }
+  }
+
+  .about-page__team {
+    text-align: center;
+    margin-top: 48px;
+
+    .about-page__team-title {
+      font-size: clamp(1.6rem, 2.4vw + 0.8rem, 2.2rem);
+      font-weight: 700;
+      margin: 0 0 12px;
+    }
+
+    .about-page__team-subtitle {
+      color: #555;
+      font-size: 1rem;
+      margin: 0 auto 40px;
+      max-width: 520px;
+    }
+
+    .about-page__team-members {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: clamp(24px, 6vw, 64px);
+      flex-wrap: wrap;
+
+      .about-page__member {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        width: 120px;
+
+        .about-page__member-avatar {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          padding: 3px;
+          border: 1.5px solid #d9eadd;
+
+          .about-page__member-photo {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+          }
+        }
+
+        .about-page__member-name {
+          margin: 6px 0 0;
+          font-size: 0.9rem;
+          font-weight: 700;
+        }
+
+        .about-page__member-role {
+          margin: 0;
+          font-size: 0.8rem;
+          color: #666;
+        }
+      }
+
+      .about-page__member-more {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: #f2f8f3;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1.2;
+        text-decoration: none;
+        padding: 8px;
+
+        &:hover {
+          background: #e6f2e9;
+        }
+      }
+    }
+  }
+
+  .about-page__stats {
+    display: flex;
+    border: 1px solid #e3e6e4;
+    border-radius: 18px;
+    margin-top: 48px;
+    overflow: hidden;
+    background: #fff;
+
+    @media (max-width: 700px) {
+      flex-wrap: wrap;
+    }
+
+    .about-page__stat {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 28px 16px;
+
+      @media (max-width: 700px) {
+        flex: 1 1 50%;
+      }
+
+      & + .about-page__stat {
+        border-left: 1px solid #e3e6e4;
+
+        @media (max-width: 700px) {
+          &:nth-child(3) {
+            border-left: none;
+          }
+        }
+      }
+
+      .about-page__stat-icon {
+        color: var(--primary-color);
+        flex-shrink: 0;
+      }
+
+      .about-page__stat-text {
+        .about-page__stat-value {
+          margin: 0;
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: var(--primary-color);
+        }
+
+        .about-page__stat-label {
+          margin: 2px 0 0;
+          font-size: 0.8rem;
+          color: #555;
+        }
+      }
+    }
+  }
+
+  .about-page__cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-top: 48px;
+    align-items: start;
+
+    @media (max-width: 750px) {
+      grid-template-columns: 1fr;
+    }
+
+    .about-page__card {
+      background: #fff;
+      border: 1px solid #e3e6e4;
+      border-radius: 18px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+
+      .about-page__card-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: #eaf6ec;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .about-page__card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0 0 12px;
+      }
+
+      .about-page__card-description {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #555;
+        margin: 0 0 20px;
+      }
+
+      .about-page__card-link {
+        margin-top: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--primary-color);
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+
+      .about-page__card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: auto;
+
+        .about-page__tag {
+          background: #f3f4f3;
+          color: #333;
+          border-radius: 8px;
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          font-weight: 600;
+
+          &--light {
+            background: #fff;
+            color: var(--primary-color);
+          }
+        }
+      }
+
+      &--featured {
+        grid-row: span 2;
+        background: var(--primary-color);
+        border: none;
+        color: #fff;
+
+        .about-page__card-icon {
+          background: #fff;
+          color: var(--primary-color);
+        }
+
+        .about-page__card-title {
+          font-size: 1.6rem;
+        }
+
+        .about-page__card-description {
+          color: rgba(255, 255, 255, 0.9);
+        }
+      }
+    }
+  }
+
+  .about-page__join {
+    text-align: center;
+    background: var(--primary-color);
+    color: #fff;
+    border-radius: 22px;
+    padding: clamp(40px, 6vw, 72px) clamp(24px, 5vw, 56px);
+    margin-top: 56px;
+
+    .about-page__join-title {
+      font-size: clamp(1.8rem, 3vw + 0.8rem, 2.6rem);
+      font-weight: 700;
+      margin: 0 0 18px;
+    }
+
+    .about-page__join-description {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.92);
+      margin: 0 auto 32px;
+      max-width: 560px;
+    }
+
+    .about-page__join-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+
+      .about-page__join-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 14px 26px;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+          opacity: 0.9;
+        }
+
+        &--primary {
+          background: #fff;
+          color: var(--primary-color);
+        }
+
+        &--secondary {
+          background: transparent;
+          color: #fff;
+          border: 1.5px solid #fff;
+        }
+      }
+    }
+  }
+}

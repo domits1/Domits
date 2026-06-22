@@ -1,28 +1,20 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import {
+  Globe,
   Users,
-  ShieldCheck,
-  Headphones,
-  Zap,
-  Wrench,
-  CreditCard,
-  Sparkles,
-  Leaf,
-  Earth,
+  Laptop,
+  HandHeart,
+  Rocket,
+  TrendingUp,
   Heart,
-  Star,
+  Briefcase,
   ArrowRight,
-  Home,
-  BarChart3,
-  KeyRound,
-  RefreshCw,
 } from "lucide-react";
 
 import stefan from "../../images/about-img/stefan.jpeg";
-import tim from "../../images/about-img/tim.png";
 import Robert from "../../images/about-img/Robert.jpg";
-import Denisa from "../../images/about-img/Denisa.jpeg";
+import Chiel from "../../images/about-img/Chiel.png";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -32,144 +24,134 @@ import es from "../../content/es.json";
 
 const contentByLanguage = { en, nl, de, es };
 
+const STAT_ICONS = { globe: Globe, users: Users, laptop: Laptop, handHeart: HandHeart };
+const MEMBER_PHOTOS = [stefan, Robert, Chiel];
+
 function About() {
   const { language } = useContext(LanguageContext);
-  const content = contentByLanguage[language]?.about?.redesign;
+  const content = contentByLanguage[language]?.about?.aboutPage ?? en.about.aboutPage;
 
-  if (!content) return null;
-
-  const features = [
-    { icon: Users, label: content.features.fairHosts },
-    { icon: ShieldCheck, label: content.features.securePayments },
-    { icon: Headphones, label: content.features.humanSupport },
-    { icon: Zap, label: content.features.aiTools },
-  ];
-
-  const pills = [
-    { icon: Zap, label: content.pills.instantBooking },
-    { icon: Wrench, label: content.pills.smartTools },
-    { icon: CreditCard, label: content.pills.securePayments },
-  ];
-
-  const techItems = [
-    { icon: Sparkles, label: content.techBand.aiTools },
-    { icon: Users, label: content.techBand.humanSupport },
-    { icon: Leaf, label: content.techBand.sustainableTravel },
-  ];
-
-  const stats = [
-    { icon: Earth, value: content.stats.countriesValue, label: content.stats.countriesLabel },
-    { icon: Heart, value: content.stats.guestsValue, label: content.stats.guestsLabel },
-    { icon: Star, value: content.stats.ratingValue, label: content.stats.ratingLabel },
-  ];
-
-  const orbitMembers = [
-    { src: stefan, alt: "Stefan", position: "top-left", badge: Home },
-    { src: Robert, alt: "Robert", position: "top-right", badge: BarChart3 },
-    { src: Denisa, alt: "Denisa", position: "bottom-left", badge: KeyRound },
-    { src: tim, alt: "Tim", position: "bottom-right", badge: RefreshCw },
-  ];
+  const { hero, team, stats, cards, join } = content;
 
   return (
-    <div className="about">
-      <section className="about__hero">
-        <p className="about__eyebrow">{content.eyebrow}</p>
-        <h1 className="about__hero-title">
-          {content.hero.line1}
+    <div className="about-page">
+      <section className="about-page__hero">
+        <p className="about-page__eyebrow">{content.eyebrow}</p>
+        <h1 className="about-page__hero-title">
+          {hero.line1}
           <br />
-          {content.hero.line2}
-          <span className="about__hero-highlight">{content.hero.highlight}</span>
-          {content.hero.suffix}
+          <span className="about-page__hero-highlight">{hero.highlight}</span>
         </h1>
+      </section>
 
-        <div className="about__features">
-          {features.map(({ icon: Icon, label }) => (
-            <div className="about__feature" key={label}>
-              <div className="about__feature-icon">
-                <Icon size={28} strokeWidth={1.8} />
+      <section className="about-page__team">
+        <h2 className="about-page__team-title">{team.title}</h2>
+        <p className="about-page__team-subtitle">{team.subtitle}</p>
+
+        <div className="about-page__team-members">
+          {team.members.map((member, index) => (
+            <div className="about-page__member" key={member.name}>
+              <div className="about-page__member-avatar">
+                <img
+                  className="about-page__member-photo"
+                  src={MEMBER_PHOTOS[index]}
+                  alt={member.name}
+                  loading="lazy"
+                />
               </div>
-              <p className="about__feature-label">{label}</p>
+              <p className="about-page__member-name">{member.name}</p>
+              <p className="about-page__member-role">{member.role}</p>
             </div>
           ))}
+
+          <Link to="/team" className="about-page__member-more">
+            {team.moreMembers}
+          </Link>
         </div>
       </section>
 
-      <section className="about__mission">
-        <div className="about__mission-text">
-          <p className="about__mission-label">{content.mission.label}</p>
-          <h2 className="about__mission-title">
-            {content.mission.titleStart}
-            <span className="about__mission-highlight">{content.mission.titleHighlight}</span>
-            {content.mission.titleEnd}
-          </h2>
-          <p className="about__mission-description">{content.mission.description}</p>
-          <Link to="/how-it-works" className="about__mission-cta">
-            {content.mission.cta} <ArrowRight size={18} />
-          </Link>
-          <Link to="/team" className="about__mission-team-link">
-            {content.mission.meetTheTeam} <ArrowRight size={16} />
-          </Link>
-        </div>
-
-        <div className="about__mission-visual">
-          <div className="about__orbit">
-            <Earth className="about__orbit-globe" strokeWidth={0.6} />
-            {orbitMembers.map(({ src, alt, position, badge: Badge }) => (
-              <div className={`about__orbit-member about__orbit-member--${position}`} key={alt}>
-                <img className="about__orbit-photo" src={src} alt={alt} loading="lazy" />
-                <span className="about__orbit-badge">
-                  <Badge size={14} strokeWidth={2} />
-                </span>
+      <section className="about-page__stats">
+        {stats.map(({ icon, value, label }) => {
+          const Icon = STAT_ICONS[icon] ?? Globe;
+          return (
+            <div className="about-page__stat" key={label}>
+              <Icon className="about-page__stat-icon" size={32} strokeWidth={1.8} />
+              <div className="about-page__stat-text">
+                <p className="about-page__stat-value">{value}</p>
+                <p className="about-page__stat-label">{label}</p>
               </div>
+            </div>
+          );
+        })}
+      </section>
+
+      <section className="about-page__cards">
+        <article className="about-page__card about-page__card--featured">
+          <span className="about-page__card-icon">
+            <Rocket size={24} strokeWidth={1.8} />
+          </span>
+          <h3 className="about-page__card-title">{cards.featured.title}</h3>
+          <p className="about-page__card-description">{cards.featured.description}</p>
+          <div className="about-page__card-tags">
+            {cards.featured.tags.map((tag) => (
+              <span className="about-page__tag about-page__tag--light" key={tag}>
+                {tag}
+              </span>
             ))}
           </div>
-        </div>
-      </section>
+        </article>
 
-      <section className="about__effortless">
-        <p className="about__effortless-text">{content.effortless}</p>
-        <div className="about__pills">
-          {pills.map(({ icon: Icon, label }) => (
-            <div className="about__pill" key={label}>
-              <Icon size={20} strokeWidth={1.8} />
-              <span>{label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="about__tech-band">
-        <h2 className="about__tech-title">{content.techBand.title}</h2>
-        <div className="about__tech-items">
-          {techItems.map(({ icon: Icon, label }) => (
-            <div className="about__tech-item" key={label}>
-              <Icon size={32} strokeWidth={1.6} />
-              <p>{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="about__stats">
-        {stats.map(({ icon: Icon, value, label }) => (
-          <div className="about__stat" key={label}>
-            <Icon className="about__stat-icon" size={40} strokeWidth={1.6} />
-            <div className="about__stat-text">
-              <p className="about__stat-value">{value}</p>
-              <p className="about__stat-label">{label}</p>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      <section className="about__cta-band">
-        <h2 className="about__cta-title">{content.cta.title}</h2>
-        <div className="about__cta-buttons">
-          <Link to="/home" className="about__cta-button about__cta-button--primary">
-            {content.cta.explore} <ArrowRight size={18} />
+        <article className="about-page__card">
+          <span className="about-page__card-icon">
+            <TrendingUp size={24} strokeWidth={1.8} />
+          </span>
+          <h3 className="about-page__card-title">{cards.partnerSuccess.title}</h3>
+          <p className="about-page__card-description">{cards.partnerSuccess.description}</p>
+          <Link to="/partner" className="about-page__card-link">
+            {cards.partnerSuccess.link} <ArrowRight size={16} />
           </Link>
-          <Link to="/landing" className="about__cta-button about__cta-button--secondary">
-            {content.cta.list}
+        </article>
+
+        <article className="about-page__card">
+          <span className="about-page__card-icon">
+            <Heart size={24} strokeWidth={1.8} />
+          </span>
+          <h3 className="about-page__card-title">{cards.culture.title}</h3>
+          <p className="about-page__card-description">{cards.culture.description}</p>
+          <div className="about-page__card-tags">
+            {cards.culture.tags.map((tag) => (
+              <span className="about-page__tag" key={tag}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        </article>
+
+        <article className="about-page__card">
+          <span className="about-page__card-icon">
+            <Briefcase size={24} strokeWidth={1.8} />
+          </span>
+          <h3 className="about-page__card-title">{cards.openPositions.title}</h3>
+          <p className="about-page__card-description">{cards.openPositions.description}</p>
+          <div className="about-page__card-tags">
+            {cards.openPositions.tags.map((tag) => (
+              <span className="about-page__tag" key={tag}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="about-page__join">
+        <h2 className="about-page__join-title">{join.title}</h2>
+        <p className="about-page__join-description">{join.description}</p>
+        <div className="about-page__join-buttons">
+          <Link to="/career" className="about-page__join-button about-page__join-button--primary">
+            {join.viewRoles} <ArrowRight size={18} />
+          </Link>
+          <Link to="/contact" className="about-page__join-button about-page__join-button--secondary">
+            {join.partner}
           </Link>
         </div>
       </section>
