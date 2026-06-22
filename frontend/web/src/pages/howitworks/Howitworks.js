@@ -1,84 +1,69 @@
 import React, { useContext } from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faCalendarAlt, faUser } from '@fortawesome/free-solid-svg-icons';
-import {LanguageContext} from "../../context/LanguageContext.js";
+import {
+  Search,
+  Calendar,
+  MessageSquare,
+  Home,
+  DollarSign,
+} from "lucide-react";
+import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 
-const contentByLanguage = {
-  en,
-  nl,
-  de,
-  es,
-};
+const contentByLanguage = { en, nl, de, es };
+
+const GUEST_ICONS = [Search, Calendar, MessageSquare];
+const HOST_ICONS = [Home, Calendar, DollarSign];
 
 function Howitworks() {
-    const {language} =  useContext(LanguageContext);
-    const howItWorksContent = contentByLanguage[language]?.howItWorksContent;
-    
-    return (
-        <section className="howitworks__main">
-            <article className="howitworks__titles-container">
-                <h3 className="howitworks__title">{howItWorksContent.title}</h3>
-                <h5 className="howitworks__subtitle">{howItWorksContent.subtitle}</h5>
-            </article>
-            <article className="howitworks__section-title-container">
-                <h3 className="howitworks__section-title">{howItWorksContent.guest.title}</h3>
-            </article>
-            <article className="howitworks__info-block howitworks__info-block--guests">
-                <section className="howitworks__info-item howitworks__info-item--guests borderright">
-                    <div className="howitworks__info-header">
-                        <h3 className="howitworks__info-title">{howItWorksContent.guest.destination.title}</h3>
-                        <FontAwesomeIcon icon={faSearch} fontSize={'1.7rem'} color="white" />
-                    </div>
-                    <p className="howitworks__info-text">{howItWorksContent.guest.destination.description}</p>
-                </section>
-                <section className="howitworks__info-item howitworks__info-item--guests">
-                    <div className="howitworks__info-header">
-                        <h3 className="howitworks__info-title">{howItWorksContent.guest.holiday.title}</h3>
-                        <FontAwesomeIcon icon={faCalendarAlt} fontSize={'1.7rem'} color="white" />
-                    </div>
-                    <p className="howitworks__info-text">{howItWorksContent.guest.holiday.description}</p>
-                </section>
-                <section className="howitworks__info-item howitworks__info-item--guests borderleft">
-                    <div className="howitworks__info-header">
-                        <h3 className="howitworks__info-title">{howItWorksContent.guest.experience.title}</h3>
-                        <FontAwesomeIcon icon={faUser} fontSize={'1.7rem'} color="white" />
-                    </div>
-                    <p className="howitworks__info-text">{howItWorksContent.guest.experience.description}</p>
-                </section>
-            </article>
+  const { language } = useContext(LanguageContext);
+  const content =
+    contentByLanguage[language]?.howItWorksContent?.redesign ??
+    en.howItWorksContent.redesign;
 
-            <article className="howitworks__section-title-container">
-                <h3 className="howitworks__section-title">{howItWorksContent.host.title}</h3>
+  const { guests, hosts } = content;
+
+  const renderSection = (section, icons, variant) => (
+    <section className={`how-it-works__section how-it-works__section--${variant}`}>
+      <div className="how-it-works__section-intro">
+        <p className="how-it-works__eyebrow">{section.eyebrow}</p>
+        <h2 className="how-it-works__heading">{section.heading}</h2>
+      </div>
+
+      <div className="how-it-works__steps">
+        {section.steps.map((step, index) => {
+          const Icon = icons[index];
+          return (
+            <article className="how-it-works__card" key={step.title}>
+              <span className="how-it-works__card-number">{index + 1}</span>
+              <span className="how-it-works__card-icon">
+                <Icon size={24} strokeWidth={1.8} />
+              </span>
+              <h3 className="how-it-works__card-title">{step.title}</h3>
+              <p className="how-it-works__card-text">{step.description}</p>
             </article>
-            <article className="howitworks__info-block howitworks__info-block--hosts bluebackground">
-                <section className="howitworks__info-item howitworks__info-item--hosts borderright">
-                    <div className="howitworks__info-header">
-                        <h3 className="howitworks__info-title">{howItWorksContent.host.rental.title}</h3>
-                        <FontAwesomeIcon icon={faUser} fontSize={'1.7rem'} color="white" />
-                    </div>
-                    <p className="howitworks__info-text">{howItWorksContent.host.rental.description}</p>
-                </section>
-                <section className="howitworks__info-item howitworks__info-item--hosts">
-                    <div className="howitworks__info-header">
-                        <h3 className="howitworks__info-title">{howItWorksContent.host.getPaid.title}</h3>
-                        <FontAwesomeIcon icon={faCalendarAlt} fontSize={'1.7rem'} color="white" />
-                    </div>
-                    <p className="howitworks__info-text">{howItWorksContent.host.getPaid.description}</p>
-                </section>
-                <section className="howitworks__info-item howitworks__info-item--hosts borderleft">
-                    <div className="howitworks__info-header">
-                        <h3 className="howitworks__info-title">{howItWorksContent.host.welcomeGuest.title}</h3>
-                        <FontAwesomeIcon icon={faUser} fontSize={'1.7rem'} color="white" />
-                    </div>
-                    <p className="howitworks__info-text">{howItWorksContent.host.welcomeGuest.description}</p>
-                </section>
-            </article>   
-        </section>
-    );
+          );
+        })}
+      </div>
+    </section>
+  );
+
+  return (
+    <div className="how-it-works">
+      <section className="how-it-works__hero">
+        <p className="how-it-works__hero-eyebrow">{content.eyebrow}</p>
+        <h1 className="how-it-works__hero-title">
+          {content.heroStart}
+          <span className="how-it-works__hero-highlight">{content.heroHighlight}</span>
+        </h1>
+      </section>
+
+      {renderSection(guests, GUEST_ICONS, "guests")}
+      {renderSection(hosts, HOST_ICONS, "hosts")}
+    </div>
+  );
 }
 
 export default Howitworks;

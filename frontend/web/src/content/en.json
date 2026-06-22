@@ -685,6 +685,29 @@
   "howItWorksContent": {
     "title": "How Domits Works",
     "subtitle": "Discover how Domits makes it easy for both guests and hosts.",
+    "redesign": {
+      "eyebrow": "How it works",
+      "heroStart": "Travel and hosting made ",
+      "heroHighlight": "simple.",
+      "guests": {
+        "eyebrow": "For guests",
+        "heading": "Find your perfect stay in 3 easy steps",
+        "steps": [
+          { "title": "Search your destination", "description": "Explore vacation rentals using smart filters for location, dates, price, and amenities." },
+          { "title": "Book your stay", "description": "Choose your preferred accommodation and confirm your booking in just a few clicks." },
+          { "title": "Experience Domits", "description": "Message your host, manage your trip, and enjoy personalized support." }
+        ]
+      },
+      "hosts": {
+        "eyebrow": "For hosts",
+        "heading": "Grow your hosting business with ease",
+        "steps": [
+          { "title": "List your property", "description": "Add photos, description, amenities and set your price and availability in minutes." },
+          { "title": "Manage bookings", "description": "Track bookings, manage your calendar and communicate with guests easily." },
+          { "title": "Get paid securely", "description": "Receive payments safely and track your earnings and insights in real time." }
+        ]
+      }
+    },
     "guest": {
       "title": "Guests",
       "destination": {
