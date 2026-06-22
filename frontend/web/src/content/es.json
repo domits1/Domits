@@ -400,6 +400,57 @@
         "list": "Publica tu propiedad"
       }
     },
+    "aboutPage": {
+      "eyebrow": "Acerca de Domits",
+      "hero": {
+        "line1": "Alianzas de viaje",
+        "highlight": "a medida."
+      },
+      "team": {
+        "title": "Conoce al equipo",
+        "subtitle": "Viajeros apasionados e innovadores tecnológicos que construyen el futuro de la hospitalidad",
+        "moreMembers": "+32 miembros",
+        "members": [
+          { "name": "Stefan Hopman", "role": "Fundador" },
+          { "name": "Robert Hopman", "role": "Engineering Manager" },
+          { "name": "Chiel van Heerwaarden", "role": "Desarrollador" }
+        ]
+      },
+      "stats": [
+        { "icon": "globe", "value": "+10", "label": "Nacionalidades" },
+        { "icon": "users", "value": "+35", "label": "Miembros del equipo" },
+        { "icon": "laptop", "value": "Remote-first", "label": "Trabaja desde cualquier lugar" },
+        { "icon": "handHeart", "value": "People-first", "label": "Una cultura que se preocupa" }
+      ],
+      "cards": {
+        "featured": {
+          "title": "Construyendo el futuro de los viajes",
+          "description": "Estamos reimaginando cómo las personas descubren, reservan y viven los viajes. Únete a nosotros para crear tecnología que acerque al mundo.",
+          "tags": ["Impacto global", "Innovación primero"]
+        },
+        "partnerSuccess": {
+          "title": "Éxito de los socios",
+          "description": "Crecemos cuando nuestros socios crecen. Accede a herramientas, información y soporte para maximizar tu éxito.",
+          "link": "Saber más"
+        },
+        "culture": {
+          "title": "Una cultura que se preocupa",
+          "description": "Remote-first, inclusiva y humana. Priorizamos el equilibrio entre vida y trabajo y el impacto significativo.",
+          "tags": ["Remoto", "Flexible", "Global"]
+        },
+        "openPositions": {
+          "title": "Vacantes abiertas",
+          "description": "Estamos contratando en ingeniería, producto, diseño y alianzas.",
+          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+        }
+      },
+      "join": {
+        "title": "Únete a nuestra misión",
+        "description": "Ya sea que quieras crear productos innovadores, hacer crecer tu negocio de alquiler o formar parte de un equipo global, hay un lugar para ti en DOMITS.",
+        "viewRoles": "Ver vacantes",
+        "partner": "Conviértete en socio"
+      }
+    },
     "title": "Acerca de Domits",
     "description": "Alianzas de viaje a medida",
     "mission": {

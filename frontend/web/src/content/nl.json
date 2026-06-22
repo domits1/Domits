@@ -400,6 +400,57 @@
         "list": "Verhuur je accommodatie"
       }
     },
+    "aboutPage": {
+      "eyebrow": "Over Domits",
+      "hero": {
+        "line1": "Reispartnerschappen",
+        "highlight": "op maat."
+      },
+      "team": {
+        "title": "Ontmoet het team",
+        "subtitle": "Gepassioneerde reizigers en tech-innovators die de toekomst van gastvrijheid bouwen",
+        "moreMembers": "+32 leden",
+        "members": [
+          { "name": "Stefan Hopman", "role": "Oprichter" },
+          { "name": "Robert Hopman", "role": "Engineering Manager" },
+          { "name": "Chiel van Heerwaarden", "role": "Ontwikkelaar" }
+        ]
+      },
+      "stats": [
+        { "icon": "globe", "value": "+10", "label": "Nationaliteiten" },
+        { "icon": "users", "value": "+35", "label": "Teamleden" },
+        { "icon": "laptop", "value": "Remote-first", "label": "Werk van overal" },
+        { "icon": "handHeart", "value": "People-first", "label": "Cultuur die geeft om mensen" }
+      ],
+      "cards": {
+        "featured": {
+          "title": "De toekomst van reizen bouwen",
+          "description": "We bedenken opnieuw hoe mensen reizen ontdekken, boeken en beleven. Doe met ons mee in het creëren van technologie die de wereld dichter bij elkaar brengt.",
+          "tags": ["Wereldwijde impact", "Innovatie voorop"]
+        },
+        "partnerSuccess": {
+          "title": "Succes voor partners",
+          "description": "Wij groeien wanneer onze partners groeien. Krijg toegang tot tools, inzichten en ondersteuning om jouw succes te maximaliseren.",
+          "link": "Lees meer"
+        },
+        "culture": {
+          "title": "Cultuur die geeft om mensen",
+          "description": "Remote-first, inclusief en menselijk. Wij geven prioriteit aan werk-privébalans en betekenisvolle impact.",
+          "tags": ["Remote", "Flexibel", "Wereldwijd"]
+        },
+        "openPositions": {
+          "title": "Openstaande functies",
+          "description": "We nemen mensen aan binnen engineering, product, design en partnerschappen.",
+          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+        }
+      },
+      "join": {
+        "title": "Sluit je aan bij onze missie",
+        "description": "Of je nu innovatieve producten wilt bouwen, je verhuurbedrijf wilt laten groeien of deel wilt uitmaken van een wereldwijd team — er is een plek voor jou bij DOMITS.",
+        "viewRoles": "Bekijk vacatures",
+        "partner": "Word partner"
+      }
+    },
     "title": "Over Domits",
     "description": "Reispartners op maat",
     "mission": {

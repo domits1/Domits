@@ -400,6 +400,57 @@
         "list": "Unterkunft anbieten"
       }
     },
+    "aboutPage": {
+      "eyebrow": "Über Domits",
+      "hero": {
+        "line1": "Maßgeschneiderte",
+        "highlight": "Reisepartnerschaften."
+      },
+      "team": {
+        "title": "Lerne das Team kennen",
+        "subtitle": "Leidenschaftliche Reisende und Tech-Innovatoren, die die Zukunft der Gastfreundschaft gestalten",
+        "moreMembers": "+32 Mitglieder",
+        "members": [
+          { "name": "Stefan Hopman", "role": "Gründer" },
+          { "name": "Robert Hopman", "role": "Engineering Manager" },
+          { "name": "Chiel van Heerwaarden", "role": "Entwickler" }
+        ]
+      },
+      "stats": [
+        { "icon": "globe", "value": "+10", "label": "Nationalitäten" },
+        { "icon": "users", "value": "+35", "label": "Teammitglieder" },
+        { "icon": "laptop", "value": "Remote-first", "label": "Arbeite von überall" },
+        { "icon": "handHeart", "value": "People-first", "label": "Kultur, die sich kümmert" }
+      ],
+      "cards": {
+        "featured": {
+          "title": "Die Zukunft des Reisens gestalten",
+          "description": "Wir denken neu, wie Menschen Reisen entdecken, buchen und erleben. Gestalte mit uns Technologie, die die Welt näher zusammenbringt.",
+          "tags": ["Globale Wirkung", "Innovation zuerst"]
+        },
+        "partnerSuccess": {
+          "title": "Erfolg für Partner",
+          "description": "Wir wachsen, wenn unsere Partner wachsen. Erhalte Zugang zu Tools, Einblicken und Unterstützung, um deinen Erfolg zu maximieren.",
+          "link": "Mehr erfahren"
+        },
+        "culture": {
+          "title": "Kultur, die sich kümmert",
+          "description": "Remote-first, inklusiv und menschlich. Wir legen Wert auf Work-Life-Balance und sinnvolle Wirkung.",
+          "tags": ["Remote", "Flexibel", "Global"]
+        },
+        "openPositions": {
+          "title": "Offene Stellen",
+          "description": "Wir stellen in den Bereichen Engineering, Produkt, Design und Partnerschaften ein.",
+          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+        }
+      },
+      "join": {
+        "title": "Werde Teil unserer Mission",
+        "description": "Ob du innovative Produkte entwickeln, dein Vermietungsgeschäft ausbauen oder Teil eines globalen Teams sein möchtest — bei DOMITS ist ein Platz für dich.",
+        "viewRoles": "Offene Stellen ansehen",
+        "partner": "Partner werden"
+      }
+    },
     "title": "Über Domits",
     "description": "Maßgeschneiderte Reisepartnerschaften",
     "mission": {
