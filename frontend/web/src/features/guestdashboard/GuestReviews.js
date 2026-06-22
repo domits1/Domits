@@ -5,12 +5,12 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
-
-const contentByLanguage = { en, nl, de, es };
 import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+
+const contentByLanguage = { en, nl, de, es };
 
 function GuestReviews() {
   const [reviews, setReviews] = useState([]);
@@ -87,7 +87,7 @@ function GuestReviews() {
 
  
   const asyncDeleteReview = async (review) => {
-    if (!window.confirm(t?.reviews?.deleteConfirm || "Are you sure you want to delete this review?")) return;
+    if (!globalThis.confirm(t?.reviews?.deleteConfirm || "Are you sure you want to delete this review?")) return;
 
     
     const reviewId = review["reviewId "];

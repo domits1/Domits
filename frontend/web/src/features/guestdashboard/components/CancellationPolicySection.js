@@ -60,7 +60,12 @@ function CancellationPolicySection({ policy }) {
   const policyTranslation = policy.id ? t?.cancellationPolicy?.policies?.[policy.id] : null;
   const displayType = policyTranslation?.type || policy.type;
   const displaySummary = policyTranslation?.summary || policy.summary;
-  const displayDetails = Array.isArray(policyTranslation?.details) ? policyTranslation.details : (Array.isArray(policy.details) ? policy.details : []);
+  let displayDetails = [];
+  if (Array.isArray(policyTranslation?.details)) {
+    displayDetails = policyTranslation.details;
+  } else if (Array.isArray(policy.details)) {
+    displayDetails = policy.details;
+  }
 
   return (
     <section className="card cancellationPolicyCard">

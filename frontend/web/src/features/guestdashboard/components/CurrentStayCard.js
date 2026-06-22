@@ -6,6 +6,7 @@ import en from "../../../content/en.json";
 import nl from "../../../content/nl.json";
 import de from "../../../content/de.json";
 import es from "../../../content/es.json";
+import { buildStayMessageNavigation, buildStayReservationPath } from "./stayCardNavigation";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -15,23 +16,8 @@ function CurrentStayCard({ stay }) {
   const t = contentByLanguage[language]?.guestdashboard;
 
   const handleMessageHost = () => {
-    const bookingId = stay.bookingId || stay.id || null;
-    const messagesPath = bookingId
-      ? `/guestdashboard/messages?bookingId=${encodeURIComponent(bookingId)}`
-      : "/guestdashboard/messages";
-    navigate(messagesPath, {
-      state: {
-        messageContext: {
-          contactId: stay.hostId || null,
-          contactName: stay.hostName || "Host",
-          contactImage: stay.hostImage || null,
-          bookingId,
-          propertyId: stay.propertyId || null,
-          propertyTitle: stay.name || null,
-          accoImage: stay.image || null,
-        },
-      },
-    });
+    const messageNavigation = buildStayMessageNavigation(stay);
+    navigate(messageNavigation.messagesPath, { state: messageNavigation.state });
   };
 
   return (
@@ -40,7 +26,7 @@ function CurrentStayCard({ stay }) {
       title={t?.stays?.currentStay || "Your current stay"}
       stay={stay}
       actionClassName="stayActions"
-      onOpenReservation={() => navigate(`/guestdashboard/reservation/${stay.bookingId || stay.id}`)}
+      onOpenReservation={() => navigate(buildStayReservationPath(stay))}
       onMessageHost={handleMessageHost}
     />
   );
