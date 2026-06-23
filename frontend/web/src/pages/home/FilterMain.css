@@ -17,7 +17,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 40px 20px;
 }
 
 .filter-amenities-modal-backdrop {
@@ -31,30 +31,37 @@
 
 .filter-amenities-modal {
   position: relative;
+  top: 30px;
   border: none;
   padding: 0;
   margin: 0;
   background-color: #ffffff;
-  border-radius: 12px;
+  border-radius: 16px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
   width: 100%;
   max-width: 820px;
-  max-height: 92vh;
+  max-height: calc(100vh - 180px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .filter-amenities-modal-header {
+  position: relative;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e6e6e6;
-  font-weight: 600;
-  font-size: 16px;
+  justify-content: center;
+  padding: 28px 48px 10px;
+  font-weight: 700;
+  font-size: 22px;
 }
 
 .filter-amenities-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
   background: none;
   border: none;
   font-size: 18px;
@@ -63,8 +70,11 @@
 }
 
 .filter-amenities-modal-body {
-  padding: 16px 20px;
+  padding: 24px 20px 16px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
@@ -94,6 +104,7 @@
 }
 
 .filter-amenities-modal-footer {
+  flex-shrink: 0;
   padding: 16px 20px;
   border-top: 1px solid #e6e6e6;
 }
@@ -308,5 +319,11 @@
   min-width: 28px;
   text-align: center;
   font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .filter-amenities-modal {
+    top: 35px;
+  }
 }
 
