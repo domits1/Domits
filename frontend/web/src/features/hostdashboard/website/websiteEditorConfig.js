@@ -2,6 +2,7 @@ import LaptopMacOutlinedIcon from "@mui/icons-material/LaptopMacOutlined";
 import TabletMacOutlinedIcon from "@mui/icons-material/TabletMacOutlined";
 import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
 import { MAX_WEBSITE_CONFIGURABLE_AMENITIES } from "./config/websiteAmenitiesConfig";
+import { WEBSITE_HERO_CONTENT_ALIGNMENT_OPTIONS } from "./config/websiteHeroSectionConfig";
 
 export const PREVIEW_VIEWPORT_OPTIONS = Object.freeze([
   { id: "desktop", label: "Desktop", Icon: LaptopMacOutlinedIcon },
@@ -90,6 +91,7 @@ const PANORAMA_RESIDENCE_TOGGLE_FIELDS = Object.freeze([
 
 const PANORAMA_CONTACT_FIELDS = Object.freeze([
   createTextField("title", "Section title"),
+  createTextField("caption", "Section caption"),
   createTextField("description", "Section description", "textarea"),
 ]);
 
@@ -145,6 +147,7 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
     heroEyebrow: "common.heroEyebrow",
     heroTitle: "common.heroTitle",
     heroDescription: "common.heroDescription",
+    heroContentAlignment: "common.heroContentAlignment",
     ctaLabel: "common.ctaLabel",
     ctaNote: "common.ctaNote",
   },
@@ -176,6 +179,7 @@ export const EDITOR_TARGET_KEYS = Object.freeze({
   amenitiesIconColor: "amenities.iconColor",
   contact: {
     title: "contact.title",
+    caption: "contact.caption",
     description: "contact.description",
     avatarImage: "contact.avatarImage",
     accentColor: "contact.accentColor",
@@ -381,8 +385,8 @@ export const TEMPLATE_COPY_COLLECTION_CONFIG = Object.freeze({
 export const LOADING_EDITOR_SECTIONS = Object.freeze([
   {
     id: EDITOR_SECTION_KEYS.common,
-    title: "Common content",
-    description: "Loading imported text fields and template copy bindings.",
+    title: "Hero",
+    description: "Loading the top-of-page copy, hero image controls, and layout settings.",
   },
   {
     id: EDITOR_SECTION_KEYS.visibility,
@@ -417,6 +421,14 @@ export const getCommonTextFields = (templateKey) => {
   }
 
   return BASE_COMMON_TEXT_FIELDS;
+};
+
+export const getHeroAlignmentOptions = (templateKey) => {
+  if (isPanoramaTemplate(templateKey)) {
+    return WEBSITE_HERO_CONTENT_ALIGNMENT_OPTIONS;
+  }
+
+  return [];
 };
 
 export const getResidenceTextFields = (templateKey) => {

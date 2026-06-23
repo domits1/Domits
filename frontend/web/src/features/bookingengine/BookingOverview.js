@@ -21,6 +21,7 @@ import CancellationPolicySection from "./CancellationPolicySection";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+export const BOOKINGS_ENDPOINT = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings";
 
 export const normalizeBookingDateForRequest = (value) => {
   const normalized = String(value ?? "").trim();
@@ -44,6 +45,37 @@ export const buildBookingRequestEvent = ({ propertyId, bookingDetails, userName 
     guestName: userName,
   },
 });
+
+export const buildBookingPostRequest = ({ event, authToken }) => ({
+  url: BOOKINGS_ENDPOINT,
+  options: {
+    method: "POST",
+    body: JSON.stringify(event),
+    headers: {
+      Authorization: authToken,
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+  },
+});
+
+export const parseBookingResponseBody = async (response) => {
+  const responseText = await response.text();
+  if (!responseText.trim()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    return { message: responseText };
+  }
+};
+
+export const getBookingErrorMessage = (response, responseBody) =>
+  responseBody?.message ||
+  responseBody?.error ||
+  responseBody?.response?.message ||
+  `HTTP error! Status: ${response.status}`;
 
 const BookingOverview = () => {
   const navigate = useNavigate();
@@ -138,20 +170,14 @@ const BookingOverview = () => {
         throw new Unauthorized("Unable to get a valid authentication token.");
       }
 
-      const request = await fetch("https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings", {
-        method: "POST",
-        body: JSON.stringify(event),
-        headers: {
-          Authorization: authToken,
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      });
-      const response = await request.json();
+      const bookingRequest = buildBookingPostRequest({ event, authToken });
+      const request = await fetch(bookingRequest.url, bookingRequest.options);
+      const response = await parseBookingResponseBody(request);
       if (!request.ok) {
-        throw new Error(`HTTP error! Status: ${request.status}`);
+        throw new Error(getBookingErrorMessage(request, response));
       }
 
-      if (response.stripeClientSecret && response.bookingId) {
+      if (response?.stripeClientSecret && response?.bookingId) {
         setBookingId(response.bookingId);
         setStripeClientSecret(response.stripeClientSecret);
       } else {
@@ -194,18 +220,17 @@ const BookingOverview = () => {
         return;
       }
       const event = buildBookingRequestEvent({ propertyId, bookingDetails, userName });
-      const request = await fetch("https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings", {
-        method: "POST",
-        body: JSON.stringify(event),
-        headers: {
-          Authorization: authToken,
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      });
+      const bookingRequest = buildBookingPostRequest({ event, authToken });
+      const request = await fetch(bookingRequest.url, bookingRequest.options);
+      const response = await parseBookingResponseBody(request);
       if (!request.ok) {
-        throw new Error(`HTTP error! Status: ${request.status}`);
+        throw new Error(getBookingErrorMessage(request, response));
       }
-      const response = await request.json();
+      if (!response?.bookingId) {
+        throw new NotFoundException(
+          "POST request towards backend failed. Check the Network tab to debug the request. Inquiry process failed."
+        );
+      }
       navigate(`/bookingconfirmationoverview?bookingId=${response.bookingId}&status=inquiry`);
     } catch (error) {
       console.error("Error sending inquiry:", error);
@@ -248,8 +273,8 @@ const BookingOverview = () => {
                 <Calender /> Date:
               </span>
               <span className="detail-value">
-                {DateFormatterDD_MM_YYYY(Number.parseFloat(bookingDetails.checkInDate))} -{" "}
-                {DateFormatterDD_MM_YYYY(Number.parseFloat(bookingDetails.checkOutDate))}
+                {DateFormatterDD_MM_YYYY(bookingDetails.checkInDate)} -{" "}
+                {DateFormatterDD_MM_YYYY(bookingDetails.checkOutDate)}
               </span>
             </div>
             <div className="detail-row">

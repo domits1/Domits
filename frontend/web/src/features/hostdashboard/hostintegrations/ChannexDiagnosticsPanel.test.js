@@ -6,9 +6,13 @@ import {
   getChannexAriPreview,
   getLatestChannexSyncEvidence,
   getChannexStatus,
+  listChannexProperties,
+  listChannexRatePlans,
+  listChannexRoomTypes,
   listChannexBookingRevisions,
   modifyBookingDates,
   pullLatestChannexBookings,
+  saveChannexSetupMapping,
   syncChannexCertificationTestCase,
   syncChannexFull,
   syncChannexRestrictions,
@@ -21,9 +25,13 @@ jest.mock("./channexApi", () => ({
   getChannexAriTargets: jest.fn(),
   getChannexStatus: jest.fn(),
   getLatestChannexSyncEvidence: jest.fn(),
+  listChannexProperties: jest.fn(),
+  listChannexRatePlans: jest.fn(),
+  listChannexRoomTypes: jest.fn(),
   listChannexBookingRevisions: jest.fn(),
   modifyBookingDates: jest.fn(),
   pullLatestChannexBookings: jest.fn(),
+  saveChannexSetupMapping: jest.fn(),
   ackChannexBookingRevisions: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
   syncChannexAri: jest.fn(),
@@ -140,6 +148,113 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     }
     expect(screen.queryByRole("button", { name: "Receive booking revisions" })).toBeNull();
     expect(syncChannexCertificationTestCase).not.toHaveBeenCalled();
+  });
+
+  test("saves a single-unit Channex setup mapping from the setup tab", async () => {
+    listChannexProperties.mockResolvedValue({
+      properties: [
+        {
+          externalPropertyId: "external-property-1",
+          externalPropertyName: "Demo Channex property",
+        },
+      ],
+    });
+    listChannexRoomTypes.mockResolvedValue({
+      roomTypes: [
+        {
+          externalRoomTypeId: "room-type-1",
+          externalRoomTypeName: "Demo room",
+        },
+      ],
+    });
+    listChannexRatePlans.mockResolvedValue({
+      ratePlans: [
+        {
+          externalRatePlanId: "rate-plan-1",
+          externalRatePlanName: "Standard rate",
+        },
+      ],
+    });
+    saveChannexSetupMapping.mockResolvedValue({
+      action: "setup-mapping",
+      scope: "SINGLE_UNIT",
+      integrationAccountId: "integration-account-1",
+      ready: true,
+      readinessStatusCode: 200,
+      savedMappings: {
+        property: { externalPropertyId: "external-property-1" },
+        roomType: { externalRoomTypeId: "room-type-1" },
+        ratePlan: { externalRatePlanId: "rate-plan-1" },
+      },
+      readiness: {
+        ready: true,
+        domitsPropertyId: "domits-property-1",
+        integrationAccountId: "integration-account-1",
+        missingMappings: [],
+      },
+    });
+
+    await renderDiagnosticsPanel();
+    fillRequiredInputs({ openActions: false });
+    fireEvent.click(screen.getByRole("button", { name: "Setup & Connection" }));
+    fireEvent.click(screen.getByRole("button", { name: "Load Channex resources" }));
+
+    await waitFor(() => expect(listChannexProperties).toHaveBeenCalledTimes(1));
+    expect(listChannexProperties).toHaveBeenCalledWith({ userId: "user-1" });
+
+    fireEvent.change(await screen.findByLabelText("Channex property"), {
+      target: { value: "external-property-1" },
+    });
+    await waitFor(() => expect(listChannexRoomTypes).toHaveBeenCalledTimes(1));
+    expect(listChannexRoomTypes).toHaveBeenCalledWith({
+      userId: "user-1",
+      externalPropertyId: "external-property-1",
+    });
+
+    fireEvent.change(await screen.findByLabelText("Channex room type"), {
+      target: { value: "room-type-1" },
+    });
+    await waitFor(() => expect(listChannexRatePlans).toHaveBeenCalledTimes(1));
+    expect(listChannexRatePlans).toHaveBeenCalledWith({
+      userId: "user-1",
+      externalRoomTypeId: "room-type-1",
+    });
+
+    fireEvent.change(await screen.findByLabelText("Channex rate plan"), {
+      target: { value: "rate-plan-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save mapping" }));
+
+    await waitFor(() => expect(saveChannexSetupMapping).toHaveBeenCalledTimes(1));
+    expect(saveChannexSetupMapping).toHaveBeenCalledWith({
+      userId: "user-1",
+      mapping: {
+        domitsPropertyId: "domits-property-1",
+        externalPropertyId: "external-property-1",
+        externalPropertyName: "Demo Channex property",
+        externalRoomTypeId: "room-type-1",
+        externalRoomTypeName: "Demo room",
+        externalRatePlanId: "rate-plan-1",
+        externalRatePlanName: "Standard rate",
+        status: "ACTIVE",
+        scope: "SINGLE_UNIT",
+      },
+    });
+    expect(await screen.findByText("Single-unit Channex mapping saved.")).toBeTruthy();
+    expect(screen.getAllByText("Ready").length).toBeGreaterThan(0);
+    expect(screen.getByText("Readiness response")).toBeTruthy();
+  });
+
+  test("shows setup resource load errors", async () => {
+    listChannexProperties.mockRejectedValueOnce(new Error("Channex property list failed"));
+
+    await renderDiagnosticsPanel();
+    fillRequiredInputs({ openActions: false });
+    fireEvent.click(screen.getByRole("button", { name: "Setup & Connection" }));
+    fireEvent.click(screen.getByRole("button", { name: "Load Channex resources" }));
+
+    await waitFor(() => expect(listChannexProperties).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText("Channex property list failed")).toBeTruthy();
   });
 
   test("runs full/certification sync from the admin actions UI", async () => {

@@ -18,11 +18,14 @@ export class Controller {
     return this._run(async () => {
       const hostId = await this.cognito.getHostId(event);
       const { pricelabs_email } = JSON.parse(event.body || "{}");
+
       if (!pricelabs_email) throw Object.assign(new Error("pricelabs_email is required"), { status: 400 });
+
       const emailParts = pricelabs_email.split("@");
       if (emailParts.length !== 2 || !emailParts[0] || !emailParts[1]?.includes(".")) {
         throw Object.assign(new Error("pricelabs_email must be a valid email address"), { status: 400 });
       }
+
       return this.service.connect(hostId, pricelabs_email);
     });
   }
@@ -63,7 +66,6 @@ export class Controller {
     });
   }
 
-
   async internalSyncBooking(event) {
     return this._run(async () => {
       const { hostId, trigger } = JSON.parse(event.body || "{}");
@@ -89,7 +91,6 @@ export class Controller {
       return this.service.handleHookWebhook(event.headers, event.body);
     });
   }
-
 
   async _run(fn) {
     try {

@@ -1,4 +1,4 @@
-import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
+import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
 import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
 
 const GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v22.0";

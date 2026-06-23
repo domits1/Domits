@@ -1,10 +1,15 @@
 import amenitiesCatalog from "../../../../store/amenities";
-import { placeholderImage, resolveAccommodationImageUrls } from "../../../../utils/accommodationImage";
+import {
+  buildAccommodationImageAssetFromUrl,
+  buildAccommodationImageAssets,
+  placeholderImage,
+} from "../../../../utils/accommodationImage";
 import { AMENITY_CATEGORY_ORDER, POLICY_RULE_CONFIG } from "../../hostproperty/constants";
 import {
   DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
   DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
+  DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
   DEFAULT_WEBSITE_CONTACT_TITLE,
   WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
@@ -27,6 +32,7 @@ import {
   MAX_FEATURED_WEBSITE_AMENITIES,
   MAX_WEBSITE_CONFIGURABLE_AMENITIES,
 } from "../config/websiteAmenitiesConfig";
+import { DEFAULT_WEBSITE_HERO_CONTENT_ALIGNMENT } from "../config/websiteHeroSectionConfig";
 import { normalizeWebsiteImageRotationSettings } from "./websiteImageSlotUtils";
 
 const DEFAULT_LOCALE = "en";
@@ -255,14 +261,20 @@ const buildPolicyHighlights = (rules) => {
   return [...configuredRules, ...fallbackRules];
 };
 
-const buildGalleryImages = (propertyDetails, summaryProperty, imageVariant) => {
-  const detailImages = resolveAccommodationImageUrls(propertyDetails?.images, imageVariant);
-  if (detailImages.length > 0) {
-    return detailImages;
+const buildGalleryImageAssets = (propertyDetails, summaryProperty, imageVariant) => {
+  const detailImageAssets = buildAccommodationImageAssets(propertyDetails?.images, imageVariant);
+  if (detailImageAssets.length > 0) {
+    return detailImageAssets;
   }
 
-  const summaryImages = Array.isArray(summaryProperty?.galleryImages) ? summaryProperty.galleryImages : [];
-  return summaryImages.length > 0 ? summaryImages : [placeholderImage];
+  const summaryImageAssets = (Array.isArray(summaryProperty?.galleryImages) ? summaryProperty.galleryImages : [])
+    .map((imageUrl) => buildAccommodationImageAssetFromUrl(imageUrl))
+    .filter(Boolean);
+  if (summaryImageAssets.length > 0) {
+    return summaryImageAssets;
+  }
+
+  return [buildAccommodationImageAssetFromUrl(placeholderImage)];
 };
 
 const buildHeroDescription = ({ title, description, propertyTypeLabel, locationLabel, guestsLabel }) => {
@@ -502,7 +514,8 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   const property = propertyDetails?.property || {};
   const generalDetails = Array.isArray(propertyDetails?.generalDetails) ? propertyDetails.generalDetails : [];
   const availabilityRestrictions = buildRestrictionValueMap(propertyDetails?.availabilityRestrictions);
-  const galleryImages = buildGalleryImages(propertyDetails, summaryProperty, imageVariant);
+  const galleryImageAssets = buildGalleryImageAssets(propertyDetails, summaryProperty, imageVariant).filter(Boolean);
+  const galleryImages = galleryImageAssets.map((imageAsset) => imageAsset.src).filter(Boolean);
   const previewImages = galleryImages.slice(0, 3);
   const featuredGalleryImages = galleryImages.slice(0, MAX_FEATURED_GALLERY_IMAGES);
   const locationLabel = buildLocationLabel(propertyDetails?.location, summaryProperty);
@@ -560,8 +573,14 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
     },
     media: {
       heroImage: galleryImages[0] || placeholderImage,
+      heroImageAsset: galleryImageAssets[0] || buildAccommodationImageAssetFromUrl(placeholderImage),
       residenceImage: galleryImages[1] || galleryImages[0] || placeholderImage,
+      residenceImageAsset:
+        galleryImageAssets[1] ||
+        galleryImageAssets[0] ||
+        buildAccommodationImageAssetFromUrl(placeholderImage),
       galleryImages,
+      galleryImageAssets,
       imageRotation: normalizeWebsiteImageRotationSettings(),
       previewImages,
       featuredGalleryImages,
@@ -578,6 +597,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
         guestsLabel,
       }),
       imageUrl: galleryImages[0] || placeholderImage,
+      contentAlignment: DEFAULT_WEBSITE_HERO_CONTENT_ALIGNMENT,
     },
     stay: {
       propertyTypeLabel,
@@ -681,7 +701,8 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       panelColor: normalizeWebsiteCalendarPanelColorOverride(""),
     },
     contactSection: {
-      title: DEFAULT_WEBSITE_CONTACT_TITLE,
+      title: DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
+      caption: DEFAULT_WEBSITE_CONTACT_TITLE,
       description: DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
       accentColor: resolveWebsiteContactAccentColor(DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR),
       backgroundColor: resolveWebsiteContactBackgroundColor(DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR),

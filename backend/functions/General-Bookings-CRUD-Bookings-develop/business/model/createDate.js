@@ -1,11 +1,7 @@
 class CreateDate {
 
     static createUnixTime(){
-        const date = new Date();
-        date.setHours(0, 0, 0, 0);
-        const timestamp = date.getTime();
-
-        return timestamp;
+        return Date.now();
     }
 
     static modifyUnixTime(input){

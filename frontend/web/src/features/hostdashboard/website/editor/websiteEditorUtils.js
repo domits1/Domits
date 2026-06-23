@@ -7,7 +7,11 @@ import {
   DEFAULT_WEBSITE_AMENITY_LABEL,
   WEBSITE_AMENITY_FALLBACK_CATEGORY,
 } from "../config/websiteAmenitiesConfig";
-import { buildPublishedWebsiteHref, buildWebsitePreviewPath } from "../websitePublicSiteLinks";
+import {
+  buildPublishedWebsiteHref,
+  buildWebsitePreviewPath,
+  resolvePublishedWebsiteDomain,
+} from "../websitePublicSiteLinks";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
 
 export const getImageOptionLabel = (index) => `Imported image ${index + 1}`;
@@ -277,16 +281,25 @@ export const resolvePublicSiteLinkPresentation = ({
 }) => {
   const normalizedDraftId = String(draftId || "").trim();
   const hasPreviewLink = Boolean(normalizedDraftId);
+  const publishedSiteDomain = resolvePublishedWebsiteDomain(
+    primarySiteDomain?.domain,
+    siteSummary?.site?.siteName,
+    siteSummary?.site?.id
+  );
+  const publishedSiteHref = buildPublishedWebsiteHref(
+    primarySiteDomain?.domain,
+    siteSummary?.site?.id,
+    primarySiteDomain?.status,
+    siteSummary?.site?.siteName
+  );
 
   if (hasLiveSite) {
     return {
       primaryLinkLabel: "Domits live link",
-      primaryLinkValue: primarySiteDomain?.domain || "Available after first publish",
-      secondaryLinkHref: primarySiteDomain?.domain
-        ? buildPublishedWebsiteHref(primarySiteDomain.domain, siteSummary?.site?.id, primarySiteDomain.status)
-        : "",
+      primaryLinkValue: publishedSiteDomain || "Available after first publish",
+      secondaryLinkHref: publishedSiteHref,
       secondaryLinkCopy: "Live site URL",
-      secondaryLinkText: primarySiteDomain?.domain || "",
+      secondaryLinkText: publishedSiteDomain || "",
     };
   }
 

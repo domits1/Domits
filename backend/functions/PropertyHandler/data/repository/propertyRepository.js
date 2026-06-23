@@ -1,5 +1,6 @@
 import {NotFoundException} from "../../util/exception/NotFoundException.js";
 import {PropertyBaseInfoMapping} from "../../util/mapping/propertyBaseInfo.js";
+import {PaginatedPropertyMapping} from "../../util/mapping/paginatedProperty.js";
 import Database from "database";
 import {Property} from "database/models/Property";
 
@@ -187,20 +188,9 @@ export class PropertyRepository {
 
         if (result.length < 1) {
             throw new NotFoundException(`No property found.`)
-        } else {
-            const items = result.map(item => item.id);
-
-            const lastItem = result[result.length - 1];
-            const lastEvaluatedKey = {
-                createdAt: lastItem.createdat,
-                id: lastItem.id,
-            }
-
-            return {
-                identifiers: items,
-                lastEvaluatedKey: lastEvaluatedKey,
-            };
         }
+
+        return PaginatedPropertyMapping.mapDatabaseEntriesToPaginatedIdentifiers(result);
     }
 
     async getPropertiesByHostId(hostId) {

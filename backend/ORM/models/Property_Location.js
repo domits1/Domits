@@ -34,5 +34,17 @@ export const Property_Location = new EntitySchema({
             type: "varchar",
             nullable: false
         },
+        latitude: {
+            type: "decimal",
+            precision: 10,
+            scale: 7,
+            nullable: true
+        },
+        longitude: {
+            type: "decimal",
+            precision: 10,
+            scale: 7,
+            nullable: true
+        },
     }
 })

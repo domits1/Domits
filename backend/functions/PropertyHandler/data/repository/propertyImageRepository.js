@@ -100,8 +100,14 @@ export class PropertyImageRepository {
                     status: image.status,
                     key: web?.key || original?.key || "",
                     web_key: web?.key || null,
+                    web_width: web?.width || null,
+                    web_height: web?.height || null,
                     thumb_key: thumb?.key || null,
+                    thumb_width: thumb?.width || null,
+                    thumb_height: thumb?.height || null,
                     original_key: original?.key || null,
+                    original_width: original?.width || null,
+                    original_height: original?.height || null,
                 };
             });
         }

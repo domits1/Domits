@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
@@ -21,7 +21,6 @@ import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
-  fetchPublicWebsiteSiteResolution,
 } from "./services/websitePublicSiteService";
 import {
   subscribeToWebsiteLiveSiteUpdates,
@@ -111,10 +110,7 @@ function WebsitePublicSitePage() {
 
     return normalizeWebsiteDomain(globalThis.location?.host || "");
   }, [routeDomain]);
-  const requestedSiteId = useMemo(() => {
-    const searchParameters = new URLSearchParams(globalThis.location?.search || "");
-    return String(searchParameters.get("siteId") || "").trim();
-  }, [routeDomain]);
+  const requestedSiteId = String(new URLSearchParams(globalThis.location?.search || "").get("siteId") || "").trim();
 
   useEffect(() => {
     let isMounted = true;
@@ -124,29 +120,11 @@ function WebsitePublicSitePage() {
       setLoadError("");
 
       try {
-        let nextResolution = null;
-        let nextRenderPayload = null;
-
-        if (requestedSiteId) {
-          nextRenderPayload = await fetchPublicWebsiteRenderModel({
-            siteId: requestedSiteId,
-            domain: requestedDomain,
-          });
-          nextResolution = nextRenderPayload?.resolution || null;
-        } else {
-          nextResolution = await fetchPublicWebsiteSiteResolution(requestedDomain);
-          nextRenderPayload = await fetchPublicWebsiteRenderModel({
-            siteId: nextResolution?.siteId,
-            domain: requestedDomain,
-          });
-        }
-
-        if (nextRenderPayload?.propertySnapshot) {
-          nextRenderPayload = {
-            ...nextRenderPayload,
-            propertySnapshot: await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot),
-          };
-        }
+        const nextRenderPayload = await fetchPublicWebsiteRenderModel({
+          siteId: requestedSiteId,
+          domain: requestedDomain,
+        });
+        const nextResolution = nextRenderPayload?.resolution || null;
 
         if (!isMounted) {
           return;
@@ -154,6 +132,25 @@ function WebsitePublicSitePage() {
 
         setResolution(nextResolution);
         setRenderPayload(nextRenderPayload);
+        setIsLoading(false);
+
+        if (!nextRenderPayload?.propertySnapshot) {
+          return;
+        }
+
+        const nextPropertySnapshot = await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot);
+        if (!isMounted || nextPropertySnapshot === nextRenderPayload.propertySnapshot) {
+          return;
+        }
+
+        setRenderPayload((currentPayload) =>
+          currentPayload
+            ? {
+                ...currentPayload,
+                propertySnapshot: nextPropertySnapshot,
+              }
+            : currentPayload
+        );
       } catch (error) {
         if (!isMounted) {
           return;
@@ -162,10 +159,7 @@ function WebsitePublicSitePage() {
         setResolution(null);
         setRenderPayload(null);
         setLoadError(error?.message || "We could not load this published website.");
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
@@ -218,7 +212,7 @@ function WebsitePublicSitePage() {
     requestedDomain: resolvedDomain || requestedDomain,
   });
 
-  const clearRefreshRetryWindow = () => {
+  const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
       globalThis.clearInterval(refreshRetryIntervalRef.current);
       refreshRetryIntervalRef.current = null;
@@ -228,13 +222,13 @@ function WebsitePublicSitePage() {
       globalThis.clearTimeout(refreshRetryTimeoutRef.current);
       refreshRetryTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const triggerPublishedSiteRefresh = () => {
+  const triggerPublishedSiteRefresh = useCallback(() => {
     setRefreshVersion((currentVersion) => currentVersion + 1);
-  };
+  }, []);
 
-  const startRefreshRetryWindow = () => {
+  const startRefreshRetryWindow = useCallback(() => {
     clearRefreshRetryWindow();
 
     if (globalThis.document?.visibilityState === "hidden") {
@@ -252,7 +246,7 @@ function WebsitePublicSitePage() {
     refreshRetryTimeoutRef.current = globalThis.setTimeout(() => {
       clearRefreshRetryWindow();
     }, LIVE_SITE_REFRESH_WINDOW_MS);
-  };
+  }, [clearRefreshRetryWindow, triggerPublishedSiteRefresh]);
 
   useEffect(() => {
     const unsubscribeStorage = subscribeToWebsiteLiveSiteUpdates(
@@ -297,13 +291,13 @@ function WebsitePublicSitePage() {
       globalThis.removeEventListener("message", handleMessage);
       globalThis.document?.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [resolvedDomain, resolvedSiteId]);
+  }, [resolvedDomain, resolvedSiteId, startRefreshRetryWindow, clearRefreshRetryWindow]);
 
   useEffect(() => {
     return () => {
       clearRefreshRetryWindow();
     };
-  }, []);
+  }, [clearRefreshRetryWindow]);
 
   useEffect(() => {
     if (!publicModel?.site?.title) {

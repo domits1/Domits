@@ -5,6 +5,22 @@ import ConflictException from "../util/exception/ConflictException.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const SAFE_IDENTIFIER_PATTERN = /^[A-Za-z_]\w*$/;
+
+const quoteIdentifier = (value) => `"${String(value || "").replaceAll('"', '""')}"`;
+
+const normalizeSchemaName = (value) => {
+  if (typeof value !== "string") return "main";
+
+  const trimmed = value.trim();
+  if (!SAFE_IDENTIFIER_PATTERN.test(trimmed)) return "main";
+
+  const normalized = trimmed.toLowerCase();
+  return normalized === "public" ? "main" : normalized;
+};
+
+const qualifyTableName = (client, tableName) =>
+  `${quoteIdentifier(normalizeSchemaName(client?.options?.schema))}.${quoteIdentifier(tableName)}`;
 
 const toCalendarDateInt = (date) =>
   Number(
@@ -97,11 +113,13 @@ class PropertyRepository {
     const startDate = Math.min(...stayDates);
     const endDate = Math.max(...stayDates);
     const client = await Database.getInstance();
+    const availabilityTable = qualifyTableName(client, "property_availability");
+    const calendarOverrideTable = qualifyTableName(client, "property_calendar_override");
     const [availabilityWindows, calendarOverrides] = await Promise.all([
       client.query(
         `
           SELECT availablestartdate, availableenddate
-          FROM property_availability
+          FROM ${availabilityTable}
           WHERE property_id = $1
         `,
         [propertyId]
@@ -109,7 +127,7 @@ class PropertyRepository {
       client.query(
         `
           SELECT calendar_date, is_available
-          FROM property_calendar_override
+          FROM ${calendarOverrideTable}
           WHERE property_id = $1
             AND calendar_date >= $2
             AND calendar_date <= $3

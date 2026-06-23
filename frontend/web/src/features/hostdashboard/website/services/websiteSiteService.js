@@ -46,6 +46,19 @@ const normalizeWebsiteSiteSummary = (payload) => {
   };
 };
 
+const tryRecoverPublishedWebsiteSiteSummary = async (propertyId) => {
+  try {
+    const siteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
+    if (siteSummary?.site?.status === "PUBLISHED") {
+      return siteSummary;
+    }
+  } catch {
+    // Fall back to the original publish error when recovery is not possible.
+  }
+
+  return null;
+};
+
 export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
@@ -89,6 +102,11 @@ export const publishWebsiteSite = async (propertyId) => {
   });
 
   if (!response.ok) {
+    const recoveredSiteSummary = await tryRecoverPublishedWebsiteSiteSummary(normalizedPropertyId);
+    if (recoveredSiteSummary) {
+      return recoveredSiteSummary;
+    }
+
     const errorMessage = await getApiErrorMessage(
       response,
       "We could not publish the direct booking website for this listing."
