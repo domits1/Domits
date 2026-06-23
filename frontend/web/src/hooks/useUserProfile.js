@@ -24,7 +24,8 @@ const SAFE_EMAIL_REGEX = /^[^\s@]{1,64}@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA
 export default function useUserProfile() {
   const [tempUser, setTempUser] = useState({
     email: "",
-    name: "",
+    firstName: "",
+    lastName: "",
     phone: "",
     title: "",
     dateOfBirth: "",
@@ -35,7 +36,8 @@ export default function useUserProfile() {
   });
   const [user, setUser] = useState({
     email: "",
-    name: "",
+    firstName: "",
+    lastName: "",
     address: "",
     phone: "",
     family: "",
@@ -259,25 +261,32 @@ export default function useUserProfile() {
   };
 
   const saveUserName = async () => {
-    const newName = tempUser.name?.trim();
-    if (!newName) {
-      alert("Please provide a valid name.");
+    const firstName = tempUser.firstName?.trim();
+    const lastName = tempUser.lastName?.trim();
+    if (!firstName) {
+      alert("Please provide a valid first name.");
       return;
     }
 
     try {
       const userInfo = await Auth.currentAuthenticatedUser();
       const userId = userInfo.username;
+      const newName = `${firstName} ${lastName}`.trim();
       const response = await fetch(UPDATE_NAME_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, newName }),
+        body: JSON.stringify({ userId, newName, firstName, lastName }),
       });
 
       const result = await response.json();
 
       if (result.statusCode === 200) {
-        setUser((prev) => ({ ...prev, name: newName }));
+        const currentUser = await Auth.currentAuthenticatedUser();
+        await Auth.updateUserAttributes(currentUser, {
+          given_name: firstName,
+          family_name: lastName,
+        });
+        setUser((prev) => ({ ...prev, firstName, lastName }));
         if (editState.name) toggleEditState("name");
       }
     } catch (error) {
@@ -393,7 +402,8 @@ export default function useUserProfile() {
       const displayDob = formatBirthdateForDisplay(attributes.birthdate || "");
       setUser({
         email: attributes.email,
-        name: attributes["given_name"],
+        firstName: attributes["given_name"] || "",
+        lastName: attributes["family_name"] || "",
         address: attributes.address,
         phone: attributes.phone_number,
         family: "2 adults - 2 kids",
@@ -406,7 +416,8 @@ export default function useUserProfile() {
       });
       setTempUser({
         email: attributes.email || "",
-        name: attributes["given_name"] || "",
+        firstName: attributes["given_name"] || "",
+        lastName: attributes["family_name"] || "",
         phone: attributes.phone_number || "",
         title: attributes["custom:title"] || "",
         dateOfBirth: displayDob,

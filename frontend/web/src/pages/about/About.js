@@ -1,29 +1,20 @@
 import React, { useContext } from "react";
-import vision from "../../images/icons/vision.png";
-import whatwedo from "../../images/icons/route.png";
+import { Link } from "react-router-dom";
+import {
+  Globe,
+  Users,
+  Laptop,
+  HandHeart,
+  Rocket,
+  TrendingUp,
+  Heart,
+  Briefcase,
+  ArrowRight,
+} from "lucide-react";
 
 import stefan from "../../images/about-img/stefan.jpeg";
-import tim from "../../images/about-img/tim.png";
-
-import standard from "../../images/standard.png";
-import nick from "../../images/nick.png";
-
-import Ales from "../../images/about-img/Ales.jpg";
-import Chant from "../../images/about-img/Chant.jpg";
-import Chiel from "../../images/about-img/Chiel.png";
-import Justin from "../../images/about-img/Justin.jpg";
 import Robert from "../../images/about-img/Robert.jpg";
-import Robin from "../../images/about-img/Robin.jpg";
-import Sam from "../../images/about-img/Sam.jpg";
-import Jared from "../../images/about-img/Jared.jpg";
-import Sander from "../../images/about-img/Sander.png";
-import Bekir from "../../images/about-img/Bekir.png";
-import Kacper from "../../images/about-img/Kacper.png";
-import Valentijn from "../../images/about-img/valentijn.png";
-import Sakhi from "../../images/about-img/Sakhi.png";
-import Denisa from "../../images/about-img/Denisa.jpeg";
-import Omer from "../../images/about-img/Omer.jpg";
-import Ameen from "../../images/about-img/Ameen.jpg";
+import Chiel from "../../images/about-img/Chiel.png";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -33,210 +24,137 @@ import es from "../../content/es.json";
 
 const contentByLanguage = { en, nl, de, es };
 
-// Handy tool for editing the images:
-// https://imageresizer.com/image-compressor
+const STAT_ICONS = { globe: Globe, users: Users, laptop: Laptop, handHeart: HandHeart };
+const MEMBER_PHOTOS = [stefan, Robert, Chiel];
 
 function About() {
   const { language } = useContext(LanguageContext);
-  const aboutContent = contentByLanguage[language]?.about;
+  const content = contentByLanguage[language]?.about?.aboutPage ?? en.about.aboutPage;
 
-  if (!aboutContent) return null;
-
-  const founderMembers = [
-    { name: "Stefan", src: stefan, role: aboutContent.crew.founder },
-    { name: "Robert", src: Robert, role: aboutContent.crew.engineeringManager },
-  ];
-
-  const developerMembers = [
-    { name: "Tim H.", src: tim, role: aboutContent.crew.developer },
-    { name: "Ales", src: Ales, role: aboutContent.crew.developer },
-    { name: "Bekir", src: Bekir, role: aboutContent.crew.developer },
-    { name: "Chant", src: Chant, role: aboutContent.crew.developer },
-    { name: "Justin", src: Justin, role: aboutContent.crew.developerDistribution },
-    { name: "Kacper", src: Kacper, role: aboutContent.crew.developer },
-    { name: "Nick Ryan", src: nick, role: aboutContent.crew.developer },
-    { name: "Raman", src: standard, role: aboutContent.crew.developer },
-    { name: "Robin", src: Robin, role: aboutContent.crew.security },
-    { name: "Sam", src: Sam, role: aboutContent.crew.developer },
-    { name: "Sander", src: Sander, role: aboutContent.crew.developer },
-    { name: "Sem", src: standard, role: aboutContent.crew.developer },
-
-    // New developers
-    { name: "Ahsanul", src: standard, role: aboutContent.crew.developer },
-    { name: "Alessio", src: standard, role: aboutContent.crew.developer },
-    { name: "Asif", src: standard, role: aboutContent.crew.developer },
-    { name: "Burak", src: standard, role: aboutContent.crew.developer },
-    { name: "Chiel", src: Chiel, role: aboutContent.crew.developer},
-    { name: "Gurpreet", src: standard, role: aboutContent.crew.developer },
-    { name: "Ho Tin", src: standard, role: aboutContent.crew.developer },
-    { name: "Ken", src: standard, role: aboutContent.crew.developer },
-    { name: "Moncef", src: standard, role: aboutContent.crew.developer },
-    { name: "Stephanie", src: standard, role: aboutContent.crew.developer },
-    { name: "Tom", src: standard, role: aboutContent.crew.developer },
-    { name: "Valentijn", src: Valentijn, role: aboutContent.crew.developer },
-    { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
-    { name: "Sakhi", src: Sakhi, role: aboutContent.crew.developer },
-    { name: "Denisa", src: Denisa, role: aboutContent.crew.designer },
-    { name: "Omer", src: Omer, role: aboutContent.crew.developer },
-    { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
-    { name: "Hadeel", src: standard, role: aboutContent.crew.developer },
-   
-  ]
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const marketingMembers = [
-    { name: "Jared", src: Jared, role: aboutContent.crew.growth },
-    { name: "Julian", src: standard, role: aboutContent.crew.growth },
-    { name: "Maroan", src: standard, role: aboutContent.crew.growth },
-    { name: "Thijmen", src: standard, role: aboutContent.crew.growth },
-    {
-      name: aboutContent.crew.canBeYou,
-      src: standard,
-      role: aboutContent.crew.hiring,
-    },
-  ].sort((a, b) => a.name.localeCompare(b.name));
+  const { hero, team, stats, cards, join } = content;
 
   return (
-    <div className="about">
-      <div className="about__title-container">
-        <h2 className="about__title">
-          <span className="highlightH2">{aboutContent.title}</span>
-        </h2>
-        <h3 className="about__title">{aboutContent.description}</h3>
-      </div>
-
-      <div className="about__subtitle-container">
-        <h4>{aboutContent.mission.title}</h4>
-      </div>
-
-      <div className="about__text-container">
-        <p className="about__text about__text--margintop">
-          {aboutContent.mission.description}
-        </p>
-
-        <p className="about__text about__text--margintop">
-          {aboutContent.mission.readHere}
-          <a className="ref" href="/how-it-works">
-            {aboutContent.mission.howItWorks}
-          </a>
-          {aboutContent.mission.and}
-          <a className="ref" href="/why-domits">
-            {aboutContent.mission.whyDomits}
-          </a>
-          .
-        </p>
-      </div>
-
-      <br />
-
-      <div className="about__factsbox">
-        <div className="about__fact">
-          <div className="about__fact-header">
-            <p className="about__fact-title">{aboutContent.vision.title}</p>
-            <img className="about__fact-image" src={vision} alt="Vision" />
-          </div>
-          <p className="about__fact-subtitle">{aboutContent.vision.subTitle}</p>
-          <p className="about__fact-text">{aboutContent.vision.description}</p>
-        </div>
-
-        <div className="about__fact">
-          <div className="about__fact-header">
-            <p className="about__fact-title">{aboutContent.whatWeDo.title}</p>
-            <img className="about__fact-image" src={whatwedo} alt="What we do" />
-          </div>
-          <p className="about__fact-subtitle">{aboutContent.whatWeDo.subTitle}</p>
-          <p className="about__fact-text">
-            {aboutContent.whatWeDo.description}
-            <a className="ref" href="/travelinnovation">
-              {aboutContent.whatWeDo.travelInnovation}
-            </a>
-            .
-          </p>
-        </div>
-      </div>
-
-      <div className="about__crew">
-        <h1 className="about__who-we-are-title about__who-we-are-title--margintop">
-          {aboutContent.crew.whoWeAre}
+    <div className="about-page">
+      <section className="about-page__hero">
+        <p className="about-page__eyebrow">{content.eyebrow}</p>
+        <h1 className="about-page__hero-title">
+          {hero.line1}
+          <br />
+          <span className="about-page__hero-highlight">{hero.highlight}</span>
         </h1>
-        <p className="about__who-we-are-subtitle about__who-we-are-subtitle--marginbottom">
-          {aboutContent.crew.weAreAll}
-        </p>
+      </section>
 
-        {/* ===================== Founder Section ===================== */}
-        <div className="about__group">
-          <h2 className="about__group-title">Management</h2>
+      <section className="about-page__team">
+        <h2 className="about-page__team-title">{team.title}</h2>
+        <p className="about-page__team-subtitle">{team.subtitle}</p>
 
-          <div className="about__team about__team--founder">
-            {founderMembers
-              .slice()
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((member) => (
-                <div className="about__member" key={member.name}>
-                  <div className="about__avatar">
-                    <img
-                      className="about__avatar-image"
-                      src={member.src}
-                      alt={member.name}
-                      loading="lazy"
-                    />
-                  </div>
-                  <p className="about__member-name">{member.name}</p>
-                  <p className="about__member-role">{member.role}</p>
-                </div>
-              ))}
-          </div>
-        </div>
-
-        {/* ===================== Developer Section ===================== */}
-        <div className="about__group">
-          <h2 className="about__group-title">Engineering</h2>
-
-          <div className="about__team about__team--developer">
-            {developerMembers.map((member) => (
-              <div className="about__member" key={member.name}>
-                <div className="about__avatar">
-                  <img
-                    className="about__avatar-image"
-                    src={member.src}
-                    alt={member.name}
-                    loading="lazy"
-                  />
-                </div>
-                <p className="about__member-name">{member.name}</p>
-                <p className="about__member-role">{member.role}</p>
+        <div className="about-page__team-members">
+          {team.members.map((member, index) => (
+            <div className="about-page__member" key={member.name}>
+              <div className="about-page__member-avatar">
+                <img
+                  className="about-page__member-photo"
+                  src={MEMBER_PHOTOS[index]}
+                  alt={member.name}
+                  loading="lazy"
+                />
               </div>
+              <p className="about-page__member-name">{member.name}</p>
+              <p className="about-page__member-role">{member.role}</p>
+            </div>
+          ))}
+
+          <Link to="/team" className="about-page__member-more">
+            {team.moreMembers}
+          </Link>
+        </div>
+      </section>
+
+      <section className="about-page__stats">
+        {stats.map(({ icon, value, label }) => {
+          const Icon = STAT_ICONS[icon] ?? Globe;
+          return (
+            <div className="about-page__stat" key={label}>
+              <Icon className="about-page__stat-icon" size={32} strokeWidth={1.8} />
+              <div className="about-page__stat-text">
+                <p className="about-page__stat-value">{value}</p>
+                <p className="about-page__stat-label">{label}</p>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      <section className="about-page__cards">
+        <article className="about-page__card about-page__card--featured">
+          <span className="about-page__card-icon">
+            <Rocket size={24} strokeWidth={1.8} />
+          </span>
+          <h3 className="about-page__card-title">{cards.featured.title}</h3>
+          <p className="about-page__card-description">{cards.featured.description}</p>
+          <div className="about-page__card-tags">
+            {cards.featured.tags.map((tag) => (
+              <span className="about-page__tag about-page__tag--light" key={tag}>
+                {tag}
+              </span>
             ))}
           </div>
-        </div>
+        </article>
 
-        {/* ===================== Marketing Section ===================== */}
-        <div className="about__group">
-          <h2 className="about__group-title">Marketing, Contracting, Partnerships, Support</h2>
+        <article className="about-page__card">
+          <span className="about-page__card-icon">
+            <TrendingUp size={24} strokeWidth={1.8} />
+          </span>
+          <h3 className="about-page__card-title">{cards.partnerSuccess.title}</h3>
+          <p className="about-page__card-description">{cards.partnerSuccess.description}</p>
+          <Link to="/partner" className="about-page__card-link">
+            {cards.partnerSuccess.link} <ArrowRight size={16} />
+          </Link>
+        </article>
 
-          <div className="about__team about__team--marketing">
-            {marketingMembers.map((member) => (
-              <div className="about__member" key={member.name}>
-                <div className="about__avatar">
-                  <img
-                    className="about__avatar-image"
-                    src={member.src}
-                    alt={member.name}
-                    loading="lazy"
-                  />
-                </div>
-                <p className="about__member-name">{member.name}</p>
-                <p className="about__member-role">{member.role}</p>
-              </div>
+        <article className="about-page__card">
+          <span className="about-page__card-icon">
+            <Heart size={24} strokeWidth={1.8} />
+          </span>
+          <h3 className="about-page__card-title">{cards.culture.title}</h3>
+          <p className="about-page__card-description">{cards.culture.description}</p>
+          <div className="about-page__card-tags">
+            {cards.culture.tags.map((tag) => (
+              <span className="about-page__tag" key={tag}>
+                {tag}
+              </span>
             ))}
           </div>
-        </div>
+        </article>
 
-        <div className="about__footer">
-          <p className="about__footer-text">{aboutContent.footerText.description}</p>
-          <p className="about__footer-text">{aboutContent.footerText.description2}</p>
+        <article className="about-page__card">
+          <span className="about-page__card-icon">
+            <Briefcase size={24} strokeWidth={1.8} />
+          </span>
+          <h3 className="about-page__card-title">{cards.openPositions.title}</h3>
+          <p className="about-page__card-description">{cards.openPositions.description}</p>
+          <div className="about-page__card-tags">
+            {cards.openPositions.tags.map((tag) => (
+              <span className="about-page__tag" key={tag}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="about-page__join">
+        <h2 className="about-page__join-title">{join.title}</h2>
+        <p className="about-page__join-description">{join.description}</p>
+        <div className="about-page__join-buttons">
+          <Link to="/career" className="about-page__join-button about-page__join-button--primary">
+            {join.viewRoles} <ArrowRight size={18} />
+          </Link>
+          <Link to="/contact" className="about-page__join-button about-page__join-button--secondary">
+            {join.partner}
+          </Link>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

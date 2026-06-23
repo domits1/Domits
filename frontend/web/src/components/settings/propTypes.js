@@ -18,7 +18,8 @@ export const authStatusShape = PropTypes.shape({
 
 export const userShape = PropTypes.shape({
     email: PropTypes.string,
-    name: PropTypes.string,
+    firstName: PropTypes.string,
+    lastName: PropTypes.string,
     address: PropTypes.string,
     phone: PropTypes.string,
     family: PropTypes.string,
@@ -32,7 +33,8 @@ export const userShape = PropTypes.shape({
 
 export const tempUserShape = PropTypes.shape({
     email: PropTypes.string,
-    name: PropTypes.string,
+    firstName: PropTypes.string,
+    lastName: PropTypes.string,
     phone: PropTypes.string,
     title: PropTypes.string,
     dateOfBirth: PropTypes.string,
