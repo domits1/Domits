@@ -30,15 +30,24 @@ const deliveryWorker = new DeliveryWorker({
 });
 const controller = new AutomationController(automationService, schemaGuard);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type,Authorization",
-  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+const ACCEPTANCE_FRONTEND_ORIGIN = "https://acceptance.domits.com";
+
+const baseCorsHeaders = {
+  "Access-Control-Allow-Headers": "Authorization,Content-Type",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
 };
 
-const createResponse = ({ statusCode = 200, response }) => ({
+const resolveCorsOrigin = (event) => {
+  const origin = event?.headers?.origin || event?.headers?.Origin;
+  return origin === ACCEPTANCE_FRONTEND_ORIGIN ? ACCEPTANCE_FRONTEND_ORIGIN : "*";
+};
+
+const createResponse = ({ statusCode = 200, response }, event) => ({
   statusCode,
-  headers: corsHeaders,
+  headers: {
+    "Access-Control-Allow-Origin": resolveCorsOrigin(event),
+    ...baseCorsHeaders,
+  },
   body: JSON.stringify(response),
 });
 
@@ -119,7 +128,7 @@ export const handler = async (event) => {
       await schemaGuard.assertReady();
       return createResponse({ statusCode: 200, response: await deliveryWorker.processDue(event.detail || {}) });
     }
-    return createResponse(await routeHttpRequest(event));
+    return createResponse(await routeHttpRequest(event), event);
   } catch (error) {
     console.error("AutomatedMessaging request failed", {
       code: error?.code || error?.name || "INTERNAL_ERROR",
@@ -132,6 +141,6 @@ export const handler = async (event) => {
         message: error?.statusCode ? error.message : "Internal Server Error",
         ...(error?.details ? { details: error.details } : {}),
       },
-    });
+    }, event);
   }
 };
