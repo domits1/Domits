@@ -171,12 +171,15 @@
   .about-page__cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: minmax(300px, auto) minmax(190px, auto);
     gap: 24px;
     margin-top: 48px;
-    align-items: start;
+    align-items: stretch;
 
     @media (max-width: 750px) {
       grid-template-columns: 1fr;
+      grid-template-rows: none;
+      grid-auto-rows: auto;
     }
 
     .about-page__card {
@@ -249,7 +252,6 @@
       }
 
       &--featured {
-        grid-row: span 2;
         background: var(--primary-color);
         border: none;
         color: #fff;
