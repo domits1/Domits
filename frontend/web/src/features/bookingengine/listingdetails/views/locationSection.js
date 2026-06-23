@@ -1,21 +1,31 @@
+import { useContext } from "react";
 import PropTypes from "prop-types";
 import { FaMapMarkerAlt } from "react-icons/fa";
+import { LanguageContext } from "../../../../context/LanguageContext.js";
+import en from "../../../../content/en.json";
+import nl from "../../../../content/nl.json";
+import de from "../../../../content/de.json";
+import es from "../../../../content/es.json";
+
+const contentByLanguage = { en, nl, de, es };
 
 const buildLocationLabel = (location = {}) => {
   return [location?.city, location?.country].filter(Boolean).join(", ");
 };
 
 const buildMapQuery = (location = {}) => {
-  const query = [location?.street, location?.houseNumber, location?.city, location?.country]
+  const query = [location?.city, location?.country]
     .filter(Boolean)
-    .join(" ");
-
-  return encodeURIComponent(query || buildLocationLabel(location) || "Amsterdam");
+    .join(", ");
+  return encodeURIComponent(query);
 };
 
 const LocationSection = ({ location }) => {
+  const { language } = useContext(LanguageContext);
+  const t = (contentByLanguage[language] ?? contentByLanguage.en).listingDetails.location;
+
   const locationLabel = buildLocationLabel(location);
-  const mapQuery = buildMapQuery(location);
+  const hasUsableLocation = Boolean(location?.city || location?.country);
 
   return (
     <section className="location-section">
@@ -24,20 +34,33 @@ const LocationSection = ({ location }) => {
           <FaMapMarkerAlt />
         </span>
         <div>
-          <h3 className="location-section__title">Where you'll be</h3>
+          <h3 className="location-section__title">{t.title}</h3>
           {locationLabel && <p className="location-section__subtitle">{locationLabel}</p>}
         </div>
       </div>
 
-      <div className="location-section__map-shell">
-        <iframe
-          className="location-section__map"
-          title="Property location"
-          src={`https://maps.google.com/maps?q=${mapQuery}&z=12&output=embed`}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
-      </div>
+      {hasUsableLocation ? (
+        <>
+          <div className="location-section__map-shell">
+            <iframe
+              className="location-section__map"
+              title={t.title}
+              src={`https://maps.google.com/maps?q=${buildMapQuery(location)}&z=14&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+            <div className="location-section__map-lock location-section__map-lock--tr" aria-hidden="true" />
+            <div className="location-section__map-lock location-section__map-lock--btm" aria-hidden="true" />
+            <div
+              className="location-section__approx-overlay"
+              aria-hidden="true"
+            />
+          </div>
+          <p className="location-section__disclaimer">{t.disclaimer}</p>
+        </>
+      ) : (
+        <p className="location-section__unavailable">{t.unavailable}</p>
+      )}
     </section>
   );
 };

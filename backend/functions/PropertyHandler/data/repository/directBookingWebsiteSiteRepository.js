@@ -262,6 +262,29 @@ export class DirectBookingWebsiteSiteRepository {
     return mapSiteRow(rows?.[0] || null);
   }
 
+  async getPublishedSiteByNormalizedIdPrefix(normalizedIdPrefix) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+    const normalizedPrefix = String(normalizedIdPrefix || "").trim().toLowerCase();
+    if (!normalizedPrefix) {
+      return null;
+    }
+
+    const rows = await client.query(
+      `SELECT
+        ${SITE_SELECT_COLUMNS}
+      FROM ${tableName}
+      WHERE status = 'PUBLISHED'
+        AND REPLACE(LOWER(id), '-', '') LIKE $1
+      ORDER BY published_at DESC NULLS LAST, updated_at DESC
+      LIMIT 1`,
+      [`${normalizedPrefix}%`]
+    );
+
+    return mapSiteRow(rows?.[0] || null);
+  }
+
   async updateSiteStatus(siteId, status) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);

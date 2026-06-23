@@ -1,4 +1,11 @@
 {
+  "listingDetails": {
+    "location": {
+      "title": "Waar je verblijft",
+      "disclaimer": "De exacte locatie wordt na boeking verstrekt.",
+      "unavailable": "Locatie-informatie is niet beschikbaar."
+    }
+  },
   "component": {
     "user": {
       "hello": "Hallo",
@@ -107,9 +114,13 @@
     },
     "features": {
       "securePayments": "Veilige betalingen",
+      "securePaymentsDesc": "Uw transacties zijn beschermd",
       "verifiedGuest": "Geverifieerde gasten/gastheren",
+      "verifiedDesc": "Elke accommodatie is geverifieerd",
       "quickPhone": "Snelle telefonische ondersteuning",
+      "quickSupportDesc": "24/7 klantenservice",
       "qualityGuarantee": "Domits kwaliteitsgarantie",
+      "qualityDesc": "Alleen premium verblijven",
       "bestPrice": "Beste prijsgarantie",
       "bestPriceDescription": "Wij streven ernaar u de best mogelijke prijs te bieden. Vindt u elders een lagere prijs, dan bekijken we die samen met u en passen we deze waar mogelijk aan.",
       "bookingGuarantee": "Garantie voor accommodatieboeking",
@@ -119,6 +130,7 @@
     },
     "sections": {
       "trending": "Populaire accommodaties deze maand",
+      "trendingNow": "Trending Nu",
       "rentBoat": "Huur een boot voor elke gelegenheid",
       "discoverCampers": "Ontdek prachtige campers",
       "becomeHost": {
@@ -165,6 +177,23 @@
         "solo": "Solo",
         "senior": "Senior",
         "petFriendly": "Huisdiervriendelijk"
+      },
+      "panel": {
+        "apply": "Filter toepassen",
+        "reset": "Filter resetten",
+        "priceRange": "Prijsklasse",
+        "min": "Min",
+        "max": "Max",
+        "amenities": "Voorzieningen",
+        "showMore": "Meer tonen",
+        "roomsAndBeds": "Kamers & bedden",
+        "bedrooms": "Slaapkamers",
+        "beds": "Bedden",
+        "bathrooms": "Badkamers",
+        "any": "Alle",
+        "bookingOptions": "Boekingsopties",
+        "bookInstantly": "Direct boeken",
+        "bookingRequest": "Boekingsverzoek"
       }
     },
     "destinations": {
@@ -224,6 +253,80 @@
         }
       }
     }
+  },
+  "regionBlocks": {
+    "europe": {
+      "title": "Europa",
+      "subtitle": "Ontdek luxe verblijven in Europese bestemmingen",
+      "footer": "Verken alle landen in Europa →"
+    },
+    "asia": {
+      "title": "Azië",
+      "subtitle": "Verken exotische Aziatische retraites en moderne metropolen",
+      "footer": "Verken alle landen in Azië →"
+    },
+    "caribbean": {
+      "title": "Eilanden in het Caribisch gebied",
+      "subtitle": "Paradijs wacht in deze tropische havens",
+      "footer": "Verken alle landen in het Caribisch gebied →"
+    },
+    "ski": {
+      "title": "Populaire skibestemmingen",
+      "subtitle": "Wereldklasse pistes en gezellige bergchalets",
+      "footer": "Verken alle populaire skibestemmingen →"
+    },
+    "seasons": {
+      "title": "Favorieten per seizoen",
+      "subtitle": "Perfecte accommodaties voor elk moment van het jaar",
+      "footer": "Verken alle favorieten per seizoen →"
+    },
+    "interests": {
+      "title": "Topkeuzes op interesse",
+      "subtitle": "Vind verblijven die passen bij uw passies",
+      "footer": "Verken alle topkeuzes op interesse →"
+    },
+    "groups": {
+      "title": "Accommodaties per groep",
+      "subtitle": "Het perfecte verblijf voor uw reisgezelschap",
+      "footer": "Verken alle accommodaties per groep →"
+    }
+  },
+  "guarantees": {
+    "sectionTitle": "Onze garanties, uw gemoedsrust",
+    "sectionSubtitle": "Wij staan achter elk verblijf met onze beloften aan u."
+  },
+  "hostSection": {
+    "title": "Deel uw ruimte, verdien premium inkomen",
+    "description": "Word lid van onze exclusieve community van luxe hosts. Vermeld uw villa, strandhuis of unieke accommodatie en verbind u met reizigers die op zoek zijn naar buitengewone ervaringen.",
+    "features": {
+      "earn": {
+        "title": "Verdien meer",
+        "text": "Premium prijzen voor luxe accommodaties"
+      },
+      "infrastructure": {
+        "title": "Infrastructuur",
+        "text": "Nieuwste industriestandaarden"
+      },
+      "support": {
+        "title": "Deskundige ondersteuning",
+        "text": "Toegewijd team om u te helpen slagen"
+      }
+    },
+    "stats": {
+      "hosts": {
+        "value": "500+",
+        "label": "Actieve hosts"
+      },
+      "rating": {
+        "value": "4.9",
+        "label": "Gem. beoordeling"
+      },
+      "earning": {
+        "value": "€2.5k",
+        "label": "Gem./maand"
+      }
+    },
+    "button": "Vermeld uw accommodatie"
   },
   "travelInnovationLabs": {
     "title": "Travel Innovation Labs",
@@ -324,7 +427,25 @@
     "attachment": "Bijlagen toevoegen",
     "send": "Bericht verzenden",
     "guest": "Gast",
-    "host": "Gastheer"
+    "host": "Gastheer",
+    "heroLabel": "HULPCENTRUM",
+    "heroTitleStart": "Hoe kunnen we ",
+    "heroTitleEnd": "je helpen?",
+    "searchPlaceholder": "Zoek naar antwoorden, boekingen, betalingen, ondersteuning...",
+    "frequentlyAsked": "Veelgestelde vragen",
+    "stillNeedHelp": "Nog steeds hulp nodig?",
+    "supportSubtitle": "Ons supportteam staat 24/7 voor je klaar",
+    "contactSupport": "Contact opnemen",
+    "noResults": "Geen resultaten gevonden voor \"{query}\". Probeer een andere zoekterm.",
+    "categories": {
+      "aboutDomits": "Over Domits",
+      "manageAccount": "Account beheren",
+      "searchAndBook": "Zoeken en boeken",
+      "cancellations": "Annuleringen",
+      "payments": "Betalingen",
+      "yourStay": "Jouw verblijf",
+      "support": "Ondersteuning"
+    }
   },
   "whyDomits": {
     "head": {
@@ -441,22 +562,26 @@
     }
   },
   "sustainability": {
-    "title": "Duurzaamheid",
-    "subtitle": "Waarom kiezen voor Domits op het gebied van duurzaamheid?",
-    "business": {
-      "title": "1. Duurzaam **Ondernemen**",
-      "subtitle": "Recyclingplan met afvalbakken",
-      "description": "Domits begint eenvoudig met bewuste keuzes, zoals het kiezen van energiezuinigere apparaten, en wil elke dag 1% verbeteren. Met ons beleid rond voedselverspilling willen we niet te streng zijn en starten we met een flexibel recyclingplan voor glas, papier, plastic en organisch afval. Voor biodiversiteit en ecosystemen streven we ernaar meer biologisch voedsel te eten, milieuvriendelijke schoonmaakproducten te gebruiken en papierloze procedures te hanteren."
-    },
-    "accommodations": {
-      "title": "2. Duurzame **Accommodaties**",
-      "subtitle": "Certificering",
-      "description": "Domits richt zich actief op het onboarden van hosts die al duurzaam zijn. Als dat nog niet het geval is, begeleiden we hen stap voor stap om het bewustzijn te vergroten. Uiteindelijk willen we hosts certificeringen geven als bewijs van duurzaamheid op het gebied van energie, afval, biodiversiteit, ecosystemen, bestemmingen en gemeenschap."
-    },
-    "experience": {
-      "title": "3. Duurzame **Gastervaring**",
-      "description": "Vanaf het eerste contactmoment met Domits willen we dat gasten voelen dat ze zo duurzaam mogelijk reizen. Domits begint met duurzaamheidsfilters en een uitgebreid overzicht van alle milieuvriendelijke voorzieningen."
-    }
+    "label": "DUURZAAMHEID",
+    "title": "Waarom kiezen voor Domits",
+    "titleAccent": "op het gebied van duurzaamheid?",
+    "sections": [
+      {
+        "title": "Duurzaam Ondernemen",
+        "subtitle": "Recyclingplan met afvalbakken",
+        "description": "Domits begint eenvoudig met bewuste keuzes, zoals het kiezen van energiezuinigere apparaten, en wil elke dag 1% verbeteren. Met ons beleid rond voedselverspilling willen we niet te streng zijn en starten we met een flexibel recyclingplan voor glas, papier, plastic en organisch afval. Voor biodiversiteit en ecosystemen streven we ernaar meer biologisch voedsel te eten, milieuvriendelijke schoonmaakproducten te gebruiken en papierloze procedures te hanteren."
+      },
+      {
+        "title": "Duurzame Accommodaties",
+        "subtitle": "Certificering",
+        "description": "Domits richt zich actief op het onboarden van hosts die al duurzaam zijn. Als dat nog niet het geval is, begeleiden we hen stap voor stap om het bewustzijn te vergroten. Uiteindelijk willen we hosts certificeringen geven als bewijs van duurzaamheid op het gebied van energie, afval, biodiversiteit, ecosystemen, bestemmingen en gemeenschap."
+      },
+      {
+        "title": "Duurzame Gastervaring",
+        "subtitle": "Milieuvriendelijk reizen",
+        "description": "Vanaf het eerste contactmoment met Domits willen we dat gasten voelen dat ze zo duurzaam mogelijk reizen. Domits begint met duurzaamheidsfilters en een uitgebreid overzicht van alle milieuvriendelijke voorzieningen."
+      }
+    ]
   },
   "howItWorksContent": {
     "title": "Hoe Domits Werkt",
@@ -595,6 +720,18 @@
     }
   },
   "landing": {
+    "hero": {
+      "badge": "Vertrouwd door veel hosts",
+      "titleLine1": "Uw accommodaties.",
+      "titleLine2": "Onze infrastructuur.",
+      "description": "Zet uw luxe vakantieverhuur om in een inkomstenstroom die zichzelf runt. Meer inkomsten. Minder werkdruk. Totaal vertrouwen.",
+      "primaryButton": "Begin met hosten →",
+      "secondaryButton": "Zie hoe het werkt",
+      "stat1Label": "meer inkomsten",
+      "stat2Label": "minder werkdruk",
+      "stat3Label": "ondersteuning",
+      "integratesLabel": "Integreert naadloos met"
+    },
     "list": "Plaats uw",
     "house": "Huis",
     "camper": "Camper",
@@ -612,6 +749,9 @@
       "title2": "is nog nooit zo ",
       "easier": "makkelijk",
       "subtitle": "Het kost slechts 3 stappen",
+      "stepsLabel": "HET PROCES",
+      "stepsTitleLine1": "Drie Stappen.",
+      "stepsTitleSpan": "Nul Wrijving.",
       "first": {
         "one": "1.",
         "title": "Plaats uw accommodatie",
@@ -633,7 +773,18 @@
       "domits": "Domits",
       "end": "?",
       "description": "Bij Domits zijn we niet zomaar een platform, we bouwen een toekomstgerichte, duurzame community met onze Travel Innovation Labs. Onze innovatieve aanpak zorgt ervoor dat uw accommodatie zowel voor reizigers als voor het milieu een betekenisvolle waarde toevoegt. U krijgt ook onbeperkte ondersteuning en gepersonaliseerde, moderne dashboards die het beheer van uw aanbiedingen eenvoudiger maken dan ooit. Maar wat Domits echt onderscheidt, is onze toewijding aan u. U bent meer dan slechts een klant of data; we geven oprecht om uw succes en staan elke stap van de weg voor u klaar om u te helpen floreren. Hosten met Domits betekent het afstemmen op diepgewortelde waarden zoals gezondheid, veiligheid en duurzaamheid, en het creëren van een toekomstbestendig pad voor uw onderneming.",
-      "btnHosting": "Begin met hosten"
+      "btnHosting": "Begin met hosten",
+      "sectionTitle": "Waarom",
+      "sectionDescription": "Domits transformeert de toekomst van luxe vakantieverhuurbeheer tot een naadloze ervaring. Van plaatsing tot uitbetaling, alles wordt op één centrale plek beheerd zodat u zich kunt richten op groei, niet op operaties.",
+      "rating": "4.9 ★",
+      "features": {
+        "pmsOta": "Domits PMS met OTA",
+        "revenueManagement": "Inkomstenbeheer",
+        "directReservations": "Directe Reserveringen",
+        "financeSuite": "Finance Suite",
+        "channelManagement": "Kanaalbeheer",
+        "taskAutomations": "Taakautomatisering"
+      }
     },
     "register": {
       "title": "Registreer uw accommodatie",
@@ -663,11 +814,15 @@
       "renting": {
         "title": "Internationaal verhuren",
         "description": "U verhuurt uw vakantiehuis op een internationale markt. Dit vergroot de kans dat uw vakantiehuis verhuurd wordt."
-      }
+      },
+      "subtitle": "Alles wat u nodig heeft om uw accommodatie met vertrouwen en gemoedsrust te verhuren.",
+      "cta": "Registreer uw accommodatie →"
     },
     "othersSay": {
       "title": "Wat anderen zeggen over",
-      "domits": "Domits"
+      "domits": "Domits",
+      "hearFrom": "Hoor van onze hosts.",
+      "trustText": "Veel hosts vertrouwen Domits"
     },
     "rentingOut": {
       "title": "Is uw accommodatie geschikt voor",
@@ -704,9 +859,62 @@
       "safety": {
         "title": "Veiligheid ✓",
         "description": "De accommodatie voldoet aan de veiligheidsnormen met functionerende rookmelders, beveiligde balkons, veilige speeltuinen en duidelijke toegangswegen."
+      },
+      "cta": "Klaar om uw accommodatie te plaatsen? Ons team begeleidt u bij elke stap.",
+      "ctaBadge": "✔ Geverifieerde accommodaties krijgen 3x meer boekingen"
+    },
+    "featuresSection": {
+      "title": "Resultaatgerichte",
+      "span": "Functies",
+      "pmsOta": {
+        "title": "Domits PMS met OTA",
+        "description": "Een gecentraliseerd Property Management System (PMS) met boekingskanalenintegratie."
+      },
+      "directReservation": {
+        "title": "Directe Reserveringsuite",
+        "description": "Een directe boekingswebsite-bouwer om OTA-kosten en afhankelijkheid te verminderen"
+      },
+      "channelManagement": {
+        "title": "Kanaalbeheer",
+        "description": "Distribueer naar kanalen zoals Airbnb, Domits, Booking, Vrbo en meer"
+      },
+      "revenueIntelligence": {
+        "title": "Inkomstenintelligentie",
+        "description": "Real-time inzichten in KPI's en dynamische prijsstelling."
+      },
+      "financeSuite": {
+        "title": "Finance Suite",
+        "description": "Gastbetalingen, hostuitbetalingen en precisiebeheerhulpmiddelen"
+      },
+      "taskAutomation": {
+        "title": "Taakautomatisering",
+        "description": "Automatiseer check-ins, schoonmaakschema en onderhoudsverzoeken"
       }
     },
+    "cta": {
+      "badge": "✦ Word lid van een community van hosts",
+      "title": "Klaar om uw accommodatieprestaties te verbeteren?",
+      "subtitle": "Begin vandaag nog meer te verdienen met uw luxe vakantieverhuur. Geen creditcard vereist.",
+      "button": "Begin nu met hosten →",
+      "benefit1": "● Gratis om te beginnen",
+      "benefit2": "● Geen verborgen kosten",
+      "benefit3": "● Op elk moment annuleren"
+    },
+    "partnerContact": {
+      "title": "Meer dan software.",
+      "subtitle": "Een toegewijde partner.",
+      "description": "Ons team staat klaar om uw vragen te beantwoorden, het potentieel van uw accommodatie te bespreken en u te helpen met moeiteloos verhuurinkomen.",
+      "emailLabel": "E-mail ons",
+      "emailValue": "teamdomits@gmail.com",
+      "phoneLabel": "Bel ons",
+      "phoneValue": "24/7 beschikbaar",
+      "addressLabel": "Bezoek ons",
+      "addressLine1": "Kinderhuissingel 6-K",
+      "addressLine2": "2013 AS, Haarlem"
+    },
     "answerTo": {
+      "faqTitle": "Antwoorden op",
+      "faqSpan": "uw vragen",
       "title": "Antwoorden op ",
       "your": "uw",
       "question": "vragen",
@@ -919,6 +1127,136 @@
         "success": "✓ Uitnodiging verstuurd naar",
         "error": "Uitnodiging verzenden mislukt. Probeer het opnieuw."
       }
+    }
+  },
+  "performance": {
+    "label": "PRESTATIEPAKKETTEN",
+    "title": "Laat je verhuurbedrijf groeien met",
+    "titleAccent": "vertrouwen.",
+    "badges": [
+      {
+        "title": "Startende verhuurder",
+        "subtitle": "1-9 accommodaties"
+      },
+      {
+        "title": "Groeiende verhuurder",
+        "subtitle": "10-99 accommodaties"
+      },
+      {
+        "title": "Schaalbare verhuurder",
+        "subtitle": "100+ accommodaties"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Distributie & Marketing",
+        "bullets": [
+          "Multi-channel distributie via Booking.com, Airbnb, VRBO en 100+ platforms.",
+          "AI-gestuurde analyses, dashboards en prestatieoverzichten.",
+          "Inbound marketing, lead nurturing, klantenreizen en content.",
+          "SEO, SEA, CRO en conversiegerichte performance marketing.",
+          "CRM-automatisering, e-mailcampagnes, segmentatie en communicatiestromen."
+        ]
+      },
+      {
+        "title": "Operaties Stroomlijnen",
+        "bullets": [
+          "Vastgoedbeheer automatiseren",
+          "Reserveringsbeheer",
+          "Tarievenbeheer",
+          "Housekeeping",
+          "Receptie",
+          "Rapportage"
+        ]
+      },
+      {
+        "title": "Omzet Verhogen",
+        "bullets": [
+          "Dynamische prijzen",
+          "Digitale upselling",
+          "Bezettingsgraden",
+          "ADR (Gemiddelde Dagelijkse Prijs)",
+          "RevPAR (Opbrengst per Beschikbare Kamer)"
+        ]
+      },
+      {
+        "title": "Gastervaring",
+        "bullets": [
+          "Warmte en vriendelijkheid",
+          "Boekingsengine",
+          "Berichten",
+          "Beoordelingen",
+          "Inchecken",
+          "Ondersteuning (FAQ, e-mail en telefoon)"
+        ]
+      }
+    ]
+  },
+  "security": {
+    "label": "BEVEILIGING",
+    "title": "Jouw veiligheid staat",
+    "titleAccent": "voorop.",
+    "badges": [
+      {
+        "title": "Beveiligde Infrastructuur",
+        "subtitle": "Betrouwbaar & bewaakt"
+      },
+      {
+        "title": "Versleutelde Gegevens",
+        "subtitle": "End-to-end bescherming"
+      },
+      {
+        "title": "Dagelijkse Back-ups",
+        "subtitle": "Altijd beschermd"
+      },
+      {
+        "title": "EU Gehost",
+        "subtitle": "GDPR-conform"
+      }
+    ],
+    "sections": [
+      {
+        "title": "1. Infrastructuur",
+        "description": "Onze servers zijn veilig ondergebracht in meerdere Europese datacenters. Bij storingen staan technici altijd klaar om het probleem direct op te lossen. De online infrastructuur van Amazon Web Services garandeert de veiligheid en vertrouwelijkheid van onze clouddiensten.",
+        "bullets": [
+          "Onze gegevens zijn opgeslagen in twee verschillende datacenters.",
+          "Bij storingen schakelt Domits automatisch over naar een ander datacenter.",
+          "Een uptime van 99,995%."
+        ]
+      },
+      {
+        "title": "2. Diefstal en Privacy",
+        "description": "Domits zet zich volledig in om uw gegevens veilig te houden en te beschermen tegen hackers. Elke klant heeft zijn eigen, afzonderlijke database bij Domits, waardoor het onmogelijk is voor andere gebruikers om toegang te krijgen tot andermans gegevens.",
+        "bullets": [
+          "Bij gebruik van Domits is de verbinding beveiligd.",
+          "GDPR-conforme gegevensverwerking en -opslag",
+          "Het is onmogelijk voor buitenstaanders om dataverkeer te onderscheppen."
+        ]
+      },
+      {
+        "title": "3. Back-ups",
+        "description": "Bij Domits doen we er alles aan om ons systeem altijd operationeel te houden en uw gegevens altijd veilig te stellen. Back-ups worden dagelijks gemaakt zodat er nooit iets verloren gaat. Bij verstoringen worden al uw gegevens veilig opgeslagen en zorgt ons team ervoor dat uw account wordt hersteld.",
+        "bullets": [
+          "Garantie tegen gegevensverlies",
+          "Dagelijks herstel van gegevens tot zes maanden geleden",
+          "Veilige gegevensback-ups"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "title": "Visie",
+        "text": "Wij geloven dat iedereen recht heeft op transparante en toegankelijke beveiliging. Onze visie is een digitale omgeving te creëren waar gebruikers erop kunnen vertrouwen dat hun gegevens beschermd zijn zonder complexe technische details te hoeven begrijpen."
+      },
+      {
+        "title": "Wat We Doen",
+        "text": "We bewaken, updaten en verbeteren voortdurend onze beveiligingsinfrastructuur. Ons toegewijde team werkt dag en nacht om potentiële bedreigingen te identificeren, de nieuwste beveiligingsnormen te implementeren en ervoor te zorgen dat uw gegevens te allen tijde beschermd blijven."
+      }
+    ],
+    "cta": {
+      "title": "Vragen over beveiliging?",
+      "contactButton": "Contact opnemen",
+      "learnMoreButton": "Meer weten"
     }
   }
 }

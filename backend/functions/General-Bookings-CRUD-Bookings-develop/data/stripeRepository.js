@@ -11,18 +11,19 @@ import { Booking } from "database/models/Booking";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 
 const systemManagerRepository = new SystemManagerRepository();
-const stripePromise = process.env.TEST === "true"
-  ? Promise.resolve({
-    paymentIntents: {
-      create: async () => ({
-        id: `test_${randomUUID()}`,
-        client_secret: `test_secret_${randomUUID()}`,
-      }),
-    },
-  })
-  : systemManagerRepository
-    .getSystemManagerParameter("/stripe/keys/secret/live")
-    .then((secret) => new Stripe(secret));
+const stripePromise =
+  process.env.TEST === "true"
+    ? Promise.resolve({
+        paymentIntents: {
+          create: async () => ({
+            id: `test_${randomUUID()}`,
+            client_secret: `test_secret_${randomUUID()}`,
+          }),
+        },
+      })
+    : systemManagerRepository
+        .getSystemManagerParameter("/stripe/keys/secret/live")
+        .then((secret) => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
 
@@ -136,14 +137,15 @@ class StripeRepository {
     }
   }
 
-  async updatePaymentId(bookingId, stripePaymentId) {
+  async updatePaymentId(bookingId, stripePaymentId, totalCents = null) {
     const client = await Database.getInstance();
-    await client
-      .createQueryBuilder()
-      .update(Booking)
-      .set({ paymentid: stripePaymentId })
-      .where("id = :id", { id: bookingId })
-      .execute();
+    const updateObject = { paymentid: stripePaymentId };
+
+    if (typeof totalCents === "number" && Number.isFinite(totalCents)) {
+      updateObject.total_price = Math.round(totalCents) / 100;
+    }
+
+    await client.createQueryBuilder().update(Booking).set(updateObject).where("id = :id", { id: bookingId }).execute();
   }
 }
 export default StripeRepository;

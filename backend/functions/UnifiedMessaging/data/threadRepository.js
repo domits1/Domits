@@ -1,6 +1,23 @@
-import Database from "../ORM/index.js";
-import { UnifiedThread } from "../models/unified/messaging/UnifiedThread.js";
+import Database from "../.shared/integrations/ORM/index.js";
+import { UnifiedThread } from "database/models/unified/messaging/UnifiedThread";
 import { randomUUID } from "node:crypto";
+
+export const DOMITS_BOOKING_THREAD_UNIQUE_INDEX = "idx_unified_thread_domits_booking_unique";
+
+export const isDomitsBookingThreadUniqueError = (error) => {
+  const code = error?.code || error?.driverError?.code;
+  if (code !== "23505") return false;
+
+  const constraint = String(error?.constraint || error?.driverError?.constraint || "");
+  const detail = String(error?.detail || error?.driverError?.detail || error?.message || "");
+
+  return (
+    constraint === DOMITS_BOOKING_THREAD_UNIQUE_INDEX ||
+    detail.includes(DOMITS_BOOKING_THREAD_UNIQUE_INDEX) ||
+    detail.includes("bookingid") ||
+    detail.includes("bookingId")
+  );
+};
 
 class ThreadRepository {
   async createThread(data) {
@@ -17,6 +34,7 @@ class ThreadRepository {
         hostId: data.hostId,
         guestId: data.guestId,
         propertyId: data.propertyId,
+        bookingId: data.bookingId ?? null,
         platform: data.platform,
         externalThreadId: data.externalThreadId,
         status: "OPEN",
@@ -40,7 +58,7 @@ class ThreadRepository {
     return client.getRepository(UnifiedThread).findOne({ where: { id } });
   }
 
-  async findThread(userId1, userId2, propertyId) {
+  async findThread(userId1, userId2, propertyId, bookingId = null) {
     const client = await Database.getInstance();
 
     const qb = client
@@ -57,7 +75,25 @@ class ThreadRepository {
       qb.andWhere("thread.propertyId = :pId", { pId: propertyId });
     }
 
+    if (bookingId === null || bookingId === undefined) {
+      qb.andWhere("thread.bookingId IS NULL");
+    } else {
+      qb.andWhere("thread.bookingId = :bookingId", { bookingId });
+    }
+
     return qb.getOne();
+  }
+
+  async findThreadByBookingId(bookingId) {
+    if (!bookingId) return null;
+
+    const client = await Database.getInstance();
+    return client
+      .getRepository(UnifiedThread)
+      .createQueryBuilder("thread")
+      .where("thread.bookingId = :bookingId", { bookingId })
+      .andWhere("thread.platform = :platform", { platform: "DOMITS" })
+      .getOne();
   }
 
   async findExternalThread({ integrationAccountId, platform, externalThreadId }) {
@@ -84,6 +120,7 @@ class ThreadRepository {
           hostId: hostId ?? existing.hostId,
           guestId: guestId ?? existing.guestId,
           propertyId: propertyId ?? existing.propertyId,
+          bookingId: existing.bookingId ?? null,
           status: status ?? existing.status,
           updatedAt: now,
         })
@@ -95,6 +132,7 @@ class ThreadRepository {
         hostId: hostId ?? existing.hostId,
         guestId: guestId ?? existing.guestId,
         propertyId: propertyId ?? existing.propertyId,
+        bookingId: existing.bookingId ?? null,
         status: status ?? existing.status,
         updatedAt: now,
       };
@@ -104,6 +142,7 @@ class ThreadRepository {
       hostId,
       guestId,
       propertyId: propertyId ?? null,
+      bookingId: null,
       platform,
       externalThreadId,
       integrationAccountId,

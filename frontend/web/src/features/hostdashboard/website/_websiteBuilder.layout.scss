@@ -165,6 +165,42 @@
   gap: 14px;
 }
 
+.kpiSectionGroupList {
+  display: grid;
+  gap: 18px;
+}
+
+.kpiSectionGroup {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 1)),
+    #ffffff;
+}
+
+.kpiSectionGroupHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.kpiSectionGroupHeader h3,
+.kpiSectionGroupHeader p {
+  margin: 0;
+}
+
+.kpiSectionGroupHeader h3 {
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.kpiSectionGroupHeader p {
+  color: #64748b;
+  line-height: 1.55;
+}
+
 .kpiCard {
   display: grid;
   gap: 10px;
@@ -343,6 +379,47 @@
 
 .surfaceKpiDescription {
   margin: 0;
+}
+
+.surfaceKpiViewportGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.surfaceKpiViewportPanel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.1);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.surfaceKpiViewportHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.surfaceKpiViewportHeader h4,
+.surfaceKpiViewportHeader p {
+  margin: 0;
+}
+
+.surfaceKpiViewportHeader h4 {
+  color: #153e64;
+  font-size: 0.98rem;
+}
+
+.surfaceKpiViewportHeader p {
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.surfaceKpiViewportMetricGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
 }
 
 .surfaceKpiGrid {
@@ -585,6 +662,16 @@
 .researchKpiStatusBadgePending {
   background: #eef3f8;
   color: #46627f;
+}
+
+.researchKpiStatusBadgeWarning {
+  background: #fff3e8;
+  color: #9a4c00;
+}
+
+.researchKpiStatusBadgeProxy {
+  background: #f6efe8;
+  color: #87552d;
 }
 
 .researchKpiCardValue {

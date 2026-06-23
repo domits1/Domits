@@ -4,6 +4,7 @@ import {
   fetchUserProfileById,
   getEmptyUserProfile,
 } from "../../services/fetchUserProfileById";
+import { getAccessToken } from "../../../../services/getAccessToken";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
@@ -47,6 +48,17 @@ const looksLikePhoneIdentifier = (value) => {
   return /^[\d+\-\s()]+$/.test(raw);
 };
 
+const requireToken = (token) => {
+  const normalized = String(token || "").trim();
+  if (!normalized) throw new Error("Authentication token is required.");
+  return normalized;
+};
+
+const buildAuthHeaders = (token = null) => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${requireToken(token)}`,
+});
+
 const fetchResolvedUserProfile = async (targetUserId) => {
   if (!targetUserId) {
     return getEmptyUserProfile(targetUserId);
@@ -69,12 +81,13 @@ const fetchResolvedUserProfile = async (targetUserId) => {
   }
 };
 
-const fetchLatestMessage = async (threadId, fallbackRecipientId) => {
+const fetchLatestMessage = async (threadId, fallbackRecipientId, token = null) => {
   if (!threadId) return null;
+  if (!token) return null;
 
   try {
     const url = `${UNIFIED_API}/messages?threadId=${encodeURIComponent(threadId)}`;
-    const res = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" } });
+    const res = await fetch(url, { method: "GET", headers: buildAuthHeaders(token) });
 
     if (!res.ok) return null;
 
@@ -130,6 +143,7 @@ const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
         Status: "accepted",
         AccoId: t.propertyId,
         propertyId: t.propertyId,
+        bookingId: t.bookingId || t.bookingid || null,
         threadId: t.id,
         isFromUnified: true,
         platform: t.platform || "DOMITS",
@@ -155,14 +169,14 @@ const computeLookupIds = ({ threadHostId, threadGuestId, userId, partnerId, role
   return { hostIdForLookup: fallbackHost, guestIdForLookup: fallbackGuest };
 };
 
-const hydrateOneContact = async ({ contact, userId, role }) => {
+const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
   const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
   const platform = String(contact?.platform || "DOMITS").toUpperCase();
   const isWhatsApp = platform === "WHATSAPP";
 
   const [userInfo, latestMessage] = await Promise.all([
     fetchResolvedUserProfile(partnerId),
-    contact?.threadId ? fetchLatestMessage(contact.threadId, partnerId) : Promise.resolve(null),
+    contact?.threadId ? fetchLatestMessage(contact.threadId, partnerId, token) : Promise.resolve(null),
   ]);
 
   const threadHostId = contact?.hostId || null;
@@ -188,6 +202,9 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
       const bookingInfo = await fetchBookingDetailsAndAccommodation({
         hostId: hostIdForLookup,
         guestId: guestIdForLookup,
+        bookingId: contact?.bookingId || contact?.bookingid || null,
+        propertyId: contact?.propertyId || contact?.AccoId || null,
+        token,
         withAuth: role !== "guest",
         accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
       });
@@ -232,6 +249,7 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
     departureDate,
     propertyId,
     propertyTitle,
+    bookingId: contact?.bookingId || contact?.bookingid || null,
     platform,
     channelLabel: platform === "WHATSAPP" ? "WhatsApp" : platform,
     isWhatsApp,
@@ -240,9 +258,41 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
   };
 };
 
-const hydrateContacts = async ({ contactsList, userId, role }) => {
+const hydrateContacts = async ({ contactsList, userId, role, token = null }) => {
   const safeContacts = Array.isArray(contactsList) ? contactsList : [];
-  return Promise.all(safeContacts.map((c) => hydrateOneContact({ contact: c, userId, role })));
+  return Promise.all(safeContacts.map((c) => hydrateOneContact({ contact: c, userId, role, token })));
+};
+
+const getContactMergeKey = (contact, userId) => {
+  if (contact?.threadId) return `thread:${contact.threadId}`;
+
+  const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
+  const propertyId = contact?.propertyId || contact?.AccoId || "";
+  const bookingId = contact?.bookingId || contact?.bookingid || "";
+  const platform = String(contact?.platform || "DOMITS").toUpperCase();
+
+  return [
+    "participants",
+    userId,
+    partnerId,
+    propertyId,
+    bookingId,
+    platform,
+  ].join(":");
+};
+
+const mergeContacts = ({ primaryContacts, secondaryContacts, userId }) => {
+  const merged = [];
+  const seen = new Set();
+
+  for (const contact of [...(primaryContacts || []), ...(secondaryContacts || [])]) {
+    const key = getContactMergeKey(contact, userId);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    merged.push(contact);
+  }
+
+  return merged;
 };
 
 const normalizeLegacy = ({ raw, isHostLegacy, userId }) => {
@@ -279,11 +329,12 @@ const useFetchContacts = (userId, role) => {
     setError(null);
 
     try {
+      const token = requireToken(getAccessToken());
       let unifiedContacts = [];
       try {
-        const threadsRes = await fetch(`${UNIFIED_API}/threads?userId=${encodeURIComponent(userId)}`, {
+        const threadsRes = await fetch(`${UNIFIED_API}/threads`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: buildAuthHeaders(token),
         });
 
         if (threadsRes.ok) {
@@ -292,9 +343,15 @@ const useFetchContacts = (userId, role) => {
         }
       } catch {}
 
-      if (unifiedContacts.length > 0) {
-        const accepted = await hydrateContacts({ contactsList: unifiedContacts, userId, role });
-        setContacts(accepted);
+      if (role === "guest") {
+        if (unifiedContacts.length > 0) {
+          const accepted = await hydrateContacts({ contactsList: unifiedContacts, userId, role, token });
+          setContacts(accepted);
+          setPendingContacts([]);
+          return;
+        }
+
+        setContacts([]);
         setPendingContacts([]);
         return;
       }
@@ -322,8 +379,14 @@ const useFetchContacts = (userId, role) => {
         normalizeLegacy({ raw: r, isHostLegacy, userId })
       );
 
-      const accepted = await hydrateContacts({ contactsList: acceptedNormalized, userId, role });
-      const pending = await hydrateContacts({ contactsList: pendingNormalized, userId, role });
+      const acceptedContacts = mergeContacts({
+        primaryContacts: unifiedContacts,
+        secondaryContacts: acceptedNormalized,
+        userId,
+      });
+
+      const accepted = await hydrateContacts({ contactsList: acceptedContacts, userId, role, token });
+      const pending = await hydrateContacts({ contactsList: pendingNormalized, userId, role, token });
 
       setContacts(accepted);
       setPendingContacts(pending);

@@ -6,10 +6,8 @@ import getReservationsFromToken from "../services/getReservationsFromToken";
 import { fetchTasks } from "../services/taskService";
 import { getAccessToken } from "../../../services/getAccessToken";
 import useFetchContacts from "../hostmessages/hooks/useFetchContacts";
-import {
-  fetchUserProfileById,
-  getEmptyUserProfile,
-} from "../services/fetchUserProfileById";
+import { fetchPropertySummaries } from "../../guestdashboard/services/propertySummaryService";
+import { fetchUserProfileById, getEmptyUserProfile } from "../services/fetchUserProfileById";
 import useDashboardIdentity from "../../../hooks/useDashboardIdentity";
 import {
   buildRecentMessages,
@@ -57,7 +55,9 @@ const toDate = (value) => {
 };
 
 const isOpenTask = (task) => {
-  const normalizedStatus = String(task?.status || "").trim().toLowerCase();
+  const normalizedStatus = String(task?.status || "")
+    .trim()
+    .toLowerCase();
   return !["completed", "done", "archived", "cancelled", "canceled"].includes(normalizedStatus);
 };
 
@@ -108,17 +108,26 @@ const flattenBookingsPayload = (payload) => {
     return [];
   }
 
-  return payload.flatMap((property) => {
+  const directPayload = Array.isArray(payload) ? payload : [];
+  const properties = Array.isArray(payload?.response) 
+    ? payload.response 
+    : directPayload;
+
+  return properties.flatMap((property) => {
     const reservations = Array.isArray(property?.res?.response) ? property.res.response : [];
 
     return reservations.map((reservation, index) => {
       const arrivalDate = toDate(reservation?.arrivaldate);
       const departureDate = toDate(reservation?.departuredate);
-      const propertyId =
-        property?.id || reservation?.property_id || reservation?.propertyId || `property-${index}`;
+      const propertyId = property?.id || reservation?.property_id || reservation?.propertyId || `property-${index}`;
       const reservationId =
         reservation?.id ||
         `${propertyId}-${reservation?.guestname || reservation?.guestName || "guest"}-${reservation?.arrivaldate || index}`;
+
+      const propertyTitle =
+        property?.title || property?.propertyTitle || reservation?.propertyTitle || reservation?.title;
+      const city = property?.city || property?.location?.city || reservation?.city;
+      const country = property?.country || property?.location?.country || reservation?.country;
 
       return {
         id: reservationId,
@@ -132,8 +141,10 @@ const flattenBookingsPayload = (payload) => {
           null,
         guest: String(reservation?.guestname || reservation?.guestName || "Guest").trim(),
         avatar: null,
-        property: String(property?.title || reservation?.propertyTitle || "Untitled property").trim(),
-        address: [property?.city, property?.country].filter(Boolean).join(", "),
+        property: propertyTitle 
+          ? String(propertyTitle).trim() 
+          : `Property #${String(propertyId).substring(0, 8)}...`,
+        address: [city, country].filter(Boolean).join(", ") || "Unknown city",
         dates: formatReservationDateRange(arrivalDate, departureDate),
         arrivalDate,
         departureDate,
@@ -240,12 +251,9 @@ export default function useHostDashboardData() {
       }
 
       const listings =
-        listingsResult.status === "fulfilled" && Array.isArray(listingsResult.value)
-          ? listingsResult.value
-          : [];
+        listingsResult.status === "fulfilled" && Array.isArray(listingsResult.value) ? listingsResult.value : [];
       const revenue = revenueResult.status === "fulfilled" ? Number(revenueResult.value) || 0 : 0;
-      const bookedNights =
-        bookedNightsResult.status === "fulfilled" ? Number(bookedNightsResult.value) || 0 : 0;
+      const bookedNights = bookedNightsResult.status === "fulfilled" ? Number(bookedNightsResult.value) || 0 : 0;
       const availableNights =
         availableNightsResult.status === "fulfilled" ? Number(availableNightsResult.value) || 0 : 0;
 
@@ -303,8 +311,37 @@ export default function useHostDashboardData() {
         }
 
         const today = startOfDay(new Date());
-        const normalizedReservations =
-          bookingsPayload === "Data not found" ? [] : await enrichReservationsWithGuestProfiles(flattenBookingsPayload(bookingsPayload));
+        let normalizedReservations =
+          bookingsPayload === "Data not found"
+            ? []
+            : await enrichReservationsWithGuestProfiles(flattenBookingsPayload(bookingsPayload));
+
+        try {
+          const missingPropertyIds = normalizedReservations
+            .filter((r) => r.property.includes("Property #") || r.address === "Unknown city")
+            .map((r) => r.propertyId)
+            .filter(Boolean);
+
+          if (missingPropertyIds.length > 0) {
+            const uniqueIds = [...new Set(missingPropertyIds)];
+            const summaries = await fetchPropertySummaries(uniqueIds);
+
+            normalizedReservations = normalizedReservations.map((reservation) => {
+              const summary = summaries[reservation.propertyId];
+              if (summary) {
+                return {
+                  ...reservation,
+                  property: summary.title || reservation.property,
+                  address: [summary.city, summary.country].filter(Boolean).join(", ") || reservation.address,
+                };
+              }
+              return reservation;
+            });
+          }
+        } catch (summaryError) {
+          console.warn("Failed to fetch property summaries for dashboard:", summaryError);
+        }
+
         const upcomingReservations = buildUpcomingReservations(normalizedReservations, today);
         const arrivals = buildArrivalDepartureItems(normalizedReservations, "arrivalDate", today, "Arriving today");
         const departures = buildArrivalDepartureItems(

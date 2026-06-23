@@ -29,6 +29,10 @@ function normalizePolicy(policy) {
 }
 
 function parseDate(date, fieldName) {
+  if (typeof date === "string" && /^\d+$/.test(date)) {
+    date = Number(date);
+  }
+
   const parsedDate = date instanceof Date ? date : new Date(date);
 
   if (Number.isNaN(parsedDate.getTime())) {

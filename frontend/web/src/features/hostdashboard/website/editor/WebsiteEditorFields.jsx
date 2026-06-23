@@ -26,6 +26,8 @@ export function TextField({
   onFocus = undefined,
   onBlur = undefined,
 }) {
+  const normalizedValue = typeof value === "string" ? value : "";
+
   if (field.component === "textarea") {
     return (
       <div
@@ -38,7 +40,7 @@ export function TextField({
         <textarea
           id={`website-editor-${field.key}`}
           className={styles.textArea}
-          value={value}
+          value={normalizedValue}
           onChange={onChange}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
@@ -59,7 +61,7 @@ export function TextField({
       <input
         id={`website-editor-${field.key}`}
         className={styles.textInput}
-        value={value}
+        value={normalizedValue}
         onChange={onChange}
         onKeyDown={onKeyDown}
         onFocus={onFocus}
@@ -78,6 +80,144 @@ TextField.propTypes = {
   fieldRef: refPropType,
   isHighlighted: PropTypes.bool,
   onKeyDown: PropTypes.func,
+};
+
+const selectFieldOptionPropType = PropTypes.shape({
+  value: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+});
+
+export function SelectField({
+  field,
+  value,
+  options,
+  onChange,
+  fieldRef = null,
+  isHighlighted = false,
+  onFocus = undefined,
+  onBlur = undefined,
+}) {
+  const normalizedValue = typeof value === "string" ? value : "";
+
+  return (
+    <div
+      ref={fieldRef}
+      className={`${styles.fieldGroup} ${isHighlighted ? styles.editorTargetHighlighted : ""}`.trim()}
+    >
+      <label className={styles.fieldLabel} htmlFor={`website-editor-${field.key}`}>
+        {field.label}
+      </label>
+      <select
+        id={`website-editor-${field.key}`}
+        className={styles.textInput}
+        value={normalizedValue}
+        onChange={onChange}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+SelectField.propTypes = {
+  field: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+  }).isRequired,
+  value: PropTypes.string.isRequired,
+  options: PropTypes.arrayOf(selectFieldOptionPropType).isRequired,
+  onChange: PropTypes.func.isRequired,
+  fieldRef: refPropType,
+  isHighlighted: PropTypes.bool,
+  onFocus: PropTypes.func,
+  onBlur: PropTypes.func,
+};
+
+export function PositionMatrixField({
+  field,
+  value,
+  options,
+  onChange,
+  fieldRef = null,
+  isHighlighted = false,
+  onFocus = undefined,
+  onBlur = undefined,
+}) {
+  const normalizedValue = typeof value === "string" ? value : "";
+  const descriptionId = field.description ? `website-editor-${field.key}-description` : undefined;
+  const handleGroupBlur = (event) => {
+    if (event.currentTarget.contains(event.relatedTarget)) {
+      return;
+    }
+
+    onBlur?.(event);
+  };
+
+  return (
+    <fieldset
+      ref={fieldRef}
+      className={`${styles.fieldGroup} ${styles.positionMatrixFieldset} ${
+        isHighlighted ? styles.editorTargetHighlighted : ""
+      }`.trim()}
+      aria-describedby={descriptionId}
+      onFocus={onFocus}
+      onBlur={handleGroupBlur}
+    >
+      <legend className={`${styles.fieldLabel} ${styles.positionMatrixLegend}`.trim()}>{field.label}</legend>
+      {field.description ? (
+        <p id={descriptionId} className={styles.helperText}>
+          {field.description}
+        </p>
+      ) : null}
+      <div className={styles.positionMatrixGrid}>
+        {options.map((option) => {
+          const isSelected = normalizedValue === option.value;
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className={`${styles.positionMatrixButton} ${
+                isSelected ? styles.positionMatrixButtonSelected : ""
+              }`.trim()}
+              data-position-value={option.value}
+              aria-label={option.label}
+              aria-pressed={isSelected}
+              title={option.label}
+              onClick={() => {
+                onChange(option.value);
+              }}
+            >
+              <span className={styles.positionMatrixButtonFrame} aria-hidden="true">
+                <span className={styles.positionMatrixButtonDot} />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+PositionMatrixField.propTypes = {
+  field: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    description: PropTypes.string,
+  }).isRequired,
+  value: PropTypes.string.isRequired,
+  options: PropTypes.arrayOf(selectFieldOptionPropType).isRequired,
+  onChange: PropTypes.func.isRequired,
+  fieldRef: refPropType,
+  isHighlighted: PropTypes.bool,
+  onFocus: PropTypes.func,
+  onBlur: PropTypes.func,
 };
 
 const resolveContactImagePreview = ({
