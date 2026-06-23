@@ -25,9 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd frontend/web
-        echo -e "\033[31mNOTE! This workflow uses \`npm install\` instead of suggested \`npm ci\`, which is preferred for workflow automation.\033[0m"
-        echo -e "\033[31mBe aware that testing times will take longer.\033[0m"
-        npm install
+        npm ci
 
     - name: Retieve aws-exports
       run: echo "$AWS_EXPORTS" > frontend/web/src/aws-exports.js
@@ -43,4 +41,3 @@ jobs:
         npm run build
 
       
-
