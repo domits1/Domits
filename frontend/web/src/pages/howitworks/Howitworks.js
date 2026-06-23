@@ -10,6 +10,8 @@ import {
   Plus,
 } from "lucide-react";
 import { LanguageContext } from "../../context/LanguageContext.js";
+import guestsSuitcase from "../../images/howitworks/guests-suitcase.png";
+import hostsLaptop from "../../images/howitworks/hosts-laptop.png";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
@@ -19,6 +21,11 @@ const contentByLanguage = { en, nl, de, es };
 
 const GUEST_ICONS = [Search, Calendar, MessageSquare];
 const HOST_ICONS = [Home, Calendar, DollarSign];
+
+const SECTION_ILLUSTRATIONS = {
+  guests: { src: guestsSuitcase, alt: "Suitcase, hat and plant" },
+  hosts: { src: hostsLaptop, alt: "Domits host dashboard on a laptop" },
+};
 
 const CALENDAR_CELLS = Array.from({ length: 14 }, (_, i) => ({
   id: `cell-${i}`,
@@ -102,6 +109,12 @@ function Howitworks() {
       <div className="how-it-works__section-intro">
         <p className="how-it-works__eyebrow">{section.eyebrow}</p>
         <h2 className="how-it-works__heading">{section.heading}</h2>
+        <img
+          className="how-it-works__illustration"
+          src={SECTION_ILLUSTRATIONS[variant].src}
+          alt={SECTION_ILLUSTRATIONS[variant].alt}
+          loading="lazy"
+        />
       </div>
 
       <div className="how-it-works__steps">
