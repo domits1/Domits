@@ -7,6 +7,7 @@ import Description from "../components/description";
 import RangeCalendar from "./RangeCalendar";
 import WhereYoullStay from "../components/WhereYoullStay";
 import HostSection from "../components/HostSection";
+import SkeletonBlock from "../components/SkeletonBlock";
 import {
   getActiveCancellationPolicyId,
   parseHouseRules,
@@ -37,6 +38,8 @@ const PropertyContainer = ({
   checkOutDate = "",
   setCheckInDate,
   setCheckOutDate,
+  isPropertyLoading = false,
+  isHostLoading = false,
   children,
 }) => {
   const policyRules = React.useMemo(
@@ -109,6 +112,7 @@ const PropertyContainer = ({
           images={property.images}
           propertyTitle={property?.property?.title}
           propertyId={property?.property?.id}
+          isLoading={isPropertyLoading}
         />
       </section>
 
@@ -116,14 +120,50 @@ const PropertyContainer = ({
 
       <div className="listing-details-content-stack">
         <section className="listing-section-block">
-          <Description description={property?.property?.description} />
+          <Description description={property?.property?.description} isLoading={isPropertyLoading} />
         </section>
 
         <section className="listing-section-block">
-          <WhereYoullStay generalDetails={property.generalDetails} />
+          {isPropertyLoading ? (
+            <div className="where-youll-stay" aria-busy="true">
+              <h3 className="where-youll-stay__title">
+                <SkeletonBlock width={180} height={22} />
+              </h3>
+              <div className="where-youll-stay__grid">
+                {Array.from({ length: 4 }, (_, index) => (
+                  <div key={`stay-detail-skeleton-${index}`} className="where-youll-stay__item">
+                    <SkeletonBlock width={24} height={18} style={{ marginBottom: 6 }} />
+                    <SkeletonBlock width="72%" height={14} style={{ marginBottom: 6 }} />
+                    <SkeletonBlock width="48%" height={14} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <WhereYoullStay generalDetails={property.generalDetails} />
+          )}
         </section>
 
-        {hasAmenities && (
+        {isPropertyLoading && (
+          <section id="listing-amenities" className="listing-section-block">
+            <div className="amenities-container" aria-busy="true">
+              <div className="amenities-header">
+                <SkeletonBlock width={220} height={22} />
+              </div>
+              <div className="amenities-featured amenities-featured--3">
+                {Array.from({ length: 3 }, (_, columnIndex) => (
+                  <div key={`amenities-column-skeleton-${columnIndex}`} className="amenities-column">
+                    <SkeletonBlock width={120} height={18} style={{ marginBottom: 14 }} />
+                    <SkeletonBlock width="86%" height={16} style={{ marginBottom: 12 }} />
+                    <SkeletonBlock width="72%" height={16} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {!isPropertyLoading && hasAmenities && (
           <section id="listing-amenities" className="listing-section-block">
             <AmenitiesContainer amenityIds={property.amenities} />
           </section>
@@ -142,10 +182,17 @@ const PropertyContainer = ({
         </section>
 
         <section id="listing-host" className="listing-section-block">
-          <HostSection host={host} onContactHost={onContactHost} />
+          <HostSection host={host} onContactHost={onContactHost} isLoading={isHostLoading} />
         </section>
 
         <section id="listing-policies" className="listing-section-block">
+          {isPropertyLoading && (
+            <div className="listing-policy-section" aria-busy="true">
+              <SkeletonBlock width={180} height={22} style={{ marginBottom: 16 }} />
+              <SkeletonBlock width="100%" height={16} style={{ marginBottom: 10 }} />
+              <SkeletonBlock width="86%" height={16} />
+            </div>
+          )}
           {cancellationPolicy && (
             <PolicySection
               title="Cancellation Policy"
@@ -205,6 +252,8 @@ PropertyContainer.propTypes = {
   host: PropTypes.object,
   onContactHost: PropTypes.func,
   children: PropTypes.node,
+  isPropertyLoading: PropTypes.bool,
+  isHostLoading: PropTypes.bool,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
   checkInDate: PropTypes.string,
   checkOutDate: PropTypes.string,
