@@ -9,6 +9,8 @@ module.exports = {
     transformIgnorePatterns: [
         "node_modules/(?!(axios)/)"
     ],
+    setupFiles: ["<rootDir>/src/jestPolyfills.js"],
+    setupFilesAfterEnv: ["<rootDir>/src/tests/setupTests.js"],
     moduleNameMapper: {
         "\\.(css|less|scss|sass)$": "identity-obj-proxy",
     },
