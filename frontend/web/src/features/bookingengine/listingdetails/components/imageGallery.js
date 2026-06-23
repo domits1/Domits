@@ -102,8 +102,6 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
                 alt={getImageAltText(0)}
                 fetchPriority="high"
                 decoding="async"
-                width={1200}
-                height={765}
                 loading="eager"
               />
             </button>
@@ -155,12 +153,10 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
             >
               <img
                 className="small-image"
-                src={toThumbSrc(img)}
+                src={toThumbSrc(image)}
                 alt={getImageAltText(index + 1)}
                 loading="lazy"
                 decoding="async"
-                width={400}
-                height={255}
               />
             </button>
           ))}
