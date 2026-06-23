@@ -176,21 +176,44 @@ export class PriceLabsService {
     return { success: true, properties_pushed: targets.length };
   }
 
+  // Stuurt alle boekingen van een host door naar PriceLabs.
+  //
+  // Data flow door de mappenstructuur:
+  //   index.js (Lambda entry point)
+  //     → controller/controller.js (verwerkt HTTP-request, roept service aan)
+  //       → business/service/priceLabsService.js  
+  //           haalt data op via data/repository.js (Aurora DSQL database)
+  //           haalt API-token op via data/systemManagerRepository.js (AWS SSM)
+  //         → business/service/priceLabsApiClient.js (verstuurt HTTP naar PriceLabs API)
   async pushReservations(hostId) {
+    // API-credentials ophalen uit AWS SSM Parameter Store.
+    // Token en naam worden nooit hardcoded opgeslagen — altijd via SSM (beveiliging).
     const { token, name } = await this._creds();
+
+    // Controleer of de host een actieve PriceLabs-koppeling heeft in de database.
     const connection = await this._requireActiveConnection(hostId);
 
+    // Listings moeten al gesynchroniseerd zijn voordat we reserveringen sturen.
+    // PriceLabs koppelt reserveringen aan listing_ids — die moeten dus al bestaan.
     if (!connection.last_listings_sync_at) {
       console.log(`[PriceLabs] pushReservations skipped for host ${hostId}: listings not yet synced.`);
       return { skipped: true, reason: "Listings not yet synced to PriceLabs for this host." };
     }
 
+    // Boekingen én properties tegelijk ophalen uit de database (parallel via Promise.all).
+    // repository.js bevat alle database-queries (Aurora DSQL / TypeORM).
     const [bookings, properties] = await Promise.all([
       this.repo.getBookingsByHost(hostId),
       this.repo.getPropertiesByHost(hostId),
     ]);
 
+    // Opzoektabel van property_id → cleaning_fee, zodat we niet voor elke boeking
+    // opnieuw door de properties-lijst hoeven te zoeken.
     const cleaningFeeByProperty = _cleaningFeeMap(properties);
+
+    // Groepeer alle boekingen per listing_id.
+    // PriceLabs verwacht: [{ listing_id: "...", data: [boeking1, boeking2] }, ...]
+    // Elke boeking wordt omgezet naar het PriceLabs-formaat door _buildReservationEntry().
     const grouped = _groupReservationsByListing(hostId, bookings, cleaningFeeByProperty);
 
     const reservations = Object.values(grouped);
@@ -199,6 +222,8 @@ export class PriceLabsService {
     console.log(`[PriceLabs] pushReservations for host ${hostId}: ${totalCount} reservation(s) across ${reservations.length} listing(s).`);
 
     if (reservations.length) {
+      // Verstuur via de API-client naar PriceLabs.
+      // priceLabsApiClient.js doet de HTTP POST naar de PriceLabs reservations endpoint.
       const pushResult = await api.pushReservations(token, name, reservations);
       const successCount = Array.isArray(pushResult?.success) ? pushResult.success.length : "?";
       const failureCount = Array.isArray(pushResult?.failure) ? pushResult.failure.length : 0;
@@ -210,6 +235,7 @@ export class PriceLabsService {
       }
     }
 
+    // Laatste sync-tijdstip opslaan in de database zodat de host dit kan zien in het dashboard.
     await this.repo.updateSyncStatus(hostId, {
       last_reservations_sync_at: Date.now(),
       last_sync_status: "synced",
@@ -353,6 +379,8 @@ function _tsToDate(ts) {
   return new Date(Number(ts)).toISOString().split("T")[0];
 }
 
+// Bouwt een opzoektabel: { property_id → cleaning_fee (als getal of null) }
+// Zo kunnen we per boeking snel de cleaning_fee opzoeken zonder telkens door de array te zoeken.
 function _cleaningFeeMap(properties) {
   const map = {};
   for (const p of properties) {
@@ -361,8 +389,13 @@ function _cleaningFeeMap(properties) {
   return map;
 }
 
+// Zet één Domits-boeking om naar het formaat dat PriceLabs verwacht.
+// PriceLabs heeft vaste veldnamen zoals start_date, end_date, booked_time, status.
 function _buildReservationEntry(b, cleaningFeeByProperty) {
+  // Vertaal de Domits-status ("Cancelled", "Paid", etc.) naar het PriceLabs-formaat ("canceled" of "booked")
   const status   = _mapBookingStatus(b.status);
+
+  // Timestamps in de database zijn Unix milliseconden → omzetten naar "YYYY-MM-DD"
   const checkin  = _tsToDate(b.arrivaldate);
   const checkout = _tsToDate(b.departuredate);
 
@@ -370,6 +403,9 @@ function _buildReservationEntry(b, cleaningFeeByProperty) {
     reservation_id: b.id,
     start_date:     checkin,
     end_date:       checkout,
+    // booked_time = het moment waarop de boeking is aangemaakt.
+    // Formaat dat PriceLabs verwacht: "YYYY-MM-DD HH:MM:SS"
+    // b.createdat is een Unix timestamp in ms → omzetten naar ISO string → spatie in plaats van T
     booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
     total_days:     _dateDiff(checkin, checkout),
     total_cost:     b.total_price || 0,
@@ -378,15 +414,18 @@ function _buildReservationEntry(b, cleaningFeeByProperty) {
     booking_source: b.booking_source || "direct",
   };
 
+  // channel_reservation_id is optioneel: alleen aanwezig bij OTA-boekingen (Airbnb, Booking.com)
   if (b.channel_reservation_id) {
     entry.channel_reservation_id = b.channel_reservation_id;
   }
 
+  // cleaning_fees is optioneel: alleen toevoegen als de property een aparte schoonmaakvergoeding heeft
   const cleaningFee = cleaningFeeByProperty[b.property_id];
   if (cleaningFee != null) {
     entry.cleaning_fees = cleaningFee;
   }
 
+  // cancel_time wordt toegevoegd als de boeking geannuleerd is
   if (status === "canceled") {
     entry.cancel_time = new Date().toISOString().split("T")[0];
   }
@@ -394,6 +433,9 @@ function _buildReservationEntry(b, cleaningFeeByProperty) {
   return entry;
 }
 
+// Groepeert alle boekingen per listing_id.
+// listing_id = hostId + propertyId, met streepjes vervangen door underscores (PriceLabs-vereiste).
+// Resultaat: { "host_id_property_id": { listing_id: "...", data: [boeking1, boeking2] } }
 function _groupReservationsByListing(hostId, bookings, cleaningFeeByProperty) {
   const grouped = {};
   for (const b of bookings) {
