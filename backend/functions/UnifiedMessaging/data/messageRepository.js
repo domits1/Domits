@@ -19,6 +19,7 @@ class MessageRepository {
         recipientId: data.recipientId,
         content: data.content,
         platformMessageId: data.platformMessageId ?? null,
+        automationDeliveryId: data.automationDeliveryId ?? null,
         createdAt,
         isRead: data.isRead ?? false,
         metadata: data.metadata ?? null,
@@ -74,6 +75,61 @@ class MessageRepository {
       .where("m.platformMessageId = :platformMessageId", { platformMessageId })
       .orderBy("m.createdAt", "DESC")
       .getOne();
+  }
+
+  async findByAutomationDeliveryId(automationDeliveryId) {
+    if (!automationDeliveryId) return null;
+    const client = await Database.getInstance();
+    return client.getRepository(UnifiedMessage).findOne({ where: { automationDeliveryId } });
+  }
+
+  async createAutomatedMessageIfEligible(data) {
+    const client = await Database.getInstance();
+    const id = randomUUID();
+    const schema = client?.options?.schema || "main";
+    const safeSchema = /^[a-z_][a-z0-9_]*$/i.test(schema) ? schema : "main";
+    const rows = await client.query(
+      `INSERT INTO ${safeSchema}.unified_message (
+         "id", "threadId", "senderId", "recipientId", "content", automationdeliveryid,
+         "createdAt", "isRead", "metadata", "attachments", "deliveryStatus", direction
+       )
+       SELECT $1, $2, $3, $4, $5, $6, $7, FALSE, $8, NULL, $9, $10
+         FROM ${safeSchema}.message_automation_delivery delivery
+         JOIN ${safeSchema}.message_automation automation ON automation.id = delivery.automationid
+         JOIN ${safeSchema}.booking booking ON booking.id = delivery.bookingid
+         JOIN ${safeSchema}.property property ON property.id = booking.property_id
+        WHERE delivery.id = $6
+          AND delivery.status = 'PROCESSING'
+          AND automation.id = $11
+          AND automation.hostid = $3
+          AND automation.status = 'ACTIVE'
+          AND (automation.propertyid IS NULL OR automation.propertyid = $12)
+          AND booking.id = $13
+          AND booking.hostid = $3
+          AND booking.guestid = $4
+          AND booking.property_id = $12
+          AND LOWER(TRIM(booking.status)) = 'paid'
+          AND property.hostid = $3
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
+      [
+        id,
+        data.threadId,
+        data.senderId,
+        data.recipientId,
+        data.content,
+        data.automationDeliveryId,
+        data.createdAt,
+        data.metadata ?? null,
+        data.deliveryStatus ?? "delivered",
+        data.direction ?? "OUTBOUND",
+        data.automationId,
+        data.propertyId,
+        data.bookingId,
+      ]
+    );
+    const message = await this.findByAutomationDeliveryId(data.automationDeliveryId);
+    return { message, created: Array.isArray(rows) && rows.length === 1 };
   }
 
   async updateMessageStatusByPlatformMessageId(platformMessageId, patch = {}) {

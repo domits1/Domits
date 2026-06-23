@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import Loading from "../../../hostdashboard/Loading";
 import FetchPropertyById from "../services/fetchPropertyById";
 import fetchHostInfo from "../services/fetchHostInfo";
 import Header from "../components/header";
@@ -195,7 +194,9 @@ const ListingDetails2 = () => {
   const [acceptedBookingDateKeys, setAcceptedBookingDateKeys] = useState([]);
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [propertyLoading, setPropertyLoading] = useState(true);
+  const [hostLoading, setHostLoading] = useState(true);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMessageHost, setShowMessageHost] = useState(false);
 
@@ -237,7 +238,11 @@ const ListingDetails2 = () => {
   );
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
+
+    setPropertyLoading(true);
+    setHostLoading(true);
+    setAvailabilityLoading(true);
     setError(null);
     setProperty({});
     setHost({});
@@ -245,30 +250,66 @@ const ListingDetails2 = () => {
     setCheckInDate("");
     setCheckOutDate("");
 
-    const loadData = async () => {
-      try {
-        const [fetchedProperty, acceptedBookings] = await Promise.all([
-          FetchPropertyById(id),
-          fetchAcceptedBookingsByPropertyId(id).catch(() => []),
-        ]);
+    FetchPropertyById(id)
+      .then((fetchedProperty) => {
+        if (cancelled) return null;
+
         const normalizedProperty = normalizeListingProperty(fetchedProperty);
         setProperty(normalizedProperty);
-        setAcceptedBookingDateKeys(buildAcceptedBookingDateKeys(acceptedBookings));
+        setPropertyLoading(false);
 
-        const hostData = await fetchHostInfo(normalizedProperty?.property?.hostId);
-        setHost(hostData);
+        const hostId = normalizedProperty?.property?.hostId;
+        if (!hostId) {
+          setHostLoading(false);
+          return null;
+        }
 
-        setLoading(false);
-      } catch {
-        setError("Something went wrong while fetching the requested data, please try again later.");
-        setLoading(false);
-      }
+        return fetchHostInfo(hostId)
+          .then((hostData) => {
+            if (!cancelled) {
+              setHost(hostData);
+            }
+          })
+          .catch(() => {
+            if (!cancelled) {
+              setHost({});
+            }
+          })
+          .finally(() => {
+            if (!cancelled) {
+              setHostLoading(false);
+            }
+          });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("Something went wrong while fetching the requested data, please try again later.");
+          setPropertyLoading(false);
+          setHostLoading(false);
+        }
+      });
+
+    fetchAcceptedBookingsByPropertyId(id)
+      .then((acceptedBookings) => {
+        if (!cancelled) {
+          setAcceptedBookingDateKeys(buildAcceptedBookingDateKeys(acceptedBookings));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAcceptedBookingDateKeys([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setAvailabilityLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
     };
-
-    loadData();
   }, [id]);
-
-  if (loading) return <Loading />;
 
   if (error) {
     return (
@@ -283,19 +324,20 @@ const ListingDetails2 = () => {
 
   const sectionItems = [
     { id: "photos", label: "Photos", targetId: "listing-photos" },
-    ...(hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
+    ...(propertyLoading || hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
     { id: "host", label: "Host", targetId: "listing-host" },
     ...(hasLocation ? [{ id: "location", label: "Location", targetId: "listing-location" }] : []),
     { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];
 
   return (
-    <div className="listing-details">
+    <div className="listing-details" aria-busy={propertyLoading || hostLoading || availabilityLoading}>
       <SectionTabs sections={sectionItems} />
       <Header
         title={property?.property?.title}
         rating={property?.property?.rating}
         generalDetails={property?.generalDetails}
+        isLoading={propertyLoading}
       />
 
       <div className="container">
@@ -317,6 +359,8 @@ const ListingDetails2 = () => {
           checkOutDate={checkOutDate}
           setCheckInDate={setCheckInDate}
           setCheckOutDate={setCheckOutDate}
+          isPropertyLoading={propertyLoading}
+          isHostLoading={hostLoading}
         >
           <BookingContainer
             property={property}
@@ -332,6 +376,7 @@ const ListingDetails2 = () => {
             setCheckOutDate={setCheckOutDate}
             showMessageHost={showMessageHost}
             setShowMessageHost={setShowMessageHost}
+            isLoading={propertyLoading}
           />
         </PropertyContainer>
       </div>

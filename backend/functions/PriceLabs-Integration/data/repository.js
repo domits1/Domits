@@ -13,7 +13,7 @@ export class Repository {
     return Database.getInstance();
   }
 
-
+  
   async getConnectionByHost(hostId) {
     const ds = await this._ds();
     return ds.getRepository(PriceLabs_Connection).findOne({
@@ -77,7 +77,6 @@ export class Repository {
     );
   }
 
-
   async getPropertiesByHost(hostId) {
     const ds = await this._ds();
     const properties = await ds.getRepository(Property).find({ where: { hostid: hostId } });
@@ -103,7 +102,6 @@ export class Repository {
     }));
   }
 
-
   async getAvailabilityForProperty(propertyId, days = 730) {
     const ds  = await this._ds();
     const now = new Date();
@@ -117,7 +115,6 @@ export class Repository {
       .orderBy("cal.calendar_date", "ASC")
       .getMany();
   }
-
 
   /**
    * Batch variant of the old applyPriceRecommendation. The PriceLabs sync webhook
@@ -186,7 +183,6 @@ export class Repository {
     }
   }
 
-
   /**
    * Returns a map of propertyId → ota_listing_ids in the shape PriceLabs expects:
    * { airbnb: { id }, bookingcom: { id }, vrbo: { id }, other: { <channel>: { id } } }
@@ -230,7 +226,6 @@ export class Repository {
     return map;
   }
 
-
   async getBookingsByHost(hostId) {
     const ds = await this._ds();
     const bookings = await ds.getRepository(Booking).find({ where: { hostid: hostId } });
@@ -247,7 +242,8 @@ export class Repository {
 
         return {
           ...b,
-          booking_source: link?.channel ?? b.bookingtype ?? "direct",
+          booking_source:          link?.channel ?? b.bookingtype ?? "direct",
+          channel_reservation_id:  link?.externalReservationId  ?? null,
         };
       })
     );

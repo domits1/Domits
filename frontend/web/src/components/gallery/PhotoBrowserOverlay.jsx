@@ -139,6 +139,7 @@ export default function PhotoBrowserOverlay({
           className="overlay-main-image"
           src={resolveImageSrc(activeImage)}
           alt={resolveImageAlt(activeIndex, activeImage)}
+          decoding="async"
         />
 
         <button
@@ -165,6 +166,10 @@ export default function PhotoBrowserOverlay({
               className={`thumb ${index === activeIndex ? "active" : ""}`.trim()}
               src={resolveThumbSrc(image)}
               alt={resolveImageAlt(index, image)}
+              loading="lazy"
+              decoding="async"
+              width={150}
+              height={100}
             />
           </button>
         ))}

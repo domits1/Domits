@@ -8,6 +8,7 @@ import Forbidden from "../util/exception/Forbidden.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
+import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
@@ -141,13 +142,18 @@ class ReservationRepository {
   async readByDate(createdAt, property_id) {
     //only returns arrivaldate and departureDate
     const client = await Database.getInstance();
+    const startOfDay = new Date(Number(createdAt));
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = startOfDay.getTime() + 24 * 60 * 60 * 1000;
+
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
 
       .select(["booking.arrivaldate", "booking.departuredate", "booking.cancellation_policy"])
       .where("booking.property_id = :property_id", { property_id: property_id })
-      .andWhere("booking.createdat = :createdAt", { createdAt: createdAt })
+      .andWhere("booking.createdat >= :startOfDay", { startOfDay: startOfDay.getTime() })
+      .andWhere("booking.createdat < :endOfDay", { endOfDay })
 
       .getMany();
     if (!query) {
@@ -392,6 +398,44 @@ class ReservationRepository {
       response: query,
       statusCode: 200,
     };
+  }
+
+  async markBookingPaidWithOutbox(id) {
+    const client = await Database.getInstance();
+    return client.transaction(async (manager) => {
+      const transitionedAt = Date.now();
+      const updateResult = await manager
+        .createQueryBuilder()
+        .update(Booking)
+        .set({ status: "Paid" })
+        .where("id = :id", { id })
+        .andWhere("status != :paidStatus", { paidStatus: "Paid" })
+        .execute();
+
+      if (Number(updateResult?.affected || 0) !== 1) return false;
+
+      await manager
+        .createQueryBuilder()
+        .insert()
+        .into(BookingAutomationOutbox)
+        .values({
+          id: randomUUID(),
+          bookingId: id,
+          eventType: "BOOKING_PAID",
+          eventVersion: 1,
+          occurredAt: transitionedAt,
+          status: "PENDING",
+          attemptCount: 0,
+          failureReason: null,
+          createdAt: transitionedAt,
+          updatedAt: transitionedAt,
+          processedAt: null,
+        })
+        .orIgnore()
+        .execute();
+
+      return true;
+    });
   }
 
   async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
