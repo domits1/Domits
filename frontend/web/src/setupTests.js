@@ -6,10 +6,10 @@ import "@testing-library/jest-dom";
 // is loaded. Polyfill them globally before any test runs.
 import { TextEncoder, TextDecoder } from "node:util";
 
-if (globalThis.TextEncoder === undefined) {
+if (!("TextEncoder" in globalThis)) {
   globalThis.TextEncoder = TextEncoder;
 }
-if (globalThis.TextDecoder === undefined) {
+if (!("TextDecoder" in globalThis)) {
   globalThis.TextDecoder = TextDecoder;
 }
 
