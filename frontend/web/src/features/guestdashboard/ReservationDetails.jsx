@@ -234,6 +234,8 @@ const resolveReservationCancellationPolicy = ({ booking, propertyDetails }) => {
     booking?.cancellationPolicy ||
     propertyDetails?.reservation?.cancellation_policy ||
     propertyDetails?.reservation?.cancellationPolicy ||
+    propertyDetails?.cancellationPolicy ||
+    propertyDetails?.property?.cancellationPolicy ||
     "";
 
   if (snapshotPolicy) {

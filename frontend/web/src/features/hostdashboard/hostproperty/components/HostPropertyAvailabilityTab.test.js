@@ -328,9 +328,7 @@ describe("HostPropertyAvailabilityTab", () => {
 
     renderAvailabilityTab();
 
-    expect(
-      await screen.findByRole("gridcell", { name: /2026-06-19, Booked\/blocked/i })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("gridcell", { name: /2026-06-19, Booked\/blocked/i })).toBeInTheDocument();
     expect(screen.getByRole("gridcell", { name: /2026-06-20, Booked\/blocked/i })).toBeInTheDocument();
     expect(screen.getByRole("gridcell", { name: /2026-06-21, Booked\/blocked/i })).toBeInTheDocument();
     expect(screen.getByRole("gridcell", { name: /2026-06-22, Available override/i })).toBeInTheDocument();
@@ -355,7 +353,9 @@ describe("HostPropertyAvailabilityTab", () => {
     });
 
     expect(
-      await screen.findByText("Booked/blocked dates cannot be made available. Active bookings always block availability.")
+      await screen.findByText(
+        "Booked/blocked dates cannot be made available. Active bookings always block availability."
+      )
     ).toBeInTheDocument();
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("gridcell", { name: /2026-06-19, Booked\/blocked/i })).toBeInTheDocument();

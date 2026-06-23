@@ -367,7 +367,7 @@ const resolveActiveCancellationPolicy = ({ booking, propertyDetails }) => {
 
   const parsedBookingPolicy = bookingPolicyCandidate ? parseCancellationPolicyString(bookingPolicyCandidate) : null;
 
-  const activePolicy = parsedPropertyPolicy || parsedBookingPolicy;
+  const activePolicy = parsedBookingPolicy || parsedPropertyPolicy;
 
   return {
     type: normalizeStringValue(activePolicy?.type),
