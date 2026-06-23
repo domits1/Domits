@@ -1,11 +1,11 @@
-const util = require("util");
+const util = require("node:util");
 
-Object.defineProperty(global, "TextEncoder", {
+Object.defineProperty(globalThis, "TextEncoder", {
   writable: true,
   value: util.TextEncoder,
 });
 
-Object.defineProperty(global, "TextDecoder", {
+Object.defineProperty(globalThis, "TextDecoder", {
   writable: true,
   value: util.TextDecoder,
 });
