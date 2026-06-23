@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { fetchWebsiteDraftByPropertyId } from "../services/websiteDraftService";
 import { fetchWebsiteSiteByPropertyId } from "../services/websiteSiteService";
@@ -22,9 +22,12 @@ import {
   getDraftWorkingContentOverrides,
   normalizeUiErrorMessage,
 } from "./websiteEditorUtils";
+import { resolveWebsiteHeroContentAlignment } from "../config/websiteHeroSectionConfig";
 
 const PANORAMA_TEMPLATE_KEY = "panorama-landing";
+const TRUST_SIGNALS_TEMPLATE_KEY = "trust-signals";
 const WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS = Object.freeze([
+  "callToAction",
   "amenitiesPanel",
   "availabilityCalendar",
   "gallerySection",
@@ -52,6 +55,10 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
       heroEyebrow: getCleanText(contentOverrides.heroEyebrow),
       heroTitle: getCleanText(contentOverrides.heroTitle),
       heroDescription: getCleanText(contentOverrides.heroDescription),
+      heroContentAlignment: resolveWebsiteHeroContentAlignment(
+        contentOverrides.heroContentAlignment,
+        bootstrapValues.common.heroContentAlignment
+      ),
       ctaLabel: getCleanText(contentOverrides.ctaLabel),
       ctaNote: getCleanText(contentOverrides.ctaNote),
       residenceTitle: getCleanText(contentOverrides.residenceTitle) || bootstrapValues.common.residenceTitle,
@@ -98,8 +105,9 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
     },
     contact: {
       ...bootstrapValues.contact,
-      title: getCleanText(contentOverrides.contactTitle),
-      description: getCleanText(contentOverrides.contactDescription),
+      title: getCleanText(contentOverrides.contactLabel) || bootstrapValues.contact.title,
+      caption: getCleanText(contentOverrides.contactTitle) || bootstrapValues.contact.caption,
+      description: getCleanText(contentOverrides.contactDescription) || bootstrapValues.contact.description,
       avatarMode: getCleanText(contentOverrides.contactAvatarMode) || bootstrapValues.contact.avatarMode,
       avatarImage: getCleanText(contentOverrides.contactAvatarImage),
       accentColor:
@@ -140,6 +148,10 @@ const buildWebsiteDraftBootstrapValues = (draft) => {
 };
 
 export const getCommonFieldPreviewTargetId = (fieldKey, templateKey = "") => {
+  if (fieldKey === "heroContentAlignment") {
+    return EDITOR_TARGET_KEYS.common.heroContentAlignment;
+  }
+
   if (fieldKey === "residenceTitle") {
     return EDITOR_TARGET_KEYS.residence.title;
   }
@@ -221,22 +233,47 @@ export const buildWebsiteEditorSectionData = ({
   const normalizedVisibilityFields = Array.isArray(visibilityFields) ? visibilityFields : [];
   const normalizedImageSlots = Array.isArray(imageSlots) ? imageSlots : [];
   const isPanoramaTemplate = draftTemplateKey === PANORAMA_TEMPLATE_KEY;
+  const hasDedicatedTrustCardsSection =
+    draftTemplateKey === PANORAMA_TEMPLATE_KEY || draftTemplateKey === TRUST_SIGNALS_TEMPLATE_KEY;
+  const trustCardsVisibilityField = hasDedicatedTrustCardsSection
+    ? normalizedVisibilityFields.find((field) => field.key === "trustCards") || null
+    : null;
+  const contactSectionVisibilityField = isPanoramaTemplate
+    ? normalizedVisibilityFields.find((field) => field.key === "contactSection") || null
+    : null;
+  const contactWidgetVisibilityField = isPanoramaTemplate
+    ? normalizedVisibilityFields.find((field) => field.key === "chatWidget") || null
+    : null;
 
   return {
+    heroImageSlot: normalizedImageSlots.find((slot) => slot.kind === "hero") || null,
+    heroCallToActionVisibilityField:
+      normalizedVisibilityFields.find((field) => field.key === "callToAction") || null,
     amenitiesVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "amenitiesPanel") || null,
     calendarVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "availabilityCalendar") || null,
     galleryVisibilityField:
       normalizedVisibilityFields.find((field) => field.key === "gallerySection") || null,
+    trustCardsVisibilityField,
+    contactSectionVisibilityField,
+    contactWidgetVisibilityField,
     standaloneVisibilityFields: normalizedVisibilityFields.filter(
-      (field) => !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key)
+      (field) =>
+        !WEBSITE_EDITOR_SECTION_VISIBILITY_EXCLUSIONS.includes(field.key) &&
+        (!trustCardsVisibilityField || field.key !== "trustCards") &&
+        (!contactWidgetVisibilityField || field.key !== "chatWidget") &&
+        (!contactSectionVisibilityField || field.key !== "contactSection")
     ),
     residenceImageSlot: normalizedImageSlots.find((slot) => slot.kind === "residence") || null,
     galleryImageSlots: isPanoramaTemplate
       ? normalizedImageSlots.filter((slot) => slot.kind === "gallery")
       : [],
     generalImageSlots: normalizedImageSlots.filter((slot) => {
+      if (slot.kind === "hero") {
+        return false;
+      }
+
       if (slot.kind === "residence") {
         return false;
       }
@@ -288,6 +325,14 @@ export const useWebsiteEditorOverlayLock = ({
   isIconPickerOpen,
   isImagePickerOpen,
 }) => {
+  const closeIconPickerRef = useRef(closeIconPicker);
+  const closeImagePickerRef = useRef(closeImagePicker);
+
+  useEffect(() => {
+    closeIconPickerRef.current = closeIconPicker;
+    closeImagePickerRef.current = closeImagePicker;
+  }, [closeIconPicker, closeImagePicker]);
+
   useEffect(() => {
     const isOverlayOpen = isImagePickerOpen || isIconPickerOpen;
     if (!isOverlayOpen) {
@@ -295,8 +340,13 @@ export const useWebsiteEditorOverlayLock = ({
     }
 
     const documentBody = globalThis.document?.body;
-    const previousOverflow = documentBody?.style.overflow ?? "";
     if (documentBody) {
+      const activeLockCount = Number(documentBody.dataset.websiteEditorOverlayLockCount || "0");
+      if (activeLockCount < 1) {
+        documentBody.dataset.websiteEditorOverlayPreviousOverflow = documentBody.style.overflow ?? "";
+      }
+
+      documentBody.dataset.websiteEditorOverlayLockCount = String(activeLockCount + 1);
       documentBody.style.overflow = "hidden";
     }
 
@@ -306,22 +356,33 @@ export const useWebsiteEditorOverlayLock = ({
       }
 
       if (isIconPickerOpen) {
-        closeIconPicker();
+        closeIconPickerRef.current?.();
         return;
       }
 
-      closeImagePicker();
+      closeImagePickerRef.current?.();
     };
 
     globalThis.addEventListener("keydown", handleKeyDown);
 
     return () => {
       if (documentBody) {
-        documentBody.style.overflow = previousOverflow;
+        const activeLockCount = Math.max(
+          0,
+          Number(documentBody.dataset.websiteEditorOverlayLockCount || "1") - 1
+        );
+
+        if (activeLockCount < 1) {
+          documentBody.style.overflow = documentBody.dataset.websiteEditorOverlayPreviousOverflow || "";
+          delete documentBody.dataset.websiteEditorOverlayLockCount;
+          delete documentBody.dataset.websiteEditorOverlayPreviousOverflow;
+        } else {
+          documentBody.dataset.websiteEditorOverlayLockCount = String(activeLockCount);
+        }
       }
       globalThis.removeEventListener("keydown", handleKeyDown);
     };
-  }, [closeIconPicker, closeImagePicker, isIconPickerOpen, isImagePickerOpen]);
+  }, [isIconPickerOpen, isImagePickerOpen]);
 };
 
 export const useWebsiteEditorDataLoader = ({

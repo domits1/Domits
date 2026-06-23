@@ -15,8 +15,12 @@ const CheckIn = ({
   checkInDate = "",
   setCheckInDate = () => {},
   unavailableDateKeys = [],
+  bookedDateKeys = [],
+  availabilityRanges = null,
+  availableDateKeys = null,
 }) => {
   const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
+  const bookedDateSet = buildUnavailableDateSet(bookedDateKeys);
   const minDate = normalizeDateValue(getFutureDateKey(1));
 
   return (
@@ -28,7 +32,13 @@ const CheckIn = ({
           onChange={(date) => setCheckInDate(date ? toDateKey(date) : "")}
           className="inputField"
           minDate={minDate}
-          filterDate={(date) => !isUnavailableDate(date, unavailableDateSet)}
+          filterDate={(date) =>
+            !isUnavailableDate(date, unavailableDateSet, {
+              availabilityRanges,
+              availableDateKeys,
+              bookedDateKeys: bookedDateSet,
+            })
+          }
           dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
           dateFormat="yyyy-MM-dd"
           placeholderText="YYYY-MM-DD"
@@ -47,6 +57,14 @@ CheckIn.propTypes = {
   checkInDate: PropTypes.string,
   setCheckInDate: PropTypes.func,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default CheckIn;

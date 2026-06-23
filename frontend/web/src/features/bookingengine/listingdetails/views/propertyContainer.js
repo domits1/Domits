@@ -8,6 +8,7 @@ import RangeCalendar from "./RangeCalendar";
 import WhereYoullStay from "../components/WhereYoullStay";
 import HostSection from "../components/HostSection";
 import SkeletonBlock from "../components/SkeletonBlock";
+import LocationSection from "./locationSection";
 import {
   getActiveCancellationPolicyId,
   parseHouseRules,
@@ -32,8 +33,13 @@ const PropertyContainer = ({
     checkIn: { checkIn: {}, checkOut: {} },
   },
   host = {},
+  location = {},
   onContactHost,
   unavailableDateKeys = [],
+  bookedDateKeys = [],
+  externalBlockedDateKeys = [],
+  availabilityRanges = null,
+  availableDateKeys = [],
   checkInDate = "",
   checkOutDate = "",
   setCheckInDate,
@@ -172,6 +178,10 @@ const PropertyContainer = ({
         <section id="listing-availability" className="listing-section-block">
           <RangeCalendar
             unavailableDateKeys={unavailableDateKeys}
+            bookedDateKeys={bookedDateKeys}
+            externalBlockedDateKeys={externalBlockedDateKeys}
+            availabilityRanges={availabilityRanges}
+            availableDateKeys={availableDateKeys}
             checkInDate={checkInDate}
             checkOutDate={checkOutDate}
             onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
@@ -183,6 +193,10 @@ const PropertyContainer = ({
 
         <section id="listing-host" className="listing-section-block">
           <HostSection host={host} onContactHost={onContactHost} isLoading={isHostLoading} />
+        </section>
+
+        <section id="listing-location" className="listing-section-block">
+          <LocationSection location={location} />
         </section>
 
         <section id="listing-policies" className="listing-section-block">
@@ -222,6 +236,12 @@ const PropertyContainer = ({
 };
 
 PropertyContainer.propTypes = {
+  location: PropTypes.shape({
+    street: PropTypes.string,
+    houseNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    city: PropTypes.string,
+    country: PropTypes.string,
+  }),
   property: PropTypes.shape({
     images: PropTypes.array,
     pricing: PropTypes.shape({
@@ -255,6 +275,15 @@ PropertyContainer.propTypes = {
   isPropertyLoading: PropTypes.bool,
   isHostLoading: PropTypes.bool,
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  externalBlockedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.arrayOf(PropTypes.string),
   checkInDate: PropTypes.string,
   checkOutDate: PropTypes.string,
   setCheckInDate: PropTypes.func.isRequired,

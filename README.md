@@ -209,6 +209,7 @@ Get Domits running locally for development.
 
 Web Development Setup:
 * [Running Domits Locally - Web](./docs/internal/onboarding/running%20Domits%20locally.md)
+* [Running Domits Locally - Web (SSO)](./docs/internal/onboarding/running%20Domits%20locally%20-%20SSO.md) if your AWS access uses the newer SSO onboarding flow or the original web setup does not work.
 
 **App**
 

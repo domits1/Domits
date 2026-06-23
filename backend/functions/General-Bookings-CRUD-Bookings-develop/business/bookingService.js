@@ -20,6 +20,7 @@ import ChannexBookingAvailabilityClient, {
   createBookingAvailabilityFallbackEvidence,
 } from "./channexBookingAvailabilityClient.js";
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
+import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
 const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
@@ -121,8 +122,17 @@ class BookingService {
     await this.sendEmail(userEmail, hostEmail, bookingInfo);
 
     const bookingStatus = isInquiry ? BOOKING_STATUS_INQUIRY : BOOKING_STATUS_AWAITING_PAYMENT;
+    const eventWithParsedDates = {
+      ...event,
+      general: {
+        ...event.general,
+        arrivalDate: arrivalDateMs,
+        departureDate: departureDateMs,
+      },
+    };
+
     const result = await this.reservationRepository.addBookingToTable(
-      event,
+      eventWithParsedDates,
       authenticatedUser.sub,
       fetchedProperty.hostId,
       cancellationPolicy,
@@ -160,33 +170,7 @@ class BookingService {
   }
 
   parseBookingDateToMs(value, fieldName) {
-    if (typeof value === "number") {
-      if (!Number.isFinite(value)) {
-        throw new BadRequestException(`${fieldName} is invalid.`);
-      }
-      return value;
-    }
-
-    if (typeof value === "string") {
-      const normalized = value.trim();
-      if (!normalized) {
-        throw new BadRequestException(`${fieldName} is required.`);
-      }
-      if (/^\d+$/.test(normalized)) {
-        const parsedInt = Number(normalized);
-        if (!Number.isFinite(parsedInt)) {
-          throw new BadRequestException(`${fieldName} is invalid.`);
-        }
-        return parsedInt;
-      }
-      const parsedDate = new Date(normalized).getTime();
-      if (!Number.isFinite(parsedDate)) {
-        throw new BadRequestException(`${fieldName} is invalid.`);
-      }
-      return parsedDate;
-    }
-
-    throw new BadRequestException(`${fieldName} is required.`);
+    return parseBookingDateToMs(value, fieldName);
   }
 
   async confirmPayment(paymentid) {
@@ -196,7 +180,7 @@ class BookingService {
     }
     const paymentIntent = await this.stripeRepository.getPaymentIntentByPaymentId(paymentid);
     if (paymentIntent.status === "succeeded") {
-      await this.reservationRepository.updateBookingStatus(booking.id, BOOKING_STATUS_PAID);
+      await this.reservationRepository.markBookingPaidWithOutbox(booking.id);
       return true;
     } else {
       return false;
@@ -254,14 +238,26 @@ class BookingService {
       }
       case "getPayment": {
         const user = await this.authManager.authenticateUser(event.Authorization);
-        const booking = await this.reservationRepository.getBookingById(event.event.bookingId);
-        if (booking.guestId !== user.sub) {
+        const bookingResult = await this.reservationRepository.getBookingById(event.event.bookingId);
+        const booking = bookingResult?.response || bookingResult;
+
+        if (!booking?.id) {
+          throw new NotFoundException("Booking not found.");
+        }
+
+        if ((booking.guestid || booking.guestId) !== user.sub) {
           throw new Forbidden("Only the guest of this booking may view payment information.");
         }
-        const payment = await this.stripeRepository.getPaymentByBookingId(event.event.bookingId);
+
+        const paymentId = requireStr(booking.paymentid || booking.paymentId);
+        if (!paymentId || paymentId.startsWith("FAILED")) {
+          throw new NotFoundException("Payment not found.");
+        }
+
+        const payment = await this.stripeRepository.getPaymentByPaymentId(paymentId);
         return {
           statusCode: 200,
-          response: payment.stripeClientSecret,
+          response: payment.stripeclientsecret || payment.stripeClientSecret,
         };
       }
       default: {

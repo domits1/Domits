@@ -3,12 +3,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FaCalendarAlt } from "react-icons/fa";
 import {
   buildUnavailableDateSet,
-  hasUnavailableDateInStayRange,
+  DATE_AVAILABILITY_REASONS,
+  getDateAvailabilityReason,
+  getStayRangeAvailabilityIssue,
   normalizeDateValue,
   toDateKey,
 } from "../utils/dateAvailability";
 import "../styles/RangeCalendar.scss";
 
+const NO_AVAILABILITY_MESSAGE = "This property has no availability for the selected dates.";
+const DATE_LABEL_LOCALE = "en-US";
 const makeDate = (year, month, day) => new Date(year, month, day);
 const addMonths = (date, offset) => makeDate(date.getFullYear(), date.getMonth() + offset, 1);
 
@@ -21,9 +25,9 @@ const startOfCalendar = (year, month) => {
 };
 
 const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-const monthLabel = (date) => date.toLocaleString(undefined, { month: "long", year: "numeric" });
+const monthLabel = (date) => date.toLocaleString(DATE_LABEL_LOCALE, { month: "long", year: "numeric" });
 const formatRangeDate = (date) =>
-  date.toLocaleDateString(undefined, {
+  date.toLocaleDateString(DATE_LABEL_LOCALE, {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -40,6 +44,10 @@ function MonthGrid({
   onPick,
   navigation = null,
   blockedDateKeys,
+  bookedDateKeys,
+  externalBlockedDateKeys,
+  availabilityRanges,
+  availableDateKeys,
 }) {
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
@@ -54,16 +62,50 @@ function MonthGrid({
       date.setDate(start.getDate() + index);
       const inMonth = date.getMonth() === month;
       const key = toDateKey(date);
-      const isUnavailable = inMonth && blockedDateKeys.has(key);
+      const availabilityReason = inMonth
+        ? getDateAvailabilityReason(date, blockedDateKeys, {
+            availabilityRanges,
+            availableDateKeys,
+            bookedDateKeys,
+            externalBlockedDateKeys,
+          })
+        : DATE_AVAILABILITY_REASONS.AVAILABLE;
+      const isExternalBlocked = availabilityReason === DATE_AVAILABILITY_REASONS.EXTERNAL_BLOCKED;
+      const isOutsideWindow = availabilityReason === DATE_AVAILABILITY_REASONS.OUTSIDE_WINDOW;
+      const isUnavailableOverride = availabilityReason === DATE_AVAILABILITY_REASONS.UNAVAILABLE_OVERRIDE;
+      const isUnavailable = inMonth && availabilityReason !== DATE_AVAILABILITY_REASONS.AVAILABLE;
       const inRange = rangeStart && rangeEnd && date >= rangeStart && date <= rangeEnd && inMonth;
       const isStart = rangeStart && key === toDateKey(rangeStart);
       const isEnd = rangeEnd && key === toDateKey(rangeEnd);
       const isToday = inMonth && isSameDay(date, today);
-      items.push({ date, key, inMonth, inRange, isStart, isEnd, isUnavailable, isToday });
+      items.push({
+        date,
+        key,
+        inMonth,
+        inRange,
+        isStart,
+        isEnd,
+        isUnavailable,
+        isExternalBlocked,
+        isOutsideWindow,
+        isUnavailableOverride,
+        isToday,
+      });
     }
 
     return items;
-  }, [blockedDateKeys, month, rangeEnd, rangeStart, today, year]);
+  }, [
+    availabilityRanges,
+    availableDateKeys,
+    blockedDateKeys,
+    bookedDateKeys,
+    externalBlockedDateKeys,
+    month,
+    rangeEnd,
+    rangeStart,
+    today,
+    year,
+  ]);
 
   return (
     <div className="rc-month">
@@ -101,7 +143,10 @@ function MonthGrid({
               type="button"
               className={[
                 "rc-cell rc-cell--day",
-                cell.isUnavailable && "is-unavailable",
+                cell.isUnavailable && "is-unavailable range-calendar__day--unavailable",
+                cell.isExternalBlocked && "range-calendar__day--external-blocked",
+                cell.isOutsideWindow && "range-calendar__day--outside-window",
+                cell.isUnavailableOverride && "range-calendar__day--unavailable-override",
                 cell.inRange && "is-inrange",
                 cell.isStart && "is-start",
                 cell.isEnd && "is-end",
@@ -114,6 +159,9 @@ function MonthGrid({
               onClick={() => onPick(cell.date)}
             >
               <span>{cell.date.getDate()}</span>
+              {cell.isUnavailable ? (
+                <span className="rc-cell__unavailable-mark" aria-hidden="true">--</span>
+              ) : null}
             </button>
           );
         })}
@@ -128,6 +176,15 @@ MonthGrid.propTypes = {
   rangeEnd: PropTypes.instanceOf(Date),
   onPick: PropTypes.func.isRequired,
   blockedDateKeys: PropTypes.instanceOf(Set).isRequired,
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.instanceOf(Set),
+  bookedDateKeys: PropTypes.instanceOf(Set).isRequired,
+  externalBlockedDateKeys: PropTypes.instanceOf(Set).isRequired,
   navigation: PropTypes.shape({
     side: PropTypes.oneOf(["left", "right"]),
     onClick: PropTypes.func,
@@ -136,6 +193,10 @@ MonthGrid.propTypes = {
 
 export default function RangeCalendar({
   unavailableDateKeys = [],
+  bookedDateKeys = [],
+  externalBlockedDateKeys = [],
+  availabilityRanges = null,
+  availableDateKeys = null,
   checkInDate = "",
   checkOutDate = "",
   onRangeChange,
@@ -145,10 +206,29 @@ export default function RangeCalendar({
 
   const [view, setView] = useState(initialMonth);
   const [draftStart, setDraftStart] = useState(null);
+  const [selectionError, setSelectionError] = useState("");
   const rangeStart = useMemo(() => normalizeDateValue(checkInDate), [checkInDate]);
   const rangeEnd = useMemo(() => normalizeDateValue(checkOutDate), [checkOutDate]);
 
   const blockedDateKeys = useMemo(() => buildUnavailableDateSet(unavailableDateKeys), [unavailableDateKeys]);
+  const bookedDateKeySet = useMemo(() => buildUnavailableDateSet(bookedDateKeys), [bookedDateKeys]);
+  const externalBlockedDateKeySet = useMemo(
+    () => buildUnavailableDateSet(externalBlockedDateKeys),
+    [externalBlockedDateKeys]
+  );
+  const availableDateKeySet = useMemo(
+    () => (Array.isArray(availableDateKeys) ? buildUnavailableDateSet(availableDateKeys) : null),
+    [availableDateKeys]
+  );
+  const availabilityContext = useMemo(
+    () => ({
+      availabilityRanges,
+      availableDateKeys: availableDateKeySet,
+      bookedDateKeys: bookedDateKeySet,
+      externalBlockedDateKeys: externalBlockedDateKeySet,
+    }),
+    [availabilityRanges, availableDateKeySet, bookedDateKeySet, externalBlockedDateKeySet]
+  );
 
   const rightMonth = useMemo(() => addMonths(view, 1), [view]);
 
@@ -161,9 +241,12 @@ export default function RangeCalendar({
 
   const handlePick = (date) => {
     const key = toDateKey(date);
-    if (blockedDateKeys.has(key)) {
+    const availabilityReason = getDateAvailabilityReason(date, blockedDateKeys, availabilityContext);
+    if (availabilityReason !== DATE_AVAILABILITY_REASONS.AVAILABLE) {
+      setSelectionError(NO_AVAILABILITY_MESSAGE);
       return;
     }
+    setSelectionError("");
 
     const anchorDate = draftStart || rangeStart;
 
@@ -176,8 +259,9 @@ export default function RangeCalendar({
     const nextStart = anchorDate.getTime() <= date.getTime() ? anchorDate : date;
     const nextEnd = anchorDate.getTime() <= date.getTime() ? date : anchorDate;
 
-    if (hasUnavailableDateInStayRange(nextStart, nextEnd, blockedDateKeys)) {
-      alert("Selected stay includes unavailable dates.");
+    const rangeIssue = getStayRangeAvailabilityIssue(nextStart, nextEnd, blockedDateKeys, availabilityContext);
+    if (rangeIssue) {
+      setSelectionError(NO_AVAILABILITY_MESSAGE);
       setDraftStart(date);
       onRangeChange(key, "");
       return;
@@ -202,6 +286,11 @@ export default function RangeCalendar({
           <h3 className="availability-section__title">Availability</h3>
         </div>
         <p className="availability-section__range">{rangeLabel}</p>
+        {selectionError ? (
+          <p className="availability-section__error" role="alert">
+            {selectionError}
+          </p>
+        ) : null}
       </div>
 
       <div className="rc-con">
@@ -213,6 +302,10 @@ export default function RangeCalendar({
               rangeEnd={rangeEnd}
               onPick={handlePick}
               blockedDateKeys={blockedDateKeys}
+              bookedDateKeys={bookedDateKeySet}
+              externalBlockedDateKeys={externalBlockedDateKeySet}
+              availabilityRanges={availabilityRanges}
+              availableDateKeys={availableDateKeySet}
               navigation={{ side: "left", onClick: prev }}
             />
             <MonthGrid
@@ -221,6 +314,10 @@ export default function RangeCalendar({
               rangeEnd={rangeEnd}
               onPick={handlePick}
               blockedDateKeys={blockedDateKeys}
+              bookedDateKeys={bookedDateKeySet}
+              externalBlockedDateKeys={externalBlockedDateKeySet}
+              availabilityRanges={availabilityRanges}
+              availableDateKeys={availableDateKeySet}
               navigation={{ side: "right", onClick: next }}
             />
           </div>
@@ -232,8 +329,16 @@ export default function RangeCalendar({
 
 RangeCalendar.propTypes = {
   unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  bookedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  externalBlockedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  availableDateKeys: PropTypes.arrayOf(PropTypes.string),
   checkInDate: PropTypes.string,
   checkOutDate: PropTypes.string,
   onRangeChange: PropTypes.func.isRequired,
 };
-

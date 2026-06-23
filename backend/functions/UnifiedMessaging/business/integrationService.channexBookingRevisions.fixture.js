@@ -152,7 +152,7 @@ const buildReservationLinkRow = ({ bookingId = "domits-booking-1", id = "reserva
   ...overrides,
 });
 
-const buildCancellationAvailabilityEvidence = (overrides = {}) => ({
+const buildBookingAvailabilityEvidence = (overrides = {}) => ({
   syncType: "booking-availability",
   trigger: "BOOKING_CANCELLED",
   requestCount: 1,
@@ -167,6 +167,9 @@ const buildCancellationAvailabilityEvidence = (overrides = {}) => ({
   overallSuccess: true,
   ...overrides,
 });
+
+const buildCancellationAvailabilityEvidence = (overrides = {}) =>
+  buildBookingAvailabilityEvidence({ trigger: "BOOKING_CANCELLED", ...overrides });
 
 const createListByAccountRepository = (rows) => ({
   listByAccountId: jest.fn().mockResolvedValue(rows),
@@ -305,7 +308,9 @@ const createService = ({
   const sync = createSyncRepository(syncOverride);
   const channexEvidence = createEvidenceRepository(channexEvidenceOverride);
   const bookingAvailabilityBridge = channexBookingAvailabilityBridge || {
-    syncAvailabilityForBookingChange: jest.fn().mockResolvedValue(buildCancellationAvailabilityEvidence()),
+    syncAvailabilityForBookingChange: jest
+      .fn()
+      .mockImplementation(async (payload = {}) => buildBookingAvailabilityEvidence({ trigger: payload.trigger })),
   };
 
   const service = new IntegrationService({
@@ -347,6 +352,7 @@ const createService = ({
 };
 
 module.exports = {
+  buildBookingAvailabilityEvidence,
   buildCancellationAvailabilityEvidence,
   buildFeedRevision,
   buildImportedBookingRow,

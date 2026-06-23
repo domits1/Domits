@@ -4,7 +4,7 @@ import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
 import HostCalendar from "./hostcalen/HostCalendar";
 import HostReservations from "./HostReservations";
-import Messages from "../../components/messages/Messages";
+import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
@@ -41,6 +41,7 @@ import PropertyRateView from "../hostonboarding/views/10_PropertyRateView";
 import PropertyAvailabilityView from "../hostonboarding/views/11_PropertyAvailabilityView";
 import SummaryViewAndSubmit from "../hostonboarding/views/12_SummarySubmitView";
 import RegistrationNumberView from "../../features/verification/hostverification/HostVerifyRegistrationNumber";
+import HostReservationDetails from "./HostReservationDetails";
 
 function MainDashboardHost() {
   return (
@@ -107,7 +108,7 @@ function MainDashboardHost() {
           <Route path="calendar" element={<Navigate to="../calendar-pricing" replace />} />
 
           <Route path="reservations" element={<HostReservations />} />
-          <Route path="messages" element={<Messages dashboardType="host" />} />
+          <Route path="messages/*" element={<HostMessagingPage />} />
           <Route path="integrations-marketplace" element={<HostIntegrations />} />
           <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />
           <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
@@ -131,6 +132,7 @@ function MainDashboardHost() {
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
 
+          <Route path="reservations/:id" element={<HostReservationDetails />} />
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>
       </div>

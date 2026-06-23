@@ -27,6 +27,14 @@ $color-muted: #6b7280;
   }
 }
 
+@mixin skeleton-block {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: finance-skeleton-wave 1.25s ease-in-out infinite;
+}
+
 .page-Host--loading {
   position: fixed;
   inset: 0;
@@ -74,6 +82,124 @@ $color-muted: #6b7280;
   @include up($bp-md) {
     gap: 24px;
   }
+}
+
+.finance-inline-loader {
+  display: inline-flex;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.finance-section-loader {
+  display: grid;
+  gap: 14px;
+  align-items: start;
+}
+
+.finance-skeleton-block {
+  @include skeleton-block;
+  display: block;
+  border-radius: 10px;
+
+  &--table-cell {
+    height: 14px;
+  }
+
+  &--meter {
+    height: 14px;
+    border-radius: 999px;
+  }
+
+  &--label {
+    height: 14px;
+    width: min(180px, 48%);
+  }
+
+  &--value {
+    height: 14px;
+    width: 92px;
+    margin-left: auto;
+  }
+
+  &--input {
+    height: 44px;
+    width: 100%;
+  }
+
+  &--faq-title {
+    height: 18px;
+    width: min(260px, 72%);
+  }
+
+  &--faq-body {
+    height: 12px;
+    width: 100%;
+  }
+
+  &--faq-body-short {
+    width: min(380px, 84%);
+  }
+}
+
+.finance-skeleton-table {
+  display: grid;
+  gap: 10px;
+
+  &__header,
+  &__row {
+    display: grid;
+    gap: 10px;
+  }
+}
+
+.finance-balance-skeleton {
+  display: grid;
+  gap: 14px;
+
+  &__list {
+    display: grid;
+    gap: 10px;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.finance-form-skeleton {
+  display: grid;
+  gap: 14px;
+
+  &__row {
+    display: grid;
+    gap: 8px;
+
+    @include up($bp-md) {
+      grid-template-columns: 220px 1fr;
+      align-items: center;
+      gap: 16px;
+    }
+  }
+}
+
+.faq-skeleton-list {
+  display: grid;
+  gap: 12px;
+
+  @include up($bp-md) {
+    gap: 14px;
+  }
+}
+
+.faq-skeleton-item {
+  background: $muted;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  display: grid;
+  gap: 10px;
 }
 
 .finance-steps {
@@ -734,6 +860,11 @@ $color-muted: #6b7280;
   &:hover:not(.active) {
     background: rgba($color-success, 0.08);
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 }
 
 .invoices-loading,
@@ -777,5 +908,15 @@ $color-muted: #6b7280;
   &:hover {
     background: $color-success;
     color: #fff;
+  }
+}
+
+@keyframes finance-skeleton-wave {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
   }
 }

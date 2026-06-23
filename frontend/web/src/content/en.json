@@ -1,4 +1,11 @@
 {
+  "listingDetails": {
+    "location": {
+      "title": "Where you'll be",
+      "disclaimer": "Exact location is provided after booking.",
+      "unavailable": "Location information is not available."
+    }
+  },
   "component": {
     "user": {
       "hello": "Hello",
@@ -106,9 +113,13 @@
     },
     "features": {
       "securePayments": "Secure payments",
+      "securePaymentsDesc": "Your transactions are protected",
       "verifiedGuest": "Verified guests/hosts",
+      "verifiedDesc": "Every property is verified",
       "quickPhone": "Quick phone support",
+      "quickSupportDesc": "24/7 customer service",
       "qualityGuarantee": "Domits quality guarantee",
+      "qualityDesc": "Premium stays only",
       "bestPrice": "Best price guarantee",
       "bestPriceDescription": "We strive to offer you the best possible price. If you find a cheaper option elsewhere, we will review it with you and adjust where appropriate.",
       "bookingGuarantee": "Accommodation booking guarantee",
@@ -118,6 +129,7 @@
     },
     "sections": {
       "trending": "Trending accommodations this month",
+      "trendingNow": "Trending Now",
       "rentBoat": "Rent a boat for any occasion",
       "discoverCampers": "Discover Beautiful Campers",
       "becomeHost": {
@@ -164,6 +176,23 @@
         "solo": "Solo",
         "senior": "Senior",
         "petFriendly": "Pet Friendly"
+      },
+      "panel": {
+        "apply": "Apply filter",
+        "reset": "Reset filter",
+        "priceRange": "Price Range",
+        "min": "Min",
+        "max": "Max",
+        "amenities": "Amenities",
+        "showMore": "Show More",
+        "roomsAndBeds": "Rooms & Beds",
+        "bedrooms": "Bedrooms",
+        "beds": "Beds",
+        "bathrooms": "Bathrooms",
+        "any": "Any",
+        "bookingOptions": "Booking Options",
+        "bookInstantly": "Book Instantly",
+        "bookingRequest": "Booking Request"
       }
     },
     "destinations": {
@@ -223,6 +252,80 @@
         }
       }
     }
+  },
+  "regionBlocks": {
+    "europe": {
+      "title": "Europe",
+      "subtitle": "Discover luxury stays across European destinations",
+      "footer": "Explore all countries in europe →"
+    },
+    "asia": {
+      "title": "Asia",
+      "subtitle": "Explore exotic Asian retreats and modern metropolises",
+      "footer": "Explore all countries in Asia →"
+    },
+    "caribbean": {
+      "title": "Islands in the Caribbean",
+      "subtitle": "Paradise awaits in these tropical havens",
+      "footer": "Explore all countries in the caribbean →"
+    },
+    "ski": {
+      "title": "Popular Ski Destinations",
+      "subtitle": "World-class slopes and cozy mountain chalets",
+      "footer": "Explore all popular ski destinations →"
+    },
+    "seasons": {
+      "title": "Favorites by Season",
+      "subtitle": "Perfect properties for every time of year",
+      "footer": "Explore all favorites by season →"
+    },
+    "interests": {
+      "title": "Great Picks by Interest",
+      "subtitle": "Find stays that match your passions",
+      "footer": "Explore all great picks by interest →"
+    },
+    "groups": {
+      "title": "Accommodations by Group",
+      "subtitle": "The perfect stay for your travel party",
+      "footer": "Explore all accommodations by group →"
+    }
+  },
+  "guarantees": {
+    "sectionTitle": "Our Guarantees, Your Peace of Mind",
+    "sectionSubtitle": "We stand behind every stay with our commitments to you."
+  },
+  "hostSection": {
+    "title": "Share Your Space, Earn Premium Income",
+    "description": "Join our exclusive community of luxury hosts. List your villa, beachfront home, or unique property and connect with travelers seeking extraordinary experiences.",
+    "features": {
+      "earn": {
+        "title": "Earn More",
+        "text": "Premium pricing for luxury properties"
+      },
+      "infrastructure": {
+        "title": "Infrastructure",
+        "text": "Latest industry standards"
+      },
+      "support": {
+        "title": "Expert Support",
+        "text": "Dedicated team to help you succeed"
+      }
+    },
+    "stats": {
+      "hosts": {
+        "value": "500+",
+        "label": "Active Hosts"
+      },
+      "rating": {
+        "value": "4.9",
+        "label": "Avg Rating"
+      },
+      "earning": {
+        "value": "$2.5k",
+        "label": "Avg/Month"
+      }
+    },
+    "button": "List Your Property"
   },
   "travelInnovationLabs": {
     "title": "Travel Innovation Labs",
@@ -323,7 +426,25 @@
     "attachment": "Add attachments",
     "send": "Send message",
     "guest": "Guest",
-    "host": "Host"
+    "host": "Host",
+    "heroLabel": "HELP CENTER",
+    "heroTitleStart": "How can we ",
+    "heroTitleEnd": "help you?",
+    "searchPlaceholder": "Search for answers, bookings, payments, support...",
+    "frequentlyAsked": "Frequently asked questions",
+    "stillNeedHelp": "Still need help?",
+    "supportSubtitle": "Our support team is here for you 24/7",
+    "contactSupport": "Contact Support",
+    "noResults": "No results found for \"{query}\". Try a different search term.",
+    "categories": {
+      "aboutDomits": "About Domits",
+      "manageAccount": "Manage Account",
+      "searchAndBook": "Search And Book",
+      "cancellations": "Cancellations",
+      "payments": "Payments",
+      "yourStay": "Your Stay",
+      "support": "Support"
+    }
   },
   "whyDomits": {
     "head": {
@@ -440,22 +561,26 @@
     }
   },
   "sustainability": {
-    "title": "Sustainability",
-    "subtitle": "Why choose Domits for sustainability?",
-    "business": {
-      "title": "1. Sustainable **Business**",
-      "subtitle": "Recycling plan with bins",
-      "description": "Domits is starting out simple with making conscious decisions like choosing more energy-saving appliances and will continue to improve this 1% every day. With our food waste policy we don’t want to be to rigid and starting with a flexible recycling plan for glass, paper, plastic and organic. For biodiversity and ecosystems we’re aiming to eat more organic food, use Eco-friendly cleaning products and have paperless procedures."
-    },
-    "accommodations": {
-      "title": "2. Sustainable **Accommodations**",
-      "subtitle": "Certification",
-      "description": "Domits is actively focusing on onboarding hosts that are already sustainable. If they’re not yet, we’re supporting them step-by-step to increase awareness. At a certain point we want to give hosts certifications as a proof of sustainability with energy, waste, biodiversity, ecosystems, destinations and community."
-    },
-    "experience": {
-      "title": "3. Sustainable **Guest Experience**",
-      "description": "From the first touch point with Domits for guest we want to let them feel that they are traveling as sustainable as possible. Domits begins with having sustainability filters and a large overview of all eco-friendly amenities."
-    }
+    "label": "SUSTAINABILITY",
+    "title": "Why choose Domits",
+    "titleAccent": "for sustainability?",
+    "sections": [
+      {
+        "title": "Sustainable Business",
+        "subtitle": "Recycling plan with bins",
+        "description": "Domits is starting out simple with making conscious decisions like choosing more energy-saving appliances and will continue to improve this 1% every day. With our food waste policy we don't want to be to rigid and starting with a flexible recycling plan for glass, paper, plastic and organic. For biodiversity and ecosystems we're aiming to eat more organic food, use Eco-friendly cleaning products and have paperless procedures."
+      },
+      {
+        "title": "Sustainable Accommodations",
+        "subtitle": "Certification",
+        "description": "Domits is actively focusing on onboarding hosts that are already sustainable. If they're not yet, we're supporting them step-by-step to increase awareness. At a certain point we want to give hosts certifications as a proof of sustainability with energy, waste, biodiversity, ecosystems, destinations and community."
+      },
+      {
+        "title": "Sustainable Guest Experience",
+        "subtitle": "Eco-friendly travel",
+        "description": "From the first touch point with Domits for guest we want to let them feel that they are traveling as sustainable as possible. Domits begins with having sustainability filters and a large overview of all eco-friendly amenities."
+      }
+    ]
   },
   "howItWorksContent": {
     "title": "How Domits Works",
@@ -594,6 +719,18 @@
     }
   },
   "landing": {
+    "hero": {
+      "badge": "Trusted by many hosts",
+      "titleLine1": "Your Properties.",
+      "titleLine2": "Our Infrastructure.",
+      "description": "Turn your luxury vacation rentals into a revenue stream that runs itself. More revenue. Less workload. Total confidence.",
+      "primaryButton": "Start Hosting →",
+      "secondaryButton": "See how it works",
+      "stat1Label": "more revenue",
+      "stat2Label": "workload reduction",
+      "stat3Label": "support",
+      "integratesLabel": "Seamlessly integrates with"
+    },
     "list": "List your",
     "house": "House",
     "camper": "Camper",
@@ -611,6 +748,9 @@
       "title2": "has never been ",
       "easier": "easier",
       "subtitle": "It only takes 3 steps",
+      "stepsLabel": "THE PROCESS",
+      "stepsTitleLine1": "Three Steps.",
+      "stepsTitleSpan": "Zero Friction.",
       "first": {
         "one": "1.",
         "title": "List your property",
@@ -632,7 +772,18 @@
       "domits": "Domits",
       "end": "?",
       "description": "At Domits, we're not just another platform, we're building a future-focused, sustainable community with our Travel Innovation Labs. Our innovative approach ensures that your property adds meaningful value to both travelers and the environment. You'll also enjoy unlimited support and personalized, modern dashboards that make managing your listings easier than ever. But what truly sets Domits apart is our commitment to you. You're more than just a customer or data, we genuinely care about your success, and we're here every step on the way to help you thrive. Hosting with Domits means aligning with deeply embedded values of health, safety, and sustainability, creating a future-proof path for your business.",
-      "btnHosting": "Start hosting"
+      "btnHosting": "Start hosting",
+      "sectionTitle": "Why",
+      "sectionDescription": "Domits transforms the future of luxury vacation rental management into a seamless experience. From listing to payout, everything is handled in one centralized place so you can focus on growth, not operations.",
+      "rating": "4.9 ★",
+      "features": {
+        "pmsOta": "Domits PMS with OTA",
+        "revenueManagement": "Revenue Management",
+        "directReservations": "Direct Reservations",
+        "financeSuite": "Finance Suite",
+        "channelManagement": "Channel Management",
+        "taskAutomations": "Task Automations"
+      }
     },
     "register": {
       "title": "Register your property",
@@ -662,11 +813,15 @@
       "renting": {
         "title": "International renting",
         "description": "You rent out your holiday home on an international market. This makes the chances of renting of out your holiday home even greater"
-      }
+      },
+      "subtitle": "Everything you need to rent out your property with confidence and peace of mind.",
+      "cta": "Register Your Property →"
     },
     "othersSay": {
       "title": "What others say about",
-      "domits": "Domits"
+      "domits": "Domits",
+      "hearFrom": "Hear from our Hosts.",
+      "trustText": "Many hosts trust Domits"
     },
     "rentingOut": {
       "title": "Is your property suitable for",
@@ -703,12 +858,65 @@
       "safety": {
         "title": "Safety ✓",
         "description": "The property meets safety standards with functional smoke detectors, secured balconies, safe playgrounds, and clear access paths."
+      },
+      "cta": "Ready to list your property? Our team will guide you through every step.",
+      "ctaBadge": "✔ Verified properties get 3x more bookings"
+    },
+    "featuresSection": {
+      "title": "Outcome-Driven",
+      "span": "Features",
+      "pmsOta": {
+        "title": "Domits PMS with OTA",
+        "description": "A centralized Property Management System (PMS) with booking channel integration."
+      },
+      "directReservation": {
+        "title": "Direct Reservation Suite",
+        "description": "A direct booking website builder to reduce OTA costs and dependency"
+      },
+      "channelManagement": {
+        "title": "Channel Management",
+        "description": "Distribute to channels like Airbnb, Domits, Booking, Vrbo and more"
+      },
+      "revenueIntelligence": {
+        "title": "Revenue Intelligence",
+        "description": "Real-time insights into KPIs and dynamic pricing."
+      },
+      "financeSuite": {
+        "title": "Finance Suite",
+        "description": "Guest payments, host payouts and precision management tools"
+      },
+      "taskAutomation": {
+        "title": "Task Automation",
+        "description": "Automate check-ins, cleaning schedule and maintenance requests"
       }
+    },
+    "cta": {
+      "badge": "✦ Join a community of hosts",
+      "title": "Ready to Elevate Your Property Performance?",
+      "subtitle": "Start earning more from your luxury vacation rentals today. No credit card required.",
+      "button": "Start hosting now →",
+      "benefit1": "● Free to get started",
+      "benefit2": "● No hidden fees",
+      "benefit3": "● Cancel anytime"
+    },
+    "partnerContact": {
+      "title": "More than software.",
+      "subtitle": "A dedicated partner.",
+      "description": "Our team is here to answer your questions, discuss your property's potential, and help you get started on the path to effortless rental income.",
+      "emailLabel": "Email us",
+      "emailValue": "teamdomits@gmail.com",
+      "phoneLabel": "Call us",
+      "phoneValue": "Available 24/7",
+      "addressLabel": "Visit us",
+      "addressLine1": "Kinderhuissingel 6-K",
+      "addressLine2": "2013 AS, Haarlem"
     },
     "answerTo": {
       "title": "Answers to ",
       "your": "your",
       "question": "questions",
+      "faqTitle": "Answers to",
+      "faqSpan": "Your Questions",
       "host": {
         "title": "Getting started as a host",
         "description": "Register as a host, connect or create your stripe account, start listing your accommodation."
@@ -918,6 +1126,136 @@
         "success": "✓ Invitation sent to",
         "error": "Failed to send invitation. Please try again."
       }
+    }
+  },
+  "performance": {
+    "label": "PERFORMANCE BUNDLES",
+    "title": "Grow your rental business with",
+    "titleAccent": "confidence.",
+    "badges": [
+      {
+        "title": "Starting host",
+        "subtitle": "1-9 properties"
+      },
+      {
+        "title": "Growing host",
+        "subtitle": "10-99 properties"
+      },
+      {
+        "title": "Scaling host",
+        "subtitle": "100+ properties"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Distribution & Marketing",
+        "bullets": [
+          "Multi-channel distribution across Booking.com, Airbnb, VRBO, and 100+ platforms.",
+          "AI-powered analytics, dashboards, and performance insights.",
+          "Inbound marketing, lead nurturing, customer journeys, and content.",
+          "SEO, SEA, CRO, and conversion-focused performance marketing.",
+          "CRM automation, email campaigns, segmentation, and communication flows."
+        ]
+      },
+      {
+        "title": "Streamline Operations",
+        "bullets": [
+          "Automate property management",
+          "Reservation management",
+          "Rate management",
+          "Housekeeping",
+          "Front desk",
+          "Reporting"
+        ]
+      },
+      {
+        "title": "Grow Revenue",
+        "bullets": [
+          "Dynamic pricing",
+          "Digital upselling",
+          "Occupancy rates",
+          "ADR (Average Daily Rate)",
+          "RevPAR (Revenue per Available Room)"
+        ]
+      },
+      {
+        "title": "Guest Experience",
+        "bullets": [
+          "Warmth and friendliness",
+          "Booking engine",
+          "Messaging",
+          "Reviews",
+          "Check-in",
+          "Support (FAQ, email, and phone)"
+        ]
+      }
+    ]
+  },
+  "security": {
+    "label": "SECURITY",
+    "title": "Your safety comes",
+    "titleAccent": "first.",
+    "badges": [
+      {
+        "title": "Secure Infrastructure",
+        "subtitle": "Reliable & monitored"
+      },
+      {
+        "title": "Encrypted Data",
+        "subtitle": "End-to-end protection"
+      },
+      {
+        "title": "Daily Backups",
+        "subtitle": "Always protected"
+      },
+      {
+        "title": "EU Hosted",
+        "subtitle": "GDPR complied"
+      }
+    ],
+    "sections": [
+      {
+        "title": "1. Infrastructure",
+        "description": "Our servers are securely housed in multiple European data centers. In the event of any malfunctions, technicians are always available to tackle the problem immediately. Amazon Web Services' online infrastructure guarantees the security and confidentiality of our cloud services.",
+        "bullets": [
+          "Our data is stored in two different data centers.",
+          "In the event of malfunctions, Domits automatically switches to another data center.",
+          "An uptime of 99.995%."
+        ]
+      },
+      {
+        "title": "2. Theft and Privacy",
+        "description": "Domits is fully committed to ensuring that your data is safe and protected from hackers. Each customer has their own, separate database at Domits, making it impossible for other users to access other people's data.",
+        "bullets": [
+          "When using Domits, the connection is secured.",
+          "GDPR compliant data handling and storage",
+          "It is impossible for outsiders to intercept data traffic."
+        ]
+      },
+      {
+        "title": "3. Back-ups",
+        "description": "At Domits, we do everything we can to ensure that our system is always operational and your data is always secured. Backups of the data are made daily so that nothing is ever lost. In the event of disruptions, all your data is stored securely and our team ensures that your account can be restored.",
+        "bullets": [
+          "Guarantee against data loss",
+          "Daily recovery of data up to six months ago",
+          "Secure data backups"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "title": "Vision",
+        "text": "We believe that everyone deserves transparent and accessible security. Our vision is to create a digital environment where users can trust that their data is protected without needing to understand complex technical details."
+      },
+      {
+        "title": "What We Do",
+        "text": "We continuously monitor, update, and improve our security infrastructure. Our dedicated team works around the clock to identify potential threats, implement the latest security standards, and ensure your data remains protected at all times."
+      }
+    ],
+    "cta": {
+      "title": "Questions about security?",
+      "contactButton": "Contact support",
+      "learnMoreButton": "Learn more"
     }
   }
 }

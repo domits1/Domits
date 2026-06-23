@@ -10,6 +10,7 @@ import ContactList from "./ContactList";
 import ChatScreen from "./ChatScreen";
 import NewContactModal from "./NewContactModal";
 import ListingPanel from "./ListingPanel";
+import { getMessageCapabilities } from "./messageCapabilities";
 
 import "./messagesV2.scss";
 
@@ -28,6 +29,11 @@ const MessagesContent = ({ dashboardType }) => {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { accessToken } = useUser();
+  const capabilities = useMemo(() => getMessageCapabilities(dashboardType), [dashboardType]);
+  const bookingIdFromUrl = useMemo(() => {
+    const params = new URLSearchParams(location.search || "");
+    return params.get("bookingId") || null;
+  }, [location.search]);
 
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [selectedContactName, setSelectedContactName] = useState(null);
@@ -35,6 +41,7 @@ const MessagesContent = ({ dashboardType }) => {
   const [selectedThreadId, setSelectedThreadId] = useState(null);
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [selectedPropertyTitle, setSelectedPropertyTitle] = useState(null);
   const [selectedAccoImage, setSelectedAccoImage] = useState(null);
 
@@ -53,9 +60,72 @@ const MessagesContent = ({ dashboardType }) => {
 
   const { contacts, pendingContacts, loading: contactsLoading, setContacts } = useFetchContacts(userId, dashboardType);
 
+  const syncGuestBookingUrl = (bookingId) => {
+    if (dashboardType !== "guest") return;
+
+    const nextSearch = bookingId ? `?bookingId=${encodeURIComponent(bookingId)}` : "";
+    if ((location.search || "") === nextSearch) return;
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch,
+      },
+      { replace: false, state: null }
+    );
+  };
+
   useEffect(() => {
     const messageContext = location.state?.messageContext;
+    const contextBookingId = bookingIdFromUrl || messageContext?.bookingId || null;
+
+    if (
+      messageContext &&
+      bookingIdFromUrl &&
+      String(messageContext?.bookingId || "") !== String(bookingIdFromUrl)
+    ) {
+      setSelectedContactId(null);
+      setSelectedContactName(null);
+      setSelectedContactImage(null);
+      setSelectedThreadId(null);
+      setSelectedPropertyId(null);
+      setSelectedBookingId(bookingIdFromUrl);
+      setSelectedPropertyTitle(null);
+      setSelectedAccoImage(null);
+      setSelectedPlatform("DOMITS");
+      setSelectedIntegrationAccountId(null);
+      setSelectedExternalThreadId(null);
+      return;
+    }
+
     if (!messageContext || !userId) {
+      if (contextBookingId) {
+        if (String(selectedBookingId || "") !== String(contextBookingId)) {
+          setSelectedContactId(null);
+          setSelectedContactName(null);
+          setSelectedContactImage(null);
+          setSelectedThreadId(null);
+          setSelectedPropertyId(null);
+          setSelectedPropertyTitle(null);
+          setSelectedAccoImage(null);
+          setSelectedPlatform("DOMITS");
+          setSelectedIntegrationAccountId(null);
+          setSelectedExternalThreadId(null);
+        }
+        setSelectedBookingId(contextBookingId);
+      } else if (dashboardType === "guest" && selectedBookingId) {
+        setSelectedContactId(null);
+        setSelectedContactName(null);
+        setSelectedContactImage(null);
+        setSelectedThreadId(null);
+        setSelectedPropertyId(null);
+        setSelectedBookingId(null);
+        setSelectedPropertyTitle(null);
+        setSelectedAccoImage(null);
+        setSelectedPlatform("DOMITS");
+        setSelectedIntegrationAccountId(null);
+        setSelectedExternalThreadId(null);
+      }
       return;
     }
 
@@ -65,6 +135,7 @@ const MessagesContent = ({ dashboardType }) => {
       setSelectedContactImage(null);
       setSelectedThreadId(null);
       setSelectedPropertyId(null);
+      setSelectedBookingId(null);
       setSelectedPropertyTitle(null);
       setSelectedAccoImage(null);
       setSelectedPlatform("DOMITS");
@@ -78,12 +149,50 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedContactImage(messageContext.contactImage || null);
     setSelectedThreadId(messageContext.threadId || null);
     setSelectedPropertyId(messageContext.propertyId || null);
+    setSelectedBookingId(contextBookingId);
     setSelectedPropertyTitle(messageContext.propertyTitle || null);
     setSelectedAccoImage(messageContext.accoImage || null);
     setSelectedPlatform(messageContext.platform || "DOMITS");
     setSelectedIntegrationAccountId(messageContext.integrationAccountId || null);
     setSelectedExternalThreadId(messageContext.externalThreadId || null);
-  }, [location.key, location.state, userId]);
+  }, [bookingIdFromUrl, dashboardType, location.key, location.state, selectedBookingId, userId]);
+
+  useEffect(() => {
+    if (!bookingIdFromUrl || !userId || selectedContactId) {
+      return;
+    }
+
+    const matchedContact = (Array.isArray(contacts) ? contacts : []).find(
+      (contact) => String(contact?.bookingId || contact?.bookingid || "") === String(bookingIdFromUrl)
+    );
+
+    if (!matchedContact) {
+      return;
+    }
+
+    const partnerId =
+      matchedContact?.partnerId ||
+      matchedContact?.recipientId ||
+      matchedContact?.userId ||
+      (String(matchedContact?.hostId || "") === String(userId) ? matchedContact?.guestId : matchedContact?.hostId) ||
+      null;
+
+    if (!partnerId || String(partnerId) === String(userId)) {
+      return;
+    }
+
+    setSelectedContactId(partnerId);
+    setSelectedContactName(matchedContact?.givenName || matchedContact?.name || null);
+    setSelectedContactImage(matchedContact?.profileImage || null);
+    setSelectedThreadId(matchedContact?.threadId || null);
+    setSelectedBookingId(matchedContact?.bookingId || matchedContact?.bookingid || bookingIdFromUrl);
+    setSelectedPropertyId(matchedContact?.propertyId || matchedContact?.AccoId || null);
+    setSelectedPropertyTitle(matchedContact?.propertyTitle || matchedContact?.propertyName || null);
+    setSelectedAccoImage(matchedContact?.accoImage || null);
+    setSelectedPlatform(matchedContact?.platform || "DOMITS");
+    setSelectedIntegrationAccountId(matchedContact?.integrationAccountId || matchedContact?.externalAccountId || null);
+    setSelectedExternalThreadId(matchedContact?.externalThreadId || null);
+  }, [bookingIdFromUrl, contacts, selectedContactId, userId]);
 
   useEffect(() => {
     if (!userId || !selectedContactId) {
@@ -102,6 +211,10 @@ const MessagesContent = ({ dashboardType }) => {
         return false;
       }
 
+      if (selectedBookingId) {
+        return String(contact?.bookingId || contact?.bookingid || "") === String(selectedBookingId);
+      }
+
       if (!selectedPropertyId) {
         return true;
       }
@@ -116,6 +229,7 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedContactName((previousValue) => previousValue || matchedContact?.givenName || matchedContact?.name || null);
     setSelectedContactImage((previousValue) => previousValue || matchedContact?.profileImage || null);
     setSelectedThreadId((previousValue) => previousValue || matchedContact?.threadId || null);
+    setSelectedBookingId((previousValue) => previousValue || matchedContact?.bookingId || matchedContact?.bookingid || null);
     setSelectedPropertyId((previousValue) => previousValue || matchedContact?.propertyId || matchedContact?.AccoId || null);
     setSelectedPropertyTitle(
       (previousValue) => previousValue || matchedContact?.propertyTitle || matchedContact?.propertyName || null
@@ -128,7 +242,7 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedExternalThreadId(
       (previousValue) => previousValue || matchedContact?.externalThreadId || null
     );
-  }, [contacts, selectedContactId, selectedPropertyId, userId]);
+  }, [contacts, selectedBookingId, selectedContactId, selectedPropertyId, userId]);
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -151,7 +265,10 @@ const MessagesContent = ({ dashboardType }) => {
       try {
         const res = await fetch(`${UNIFIED_API}/integrations?userId=${encodeURIComponent(userId)}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
         });
 
         if (!res.ok) throw new Error("Failed to fetch integrations");
@@ -184,7 +301,7 @@ const MessagesContent = ({ dashboardType }) => {
     return () => {
       cancelled = true;
     };
-  }, [dashboardType, userId]);
+  }, [accessToken, dashboardType, userId]);
 
   const handleContactClick = (
     contactId,
@@ -192,6 +309,7 @@ const MessagesContent = ({ dashboardType }) => {
     contactImage,
     threadId = null,
     propertyId = null,
+    bookingId = null,
     propertyTitle = null,
     accoImage = null,
     platform = "DOMITS",
@@ -204,12 +322,14 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedThreadId(threadId);
 
     setSelectedPropertyId(propertyId || null);
+    setSelectedBookingId(bookingId || null);
     setSelectedPropertyTitle(propertyTitle || null);
     setSelectedAccoImage(accoImage || null);
 
     setSelectedPlatform(platform || "DOMITS");
     setSelectedIntegrationAccountId(integrationAccountId || null);
     setSelectedExternalThreadId(externalThreadId || null);
+    syncGuestBookingUrl(bookingId || null);
   };
 
   const handleBackToContacts = () => {
@@ -218,12 +338,14 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedThreadId(null);
 
     setSelectedPropertyId(null);
+    setSelectedBookingId(null);
     setSelectedPropertyTitle(null);
     setSelectedAccoImage(null);
 
     setSelectedPlatform("DOMITS");
     setSelectedIntegrationAccountId(null);
     setSelectedExternalThreadId(null);
+    syncGuestBookingUrl(null);
   };
 
   const handleCloseChat = (contactId = null) => {
@@ -234,12 +356,14 @@ const MessagesContent = ({ dashboardType }) => {
       setSelectedThreadId(null);
 
       setSelectedPropertyId(null);
+      setSelectedBookingId(null);
       setSelectedPropertyTitle(null);
       setSelectedAccoImage(null);
 
       setSelectedPlatform("DOMITS");
       setSelectedIntegrationAccountId(null);
       setSelectedExternalThreadId(null);
+      syncGuestBookingUrl(null);
     }
   };
 
@@ -249,24 +373,26 @@ const MessagesContent = ({ dashboardType }) => {
 
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : true;
-  const showDetailsPanel = !isMobile && !isTablet && selectedPlatform !== "WHATSAPP";
+  const showDetailsPanel = !isMobile && !isTablet && selectedPlatform !== "WHATSAPP" && capabilities.canViewListingPanel;
 
   const showWhatsAppBanner = useMemo(() => {
-    return dashboardType === "host" && !integrationsLoading && !whatsAppConnected;
-  }, [dashboardType, integrationsLoading, whatsAppConnected]);
+    return capabilities.canUseChannelManagement && dashboardType === "host" && !integrationsLoading && !whatsAppConnected;
+  }, [capabilities.canUseChannelManagement, dashboardType, integrationsLoading, whatsAppConnected]);
 
   return (
     <div className={`${dashboardType}-dashboard-page-body messages-v2`}>
       <WebSocketProvider userId={userId} token={accessToken}>
         {userId ? (
           <>
-            <NewContactModal
-              isOpen={isNewMessageOpen}
-              onClose={() => setIsNewMessageOpen(false)}
-              onCreate={(newContact) => setContacts((prev) => [newContact, ...(Array.isArray(prev) ? prev : [])])}
-              userId={userId}
-              dashboardType={dashboardType}
-            />
+            {capabilities.canCreateContact ? (
+              <NewContactModal
+                isOpen={isNewMessageOpen}
+                onClose={() => setIsNewMessageOpen(false)}
+                onCreate={(newContact) => setContacts((prev) => [newContact, ...(Array.isArray(prev) ? prev : [])])}
+                userId={userId}
+                dashboardType={dashboardType}
+              />
+            ) : null}
 
             {showWhatsAppBanner ? (
               <div
@@ -343,8 +469,9 @@ const MessagesContent = ({ dashboardType }) => {
                     pendingContacts={pendingContacts}
                     loading={contactsLoading}
                     setContacts={setContacts}
-                    onNewMessage={() => setIsNewMessageOpen(true)}
+                    onNewMessage={capabilities.canCreateContact ? () => setIsNewMessageOpen(true) : null}
                     activeThreadId={selectedThreadId}
+                    capabilities={capabilities}
                   />
                 </div>
               )}
@@ -359,11 +486,13 @@ const MessagesContent = ({ dashboardType }) => {
                     contactImage={selectedContactImage}
                     threadId={selectedThreadId}
                     propertyId={selectedPropertyId}
+                    bookingId={selectedBookingId}
                     platform={selectedPlatform}
                     integrationAccountId={selectedIntegrationAccountId}
                     externalThreadId={selectedExternalThreadId}
                     onBack={isTablet ? handleBackToContacts : null}
                     dashboardType={dashboardType}
+                    capabilities={capabilities}
                   />
                 </div>
               )}

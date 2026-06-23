@@ -41,6 +41,7 @@ export const BOOKING_EXCLUDED_STATUSES = new Set([
   "rejected",
 ]);
 export const SELECTED_PROPERTY_STORAGE_PREFIX = "host-calendar:selected-property";
+export const CALENDAR_FOCUS_CONTEXT_STORAGE_PREFIX = "host-calendar:focus-context";
 
 export const INITIAL_CALENDAR_SYNC_FORM = {
   calendarUrl: "",
@@ -110,7 +111,35 @@ export const resolveCalendarProviderFromSource = (source = {}) => {
 export const getSelectedPropertyStorageKey = (hostId) =>
   `${SELECTED_PROPERTY_STORAGE_PREFIX}:${String(hostId || "").trim()}`;
 
+export const getCalendarFocusContextStorageKey = (hostId) =>
+  `${CALENDAR_FOCUS_CONTEXT_STORAGE_PREFIX}:${String(hostId || "").trim()}`;
+
 const getBrowserWindow = () => globalThis?.window;
+
+const getCalendarFocusStorage = (browserWindow) =>
+  browserWindow?.sessionStorage || browserWindow?.localStorage || null;
+
+const normalizeCalendarFocusContext = (context) => {
+  if (!context || typeof context !== "object") {
+    return null;
+  }
+
+  const bookingId = String(context.bookingId || "").trim();
+  const propertyId = String(context.propertyId || "").trim();
+  const arrivalDate = String(context.arrivalDate || "").trim();
+  const departureDate = String(context.departureDate || "").trim();
+
+  if (!bookingId && !propertyId && !arrivalDate && !departureDate) {
+    return null;
+  }
+
+  return {
+    bookingId,
+    propertyId,
+    arrivalDate,
+    departureDate,
+  };
+};
 
 export const readPersistedSelectedPropertyId = (hostId) => {
   const key = getSelectedPropertyStorageKey(hostId);
@@ -138,6 +167,57 @@ export const persistSelectedPropertyId = (hostId, propertyId) => {
     } else {
       browserWindow.localStorage.removeItem(key);
     }
+  } catch {}
+};
+
+export const readPersistedCalendarFocusContext = (hostId) => {
+  const key = getCalendarFocusContextStorageKey(hostId);
+  const browserWindow = getBrowserWindow();
+  const storage = getCalendarFocusStorage(browserWindow);
+  if (!key || !storage) {
+    return null;
+  }
+
+  try {
+    const storedValue = storage.getItem(key);
+    if (!storedValue) {
+      return null;
+    }
+
+    return normalizeCalendarFocusContext(JSON.parse(storedValue));
+  } catch {
+    return null;
+  }
+};
+
+export const persistCalendarFocusContext = (hostId, context) => {
+  const key = getCalendarFocusContextStorageKey(hostId);
+  const browserWindow = getBrowserWindow();
+  const storage = getCalendarFocusStorage(browserWindow);
+  if (!key || !storage) {
+    return;
+  }
+
+  try {
+    const normalizedContext = normalizeCalendarFocusContext(context);
+    if (normalizedContext) {
+      storage.setItem(key, JSON.stringify(normalizedContext));
+    } else {
+      storage.removeItem(key);
+    }
+  } catch {}
+};
+
+export const clearPersistedCalendarFocusContext = (hostId) => {
+  const key = getCalendarFocusContextStorageKey(hostId);
+  const browserWindow = getBrowserWindow();
+  const storage = getCalendarFocusStorage(browserWindow);
+  if (!key || !storage) {
+    return;
+  }
+
+  try {
+    storage.removeItem(key);
   } catch {}
 };
 
@@ -261,6 +341,23 @@ export const keyToDateNumber = (key) => {
   return year * 10000 + month * 100 + day;
 };
 
+export const dateNumberToUtcDate = (dateNumber) => {
+  const normalizedDateNumber = normalizeDateNumber(dateNumber);
+  if (normalizedDateNumber === null) {
+    return null;
+  }
+
+  const normalized = String(normalizedDateNumber);
+  const year = Number(normalized.slice(0, 4));
+  const month = Number(normalized.slice(4, 6));
+  const day = Number(normalized.slice(6, 8));
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+
+  return new Date(Date.UTC(year, month - 1, day));
+};
+
 export const keyToUtcDate = (key) => {
   if (typeof key !== "string") {
     return null;
@@ -329,11 +426,21 @@ export const normalizeTimestampLike = (value) => {
 
   const numeric = Number(value);
   if (Number.isFinite(numeric) && numeric > 0) {
+    const normalizedDateNumber = normalizeDateNumber(numeric);
+    if (normalizedDateNumber !== null) {
+      return dateNumberToUtcDate(normalizedDateNumber);
+    }
+
     const milliseconds = numeric > 1000000000000 ? numeric : numeric * 1000;
     const parsedDate = new Date(milliseconds);
     if (!Number.isNaN(parsedDate.getTime())) {
       return parsedDate;
     }
+  }
+
+  const normalizedDateNumber = normalizeDateNumber(value);
+  if (normalizedDateNumber !== null) {
+    return dateNumberToUtcDate(normalizedDateNumber);
   }
 
   const parsedFromString = new Date(String(value));

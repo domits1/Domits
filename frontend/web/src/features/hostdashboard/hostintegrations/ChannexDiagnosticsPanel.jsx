@@ -8,7 +8,11 @@ import {
   getChannexAriTargets,
   getChannexStatus,
   getLatestChannexSyncEvidence,
+  listChannexProperties,
+  listChannexRatePlans,
+  listChannexRoomTypes,
   modifyBookingDates,
+  saveChannexSetupMapping,
   syncChannexAri,
   syncChannexAvailability,
   syncChannexFull,
@@ -17,6 +21,7 @@ import {
 
 const SECTION_TABS = [
   { key: "overview", label: "Overview" },
+  { key: "setup", label: "Setup & Connection" },
   { key: "mappings", label: "Mappings" },
   { key: "ari", label: "ARI Preview" },
   { key: "evidence", label: "Evidence" },
@@ -349,6 +354,41 @@ const normalizeCancelBookingForm = (form) => ({
 const validateCancelBookingForm = (form) => {
   const payload = normalizeCancelBookingForm(form);
   return payload.bookingId ? "" : "Enter the booking ID to cancel.";
+};
+
+const createSetupSelection = () => ({
+  externalPropertyId: "",
+  externalRoomTypeId: "",
+  externalRatePlanId: "",
+});
+
+const findById = (items, key, value) =>
+  (Array.isArray(items) ? items : []).find((item) => String(item?.[key] || "") === String(value || "")) || null;
+
+const buildSetupMappingPayload = ({
+  domitsPropertyId,
+  selection,
+  selectedProperty,
+  selectedRoomType,
+  selectedRatePlan,
+}) => ({
+  domitsPropertyId: String(domitsPropertyId || "").trim(),
+  externalPropertyId: selection.externalPropertyId,
+  externalPropertyName: selectedProperty?.externalPropertyName || null,
+  externalRoomTypeId: selection.externalRoomTypeId,
+  externalRoomTypeName: selectedRoomType?.externalRoomTypeName || null,
+  externalRatePlanId: selection.externalRatePlanId,
+  externalRatePlanName: selectedRatePlan?.externalRatePlanName || null,
+  status: "ACTIVE",
+  scope: "SINGLE_UNIT",
+});
+
+const validateSetupMappingPayload = (payload) => {
+  if (!payload.domitsPropertyId) return "Enter a Domits property ID before saving the mapping.";
+  if (!payload.externalPropertyId) return "Select a Channex property before saving the mapping.";
+  if (!payload.externalRoomTypeId) return "Select a Channex room type before saving the mapping.";
+  if (!payload.externalRatePlanId) return "Select a Channex rate plan before saving the mapping.";
+  return "";
 };
 
 const getPayloadPaginationSummary = (pagination = {}) => {
@@ -1218,6 +1258,11 @@ function ChannexDiagnosticsPanel({ userId }) {
   const [latestEvidenceState, setLatestEvidenceState] = useState(createRequestState);
   const [ariPreviewState, setAriPreviewState] = useState(createRequestState);
   const [payloadPreviewState, setPayloadPreviewState] = useState(createRequestState);
+  const [setupPropertiesState, setSetupPropertiesState] = useState(createRequestState);
+  const [setupRoomTypesState, setSetupRoomTypesState] = useState(createRequestState);
+  const [setupRatePlansState, setSetupRatePlansState] = useState(createRequestState);
+  const [setupMappingState, setSetupMappingState] = useState(createRequestState);
+  const [setupSelection, setSetupSelection] = useState(createSetupSelection);
   const [actionStates, setActionStates] = useState({});
   const [modifyBookingForm, setModifyBookingForm] = useState(MODIFY_BOOKING_DEMO_DEFAULTS);
   const [modifyBookingState, setModifyBookingState] = useState(createRequestState);
@@ -1235,6 +1280,21 @@ function ChannexDiagnosticsPanel({ userId }) {
       dateTo,
     }),
     [dateFrom, dateTo, domitsPropertyId, userId]
+  );
+  const setupProperties = setupPropertiesState.data?.properties || [];
+  const setupRoomTypes = setupRoomTypesState.data?.roomTypes || [];
+  const setupRatePlans = setupRatePlansState.data?.ratePlans || [];
+  const selectedSetupProperty = useMemo(
+    () => findById(setupProperties, "externalPropertyId", setupSelection.externalPropertyId),
+    [setupProperties, setupSelection.externalPropertyId]
+  );
+  const selectedSetupRoomType = useMemo(
+    () => findById(setupRoomTypes, "externalRoomTypeId", setupSelection.externalRoomTypeId),
+    [setupRoomTypes, setupSelection.externalRoomTypeId]
+  );
+  const selectedSetupRatePlan = useMemo(
+    () => findById(setupRatePlans, "externalRatePlanId", setupSelection.externalRatePlanId),
+    [setupRatePlans, setupSelection.externalRatePlanId]
   );
 
   const runRequest = useCallback(async ({ setState, request }) => {
@@ -1297,6 +1357,101 @@ function ChannexDiagnosticsPanel({ userId }) {
           pageSizeDays: PAYLOAD_PREVIEW_PAGE_SIZE_DAYS,
         }),
     });
+
+  const loadChannexResources = async () => {
+    setSetupSelection(createSetupSelection());
+    setSetupRoomTypesState(createRequestState());
+    setSetupRatePlansState(createRequestState());
+    setSetupMappingState(createRequestState());
+    return runRequest({
+      setState: setSetupPropertiesState,
+      request: () => listChannexProperties({ userId }),
+    });
+  };
+
+  const handleSetupPropertyChange = async (externalPropertyId) => {
+    setSetupSelection({
+      externalPropertyId,
+      externalRoomTypeId: "",
+      externalRatePlanId: "",
+    });
+    setSetupRatePlansState(createRequestState());
+    setSetupMappingState(createRequestState());
+
+    if (!externalPropertyId) {
+      setSetupRoomTypesState(createRequestState());
+      return;
+    }
+
+    await runRequest({
+      setState: setSetupRoomTypesState,
+      request: () => listChannexRoomTypes({ userId, externalPropertyId }),
+    });
+  };
+
+  const handleSetupRoomTypeChange = async (externalRoomTypeId) => {
+    setSetupSelection((current) => ({
+      ...current,
+      externalRoomTypeId,
+      externalRatePlanId: "",
+    }));
+    setSetupMappingState(createRequestState());
+
+    if (!externalRoomTypeId) {
+      setSetupRatePlansState(createRequestState());
+      return;
+    }
+
+    await runRequest({
+      setState: setSetupRatePlansState,
+      request: () => listChannexRatePlans({ userId, externalRoomTypeId }),
+    });
+  };
+
+  const handleSetupRatePlanChange = (externalRatePlanId) => {
+    setSetupSelection((current) => ({
+      ...current,
+      externalRatePlanId,
+    }));
+    setSetupMappingState(createRequestState());
+  };
+
+  const saveSetupMapping = async () => {
+    const mapping = buildSetupMappingPayload({
+      domitsPropertyId,
+      selection: setupSelection,
+      selectedProperty: selectedSetupProperty,
+      selectedRoomType: selectedSetupRoomType,
+      selectedRatePlan: selectedSetupRatePlan,
+    });
+    const validationMessage = validateSetupMappingPayload(mapping);
+
+    if (validationMessage) {
+      setSetupMappingState({
+        loading: false,
+        error: validationMessage,
+        errorDetails: null,
+        data: null,
+      });
+      return null;
+    }
+
+    const data = await runRequest({
+      setState: setSetupMappingState,
+      request: () => saveChannexSetupMapping({ userId, mapping }),
+    });
+
+    if (data?.readiness) {
+      setTargetsState({
+        loading: false,
+        error: "",
+        errorDetails: null,
+        data: data.readiness,
+      });
+    }
+
+    return data;
+  };
 
   const updateActionState = useCallback((key, updater) => {
     setActionStates((current) => {
@@ -1482,6 +1637,162 @@ function ChannexDiagnosticsPanel({ userId }) {
           </>
         ) : (
           <p className="host-integrations-muted">Status has not loaded yet.</p>
+        )}
+      </SectionCard>
+    </div>
+  );
+
+  const renderSetup = () => (
+    <div className="channex-diagnostics-grid">
+      <SectionCard
+        title="Setup & Connection"
+        description="Admin-only single-unit mapping setup for one Domits property, one Channex property, one room type, and one rate plan."
+      >
+        <div className="host-integrations-field-grid">
+          <label className="host-integrations-field">
+            <span>Setup Domits property ID</span>
+            <input
+              value={domitsPropertyId}
+              onChange={(event) => setDomitsPropertyId(event.target.value)}
+              placeholder="Domits property ID"
+            />
+          </label>
+          <label className="host-integrations-field">
+            <span>Channex property</span>
+            <select
+              value={setupSelection.externalPropertyId}
+              disabled={setupPropertiesState.loading || !setupProperties.length}
+              onChange={(event) => handleSetupPropertyChange(event.target.value)}
+            >
+              <option value="">Select Channex property</option>
+              {setupProperties.map((property) => (
+                <option key={property.externalPropertyId} value={property.externalPropertyId}>
+                  {property.externalPropertyName || property.externalPropertyId}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="host-integrations-field">
+            <span>Channex room type</span>
+            <select
+              value={setupSelection.externalRoomTypeId}
+              disabled={setupRoomTypesState.loading || !setupSelection.externalPropertyId || !setupRoomTypes.length}
+              onChange={(event) => handleSetupRoomTypeChange(event.target.value)}
+            >
+              <option value="">Select Channex room type</option>
+              {setupRoomTypes.map((roomType) => (
+                <option key={roomType.externalRoomTypeId} value={roomType.externalRoomTypeId}>
+                  {roomType.externalRoomTypeName || roomType.externalRoomTypeId}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="host-integrations-field">
+            <span>Channex rate plan</span>
+            <select
+              value={setupSelection.externalRatePlanId}
+              disabled={setupRatePlansState.loading || !setupSelection.externalRoomTypeId || !setupRatePlans.length}
+              onChange={(event) => handleSetupRatePlanChange(event.target.value)}
+            >
+              <option value="">Select Channex rate plan</option>
+              {setupRatePlans.map((ratePlan) => (
+                <option key={ratePlan.externalRatePlanId} value={ratePlan.externalRatePlanId}>
+                  {ratePlan.externalRatePlanName || ratePlan.externalRatePlanId}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="channex-diagnostics-actions">
+          <button
+            type="button"
+            className="host-integrations-secondary-btn"
+            disabled={!userId || setupPropertiesState.loading}
+            onClick={loadChannexResources}
+          >
+            {setupPropertiesState.loading ? "Loading..." : "Load Channex resources"}
+          </button>
+          <button
+            type="button"
+            className="host-integrations-primary-btn"
+            disabled={!userId || setupMappingState.loading}
+            onClick={saveSetupMapping}
+          >
+            {setupMappingState.loading ? "Saving..." : "Save mapping"}
+          </button>
+          <button
+            type="button"
+            className="host-integrations-secondary-btn"
+            disabled={!userId || !hasProperty || targetsState.loading}
+            onClick={loadTargets}
+          >
+            {targetsState.loading ? "Validating..." : "Validate readiness"}
+          </button>
+        </div>
+
+        {setupPropertiesState.loading || setupRoomTypesState.loading || setupRatePlansState.loading ? (
+          <p className="host-integrations-loading">Loading Channex setup resources...</p>
+        ) : null}
+        {setupPropertiesState.error ? (
+          <ErrorCallout error={setupPropertiesState.error} details={setupPropertiesState.errorDetails} />
+        ) : null}
+        {setupRoomTypesState.error ? (
+          <ErrorCallout error={setupRoomTypesState.error} details={setupRoomTypesState.errorDetails} />
+        ) : null}
+        {setupRatePlansState.error ? (
+          <ErrorCallout error={setupRatePlansState.error} details={setupRatePlansState.errorDetails} />
+        ) : null}
+        {setupMappingState.error ? (
+          <ErrorCallout error={setupMappingState.error} details={setupMappingState.errorDetails} />
+        ) : null}
+
+        <DetailGrid
+          items={[
+            { label: "Loaded Channex properties", value: setupProperties.length },
+            { label: "Loaded room types", value: setupRoomTypes.length },
+            { label: "Loaded rate plans", value: setupRatePlans.length },
+            { label: "Selected property", value: selectedSetupProperty?.externalPropertyName || setupSelection.externalPropertyId || "-" },
+            { label: "Selected room type", value: selectedSetupRoomType?.externalRoomTypeName || setupSelection.externalRoomTypeId || "-" },
+            { label: "Selected rate plan", value: selectedSetupRatePlan?.externalRatePlanName || setupSelection.externalRatePlanId || "-" },
+          ]}
+        />
+
+        {setupMappingState.data ? (
+          <>
+            <p className="host-integrations-success-banner">Single-unit Channex mapping saved.</p>
+            <DetailGrid
+              items={[
+                { label: "Integration account", value: setupMappingState.data.integrationAccountId },
+                { label: "Scope", value: setupMappingState.data.scope },
+                { label: "Readiness", value: setupMappingState.data.ready ? "Ready" : "Not ready" },
+                { label: "Readiness status", value: setupMappingState.data.readinessStatusCode ?? "-" },
+              ]}
+            />
+            <JsonBlock title="Saved setup mapping" value={setupMappingState.data.savedMappings} />
+          </>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard
+        title="Current mapping readiness"
+        description="Readiness after setup save, or the latest readiness loaded for the selected Domits property."
+        state={targetsState}
+      >
+        {targetsState.data ? (
+          <>
+            <DetailGrid
+              items={[
+                { label: "Ready", value: targets.ready === true ? "Yes" : "No" },
+                { label: "Domits property", value: targets.domitsPropertyId },
+                { label: "Integration account", value: targets.integrationAccountId },
+                { label: "Missing mappings", value: renderList(targets.missingMappings) },
+              ]}
+            />
+            <JsonBlock title="Readiness response" value={targetsState.data} />
+          </>
+        ) : (
+          <p className="host-integrations-muted">Save mapping or validate readiness to see the current setup result.</p>
         )}
       </SectionCard>
     </div>
@@ -1891,6 +2202,7 @@ function ChannexDiagnosticsPanel({ userId }) {
       </nav>
 
       {activeSection === "overview" ? renderOverview() : null}
+      {activeSection === "setup" ? renderSetup() : null}
       {activeSection === "mappings" ? renderMappings() : null}
       {activeSection === "ari" ? renderAriPreview() : null}
       {activeSection === "evidence" ? renderEvidence() : null}

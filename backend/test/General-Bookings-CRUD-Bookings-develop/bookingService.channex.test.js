@@ -56,27 +56,29 @@ const buildService = ({
   const dependencies = {
     reservationRepository: {
       assertNoBookingConflict: jest.fn(),
-      addBookingToTable: jest.fn().mockResolvedValue({
+      addBookingToTable: jest.fn().mockImplementation(async (requestBody, _userId, hostId) => ({
         statusCode: 201,
-        hostId: "host-1",
+        hostId,
         bookingId: "booking-1",
-        propertyId: "domits-property-1",
+        propertyId: requestBody.identifiers.property_Id,
         dates: {
-          arrivalDate: "2026-06-01",
-          departureDate: "2026-06-03",
+          arrivalDate: requestBody.general.arrivalDate,
+          departureDate: requestBody.general.departureDate,
         },
-      }),
+      })),
       getBookingByPaymentId: jest.fn().mockResolvedValue({
         id: "booking-1",
         status: "Awaiting Payment",
       }),
       updateBookingStatus: jest.fn(),
+      markBookingPaidWithOutbox: jest.fn(),
       getBookingById: jest.fn(),
       updateBookingDates: jest.fn(),
       ...reservationRepository,
     },
     stripeRepository: {
       getPaymentIntentByPaymentId: jest.fn().mockResolvedValue({ status: "succeeded" }),
+      getPaymentByPaymentId: jest.fn().mockResolvedValue({ stripeclientsecret: "secret_1" }),
       ...stripeRepository,
     },
     cognitoRepository: {},
@@ -142,6 +144,7 @@ describe("BookingService Channex booking availability hooks", () => {
     const { service, dependencies } = buildService();
 
     const result = await service.create(buildCreateEvent());
+    const storedRequest = dependencies.reservationRepository.addBookingToTable.mock.calls[0][0];
 
     expect(dependencies.reservationRepository.addBookingToTable).toHaveBeenCalledWith(
       expect.any(Object),
@@ -162,9 +165,95 @@ describe("BookingService Channex booking availability hooks", () => {
         hostid: "host-1",
         guestid: "guest-1",
         status: "Awaiting Payment",
+        arrivaldate: Date.parse("2026-06-01T00:00:00.000Z"),
+        departuredate: Date.parse("2026-06-03T00:00:00.000Z"),
       }),
     });
+    expect(storedRequest.general.arrivalDate).toBe(Date.parse("2026-06-01T00:00:00.000Z"));
+    expect(storedRequest.general.departureDate).toBe(Date.parse("2026-06-03T00:00:00.000Z"));
+    expect(Number.isNaN(storedRequest.general.arrivalDate)).toBe(false);
+    expect(Number.isNaN(storedRequest.general.departureDate)).toBe(false);
     expect(result.channexAvailabilitySync).toEqual(buildEvidence());
+  });
+
+  test("converts valid YYYY-MM-DD dates to millisecond timestamps before storing", async () => {
+    const { service, dependencies } = buildService();
+
+    const result = await service.create(
+      buildCreateEvent({
+        general: {
+          arrivalDate: "2026-06-15",
+          departureDate: "2026-06-17",
+          guests: 2,
+          guestName: "Guest",
+        },
+      })
+    );
+    const storedRequest = dependencies.reservationRepository.addBookingToTable.mock.calls[0][0];
+
+    expect(storedRequest.general.arrivalDate).toBe(Date.parse("2026-06-15T00:00:00.000Z"));
+    expect(storedRequest.general.departureDate).toBe(Date.parse("2026-06-17T00:00:00.000Z"));
+    expect(Number.isNaN(storedRequest.general.arrivalDate)).toBe(false);
+    expect(Number.isNaN(storedRequest.general.departureDate)).toBe(false);
+    expect(result.dates).toEqual({
+      arrivalDate: Date.parse("2026-06-15T00:00:00.000Z"),
+      departureDate: Date.parse("2026-06-17T00:00:00.000Z"),
+    });
+  });
+
+  test("invalid create dates return controlled 400 before storage", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const { service, dependencies } = buildService();
+    const controller = new ReservationController({
+      bookingService: service,
+      paymentService: {
+        create: jest.fn(),
+      },
+    });
+
+    const response = await controller.create({
+      event: buildCreateEvent({
+        general: {
+          arrivalDate: "2026-02-31",
+          departureDate: "2026-06-17",
+          guests: 2,
+          guestName: "Guest",
+        },
+      }),
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.response).toEqual({ message: "arrivalDate is invalid." });
+    expect(dependencies.reservationRepository.addBookingToTable).not.toHaveBeenCalled();
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  test("missing create dates return controlled 400 before storage", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const { service, dependencies } = buildService();
+    const controller = new ReservationController({
+      bookingService: service,
+      paymentService: {
+        create: jest.fn(),
+      },
+    });
+
+    const response = await controller.create({
+      event: buildCreateEvent({
+        general: {
+          departureDate: "2026-06-17",
+          guests: 2,
+          guestName: "Guest",
+        },
+      }),
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.response).toEqual({ message: "arrivalDate is required." });
+    expect(dependencies.reservationRepository.addBookingToTable).not.toHaveBeenCalled();
+    expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   test("direct booking validates host calendar availability before storing and syncing", async () => {
@@ -224,8 +313,42 @@ describe("BookingService Channex booking availability hooks", () => {
 
     await expect(service.confirmPayment("pi_1")).resolves.toBe(true);
 
-    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Paid");
+    expect(dependencies.reservationRepository.markBookingPaidWithOutbox).toHaveBeenCalledWith("booking-1");
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
+  });
+
+  test("getPayment read returns the stored client secret for the booking guest", async () => {
+    const { service, dependencies } = buildService({
+      reservationRepository: {
+        getBookingById: jest.fn().mockResolvedValue({
+          response: {
+            id: "booking-1",
+            guestid: "guest-1",
+            paymentid: "pi_1",
+          },
+        }),
+      },
+      stripeRepository: {
+        getPaymentByPaymentId: jest.fn().mockResolvedValue({
+          stripeclientsecret: "secret_1",
+        }),
+      },
+    });
+
+    const result = await service.read({
+      Authorization: "Bearer guest-token",
+      event: {
+        readType: "getPayment",
+        bookingId: "booking-1",
+      },
+    });
+
+    expect(dependencies.reservationRepository.getBookingById).toHaveBeenCalledWith("booking-1");
+    expect(dependencies.stripeRepository.getPaymentByPaymentId).toHaveBeenCalledWith("pi_1");
+    expect(result).toEqual({
+      statusCode: 200,
+      response: "secret_1",
+    });
   });
 
   test("booking response keeps existing payment fields and adds optional evidence", async () => {

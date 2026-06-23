@@ -6,6 +6,7 @@ import { CognitoRepository } from "../data/repository/cognitoRepository.js";
 import { PropertyRepository } from "../data/repository/propertyRepository.js";
 import { BookingRepository } from "../data/repository/bookingRepository.js";
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
+import { TeamMemberRepository } from "../data/repository/teamMemberRepository.js";
 
 export class AuthManager {
 
@@ -13,12 +14,14 @@ export class AuthManager {
     propertyRepository;
     bookingRepository;
     propertyDraftRepository;
+    teamMemberRepository;
 
     constructor(dynamoDbClient, systemManagerRepository) {
         this.cognitoRepository = new CognitoRepository();
         this.propertyRepository = new PropertyRepository(dynamoDbClient, systemManagerRepository);
         this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
         this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
+        this.teamMemberRepository = new TeamMemberRepository();
     }
 
     async getAuthorizedUser(accessToken) {
@@ -50,6 +53,26 @@ export class AuthManager {
             throw new Forbidden("You must be the owner of the property to access it.")
         }
         return user.Username;
+    }
+
+    async authorizePropertyCalendarOverrideRequest(accessToken, id) {
+        const user = await this.getAuthorizedUser(accessToken);
+        const property = await this.propertyRepository.getPropertyById(id)
+        if (!property) {
+            throw new NotFoundException("Property not found.")
+        }
+        if (property.hostId === user.Username) {
+            return property.hostId;
+        }
+
+        const membership = await this.teamMemberRepository.findActiveMembershipByMemberAndHost(
+            user.Username,
+            property.hostId
+        );
+        if (!membership) {
+            throw new Forbidden("You must be the owner or an active co-host of the property to access it.")
+        }
+        return property.hostId;
     }
 
     async authorizeDraftOwnerRequest(accessToken, draftId) {
