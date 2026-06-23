@@ -1,3 +1,4 @@
+
 import * as api     from "./priceLabsApiClient.js";
 import { verifyPriceLabsSignature } from "./priceLabsWebhookVerifier.js";
 import { Repository }               from "../../data/repository.js";
@@ -146,8 +147,6 @@ export class PriceLabsService {
       ? properties.filter((p) => listingIds.includes(`${hostId.replaceAll("-", "_")}_${p.id.replaceAll("-", "_")}`))
       : properties;
 
-    // Booked dates per property so PriceLabs can distinguish booked nights
-    // (reservations) from blocked nights (host-made unavailable).
     const bookings = await this.repo.getBookingsByHost(hostId);
     const bookedDatesByProperty = _bookedDatesByProperty(bookings);
 
@@ -180,49 +179,32 @@ export class PriceLabsService {
   async pushReservations(hostId) {
     const { token, name } = await this._creds();
     const connection = await this._requireActiveConnection(hostId);
+
     if (!connection.last_listings_sync_at) {
       console.log(`[PriceLabs] pushReservations skipped for host ${hostId}: listings not yet synced.`);
       return { skipped: true, reason: "Listings not yet synced to PriceLabs for this host." };
     }
-    const bookings   = await this.repo.getBookingsByHost(hostId);
 
-    const grouped = {};
-    for (const b of bookings) {
-      const listingId = `${hostId.replaceAll("-", "_")}_${b.property_id.replaceAll("-", "_")}`;
-      if (!grouped[listingId]) {
-        grouped[listingId] = {
-          listing_id: listingId,
-          data:       [],
-        };
-      }
-      const status   = _mapBookingStatus(b.status);
-      const checkin  = _tsToDate(b.arrivaldate);
-      const checkout = _tsToDate(b.departuredate);
-      const entry = {
-        reservation_id: b.id,
-        start_date:     checkin,
-        end_date:       checkout,
-        booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
-        total_days:     _dateDiff(checkin, checkout),
-        total_cost:     b.total_price || 0,
-        currency:       "EUR",
-        status,
-        booking_source: b.booking_source || "direct",
-      };
-      if (status === "canceled") {
-        entry.cancel_time = new Date().toISOString().split("T")[0];
-      }
-      grouped[listingId].data.push(entry);
-    }
+    const [bookings, properties] = await Promise.all([
+      this.repo.getBookingsByHost(hostId),
+      this.repo.getPropertiesByHost(hostId),
+    ]);
+
+    const cleaningFeeByProperty = _cleaningFeeMap(properties);
+    const grouped = _groupReservationsByListing(hostId, bookings, cleaningFeeByProperty);
 
     const reservations = Object.values(grouped);
     const totalCount = reservations.reduce((sum, r) => sum + r.data.length, 0);
+
     console.log(`[PriceLabs] pushReservations for host ${hostId}: ${totalCount} reservation(s) across ${reservations.length} listing(s).`);
+
     if (reservations.length) {
       const pushResult = await api.pushReservations(token, name, reservations);
       const successCount = Array.isArray(pushResult?.success) ? pushResult.success.length : "?";
       const failureCount = Array.isArray(pushResult?.failure) ? pushResult.failure.length : 0;
+
       console.log(`[PriceLabs] pushReservations API result for host ${hostId}: ${successCount} accepted, ${failureCount} failed.`);
+
       if (failureCount > 0) {
         console.error(`[PriceLabs] pushReservations failures for host ${hostId}:`, JSON.stringify(pushResult.failure));
       }
@@ -282,12 +264,12 @@ export class PriceLabsService {
     }
 
     const body = JSON.parse(rawBody || "{}");
-
     const listings = _normalizeListings(body);
 
     for (const listing of listings) {
       const { listing_id, data = [], prices = [] } = listing;
       const entries = data.length ? data : prices;
+
       const parts = listing_id.split("_");
       const propertyId = parts.slice(5).join("-");
 
@@ -369,6 +351,59 @@ export class PriceLabsService {
 function _tsToDate(ts) {
   if (!ts) return null;
   return new Date(Number(ts)).toISOString().split("T")[0];
+}
+
+function _cleaningFeeMap(properties) {
+  const map = {};
+  for (const p of properties) {
+    map[p.id] = p.cleaning_fee == null ? null : Number(p.cleaning_fee);
+  }
+  return map;
+}
+
+function _buildReservationEntry(b, cleaningFeeByProperty) {
+  const status   = _mapBookingStatus(b.status);
+  const checkin  = _tsToDate(b.arrivaldate);
+  const checkout = _tsToDate(b.departuredate);
+
+  const entry = {
+    reservation_id: b.id,
+    start_date:     checkin,
+    end_date:       checkout,
+    booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
+    total_days:     _dateDiff(checkin, checkout),
+    total_cost:     b.total_price || 0,
+    currency:       "EUR",
+    status,
+    booking_source: b.booking_source || "direct",
+  };
+
+  if (b.channel_reservation_id) {
+    entry.channel_reservation_id = b.channel_reservation_id;
+  }
+
+  const cleaningFee = cleaningFeeByProperty[b.property_id];
+  if (cleaningFee != null) {
+    entry.cleaning_fees = cleaningFee;
+  }
+
+  if (status === "canceled") {
+    entry.cancel_time = new Date().toISOString().split("T")[0];
+  }
+
+  return entry;
+}
+
+function _groupReservationsByListing(hostId, bookings, cleaningFeeByProperty) {
+  const grouped = {};
+  for (const b of bookings) {
+    const listingId = `${hostId.replaceAll("-", "_")}_${b.property_id.replaceAll("-", "_")}`;
+    if (!grouped[listingId]) {
+      grouped[listingId] = { listing_id: listingId, data: [] };
+    }
+    grouped[listingId].data.push(_buildReservationEntry(b, cleaningFeeByProperty));
+  }
+  return grouped;
 }
 
 function _normalizeListings(body) {
@@ -454,7 +489,6 @@ const COUNTRY_TO_ALPHA3 = {
   "greece": "GRC", "gr": "GRC",
   "turkey": "TUR", "tr": "TUR",
   "united states": "USA", "us": "USA",
-  // Dutch country names (the Domits UI stores these)
   "nederland": "NLD", "duitsland": "DEU", "belgië": "BEL", "belgie": "BEL",
   "frankrijk": "FRA", "spanje": "ESP", "italië": "ITA", "italie": "ITA",
   "verenigd koninkrijk": "GBR", "oostenrijk": "AUT", "zwitserland": "CHE",

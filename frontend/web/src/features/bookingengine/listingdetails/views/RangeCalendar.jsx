@@ -11,7 +11,6 @@ import {
 } from "../utils/dateAvailability";
 import "../styles/RangeCalendar.scss";
 
-const BOOKED_MESSAGE = "These dates are already booked.";
 const NO_AVAILABILITY_MESSAGE = "This property has no availability for the selected dates.";
 const makeDate = (year, month, day) => new Date(year, month, day);
 const addMonths = (date, offset) => makeDate(date.getFullYear(), date.getMonth() + offset, 1);
@@ -70,7 +69,6 @@ function MonthGrid({
             externalBlockedDateKeys,
           })
         : DATE_AVAILABILITY_REASONS.AVAILABLE;
-      const isBooked = availabilityReason === DATE_AVAILABILITY_REASONS.BOOKED;
       const isExternalBlocked = availabilityReason === DATE_AVAILABILITY_REASONS.EXTERNAL_BLOCKED;
       const isOutsideWindow = availabilityReason === DATE_AVAILABILITY_REASONS.OUTSIDE_WINDOW;
       const isUnavailableOverride = availabilityReason === DATE_AVAILABILITY_REASONS.UNAVAILABLE_OVERRIDE;
@@ -87,7 +85,6 @@ function MonthGrid({
         isStart,
         isEnd,
         isUnavailable,
-        isBooked,
         isExternalBlocked,
         isOutsideWindow,
         isUnavailableOverride,
@@ -145,8 +142,7 @@ function MonthGrid({
               type="button"
               className={[
                 "rc-cell rc-cell--day",
-                cell.isUnavailable && !cell.isBooked && "is-unavailable range-calendar__day--unavailable",
-                cell.isBooked && "is-booked range-calendar__day--booked",
+                cell.isUnavailable && "is-unavailable range-calendar__day--unavailable",
                 cell.isExternalBlocked && "range-calendar__day--external-blocked",
                 cell.isOutsideWindow && "range-calendar__day--outside-window",
                 cell.isUnavailableOverride && "range-calendar__day--unavailable-override",
@@ -162,8 +158,7 @@ function MonthGrid({
               onClick={() => onPick(cell.date)}
             >
               <span>{cell.date.getDate()}</span>
-              {cell.isBooked ? <span className="rc-cell__booked-mark">Booked</span> : null}
-              {cell.isUnavailable && !cell.isBooked ? (
+              {cell.isUnavailable ? (
                 <span className="rc-cell__unavailable-mark" aria-hidden="true">--</span>
               ) : null}
             </button>
@@ -247,9 +242,7 @@ export default function RangeCalendar({
     const key = toDateKey(date);
     const availabilityReason = getDateAvailabilityReason(date, blockedDateKeys, availabilityContext);
     if (availabilityReason !== DATE_AVAILABILITY_REASONS.AVAILABLE) {
-      setSelectionError(
-        availabilityReason === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE
-      );
+      setSelectionError(NO_AVAILABILITY_MESSAGE);
       return;
     }
     setSelectionError("");
@@ -267,7 +260,7 @@ export default function RangeCalendar({
 
     const rangeIssue = getStayRangeAvailabilityIssue(nextStart, nextEnd, blockedDateKeys, availabilityContext);
     if (rangeIssue) {
-      setSelectionError(rangeIssue === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
+      setSelectionError(NO_AVAILABILITY_MESSAGE);
       setDraftStart(date);
       onRangeChange(key, "");
       return;

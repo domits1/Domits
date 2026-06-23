@@ -30,6 +30,10 @@ export const UnifiedThread = new EntitySchema({
       type: "varchar",
       nullable: true,
     },
+    bookingId: {
+      type: "varchar",
+      nullable: true,
+    },
     platform: {
       type: "varchar",
       nullable: false,

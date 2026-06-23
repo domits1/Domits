@@ -34,6 +34,7 @@ import { isValidDate, startOfDay } from "../../utils/dashboardShared";
 import { fetchPropertySummaries } from "./services/propertySummaryService";
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
+const PAY_ROUTE_PREFIX = "/guestdashboard/pay/";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const DISPLAY_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
@@ -325,6 +326,7 @@ const buildReservationContent = ({
   isPageLoading,
   pageError,
   reservation,
+  handleCompletePayment,
   handleMessageHost,
   handleOpenCancelBooking,
 }) => {
@@ -346,7 +348,11 @@ const buildReservationContent = ({
   }
 
   if (reservation) {
-    const isCancelledReservation = normalizeStayStatus(reservation.stay.status) === "Cancelled";
+    const normalizedReservationStatus = String(reservation.stay.status || "").trim().toLowerCase();
+    const isCancelledReservation = normalizedReservationStatus === "cancelled";
+    const isAwaitingInquiryPayment =
+      normalizedReservationStatus === "awaiting payment" &&
+      String(reservation.stay.bookingType || "").trim().toLowerCase() === "inquiry";
 
     return (
       <>
@@ -383,6 +389,16 @@ const buildReservationContent = ({
             <CancellationPolicySection policy={reservation.cancellationPolicy} />
 
             <HouseRules rules={reservation.rules} />
+
+            {isAwaitingInquiryPayment && (
+              <div className="card helpCard">
+                <h3>Complete payment</h3>
+                <p>The host accepted your request. Finish payment to confirm this booking.</p>
+                <button type="button" className="primaryBtn" onClick={handleCompletePayment}>
+                  Continue to payment
+                </button>
+              </div>
+            )}
 
             {normalizeStayStatus(reservation.stay.status) !== "Cancelled" && (
               <div className="card cancelBookingCard">
@@ -473,6 +489,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     },
     stay: {
       bookingId,
+      bookingType: String(booking?.bookingtype ?? booking?.bookingType ?? "direct"),
       reservationId: getReservationNumber(booking),
       status: normalizeStayStatus(booking?.status),
       bookedDate: formatDisplayDate(bookedDate),
@@ -657,13 +674,18 @@ function ReservationDetails() {
   };
 
   const handleMessageHost = () => {
+    const bookingId = reservation?.stay?.bookingId || reservationRouteId || null;
     if (reservation?.host?.id) {
-      navigate("/guestdashboard/messages", {
+      const messagesPath = bookingId
+        ? `/guestdashboard/messages?bookingId=${encodeURIComponent(bookingId)}`
+        : "/guestdashboard/messages";
+      navigate(messagesPath, {
         state: {
           messageContext: {
             contactId: reservation.host.id,
             contactName: reservation.host.name,
             contactImage: reservation.host.image,
+            bookingId,
             propertyId: reservation.property.id,
             propertyTitle: reservation.property.title,
             accoImage: reservation.property.image,
@@ -674,6 +696,16 @@ function ReservationDetails() {
     }
 
     navigate("/guestdashboard/messages");
+  };
+
+  const handleCompletePayment = () => {
+    const bookingId = reservation?.stay?.bookingId;
+    if (!bookingId) {
+      toast.error("This reservation is missing a payment link.");
+      return;
+    }
+
+    navigate(`${PAY_ROUTE_PREFIX}${encodeURIComponent(bookingId)}`);
   };
 
   const handleOpenCancelBooking = () => {
@@ -726,6 +758,7 @@ function ReservationDetails() {
     isPageLoading,
     pageError,
     reservation,
+    handleCompletePayment,
     handleMessageHost,
     handleOpenCancelBooking,
   });

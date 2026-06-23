@@ -3,11 +3,13 @@ import IngestionController from "./controller/ingestionController.js";
 import IntegrationController from "./controller/integrationController.js";
 import MessageController from "./controller/messageController.js";
 import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
+import AutomatedMessageController from "./controller/automatedMessageController.js";
 
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
 const ingestionController = new IngestionController();
 const whatsAppWebhookController = new WhatsAppWebhookController();
+const automatedMessageController = new AutomatedMessageController();
 const notFound = { statusCode: 404, response: "Not Found" };
 const internalError = { statusCode: 500, response: "Internal Server Error" };
 const corsHeaders = {
@@ -207,6 +209,27 @@ const findRouteHandler = (httpMethod, path) =>
     ?.handle || null;
 
 export const handler = async (event) => {
+  if (
+    event?.source === "domits.automated-messaging" &&
+    event?.action === "SEND_AUTOMATED_DOMITS_MESSAGE"
+  ) {
+    try {
+      return createLambdaResponse(await automatedMessageController.send(event));
+    } catch (error) {
+      console.error("Internal automated message delivery failed", {
+        code: error?.code || error?.name || "INTERNAL_ERROR",
+        statusCode: error?.statusCode || 500,
+      });
+      return createLambdaResponse({
+        statusCode: error?.statusCode || 500,
+        response: {
+          error: error?.code || "INTERNAL_ERROR",
+          message: error?.statusCode ? error.message : "Internal Server Error",
+        },
+      });
+    }
+  }
+
   const channelResponse = await handleChannelManagementEvent(event);
   if (channelResponse) return channelResponse;
 
@@ -221,6 +244,15 @@ export const handler = async (event) => {
     return createLambdaResponse(await routeHandler(event));
   } catch (error) {
     console.error("Error in handler:", error);
+    if (error?.statusCode) {
+      return createLambdaResponse({
+        statusCode: error.statusCode,
+        response: {
+          error: error.code || "REQUEST_FAILED",
+          message: error.message,
+        },
+      });
+    }
     return createLambdaResponse(internalError);
   }
 };
