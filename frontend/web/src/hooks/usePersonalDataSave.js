@@ -18,7 +18,10 @@ export default function usePersonalDataSave({
     const saveAll = async () => {
         const saves = [];
 
-        if ((tempUser.name || "").trim() !== (user.name || "").trim()) {
+        if (
+            (tempUser.firstName || "").trim() !== (user.firstName || "").trim() ||
+            (tempUser.lastName || "").trim() !== (user.lastName || "").trim()
+        ) {
             saves.push(onSaveUserName());
         }
         if ((tempUser.email || "").trim() !== (user.email || "").trim()) {

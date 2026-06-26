@@ -351,6 +351,106 @@
     }
   },
   "about": {
+    "redesign": {
+      "eyebrow": "Waarom Domits",
+      "hero": {
+        "line1": "Wij geloven dat reizen",
+        "line2": "",
+        "highlight": "simpel, eerlijk en menselijk",
+        "suffix": " moet zijn."
+      },
+      "features": {
+        "fairHosts": "Eerlijk voor hosts",
+        "securePayments": "Veilige betalingen",
+        "humanSupport": "Menselijke support",
+        "aiTools": "AI-gedreven tools"
+      },
+      "mission": {
+        "label": "Onze missie",
+        "titleStart": "Wij versterken ",
+        "titleHighlight": "betekenisvolle",
+        "titleEnd": " reisverbindingen.",
+        "description": "Wij maken reizen simpel voor gasten en duurzamer voor hosts.",
+        "cta": "Lees meer over ons",
+        "meetTheTeam": "Ontmoet het team"
+      },
+      "effortless": "Gebouwd om hosten en reizen moeiteloos te maken.",
+      "pills": {
+        "instantBooking": "Direct boeken",
+        "smartTools": "Slimme tools",
+        "securePayments": "Veilige betalingen"
+      },
+      "techBand": {
+        "title": "Technologie met een doel.",
+        "aiTools": "AI-gedreven tools",
+        "humanSupport": "Menselijke support",
+        "sustainableTravel": "Duurzaam reizen"
+      },
+      "stats": {
+        "countriesValue": "50+",
+        "countriesLabel": "Landen",
+        "guestsValue": "2K+",
+        "guestsLabel": "Tevreden gasten",
+        "ratingValue": "4.8/5",
+        "ratingLabel": "Gemiddelde beoordeling"
+      },
+      "cta": {
+        "title": "Laten we samen de toekomst van reizen bouwen.",
+        "explore": "Ontdek verblijven",
+        "list": "Verhuur je accommodatie"
+      }
+    },
+    "aboutPage": {
+      "eyebrow": "Over Domits",
+      "hero": {
+        "line1": "Reispartnerschappen",
+        "highlight": "op maat."
+      },
+      "team": {
+        "title": "Ontmoet het team",
+        "subtitle": "Gepassioneerde reizigers en tech-innovators die de toekomst van gastvrijheid bouwen",
+        "moreMembers": "+32 leden",
+        "members": [
+          { "name": "Stefan Hopman", "role": "Oprichter" },
+          { "name": "Robert Hopman", "role": "Engineering Manager" },
+          { "name": "Chiel van Heerwaarden", "role": "Ontwikkelaar" }
+        ]
+      },
+      "stats": [
+        { "icon": "globe", "value": "+10", "label": "Nationaliteiten" },
+        { "icon": "users", "value": "+35", "label": "Teamleden" },
+        { "icon": "laptop", "value": "Remote-first", "label": "Werk van overal" },
+        { "icon": "handHeart", "value": "People-first", "label": "Cultuur die geeft om mensen" }
+      ],
+      "cards": {
+        "featured": {
+          "title": "De toekomst van reizen bouwen",
+          "description": "We bedenken opnieuw hoe mensen reizen ontdekken, boeken en beleven. Doe met ons mee in het creëren van technologie die de wereld dichter bij elkaar brengt.",
+          "tags": ["Wereldwijde impact", "Innovatie voorop"]
+        },
+        "partnerSuccess": {
+          "title": "Succes voor partners",
+          "description": "Wij groeien wanneer onze partners groeien. Krijg toegang tot tools, inzichten en ondersteuning om jouw succes te maximaliseren.",
+          "link": "Lees meer"
+        },
+        "culture": {
+          "title": "Cultuur die geeft om mensen",
+          "description": "Remote-first, inclusief en menselijk. Wij geven prioriteit aan werk-privébalans en betekenisvolle impact.",
+          "tags": ["Remote", "Flexibel", "Wereldwijd"]
+        },
+        "openPositions": {
+          "title": "Openstaande functies",
+          "description": "We nemen mensen aan binnen engineering, product, design en partnerschappen.",
+          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+        }
+      },
+      "join": {
+        "title": "Sluit je aan bij onze missie",
+        "description": "Of je nu innovatieve producten wilt bouwen, je verhuurbedrijf wilt laten groeien of deel wilt uitmaken van een wereldwijd team — er is een plek voor jou bij DOMITS.",
+        "viewRoles": "Bekijk vacatures",
+        "partner": "Word partner"
+      }
+    },
     "title": "Over Domits",
     "description": "Reispartners op maat",
     "mission": {
@@ -586,6 +686,29 @@
   "howItWorksContent": {
     "title": "Hoe Domits Werkt",
     "subtitle": "Ontdek hoe Domits het gemakkelijk maakt voor zowel gasten als hosts.",
+    "redesign": {
+      "eyebrow": "Hoe het werkt",
+      "heroStart": "Reizen en hosten gemaakt ",
+      "heroHighlight": "eenvoudig.",
+      "guests": {
+        "eyebrow": "Voor gasten",
+        "heading": "Vind je perfecte verblijf in 3 eenvoudige stappen",
+        "steps": [
+          { "title": "Zoek je bestemming", "description": "Ontdek vakantieverhuur met slimme filters voor locatie, datums, prijs en voorzieningen." },
+          { "title": "Boek je verblijf", "description": "Kies je favoriete accommodatie en bevestig je boeking in slechts een paar klikken." },
+          { "title": "Beleef Domits", "description": "Stuur je host een bericht, beheer je reis en geniet van persoonlijke ondersteuning." }
+        ]
+      },
+      "hosts": {
+        "eyebrow": "Voor hosts",
+        "heading": "Laat je verhuurbedrijf moeiteloos groeien",
+        "steps": [
+          { "title": "Plaats je accommodatie", "description": "Voeg foto's, beschrijving en voorzieningen toe en stel in enkele minuten je prijs en beschikbaarheid in." },
+          { "title": "Beheer boekingen", "description": "Volg boekingen, beheer je agenda en communiceer eenvoudig met gasten." },
+          { "title": "Word veilig betaald", "description": "Ontvang betalingen veilig en volg je inkomsten en inzichten in realtime." }
+        ]
+      }
+    },
     "guest": {
       "title": "Gasten",
       "destination": {
@@ -1015,6 +1138,8 @@
       },
       "fields": {
         "fullName": "Volledige naam",
+        "firstName": "Voornaam",
+        "lastName": "Achternaam",
         "title": "Aanspreektitel",
         "selectTitle": "Selecteer aanspreektitel",
         "email": "E-mail",

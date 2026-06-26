@@ -37,10 +37,25 @@ describe("AutomatedMessaging HTTP authorization responses", () => {
     });
   });
 
-  test("keeps OPTIONS unauthenticated", async () => {
-    const response = await handler({ httpMethod: "OPTIONS", path: "/automations" });
+  test("keeps OPTIONS unauthenticated with acceptance CORS headers", async () => {
+    const response = await handler({
+      httpMethod: "OPTIONS",
+      path: "/automations",
+      headers: {
+        Origin: "https://acceptance.domits.com",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "authorization,content-type",
+      },
+    });
 
     expect(response.statusCode).toBe(200);
+    expect(response.headers).toEqual(
+      expect.objectContaining({
+        "Access-Control-Allow-Origin": "https://acceptance.domits.com",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "Authorization,Content-Type",
+      })
+    );
     expect(parseBody(response)).toBeNull();
   });
 

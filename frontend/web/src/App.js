@@ -31,6 +31,7 @@ import HostVerificationView from "./features/verification/hostverification/HostV
 import PhoneNumberView from "./features/verification/hostverification/HostVerifyPhoneNumber.js";
 import PhoneNumberConfirmView from "./features/verification/hostverification/HostVerifyPhoneNumberConfirm.js";
 import About from "./pages/about/About";
+import Team from "./pages/about/Team";
 import Careers from "./pages/careers/Careers";
 import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
@@ -220,6 +221,7 @@ function App() {
                   <Route path="/home" element={<Home searchResults={searchResults} searchInProgress={loading} />} />
                   <Route path="/" element={isDirectBookingWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/team" element={<Team />} />
                   <Route path="/data-safety" element={<Datasafety />} />
                   <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
                   <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
