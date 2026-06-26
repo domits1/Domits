@@ -31,6 +31,8 @@
 
 //about
 @use "pages/about/about";
+@use "pages/about/about-page";
+@use "pages/about/team";
 
 
 //productupdates
@@ -44,7 +46,7 @@
 @use "pages/whydomits/whydomits";
 
 //howitworks
-@use "pages/howitworks/howitworks.scss";
+@use "pages/howitworks/howitworks-redesign.scss";
 
 //security
 @use "pages/security/security.scss";

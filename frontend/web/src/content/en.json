@@ -361,6 +361,106 @@
     }
   },
   "about": {
+    "redesign": {
+      "eyebrow": "Why Domits",
+      "hero": {
+        "line1": "We believe travel",
+        "line2": "should be ",
+        "highlight": "simple, fair and human.",
+        "suffix": ""
+      },
+      "features": {
+        "fairHosts": "Fair for hosts",
+        "securePayments": "Secure payments",
+        "humanSupport": "Human support",
+        "aiTools": "AI-powered tools"
+      },
+      "mission": {
+        "label": "Our mission",
+        "titleStart": "Empowering ",
+        "titleHighlight": "meaningful",
+        "titleEnd": " travel connections.",
+        "description": "We make travel simple for guests and more sustainable for hosts.",
+        "cta": "Learn more about us",
+        "meetTheTeam": "Meet the team"
+      },
+      "effortless": "Built to make hosting and traveling feel effortless.",
+      "pills": {
+        "instantBooking": "Instant booking",
+        "smartTools": "Smart tools",
+        "securePayments": "Secure payments"
+      },
+      "techBand": {
+        "title": "Technology with purpose.",
+        "aiTools": "AI-powered tools",
+        "humanSupport": "Human support",
+        "sustainableTravel": "Sustainable travel"
+      },
+      "stats": {
+        "countriesValue": "50+",
+        "countriesLabel": "Countries",
+        "guestsValue": "2K+",
+        "guestsLabel": "Happy guests",
+        "ratingValue": "4.8/5",
+        "ratingLabel": "Average rating"
+      },
+      "cta": {
+        "title": "Let's build the future of travel together.",
+        "explore": "Explore stays",
+        "list": "List your property"
+      }
+    },
+    "aboutPage": {
+      "eyebrow": "About Domits",
+      "hero": {
+        "line1": "Tailor-made travel",
+        "highlight": "partnerships."
+      },
+      "team": {
+        "title": "Meet the team",
+        "subtitle": "Passionate travelers and tech innovators building the future of hospitality",
+        "moreMembers": "+32 members",
+        "members": [
+          { "name": "Stefan Hopman", "role": "Founder" },
+          { "name": "Robert Hopman", "role": "Engineering Manager" },
+          { "name": "Chiel van Heerwaarden", "role": "Developer" }
+        ]
+      },
+      "stats": [
+        { "icon": "globe", "value": "+10", "label": "Nationalities" },
+        { "icon": "users", "value": "+35", "label": "Team members" },
+        { "icon": "laptop", "value": "Remote-first", "label": "Work from anywhere" },
+        { "icon": "handHeart", "value": "People-first", "label": "Culture that cares" }
+      ],
+      "cards": {
+        "featured": {
+          "title": "Building the future of travel",
+          "description": "We're reimagining how people discover, book, and experience travel. Join us in creating technology that brings the world closer together.",
+          "tags": ["Global Impact", "Innovation First"]
+        },
+        "partnerSuccess": {
+          "title": "Partner success",
+          "description": "We grow when our partners grow. Access tools, insights, and support to maximize your success.",
+          "link": "Learn more"
+        },
+        "culture": {
+          "title": "Culture that cares",
+          "description": "Remote-first, inclusive, and human. We prioritize work-life balance and meaningful impact.",
+          "tags": ["Remote", "Flexible", "Global"]
+        },
+        "openPositions": {
+          "title": "Open positions",
+          "description": "We're hiring across engineering, product, design, and partnerships.",
+          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+        }
+      },
+      "join": {
+        "title": "Join our mission",
+        "description": "Whether you're looking to build innovative products, grow your property business, or be part of a global team — there's a place for you at DOMITS.",
+        "viewRoles": "View open roles",
+        "partner": "Partner with us"
+      }
+    },
     "title": "About Domits",
     "description": "Tailor-made travel partnerships",
     "mission": {
@@ -596,6 +696,29 @@
   "howItWorksContent": {
     "title": "How Domits Works",
     "subtitle": "Discover how Domits makes it easy for both guests and hosts.",
+    "redesign": {
+      "eyebrow": "How it works",
+      "heroStart": "Travel and hosting made ",
+      "heroHighlight": "simple.",
+      "guests": {
+        "eyebrow": "For guests",
+        "heading": "Find your perfect stay in 3 easy steps",
+        "steps": [
+          { "title": "Search your destination", "description": "Explore vacation rentals using smart filters for location, dates, price, and amenities." },
+          { "title": "Book your stay", "description": "Choose your preferred accommodation and confirm your booking in just a few clicks." },
+          { "title": "Experience Domits", "description": "Message your host, manage your trip, and enjoy personalized support." }
+        ]
+      },
+      "hosts": {
+        "eyebrow": "For hosts",
+        "heading": "Grow your hosting business with ease",
+        "steps": [
+          { "title": "List your property", "description": "Add photos, description, amenities and set your price and availability in minutes." },
+          { "title": "Manage bookings", "description": "Track bookings, manage your calendar and communicate with guests easily." },
+          { "title": "Get paid securely", "description": "Receive payments safely and track your earnings and insights in real time." }
+        ]
+      }
+    },
     "guest": {
       "title": "Guests",
       "destination": {
@@ -1025,6 +1148,8 @@
       },
       "fields": {
         "fullName": "Full name",
+        "firstName": "First name",
+        "lastName": "Last name",
         "title": "Title",
         "selectTitle": "Select title",
         "email": "Email",

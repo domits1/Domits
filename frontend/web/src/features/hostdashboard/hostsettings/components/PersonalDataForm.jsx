@@ -179,15 +179,28 @@ const PersonalDataForm = ({
 
                     <div className="personal-data-fields-col">
                         <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-name">{t.fields.fullName}</label>
+                            <label className="pd-field-label" htmlFor="pd-first-name">{t.fields.firstName}</label>
                             <input
-                                id="pd-name"
+                                id="pd-first-name"
                                 type="text"
-                                name="name"
-                                value={tempUser.name || ""}
+                                name="firstName"
+                                value={tempUser.firstName || ""}
                                 onChange={onInputChange}
                                 className="pd-field-input"
-                                placeholder={t.fields.fullName}
+                                placeholder={t.fields.firstName}
+                            />
+                        </div>
+
+                        <div className="pd-field">
+                            <label className="pd-field-label" htmlFor="pd-last-name">{t.fields.lastName}</label>
+                            <input
+                                id="pd-last-name"
+                                type="text"
+                                name="lastName"
+                                value={tempUser.lastName || ""}
+                                onChange={onInputChange}
+                                className="pd-field-input"
+                                placeholder={t.fields.lastName}
                             />
                         </div>
 

@@ -362,6 +362,106 @@
     }
   },
   "about": {
+    "redesign": {
+      "eyebrow": "Warum Domits",
+      "hero": {
+        "line1": "Wir glauben, dass Reisen",
+        "line2": "",
+        "highlight": "einfach, fair und menschlich",
+        "suffix": " sein sollte."
+      },
+      "features": {
+        "fairHosts": "Fair für Gastgeber",
+        "securePayments": "Sichere Zahlungen",
+        "humanSupport": "Menschlicher Support",
+        "aiTools": "KI-gestützte Tools"
+      },
+      "mission": {
+        "label": "Unsere Mission",
+        "titleStart": "Wir fördern ",
+        "titleHighlight": "bedeutungsvolle",
+        "titleEnd": " Reiseverbindungen.",
+        "description": "Wir machen Reisen einfach für Gäste und nachhaltiger für Gastgeber.",
+        "cta": "Mehr über uns erfahren",
+        "meetTheTeam": "Lerne das Team kennen"
+      },
+      "effortless": "Entwickelt, damit sich Gastgeben und Reisen mühelos anfühlen.",
+      "pills": {
+        "instantBooking": "Sofortbuchung",
+        "smartTools": "Smarte Tools",
+        "securePayments": "Sichere Zahlungen"
+      },
+      "techBand": {
+        "title": "Technologie mit Sinn.",
+        "aiTools": "KI-gestützte Tools",
+        "humanSupport": "Menschlicher Support",
+        "sustainableTravel": "Nachhaltiges Reisen"
+      },
+      "stats": {
+        "countriesValue": "50+",
+        "countriesLabel": "Länder",
+        "guestsValue": "2K+",
+        "guestsLabel": "Zufriedene Gäste",
+        "ratingValue": "4.8/5",
+        "ratingLabel": "Durchschnittliche Bewertung"
+      },
+      "cta": {
+        "title": "Lass uns gemeinsam die Zukunft des Reisens gestalten.",
+        "explore": "Unterkünfte entdecken",
+        "list": "Unterkunft anbieten"
+      }
+    },
+    "aboutPage": {
+      "eyebrow": "Über Domits",
+      "hero": {
+        "line1": "Maßgeschneiderte",
+        "highlight": "Reisepartnerschaften."
+      },
+      "team": {
+        "title": "Lerne das Team kennen",
+        "subtitle": "Leidenschaftliche Reisende und Tech-Innovatoren, die die Zukunft der Gastfreundschaft gestalten",
+        "moreMembers": "+32 Mitglieder",
+        "members": [
+          { "name": "Stefan Hopman", "role": "Gründer" },
+          { "name": "Robert Hopman", "role": "Engineering Manager" },
+          { "name": "Chiel van Heerwaarden", "role": "Entwickler" }
+        ]
+      },
+      "stats": [
+        { "icon": "globe", "value": "+10", "label": "Nationalitäten" },
+        { "icon": "users", "value": "+35", "label": "Teammitglieder" },
+        { "icon": "laptop", "value": "Remote-first", "label": "Arbeite von überall" },
+        { "icon": "handHeart", "value": "People-first", "label": "Kultur, die sich kümmert" }
+      ],
+      "cards": {
+        "featured": {
+          "title": "Die Zukunft des Reisens gestalten",
+          "description": "Wir denken neu, wie Menschen Reisen entdecken, buchen und erleben. Gestalte mit uns Technologie, die die Welt näher zusammenbringt.",
+          "tags": ["Globale Wirkung", "Innovation zuerst"]
+        },
+        "partnerSuccess": {
+          "title": "Erfolg für Partner",
+          "description": "Wir wachsen, wenn unsere Partner wachsen. Erhalte Zugang zu Tools, Einblicken und Unterstützung, um deinen Erfolg zu maximieren.",
+          "link": "Mehr erfahren"
+        },
+        "culture": {
+          "title": "Kultur, die sich kümmert",
+          "description": "Remote-first, inklusiv und menschlich. Wir legen Wert auf Work-Life-Balance und sinnvolle Wirkung.",
+          "tags": ["Remote", "Flexibel", "Global"]
+        },
+        "openPositions": {
+          "title": "Offene Stellen",
+          "description": "Wir stellen in den Bereichen Engineering, Produkt, Design und Partnerschaften ein.",
+          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+        }
+      },
+      "join": {
+        "title": "Werde Teil unserer Mission",
+        "description": "Ob du innovative Produkte entwickeln, dein Vermietungsgeschäft ausbauen oder Teil eines globalen Teams sein möchtest — bei DOMITS ist ein Platz für dich.",
+        "viewRoles": "Offene Stellen ansehen",
+        "partner": "Partner werden"
+      }
+    },
     "title": "Über Domits",
     "description": "Maßgeschneiderte Reisepartnerschaften",
     "mission": {
@@ -597,6 +697,29 @@
   "howItWorksContent": {
     "title": "Wie Domits Funktioniert",
     "subtitle": "Erfahre, wie Domits es sowohl Gästen als auch Gastgebern leicht macht.",
+    "redesign": {
+      "eyebrow": "Wie es funktioniert",
+      "heroStart": "Reisen und Gastgeben ganz ",
+      "heroHighlight": "einfach.",
+      "guests": {
+        "eyebrow": "Für Gäste",
+        "heading": "Finde deine perfekte Unterkunft in 3 einfachen Schritten",
+        "steps": [
+          { "title": "Suche dein Reiseziel", "description": "Entdecke Ferienunterkünfte mit smarten Filtern für Ort, Daten, Preis und Ausstattung." },
+          { "title": "Buche deinen Aufenthalt", "description": "Wähle deine bevorzugte Unterkunft und bestätige deine Buchung mit nur wenigen Klicks." },
+          { "title": "Erlebe Domits", "description": "Schreibe deinem Gastgeber, verwalte deine Reise und genieße persönliche Unterstützung." }
+        ]
+      },
+      "hosts": {
+        "eyebrow": "Für Gastgeber",
+        "heading": "Lass dein Vermietungsgeschäft mühelos wachsen",
+        "steps": [
+          { "title": "Inseriere deine Unterkunft", "description": "Füge Fotos, Beschreibung und Ausstattung hinzu und lege in wenigen Minuten Preis und Verfügbarkeit fest." },
+          { "title": "Verwalte Buchungen", "description": "Verfolge Buchungen, verwalte deinen Kalender und kommuniziere mühelos mit Gästen." },
+          { "title": "Werde sicher bezahlt", "description": "Erhalte Zahlungen sicher und verfolge deine Einnahmen und Einblicke in Echtzeit." }
+        ]
+      }
+    },
     "guest": {
       "title": "Gäste",
       "destination": {
@@ -1026,6 +1149,8 @@
       },
       "fields": {
         "fullName": "Vollständiger Name",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
         "title": "Anrede",
         "selectTitle": "Anrede auswählen",
         "email": "E-Mail",
