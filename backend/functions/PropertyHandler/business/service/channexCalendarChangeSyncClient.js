@@ -9,6 +9,10 @@ export const CHANNEX_CALENDAR_CHANGE_SYNC_FAILED = "CHANNEX_CALENDAR_CHANGE_SYNC
 
 const lambdaClient = new LambdaClient({ region: REGION });
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+const resolveDefaultFunctionName = () =>
+    process.env.CHANNEL_MANAGEMENT_FUNCTION_NAME ||
+    process.env.UNIFIED_MESSAGING_FUNCTION_NAME ||
+    DEFAULT_UNIFIED_MESSAGING_FUNCTION_NAME;
 
 const buildFallbackError = ({ code, message, httpStatus }) => ({
     code,
@@ -58,7 +62,7 @@ const createCalendarChangeFailureEvidence = ({ payload, error }) =>
     });
 
 export default class ChannexCalendarChangeSyncClient {
-    constructor({ lambda = lambdaClient, functionName = process.env.UNIFIED_MESSAGING_FUNCTION_NAME } = {}) {
+    constructor({ lambda = lambdaClient, functionName = resolveDefaultFunctionName() } = {}) {
         this.lambda = lambda;
         this.functionName = functionName || DEFAULT_UNIFIED_MESSAGING_FUNCTION_NAME;
     }
