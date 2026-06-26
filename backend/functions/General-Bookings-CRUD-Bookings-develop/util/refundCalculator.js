@@ -20,6 +20,21 @@ const REFUND_POLICIES = {
     { minimumMsBeforeArrival: 7 * DAY_IN_MS, refundPercentage: 0.5 },
     { minimumMsBeforeArrival: 0, refundPercentage: 0 },
   ],
+  "semi-strict": [
+    { minimumMsBeforeArrival: 60 * DAY_IN_MS, refundPercentage: 1 },
+    { minimumMsBeforeArrival: 0, refundPercentage: 0 },
+  ],
+  strict: [
+    { minimumMsBeforeArrival: 90 * DAY_IN_MS, refundPercentage: 1 },
+    { minimumMsBeforeArrival: 0, refundPercentage: 0 },
+  ],
+  "super-strict": [
+    { minimumMsBeforeArrival: 180 * DAY_IN_MS, refundPercentage: 1 },
+    { minimumMsBeforeArrival: 0, refundPercentage: 0 },
+  ],
+  "non-refundable": [
+    { minimumMsBeforeArrival: 0, refundPercentage: 0 },
+  ],
 };
 
 function normalizePolicy(policy) {
@@ -47,7 +62,8 @@ function getRefundPercentage(policy, arrivalDate, cancellationDate = new Date())
   const tiers = REFUND_POLICIES[normalizedPolicy];
 
   if (!tiers) {
-    throw new Error(`Unsupported cancellation policy: ${policy}`);
+    console.error(`Unknown cancellation policy: ${policy}. Defaulting to 0% refund.`);
+    return 0;
   }
 
   const arrival = parseDate(arrivalDate, "arrivalDate");
