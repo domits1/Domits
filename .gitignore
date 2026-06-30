@@ -1,6 +1,7 @@
 # Node modules
 node_modules/
 package-lock.json
+!frontend/web/package-lock.json
 
 # Mac system files
 .DS_Store
