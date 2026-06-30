@@ -57,6 +57,7 @@ amplifytools.xcconfig
 # amplify-do-not-edit-end
 
 package-lock.json
+!package-lock.json
 
 
 # Compiled SCSS output

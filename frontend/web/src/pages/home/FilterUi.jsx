@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import Slider from '@mui/material/Slider';
 import { LanguageContext } from '../../context/LanguageContext';
@@ -220,7 +221,7 @@ const FilterUi = ({ onFilterApplied }) => {
         </button>
       </div>
 
-      {amenitiesModalOpen && (
+      {amenitiesModalOpen && createPortal(
         <div className="filter-amenities-modal-overlay">
           <button
             type="button"
@@ -262,7 +263,8 @@ const FilterUi = ({ onFilterApplied }) => {
               </button>
             </div>
           </dialog>
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className="filter-section">

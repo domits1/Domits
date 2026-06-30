@@ -6,9 +6,6 @@ import Pricing from "../components/pricing";
 import useHandleReservePress from "../hooks/handleReservePress";
 import {
   buildUnavailableDateSet,
-  DATE_AVAILABILITY_REASONS,
-  getDateAvailabilityReason,
-  getStayRangeAvailabilityIssue,
   hasUnavailableDateInStayRange,
   isUnavailableDate,
 } from "../utils/dateAvailability";
@@ -17,6 +14,7 @@ import {
   parseCancellationPolicyString,
   parseCancellationPolicy,
 } from "../../../../utils/policyDisplayUtils";
+import SkeletonBlock from "../components/SkeletonBlock";
 
 import { UserProvider } from "../../../hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../../hostdashboard/hostmessages/context/webSocketContext";
@@ -26,7 +24,6 @@ import ChatScreen from "../../../../components/messages/ChatScreen";
 import "../../../../components/messages/messagesV2.scss";
 
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
-const BOOKED_MESSAGE = "These dates are already booked.";
 const NO_AVAILABILITY_MESSAGE = "This property has no availability for the selected dates.";
 
 const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyId }) => {
@@ -169,6 +166,7 @@ const BookingContainer = ({
   setCheckOutDate = () => {},
   showMessageHost: showMessageHostProp,
   setShowMessageHost: setShowMessageHostProp,
+  isLoading = false,
 }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
@@ -283,9 +281,8 @@ const BookingContainer = ({
       return;
     }
 
-    const availabilityReason = getDateAvailabilityReason(value, unavailableDateSet, availabilityContext);
-    if (availabilityReason !== DATE_AVAILABILITY_REASONS.AVAILABLE) {
-      alert(availabilityReason === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
+    if (isUnavailableDate(value, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -294,10 +291,8 @@ const BookingContainer = ({
       return;
     }
 
-    const rangeIssue =
-      checkOutDate && getStayRangeAvailabilityIssue(value, checkOutDate, unavailableDateSet, availabilityContext);
-    if (rangeIssue) {
-      alert(rangeIssue === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
+    if (checkOutDate && hasUnavailableDateInStayRange(value, checkOutDate, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -320,9 +315,8 @@ const BookingContainer = ({
       return;
     }
 
-    const rangeIssue = getStayRangeAvailabilityIssue(checkInDate, value, unavailableDateSet, availabilityContext);
-    if (rangeIssue) {
-      alert(rangeIssue === DATE_AVAILABILITY_REASONS.BOOKED ? BOOKED_MESSAGE : NO_AVAILABILITY_MESSAGE);
+    if (hasUnavailableDateInStayRange(checkInDate, value, unavailableDateSet, availabilityContext)) {
+      alert(NO_AVAILABILITY_MESSAGE);
       return;
     }
 
@@ -359,6 +353,37 @@ const BookingContainer = ({
       adults + kids
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="listing-booking-card" ref={bookingCardRef} aria-busy="true">
+        <div className="listing-booking-card__price-header">
+          <SkeletonBlock width={96} height={28} />
+          <SkeletonBlock width={72} height={16} />
+        </div>
+        <div className="date-container">
+          <div className="date-box">
+            <SkeletonBlock width={68} height={12} style={{ marginBottom: 8 }} />
+            <SkeletonBlock width="82%" height={18} />
+          </div>
+          <div className="date-box">
+            <SkeletonBlock width={76} height={12} style={{ marginBottom: 8 }} />
+            <SkeletonBlock width="82%" height={18} />
+          </div>
+        </div>
+        <div className="guests-container">
+          <div className="guests-summary">
+            <SkeletonBlock width="70%" height={18} />
+          </div>
+        </div>
+        <div className="pricing-container">
+          <SkeletonBlock width="100%" height={16} style={{ marginBottom: 10 }} />
+          <SkeletonBlock width="88%" height={16} />
+        </div>
+        <SkeletonBlock width="100%" height={44} borderRadius={10} />
+      </div>
+    );
+  }
 
   return (
     <div className="listing-booking-card" ref={bookingCardRef}>
@@ -502,6 +527,7 @@ BookingContainer.propTypes = {
   setCheckOutDate: PropTypes.func,
   showMessageHost: PropTypes.bool,
   setShowMessageHost: PropTypes.func,
+  isLoading: PropTypes.bool,
 };
 
 export default BookingContainer;

@@ -1,0 +1,227 @@
+{
+  "main": {
+    "id": "374658ad538b4761",
+    "type": "split",
+    "children": [
+      {
+        "id": "42cecefb73154f67",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "48d8837e8a5ef516",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "2b8042231aa27e09",
+    "type": "split",
+    "children": [
+      {
+        "id": "b92673bd6f75008c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "35b3b20ff232d8fc",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "e217a0c21dca0366",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "6815f4c45e1b5d15",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 270.5
+  },
+  "right": {
+    "id": "6ba40acca4748121",
+    "type": "split",
+    "children": [
+      {
+        "id": "b545a6802dff515c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d6c8f6862358c694",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "5dbe64befa1309dc",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "e12a9d12fde814ba",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "84befb7b03344cc0",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "4605dc1f01086ca3",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "48d8837e8a5ef516",
+  "lastOpenFiles": [
+    "01_Foundation/AI_Context_Workflow.md",
+    "01_Foundation/Vault_Color_Legend.md",
+    "02_Codex_Context/Active_Feature_Tasks.md",
+    "01_Foundation/PR_Review_Workflow.md",
+    "03_Capabilities/Agentic AI.md",
+    "03_Capabilities/Tasks.md",
+    "README.md",
+    "Untitled.md",
+    "03_Capabilities/Untitled.base",
+    "02_Codex_Context/Direct_Booking_Website_Current_Task.md",
+    "02_Codex_Context/Decisions_Log.md",
+    "03_Capabilities/Quality Assurance.md",
+    "03_Capabilities/Compliance, trust & security.md",
+    "03_Capabilities/Guest Experience.md",
+    "03_Capabilities/Integrations Marketplace.md",
+    "03_Capabilities/Settings guest & host.md",
+    "03_Capabilities/Business Intelligence.md",
+    "03_Capabilities/Reviews.md",
+    "03_Capabilities/Finance & Accounting.md",
+    "03_Capabilities/Revenue Manager.md",
+    "03_Capabilities/Channel Manager.md",
+    "03_Capabilities/Central Reservation System.md",
+    "03_Capabilities/Listing Management.md",
+    "02_Codex_Context/Session_Summary.md",
+    "03_Capabilities/Host_Reservation_Details_Repo_Sources.md",
+    "01_Foundation/Vault_Context_Architecture.md",
+    "01_Foundation/Testing_Guidance.md",
+    "99_Attachments/Onboarding/App_Setup/screenshot_copied_cask_path_hightlight.png",
+    "99_Attachments/Onboarding/App_Setup/screenshot_xcode_cmdline_version.png",
+    "99_Attachments/Onboarding/App_Setup/screenshot_sdk_platform_selection.png",
+    "99_Attachments/Onboarding/Amplify_Localhost_Dev_SSO/image6.png",
+    "99_Attachments/Onboarding/Amplify_Localhost_Dev_SSO/image9.png",
+    "99_Attachments/Onboarding/App_Setup/screenshot_sdk_manager_location_welcomescreen.png",
+    "99_Attachments/Onboarding/App_Setup/screenshot_copied_path_search.png",
+    "99_Attachments/Onboarding/App_Setup/screenshot_sdk_version_selection.png",
+    "99_Attachments/Onboarding/App_Setup/screenshot_gotofolder_button.png",
+    "99_Attachments/Onboarding/App_Setup/screenshot_device_manager_location_welcomescreen.png",
+    "99_Attachments/Onboarding/App_Setup",
+    "99_Attachments/Onboarding/Amplify_Localhost_Dev_SSO",
+    "99_Attachments/Onboarding",
+    "99_Attachments",
+    "01_Foundation",
+    "03_Capabilities",
+    "10_Repo_Snapshots",
+    "02_Codex_Context"
+  ]
+}

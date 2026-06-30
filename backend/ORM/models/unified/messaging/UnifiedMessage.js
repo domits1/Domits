@@ -38,6 +38,11 @@ export const UnifiedMessage = new EntitySchema({
       type: "varchar",
       nullable: true,
     },
+    automationDeliveryId: {
+      name: "automationdeliveryid",
+      type: "varchar",
+      nullable: true,
+    },
     createdAt: {
       ...bigintNumber,
       nullable: false,

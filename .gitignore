@@ -1,6 +1,7 @@
 # Node modules
 node_modules/
 package-lock.json
+!frontend/web/package-lock.json
 
 # Mac system files
 .DS_Store
@@ -54,4 +55,5 @@ src/ui-components/utils.js
 
 # Local Obsidian vaults
 /Obsidian Brain/
-/docs/internal/context/domits_vault/
+
+# The repo-managed Obsidian vault is intentionally tracked.

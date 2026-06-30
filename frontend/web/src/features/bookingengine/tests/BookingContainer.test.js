@@ -9,14 +9,18 @@ jest.mock("../listingdetails/views/dateSelectionContainer", () => () => <div>Dat
 jest.mock("../listingdetails/views/guestSelectionContainer", () => () => <div>Guest selection</div>);
 jest.mock("../listingdetails/components/pricing", () => () => <div>Pricing</div>);
 jest.mock("../listingdetails/hooks/handleReservePress", () => () => mockReservePress);
+jest.mock("../../hostdashboard/hostmessages/context/AuthContext", () => ({
+  UserProvider: ({ children }) => <div>{children}</div>,
+}));
+jest.mock("../../hostdashboard/hostmessages/context/webSocketContext", () => ({
+  WebSocketProvider: ({ children }) => <div>{children}</div>,
+}));
+jest.mock("../../hostdashboard/hostmessages/hooks/useAuth", () => ({
+  useAuth: () => ({ userId: "guest-1" }),
+}));
+jest.mock("../../../components/messages/ChatScreen", () => () => <div>Chat screen</div>);
 jest.mock("../listingdetails/utils/dateAvailability", () => ({
   buildUnavailableDateSet: () => new Set(),
-  DATE_AVAILABILITY_REASONS: {
-    AVAILABLE: "available",
-    BOOKED: "booked",
-  },
-  getDateAvailabilityReason: () => "available",
-  getStayRangeAvailabilityIssue: () => null,
   hasUnavailableDateInStayRange: () => false,
   isUnavailableDate: () => false,
 }));
