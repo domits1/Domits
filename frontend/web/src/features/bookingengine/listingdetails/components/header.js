@@ -1,10 +1,26 @@
 import React from "react";
 import PropTypes from "prop-types";
+import SkeletonBlock from "./SkeletonBlock";
 
-const Header = ({ title, rating, generalDetails }) => {
+const Header = ({ title, rating, generalDetails, isLoading = false }) => {
   const detailParts = Array.isArray(generalDetails)
     ? generalDetails.map((d) => `${d.value} ${d.detail}`)
     : [];
+
+  if (isLoading) {
+    return (
+      <section className="listing-details-header" aria-busy="true">
+        <h2 className="title">
+          <SkeletonBlock width="min(520px, 82vw)" height={28} />
+        </h2>
+        <div className="listing-details-header__meta">
+          <SkeletonBlock width={92} height={16} />
+          <SkeletonBlock width={140} height={16} />
+          <SkeletonBlock width={118} height={16} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="listing-details-header">
@@ -30,6 +46,7 @@ const Header = ({ title, rating, generalDetails }) => {
 Header.propTypes = {
   title: PropTypes.string,
   rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isLoading: PropTypes.bool,
   generalDetails: PropTypes.arrayOf(
     PropTypes.shape({
       detail: PropTypes.string,

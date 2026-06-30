@@ -4,8 +4,31 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import LanguageIcon from "@mui/icons-material/Language";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import SkeletonBlock from "./SkeletonBlock";
 
-const HostSection = ({ host = {}, onContactHost }) => {
+const HostSection = ({ host = {}, onContactHost, isLoading = false }) => {
+  if (isLoading) {
+    return (
+      <div className="host-section" aria-busy="true">
+        <div className="host-section__left">
+          <div className="host-section__avatar-row">
+            <SkeletonBlock width={64} height={64} borderRadius="50%" />
+            <div className="host-section__identity">
+              <SkeletonBlock width={190} height={20} />
+              <SkeletonBlock width={120} height={14} />
+            </div>
+          </div>
+          <SkeletonBlock width="92%" height={16} style={{ marginBottom: 10 }} />
+          <SkeletonBlock width="70%" height={16} />
+        </div>
+        <div className="host-section__stats">
+          <SkeletonBlock width={150} height={18} />
+          <SkeletonBlock width={130} height={18} />
+        </div>
+      </div>
+    );
+  }
+
   const firstName = host.givenName || host.given_name || "";
   const lastName = host.familyName || host.family_name || "";
   const name = (firstName || lastName)
@@ -111,6 +134,7 @@ HostSection.propTypes = {
     city: PropTypes.string,
   }),
   onContactHost: PropTypes.func,
+  isLoading: PropTypes.bool,
 };
 
 export default HostSection;

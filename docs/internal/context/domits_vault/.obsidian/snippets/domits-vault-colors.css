@@ -1,0 +1,113 @@
+/* Domits vault area colors for the file explorer.
+   Keeps the vault readable while making the main funnels obvious. */
+
+body {
+  --domits-readme: #7bdff2;
+  --domits-readme-bg: rgba(123, 223, 242, 0.16);
+  --domits-context: #ff6b6b;
+  --domits-context-bg: rgba(255, 107, 107, 0.16);
+  --domits-entry: #ffd166;
+  --domits-entry-bg: rgba(255, 209, 102, 0.18);
+
+  --domits-foundation: #77aaff;
+  --domits-foundation-bg: rgba(119, 170, 255, 0.14);
+
+  --domits-codex: #ffb454;
+  --domits-codex-bg: rgba(255, 180, 84, 0.14);
+
+  --domits-features: #47d3a3;
+  --domits-features-bg: rgba(71, 211, 163, 0.14);
+
+  --domits-snapshots: #a8b3c7;
+  --domits-snapshots-bg: rgba(168, 179, 199, 0.12);
+
+  --domits-attachments: #ff8fab;
+  --domits-attachments-bg: rgba(255, 143, 171, 0.14);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path="README.md"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path="01_Foundation/Domits_Context.md"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path="02_Codex_Context/Active_Feature_Tasks.md"] {
+  border-left: 3px solid;
+  border-radius: 8px;
+  font-weight: 700;
+  margin: 1px 0;
+  padding-left: 8px;
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path="README.md"] {
+  color: var(--domits-readme);
+  background-color: var(--domits-readme-bg);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path="01_Foundation/Domits_Context.md"] {
+  color: var(--domits-context);
+  background-color: var(--domits-context-bg);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path="02_Codex_Context/Active_Feature_Tasks.md"] {
+  color: var(--domits-entry);
+  background-color: var(--domits-entry-bg);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="01_Foundation"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="02_Codex_Context"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="03_Capabilities"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="10_Repo_Snapshots"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="99_Attachments"] {
+  border-left: 3px solid;
+  border-radius: 8px;
+  font-weight: 700;
+  margin: 2px 0;
+  padding-left: 8px;
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="01_Foundation"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path^="01_Foundation/"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path^="01_Foundation/"] {
+  color: var(--domits-foundation);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="01_Foundation"] {
+  background-color: var(--domits-foundation-bg);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="02_Codex_Context"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path^="02_Codex_Context/"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path^="02_Codex_Context/"] {
+  color: var(--domits-codex);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="02_Codex_Context"] {
+  background-color: var(--domits-codex-bg);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="03_Capabilities"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path^="03_Capabilities/"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path^="03_Capabilities/"] {
+  color: var(--domits-features);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="03_Capabilities"] {
+  background-color: var(--domits-features-bg);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="10_Repo_Snapshots"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path^="10_Repo_Snapshots/"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path^="10_Repo_Snapshots/"] {
+  color: var(--domits-snapshots);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="10_Repo_Snapshots"] {
+  background-color: var(--domits-snapshots-bg);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="99_Attachments"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path^="99_Attachments/"],
+.workspace-leaf-content[data-type="file-explorer"] .nav-file-title[data-path^="99_Attachments/"] {
+  color: var(--domits-attachments);
+}
+
+.workspace-leaf-content[data-type="file-explorer"] .nav-folder-title[data-path="99_Attachments"] {
+  background-color: var(--domits-attachments-bg);
+}

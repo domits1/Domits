@@ -17,8 +17,9 @@ import {
   updateWishlistItem,
   isPropertyInAnyWishlist,
 } from "../../../guestdashboard/services/wishlistService";
+import SkeletonBlock from "./SkeletonBlock";
 
-const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
+const ImageGallery = ({ images = [], propertyTitle, propertyId, isLoading = false }) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -88,6 +89,12 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
   return (
     <section className="image-section">
       <div className="image-gallery">
+        {isLoading && !main ? (
+          <div className="main-image-wrapper" aria-busy="true">
+            <SkeletonBlock className="main-image" width="100%" height="100%" borderRadius={12} />
+          </div>
+        ) : null}
+
         {main ? (
           <div className="main-image-wrapper">
             <button
@@ -96,7 +103,14 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
               onClick={() => openOverlayAtIndex(0)}
               aria-label="Open image 1"
             >
-              <img className="main-image" src={toMainSrc(main)} alt={getImageAltText(0)} />
+              <img
+                className="main-image"
+                src={toMainSrc(main)}
+                alt={getImageAltText(0)}
+                fetchPriority="high"
+                decoding="async"
+                loading="eager"
+              />
             </button>
 
             <button
@@ -136,6 +150,14 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
         ) : null}
 
         <div className="small-images-container">
+          {isLoading && thumbs.length === 0
+            ? Array.from({ length: 4 }, (_, index) => (
+                <div key={`gallery-thumb-skeleton-${index}`} className="image-button small-image-button" aria-busy="true">
+                  <SkeletonBlock className="small-image" width="100%" height="100%" borderRadius={10} />
+                </div>
+              ))
+            : null}
+
           {thumbs.map((image, index) => (
             <button
               type="button"
@@ -144,7 +166,13 @@ const ImageGallery = ({ images = [], propertyTitle, propertyId }) => {
               onClick={() => openOverlayAtIndex(index + 1)}
               aria-label={`Open image ${index + 2}`}
             >
-              <img className="small-image" src={toMainSrc(image)} alt={getImageAltText(index + 1)} />
+              <img
+                className="small-image"
+                src={toThumbSrc(image)}
+                alt={getImageAltText(index + 1)}
+                loading="lazy"
+                decoding="async"
+              />
             </button>
           ))}
         </div>
@@ -193,6 +221,7 @@ ImageGallery.propTypes = {
   images: PropTypes.array,
   propertyTitle: PropTypes.string,
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isLoading: PropTypes.bool,
 };
 
 export default ImageGallery;
