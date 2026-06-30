@@ -95,9 +95,7 @@ const fetchHostPropertyOptions = async (url) => {
 export const fetchPropertyAndListings = async (propertyId, managedHostId = null) => {
   const hostPropertiesUrls = [`${PROPERTY_API_BASE}/hostDashboard/all`];
   if (managedHostId) {
-    hostPropertiesUrls.push(
-      `${PROPERTY_API_BASE}/hostDashboard/byHostId?hostId=${encodeURIComponent(managedHostId)}`
-    );
+    hostPropertiesUrls.push(`${PROPERTY_API_BASE}/hostDashboard/byHostId?hostId=${encodeURIComponent(managedHostId)}`);
   }
 
   const [response, ...hostPropertiesResults] = await Promise.all([
