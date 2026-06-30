@@ -1,0 +1,79 @@
+{
+  "collapse-filter": false,
+  "search": "",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "path:\"README.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 8118258
+      }
+    },
+    {
+      "query": "path:\"01_Foundation/Domits_Context.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 16739179
+      }
+    },
+    {
+      "query": "path:\"02_Codex_Context/Active_Feature_Tasks.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 16765286
+      }
+    },
+    {
+      "query": "path:\"01_Foundation\"",
+      "color": {
+        "a": 1,
+        "rgb": 7842559
+      }
+    },
+    {
+      "query": "path:\"02_Codex_Context\"",
+      "color": {
+        "a": 1,
+        "rgb": 16757844
+      }
+    },
+    {
+      "query": "path:\"03_Capabilities\" ",
+      "color": {
+        "a": 1,
+        "rgb": 3598137
+      }
+    },
+    {
+      "query": "path:\"10_Repo_Snapshots\"",
+      "color": {
+        "a": 1,
+        "rgb": 11056071
+      }
+    },
+    {
+      "query": "path:\"99_Attachments\"",
+      "color": {
+        "a": 1,
+        "rgb": 16748459
+      }
+    }
+  ],
+  "collapse-display": false,
+  "showArrow": false,
+  "textFadeMultiplier": 0,
+  "nodeSizeMultiplier": 1,
+  "lineSizeMultiplier": 0.956228373702422,
+  "collapse-forces": false,
+  "centerStrength": 0.518713248970312,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 0.7132754626224284,
+  "close": true
+}

@@ -54,4 +54,5 @@ src/ui-components/utils.js
 
 # Local Obsidian vaults
 /Obsidian Brain/
-/docs/internal/context/domits_vault/
+
+# The repo-managed Obsidian vault is intentionally tracked.
