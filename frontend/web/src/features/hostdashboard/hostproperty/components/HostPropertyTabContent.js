@@ -105,8 +105,6 @@ const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const toDateKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-const getDefaultAvailabilityDateKey = () => toDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
-
 const calendarDateToKey = (value) => {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) {
@@ -117,6 +115,14 @@ const calendarDateToKey = (value) => {
     return "";
   }
   return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}`;
+};
+
+const getDefaultAvailabilityDateKey = (availabilityRanges = []) => {
+  const firstAvailabilityDateKey = calendarDateToKey(availabilityRanges[0]?.start);
+  if (firstAvailabilityDateKey) {
+    return firstAvailabilityDateKey;
+  }
+  return toDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
 };
 
 const normalizeAvailabilityOverrideMap = (overrides) =>
@@ -1133,7 +1139,8 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
 }
 
 export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availability, blockedDateKeys = [], saving }) {
-  const defaultDateKey = getDefaultAvailabilityDateKey();
+  const availabilityRanges = normalizeAvailabilityRanges(availability);
+  const defaultDateKey = getDefaultAvailabilityDateKey(availabilityRanges);
   const [calendarCursor, setCalendarCursor] = useState(() => getAvailabilityMonthCursor(defaultDateKey));
   const [selectedStartDateKey, setSelectedStartDateKey] = useState(defaultDateKey);
   const [selectedEndDateKey, setSelectedEndDateKey] = useState(defaultDateKey);
@@ -1144,7 +1151,6 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
   const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
   const { bookedDateKeysByPropertyId } = useCalendarBookings();
-  const availabilityRanges = normalizeAvailabilityRanges(availability);
   const blockedDateSet = useMemo(() => {
     const nextBlockedDateSet = new Set();
     const addDateKey = (dateKey) => {
