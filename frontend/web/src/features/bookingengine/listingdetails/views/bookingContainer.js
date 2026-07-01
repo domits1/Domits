@@ -14,6 +14,7 @@ import {
   parseCancellationPolicyString,
   parseCancellationPolicy,
 } from "../../../../utils/policyDisplayUtils";
+import SkeletonBlock from "../components/SkeletonBlock";
 
 import { UserProvider } from "../../../hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../../hostdashboard/hostmessages/context/webSocketContext";
@@ -165,6 +166,7 @@ const BookingContainer = ({
   setCheckOutDate = () => {},
   showMessageHost: showMessageHostProp,
   setShowMessageHost: setShowMessageHostProp,
+  isLoading = false,
 }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
@@ -352,6 +354,37 @@ const BookingContainer = ({
     );
   };
 
+  if (isLoading) {
+    return (
+      <div className="listing-booking-card" ref={bookingCardRef} aria-busy="true">
+        <div className="listing-booking-card__price-header">
+          <SkeletonBlock width={96} height={28} />
+          <SkeletonBlock width={72} height={16} />
+        </div>
+        <div className="date-container">
+          <div className="date-box">
+            <SkeletonBlock width={68} height={12} style={{ marginBottom: 8 }} />
+            <SkeletonBlock width="82%" height={18} />
+          </div>
+          <div className="date-box">
+            <SkeletonBlock width={76} height={12} style={{ marginBottom: 8 }} />
+            <SkeletonBlock width="82%" height={18} />
+          </div>
+        </div>
+        <div className="guests-container">
+          <div className="guests-summary">
+            <SkeletonBlock width="70%" height={18} />
+          </div>
+        </div>
+        <div className="pricing-container">
+          <SkeletonBlock width="100%" height={16} style={{ marginBottom: 10 }} />
+          <SkeletonBlock width="88%" height={16} />
+        </div>
+        <SkeletonBlock width="100%" height={44} borderRadius={10} />
+      </div>
+    );
+  }
+
   return (
     <div className="listing-booking-card" ref={bookingCardRef}>
       <div className="listing-booking-card__price-header">
@@ -494,6 +527,7 @@ BookingContainer.propTypes = {
   setCheckOutDate: PropTypes.func,
   showMessageHost: PropTypes.bool,
   setShowMessageHost: PropTypes.func,
+  isLoading: PropTypes.bool,
 };
 
 export default BookingContainer;
