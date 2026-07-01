@@ -2,6 +2,11 @@ import { randomUUID } from "node:crypto";
 import Database from "../.shared/integrations/ORM/index.js";
 import { MessageAutomationDelivery } from "database/models/automation/MessageAutomationDelivery";
 
+const resolveSafeSchema = (client) => {
+  const schema = client?.options?.schema || "main";
+  return /^[a-z_][a-z0-9_]*$/i.test(schema) ? schema : "main";
+};
+
 export default class DeliveryRepository {
   async createScheduled(data) {
     const client = await Database.getInstance();
@@ -71,6 +76,7 @@ export default class DeliveryRepository {
 
   async authorizeSend({ deliveryId, automationId, bookingId, hostId, propertyId, now }) {
     const client = await Database.getInstance();
+    const schema = resolveSafeSchema(client);
     const result = await client
       .createQueryBuilder()
       .update(MessageAutomationDelivery)
@@ -82,9 +88,9 @@ export default class DeliveryRepository {
       .andWhere(
         `EXISTS (
           SELECT 1
-            FROM main.message_automation automation
-            JOIN main.booking booking ON booking.id = :bookingId
-            JOIN main.property property ON property.id = :propertyId
+            FROM ${schema}.message_automation automation
+            JOIN ${schema}.booking booking ON booking.id = :bookingId
+            JOIN ${schema}.property property ON property.id = :propertyId
            WHERE automation.id = :automationId
              AND automation.hostid = :hostId
              AND automation.status = 'ACTIVE'
