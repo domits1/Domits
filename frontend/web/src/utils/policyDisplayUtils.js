@@ -1,78 +1,42 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 
-const getRefundString = (pct) => {
-  if (pct === 100) {
-    return "100% refund.";
-  }
-  if (pct === 70) {
-    return "70% refund.";
-  }
-  if (pct === 50) {
-    return "50% refund.";
-  }
-  return "No refund.";
-};
-
-const generatePolicyRuleStrings = (periodDays, refundPercentages) => {
-  const periodStr = periodDays === 1 ? `${periodDays} day` : `${periodDays} days`;
-  return refundPercentages.map((pct, index) => {
-    const refundStr = getRefundString(pct);
-    if (index === 0) {
-      return `At least ${periodStr} before check-in, Guests will receive ${refundStr}`;
-    }
-    return `Less than ${periodStr} before check-in, Guests will receive ${refundStr}`;
-  });
-};
-
-const generateFlexiblePolicyRules = () => generatePolicyRuleStrings(1, [100, 0]);
-
-const generateModeratePolicyRules = () => generatePolicyRuleStrings(5, [100, 50]);
-
-const generateLimitedPolicyRules = () => [
-  "At least 14 days before check-in, Guests will receive 100% refund.",
-  "Between 7 and 14 days before check-in, Guests will receive 50% refund.",
-  "Less than 7 days before check-in, Guests will receive No refund.",
+const REFUNDABLE_POLICY_DEFINITIONS = [
+  { id: "flexible", name: "Flexible", refundUntilDays: 1 },
+  { id: "moderate", name: "Moderate", refundUntilDays: 5 },
+  { id: "limited", name: "Limited", refundUntilDays: 14 },
+  { id: "firm", name: "Firm", refundUntilDays: 30 },
+  { id: "semi_strict", name: "Semi-strict", refundUntilDays: 60 },
+  { id: "strict", name: "Strict", refundUntilDays: 90 },
+  { id: "super_strict", name: "Super-strict", refundUntilDays: 180 },
 ];
 
-const generateFirmPolicyRules = () => [
-  "At least 30 days before check-in, Guests will receive 100% refund.",
-  "Between 7 and 30 days before check-in, Guests will receive 50% refund.",
-  "Less than 7 days before check-in, Guests will receive No refund.",
-];
+const formatDayLabel = (days) => `${days} day${days === 1 ? "" : "s"}`;
+
+const buildRefundablePolicy = ({ id, name, refundUntilDays }) => {
+  const dayLabel = formatDayLabel(refundUntilDays);
+  return {
+    id,
+    name,
+    summary: `Full refund until ${dayLabel} before check-in`,
+    rules: [
+      `Guests receive a full refund when they cancel at least ${dayLabel} before check-in.`,
+      `Cancellations made less than ${dayLabel} before check-in are non-refundable.`,
+    ],
+    important:
+      `Your payout is processed once the booking becomes non-refundable (${dayLabel} before check-in). You should receive your payout within 3 days of processing.`,
+  };
+};
 
 export const CANCELLATION_POLICIES = [
+  ...REFUNDABLE_POLICY_DEFINITIONS.map(buildRefundablePolicy),
   {
-    id: "flexible",
-    name: "Flexible",
-    summary: "Full refund until 1 day before check-in",
-    rules: generateFlexiblePolicyRules(),
+    id: "non_refundable",
+    name: "Non-refundable",
+    summary: "No refunds provided",
+    rules: ["No refunds provided."],
     important:
-      "Your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
-  },
-  {
-    id: "moderate",
-    name: "Moderate",
-    summary: "Full refund until 5 days before check-in",
-    rules: generateModeratePolicyRules(),
-    important:
-      "Your payout is processed once the booking becomes non-refundable (5 days before check-in). You should receive your payout within 3 days of processing.",
-  },
-  {
-    id: "strict",
-    name: "Limited",
-    summary: "Full refund until 14 days before check-in",
-    rules: generateLimitedPolicyRules(),
-    important:
-      "Your payout is processed once the booking becomes non-refundable (14 days before check-in). You should receive your payout within 3 days of processing.",
-  },
-  {
-    id: "firm",
-    name: "Firm",
-    summary: "Full refund until 30 days before check-in",
-    rules: generateFirmPolicyRules(),
-    important:
-      "Your payout is processed once the booking becomes non-refundable (30 days before check-in). You should receive your payout within 3 days of processing.",
+      "Your payout is processed immediately upon booking confirmation. You should receive your payout within 3 days of processing.",
   },
 ];
 
@@ -80,14 +44,22 @@ const toNormalizedPolicyId = (value = "") =>
   String(value || "")
     .trim()
     .toLowerCase()
+    .replace(/^cancellationpolicy:/, "")
     .replaceAll(/\s+/g, "_")
     .replaceAll("-", "_");
+
+const isPolicyActive = (value) => value === true || String(value).trim().toLowerCase() === "true";
 
 const getCancellationPolicyColor = (policyId = "") => {
   const normalizedId = toNormalizedPolicyId(policyId);
   if (normalizedId === "flexible") return "#4CAF50";
-  if (normalizedId === "moderate") return "#00BCD4";
-  if (normalizedId === "strict" || normalizedId === "firm") return "#FF7043";
+  if (normalizedId === "moderate") return "#8BC34A";
+  if (normalizedId === "limited") return "#00BCD4";
+  if (normalizedId === "firm") return "#FFC107";
+  if (normalizedId === "semi_strict") return "#FF9800";
+  if (normalizedId === "strict") return "#FF7043";
+  if (normalizedId === "super_strict") return "#F44336";
+  if (normalizedId === "non_refundable") return "#9E9E9E";
   return "#6b7280";
 };
 
@@ -111,7 +83,7 @@ const buildCancellationPolicy = (policyId, description = null) => {
 
 export const parseCancellationPolicy = (rules = []) => {
   const activePolicy = (rules || []).find(
-    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && rule?.value === true
+    (rule) => rule?.rule?.startsWith("CancellationPolicy:") && isPolicyActive(rule?.value)
   );
 
   if (!activePolicy?.rule) {
@@ -124,7 +96,7 @@ export const parseCancellationPolicy = (rules = []) => {
 export const getActiveCancellationPolicyId = (rulesOrObject = []) => {
   if (Array.isArray(rulesOrObject)) {
     const activePolicy = rulesOrObject.find(
-      (rule) => rule?.rule?.startsWith("CancellationPolicy:") && rule?.value === true
+      (rule) => rule?.rule?.startsWith("CancellationPolicy:") && isPolicyActive(rule?.value)
     );
 
     return activePolicy?.rule ? activePolicy.rule.replace("CancellationPolicy:", "") : "";
@@ -132,7 +104,7 @@ export const getActiveCancellationPolicyId = (rulesOrObject = []) => {
 
   if (rulesOrObject && typeof rulesOrObject === "object") {
     const activePolicyKey = Object.keys(rulesOrObject).find(
-      (key) => key?.startsWith("CancellationPolicy:") && rulesOrObject[key] === true
+      (key) => key?.startsWith("CancellationPolicy:") && isPolicyActive(rulesOrObject[key])
     );
 
     return activePolicyKey ? activePolicyKey.replace("CancellationPolicy:", "") : "";
