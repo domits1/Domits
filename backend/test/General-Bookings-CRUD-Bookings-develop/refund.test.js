@@ -140,7 +140,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
         const percentage = getRefundPercentage(scenario.policy, arrivalDate, now);
 
-expect(percentage).toBe(scenario.expectedPercentage);
+        expect(percentage).toBe(scenario.expectedPercentage);
       });
     });
 

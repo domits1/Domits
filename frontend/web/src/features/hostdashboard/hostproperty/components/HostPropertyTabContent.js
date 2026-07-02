@@ -80,10 +80,7 @@ const buildRefundableCancellationPolicy = ({ id, name, refundUntilDays, importan
     ruleKey: `CancellationPolicy:${name}`,
     name,
     summary: `Full refund until ${dayLabel} before check-in`,
-    rules: [
-      `100% refund up to ${dayLabel} before check-in.`,
-      `No refund less than ${dayLabel} before check-in.`,
-    ],
+    rules: [`100% refund up to ${dayLabel} before check-in.`, `No refund less than ${dayLabel} before check-in.`],
     important,
   };
 };
@@ -128,11 +125,7 @@ const getDefaultAvailabilityDateKey = (availabilityRanges = []) => {
 const normalizeAvailabilityOverrideMap = (overrides) =>
   (Array.isArray(overrides) ? overrides : []).reduce((next, override) => {
     const dateKey = calendarDateToKey(override?.date ?? override?.calendarDate ?? override?.calendar_date);
-    if (
-      !dateKey ||
-      override?.isAvailable === undefined ||
-      override?.isAvailable === null
-    ) {
+    if (!dateKey || override?.isAvailable === undefined || override?.isAvailable === null) {
       return next;
     }
     next[dateKey] = Boolean(override.isAvailable);
@@ -169,8 +162,7 @@ const resolveAvailabilityResponseError = async (response, fallbackMessage) => {
   return fallbackMessage;
 };
 
-const getAvailabilityMonthCursor = (dateKey) =>
-  startOfMonthUTC(keyToUtcDate(dateKey) || new Date());
+const getAvailabilityMonthCursor = (dateKey) => startOfMonthUTC(keyToUtcDate(dateKey) || new Date());
 
 const resolveAvailabilityDetails = ({ dateKey, availabilityOverrides, availabilityRanges, blockedDateSet }) => {
   if (!DATE_KEY_PATTERN.test(String(dateKey || ""))) {
@@ -189,9 +181,7 @@ const resolveAvailabilityDetails = ({ dateKey, availabilityOverrides, availabili
 
   const dateNumber = keyToDateNumber(dateKey);
   const isInBaseWindow = availabilityRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
-  return isInBaseWindow
-    ? { label: "Available", tone: "available" }
-    : { label: "Outside base window", tone: "outside" };
+  return isInBaseWindow ? { label: "Available", tone: "available" } : { label: "Outside base window", tone: "outside" };
 };
 
 function ToggleSwitch({ checked, onChange, disabled }) {
@@ -424,8 +414,7 @@ function HostPropertyOverviewTab(props) {
           id="booking-type"
           className={styles.input}
           value={bookingType || "direct"}
-          onChange={(event) => onBookingTypeChange(event.target.value)}
-        >
+          onChange={(event) => onBookingTypeChange(event.target.value)}>
           <option value="direct">Book Instantly (guest pays immediately)</option>
           <option value="inquiry">Request first (host reviews before payment)</option>
         </select>
@@ -512,7 +501,9 @@ function HostPropertyOverviewTab(props) {
         )}
         <div className={styles.mapPreviewFooter}>
           <p className={styles.mapPreviewLabel}>Map preview — guest view</p>
-          <p className={styles.mapPreviewAddress}>Guests see the approximate area only. Exact address is hidden until booking is confirmed.</p>
+          <p className={styles.mapPreviewAddress}>
+            Guests see the approximate area only. Exact address is hidden until booking is confirmed.
+          </p>
         </div>
       </div>
     </section>
@@ -1161,10 +1152,9 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
     };
 
     (Array.isArray(blockedDateKeys) ? blockedDateKeys : []).forEach(addDateKey);
-    (Array.isArray(bookedDateKeysByPropertyId?.[propertyId])
-      ? bookedDateKeysByPropertyId[propertyId]
-      : []
-    ).forEach(addDateKey);
+    (Array.isArray(bookedDateKeysByPropertyId?.[propertyId]) ? bookedDateKeysByPropertyId[propertyId] : []).forEach(
+      addDateKey
+    );
 
     return nextBlockedDateSet;
   }, [blockedDateKeys, bookedDateKeysByPropertyId, propertyId]);
@@ -1189,15 +1179,21 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
       setAvailabilityError("");
       setAvailabilityMessage("");
       try {
-        const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides?propertyId=${encodeURIComponent(propertyId)}`, {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        });
+        const response = await fetch(
+          `${PROPERTY_API_BASE}/calendar/overrides?propertyId=${encodeURIComponent(propertyId)}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+            },
+          }
+        );
         if (!response.ok) {
           throw new Error(
-            await resolveAvailabilityResponseError(response, `Could not load availability overrides (${response.status}).`)
+            await resolveAvailabilityResponseError(
+              response,
+              `Could not load availability overrides (${response.status}).`
+            )
           );
         }
         const body = await response.json();
@@ -1352,7 +1348,8 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
     <section className={`${styles.card} ${styles.pricingCard}`} aria-label="Listing availability editor">
       <h3 className={styles.sectionTitle}>Availability</h3>
       <p className={styles.pricingSubtitle}>
-        Manage per-date availability for this listing. These changes are saved to the same calendar overrides used by Calendar & Pricing, guest availability, booking validation, and Channex Full Sync.
+        Manage per-date availability for this listing. These changes are saved to the same calendar overrides used by
+        Calendar & Pricing, guest availability, booking validation, and Channex Full Sync.
       </p>
       <p className={styles.pricingSubtitle}>
         Listing: <strong>{listingTitle || propertyId || "Selected listing"}</strong>

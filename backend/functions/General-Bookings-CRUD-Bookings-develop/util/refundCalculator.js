@@ -32,9 +32,7 @@ const REFUND_POLICIES = {
     { minimumMsBeforeArrival: 180 * DAY_IN_MS, refundPercentage: 1 },
     { minimumMsBeforeArrival: 0, refundPercentage: 0 },
   ],
-  "non-refundable": [
-    { minimumMsBeforeArrival: 0, refundPercentage: 0 },
-  ],
+  "non-refundable": [{ minimumMsBeforeArrival: 0, refundPercentage: 0 }],
 };
 
 function normalizePolicy(policy) {
