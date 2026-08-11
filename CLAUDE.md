@@ -2,6 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Commits
+
+Commit at every green step, not at every green iteration. A step is green when the tests that describe it pass.
+
+The rhythm is: failing test, implementation, tests pass, commit. The commit happens before the next failing test is written.
+
+- Run the whole test suite before every commit, not only the suite for the layer just edited. A change is green when every suite is green.
+- Never commit a failing test. "I did not know it was red" is not an exception, it is the failure. Not looking is how red gets committed.
+- A behaviour change that invalidates a higher level test invalidates it now, not later. Update that test in the same commit as the behaviour.
+- Test and implementation for the same behaviour go in one commit. They are one change.
+- Refactoring is committed separately from behaviour, so a review can read it as a no-behaviour-change diff.
+- When one change ripples across layers and cannot be green in isolation, commit those layers together as one coherent change rather than leaving the repository red.
+- Do not batch a finished iteration into a single end-of-iteration commit. That hides the order the design was built in and leaves nothing reviewable until everything lands.
+- The end of an iteration is a documentation commit and a review pass, not the moment the code first appears in the history.
+- Use conventional commits.
+
 ## Repository layout
 
 Three independent npm workspaces. Each has its own `package.json` and lockfile. Run every command from inside the correct directory.
