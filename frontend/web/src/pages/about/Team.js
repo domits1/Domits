@@ -22,6 +22,7 @@ import Sakhi from "../../images/about-img/Sakhi.png";
 import Denisa from "../../images/about-img/Denisa.jpeg";
 import Omer from "../../images/about-img/Omer.jpg";
 import Ameen from "../../images/about-img/Ameen.jpg";
+import enes from "../../images/about-img/Enes.jpg";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -73,6 +74,7 @@ function Team() {
     { name: "Omer", src: Omer, role: aboutContent.crew.developer },
     { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
     { name: "Hadeel", src: standard, role: aboutContent.crew.developer },
+    { name: "Enes", src: enes, role: aboutContent.crew.developer },
   ].sort((a, b) => a.name.localeCompare(b.name));
 
   const marketingMembers = [
