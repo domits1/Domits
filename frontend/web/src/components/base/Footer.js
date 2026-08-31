@@ -3,6 +3,9 @@ import logo from "../../images/logo.svg";
 import linkedinIcon from "../../images/icons/LinkedIn.png";
 import instagramIcon from "../../images/icons/Instagram.jpg";
 import xIcon from "../../images/icons/x.png";
+import youtubeIcon from "../../images/icons/Youtube.png";
+import spotifyIcon from "../../images/icons/Spotify.png";
+import githubIcon from "../../images/icons/Github.png";
 import { Link } from "react-router-dom";
 import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -158,6 +161,36 @@ const Footer = () => {
                   className="footer-icons"
                 >
                   <img src={xIcon} alt="X" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://open.spotify.com/show/1DSLvgy3TTwNL7skKxsWrF"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-icons"
+                >
+                  <img src={spotifyIcon} alt="Spotify" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.youtube.com/@DomitsPlatform"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-icons"
+                >
+                  <img src={youtubeIcon} alt="Youtube" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/domits1/Domits"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-icons"
+                >
+                  <img src={githubIcon} alt="Github" />
                 </a>
               </li>
             </ul>
