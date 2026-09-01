@@ -35,9 +35,11 @@ jobs:
       # Run Cypress tests
       # The composite action already installed with --ignore-scripts, which
       # skips Cypress's postinstall, so the binary is fetched explicitly here.
+      # Calling the linked binary rather than npx keeps the version the one
+      # the lockfile resolved, and never fetches a package on demand.
       - name: Install the Cypress binary
         working-directory: frontend/web
-        run: npx cypress install
+        run: ./node_modules/.bin/cypress install
 
       - name: Cypress run
         uses: cypress-io/github-action@v6
