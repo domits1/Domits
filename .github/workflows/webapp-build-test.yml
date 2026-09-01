@@ -22,6 +22,9 @@ jobs:
         node-version: 22
         cache-dependency-path: frontend/web/package-lock.json
 
+    - name: Pin npm to the version Dependabot generates lockfiles with
+      run: npm install -g npm@11.6.2 --ignore-scripts
+
     - name: Install dependencies
       run: |
         cd frontend/web
