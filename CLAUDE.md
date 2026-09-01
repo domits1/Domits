@@ -18,6 +18,20 @@ The rhythm is: failing test, implementation, tests pass, commit. The commit happ
 - The end of an iteration is a documentation commit and a review pass, not the moment the code first appears in the history.
 - Use conventional commits.
 
+## Gate: Engineering review
+
+Before a commit happens, run the eng-review skill against the staged diff. Say plainly that it is running and that the commit is on hold until it finishes, so nobody is left wondering why the commit did not land.
+
+Name the target when you invoke it. The staged diff is an explicitly named target, so the skill does not stop to ask what to review.
+
+A finding blocks the commit when it is both severe and certain: it names a concrete defect that would ship, such as data loss, a security hole, a broken contract or a silent failure, and it is quoted against a file and a line. Confidence alone does not block, because a typo can be a 10 and still not matter.
+
+Report each blocking finding on its own, wait for the user to process it, and commit only when none are left open. Processing means the user fixes it, or the user judges it acceptable and says so. Everything else is reported and does not block. The skill carries the confidence scale; do not restate it here.
+
+- Do not skip the gate because the diff looks small. Size does not predict whether a change touches a boundary.
+- Do not soften a finding to let the commit through, and do not inflate one to make a point. If it cannot be quoted against a file and a line, it does not block.
+- The gate runs before the commit, not after. Reviewing a commit that is already in the history is a different activity with a different fix cost.
+
 ## Repository layout
 
 Three independent npm workspaces. Each has its own `package.json` and lockfile. Run every command from inside the correct directory.
