@@ -81,6 +81,55 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       expectedPercentage: 1,
       expectedAmountCents: totalPriceCents,
     },
+    {
+      name: "Semi-strict: Cancel 61 days before (60+ days)",
+      policy: "semi-strict",
+      hoursBeforeArrival: 1464,
+      expectedPercentage: 1,
+      expectedAmountCents: totalPriceCents,
+    },
+    {
+      name: "Semi-strict: Cancel 59 days before (less than 60 days)",
+      policy: "semi-strict",
+      hoursBeforeArrival: 1416,
+      expectedPercentage: 0,
+      expectedAmountCents: 0,
+    },
+    {
+      name: "Strict: Cancel 91 days before (90+ days)",
+      policy: "strict",
+      hoursBeforeArrival: 2184,
+      expectedPercentage: 1,
+      expectedAmountCents: totalPriceCents,
+    },
+    {
+      name: "Strict: Cancel 89 days before (less than 90 days)",
+      policy: "strict",
+      hoursBeforeArrival: 2136,
+      expectedPercentage: 0,
+      expectedAmountCents: 0,
+    },
+    {
+      name: "Super-strict: Cancel 181 days before (180+ days)",
+      policy: "super-strict",
+      hoursBeforeArrival: 4344,
+      expectedPercentage: 1,
+      expectedAmountCents: totalPriceCents,
+    },
+    {
+      name: "Super-strict: Cancel 179 days before (less than 180 days)",
+      policy: "super-strict",
+      hoursBeforeArrival: 4296,
+      expectedPercentage: 0,
+      expectedAmountCents: 0,
+    },
+    {
+      name: "Non-refundable: Cancel 300 days before (no refund)",
+      policy: "non-refundable",
+      hoursBeforeArrival: 7200,
+      expectedPercentage: 0,
+      expectedAmountCents: 0,
+    },
   ];
 
   describe("Refund Calculator - getRefundPercentage()", () => {
@@ -95,13 +144,21 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       });
     });
 
-    it("should throw error for invalid policy", () => {
+    it("should return 0 for unknown policy (safeguard)", () => {
       const now = new Date();
       const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-      expect(() => {
-        getRefundPercentage("invalid_policy", futureDate, now);
-      }).toThrow("Unsupported cancellation policy");
+      const percentage = getRefundPercentage("FakePolicy", futureDate, now);
+      expect(percentage).toBe(0);
+    });
+
+    it("should return 0 for null/undefined policy (safeguard)", () => {
+      const now = new Date();
+      const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      expect(getRefundPercentage(null, futureDate, now)).toBe(0);
+      expect(getRefundPercentage(undefined, futureDate, now)).toBe(0);
+      expect(getRefundPercentage("", futureDate, now)).toBe(0);
     });
 
     it("should throw error for invalid arrival date", () => {

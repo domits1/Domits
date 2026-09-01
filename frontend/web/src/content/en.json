@@ -4,6 +4,17 @@
       "title": "Where you'll be",
       "disclaimer": "Exact location is provided after booking.",
       "unavailable": "Location information is not available."
+    },
+    "cancellationPolicies": {
+      "title": "Cancellation Policy",
+      "flexible": "Flexible (Full refund until 1 day before check-in)",
+      "moderate": "Moderate (Full refund until 5 days before check-in)",
+      "limited": "Limited (Full refund until 14 days before check-in)",
+      "firm": "Firm (Full refund until 30 days before check-in)",
+      "semiStrict": "Semi-strict (Full refund until 60 days before check-in)",
+      "strict": "Strict (Full refund until 90 days before check-in)",
+      "superStrict": "Super-strict (Full refund until 180 days before check-in)",
+      "nonRefundable": "Non-refundable (No refunds provided)"
     }
   },
   "component": {

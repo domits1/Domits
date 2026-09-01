@@ -4,6 +4,17 @@
       "title": "Wo du sein wirst",
       "disclaimer": "Der genaue Standort wird nach der Buchung mitgeteilt.",
       "unavailable": "Standortinformationen sind nicht verfügbar."
+    },
+    "cancellationPolicies": {
+      "title": "Stornierungsbedingungen",
+      "flexible": "Flexibel (volle Ruckerstattung bis 1 Tag vor Check-in)",
+      "moderate": "Moderat (volle Ruckerstattung bis 5 Tage vor Check-in)",
+      "limited": "Begrenzt (volle Ruckerstattung bis 14 Tage vor Check-in)",
+      "firm": "Fest (volle Ruckerstattung bis 30 Tage vor Check-in)",
+      "semiStrict": "Semi-strikt (volle Ruckerstattung bis 60 Tage vor Check-in)",
+      "strict": "Strikt (volle Ruckerstattung bis 90 Tage vor Check-in)",
+      "superStrict": "Super-strikt (volle Ruckerstattung bis 180 Tage vor Check-in)",
+      "nonRefundable": "Nicht erstattbar (keine Ruckerstattungen)"
     }
   },
   "component": {

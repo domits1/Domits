@@ -4,6 +4,17 @@
       "title": "Waar je verblijft",
       "disclaimer": "De exacte locatie wordt na boeking verstrekt.",
       "unavailable": "Locatie-informatie is niet beschikbaar."
+    },
+    "cancellationPolicies": {
+      "title": "Annuleringsvoorwaarden",
+      "flexible": "Flexibel (volledige terugbetaling tot 1 dag voor check-in)",
+      "moderate": "Gemiddeld (volledige terugbetaling tot 5 dagen voor check-in)",
+      "limited": "Beperkt (volledige terugbetaling tot 14 dagen voor check-in)",
+      "firm": "Vast (volledige terugbetaling tot 30 dagen voor check-in)",
+      "semiStrict": "Semi-strikt (volledige terugbetaling tot 60 dagen voor check-in)",
+      "strict": "Strikt (volledige terugbetaling tot 90 dagen voor check-in)",
+      "superStrict": "Super-strikt (volledige terugbetaling tot 180 dagen voor check-in)",
+      "nonRefundable": "Niet-restitueerbaar (geen terugbetalingen)"
     }
   },
   "component": {

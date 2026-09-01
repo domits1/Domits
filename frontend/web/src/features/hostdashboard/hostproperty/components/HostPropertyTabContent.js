@@ -58,48 +58,41 @@ const CAPACITY_COUNTER_FIELDS = [
   { key: "bathrooms", label: "Bathrooms" },
 ];
 
+const FLEXIBLE_PAYOUT_NOTE =
+  "Your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.";
+
+const REFUNDABLE_CANCELLATION_POLICY_DEFINITIONS = [
+  { id: "flexible", name: "Flexible", refundUntilDays: 1, important: FLEXIBLE_PAYOUT_NOTE },
+  { id: "moderate", name: "Moderate", refundUntilDays: 5 },
+  { id: "limited", name: "Limited", refundUntilDays: 14 },
+  { id: "firm", name: "Firm", refundUntilDays: 30 },
+  { id: "semi-strict", name: "Semi-strict", refundUntilDays: 60 },
+  { id: "strict", name: "Strict", refundUntilDays: 90 },
+  { id: "super-strict", name: "Super-strict", refundUntilDays: 180 },
+];
+
+const formatPolicyDayLabel = (days) => `${days} day${days === 1 ? "" : "s"}`;
+
+const buildRefundableCancellationPolicy = ({ id, name, refundUntilDays, important = null }) => {
+  const dayLabel = formatPolicyDayLabel(refundUntilDays);
+  return {
+    id,
+    ruleKey: `CancellationPolicy:${name}`,
+    name,
+    summary: `Full refund until ${dayLabel} before check-in`,
+    rules: [`100% refund up to ${dayLabel} before check-in.`, `No refund less than ${dayLabel} before check-in.`],
+    important,
+  };
+};
+
 const CANCELLATION_POLICIES = [
+  ...REFUNDABLE_CANCELLATION_POLICY_DEFINITIONS.map(buildRefundableCancellationPolicy),
   {
-    id: "flexible",
-    name: "Flexible",
-    summary: "Full refund until 1 day before check-in",
-    rules: [
-      "At least 1 day before check-in, they will receive 100% refund ( you will keep 0% of the booking)",
-      "Less than 1 day before check-in, they will receive no refund ( you will keep 100% of the booking)",
-    ],
-    important:
-      "your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.",
-  },
-  {
-    id: "moderate",
-    name: "Moderate",
-    summary: "Full refund until 5 days before check-in",
-    rules: [
-      "At least 5 days before check-in, they will receive 100% refund (you will keep 0% of the booking)",
-      "Less than 5 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
-    ],
-    important: null,
-  },
-  {
-    id: "strict",
-    name: "Limited",
-    summary: "Full refund until 14 days before check-in",
-    rules: [
-      "At least 14 days before check-in, they will receive 100% refund (you will keep 0% of the booking)",
-      "Between 7 and 14 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
-      "Less than 7 days before check-in, they will receive no refund (you will keep 100% of the booking)",
-    ],
-    important: null,
-  },
-  {
-    id: "firm",
-    name: "Firm",
-    summary: "Full refund until 30 days before check-in",
-    rules: [
-      "At least 30 days before check-in, they will receive a 100% refund (you will keep 0% of the booking)",
-      "Less than 30 days but more than 7 days before check-in, they will receive a 50% refund (you will keep 50% of the booking)",
-      "Less than 7 days before check-in, they will receive no refund (you will keep 100% of the booking)",
-    ],
+    id: "non-refundable",
+    ruleKey: "CancellationPolicy:Non-refundable",
+    name: "Non-refundable",
+    summary: "No refunds provided",
+    rules: ["No refunds provided."],
     important: null,
   },
 ];
@@ -132,11 +125,7 @@ const getDefaultAvailabilityDateKey = (availabilityRanges = []) => {
 const normalizeAvailabilityOverrideMap = (overrides) =>
   (Array.isArray(overrides) ? overrides : []).reduce((next, override) => {
     const dateKey = calendarDateToKey(override?.date ?? override?.calendarDate ?? override?.calendar_date);
-    if (
-      !dateKey ||
-      override?.isAvailable === undefined ||
-      override?.isAvailable === null
-    ) {
+    if (!dateKey || override?.isAvailable === undefined || override?.isAvailable === null) {
       return next;
     }
     next[dateKey] = Boolean(override.isAvailable);
@@ -173,8 +162,7 @@ const resolveAvailabilityResponseError = async (response, fallbackMessage) => {
   return fallbackMessage;
 };
 
-const getAvailabilityMonthCursor = (dateKey) =>
-  startOfMonthUTC(keyToUtcDate(dateKey) || new Date());
+const getAvailabilityMonthCursor = (dateKey) => startOfMonthUTC(keyToUtcDate(dateKey) || new Date());
 
 const resolveAvailabilityDetails = ({ dateKey, availabilityOverrides, availabilityRanges, blockedDateSet }) => {
   if (!DATE_KEY_PATTERN.test(String(dateKey || ""))) {
@@ -193,9 +181,7 @@ const resolveAvailabilityDetails = ({ dateKey, availabilityOverrides, availabili
 
   const dateNumber = keyToDateNumber(dateKey);
   const isInBaseWindow = availabilityRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
-  return isInBaseWindow
-    ? { label: "Available", tone: "available" }
-    : { label: "Outside base window", tone: "outside" };
+  return isInBaseWindow ? { label: "Available", tone: "available" } : { label: "Outside base window", tone: "outside" };
 };
 
 function ToggleSwitch({ checked, onChange, disabled }) {
@@ -428,8 +414,7 @@ function HostPropertyOverviewTab(props) {
           id="booking-type"
           className={styles.input}
           value={bookingType || "direct"}
-          onChange={(event) => onBookingTypeChange(event.target.value)}
-        >
+          onChange={(event) => onBookingTypeChange(event.target.value)}>
           <option value="direct">Book Instantly (guest pays immediately)</option>
           <option value="inquiry">Request first (host reviews before payment)</option>
         </select>
@@ -516,7 +501,9 @@ function HostPropertyOverviewTab(props) {
         )}
         <div className={styles.mapPreviewFooter}>
           <p className={styles.mapPreviewLabel}>Map preview — guest view</p>
-          <p className={styles.mapPreviewAddress}>Guests see the approximate area only. Exact address is hidden until booking is confirmed.</p>
+          <p className={styles.mapPreviewAddress}>
+            Guests see the approximate area only. Exact address is hidden until booking is confirmed.
+          </p>
         </div>
       </div>
     </section>
@@ -1165,10 +1152,9 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
     };
 
     (Array.isArray(blockedDateKeys) ? blockedDateKeys : []).forEach(addDateKey);
-    (Array.isArray(bookedDateKeysByPropertyId?.[propertyId])
-      ? bookedDateKeysByPropertyId[propertyId]
-      : []
-    ).forEach(addDateKey);
+    (Array.isArray(bookedDateKeysByPropertyId?.[propertyId]) ? bookedDateKeysByPropertyId[propertyId] : []).forEach(
+      addDateKey
+    );
 
     return nextBlockedDateSet;
   }, [blockedDateKeys, bookedDateKeysByPropertyId, propertyId]);
@@ -1193,15 +1179,21 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
       setAvailabilityError("");
       setAvailabilityMessage("");
       try {
-        const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides?propertyId=${encodeURIComponent(propertyId)}`, {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        });
+        const response = await fetch(
+          `${PROPERTY_API_BASE}/calendar/overrides?propertyId=${encodeURIComponent(propertyId)}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+            },
+          }
+        );
         if (!response.ok) {
           throw new Error(
-            await resolveAvailabilityResponseError(response, `Could not load availability overrides (${response.status}).`)
+            await resolveAvailabilityResponseError(
+              response,
+              `Could not load availability overrides (${response.status}).`
+            )
           );
         }
         const body = await response.json();
@@ -1356,7 +1348,8 @@ export function HostPropertyAvailabilityTab({ propertyId, listingTitle, availabi
     <section className={`${styles.card} ${styles.pricingCard}`} aria-label="Listing availability editor">
       <h3 className={styles.sectionTitle}>Availability</h3>
       <p className={styles.pricingSubtitle}>
-        Manage per-date availability for this listing. These changes are saved to the same calendar overrides used by Calendar & Pricing, guest availability, booking validation, and Channex Full Sync.
+        Manage per-date availability for this listing. These changes are saved to the same calendar overrides used by
+        Calendar & Pricing, guest availability, booking validation, and Channex Full Sync.
       </p>
       <p className={styles.pricingSubtitle}>
         Listing: <strong>{listingTitle || propertyId || "Selected listing"}</strong>
@@ -1694,15 +1687,12 @@ export default function HostPropertyPoliciesTab(props) {
 
   // Sync cancellation policy from policyRules
   useEffect(() => {
-    const policyOrder = ["Strict", "Firm", "Moderate", "Flexible"];
-    for (const policyName of policyOrder) {
-      if (policyRules[`CancellationPolicy:${policyName}`]) {
-        const policyId = policyName.toLowerCase();
-        setCancellationPolicy(policyId);
+    for (const policy of CANCELLATION_POLICIES) {
+      if (policyRules[policy.ruleKey]) {
+        setCancellationPolicy(policy.id);
         return;
       }
     }
-    // No policy selected, reset to default
     setCancellationPolicy("flexible");
   }, [policyRules]);
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
@@ -1714,10 +1704,13 @@ export default function HostPropertyPoliciesTab(props) {
   });
 
   const handleSelectPolicy = (id) => {
+    const selectedPolicy = CANCELLATION_POLICIES.find((policy) => policy.id === id);
+    if (!selectedPolicy) {
+      return;
+    }
     setCancellationPolicy(id);
-    updatePolicyRule(`CancellationPolicy:${id.charAt(0).toUpperCase() + id.slice(1)}`, true);
-    CANCELLATION_POLICIES.filter((p) => p.id !== id).forEach((p) => {
-      updatePolicyRule(`CancellationPolicy:${p.id.charAt(0).toUpperCase() + p.id.slice(1)}`, false);
+    CANCELLATION_POLICIES.forEach((policy) => {
+      updatePolicyRule(policy.ruleKey, policy.id === selectedPolicy.id);
     });
     setExpandedPolicy(id);
   };
