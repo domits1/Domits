@@ -148,5 +148,9 @@
     "moduleNameMapper": {
       "^axios$": "axios/dist/node/axios.cjs"
     }
+  },
+  "overrides": {
+    "shell-quote": "1.10.0",
+    "websocket-driver": "0.7.5"
   }
 }
