@@ -20,4 +20,4 @@ runs:
     - name: Install dependencies
       shell: bash
       working-directory: frontend/web
-      run: npm ci --prefer-offline --no-audit --fund=false
+      run: npm ci --prefer-offline --no-audit --fund=false --ignore-scripts
