@@ -1,0 +1,22 @@
+name: Setup frontend
+description: >
+  Node, npm and dependencies for frontend/web. Declared once so the version
+  and the install flags cannot drift between workflows.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v6.0.0
+      with:
+        node-version: 22
+        cache-dependency-path: frontend/web/package-lock.json
+
+    - name: Pin npm to the version Dependabot generates lockfiles with
+      shell: bash
+      run: npm install -g npm@11.6.2 --ignore-scripts
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: frontend/web
+      run: npm ci
