@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { signWebsiteQuoteToken } from "../../.shared/websiteQuoteToken.js";
 import {
   WebsiteQuoteError,
   WEBSITE_QUOTE_ERROR_CODES,
@@ -282,3 +284,120 @@ export const summarizeAvailabilityWindows = (availabilityWindows) => {
   const latestEnd = Math.max(...windows.map((window) => window.end));
   return { bookableFrom: calendarIntToDateKey(earliestStart), bookableUntil: calendarIntToDateKey(latestEnd) };
 };
+
+export const resolveGuestCapacity = (generalDetails) => {
+  const row = (Array.isArray(generalDetails) ? generalDetails : []).find((detail) => detail?.detail === "Guests");
+  const capacity = Number(row?.value);
+  return Number.isInteger(capacity) && capacity > 0 ? capacity : null;
+};
+
+const QUOTE_TTL_MS = 30 * 60 * 1000;
+
+export class WebsiteQuoteService {
+  // propertyService is required rather than defaulted: the default PropertyService
+  // constructor wires twenty repositories, and the composing controller already
+  // owns one instance. The secret provider is a function so SSM stays out of
+  // the business layer.
+  constructor({ propertyService, quoteTokenSecretProvider, clock = () => Date.now() } = {}) {
+    if (!propertyService) {
+      throw new TypeError("WebsiteQuoteService requires a propertyService.");
+    }
+    if (typeof quoteTokenSecretProvider !== "function") {
+      throw new TypeError("WebsiteQuoteService requires a quoteTokenSecretProvider function.");
+    }
+    this.propertyService = propertyService;
+    this.quoteTokenSecretProvider = quoteTokenSecretProvider;
+    this.clock = clock;
+  }
+
+  async createQuote({ siteId, propertyId, checkIn, checkOut, guests, currency }) {
+    if (currency !== undefined && currency !== null && currency !== "EUR") {
+      // D14: the platform prices in EUR only; there is no currency column anywhere.
+      throw new WebsiteQuoteError(WEBSITE_QUOTE_ERROR_CODES.QUOTE_UNAVAILABLE, "Only EUR quotes are supported.");
+    }
+
+    const now = this.clock();
+    const stay = parseQuoteStayDates({ checkIn, checkOut, now });
+
+    let property, generalDetails, restrictionRows, availabilityWindows, pricing, calendarAvailability;
+    try {
+      [property, generalDetails, restrictionRows, availabilityWindows, pricing, calendarAvailability] =
+        await Promise.all([
+          this.propertyService.getBasePropertyInfo(propertyId),
+          this.propertyService.getGeneralDetails(propertyId),
+          this.propertyService.getAvailabilityRestrictions(propertyId),
+          this.propertyService.getAvailability(propertyId),
+          this.propertyService.getPricing(propertyId),
+          this.propertyService.getPublicCalendarAvailability(propertyId),
+        ]);
+    } catch (error) {
+      if (error?.statusCode === 404) {
+        throw new WebsiteQuoteError(
+          WEBSITE_QUOTE_ERROR_CODES.QUOTE_UNAVAILABLE,
+          "This property is not bookable right now."
+        );
+      }
+      throw new WebsiteQuoteError(
+        WEBSITE_QUOTE_ERROR_CODES.PRICING_SERVICE_UNAVAILABLE,
+        "Live pricing and availability could not be checked. Please try again."
+      );
+    }
+
+    assertPropertyIsQuotable(property);
+    assertQuoteGuestCount({ guests, capacity: resolveGuestCapacity(generalDetails) });
+
+    const restrictions = resolveStayRestrictions(restrictionRows);
+    const policiesApplied = [
+      ...assertStayRestrictions({ nights: stay.nights, checkInKey: stay.checkInKey, now, restrictions }),
+      ...assertStayNightsAvailable({
+        stayNightKeys: stay.stayNightKeys,
+        calendarAvailability,
+        availabilityWindows,
+      }),
+    ];
+
+    const priceBreakdown = buildQuotePriceBreakdown({ pricing, nights: stay.nights });
+    const { bookableFrom, bookableUntil } = summarizeAvailabilityWindows(availabilityWindows);
+    const expiresAt = new Date(now + QUOTE_TTL_MS).toISOString();
+    const quoteId = `quote_${randomUUID()}`;
+
+    const quoteToken = signWebsiteQuoteToken(
+      {
+        v: 1,
+        quoteId,
+        siteId,
+        propertyId,
+        checkIn: stay.checkInKey,
+        checkOut: stay.checkOutKey,
+        guests,
+        priceBreakdown,
+        expiresAt,
+      },
+      await this.quoteTokenSecretProvider()
+    );
+
+    return {
+      quoteId,
+      siteId,
+      propertyId,
+      // D3: no property timezone exists anywhere in the platform yet.
+      timezone: null,
+      checkIn: stay.checkInKey,
+      checkOut: stay.checkOutKey,
+      nights: stay.nights,
+      guestCount: guests,
+      availability: {
+        isAvailable: true,
+        bookableFrom,
+        bookableUntil,
+        minimumStay: restrictions.minimumStay,
+        maximumStay: restrictions.maximumStay,
+      },
+      priceBreakdown,
+      policiesApplied,
+      expiresAt,
+      quoteToken,
+    };
+  }
+}
+
