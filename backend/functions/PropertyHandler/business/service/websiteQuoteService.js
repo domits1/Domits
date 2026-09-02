@@ -42,6 +42,55 @@ const startOfUtcDayMs = (nowMs) => {
   return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 };
 
+const toCalendarDateInt = (date) =>
+  date.getUTCFullYear() * 10000 + (date.getUTCMonth() + 1) * 100 + date.getUTCDate();
+
+const CALENDAR_INT_MIN = 19000101;
+const CALENDAR_INT_MAX = 21001231;
+
+// Accepts the date representations that reach us from the calendar sources:
+// "YYYY-MM-DD" keys, YYYYMMDD ints, and the epoch timestamps the availability
+// windows are stored as. Mirrors the booking guard's normalizeValueToCalendarInt,
+// with YYYYMMDD-range integers recognized before the epoch interpretation.
+const normalizeToCalendarInt = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (DATE_KEY_PATTERN.test(trimmed)) {
+      return Number(trimmed.replaceAll("-", ""));
+    }
+    if (/^\d{8}$/.test(trimmed)) {
+      return Number(trimmed);
+    }
+  }
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return null;
+  }
+  const truncated = Math.trunc(numericValue);
+  if (truncated >= CALENDAR_INT_MIN && truncated <= CALENDAR_INT_MAX) {
+    return truncated;
+  }
+  const milliseconds = truncated > 1_000_000_000_000 ? truncated : truncated * 1000;
+  const date = new Date(milliseconds);
+  return Number.isNaN(date.getTime()) ? null : toCalendarDateInt(date);
+};
+
+const calendarIntToDateKey = (calendarInt) => {
+  const digits = String(calendarInt).padStart(8, "0");
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+};
+
+const normalizeWindows = (availabilityWindows) =>
+  (Array.isArray(availabilityWindows) ? availabilityWindows : [])
+    .map((window) => ({
+      start: normalizeToCalendarInt(window?.availableStartDate ?? window?.availablestartdate),
+      end: normalizeToCalendarInt(window?.availableEndDate ?? window?.availableenddate),
+    }))
+    .filter((window) => window.start !== null && window.end !== null);
+
 export const parseQuoteStayDates = ({ checkIn, checkOut, now }) => {
   const checkInMs = parseIsoDateKeyToUtcMs(checkIn);
   const checkOutMs = parseIsoDateKeyToUtcMs(checkOut);
@@ -146,4 +195,90 @@ export const assertStayRestrictions = ({ nights, checkInKey, now, restrictions }
   }
 
   return applied;
+};
+
+export const assertPropertyIsQuotable = (property) => {
+  if (property?.status !== "ACTIVE") {
+    throw new WebsiteQuoteError(
+      WEBSITE_QUOTE_ERROR_CODES.QUOTE_UNAVAILABLE,
+      "This property is not bookable right now."
+    );
+  }
+};
+
+// Mirrors the booking Lambda's assertBookingDatesAvailable: a night is bookable
+// when it is not blocked (booking, unavailable-override, or external calendar)
+// and is either opened by an available-override or inside an availability
+// window. A quote that passes here predicts a booking that passes the guard.
+export const assertStayNightsAvailable = ({ stayNightKeys, calendarAvailability, availabilityWindows }) => {
+  const collectInts = (values) =>
+    new Set((Array.isArray(values) ? values : []).map(normalizeToCalendarInt).filter((v) => v !== null));
+
+  const blockedInts = collectInts([
+    ...(calendarAvailability?.unavailableDateKeys ?? []),
+    ...(calendarAvailability?.externalBlockedDates ?? []),
+  ]);
+  const openedInts = collectInts(calendarAvailability?.availableDateKeys);
+  const windows = normalizeWindows(availabilityWindows);
+
+  const unavailable = new WebsiteQuoteError(
+    WEBSITE_QUOTE_ERROR_CODES.UNAVAILABLE_DATES,
+    "The selected dates are not available."
+  );
+  for (const nightKey of stayNightKeys) {
+    const nightInt = normalizeToCalendarInt(nightKey);
+    if (blockedInts.has(nightInt)) {
+      throw unavailable;
+    }
+    if (openedInts.has(nightInt)) {
+      continue;
+    }
+    if (!windows.some((window) => nightInt >= window.start && nightInt <= window.end)) {
+      throw unavailable;
+    }
+  }
+
+  return ["availability_window"];
+};
+
+export const buildQuotePriceBreakdown = ({ pricing, nights }) => {
+  const quoteUnavailable = new WebsiteQuoteError(
+    WEBSITE_QUOTE_ERROR_CODES.QUOTE_UNAVAILABLE,
+    "This property is not bookable right now."
+  );
+
+  const roomRate = Number(pricing?.roomRate);
+  if (!Number.isFinite(roomRate) || roomRate <= 0) {
+    throw quoteUnavailable;
+  }
+  const cleaning = pricing.cleaning === null || pricing.cleaning === undefined ? 0 : Number(pricing.cleaning);
+  if (!Number.isFinite(cleaning) || cleaning < 0) {
+    throw quoteUnavailable;
+  }
+
+  // Money leaves this service in minor units only. The cleaning fee is flat per
+  // stay (open decision D4), and no platform fee, discounts, or taxes are
+  // applied in v1 (open decisions D5/D6).
+  const nightlyBaseTotal = Math.round(roomRate * 100) * nights;
+  const cleaningFee = Math.round(cleaning * 100);
+
+  return {
+    currency: "EUR",
+    nightlyBaseTotal,
+    cleaningFee,
+    discounts: [],
+    taxes: [],
+    fees: [],
+    total: nightlyBaseTotal + cleaningFee,
+  };
+};
+
+export const summarizeAvailabilityWindows = (availabilityWindows) => {
+  const windows = normalizeWindows(availabilityWindows);
+  if (windows.length === 0) {
+    return { bookableFrom: null, bookableUntil: null };
+  }
+  const earliestStart = Math.min(...windows.map((window) => window.start));
+  const latestEnd = Math.max(...windows.map((window) => window.end));
+  return { bookableFrom: calendarIntToDateKey(earliestStart), bookableUntil: calendarIntToDateKey(latestEnd) };
 };
