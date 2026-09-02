@@ -21,6 +21,7 @@ const ValidatePayment = () => {
     if (!clientSecret) {
       setMessage("Missing Client Secret in URL. Please contact support.");
       setLoading(false);
+      return;
     }
 
     const checkPayment = async () => {
