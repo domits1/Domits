@@ -125,7 +125,7 @@ describe("ValidatePayment", () => {
       expect(retrievePaymentIntent).toHaveBeenCalledWith(null);
     });
 
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Something went wrong. Please contact support."})).toBeInTheDocument();
     expect(consoleErrorSpy).toHaveBeenCalledWith("No PaymentIntent received!!");
   });
 

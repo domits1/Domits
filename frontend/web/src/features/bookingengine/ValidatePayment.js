@@ -20,6 +20,7 @@ const ValidatePayment = () => {
     const clientSecret = new URLSearchParams(window.location.search).get(`payment_intent_client_secret`);
     if (!clientSecret) {
       setMessage("Missing Client Secret in URL. Please contact support.");
+      setLoading(false);
     }
 
     const checkPayment = async () => {
@@ -28,9 +29,12 @@ const ValidatePayment = () => {
 
         if (!paymentIntent) {
           console.error("No PaymentIntent received!!");
+          setMessage("Something went wrong. Please contact support.");
+          setLoading(false);
           return;
         }
         setLoading(false);
+
         switch (paymentIntent.status) {
           case "succeeded":
             setMessage(`Success! Payment received.`);
