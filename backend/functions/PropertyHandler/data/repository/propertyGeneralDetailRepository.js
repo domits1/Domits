@@ -1,8 +1,19 @@
 import { GeneralDetailMapping } from "../../util/mapping/generalDetail.js";
 import Database from "database";
 import {General_Details} from "database/models/General_Details";
-import {Property_General_Detail} from "database/models/Property_General_Detail";
+import {
+    Property_General_Detail,
+    PROPERTY_GENERAL_DETAIL_TABLE_NAMES
+} from "database/models/Property_General_Detail";
 import { randomUUID } from "node:crypto";
+
+const PROPERTY_GENERAL_DETAIL_TABLE = PROPERTY_GENERAL_DETAIL_TABLE_NAMES.current;
+const PROPERTY_GENERAL_DETAIL_COLUMNS = Object.freeze({
+    id: "id",
+    propertyId: "property_id",
+    detail: "detail",
+    value: "value"
+});
 
 export class PropertyGeneralDetailRepository {
 
@@ -24,8 +35,8 @@ export class PropertyGeneralDetailRepository {
         const client = await Database.getInstance();
         const result = await client
             .getRepository(Property_General_Detail)
-            .createQueryBuilder("property_generaldetail")
-            .where("id = :id", { id: id })
+            .createQueryBuilder(PROPERTY_GENERAL_DETAIL_TABLE)
+            .where(`${PROPERTY_GENERAL_DETAIL_COLUMNS.id} = :id`, { id: id })
             .getOne();
         return result ? result : null
     }
@@ -37,10 +48,10 @@ export class PropertyGeneralDetailRepository {
             .insert()
             .into(Property_General_Detail)
             .values({
-                id: detail.id,
-                property_id: detail.property_id,
-                detail: detail.detail,
-                value: detail.value
+                [PROPERTY_GENERAL_DETAIL_COLUMNS.id]: detail.id,
+                [PROPERTY_GENERAL_DETAIL_COLUMNS.propertyId]: detail.property_id,
+                [PROPERTY_GENERAL_DETAIL_COLUMNS.detail]: detail.detail,
+                [PROPERTY_GENERAL_DETAIL_COLUMNS.value]: detail.value
             })
             .execute();
         const result = await this.getPropertyGeneralDetailById(detail.id);
@@ -51,8 +62,8 @@ export class PropertyGeneralDetailRepository {
         const client = await Database.getInstance();
         const result = await client
             .getRepository(Property_General_Detail)
-            .createQueryBuilder("property_generaldetail")
-            .where("property_id = :id", { id: id })
+            .createQueryBuilder(PROPERTY_GENERAL_DETAIL_TABLE)
+            .where(`${PROPERTY_GENERAL_DETAIL_COLUMNS.propertyId} = :id`, { id: id })
             .getMany();
         return result.length > 0 ? result.map(item => GeneralDetailMapping.mapDatabaseEntryToGeneralDetail(item)) : null;
     }
@@ -68,17 +79,17 @@ export class PropertyGeneralDetailRepository {
 
             const existing = await client
                 .getRepository(Property_General_Detail)
-                .createQueryBuilder("property_generaldetail")
-                .where("property_id = :propertyId", { propertyId })
-                .andWhere("detail = :detail", { detail: detail.detail })
+                .createQueryBuilder(PROPERTY_GENERAL_DETAIL_TABLE)
+                .where(`${PROPERTY_GENERAL_DETAIL_COLUMNS.propertyId} = :propertyId`, { propertyId })
+                .andWhere(`${PROPERTY_GENERAL_DETAIL_COLUMNS.detail} = :detail`, { detail: detail.detail })
                 .getOne();
 
             if (existing) {
                 await client
                     .createQueryBuilder()
                     .update(Property_General_Detail)
-                    .set({ value: Math.max(0, Math.trunc(normalizedValue)) })
-                    .where("id = :id", { id: existing.id })
+                    .set({ [PROPERTY_GENERAL_DETAIL_COLUMNS.value]: Math.max(0, Math.trunc(normalizedValue)) })
+                    .where(`${PROPERTY_GENERAL_DETAIL_COLUMNS.id} = :id`, { id: existing.id })
                     .execute();
             } else {
                 await client
@@ -86,10 +97,10 @@ export class PropertyGeneralDetailRepository {
                     .insert()
                     .into(Property_General_Detail)
                     .values({
-                        id: randomUUID(),
-                        property_id: propertyId,
-                        detail: detail.detail,
-                        value: Math.max(0, Math.trunc(normalizedValue))
+                        [PROPERTY_GENERAL_DETAIL_COLUMNS.id]: randomUUID(),
+                        [PROPERTY_GENERAL_DETAIL_COLUMNS.propertyId]: propertyId,
+                        [PROPERTY_GENERAL_DETAIL_COLUMNS.detail]: detail.detail,
+                        [PROPERTY_GENERAL_DETAIL_COLUMNS.value]: Math.max(0, Math.trunc(normalizedValue))
                     })
                     .execute();
             }
