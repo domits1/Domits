@@ -79,11 +79,9 @@ describe("parseQuoteStayDates", () => {
         const checkOutMs = checkInMs + nights * 86_400_000;
         const toKey = (ms) => new Date(ms).toISOString().slice(0, 10);
         const stay = parseQuoteStayDates({ checkIn: toKey(checkInMs), checkOut: toKey(checkOutMs), now: NOW });
-        return (
-          stay.nights === nights &&
-          stay.stayNightKeys.length === nights &&
-          stay.stayNightKeys[0] === toKey(checkInMs)
-        );
+        expect(stay.nights).toBe(nights);
+        expect(stay.stayNightKeys).toHaveLength(nights);
+        expect(stay.stayNightKeys[0]).toBe(toKey(checkInMs));
       })
     );
   });

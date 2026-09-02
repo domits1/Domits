@@ -111,8 +111,8 @@ describe("verifyWebsiteQuoteToken", () => {
       fc.property(fc.jsonValue({ maxDepth: 3 }), (extra) => {
         const payload = buildPayload({ extra });
         const token = signWebsiteQuoteToken(payload, SECRET);
-        return (
-          JSON.stringify(verifyWebsiteQuoteToken(token, SECRET, { now: NOW })) === JSON.stringify(payload)
+        expect(JSON.stringify(verifyWebsiteQuoteToken(token, SECRET, { now: NOW }))).toBe(
+          JSON.stringify(payload)
         );
       })
     );
