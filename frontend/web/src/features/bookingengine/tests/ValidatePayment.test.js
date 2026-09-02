@@ -110,9 +110,8 @@ describe("ValidatePayment", () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  test("still attempts to retrieve payment intent when client secret is missing", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-    const retrievePaymentIntent = jest.fn().mockResolvedValue({ paymentIntent: null });
+  test("shows an error and does not retrieve payment intent when client secret is missing", async () => {
+    const retrievePaymentIntent = jest.fn();
 
     useStripe.mockReturnValue({
       retrievePaymentIntent,
@@ -121,12 +120,13 @@ describe("ValidatePayment", () => {
 
     render(<ValidatePayment />);
 
-    await waitFor(() => {
-      expect(retrievePaymentIntent).toHaveBeenCalledWith(null);
-    });
+    expect(
+      await screen.findByRole("heading", {
+        name: "Missing Client Secret in URL. Please contact support.",
+      })
+    ).toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: "Something went wrong. Please contact support."})).toBeInTheDocument();
-    expect(consoleErrorSpy).toHaveBeenCalledWith("No PaymentIntent received!!");
+    expect(retrievePaymentIntent).not.toHaveBeenCalled();
   });
 
   test("keeps loading state when stripe is not ready", () => {
