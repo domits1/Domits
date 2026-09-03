@@ -1,5 +1,6 @@
 import { PropertyBuilder } from "../business/service/propertyBuilder.js";
 import { PropertyService } from "../business/service/propertyService.js";
+import { WebsiteQuoteService } from "../business/service/websiteQuoteService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -17,6 +18,7 @@ import ChannexCalendarChangeSyncClient, {
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
+import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -48,6 +50,14 @@ const WEBSITE_PUBLIC_ANALYTICS_EVENT_TYPES = new Set([
 const WEBSITE_ANALYTICS_SURFACES = new Set(["preview", "live"]);
 const WEBSITE_ANALYTICS_VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
 const DIRECT_BOOKING_WEBSITE_PUBLIC_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
+
+// String parameter (not SecureString): SystemManagerRepository reads with WithDecryption:false.
+const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
+    process.env.DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER || "/direct-booking-website/quote-token-secret";
+
+// Only genuine availability conflicts count as quote_conflicted in the KPI stream;
+// validation 400s are guest input errors, not conflicts.
+const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
 const CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS = 500;
@@ -181,6 +191,9 @@ export class PropertyController {
         this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
         this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
         this.channexCalendarChangeSyncClient = channexCalendarChangeSyncClient;
+        this.systemManagerRepository = systemManagerRepository;
+        this.websiteQuoteService = null;
+        this.websiteQuoteTokenSecretPromise = null;
     }
 
     // -------------------------
@@ -2925,6 +2938,147 @@ export class PropertyController {
             }
             return this.websiteServerError();
         }
+    }
+
+    // -------------------------
+    // POST /property/website/public/quote
+    // -------------------------
+    async createPublicWebsiteQuote(event) {
+        const requestId = cleanWebsiteText(event?.requestContext?.requestId) || randomUUID();
+        let site = null;
+        try {
+            let requestBody = null;
+            try {
+                requestBody = JSON.parse(event?.body || "");
+            } catch {
+                requestBody = null;
+            }
+            if (!requestBody || typeof requestBody !== "object" || Array.isArray(requestBody)) {
+                return this.websiteQuoteErrorResponse(400, "invalid_request", "A JSON object request body is required.", requestId);
+            }
+
+            const siteId = cleanWebsiteText(requestBody.siteId);
+            if (!siteId) {
+                return this.websiteQuoteErrorResponse(400, "invalid_request", "siteId is required.", requestId);
+            }
+
+            site = await this.directBookingWebsiteSiteRepository.getSiteById(siteId);
+            if (!site) {
+                return this.websiteQuoteErrorResponse(404, "site_not_found", "No website was found for this request.", requestId);
+            }
+            if (site.status === "SUSPENDED") {
+                return this.websiteQuoteErrorResponse(410, "site_suspended", "This website is no longer available.", requestId);
+            }
+            if (site.status !== "PUBLISHED") {
+                return this.websiteQuoteErrorResponse(409, "site_not_published", "This website is not published.", requestId);
+            }
+
+            const sessionId = cleanWebsiteText(requestBody.session?.sessionId) || null;
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                eventType: "SITE_QUOTE_REQUESTED",
+                payload: {
+                    requestId,
+                    siteId: site.id,
+                    sessionId,
+                    checkIn: requestBody.checkIn ?? null,
+                    checkOut: requestBody.checkOut ?? null,
+                    guests: requestBody.guests ?? null,
+                },
+            });
+
+            // The quoted property is the site's own; a client-supplied propertyId is never used.
+            const quote = await this.getWebsiteQuoteService().createQuote({
+                siteId: site.id,
+                propertyId: site.propertyId,
+                checkIn: requestBody.checkIn,
+                checkOut: requestBody.checkOut,
+                guests: requestBody.guests,
+                currency: requestBody.currency,
+            });
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                eventType: "SITE_QUOTE_RETURNED",
+                payload: {
+                    requestId,
+                    siteId: site.id,
+                    sessionId,
+                    quoteId: quote.quoteId,
+                    nights: quote.nights,
+                    total: quote.priceBreakdown?.total ?? null,
+                },
+            });
+
+            console.log(JSON.stringify({
+                scope: "websiteQuote",
+                outcome: "returned",
+                requestId,
+                siteId: site.id,
+                propertyId: site.propertyId,
+                quoteId: quote.quoteId,
+            }));
+            return {
+                statusCode: 200,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(quote),
+            };maa
+        } catch (error) {
+            if (error instanceof WebsiteQuoteError) {
+                if (site && WEBSITE_QUOTE_CONFLICT_ERROR_CODES.has(error.code)) {
+                    await this.recordStandaloneWebsiteEventSafely({
+                        draftId: null,
+                        propertyId: site.propertyId,
+                        hostId: site.hostId,
+                        eventType: "SITE_QUOTE_CONFLICTED",
+                        payload: { requestId, siteId: site.id, code: error.code },
+                    });
+                }
+                console.log(JSON.stringify({
+                    scope: "websiteQuote",
+                    outcome: error.code,
+                    requestId,
+                    siteId: site?.id ?? null,
+                    propertyId: site?.propertyId ?? null,
+                }));
+                return this.websiteQuoteErrorResponse(error.statusCode, error.code, error.message, requestId);
+            }
+            console.error("Website quote request failed.", error);
+            return this.websiteQuoteErrorResponse(500, "internal_error", "We could not complete this quote request. Please try again.", requestId);
+        }
+    }
+
+    websiteQuoteErrorResponse(statusCode, code, message, requestId) {
+        return {
+            statusCode,
+            headers: draftResponseHeaders,
+            body: JSON.stringify({ error: { code, message, requestId } }),
+        };
+    }
+
+    getWebsiteQuoteService() {
+        this.websiteQuoteService ??= new WebsiteQuoteService({
+            propertyService: this.propertyService,
+            quoteTokenSecretProvider: () => this.getWebsiteQuoteTokenSecret(),
+        });
+        return this.websiteQuoteService;
+    }
+
+    async getWebsiteQuoteTokenSecret() {
+        if (!this.websiteQuoteTokenSecretPromise) {
+            this.websiteQuoteTokenSecretPromise = this.systemManagerRepository
+                .getSystemManagerParameter(DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER)
+                .catch((error) => {
+                    // A transient SSM failure must not poison the warm Lambda.
+                    this.websiteQuoteTokenSecretPromise = null;
+                    throw error;
+                });
+        }
+        return this.websiteQuoteTokenSecretPromise;
     }
 
     // -------------------------
