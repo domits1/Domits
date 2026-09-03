@@ -29,6 +29,7 @@ const directRouteSpecs = [
   ["PATCH property calendar overrides request", "updatePropertyCalendarOverrides", "PATCH", "/property/calendar/overrides", 200],
   ["PATCH property activation request", "activateProperty", "PATCH", "/property", 204],
   ["POST website analytics event request", "recordWebsiteAnalyticsEvent", "POST", "/property/website/event", 204],
+  ["POST public website quote request", "createPublicWebsiteQuote", "POST", "/property/website/public/quote", 200],
   ["POST website site publish request", "publishWebsiteSite", "POST", "/property/website/site/publish", 200],
   ["POST website site unpublish request", "unpublishWebsiteSite", "POST", "/property/website/site/unpublish", 200],
   ["POST website draft upsert request", "upsertWebsiteDraft", "POST", "/property/website/draft", 200],
