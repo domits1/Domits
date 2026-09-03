@@ -32,6 +32,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/event")) {
     return controller.recordWebsiteAnalyticsEvent(event);
   }
+  if (isPath(event, "/property/website/public/quote")) {
+    return controller.createPublicWebsiteQuote(event);
+  }
   if (isPath(event, "/property/website/site/publish")) {
     return controller.publishWebsiteSite(event);
   }
