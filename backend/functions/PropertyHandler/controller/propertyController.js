@@ -3026,7 +3026,7 @@ export class PropertyController {
                 statusCode: 200,
                 headers: draftResponseHeaders,
                 body: JSON.stringify(quote),
-            };maa
+            };
         } catch (error) {
             if (error instanceof WebsiteQuoteError) {
                 if (site && WEBSITE_QUOTE_CONFLICT_ERROR_CODES.has(error.code)) {
