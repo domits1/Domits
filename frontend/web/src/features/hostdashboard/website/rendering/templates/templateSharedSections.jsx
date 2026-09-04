@@ -273,6 +273,7 @@ export function TemplateAvailabilityCalendar({
   variant = "default",
   propertyTitle = "",
   templateKey = "",
+  selection = null,
 }) {
   const titleInteractiveTargetProps = getInteractiveTargetProps("", onSelectTarget, {
     sectionId: "calendar",
@@ -300,6 +301,7 @@ export function TemplateAvailabilityCalendar({
         templateKey={templateKey}
         variant={variant}
         propertyTitle={propertyTitle}
+        selection={selection}
         interactiveTargetProps={getInteractiveTargetProps(styles.availabilityCalendarTarget, onSelectTarget, {
           sectionId: "calendar",
           targetId: "calendar.visibility",
@@ -310,6 +312,13 @@ export function TemplateAvailabilityCalendar({
 }
 
 TemplateAvailabilityCalendar.propTypes = {
+  selection: PropTypes.shape({
+    selectable: PropTypes.bool,
+    checkIn: PropTypes.string,
+    checkOut: PropTypes.string,
+    todayKey: PropTypes.string,
+    onSelectDate: PropTypes.func,
+  }),
   model: PropTypes.shape({
     availability: PropTypes.shape({}).isRequired,
     calendarSection: PropTypes.shape({}),

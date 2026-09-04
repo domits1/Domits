@@ -506,3 +506,49 @@
     font-size: 0.92rem;
   }
 }
+
+.calendarCellSelectable,
+.panoramaCalendarCellSelectable {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.calendarCellSelectable:focus-visible,
+.panoramaCalendarCellSelectable:focus-visible {
+  outline: 2px solid #1e3150;
+  outline-offset: -2px;
+}
+
+.calendarCellSelectable:not(:disabled):hover {
+  border-color: rgba(31, 78, 121, 0.4);
+}
+
+.panoramaCalendarCellSelectable {
+  border-radius: 10px;
+  background: transparent;
+}
+
+.panoramaCalendarCellSelectable:not(:disabled):hover {
+  background: rgba(30, 49, 80, 0.08);
+}
+
+.calendarCellInRange,
+.panoramaCalendarCellInRange {
+  background: rgba(30, 49, 80, 0.14);
+}
+
+.calendarCellSelected,
+.panoramaCalendarCellSelected,
+.panoramaCalendarCellSelectable.panoramaCalendarCellSelected:hover {
+  background: #1e3150;
+  color: #ffffff;
+}
+
+.calendarCellPast,
+.panoramaCalendarCellPast {
+  color: rgba(30, 49, 80, 0.35);
+  cursor: not-allowed;
+}

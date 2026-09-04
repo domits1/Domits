@@ -87,17 +87,20 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "journeyStops",
 ]);
 
-const VISIBILITY_KEYS = Object.freeze([
-  "topBar",
-  "trustCards",
-  "gallerySection",
-  "amenitiesPanel",
-  "availabilityCalendar",
-  "callToAction",
-  "journeyStops",
-  "contactSection",
-  "chatWidget",
-]);
+const VISIBILITY_DEFAULTS = Object.freeze({
+  topBar: true,
+  trustCards: true,
+  gallerySection: true,
+  amenitiesPanel: true,
+  availabilityCalendar: true,
+  callToAction: true,
+  journeyStops: true,
+  contactSection: true,
+  chatWidget: true,
+  quotePanel: false,
+});
+
+const VISIBILITY_KEYS = Object.freeze(Object.keys(VISIBILITY_DEFAULTS));
 
 const cleanText = (value) => String(value || "").trim();
 
@@ -405,13 +408,7 @@ export const createEmptyWebsiteDraftEditorValues = (templateKey = "") => ({
     accentColor: DEFAULT_WEBSITE_CONTACT_ACCENT_COLOR,
     backgroundColor: DEFAULT_WEBSITE_CONTACT_BACKGROUND_COLOR,
   },
-  visibility: VISIBILITY_KEYS.reduce(
-    (visibilityMap, visibilityKey) => ({
-      ...visibilityMap,
-      [visibilityKey]: true,
-    }),
-    {}
-  ),
+  visibility: { ...VISIBILITY_DEFAULTS },
   images: {
     heroImage: "",
     residenceImage: "",

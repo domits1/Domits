@@ -239,6 +239,11 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
       "Show contact footer",
       "Controls the contact footer section at the bottom of the page."
     ),
+    createVisibilityField(
+      "quotePanel",
+      "Show booking panel",
+      "Lets guests pick dates and see a live price. Appears on your published site only, and needs the availability calendar."
+    ),
     createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],
   [TRUST_SIGNALS_TEMPLATE_KEY]: [
@@ -257,6 +262,11 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
       "availabilityCalendar",
       "Show availability calendar",
       "Controls the imported availability snapshot section."
+    ),
+    createVisibilityField(
+      "quotePanel",
+      "Show booking panel",
+      "Lets guests pick dates and see a live price. Appears on your published site only, and needs the availability calendar."
     ),
     createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],
@@ -281,6 +291,11 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
       "availabilityCalendar",
       "Show availability calendar",
       "Controls the imported availability snapshot section."
+    ),
+    createVisibilityField(
+      "quotePanel",
+      "Show booking panel",
+      "Lets guests pick dates and see a live price. Appears on your published site only, and needs the availability calendar."
     ),
     createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],

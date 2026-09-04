@@ -719,6 +719,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       journeyStops: true,
       contactSection: true,
       chatWidget: true,
+      quotePanel: false,
     },
   };
 };
