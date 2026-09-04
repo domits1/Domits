@@ -5,6 +5,7 @@ import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getScrollRevealProps } from "../animations/scrollRevealProps";
+import { revealDeferredSections } from "../animations/revealDeferredSections";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
@@ -89,6 +90,13 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
   }
 
   event.preventDefault();
+
+  // Measure only after deferred sections render at their real height (see revealDeferredSections).
+  revealDeferredSections(
+    globalThis.document,
+    styles.panoramaDeferredRenderSection,
+    styles.panoramaDeferredRenderSectionRevealed
+  );
 
   const topBarElement = globalThis.document.querySelector(PANORAMA_TOP_BAR_SELECTOR);
   const topBarInnerElement =
