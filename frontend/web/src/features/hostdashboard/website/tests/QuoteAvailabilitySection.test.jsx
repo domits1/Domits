@@ -2,6 +2,10 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import QuoteAvailabilitySection from "../rendering/booking/QuoteAvailabilitySection";
 import { WebsitePublicQuoteError, requestPublicWebsiteQuote } from "../services/websitePublicQuoteService";
+// The section lazy-loads the calendar. Importing it here first puts the module in
+// Jest's registry, so the lazy import() resolves from cache instead of transpiling
+// the calendar (and its icon imports) inside the test's wait window on a cold runner.
+import "../rendering/AvailabilityCalendarPreview";
 
 jest.mock("../services/websitePublicQuoteService", () => {
   const actual = jest.requireActual("../services/websitePublicQuoteService");
@@ -57,9 +61,14 @@ const renderSection = () =>
     />
   );
 
+// The calendar replaces a Suspense fallback; its month navigation is the landmark
+// that proves the real calendar is on screen before any day is looked up.
+const waitForCalendar = () => screen.findByRole("button", { name: "Show next months" });
+
 const selectStay = async () => {
-  fireEvent.click(await screen.findByRole("button", { name: `${monthLabel} 1, Available` }));
-  fireEvent.click(await screen.findByRole("button", { name: `${monthLabel} 4, Available` }));
+  await waitForCalendar();
+  fireEvent.click(screen.getByRole("button", { name: `${monthLabel} 1, Available` }));
+  fireEvent.click(screen.getByRole("button", { name: `${monthLabel} 4, Available` }));
 };
 
 describe("QuoteAvailabilitySection", () => {
