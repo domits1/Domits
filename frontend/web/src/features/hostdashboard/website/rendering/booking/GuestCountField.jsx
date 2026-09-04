@@ -8,14 +8,12 @@ export default function GuestCountField({ value, onChange, min = 1, max = null, 
   const canIncrement = !disabled && (!hasMax || value < max);
 
   return (
-    <div className={styles.guestField}>
-      <div className={styles.guestFieldHeader}>
-        <span id="website-quote-guests-label" className={styles.fieldLabel}>
-          Guests
-        </span>
+    <fieldset className={styles.guestField}>
+      <legend className={styles.guestFieldLegend}>
+        <span className={styles.fieldLabel}>Guests</span>
         {hasMax ? <span className={styles.hint}>{`Up to ${max} guests`}</span> : null}
-      </div>
-      <div className={styles.stepper} role="group" aria-labelledby="website-quote-guests-label">
+      </legend>
+      <div className={styles.stepper}>
         <button
           type="button"
           className={styles.stepperButton}
@@ -43,7 +41,7 @@ export default function GuestCountField({ value, onChange, min = 1, max = null, 
           {errorMessage}
         </p>
       ) : null}
-    </div>
+    </fieldset>
   );
 }
 

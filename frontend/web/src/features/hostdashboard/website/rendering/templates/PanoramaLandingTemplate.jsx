@@ -44,7 +44,7 @@ import {
   resolveWebsiteContactSectionCopy,
 } from "../../config/websiteContactSectionConfig";
 import { getDefaultWebsiteCalendarTitle } from "../../config/websiteCalendarSectionConfig";
-import { resolveQuotePanelVisibility } from "../booking/quotePanelGate";
+import { resolveQuotePanelSiteId } from "../booking/quotePanelGate";
 import { resolveWebsiteResidencePanelColor } from "../../config/websiteResidenceSectionConfig";
 import { resolveWebsiteGalleryPanelColor } from "../../config/websiteGallerySectionConfig";
 import {
@@ -1172,7 +1172,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
   const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const isInteractivePreview = Boolean(onSelectTarget);
-  const showQuotePanel = resolveQuotePanelVisibility({ quoteContext, model, onSelectTarget });
+  const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
   const canOpenGalleryBrowser = !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
@@ -1233,11 +1233,11 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       activeTargetId={activeTargetId}
     />
   );
-  const availabilityContent = showQuotePanel ? (
+  const availabilityContent = quotePanelSiteId ? (
     <Suspense fallback={availabilityCalendar}>
       <LazyQuoteAvailabilitySection
         model={model}
-        siteId={quoteContext.siteId}
+        siteId={quotePanelSiteId}
         variant="panorama"
         templateKey="panorama-landing"
         propertyTitle={model.site.title}

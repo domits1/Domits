@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import QuoteAvailabilitySection from "../rendering/booking/QuoteAvailabilitySection";
 import { WebsitePublicQuoteError, requestPublicWebsiteQuote } from "../services/websitePublicQuoteService";
 // The section lazy-loads the calendar. Importing it here first puts the module in
@@ -119,7 +119,7 @@ describe("QuoteAvailabilitySection", () => {
     await selectStay();
     fireEvent.click(screen.getByRole("button", { name: /check availability & price/i }));
 
-    await waitFor(() => expect(screen.getByText(/no longer available/i)).toBeInTheDocument());
+    expect(await screen.findByText(/no longer available/i)).toBeInTheDocument();
     expect(screen.getByText(/select your check-in date/i)).toBeInTheDocument();
   });
 });

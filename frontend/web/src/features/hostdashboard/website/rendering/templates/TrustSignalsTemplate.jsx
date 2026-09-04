@@ -23,7 +23,7 @@ import {
   visibilityPropType,
   quoteContextPropType,
 } from "./templatePropTypes";
-import { resolveQuotePanelVisibility } from "../booking/quotePanelGate";
+import { resolveQuotePanelSiteId } from "../booking/quotePanelGate";
 
 const LazyQuoteAvailabilitySection = lazy(() => import("../booking/QuoteAvailabilitySection"));
 
@@ -32,7 +32,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
   const showTrustCards = model.visibility?.trustCards !== false;
   const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
   const showCallToAction = model.visibility?.callToAction !== false;
-  const showQuotePanel = resolveQuotePanelVisibility({ quoteContext, model, onSelectTarget });
+  const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
 
   const availabilityCalendar = (
     <TemplateAvailabilityCalendar
@@ -42,9 +42,9 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
       activeTargetId={activeTargetId}
     />
   );
-  const availabilityContent = showQuotePanel ? (
+  const availabilityContent = quotePanelSiteId ? (
     <Suspense fallback={availabilityCalendar}>
-      <LazyQuoteAvailabilitySection model={model} siteId={quoteContext.siteId} templateKey="trust-signals" />
+      <LazyQuoteAvailabilitySection model={model} siteId={quotePanelSiteId} templateKey="trust-signals" />
     </Suspense>
   ) : (
     availabilityCalendar

@@ -26,7 +26,7 @@ import {
   quoteContextPropType,
 } from "./templatePropTypes";
 import { resolveWebsiteAmenityIconColor } from "../../config/websiteAmenitiesConfig";
-import { resolveQuotePanelVisibility } from "../booking/quotePanelGate";
+import { resolveQuotePanelSiteId } from "../booking/quotePanelGate";
 
 const LazyQuoteAvailabilitySection = lazy(() => import("../booking/QuoteAvailabilitySection"));
 
@@ -41,7 +41,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
     model.amenities?.iconColor,
     "experience-journey"
   );
-  const showQuotePanel = resolveQuotePanelVisibility({ quoteContext, model, onSelectTarget });
+  const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
 
   const availabilityCalendar = (
     <TemplateAvailabilityCalendar
@@ -51,9 +51,9 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
       activeTargetId={activeTargetId}
     />
   );
-  const availabilityContent = showQuotePanel ? (
+  const availabilityContent = quotePanelSiteId ? (
     <Suspense fallback={availabilityCalendar}>
-      <LazyQuoteAvailabilitySection model={model} siteId={quoteContext.siteId} templateKey="experience-journey" />
+      <LazyQuoteAvailabilitySection model={model} siteId={quotePanelSiteId} templateKey="experience-journey" />
     </Suspense>
   ) : (
     availabilityCalendar

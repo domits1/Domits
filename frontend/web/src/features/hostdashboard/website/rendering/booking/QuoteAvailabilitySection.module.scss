@@ -79,13 +79,19 @@
 .guestField {
   display: grid;
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
 }
 
-.guestFieldHeader {
+.guestFieldLegend {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
+  width: 100%;
+  padding: 0;
 }
 
 .fieldLabel {
