@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
@@ -23,10 +23,14 @@ import {
   sitePropType,
   templateInteractionPropTypes,
   visibilityPropType,
+  quoteContextPropType,
 } from "./templatePropTypes";
 import { resolveWebsiteAmenityIconColor } from "../../config/websiteAmenitiesConfig";
+import { resolveQuotePanelSiteId } from "../booking/quotePanelGate";
 
-export default function ExperienceJourneyTemplate({ model, onSelectTarget, activeTargetId }) {
+const LazyQuoteAvailabilitySection = lazy(() => import("../booking/QuoteAvailabilitySection"));
+
+export default function ExperienceJourneyTemplate({ model, onSelectTarget, activeTargetId, quoteContext = null }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showJourneyStops = model.visibility?.journeyStops !== false;
   const showAmenitiesPanel = model.visibility?.amenitiesPanel !== false;
@@ -36,6 +40,23 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
   const amenityIconColor = resolveWebsiteAmenityIconColor(
     model.amenities?.iconColor,
     "experience-journey"
+  );
+  const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
+
+  const availabilityCalendar = (
+    <TemplateAvailabilityCalendar
+      model={model}
+      templateKey="experience-journey"
+      onSelectTarget={onSelectTarget}
+      activeTargetId={activeTargetId}
+    />
+  );
+  const availabilityContent = quotePanelSiteId ? (
+    <Suspense fallback={availabilityCalendar}>
+      <LazyQuoteAvailabilitySection model={model} siteId={quotePanelSiteId} templateKey="experience-journey" />
+    </Suspense>
+  ) : (
+    availabilityCalendar
   );
 
   return (
@@ -103,14 +124,7 @@ export default function ExperienceJourneyTemplate({ model, onSelectTarget, activ
         </section>
       ) : null}
 
-      {showAvailabilityCalendar ? (
-        <TemplateAvailabilityCalendar
-          model={model}
-          templateKey="experience-journey"
-          onSelectTarget={onSelectTarget}
-          activeTargetId={activeTargetId}
-        />
-      ) : null}
+      {showAvailabilityCalendar ? availabilityContent : null}
 
       {showExperienceFooter ? (
         <section className={styles.sectionCard}>
@@ -190,4 +204,5 @@ ExperienceJourneyTemplate.propTypes = {
     visibility: visibilityPropType.isRequired,
   }).isRequired,
   ...templateInteractionPropTypes,
+  quoteContext: quoteContextPropType,
 };

@@ -5,6 +5,7 @@ import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getScrollRevealProps } from "../animations/scrollRevealProps";
+import { revealDeferredSections } from "../animations/revealDeferredSections";
 import { getAmenityIconNode } from "../amenityIconRegistry";
 import {
   getInteractiveTargetProps,
@@ -30,6 +31,7 @@ import {
   sitePropType,
   templateInteractionPropTypes,
   visibilityPropType,
+  quoteContextPropType,
 } from "./templatePropTypes";
 import {
   DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
@@ -43,6 +45,7 @@ import {
   resolveWebsiteContactSectionCopy,
 } from "../../config/websiteContactSectionConfig";
 import { getDefaultWebsiteCalendarTitle } from "../../config/websiteCalendarSectionConfig";
+import { resolveQuotePanelSiteId } from "../booking/quotePanelGate";
 import { resolveWebsiteResidencePanelColor } from "../../config/websiteResidenceSectionConfig";
 import { resolveWebsiteGalleryPanelColor } from "../../config/websiteGallerySectionConfig";
 import {
@@ -87,6 +90,12 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
   }
 
   event.preventDefault();
+
+  revealDeferredSections(
+    globalThis.document,
+    styles.panoramaDeferredRenderSection,
+    styles.panoramaDeferredRenderSectionRevealed
+  );
 
   const topBarElement = globalThis.document.querySelector(PANORAMA_TOP_BAR_SELECTOR);
   const topBarInnerElement =
@@ -601,6 +610,42 @@ const renderPanoramaTrustCards = ({ featuredTrustCards, onSelectTarget, activeTa
   );
 };
 
+const PANORAMA_AVAILABILITY_ANCHOR = "#availability";
+const LazyQuoteAvailabilitySection = lazy(() => import("../booking/QuoteAvailabilitySection"));
+
+const renderPanoramaHeroCallToAction = ({ model, onSelectTarget, activeTargetId }) => {
+  const callToActionContent = (
+    <>
+      <strong>{model.callToAction.label}</strong>
+      <span>{model.callToAction.note || model.stay?.nightlyRateLabel || "Direct booking website"}</span>
+    </>
+  );
+
+  if (onSelectTarget) {
+    return (
+      <div
+        {...getInteractiveTargetProps(styles.panoramaHeroPrimaryAction, onSelectTarget, {
+          sectionId: "common",
+          targetId: "common.ctaLabel",
+        }, activeTargetId)}
+      >
+        {callToActionContent}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={`${styles.panoramaHeroPrimaryAction} ${styles.panoramaHeroPrimaryActionButton}`}
+      data-preview-target-id="common.ctaLabel"
+      onClick={handlePanoramaNavItemClick(PANORAMA_AVAILABILITY_ANCHOR)}
+    >
+      {callToActionContent}
+    </button>
+  );
+};
+
 const renderPanoramaHeroSection = ({
   model,
   onSelectTarget,
@@ -667,17 +712,7 @@ const renderPanoramaHeroSection = ({
               className={styles.panoramaHeroActionRow}
               data-panorama-hero-alignment={heroContentAlignment}
             >
-              {showCallToAction ? (
-                <div
-                  {...getInteractiveTargetProps(styles.panoramaHeroPrimaryAction, onSelectTarget, {
-                    sectionId: "common",
-                    targetId: "common.ctaLabel",
-                  }, activeTargetId)}
-                >
-                  <strong>{model.callToAction.label}</strong>
-                  <span>{model.callToAction.note || model.stay?.nightlyRateLabel || "Direct booking website"}</span>
-                </div>
-              ) : null}
+              {showCallToAction ? renderPanoramaHeroCallToAction({ model, onSelectTarget, activeTargetId }) : null}
             </div>
           </div>
         </div>
@@ -1135,13 +1170,14 @@ const renderPanoramaContactSection = ({
   );
 };
 
-export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId }) {
+export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId, quoteContext = null }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
   const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const isInteractivePreview = Boolean(onSelectTarget);
+  const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
   const canOpenGalleryBrowser = !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
@@ -1191,6 +1227,30 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
       }
     };
   }, [isNavDrawerOpen]);
+
+  const availabilityCalendar = (
+    <TemplateAvailabilityCalendar
+      model={model}
+      variant="panorama"
+      templateKey="panorama-landing"
+      propertyTitle={model.site.title}
+      onSelectTarget={onSelectTarget}
+      activeTargetId={activeTargetId}
+    />
+  );
+  const availabilityContent = quotePanelSiteId ? (
+    <Suspense fallback={availabilityCalendar}>
+      <LazyQuoteAvailabilitySection
+        model={model}
+        siteId={quotePanelSiteId}
+        variant="panorama"
+        templateKey="panorama-landing"
+        propertyTitle={model.site.title}
+      />
+    </Suspense>
+  ) : (
+    availabilityCalendar
+  );
 
   return (
     <>
@@ -1262,14 +1322,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
             )}
             {...getScrollRevealProps(160)}
           >
-            <TemplateAvailabilityCalendar
-              model={model}
-              variant="panorama"
-              templateKey="panorama-landing"
-              propertyTitle={model.site.title}
-              onSelectTarget={onSelectTarget}
-              activeTargetId={activeTargetId}
-            />
+            {availabilityContent}
           </section>
         ) : null}
 
@@ -1354,4 +1407,5 @@ PanoramaLandingTemplate.propTypes = {
     contactSection: contactSectionPropType.isRequired,
   }).isRequired,
   ...templateInteractionPropTypes,
+  quoteContext: quoteContextPropType,
 };
