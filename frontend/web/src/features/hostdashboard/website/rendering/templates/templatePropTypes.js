@@ -131,6 +131,12 @@ export const visibilityPropType = PropTypes.shape({
   journeyStops: PropTypes.bool,
   contactSection: PropTypes.bool,
   chatWidget: PropTypes.bool,
+  quotePanel: PropTypes.bool,
+});
+
+// Present only on the live published surface; its absence hides every booking control.
+export const quoteContextPropType = PropTypes.shape({
+  siteId: PropTypes.string,
 });
 
 export const templateInteractionPropTypes = {

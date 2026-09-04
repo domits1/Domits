@@ -81,6 +81,61 @@ const availabilityPropType = PropTypes.shape({
   callout: PropTypes.string,
 });
 
+const selectionPropType = PropTypes.shape({
+  selectable: PropTypes.bool,
+  checkIn: PropTypes.string,
+  checkOut: PropTypes.string,
+  todayKey: PropTypes.string,
+  onSelectDate: PropTypes.func,
+});
+
+// Selection is opt-in: the calendar stays a display-only snapshot in the editor
+// and the draft preview, and becomes a date-range picker only when the booking
+// section on the live site hands it a selection.
+const resolveCellSelectionState = (cell, selection) => {
+  if (!selection?.selectable || !cell.isCurrentMonth) {
+    return null;
+  }
+  const checkIn = selection.checkIn || null;
+  const checkOut = selection.checkOut || null;
+  return {
+    isPast: Boolean(selection.todayKey) && cell.id < selection.todayKey,
+    isCheckIn: cell.id === checkIn,
+    isCheckOut: cell.id === checkOut,
+    isInRange: Boolean(checkIn && checkOut) && cell.id > checkIn && cell.id < checkOut,
+  };
+};
+
+const buildCellSelectionClassName = (selectionState, classNames) => {
+  if (!selectionState) {
+    return "";
+  }
+  const isSelected = selectionState.isCheckIn || selectionState.isCheckOut;
+  return `${classNames.selectable} ${isSelected ? classNames.selected : ""} ${
+    selectionState.isInRange ? classNames.inRange : ""
+  } ${selectionState.isPast ? classNames.past : ""}`.trim();
+};
+
+const buildCellSelectionProps = (cell, selection, selectionState) =>
+  selectionState
+    ? {
+        type: "button",
+        disabled: selectionState.isPast,
+        "aria-pressed": selectionState.isCheckIn || selectionState.isCheckOut,
+        onClick: () => selection.onSelectDate?.(cell.id),
+      }
+    : {};
+
+const resolveSelectionLabelSuffix = (selectionState) => {
+  if (selectionState?.isCheckIn) {
+    return ", check-in";
+  }
+  if (selectionState?.isCheckOut) {
+    return ", check-out";
+  }
+  return "";
+};
+
 const splitInteractiveTargetProps = (interactiveTargetProps = {}) => {
   const { className = "", ...targetProps } = interactiveTargetProps;
   return {
@@ -251,6 +306,7 @@ function LegacyAvailabilityCalendar({
   templateKey = "",
   titleInteractiveTargetProps = {},
   descriptionInteractiveTargetProps = {},
+  selection = null,
 }) {
   const { externalBlockedDateKeySet, unavailableDateKeySet } = useAvailabilityDateKeySets(availability);
   const baseMonth = useMemo(() => {
@@ -370,16 +426,27 @@ function LegacyAvailabilityCalendar({
         {calendarCells.map((cell) => {
           const status = getCalendarCellStatus(cell);
           const StatusIcon = status?.Icon;
+          const selectionState = resolveCellSelectionState(cell, selection);
+          const CellElement = selectionState ? "button" : "span";
 
           return (
-            <span
+            <CellElement
               key={cell.id}
               className={`${styles.calendarCell} ${cell.isCurrentMonth ? styles.calendarCellCurrent : ""} ${
                 cell.isExternalBlocked ? styles.calendarCellBlocked : ""
               } ${cell.isUnavailable && !cell.isExternalBlocked ? styles.calendarCellUnavailable : ""} ${
                 cell.isUnavailable ? styles.calendarCellBlockedBase : ""
-              } ${cell.isToday ? styles.calendarCellToday : ""}`.trim()}
+              } ${cell.isToday ? styles.calendarCellToday : ""} ${buildCellSelectionClassName(selectionState, {
+                selectable: styles.calendarCellSelectable,
+                selected: styles.calendarCellSelected,
+                inRange: styles.calendarCellInRange,
+                past: styles.calendarCellPast,
+              })}`.trim()}
               title={status?.title}
+              aria-label={
+                selectionState ? `${monthLabel} ${cell.dayOfMonth}${resolveSelectionLabelSuffix(selectionState)}` : undefined
+              }
+              {...buildCellSelectionProps(cell, selection, selectionState)}
             >
               <span className={styles.calendarCellDay}>{cell.dayOfMonth}</span>
               {status && StatusIcon ? (
@@ -388,7 +455,7 @@ function LegacyAvailabilityCalendar({
                   <span>{status.label}</span>
                 </span>
               ) : null}
-            </span>
+            </CellElement>
           );
         })}
       </div>
@@ -405,6 +472,7 @@ LegacyAvailabilityCalendar.propTypes = {
   templateKey: PropTypes.string,
   titleInteractiveTargetProps: interactiveTargetPropType,
   descriptionInteractiveTargetProps: interactiveTargetPropType,
+  selection: selectionPropType,
 };
 
 function PanoramaAvailabilityCalendar({
@@ -417,6 +485,7 @@ function PanoramaAvailabilityCalendar({
   templateKey = "",
   titleInteractiveTargetProps = {},
   descriptionInteractiveTargetProps = {},
+  selection = null,
 }) {
   const { externalBlockedDateKeySet, unavailableDateKeySet } = useAvailabilityDateKeySets(availability);
   const baseMonth = useMemo(() => {
@@ -514,24 +583,37 @@ function PanoramaAvailabilityCalendar({
                 const isReserved = cell.isExternalBlocked || cell.isUnavailable;
                 const isPlaceholder = !cell.isCurrentMonth;
                 const availabilityLabel = isReserved ? "Reserved" : "Available";
+                const selectionState = resolveCellSelectionState(cell, selection);
+                const CellElement = selectionState ? "button" : "span";
                 const calendarCellLabel = isPlaceholder
                   ? undefined
-                  : `${monthView.label} ${cell.dayOfMonth}, ${availabilityLabel}`;
+                  : `${monthView.label} ${cell.dayOfMonth}, ${availabilityLabel}${resolveSelectionLabelSuffix(
+                      selectionState
+                    )}`;
 
                 return (
-                  <span
+                  <CellElement
                     key={cell.id}
                     className={`${styles.panoramaCalendarCell} ${
                       isReserved ? styles.panoramaCalendarCellReserved : ""
-                    } ${isPlaceholder ? styles.panoramaCalendarCellPlaceholder : ""}`.trim()}
+                    } ${isPlaceholder ? styles.panoramaCalendarCellPlaceholder : ""} ${buildCellSelectionClassName(
+                      selectionState,
+                      {
+                        selectable: styles.panoramaCalendarCellSelectable,
+                        selected: styles.panoramaCalendarCellSelected,
+                        inRange: styles.panoramaCalendarCellInRange,
+                        past: styles.panoramaCalendarCellPast,
+                      }
+                    )}`.trim()}
                     title={status?.title}
                     aria-label={calendarCellLabel}
                     aria-hidden={isPlaceholder}
+                    {...buildCellSelectionProps(cell, selection, selectionState)}
                   >
                     {cell.isCurrentMonth ? (
                       <span className={styles.panoramaCalendarCellDay}>{cell.dayOfMonth}</span>
                     ) : null}
-                  </span>
+                  </CellElement>
                 );
               })}
             </div>
@@ -566,6 +648,7 @@ PanoramaAvailabilityCalendar.propTypes = {
   templateKey: PropTypes.string,
   titleInteractiveTargetProps: interactiveTargetPropType,
   descriptionInteractiveTargetProps: interactiveTargetPropType,
+  selection: selectionPropType,
 };
 
 export default function AvailabilityCalendarPreview({
@@ -577,6 +660,7 @@ export default function AvailabilityCalendarPreview({
   variant = "default",
   propertyTitle = "",
   templateKey = "",
+  selection = null,
 }) {
   const { className: interactiveClassName = "", ...rootInteractiveProps } = interactiveTargetProps || {};
 
@@ -592,6 +676,7 @@ export default function AvailabilityCalendarPreview({
         interactiveClassName={interactiveClassName}
         templateKey={templateKey}
         titleInteractiveTargetProps={titleInteractiveTargetProps}
+        selection={selection}
       />
     );
   }
@@ -606,6 +691,7 @@ export default function AvailabilityCalendarPreview({
       interactiveClassName={interactiveClassName}
       templateKey={templateKey}
       titleInteractiveTargetProps={titleInteractiveTargetProps}
+      selection={selection}
     />
   );
 }

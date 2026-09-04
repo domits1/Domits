@@ -719,6 +719,8 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       journeyStops: true,
       contactSection: true,
       chatWidget: true,
+      // Off until a host opts in: the booking flow behind the panel is still landing.
+      quotePanel: false,
     },
   };
 };

@@ -2961,3 +2961,15 @@
     padding: 16px;
   }
 }
+
+.panoramaHeroPrimaryActionButton {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.panoramaHeroPrimaryActionButton:focus-visible {
+  outline: 2px solid #f8f4ed;
+  outline-offset: 3px;
+}

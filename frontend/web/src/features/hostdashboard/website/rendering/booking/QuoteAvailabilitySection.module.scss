@@ -1,0 +1,255 @@
+.quoteSection {
+  display: grid;
+  gap: clamp(16px, 2.4vw, 28px);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .quoteSection {
+    grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.85fr);
+  }
+}
+
+.quoteSectionCalendar,
+.quoteSectionPanel {
+  min-width: 0;
+}
+
+.panel {
+  --website-quote-ink: #1e3150;
+  --website-quote-muted: #60708a;
+  --website-quote-line: rgba(30, 49, 80, 0.12);
+  --website-quote-accent: #1e3150;
+  display: grid;
+  gap: clamp(12px, 1.6vw, 18px);
+  padding: clamp(18px, 2.4vw, 26px);
+  border-radius: 22px;
+  border: 1px solid var(--website-quote-line);
+  background: #ffffff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  color: var(--website-quote-ink);
+}
+
+.panelEyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--website-quote-muted);
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: clamp(1.15rem, 0.9rem + 0.9vw, 1.45rem);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.stayBlock {
+  display: grid;
+  gap: 6px;
+  padding-bottom: clamp(10px, 1.4vw, 14px);
+  border-bottom: 1px solid var(--website-quote-line);
+}
+
+.staySummary {
+  margin: 0;
+  font-weight: 600;
+}
+
+.stayNights {
+  margin: 0;
+  color: var(--website-quote-muted);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--website-quote-muted);
+}
+
+.fieldError {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #9f3a2b;
+}
+
+.guestField {
+  display: grid;
+  gap: 8px;
+}
+
+.guestFieldHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.fieldLabel {
+  font-weight: 600;
+}
+
+.stepper {
+  display: inline-grid;
+  grid-template-columns: 40px minmax(48px, auto) 40px;
+  align-items: center;
+  border: 1px solid var(--website-quote-line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.stepperButton {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--website-quote-ink);
+  font: inherit;
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.stepperButton:disabled {
+  color: rgba(30, 49, 80, 0.3);
+  cursor: not-allowed;
+}
+
+.stepperButton:focus-visible,
+.action:focus-visible,
+.secondaryAction:focus-visible,
+.contactLink:focus-visible {
+  outline: 2px solid var(--website-quote-accent);
+  outline-offset: 2px;
+}
+
+.stepperValue {
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.action {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 48px;
+  padding: 0.7rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--website-quote-accent);
+  color: #f8f4ed;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+.action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.alert {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(159, 58, 43, 0.28);
+  background: rgba(159, 58, 43, 0.06);
+}
+
+.alertMessage {
+  margin: 0;
+  font-weight: 600;
+}
+
+.alertActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.secondaryAction {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--website-quote-line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--website-quote-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contactLink {
+  color: var(--website-quote-ink);
+  font-weight: 600;
+}
+
+.reference {
+  margin: 0;
+  width: 100%;
+  font-size: 0.78rem;
+  color: var(--website-quote-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown {
+  display: grid;
+  gap: 8px;
+  padding-top: clamp(10px, 1.4vw, 14px);
+  border-top: 1px solid var(--website-quote-line);
+}
+
+.breakdownStale {
+  opacity: 0.6;
+}
+
+.staleNotice {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--website-quote-muted);
+}
+
+.breakdownList {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdownRow dt,
+.breakdownRow dd {
+  margin: 0;
+}
+
+.breakdownTotal {
+  padding-top: 6px;
+  border-top: 1px dashed var(--website-quote-line);
+  font-weight: 700;
+}
+
+.validity {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--website-quote-muted);
+}
+
+.note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--website-quote-muted);
+}
