@@ -6,6 +6,7 @@ import CorporateFareOutlinedIcon from "@mui/icons-material/CorporateFareOutlined
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import PercentOutlinedIcon from "@mui/icons-material/PercentOutlined";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
@@ -22,6 +23,7 @@ const CARD_ICONS = {
   team:            <PeopleOutlineIcon />,
   "rate-plans":    <PercentOutlinedIcon />,
   compliance:      <VerifiedUserOutlinedIcon />,
+  "communication-preferences": <NotificationsNoneOutlinedIcon />,
 };
 
 const SettingsCard = ({ to, icon, title, desc }) => (
@@ -45,10 +47,11 @@ SettingsCard.propTypes = {
 const HostSettingsHub = () => {
   const { language } = useContext(LanguageContext);
   const t = contentByLanguage[language]?.settings?.hub ?? contentByLanguage.en.settings.hub;
-  const { personalData, company, team, ratePlans, compliance } = t.cards;
+  const { personalData, communicationPreferences, company, team, ratePlans, compliance } = t.cards;
 
   const personalCards = [
     { to: "personal-data", icon: CARD_ICONS["personal-data"], title: personalData.title, desc: personalData.desc },
+    { to: "communication-preferences", icon: CARD_ICONS["communication-preferences"], title: communicationPreferences.title, desc: communicationPreferences.desc },
   ];
 
   const accountCards = [
@@ -73,6 +76,7 @@ const HostSettingsHub = () => {
           ))}
         </div>
       </div>
+
 
       <div className="host-settings-section">
         <h2 className="host-settings-section-title">{t.accountSection}</h2>

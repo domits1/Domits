@@ -1100,12 +1100,17 @@
       "title": "Configuración",
       "subtitle": "Gestiona tu configuración personal y de cuenta en un solo lugar",
       "personalSection": "Configuración personal",
+      "communicationSection": "Preferencias de comunicación",
       "accountSection": "Configuración de cuenta",
       "breadcrumb": "Configuración",
       "cards": {
         "personalData": {
           "title": "Datos personales",
           "desc": "Gestiona tu información de contacto, foto de perfil y datos personales."
+        },
+        "communicationPreferences": {
+          "title": "Preferencias de comunicación",
+          "desc": "Elige cómo recibes actualizaciones y notificaciones importantes de Domits."
         },
         "company": {
           "title": "Empresa",
@@ -1173,6 +1178,31 @@
         "save": "Guardar cambios",
         "saving": "Guardando...",
         "saved": "¡Guardado!"
+      }
+    },
+    "communicationPreferences": {
+      "breadcrumb": "Preferencias de comunicación",
+      "title": "Preferencias de comunicación",
+      "subtitle": "Elige cómo recibes actualizaciones y notificaciones importantes de Domits.",
+      "sectionTitle": "Preferencias de notificaciones",
+      "required": "Obligatorio",
+      "notificationsLabel": "notificaciones",
+      "channels": {
+        "email": "Correo electrónico",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "events": {
+        "reservation": "Reserva",
+        "cancellation": "Cancelación",
+        "messages": "Mensajes"
+      },
+      "states": {
+        "on": "ACT.",
+        "off": "DES."
+      },
+      "actions": {
+        "saveChanges": "Guardar cambios"
       }
     },
     "company": {
