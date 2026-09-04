@@ -3,13 +3,13 @@ FROM information_schema.columns
 WHERE table_name = 'booking'
   AND table_schema IN ('main', 'test')
   AND column_name IN ('booking_source', 'site_id', 'guest_email', 'public_booking_ref', 'idempotency_key')
-ORDER BY table_schema, column_name;
+ORDER BY table_schema ASC, column_name ASC;
 
 SELECT table_schema, COUNT(*) AS column_count
 FROM information_schema.columns
 WHERE table_name = 'booking' AND table_schema IN ('main', 'test')
 GROUP BY table_schema
-ORDER BY table_schema;
+ORDER BY table_schema ASC;
 
 SELECT job_id, status, job_type, object_name, update_time
 FROM sys.jobs
@@ -32,7 +32,7 @@ CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique_test ON test.booking (i
 SELECT job_id, status, details, job_type, object_name, update_time
 FROM sys.jobs
 WHERE object_name LIKE 'test.booking_%_unique_test'
-ORDER BY update_time;
+ORDER BY update_time ASC;
 
 ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS booking_source VARCHAR(255);
 
@@ -51,14 +51,14 @@ CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique ON main.booking (idempo
 SELECT job_id, status, details, job_type, object_name, update_time
 FROM sys.jobs
 WHERE object_name LIKE 'main.booking_%_unique'
-ORDER BY update_time;
+ORDER BY update_time ASC;
 
 SELECT table_schema, column_name, data_type, character_maximum_length, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_name = 'booking'
   AND table_schema IN ('main', 'test')
   AND column_name IN ('booking_source', 'site_id', 'guest_email', 'public_booking_ref', 'idempotency_key')
-ORDER BY table_schema, column_name;
+ORDER BY table_schema ASC, column_name ASC;
 
 SELECT n.nspname AS schema_name, c.relname AS index_name, i.indisunique, i.indisvalid
 FROM pg_index i
@@ -68,14 +68,14 @@ JOIN pg_namespace n ON n.oid = t.relnamespace
 WHERE t.relname = 'booking'
   AND n.nspname IN ('main', 'test')
   AND c.relname LIKE 'booking_%_unique%'
-ORDER BY schema_name, index_name;
+ORDER BY schema_name ASC, index_name ASC;
 
 SELECT schemaname, indexname, indexdef
 FROM pg_indexes
 WHERE tablename = 'booking'
   AND schemaname IN ('main', 'test')
   AND indexname LIKE 'booking_%_unique%'
-ORDER BY schemaname, indexname;
+ORDER BY schemaname ASC, indexname ASC;
 
 BEGIN;
 
@@ -98,7 +98,7 @@ VALUES
 SELECT id, booking_source, site_id, guest_email, public_booking_ref, idempotency_key
 FROM test.booking
 WHERE id IN ('smoke-dbw-1', 'smoke-marketplace-1')
-ORDER BY id;
+ORDER BY id ASC;
 
 ROLLBACK;
 

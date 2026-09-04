@@ -3,7 +3,7 @@ FROM information_schema.columns
 WHERE table_name = 'booking'
   AND table_schema IN ('main', 'test')
   AND column_name IN ('refunded_amount', 'stripe_refund_id', 'refund_error', 'total_price')
-ORDER BY table_schema, column_name;
+ORDER BY table_schema ASC, column_name ASC;
 
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refunded_amount BIGINT;
 
@@ -17,7 +17,7 @@ SELECT table_schema, COUNT(*) AS column_count
 FROM information_schema.columns
 WHERE table_name = 'booking' AND table_schema IN ('main', 'test')
 GROUP BY table_schema
-ORDER BY table_schema;
+ORDER BY table_schema ASC;
 
 SELECT m.column_name
 FROM information_schema.columns m
@@ -29,7 +29,7 @@ SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_schema = 'test' AND table_name = 'booking'
   AND column_name IN ('refunded_amount', 'stripe_refund_id', 'refund_error', 'total_price')
-ORDER BY column_name;
+ORDER BY column_name ASC;
 
 BEGIN;
 
