@@ -74,4 +74,148 @@ describe("ChannexCalendarChangeSyncClient", () => {
         client.syncCalendarChange({ domitsPropertyId: "property-1" }),
     });
   });
+
+  describe("scenario coverage by change type", () => {
+    it.each([
+      {
+        description: "a rate change",
+        requestTypes: ["rate"],
+        payload: {
+          domitsPropertyId: "property-1",
+          changedDates: ["2026-07-01", "2026-07-02"],
+          changeTypes: ["rate"],
+        },
+      },
+      {
+        description: "an availability block over a date range",
+        requestTypes: ["availability-block"],
+        payload: {
+          domitsPropertyId: "property-1",
+          dateFrom: "2026-08-01",
+          dateTo: "2026-08-07",
+          changeTypes: ["availability-block"],
+        },
+      },
+      {
+        description: "a stay restriction change",
+        requestTypes: ["restriction"],
+        payload: {
+          domitsPropertyId: "property-1",
+          changedDates: ["2026-09-01"],
+          changeTypes: ["restriction"],
+        },
+      },
+      {
+        description: "a combined rate, availability and restriction change",
+        requestTypes: ["rate", "availability-block", "restriction"],
+        payload: {
+          domitsPropertyId: "property-1",
+          changedDates: ["2026-09-10"],
+          changeTypes: ["rate", "availability-block", "restriction"],
+        },
+      },
+    ])("syncs $description and returns the UnifiedMessaging evidence", async ({ requestTypes, payload }) => {
+      const evidence = {
+        syncType: "calendar-change",
+        requestTypes,
+        requestCount: requestTypes.length,
+        overallSuccess: true,
+      };
+      const lambda = createLambdaMock({ body: evidence });
+      const client = new ChannexCalendarChangeSyncClient({ lambda });
+
+      await expect(client.syncCalendarChange(payload)).resolves.toEqual(evidence);
+      expectChannexLambdaInvocation(lambda, {
+        path: "/integrations/channex/calendar-change/sync",
+        payload,
+      });
+    });
+  });
+
+  describe("downstream invocation resilience", () => {
+    it("returns fallback failure evidence when the Lambda invocation itself throws", async () => {
+      const invokeError = Object.assign(new Error("Network timeout"), {
+        code: "ETIMEDOUT",
+      });
+      const lambda = { send: jest.fn().mockRejectedValue(invokeError) };
+      const client = new ChannexCalendarChangeSyncClient({ lambda });
+      const payload = {
+        domitsPropertyId: "property-1",
+        changedDates: ["2026-06-10"],
+        changeTypes: ["rate"],
+      };
+
+      const result = await client.syncCalendarChange(payload);
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          domitsPropertyId: "property-1",
+          changedDates: ["2026-06-10"],
+          changeTypes: ["rate"],
+          skipped: false,
+          reason: CHANNEX_CALENDAR_CHANGE_SYNC_FAILED,
+          overallSuccess: false,
+          errors: [
+            {
+              code: "ETIMEDOUT",
+              message: "Network timeout",
+              httpStatus: null,
+            },
+          ],
+        })
+      );
+    });
+
+    it("returns fallback failure evidence when Lambda reports a FunctionError", async () => {
+      const lambda = createLambdaMock({
+        body: { error: "Unhandled exception in UnifiedMessaging." },
+        statusCode: 200,
+        functionError: "Unhandled",
+      });
+      const client = new ChannexCalendarChangeSyncClient({ lambda });
+      const payload = { domitsPropertyId: "property-1", changeTypes: ["availability-block"] };
+
+      const result = await client.syncCalendarChange(payload);
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          domitsPropertyId: "property-1",
+          skipped: false,
+          reason: CHANNEX_CALENDAR_CHANGE_SYNC_FAILED,
+          overallSuccess: false,
+          errors: [
+            {
+              code: "Unhandled",
+              message: "Unhandled exception in UnifiedMessaging.",
+              httpStatus: 200,
+            },
+          ],
+        })
+      );
+    });
+
+    it("returns fallback failure evidence when the response body is missing on a 2xx status", async () => {
+      const lambda = createLambdaMock({ statusCode: 200 });
+      const client = new ChannexCalendarChangeSyncClient({ lambda });
+      const payload = { domitsPropertyId: "property-1", changeTypes: ["restriction"] };
+
+      const result = await client.syncCalendarChange(payload);
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          domitsPropertyId: "property-1",
+          skipped: false,
+          reason: CHANNEX_CALENDAR_CHANGE_SYNC_FAILED,
+          overallSuccess: false,
+          errors: [
+            {
+              code: 200,
+              message: "UnifiedMessaging calendar-change sync failed.",
+              httpStatus: 200,
+            },
+          ],
+        })
+      );
+    });
+  });
 });
