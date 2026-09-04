@@ -76,87 +76,53 @@ describe("ChannexCalendarChangeSyncClient", () => {
   });
 
   describe("scenario coverage by change type", () => {
-    it("syncs a rate change and returns the UnifiedMessaging evidence", async () => {
-      const evidence = {
-        syncType: "calendar-change",
+    it.each([
+      {
+        description: "a rate change",
         requestTypes: ["rate"],
-        requestCount: 1,
-        overallSuccess: true,
-      };
-      const lambda = createLambdaMock({ body: evidence });
-      const client = new ChannexCalendarChangeSyncClient({ lambda });
-      const payload = {
-        domitsPropertyId: "property-1",
-        changedDates: ["2026-07-01", "2026-07-02"],
-        changeTypes: ["rate"],
-      };
-
-      await expect(client.syncCalendarChange(payload)).resolves.toEqual(evidence);
-      expectChannexLambdaInvocation(lambda, {
-        path: "/integrations/channex/calendar-change/sync",
-        payload,
-      });
-    });
-
-    it("syncs an availability block over a date range and returns the evidence", async () => {
-      const evidence = {
-        syncType: "calendar-change",
+        payload: {
+          domitsPropertyId: "property-1",
+          changedDates: ["2026-07-01", "2026-07-02"],
+          changeTypes: ["rate"],
+        },
+      },
+      {
+        description: "an availability block over a date range",
         requestTypes: ["availability-block"],
-        requestCount: 1,
-        overallSuccess: true,
-      };
-      const lambda = createLambdaMock({ body: evidence });
-      const client = new ChannexCalendarChangeSyncClient({ lambda });
-      const payload = {
-        domitsPropertyId: "property-1",
-        dateFrom: "2026-08-01",
-        dateTo: "2026-08-07",
-        changeTypes: ["availability-block"],
-      };
-
-      await expect(client.syncCalendarChange(payload)).resolves.toEqual(evidence);
-      expectChannexLambdaInvocation(lambda, {
-        path: "/integrations/channex/calendar-change/sync",
-        payload,
-      });
-    });
-
-    it("syncs a stay restriction change and returns the evidence", async () => {
-      const evidence = {
-        syncType: "calendar-change",
+        payload: {
+          domitsPropertyId: "property-1",
+          dateFrom: "2026-08-01",
+          dateTo: "2026-08-07",
+          changeTypes: ["availability-block"],
+        },
+      },
+      {
+        description: "a stay restriction change",
         requestTypes: ["restriction"],
-        requestCount: 1,
-        overallSuccess: true,
-      };
-      const lambda = createLambdaMock({ body: evidence });
-      const client = new ChannexCalendarChangeSyncClient({ lambda });
-      const payload = {
-        domitsPropertyId: "property-1",
-        changedDates: ["2026-09-01"],
-        changeTypes: ["restriction"],
-      };
-
-      await expect(client.syncCalendarChange(payload)).resolves.toEqual(evidence);
-      expectChannexLambdaInvocation(lambda, {
-        path: "/integrations/channex/calendar-change/sync",
-        payload,
-      });
-    });
-
-    it("syncs a combined rate, availability and restriction change in a single call", async () => {
+        payload: {
+          domitsPropertyId: "property-1",
+          changedDates: ["2026-09-01"],
+          changeTypes: ["restriction"],
+        },
+      },
+      {
+        description: "a combined rate, availability and restriction change",
+        requestTypes: ["rate", "availability-block", "restriction"],
+        payload: {
+          domitsPropertyId: "property-1",
+          changedDates: ["2026-09-10"],
+          changeTypes: ["rate", "availability-block", "restriction"],
+        },
+      },
+    ])("syncs $description and returns the UnifiedMessaging evidence", async ({ requestTypes, payload }) => {
       const evidence = {
         syncType: "calendar-change",
-        requestTypes: ["rate", "availability-block", "restriction"],
-        requestCount: 3,
+        requestTypes,
+        requestCount: requestTypes.length,
         overallSuccess: true,
       };
       const lambda = createLambdaMock({ body: evidence });
       const client = new ChannexCalendarChangeSyncClient({ lambda });
-      const payload = {
-        domitsPropertyId: "property-1",
-        changedDates: ["2026-09-10"],
-        changeTypes: ["rate", "availability-block", "restriction"],
-      };
 
       await expect(client.syncCalendarChange(payload)).resolves.toEqual(evidence);
       expectChannexLambdaInvocation(lambda, {
