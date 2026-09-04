@@ -83,7 +83,7 @@ describe("QuoteAvailabilitySection", () => {
     await selectStay();
     expect(screen.getByText(/3 nights/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /check availability & price/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^check availability$/i }));
 
     expect(await screen.findByText("€620.00")).toBeInTheDocument();
     expect(requestPublicWebsiteQuote).toHaveBeenCalledWith(
@@ -102,12 +102,12 @@ describe("QuoteAvailabilitySection", () => {
     renderSection();
 
     await selectStay();
-    fireEvent.click(screen.getByRole("button", { name: /check availability & price/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^check availability$/i }));
     await screen.findByText("€620.00");
 
     fireEvent.click(screen.getByRole("button", { name: /add a guest/i }));
 
-    expect(screen.getByText(/changed/i)).toBeInTheDocument();
+    expect(screen.getByText("Selection changed — check again")).toBeInTheDocument();
   });
 
   it("clears the selection when the server reports the dates as unavailable", async () => {
@@ -117,9 +117,9 @@ describe("QuoteAvailabilitySection", () => {
     renderSection();
 
     await selectStay();
-    fireEvent.click(screen.getByRole("button", { name: /check availability & price/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^check availability$/i }));
 
     expect(await screen.findByText(/no longer available/i)).toBeInTheDocument();
-    expect(screen.getByText(/select your check-in date/i)).toBeInTheDocument();
+    expect(screen.getByText("Pick a check-in date")).toBeInTheDocument();
   });
 });

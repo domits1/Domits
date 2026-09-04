@@ -30,15 +30,6 @@
   color: var(--website-quote-ink);
 }
 
-.panelEyebrow {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--website-quote-muted);
-}
-
 .panelTitle {
   margin: 0;
   font-size: clamp(1.15rem, 0.9rem + 0.9vw, 1.45rem);
@@ -250,12 +241,5 @@
 .validity {
   margin: 0;
   font-size: 0.82rem;
-  color: var(--website-quote-muted);
-}
-
-.note {
-  margin: 0;
-  font-size: 0.78rem;
-  line-height: 1.45;
   color: var(--website-quote-muted);
 }

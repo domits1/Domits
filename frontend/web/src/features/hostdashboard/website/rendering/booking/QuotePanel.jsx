@@ -10,18 +10,16 @@ const pluralizeNights = (count) => `${count} ${count === 1 ? "night" : "nights"}
 
 const resolveStaySummary = ({ checkIn, checkOut }) => {
   if (!checkIn) {
-    return "Select your check-in date on the calendar.";
+    return "Pick a check-in date";
   }
   if (!checkOut) {
-    return "Now pick your check-out date on the calendar.";
+    return "Now pick a check-out date";
   }
   return `${formatStayDate(checkIn)} → ${formatStayDate(checkOut)}`;
 };
 
 const resolveStaleNotice = (staleReason) =>
-  staleReason === QUOTE_STALE_REASONS.EXPIRED
-    ? "This price has expired — check again."
-    : "Dates or guests changed — check the price again.";
+  staleReason === QUOTE_STALE_REASONS.EXPIRED ? "Price expired — check again" : "Selection changed — check again";
 
 function QuoteBreakdown({ quote, isStale, staleReason }) {
   const { priceBreakdown, nights } = quote;
@@ -47,7 +45,7 @@ function QuoteBreakdown({ quote, isStale, staleReason }) {
           <dd>{formatMinorUnits(priceBreakdown.total)}</dd>
         </div>
       </dl>
-      {!isStale && validUntil ? <p className={styles.validity}>{`Price valid until ${validUntil}`}</p> : null}
+      {!isStale && validUntil ? <p className={styles.validity}>{`Valid until ${validUntil}`}</p> : null}
     </div>
   );
 }
@@ -133,7 +131,6 @@ export default function QuotePanel({
 
   return (
     <aside className={styles.panel} aria-labelledby="website-quote-panel-title">
-      <p className={styles.panelEyebrow}>Live price</p>
       <h3 id="website-quote-panel-title" className={styles.panelTitle}>
         Check availability &amp; price
       </h3>
@@ -159,7 +156,7 @@ export default function QuotePanel({
 
       {showAction ? (
         <button type="button" className={styles.action} onClick={onRequestQuote} disabled={!canRequestQuote}>
-          {isLoading ? "Checking…" : "Check availability & price"}
+          {isLoading ? "Checking…" : "Check availability"}
         </button>
       ) : null}
 
@@ -175,8 +172,6 @@ export default function QuotePanel({
       {showBreakdown ? (
         <QuoteBreakdown quote={quoteState.quote} isStale={isStale} staleReason={quoteState.staleReason} />
       ) : null}
-
-      <p className={styles.note}>Live pricing and availability are checked when you request a price.</p>
     </aside>
   );
 }

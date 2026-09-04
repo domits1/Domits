@@ -34,19 +34,25 @@ const renderPanel = (props = {}) => {
   return { ...utils, onRequestQuote, onGuestsChange };
 };
 
-const actionButton = () => screen.queryByRole("button", { name: /check availability & price/i });
+const actionButton = () => screen.queryByRole("button", { name: /^check availability$/i });
 
 describe("QuotePanel", () => {
   it("prompts for dates and keeps the action disabled until the range is complete", () => {
     renderPanel();
-    expect(screen.getByText(/select your check-in date/i)).toBeInTheDocument();
+    expect(screen.getByText("Pick a check-in date")).toBeInTheDocument();
     expect(actionButton()).toBeDisabled();
   });
 
   it("asks for the check-out date after a check-in is chosen", () => {
     renderPanel({ range: { checkIn: "2026-10-10", checkOut: null } });
-    expect(screen.getByText(/pick your check-out date/i)).toBeInTheDocument();
+    expect(screen.getByText("Now pick a check-out date")).toBeInTheDocument();
     expect(actionButton()).toBeDisabled();
+  });
+
+  it("names the region after its heading", () => {
+    renderPanel();
+    expect(screen.getByRole("heading", { name: "Check availability & price" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Check availability & price" })).toBeInTheDocument();
   });
 
   it("summarises the stay and requests a quote when asked", () => {
@@ -69,7 +75,7 @@ describe("QuotePanel", () => {
     expect(screen.getByText("€190.00 × 4 nights")).toBeInTheDocument();
     expect(screen.getByText("€50.00")).toBeInTheDocument();
     expect(screen.getByText("€810.00")).toBeInTheDocument();
-    expect(screen.getByText(/price valid until/i)).toBeInTheDocument();
+    expect(screen.getByText(/^valid until/i)).toBeInTheDocument();
   });
 
   it("explains a stale quote after the selection changed or the price expired", () => {
@@ -77,7 +83,7 @@ describe("QuotePanel", () => {
       range: COMPLETE_RANGE,
       quoteState: { ...IDLE, status: QUOTE_STATUS.STALE, quote: QUOTE, staleReason: "changed" },
     });
-    expect(screen.getByText(/changed/i)).toBeInTheDocument();
+    expect(screen.getByText("Selection changed — check again")).toBeInTheDocument();
 
     rerender(
       <QuotePanel
@@ -91,7 +97,7 @@ describe("QuotePanel", () => {
         contactHref={null}
       />
     );
-    expect(screen.getByText(/expired/i)).toBeInTheDocument();
+    expect(screen.getByText("Price expired — check again")).toBeInTheDocument();
   });
 
   it("puts date and guest errors next to the field they concern", () => {
