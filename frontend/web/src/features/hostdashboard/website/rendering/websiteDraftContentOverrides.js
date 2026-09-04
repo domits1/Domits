@@ -87,8 +87,6 @@ const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "journeyStops",
 ]);
 
-// Every section defaults to visible except the booking panel, which a host opts into.
-// The editor seeds its values from this map, so a new draft never turns it on by accident.
 const VISIBILITY_DEFAULTS = Object.freeze({
   topBar: true,
   trustCards: true,

@@ -25,8 +25,6 @@ const createVisitorId = () => {
   return `visitor-${createRandomVisitorSegment()}`;
 };
 
-// Anonymous, per-browser identity for public direct booking website visitors.
-// It is a correlation id for quote sessions, never an authenticated identity.
 export const getOrCreateVisitorId = () => {
   let storage = null;
   try {

@@ -3,8 +3,6 @@ const padDatePart = (value) => String(value).padStart(2, "0");
 
 export const EMPTY_STAY_RANGE = Object.freeze({ checkIn: null, checkOut: null });
 
-// Calendar keys are local dates ("YYYY-MM-DD"), matching the availability calendar's
-// own keys. ISO keys compare lexicographically, so string comparison is date order.
 export const toLocalDateKey = (date) =>
   `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
 
@@ -39,8 +37,6 @@ export const countStayNights = (checkIn, checkOut) => buildStayNightKeys(checkIn
 export const hasBlockedNight = (checkIn, checkOut, blockedDateKeys) =>
   buildStayNightKeys(checkIn, checkOut).some((nightKey) => blockedDateKeys?.has?.(nightKey) === true);
 
-// Two-click range selection. A blocked day can end a stay (checkout is exclusive)
-// but never start one; a click that would span a blocked night restarts the range.
 export const selectStayDate = ({ range, dateKey, blockedDateKeys, todayKey }) => {
   const currentRange = range || EMPTY_STAY_RANGE;
   if (!isValidDateKey(dateKey) || (todayKey && dateKey < todayKey)) {

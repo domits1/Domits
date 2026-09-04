@@ -91,7 +91,6 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
 
   event.preventDefault();
 
-  // Measure only after deferred sections render at their real height (see revealDeferredSections).
   revealDeferredSections(
     globalThis.document,
     styles.panoramaDeferredRenderSection,
@@ -614,8 +613,6 @@ const renderPanoramaTrustCards = ({ featuredTrustCards, onSelectTarget, activeTa
 const PANORAMA_AVAILABILITY_ANCHOR = "#availability";
 const LazyQuoteAvailabilitySection = lazy(() => import("../booking/QuoteAvailabilitySection"));
 
-// In the editor the CTA stays a selectable target; on the live site it scrolls to
-// the availability section, whether or not the host has enabled the quote panel.
 const renderPanoramaHeroCallToAction = ({ model, onSelectTarget, activeTargetId }) => {
   const callToActionContent = (
     <>

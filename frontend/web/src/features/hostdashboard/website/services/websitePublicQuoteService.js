@@ -68,9 +68,6 @@ const normalizePublicWebsiteQuote = (payload) => {
   };
 };
 
-// Deliberately sends no Authorization header: this is the one public, anonymous
-// call in the website feature, and a host token in localStorage must never leak
-// into a guest-facing request.
 export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, guests, sessionId, signal }) => {
   let response;
   try {

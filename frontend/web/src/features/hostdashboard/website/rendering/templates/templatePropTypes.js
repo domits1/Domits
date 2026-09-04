@@ -134,7 +134,6 @@ export const visibilityPropType = PropTypes.shape({
   quotePanel: PropTypes.bool,
 });
 
-// Present only on the live published surface; its absence hides every booking control.
 export const quoteContextPropType = PropTypes.shape({
   siteId: PropTypes.string,
 });

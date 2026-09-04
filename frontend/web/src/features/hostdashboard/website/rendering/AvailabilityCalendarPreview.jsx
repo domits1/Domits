@@ -89,9 +89,6 @@ const selectionPropType = PropTypes.shape({
   onSelectDate: PropTypes.func,
 });
 
-// Selection is opt-in: the calendar stays a display-only snapshot in the editor
-// and the draft preview, and becomes a date-range picker only when the booking
-// section on the live site hands it a selection.
 const resolveCellSelectionState = (cell, selection) => {
   if (!selection?.selectable || !cell.isCurrentMonth) {
     return null;

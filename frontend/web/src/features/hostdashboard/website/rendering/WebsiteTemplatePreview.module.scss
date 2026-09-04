@@ -1316,8 +1316,6 @@
   }
 }
 
-/* Switched on before an in-page navigation scrolls, so the target is measured
-   against real section heights and the layout stays stable mid-scroll. */
 .panoramaDeferredRenderSection.panoramaDeferredRenderSectionRevealed {
   content-visibility: visible;
 }

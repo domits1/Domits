@@ -16,8 +16,6 @@
   filter: blur(0) !important;
 }
 
-/* Added once the reveal transition has ended: a settled section is a plain block
-   again, not a composited layer with lingering transform/filter/will-change. */
 .scrollRevealSettled {
   transform: none !important;
   filter: none !important;

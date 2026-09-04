@@ -75,8 +75,6 @@ export const useWebsiteQuote = ({ siteId, sessionId }) => {
     );
   }, []);
 
-  // A change to dates or guests keeps a previous price visible but marked stale,
-  // and clears a previous error so the guest starts from a clean panel.
   const notifySelectionChanged = useCallback(() => {
     setState((currentState) => {
       if (currentState.quote) {

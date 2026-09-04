@@ -28,8 +28,6 @@ const presentation = ({
   clearSelection = false,
 }) => ({ scope, message, canRetry, showContact, showReference, hideAction, clearSelection });
 
-// Server messages for guest-input problems were written guest-facing on purpose,
-// so they are shown as-is. Infrastructure and lifecycle failures get client copy.
 export const resolveQuoteErrorPresentation = (error) => {
   const code = String(error?.code || "");
   const serverMessage = String(error?.message || "").trim();

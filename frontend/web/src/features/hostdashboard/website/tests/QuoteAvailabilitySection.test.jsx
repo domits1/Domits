@@ -2,9 +2,6 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import QuoteAvailabilitySection from "../rendering/booking/QuoteAvailabilitySection";
 import { WebsitePublicQuoteError, requestPublicWebsiteQuote } from "../services/websitePublicQuoteService";
-// The section lazy-loads the calendar. Importing it here first puts the module in
-// Jest's registry, so the lazy import() resolves from cache instead of transpiling
-// the calendar (and its icon imports) inside the test's wait window on a cold runner.
 import "../rendering/AvailabilityCalendarPreview";
 
 jest.mock("../services/websitePublicQuoteService", () => {
@@ -19,7 +16,6 @@ jest.mock("../services/websiteVisitorId", () => ({
 const padDatePart = (value) => String(value).padStart(2, "0");
 const toKey = (date) => `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
 
-// The panorama calendar shows the current and next month; next month is always fully visible.
 const today = new Date();
 const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
 const checkInDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
@@ -61,8 +57,6 @@ const renderSection = () =>
     />
   );
 
-// The calendar replaces a Suspense fallback; its month navigation is the landmark
-// that proves the real calendar is on screen before any day is looked up.
 const waitForCalendar = () => screen.findByRole("button", { name: "Show next months" });
 
 const selectStay = async () => {

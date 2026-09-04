@@ -26,8 +26,6 @@ const resolveContactHref = (model) => {
   return whatsapp?.isAvailable && digits ? `https://wa.me/${digits}` : null;
 };
 
-// Owns the guest's booking selection so the calendar and the quote panel stay
-// siblings and the templates stay orchestration-only.
 export default function QuoteAvailabilitySection({
   model,
   siteId,

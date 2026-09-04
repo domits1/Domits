@@ -73,7 +73,6 @@ describe("useWebsiteScrollReveal", () => {
     expect(first.classList.contains(VISIBLE)).toBe(true);
     expect(first.classList.contains(SETTLED)).toBe(false);
 
-    // A child's transition bubbling up must not settle the section early.
     fireTransitionEnd(getByTestId("child"));
     expect(first.classList.contains(SETTLED)).toBe(false);
 

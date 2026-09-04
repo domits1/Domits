@@ -4,10 +4,6 @@ import motionStyles from "./WebsiteTemplateMotion.module.scss";
 const WEBSITE_SCROLL_REVEAL_THRESHOLD = 0.08;
 const WEBSITE_SCROLL_REVEAL_ROOT_MARGIN = "0px 0px 6% 0px";
 
-// A revealed section keeps its transform, filter and will-change until the
-// transition ends, then settles into a plain block. Leaving those hints on
-// keeps every section on its own compositing layer for the life of the page,
-// which is what makes Safari's hit-testing go stale after a smooth scroll.
 const settleAfterTransition = (target, settledClassName) => {
   const handleTransitionEnd = (event) => {
     if (event.target !== target) {
@@ -50,7 +46,6 @@ export const useWebsiteScrollReveal = ({ enabled = false, deps = [] } = {}) => {
       globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (typeof IntersectionObserver === "undefined" || prefersReducedMotion) {
-      // Nothing animates on this path, so no transitionend will ever arrive.
       revealTargets.forEach((target) => {
         target.classList.add(revealClassName, settledClassName);
       });
