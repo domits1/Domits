@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
+import { Auth } from "aws-amplify";
 import fetchBookingDetailsAndAccommodation from "../utils/FetchBookingDetails";
 import {
   fetchUserProfileById,
   getEmptyUserProfile,
 } from "../../services/fetchUserProfileById";
-import { getAccessToken } from "../../../../services/getAccessToken";
+
+const getIdToken = async () => {
+  const session = await Auth.currentSession();
+  return session.getIdToken().getJwtToken();
+};
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
@@ -329,7 +334,7 @@ const useFetchContacts = (userId, role) => {
     setError(null);
 
     try {
-      const token = requireToken(getAccessToken());
+      const token = requireToken(await getIdToken());
       let unifiedContacts = [];
       try {
         const threadsRes = await fetch(`${UNIFIED_API}/threads`, {

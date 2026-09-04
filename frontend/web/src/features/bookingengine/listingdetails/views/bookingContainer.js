@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
+import { Auth } from "aws-amplify";
 import DateSelectionContainer from "./dateSelectionContainer";
 import GuestSelectionContainer from "./guestSelectionContainer";
 import Pricing from "../components/pricing";
@@ -25,6 +26,11 @@ import "../../../../components/messages/messagesV2.scss";
 
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 const NO_AVAILABILITY_MESSAGE = "This property has no availability for the selected dates.";
+
+const getIdToken = async () => {
+  const session = await Auth.currentSession();
+  return session.getIdToken().getJwtToken();
+};
 
 const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyId }) => {
   const { userId } = useAuth();
@@ -69,9 +75,10 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
       inFlightRef.current = true;
 
       try {
+        const idToken = await getIdToken();
         const res = await fetch(`${UNIFIED_MESSAGING_API}/threads?userId=${encodeURIComponent(userId)}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
         });
 
         if (!res.ok) {
