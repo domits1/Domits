@@ -1100,12 +1100,17 @@
       "title": "Einstellungen",
       "subtitle": "Verwalte deine persönlichen und Kontoeinstellungen an einem Ort",
       "personalSection": "Persönliche Einstellungen",
+      "communicationSection": "Kommunikationseinstellungen",
       "accountSection": "Kontoeinstellungen",
       "breadcrumb": "Einstellungen",
       "cards": {
         "personalData": {
           "title": "Persönliche Daten",
           "desc": "Verwalte deine Kontaktdaten, Profilfoto und persönliche Angaben."
+        },
+        "communicationPreferences": {
+          "title": "Kommunikationseinstellungen",
+          "desc": "Wähle, wie du wichtige Updates und Benachrichtigungen von Domits erhältst."
         },
         "company": {
           "title": "Unternehmen",
@@ -1173,6 +1178,31 @@
         "save": "Änderungen speichern",
         "saving": "Wird gespeichert...",
         "saved": "Gespeichert!"
+      }
+    },
+    "communicationPreferences": {
+      "breadcrumb": "Kommunikationseinstellungen",
+      "title": "Kommunikationseinstellungen",
+      "subtitle": "Wähle, wie du wichtige Updates und Benachrichtigungen von Domits erhältst.",
+      "sectionTitle": "Benachrichtigungseinstellungen",
+      "required": "Erforderlich",
+      "notificationsLabel": "Benachrichtigungen",
+      "channels": {
+        "email": "E-Mail",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "events": {
+        "reservation": "Reservierung",
+        "cancellation": "Stornierung",
+        "messages": "Nachrichten"
+      },
+      "states": {
+        "on": "EIN",
+        "off": "AUS"
+      },
+      "actions": {
+        "saveChanges": "Änderungen speichern"
       }
     },
     "company": {

@@ -15,6 +15,7 @@ import WebsiteKpiDashboardPage from "./website/kpis/WebsiteKpiDashboardPage";
 import HostTeam from "./HostTeam";
 import HostSettingsHub from "./hostsettings/pages/HostSettingsHub";
 import HostSettingsPersonalData from "./hostsettings/pages/HostSettingsPersonalData";
+import HostCommunicationPreferences from "./hostsettings/pages/HostCommunicationPreferences";
 import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
 import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
 import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
@@ -127,6 +128,7 @@ function MainDashboardHost() {
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettingsHub />} />
           <Route path="settings/personal-data" element={<HostSettingsPersonalData />} />
+          <Route path="settings/communication-preferences" element={<HostCommunicationPreferences />} />
           <Route path="settings/team" element={<HostTeam />} />
           <Route path="settings/company" element={<HostSettingsCompany />} />
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />

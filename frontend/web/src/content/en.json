@@ -1099,12 +1099,17 @@
       "title": "Settings",
       "subtitle": "Manage your personal and account settings in one place",
       "personalSection": "Personal Settings",
+      "communicationSection": "Communication Preferences",
       "accountSection": "Account Settings",
       "breadcrumb": "Settings",
       "cards": {
         "personalData": {
           "title": "Personal Data",
           "desc": "Manage your contact info, profile photo and personal details."
+        },
+        "communicationPreferences": {
+          "title": "Communication Preferences",
+          "desc": "Choose how you receive important updates and notifications from Domits."
         },
         "company": {
           "title": "Company",
@@ -1172,6 +1177,31 @@
         "save": "Save changes",
         "saving": "Saving...",
         "saved": "Saved!"
+      }
+    },
+    "communicationPreferences": {
+      "breadcrumb": "Communication Preferences",
+      "title": "Communication Preferences",
+      "subtitle": "Choose how you receive important updates and notifications from Domits.",
+      "sectionTitle": "Notification Preferences",
+      "required": "Required",
+      "notificationsLabel": "notifications",
+      "channels": {
+        "email": "Email",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "events": {
+        "reservation": "Reservation",
+        "cancellation": "Cancellation",
+        "messages": "Messages"
+      },
+      "states": {
+        "on": "ON",
+        "off": "OFF"
+      },
+      "actions": {
+        "saveChanges": "Save changes"
       }
     },
     "company": {
