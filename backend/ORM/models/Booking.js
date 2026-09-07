@@ -102,5 +102,30 @@ export const Booking = new EntitySchema({
       name: "refund_error",
       nullable: true,
     },
+    booking_source: {
+      type: "varchar",
+      name: "booking_source",
+      nullable: true,
+    },
+    site_id: {
+      type: "varchar",
+      name: "site_id",
+      nullable: true,
+    },
+    guest_email: {
+      type: "varchar",
+      name: "guest_email",
+      nullable: true,
+    },
+    public_booking_ref: {
+      type: "varchar",
+      name: "public_booking_ref",
+      nullable: true,
+    },
+    idempotency_key: {
+      type: "varchar",
+      name: "idempotency_key",
+      nullable: true,
+    },
   },
 });
