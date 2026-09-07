@@ -5,6 +5,7 @@ import {
   fetchUserProfileById,
   getEmptyUserProfile,
 } from "../../services/fetchUserProfileById";
+import { getAccessToken } from "../../../../services/getAccessToken";
 
 const getIdToken = async () => {
   const session = await Auth.currentSession();
@@ -209,7 +210,7 @@ const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
         guestId: guestIdForLookup,
         bookingId: contact?.bookingId || contact?.bookingid || null,
         propertyId: contact?.propertyId || contact?.AccoId || null,
-        token,
+        token: getAccessToken(),
         withAuth: role !== "guest",
         accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
       });
