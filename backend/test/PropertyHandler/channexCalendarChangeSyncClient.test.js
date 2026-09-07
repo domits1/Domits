@@ -8,6 +8,12 @@ import {
   useChannexLambdaClientTestEnvironment,
 } from "../util/channexLambdaClientTestUtils.js";
 
+// This client is a transport-only wrapper: it forwards the payload to UnifiedMessaging and
+// returns whatever evidence comes back, so these tests only prove forwarding + evidence roundtrip.
+// The real rate/min_stay/stop_sell/availability values come from the shared payload builders
+// (buildChannexFullSyncAvailabilityPayloadContext, buildChannexFullSyncPayloadContext) that
+// calendar-change reuses from the full ARI sync, and those are covered with real data in
+// functions/UnifiedMessaging/business/integrationService.channexAri.test.js.
 describe("ChannexCalendarChangeSyncClient", () => {
   useChannexLambdaClientTestEnvironment();
 
@@ -79,39 +85,41 @@ describe("ChannexCalendarChangeSyncClient", () => {
     it.each([
       {
         description: "a rate change",
-        requestTypes: ["rate"],
+        requestTypes: ["restrictions/rates"],
         payload: {
           domitsPropertyId: "property-1",
           changedDates: ["2026-07-01", "2026-07-02"],
-          changeTypes: ["rate"],
+          changeTypes: ["rates"],
         },
       },
       {
         description: "an availability block over a date range",
-        requestTypes: ["availability-block"],
+        requestTypes: ["availability"],
         payload: {
           domitsPropertyId: "property-1",
           dateFrom: "2026-08-01",
           dateTo: "2026-08-07",
-          changeTypes: ["availability-block"],
+          changeTypes: ["availability"],
         },
       },
       {
         description: "a stay restriction change",
-        requestTypes: ["restriction"],
+        requestTypes: ["restrictions/rates"],
         payload: {
           domitsPropertyId: "property-1",
           changedDates: ["2026-09-01"],
-          changeTypes: ["restriction"],
+          changeTypes: ["restrictions"],
         },
       },
       {
+        // rates and restrictions both fold into the single "restrictions/rates" requestType,
+        // so 3 changeTypes collapse into 2 requestTypes — see channexAvailabilitySyncService.js.
         description: "a combined rate, availability and restriction change",
-        requestTypes: ["rate", "availability-block", "restriction"],
+        requestTypes: ["availability", "restrictions/rates"],
         payload: {
           domitsPropertyId: "property-1",
           changedDates: ["2026-09-10"],
-          changeTypes: ["rate", "availability-block", "restriction"],
+          changeTypes: ["rates", "availability", "restrictions"],
         },
       },
     ])("syncs $description and returns the UnifiedMessaging evidence", async ({ requestTypes, payload }) => {
@@ -142,7 +150,7 @@ describe("ChannexCalendarChangeSyncClient", () => {
       const payload = {
         domitsPropertyId: "property-1",
         changedDates: ["2026-06-10"],
-        changeTypes: ["rate"],
+        changeTypes: ["rates"],
       };
 
       const result = await client.syncCalendarChange(payload);
@@ -151,7 +159,7 @@ describe("ChannexCalendarChangeSyncClient", () => {
         expect.objectContaining({
           domitsPropertyId: "property-1",
           changedDates: ["2026-06-10"],
-          changeTypes: ["rate"],
+          changeTypes: ["rates"],
           skipped: false,
           reason: CHANNEX_CALENDAR_CHANGE_SYNC_FAILED,
           overallSuccess: false,
@@ -173,7 +181,7 @@ describe("ChannexCalendarChangeSyncClient", () => {
         functionError: "Unhandled",
       });
       const client = new ChannexCalendarChangeSyncClient({ lambda });
-      const payload = { domitsPropertyId: "property-1", changeTypes: ["availability-block"] };
+      const payload = { domitsPropertyId: "property-1", changeTypes: ["availability"] };
 
       const result = await client.syncCalendarChange(payload);
 
@@ -197,7 +205,7 @@ describe("ChannexCalendarChangeSyncClient", () => {
     it("returns fallback failure evidence when the response body is missing on a 2xx status", async () => {
       const lambda = createLambdaMock({ statusCode: 200 });
       const client = new ChannexCalendarChangeSyncClient({ lambda });
-      const payload = { domitsPropertyId: "property-1", changeTypes: ["restriction"] };
+      const payload = { domitsPropertyId: "property-1", changeTypes: ["restrictions"] };
 
       const result = await client.syncCalendarChange(payload);
 
