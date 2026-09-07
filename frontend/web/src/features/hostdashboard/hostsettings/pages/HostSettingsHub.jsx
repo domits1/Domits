@@ -77,7 +77,6 @@ const HostSettingsHub = () => {
         </div>
       </div>
 
-
       <div className="host-settings-section">
         <h2 className="host-settings-section-title">{t.accountSection}</h2>
         <div className="host-settings-cards-grid">
