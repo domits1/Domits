@@ -9,23 +9,21 @@ import PaymentsGuestDashboard, {
   getInvoiceUrl,
   getPaymentStatus,
 } from "./GuestPayments";
-import { getAccessToken } from "../../services/getAccessToken";
 
 jest.mock("aws-amplify", () => ({
   Auth: {
     currentUserInfo: jest.fn(),
+    currentSession: jest.fn(),
   },
-}));
-
-jest.mock("../../services/getAccessToken", () => ({
-  getAccessToken: jest.fn(),
 }));
 
 describe("GuestPayments", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: "guest-1" } });
-    getAccessToken.mockReturnValue("access-token");
+    Auth.currentSession.mockResolvedValue({
+      getIdToken: () => ({ getJwtToken: () => "id-token" }),
+    });
   });
 
   test("formats payment amounts using cents", () => {
@@ -87,7 +85,7 @@ describe("GuestPayments", () => {
     }
   });
 
-  test("sends the access token when loading payments", async () => {
+  test("sends the ID token when loading payments", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ payments: [] }),
@@ -100,7 +98,7 @@ describe("GuestPayments", () => {
       expect.stringContaining("FetchGuestPayments"),
       expect.objectContaining({
         headers: {
-          Authorization: "access-token",
+          Authorization: "id-token",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId: "guest-1" }),

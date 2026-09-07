@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY.js";
 import spinner from "../../images/spinnner.gif";
-import { getAccessToken } from "../../services/getAccessToken";
 import "./paymentsguestdashboard.css";
 
 const PAYMENTS_API =
@@ -64,15 +63,16 @@ const PaymentsGuestDashboard = () => {
       if (!userId) {
         throw new Error("The signed-in guest could not be identified.");
       }
-      const accessToken = getAccessToken();
-      if (!accessToken) {
-        throw new Error("The signed-in guest has no access token.");
+      const session = await Auth.currentSession();
+      const idToken = session?.getIdToken?.()?.getJwtToken?.();
+      if (!idToken) {
+        throw new Error("The signed-in guest has no ID token.");
       }
 
       const response = await fetch(PAYMENTS_API, {
         method: "POST",
         headers: {
-          Authorization: accessToken,
+          Authorization: idToken,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId }),
