@@ -98,6 +98,16 @@ export default function InvoicesSection() {
       {!loading && !error && filtered.length > 0 ? (
         <div className="table-wrap">
           <table className="payout-table invoices-table">
+            <colgroup>
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "18%" }} />
+            </colgroup>
             <thead>
               <tr>
                 <th scope="col">Invoice</th>

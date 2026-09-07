@@ -31,6 +31,7 @@ async function buildLogoDataUrl() {
   } catch {
     return "";
   }
+
 }
 
 const textOrUnavailable = (value) => (value === null || value === undefined || value === "" ? "Unavailable" : String(value));
@@ -81,10 +82,14 @@ export async function downloadHostInvoicePdf(invoice) {
   });
 
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, "PNG", MARGIN, y - 3, 42, 13);
+    doc.addImage(logoDataUrl, "PNG", MARGIN, y - 3, 34, 11);
   }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(25);
+  doc.setFontSize(7);
+  doc.setTextColor(...GREEN);
+  doc.text("DOMITS FINANCE SUITE", PAGE_WIDTH - MARGIN, y - 3, { align: "right" });
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(34);
   doc.setTextColor(...DARK);
   doc.text("INVOICE", PAGE_WIDTH - MARGIN, y + 5, { align: "right" });
   y += 25;
@@ -94,13 +99,15 @@ export async function downloadHostInvoicePdf(invoice) {
   y += 10;
 
   writeLabelValue(doc, "Invoice number", invoice.invoice_number, y);
-  writeLabelValue(doc, "Invoice date", formatDate(invoice.created_at), y, 112, 155);
+  y += 7;
+  writeLabelValue(doc, "Invoice date", formatDate(invoice.created_at), y);
   y += 7;
   if (invoice.payout_reference || invoice.payoutReference) {
     writeLabelValue(doc, "Payout reference", invoice.payout_reference || invoice.payoutReference, y);
+    y += 7;
   }
   if (status) {
-    writeLabelValue(doc, "Invoice status", status, y, 112, 155);
+    writeLabelValue(doc, "Invoice status", status, y);
   }
   y += 14;
 
@@ -151,6 +158,8 @@ export async function downloadHostInvoicePdf(invoice) {
   writeLabelValue(doc, "Stay", stay, y);
   y += 6;
   writeLabelValue(doc, "Nights", invoice.nights, y);
+  y += 6;
+  writeLabelValue(doc, "Rate per night", formatMoney(invoice.rate_per_night, currency), y);
   y += 14;
 
   doc.setDrawColor(229, 231, 235);
@@ -186,6 +195,10 @@ export async function downloadHostInvoicePdf(invoice) {
   doc.text(formatMoney(invoice.net_amount, currency) || "Unavailable", PAGE_WIDTH - MARGIN - 6, y + 2, {
     align: "right",
   });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...MUTED);
+  doc.text("Amount due to the host after recorded deductions", MARGIN + 6, y + 9);
 
   addWaveFooter(doc);
   doc.setFont("helvetica", "normal");
@@ -196,7 +209,10 @@ export async function downloadHostInvoicePdf(invoice) {
     MARGIN,
     PAGE_HEIGHT - 18,
   );
-  if (status) doc.text(`Status: ${status}`, MARGIN, PAGE_HEIGHT - 12);
+  if (status) doc.text(`Payment status: ${status}`, MARGIN, PAGE_HEIGHT - 12);
+  if (invoice.payout_reference || invoice.payoutReference) {
+    doc.text(`Payout reference: ${invoice.payout_reference || invoice.payoutReference}`, MARGIN, PAGE_HEIGHT - 7);
+  }
   doc.setTextColor(...GREEN);
   doc.setFont("helvetica", "bold");
   doc.text("Domits Finance Suite", PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 12, { align: "right" });
