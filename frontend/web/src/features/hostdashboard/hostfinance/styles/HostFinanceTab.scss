@@ -59,11 +59,13 @@ $color-muted: #6b7280;
 
 .host-pc-finance {
   background: #fff;
+  box-sizing: border-box;
   border-radius: $radius;
   box-shadow: $shadow;
+  min-width: 0;
   padding: 16px;
-  max-width: 100%;
-  width: 960px;
+  max-width: 960px;
+  width: 100%;
   margin: 0 auto;
   @include up($bp-md) {
     padding: 24px;
@@ -76,6 +78,14 @@ $color-muted: #6b7280;
 .finance-content {
   display: grid;
   gap: 16px;
+  min-width: 0;
+  width: 100%;
+
+  > * {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
   @include up($bp-sm) {
     gap: 20px;
   }
@@ -835,6 +845,77 @@ $color-muted: #6b7280;
     font-weight: 600;
     margin-bottom: 16px;
   }
+
+  .table-wrap {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+
+  .invoices-table {
+    background: #fff;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.88rem;
+    min-width: 980px;
+    width: 100%;
+
+    th,
+    td {
+      border-bottom: 1px solid #eef0f2;
+      padding: 14px 16px;
+      vertical-align: middle;
+    }
+
+    thead th {
+      background: #f8faf9;
+      color: #475467;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      transition: background-color 0.15s ease;
+    }
+
+    tbody tr:hover {
+      background: #f8fcf8;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .amount-column {
+      text-align: right;
+      white-space: nowrap;
+    }
+  }
+
+  .invoice-number-cell {
+    color: #0d9813;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .invoice-property-cell {
+    display: grid;
+    gap: 4px;
+    min-width: 190px;
+
+    strong {
+      color: #111827;
+      font-weight: 700;
+    }
+
+    span {
+      color: #667085;
+      font-size: 0.78rem;
+    }
+  }
 }
 
 .invoices-filters {
@@ -869,8 +950,13 @@ $color-muted: #6b7280;
 
 .invoices-loading,
 .invoices-empty {
+  background: #f8faf9;
+  border: 1px dashed #d0d5d2;
+  border-radius: 12px;
   color: $color-muted;
   font-size: 0.9rem;
+  padding: 32px 20px;
+  text-align: center;
 }
 
 .invoices-error {
@@ -909,6 +995,17 @@ $color-muted: #6b7280;
     background: $color-success;
     color: #fff;
   }
+}
+
+.invoice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.invoice-status {
+  white-space: nowrap;
 }
 
 @keyframes finance-skeleton-wave {
