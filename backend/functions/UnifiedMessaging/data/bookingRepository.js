@@ -1,5 +1,6 @@
 import Database from "../.shared/integrations/ORM/index.js";
 import { Booking } from "database/models/Booking";
+import { Property } from "database/models/Property";
 
 const normalizeBooking = (booking) => {
   if (!booking) return null;
@@ -49,6 +50,14 @@ class BookingRepository {
       .getMany();
 
     return bookings.map(normalizeBooking).filter(Boolean);
+  }
+
+  async hostOwnsProperty(hostId, propertyId) {
+    if (!hostId || !propertyId) return false;
+
+    const client = await Database.getInstance();
+    const count = await client.getRepository(Property).count({ where: { id: propertyId, hostid: hostId } });
+    return count === 1;
   }
 }
 

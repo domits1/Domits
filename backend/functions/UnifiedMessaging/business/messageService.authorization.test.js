@@ -15,6 +15,7 @@ const mockBookingRepository = {
   getBookingById: jest.fn(),
   findBookingsForGuestHost: jest.fn(),
   findBookingsForGuestHostProperty: jest.fn(),
+  hostOwnsProperty: jest.fn(),
 };
 
 jest.mock("../data/messageRepository.js", () => ({
@@ -245,11 +246,82 @@ describe("MessageService authorization and booking scoping", () => {
     expect(mockMessageRepository.createMessage).not.toHaveBeenCalled();
   });
 
-  test("requires bookingId when a guest starts a new conversation", async () => {
+  test("rejects a guest starting a new conversation without propertyId", async () => {
     await expect(service.sendMessage({ recipientId: "host-1", content: "Hello" }, guestAuth)).rejects.toMatchObject({
       statusCode: 400,
       code: "BAD_REQUEST",
     });
+    expect(mockBookingRepository.hostOwnsProperty).not.toHaveBeenCalled();
+  });
+
+  test("allows a guest to start a pre-booking conversation when the property belongs to the recipient host", async () => {
+    mockBookingRepository.hostOwnsProperty.mockResolvedValue(true);
+    mockThreadRepository.findThread.mockResolvedValue(null);
+    mockThreadRepository.createThread.mockResolvedValue(thread({ bookingId: null }));
+    mockMessageRepository.createMessage.mockImplementation(async (row) => ({ id: "message-1", ...row }));
+
+    const result = await service.sendMessage(
+      { recipientId: "host-1", propertyId: "property-1", content: "Hi, is this available?" },
+      guestAuth
+    );
+
+    expect(result.statusCode).toBe(201);
+    expect(mockBookingRepository.hostOwnsProperty).toHaveBeenCalledWith("host-1", "property-1");
+    expect(mockThreadRepository.createThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hostId: "host-1",
+        guestId: "guest-1",
+        propertyId: "property-1",
+        bookingId: null,
+      })
+    );
+  });
+
+  test("rejects a guest pre-booking conversation when the property belongs to a different host", async () => {
+    mockBookingRepository.hostOwnsProperty.mockResolvedValue(false);
+
+    await expect(
+      service.sendMessage({ recipientId: "host-1", propertyId: "property-1", content: "Hi" }, guestAuth)
+    ).rejects.toMatchObject({ statusCode: 400, code: "BAD_REQUEST" });
+    expect(mockThreadRepository.createThread).not.toHaveBeenCalled();
+  });
+
+  test("rejects a spoofed guestId on a guest pre-booking conversation", async () => {
+    mockBookingRepository.hostOwnsProperty.mockResolvedValue(true);
+
+    await expect(
+      service.sendMessage(
+        { recipientId: "host-1", propertyId: "property-1", guestId: "someone-else", content: "Hi" },
+        guestAuth
+      )
+    ).rejects.toMatchObject({ statusCode: 403, code: "FORBIDDEN" });
+    expect(mockThreadRepository.createThread).not.toHaveBeenCalled();
+  });
+
+  test("rejects a spoofed hostId on a guest pre-booking conversation", async () => {
+    mockBookingRepository.hostOwnsProperty.mockResolvedValue(true);
+
+    await expect(
+      service.sendMessage(
+        { recipientId: "host-1", propertyId: "property-1", hostId: "some-other-host", content: "Hi" },
+        guestAuth
+      )
+    ).rejects.toMatchObject({ statusCode: 403, code: "FORBIDDEN" });
+    expect(mockThreadRepository.createThread).not.toHaveBeenCalled();
+  });
+
+  test("allows a host to start a new conversation without a booking", async () => {
+    mockThreadRepository.findThread.mockResolvedValue(null);
+    mockThreadRepository.createThread.mockResolvedValue(thread({ bookingId: null }));
+    mockMessageRepository.createMessage.mockImplementation(async (row) => ({ id: "message-1", ...row }));
+
+    const result = await service.sendMessage({ recipientId: "guest-1", content: "Welcome!" }, hostAuth);
+
+    expect(result.statusCode).toBe(201);
+    expect(mockBookingRepository.hostOwnsProperty).not.toHaveBeenCalled();
+    expect(mockThreadRepository.createThread).toHaveBeenCalledWith(
+      expect.objectContaining({ hostId: "host-1", guestId: "guest-1", bookingId: null })
+    );
   });
 
   test("creates guest reservation conversations from booking ownership and stores bookingId", async () => {
