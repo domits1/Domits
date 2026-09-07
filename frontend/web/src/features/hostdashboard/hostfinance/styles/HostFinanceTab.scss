@@ -992,6 +992,7 @@ $color-muted: #6b7280;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 600;
+  white-space: nowrap;
 
   &--finalized {
     background: rgba($color-success, 0.12);
@@ -1039,10 +1040,6 @@ $color-muted: #6b7280;
   gap: 6px;
   min-width: 0;
   width: 100%;
-}
-
-.invoice-status {
-  white-space: nowrap;
 }
 
 @keyframes finance-skeleton-wave {

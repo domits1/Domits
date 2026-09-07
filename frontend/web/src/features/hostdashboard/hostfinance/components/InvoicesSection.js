@@ -2,9 +2,8 @@ import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import { getInvoices } from "../services/invoiceService";
-import HostInvoice from "./HostInvoice";
+import HostInvoice, { formatMoney as formatInvoiceMoney } from "./HostInvoice";
 import { downloadHostInvoicePdf } from "../services/downloadHostInvoicePdf";
-import { formatMoney as formatInvoiceMoney } from "./HostInvoice";
 import { HOST_INVOICE_FIXTURE_ENABLED, HOST_INVOICE_FIXTURES } from "../utils/hostInvoiceFixtures";
 
 const STATUS_LABEL = { finalized: "Paid", draft: "Draft" };
