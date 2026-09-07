@@ -3,6 +3,150 @@
   font-family: "Kanit", sans-serif;
 }
 
+.guest-payments {
+  color: #1f2937;
+  max-width: 1100px;
+  padding: 2rem;
+}
+
+.guest-payments__header,
+.guest-payments__summary,
+.guest-payments__item {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.guest-payments__header {
+  margin-bottom: 1.5rem;
+}
+
+.guest-payments__header h1,
+.guest-payments__list h2,
+.guest-payments__state h2 {
+  margin: 0;
+}
+
+.guest-payments__header p,
+.guest-payments__state p,
+.guest-payments__item p {
+  color: #667085;
+  margin: 0.4rem 0 0;
+}
+
+.guest-payments__summary {
+  background: #f7f8fa;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+}
+
+.guest-payments__summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.guest-payments__summary span {
+  color: #667085;
+  font-size: 0.9rem;
+}
+
+.guest-payments__summary strong {
+  font-size: 1.25rem;
+}
+
+.guest-payments__list {
+  display: grid;
+  gap: 1rem;
+}
+
+.guest-payments__item {
+  align-items: flex-start;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.guest-payments__details {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: right;
+}
+
+.guest-payments__status {
+  color: #087443;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.guest-payments__unavailable {
+  color: #667085;
+  font-size: 0.85rem;
+}
+
+.guest-payments__primary-button,
+.guest-payments__secondary-button {
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.65rem 1rem;
+}
+
+.guest-payments__primary-button {
+  background: #087443;
+  color: #fff;
+}
+
+.guest-payments__secondary-button {
+  background: #eef2f6;
+  color: #1f2937;
+}
+
+.guest-payments__secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.guest-payments__state {
+  border: 1px dashed #cfd5dd;
+  border-radius: 12px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.guest-payments__state button {
+  margin-top: 1rem;
+}
+
+.guest-payments__spinner {
+  display: block;
+  margin: 4rem auto;
+}
+
+@media (max-width: 640px) {
+  .guest-payments {
+    padding: 1rem;
+  }
+
+  .guest-payments__header,
+  .guest-payments__summary,
+  .guest-payments__item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .guest-payments__details {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
 .bookingContent {
   margin-left: 20px;
   margin-right: 20px;
