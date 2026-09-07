@@ -6,9 +6,17 @@ import React from "react";
 import PropTypes from "prop-types";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
+import { Auth } from "aws-amplify";
 import useFetchContacts from "./useFetchContacts";
 import { getAccessToken } from "../../../../services/getAccessToken";
 import { fetchUserProfileById, getEmptyUserProfile } from "../../services/fetchUserProfileById";
+import fetchBookingDetailsAndAccommodation from "../utils/FetchBookingDetails";
+
+jest.mock("aws-amplify", () => ({
+  Auth: {
+    currentSession: jest.fn(),
+  },
+}));
 
 jest.mock("../../../../services/getAccessToken", () => ({
   getAccessToken: jest.fn(),
@@ -62,7 +70,10 @@ const okJson = (payload) => ({
 describe("useFetchContacts history merging", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getAccessToken.mockReturnValue("host-token-1");
+    Auth.currentSession.mockResolvedValue({
+      getIdToken: () => ({ getJwtToken: () => "host-token-1" }),
+    });
+    getAccessToken.mockReturnValue("host-access-token-1");
     fetchUserProfileById.mockImplementation(async (userId) => ({
       ...getEmptyUserProfile(userId),
       givenName: `Profile ${userId}`,
@@ -146,6 +157,10 @@ describe("useFetchContacts history merging", () => {
         method: "POST",
         body: JSON.stringify({ hostID: "host-1" }),
       })
+    );
+
+    expect(fetchBookingDetailsAndAccommodation).toHaveBeenCalledWith(
+      expect.objectContaining({ token: "host-access-token-1" })
     );
   });
 });
