@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY.js";
 import spinner from "../../images/spinnner.gif";
+import { getAccessToken } from "../../services/getAccessToken";
 import "./paymentsguestdashboard.css";
 
 const PAYMENTS_API =
@@ -15,20 +16,14 @@ function formatAmount(amount, currency = "EUR") {
 }
 
 function getInvoiceUrl(payment) {
-  return (
-    payment.invoiceUrl ||
-    payment.receiptUrl ||
-    payment.invoice?.url ||
-    payment.receipt?.url ||
-    null
-  );
+  return payment.invoiceUrl || null;
 }
 
 function getPaymentStatus(payment) {
-  return payment.status || payment.paymentStatus || "Paid";
+  return payment.status || payment.paymentStatus || "Status unavailable";
 }
 
-function downloadPayments(payments) {
+function buildPaymentsCsv(payments) {
   const rows = [
     ["Description", "Date", "Amount", "Currency", "Status"],
     ...payments.map((payment) => [
@@ -39,9 +34,13 @@ function downloadPayments(payments) {
       getPaymentStatus(payment),
     ]),
   ];
-  const csv = rows
+  return rows
     .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","))
     .join("\n");
+}
+
+function downloadPayments(payments) {
+  const csv = buildPaymentsCsv(payments);
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
   const link = document.createElement("a");
   link.href = url;
@@ -65,10 +64,17 @@ const PaymentsGuestDashboard = () => {
       if (!userId) {
         throw new Error("The signed-in guest could not be identified.");
       }
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        throw new Error("The signed-in guest has no access token.");
+      }
 
       const response = await fetch(PAYMENTS_API, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: accessToken,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ userId }),
       });
 
@@ -184,5 +190,5 @@ const PaymentsGuestDashboard = () => {
   );
 };
 
-export { formatAmount, getInvoiceUrl };
+export { buildPaymentsCsv, downloadPayments, formatAmount, getInvoiceUrl, getPaymentStatus };
 export default PaymentsGuestDashboard;
