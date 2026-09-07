@@ -1100,12 +1100,17 @@
       "title": "Instellingen",
       "subtitle": "Beheer al je persoonlijke en accountinstellingen op één plek",
       "personalSection": "Persoonlijke instellingen",
+      "communicationSection": "Communicatievoorkeuren",
       "accountSection": "Accountinstellingen",
       "breadcrumb": "Instellingen",
       "cards": {
         "personalData": {
           "title": "Persoonlijke gegevens",
           "desc": "Beheer je contactgegevens, profielfoto en persoonlijke informatie."
+        },
+        "communicationPreferences": {
+          "title": "Communicatievoorkeuren",
+          "desc": "Kies hoe je belangrijke updates en meldingen van Domits ontvangt."
         },
         "company": {
           "title": "Bedrijf",
@@ -1173,6 +1178,31 @@
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan...",
         "saved": "Opgeslagen!"
+      }
+    },
+    "communicationPreferences": {
+      "breadcrumb": "Communicatievoorkeuren",
+      "title": "Communicatievoorkeuren",
+      "subtitle": "Kies hoe je belangrijke updates en meldingen van Domits ontvangt.",
+      "sectionTitle": "Meldingsvoorkeuren",
+      "required": "Verplicht",
+      "notificationsLabel": "meldingen",
+      "channels": {
+        "email": "E-mail",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "events": {
+        "reservation": "Reservering",
+        "cancellation": "Annulering",
+        "messages": "Berichten"
+      },
+      "states": {
+        "on": "AAN",
+        "off": "UIT"
+      },
+      "actions": {
+        "saveChanges": "Wijzigingen opslaan"
       }
     },
     "company": {
