@@ -96,7 +96,7 @@ describe("MessageService authorization and booking scoping", () => {
   });
 
   test("allows legacy guest threads only when a matching reservation exists", async () => {
-    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null }));
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null, platform: "WHATSAPP" }));
     mockBookingRepository.findBookingsForGuestHostProperty.mockResolvedValue([booking()]);
     mockMessageRepository.getMessagesByThreadId.mockResolvedValue([]);
 
@@ -126,7 +126,7 @@ describe("MessageService authorization and booking scoping", () => {
   });
 
   test("rejects legacy guest threads when no matching reservation exists", async () => {
-    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null }));
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null, platform: "WHATSAPP" }));
     mockBookingRepository.findBookingsForGuestHostProperty.mockResolvedValue([]);
 
     await expect(service.getMessages("thread-1", guestAuth)).rejects.toMatchObject({
@@ -137,7 +137,7 @@ describe("MessageService authorization and booking scoping", () => {
   });
 
   test("rejects ambiguous legacy guest threads with multiple matching reservations", async () => {
-    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null }));
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null, platform: "WHATSAPP" }));
     mockBookingRepository.findBookingsForGuestHostProperty.mockResolvedValue([
       booking({ id: "booking-1" }),
       booking({ id: "booking-2" }),
@@ -160,6 +160,48 @@ describe("MessageService authorization and booking scoping", () => {
     await expect(service.getMessages("thread-1", guestAuth)).rejects.toMatchObject({
       statusCode: 403,
       code: "FORBIDDEN",
+    });
+    expect(mockMessageRepository.getMessagesByThreadId).not.toHaveBeenCalled();
+  });
+
+  test("guest sees own DOMITS pre-booking thread in /threads", async () => {
+    mockThreadRepository.getThreadsForUser.mockResolvedValue([
+      thread({ id: "pre-booking-thread", bookingId: null, propertyId: "property-1", platform: "DOMITS" }),
+    ]);
+
+    const result = await service.getThreads(guestAuth);
+
+    expect(result.response).toEqual([expect.objectContaining({ id: "pre-booking-thread", bookingId: null })]);
+    expect(mockBookingRepository.findBookingsForGuestHostProperty).not.toHaveBeenCalled();
+    expect(mockBookingRepository.findBookingsForGuestHost).not.toHaveBeenCalled();
+  });
+
+  test("guest can getMessages on own DOMITS pre-booking thread", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(
+      thread({ bookingId: null, propertyId: "property-1", platform: "DOMITS" })
+    );
+    mockMessageRepository.getMessagesByThreadId.mockResolvedValue([{ id: "message-1" }]);
+
+    const result = await service.getMessages("thread-1", guestAuth);
+
+    expect(result).toEqual({ statusCode: 200, response: [{ id: "message-1" }] });
+    expect(mockBookingRepository.findBookingsForGuestHostProperty).not.toHaveBeenCalled();
+  });
+
+  test("rejects a non-DOMITS thread with propertyId but no bookingId without a matching reservation", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(
+      thread({ bookingId: null, propertyId: "property-1", platform: "WHATSAPP" })
+    );
+    mockBookingRepository.findBookingsForGuestHostProperty.mockResolvedValue([]);
+
+    await expect(service.getMessages("thread-1", guestAuth)).rejects.toMatchObject({
+      statusCode: 403,
+      code: "FORBIDDEN",
+    });
+    expect(mockBookingRepository.findBookingsForGuestHostProperty).toHaveBeenCalledWith({
+      guestId: "guest-1",
+      hostId: "host-1",
+      propertyId: "property-1",
     });
     expect(mockMessageRepository.getMessagesByThreadId).not.toHaveBeenCalled();
   });
