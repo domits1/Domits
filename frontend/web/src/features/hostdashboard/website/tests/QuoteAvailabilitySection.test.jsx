@@ -132,6 +132,12 @@ describe("QuoteAvailabilitySection", () => {
   });
 
   describe("booking request", () => {
+    const FRESH_QUOTE = {
+      ...QUOTE,
+      quoteId: "quote_2",
+      quoteToken: "qtok2",
+      priceBreakdown: { ...QUOTE.priceBreakdown, nightlyBaseTotal: 60000, total: 65000 },
+    };
     const RESULT = {
       publicBookingRef: "DBW-ABCDEFGHJK",
       status: "REQUESTED",
@@ -199,6 +205,38 @@ describe("QuoteAvailabilitySection", () => {
       expect(requestPublicSiteBooking).not.toHaveBeenCalled();
     });
 
+    it("re-quotes automatically when the price changed and keeps the guest's details", async () => {
+      requestPublicWebsiteQuote.mockResolvedValueOnce(QUOTE).mockResolvedValueOnce(FRESH_QUOTE);
+      requestPublicSiteBooking.mockRejectedValue(bookingError("quote_expired", 409));
+      renderSection();
+
+      await getQuote();
+      fillContact();
+      submitRequest();
+
+      expect(await screen.findByText("€650.00")).toBeInTheDocument();
+      expect(screen.getByText(/price changed/i)).toBeInTheDocument();
+      expect(requestPublicWebsiteQuote).toHaveBeenCalledTimes(2);
+      expect(screen.getByLabelText("Your name")).toHaveValue("Guest Name");
+      expect(screen.getByRole("button", { name: "Request to book" })).toBeInTheDocument();
+    });
+
+    it("clears the selection and blocks the dates when they were taken meanwhile", async () => {
+      requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
+      requestPublicSiteBooking.mockRejectedValue(bookingError("unavailable_dates", 409));
+      renderSection();
+
+      await getQuote();
+      fillContact();
+      submitRequest();
+
+      expect(await screen.findByText(/no longer available/i)).toBeInTheDocument();
+      expect(screen.getByText("Pick a check-in date")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${monthLabel} 1,`) }));
+      expect(screen.getByText("Pick a check-in date")).toBeInTheDocument();
+    });
+
     it("retries with the same key after a transient failure", async () => {
       requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
       requestPublicSiteBooking.mockRejectedValueOnce(bookingError("network_error", 0)).mockResolvedValueOnce(RESULT);
@@ -214,6 +252,20 @@ describe("QuoteAvailabilitySection", () => {
       expect(await screen.findByText("Request sent")).toBeInTheDocument();
       const [firstCall, secondCall] = requestPublicSiteBooking.mock.calls;
       expect(secondCall[0].idempotencyKey).toBe(firstCall[0].idempotencyKey);
+    });
+
+    it("asks for a fresh availability check when the token is rejected", async () => {
+      requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
+      requestPublicSiteBooking.mockRejectedValue(bookingError("quote_token_invalid", 401));
+      renderSection();
+
+      await getQuote();
+      fillContact();
+      submitRequest();
+
+      expect(await screen.findByText(/check availability again/i)).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Request to book" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^check availability$/i })).toBeEnabled();
     });
   });
 });

@@ -21,6 +21,48 @@ describe("resolveBookingRequestErrorPresentation", () => {
     expect(presentation.recovery).toBe(BOOKING_REQUEST_RECOVERY.NONE);
   });
 
+  it("re-quotes automatically when the price changed", () => {
+    const presentation = resolveBookingRequestErrorPresentation(buildError("quote_expired", { status: 409 }));
+    expect(presentation.scope).toBe(BOOKING_REQUEST_ERROR_SCOPES.QUOTE);
+    expect(presentation.recovery).toBe(BOOKING_REQUEST_RECOVERY.REQUOTE);
+    expect(presentation.message).toMatch(/price changed/i);
+  });
+
+  it("clears the selection and blocks the dates when they were taken", () => {
+    const presentation = resolveBookingRequestErrorPresentation(buildError("unavailable_dates", { status: 409 }));
+    expect(presentation.scope).toBe(BOOKING_REQUEST_ERROR_SCOPES.DATES);
+    expect(presentation.clearSelection).toBe(true);
+    expect(presentation.blockDates).toBe(true);
+    expect(presentation.message).toMatch(/no longer available/i);
+  });
+
+  it("clears the selection with the server message for a stay-rule violation", () => {
+    const presentation = resolveBookingRequestErrorPresentation(
+      buildError("stay_restriction_violation", { status: 409 })
+    );
+    expect(presentation.scope).toBe(BOOKING_REQUEST_ERROR_SCOPES.DATES);
+    expect(presentation.clearSelection).toBe(true);
+    expect(presentation.blockDates).toBe(false);
+    expect(presentation.message).toBe("Server says so.");
+  });
+
+  it.each(["invalid_date_range", "invalid_guest_count", "quote_token_invalid"])(
+    "asks for a fresh availability check when the token is rejected (%s)",
+    (code) => {
+      const presentation = resolveBookingRequestErrorPresentation(buildError(code));
+      expect(presentation.scope).toBe(BOOKING_REQUEST_ERROR_SCOPES.QUOTE);
+      expect(presentation.recovery).toBe(BOOKING_REQUEST_RECOVERY.RECHECK);
+      expect(presentation.message).toMatch(/check availability again/i);
+    }
+  );
+
+  it("shows the reference for a token that belongs to another site", () => {
+    expect(
+      resolveBookingRequestErrorPresentation(buildError("quote_token_invalid", { status: 401 })).showReference
+    ).toBe(true);
+    expect(resolveBookingRequestErrorPresentation(buildError("invalid_date_range")).showReference).toBe(false);
+  });
+
   it.each(["site_not_found", "site_not_published", "site_suspended"])(
     "hides the whole action for a site lifecycle problem (%s)",
     (code) => {
@@ -31,21 +73,45 @@ describe("resolveBookingRequestErrorPresentation", () => {
     }
   );
 
-  it.each(["quote_expired", "unavailable_dates", "network_error", "rate_limited", "internal_error", "something_new"])(
-    "offers a retry with the same key and the reference for everything else (%s)",
+  it("offers the host contact when the property cannot be booked online", () => {
+    const presentation = resolveBookingRequestErrorPresentation(buildError("quote_unavailable", { status: 422 }));
+    expect(presentation.scope).toBe(BOOKING_REQUEST_ERROR_SCOPES.PANEL);
+    expect(presentation.showContact).toBe(true);
+    expect(presentation.recovery).toBe(BOOKING_REQUEST_RECOVERY.NONE);
+  });
+
+  it("offers a retry with the same key for a throttle", () => {
+    const presentation = resolveBookingRequestErrorPresentation(buildError("rate_limited", { status: 429 }));
+    expect(presentation.scope).toBe(BOOKING_REQUEST_ERROR_SCOPES.PANEL);
+    expect(presentation.recovery).toBe(BOOKING_REQUEST_RECOVERY.RETRY);
+    expect(presentation.message).toMatch(/too many requests/i);
+  });
+
+  it.each(["booking_service_unavailable", "pricing_service_unavailable", "network_error"])(
+    "offers a retry with the same key for a transient failure (%s)",
     (code) => {
       const presentation = resolveBookingRequestErrorPresentation(buildError(code));
       expect(presentation.scope).toBe(BOOKING_REQUEST_ERROR_SCOPES.PANEL);
       expect(presentation.recovery).toBe(BOOKING_REQUEST_RECOVERY.RETRY);
-      expect(presentation.showReference).toBe(true);
       expect(presentation.message).toMatch(/couldn't send your request/i);
+      expect(presentation.showReference).toBe(false);
     }
   );
 
-  it("does not show a reference when the error carries none", () => {
-    expect(resolveBookingRequestErrorPresentation(buildError("internal_error", { requestId: "" })).showReference).toBe(
-      false
-    );
+  it("shows the request reference for unexpected failures", () => {
+    for (const code of [
+      "missing_idempotency_key",
+      "invalid_request",
+      "internal_error",
+      "unexpected_response",
+      "something_new",
+    ]) {
+      const presentation = resolveBookingRequestErrorPresentation(buildError(code));
+      expect(presentation.scope).toBe(BOOKING_REQUEST_ERROR_SCOPES.PANEL);
+      expect(presentation.recovery).toBe(BOOKING_REQUEST_RECOVERY.RETRY);
+      expect(presentation.showReference).toBe(true);
+      expect(presentation.message).not.toBe("Server says so.");
+    }
   });
 
   it("survives a missing error object", () => {

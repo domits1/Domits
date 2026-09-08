@@ -2,11 +2,12 @@ import React, { useCallback, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "./QuoteAvailabilitySection.module.scss";
 import QuotePanel from "./QuotePanel";
-import { QUOTE_STATUS, useWebsiteQuote } from "./useWebsiteQuote";
+import { QUOTE_STALE_REASONS, QUOTE_STATUS, useWebsiteQuote } from "./useWebsiteQuote";
 import { BOOKING_REQUEST_STATUS, useWebsiteBookingRequest } from "./useWebsiteBookingRequest";
 import { resolveQuoteErrorPresentation } from "./quoteErrorCopy";
+import { BOOKING_REQUEST_RECOVERY, resolveBookingRequestErrorPresentation } from "./bookingRequestErrorCopy";
 import { EMPTY_BOOKING_GUEST, validateBookingGuestContact } from "./bookingRequestContact";
-import { EMPTY_STAY_RANGE, getTodayDateKey, selectStayDate } from "./quoteSelection";
+import { EMPTY_STAY_RANGE, buildStayNightKeys, getTodayDateKey, selectStayDate } from "./quoteSelection";
 import { TemplateAvailabilityCalendar } from "../templates/templateSharedSections";
 import { getOrCreateVisitorId } from "../../services/websiteVisitorId";
 
@@ -45,13 +46,15 @@ export default function QuoteAvailabilitySection({
   const sessionId = useMemo(() => getOrCreateVisitorId(), []);
   const todayKey = useMemo(() => getTodayDateKey(), []);
   const capacity = resolveCapacity(model);
+  const [sessionBlockedDateKeys, setSessionBlockedDateKeys] = useState(() => new Set());
   const blockedDateKeys = useMemo(
     () =>
       new Set([
         ...toDateKeyList(model?.availability?.externalBlockedDates),
         ...toDateKeyList(model?.availability?.unavailableDateKeys),
+        ...sessionBlockedDateKeys,
       ]),
-    [model?.availability]
+    [model?.availability, sessionBlockedDateKeys]
   );
 
   const [range, setRange] = useState(EMPTY_STAY_RANGE);
@@ -60,7 +63,7 @@ export default function QuoteAvailabilitySection({
   );
   const [guest, setGuest] = useState(EMPTY_BOOKING_GUEST);
   const [guestErrors, setGuestErrors] = useState({});
-  const { requestQuote, notifySelectionChanged, ...quoteState } = useWebsiteQuote({ siteId, sessionId });
+  const { requestQuote, notifySelectionChanged, markStale, ...quoteState } = useWebsiteQuote({ siteId, sessionId });
   const {
     submitBookingRequest,
     reset: resetBookingRequest,
@@ -126,8 +129,37 @@ export default function QuoteAvailabilitySection({
       return;
     }
 
-    await submitBookingRequest({ quote, guest: normalizedGuest });
-  }, [guest, quoteState.quote, quoteState.status, submitBookingRequest]);
+    const outcome = await submitBookingRequest({ quote, guest: normalizedGuest });
+    if (!outcome?.error) {
+      return;
+    }
+
+    const presentation = resolveBookingRequestErrorPresentation(outcome.error);
+    if (presentation.blockDates) {
+      const takenNightKeys = buildStayNightKeys(range.checkIn, range.checkOut);
+      setSessionBlockedDateKeys((currentKeys) => new Set([...currentKeys, ...takenNightKeys]));
+    }
+    if (presentation.clearSelection) {
+      setRange(EMPTY_STAY_RANGE);
+      notifySelectionChanged();
+    }
+    if (presentation.recovery === BOOKING_REQUEST_RECOVERY.REQUOTE) {
+      await requestQuote({ checkIn: range.checkIn, checkOut: range.checkOut, guests });
+    }
+    if (presentation.recovery === BOOKING_REQUEST_RECOVERY.RECHECK) {
+      markStale(QUOTE_STALE_REASONS.REJECTED);
+    }
+  }, [
+    guest,
+    guests,
+    markStale,
+    notifySelectionChanged,
+    quoteState.quote,
+    quoteState.status,
+    range,
+    requestQuote,
+    submitBookingRequest,
+  ]);
 
   const selection = useMemo(
     () => ({

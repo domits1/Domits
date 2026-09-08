@@ -30,8 +30,12 @@ const resolveStaySummary = ({ checkIn, checkOut }) => {
   return `${formatStayDate(checkIn)} → ${formatStayDate(checkOut)}`;
 };
 
-const resolveStaleNotice = (staleReason) =>
-  staleReason === QUOTE_STALE_REASONS.EXPIRED ? "Price expired — check again" : "Selection changed — check again";
+const STALE_NOTICES = Object.freeze({
+  [QUOTE_STALE_REASONS.EXPIRED]: "Price expired — check again",
+  [QUOTE_STALE_REASONS.REJECTED]: "Price needs re-checking — check again",
+});
+
+const resolveStaleNotice = (staleReason) => STALE_NOTICES[staleReason] || "Selection changed — check again";
 
 function QuoteBreakdown({ quote, isStale, staleReason }) {
   const { priceBreakdown, nights } = quote;
@@ -118,7 +122,7 @@ QuotePanelAlert.propTypes = {
 const toAlertPresentation = (bookingPresentation) => ({
   message: bookingPresentation.message,
   canRetry: bookingPresentation.recovery === BOOKING_REQUEST_RECOVERY.RETRY,
-  showContact: false,
+  showContact: bookingPresentation.showContact,
   showReference: bookingPresentation.showReference,
 });
 
@@ -155,17 +159,22 @@ export default function QuotePanel({
       ? resolveBookingRequestErrorPresentation(bookingState.error)
       : null;
 
-  const datesError = errorPresentation?.scope === QUOTE_ERROR_SCOPES.DATES ? errorPresentation.message : "";
+  const datesError =
+    (errorPresentation?.scope === QUOTE_ERROR_SCOPES.DATES ? errorPresentation.message : "") ||
+    (bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.DATES ? bookingPresentation.message : "");
   const guestsError = errorPresentation?.scope === QUOTE_ERROR_SCOPES.GUESTS ? errorPresentation.message : "";
   const panelError = errorPresentation?.scope === QUOTE_ERROR_SCOPES.PANEL ? errorPresentation : null;
   const bookingPanelError =
     bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.PANEL ? bookingPresentation : null;
+  const bookingQuoteNotice =
+    bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.QUOTE ? bookingPresentation : null;
   const bookingContactError =
     bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.CONTACT ? bookingPresentation.message : "";
 
   const hideAction = Boolean(panelError?.hideAction || bookingPanelError?.hideAction);
   const canRequestQuote = nights > 0 && guests >= 1 && !isLoading && !isSubmitting;
   const showRequestForm = isQuoted && !hideAction;
+  const bookingRequestId = bookingState.error?.requestId || "";
 
   return (
     <aside className={styles.panel} aria-labelledby="website-quote-panel-title">
@@ -217,10 +226,19 @@ export default function QuotePanel({
             <QuoteBreakdown quote={quoteState.quote} isStale={isStale} staleReason={quoteState.staleReason} />
           ) : null}
 
+          {bookingQuoteNotice ? (
+            <div className={styles.notice} role="status">
+              <p className={styles.noticeMessage}>{bookingQuoteNotice.message}</p>
+              {bookingQuoteNotice.showReference && bookingRequestId ? (
+                <p className={styles.reference}>{`Reference: ${bookingRequestId}`}</p>
+              ) : null}
+            </div>
+          ) : null}
+
           {bookingPanelError ? (
             <QuotePanelAlert
               presentation={toAlertPresentation(bookingPanelError)}
-              requestId={bookingState.error?.requestId || ""}
+              requestId={bookingRequestId}
               contactHref={contactHref}
               onRetry={onSubmitBookingRequest}
             />

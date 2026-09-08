@@ -315,6 +315,12 @@ describe("QuotePanel", () => {
       expect(requestButton()).toBeInTheDocument();
     });
 
+    it("explains a refreshed price above the form", () => {
+      renderQuotedPanel({ bookingState: bookingError("quote_expired", "", 409) });
+      expect(screen.getByText(/price changed/i)).toBeInTheDocument();
+      expect(requestButton()).toBeInTheDocument();
+    });
+
     it("offers a retry that resubmits the same request", () => {
       const { onSubmitBookingRequest } = renderQuotedPanel({ bookingState: bookingError("network_error", "", 0) });
       expect(screen.getByRole("alert")).toHaveTextContent(/couldn't send your request/i);

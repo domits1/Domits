@@ -16,6 +16,7 @@ export const QUOTE_STATUS = Object.freeze({
 export const QUOTE_STALE_REASONS = Object.freeze({
   CHANGED: "changed",
   EXPIRED: "expired",
+  REJECTED: "rejected",
 });
 
 const EXPIRY_CHECK_INTERVAL_MS = 30_000;
