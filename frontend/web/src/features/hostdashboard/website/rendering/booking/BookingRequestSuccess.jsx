@@ -7,7 +7,7 @@ const pluralizeGuests = (count) => `${count} ${count === 1 ? "guest" : "guests"}
 
 export default function BookingRequestSuccess({ result, guestEmail = "" }) {
   return (
-    <div className={styles.success} role="status">
+    <output className={styles.success}>
       <p className={styles.successTitle}>Request sent</p>
       <p className={styles.successLabel}>Booking reference</p>
       <p className={styles.successReference}>{result.publicBookingRef}</p>
@@ -23,7 +23,7 @@ export default function BookingRequestSuccess({ result, guestEmail = "" }) {
       </dl>
       <p className={styles.successNote}>The host still has to confirm your request — nothing is booked yet.</p>
       {guestEmail ? <p className={styles.hint}>{`We've sent a copy to ${guestEmail}.`}</p> : null}
-    </div>
+    </output>
   );
 }
 

@@ -1,4 +1,4 @@
-export const BOOKING_GUEST_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const BOOKING_GUEST_EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 const MAX_CONTACT_FIELD_LENGTH = 255;
 

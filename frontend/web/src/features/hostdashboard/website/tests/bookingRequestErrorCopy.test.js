@@ -3,7 +3,7 @@ import {
   BOOKING_REQUEST_RECOVERY,
   resolveBookingRequestErrorPresentation,
 } from "../rendering/booking/bookingRequestErrorCopy";
-import { validateBookingGuestContact } from "../rendering/booking/bookingRequestContact";
+import { BOOKING_GUEST_EMAIL_PATTERN, validateBookingGuestContact } from "../rendering/booking/bookingRequestContact";
 
 const buildError = (code, overrides = {}) => ({
   code,
@@ -76,5 +76,17 @@ describe("validateBookingGuestContact", () => {
 
   it("reports both fields when both are missing", () => {
     expect(Object.keys(validateBookingGuestContact({ name: "", email: "" }).errors).sort()).toEqual(["email", "name"]);
+  });
+
+  it("rejects a pathological address in linear time", () => {
+    const email = `a@${"b.".repeat(50000)} `;
+    expect(BOOKING_GUEST_EMAIL_PATTERN.test(email)).toBe(false);
+  });
+
+  it("accepts subdomains and rejects consecutive or trailing dots", () => {
+    expect(BOOKING_GUEST_EMAIL_PATTERN.test("guest@mail.example.co.uk")).toBe(true);
+    expect(BOOKING_GUEST_EMAIL_PATTERN.test("guest@example..com")).toBe(false);
+    expect(BOOKING_GUEST_EMAIL_PATTERN.test("guest@example.com.")).toBe(false);
+    expect(BOOKING_GUEST_EMAIL_PATTERN.test("guest@example")).toBe(false);
   });
 });

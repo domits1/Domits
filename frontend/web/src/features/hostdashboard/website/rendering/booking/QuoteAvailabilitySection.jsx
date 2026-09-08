@@ -30,13 +30,8 @@ const resolveContactHref = (model) => {
 
 const toDateKeyList = (value) => (Array.isArray(value) ? value : []);
 
-const withoutField = (errors, field) => {
-  if (!errors?.[field]) {
-    return errors;
-  }
-  const { [field]: _removed, ...remainingErrors } = errors;
-  return remainingErrors;
-};
+const withoutField = (errors, field) =>
+  errors?.[field] ? Object.fromEntries(Object.entries(errors).filter(([key]) => key !== field)) : errors;
 
 export default function QuoteAvailabilitySection({
   model,

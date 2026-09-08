@@ -54,6 +54,24 @@ describe("booking request idempotency key", () => {
     expect(globalThis.localStorage.getItem(resolveBookingIdempotencyStorageKey("site-1"))).toBeNull();
   });
 
+  it("falls back to crypto.getRandomValues when randomUUID is unavailable", () => {
+    const originalRandomUuid = globalThis.crypto.randomUUID;
+    Object.defineProperty(globalThis.crypto, "randomUUID", { value: undefined, configurable: true, writable: true });
+    const getRandomValues = jest.spyOn(globalThis.crypto, "getRandomValues");
+
+    try {
+      const key = getOrCreateBookingIdempotencyKey({ siteId: "site-7", quoteId: "quote_1" });
+      expect(key).toMatch(UUID_PATTERN);
+      expect(getRandomValues).toHaveBeenCalledTimes(1);
+    } finally {
+      Object.defineProperty(globalThis.crypto, "randomUUID", {
+        value: originalRandomUuid,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
   it("regenerates when the stored value is corrupt", () => {
     globalThis.localStorage.setItem(resolveBookingIdempotencyStorageKey("site-1"), "{not json");
 

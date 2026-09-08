@@ -7,14 +7,7 @@ const cleanText = (value) => String(value || "").trim();
 export const resolveBookingIdempotencyStorageKey = (siteId) => `${STORAGE_KEY_PREFIX}${cleanText(siteId)}`;
 
 const createFallbackUuid = () => {
-  const bytes = new Uint8Array(16);
-  if (globalThis.crypto?.getRandomValues) {
-    globalThis.crypto.getRandomValues(bytes);
-  } else {
-    for (let index = 0; index < bytes.length; index += 1) {
-      bytes[index] = Math.floor(Math.random() * 256);
-    }
-  }
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
   bytes[6] = (bytes[6] & 0x0f) | 0x40;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
   const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -22,7 +15,7 @@ const createFallbackUuid = () => {
 };
 
 const createIdempotencyKey = () =>
-  globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : createFallbackUuid();
+  typeof globalThis.crypto.randomUUID === "function" ? globalThis.crypto.randomUUID() : createFallbackUuid();
 
 const isUsableRecord = (record, quoteId) =>
   Boolean(record) && record.quoteId === quoteId && Boolean(cleanText(record.idempotencyKey));

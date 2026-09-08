@@ -1,9 +1,17 @@
 const DEFAULT_BOOKINGS_API_BASE = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development";
 const BOOKING_SESSION_SOURCE = "standalone_site";
 
-export const DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE = String(
+const stripTrailingSlashes = (value) => {
+  let normalized = String(value || "");
+  while (normalized.endsWith("/")) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+};
+
+export const DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE = stripTrailingSlashes(
   process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE || DEFAULT_BOOKINGS_API_BASE
-).replace(/\/+$/, "");
+);
 
 export const WEBSITE_PUBLIC_BOOKING_CLIENT_ERROR_CODES = Object.freeze({
   NETWORK_ERROR: "network_error",
