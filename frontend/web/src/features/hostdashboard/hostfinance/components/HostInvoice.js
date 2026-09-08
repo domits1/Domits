@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import domitsLogoUrl from "../../../../images/logo.svg";
 import { HOST_INVOICE_BRANDING } from "../utils/hostInvoiceBranding";
 import "./HostInvoice.scss";
@@ -86,7 +87,8 @@ function HostInvoice({ invoice, onClose, onDownload, autoPrint = false, onPrintC
     };
   }, [autoPrint, onPrintComplete]);
 
-  return (
+  return createPortal(
+    (
     <div className="host-invoice-backdrop" role="dialog" aria-modal="true" aria-labelledby="host-invoice-title">
       <div className="host-invoice__controls">
         {onClose ? (
@@ -201,6 +203,8 @@ function HostInvoice({ invoice, onClose, onDownload, autoPrint = false, onPrintC
         </div>
       </article>
     </div>
+    ),
+    document.body,
   );
 }
 
