@@ -141,16 +141,17 @@ export default function QuotePanel({
   onGuestChange = noop,
   onSubmitBookingRequest = noop,
 }) {
-  const checkIn = range?.checkIn || null;
-  const checkOut = range?.checkOut || null;
+  const isSubmitting = bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING;
+  const bookingSucceeded = bookingState.status === BOOKING_REQUEST_STATUS.SUCCESS && Boolean(bookingState.result);
+
+  const stay = bookingSucceeded && bookingState.result.checkIn ? bookingState.result : range;
+  const checkIn = stay?.checkIn || null;
+  const checkOut = stay?.checkOut || null;
   const nights = countStayNights(checkIn, checkOut);
   const isLoading = quoteState.status === QUOTE_STATUS.LOADING;
   const isStale = quoteState.status === QUOTE_STATUS.STALE;
   const isQuoted = quoteState.status === QUOTE_STATUS.SUCCESS && Boolean(quoteState.quote);
   const showBreakdown = Boolean(quoteState.quote) && (isQuoted || isStale);
-
-  const isSubmitting = bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING;
-  const bookingSucceeded = bookingState.status === BOOKING_REQUEST_STATUS.SUCCESS && Boolean(bookingState.result);
 
   const errorPresentation =
     quoteState.status === QUOTE_STATUS.ERROR ? resolveQuoteErrorPresentation(quoteState.error) : null;
@@ -283,7 +284,10 @@ QuotePanel.propTypes = {
   contactHref: PropTypes.string,
   bookingState: PropTypes.shape({
     status: PropTypes.oneOf(Object.values(BOOKING_REQUEST_STATUS)).isRequired,
-    result: PropTypes.shape({}),
+    result: PropTypes.shape({
+      checkIn: PropTypes.string,
+      checkOut: PropTypes.string,
+    }),
     error: PropTypes.shape({
       code: PropTypes.string,
       message: PropTypes.string,

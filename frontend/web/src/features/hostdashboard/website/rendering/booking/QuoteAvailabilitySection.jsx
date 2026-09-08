@@ -73,7 +73,9 @@ export default function QuoteAvailabilitySection({
     sessionId,
   });
   const bookingSucceeded = bookingState.status === BOOKING_REQUEST_STATUS.SUCCESS;
+  const isSubmitting = bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING;
   const hasBookingError = bookingState.status === BOOKING_REQUEST_STATUS.ERROR;
+  const isSelectionFrozen = bookingSucceeded || isSubmitting;
 
   const handleSelectionChanged = useCallback(() => {
     notifySelectionChanged();
@@ -84,7 +86,7 @@ export default function QuoteAvailabilitySection({
 
   const handleSelectDate = useCallback(
     (dateKey) => {
-      if (bookingSucceeded) {
+      if (isSelectionFrozen) {
         return;
       }
       const nextRange = selectStayDate({ range, dateKey, blockedDateKeys, todayKey });
@@ -94,7 +96,7 @@ export default function QuoteAvailabilitySection({
       setRange(nextRange);
       handleSelectionChanged();
     },
-    [blockedDateKeys, bookingSucceeded, handleSelectionChanged, range, todayKey]
+    [blockedDateKeys, handleSelectionChanged, isSelectionFrozen, range, todayKey]
   );
 
   const handleGuestsChange = useCallback(
@@ -163,13 +165,13 @@ export default function QuoteAvailabilitySection({
 
   const selection = useMemo(
     () => ({
-      selectable: !bookingSucceeded,
+      selectable: !isSelectionFrozen,
       checkIn: range.checkIn,
       checkOut: range.checkOut,
       todayKey,
       onSelectDate: handleSelectDate,
     }),
-    [bookingSucceeded, handleSelectDate, range.checkIn, range.checkOut, todayKey]
+    [handleSelectDate, isSelectionFrozen, range.checkIn, range.checkOut, todayKey]
   );
 
   return (

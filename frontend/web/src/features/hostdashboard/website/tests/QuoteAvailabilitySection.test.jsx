@@ -1,8 +1,9 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import QuoteAvailabilitySection from "../rendering/booking/QuoteAvailabilitySection";
 import { WebsitePublicQuoteError, requestPublicWebsiteQuote } from "../services/websitePublicQuoteService";
 import { WebsitePublicBookingError, requestPublicSiteBooking } from "../services/websitePublicBookingService";
+import { formatStayDate } from "../rendering/booking/quoteSelection";
 import "../rendering/AvailabilityCalendarPreview";
 
 jest.mock("../services/websitePublicQuoteService", () => {
@@ -266,6 +267,36 @@ describe("QuoteAvailabilitySection", () => {
       expect(await screen.findByText(/check availability again/i)).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Request to book" })).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^check availability$/i })).toBeEnabled();
+    });
+
+    it("freezes the calendar while the request is in flight and reports the booked dates", async () => {
+      let resolveBooking;
+      requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
+      requestPublicSiteBooking.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveBooking = resolve;
+          })
+      );
+      renderSection();
+
+      await getQuote();
+      fillContact();
+      submitRequest();
+
+      expect(await screen.findByRole("button", { name: "Sending…" })).toBeDisabled();
+      expect(screen.queryByRole("button", { name: new RegExp(`^${monthLabel} 8,`) })).not.toBeInTheDocument();
+      expect(screen.getByText("3 nights")).toBeInTheDocument();
+
+      await act(async () => {
+        resolveBooking(RESULT);
+      });
+
+      expect(await screen.findByText("Request sent")).toBeInTheDocument();
+      expect(
+        screen.getByText(`${formatStayDate(RESULT.checkIn)} → ${formatStayDate(RESULT.checkOut)}`)
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: new RegExp(`^${monthLabel} 8,`) })).not.toBeInTheDocument();
     });
   });
 });
