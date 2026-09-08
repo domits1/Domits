@@ -347,6 +347,10 @@ class ReservationRepository {
         "booking.refunded_amount",
         "booking.stripe_refund_id",
         "booking.refund_error",
+        "booking.booking_source",
+        "booking.site_id",
+        "booking.guest_email",
+        "booking.public_booking_ref",
       ])
       .where("booking.id = :id", { id: id })
       .getOne();
@@ -377,6 +381,32 @@ class ReservationRepository {
       );
     }
     return query;
+  }
+
+  async createPublicSiteBookingRequest(values) {
+    const client = await Database.getInstance();
+    await client.createQueryBuilder().insert().into(Booking).values(values).execute();
+    return values;
+  }
+
+  async getByIdempotencyKey(idempotencyKey) {
+    const client = await Database.getInstance();
+    const booking = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.idempotency_key = :idempotencyKey", { idempotencyKey })
+      .getOne();
+    return booking || null;
+  }
+
+  async getByPublicBookingRef(publicBookingRef) {
+    const client = await Database.getInstance();
+    const booking = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.public_booking_ref = :publicBookingRef", { publicBookingRef })
+      .getOne();
+    return booking || null;
   }
 
   async updateBookingStatus(id, status) {

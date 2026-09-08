@@ -7,6 +7,9 @@ import { calculateRefundAmountCents } from "../util/refundCalculator.js";
 import Forbidden from "../util/exception/Forbidden.js";
 import Unauthorized from "../util/exception/Unauthorized.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
+import PublicSiteBookingRequestService from "../business/publicSiteBookingRequestService.js";
+import { PublicBookingRequestError } from "../util/exception/PublicBookingRequestError.js";
+import { randomUUID } from "node:crypto";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
 const responseHeaderJSON = responsejson;
@@ -14,6 +17,36 @@ const REFUND_CURRENCY = "eur";
 const STRIPE_REFUND_REASON = "requested_by_customer";
 const CHANNEX_BOOKING_CANCELLED_TRIGGER = "BOOKING_CANCELLED";
 const CHANNEX_ACTIVE_CANCELLATION_STATUSES = new Set(["awaiting payment", "paid"]);
+const PUBLIC_SITE_BOOKINGS_PATH_PATTERN = /\/public\/sites\/([^/]+)\/bookings\/?$/;
+const PUBLIC_BOOKING_INTERNAL_ERROR_MESSAGE = "Something went wrong while sending your booking request. Please try again.";
+
+const readHeader = (headers, name) => {
+  const wanted = name.toLowerCase();
+  const match = Object.entries(headers || {}).find(([key]) => key.toLowerCase() === wanted);
+  return match ? match[1] : undefined;
+};
+
+const resolvePublicSiteId = (event) =>
+  event?.pathParameters?.siteId || PUBLIC_SITE_BOOKINGS_PATH_PATTERN.exec(String(event?.path || ""))?.[1] || "";
+
+const parsePublicBookingRequestBody = (rawBody) => {
+  let parsed;
+  try {
+    parsed = JSON.parse(rawBody || "");
+  } catch (error) {
+    throw new PublicBookingRequestError("invalid_request", "The request body must be valid JSON.");
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new PublicBookingRequestError("invalid_request", "The request body must be a JSON object.");
+  }
+  return parsed;
+};
+
+const buildPublicBookingErrorResponse = ({ statusCode, code, message, requestId }) => ({
+  statusCode,
+  headers: responseHeaderJSON,
+  body: JSON.stringify({ error: { code, message, requestId } }),
+});
 
 const normalizeJsonNumber = (value) => {
   const numeric = Number(value);
@@ -47,9 +80,14 @@ const shouldSyncChannexCancellation = (booking) =>
   CHANNEX_ACTIVE_CANCELLATION_STATUSES.has(normalizeBookingStatus(booking?.status));
 
 class ReservationController {
-  constructor({ bookingService = new BookingService(), paymentService = new PaymentService() } = {}) {
+  constructor({
+    bookingService = new BookingService(),
+    paymentService = new PaymentService(),
+    publicSiteBookingRequestService = new PublicSiteBookingRequestService(),
+  } = {}) {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
+    this.publicSiteBookingRequestService = publicSiteBookingRequestService;
     this.systemManagerRepository = new SystemManagerRepository();
     this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : undefined;
     this._stripeInitPromise = null;
@@ -192,6 +230,45 @@ class ReservationController {
     }
 
     return null;
+  }
+
+  async createPublicSiteBookingRequest(event) {
+    const requestId = String(event?.requestContext?.requestId || randomUUID());
+
+    try {
+      const payload = parsePublicBookingRequestBody(event?.body);
+      const result = await this.publicSiteBookingRequestService.createBookingRequest({
+        siteId: resolvePublicSiteId(event),
+        idempotencyKey: readHeader(event?.headers, "Idempotency-Key"),
+        quoteToken: payload.quoteToken,
+        guest: payload.guest,
+        session: payload.session,
+        requestId,
+      });
+
+      return {
+        statusCode: result.statusCode,
+        headers: responseHeaderJSON,
+        body: JSON.stringify(result.response),
+      };
+    } catch (error) {
+      if (error instanceof PublicBookingRequestError) {
+        return buildPublicBookingErrorResponse({
+          statusCode: error.statusCode,
+          code: error.code,
+          message: error.message,
+          requestId,
+        });
+      }
+
+      console.error("Unhandled public site booking request failure.", error);
+      return buildPublicBookingErrorResponse({
+        statusCode: 500,
+        code: "internal_error",
+        message: PUBLIC_BOOKING_INTERNAL_ERROR_MESSAGE,
+        requestId,
+      });
+    }
   }
 
   async acceptInquiry(bookingId, authToken) {
