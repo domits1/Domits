@@ -97,6 +97,7 @@ const resolveCellSelectionState = (cell, selection) => {
   const checkOut = selection.checkOut || null;
   return {
     isPast: Boolean(selection.todayKey) && cell.id < selection.todayKey,
+    isReserved: cell.isExternalBlocked || cell.isUnavailable,
     isCheckIn: cell.id === checkIn,
     isCheckOut: cell.id === checkOut,
     isInRange: Boolean(checkIn && checkOut) && cell.id > checkIn && cell.id < checkOut,
@@ -117,7 +118,7 @@ const buildCellSelectionProps = (cell, selection, selectionState) =>
   selectionState
     ? {
         type: "button",
-        disabled: selectionState.isPast,
+        disabled: selectionState.isPast || selectionState.isReserved,
         "aria-pressed": selectionState.isCheckIn || selectionState.isCheckOut,
         onClick: () => selection.onSelectDate?.(cell.id),
       }
