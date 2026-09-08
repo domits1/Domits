@@ -1,10 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { Auth } from "aws-amplify";
-
-const getIdToken = async () => {
-  const session = await Auth.currentSession();
-  return session.getIdToken().getJwtToken();
-};
+import { getIdToken } from "../../../../services/getAccessToken";
 
 const UserContext = createContext();
 export const useUser = () => useContext(UserContext);

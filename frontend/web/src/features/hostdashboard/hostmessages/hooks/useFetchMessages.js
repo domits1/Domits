@@ -1,11 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useContext } from "react";
-import { Auth } from "aws-amplify";
 import { WebSocketContext } from "../context/webSocketContext";
-
-const getIdToken = async () => {
-  const session = await Auth.currentSession();
-  return session.getIdToken().getJwtToken();
-};
+import { getIdToken } from "../../../../services/getAccessToken";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 

@@ -1,16 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Auth } from "aws-amplify";
 import fetchBookingDetailsAndAccommodation from "../utils/FetchBookingDetails";
 import {
   fetchUserProfileById,
   getEmptyUserProfile,
 } from "../../services/fetchUserProfileById";
-import { getAccessToken } from "../../../../services/getAccessToken";
-
-const getIdToken = async () => {
-  const session = await Auth.currentSession();
-  return session.getIdToken().getJwtToken();
-};
+import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
