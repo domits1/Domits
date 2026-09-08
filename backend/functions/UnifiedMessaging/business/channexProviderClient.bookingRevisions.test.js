@@ -138,6 +138,19 @@ describe("ChannexProviderClient booking revisions", () => {
         });
       }
     );
+
+    test("a Channex-provided error code and title take priority over the fallback template", async () => {
+      global.fetch.mockResolvedValue(
+        jsonResponse(422, { errors: { code: "REVISION_ALREADY_ACKED", title: "Revision was already acknowledged." } })
+      );
+
+      const result = await client.acknowledgeBookingRevision(CREDENTIALS, REVISION_ID);
+
+      expect(result).toMatchObject({
+        errorCode: "REVISION_ALREADY_ACKED",
+        errorMessage: "Revision was already acknowledged.",
+      });
+    });
   });
 
   // errorCode falls through error?.code || error?.name, and a standard Error's name wins before
@@ -205,6 +218,22 @@ describe("ChannexProviderClient booking revisions", () => {
         ratePlanId: "ext-rate-1",
         roomTypeId: "ext-room-1",
         rawPayload: row,
+      });
+    });
+
+    // A revision without a rooms array (a cancellation, for instance) still maps, but the room
+    // and rate plan ids derived from the first room come back null - the fields the downstream
+    // booking import keys off, so the null outcome is worth stating explicitly.
+    test("maps a revision that carries no rooms to null room and rate plan ids", async () => {
+      global.fetch.mockResolvedValue(jsonResponse(200, { data: [revisionRow({ rooms: undefined })] }));
+
+      const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
+
+      expect(result.revisions[0]).toMatchObject({
+        revisionId: REVISION_ID,
+        rooms: [],
+        ratePlanId: null,
+        roomTypeId: null,
       });
     });
 
