@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import QuoteAvailabilitySection from "../rendering/booking/QuoteAvailabilitySection";
 import { WebsitePublicQuoteError, requestPublicWebsiteQuote } from "../services/websitePublicQuoteService";
+import { WebsitePublicBookingError, requestPublicSiteBooking } from "../services/websitePublicBookingService";
 import "../rendering/AvailabilityCalendarPreview";
 
 jest.mock("../services/websitePublicQuoteService", () => {
@@ -12,6 +13,11 @@ jest.mock("../services/websitePublicQuoteService", () => {
 jest.mock("../services/websiteVisitorId", () => ({
   getOrCreateVisitorId: () => "visitor-test",
 }));
+
+jest.mock("../services/websitePublicBookingService", () => {
+  const actual = jest.requireActual("../services/websitePublicBookingService");
+  return { ...actual, requestPublicSiteBooking: jest.fn() };
+});
 
 const padDatePart = (value) => String(value).padStart(2, "0");
 const toKey = (date) => `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
@@ -41,7 +47,15 @@ const QUOTE = {
   quoteId: "quote_1",
   nights: 3,
   guestCount: 2,
-  priceBreakdown: { currency: "EUR", nightlyBaseTotal: 57000, cleaningFee: 5000, discounts: [], taxes: [], fees: [], total: 62000 },
+  priceBreakdown: {
+    currency: "EUR",
+    nightlyBaseTotal: 57000,
+    cleaningFee: 5000,
+    discounts: [],
+    taxes: [],
+    fees: [],
+    total: 62000,
+  },
   expiresAt: "2099-01-01T10:30:00.000Z",
   quoteToken: "qtok",
 };
@@ -115,5 +129,91 @@ describe("QuoteAvailabilitySection", () => {
 
     expect(await screen.findByText(/no longer available/i)).toBeInTheDocument();
     expect(screen.getByText("Pick a check-in date")).toBeInTheDocument();
+  });
+
+  describe("booking request", () => {
+    const RESULT = {
+      publicBookingRef: "DBW-ABCDEFGHJK",
+      status: "REQUESTED",
+      siteId: "site-1",
+      checkIn: toKey(checkInDate),
+      checkOut: toKey(checkOutDate),
+      guests: 2,
+      total: 62000,
+      currency: "EUR",
+    };
+    const bookingError = (code, status) =>
+      new WebsitePublicBookingError({ code, message: "", status, requestId: "req-1" });
+
+    const getQuote = async () => {
+      await selectStay();
+      fireEvent.click(screen.getByRole("button", { name: /^check availability$/i }));
+      await screen.findByText("€620.00");
+    };
+
+    const fillContact = () => {
+      fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Guest Name" } });
+      fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "guest@example.com" } });
+    };
+
+    const submitRequest = () => fireEvent.click(screen.getByRole("button", { name: "Request to book" }));
+
+    beforeEach(() => {
+      requestPublicSiteBooking.mockReset();
+      globalThis.localStorage.clear();
+    });
+
+    it("sends the quoted stay with the guest's details and shows the booking reference", async () => {
+      requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
+      requestPublicSiteBooking.mockResolvedValue(RESULT);
+      renderSection();
+
+      await getQuote();
+      fillContact();
+      submitRequest();
+
+      expect(await screen.findByText("Request sent")).toBeInTheDocument();
+      expect(screen.getByText("DBW-ABCDEFGHJK")).toBeInTheDocument();
+      expect(screen.getByText(/still has to confirm/i)).toBeInTheDocument();
+      expect(requestPublicSiteBooking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          siteId: "site-1",
+          quoteToken: "qtok",
+          guest: { name: "Guest Name", email: "guest@example.com" },
+          sessionId: "visitor-test",
+          idempotencyKey: expect.any(String),
+        })
+      );
+    });
+
+    it("validates the contact details before calling the endpoint", async () => {
+      requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
+      renderSection();
+
+      await getQuote();
+      fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "not-an-email" } });
+      submitRequest();
+
+      expect(screen.getByText("Please enter your name.")).toBeInTheDocument();
+      expect(screen.getByText("Please enter a valid email address.")).toBeInTheDocument();
+      expect(requestPublicSiteBooking).not.toHaveBeenCalled();
+    });
+
+    it("retries with the same key after a transient failure", async () => {
+      requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
+      requestPublicSiteBooking.mockRejectedValueOnce(bookingError("network_error", 0)).mockResolvedValueOnce(RESULT);
+      renderSection();
+
+      await getQuote();
+      fillContact();
+      submitRequest();
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't send your request/i);
+      fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+
+      expect(await screen.findByText("Request sent")).toBeInTheDocument();
+      const [firstCall, secondCall] = requestPublicSiteBooking.mock.calls;
+      expect(secondCall[0].idempotencyKey).toBe(firstCall[0].idempotencyKey);
+    });
   });
 });
