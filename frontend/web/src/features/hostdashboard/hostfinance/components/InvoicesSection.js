@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import { getInvoices } from "../services/invoiceService";
 import HostInvoice, { formatMoney as formatInvoiceMoney } from "./HostInvoice";
-import { downloadHostInvoicePdf } from "../services/downloadHostInvoicePdf";
-import { HOST_INVOICE_FIXTURE_ENABLED, HOST_INVOICE_FIXTURES } from "../utils/hostInvoiceFixtures";
+import { HOST_INVOICE_FIXTURE_ENABLED, HOST_INVOICE_FIXTURES } from "../mocks/hostInvoiceFixtures";
 
 const STATUS_LABEL = { finalized: "Paid", draft: "Draft" };
 const FILTER_LABEL = { all: "All", finalized: "Paid", draft: "Draft" };
@@ -53,6 +52,7 @@ export default function InvoicesSection() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [autoPrint, setAutoPrint] = useState(false);
 
   useEffect(() => {
     if (HOST_INVOICE_FIXTURE_ENABLED) {
@@ -68,6 +68,14 @@ export default function InvoicesSection() {
   }, []);
 
   const filtered = filter === "all" ? invoices : invoices.filter((invoice) => invoice.status === filter);
+  const closeInvoice = () => {
+    setSelectedInvoice(null);
+    setAutoPrint(false);
+  };
+  const printInvoice = (invoice) => {
+    setSelectedInvoice(invoice);
+    setAutoPrint(true);
+  };
 
   return (
     <div className="invoices-section">
@@ -100,12 +108,12 @@ export default function InvoicesSection() {
             <colgroup>
               <col style={{ width: "17%" }} />
               <col style={{ width: "12%" }} />
-              <col style={{ width: "27%" }} />
-              <col style={{ width: "17%" }} />
-              <col style={{ width: "15%" }} />
-              <col style={{ width: "15%" }} />
-              <col style={{ width: "10%" }} />
-              <col style={{ width: "17%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "14%" }} />
             </colgroup>
             <thead>
               <tr>
@@ -156,7 +164,7 @@ export default function InvoicesSection() {
                       <button
                         type="button"
                         className="invoice-download-btn"
-                        onClick={() => downloadHostInvoicePdf(invoice)}
+                        onClick={() => printInvoice(invoice)}
                       >
                         Download PDF
                       </button>
@@ -172,8 +180,10 @@ export default function InvoicesSection() {
       {selectedInvoice ? (
         <HostInvoice
           invoice={selectedInvoice}
-          onClose={() => setSelectedInvoice(null)}
-          onDownload={() => downloadHostInvoicePdf(selectedInvoice)}
+          onClose={closeInvoice}
+          onDownload={() => setAutoPrint(true)}
+          autoPrint={autoPrint}
+          onPrintComplete={() => setAutoPrint(false)}
         />
       ) : null}
     </div>

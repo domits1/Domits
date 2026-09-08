@@ -3,14 +3,9 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import InvoicesSection from "./InvoicesSection";
 import { getInvoices } from "../services/invoiceService";
-import { downloadHostInvoicePdf } from "../services/downloadHostInvoicePdf";
 
 jest.mock("../services/invoiceService", () => ({
   getInvoices: jest.fn(),
-}));
-
-jest.mock("../services/downloadHostInvoicePdf", () => ({
-  downloadHostInvoicePdf: jest.fn(),
 }));
 
 const invoice = {
@@ -32,6 +27,7 @@ describe("InvoicesSection", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     getInvoices.mockResolvedValue([invoice]);
+    window.print = jest.fn();
   });
 
   test("opens the invoice preview from View invoice", async () => {
@@ -55,12 +51,12 @@ describe("InvoicesSection", () => {
     expect(screen.getByText("INV-2026-000123")).toBeInTheDocument();
   });
 
-  test("downloads the selected invoice as PDF", async () => {
+  test("prints the rendered invoice for PDF saving", async () => {
     render(<InvoicesSection />);
 
     await screen.findByText("INV-2026-000123");
     fireEvent.click(screen.getByRole("button", { name: "Download PDF" }));
 
-    await waitFor(() => expect(downloadHostInvoicePdf).toHaveBeenCalledWith(invoice));
+    await waitFor(() => expect(window.print).toHaveBeenCalled());
   });
 });

@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { useEffect } from "react";
 import domitsLogoUrl from "../../../../images/logo.svg";
 import { HOST_INVOICE_BRANDING } from "../utils/hostInvoiceBranding";
 import "./HostInvoice.scss";
@@ -55,7 +56,7 @@ OptionalField.propTypes = {
   value: PropTypes.node,
 };
 
-function HostInvoice({ invoice, onClose, onDownload }) {
+function HostInvoice({ invoice, onClose, onDownload, autoPrint = false, onPrintComplete }) {
   const currency = displayValue(invoice.currency);
   const gross = formatMoney(invoice.gross_amount, currency);
   const commission = formatMoney(invoice.commission_amount, currency);
@@ -65,6 +66,25 @@ function HostInvoice({ invoice, onClose, onDownload }) {
   const bookingId = displayValue(invoice.booking_id);
   const status = displayStatus(invoice.status);
   const invoiceDate = formatDate(invoice.created_at);
+
+  useEffect(() => {
+    if (!autoPrint || typeof window.print !== "function") return undefined;
+
+    const handleAfterPrint = () => {
+      document.body.classList.remove("host-invoice-printing");
+      onPrintComplete?.();
+    };
+
+    document.body.classList.add("host-invoice-printing");
+    window.addEventListener("afterprint", handleAfterPrint, { once: true });
+    const printTimer = window.setTimeout(() => window.print(), 0);
+
+    return () => {
+      window.clearTimeout(printTimer);
+      window.removeEventListener("afterprint", handleAfterPrint);
+      document.body.classList.remove("host-invoice-printing");
+    };
+  }, [autoPrint, onPrintComplete]);
 
   return (
     <div className="host-invoice-backdrop" role="dialog" aria-modal="true" aria-labelledby="host-invoice-title">
@@ -209,6 +229,8 @@ HostInvoice.propTypes = {
   }).isRequired,
   onClose: PropTypes.func,
   onDownload: PropTypes.func,
+  autoPrint: PropTypes.bool,
+  onPrintComplete: PropTypes.func,
 };
 
 export { formatDate, formatMoney };

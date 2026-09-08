@@ -294,11 +294,48 @@
     size: A4 portrait;
   }
 
+  html,
+  body {
+    height: 297mm !important;
+    max-height: 297mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body.host-invoice-printing > *:not(#root) {
+    display: none !important;
+  }
+
+  body.host-invoice-printing > #root {
+    height: 297mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+
   .host-invoice-backdrop {
     background: #fff;
+    bottom: auto !important;
     display: block;
+    height: 297mm;
+    left: 0;
+    min-height: 297mm;
+    overflow: hidden;
     padding: 0;
-    position: static;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 210mm;
+  }
+
+  body.host-invoice-printing > #root > * {
+    visibility: hidden;
+  }
+
+  body.host-invoice-printing .host-invoice-backdrop {
+    visibility: visible;
   }
 
   .host-invoice__controls {
@@ -308,6 +345,8 @@
   .host-invoice__document {
     box-shadow: none;
     min-height: 297mm;
+    page-break-after: auto;
+    page-break-before: auto;
     width: 210mm;
   }
 }
