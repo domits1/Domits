@@ -161,6 +161,10 @@ class MessageService {
       return booking;
     }
 
+    if (thread?.propertyId && thread?.platform === "DOMITS") {
+      return null;
+    }
+
     const matches = await this.getMatchingLegacyBookings(thread, authenticatedUserId);
     if (matches.length === 0) {
       throw forbidden("This conversation is not connected to one of your reservations.");
