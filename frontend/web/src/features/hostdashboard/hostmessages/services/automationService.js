@@ -1,4 +1,4 @@
-import { Auth } from "aws-amplify";
+import { getIdToken } from "../../../../services/getAccessToken";
 
 const AUTOMATED_MESSAGING_FALLBACK_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 const KNOWN_WRONG_AUTOMATED_MESSAGING_API_ID = "543s1lwby8";
@@ -29,13 +29,8 @@ const requireToken = (token) => {
   return normalized;
 };
 
-const getIdToken = async () => {
-  const session = await Auth.currentSession();
-  return requireToken(session.getIdToken().getJwtToken());
-};
-
 const request = async (path, { method = "GET", body } = {}) => {
-  const idToken = await getIdToken();
+  const idToken = requireToken(await getIdToken());
   const response = await fetch(`${API_BASE}/automations${path}`, {
     method,
     headers: {

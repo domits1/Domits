@@ -302,18 +302,40 @@ class MessageService {
     };
   }
 
-  resolveHostMessageContext(payload, authenticatedUser, senderId) {
+  async resolveHostMessageContext(payload, authenticatedUser, senderId) {
     const recipientId = payload.recipientId;
-
-    if (!authenticatedUser.isHost) {
-      throw badRequest("bookingId is required to start a guest conversation.");
-    }
 
     if (!recipientId || idsEqual(recipientId, senderId)) {
       throw badRequest("recipientId is required.");
     }
 
-    this.assertConsistentOptionalId(payload.hostId, senderId, "hostId");
+    if (authenticatedUser.isHost) {
+      this.assertConsistentOptionalId(payload.hostId, senderId, "hostId");
+      return {
+        senderId,
+        recipientId,
+        threadId: null,
+        resolvedPayload: {
+          ...payload,
+          senderId,
+          recipientId,
+          hostId: senderId,
+          guestId: payload.guestId || recipientId,
+          propertyId: payload.propertyId ?? null,
+          bookingId: null,
+          platform: payload.platform || "DOMITS",
+        },
+      };
+    }
+
+    if (!payload.propertyId) {
+      throw badRequest("propertyId is required to start a conversation without a booking.");
+    }
+    if (!(await this.bookingRepository.hostOwnsProperty(recipientId, payload.propertyId))) {
+      throw badRequest("propertyId does not belong to the specified host.");
+    }
+    this.assertConsistentOptionalId(payload.guestId, senderId, "guestId");
+    this.assertConsistentOptionalId(payload.hostId, recipientId, "hostId");
     return {
       senderId,
       recipientId,
@@ -322,9 +344,9 @@ class MessageService {
         ...payload,
         senderId,
         recipientId,
-        hostId: senderId,
-        guestId: payload.guestId || recipientId,
-        propertyId: payload.propertyId ?? null,
+        hostId: recipientId,
+        guestId: senderId,
+        propertyId: payload.propertyId,
         bookingId: null,
         platform: payload.platform || "DOMITS",
       },
@@ -342,7 +364,7 @@ class MessageService {
       return await this.resolveBookingMessageContext(payload, senderId);
     }
 
-    return this.resolveHostMessageContext(payload, authenticatedUser, senderId);
+    return await this.resolveHostMessageContext(payload, authenticatedUser, senderId);
   }
 
   async sendMessage(payload, authenticatedUser) {

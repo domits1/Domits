@@ -6,20 +6,14 @@ import React from "react";
 import PropTypes from "prop-types";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
-import { Auth } from "aws-amplify";
 import useFetchContacts from "./useFetchContacts";
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
 import { fetchUserProfileById, getEmptyUserProfile } from "../../services/fetchUserProfileById";
 import fetchBookingDetailsAndAccommodation from "../utils/FetchBookingDetails";
 
-jest.mock("aws-amplify", () => ({
-  Auth: {
-    currentSession: jest.fn(),
-  },
-}));
-
 jest.mock("../../../../services/getAccessToken", () => ({
   getAccessToken: jest.fn(),
+  getIdToken: jest.fn(),
 }));
 
 jest.mock("../../services/fetchUserProfileById", () => ({
@@ -70,9 +64,7 @@ const okJson = (payload) => ({
 describe("useFetchContacts history merging", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    Auth.currentSession.mockResolvedValue({
-      getIdToken: () => ({ getJwtToken: () => "host-token-1" }),
-    });
+    getIdToken.mockResolvedValue("host-token-1");
     getAccessToken.mockReturnValue("host-access-token-1");
     fetchUserProfileById.mockImplementation(async (userId) => ({
       ...getEmptyUserProfile(userId),

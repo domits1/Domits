@@ -7,11 +7,13 @@ import PropTypes from "prop-types";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import { WebSocketContext } from "../context/webSocketContext";
+import { Auth } from "aws-amplify";
 import useFetchMessages from "./useFetchMessages";
-import { getAccessToken } from "../../../../services/getAccessToken";
 
-jest.mock("../../../../services/getAccessToken", () => ({
-  getAccessToken: jest.fn(),
+jest.mock("aws-amplify", () => ({
+  Auth: {
+    currentSession: jest.fn(),
+  },
 }));
 
 const Harness = ({ accessToken = null }) => {
@@ -46,7 +48,9 @@ describe("useFetchMessages protected REST calls", () => {
   });
 
   test("does not call protected endpoints when token retrieval fails", async () => {
-    getAccessToken.mockReturnValue(null);
+    Auth.currentSession.mockResolvedValue({
+      getIdToken: () => ({ getJwtToken: () => "" }),
+    });
 
     renderHarness(null);
 
@@ -57,7 +61,6 @@ describe("useFetchMessages protected REST calls", () => {
   });
 
   test("does not fetch /messages when /threads rejects authorization", async () => {
-    getAccessToken.mockReturnValue("access-token-1");
     globalThis.fetch.mockResolvedValue({
       ok: false,
       status: 403,
@@ -72,5 +75,25 @@ describe("useFetchMessages protected REST calls", () => {
 
     expect(globalThis.fetch.mock.calls[0][0]).toContain("/threads");
     expect(globalThis.fetch.mock.calls[0][1].headers.Authorization).toBe("Bearer access-token-1");
+  });
+
+  test("falls back to the Cognito ID token for /threads when no accessToken option is passed", async () => {
+    Auth.currentSession.mockResolvedValue({
+      getIdToken: () => ({ getJwtToken: () => "id-token-1" }),
+    });
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [],
+    });
+
+    renderHarness(null);
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("/threads");
+    expect(globalThis.fetch.mock.calls[0][1].headers.Authorization).toBe("Bearer id-token-1");
   });
 });
