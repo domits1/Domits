@@ -131,10 +131,6 @@ describe("BookingService inquiry conflict resolution", () => {
       expect(reservationRepository.updateBookingStatus).toHaveBeenCalledWith(INQUIRY_ID, "Awaiting Payment");
     });
 
-    // acceptInquiry is not transactional: the accept commits before overlapping inquiries are
-    // looked up and declined. This documents that current gap rather than papering over it — if
-    // the overlap search fails, the accepted booking has already moved to Awaiting Payment while
-    // competing inquiries stay open.
     it("leaves the accepted booking committed even when the overlap search fails", async () => {
       const { service, reservationRepository } = buildService();
       reservationRepository.getOverlappingInquiries.mockRejectedValue(new Error("connection reset"));

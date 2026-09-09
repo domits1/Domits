@@ -35,9 +35,6 @@ describe("ReservationRepository overlapping inquiry search", () => {
     jest.clearAllMocks();
   });
 
-  // The date bounds below are deliberately raw, unlike assertNoBookingConflict which pads them by
-  // MIN_CHECK_IN_OUT_GAP_MS. Competing inquiries are only auto-declined on true date overlap, so a
-  // back-to-back inquiry inside the turnover gap stays open for the host to decide on.
   it.each([
     {
       clause: "scopes the search to the property being booked",
@@ -55,12 +52,12 @@ describe("ReservationRepository overlapping inquiry search", () => {
       params: { excludeBookingId: BASE_REQUEST.excludeBookingId },
     },
     {
-      clause: "matches inquiries starting before the requested departure, unpadded",
+      clause: "matches inquiries starting before the requested departure, with no check-in/out buffer",
       query: "booking.arrivaldate < :departureDateMs",
       params: { departureDateMs: BASE_REQUEST.departureDateMs },
     },
     {
-      clause: "matches inquiries ending after the requested arrival, unpadded",
+      clause: "matches inquiries ending after the requested arrival, with no check-in/out buffer",
       query: "booking.departuredate > :arrivalDateMs",
       params: { arrivalDateMs: BASE_REQUEST.arrivalDateMs },
     },
