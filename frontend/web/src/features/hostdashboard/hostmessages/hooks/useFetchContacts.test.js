@@ -44,7 +44,12 @@ const Harness = ({ userId = "host-1", role = "host" }) => {
     <div>
       <div data-testid="loading">{String(loading)}</div>
       <div data-testid="contacts">
-        {contacts.map((contact) => `${contact.threadId || "legacy"}:${contact.partnerId}:${contact.platform}`).join("|")}
+        {contacts
+          .map(
+            (contact) =>
+              `${contact.threadId || "legacy"}:${contact.partnerId}:${contact.platform}:${contact.unreadCount ?? "none"}`
+          )
+          .join("|")}
       </div>
       <div data-testid="pending">{pendingContacts.length}</div>
     </div>
@@ -85,6 +90,7 @@ describe("useFetchContacts history merging", () => {
             platform: "WHATSAPP",
             externalThreadId: "wa-thread-1",
             integrationAccountId: "integration-1",
+            unreadCount: 4,
           },
         ]);
       }
@@ -132,7 +138,7 @@ describe("useFetchContacts history merging", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    expect(screen.getByTestId("contacts")).toHaveTextContent("external-thread-1:+31612345678:WHATSAPP");
+    expect(screen.getByTestId("contacts")).toHaveTextContent("external-thread-1:+31612345678:WHATSAPP:4");
     expect(screen.getByTestId("contacts")).toHaveTextContent("legacy:legacy-guest-1:DOMITS");
     expect(screen.getByTestId("pending")).toHaveTextContent("0");
 

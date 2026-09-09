@@ -328,3 +328,17 @@ export async function sendUnifiedMessage({
 
   return res.json();
 }
+
+export async function markThreadRead(threadId, idToken = null) {
+  const res = await fetch(`${UNIFIED_MESSAGING_API}/threads/${encodeURIComponent(threadId)}/read`, {
+    method: "POST",
+    headers: buildAuthHeaders(idToken, { requireAuth: true }),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`UnifiedMessaging /threads/{id}/read failed: ${res.status} ${txt}`);
+  }
+
+  return res.json();
+}

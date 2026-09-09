@@ -1,4 +1,4 @@
-import { getGuestBookingDetailsByBookingId, getHostBookingDetails, sendUnifiedMessage } from "./messagingService";
+import { getGuestBookingDetailsByBookingId, getHostBookingDetails, sendUnifiedMessage, markThreadRead } from "./messagingService";
 
 describe("messagingService unified REST client", () => {
   beforeEach(() => {
@@ -57,6 +57,34 @@ describe("messagingService unified REST client", () => {
         token: null,
       })
     ).rejects.toMatchObject({
+      code: "AUTH_TOKEN_REQUIRED",
+    });
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("markThreadRead posts to /threads/{id}/read with the Cognito ID token", async () => {
+    globalThis.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ threadId: "thread-1", updated: 2 }) });
+
+    const result = await markThreadRead("thread-1", "id-token-1");
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads/thread-1/read",
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer id-token-1",
+        },
+      })
+    );
+    expect(result).toEqual({ threadId: "thread-1", updated: 2 });
+  });
+
+  test("markThreadRead does not call the API without a token", async () => {
+    globalThis.fetch.mockClear();
+
+    await expect(markThreadRead("thread-1", null)).rejects.toMatchObject({
       code: "AUTH_TOKEN_REQUIRED",
     });
 
