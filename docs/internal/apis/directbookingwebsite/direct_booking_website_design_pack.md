@@ -741,6 +741,16 @@ Rules:
 }
 ```
 
+**Price breakdown rules**
+
+Direct booking websites price a stay differently from the marketplace, on purpose:
+
+- `cleaningFee` is charged once per reservation, whatever the number of nights. The marketplace booking flow charges the property's cleaning fee per night. Decided 2026-09-09.
+- `fees` is empty: there is no Domits platform fee on a direct booking website. The marketplace adds a 10% platform fee on top of the host total. This has been the shipped behaviour of the quote engine since its first release and is recorded here as intended, not as an omission.
+- `total` is therefore `nightlyBaseTotal + cleaningFee` until discounts or taxes are introduced.
+
+Any payment flow built on these quotes must charge the quoted `total`; reusing the marketplace charge calculation would bake in a quote-to-charge mismatch.
+
 **Errors**
 - `400 invalid_date_range`
 - `400 invalid_guest_count`
@@ -964,9 +974,23 @@ Raw events are written to `main.standalone_site_event`.
 | `publish_requested` | host starts publish |
 | `publish_succeeded` | publish completes |
 | `publish_failed` | publish fails |
+| `booking_requested` | guest submits a booking request without payment; the booking is created with status `Inquiry` and the host still has to confirm. Distinct from `booking_completed`, which is reserved for a paid booking |
 | `checkout_started` | v2 only: booking funnel begins after quote validation |
 | `booking_completed` | v2 only: booking completes successfully |
 | `confirmation_viewed` | v2 only: guest opens the confirmation view |
+
+### Event naming as shipped
+
+Rows in `main.standalone_site_event` use the uppercase, `SITE_`-prefixed convention of the existing event types (for example `SITE_LCP_RECORDED`). The names in the table above are the design vocabulary; the values actually written, and the ones any query against the table must match, are:
+
+| Design name | Stored `event_type` |
+|------|------|
+| `quote_requested` | `SITE_QUOTE_REQUESTED` |
+| `quote_returned` | `SITE_QUOTE_RETURNED` |
+| `quote_conflicted` | `SITE_QUOTE_CONFLICTED` |
+| `booking_requested` | `SITE_BOOKING_REQUESTED` |
+
+This mapping covers the quote and booking events. Publish and page-view events were already stored under their own names before this section was written (`WEBSITE_SITE_PUBLISHED`, `WEBSITE_SITE_UNPUBLISHED`, `PUBLIC_SITE_OPENED`, `SITE_LCP_RECORDED`); the v2 checkout and confirmation events are not recorded yet.
 
 ### KPI derivation
 
