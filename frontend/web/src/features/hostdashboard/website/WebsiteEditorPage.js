@@ -1011,7 +1011,8 @@ function WebsiteEditorPage() {
       primarySiteDomain?.domain,
       siteSummary?.site?.id,
       primarySiteDomain?.status,
-      siteSummary?.site?.siteName
+      siteSummary?.site?.siteName,
+      siteSummary?.domains
     );
     if (!publishedWebsiteHref) {
       toast.error("This website does not have a live link yet.");

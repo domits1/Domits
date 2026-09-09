@@ -61,10 +61,10 @@ import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
 import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
+import { resolveDirectBookingWebsiteSurface } from "./features/hostdashboard/website/directBookingWebsiteSurface";
 import AcceptInvite from "./features/hostdashboard/AcceptInvite";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
-const DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com";
 const apolloClient = new ApolloClient({
   link: new HttpLink({
     uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
@@ -82,35 +82,6 @@ function RedirectHostOnboardingCatchAll() {
   return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
 }
 
-const normalizeDirectBookingWebsiteHostName = (value) => {
-  const normalizedValue = String(value || "").trim().toLowerCase();
-  if (!normalizedValue) {
-    return "";
-  }
-
-  return normalizedValue.split(":")[0] || "";
-};
-
-const getDirectBookingWebsiteFallbackDomainSuffix = () =>
-  normalizeDirectBookingWebsiteHostName(
-    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX ||
-      DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX
-  );
-
-const isDirectBookingWebsiteHostName = (hostName) => {
-  const normalizedHostName = normalizeDirectBookingWebsiteHostName(hostName);
-  const fallbackDomainSuffix = getDirectBookingWebsiteFallbackDomainSuffix();
-
-  if (!normalizedHostName || !fallbackDomainSuffix) {
-    return false;
-  }
-
-  return (
-    normalizedHostName === fallbackDomainSuffix ||
-    normalizedHostName.endsWith(`.${fallbackDomainSuffix}`)
-  );
-};
-
 function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -126,10 +97,8 @@ function App() {
 
   const currentPath = currentLocation.pathname;
   const currentHostName = currentLocation.hostname;
-  const isWebsitePreviewPath = currentPath.startsWith("/website-preview");
-  const isWebsiteLivePath = currentPath.startsWith("/website-live");
-  const isDirectBookingWebsiteHost = isDirectBookingWebsiteHostName(currentHostName);
-  const isDirectBookingWebsiteSurface = isWebsitePreviewPath || isWebsiteLivePath || isDirectBookingWebsiteHost;
+  const { isHost: isDirectBookingWebsiteHost, isSurface: isDirectBookingWebsiteSurface } =
+    resolveDirectBookingWebsiteSurface({ hostname: currentHostName, pathname: currentPath });
   const shouldRenderStandardHeader = currentPath !== "/admin" && isDirectBookingWebsiteSurface === false;
   const shouldRenderNavbar = isDirectBookingWebsiteSurface === false;
 
