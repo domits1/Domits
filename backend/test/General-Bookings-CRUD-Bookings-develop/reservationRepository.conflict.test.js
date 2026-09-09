@@ -45,7 +45,7 @@ describe("ReservationRepository same-channel double-booking guard", () => {
         shouldReject: true,
       },
       {
-        description: "an overlapping booking in a non-blocking status (Cancelled, Declined, Inquiry or Failed)",
+        description: "resolves when the query reports no conflicting bookings",
         conflictCount: 0,
         excludeBookingId: null,
         shouldReject: false,
