@@ -25,6 +25,7 @@ import Ameen from "../../images/about-img/Ameen.jpg";
 import Enes from "../../images/about-img/Enes.jpg";
 import Mounir from "../../images/about-img/Mounir.png";
 import Mehedi from "../../images/about-img/Mehedi_Bappy.png";
+import Puok from "../../images/about-img/Puok.png";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -79,6 +80,7 @@ function Team() {
     { name: "Hadeel", src: standard, role: aboutContent.crew.developer },
     { name: "Enes", src: Enes, role: aboutContent.crew.developer },
     { name: "Mounir", src: Mounir, role: aboutContent.crew.developer },
+    { name: "Puok", src: Puok, role: aboutContent.crew.developer },
   ].sort((a, b) => a.name.localeCompare(b.name));
 
   const marketingMembers = [
