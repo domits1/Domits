@@ -7,8 +7,21 @@ import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Messages from "./Messages";
+import { getIdToken } from "../../services/getAccessToken";
+import { markThreadRead } from "../../features/hostdashboard/hostmessages/services/messagingService";
 
 let mockContacts = [];
+let mockSetContacts = jest.fn();
+
+jest.mock("../../services/getAccessToken", () => ({
+  __esModule: true,
+  getIdToken: jest.fn(),
+}));
+
+jest.mock("../../features/hostdashboard/hostmessages/services/messagingService", () => ({
+  __esModule: true,
+  markThreadRead: jest.fn(),
+}));
 
 jest.mock("../../features/hostdashboard/hostmessages/context/AuthContext", () => {
   const React = require("react");
@@ -53,7 +66,7 @@ jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchContacts", ()
     contacts: mockContacts,
     pendingContacts: [],
     loading: false,
-    setContacts: jest.fn(),
+    setContacts: mockSetContacts,
   }),
 }));
 
@@ -137,6 +150,11 @@ const renderMessages = (entry) =>
 
 describe("Messages booking URL context", () => {
   beforeEach(() => {
+    mockSetContacts = jest.fn();
+    getIdToken.mockReset();
+    getIdToken.mockResolvedValue("id-token-1");
+    markThreadRead.mockReset();
+    markThreadRead.mockResolvedValue({ threadId: "thread-1", updated: 3 });
     mockContacts = [
       {
         partnerId: "host-1",
@@ -145,6 +163,7 @@ describe("Messages booking URL context", () => {
         propertyId: "property-1",
         bookingId: "booking-1",
         propertyTitle: "Exact stay",
+        unreadCount: 3,
       },
     ];
   });
@@ -214,5 +233,25 @@ describe("Messages booking URL context", () => {
       expect(screen.getByTestId("chat-screen")).toHaveAttribute("data-booking-id", "missing-booking");
     });
     expect(screen.getByTestId("chat-screen")).toHaveAttribute("data-contact-id", "");
+  });
+
+  test("opening a conversation marks it read using the shared ID token and clears the unread badge locally", async () => {
+    renderMessages("/guestdashboard/messages?bookingId=booking-1");
+
+    await waitFor(() => {
+      expect(getIdToken).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    await waitFor(() => {
+      expect(mockSetContacts).toHaveBeenCalled();
+    });
+
+    const updaterFn = mockSetContacts.mock.calls.at(-1)[0];
+    const updatedContacts = updaterFn(mockContacts);
+    expect(updatedContacts.find((c) => c.threadId === "thread-1").unreadCount).toBe(0);
   });
 });
