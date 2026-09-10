@@ -1,7 +1,6 @@
 import Stripe from "stripe";
 import { randomUUID } from "node:crypto";
-import { DynamoDBClient, QueryCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import SystemManagerRepository from "./systemManagerRepository.js";
 import CalculateTotalRate from "../util/calcuateTotalRate.js";
@@ -11,29 +10,40 @@ import { Booking } from "database/models/Booking";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 
 const systemManagerRepository = new SystemManagerRepository();
-const stripePromise =
-  process.env.TEST === "true"
-    ? Promise.resolve({
-        paymentIntents: {
-          create: async () => ({
-            id: `test_${randomUUID()}`,
-            client_secret: `test_secret_${randomUUID()}`,
-          }),
-        },
-      })
-    : systemManagerRepository
-        .getSystemManagerParameter("/stripe/keys/secret/live")
-        .then((secret) => new Stripe(secret));
+const STRIPE_MODES = new Set(["live", "test"]);
+const STRIPE_MODE = String(process.env.STRIPE_MODE || "live")
+  .trim()
+  .toLowerCase();
+if (!STRIPE_MODES.has(STRIPE_MODE)) {
+  throw new Error(`Unsupported STRIPE_MODE: "${STRIPE_MODE}". Expected "live" or "test".`);
+}
+
+const STRIPE_SECRET_PARAMETER = `/stripe/keys/secret/${STRIPE_MODE}`;
+const useFakeStripe = process.env.TEST === "true" && !process.env.STRIPEMODE;
+const stripePromise = useFakeStripe
+  ? Promise.resolve({
+    paymentIntents: {
+      create: async () => ({
+        id: `test${randomUUID()},
+          client_secret: testsecret${randomUUID()}`,
+      }),
+    },
+  })
+  : systemManagerRepository.getSystemManagerParameter(STRIPE_SECRET_PARAMETER).then((secret) => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
 
 class StripeRepository {
+  getClient() {
+    return stripePromise;
+  }
+
   async createPaymentIntent(account_id, propertyId, dates, bookingId) {
     try {
       if (!account_id || !propertyId || !dates) {
         console.error(`accountId ${account_id}, property_id ${propertyId}, or dates ${dates} are NaN.`);
         throw new NotFoundException(
-          "account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent."
+          "account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent.",
         );
       }
 
@@ -148,4 +158,5 @@ class StripeRepository {
     await client.createQueryBuilder().update(Booking).set(updateObject).where("id = :id", { id: bookingId }).execute();
   }
 }
+
 export default StripeRepository;

@@ -1,7 +1,6 @@
 import BookingService from "../business/bookingService.js";
 import PaymentService from "../business/paymentService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
-import Stripe from "stripe";
 import SystemManagerRepository from "../data/systemManagerRepository.js";
 import { calculateRefundAmountCents } from "../util/refundCalculator.js";
 import Forbidden from "../util/exception/Forbidden.js";
@@ -51,34 +50,15 @@ class ReservationController {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
     this.systemManagerRepository = new SystemManagerRepository();
-    this.stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : undefined;
-    this._stripeInitPromise = null;
   }
 
   async getStripeInstance() {
-    if (this.stripe !== undefined) return this.stripe;
-    if (this._stripeInitPromise) return this._stripeInitPromise;
-
-    this._stripeInitPromise = (async () => {
-      try {
-        const secret =
-          process.env.STRIPE_SECRET_KEY ||
-          (await this.systemManagerRepository.getSystemManagerParameter("/stripe/keys/secret/test"));
-        if (secret) {
-          this.stripe = new Stripe(secret);
-        } else {
-          this.stripe = null;
-        }
-      } catch (error) {
-        console.error("Failed to initialize Stripe from SSM:", error);
-        this.stripe = null;
-      } finally {
-        this._stripeInitPromise = null;
-      }
-      return this.stripe;
-    })();
-
-    return this._stripeInitPromise;
+    try {
+      return await this.bookingService.getStripeClient();
+    } catch (error) {
+      console.error("Failed to initialize Stripe:", error);
+      return null;
+    }
   }
 
   // POST
