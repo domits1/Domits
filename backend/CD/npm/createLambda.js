@@ -68,7 +68,7 @@ class LambdaFactory {
       }
     });
   }
-
+ 
   async doesLambdaFunctionExist(name) {
     try {
       await this.lambdaClient.send(new GetFunctionCommand({ FunctionName: name }));
