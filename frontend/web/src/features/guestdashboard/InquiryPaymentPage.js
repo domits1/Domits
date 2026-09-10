@@ -4,10 +4,10 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { getAccessToken } from "../../services/getAccessToken";
 import SetupForm from "../bookingengine/views/SetupForm";
-import publicKeys from "../../utils/const/publicKeys.json";
+import { STRIPE_PUBLIC_KEY } from "../../utils/const/stripePublicKey";
 import spinner from "../../images/spinnner.gif";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
 const BOOKINGS_API = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings";
 const PAY_ROUTE_PREFIX = "/guestdashboard/pay/";
 

@@ -548,6 +548,14 @@ class MessageService {
     return { statusCode: 201, response: { ...message, threadId, reused: false, diagnostic } };
   }
 
+  async markThreadRead(threadId, authenticatedUser) {
+    if (!threadId) throw badRequest("threadId is required.");
+    const thread = await this.threadRepository.getThreadById(threadId);
+    await this.assertThreadAccess(thread, authenticatedUser);
+    const updated = await this.messageRepository.markThreadMessagesRead(threadId, authenticatedUser.userId);
+    return { statusCode: 200, response: { threadId, updated } };
+  }
+
   async getThreads(authenticatedUser) {
     const threads = await this.threadRepository.getThreadsForUser(authenticatedUser.userId);
     const visible = [];
@@ -562,9 +570,14 @@ class MessageService {
       }
     }
 
+    const unreadCounts = await this.messageRepository.getUnreadCountsForThreads(
+      visible.map((t) => t.id),
+      authenticatedUser.userId
+    );
+
     return {
       statusCode: 200,
-      response: visible,
+      response: visible.map((t) => ({ ...t, unreadCount: unreadCounts[t.id] || 0 })),
     };
   }
 
