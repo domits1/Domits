@@ -8,12 +8,6 @@ import {
   useChannexLambdaClientTestEnvironment,
 } from "../util/channexLambdaClientTestUtils.js";
 
-// This client is a transport-only wrapper: it forwards the payload to UnifiedMessaging and
-// returns whatever evidence comes back, so these tests only prove forwarding + evidence roundtrip.
-// The real rate/min_stay/stop_sell/availability values come from the shared payload builders
-// (buildChannexFullSyncAvailabilityPayloadContext, buildChannexFullSyncPayloadContext) that
-// calendar-change reuses from the full ARI sync, and those are covered with real data in
-// functions/UnifiedMessaging/business/integrationService.channexAri.test.js.
 describe("ChannexCalendarChangeSyncClient", () => {
   useChannexLambdaClientTestEnvironment();
 
@@ -76,8 +70,7 @@ describe("ChannexCalendarChangeSyncClient", () => {
     const client = new ChannexCalendarChangeSyncClient({ lambda });
     await expectMissingInternalTokenSkip({
       lambda,
-      invoke: () =>
-        client.syncCalendarChange({ domitsPropertyId: "property-1" }),
+      invoke: () => client.syncCalendarChange({ domitsPropertyId: "property-1" }),
     });
   });
 
@@ -112,9 +105,8 @@ describe("ChannexCalendarChangeSyncClient", () => {
         },
       },
       {
-        // rates and restrictions both fold into the single "restrictions/rates" requestType,
-        // so 3 changeTypes collapse into 2 requestTypes — see channexAvailabilitySyncService.js.
-        description: "a combined rate, availability and restriction change",
+        description:
+          "a combined rate, availability and restriction change (rate and restriction collapse into one restrictions/rates requestType)",
         requestTypes: ["availability", "restrictions/rates"],
         payload: {
           domitsPropertyId: "property-1",
