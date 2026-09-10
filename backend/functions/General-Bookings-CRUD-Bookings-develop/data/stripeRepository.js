@@ -19,17 +19,19 @@ if (!STRIPE_MODES.has(STRIPE_MODE)) {
 }
 
 const STRIPE_SECRET_PARAMETER = `/stripe/keys/secret/${STRIPE_MODE}`;
-const useFakeStripe = process.env.TEST === "true" && !process.env.STRIPEMODE;
+const useFakeStripe = process.env.TEST === "true" && !process.env.STRIPE_MODE;
 const stripePromise = useFakeStripe
   ? Promise.resolve({
     paymentIntents: {
       create: async () => ({
-        id: `test${randomUUID()},
-          client_secret: testsecret${randomUUID()}`,
+        id: `test_${randomUUID()}`,
+        client_secret: `test_secret_${randomUUID()}`,
       }),
     },
   })
-  : systemManagerRepository.getSystemManagerParameter(STRIPE_SECRET_PARAMETER).then((secret) => new Stripe(secret));
+  : systemManagerRepository
+    .getSystemManagerParameter(STRIPE_SECRET_PARAMETER)
+    .then((secret) => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
 
