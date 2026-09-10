@@ -4,6 +4,8 @@ import { WebSocketContext } from "../../features/hostdashboard/hostmessages/cont
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
 import { getMessageCapabilities } from "./messageCapabilities";
+import { markThreadRead } from "../../features/hostdashboard/hostmessages/services/messagingService";
+import { getIdToken } from "../../services/getAccessToken";
 
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
@@ -87,7 +89,7 @@ const fetchUserInfo = async (targetUserId) => {
   return { givenName: null, userId: targetUserId, profileImage: null };
 };
 
-const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
+const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming, isActiveThread }) => {
   const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
   const threadId = incoming?.threadId || null;
@@ -103,14 +105,22 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
     return resolvePartnerId(c, selfUserId) === partnerId;
   });
 
+  const isFromCurrentUser = String(incoming?.userId ?? incoming?.senderId) === String(selfUserId);
+  const isAddressedToCurrentUser = String(incoming?.recipientId) === String(selfUserId);
+  const isGenuineIncoming = !isFromCurrentUser && isAddressedToCurrentUser;
+
   const hasExisting = idx > -1;
   if (hasExisting) {
+    const previousUnreadCount = updated[idx]?.unreadCount || 0;
+    const nextUnreadCount = !isGenuineIncoming ? previousUnreadCount : isActiveThread ? 0 : previousUnreadCount + 1;
+
     updated[idx] = {
       ...updated[idx],
       latestMessage: { ...incoming, text: displayText },
       platform: incoming?.platform || updated[idx]?.platform || "DOMITS",
       integrationAccountId: incoming?.integrationAccountId || updated[idx]?.integrationAccountId || null,
       externalThreadId: incoming?.externalThreadId || updated[idx]?.externalThreadId || null,
+      unreadCount: nextUnreadCount,
     };
   } else {
     updated.unshift({
@@ -130,6 +140,7 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
       externalThreadId: incoming?.externalThreadId || null,
       channelLabel: incoming?.platform === "WHATSAPP" ? "WhatsApp" : incoming?.platform || null,
       isWhatsApp: String(incoming?.platform || "").toUpperCase() === "WHATSAPP",
+      unreadCount: isGenuineIncoming ? (isActiveThread ? 0 : 1) : 0,
     });
   }
 
@@ -188,6 +199,16 @@ const ContactList = ({
   const hydratingIdsRef = useRef(new Set());
   const lastWsMessageIdRef = useRef(null);
   const lastPropMessageIdRef = useRef(null);
+  const activeThreadIdRef = useRef(activeThreadId);
+  const activeContactIdRef = useRef(activeContactId);
+
+  useEffect(() => {
+    activeThreadIdRef.current = activeThreadId;
+  }, [activeThreadId]);
+
+  useEffect(() => {
+    activeContactIdRef.current = activeContactId;
+  }, [activeContactId]);
 
   const processIncomingMessage = useCallback(
     (incoming) => {
@@ -196,7 +217,22 @@ const ContactList = ({
       const partnerId = incoming?.userId === userId ? incoming?.recipientId : incoming?.userId;
       if (!partnerId || String(partnerId) === String(userId)) return;
 
-      setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming }));
+      const incomingThreadId = incoming?.threadId || null;
+      const isActiveThread = incomingThreadId
+        ? String(incomingThreadId) === String(activeThreadIdRef.current || "")
+        : String(partnerId) === String(activeContactIdRef.current || "");
+
+      setContacts?.((prevContacts) =>
+        upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming, isActiveThread })
+      );
+
+      const isFromCurrentUser = String(incoming?.userId ?? incoming?.senderId) === String(userId);
+      const isAddressedToCurrentUser = String(incoming?.recipientId) === String(userId);
+      if (!isFromCurrentUser && isAddressedToCurrentUser && isActiveThread && incomingThreadId) {
+        getIdToken()
+          .then((idToken) => markThreadRead(incomingThreadId, idToken))
+          .catch(() => {});
+      }
 
       const hydrateKey = String(partnerId);
       if (hydratingIdsRef.current.has(hydrateKey)) return;
