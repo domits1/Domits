@@ -33,6 +33,40 @@ const resolveStaySummary = ({ checkIn, checkOut }) => {
 const resolveStaleNotice = (staleReason) =>
   staleReason === QUOTE_STALE_REASONS.EXPIRED ? "Price expired — check again" : "Selection changed — check again";
 
+const deriveQuoteView = (quoteState) => {
+  const isLoading = quoteState.status === QUOTE_STATUS.LOADING;
+  const isStale = quoteState.status === QUOTE_STATUS.STALE;
+  const isQuoted = quoteState.status === QUOTE_STATUS.SUCCESS && Boolean(quoteState.quote);
+  const showBreakdown = Boolean(quoteState.quote) && (isQuoted || isStale);
+  const errorPresentation =
+    quoteState.status === QUOTE_STATUS.ERROR ? resolveQuoteErrorPresentation(quoteState.error) : null;
+
+  return {
+    isLoading,
+    isStale,
+    isQuoted,
+    showBreakdown,
+    datesError: errorPresentation?.scope === QUOTE_ERROR_SCOPES.DATES ? errorPresentation.message : "",
+    guestsError: errorPresentation?.scope === QUOTE_ERROR_SCOPES.GUESTS ? errorPresentation.message : "",
+    panelError: errorPresentation?.scope === QUOTE_ERROR_SCOPES.PANEL ? errorPresentation : null,
+  };
+};
+
+const deriveBookingView = (bookingState) => {
+  const bookingPresentation =
+    bookingState.status === BOOKING_REQUEST_STATUS.ERROR
+      ? resolveBookingRequestErrorPresentation(bookingState.error)
+      : null;
+
+  return {
+    isSubmitting: bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING,
+    bookingSucceeded: bookingState.status === BOOKING_REQUEST_STATUS.SUCCESS && Boolean(bookingState.result),
+    bookingPanelError: bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.PANEL ? bookingPresentation : null,
+    bookingContactError:
+      bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.CONTACT ? bookingPresentation.message : "",
+  };
+};
+
 function QuoteBreakdown({ quote, isStale, staleReason }) {
   const { priceBreakdown, nights } = quote;
   const nightlyRate = nights > 0 ? Math.round(priceBreakdown.nightlyBaseTotal / nights) : null;
@@ -122,6 +156,160 @@ const toAlertPresentation = (bookingPresentation) => ({
   showReference: bookingPresentation.showReference,
 });
 
+function StayBlock({ checkIn, checkOut, nights, minimumStay, bookingSucceeded, datesError }) {
+  return (
+    <div className={styles.stayBlock}>
+      <p className={styles.staySummary}>{resolveStaySummary({ checkIn, checkOut })}</p>
+      {nights > 0 ? <p className={styles.stayNights}>{pluralizeNights(nights)}</p> : null}
+      {minimumStay > 0 && !bookingSucceeded ? (
+        <p className={styles.hint}>{`Minimum stay: ${pluralizeNights(minimumStay)}`}</p>
+      ) : null}
+      {datesError ? (
+        <p className={styles.fieldError} role="alert">
+          {datesError}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+StayBlock.propTypes = {
+  checkIn: PropTypes.string,
+  checkOut: PropTypes.string,
+  nights: PropTypes.number.isRequired,
+  minimumStay: PropTypes.number,
+  bookingSucceeded: PropTypes.bool.isRequired,
+  datesError: PropTypes.string.isRequired,
+};
+
+function QuotePanelBody({
+  guests,
+  onGuestsChange,
+  capacity,
+  quoteState,
+  quoteView,
+  onRequestQuote,
+  contactHref,
+  bookingState,
+  bookingView,
+  guest,
+  guestErrors,
+  onGuestChange,
+  onSubmitBookingRequest,
+  hideAction,
+  canRequestQuote,
+  showRequestForm,
+}) {
+  const { isLoading, isStale, showBreakdown, guestsError, panelError } = quoteView;
+  const { isSubmitting, bookingPanelError, bookingContactError } = bookingView;
+
+  return (
+    <>
+      <GuestCountField
+        value={guests}
+        onChange={onGuestsChange}
+        max={capacity}
+        disabled={isLoading || isSubmitting}
+        errorMessage={guestsError}
+      />
+
+      {hideAction ? null : (
+        <button type="button" className={styles.action} onClick={onRequestQuote} disabled={!canRequestQuote}>
+          {isLoading ? "Checking…" : "Check availability"}
+        </button>
+      )}
+
+      {panelError ? (
+        <QuotePanelAlert
+          presentation={panelError}
+          requestId={quoteState.error?.requestId || ""}
+          contactHref={contactHref}
+          onRetry={onRequestQuote}
+        />
+      ) : null}
+
+      {showBreakdown ? (
+        <QuoteBreakdown quote={quoteState.quote} isStale={isStale} staleReason={quoteState.staleReason} />
+      ) : null}
+
+      {bookingPanelError ? (
+        <QuotePanelAlert
+          presentation={toAlertPresentation(bookingPanelError)}
+          requestId={bookingState.error?.requestId || ""}
+          contactHref={contactHref}
+          onRetry={onSubmitBookingRequest}
+        />
+      ) : null}
+
+      {showRequestForm ? (
+        <BookingRequestForm
+          guest={guest}
+          onGuestChange={onGuestChange}
+          onSubmit={onSubmitBookingRequest}
+          isSubmitting={isSubmitting}
+          fieldErrors={guestErrors}
+          formError={bookingContactError}
+        />
+      ) : null}
+    </>
+  );
+}
+
+const quoteStatePropType = PropTypes.shape({
+  status: PropTypes.oneOf(Object.values(QUOTE_STATUS)).isRequired,
+  quote: PropTypes.shape({}),
+  error: PropTypes.shape({
+    code: PropTypes.string,
+    message: PropTypes.string,
+    requestId: PropTypes.string,
+  }),
+  staleReason: PropTypes.string,
+});
+
+const bookingStatePropType = PropTypes.shape({
+  status: PropTypes.oneOf(Object.values(BOOKING_REQUEST_STATUS)).isRequired,
+  result: PropTypes.shape({}),
+  error: PropTypes.shape({
+    code: PropTypes.string,
+    message: PropTypes.string,
+    requestId: PropTypes.string,
+  }),
+});
+
+const guestPropType = PropTypes.shape({
+  name: PropTypes.string,
+  email: PropTypes.string,
+});
+
+QuotePanelBody.propTypes = {
+  guests: PropTypes.number.isRequired,
+  onGuestsChange: PropTypes.func.isRequired,
+  capacity: PropTypes.number,
+  quoteState: quoteStatePropType.isRequired,
+  quoteView: PropTypes.shape({
+    isLoading: PropTypes.bool.isRequired,
+    isStale: PropTypes.bool.isRequired,
+    showBreakdown: PropTypes.bool.isRequired,
+    guestsError: PropTypes.string.isRequired,
+    panelError: PropTypes.shape({}),
+  }).isRequired,
+  onRequestQuote: PropTypes.func.isRequired,
+  contactHref: PropTypes.string,
+  bookingState: bookingStatePropType.isRequired,
+  bookingView: PropTypes.shape({
+    isSubmitting: PropTypes.bool.isRequired,
+    bookingPanelError: PropTypes.shape({}),
+    bookingContactError: PropTypes.string.isRequired,
+  }).isRequired,
+  guest: guestPropType.isRequired,
+  guestErrors: guestPropType.isRequired,
+  onGuestChange: PropTypes.func.isRequired,
+  onSubmitBookingRequest: PropTypes.func.isRequired,
+  hideAction: PropTypes.bool.isRequired,
+  canRequestQuote: PropTypes.bool.isRequired,
+  showRequestForm: PropTypes.bool.isRequired,
+};
+
 export default function QuotePanel({
   range,
   guests,
@@ -140,32 +328,12 @@ export default function QuotePanel({
   const checkIn = range?.checkIn || null;
   const checkOut = range?.checkOut || null;
   const nights = countStayNights(checkIn, checkOut);
-  const isLoading = quoteState.status === QUOTE_STATUS.LOADING;
-  const isStale = quoteState.status === QUOTE_STATUS.STALE;
-  const isQuoted = quoteState.status === QUOTE_STATUS.SUCCESS && Boolean(quoteState.quote);
-  const showBreakdown = Boolean(quoteState.quote) && (isQuoted || isStale);
+  const quoteView = deriveQuoteView(quoteState);
+  const bookingView = deriveBookingView(bookingState);
 
-  const isSubmitting = bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING;
-  const bookingSucceeded = bookingState.status === BOOKING_REQUEST_STATUS.SUCCESS && Boolean(bookingState.result);
-
-  const errorPresentation =
-    quoteState.status === QUOTE_STATUS.ERROR ? resolveQuoteErrorPresentation(quoteState.error) : null;
-  const bookingPresentation =
-    bookingState.status === BOOKING_REQUEST_STATUS.ERROR
-      ? resolveBookingRequestErrorPresentation(bookingState.error)
-      : null;
-
-  const datesError = errorPresentation?.scope === QUOTE_ERROR_SCOPES.DATES ? errorPresentation.message : "";
-  const guestsError = errorPresentation?.scope === QUOTE_ERROR_SCOPES.GUESTS ? errorPresentation.message : "";
-  const panelError = errorPresentation?.scope === QUOTE_ERROR_SCOPES.PANEL ? errorPresentation : null;
-  const bookingPanelError =
-    bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.PANEL ? bookingPresentation : null;
-  const bookingContactError =
-    bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.CONTACT ? bookingPresentation.message : "";
-
-  const hideAction = Boolean(panelError?.hideAction || bookingPanelError?.hideAction);
-  const canRequestQuote = nights > 0 && guests >= 1 && !isLoading && !isSubmitting;
-  const showRequestForm = isQuoted && !hideAction;
+  const hideAction = Boolean(quoteView.panelError?.hideAction || bookingView.bookingPanelError?.hideAction);
+  const canRequestQuote = nights > 0 && guests >= 1 && !quoteView.isLoading && !bookingView.isSubmitting;
+  const showRequestForm = quoteView.isQuoted && !hideAction;
 
   return (
     <aside className={styles.panel} aria-labelledby="website-quote-panel-title">
@@ -173,70 +341,36 @@ export default function QuotePanel({
         Check availability &amp; price
       </h3>
 
-      <div className={styles.stayBlock}>
-        <p className={styles.staySummary}>{resolveStaySummary({ checkIn, checkOut })}</p>
-        {nights > 0 ? <p className={styles.stayNights}>{pluralizeNights(nights)}</p> : null}
-        {minimumStay > 0 && !bookingSucceeded ? (
-          <p className={styles.hint}>{`Minimum stay: ${pluralizeNights(minimumStay)}`}</p>
-        ) : null}
-        {datesError ? (
-          <p className={styles.fieldError} role="alert">
-            {datesError}
-          </p>
-        ) : null}
-      </div>
+      <StayBlock
+        checkIn={checkIn}
+        checkOut={checkOut}
+        nights={nights}
+        minimumStay={minimumStay}
+        bookingSucceeded={bookingView.bookingSucceeded}
+        datesError={quoteView.datesError}
+      />
 
-      {bookingSucceeded ? (
+      {bookingView.bookingSucceeded ? (
         <BookingRequestSuccess result={bookingState.result} guestEmail={guest?.email || ""} />
       ) : (
-        <>
-          <GuestCountField
-            value={guests}
-            onChange={onGuestsChange}
-            max={capacity}
-            disabled={isLoading || isSubmitting}
-            errorMessage={guestsError}
-          />
-
-          {hideAction ? null : (
-            <button type="button" className={styles.action} onClick={onRequestQuote} disabled={!canRequestQuote}>
-              {isLoading ? "Checking…" : "Check availability"}
-            </button>
-          )}
-
-          {panelError ? (
-            <QuotePanelAlert
-              presentation={panelError}
-              requestId={quoteState.error?.requestId || ""}
-              contactHref={contactHref}
-              onRetry={onRequestQuote}
-            />
-          ) : null}
-
-          {showBreakdown ? (
-            <QuoteBreakdown quote={quoteState.quote} isStale={isStale} staleReason={quoteState.staleReason} />
-          ) : null}
-
-          {bookingPanelError ? (
-            <QuotePanelAlert
-              presentation={toAlertPresentation(bookingPanelError)}
-              requestId={bookingState.error?.requestId || ""}
-              contactHref={contactHref}
-              onRetry={onSubmitBookingRequest}
-            />
-          ) : null}
-
-          {showRequestForm ? (
-            <BookingRequestForm
-              guest={guest}
-              onGuestChange={onGuestChange}
-              onSubmit={onSubmitBookingRequest}
-              isSubmitting={isSubmitting}
-              fieldErrors={guestErrors}
-              formError={bookingContactError}
-            />
-          ) : null}
-        </>
+        <QuotePanelBody
+          guests={guests}
+          onGuestsChange={onGuestsChange}
+          capacity={capacity}
+          quoteState={quoteState}
+          quoteView={quoteView}
+          onRequestQuote={onRequestQuote}
+          contactHref={contactHref}
+          bookingState={bookingState}
+          bookingView={bookingView}
+          guest={guest}
+          guestErrors={guestErrors}
+          onGuestChange={onGuestChange}
+          onSubmitBookingRequest={onSubmitBookingRequest}
+          hideAction={hideAction}
+          canRequestQuote={canRequestQuote}
+          showRequestForm={showRequestForm}
+        />
       )}
     </aside>
   );
@@ -251,35 +385,12 @@ QuotePanel.propTypes = {
   onGuestsChange: PropTypes.func.isRequired,
   capacity: PropTypes.number,
   minimumStay: PropTypes.number,
-  quoteState: PropTypes.shape({
-    status: PropTypes.oneOf(Object.values(QUOTE_STATUS)).isRequired,
-    quote: PropTypes.shape({}),
-    error: PropTypes.shape({
-      code: PropTypes.string,
-      message: PropTypes.string,
-      requestId: PropTypes.string,
-    }),
-    staleReason: PropTypes.string,
-  }).isRequired,
+  quoteState: quoteStatePropType.isRequired,
   onRequestQuote: PropTypes.func.isRequired,
   contactHref: PropTypes.string,
-  bookingState: PropTypes.shape({
-    status: PropTypes.oneOf(Object.values(BOOKING_REQUEST_STATUS)).isRequired,
-    result: PropTypes.shape({}),
-    error: PropTypes.shape({
-      code: PropTypes.string,
-      message: PropTypes.string,
-      requestId: PropTypes.string,
-    }),
-  }),
-  guest: PropTypes.shape({
-    name: PropTypes.string,
-    email: PropTypes.string,
-  }),
-  guestErrors: PropTypes.shape({
-    name: PropTypes.string,
-    email: PropTypes.string,
-  }),
+  bookingState: bookingStatePropType,
+  guest: guestPropType,
+  guestErrors: guestPropType,
   onGuestChange: PropTypes.func,
   onSubmitBookingRequest: PropTypes.func,
 };
