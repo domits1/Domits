@@ -179,6 +179,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         authManager: {
           authenticateUser: jest.fn().mockResolvedValue({ sub: "guest123" }),
         },
+        getStripeClient: jest.fn().mockResolvedValue(mockStripe),
         reservationRepository: {
           getBookingById: jest.fn(),
           cancelBookingByGuest: jest.fn().mockResolvedValue({
@@ -331,6 +332,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
     it("should handle missing Stripe configuration", async () => {
       const bookingId = "booking_no_stripe";
       mockBooking({ id: bookingId, paymentid: "pi_test_123" });
+      mockBookingService.getStripeClient.mockResolvedValue(null);
       controller.stripe = null;
 
       const result = await controller.cancelBooking(bookingId, authEvent);

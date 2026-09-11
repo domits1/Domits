@@ -54,7 +54,7 @@ import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import Navbar from "./components/base/navbar";
-import publicKeys from "./utils/const/publicKeys.json";
+import { STRIPE_PUBLIC_KEY } from "./utils/const/stripePublicKey";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
@@ -63,7 +63,7 @@ import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePu
 import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
 import AcceptInvite from "./features/hostdashboard/AcceptInvite";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
 const DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com";
 const apolloClient = new ApolloClient({
   link: new HttpLink({

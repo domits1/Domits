@@ -149,6 +149,7 @@ const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
         platform: t.platform || "DOMITS",
         externalThreadId: t.externalThreadId || null,
         integrationAccountId: t.integrationaccountid || t.integrationAccountId || null,
+        unreadCount: t.unreadCount ?? 0,
       };
     })
     .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));

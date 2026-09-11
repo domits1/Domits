@@ -1,6 +1,7 @@
 import MessageService from "../business/messageService.js";
 import { getAuthenticatedUser } from "../auth/authContext.js";
 import { badRequest, forbidden } from "../util/httpErrors.js";
+import { extractThreadIdForRead } from "./controllerUtils.js";
 
 const parseBody = (event) => {
   if (!event?.body) return {};
@@ -36,6 +37,12 @@ class MessageController {
     const authenticatedUser = getAuthenticatedUser(event);
     const threadId = event.queryStringParameters?.threadId;
     return await this.messageService.getMessages(threadId, authenticatedUser);
+  }
+
+  async markThreadRead(event) {
+    const authenticatedUser = getAuthenticatedUser(event);
+    const threadId = extractThreadIdForRead(event.path);
+    return await this.messageService.markThreadRead(threadId, authenticatedUser);
   }
 }
 

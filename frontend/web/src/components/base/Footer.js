@@ -129,7 +129,7 @@ const Footer = () => {
         </div>
 
         {/* Socials section */}
-        <div className="footer-section-grid">
+        <div className="footer-section-grid footer-social-section">
           <div className="footer-section">
             <h4 className="footer-headers">{footerContent.socials.title}</h4>
             <ul className="footer-lists">
