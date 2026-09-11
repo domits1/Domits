@@ -468,41 +468,32 @@ class ReservationRepository {
     });
   }
 
-  // executor is either a Database client or a transaction manager — both expose getRepository().
-  async findOverlappingInquiries(executor, { propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
-    return executor
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .where("booking.property_id = :propertyId", { propertyId })
-      .andWhere("booking.status = :status", { status: "Inquiry" })
-      .andWhere("booking.id != :excludeBookingId", { excludeBookingId })
-      .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
-      .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
-      .getMany();
-  }
-
+  // Locks the target booking and every currently-overlapping Inquiry sibling for this property
+  // with SELECT ... FOR UPDATE before any write happens. If two overlapping inquiries are
+  // accepted at effectively the same time, the second transaction's locked read blocks until
+  // the first commits, then re-reads the post-commit state — so it correctly sees its own
+  // target (or an overlap) already left Inquiry status, instead of racing an unlocked read.
   async acceptInquiryWithOverlapDecline({ bookingId, propertyId, arrivalDateMs, departureDateMs }) {
     const client = await Database.getInstance();
     return client.transaction(async (manager) => {
-      const statusUpdate = await manager
-        .createQueryBuilder()
-        .update(Booking)
-        .set({ status: "Awaiting Payment" })
-        .where("id = :id", { id: bookingId })
-        .andWhere("status = :inquiryStatus", { inquiryStatus: "Inquiry" })
-        .execute();
+      const lockedRows = await manager
+        .getRepository(Booking)
+        .createQueryBuilder("booking")
+        .setLock("pessimistic_write")
+        .where("booking.property_id = :propertyId", { propertyId })
+        .andWhere("booking.status = :status", { status: "Inquiry" })
+        .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
+        .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
+        .getMany();
 
-      if (Number(statusUpdate?.affected || 0) !== 1) {
+      const targetIsStillInquiry = lockedRows.some((row) => row.id === bookingId);
+      if (!targetIsStillInquiry) {
         return { accepted: false, declinedCount: 0 };
       }
 
-      const overlapping = await this.findOverlappingInquiries(manager, {
-        propertyId,
-        arrivalDateMs,
-        departureDateMs,
-        excludeBookingId: bookingId,
-      });
+      await manager.createQueryBuilder().update(Booking).set({ status: "Awaiting Payment" }).where("id = :id", { id: bookingId }).execute();
 
+      const overlapping = lockedRows.filter((row) => row.id !== bookingId);
       for (const overlap of overlapping) {
         await manager.createQueryBuilder().update(Booking).set({ status: "Declined" }).where("id = :id", { id: overlap.id }).execute();
       }
