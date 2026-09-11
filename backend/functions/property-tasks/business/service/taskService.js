@@ -1,5 +1,5 @@
 import * as taskRepository from "../../data/taskRepository.js";
-import { validateTaskPayload } from "../model/taskValidator.js";
+import { validateTaskPayload, VALID_TASK_TYPES } from "../model/taskValidator.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -58,6 +58,10 @@ export const updateTask = async (hostId, taskId, updateData) => {
 
     if (fieldsToUpdate.due_date) {
         fieldsToUpdate.due_date = new Date(fieldsToUpdate.due_date).getTime();
+    }
+
+    if (fieldsToUpdate.type && !VALID_TASK_TYPES.includes(fieldsToUpdate.type)) {
+        throw new Error(`Invalid type: ${fieldsToUpdate.type}. Must be one of: ${VALID_TASK_TYPES.join(", ")}`);
     }
 
     if (fieldsToUpdate.attachments !== undefined) {
