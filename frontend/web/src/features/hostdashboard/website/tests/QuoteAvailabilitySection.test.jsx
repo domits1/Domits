@@ -63,10 +63,10 @@ const QUOTE = {
   quoteToken: "qtok",
 };
 
-const renderSection = () =>
+const renderSection = (model = MODEL) =>
   render(
     <QuoteAvailabilitySection
-      model={MODEL}
+      model={model}
       siteId="site-1"
       variant="panorama"
       templateKey="panorama-landing"
@@ -143,6 +143,43 @@ describe("QuoteAvailabilitySection", () => {
 
     expect(await screen.findByText(/no longer available/i)).toBeInTheDocument();
     expect(screen.getByText("Pick a check-in date")).toBeInTheDocument();
+  });
+
+  it("renders a reserved date as a disabled, marked cell that cannot start a stay", async () => {
+    const reservedKey = toKey(new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 2));
+    renderSection({ ...MODEL, availability: { ...MODEL.availability, unavailableDateKeys: [reservedKey] } });
+
+    await waitForCalendar();
+    const reservedCell = screen.getByRole("button", { name: `${monthLabel} 2, Reserved` });
+    expect(reservedCell).toBeDisabled();
+    expect(reservedCell).toHaveClass("panoramaCalendarCellReserved");
+
+    fireEvent.click(reservedCell);
+    expect(screen.getByText("Pick a check-in date")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: `${monthLabel} 1, Available` })).toBeEnabled();
+  });
+
+  it("lets a reserved date serve as check-out once a check-in is chosen, but not past a blocked night", async () => {
+    const dayKey = (day) => toKey(new Date(nextMonth.getFullYear(), nextMonth.getMonth(), day));
+    renderSection({
+      ...MODEL,
+      availability: { ...MODEL.availability, unavailableDateKeys: [dayKey(2), dayKey(3)] },
+    });
+
+    await waitForCalendar();
+    expect(screen.getByRole("button", { name: `${monthLabel} 2, Reserved` })).toBeDisabled();
+    expect(screen.getByRole("button", { name: `${monthLabel} 3, Reserved` })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: `${monthLabel} 1, Available` }));
+
+    const checkOutCandidate = screen.getByRole("button", { name: `${monthLabel} 2, Reserved` });
+    expect(checkOutCandidate).toBeEnabled();
+    expect(checkOutCandidate).toHaveClass("panoramaCalendarCellReserved");
+    expect(screen.getByRole("button", { name: `${monthLabel} 3, Reserved` })).toBeDisabled();
+
+    fireEvent.click(checkOutCandidate);
+    expect(screen.getByText(`${formatStayDate(dayKey(1))} → ${formatStayDate(dayKey(2))}`)).toBeInTheDocument();
+    expect(screen.getByText("1 night")).toBeInTheDocument();
   });
 
   describe("booking request", () => {
