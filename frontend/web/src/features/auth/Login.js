@@ -87,6 +87,12 @@ const Login = () => {
     navigate(`/register?redirect=${redirectForRegister}`);
   };
 
+  const startPasswordRecovery = () => {
+    setFormData((currentFormData) => ({ ...currentFormData, password: "" }));
+    setErrorMessage("");
+    setForgotPassword(true);
+  };
+
   const handlePasswordRecovery = async () => {
     try {
       const response = await fetch(
@@ -165,6 +171,13 @@ const Login = () => {
               <div className="iconBox">
                 <FaLock />
               </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="New password"
+                value={formData.password}
+                onChange={handleChange}
+              />
               <button
                 type="button"
                 className="eyeIcon"
@@ -226,7 +239,7 @@ const Login = () => {
               <button
                 type="button"
                 className="forgotText"
-                onClick={() => setForgotPassword(true)}
+                onClick={startPasswordRecovery}
                 disabled={isSigningIn}
               >
                 Forgot password?
