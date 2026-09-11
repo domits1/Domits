@@ -126,5 +126,37 @@ describe("ReservationRepository accept-inquiry transaction", () => {
     const repository = new ReservationRepository();
 
     await expect(repository.acceptInquiryWithOverlapDecline(OVERLAP_ARGS)).rejects.toThrow("constraint violation");
+    expect(transaction).toHaveBeenCalledTimes(1);
+  });
+
+  const occConflict = () => Object.assign(new Error("change conflicts with another transaction (OC000)"), { code: "40001" });
+
+  test("retries after an optimistic concurrency conflict and returns the retry's fresh result", async () => {
+    // the retry re-reads committed state: a concurrent accept already declined this booking
+    const selectBuilder = createSelectBuilder([]);
+    const manager = {
+      getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => selectBuilder) })),
+      createQueryBuilder: jest.fn(),
+    };
+    const transaction = jest
+      .fn()
+      .mockRejectedValueOnce(occConflict())
+      .mockImplementationOnce(async (callback) => callback(manager));
+    Database.getInstance.mockResolvedValue({ transaction });
+    const repository = new ReservationRepository();
+
+    const result = await repository.acceptInquiryWithOverlapDecline(OVERLAP_ARGS);
+
+    expect(result).toEqual({ accepted: false, declinedCount: 0 });
+    expect(transaction).toHaveBeenCalledTimes(2);
+  });
+
+  test("gives up and rethrows when the conflict persists across every attempt", async () => {
+    const transaction = jest.fn().mockRejectedValue(occConflict());
+    Database.getInstance.mockResolvedValue({ transaction });
+    const repository = new ReservationRepository();
+
+    await expect(repository.acceptInquiryWithOverlapDecline(OVERLAP_ARGS)).rejects.toMatchObject({ code: "40001" });
+    expect(transaction).toHaveBeenCalledTimes(3);
   });
 });
