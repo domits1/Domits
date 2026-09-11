@@ -1,16 +1,131 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import standardAvatar from "../../images/standard.png";
 import { normalizeImageUrl } from "../guestdashboard/utils/image";
 import { fetchTeamMembers, fetchMemberships, inviteTeamMember, removeTeamMember } from "./services/teamService";
 import { LanguageContext } from "../../context/LanguageContext";
+import { ROLES } from "../auth/roles.js";
+import { getRolePermissionsSummary } from "./constants/rolePermissionsSummary.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 
 const contentByLanguage = { en, nl, de, es };
+
+// Cosmetic-only color coding for the Role column. An unrecognized role
+// (shouldn't happen given backend validation, but the UI must not assume)
+// simply falls back to the base .team-role-badge gray styling.
+const ROLE_BADGE_CLASS_NAMES = {
+    [ROLES.GENERAL_MANAGER]: "team-role-badge--general-manager",
+    [ROLES.RESERVATION_MANAGER]: "team-role-badge--reservation-manager",
+    [ROLES.GUEST_EXPERIENCE_MANAGER]: "team-role-badge--guest-experience-manager",
+    [ROLES.FINANCIAL_MANAGER]: "team-role-badge--financial-manager",
+    [ROLES.DISTRIBUTION_MANAGER]: "team-role-badge--distribution-manager",
+    [ROLES.REVENUE_MANAGER]: "team-role-badge--revenue-manager",
+    [ROLES.SALES_MANAGER]: "team-role-badge--sales-manager",
+    [ROLES.PROPERTY_OPERATIONS_MANAGER]: "team-role-badge--property-operations-manager",
+};
+
+const roleBadgeClassName = (role) => {
+    const modifier = ROLE_BADGE_CLASS_NAMES[role];
+    return modifier ? `team-role-badge ${modifier}` : "team-role-badge";
+};
+
+const PermissionsSummary = ({ role, t }) => {
+    const items = getRolePermissionsSummary(role);
+    if (items.length === 0) {
+        return <span className="team-permissions-empty">{t.permissionsEmpty}</span>;
+    }
+
+    const overflowCount = items.length - 2;
+    return (
+        <div className="team-permissions-list">
+            {items.map((item, index) => (
+                <span
+                    key={item}
+                    className={`team-permission-chip${index >= 2 ? " team-permission-chip--overflow" : ""}`}
+                >
+                    {item}
+                </span>
+            ))}
+            {overflowCount > 0 && (
+                <span className="team-permission-more">
+                    {t.permissionsMore.replace("{count}", overflowCount)}
+                </span>
+            )}
+        </div>
+    );
+};
+
+const TeamMemberRow = ({ member, t, onRemove }) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const actionsRef = useRef(null);
+
+    useEffect(() => {
+        if (!menuOpen) return undefined;
+        const handleClickOutside = (e) => {
+            if (actionsRef.current && !actionsRef.current.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [menuOpen]);
+
+    const isActive = member.status === "active";
+
+    return (
+        <div className="team-table-row" role="row">
+            <div className="team-row-cell team-row-cohost" role="cell">
+                <img src={standardAvatar} alt={t.memberAvatarAlt} className="team-member-avatar team-member-avatar--sm" />
+                <div className="team-member-info">
+                    <div className="team-member-name">{member.member_email}</div>
+                </div>
+            </div>
+            <div className="team-row-cell team-row-role" role="cell" data-label={t.columnRole}>
+                <span className={roleBadgeClassName(member.role)}>{member.role}</span>
+            </div>
+            <div className="team-row-cell team-row-permissions" role="cell" data-label={t.columnPermissions}>
+                <PermissionsSummary role={member.role} t={t} />
+            </div>
+            <div className="team-row-cell team-row-status" role="cell" data-label={t.columnStatus}>
+                <span className={`team-status-badge team-status-badge--${member.status}`}>
+                    <span className="team-status-dot" aria-hidden="true" />
+                    {isActive ? t.statusActive : t.statusPending}
+                </span>
+            </div>
+            <div className="team-row-cell team-row-actions" role="cell" ref={actionsRef}>
+                <button
+                    type="button"
+                    className="team-row-menu-btn"
+                    onClick={() => setMenuOpen((open) => !open)}
+                    aria-haspopup="true"
+                    aria-expanded={menuOpen}
+                    aria-label={t.actionsMenuLabel}
+                >
+                    ⋮
+                </button>
+                {menuOpen && (
+                    <div className="team-row-menu" role="menu">
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className="team-row-menu-item team-row-menu-item--danger"
+                            onClick={() => {
+                                setMenuOpen(false);
+                                onRemove(member.id);
+                            }}
+                        >
+                            {t.removeAction}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const HostTeam = () => {
     const { language } = useContext(LanguageContext);
@@ -26,6 +141,7 @@ const HostTeam = () => {
     const [inviteSent, setInviteSent] = useState(false);
     const [inviteError, setInviteError] = useState("");
     const [loadError, setLoadError] = useState(false);
+    const [isLoadingMembers, setIsLoadingMembers] = useState(true);
     const [confirmRemoveId, setConfirmRemoveId] = useState(null);
 
     useEffect(() => {
@@ -49,8 +165,9 @@ const HostTeam = () => {
 
     useEffect(() => {
         fetchTeamMembers()
-            .then(setMembers)
-            .catch(() => setLoadError(true));
+            .then((data) => setMembers(data))
+            .catch(() => setLoadError(true))
+            .finally(() => setIsLoadingMembers(false));
         fetchMemberships()
             .then(setMemberships)
             .catch(() => { /* memberships optional */ });
@@ -98,29 +215,6 @@ const HostTeam = () => {
         }
     };
 
-    const renderMemberRow = (member) => (
-        <div key={member.id} className="team-member-row team-member-row--bordered">
-            <img
-                src={standardAvatar}
-                alt={t.memberAvatarAlt}
-                className="team-member-avatar"
-            />
-            <div className="team-member-info">
-                <div className="team-member-name">
-                    {member.member_email}
-                    <span className="team-role-badge">{member.role}</span>
-                </div>
-            </div>
-            <button
-                className="team-remove-btn"
-                onClick={() => handleRemoveConfirm(member.id)}
-                aria-label={`Remove ${member.member_email}`}
-            >
-                ✕
-            </button>
-        </div>
-    );
-
     const renderMemberList = () => {
         if (loadError) {
             return (
@@ -130,10 +224,19 @@ const HostTeam = () => {
             );
         }
 
-        const activeMembers = members.filter(m => m.status === "active" && m.member_email !== host.email);
-        const pendingMembers = members.filter(m => m.status === "pending" && m.member_email !== host.email);
+        if (isLoadingMembers) {
+            return (
+                <div className="team-empty-state" role="status" aria-live="polite">
+                    <p>{t.loadingMembers}</p>
+                </div>
+            );
+        }
 
-        if (activeMembers.length === 0 && pendingMembers.length === 0) {
+        const visibleMembers = members
+            .filter(m => m.member_email !== host.email && (m.status === "active" || m.status === "pending"))
+            .sort((a, b) => (a.status === b.status ? 0 : a.status === "active" ? -1 : 1));
+
+        if (visibleMembers.length === 0) {
             return (
                 <div className="team-empty-state">
                     <p>{t.emptyState}</p>
@@ -142,20 +245,20 @@ const HostTeam = () => {
         }
 
         return (
-            <>
-                {activeMembers.length > 0 && (
-                    <div className="team-card">
-                        <div className="team-card-header">{t.activeMembers}</div>
-                        {activeMembers.map(renderMemberRow)}
+            <div className="team-card">
+                <div className="team-table" role="table">
+                    <div className="team-table-header" role="row">
+                        <span className="team-row-cell" role="columnheader">{t.columnCohost}</span>
+                        <span className="team-row-cell" role="columnheader">{t.columnRole}</span>
+                        <span className="team-row-cell" role="columnheader">{t.columnPermissions}</span>
+                        <span className="team-row-cell" role="columnheader">{t.columnStatus}</span>
+                        <span className="team-row-cell" role="columnheader">{t.columnActions}</span>
                     </div>
-                )}
-                {pendingMembers.length > 0 && (
-                    <div className="team-card">
-                        <div className="team-card-header">{t.pendingInvitations}</div>
-                        {pendingMembers.map(renderMemberRow)}
-                    </div>
-                )}
-            </>
+                    {visibleMembers.map(member => (
+                        <TeamMemberRow key={member.id} member={member} t={t} onRemove={handleRemoveConfirm} />
+                    ))}
+                </div>
+            </div>
         );
     };
 

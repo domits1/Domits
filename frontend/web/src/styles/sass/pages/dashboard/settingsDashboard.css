@@ -684,6 +684,9 @@ dialog.team-modal .team-cancel-btn:hover {
 }
 
 .team-page .team-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 0.72rem;
     font-weight: 600;
     border-radius: 999px;
@@ -701,6 +704,204 @@ dialog.team-modal .team-cancel-btn:hover {
     background: #dcfce7;
     color: #166534;
     border-color: #86efac;
+}
+
+.team-page .team-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+/* ─── Team member table ──────────────────────────────────────────────────── */
+
+.team-page .team-table {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-page .team-table-header,
+.team-page .team-table-row {
+    display: grid;
+    grid-template-columns: 2.5fr 1.2fr 2fr 1fr 0.6fr;
+    align-items: center;
+    gap: 12px;
+}
+
+.team-page .team-table-header {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9ca3af;
+    padding: 0 4px 10px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.team-page .team-table-row {
+    padding: 12px 4px;
+}
+
+.team-page .team-table-row + .team-table-row {
+    border-top: 1px solid #f3f4f6;
+}
+
+.team-page .team-row-cohost {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.team-page .team-row-cohost .team-member-name {
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+
+.team-page .team-member-avatar--sm {
+    width: 36px;
+    height: 36px;
+}
+
+.team-page .team-row-actions {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Role badges: low-saturation, distinct per role, gray fallback via the
+   base .team-role-badge rule above when a role has no color mapped. */
+.team-page .team-role-badge--general-manager {
+    background: #e0e7ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
+}
+
+.team-page .team-role-badge--reservation-manager {
+    background: #dbeafe;
+    color: #1e40af;
+    border-color: #bfdbfe;
+}
+
+.team-page .team-role-badge--guest-experience-manager {
+    background: #fce7f3;
+    color: #9d174d;
+    border-color: #fbcfe8;
+}
+
+.team-page .team-role-badge--financial-manager {
+    background: #ccfbf1;
+    color: #0f766e;
+    border-color: #99f6e4;
+}
+
+.team-page .team-role-badge--distribution-manager {
+    background: #ede9fe;
+    color: #6d28d9;
+    border-color: #ddd6fe;
+}
+
+.team-page .team-role-badge--revenue-manager {
+    background: #cffafe;
+    color: #155e75;
+    border-color: #a5f3fc;
+}
+
+.team-page .team-role-badge--sales-manager {
+    background: #ffedd5;
+    color: #9a3412;
+    border-color: #fed7aa;
+}
+
+.team-page .team-role-badge--property-operations-manager {
+    background: #e7e5e4;
+    color: #44403c;
+    border-color: #d6d3d1;
+}
+
+.team-page .team-permissions-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.team-page .team-permission-chip {
+    font-size: 0.72rem;
+    color: #4b5563;
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 6px;
+    padding: 2px 6px;
+    white-space: nowrap;
+}
+
+.team-page .team-permission-more {
+    display: none;
+    font-size: 0.72rem;
+    color: #9ca3af;
+    font-weight: 600;
+}
+
+.team-page .team-permissions-empty {
+    color: #d1d5db;
+    font-size: 0.85rem;
+}
+
+.team-page .team-row-menu-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.team-page .team-row-menu-btn:hover,
+.team-page .team-row-menu-btn[aria-expanded="true"] {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.team-page .team-row-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    min-width: 140px;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.team-page .team-row-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    color: #374151;
+    cursor: pointer;
+}
+
+.team-page .team-row-menu-item:hover {
+    background: #f3f4f6;
+}
+
+.team-page .team-row-menu-item--danger {
+    color: #dc2626;
+}
+
+.team-page .team-row-menu-item--danger:hover {
+    background: #fef2f2;
 }
 
 .team-page .team-remove-btn {
@@ -809,6 +1010,51 @@ dialog.team-modal h3 {
     dialog.team-modal .team-cancel-btn {
         width: 100%;
         text-align: center;
+    }
+
+    .team-page .team-table-header {
+        display: none;
+    }
+
+    .team-page .team-table-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 14px 4px;
+    }
+
+    .team-page .team-row-cell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .team-page .team-row-cohost {
+        justify-content: flex-start;
+    }
+
+    .team-page .team-row-role::before,
+    .team-page .team-row-permissions::before,
+    .team-page .team-row-status::before {
+        content: attr(data-label);
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        flex-shrink: 0;
+    }
+
+    .team-page .team-row-actions {
+        justify-content: flex-end;
+    }
+
+    .team-page .team-permission-chip--overflow {
+        display: none;
+    }
+
+    .team-page .team-permissions-list .team-permission-more {
+        display: inline-flex;
     }
 }
 
