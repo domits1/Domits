@@ -1189,8 +1189,8 @@ ErrorCallout.propTypes = {
   }),
 };
 
-const SectionCard = ({ title, description, actions, state, children }) => (
-  <section className="channex-diagnostics-card">
+const SectionCard = ({ title, description, actions, state, children, className }) => (
+  <section className={["channex-diagnostics-card", className].filter(Boolean).join(" ")}>
     <div className="channex-diagnostics-card-header">
       <div>
         <h3>{title}</h3>
@@ -1214,6 +1214,7 @@ SectionCard.propTypes = {
     errorDetails: PropTypes.object,
   }),
   children: PropTypes.node,
+  className: PropTypes.string,
 };
 
 const getConnectButtonLabel = ({ loading, isConnected }) => {
@@ -1726,7 +1727,8 @@ function ChannexDiagnosticsPanel({ userId }) {
       <SectionCard
         title="Channex credentials"
         description="Connect this Domits host account to Channex with a user API key generated in the Channex profile settings."
-        state={connectState}>
+        state={connectState}
+        className="channex-diagnostics-card--credentials channex-diagnostics-card--align-top">
         <form
           className="host-integrations-field-grid"
           onSubmit={(event) => {
@@ -1902,6 +1904,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         title="Current mapping readiness"
         description="Readiness after setup save, or the latest readiness loaded for the selected Domits property."
         state={targetsState}
+        className="channex-diagnostics-card--align-top"
       >
         {targetsState.data ? (
           <>
