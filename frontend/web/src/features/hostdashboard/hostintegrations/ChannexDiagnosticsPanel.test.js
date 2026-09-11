@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import ChannexDiagnosticsPanel from "./ChannexDiagnosticsPanel";
 import {
   cancelBooking,
+  connectChannex,
   getChannexAriPreview,
   getLatestChannexSyncEvidence,
   getChannexStatus,
@@ -20,6 +21,7 @@ import {
 
 jest.mock("./channexApi", () => ({
   cancelBooking: jest.fn(),
+  connectChannex: jest.fn(),
   getChannexAriPayloadPreview: jest.fn(),
   getChannexAriPreview: jest.fn(),
   getChannexAriTargets: jest.fn(),
@@ -512,5 +514,108 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
       includeRawPayload: false,
       limit: "50",
     });
+  });
+});
+
+describe("ChannexDiagnosticsPanel connect form", () => {
+  const openSetupTab = async () => {
+    await renderDiagnosticsPanel();
+    fireEvent.click(screen.getByRole("button", { name: "Setup & Connection" }));
+  };
+
+  const submitConnectForm = ({ apiKey, displayName } = {}) => {
+    if (apiKey !== undefined) {
+      fireEvent.change(screen.getByLabelText("Channex API key"), { target: { value: apiKey } });
+    }
+    if (displayName !== undefined) {
+      fireEvent.change(screen.getByLabelText("Display name (optional)"), { target: { value: displayName } });
+    }
+    fireEvent.click(screen.getByRole("button", { name: /^(Connect|Reconnect)$/ }));
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getChannexStatus.mockResolvedValue({ status: "NOT_CONNECTED" });
+    getLatestChannexSyncEvidence.mockResolvedValue({ item: null });
+    listChannexBookingRevisions.mockResolvedValue({ revisions: [], count: 0 });
+  });
+
+  test("sends the entered credentials and refreshes status on a verified connection", async () => {
+    connectChannex.mockResolvedValue({
+      connected: true,
+      validationState: "CONNECTED",
+      providerStatus: "ACTIVE",
+      integration: { id: "integration-account-1" },
+    });
+
+    await openSetupTab();
+    submitConnectForm({ apiKey: " key-1 ", displayName: "Staging" });
+
+    await waitFor(() => expect(connectChannex).toHaveBeenCalledTimes(1));
+    expect(connectChannex).toHaveBeenCalledWith({
+      userId: "user-1",
+      apiKey: "key-1",
+      displayName: "Staging",
+    });
+    expect(await screen.findByText("Channex credentials verified and connected.")).toBeTruthy();
+    await waitFor(() => expect(getChannexStatus).toHaveBeenCalledTimes(2));
+    expect(screen.getByLabelText("Channex API key")).toHaveValue("");
+  });
+
+  test("does not call the API when the key is blank", async () => {
+    await openSetupTab();
+    submitConnectForm({ apiKey: "   " });
+
+    expect(await screen.findByText("Enter a Channex API key before connecting.")).toBeTruthy();
+    expect(connectChannex).not.toHaveBeenCalled();
+  });
+
+  test("reports a rejected key as a failure even though the request returned 200", async () => {
+    connectChannex.mockResolvedValue({
+      connected: false,
+      validationState: "VALIDATION_FAILED",
+      providerStatus: "UNAUTHORIZED",
+      integration: { id: "integration-account-1" },
+    });
+
+    await openSetupTab();
+    submitConnectForm({ apiKey: "bad-key" });
+
+    await waitFor(() => expect(connectChannex).toHaveBeenCalledTimes(1));
+    expect(
+      await screen.findByText(
+        "Channex rejected these credentials. The key was stored, but the integration is not usable yet."
+      )
+    ).toBeTruthy();
+    expect(screen.queryByText("Channex credentials verified and connected.")).toBeNull();
+    expect(screen.getByText("UNAUTHORIZED")).toBeTruthy();
+    expect(screen.getByLabelText("Channex API key")).toHaveValue("bad-key");
+  });
+
+  test("surfaces a failed request through the shared error callout", async () => {
+    const error = new Error("POST /integrations/channex/connect failed with status 503: secret store down");
+    error.status = 503;
+    connectChannex.mockRejectedValueOnce(error);
+
+    await openSetupTab();
+    submitConnectForm({ apiKey: "key-1" });
+
+    expect(await screen.findByText(/POST \/integrations\/channex\/connect failed with status 503/)).toBeTruthy();
+  });
+
+  test("labels the action Reconnect once the integration is already connected", async () => {
+    getChannexStatus.mockResolvedValue({ status: "CONNECTED" });
+
+    await openSetupTab();
+
+    expect(screen.getByRole("button", { name: "Reconnect" })).toBeTruthy();
+  });
+
+  test("keeps the api key masked until the reveal toggle is used", async () => {
+    await openSetupTab();
+
+    expect(screen.getByLabelText("Channex API key")).toHaveProperty("type", "password");
+    fireEvent.click(screen.getByRole("button", { name: "Show API key" }));
+    expect(screen.getByLabelText("Channex API key")).toHaveProperty("type", "text");
   });
 });

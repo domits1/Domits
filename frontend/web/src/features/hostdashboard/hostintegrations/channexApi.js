@@ -130,6 +130,16 @@ export const getChannexAdminAccess = ({ userId }) =>
     query: { userId },
   });
 
+export const connectChannex = ({ userId, apiKey, displayName }) =>
+  requestChannex("/integrations/channex/connect", {
+    method: "POST",
+    body: {
+      userId,
+      credentials: { apiKey },
+      ...(displayName ? { displayName } : {}),
+    },
+  });
+
 export const getChannexAriTargets = ({ userId, domitsPropertyId }) =>
   requestChannex("/integrations/channex/ari-targets", {
     query: { userId, domitsPropertyId },
