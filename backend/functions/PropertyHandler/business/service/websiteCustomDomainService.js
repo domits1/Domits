@@ -23,8 +23,12 @@ const CLOUDFRONT_DOMAIN_STATUS_ACTIVE = "active";
 const DNS_STATUS_VALID = "valid-configuration";
 const SDK_ERROR_DOMAIN_IN_USE = "CNAMEAlreadyExists";
 const SDK_ERROR_TENANT_NAME_EXISTS = "EntityAlreadyExists";
-const EVENT_DOMAIN_REQUESTED = "WEBSITE_DOMAIN_REQUESTED";
-const EVENT_DOMAIN_STATUS_CHANGED = "WEBSITE_DOMAIN_STATUS_CHANGED";
+const EVENT_DOMAIN_REQUESTED = "SITE_DOMAIN_REQUESTED";
+const EVENT_TYPE_BY_STATUS = Object.freeze({
+  [DOMAIN_STATUS.VERIFIED]: "SITE_DOMAIN_VERIFIED",
+  [DOMAIN_STATUS.ACTIVE]: "SITE_DOMAIN_ACTIVATED",
+  [DOMAIN_STATUS.FAILED]: "SITE_DOMAIN_FAILED",
+});
 const CONFIG_ENV_NAMES = Object.freeze({
   distributionId: "DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID",
   connectionGroupId: "DIRECT_BOOKING_WEBSITE_CLOUDFRONT_CONNECTION_GROUP_ID",
@@ -214,6 +218,7 @@ export class WebsiteCustomDomainService {
 
     const { tenant, lastError } = await this.createOrAdoptTenant({ site, domain: normalizedDomain });
     const status = tenant ? DOMAIN_STATUS.PENDING : DOMAIN_STATUS.FAILED;
+    const reason = tenant ? "tenant_created" : "domain_in_use_elsewhere";
     const record = await this.domainRepository.ensureDomain({
       siteId: site.id,
       domain: normalizedDomain,
@@ -224,7 +229,7 @@ export class WebsiteCustomDomainService {
         previous: existingRecord?.verificationDetails,
         domain: normalizedDomain,
         tenant,
-        reason: tenant ? "tenant_created" : "domain_in_use_elsewhere",
+        reason,
         lastError,
       }),
       lastCheckedAt: this.clock(),
@@ -236,8 +241,18 @@ export class WebsiteCustomDomainService {
       status,
       tenantId: tenant?.id || null,
     });
+    await this.recordStatusEventSafely({ site, domain: normalizedDomain, previousStatus: null, status, reason });
 
     return record;
+  }
+
+  async recordStatusEventSafely({ site, domain, previousStatus, status, reason }) {
+    const eventType = status === previousStatus ? null : EVENT_TYPE_BY_STATUS[status];
+    if (!eventType) {
+      return;
+    }
+
+    await this.recordEventSafely(site, eventType, { siteId: site.id, domain, previousStatus, status, reason });
   }
 
   async readCloudFrontState({ tenantId, domain }) {
@@ -316,15 +331,13 @@ export class WebsiteCustomDomainService {
       })
     );
 
-    if (status !== record.status) {
-      await this.recordEventSafely(site, EVENT_DOMAIN_STATUS_CHANGED, {
-        siteId: site.id,
-        domain: record.domain,
-        previousStatus: record.status,
-        status,
-        reason,
-      });
-    }
+    await this.recordStatusEventSafely({
+      site,
+      domain: record.domain,
+      previousStatus: record.status,
+      status,
+      reason,
+    });
 
     return updatedRecord;
   }
