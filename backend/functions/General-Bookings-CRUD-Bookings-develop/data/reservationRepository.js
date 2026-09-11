@@ -468,9 +468,9 @@ class ReservationRepository {
     });
   }
 
-  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
-    const client = await Database.getInstance();
-    return await client
+  // executor is either a Database client or a transaction manager — both expose getRepository().
+  async findOverlappingInquiries(executor, { propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
+    return executor
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :propertyId", { propertyId })
@@ -479,6 +479,41 @@ class ReservationRepository {
       .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
       .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
       .getMany();
+  }
+
+  async acceptInquiryWithOverlapDecline({ bookingId, propertyId, arrivalDateMs, departureDateMs }) {
+    const client = await Database.getInstance();
+    return client.transaction(async (manager) => {
+      const statusUpdate = await manager
+        .createQueryBuilder()
+        .update(Booking)
+        .set({ status: "Awaiting Payment" })
+        .where("id = :id", { id: bookingId })
+        .andWhere("status = :inquiryStatus", { inquiryStatus: "Inquiry" })
+        .execute();
+
+      if (Number(statusUpdate?.affected || 0) !== 1) {
+        return { accepted: false, declinedCount: 0 };
+      }
+
+      const overlapping = await this.findOverlappingInquiries(manager, {
+        propertyId,
+        arrivalDateMs,
+        departureDateMs,
+        excludeBookingId: bookingId,
+      });
+
+      for (const overlap of overlapping) {
+        await manager.createQueryBuilder().update(Booking).set({ status: "Declined" }).where("id = :id", { id: overlap.id }).execute();
+      }
+
+      return { accepted: true, declinedCount: overlapping.length };
+    });
+  }
+
+  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
+    const client = await Database.getInstance();
+    return this.findOverlappingInquiries(client, { propertyId, arrivalDateMs, departureDateMs, excludeBookingId });
   }
 
   async updateBookingDates(id, arrivalDateMs, departureDateMs) {
