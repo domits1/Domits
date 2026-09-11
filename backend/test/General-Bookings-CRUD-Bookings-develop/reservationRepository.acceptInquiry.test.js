@@ -7,9 +7,18 @@ const Database = require("database").default;
 const ReservationRepository =
   require("../../functions/General-Bookings-CRUD-Bookings-develop/data/reservationRepository.js").default;
 
-const createBuilder = (result) => {
+const createSelectBuilder = (rows) => {
   const builder = {};
-  ["update", "set", "where", "andWhere", "getMany", "getRepository", "createQueryBuilder"].forEach((method) => {
+  ["setLock", "where", "andWhere"].forEach((method) => {
+    builder[method] = jest.fn(() => builder);
+  });
+  builder.getMany = jest.fn(async () => rows);
+  return builder;
+};
+
+const createUpdateBuilder = (result = { affected: 1 }) => {
+  const builder = {};
+  ["update", "set", "where"].forEach((method) => {
     builder[method] = jest.fn(() => builder);
   });
   builder.execute = jest.fn(async () => result);
@@ -24,16 +33,19 @@ const OVERLAP_ARGS = {
 };
 
 describe("ReservationRepository accept-inquiry transaction", () => {
-  test("transitions the booking and declines every overlapping inquiry in one transaction", async () => {
-    const statusUpdate = createBuilder({ affected: 1 });
-    const overlapSelect = createBuilder(null);
-    overlapSelect.getMany = jest.fn(async () => [{ id: "overlap-1" }, { id: "overlap-2" }]);
-    const declineOverlap1 = createBuilder({ affected: 1 });
-    const declineOverlap2 = createBuilder({ affected: 1 });
+  test("locks the full conflict set before writing anything, then accepts the target and declines the rest", async () => {
+    const selectBuilder = createSelectBuilder([
+      { id: "booking-1", status: "Inquiry" },
+      { id: "overlap-1", status: "Inquiry" },
+      { id: "overlap-2", status: "Inquiry" },
+    ]);
+    const targetUpdate = createUpdateBuilder({ affected: 1 });
+    const declineOverlap1 = createUpdateBuilder({ affected: 1 });
+    const declineOverlap2 = createUpdateBuilder({ affected: 1 });
 
     const manager = {
-      createQueryBuilder: jest.fn().mockReturnValueOnce(statusUpdate).mockReturnValueOnce(declineOverlap1).mockReturnValueOnce(declineOverlap2),
-      getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => overlapSelect) })),
+      getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => selectBuilder) })),
+      createQueryBuilder: jest.fn().mockReturnValueOnce(targetUpdate).mockReturnValueOnce(declineOverlap1).mockReturnValueOnce(declineOverlap2),
     };
     const transaction = jest.fn(async (callback) => callback(manager));
     Database.getInstance.mockResolvedValue({ transaction });
@@ -42,20 +54,30 @@ describe("ReservationRepository accept-inquiry transaction", () => {
     const result = await repository.acceptInquiryWithOverlapDecline(OVERLAP_ARGS);
 
     expect(result).toEqual({ accepted: true, declinedCount: 2 });
-    expect(statusUpdate.where).toHaveBeenCalledWith("id = :id", { id: "booking-1" });
-    expect(statusUpdate.andWhere).toHaveBeenCalledWith("status = :inquiryStatus", { inquiryStatus: "Inquiry" });
-    expect(statusUpdate.set).toHaveBeenCalledWith({ status: "Awaiting Payment" });
+
+    // the locked read must happen before any write
+    expect(manager.getRepository).toHaveBeenCalled();
+    expect(selectBuilder.setLock).toHaveBeenCalledWith("pessimistic_write");
+    expect(selectBuilder.where).toHaveBeenCalledWith("booking.property_id = :propertyId", { propertyId: "property-1" });
+    expect(selectBuilder.andWhere).toHaveBeenCalledWith("booking.status = :status", { status: "Inquiry" });
+    expect(selectBuilder.andWhere).toHaveBeenCalledWith("booking.arrivaldate < :departureDateMs", { departureDateMs: 2000 });
+    expect(selectBuilder.andWhere).toHaveBeenCalledWith("booking.departuredate > :arrivalDateMs", { arrivalDateMs: 1000 });
+
+    expect(targetUpdate.set).toHaveBeenCalledWith({ status: "Awaiting Payment" });
+    expect(targetUpdate.where).toHaveBeenCalledWith("id = :id", { id: "booking-1" });
     expect(declineOverlap1.set).toHaveBeenCalledWith({ status: "Declined" });
     expect(declineOverlap1.where).toHaveBeenCalledWith("id = :id", { id: "overlap-1" });
     expect(declineOverlap2.where).toHaveBeenCalledWith("id = :id", { id: "overlap-2" });
   });
 
-  test("returns accepted:false without touching overlaps when the booking is no longer Inquiry", async () => {
-    const statusUpdate = createBuilder({ affected: 0 });
-    const overlapCreateQueryBuilder = jest.fn();
+  test("returns accepted:false without writing anything when the locked read no longer finds the target as Inquiry", async () => {
+    // simulates a concurrent transaction having already accepted/declined this booking
+    // before this one acquired the lock
+    const selectBuilder = createSelectBuilder([{ id: "overlap-1", status: "Inquiry" }]);
+    const createQueryBuilder = jest.fn();
     const manager = {
-      createQueryBuilder: jest.fn().mockReturnValue(statusUpdate),
-      getRepository: jest.fn(() => ({ createQueryBuilder: overlapCreateQueryBuilder })),
+      getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => selectBuilder) })),
+      createQueryBuilder,
     };
     const transaction = jest.fn(async (callback) => callback(manager));
     Database.getInstance.mockResolvedValue({ transaction });
@@ -64,21 +86,40 @@ describe("ReservationRepository accept-inquiry transaction", () => {
     const result = await repository.acceptInquiryWithOverlapDecline(OVERLAP_ARGS);
 
     expect(result).toEqual({ accepted: false, declinedCount: 0 });
-    expect(overlapCreateQueryBuilder).not.toHaveBeenCalled();
+    expect(createQueryBuilder).not.toHaveBeenCalled();
   });
 
-  test("propagates a failure from declining an overlap so the transaction rolls back the status change too", async () => {
-    const statusUpdate = createBuilder({ affected: 1 });
-    const overlapSelect = createBuilder(null);
-    overlapSelect.getMany = jest.fn(async () => [{ id: "overlap-1" }]);
-    const declineOverlap1 = createBuilder(null);
+  test("returns accepted:true with zero declines when there are no overlapping inquiries", async () => {
+    const selectBuilder = createSelectBuilder([{ id: "booking-1", status: "Inquiry" }]);
+    const targetUpdate = createUpdateBuilder({ affected: 1 });
+    const manager = {
+      getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => selectBuilder) })),
+      createQueryBuilder: jest.fn().mockReturnValueOnce(targetUpdate),
+    };
+    const transaction = jest.fn(async (callback) => callback(manager));
+    Database.getInstance.mockResolvedValue({ transaction });
+    const repository = new ReservationRepository();
+
+    const result = await repository.acceptInquiryWithOverlapDecline(OVERLAP_ARGS);
+
+    expect(result).toEqual({ accepted: true, declinedCount: 0 });
+    expect(manager.createQueryBuilder).toHaveBeenCalledTimes(1);
+  });
+
+  test("propagates a failure from declining an overlap so the transaction rolls back the target's acceptance too", async () => {
+    const selectBuilder = createSelectBuilder([
+      { id: "booking-1", status: "Inquiry" },
+      { id: "overlap-1", status: "Inquiry" },
+    ]);
+    const targetUpdate = createUpdateBuilder({ affected: 1 });
+    const declineOverlap1 = createUpdateBuilder();
     declineOverlap1.execute = jest.fn(async () => {
       throw new Error("constraint violation");
     });
 
     const manager = {
-      createQueryBuilder: jest.fn().mockReturnValueOnce(statusUpdate).mockReturnValueOnce(declineOverlap1),
-      getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => overlapSelect) })),
+      getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => selectBuilder) })),
+      createQueryBuilder: jest.fn().mockReturnValueOnce(targetUpdate).mockReturnValueOnce(declineOverlap1),
     };
     const transaction = jest.fn(async (callback) => callback(manager));
     Database.getInstance.mockResolvedValue({ transaction });
