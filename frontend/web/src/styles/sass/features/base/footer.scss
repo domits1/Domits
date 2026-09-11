@@ -101,6 +101,24 @@ $breakpoint-sm: 480px;
     }
   }
 
+  .footer-social-section {
+    .footer-section {
+      text-align: center;
+    }
+
+    .footer-lists {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 20px;
+      justify-items: center;
+      margin: 0 auto;
+    }
+
+    .footer-lists li {
+      line-height: 0;
+    }
+  }
+
   .footer-section,
   .footer-endsection {
     @media screen and (max-width: $breakpoint-md) {

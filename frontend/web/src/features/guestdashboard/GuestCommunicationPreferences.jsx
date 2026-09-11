@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { LanguageContext } from "../../context/LanguageContext";
 import NotificationPreferencesForm from "../../components/settings/NotificationPreferencesForm";
+import useCommunicationPreferences from "../../hooks/useCommunicationPreferences";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
@@ -15,6 +16,7 @@ const GuestCommunicationPreferences = () => {
     const { language } = useContext(LanguageContext);
     const settingsContent = contentByLanguage[language]?.settings ?? contentByLanguage.en.settings;
     const t = settingsContent.communicationPreferences;
+    const communicationPreferences = useCommunicationPreferences("guest");
 
     return (
         <div className="personal-data-page">
@@ -29,7 +31,7 @@ const GuestCommunicationPreferences = () => {
                 <p className="personal-data-subtitle">{t.subtitle}</p>
             </div>
 
-            <NotificationPreferencesForm labels={t} />
+            <NotificationPreferencesForm labels={t} {...communicationPreferences} />
         </div>
     );
 };

@@ -34,6 +34,12 @@ export const buildStayNightKeys = (checkIn, checkOut) => {
 
 export const countStayNights = (checkIn, checkOut) => buildStayNightKeys(checkIn, checkOut).length;
 
+export const quoteMatchesSelection = (quote, { checkIn, checkOut, guests }) =>
+  Boolean(quote) &&
+  quote.checkIn === checkIn &&
+  quote.checkOut === checkOut &&
+  Number(quote.guestCount) === Number(guests);
+
 export const hasBlockedNight = (checkIn, checkOut, blockedDateKeys) =>
   buildStayNightKeys(checkIn, checkOut).some((nightKey) => blockedDateKeys?.has?.(nightKey) === true);
 

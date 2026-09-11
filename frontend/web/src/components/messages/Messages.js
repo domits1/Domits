@@ -1,13 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { UserProvider, useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
+import { getIdToken } from "../../services/getAccessToken";
 
 import useFetchContacts from "../../features/hostdashboard/hostmessages/hooks/useFetchContacts";
 
 import ContactList from "./ContactList";
 import ChatScreen from "./ChatScreen";
+import { markThreadRead } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import NewContactModal from "./NewContactModal";
 import ListingPanel from "./ListingPanel";
 import { getMessageCapabilities } from "./messageCapabilities";
@@ -59,6 +61,7 @@ const MessagesContent = ({ dashboardType }) => {
   const isTablet = screenWidth >= 768 && screenWidth < 1280;
 
   const { contacts, pendingContacts, loading: contactsLoading, setContacts } = useFetchContacts(userId, dashboardType);
+  const contactsRef = useRef(contacts);
 
   const syncGuestBookingUrl = (bookingId) => {
     if (dashboardType !== "guest") return;
@@ -249,6 +252,38 @@ const MessagesContent = ({ dashboardType }) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    contactsRef.current = contacts;
+  }, [contacts]);
+
+  useEffect(() => {
+    if (!selectedThreadId) return;
+
+    const matchedContact = (contactsRef.current || []).find((c) => c?.threadId === selectedThreadId);
+    if (matchedContact && !matchedContact.unreadCount) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const idToken = await getIdToken();
+        await markThreadRead(selectedThreadId, idToken);
+        if (cancelled) return;
+        setContacts((prev) =>
+          (Array.isArray(prev) ? prev : []).map((c) =>
+            c?.threadId === selectedThreadId ? { ...c, unreadCount: 0 } : c
+          )
+        );
+      } catch {
+        // Mark-read failures should not interrupt viewing the conversation.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedThreadId, setContacts]);
 
   useEffect(() => {
     let cancelled = false;

@@ -193,6 +193,37 @@ class MessageRepository {
 
     return messages;
   }
+
+  async markThreadMessagesRead(threadId, recipientId) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(UnifiedMessage)
+      .set({ isRead: true })
+      .where({ threadId, recipientId, isRead: false })
+      .execute();
+    return result?.affected ?? 0;
+  }
+
+  async getUnreadCountsForThreads(threadIds, recipientId) {
+    if (!Array.isArray(threadIds) || threadIds.length === 0) return {};
+    const client = await Database.getInstance();
+    const rows = await client
+      .getRepository(UnifiedMessage)
+      .createQueryBuilder("message")
+      .select("message.threadId", "threadId")
+      .addSelect("COUNT(*)", "count")
+      .where("message.threadId IN (:...threadIds)", { threadIds })
+      .andWhere("message.recipientId = :recipientId", { recipientId })
+      .andWhere("message.isRead = :isRead", { isRead: false })
+      .groupBy("message.threadId")
+      .getRawMany();
+
+    return rows.reduce((acc, row) => {
+      acc[row.threadId] = Number(row.count);
+      return acc;
+    }, {});
+  }
 }
 
 export default MessageRepository;

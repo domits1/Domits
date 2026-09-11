@@ -243,3 +243,86 @@
   font-size: 0.82rem;
   color: var(--website-quote-muted);
 }
+
+.notice {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(30, 49, 80, 0.06);
+}
+
+.noticeMessage {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.form {
+  display: grid;
+  gap: clamp(10px, 1.4vw, 14px);
+  padding-top: clamp(10px, 1.4vw, 14px);
+  border-top: 1px solid var(--website-quote-line);
+}
+
+.formField {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.input {
+  min-height: 44px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--website-quote-line);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--website-quote-ink);
+  font: inherit;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--website-quote-accent);
+  outline-offset: 2px;
+}
+
+.input:disabled {
+  opacity: 0.6;
+}
+
+.inputInvalid {
+  border-color: #9f3a2b;
+}
+
+.success {
+  display: grid;
+  gap: 8px;
+  padding: clamp(12px, 1.6vw, 16px);
+  border-radius: 14px;
+  background: rgba(30, 49, 80, 0.06);
+}
+
+.successTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.successLabel {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--website-quote-muted);
+}
+
+.successReference {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.successNote {
+  margin: 0;
+  font-weight: 600;
+}

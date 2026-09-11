@@ -21,3 +21,10 @@ export const extractLastPathSegment = (path) => {
 
   return parts.at(-1) ?? null;
 };
+
+const threadIdForReadPattern = /\/threads\/([^/]+)\/read/;
+
+export const extractThreadIdForRead = (path) => {
+  const match = threadIdForReadPattern.exec(String(path || ""));
+  return match?.[1] || null;
+};
