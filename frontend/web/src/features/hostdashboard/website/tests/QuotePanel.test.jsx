@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import QuotePanel from "../rendering/booking/QuotePanel";
 import { QUOTE_STATUS } from "../rendering/booking/useWebsiteQuote";
 import { BOOKING_REQUEST_STATUS } from "../rendering/booking/useWebsiteBookingRequest";
+import { formatStayDate } from "../rendering/booking/quoteSelection";
 
 const QUOTE = {
   quoteId: "quote_1",
@@ -309,9 +310,26 @@ describe("QuotePanel", () => {
       expect(screen.queryByRole("button", { name: /add a guest/i })).not.toBeInTheDocument();
     });
 
+    it("summarises the booked stay from the result, not the current selection", () => {
+      renderQuotedPanel({
+        range: { checkIn: "2026-11-01", checkOut: "2026-11-03" },
+        bookingState: { status: BOOKING_REQUEST_STATUS.SUCCESS, result: RESULT, error: null },
+      });
+
+      expect(screen.getByText(`${formatStayDate("2026-10-10")} → ${formatStayDate("2026-10-14")}`)).toBeInTheDocument();
+      expect(screen.getByText("4 nights")).toBeInTheDocument();
+      expect(screen.queryByText(new RegExp(formatStayDate("2026-11-01")))).not.toBeInTheDocument();
+    });
+
     it("shows a rejected contact on the form", () => {
       renderQuotedPanel({ bookingState: bookingError("invalid_guest_contact", "Please provide a valid email.") });
       expect(screen.getByRole("alert")).toHaveTextContent("Please provide a valid email.");
+      expect(requestButton()).toBeInTheDocument();
+    });
+
+    it("explains a refreshed price above the form", () => {
+      renderQuotedPanel({ bookingState: bookingError("quote_expired", "", 409) });
+      expect(screen.getByText(/price changed/i)).toBeInTheDocument();
       expect(requestButton()).toBeInTheDocument();
     });
 

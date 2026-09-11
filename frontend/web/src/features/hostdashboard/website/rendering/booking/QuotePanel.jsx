@@ -30,8 +30,12 @@ const resolveStaySummary = ({ checkIn, checkOut }) => {
   return `${formatStayDate(checkIn)} → ${formatStayDate(checkOut)}`;
 };
 
-const resolveStaleNotice = (staleReason) =>
-  staleReason === QUOTE_STALE_REASONS.EXPIRED ? "Price expired — check again" : "Selection changed — check again";
+const STALE_NOTICES = Object.freeze({
+  [QUOTE_STALE_REASONS.EXPIRED]: "Price expired — check again",
+  [QUOTE_STALE_REASONS.REJECTED]: "Price needs re-checking — check again",
+});
+
+const resolveStaleNotice = (staleReason) => STALE_NOTICES[staleReason] || "Selection changed — check again";
 
 const deriveQuoteView = (quoteState) => {
   const isLoading = quoteState.status === QUOTE_STATUS.LOADING;
@@ -62,6 +66,9 @@ const deriveBookingView = (bookingState) => {
     isSubmitting: bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING,
     bookingSucceeded: bookingState.status === BOOKING_REQUEST_STATUS.SUCCESS && Boolean(bookingState.result),
     bookingPanelError: bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.PANEL ? bookingPresentation : null,
+    bookingQuoteNotice: bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.QUOTE ? bookingPresentation : null,
+    bookingDatesError:
+      bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.DATES ? bookingPresentation.message : "",
     bookingContactError:
       bookingPresentation?.scope === BOOKING_REQUEST_ERROR_SCOPES.CONTACT ? bookingPresentation.message : "",
   };
@@ -152,7 +159,7 @@ QuotePanelAlert.propTypes = {
 const toAlertPresentation = (bookingPresentation) => ({
   message: bookingPresentation.message,
   canRetry: bookingPresentation.recovery === BOOKING_REQUEST_RECOVERY.RETRY,
-  showContact: false,
+  showContact: bookingPresentation.showContact,
   showReference: bookingPresentation.showReference,
 });
 
@@ -182,6 +189,23 @@ StayBlock.propTypes = {
   datesError: PropTypes.string.isRequired,
 };
 
+function BookingQuoteNotice({ notice, requestId }) {
+  return (
+    <div className={styles.notice} role="status">
+      <p className={styles.noticeMessage}>{notice.message}</p>
+      {notice.showReference && requestId ? <p className={styles.reference}>{`Reference: ${requestId}`}</p> : null}
+    </div>
+  );
+}
+
+BookingQuoteNotice.propTypes = {
+  notice: PropTypes.shape({
+    message: PropTypes.string.isRequired,
+    showReference: PropTypes.bool,
+  }).isRequired,
+  requestId: PropTypes.string.isRequired,
+};
+
 function QuotePanelBody({
   guests,
   onGuestsChange,
@@ -190,8 +214,8 @@ function QuotePanelBody({
   quoteView,
   onRequestQuote,
   contactHref,
-  bookingState,
   bookingView,
+  bookingRequestId,
   guest,
   guestErrors,
   onGuestChange,
@@ -201,7 +225,7 @@ function QuotePanelBody({
   showRequestForm,
 }) {
   const { isLoading, isStale, showBreakdown, guestsError, panelError } = quoteView;
-  const { isSubmitting, bookingPanelError, bookingContactError } = bookingView;
+  const { isSubmitting, bookingPanelError, bookingQuoteNotice, bookingContactError } = bookingView;
 
   return (
     <>
@@ -232,10 +256,12 @@ function QuotePanelBody({
         <QuoteBreakdown quote={quoteState.quote} isStale={isStale} staleReason={quoteState.staleReason} />
       ) : null}
 
+      {bookingQuoteNotice ? <BookingQuoteNotice notice={bookingQuoteNotice} requestId={bookingRequestId} /> : null}
+
       {bookingPanelError ? (
         <QuotePanelAlert
           presentation={toAlertPresentation(bookingPanelError)}
-          requestId={bookingState.error?.requestId || ""}
+          requestId={bookingRequestId}
           contactHref={contactHref}
           onRetry={onSubmitBookingRequest}
         />
@@ -268,7 +294,10 @@ const quoteStatePropType = PropTypes.shape({
 
 const bookingStatePropType = PropTypes.shape({
   status: PropTypes.oneOf(Object.values(BOOKING_REQUEST_STATUS)).isRequired,
-  result: PropTypes.shape({}),
+  result: PropTypes.shape({
+    checkIn: PropTypes.string,
+    checkOut: PropTypes.string,
+  }),
   error: PropTypes.shape({
     code: PropTypes.string,
     message: PropTypes.string,
@@ -295,12 +324,13 @@ QuotePanelBody.propTypes = {
   }).isRequired,
   onRequestQuote: PropTypes.func.isRequired,
   contactHref: PropTypes.string,
-  bookingState: bookingStatePropType.isRequired,
   bookingView: PropTypes.shape({
     isSubmitting: PropTypes.bool.isRequired,
     bookingPanelError: PropTypes.shape({}),
+    bookingQuoteNotice: PropTypes.shape({}),
     bookingContactError: PropTypes.string.isRequired,
   }).isRequired,
+  bookingRequestId: PropTypes.string.isRequired,
   guest: guestPropType.isRequired,
   guestErrors: guestPropType.isRequired,
   onGuestChange: PropTypes.func.isRequired,
@@ -325,15 +355,19 @@ export default function QuotePanel({
   onGuestChange = noop,
   onSubmitBookingRequest = noop,
 }) {
-  const checkIn = range?.checkIn || null;
-  const checkOut = range?.checkOut || null;
-  const nights = countStayNights(checkIn, checkOut);
   const quoteView = deriveQuoteView(quoteState);
   const bookingView = deriveBookingView(bookingState);
 
+  const stay = bookingView.bookingSucceeded && bookingState.result.checkIn ? bookingState.result : range;
+  const checkIn = stay?.checkIn || null;
+  const checkOut = stay?.checkOut || null;
+  const nights = countStayNights(checkIn, checkOut);
+
+  const datesError = quoteView.datesError || bookingView.bookingDatesError;
   const hideAction = Boolean(quoteView.panelError?.hideAction || bookingView.bookingPanelError?.hideAction);
   const canRequestQuote = nights > 0 && guests >= 1 && !quoteView.isLoading && !bookingView.isSubmitting;
   const showRequestForm = quoteView.isQuoted && !hideAction;
+  const bookingRequestId = bookingState.error?.requestId || "";
 
   return (
     <aside className={styles.panel} aria-labelledby="website-quote-panel-title">
@@ -347,7 +381,7 @@ export default function QuotePanel({
         nights={nights}
         minimumStay={minimumStay}
         bookingSucceeded={bookingView.bookingSucceeded}
-        datesError={quoteView.datesError}
+        datesError={datesError}
       />
 
       {bookingView.bookingSucceeded ? (
@@ -361,8 +395,8 @@ export default function QuotePanel({
           quoteView={quoteView}
           onRequestQuote={onRequestQuote}
           contactHref={contactHref}
-          bookingState={bookingState}
           bookingView={bookingView}
+          bookingRequestId={bookingRequestId}
           guest={guest}
           guestErrors={guestErrors}
           onGuestChange={onGuestChange}
