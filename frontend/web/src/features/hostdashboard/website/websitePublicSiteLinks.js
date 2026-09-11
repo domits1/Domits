@@ -1,4 +1,5 @@
-const DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com";
+import { getDirectBookingWebsiteFallbackDomainSuffix } from "./directBookingWebsiteSurface";
+
 const WEBSITE_DOMAIN_SLUG_MAX_LENGTH = 40;
 const WEBSITE_DOMAIN_ID_SUFFIX_LENGTH = 8;
 const WEBSITE_DOMAIN_LABEL_MAX_LENGTH = 63;
@@ -8,9 +9,21 @@ const WEBSITE_ID_SUFFIX_SANITIZER_PATTERN = /[^a-z0-9]/g;
 
 const cleanWebsiteText = (value) => String(value || "").replaceAll(/\s+/g, " ").trim();
 
-const getDirectBookingWebsiteFallbackDomainSuffix = () =>
-  cleanWebsiteText(process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX).toLowerCase() ||
-  DEFAULT_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX;
+const normalizeDomainName = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
+
+const isActiveDomainEntry = (domainEntry) =>
+  Boolean(normalizeDomainName(domainEntry?.domain)) &&
+  String(domainEntry?.status || "")
+    .trim()
+    .toUpperCase() === "ACTIVE";
+
+export const resolvePublishedWebsiteLiveDomain = (domains = []) => {
+  const activeDomains = (Array.isArray(domains) ? domains : []).filter(isActiveDomainEntry);
+  return activeDomains.find((domainEntry) => domainEntry?.isPrimary === true) || activeDomains[0] || null;
+};
 
 const trimWebsiteDomainLabelEdges = (value) => {
   const normalizedValue = String(value || "");
@@ -75,7 +88,12 @@ export const buildPublishedWebsitePath = (domain = "", siteId = "", siteName = "
 export const buildWebsitePreviewPath = (draftId) =>
   `/website-preview/${encodeURIComponent(String(draftId || "").trim())}`;
 
-export const buildPublishedWebsiteHref = (domain, siteId = "", domainStatus = "", siteName = "") => {
+export const buildPublishedWebsiteHref = (domain, siteId = "", domainStatus = "", siteName = "", domains = []) => {
+  const liveDomain = resolvePublishedWebsiteLiveDomain(domains);
+  if (liveDomain) {
+    return `https://${normalizeDomainName(liveDomain.domain)}`;
+  }
+
   const normalizedDomain = resolvePublishedWebsiteDomain(domain, siteName, siteId);
 
   if (normalizedDomain && String(domainStatus || "").trim().toUpperCase() === "ACTIVE") {
