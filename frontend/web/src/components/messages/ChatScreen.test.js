@@ -99,4 +99,30 @@ describe("ChatScreen reservation messaging", () => {
       );
     });
   });
+
+  test("preserves the deliveryStatus returned by the send response", async () => {
+    mockSendMessage.mockResolvedValue({
+      success: true,
+      saved: { id: "message-1", threadId: "thread-1", deliveryStatus: "sent" },
+    });
+
+    render(
+      <ChatScreen
+        userId="guest-1"
+        contactId="host-1"
+        contactName="Reservation Host"
+        propertyId="property-1"
+        bookingId="booking-1"
+        dashboardType="guest"
+        capabilities={getMessageCapabilities("guest")}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "Hello host" } });
+    fireEvent.click(screen.getByTitle("Send"));
+
+    await waitFor(() => {
+      expect(screen.getByText("✓", { selector: ".message-status", exact: true })).toBeInTheDocument();
+    });
+  });
 });
