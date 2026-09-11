@@ -7,7 +7,13 @@ import { BOOKING_REQUEST_STATUS, useWebsiteBookingRequest } from "./useWebsiteBo
 import { resolveQuoteErrorPresentation } from "./quoteErrorCopy";
 import { BOOKING_REQUEST_RECOVERY, resolveBookingRequestErrorPresentation } from "./bookingRequestErrorCopy";
 import { EMPTY_BOOKING_GUEST, validateBookingGuestContact } from "./bookingRequestContact";
-import { EMPTY_STAY_RANGE, buildStayNightKeys, getTodayDateKey, selectStayDate } from "./quoteSelection";
+import {
+  EMPTY_STAY_RANGE,
+  buildStayNightKeys,
+  getTodayDateKey,
+  quoteMatchesSelection,
+  selectStayDate,
+} from "./quoteSelection";
 import { TemplateAvailabilityCalendar } from "../templates/templateSharedSections";
 import { getOrCreateVisitorId } from "../../services/websiteVisitorId";
 
@@ -76,6 +82,15 @@ export default function QuoteAvailabilitySection({
   const isSubmitting = bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING;
   const hasBookingError = bookingState.status === BOOKING_REQUEST_STATUS.ERROR;
   const isSelectionFrozen = bookingSucceeded || isSubmitting;
+  const isQuoteForSelection = quoteMatchesSelection(quoteState.quote, {
+    checkIn: range.checkIn,
+    checkOut: range.checkOut,
+    guests,
+  });
+  const displayedQuoteState =
+    quoteState.status === QUOTE_STATUS.SUCCESS && !isQuoteForSelection
+      ? { ...quoteState, status: QUOTE_STATUS.STALE, staleReason: QUOTE_STALE_REASONS.CHANGED }
+      : quoteState;
 
   const handleSelectionChanged = useCallback(() => {
     notifySelectionChanged();
@@ -121,7 +136,7 @@ export default function QuoteAvailabilitySection({
 
   const handleSubmitBookingRequest = useCallback(async () => {
     const quote = quoteState.quote;
-    if (quoteState.status !== QUOTE_STATUS.SUCCESS || !quote) {
+    if (displayedQuoteState.status !== QUOTE_STATUS.SUCCESS || !quote) {
       return;
     }
 
@@ -152,12 +167,12 @@ export default function QuoteAvailabilitySection({
       markStale(QUOTE_STALE_REASONS.REJECTED);
     }
   }, [
+    displayedQuoteState.status,
     guest,
     guests,
     markStale,
     notifySelectionChanged,
     quoteState.quote,
-    quoteState.status,
     range,
     requestQuote,
     submitBookingRequest,
@@ -194,7 +209,7 @@ export default function QuoteAvailabilitySection({
           onGuestsChange={handleGuestsChange}
           capacity={capacity}
           minimumStay={resolveMinimumStay(model)}
-          quoteState={quoteState}
+          quoteState={displayedQuoteState}
           onRequestQuote={handleRequestQuote}
           contactHref={resolveContactHref(model)}
           bookingState={bookingState}

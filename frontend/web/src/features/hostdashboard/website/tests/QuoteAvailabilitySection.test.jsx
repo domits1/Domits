@@ -46,6 +46,8 @@ const MODEL = {
 
 const QUOTE = {
   quoteId: "quote_1",
+  checkIn: toKey(checkInDate),
+  checkOut: toKey(checkOutDate),
   nights: 3,
   guestCount: 2,
   priceBreakdown: {
@@ -117,6 +119,17 @@ describe("QuoteAvailabilitySection", () => {
     fireEvent.click(screen.getByRole("button", { name: /add a guest/i }));
 
     expect(screen.getByText("Selection changed — check again")).toBeInTheDocument();
+  });
+
+  it("does not offer the request form when the returned quote is for another stay", async () => {
+    requestPublicWebsiteQuote.mockResolvedValue({ ...QUOTE, checkIn: "2030-01-01", checkOut: "2030-01-04" });
+    renderSection();
+
+    await selectStay();
+    fireEvent.click(screen.getByRole("button", { name: /^check availability$/i }));
+
+    expect(await screen.findByText("Selection changed — check again")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Request to book" })).not.toBeInTheDocument();
   });
 
   it("clears the selection when the server reports the dates as unavailable", async () => {
