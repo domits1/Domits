@@ -54,7 +54,7 @@ Important alignment points for the rest of this document:
 
 - The currently implemented schema uses `standalone_site`, `standalone_site_domain`, `standalone_site_draft`, and `standalone_site_event`.
 - Earlier split-table ideas such as `standalone_site_theme`, `standalone_site_content`, and `standalone_site_section` are not the current implementation.
-- Custom-domain support is not implemented yet, even though `standalone_site_domain.domain_type` already allows `CUSTOM`.
+- Custom-domain activation on the backend shipped on 2026-09-10 (see "Custom domain activation" under the state model). Host endpoints, dashboard UI, promotion to primary, and removal are still pending.
 - Quote, checkout, and booking sections later in this document remain forward design, not current runtime behavior.
 - The current frontend editor has progressed into section-scoped contracts for shared website areas such as:
   - `residenceSection`
@@ -237,7 +237,7 @@ stateDiagram-v2
 
 ### Domain state rules
 - V1 fallback domains follow an internal activation path and do not require user DNS work.
-- Custom domains use the same state model later, but custom-domain implementation is out of scope for v1.
+- Custom domains use the same state model. The backend activation service shipped on 2026-09-10; the host-facing endpoints and dashboard UI follow in separate PRs.
 
 ```mermaid
 stateDiagram-v2
@@ -250,6 +250,59 @@ stateDiagram-v2
     FAILED --> PENDING: retry
     DISABLED --> PENDING: re-enable
 ```
+
+### Custom domain activation (implemented 2026-09-10)
+
+Custom domains are served by CloudFront SaaS Manager: one distribution tenant per site on the shared multi-tenant distribution, reached through the connection group's routing endpoint. The host points a CNAME at that endpoint; CloudFront validates a managed certificate over HTTP and serves the domain once the certificate is attached to the tenant.
+
+Activation is three CloudFront calls, not one. The console hides the third behind its Submit button; the API does not do it for you, and a tenant with an issued certificate that was never applied stays `inactive` indefinitely.
+
+```mermaid
+sequenceDiagram
+    participant Host
+    participant Service as WebsiteCustomDomainService
+    participant CF as CloudFront SaaS Manager
+    participant DB as standalone_site_domain
+
+    Host->>Service: request(domain)
+    Service->>CF: CreateDistributionTenant(ManagedCertificateRequest, ValidationTokenHost=cloudfront)
+    Service->>DB: CUSTOM row, PENDING, is_primary=false, CNAME instruction
+    Host->>Host: create CNAME domain -> routing endpoint
+    loop each sync (dashboard load or explicit check)
+        Service->>CF: GetDistributionTenant + GetManagedCertificateDetails
+        alt certificate issued and not yet on the tenant
+            Service->>CF: UpdateDistributionTenant(Customizations.Certificate.Arn, If-Match etag)
+        end
+        Service->>DB: status + verification_details_json
+    end
+```
+
+Status mapping from CloudFront to `standalone_site_domain.status`:
+
+| CloudFront observation | Our status | `reason` in verification details |
+|------|------|------|
+| Certificate `pending-validation`, domain `inactive` | `PENDING` | `certificate_pending`; `dnsVerified` says whether the CNAME is seen |
+| Certificate `issued`, not yet applied to the tenant | `VERIFIED` | `certificate_issued`; the same sync applies it |
+| Certificate `issued`, applied, domain still `inactive` | `VERIFIED` | `certificate_applied`; tenant is redeploying |
+| Domain `active` | `ACTIVE` | `domain_active` |
+| Certificate `validation-timed-out`, `failed`, `revoked`, `expired` | `FAILED` | `certificate_<status>` |
+| Tenant `Enabled: false` | `DISABLED` | `tenant_disabled` |
+| Tenant not found | `FAILED` | `tenant_not_found` |
+| Certificate `inactive` (undocumented by AWS) | unchanged | `certificate_inactive` |
+
+Rules the service enforces:
+
+- `ValidationTokenHost` is always `cloudfront`. The `self-hosted` default expects the host to serve the validation token from an existing server, which a new domain does not have, so it never validates.
+- Subdomains only in v1 (`www.example.com`, not `example.com`). An apex needs a Route 53 alias and the `_cf-challenge` TXT record, which is a different onboarding flow.
+- One custom domain per site. A second request returns `domain_limit_reached`; changing a domain goes through removal first.
+- A domain already tied to another site returns `domain_taken`. A domain already used by another CloudFront resource (`CNAMEAlreadyExists`) is stored as `FAILED` with the reason, because only `UpdateDomainAssociation` from the owning resource can free it.
+- The custom row is created with `is_primary = false`. The fallback domain keeps serving until the promotion step lands.
+- Tenant names are `dbw-<siteId>`, so a retry after a failed database write adopts the existing tenant instead of creating a duplicate.
+- Transient CloudFront errors leave the status untouched, store the error name in `lastError`, and surface as `sync_failed`.
+
+Lambda configuration (PropertyHandler): `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_CONNECTION_GROUP_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_ROUTING_ENDPOINT`. The service refuses to construct without all three. The Lambda role needs `cloudfront:CreateDistributionTenant`, `GetDistributionTenant`, `GetDistributionTenantByDomain`, `GetManagedCertificateDetails`, `UpdateDistributionTenant`, `VerifyDnsConfiguration`.
+
+Not yet implemented: host endpoints and dashboard UI; promotion of an `ACTIVE` custom domain to primary; removal (`Enabled: false`, then `DeleteDistributionTenant`); retry after `validation-timed-out` (needs a new managed certificate request); a partial unique index on `(site_id) WHERE domain_type = 'CUSTOM'` to make the one-domain rule a database guarantee.
 
 ### Optional later `quote.status`
 Future only:
@@ -299,7 +352,7 @@ Future only:
 |------|------|
 | `main.standalone_site_draft` | working host draft plus published-draft overrides for internal preview |
 | `main.standalone_site` | published direct booking website snapshot and lifecycle |
-| `main.standalone_site_domain` | fallback-domain record now, custom-domain record later |
+| `main.standalone_site_domain` | fallback-domain record, plus the custom-domain record and its CloudFront tenant details |
 | `main.standalone_site_event` | lifecycle and KPI event stream |
 
 ### Current implemented schema
@@ -964,6 +1017,8 @@ Raw events are written to `main.standalone_site_event`.
 | `publish_requested` | host starts publish |
 | `publish_succeeded` | publish completes |
 | `publish_failed` | publish fails |
+| `domain_requested` | host connects a custom domain; shipped as `WEBSITE_DOMAIN_REQUESTED` |
+| `domain_status_changed` | a sync moved a custom domain to another status; shipped as `WEBSITE_DOMAIN_STATUS_CHANGED` |
 | `checkout_started` | v2 only: booking funnel begins after quote validation |
 | `booking_completed` | v2 only: booking completes successfully |
 | `confirmation_viewed` | v2 only: guest opens the confirmation view |

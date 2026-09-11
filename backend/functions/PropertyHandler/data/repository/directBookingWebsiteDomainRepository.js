@@ -165,6 +165,19 @@ export class DirectBookingWebsiteDomainRepository {
     return this.getFallbackDomainBySiteId(siteId);
   }
 
+  async getCustomDomainBySiteId(siteId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    const rows = await client.query(
+      buildSiteDomainSelectQuery(tableName, "WHERE site_id = $1 AND domain_type = 'CUSTOM'", "LIMIT 1"),
+      [siteId]
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
+  }
+
   async getDomainByName(domain) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
@@ -280,5 +293,28 @@ export class DirectBookingWebsiteDomainRepository {
 
   async updatePrimaryLiveDomainStatus(siteId, status, verificationDetails = {}) {
     return this.updateFallbackDomainStatus(siteId, status, verificationDetails);
+  }
+
+  async updateDomainStatusById(domainId, status, verificationDetails = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const normalizedStatus = normalizeDomainStatus(status);
+    const now = Date.now();
+
+    const rows = await client.query(
+      `UPDATE ${tableName}
+      SET
+        status = $2,
+        verification_details_json = $3,
+        last_checked_at = $4,
+        updated_at = $4
+      WHERE id = $1
+      RETURNING
+        ${SITE_DOMAIN_SELECT_COLUMNS}`,
+      [domainId, normalizedStatus, normalizeJsonObject(verificationDetails), now]
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
   }
 }
