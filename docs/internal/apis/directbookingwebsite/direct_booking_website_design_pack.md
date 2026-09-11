@@ -302,7 +302,9 @@ Rules the service enforces:
 
 Lambda configuration (PropertyHandler): `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_CONNECTION_GROUP_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_ROUTING_ENDPOINT`. The service refuses to construct without all three. The Lambda role needs `cloudfront:CreateDistributionTenant`, `GetDistributionTenant`, `GetDistributionTenantByDomain`, `GetManagedCertificateDetails`, `UpdateDistributionTenant`, `VerifyDnsConfiguration`.
 
-Not yet implemented: host endpoints and dashboard UI; promotion of an `ACTIVE` custom domain to primary; removal (`Enabled: false`, then `DeleteDistributionTenant`); retry after `validation-timed-out` (needs a new managed certificate request); a partial unique index on `(site_id) WHERE domain_type = 'CUSTOM'` to make the one-domain rule a database guarantee.
+Host endpoints shipped on 2026-09-11; see "Host custom domain API" under the API contract.
+
+Not yet implemented: dashboard UI; promotion of an `ACTIVE` custom domain to primary; removal (`DELETE /property/website/domains?siteId=`, which disables the tenant, then deletes it once the disable has deployed); retry after `validation-timed-out` (needs a new managed certificate request); a partial unique index on `(site_id) WHERE domain_type = 'CUSTOM'` to make the one-domain rule a database guarantee.
 
 ### Optional later `quote.status`
 Future only:
@@ -812,6 +814,23 @@ Booking and confirmation are intentionally moved to v2 so v1 can stay a clean fo
 | `POST` | `/public/sites/:siteId/bookings` | create authoritative booking | requires idempotency key and booking source attribution |
 | `GET` | `/public/bookings/:publicBookingRef/confirmation` | return public-safe confirmation payload | requires confirmation token |
 
+### Host custom domain API (implemented 2026-09-11)
+
+Host-authenticated routes on PropertyHandler. The caller must be in the `Host` group and own the site through `standalone_site.host_id`; a site that is missing or belongs to another host answers `404 site_not_found` in both cases so site IDs cannot be probed. Errors use the same envelope as the quote and booking endpoints: `{ "error": { "code", "message", "requestId" } }`.
+
+| Method | Endpoint | Body / query | Response |
+|------|------|------|------|
+| `GET` | `/property/website/domains?siteId=` | query `siteId` | `200 { siteId, domains: [DomainView] }`; the custom domain is refreshed from CloudFront first when it has a tenant, and a refresh failure returns the stored status instead of an error |
+| `POST` | `/property/website/domains` | `{ siteId, domain }` | `201 { domain: DomainView }`; a domain already used by another CloudFront resource is still `201` with `status: "FAILED"` and `reason: "domain_in_use_elsewhere"` |
+| `POST` | `/property/website/domains/verify` | `{ siteId }` | `200 { domain: DomainView }`, the "check again" action |
+| `DELETE` | `/property/website/domains?siteId=` | query `siteId` | planned with removal |
+
+`DomainView` is the host-facing shape, `toHostWebsiteDomainView`: `domain`, `domainType`, `status`, `isPrimary`, `dnsRecord { type, name, value }` (custom domains only), `dnsVerified`, `certificateStatus`, `reason`, `lastError`, `lastCheckedAt`. Tenant IDs, certificate ARNs and connection group IDs never leave the backend.
+
+Error codes and statuses: `invalid_request` 400, `invalid_domain` 400, `unauthorized` 401, `forbidden` 403, `site_not_found` 404, `domain_not_found` 404, `domain_taken` 409, `domain_limit_reached` 409, `tenant_create_failed` 502, `sync_failed` 502, `internal_error` 500.
+
+API Gateway, after merge: resource `domains` under `/property/website` with GET and POST, child resource `verify` with POST, all Lambda-proxy to PropertyHandler, OPTIONS on both resources allowing `Authorization` and `Content-Type`, then a stage deploy. The Lambda needs the three `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_*` variables and the CloudFront IAM actions listed under "Custom domain activation"; until they exist these routes answer `500 internal_error` and log the missing variable, and the rest of the Lambda is unaffected.
+
 ### Auth model
 Public guest endpoints are unauthenticated, but protected by:
 
@@ -1017,8 +1036,10 @@ Raw events are written to `main.standalone_site_event`.
 | `publish_requested` | host starts publish |
 | `publish_succeeded` | publish completes |
 | `publish_failed` | publish fails |
-| `domain_requested` | host connects a custom domain; shipped as `WEBSITE_DOMAIN_REQUESTED` |
-| `domain_status_changed` | a sync moved a custom domain to another status; shipped as `WEBSITE_DOMAIN_STATUS_CHANGED` |
+| `domain_requested` | host connects a custom domain; shipped as `SITE_DOMAIN_REQUESTED` |
+| `domain_verified` | the managed certificate was issued and applied; shipped as `SITE_DOMAIN_VERIFIED` |
+| `domain_activated` | CloudFront reports the custom domain active; shipped as `SITE_DOMAIN_ACTIVATED` |
+| `domain_failed` | the domain is in use elsewhere, the certificate failed, or the tenant is gone; shipped as `SITE_DOMAIN_FAILED` |
 | `checkout_started` | v2 only: booking funnel begins after quote validation |
 | `booking_completed` | v2 only: booking completes successfully |
 | `confirmation_viewed` | v2 only: guest opens the confirmation view |
