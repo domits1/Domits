@@ -511,11 +511,6 @@ class ReservationRepository {
     });
   }
 
-  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
-    const client = await Database.getInstance();
-    return this.findOverlappingInquiries(client, { propertyId, arrivalDateMs, departureDateMs, excludeBookingId });
-  }
-
   async updateBookingDates(id, arrivalDateMs, departureDateMs) {
     const client = await Database.getInstance();
     const query = await client
