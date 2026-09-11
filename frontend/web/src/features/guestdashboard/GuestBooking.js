@@ -138,6 +138,13 @@ BookingSection.propTypes = {
   extraClassName: PropTypes.string,
 };
 
+const TABS = [
+  { key: "all", label: "All" },
+  { key: "current", label: "Current" },
+  { key: "upcoming", label: "Upcoming" },
+  { key: "past", label: "Past" },
+];
+
 function GuestBooking() {
   const navigate = useNavigate();
 
@@ -146,6 +153,7 @@ function GuestBooking() {
   const [user, setUser] = useState({ name: "", email: "" });
   const [bookings, setBookings] = useState([]);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
 
   const [propertyMap, setPropertyMap] = useState({});
   const [propLoading, setPropLoading] = useState(false);
@@ -260,24 +268,46 @@ function GuestBooking() {
     [paidBookings]
   );
 
+  const tabBookings = useMemo(() => {
+    switch (activeTab) {
+      case "current":
+        return currentBookings;
+      case "upcoming":
+        return upcomingBookings;
+      case "past":
+        return pastBookings;
+      case "all":
+      default:
+        return paidBookings;
+    }
+  }, [activeTab, paidBookings, currentBookings, upcomingBookings, pastBookings]);
+
+  const tabEmptyMessages = {
+    all: "You do not have any bookings yet.",
+    current: "No current bookings this week.",
+    upcoming: "You do not have any upcoming bookings yet.",
+    past: "You do not have any past bookings yet.",
+  };
+
+  const tabCounts = {
+    all: paidBookings.length,
+    current: currentBookings.length,
+    upcoming: upcomingBookings.length,
+    past: pastBookings.length,
+  };
+
   let bookingContent;
   if (isLoading) {
     bookingContent = <div className="guest-booking-loader">Loading...</div>;
-  } else if (error) {
-    bookingContent = (
-      <div className="guest-booking-error" role="alert">
-        {error}
-      </div>
-    );
-  } else if (paidBookings.length === 0 && inquiryBookings.length === 0) {
-    bookingContent = (
-      <div className="emptyState">
-        <p>You do not have any bookings yet.</p>
-      </div>
-    );
   } else {
     bookingContent = (
       <div className="guest-booking-bookingContent">
+        {error && (
+          <div className="guest-booking-error" role="alert">
+            {error}
+          </div>
+        )}
+
         {propLoading && <div className="guest-booking-loader-inline">Loading property details...</div>}
 
         {inquiryBookings.length > 0 && (
@@ -292,41 +322,44 @@ function GuestBooking() {
           </div>
         )}
 
+        <div className="guest-booking-tabs" role="tablist">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={`guest-booking-tab${activeTab === tab.key ? " guest-booking-tab--active" : ""}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+              <span className="guest-booking-tab-count">{tabCounts[tab.key]}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="guest-booking-summary-grid">
           <BookingSection
-            title="Current / This Week"
-            bookings={currentBookings}
-            emptyMessage="No current bookings this week."
+            title={TABS.find((t) => t.key === activeTab)?.label || "Bookings"}
+            bookings={tabBookings}
+            emptyMessage={tabEmptyMessages[activeTab]}
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
-          />
-
-          <BookingSection
-            title="Upcoming Bookings"
-            bookings={upcomingBookings}
-            emptyMessage="You do not have any upcoming bookings yet."
-            propertyMap={propertyMap}
-            handleBookingClick={handleBookingClick}
-          />
-
-          <BookingSection
-            title="Cancelled Bookings"
-            bookings={cancelledBookings}
-            emptyMessage="You do not have any cancelled bookings yet."
-            propertyMap={propertyMap}
-            handleBookingClick={handleBookingClick}
-            extraClassName="guest-card--cancelled"
-          />
-
-          <BookingSection
-            title="Past Bookings"
-            bookings={pastBookings}
-            emptyMessage="You do not have any past bookings yet."
-            propertyMap={propertyMap}
-            handleBookingClick={handleBookingClick}
-            extraClassName="guest-card--past"
           />
         </div>
+
+        {cancelledBookings.length > 0 && (
+          <div className="guest-booking-summary-grid">
+            <BookingSection
+              title="Cancelled Bookings"
+              bookings={cancelledBookings}
+              emptyMessage="You do not have any cancelled bookings yet."
+              propertyMap={propertyMap}
+              handleBookingClick={handleBookingClick}
+              extraClassName="guest-card--cancelled"
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -334,7 +367,7 @@ function GuestBooking() {
   return (
     <div className="guest-dashboard-shell">
       <div className="guest-dashboard-page-body guest-booking-page-body">
-        <h2>{user.name || "Guest"} Bookings</h2>
+        <h2>View and manage your bookings</h2>
 
         <div className="guest-dashboard-dashboards">
           <div className="guest-dashboard-content guest-booking-dashboard-content">
