@@ -25,7 +25,7 @@ import Ameen from "../../images/about-img/Ameen.jpg";
 import Enes from "../../images/about-img/Enes.jpg";
 import Mounir from "../../images/about-img/Mounir.png";
 import Mehedi from "../../images/about-img/Mehedi_Bappy.png";
-import Puok from "../../images/about-img/Puok.png";
+import Puok from "../../images/about-img/Puok.jpeg";
 import Nishchal from "../../images/about-img/Nishchal.png";
 
 import { LanguageContext } from "../../context/LanguageContext.js";

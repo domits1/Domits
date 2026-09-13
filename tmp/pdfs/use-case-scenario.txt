@@ -1,0 +1,473 @@
+--- Page 1 ---
+domits1 Domits
+Code Issues 881 Pull requests19 Agents DiscussionsActions Projects Wiki
+Security and quality153 Insights Settings
+Use Case / Scenario Testing Review System #3208
+New issue
+Open
+Assignees
+Labels
+Milestone 1.2.8 Web: Reviews
+L2: Capability
+stefanhopman1opened 3d ago Member
+🚀  Capability Summary
+Build a Domits Review System that manages the complete guest feedback and reputation lifecycle across
+the Domits ecosystem.
+Web: Reviews main #90
+The system should support:
+Guest reviews
+Property reviews
+Host reviews
+Experience reviews
+Reservation reviews
+Category ratings
+Written reviews
+Private feedback
+Public reviews
+Review requests
+Review reminders
+Review moderation
+Review verification
+
+--- Page 2 ---
+User Stories
+1. Guest Reviews
+Guest
+2. Property Reviews
+Guest
+Host / Property Manager
+Review responses
+Review analytics
+Sentiment analysis
+AI review intelligence
+Reputation management
+Review syndication
+Review widgets
+Review-based personalization
+Review-driven operational improvement
+As a guest, I want to leave a review after my stay so that I can share my experience.
+As a guest, I want to rate my overall experience so that other travelers can understand the
+quality of the stay.
+As a guest, I want to write a detailed review so that I can explain what I liked or disliked.
+As a guest, I want to edit my review within the allowed period so that I can correct mistakes.
+As a guest, I want to see my submitted reviews so that I can manage my feedback history.
+As a guest, I want my review to be associated with a genuine reservation so that my feedback
+is trusted.
+As a guest, I want to rate the property so that I can share my experience with future guests.
+As a guest, I want to rate specific aspects of the property so that my feedback is more useful.
+As a guest, I want to describe the actual condition and quality of the property.
+As a guest, I want to see reviews from previous guests before booking.
+
+--- Page 3 ---
+3. Host Reviews
+Guest
+Host
+4. Reservation Reviews
+Guest
+Property Manager
+5. Experience Reviews
+Guest
+As a property manager, I want to see the property's overall review score.
+As a property manager, I want to see category-level ratings.
+As a property manager, I want to track property review performance over time.
+As a property manager, I want to identify properties with declining ratings.
+As a guest, I want to review the Host separately from the property.
+As a guest, I want to rate Host communication.
+As a guest, I want to rate Host responsiveness.
+As a guest, I want to rate Host hospitality.
+As a Host, I want to see my Host rating.
+As a Host, I want to understand which aspects of my service require improvement.
+As a Host, I want to respond to appropriate guest reviews.
+As a guest, I want to review my specific reservation.
+As a guest, I want to provide feedback about the booking experience.
+As a guest, I want to report problems that occurred during my reservation.
+As a property manager, I want reservation feedback connected to the reservation record.
+As a property manager, I want to investigate review issues using the underlying reservation
+information.
+
+--- Page 4 ---
+Experience Provider
+6. Category Ratings
+Guest
+Host / Property Manager
+7. Private Feedback
+Guest
+As a guest, I want to review experiences I purchased or participated in.
+As a guest, I want to rate experiences separately from my accommodation.
+As a guest, I want to provide feedback about guides, chefs, transfers, activities and other
+services.
+As an experience provider, I want to see my ratings.
+As an experience provider, I want to see guest feedback.
+As an experience provider, I want to respond to appropriate reviews.
+As a guest, I want to rate different aspects of my stay instead of only giving one overall score.
+As a guest, I want to rate cleanliness.
+As a guest, I want to rate location.
+As a guest, I want to rate property quality.
+As a guest, I want to rate accuracy.
+As a guest, I want to rate communication.
+As a guest, I want to rate check-in.
+As a guest, I want to rate amenities.
+As a guest, I want to rate value.
+As a guest, I want to rate hospitality.
+As a guest, I want to rate service.
+As a property manager, I want to see category-level performance.
+As a property manager, I want to compare category ratings across properties.
+As a property manager, I want to identify categories that require improvement.
+
+--- Page 5 ---
+Host / Property Manager
+8. Public Reviews
+Guest
+Traveler
+9. Review Requests
+Host / Property Manager
+Guest
+As a guest, I want to provide private feedback to the Host.
+As a guest, I want to provide private feedback to Domits.
+As a guest, I want to distinguish private feedback from my public review.
+As a guest, I want private feedback to remain private.
+As a property manager, I want to receive private feedback.
+As a property manager, I want to address problems before they negatively affect future stays.
+As a guest, I want my approved review to be published.
+As a guest, I want to understand how my review will be displayed.
+As a guest, I want to know whether my review is verified.
+As a traveler, I want to read reviews before booking.
+As a traveler, I want to filter reviews.
+As a traveler, I want to sort reviews.
+As a traveler, I want to see recent reviews.
+As a traveler, I want to see verified-stay indicators.
+As a traveler, I want to see relevant category ratings.
+As a property manager, I want Domits to automatically request a review after checkout.
+As a property manager, I want to configure when review requests are sent.
+As a property manager, I want to customize review-request messaging.
+As a property manager, I want review requests to use supported communication channels.
+
+--- Page 6 ---
+10. Review Reminders
+Guest
+Host / Property Manager
+11. Review Verification
+Guest
+Domits Admin
+12. Review Moderation
+Domits Admin
+As a guest, I want to receive a review request after my stay.
+As a guest, I want the review request to contain a direct link to the review experience.
+As a guest, I want to receive a reminder if I have not completed my review.
+As a guest, I want to control review-related notifications where supported.
+As a property manager, I want to configure reminder timing.
+As a property manager, I want to avoid excessive review reminders.
+As a guest, I want reviews to be associated with verified reservations.
+As an administrator, I want to verify that a review originates from a legitimate guest.
+As an administrator, I want to verify the underlying reservation.
+As an administrator, I want suspicious reviews to be flagged.
+As an administrator, I want duplicate reviews to be detected.
+As an administrator, I want fraudulent reviews to be prevented.
+As an administrator, I want to moderate reviews that violate Domits policies.
+As an administrator, I want to detect spam.
+As an administrator, I want to detect abusive content.
+As an administrator, I want to detect inappropriate content.
+
+--- Page 7 ---
+13. Review Responses
+Host / Property Manager
+Guest
+14. Review Analytics
+Host / Property Manager
+Enterprise
+As an administrator, I want to flag reviews for manual review.
+As an administrator, I want to approve eligible reviews.
+As an administrator, I want to restrict or remove reviews when policy requirements are met.
+As an administrator, I want every moderation action to be auditable.
+As a Host, I want to respond to public reviews.
+As a Host, I want to thank guests for positive feedback.
+As a Host, I want to respond professionally to negative feedback.
+As a property manager, I want authorized team members to respond on behalf of the
+business.
+As a manager, I want review responses to follow Domits policies.
+As a guest, I want to see Host responses to reviews.
+As a guest, I want to understand how the business responds to feedback.
+As a property manager, I want to see my overall review score.
+As a property manager, I want to track review scores over time.
+As a property manager, I want to monitor review volume.
+As a property manager, I want to monitor review response rates.
+As a property manager, I want to compare properties.
+As a property manager, I want to identify high-performing properties.
+As a property manager, I want to identify declining properties.
+As an enterprise manager, I want to analyze reviews across portfolios.
+As an enterprise manager, I want to analyze reviews across destinations.
+
+--- Page 8 ---
+15. Sentiment Analysis
+Host / Property Manager
+Domits AI
+16. AI Review Intelligence
+Host / Property Manager
+Domits AI
+As an enterprise manager, I want to analyze reviews across brands.
+As an executive, I want a centralized reputation overview.
+As a property manager, I want Domits to analyze review sentiment.
+As a property manager, I want to see positive sentiment.
+As a property manager, I want to see neutral sentiment.
+As a property manager, I want to see negative sentiment.
+As a property manager, I want to identify recurring positive topics.
+As a property manager, I want to identify recurring negative topics.
+As a manager, I want to track sentiment trends over time.
+As Domits AI, I want to classify review sentiment.
+As Domits AI, I want to identify topics within reviews.
+As Domits AI, I want to identify recurring issues.
+As a property manager, I want AI to summarize large volumes of reviews.
+As a property manager, I want AI to identify recurring complaints.
+As a property manager, I want AI to identify recurring compliments.
+As a property manager, I want AI to identify emerging problems.
+As a property manager, I want AI to recommend improvement actions.
+As an executive, I want AI-generated reputation insights across my portfolio.
+As Domits AI, I want to identify patterns across reviews.
+As Domits AI, I want to detect sudden changes in sentiment.
+As Domits AI, I want to identify potential reputation risks.
+
+--- Page 9 ---
+17. Reputation Management
+Host / Property Manager
+Domits
+18. Review Syndication
+Host / Property Manager
+System
+19. Review Widgets
+Host / Property Manager
+As Domits AI, I want to generate actionable review insights.
+As a property manager, I want a central reputation dashboard.
+As a property manager, I want to monitor reputation across properties.
+As a property manager, I want to monitor reputation across channels.
+As an enterprise manager, I want to identify reputation risks.
+As a manager, I want to track reputation improvements after operational changes.
+As Domits, I want reputation intelligence to improve marketplace quality.
+As Domits, I want reputation intelligence to improve traveler trust.
+As a property manager, I want eligible reviews distributed to supported Domits surfaces.
+As a property manager, I want reviews associated with the correct property.
+As an enterprise, I want consistent review information across supported channels where
+permitted.
+As the review system, I want to prevent duplicate reviews during syndication.
+As the review system, I want to prevent incorrect review attribution.
+As a Host, I want to display reviews on my Direct Booking Website.
+As a property manager, I want to display property ratings.
+
+--- Page 10 ---
+Guest
+20. Review-Based Personalization
+Guest
+Host / Property Manager
+21. Review-Driven Operational Improvement
+Property Manager
+Operations
+As a Host, I want to display guest testimonials.
+As a Host, I want review widgets to update automatically.
+As a Host, I want to configure where approved reviews appear.
+As a traveler, I want to see trustworthy reviews on a property's direct booking website.
+As a guest, I want relevant property information based on previous guest feedback.
+As a returning guest, I want recommendations informed by my previous experiences where
+appropriate.
+As a property manager, I want review intelligence to improve guest personalization.
+As a manager, I want to understand which property attributes specific guest segments value
+most.
+As a property manager, I want negative feedback to generate actionable insights.
+As a property manager, I want recurring cleanliness complaints identified.
+As a property manager, I want recurring maintenance complaints identified.
+As a property manager, I want communication complaints identified.
+As a property manager, I want Guest Experience issues identified.
+As a property manager, I want to track whether operational actions improve future reviews.
+As an operations manager, I want review insights to create operational tasks.
+As an operations manager, I want to prioritize recurring problems.
+As an operations manager, I want to identify properties requiring intervention.
+
+--- Page 11 ---
+22. Review Alerts & Notifications
+Host / Property Manager
+System
+23. Review Comparison
+Property Manager
+24. Guest Review History
+Guest
+Domits
+As a property manager, I want to receive alerts when a negative review is submitted.
+As a manager, I want to be notified when a property's rating drops below a threshold.
+As an operations manager, I want alerts when recurring complaints are detected.
+As an executive, I want alerts for significant reputation risks.
+As the review system, I want alerts routed to the appropriate team.
+As the review system, I want alerts based on review topic and severity.
+As the review system, I want notification preferences to be configurable.
+As a property manager, I want to compare review performance across properties.
+As an enterprise manager, I want to compare destinations.
+As an enterprise manager, I want to compare portfolios.
+As a manager, I want to compare current performance against historical performance.
+As a revenue manager, I want to understand the relationship between reputation and booking
+performance.
+As a guest, I want to see reviews I previously submitted.
+As a guest, I want to see which reservation each review relates to.
+As a guest, I want to manage eligible reviews from my account.
+As Domits, I want to maintain a complete review history while respecting privacy and retention
+requirements.
+
+--- Page 12 ---
+25. Enterprise Review Management
+Enterprise
+Core Review Lifecycle
+As an enterprise manager, I want to manage reviews across hundreds or thousands of
+properties.
+As an enterprise manager, I want role-based access to review information.
+As an enterprise manager, I want to assign review-management responsibilities to teams.
+As an enterprise manager, I want centralized reputation reporting.
+As an enterprise manager, I want to drill down from enterprise reputation to individual
+properties.
+As an enterprise manager, I want to filter reviews by destination, portfolio, property, Host,
+reservation and category.
+Reservation completed
+Checkout completed
+Review request generated
+Review request delivered
+Guest submits feedback
+Review eligibility verified
+Review verified
+Review moderated
+Review published
+Host response enabled
+Host response published
+Sentiment analyzed
+Review topics identified
+AI insights generated
+Operational issues identified
+Operational actions created
+Follow-up performance measured
+
+--- Page 13 ---
+Core Integrations
+Core Data Objects
+PMS / Reservations
+Guest CRM
+Guest Experience
+Property Management
+Housekeeping
+Maintenance
+Unified Inbox
+Notifications
+Finance
+Direct Booking
+OTA Booking Engine
+AI Platform
+Business Intelligence
+Automation
+Experience Management
+Review
+Review Subject
+Review Author
+Review Category
+Category Rating
+Written Feedback
+Private Feedback
+Review Request
+Review Reminder
+Review Verification
+Review Moderation
+Review Response
+Review Sentiment
+Review Topic
+Open Use Case / Scenario Testing Review System#3208
+
+--- Page 14 ---
+Platform Requirements
+Success Metrics
+Review Insight
+Review Alert
+Review Syndication
+Review Widget
+Review Analytics
+Multi-tenant architecture
+Role-based permissions
+Scope-based access
+Verified reviews
+Review fraud protection
+Review moderation
+Audit logging
+GDPR/privacy controls
+Guest data protection
+AI governance
+Review history integrity
+Duplicate-review prevention
+Review attribution integrity
+API support
+Event-driven architecture
+Automated testing
+Enterprise scalability
+Analytics and reporting
+Review request delivery rate
+Review completion rate
+Review response rate
+Verified review percentage
+
+--- Page 15 ---
+Definition of Done
+Average property rating
+Average Host rating
+Average experience rating
+Review sentiment
+Negative-review resolution rate
+Time to respond to negative reviews
+Recurring issue detection
+Operational issue resolution
+Reputation improvement
+Guest satisfaction
+Repeat booking rate
+Review-related conversion impact
+Review moderation accuracy
+Fraudulent review detection rate
+Guests can submit reviews after eligible reservations.
+Guests can submit property reviews.
+Guests can submit Host reviews.
+Guests can submit experience reviews.
+Guests can provide category ratings.
+Guests can provide private feedback.
+Review requests can be automated.
+Review reminders can be automated.
+Reviews can be verified.
+Reviews can be moderated.
+Hosts can respond to reviews.
+Reviews can be displayed publicly.
+Review analytics are available.
+Sentiment analysis is available.
+AI review intelligence is available.
+Reputation dashboards are available.
+Review widgets are available.
+
+--- Page 16 ---
+Core Principle
+Domits Reviews should transform guest feedback from a static rating mechanism into an
+intelligent reputation and operational improvement platform.
+Guest Experience → Feedback → Reputation → Intelligence → Action → Better Experience → Better
+Reputation
+Review insights can feed operational workflows.
+Enterprise users can analyze reviews across their portfolio.
+Permissions are enforced.
+Review actions are audited.
+Privacy requirements are implemented.
+Critical review workflows have automated tests.
+Review data is connected to the broader Domits ecosystem.
+Create sub-issue
+stefanhopman1added this to the 1.2.8 Web: Reviews milestone 3d ago
+stefanhopman1assigned PuoK243d ago
+stefanhopman1added this to  2.9 Reviews3d ago
+stefanhopman1added  3d ago
+L2: Capability
+github-project-automationmoved this to Todo in  2.9 Reviews3d ago
+stefanhopman1mentioned this 3d ago
+Web: Reviews main #90
+Add a comment
+Write Preview
+
+--- Page 17 ---
+Metadata
+Please follow this repository's contributing guidelines, security policy and code of conduct.
+Paste, drop, or click to add files Comment
+Use Markdown to format your comment
+Close issue
+
+--- Page 18 ---
