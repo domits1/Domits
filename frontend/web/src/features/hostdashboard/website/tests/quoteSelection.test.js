@@ -4,9 +4,30 @@ import {
   countStayNights,
   formatMinorUnits,
   hasBlockedNight,
+  quoteMatchesSelection,
   selectStayDate,
   toLocalDateKey,
 } from "../rendering/booking/quoteSelection";
+
+describe("quoteMatchesSelection", () => {
+  const quote = { checkIn: "2026-10-01", checkOut: "2026-10-04", guestCount: 2 };
+
+  it("accepts a quote whose stay equals the selection", () => {
+    expect(quoteMatchesSelection(quote, { checkIn: "2026-10-01", checkOut: "2026-10-04", guests: 2 })).toBe(true);
+  });
+
+  it.each([
+    ["check-in", { checkIn: "2026-10-02", checkOut: "2026-10-04", guests: 2 }],
+    ["check-out", { checkIn: "2026-10-01", checkOut: "2026-10-05", guests: 2 }],
+    ["guest count", { checkIn: "2026-10-01", checkOut: "2026-10-04", guests: 3 }],
+  ])("rejects a quote whose %s differs", (_label, selection) => {
+    expect(quoteMatchesSelection(quote, selection)).toBe(false);
+  });
+
+  it("rejects a missing quote", () => {
+    expect(quoteMatchesSelection(null, { checkIn: "2026-10-01", checkOut: "2026-10-04", guests: 2 })).toBe(false);
+  });
+});
 
 const TODAY = "2026-10-01";
 const blocked = (...keys) => new Set(keys);

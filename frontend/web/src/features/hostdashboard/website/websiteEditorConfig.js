@@ -242,7 +242,7 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
     createVisibilityField(
       "quotePanel",
       "Show booking panel",
-      "Lets guests pick dates and see a live price. Appears on your published site only, and needs the availability calendar."
+      "Lets guests pick dates, see a live price and send a booking request. Appears on your published site only, and needs the availability calendar."
     ),
     createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],
@@ -266,7 +266,7 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
     createVisibilityField(
       "quotePanel",
       "Show booking panel",
-      "Lets guests pick dates and see a live price. Appears on your published site only, and needs the availability calendar."
+      "Lets guests pick dates, see a live price and send a booking request. Appears on your published site only, and needs the availability calendar."
     ),
     createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],
@@ -295,7 +295,7 @@ export const TEMPLATE_VISIBILITY_FIELD_MAP = Object.freeze({
     createVisibilityField(
       "quotePanel",
       "Show booking panel",
-      "Lets guests pick dates and see a live price. Appears on your published site only, and needs the availability calendar."
+      "Lets guests pick dates, see a live price and send a booking request. Appears on your published site only, and needs the availability calendar."
     ),
     createVisibilityField("chatWidget", "Show WhatsApp widget", WHATSAPP_WIDGET_DESCRIPTION),
   ],
