@@ -1762,10 +1762,9 @@ const HostPropertyCare = () => {
                                 <div className="form-group">
                                     <label htmlFor='task-type'>Type</label>
                                     <select id='task-type' name="type" value={editedTask.type} onChange={handleEditChange}>
-                                        <option value="Cleaning">Cleaning</option>
-                                        <option value="Maintenance">Maintenance</option>
-                                        <option value="Inspection">Inspection</option>
-                                        <option value="Administration">Administration</option>
+                                        {TASK_TYPE_OPTIONS.map(option => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="form-group">
