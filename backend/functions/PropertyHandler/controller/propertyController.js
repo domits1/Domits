@@ -3074,7 +3074,7 @@ export class PropertyController {
             const summary = this.buildDirectBookingWebsiteSummary(site, domains);
             return {
                 statusCode: 200,
-                body: { siteId: site.id, domains: summary.domains.map(toHostWebsiteDomainView) },
+                body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
             };
         });
     }
