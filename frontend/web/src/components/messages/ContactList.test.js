@@ -120,7 +120,7 @@ describe("ContactList realtime unread sync", () => {
   const renderWithSocket = ({ contacts: initialContacts, wsMessage, activeThreadId = null, activeContactId = null }) => {
     const setContacts = jest.fn();
 
-    render(
+    const buildElement = (threadId) => (
       <WebSocketContext.Provider value={{ messages: wsMessage ? [wsMessage] : [] }}>
         <ContactList
           userId="host-1"
@@ -132,15 +132,40 @@ describe("ContactList realtime unread sync", () => {
           onContactClick={jest.fn()}
           onCloseChat={jest.fn()}
           onNewMessage={jest.fn()}
-          activeThreadId={activeThreadId}
+          activeThreadId={threadId}
           activeContactId={activeContactId}
           capabilities={getMessageCapabilities("host")}
         />
       </WebSocketContext.Provider>
     );
 
-    return { setContacts };
+    const { rerender: rerenderElement } = render(buildElement(activeThreadId));
+
+    return {
+      setContacts,
+      rerender: (nextActiveThreadId) => rerenderElement(buildElement(nextActiveThreadId)),
+    };
   };
+
+  // processIncomingMessage may queue more than one setContacts update (e.g. an unrelated
+  // hydration update alongside a mark-read confirmation), so replay every queued updater
+  // in order to get the true final state, rather than assuming a fixed call index/count.
+  const applyQueuedUpdates = (calls, initialState) =>
+    calls.reduce((state, [updaterFn]) => updaterFn(state), initialState);
+
+  const renderActiveThreadMessage = (contactWithUnread) =>
+    renderWithSocket({
+      contacts: [contactWithUnread],
+      wsMessage: {
+        userId: "+31612345678",
+        senderId: "+31612345678",
+        recipientId: "host-1",
+        text: "Are you there?",
+        threadId: "thread-1",
+        createdAt: "2026-06-01T10:10:00.000Z",
+      },
+      activeThreadId: "thread-1",
+    });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -195,18 +220,7 @@ describe("ContactList realtime unread sync", () => {
 
   test("incoming message to the active thread increments locally, then resets to 0 only once markThreadRead succeeds", async () => {
     const contactWithUnread = { ...baseContact, unreadCount: 3 };
-    const { setContacts } = renderWithSocket({
-      contacts: [contactWithUnread],
-      wsMessage: {
-        userId: "+31612345678",
-        senderId: "+31612345678",
-        recipientId: "host-1",
-        text: "Are you there?",
-        threadId: "thread-1",
-        createdAt: "2026-06-01T10:10:00.000Z",
-      },
-      activeThreadId: "thread-1",
-    });
+    const { setContacts } = renderActiveThreadMessage(contactWithUnread);
 
     const firstUpdater = setContacts.mock.calls[0][0];
     const afterFirstUpdate = firstUpdater([contactWithUnread]);
@@ -218,15 +232,8 @@ describe("ContactList realtime unread sync", () => {
       expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
     });
 
-    // processIncomingMessage also queues an unrelated hydration update (name/avatar lookup),
-    // so replay every queued updater in order to get the true final state, rather than
-    // assuming a fixed call index or count.
     await waitFor(() => {
-      let finalState = [contactWithUnread];
-      for (const [updaterFn] of setContacts.mock.calls) {
-        finalState = updaterFn(finalState);
-      }
-      expect(finalState[0].unreadCount).toBe(0);
+      expect(applyQueuedUpdates(setContacts.mock.calls, [contactWithUnread])[0].unreadCount).toBe(0);
     });
   });
 
@@ -234,18 +241,7 @@ describe("ContactList realtime unread sync", () => {
     markThreadRead.mockRejectedValue(new Error("network error"));
 
     const contactWithUnread = { ...baseContact, unreadCount: 3 };
-    const { setContacts } = renderWithSocket({
-      contacts: [contactWithUnread],
-      wsMessage: {
-        userId: "+31612345678",
-        senderId: "+31612345678",
-        recipientId: "host-1",
-        text: "Are you there?",
-        threadId: "thread-1",
-        createdAt: "2026-06-01T10:10:00.000Z",
-      },
-      activeThreadId: "thread-1",
-    });
+    const { setContacts } = renderActiveThreadMessage(contactWithUnread);
 
     const firstUpdater = setContacts.mock.calls[0][0];
     const afterFirstUpdate = firstUpdater([contactWithUnread]);
@@ -259,11 +255,7 @@ describe("ContactList realtime unread sync", () => {
     // that across every queued updater, unreadCount was never reset to 0.
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    let finalState = [contactWithUnread];
-    for (const [updaterFn] of setContacts.mock.calls) {
-      finalState = updaterFn(finalState);
-    }
-    expect(finalState[0].unreadCount).toBe(4);
+    expect(applyQueuedUpdates(setContacts.mock.calls, [contactWithUnread])[0].unreadCount).toBe(4);
   });
 
   test("active-contact fallback without a threadId increments unreadCount and never calls markThreadRead", () => {
@@ -299,32 +291,15 @@ describe("ContactList realtime unread sync", () => {
       threadId: "thread-1",
       createdAt: "2026-06-01T10:00:00.000Z",
     };
-    const setContacts = jest.fn();
-    const wsValue = { messages: [wsMessage] };
 
-    const renderProps = (activeThreadId) => (
-      <WebSocketContext.Provider value={wsValue}>
-        <ContactList
-          userId="host-1"
-          dashboardType="host"
-          contacts={[baseContact]}
-          pendingContacts={[]}
-          loading={false}
-          setContacts={setContacts}
-          onContactClick={jest.fn()}
-          onCloseChat={jest.fn()}
-          onNewMessage={jest.fn()}
-          activeThreadId={activeThreadId}
-          activeContactId={null}
-          capabilities={getMessageCapabilities("host")}
-        />
-      </WebSocketContext.Provider>
-    );
-
-    const { rerender } = render(renderProps("thread-2"));
+    const { setContacts, rerender } = renderWithSocket({
+      contacts: [baseContact],
+      wsMessage,
+      activeThreadId: "thread-2",
+    });
     expect(setContacts).toHaveBeenCalledTimes(1);
 
-    rerender(renderProps("thread-1"));
+    rerender("thread-1");
     expect(setContacts).toHaveBeenCalledTimes(1);
     expect(markThreadRead).not.toHaveBeenCalled();
   });
