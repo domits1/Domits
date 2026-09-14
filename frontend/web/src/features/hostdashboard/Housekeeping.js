@@ -40,7 +40,7 @@ const DEFAULT_NEW_TASK = {
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
-const AttachmentThumb = ({ attachment }) => {
+const AttachmentThumb = ({ attachment, onRemove }) => {
     const [url, setUrl] = React.useState(null);
 
     React.useEffect(() => {
@@ -59,15 +59,28 @@ const AttachmentThumb = ({ attachment }) => {
     const isPdf = name.endsWith('.pdf');
 
     return (
-        <a href={url} target="_blank" rel="noreferrer" className="attachment-thumb">
-            {isPdf ? <div className="attachment-pdf-icon">PDF</div> : <img src={url} alt={name} />}
-        </a>
+        <div className="attachment-thumb-wrapper">
+            <a href={url} target="_blank" rel="noreferrer" className="attachment-thumb">
+                {isPdf ? <div className="attachment-pdf-icon">PDF</div> : <img src={url} alt={name} />}
+            </a>
+            {onRemove && (
+                <button
+                    type="button"
+                    className="attachment-remove-btn"
+                    aria-label={`Remove ${name}`}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
+                >
+                    <LuX />
+                </button>
+            )}
+        </div>
     );
 };
 
 
 AttachmentThumb.propTypes = {
     attachment: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.string]).isRequired,
+    onRemove: PropTypes.func,
 };
 
 const isTaskOverdue = (task, todayStr) => (
@@ -553,6 +566,13 @@ const HostPropertyCare = () => {
         setEditedTask(prev => ({
             ...prev,
             attachments: [...(prev.attachments || []), ...files],
+        }));
+    };
+
+    const handleRemoveAttachment = (index) => {
+        setEditedTask(prev => ({
+            ...prev,
+            attachments: (prev.attachments || []).filter((_, i) => i !== index),
         }));
     };
 
@@ -1787,8 +1807,12 @@ const HostPropertyCare = () => {
                                         <p className="no-attachments-text">No attachments yet.</p>
                                     ) : (
                                         <div className="attachments-grid">
-                                            {editedTask.attachments.map((f) => (
-                                                <AttachmentThumb key={f instanceof File ? f.name : f} attachment={f} />
+                                            {editedTask.attachments.map((f, index) => (
+                                                <AttachmentThumb
+                                                    key={f instanceof File ? f.name : f}
+                                                    attachment={f}
+                                                    onRemove={() => handleRemoveAttachment(index)}
+                                                />
                                             ))}
                                         </div>
                                     )}
