@@ -283,7 +283,7 @@ const tabEmptyMessages = {
 };
 const filteredBookings = useMemo(() => {
   if (!searchQuery.trim()) return tabBookings;
-  const query = searchQuery.toLowerCase();
+   const query = searchQuery.trim().toLowerCase();
   return tabBookings.filter((b) => {
     const propertyId = getPropertyId(b);
     const propertyInfo = propertyId ? propertyMap[propertyId] : undefined;
