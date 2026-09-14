@@ -15,6 +15,11 @@ const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancell
 const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
 const ACCEPT_INQUIRY_MAX_ATTEMPTS = 3;
 const SERIALIZATION_FAILURE_SQLSTATE = "40001";
+// Everything that isn't Inquiry and isn't in NON_BLOCKING_BOOKING_STATUSES blocks a new booking
+// elsewhere in this file (assertNoBookingConflict, getBlockedDatesByPropertyId). Reuse that same
+// definition here instead of a second, separately-maintained list of "blocking" statuses.
+const ACCEPT_INQUIRY_EXCLUDED_STATUSES = NON_BLOCKING_BOOKING_STATUSES.filter((status) => status !== "Inquiry");
+export const CONFLICT_EXISTING_BOOKING = "CONFLICT_EXISTING_BOOKING";
 
 class ReservationRepository {
   // ---------
@@ -494,14 +499,22 @@ class ReservationRepository {
         .createQueryBuilder("booking")
         .setLock("pessimistic_write")
         .where("booking.property_id = :propertyId", { propertyId })
-        .andWhere("booking.status = :status", { status: "Inquiry" })
+        .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: ACCEPT_INQUIRY_EXCLUDED_STATUSES })
         .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
         .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
         .getMany();
 
-      const targetIsStillInquiry = lockedRows.some((row) => row.id === bookingId);
-      if (!targetIsStillInquiry) {
+      const targetRow = lockedRows.find((row) => row.id === bookingId);
+      if (!targetRow || targetRow.status !== "Inquiry") {
         return { accepted: false, declinedCount: 0 };
+      }
+
+      // A concurrent create() or accept() may have already moved an overlapping booking past
+      // Inquiry before this transaction acquired the lock. Confirming here would double-book,
+      // so refuse instead of only declining Inquiry siblings.
+      const hasBlockingOverlap = lockedRows.some((row) => row.id !== bookingId && row.status !== "Inquiry");
+      if (hasBlockingOverlap) {
+        return { accepted: false, declinedCount: 0, reason: CONFLICT_EXISTING_BOOKING };
       }
 
       await manager.createQueryBuilder().update(Booking).set({ status: "Awaiting Payment" }).where("id = :id", { id: bookingId }).execute();

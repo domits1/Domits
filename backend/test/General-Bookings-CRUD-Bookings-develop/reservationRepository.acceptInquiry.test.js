@@ -59,7 +59,9 @@ describe("ReservationRepository accept-inquiry transaction", () => {
     expect(manager.getRepository).toHaveBeenCalled();
     expect(selectBuilder.setLock).toHaveBeenCalledWith("pessimistic_write");
     expect(selectBuilder.where).toHaveBeenCalledWith("booking.property_id = :propertyId", { propertyId: "property-1" });
-    expect(selectBuilder.andWhere).toHaveBeenCalledWith("booking.status = :status", { status: "Inquiry" });
+    expect(selectBuilder.andWhere).toHaveBeenCalledWith("booking.status NOT IN (:...excludedStatuses)", {
+      excludedStatuses: ["Failed", "Declined", "Cancelled", "Canceled"],
+    });
     expect(selectBuilder.andWhere).toHaveBeenCalledWith("booking.arrivaldate < :departureDateMs", { departureDateMs: 2000 });
     expect(selectBuilder.andWhere).toHaveBeenCalledWith("booking.departuredate > :arrivalDateMs", { arrivalDateMs: 1000 });
 
@@ -86,6 +88,28 @@ describe("ReservationRepository accept-inquiry transaction", () => {
     const result = await repository.acceptInquiryWithOverlapDecline(OVERLAP_ARGS);
 
     expect(result).toEqual({ accepted: false, declinedCount: 0 });
+    expect(createQueryBuilder).not.toHaveBeenCalled();
+  });
+
+  test("returns accepted:false with reason CONFLICT_EXISTING_BOOKING and writes nothing when an overlap already holds a blocking status", async () => {
+    // simulates a concurrent create() or accept() having already moved an overlapping
+    // booking to Awaiting Payment before this transaction acquired the lock
+    const selectBuilder = createSelectBuilder([
+      { id: "booking-1", status: "Inquiry" },
+      { id: "overlap-1", status: "Awaiting Payment" },
+    ]);
+    const createQueryBuilder = jest.fn();
+    const manager = {
+      getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => selectBuilder) })),
+      createQueryBuilder,
+    };
+    const transaction = jest.fn(async (callback) => callback(manager));
+    Database.getInstance.mockResolvedValue({ transaction });
+    const repository = new ReservationRepository();
+
+    const result = await repository.acceptInquiryWithOverlapDecline(OVERLAP_ARGS);
+
+    expect(result).toEqual({ accepted: false, declinedCount: 0, reason: "CONFLICT_EXISTING_BOOKING" });
     expect(createQueryBuilder).not.toHaveBeenCalled();
   });
 
