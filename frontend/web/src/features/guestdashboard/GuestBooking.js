@@ -281,13 +281,6 @@ const tabEmptyMessages = {
   upcoming: "You do not have any upcoming bookings yet.",
   past: "You do not have any past bookings yet.",
 };
-
-const tabCounts = {
-  all: paidBookings.length,
-  current: currentBookings.length,
-  upcoming: upcomingBookings.length,
-  past: pastBookings.length,
-};
 const filteredBookings = useMemo(() => {
   if (!searchQuery.trim()) return tabBookings;
   const query = searchQuery.toLowerCase();
@@ -330,9 +323,9 @@ const filteredBookings = useMemo(() => {
         <div className="guest-booking-search">
           <input
             type="text"
+            aria-label="Search bookings"
             placeholder="Search by city, property or booking id"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
@@ -358,6 +351,7 @@ const filteredBookings = useMemo(() => {
             emptyMessage={tabEmptyMessages[activeTab]}
             propertyMap={propertyMap}
             handleBookingClick={handleBookingClick}
+            extraClassName={activeTab === "past" ? "guest-card--past" : ""}
           />
         </div>
                   {cancelledBookings.length > 0 && (

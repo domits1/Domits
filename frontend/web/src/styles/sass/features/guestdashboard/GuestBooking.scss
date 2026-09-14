@@ -65,15 +65,17 @@ $text-muted: #6b7280;
     display: none;
   }
 
-  > h2,
-  .dashboardHead {
-    padding-inline: clamp(8px, 2vw, 16px);
-  }
+> h2,
+.guest-booking-title,
+.guest-booking-subtitle,
+.dashboardHead {
+  padding-inline: clamp(8px, 2vw, 16px);
+}
 
 .guest-booking-title {
   font-size: 22px;
   font-weight: 700;
-  text-align: auto;
+  text-align: left;
   margin: 0;
 }
 
@@ -325,7 +327,6 @@ $text-muted: #6b7280;
       justify-self: stretch;
     }
   }
-
   .guest-card--past .guest-card-body {
     max-height: 360px;
     overflow-y: auto;
@@ -342,6 +343,93 @@ $text-muted: #6b7280;
       border-radius: 999px;
     }
   }
+
+  .guest-booking-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 20px 28px;
+    margin: 16px 0 0 0;
+    padding-inline: clamp(8px, 2vw, 16px);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .guest-booking-tab {
+    flex: none;
+    width: auto;
+    background: none;
+    border: none;
+    padding: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-muted;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      color: var(--primary-color);
+    }
+
+    &--active {
+      color: var(--primary-color);
+      font-weight: 700;
+      border-bottom-color: var(--primary-color);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .guest-booking-tabs {
+      gap: 20px;
+      padding-bottom: 2px;
+    }
+
+    .guest-booking-tab {
+      font-size: 13px;
+      padding-bottom: 10px;
+    }
+  }
+
+  .guest-booking-search {
+    position: relative;
+    width: 100%;
+    max-width: $summary-max;
+    margin: 16px 16px 0 0;
+    padding-inline: clamp(8px, 2vw, 16px);
+    box-sizing: border-box;
+
+    input {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 16px 12px 40px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: $radius-sm;
+      font-size: 14px;
+      color: $text;
+      background: $bg;
+
+      &::placeholder {
+        color: $text-muted;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: $focus-ring;
+      }
+    }
+
+    .guest-booking-search-icon {
+      position: absolute;
+      left: calc(clamp(8px, 2vw, 16px) + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      color: $text-muted;
+      pointer-events: none;
+    }
+  }
+
 }
 
 .guest-card-body::-webkit-scrollbar {
@@ -350,88 +438,4 @@ $text-muted: #6b7280;
 .guest-card-body::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.25);
   border-radius: 999px;
-}
-.guest-booking-tabs {
-  display: flex;
-  flex-wrap: wrap;               // allow wrapping
-  justify-content: flex-start;
-  gap: 20px 28px;                // smaller gap
-  margin: 16px 0 0 0;
-  padding-inline: clamp(8px, 2vw, 16px);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.guest-booking-tab {
-  flex: none;
-  width: auto;
-  background: none;
-  border: none;
-  padding: 0 0 10px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: $text-muted;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease;
-
-  &:hover {
-    color: var(--primary-color);
-  }
-
-  &--active {
-    color: var(--primary-color);
-    font-weight: 700;
-    border-bottom-color: var(--primary-color);
-  }
-}
-
-@media (max-width: 600px) {
-  .guest-booking-tabs {
-    gap: 20px;
-    padding-bottom: 2px;          // small space so the green line doesn’t get cut
-  }
-
-  .guest-booking-tab {
-    font-size: 13px;
-    padding-bottom: 10px;
-  }
-}
-.guest-booking-search {
-  position: relative;
-  width: 100%;
-  max-width: $summary-max;
-  margin: 16px 16px 0 0 0;
-  padding-inline: clamp(8px, 2vw, 16px);
-  box-sizing: border-box;
-
-  input {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px 16px 12px 40px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: $radius-sm;
-    font-size: 14px;
-    color: $text;
-    background: $bg;
-
-    &::placeholder {
-      color: $text-muted;
-    }
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: $focus-ring;
-    }
-  }
-
-  .guest-booking-search-icon {
-    position: absolute;
-    left: calc(clamp(8px, 2vw, 16px) + 12px);
-    top: 50%;
-    transform: translateY(-50%);
-    color: $text-muted;
-    pointer-events: none;
-  }
 }
