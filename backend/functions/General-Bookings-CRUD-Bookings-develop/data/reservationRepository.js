@@ -19,7 +19,7 @@ const SERIALIZATION_FAILURE_SQLSTATE = "40001";
 // elsewhere in this file (assertNoBookingConflict, getBlockedDatesByPropertyId). Reuse that same
 // definition here instead of a second, separately-maintained list of "blocking" statuses.
 const ACCEPT_INQUIRY_EXCLUDED_STATUSES = NON_BLOCKING_BOOKING_STATUSES.filter((status) => status !== "Inquiry");
-const CONFLICT_EXISTING_BOOKING = "CONFLICT_EXISTING_BOOKING";
+export const CONFLICT_EXISTING_BOOKING = "CONFLICT_EXISTING_BOOKING";
 
 class ReservationRepository {
   // ---------

@@ -91,4 +91,14 @@ describe("BookingService.acceptInquiry", () => {
       departureDateMs: 2000,
     });
   });
+
+  test("throws a dates-unavailable BadRequestException when an overlap already holds a blocking status", async () => {
+    const { service } = buildService({
+      acceptResult: { accepted: false, declinedCount: 0, reason: "CONFLICT_EXISTING_BOOKING" },
+    });
+
+    await expect(service.acceptInquiry("booking-1", "token-1")).rejects.toMatchObject({
+      message: "Dates are no longer available for this booking.",
+    });
+  });
 });
