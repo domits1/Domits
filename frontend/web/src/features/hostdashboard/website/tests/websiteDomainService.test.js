@@ -77,6 +77,33 @@ describe("websiteDomainService", () => {
     });
   });
 
+  it("treats a success without a domain in the body as an unexpected response", async () => {
+    fetch.mockResolvedValue(jsonResponse(200, { ok: true }));
+
+    await expect(connectWebsiteDomain({ siteId: "site-1", domain: "www.example.com" })).rejects.toMatchObject({
+      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
+      status: 200,
+    });
+    fetch.mockResolvedValue(jsonResponse(200, { domain: null }));
+    await expect(verifyWebsiteDomain("site-1")).rejects.toMatchObject({
+      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
+    });
+  });
+
+  it("reports a failed body read as a network error", async () => {
+    fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => {
+        throw new TypeError("body stream aborted");
+      },
+    });
+
+    await expect(fetchWebsiteDomains("site-1")).rejects.toMatchObject({
+      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.NETWORK_ERROR,
+    });
+  });
+
   it("reports a missing session as unauthorized without calling the server", async () => {
     getAccessToken.mockReturnValueOnce(null);
 

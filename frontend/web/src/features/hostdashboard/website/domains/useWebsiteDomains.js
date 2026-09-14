@@ -15,6 +15,9 @@ const DOMAIN_TYPE_CUSTOM = "CUSTOM";
 const SITE_STATUS_PUBLISHED = "PUBLISHED";
 const ACTION_CONNECT = "connect";
 const ACTION_CHECK = "check";
+const ERROR_SCOPE_FIELD = "field";
+const ERROR_SCOPE_PANEL = "panel";
+const RELOAD_ON_ERROR_CODES = new Set(["domain_limit_reached", "domain_not_found"]);
 
 const isCustomDomain = (entry) => entry?.domainType === DOMAIN_TYPE_CUSTOM;
 
@@ -51,31 +54,47 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
   }, [propertyId]);
 
   useEffect(() => {
+    setStatus(WEBSITE_DOMAINS_STATUS.IDLE);
+    setSiteId("");
+    setDomains([]);
+    setNotice(null);
+    setFieldError("");
+  }, [propertyId]);
+
+  useEffect(() => {
     if (enabled && status === WEBSITE_DOMAINS_STATUS.IDLE) {
       void load();
     }
   }, [enabled, load, status]);
 
-  const runDomainAction = useCallback(async (action, request) => {
-    setPendingAction(action);
-    setNotice(null);
-    setFieldError("");
-    try {
-      const domain = await request();
-      setDomains((current) => replaceCustomDomain(current, domain));
-      return true;
-    } catch (error) {
-      const presentation = resolveDomainErrorCopy(error);
-      if (presentation.scope === "field") {
-        setFieldError(presentation.message);
-      } else {
-        setNotice(presentation);
+  const runDomainAction = useCallback(
+    async ({ action, request, errorScope = ERROR_SCOPE_FIELD }) => {
+      setPendingAction(action);
+      setNotice(null);
+      setFieldError("");
+      try {
+        const domain = await request();
+        setDomains((current) => replaceCustomDomain(current, domain));
+        return true;
+      } catch (error) {
+        const presentation = resolveDomainErrorCopy(error);
+        const reloaded = RELOAD_ON_ERROR_CODES.has(String(error?.code || ""));
+        if (reloaded) {
+          await load();
+        }
+        const showInField = presentation.scope === ERROR_SCOPE_FIELD && errorScope === ERROR_SCOPE_FIELD && !reloaded;
+        if (showInField) {
+          setFieldError(presentation.message);
+        } else {
+          setNotice(presentation);
+        }
+        return false;
+      } finally {
+        setPendingAction(null);
       }
-      return false;
-    } finally {
-      setPendingAction(null);
-    }
-  }, []);
+    },
+    [load]
+  );
 
   const connect = useCallback(
     (value) => {
@@ -84,13 +103,18 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
         setFieldError(error);
         return Promise.resolve(false);
       }
-      return runDomainAction(ACTION_CONNECT, () => connectWebsiteDomain({ siteId, domain }));
+      return runDomainAction({ action: ACTION_CONNECT, request: () => connectWebsiteDomain({ siteId, domain }) });
     },
     [runDomainAction, siteId]
   );
 
   const checkAgain = useCallback(
-    () => runDomainAction(ACTION_CHECK, () => verifyWebsiteDomain(siteId)),
+    () =>
+      runDomainAction({
+        action: ACTION_CHECK,
+        request: () => verifyWebsiteDomain(siteId),
+        errorScope: ERROR_SCOPE_PANEL,
+      }),
     [runDomainAction, siteId]
   );
 

@@ -93,6 +93,45 @@ describe("WebsiteDomainPanel", () => {
     expect(fetchWebsiteDomains).not.toHaveBeenCalled();
   });
 
+  it("lets the host re-check after publishing in another tab", async () => {
+    fetchWebsiteSiteByPropertyId
+      .mockResolvedValueOnce({ ...PUBLISHED_SUMMARY, site: { id: "site-1", status: "PREVIEW" } })
+      .mockResolvedValueOnce(PUBLISHED_SUMMARY);
+    await openPanel();
+    await screen.findByText(/publish this website first/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /check again/i }));
+
+    expect(await screen.findByText(FALLBACK.domain)).toBeInTheDocument();
+    expect(fetchWebsiteSiteByPropertyId).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows a verify refusal as a panel notice even though the form is hidden", async () => {
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, CUSTOM]);
+    verifyWebsiteDomain.mockRejectedValue(domainError("invalid_domain"));
+    await openPanel();
+    await screen.findByText("d3lo.cloudfront.net");
+
+    fireEvent.click(screen.getByRole("button", { name: /check again/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/subdomain like www\.example\.com/i);
+    expect(screen.queryByRole("textbox", { name: /your domain/i })).not.toBeInTheDocument();
+  });
+
+  it("reloads the domains when the server says this website already has one", async () => {
+    fetchWebsiteDomains.mockResolvedValueOnce([FALLBACK]).mockResolvedValueOnce([FALLBACK, CUSTOM]);
+    connectWebsiteDomain.mockRejectedValue(domainError("domain_limit_reached"));
+    await openPanel();
+    await screen.findByText(FALLBACK.domain);
+
+    fireEvent.change(screen.getByRole("textbox", { name: /your domain/i }), { target: { value: "www.other.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(await screen.findByText("d3lo.cloudfront.net")).toBeInTheDocument();
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("alert")).toHaveTextContent(/already has a custom domain/i);
+  });
+
   it("connects a domain and shows the CNAME record with working copy buttons", async () => {
     await openPanel();
     await screen.findByText(FALLBACK.domain);

@@ -82,6 +82,8 @@ describe("resolveDomainProgressCopy / resolveDomainReasonCopy", () => {
       /already connected to another website or service/i
     );
     expect(resolveDomainReasonCopy("certificate_validation-timed-out")).toMatch(/never appeared/i);
+    expect(resolveDomainReasonCopy("certificate_validation-timed-out")).not.toMatch(/check again/i);
+    expect(resolveDomainReasonCopy("certificate_validation-timed-out")).toMatch(/contact support to start again/i);
     expect(resolveDomainReasonCopy("certificate_expired")).toMatch(/certificate could not be issued/i);
     expect(resolveDomainReasonCopy("tenant_not_found")).toMatch(/removed on our side/i);
     expect(resolveDomainReasonCopy("something_new")).toMatch(/could not be activated/i);

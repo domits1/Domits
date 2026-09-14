@@ -31,7 +31,7 @@ const PROGRESS_COPY_BY_COMPLETED_STEPS = Object.freeze({
 
 const REASON_COPY = Object.freeze({
   [REASON_DOMAIN_IN_USE]: "This domain is already connected to another website or service. Disconnect it there first.",
-  [REASON_DNS_TIMED_OUT]: "We waited for your DNS record but it never appeared.",
+  [REASON_DNS_TIMED_OUT]: "We waited for your DNS record but it never appeared. Contact support to start again.",
   tenant_not_found: "The domain setup was removed on our side.",
   tenant_disabled: "The domain was turned off on our side.",
 });
@@ -94,6 +94,9 @@ export const resolveDomainProgressCopy = (domain) => {
 
 export const resolveDomainReasonCopy = (reason) => {
   const normalizedReason = String(reason || "");
+  if (normalizedReason === REASON_DNS_TIMED_OUT) {
+    return REASON_COPY[REASON_DNS_TIMED_OUT];
+  }
   const isCertificateFailure =
     normalizedReason.startsWith(CERTIFICATE_REASON_PREFIX) && normalizedReason !== REASON_DNS_TIMED_OUT;
   const copy = isCertificateFailure

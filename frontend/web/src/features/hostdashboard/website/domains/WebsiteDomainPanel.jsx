@@ -208,7 +208,14 @@ function DomainPanelBody({ state }) {
     return <p className={builderStyles.metaText}>Loading domains…</p>;
   }
   if (state.status === WEBSITE_DOMAINS_STATUS.UNPUBLISHED) {
-    return <p className={styles.notice}>Publish this website first, then connect your domain.</p>;
+    return (
+      <div className={styles.notice}>
+        <p>Publish this website first, then connect your domain.</p>
+        <button type="button" className={builderStyles.secondaryButton} onClick={() => void state.reload()}>
+          Check again
+        </button>
+      </div>
+    );
   }
   if (state.status === WEBSITE_DOMAINS_STATUS.ERROR) {
     return (

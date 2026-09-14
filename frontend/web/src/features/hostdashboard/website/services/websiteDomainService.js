@@ -44,8 +44,10 @@ const buildDomainRequestHeaders = (contentType) => {
 const sendWebsiteDomainRequest = async (url, { method, body = null }, fallbackMessage) => {
   const headers = buildDomainRequestHeaders(body ? JSON_CONTENT_TYPE : null);
   let response;
+  let rawBody;
   try {
     response = await fetch(url, { method, cache: "no-store", headers, body });
+    rawBody = await response.text();
   } catch {
     throw new WebsiteDomainError({
       code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.NETWORK_ERROR,
@@ -53,7 +55,7 @@ const sendWebsiteDomainRequest = async (url, { method, body = null }, fallbackMe
     });
   }
 
-  const payload = parseJsonSafely(await response.text());
+  const payload = parseJsonSafely(rawBody);
   if (!response.ok) {
     const errorBody = payload?.error;
     throw new WebsiteDomainError({
@@ -83,20 +85,33 @@ export const fetchWebsiteDomains = async (siteId) => {
   return Array.isArray(payload.domains) ? payload.domains : [];
 };
 
+const requireDomainView = (payload, fallbackMessage) => {
+  if (!payload.domain || typeof payload.domain !== "object") {
+    throw new WebsiteDomainError({
+      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
+      message: fallbackMessage,
+      status: 200,
+    });
+  }
+  return payload.domain;
+};
+
 export const connectWebsiteDomain = async ({ siteId, domain }) => {
+  const fallbackMessage = "We could not connect this domain.";
   const payload = await sendWebsiteDomainRequest(
     WEBSITE_DOMAINS_URL,
     { method: "POST", body: JSON.stringify({ siteId, domain }) },
-    "We could not connect this domain."
+    fallbackMessage
   );
-  return payload.domain || null;
+  return requireDomainView(payload, fallbackMessage);
 };
 
 export const verifyWebsiteDomain = async (siteId) => {
+  const fallbackMessage = "We could not check this domain.";
   const payload = await sendWebsiteDomainRequest(
     WEBSITE_DOMAIN_VERIFY_URL,
     { method: "POST", body: JSON.stringify({ siteId }) },
-    "We could not check this domain."
+    fallbackMessage
   );
-  return payload.domain || null;
+  return requireDomainView(payload, fallbackMessage);
 };
