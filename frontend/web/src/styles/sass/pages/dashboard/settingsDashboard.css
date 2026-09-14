@@ -595,6 +595,7 @@
     border: 1px solid #e5e7eb;
     border-radius: 999px;
     padding: 2px 8px;
+    white-space: nowrap;
 }
 
 .team-page .team-member-chevron {
@@ -724,7 +725,12 @@ dialog.team-modal .team-cancel-btn:hover {
 .team-page .team-table-header,
 .team-page .team-table-row {
     display: grid;
-    grid-template-columns: 2.5fr 1.2fr 2fr 1fr 0.6fr;
+    /* Role and Status hold fixed-height pill badges (white-space: nowrap),
+       so those two tracks get a min width sized to the longest label
+       ("Property Operations Manager") to guarantee they never wrap.
+       Cohost/Permissions/Actions stay flexible since their content already
+       wraps (email text) or reflows (permission chips) safely. */
+    grid-template-columns: minmax(160px, 2.2fr) minmax(200px, 1.3fr) minmax(140px, 2fr) minmax(90px, 0.8fr) minmax(44px, 0.4fr);
     align-items: center;
     gap: 12px;
 }
@@ -1031,6 +1037,21 @@ dialog.team-modal h3 {
 
     .team-page .team-row-cohost {
         justify-content: flex-start;
+    }
+
+    /* Role/Permissions/Status stack label-above-value instead of sitting
+       side-by-side with space-between: their values are nowrap pills/chips
+       that must not be forced to shrink below their content width, and a
+       side-by-side row with an unshrinkable child would blow out the card's
+       width on narrow screens (seen with "Property Operations Manager").
+       Stacking removes any horizontal width pressure regardless of how
+       long the role name or how many permission chips there are. */
+    .team-page .team-row-role,
+    .team-page .team-row-permissions,
+    .team-page .team-row-status {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
 
     .team-page .team-row-role::before,

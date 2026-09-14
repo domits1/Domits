@@ -1263,7 +1263,7 @@
       "joined": "Joined",
       "memberAvatarAlt": "Member avatar",
       "hostAvatarAlt": "Host avatar",
-      "columnCohost": "Co-Host",
+      "columnMember": "Member",
       "columnRole": "Role",
       "columnPermissions": "Permissions",
       "columnStatus": "Status",
@@ -1272,6 +1272,7 @@
       "statusPending": "Pending",
       "actionsMenuLabel": "Open actions menu",
       "removeAction": "Remove",
+      "editRoleAction": "Edit role",
       "permissionsMore": "+{count} more",
       "permissionsEmpty": "—",
       "removeModal": {
@@ -1285,11 +1286,17 @@
         "emailLabel": "Email address",
         "emailPlaceholder": "colleague@example.com",
         "roleLabel": "Role",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Send invitation",
         "cancel": "Cancel",
         "success": "✓ Invitation sent to",
         "error": "Failed to send invitation. Please try again."
+      },
+      "editRoleModal": {
+        "title": "Edit role",
+        "roleLabel": "Role",
+        "saveBtn": "Save",
+        "cancel": "Cancel",
+        "error": "Failed to update role. Please try again."
       }
     }
   },

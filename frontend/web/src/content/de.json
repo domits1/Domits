@@ -1264,7 +1264,7 @@
       "joined": "Beigetreten am",
       "memberAvatarAlt": "Mitglied-Avatar",
       "hostAvatarAlt": "Host-Avatar",
-      "columnCohost": "Co-Host",
+      "columnMember": "Mitglied",
       "columnRole": "Rolle",
       "columnPermissions": "Berechtigungen",
       "columnStatus": "Status",
@@ -1273,6 +1273,7 @@
       "statusPending": "Ausstehend",
       "actionsMenuLabel": "Aktionsmenü öffnen",
       "removeAction": "Entfernen",
+      "editRoleAction": "Rolle bearbeiten",
       "permissionsMore": "+{count} weitere",
       "permissionsEmpty": "—",
       "removeModal": {
@@ -1281,12 +1282,18 @@
         "confirm": "Ja, entfernen",
         "cancel": "Abbrechen"
       },
+      "editRoleModal": {
+        "title": "Rolle bearbeiten",
+        "roleLabel": "Rolle",
+        "saveBtn": "Speichern",
+        "cancel": "Abbrechen",
+        "error": "Rolle konnte nicht aktualisiert werden. Bitte versuche es erneut."
+      },
       "inviteModal": {
         "title": "Teammitglied einladen",
         "emailLabel": "E-Mail-Adresse",
         "emailPlaceholder": "kollege@beispiel.com",
         "roleLabel": "Rolle",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Einladung senden",
         "cancel": "Abbrechen",
         "success": "✓ Einladung gesendet an",

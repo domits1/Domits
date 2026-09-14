@@ -31,7 +31,7 @@ describe("ROLE_PERMISSIONS_SUMMARY", () => {
 
 describe("getRolePermissionsSummary", () => {
     test("returns the mapped list for a known role", () => {
-        expect(getRolePermissionsSummary("Reservation Manager")).toEqual(["Manage bookings", "Guest communication"]);
+        expect(getRolePermissionsSummary("Reservation Manager")).toEqual(["Bookings", "Messaging"]);
     });
 
     test("falls back to an empty array for an unrecognized role", () => {

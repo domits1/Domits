@@ -3,10 +3,16 @@ import { Link } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import standardAvatar from "../../images/standard.png";
 import { normalizeImageUrl } from "../guestdashboard/utils/image";
-import { fetchTeamMembers, fetchMemberships, inviteTeamMember, removeTeamMember } from "./services/teamService";
+import {
+    fetchTeamMembers,
+    fetchMemberships,
+    inviteTeamMember,
+    removeTeamMember,
+    updateTeamMemberRole,
+} from "./services/teamService";
 import { LanguageContext } from "../../context/LanguageContext";
 import { ROLES } from "../auth/roles.js";
-import { getRolePermissionsSummary } from "./constants/rolePermissionsSummary.js";
+import { getRolePermissionsSummary, TEAM_INVITABLE_ROLES } from "./constants/rolePermissionsSummary.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
@@ -59,7 +65,7 @@ const PermissionsSummary = ({ role, t }) => {
     );
 };
 
-const TeamMemberRow = ({ member, t, onRemove }) => {
+export const TeamMemberRow = ({ member, t, onRemove, onEditRole, canEditRoles }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const actionsRef = useRef(null);
 
@@ -109,6 +115,19 @@ const TeamMemberRow = ({ member, t, onRemove }) => {
                 </button>
                 {menuOpen && (
                     <div className="team-row-menu" role="menu">
+                        {canEditRoles && (
+                            <button
+                                type="button"
+                                role="menuitem"
+                                className="team-row-menu-item"
+                                onClick={() => {
+                                    setMenuOpen(false);
+                                    onEditRole(member);
+                                }}
+                            >
+                                {t.editRoleAction}
+                            </button>
+                        )}
                         <button
                             type="button"
                             role="menuitem"
@@ -143,6 +162,12 @@ const HostTeam = () => {
     const [loadError, setLoadError] = useState(false);
     const [isLoadingMembers, setIsLoadingMembers] = useState(true);
     const [confirmRemoveId, setConfirmRemoveId] = useState(null);
+    const [editingMember, setEditingMember] = useState(null);
+    const [editRoleValue, setEditRoleValue] = useState("");
+    const [editRoleError, setEditRoleError] = useState("");
+    const [editRoleSaving, setEditRoleSaving] = useState(false);
+
+    const canEditRoles = host.group === "Host" || host.group === "Admin";
 
     useEffect(() => {
         const loadHost = async () => {
@@ -180,6 +205,13 @@ const HostTeam = () => {
         return () => document.removeEventListener("keydown", handleEscape);
     }, [showInviteModal]);
 
+    useEffect(() => {
+        if (!editingMember) return;
+        const handleEscape = (e) => { if (e.key === "Escape") setEditingMember(null); };
+        document.addEventListener("keydown", handleEscape);
+        return () => document.removeEventListener("keydown", handleEscape);
+    }, [editingMember]);
+
     const handleInvite = async (e) => {
         e.preventDefault();
         if (!inviteEmail) return;
@@ -212,6 +244,28 @@ const HostTeam = () => {
             setMembers(prev => prev.filter(m => m.id !== memberId));
         } catch {
             /* silently ignore */
+        }
+    };
+
+    const handleEditRoleOpen = (member) => {
+        setEditingMember(member);
+        setEditRoleValue(member.role);
+        setEditRoleError("");
+    };
+
+    const handleEditRoleSave = async (e) => {
+        e.preventDefault();
+        if (!editingMember) return;
+        setEditRoleError("");
+        setEditRoleSaving(true);
+        try {
+            const updated = await updateTeamMemberRole(editingMember.id, editRoleValue);
+            setMembers(prev => prev.map(m => (m.id === editingMember.id ? { ...m, role: updated.role } : m)));
+            setEditingMember(null);
+        } catch {
+            setEditRoleError(t.editRoleModal.error);
+        } finally {
+            setEditRoleSaving(false);
         }
     };
 
@@ -248,14 +302,21 @@ const HostTeam = () => {
             <div className="team-card">
                 <div className="team-table" role="table">
                     <div className="team-table-header" role="row">
-                        <span className="team-row-cell" role="columnheader">{t.columnCohost}</span>
+                        <span className="team-row-cell" role="columnheader">{t.columnMember}</span>
                         <span className="team-row-cell" role="columnheader">{t.columnRole}</span>
                         <span className="team-row-cell" role="columnheader">{t.columnPermissions}</span>
                         <span className="team-row-cell" role="columnheader">{t.columnStatus}</span>
                         <span className="team-row-cell" role="columnheader">{t.columnActions}</span>
                     </div>
                     {visibleMembers.map(member => (
-                        <TeamMemberRow key={member.id} member={member} t={t} onRemove={handleRemoveConfirm} />
+                        <TeamMemberRow
+                            key={member.id}
+                            member={member}
+                            t={t}
+                            onRemove={handleRemoveConfirm}
+                            onEditRole={handleEditRoleOpen}
+                            canEditRoles={canEditRoles}
+                        />
                     ))}
                 </div>
             </div>
@@ -397,7 +458,9 @@ const HostTeam = () => {
                                         value={inviteRole}
                                         onChange={(e) => setInviteRole(e.target.value)}
                                     >
-                                        <option value="Property Operations Manager">{inviteModal.roleOption}</option>
+                                        {TEAM_INVITABLE_ROLES.map(role => (
+                                            <option key={role} value={role}>{role}</option>
+                                        ))}
                                     </select>
                                 </label>
                                 {inviteError && (
@@ -415,6 +478,43 @@ const HostTeam = () => {
                                 </div>
                             </form>
                         )}
+                    </dialog>
+                </div>
+            )}
+
+            {editingMember && (
+                <div className="team-modal-overlay">
+                    <dialog className="team-modal" open aria-modal="true" aria-labelledby="edit-role-modal-title">
+                        <h3 id="edit-role-modal-title">{t.editRoleModal.title}</h3>
+                        <form onSubmit={handleEditRoleSave}>
+                            <label className="team-modal-label">
+                                <span>{t.editRoleModal.roleLabel}</span>
+                                <select
+                                    className="team-modal-input"
+                                    value={editRoleValue}
+                                    onChange={(e) => setEditRoleValue(e.target.value)}
+                                >
+                                    {TEAM_INVITABLE_ROLES.map(role => (
+                                        <option key={role} value={role}>{role}</option>
+                                    ))}
+                                </select>
+                            </label>
+                            {editRoleError && (
+                                <p className="team-invite-error">{editRoleError}</p>
+                            )}
+                            <div className="team-modal-actions">
+                                <button type="submit" className="team-invite-btn" disabled={editRoleSaving}>
+                                    {t.editRoleModal.saveBtn}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="team-cancel-btn"
+                                    onClick={() => setEditingMember(null)}
+                                >
+                                    {t.editRoleModal.cancel}
+                                </button>
+                            </div>
+                        </form>
                     </dialog>
                 </div>
             )}

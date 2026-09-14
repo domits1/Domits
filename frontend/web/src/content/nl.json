@@ -1264,7 +1264,7 @@
       "joined": "Lid geworden op",
       "memberAvatarAlt": "Avatar lid",
       "hostAvatarAlt": "Avatar host",
-      "columnCohost": "Co-host",
+      "columnMember": "Lid",
       "columnRole": "Rol",
       "columnPermissions": "Rechten",
       "columnStatus": "Status",
@@ -1273,6 +1273,7 @@
       "statusPending": "In behandeling",
       "actionsMenuLabel": "Actiemenu openen",
       "removeAction": "Verwijderen",
+      "editRoleAction": "Rol bewerken",
       "permissionsMore": "+{count} meer",
       "permissionsEmpty": "—",
       "removeModal": {
@@ -1281,12 +1282,18 @@
         "confirm": "Ja, verwijderen",
         "cancel": "Annuleren"
       },
+      "editRoleModal": {
+        "title": "Rol bewerken",
+        "roleLabel": "Rol",
+        "saveBtn": "Opslaan",
+        "cancel": "Annuleren",
+        "error": "Rol bijwerken mislukt. Probeer het opnieuw."
+      },
       "inviteModal": {
         "title": "Teamlid uitnodigen",
         "emailLabel": "E-mailadres",
         "emailPlaceholder": "collega@voorbeeld.com",
         "roleLabel": "Rol",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Uitnodiging verzenden",
         "cancel": "Annuleren",
         "success": "✓ Uitnodiging verstuurd naar",

@@ -6,8 +6,9 @@ import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Auth } from "aws-amplify";
-import HostTeam from "./HostTeam";
-import { fetchTeamMembers, fetchMemberships } from "./services/teamService";
+import HostTeam, { TeamMemberRow } from "./HostTeam";
+import { fetchTeamMembers, fetchMemberships, updateTeamMemberRole } from "./services/teamService";
+import en from "../../content/en.json";
 
 jest.mock("aws-amplify", () => ({
     Auth: {
@@ -20,6 +21,7 @@ jest.mock("./services/teamService", () => ({
     fetchMemberships: jest.fn(),
     inviteTeamMember: jest.fn(),
     removeTeamMember: jest.fn(),
+    updateTeamMemberRole: jest.fn(),
 }));
 
 const HOST_ATTRS = {
@@ -105,8 +107,8 @@ describe("HostTeam member table row rendering", () => {
         const generalBadge = screen.getByText("General Manager");
         expect(generalBadge).toHaveClass("team-role-badge", "team-role-badge--general-manager");
 
-        expect(screen.getByText("Manage bookings")).toBeInTheDocument();
-        expect(screen.getByText("Guest communication")).toBeInTheDocument();
+        expect(screen.getByText("Bookings")).toBeInTheDocument();
+        expect(screen.getByText("Messaging")).toBeInTheDocument();
 
         expect(screen.getByText("Active")).toBeInTheDocument();
         expect(screen.getByText("Pending")).toBeInTheDocument();
@@ -138,7 +140,7 @@ describe("HostTeam member table row rendering", () => {
 
         renderHostTeam();
 
-        const thirdChip = await screen.findByText("View finances");
+        const thirdChip = await screen.findByText("Finances");
         expect(thirdChip).toHaveClass("team-permission-chip--overflow");
         expect(screen.getByText("+1 more")).toBeInTheDocument();
     });
@@ -153,6 +155,77 @@ describe("HostTeam member table row rendering", () => {
         fireEvent.click(screen.getByRole("menuitem", { name: "Remove" }));
 
         expect(await screen.findByText("Remove team member")).toBeInTheDocument();
+    });
+});
+
+describe("HostTeam edit role modal", () => {
+    test("opens pre-filled with the member's current role and saves the new role", async () => {
+        fetchTeamMembers.mockResolvedValue([activeMember]);
+        updateTeamMemberRole.mockResolvedValue({ id: activeMember.id, role: "Sales Manager" });
+
+        renderHostTeam();
+
+        await screen.findByText("alex@example.com");
+        fireEvent.click(screen.getByRole("button", { name: "Open actions menu" }));
+        fireEvent.click(screen.getByRole("menuitem", { name: "Edit role" }));
+
+        const select = await screen.findByLabelText("Role");
+        expect(select).toHaveValue("Reservation Manager");
+
+        fireEvent.change(select, { target: { value: "Sales Manager" } });
+        fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+        // Wait for the modal to actually close (a reliable completion signal)
+        // rather than searching for "Sales Manager" text directly: that string
+        // is already present as a static <option> inside the still-open
+        // dropdown regardless of whether the save has finished, so a plain
+        // findByText would pass even while the modal is still open.
+        await waitFor(() => expect(screen.queryByText(en.settings.team.editRoleModal.title)).not.toBeInTheDocument());
+
+        expect(updateTeamMemberRole).toHaveBeenCalledWith("member-active", "Sales Manager");
+        const badge = document.querySelector(".team-row-role .team-role-badge");
+        expect(badge).toHaveTextContent("Sales Manager");
+    });
+});
+
+// TeamMemberRow's canEditRoles gate can't be exercised through the full
+// HostTeam page: the "Additional team members" section (and therefore the
+// table) only ever renders when host.group === "Host", so a non-Host/Admin
+// viewer never reaches a row to click in the first place, and there's no
+// page state where an Admin viewer sees the table either (that branch of
+// canEditRoles is intentionally in the code for a future caller, not
+// reachable from this page today). Testing the row directly is the only
+// way to verify the option is actually gated by the prop.
+describe("TeamMemberRow canEditRoles gating", () => {
+    const t = en.settings.team;
+    const member = { id: "m1", member_email: "alex@example.com", role: "Reservation Manager", status: "active" };
+
+    test("shows Edit role when canEditRoles is true", () => {
+        render(
+            <TeamMemberRow member={member} t={t} onRemove={jest.fn()} onEditRole={jest.fn()} canEditRoles={true} />
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Open actions menu" }));
+        expect(screen.getByRole("menuitem", { name: "Edit role" })).toBeInTheDocument();
+    });
+
+    test("hides Edit role when canEditRoles is false, Remove still shows", () => {
+        render(
+            <TeamMemberRow member={member} t={t} onRemove={jest.fn()} onEditRole={jest.fn()} canEditRoles={false} />
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Open actions menu" }));
+        expect(screen.queryByRole("menuitem", { name: "Edit role" })).not.toBeInTheDocument();
+        expect(screen.getByRole("menuitem", { name: "Remove" })).toBeInTheDocument();
+    });
+
+    test("clicking Edit role calls onEditRole with the member and closes the menu", () => {
+        const onEditRole = jest.fn();
+        render(
+            <TeamMemberRow member={member} t={t} onRemove={jest.fn()} onEditRole={onEditRole} canEditRoles={true} />
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Open actions menu" }));
+        fireEvent.click(screen.getByRole("menuitem", { name: "Edit role" }));
+        expect(onEditRole).toHaveBeenCalledWith(member);
+        expect(screen.queryByRole("menuitem", { name: "Edit role" })).not.toBeInTheDocument();
     });
 });
 

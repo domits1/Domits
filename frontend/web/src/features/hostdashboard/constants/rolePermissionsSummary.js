@@ -14,14 +14,14 @@ export const TEAM_INVITABLE_ROLES = HOST_ROLES.filter(
 // still the plain ownership/role checks in each Lambda's auth layer (see
 // backend/functions/host-team and PropertyHandler auth managers).
 export const ROLE_PERMISSIONS_SUMMARY = {
-    [ROLES.GENERAL_MANAGER]: ["Full property access", "Manage team", "View finances"],
-    [ROLES.RESERVATION_MANAGER]: ["Manage bookings", "Guest communication"],
-    [ROLES.GUEST_EXPERIENCE_MANAGER]: ["Guest communication", "Manage reviews"],
-    [ROLES.FINANCIAL_MANAGER]: ["View finances", "Manage payouts"],
-    [ROLES.DISTRIBUTION_MANAGER]: ["Manage channels", "Manage pricing"],
-    [ROLES.REVENUE_MANAGER]: ["Manage pricing", "View finances"],
-    [ROLES.SALES_MANAGER]: ["Manage bookings", "Guest communication"],
-    [ROLES.PROPERTY_OPERATIONS_MANAGER]: ["Manage bookings", "Manage listings"],
+    [ROLES.GENERAL_MANAGER]: ["Full access", "Team", "Finances"],
+    [ROLES.RESERVATION_MANAGER]: ["Bookings", "Messaging"],
+    [ROLES.GUEST_EXPERIENCE_MANAGER]: ["Messaging", "Reviews"],
+    [ROLES.FINANCIAL_MANAGER]: ["Finances", "Payouts"],
+    [ROLES.DISTRIBUTION_MANAGER]: ["Channels", "Pricing"],
+    [ROLES.REVENUE_MANAGER]: ["Pricing", "Finances"],
+    [ROLES.SALES_MANAGER]: ["Bookings", "Messaging"],
+    [ROLES.PROPERTY_OPERATIONS_MANAGER]: ["Bookings", "Listings"],
 };
 
 export const getRolePermissionsSummary = (role) => ROLE_PERMISSIONS_SUMMARY[role] || [];
