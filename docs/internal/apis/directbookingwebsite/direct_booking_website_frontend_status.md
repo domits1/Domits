@@ -80,6 +80,7 @@ What is in place:
   - API Gateway `/property/website/draft` and `/property/website/drafts`
   - API Gateway `/property/website/site`, `/property/website/site/publish`, `/property/website/site/unpublish`
   - API Gateway `/property/website/public/resolve` and `/property/website/public/render`
+  - API Gateway `/property/website/domains` (GET, POST) and `/property/website/domains/verify` (POST), pending console setup
   - CORS preflight on the new website routes
 - Draft save/read now explicitly bypasses cache and the editor performs a read-after-write refresh to avoid stale draft payloads after saving.
 - Building a website now keeps the Step 3 preview visible while the draft is saved, then shows a toast that the website is ready for review.

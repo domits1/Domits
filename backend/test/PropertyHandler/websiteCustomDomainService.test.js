@@ -163,9 +163,24 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
       expect.objectContaining({
         hostId: SITE.hostId,
         propertyId: SITE.propertyId,
-        eventType: "WEBSITE_DOMAIN_REQUESTED",
+        eventType: "SITE_DOMAIN_REQUESTED",
+        payload: expect.objectContaining({ siteId: SITE.id, domain: DOMAIN, status: "PENDING" }),
       })
     );
+    expect(eventRepository.recordEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it("records SITE_DOMAIN_FAILED next to the request event when the domain is in use elsewhere", async () => {
+    const tenantRepository = buildTenantRepository({
+      createTenant: jest.fn().mockRejectedValue(namedError("CNAMEAlreadyExists")),
+    });
+    const { service, eventRepository } = buildService({ tenantRepository });
+
+    await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
+
+    const eventTypes = eventRepository.recordEvent.mock.calls.map(([input]) => input.eventType);
+    expect(eventTypes).toEqual(["SITE_DOMAIN_REQUESTED", "SITE_DOMAIN_FAILED"]);
+    expect(eventRepository.recordEvent.mock.calls[1][0].payload).toMatchObject({ reason: "domain_in_use_elsewhere" });
   });
 
   it("persists FAILED without throwing when the domain is already used by another CloudFront resource", async () => {
@@ -267,12 +282,49 @@ describe("WebsiteCustomDomainService.syncCustomDomain", () => {
     const record = await service.syncCustomDomain({ site: SITE, domainRecord: buildRecord({ status: "VERIFIED" }) });
 
     expect(record.status).toBe("ACTIVE");
+    expect(eventRepository.recordEvent).toHaveBeenCalledTimes(1);
     expect(eventRepository.recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        eventType: "WEBSITE_DOMAIN_STATUS_CHANGED",
-        payload: expect.objectContaining({ previousStatus: "VERIFIED", status: "ACTIVE" }),
+        hostId: SITE.hostId,
+        propertyId: SITE.propertyId,
+        eventType: "SITE_DOMAIN_ACTIVATED",
+        payload: expect.objectContaining({ siteId: SITE.id, domain: DOMAIN, previousStatus: "VERIFIED" }),
       })
     );
+  });
+
+  it("records SITE_DOMAIN_VERIFIED when the certificate is issued and SITE_DOMAIN_FAILED when validation times out", async () => {
+    const verified = buildService({
+      tenantRepository: buildTenantRepository({ getManagedCertificate: jest.fn().mockResolvedValue(ISSUED) }),
+    });
+    await verified.service.syncCustomDomain({ site: SITE, domainRecord: buildRecord() });
+    expect(verified.eventRepository.recordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "SITE_DOMAIN_VERIFIED" })
+    );
+
+    const failed = buildService({
+      tenantRepository: buildTenantRepository({
+        getManagedCertificate: jest.fn().mockResolvedValue({ ...ISSUED, status: "validation-timed-out" }),
+      }),
+    });
+    await failed.service.syncCustomDomain({ site: SITE, domainRecord: buildRecord() });
+    expect(failed.eventRepository.recordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "SITE_DOMAIN_FAILED",
+        payload: expect.objectContaining({ reason: "certificate_validation-timed-out" }),
+      })
+    );
+  });
+
+  it("records nothing when a sync leaves a failed domain failed", async () => {
+    const tenantRepository = buildTenantRepository({
+      getManagedCertificate: jest.fn().mockResolvedValue({ ...ISSUED, status: "validation-timed-out" }),
+    });
+    const { service, eventRepository } = buildService({ tenantRepository });
+
+    await service.syncCustomDomain({ site: SITE, domainRecord: buildRecord({ status: "FAILED" }) });
+
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
   });
 
   it("stays PENDING while validation is pending and reports whether DNS points at CloudFront", async () => {
