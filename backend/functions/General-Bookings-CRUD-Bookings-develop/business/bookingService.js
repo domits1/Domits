@@ -173,6 +173,10 @@ class BookingService {
     return parseBookingDateToMs(value, fieldName);
   }
 
+  getStripeClient() {
+    return this.stripeRepository.getClient();
+  }
+
   async confirmPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
     if (booking.status === BOOKING_STATUS_PAID) {

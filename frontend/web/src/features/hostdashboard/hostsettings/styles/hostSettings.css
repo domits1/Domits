@@ -719,6 +719,35 @@
     overflow: hidden;
 }
 
+.notification-preferences-status {
+    padding: 14px 20px;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.notification-preferences-footer {
+    align-items: center;
+    gap: 16px;
+}
+
+.notification-preferences-feedback {
+    flex: 1;
+    min-height: 20px;
+    font-size: 0.85rem;
+}
+
+.notification-preferences-success {
+    color: #166534;
+    font-weight: 600;
+}
+
+.notification-preferences-error {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
 .notification-preferences-grid {
     width: 100%;
 }

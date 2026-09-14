@@ -97,7 +97,7 @@ const VISIBILITY_DEFAULTS = Object.freeze({
   journeyStops: true,
   contactSection: true,
   chatWidget: true,
-  quotePanel: false,
+  quotePanel: true,
 });
 
 const VISIBILITY_KEYS = Object.freeze(Object.keys(VISIBILITY_DEFAULTS));
