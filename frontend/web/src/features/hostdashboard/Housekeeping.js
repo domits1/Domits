@@ -247,6 +247,17 @@ const HostPropertyCare = () => {
         { value: 'High',   label: 'High',   cls: 'priority-high' },
         { value: 'Urgent', label: 'Urgent', cls: 'priority-urgent' },
     ];
+    const TASK_TYPE_OPTIONS = [
+        'Cleaning',
+        'Maintenance',
+        'Inspection',
+        'Mid-stay',
+        'Sanitation',
+        'Check-in',
+        'Inventory',
+        'Administration',
+        'Issue',
+    ];
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
@@ -1614,12 +1625,11 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-type'>Type</label>
-                                <div className="radio-group">
-                                    <label><input type="radio" id='task-type-cleaning' name="type" value="Cleaning" checked={newTask.type === 'Cleaning'} onChange={handleInputChange} /> Cleaning</label>
-                                    <label><input type="radio" id='task-type-maintenance' name="type" value="Maintenance" checked={newTask.type === 'Maintenance'} onChange={handleInputChange} /> Maintenance</label>
-                                    <label><input type="radio" id='task-type-inspection' name="type" value="Inspection" checked={newTask.type === 'Inspection'} onChange={handleInputChange} /> Inspection</label>
-                                    <label><input type="radio" id='task-type-administration' name="type" value="Administration" checked={newTask.type === 'Administration'} onChange={handleInputChange} /> Administration</label>
-                                </div>
+                                <select id='task-type' name="type" value={newTask.type} onChange={handleInputChange} required>
+                                    {TASK_TYPE_OPTIONS.map(option => (
+                                        <option key={option} value={option}>{option}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-assignee'>Assignee</label>
