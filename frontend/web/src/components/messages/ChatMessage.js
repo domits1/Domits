@@ -11,8 +11,15 @@ import {
   mdiRobotOutline,
 } from "@mdi/js";
 
+const DELIVERY_STATUS_INDICATORS = {
+  pending: "…",
+  sent: "✓",
+  delivered: "✓✓",
+  failed: "!",
+};
+
 const ChatMessage = ({ message, userId, contactName, contactImage }) => {
-  const { userId: senderId, text, createdAt, isSent, fileUrls, isAutomated, messageType } = message;
+  const { userId: senderId, text, createdAt, isSent, fileUrls, isAutomated, messageType, deliveryStatus } = message;
 
   const formatTime = (v) => {
     const d = new Date(v);
@@ -114,7 +121,9 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
 
         <div className="message-footer">
           <span>{formatTime(createdAt)}</span>
-          {isOutgoing ? <span className="message-status">✓✓</span> : null}
+          {isOutgoing && DELIVERY_STATUS_INDICATORS[deliveryStatus] ? (
+            <span className="message-status">{DELIVERY_STATUS_INDICATORS[deliveryStatus]}</span>
+          ) : null}
         </div>
       </div>
 
