@@ -4,7 +4,7 @@ import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
-
+import { BadRequestException } from "../../util/exception/badRequestException.js";
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";
 
@@ -56,21 +56,29 @@ export const updateTask = async (hostId, taskId, updateData) => {
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
     );
 
-    if (fieldsToUpdate.due_date) {
-        fieldsToUpdate.due_date = new Date(fieldsToUpdate.due_date).getTime();
-        if (isPastDueDate(fieldsToUpdate.due_date)) {
-            throw new Error("due_date cannot be in the past");
-        }
+    if (fieldsToUpdate.due_date !== undefined) {
+    const nextDueDate = fieldsToUpdate.due_date === null ? null : new Date(fieldsToUpdate.due_date).getTime();
+    if (nextDueDate !== oldTask.due_date && isPastDueDate(nextDueDate)) {
+            throw new BadRequestException("due_date cannot be in the past");
+    }
+    fieldsToUpdate.due_date = nextDueDate;
     }
 
     if (fieldsToUpdate.type && !VALID_TASK_TYPES.includes(fieldsToUpdate.type)) {
-        throw new Error(`Invalid type: ${fieldsToUpdate.type}. Must be one of: ${VALID_TASK_TYPES.join(", ")}`);
+        throw new BadRequestException(`Invalid type: ${fieldsToUpdate.type}. Must be one of: ${VALID_TASK_TYPES.join(", ")}`);
     }
 
     if (fieldsToUpdate.attachments !== undefined) {
-        fieldsToUpdate.attachments = Array.isArray(fieldsToUpdate.attachments)
-            ? JSON.stringify(fieldsToUpdate.attachments)
-            : null;
+        const oldKeys = oldTask.attachments ? JSON.parse(oldTask.attachments) : [];
+        const newKeys = Array.isArray(fieldsToUpdate.attachments) ? fieldsToUpdate.attachments : [];
+        const removedKeys = oldKeys.filter(key => !newKeys.includes(key));
+        if (removedKeys.length > 0) {
+            await s3.send(new DeleteObjectsCommand({
+                Bucket: BUCKET_NAME,
+                Delete: { Objects: removedKeys.map(key => ({ Key: key })) },
+            }));
+        }
+        fieldsToUpdate.attachments = newKeys.length > 0 ? JSON.stringify(newKeys) : null;
     }
 
     if (fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed') {
