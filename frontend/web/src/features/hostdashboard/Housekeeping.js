@@ -1773,7 +1773,7 @@ const HostPropertyCare = () => {
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor='task-due-date'>Due Date</label>
-                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} onClick={(e) => e.target.showPicker?.()} />
+                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} min={getTodayString()} onChange={handleEditChange} onClick={(e) => e.target.showPicker?.()} />
                                 </div>
                             </div>
 
