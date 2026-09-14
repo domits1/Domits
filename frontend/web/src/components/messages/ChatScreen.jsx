@@ -178,6 +178,7 @@ const ChatScreen = ({
       bookingId: bookingId || null,
       isSent: true,
       platform: resolvedPlatform,
+      deliveryStatus: "pending",
     };
 
     isNearBottomRef.current = true;
