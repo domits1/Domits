@@ -1,54 +1,64 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-
-export const DEFAULT_NOTIFICATION_PREFERENCES = {
-    reservation: {
-        email: true,
-        sms: false,
-        push: true,
-    },
-    cancellation: {
-        email: true,
-        sms: true,
-        push: true,
-    },
-    messages: {
-        email: true,
-        sms: false,
-        push: true,
-    },
-};
+import {
+    DEFAULT_NOTIFICATION_PREFERENCES,
+    REQUIRED_COMMUNICATION_PREFERENCES,
+    enforceRequiredCommunicationPreferences,
+} from "./communicationPreferencesConfig";
 
 const EVENT_KEYS = ["reservation", "cancellation", "messages"];
 const CHANNEL_KEYS = ["email", "sms", "push"];
-const REQUIRED_PREFERENCES = {
-    reservation: { email: true },
-    cancellation: { email: true },
-};
+const isRequiredPreference = (eventKey, channelKey) => Boolean(REQUIRED_COMMUNICATION_PREFERENCES[eventKey]?.[channelKey]);
 
-const isRequiredPreference = (eventKey, channelKey) => Boolean(REQUIRED_PREFERENCES[eventKey]?.[channelKey]);
+const NotificationPreferencesForm = ({
+    labels,
+    preferences: controlledPreferences,
+    onPreferencesChange,
+    onSave,
+    isLoading = false,
+    isSaving = false,
+    isDirty = false,
+    saveSuccess = false,
+    error = "",
+}) => {
+    const [localPreferences, setLocalPreferences] = useState(DEFAULT_NOTIFICATION_PREFERENCES);
+    const isControlled = controlledPreferences && onPreferencesChange;
+    const preferences = enforceRequiredCommunicationPreferences(isControlled ? controlledPreferences : localPreferences);
+    const saveDisabled = isLoading || isSaving || !isDirty;
 
-const NotificationPreferencesForm = ({ labels }) => {
-    const [preferences, setPreferences] = useState(DEFAULT_NOTIFICATION_PREFERENCES);
+    const updatePreferences = (nextPreferences) => {
+        const normalized = enforceRequiredCommunicationPreferences(nextPreferences);
+        if (isControlled) {
+            onPreferencesChange(normalized);
+            return;
+        }
+        setLocalPreferences(normalized);
+    };
 
     const togglePreference = (eventKey, channelKey) => {
-        if (isRequiredPreference(eventKey, channelKey)) {
+        if (isLoading || isSaving || isRequiredPreference(eventKey, channelKey)) {
             return;
         }
 
-        setPreferences((current) => ({
-            ...current,
+        updatePreferences({
+            ...preferences,
             [eventKey]: {
-                ...current[eventKey],
-                [channelKey]: !current[eventKey][channelKey],
+                ...preferences[eventKey],
+                [channelKey]: !preferences[eventKey][channelKey],
             },
-        }));
+        });
     };
 
     return (
         <div className="personal-data-section">
             <h2 className="personal-data-section-title">{labels.sectionTitle}</h2>
-            <div className="personal-data-card notification-preferences-card">
+            <div className="personal-data-card notification-preferences-card" aria-busy={isLoading || isSaving}>
+                {isLoading && (
+                    <div className="notification-preferences-status" role="status">
+                        Loading communication preferences...
+                    </div>
+                )}
+
                 <div className="notification-preferences-grid" role="table" aria-label={labels.sectionTitle}>
                     <div className="notification-preferences-row notification-preferences-row--head" role="row">
                         <div className="notification-preferences-cell notification-preferences-cell--event" role="columnheader" />
@@ -79,7 +89,7 @@ const NotificationPreferencesForm = ({ labels }) => {
                                             aria-checked={checked}
                                             aria-label={ariaLabel}
                                             aria-describedby={required ? requiredId : undefined}
-                                            disabled={required}
+                                            disabled={required || isLoading || isSaving}
                                             onClick={() => togglePreference(eventKey, channelKey)}
                                         >
                                             <span className="notification-toggle-text">{checked ? labels.states.on : labels.states.off}</span>
@@ -97,9 +107,13 @@ const NotificationPreferencesForm = ({ labels }) => {
                     ))}
                 </div>
 
-                <div className="personal-data-card-footer">
-                    <button type="button" className="pd-save-btn" disabled>
-                        {labels.actions.saveChanges}
+                <div className="personal-data-card-footer notification-preferences-footer">
+                    <div className="notification-preferences-feedback" aria-live="polite">
+                        {error && <span className="notification-preferences-error">{error}</span>}
+                        {saveSuccess && !error && <span className="notification-preferences-success">Communication preferences saved.</span>}
+                    </div>
+                    <button type="button" className="pd-save-btn" disabled={saveDisabled} onClick={onSave}>
+                        {isSaving ? "Saving..." : labels.actions.saveChanges}
                     </button>
                 </div>
             </div>
@@ -130,6 +144,30 @@ NotificationPreferencesForm.propTypes = {
             saveChanges: PropTypes.string.isRequired,
         }).isRequired,
     }).isRequired,
+    preferences: PropTypes.shape({
+        reservation: PropTypes.shape({
+            email: PropTypes.bool.isRequired,
+            sms: PropTypes.bool.isRequired,
+            push: PropTypes.bool.isRequired,
+        }),
+        cancellation: PropTypes.shape({
+            email: PropTypes.bool.isRequired,
+            sms: PropTypes.bool.isRequired,
+            push: PropTypes.bool.isRequired,
+        }),
+        messages: PropTypes.shape({
+            email: PropTypes.bool.isRequired,
+            sms: PropTypes.bool.isRequired,
+            push: PropTypes.bool.isRequired,
+        }),
+    }),
+    onPreferencesChange: PropTypes.func,
+    onSave: PropTypes.func,
+    isLoading: PropTypes.bool,
+    isSaving: PropTypes.bool,
+    isDirty: PropTypes.bool,
+    saveSuccess: PropTypes.bool,
+    error: PropTypes.string,
 };
 
 export default NotificationPreferencesForm;

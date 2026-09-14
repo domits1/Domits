@@ -535,6 +535,15 @@
   background: rgba(30, 49, 80, 0.08);
 }
 
+.panoramaCalendarCellSelectable.panoramaCalendarCellReserved {
+  background: #e6e5e2;
+}
+
+.calendarCellSelectable:disabled,
+.panoramaCalendarCellSelectable:disabled {
+  cursor: not-allowed;
+}
+
 .calendarCellInRange,
 .panoramaCalendarCellInRange {
   background: rgba(30, 49, 80, 0.14);
