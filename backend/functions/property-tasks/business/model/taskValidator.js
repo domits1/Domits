@@ -1,3 +1,5 @@
+import { BadRequestException } from "../../util/exception/badRequestException.js";
+
 export const VALID_TASK_TYPES = [
     'Cleaning', 'Maintenance', 'Inspection', 'Mid-stay',
     'Sanitation', 'Check-in', 'Inventory', 'Administration', 'Issue'
@@ -33,7 +35,7 @@ export const validateTaskPayload = (data) => {
     }
 
     if (errors.length > 0) {
-        throw new Error(`Validation failed: ${errors.join(", ")}`);
+        throw new BadRequestException(`Validation failed: ${errors.join(", ")}`);
     }
 
     return true;
