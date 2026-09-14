@@ -326,6 +326,7 @@ const filteredBookings = useMemo(() => {
             aria-label="Search bookings"
             placeholder="Search by city, property or booking id"
             value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
@@ -340,7 +341,7 @@ const filteredBookings = useMemo(() => {
               onClick={() => setActiveTab(tab.key)}
             >
               {tab.label}
-              
+              <span className="guest-booking-tab-count">{tab.count}</span>
             </button>
           ))}
         </div>
