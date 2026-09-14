@@ -54,7 +54,7 @@ Important alignment points for the rest of this document:
 
 - The currently implemented schema uses `standalone_site`, `standalone_site_domain`, `standalone_site_draft`, and `standalone_site_event`.
 - Earlier split-table ideas such as `standalone_site_theme`, `standalone_site_content`, and `standalone_site_section` are not the current implementation.
-- Custom-domain activation on the backend shipped on 2026-09-10 (see "Custom domain activation" under the state model). Host endpoints, dashboard UI, promotion to primary, and removal are still pending.
+- Custom-domain activation on the backend shipped on 2026-09-10 (see "Custom domain activation" under the state model), the host endpoints on 2026-09-11, and the dashboard panel on 2026-09-14. Promotion to primary and removal are still pending.
 - Quote, checkout, and booking sections later in this document remain forward design, not current runtime behavior.
 - The current frontend editor has progressed into section-scoped contracts for shared website areas such as:
   - `residenceSection`
@@ -302,9 +302,9 @@ Rules the service enforces:
 
 Lambda configuration (PropertyHandler): `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_CONNECTION_GROUP_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_ROUTING_ENDPOINT`. The service refuses to construct without all three. The Lambda role needs `cloudfront:CreateDistributionTenant`, `GetDistributionTenant`, `GetDistributionTenantByDomain`, `GetManagedCertificateDetails`, `UpdateDistributionTenant`, `VerifyDnsConfiguration`.
 
-Host endpoints shipped on 2026-09-11; see "Host custom domain API" under the API contract.
+Host endpoints shipped on 2026-09-11; see "Host custom domain API" under the API contract. The dashboard panel shipped on 2026-09-14: a collapsed "Custom domain" section on each website card in the website tab that lists the site's domains with their status, connects a subdomain, shows the CNAME record with copy buttons, renders the four-step timeline (added, DNS record found, certificate issued, live) from the domain status, and offers "Check again". The panel loads only when opened, validates the subdomain rule before calling the API, and maps every error code and failure reason to host copy (`domains/websiteDomainTimeline.js`).
 
-Not yet implemented: dashboard UI; promotion of an `ACTIVE` custom domain to primary; removal (`DELETE /property/website/domains?siteId=`, which disables the tenant, then deletes it once the disable has deployed); retry after `validation-timed-out` (needs a new managed certificate request); a partial unique index on `(site_id) WHERE domain_type = 'CUSTOM'` to make the one-domain rule a database guarantee.
+Not yet implemented: promotion of an `ACTIVE` custom domain to primary; removal (`DELETE /property/website/domains?siteId=`, which disables the tenant, then deletes it once the disable has deployed); retry after `validation-timed-out` (needs a new managed certificate request); a partial unique index on `(site_id) WHERE domain_type = 'CUSTOM'` to make the one-domain rule a database guarantee.
 
 ### Optional later `quote.status`
 Future only:
