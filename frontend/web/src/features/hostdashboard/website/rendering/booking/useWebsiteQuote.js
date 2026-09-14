@@ -16,6 +16,7 @@ export const QUOTE_STATUS = Object.freeze({
 export const QUOTE_STALE_REASONS = Object.freeze({
   CHANGED: "changed",
   EXPIRED: "expired",
+  REJECTED: "rejected",
 });
 
 const EXPIRY_CHECK_INTERVAL_MS = 30_000;
@@ -76,11 +77,12 @@ export const useWebsiteQuote = ({ siteId, sessionId }) => {
   }, []);
 
   const notifySelectionChanged = useCallback(() => {
+    abortControllerRef.current?.abort();
     setState((currentState) => {
       if (currentState.quote) {
         return { ...currentState, status: QUOTE_STATUS.STALE, staleReason: QUOTE_STALE_REASONS.CHANGED };
       }
-      if (currentState.status === QUOTE_STATUS.ERROR) {
+      if (currentState.status === QUOTE_STATUS.ERROR || currentState.status === QUOTE_STATUS.LOADING) {
         return INITIAL_STATE;
       }
       return currentState;

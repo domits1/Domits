@@ -51,6 +51,7 @@ import { BookingAutomationOutbox } from "../../models/automation/BookingAutomati
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
+import { Communication_Preferences } from "../../models/Communication_Preferences.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
@@ -110,6 +111,7 @@ export const Tables = [
   PropertyTask,
   Property_Task_Activity,
   Host_Settings,
+  Communication_Preferences,
   Kpi_Snapshot,
   PriceLabs_Connection,
   Team_Member,

@@ -2,12 +2,22 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import QuotePanel from "../rendering/booking/QuotePanel";
 import { QUOTE_STATUS } from "../rendering/booking/useWebsiteQuote";
+import { BOOKING_REQUEST_STATUS } from "../rendering/booking/useWebsiteBookingRequest";
+import { formatStayDate } from "../rendering/booking/quoteSelection";
 
 const QUOTE = {
   quoteId: "quote_1",
   nights: 4,
   guestCount: 2,
-  priceBreakdown: { currency: "EUR", nightlyBaseTotal: 76000, cleaningFee: 5000, discounts: [], taxes: [], fees: [], total: 81000 },
+  priceBreakdown: {
+    currency: "EUR",
+    nightlyBaseTotal: 76000,
+    cleaningFee: 5000,
+    discounts: [],
+    taxes: [],
+    fees: [],
+    total: 81000,
+  },
   expiresAt: "2099-01-01T10:30:00.000Z",
   quoteToken: "qtok",
 };
@@ -202,5 +212,150 @@ describe("QuotePanel", () => {
       />
     );
     expect(screen.getByRole("button", { name: /add a guest/i })).toBeDisabled();
+  });
+
+  describe("booking request", () => {
+    const QUOTED = { ...IDLE, status: QUOTE_STATUS.SUCCESS, quote: QUOTE };
+    const NO_BOOKING = { status: BOOKING_REQUEST_STATUS.IDLE, result: null, error: null };
+    const GUEST = { name: "Guest Name", email: "guest@example.com" };
+    const RESULT = {
+      publicBookingRef: "DBW-ABCDEFGHJK",
+      status: "REQUESTED",
+      siteId: "site-1",
+      checkIn: "2026-10-10",
+      checkOut: "2026-10-14",
+      guests: 2,
+      total: 81000,
+      currency: "EUR",
+    };
+    const bookingError = (code, message = "", status = 400) => ({
+      status: BOOKING_REQUEST_STATUS.ERROR,
+      result: null,
+      error: { code, message, status, requestId: "req-7" },
+    });
+    const requestButton = () => screen.queryByRole("button", { name: "Request to book" });
+
+    const renderQuotedPanel = (props = {}) => {
+      const onGuestChange = jest.fn();
+      const onSubmitBookingRequest = jest.fn();
+      const utils = renderPanel({
+        range: COMPLETE_RANGE,
+        quoteState: QUOTED,
+        bookingState: NO_BOOKING,
+        guest: GUEST,
+        guestErrors: {},
+        onGuestChange,
+        onSubmitBookingRequest,
+        ...props,
+      });
+      return { ...utils, onGuestChange, onSubmitBookingRequest };
+    };
+
+    it("only offers the request form once a fresh quote is on screen", () => {
+      const { rerender } = renderQuotedPanel({ quoteState: IDLE });
+      expect(requestButton()).not.toBeInTheDocument();
+
+      rerender(
+        <QuotePanel
+          range={COMPLETE_RANGE}
+          guests={2}
+          onGuestsChange={jest.fn()}
+          quoteState={{ ...IDLE, status: QUOTE_STATUS.STALE, quote: QUOTE, staleReason: "changed" }}
+          onRequestQuote={jest.fn()}
+          bookingState={NO_BOOKING}
+          guest={GUEST}
+          onGuestChange={jest.fn()}
+          onSubmitBookingRequest={jest.fn()}
+        />
+      );
+      expect(requestButton()).not.toBeInTheDocument();
+
+      rerender(
+        <QuotePanel
+          range={COMPLETE_RANGE}
+          guests={2}
+          onGuestsChange={jest.fn()}
+          quoteState={QUOTED}
+          onRequestQuote={jest.fn()}
+          bookingState={NO_BOOKING}
+          guest={GUEST}
+          onGuestChange={jest.fn()}
+          onSubmitBookingRequest={jest.fn()}
+        />
+      );
+      expect(requestButton()).toBeInTheDocument();
+      expect(screen.getByText("€810.00")).toBeInTheDocument();
+    });
+
+    it("hands the guest details and the submit up to the section", () => {
+      const { onGuestChange, onSubmitBookingRequest } = renderQuotedPanel();
+
+      fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Someone Else" } });
+      expect(onGuestChange).toHaveBeenCalledWith("name", "Someone Else");
+
+      fireEvent.click(requestButton());
+      expect(onSubmitBookingRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it("replaces the panel body with the confirmation after a successful request", () => {
+      renderQuotedPanel({ bookingState: { status: BOOKING_REQUEST_STATUS.SUCCESS, result: RESULT, error: null } });
+
+      expect(screen.getByRole("status")).toHaveTextContent("Request sent");
+      expect(screen.getByText("DBW-ABCDEFGHJK")).toBeInTheDocument();
+      expect(screen.getByText(/still has to confirm/i)).toBeInTheDocument();
+      expect(screen.getByText(/guest@example\.com/)).toBeInTheDocument();
+      expect(screen.getByText("€810.00")).toBeInTheDocument();
+      expect(actionButton()).not.toBeInTheDocument();
+      expect(requestButton()).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /add a guest/i })).not.toBeInTheDocument();
+    });
+
+    it("summarises the booked stay from the result, not the current selection", () => {
+      renderQuotedPanel({
+        range: { checkIn: "2026-11-01", checkOut: "2026-11-03" },
+        bookingState: { status: BOOKING_REQUEST_STATUS.SUCCESS, result: RESULT, error: null },
+      });
+
+      expect(screen.getByText(`${formatStayDate("2026-10-10")} → ${formatStayDate("2026-10-14")}`)).toBeInTheDocument();
+      expect(screen.getByText("4 nights")).toBeInTheDocument();
+      expect(screen.queryByText(new RegExp(formatStayDate("2026-11-01")))).not.toBeInTheDocument();
+    });
+
+    it("shows a rejected contact on the form", () => {
+      renderQuotedPanel({ bookingState: bookingError("invalid_guest_contact", "Please provide a valid email.") });
+      expect(screen.getByRole("alert")).toHaveTextContent("Please provide a valid email.");
+      expect(requestButton()).toBeInTheDocument();
+    });
+
+    it("explains a refreshed price above the form", () => {
+      renderQuotedPanel({ bookingState: bookingError("quote_expired", "", 409) });
+      expect(screen.getByText(/price changed/i)).toBeInTheDocument();
+      expect(requestButton()).toBeInTheDocument();
+    });
+
+    it("offers a retry that resubmits the same request", () => {
+      const { onSubmitBookingRequest } = renderQuotedPanel({ bookingState: bookingError("network_error", "", 0) });
+      expect(screen.getByRole("alert")).toHaveTextContent(/couldn't send your request/i);
+      fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+      expect(onSubmitBookingRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows the reference for an unexpected failure", () => {
+      renderQuotedPanel({ bookingState: bookingError("internal_error", "", 500) });
+      expect(screen.getByText(/reference: req-7/i)).toBeInTheDocument();
+    });
+
+    it("hides the form when the site can no longer take requests", () => {
+      renderQuotedPanel({ bookingState: bookingError("site_suspended", "", 410) });
+      expect(requestButton()).not.toBeInTheDocument();
+      expect(actionButton()).not.toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent(/isn't available/i);
+    });
+
+    it("locks the form while the request is being sent", () => {
+      renderQuotedPanel({ bookingState: { status: BOOKING_REQUEST_STATUS.SUBMITTING, result: null, error: null } });
+      expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
+      expect(screen.getByLabelText("Your name")).toBeDisabled();
+    });
   });
 });

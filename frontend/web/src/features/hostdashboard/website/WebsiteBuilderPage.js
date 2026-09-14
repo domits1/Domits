@@ -1201,7 +1201,13 @@ function WebsiteBuilderPage() {
       }
 
       globalThis.open(
-        buildPublishedWebsiteHref(liveDomain, siteId, liveDomainStatus),
+        buildPublishedWebsiteHref(
+          liveDomain,
+          siteId,
+          liveDomainStatus,
+          siteSummary?.site?.siteName,
+          siteSummary?.domains
+        ),
         "_blank",
         "noopener,noreferrer"
       );

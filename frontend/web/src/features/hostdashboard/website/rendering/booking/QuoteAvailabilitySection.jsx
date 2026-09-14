@@ -2,9 +2,18 @@ import React, { useCallback, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "./QuoteAvailabilitySection.module.scss";
 import QuotePanel from "./QuotePanel";
-import { useWebsiteQuote } from "./useWebsiteQuote";
+import { QUOTE_STALE_REASONS, QUOTE_STATUS, useWebsiteQuote } from "./useWebsiteQuote";
+import { BOOKING_REQUEST_STATUS, useWebsiteBookingRequest } from "./useWebsiteBookingRequest";
 import { resolveQuoteErrorPresentation } from "./quoteErrorCopy";
-import { EMPTY_STAY_RANGE, getTodayDateKey, selectStayDate } from "./quoteSelection";
+import { BOOKING_REQUEST_RECOVERY, resolveBookingRequestErrorPresentation } from "./bookingRequestErrorCopy";
+import { EMPTY_BOOKING_GUEST, validateBookingGuestContact } from "./bookingRequestContact";
+import {
+  EMPTY_STAY_RANGE,
+  buildStayNightKeys,
+  getTodayDateKey,
+  quoteMatchesSelection,
+  selectStayDate,
+} from "./quoteSelection";
 import { TemplateAvailabilityCalendar } from "../templates/templateSharedSections";
 import { getOrCreateVisitorId } from "../../services/websiteVisitorId";
 
@@ -26,6 +35,11 @@ const resolveContactHref = (model) => {
   return whatsapp?.isAvailable && digits ? `https://wa.me/${digits}` : null;
 };
 
+const toDateKeyList = (value) => (Array.isArray(value) ? value : []);
+
+const withoutField = (errors, field) =>
+  errors?.[field] ? Object.fromEntries(Object.entries(errors).filter(([key]) => key !== field)) : errors;
+
 export default function QuoteAvailabilitySection({
   model,
   siteId,
@@ -38,37 +52,74 @@ export default function QuoteAvailabilitySection({
   const sessionId = useMemo(() => getOrCreateVisitorId(), []);
   const todayKey = useMemo(() => getTodayDateKey(), []);
   const capacity = resolveCapacity(model);
+  const [sessionBlockedDateKeys, setSessionBlockedDateKeys] = useState(() => new Set());
   const blockedDateKeys = useMemo(
     () =>
       new Set([
-        ...(Array.isArray(model?.availability?.externalBlockedDates) ? model.availability.externalBlockedDates : []),
-        ...(Array.isArray(model?.availability?.unavailableDateKeys) ? model.availability.unavailableDateKeys : []),
+        ...toDateKeyList(model?.availability?.externalBlockedDates),
+        ...toDateKeyList(model?.availability?.unavailableDateKeys),
+        ...sessionBlockedDateKeys,
       ]),
-    [model?.availability]
+    [model?.availability, sessionBlockedDateKeys]
   );
 
   const [range, setRange] = useState(EMPTY_STAY_RANGE);
-  const [guests, setGuests] = useState(() => (capacity ? Math.min(DEFAULT_GUEST_COUNT, capacity) : DEFAULT_GUEST_COUNT));
-  const { requestQuote, notifySelectionChanged, ...quoteState } = useWebsiteQuote({ siteId, sessionId });
+  const [guests, setGuests] = useState(() =>
+    capacity ? Math.min(DEFAULT_GUEST_COUNT, capacity) : DEFAULT_GUEST_COUNT
+  );
+  const [guest, setGuest] = useState(EMPTY_BOOKING_GUEST);
+  const [guestErrors, setGuestErrors] = useState({});
+  const { requestQuote, notifySelectionChanged, markStale, ...quoteState } = useWebsiteQuote({ siteId, sessionId });
+  const {
+    submitBookingRequest,
+    reset: resetBookingRequest,
+    ...bookingState
+  } = useWebsiteBookingRequest({
+    siteId,
+    sessionId,
+  });
+  const bookingSucceeded = bookingState.status === BOOKING_REQUEST_STATUS.SUCCESS;
+  const isSubmitting = bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING;
+  const hasBookingError = bookingState.status === BOOKING_REQUEST_STATUS.ERROR;
+  const isSelectionFrozen = bookingSucceeded || isSubmitting;
+  const isQuoteForSelection = quoteMatchesSelection(quoteState.quote, {
+    checkIn: range.checkIn,
+    checkOut: range.checkOut,
+    guests,
+  });
+  const displayedQuoteState =
+    quoteState.status === QUOTE_STATUS.SUCCESS && !isQuoteForSelection
+      ? { ...quoteState, status: QUOTE_STATUS.STALE, staleReason: QUOTE_STALE_REASONS.CHANGED }
+      : quoteState;
+
+  const handleSelectionChanged = useCallback(() => {
+    notifySelectionChanged();
+    if (hasBookingError) {
+      resetBookingRequest();
+    }
+  }, [hasBookingError, notifySelectionChanged, resetBookingRequest]);
 
   const handleSelectDate = useCallback(
     (dateKey) => {
+      if (isSelectionFrozen) {
+        return;
+      }
       const nextRange = selectStayDate({ range, dateKey, blockedDateKeys, todayKey });
       if (nextRange === range) {
         return;
       }
       setRange(nextRange);
-      notifySelectionChanged();
+      handleSelectionChanged();
     },
-    [blockedDateKeys, notifySelectionChanged, range, todayKey]
+    [blockedDateKeys, handleSelectionChanged, isSelectionFrozen, range, todayKey]
   );
 
   const handleGuestsChange = useCallback(
     (nextGuests) => {
       setGuests(nextGuests);
-      notifySelectionChanged();
+      handleSelectionChanged();
     },
-    [notifySelectionChanged]
+    [handleSelectionChanged]
   );
 
   const handleRequestQuote = useCallback(async () => {
@@ -78,15 +129,64 @@ export default function QuoteAvailabilitySection({
     }
   }, [guests, range.checkIn, range.checkOut, requestQuote]);
 
+  const handleGuestChange = useCallback((field, value) => {
+    setGuest((currentGuest) => ({ ...currentGuest, [field]: value }));
+    setGuestErrors((currentErrors) => withoutField(currentErrors, field));
+  }, []);
+
+  const handleSubmitBookingRequest = useCallback(async () => {
+    const quote = quoteState.quote;
+    if (displayedQuoteState.status !== QUOTE_STATUS.SUCCESS || !quote) {
+      return;
+    }
+
+    const { guest: normalizedGuest, errors } = validateBookingGuestContact(guest);
+    setGuestErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    const outcome = await submitBookingRequest({ quote, guest: normalizedGuest });
+    if (!outcome?.error) {
+      return;
+    }
+
+    const presentation = resolveBookingRequestErrorPresentation(outcome.error);
+    if (presentation.blockDates) {
+      const takenNightKeys = buildStayNightKeys(range.checkIn, range.checkOut);
+      setSessionBlockedDateKeys((currentKeys) => new Set([...currentKeys, ...takenNightKeys]));
+    }
+    if (presentation.clearSelection) {
+      setRange(EMPTY_STAY_RANGE);
+      notifySelectionChanged();
+    }
+    if (presentation.recovery === BOOKING_REQUEST_RECOVERY.REQUOTE) {
+      await requestQuote({ checkIn: range.checkIn, checkOut: range.checkOut, guests });
+    }
+    if (presentation.recovery === BOOKING_REQUEST_RECOVERY.RECHECK) {
+      markStale(QUOTE_STALE_REASONS.REJECTED);
+    }
+  }, [
+    displayedQuoteState.status,
+    guest,
+    guests,
+    markStale,
+    notifySelectionChanged,
+    quoteState.quote,
+    range,
+    requestQuote,
+    submitBookingRequest,
+  ]);
+
   const selection = useMemo(
     () => ({
-      selectable: true,
+      selectable: !isSelectionFrozen,
       checkIn: range.checkIn,
       checkOut: range.checkOut,
       todayKey,
       onSelectDate: handleSelectDate,
     }),
-    [handleSelectDate, range.checkIn, range.checkOut, todayKey]
+    [handleSelectDate, isSelectionFrozen, range.checkIn, range.checkOut, todayKey]
   );
 
   return (
@@ -109,9 +209,14 @@ export default function QuoteAvailabilitySection({
           onGuestsChange={handleGuestsChange}
           capacity={capacity}
           minimumStay={resolveMinimumStay(model)}
-          quoteState={quoteState}
+          quoteState={displayedQuoteState}
           onRequestQuote={handleRequestQuote}
           contactHref={resolveContactHref(model)}
+          bookingState={bookingState}
+          guest={guest}
+          guestErrors={guestErrors}
+          onGuestChange={handleGuestChange}
+          onSubmitBookingRequest={handleSubmitBookingRequest}
         />
       </div>
     </div>
