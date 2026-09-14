@@ -89,7 +89,7 @@ const fetchUserInfo = async (targetUserId) => {
   return { givenName: null, userId: targetUserId, profileImage: null };
 };
 
-const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming, isActiveThread }) => {
+const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
   const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
   const threadId = incoming?.threadId || null;
@@ -112,7 +112,9 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming, isActiv
   const hasExisting = idx > -1;
   if (hasExisting) {
     const previousUnreadCount = updated[idx]?.unreadCount || 0;
-    const nextUnreadCount = !isGenuineIncoming ? previousUnreadCount : isActiveThread ? 0 : previousUnreadCount + 1;
+    // Never clear unreadCount here: only a confirmed markThreadRead() success may do that
+    // (see markContactThreadReadLocally), so local state can't drift ahead of the backend.
+    const nextUnreadCount = isGenuineIncoming ? previousUnreadCount + 1 : previousUnreadCount;
 
     updated[idx] = {
       ...updated[idx],
@@ -140,13 +142,20 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming, isActiv
       externalThreadId: incoming?.externalThreadId || null,
       channelLabel: incoming?.platform === "WHATSAPP" ? "WhatsApp" : incoming?.platform || null,
       isWhatsApp: String(incoming?.platform || "").toUpperCase() === "WHATSAPP",
-      unreadCount: isGenuineIncoming ? (isActiveThread ? 0 : 1) : 0,
+      unreadCount: isGenuineIncoming ? 1 : 0,
     });
   }
 
   updated.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
   return updated;
 };
+
+// Only called after a POST /threads/{id}/read confirmation, so local state never
+// claims "read" ahead of the backend actually confirming it.
+const markContactThreadReadLocally = (prevContacts, threadId) =>
+  (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
+    c?.threadId && String(c.threadId) === String(threadId) ? { ...c, unreadCount: 0 } : c
+  );
 
 const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) => {
   setContacts?.((prevContacts) => {
@@ -222,15 +231,16 @@ const ContactList = ({
         ? String(incomingThreadId) === String(activeThreadIdRef.current || "")
         : String(partnerId) === String(activeContactIdRef.current || "");
 
-      setContacts?.((prevContacts) =>
-        upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming, isActiveThread })
-      );
+      setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming }));
 
       const isFromCurrentUser = String(incoming?.userId ?? incoming?.senderId) === String(userId);
       const isAddressedToCurrentUser = String(incoming?.recipientId) === String(userId);
       if (!isFromCurrentUser && isAddressedToCurrentUser && isActiveThread && incomingThreadId) {
         getIdToken()
           .then((idToken) => markThreadRead(incomingThreadId, idToken))
+          .then(() => {
+            setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, incomingThreadId));
+          })
           .catch(() => {});
       }
 

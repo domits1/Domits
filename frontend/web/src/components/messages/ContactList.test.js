@@ -193,7 +193,7 @@ describe("ContactList realtime unread sync", () => {
     expect(markThreadRead).not.toHaveBeenCalled();
   });
 
-  test("incoming message to the active thread resets unreadCount to 0 and marks the thread read", async () => {
+  test("incoming message to the active thread increments locally, then resets to 0 only once markThreadRead succeeds", async () => {
     const contactWithUnread = { ...baseContact, unreadCount: 3 };
     const { setContacts } = renderWithSocket({
       contacts: [contactWithUnread],
@@ -208,15 +208,86 @@ describe("ContactList realtime unread sync", () => {
       activeThreadId: "thread-1",
     });
 
-    const updater = setContacts.mock.calls[0][0];
-    const updated = updater([contactWithUnread]);
+    const firstUpdater = setContacts.mock.calls[0][0];
+    const afterFirstUpdate = firstUpdater([contactWithUnread]);
 
-    expect(updated[0].unreadCount).toBe(0);
-    expect(updated[0].latestMessage.text).toBe("Are you there?");
+    expect(afterFirstUpdate[0].unreadCount).toBe(4);
+    expect(afterFirstUpdate[0].latestMessage.text).toBe("Are you there?");
 
     await waitFor(() => {
       expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
     });
+
+    // processIncomingMessage also queues an unrelated hydration update (name/avatar lookup),
+    // so replay every queued updater in order to get the true final state, rather than
+    // assuming a fixed call index or count.
+    await waitFor(() => {
+      let finalState = [contactWithUnread];
+      for (const [updaterFn] of setContacts.mock.calls) {
+        finalState = updaterFn(finalState);
+      }
+      expect(finalState[0].unreadCount).toBe(0);
+    });
+  });
+
+  test("markThreadRead failure does not leave unreadCount falsely at 0", async () => {
+    markThreadRead.mockRejectedValue(new Error("network error"));
+
+    const contactWithUnread = { ...baseContact, unreadCount: 3 };
+    const { setContacts } = renderWithSocket({
+      contacts: [contactWithUnread],
+      wsMessage: {
+        userId: "+31612345678",
+        senderId: "+31612345678",
+        recipientId: "host-1",
+        text: "Are you there?",
+        threadId: "thread-1",
+        createdAt: "2026-06-01T10:10:00.000Z",
+      },
+      activeThreadId: "thread-1",
+    });
+
+    const firstUpdater = setContacts.mock.calls[0][0];
+    const afterFirstUpdate = firstUpdater([contactWithUnread]);
+    expect(afterFirstUpdate[0].unreadCount).toBe(4);
+
+    await waitFor(() => {
+      expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    // Flush the rejected promise chain and any unrelated hydration update, then confirm
+    // that across every queued updater, unreadCount was never reset to 0.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    let finalState = [contactWithUnread];
+    for (const [updaterFn] of setContacts.mock.calls) {
+      finalState = updaterFn(finalState);
+    }
+    expect(finalState[0].unreadCount).toBe(4);
+  });
+
+  test("active-contact fallback without a threadId increments unreadCount and never calls markThreadRead", () => {
+    const contactWithUnread = { ...baseContact, threadId: null, unreadCount: 1 };
+    const { setContacts } = renderWithSocket({
+      contacts: [contactWithUnread],
+      wsMessage: {
+        userId: "+31612345678",
+        senderId: "+31612345678",
+        recipientId: "host-1",
+        text: "Legacy message, no threadId",
+        threadId: null,
+        createdAt: "2026-06-01T10:20:00.000Z",
+      },
+      activeThreadId: null,
+      activeContactId: "+31612345678",
+    });
+
+    const updater = setContacts.mock.calls[0][0];
+    const updated = updater([contactWithUnread]);
+
+    expect(updated[0].unreadCount).toBe(2);
+    expect(updated[0].latestMessage.text).toBe("Legacy message, no threadId");
+    expect(markThreadRead).not.toHaveBeenCalled();
   });
 
   test("switching the active conversation without a new message does not reprocess the realtime message", () => {
