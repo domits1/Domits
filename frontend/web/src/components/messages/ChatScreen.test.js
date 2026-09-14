@@ -57,7 +57,7 @@ describe("ChatScreen reservation messaging", () => {
     mockSendMessage.mockResolvedValue({ success: true, saved: { id: "message-1", threadId: "thread-1" } });
   });
 
-  test("fetches and sends guest messages with bookingId and bearer-token context", async () => {
+  const renderChatScreen = () =>
     render(
       <ChatScreen
         userId="guest-1"
@@ -70,6 +70,14 @@ describe("ChatScreen reservation messaging", () => {
       />
     );
 
+  const typeAndSend = (text) => {
+    fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: text } });
+    fireEvent.click(screen.getByTitle("Send"));
+  };
+
+  test("fetches and sends guest messages with bookingId and bearer-token context", async () => {
+    renderChatScreen();
+
     expect(mockFetchMessages).toHaveBeenCalledWith(
       "host-1",
       null,
@@ -81,8 +89,7 @@ describe("ChatScreen reservation messaging", () => {
     );
     expect(screen.getByTestId("booking-tab")).toHaveAttribute("data-booking-id", "booking-1");
 
-    fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "Hello host" } });
-    fireEvent.click(screen.getByTitle("Send"));
+    typeAndSend("Hello host");
 
     await waitFor(() => {
       expect(mockSendMessage).toHaveBeenCalledWith(
@@ -109,20 +116,8 @@ describe("ChatScreen reservation messaging", () => {
         })
     );
 
-    render(
-      <ChatScreen
-        userId="guest-1"
-        contactId="host-1"
-        contactName="Reservation Host"
-        propertyId="property-1"
-        bookingId="booking-1"
-        dashboardType="guest"
-        capabilities={getMessageCapabilities("guest")}
-      />
-    );
-
-    fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "Hello host" } });
-    fireEvent.click(screen.getByTitle("Send"));
+    renderChatScreen();
+    typeAndSend("Hello host");
 
     await waitFor(() => {
       expect(screen.getByText("…", { selector: ".message-status", exact: true })).toBeInTheDocument();
@@ -141,20 +136,8 @@ describe("ChatScreen reservation messaging", () => {
       saved: { id: "message-1", threadId: "thread-1", deliveryStatus: "sent" },
     });
 
-    render(
-      <ChatScreen
-        userId="guest-1"
-        contactId="host-1"
-        contactName="Reservation Host"
-        propertyId="property-1"
-        bookingId="booking-1"
-        dashboardType="guest"
-        capabilities={getMessageCapabilities("guest")}
-      />
-    );
-
-    fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "Hello host" } });
-    fireEvent.click(screen.getByTitle("Send"));
+    renderChatScreen();
+    typeAndSend("Hello host");
 
     await waitFor(() => {
       expect(screen.getByText("✓", { selector: ".message-status", exact: true })).toBeInTheDocument();
