@@ -13,6 +13,7 @@ import {
 } from "./websiteEditorUtils";
 import styles from "../WebsiteEditorPage.module.scss";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
+import { formatPublishedAtLabel } from "../services/websiteListingChange";
 
 export function WebsiteEditorLoadingState({
   renderLoadingSection,
@@ -232,8 +233,11 @@ export function WebsiteEditorPublicSitePanel({
   siteSummaryError,
   hasLiveSite,
   hasLiveSyncPending,
+  isListingStale = false,
+  listingPublishedAt = null,
   draftId,
 }) {
+  const listingPublishedAtLabel = formatPublishedAtLabel(listingPublishedAt);
   const { primaryLinkLabel, primaryLinkValue, secondaryLinkHref } = resolvePublicSiteLinkPresentation({
     hasLiveSite,
     primarySiteDomain,
@@ -281,6 +285,15 @@ export function WebsiteEditorPublicSitePanel({
       </div>
 
       {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
+      {!siteSummaryError && hasLiveSite && isListingStale ? (
+        <p className={styles.publicSiteStale} role="status">
+          <strong>
+            Your listing changed after the last publish
+            {listingPublishedAtLabel ? ` (${listingPublishedAtLabel})` : ""}.
+          </strong>{" "}
+          Guests still see the older version. Use &ldquo;Update live site&rdquo; to publish the current listing.
+        </p>
+      ) : null}
       {!siteSummaryError && hasLiveSite && hasLiveSyncPending ? (
         <p className={styles.publicSiteHint}>
           Update the live site to push the latest editor changes to the public website.
@@ -303,5 +316,7 @@ WebsiteEditorPublicSitePanel.propTypes = {
   siteSummaryError: PropTypes.string,
   hasLiveSite: PropTypes.bool.isRequired,
   hasLiveSyncPending: PropTypes.bool.isRequired,
+  isListingStale: PropTypes.bool,
+  listingPublishedAt: PropTypes.number,
   draftId: PropTypes.string,
 };

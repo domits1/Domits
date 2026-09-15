@@ -1345,6 +1345,17 @@
   gap: 10px;
 }
 
+.websiteDraftStaleNotice {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #f6d58a;
+  background: #fff8e6;
+  color: #7c4a03;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
 .previewStageActions {
   display: flex;
   flex-wrap: wrap;

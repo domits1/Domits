@@ -48,6 +48,7 @@ import {
   upsertWebsiteDraft,
 } from "./services/websiteDraftService";
 import { fetchWebsiteSiteByPropertyId } from "./services/websiteSiteService";
+import { formatPublishedAtLabel, resolveLiveSiteStaleness } from "./services/websiteListingChange";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import {
@@ -194,6 +195,11 @@ const buildWebsiteDraftPreviewModelMap = (previewEntries) =>
 
 const buildWebsiteDraftPreviewCacheKeyMap = (previewEntries) =>
   Object.fromEntries(previewEntries.map(([propertyId, , previewCacheKey]) => [propertyId, previewCacheKey]));
+
+const buildWebsiteDraftLiveSiteStateMap = (previewEntries) =>
+  Object.fromEntries(previewEntries.map(([propertyId, , , liveSiteState]) => [propertyId, liveSiteState]));
+
+const NOT_STALE_LIVE_SITE_STATE = Object.freeze({ isStale: false, publishedAt: null });
 
 const buildImageVariantMap = (images) => {
   const imageVariantMap = new Map();
@@ -430,9 +436,33 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
   return applyWebsiteDraftContentOverrides(themedModel, contentOverrides, draft.templateKey);
 };
 
-const buildWebsiteDraftPreviewModel = async (draft) => {
+const loadWebsiteDraftListingDetails = async (draft) => {
   try {
-    const propertyDetails = await fetchWebsitePropertyDetails(draft.propertyId);
+    return await fetchWebsitePropertyDetails(draft.propertyId);
+  } catch {
+    return null;
+  }
+};
+
+const resolveWebsiteDraftLiveSiteState = async (draft, propertyDetails) => {
+  if (!propertyDetails) {
+    return NOT_STALE_LIVE_SITE_STATE;
+  }
+
+  try {
+    const siteSummary = await fetchWebsiteSiteByPropertyId(draft.propertyId);
+    return resolveLiveSiteStaleness(siteSummary, propertyDetails);
+  } catch {
+    return NOT_STALE_LIVE_SITE_STATE;
+  }
+};
+
+const buildWebsiteDraftPreviewModel = (draft, propertyDetails) => {
+  if (!propertyDetails) {
+    return buildDraftCardFallbackPreviewModel(draft);
+  }
+
+  try {
     const baseModel = buildWebsiteTemplateModel({
       propertyDetails,
       summaryProperty: null,
@@ -454,9 +484,11 @@ const buildWebsiteDraftPreviewModel = async (draft) => {
 
 const buildWebsiteDraftPreviewEntry = async (draft) => {
   const propertyId = getDraftPropertyId(draft);
-  const previewModel = await buildWebsiteDraftPreviewModel(draft);
+  const propertyDetails = await loadWebsiteDraftListingDetails(draft);
+  const previewModel = buildWebsiteDraftPreviewModel(draft, propertyDetails);
+  const liveSiteState = await resolveWebsiteDraftLiveSiteState(draft, propertyDetails);
   const previewCacheKey = getWebsiteDraftPreviewCacheKey(draft);
-  return [propertyId, previewModel, previewCacheKey];
+  return [propertyId, previewModel, previewCacheKey, liveSiteState];
 };
 
 function WebsiteDraftDeleteDialog({
@@ -609,6 +641,7 @@ function WebsiteBuilderPage() {
   const [isLoadingWebsiteDrafts, setIsLoadingWebsiteDrafts] = useState(true);
   const [websiteDraftsError, setWebsiteDraftsError] = useState("");
   const [websiteDraftPreviewModels, setWebsiteDraftPreviewModels] = useState({});
+  const [websiteDraftLiveSiteStates, setWebsiteDraftLiveSiteStates] = useState({});
   const [isPersistingWebsiteDraft, setIsPersistingWebsiteDraft] = useState(false);
   const [persistWebsiteDraftError, setPersistWebsiteDraftError] = useState("");
   const [websiteDraftPendingDelete, setWebsiteDraftPendingDelete] = useState(null);
@@ -707,6 +740,7 @@ function WebsiteBuilderPage() {
         if (isMounted) {
           websiteDraftPreviewCacheKeysRef.current = {};
           setWebsiteDraftPreviewModels({});
+          setWebsiteDraftLiveSiteStates({});
         }
         return;
       }
@@ -723,6 +757,9 @@ function WebsiteBuilderPage() {
       if (isMounted) {
         setWebsiteDraftPreviewModels((currentPreviewModels) =>
           pruneWebsiteDraftPreviewModels(currentPreviewModels, activePropertyIds)
+        );
+        setWebsiteDraftLiveSiteStates((currentLiveSiteStates) =>
+          pruneWebsiteDraftPreviewModels(currentLiveSiteStates, activePropertyIds)
         );
       }
 
@@ -752,6 +789,10 @@ function WebsiteBuilderPage() {
       setWebsiteDraftPreviewModels((currentPreviewModels) => ({
         ...currentPreviewModels,
         ...buildWebsiteDraftPreviewModelMap(previewEntries),
+      }));
+      setWebsiteDraftLiveSiteStates((currentLiveSiteStates) => ({
+        ...currentLiveSiteStates,
+        ...buildWebsiteDraftLiveSiteStateMap(previewEntries),
       }));
     };
 
@@ -1267,6 +1308,11 @@ function WebsiteBuilderPage() {
         delete nextPreviewModels[propertyId];
         return nextPreviewModels;
       });
+      setWebsiteDraftLiveSiteStates((currentLiveSiteStates) => {
+        const nextLiveSiteStates = { ...currentLiveSiteStates };
+        delete nextLiveSiteStates[propertyId];
+        return nextLiveSiteStates;
+      });
       setWebsiteDraftPendingDelete(null);
       setWebsiteDraftDeleteReasons([]);
       setWebsiteDraftDeleteStep(DELETE_WEBSITE_DRAFT_STEP_REASON);
@@ -1367,6 +1413,8 @@ function WebsiteBuilderPage() {
           const template = getWebsiteTemplateById(draft.templateKey);
           const templateName = template?.name || draft.templateKey || "Unknown template";
           const draftPreviewModel = websiteDraftPreviewModels[draft.propertyId] || null;
+          const draftLiveSiteState = websiteDraftLiveSiteStates[draft.propertyId] || null;
+          const draftPublishedAtLabel = formatPublishedAtLabel(draftLiveSiteState?.publishedAt);
           const draftDisplayTitle = getDraftDisplayTitle(draft, getDraftPublishedContentOverrides(draft));
 
           return (
@@ -1383,6 +1431,16 @@ function WebsiteBuilderPage() {
                     <span className={styles.metaText}>Template: {templateName}</span>
                     <span className={styles.metaText}>Updated: {formatDraftUpdatedAt(draft.updatedAt)}</span>
                   </div>
+
+                  {draftLiveSiteState?.isStale ? (
+                    <p className={styles.websiteDraftStaleNotice} role="status">
+                      <strong>
+                        Your listing changed after the last publish
+                        {draftPublishedAtLabel ? ` (${draftPublishedAtLabel})` : ""}.
+                      </strong>{" "}
+                      Guests still see the older version. Open the editor and use &ldquo;Update live site&rdquo;.
+                    </p>
+                  ) : null}
 
                   <div className={styles.buttonRow}>
                     <button

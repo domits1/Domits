@@ -9,6 +9,7 @@ import {
   publishWebsiteSite,
   unpublishWebsiteSite,
 } from "./services/websiteSiteService";
+import { resolveLiveSiteStaleness } from "./services/websiteListingChange";
 import { getAmenityIconOptions } from "./rendering/amenityIconRegistry";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
 import {
@@ -113,6 +114,7 @@ function WebsiteEditorPage() {
   const [previewLoadError, setPreviewLoadError] = useState("");
   const [draftRecord, setDraftRecord] = useState(null);
   const [baseModel, setBaseModel] = useState(null);
+  const [listingDetails, setListingDetails] = useState(null);
   const [editorValues, setEditorValues] = useState(createEmptyWebsiteDraftEditorValues);
   const [themeValues, setThemeValues] = useState(createEmptyWebsiteDraftThemeEditorValues);
   const [previewViewport, setPreviewViewport] = useState("desktop");
@@ -187,6 +189,7 @@ function WebsiteEditorPage() {
     setEditorValues,
     setIsEditorLoading,
     setIsPreviewLoading,
+    setListingDetails,
     setLoadError,
     setPreviewLoadError,
     setSiteSummary,
@@ -328,6 +331,11 @@ function WebsiteEditorPage() {
     [mergedContentOverrides, publishedContentOverrides, mergedThemeOverrides, publishedThemeOverrides]
   );
 
+  const liveSiteStaleness = useMemo(
+    () => resolveLiveSiteStaleness(siteSummary, listingDetails),
+    [listingDetails, siteSummary]
+  );
+  const canUpdateLiveSite = hasLiveSyncPending || liveSiteStaleness.isStale;
   const isMutatingDraft = isSaving || isDiscardingChanges || isUpdatingLiveSite;
   const isMutatingSite = isPublishingSite || isUnpublishingSite;
   const primarySiteDomain = useMemo(() => getPrimaryWebsiteDomain(siteSummary), [siteSummary]);
@@ -899,7 +907,7 @@ function WebsiteEditorPage() {
   };
 
   const updateLiveSiteChanges = async () => {
-    if (!draftRecord || !hasLiveSite || !hasLiveSyncPending || isMutatingDraft || isMutatingSite) {
+    if (!draftRecord || !hasLiveSite || !canUpdateLiveSite || isMutatingDraft || isMutatingSite) {
       return;
     }
 
@@ -1128,7 +1136,7 @@ function WebsiteEditorPage() {
                 openLiveWebsiteLink={openLiveWebsiteLink}
                 updateLiveSiteChanges={updateLiveSiteChanges}
                 isMutatingDraft={isMutatingDraft}
-                hasLiveSyncPending={hasLiveSyncPending}
+                hasLiveSyncPending={canUpdateLiveSite}
                 isUpdatingLiveSite={isUpdatingLiveSite}
                 publishLiveSite={publishLiveSite}
                 canPublishSite={canPublishSite}
@@ -1149,6 +1157,8 @@ function WebsiteEditorPage() {
               siteSummaryError={siteSummaryError}
               hasLiveSite={hasLiveSite}
               hasLiveSyncPending={hasLiveSyncPending}
+              isListingStale={liveSiteStaleness.isStale}
+              listingPublishedAt={liveSiteStaleness.publishedAt}
               draftId={draftRecord?.id || ""}
             />
           </div>
