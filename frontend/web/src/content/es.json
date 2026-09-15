@@ -1138,8 +1138,9 @@
       "prefsSection": "Preferencias / Autenticación",
       "photo": {
         "upload": "Subir",
-        "uploading": "Procesando...",
-        "remove": "Eliminar"
+        "uploading": "Subiendo...",
+        "remove": "Eliminar",
+        "removing": "Eliminando..."
       },
       "fields": {
         "fullName": "Nombre completo",

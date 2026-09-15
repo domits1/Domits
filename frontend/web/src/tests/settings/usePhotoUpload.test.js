@@ -17,10 +17,11 @@ describe("usePhotoUpload", () => {
     globalThis.fetch = jest.fn();
   });
 
-  test("initial state: photoError is empty and isUploadingPhoto is false", () => {
+  test("initial state: photoError is empty and isUploadingPhoto/isRemovingPhoto are false", () => {
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     expect(result.current.photoError).toBe("");
     expect(result.current.isUploadingPhoto).toBe(false);
+    expect(result.current.isRemovingPhoto).toBe(false);
   });
 
   test("onPhotoInputChange: does nothing when files array is empty", async () => {
@@ -150,7 +151,7 @@ describe("usePhotoUpload", () => {
     const updater = mockSetUser.mock.calls[0][0];
     expect(updater({ picture: "old-url.jpg" })).toEqual(expect.objectContaining({ picture: "" }));
     expect(result.current.photoError).toBe("");
-    expect(result.current.isUploadingPhoto).toBe(false);
+    expect(result.current.isRemovingPhoto).toBe(false);
   });
 
   test("onPhotoRemove: sets error when Auth call fails", async () => {
@@ -163,7 +164,29 @@ describe("usePhotoUpload", () => {
     });
 
     expect(result.current.photoError).toBe("Failed to remove photo. Please try again.");
-    expect(result.current.isUploadingPhoto).toBe(false);
+    expect(result.current.isRemovingPhoto).toBe(false);
     expect(mockSetUser).not.toHaveBeenCalled();
+  });
+
+  test("onPhotoRemove: isRemovingPhoto is true while the removal is in flight and false once settled", async () => {
+    const mockCognitoUser = { username: "user-123" };
+    let resolveAuth;
+    Auth.currentAuthenticatedUser.mockReturnValue(new Promise((resolve) => (resolveAuth = resolve)));
+    Auth.updateUserAttributes.mockResolvedValue({});
+
+    const { result } = renderHook(() => usePhotoUpload(mockSetUser));
+
+    let removePromise;
+    act(() => {
+      removePromise = result.current.onPhotoRemove();
+    });
+    expect(result.current.isRemovingPhoto).toBe(true);
+    expect(result.current.isUploadingPhoto).toBe(false);
+
+    await act(async () => {
+      resolveAuth(mockCognitoUser);
+      await removePromise;
+    });
+    expect(result.current.isRemovingPhoto).toBe(false);
   });
 });

@@ -6,6 +6,7 @@ import {getProfileUploadUrl} from "../components/settings/api/profileUpload";
 export default function usePhotoUpload(setUser) {
     const [photoError, setPhotoError] = useState("");
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
     const photoInputRef = useRef(null);
 
     const handlePhotoButtonClick = () => {
@@ -69,7 +70,7 @@ export default function usePhotoUpload(setUser) {
     };
 
     const handlePhotoRemove = async () => {
-        setIsUploadingPhoto(true);
+        setIsRemovingPhoto(true);
         setPhotoError("");
 
         try {
@@ -80,13 +81,14 @@ export default function usePhotoUpload(setUser) {
             console.error("Error removing profile photo:", error);
             setPhotoError("Failed to remove photo. Please try again.");
         } finally {
-            setIsUploadingPhoto(false);
+            setIsRemovingPhoto(false);
         }
     };
 
     return {
         photoError,
         isUploadingPhoto,
+        isRemovingPhoto,
         photoInputRef,
         onPhotoButtonClick: handlePhotoButtonClick,
         onPhotoInputChange: handlePhotoInputChange,

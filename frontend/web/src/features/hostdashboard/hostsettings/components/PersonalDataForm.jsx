@@ -80,6 +80,7 @@ const PersonalDataForm = ({
     user,
     tempUser,
     isUploadingPhoto,
+    isRemovingPhoto,
     photoError,
     photoInputRef,
     onPhotoButtonClick,
@@ -153,7 +154,7 @@ const PersonalDataForm = ({
                                 type="button"
                                 onClick={onPhotoButtonClick}
                                 className="pd-photo-btn pd-photo-btn--primary"
-                                disabled={isUploadingPhoto}
+                                disabled={isUploadingPhoto || isRemovingPhoto}
                             >
                                 {isUploadingPhoto ? t.photo.uploading : t.photo.upload}
                             </button>
@@ -161,9 +162,9 @@ const PersonalDataForm = ({
                                 type="button"
                                 onClick={onPhotoRemove}
                                 className="pd-photo-btn pd-photo-btn--secondary"
-                                disabled={isUploadingPhoto || !user.picture}
+                                disabled={isUploadingPhoto || isRemovingPhoto || !user.picture}
                             >
-                                {t.photo.remove}
+                                {isRemovingPhoto ? t.photo.removing : t.photo.remove}
                             </button>
                         </div>
                         {photoError && <p className="pd-field-error">{photoError}</p>}
@@ -460,6 +461,7 @@ PersonalDataForm.propTypes = {
     user: userShape.isRequired,
     tempUser: tempUserShape.isRequired,
     isUploadingPhoto: PropTypes.bool.isRequired,
+    isRemovingPhoto: PropTypes.bool.isRequired,
     photoError: PropTypes.string,
     photoInputRef: refShape.isRequired,
     onPhotoButtonClick: PropTypes.func.isRequired,
