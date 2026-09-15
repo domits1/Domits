@@ -1136,7 +1136,8 @@ function WebsiteEditorPage() {
                 openLiveWebsiteLink={openLiveWebsiteLink}
                 updateLiveSiteChanges={updateLiveSiteChanges}
                 isMutatingDraft={isMutatingDraft}
-                hasLiveSyncPending={canUpdateLiveSite}
+                hasLiveSyncPending={hasLiveSyncPending}
+                canUpdateLiveSite={canUpdateLiveSite}
                 isUpdatingLiveSite={isUpdatingLiveSite}
                 publishLiveSite={publishLiveSite}
                 canPublishSite={canPublishSite}

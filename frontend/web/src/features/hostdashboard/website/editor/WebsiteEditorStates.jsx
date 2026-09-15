@@ -106,6 +106,7 @@ export function WebsiteEditorActionMenu({
   updateLiveSiteChanges,
   isMutatingDraft,
   hasLiveSyncPending,
+  canUpdateLiveSite,
   isUpdatingLiveSite,
   publishLiveSite,
   canPublishSite,
@@ -164,7 +165,7 @@ export function WebsiteEditorActionMenu({
               role="menuitem"
               className={styles.actionMenuItem}
               onClick={updateLiveSiteChanges}
-              disabled={isMutatingDraft || !hasLiveSyncPending}
+              disabled={isMutatingDraft || !canUpdateLiveSite}
             >
               {isUpdatingLiveSite ? "Updating..." : "Update live site"}
             </button>
@@ -214,6 +215,7 @@ WebsiteEditorActionMenu.propTypes = {
   updateLiveSiteChanges: PropTypes.func.isRequired,
   isMutatingDraft: PropTypes.bool.isRequired,
   hasLiveSyncPending: PropTypes.bool.isRequired,
+  canUpdateLiveSite: PropTypes.bool.isRequired,
   isUpdatingLiveSite: PropTypes.bool.isRequired,
   publishLiveSite: PropTypes.func.isRequired,
   canPublishSite: PropTypes.bool.isRequired,
