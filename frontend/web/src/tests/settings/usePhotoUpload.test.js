@@ -56,28 +56,30 @@ describe("usePhotoUpload", () => {
     expect(result.current.photoError).toBe("Image must be 5MB or smaller.");
   });
 
-  test("onPhotoInputChange: successful upload updates user state and Cognito picture attribute", async () => {
+  const performSuccessfulUpload = async () => {
     const mockCognitoUser = { username: "user-123" };
+    const fileUrl = "https://accommodation.s3.eu-north-1.amazonaws.com/images/profile/user-123/abc.jpg";
     Auth.currentAuthenticatedUser.mockResolvedValue(mockCognitoUser);
     Auth.updateUserAttributes.mockResolvedValue({});
-    profileUpload.uploadProfilePhoto.mockResolvedValue({
-      fileUrl: "https://accommodation.s3.eu-north-1.amazonaws.com/profile/user-123/abc.jpg",
-    });
+    profileUpload.uploadProfilePhoto.mockResolvedValue({ fileUrl });
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img-data"], "photo.jpg", { type: "image/jpeg" });
-
     await act(async () => {
       await result.current.onPhotoInputChange({ target: { files: [file] } });
     });
+
+    return { result, mockCognitoUser, fileUrl };
+  };
+
+  test("onPhotoInputChange: successful upload updates user state and Cognito picture attribute", async () => {
+    const { result, mockCognitoUser, fileUrl } = await performSuccessfulUpload();
 
     expect(profileUpload.uploadProfilePhoto).toHaveBeenCalledWith(
       "mock-access-token",
       expect.stringMatching(/^data:image\/jpeg;base64,/)
     );
-    expect(Auth.updateUserAttributes).toHaveBeenCalledWith(mockCognitoUser, {
-      picture: "https://accommodation.s3.eu-north-1.amazonaws.com/profile/user-123/abc.jpg",
-    });
+    expect(Auth.updateUserAttributes).toHaveBeenCalledWith(mockCognitoUser, { picture: fileUrl });
     expect(mockSetUser).toHaveBeenCalled();
     expect(result.current.photoError).toBe("");
     expect(result.current.photoSuccess).toBe("uploaded");
@@ -86,19 +88,7 @@ describe("usePhotoUpload", () => {
 
   test("onPhotoInputChange: photoSuccess clears itself after the display timeout", async () => {
     jest.useFakeTimers();
-    const mockCognitoUser = { username: "user-123" };
-    Auth.currentAuthenticatedUser.mockResolvedValue(mockCognitoUser);
-    Auth.updateUserAttributes.mockResolvedValue({});
-    profileUpload.uploadProfilePhoto.mockResolvedValue({
-      fileUrl: "https://accommodation.s3.eu-north-1.amazonaws.com/images/profile/user-123/abc.jpg",
-    });
-
-    const { result } = renderHook(() => usePhotoUpload(mockSetUser));
-    const file = new File(["img-data"], "photo.jpg", { type: "image/jpeg" });
-
-    await act(async () => {
-      await result.current.onPhotoInputChange({ target: { files: [file] } });
-    });
+    const { result } = await performSuccessfulUpload();
     expect(result.current.photoSuccess).toBe("uploaded");
 
     act(() => {
