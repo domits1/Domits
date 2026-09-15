@@ -1,8 +1,13 @@
 import {EntitySchema} from "typeorm";
 
+export const PROPERTY_TECHNICAL_DETAILS_TABLE_NAMES = Object.freeze({
+    current: "property_technicaldetails",
+    canonical: "property_technical_details"
+});
+
 export const Property_Technical_Details = new EntitySchema({
     name: "Property_TechnicalDetails",
-    tableName: "property_technicaldetails",
+    tableName: PROPERTY_TECHNICAL_DETAILS_TABLE_NAMES.current,
     columns: {
         property_id: {
             primary: true,
