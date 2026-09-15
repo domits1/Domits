@@ -138,4 +138,4 @@ export const countryCodes = [
 ];
 
 export const titleOptions = ["", "Dr.", "Mr.", "Mrs.", "Ms.", "Prof."];
-export const sexOptions = ["", "Female", "Male"];
+export const sexOptions = ["", "Female", "Male", "Other", "Prefer not to say"];
