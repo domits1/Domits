@@ -286,13 +286,13 @@ export function WebsiteEditorPublicSitePanel({
 
       {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
       {!siteSummaryError && hasLiveSite && isListingStale ? (
-        <p className={styles.publicSiteStale} role="status">
+        <output className={styles.publicSiteStale}>
           <strong>
             Your listing changed after the last publish
             {listingPublishedAtLabel ? ` (${listingPublishedAtLabel})` : ""}.
           </strong>{" "}
           Guests still see the older version. Use &ldquo;Update live site&rdquo; to publish the current listing.
-        </p>
+        </output>
       ) : null}
       {!siteSummaryError && hasLiveSite && hasLiveSyncPending ? (
         <p className={styles.publicSiteHint}>

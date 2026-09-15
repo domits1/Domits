@@ -1433,13 +1433,13 @@ function WebsiteBuilderPage() {
                   </div>
 
                   {draftLiveSiteState?.isStale ? (
-                    <p className={styles.websiteDraftStaleNotice} role="status">
+                    <output className={styles.websiteDraftStaleNotice}>
                       <strong>
                         Your listing changed after the last publish
                         {draftPublishedAtLabel ? ` (${draftPublishedAtLabel})` : ""}.
                       </strong>{" "}
                       Guests still see the older version. Open the editor and use &ldquo;Update live site&rdquo;.
-                    </p>
+                    </output>
                   ) : null}
 
                   <div className={styles.buttonRow}>

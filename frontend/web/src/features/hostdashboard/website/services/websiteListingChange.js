@@ -30,7 +30,7 @@ const toSortedPairs = (entries, keyField, valueField) =>
   toList(entries)
     .map((entry) => `${cleanText(entry?.[keyField])}=${cleanText(entry?.[valueField])}`)
     .filter((pair) => pair !== "=")
-    .sort();
+    .sort((left, right) => left.localeCompare(right));
 
 export const buildListingDigest = (propertyDetails) => {
   const property = propertyDetails?.property || {};
@@ -45,7 +45,7 @@ export const buildListingDigest = (propertyDetails) => {
     amenities: toList(propertyDetails?.amenities)
       .map((amenity) => firstFilledField(amenity, AMENITY_ID_FIELDS))
       .filter(Boolean)
-      .sort(),
+      .sort((left, right) => left.localeCompare(right)),
     generalDetails: toSortedPairs(propertyDetails?.generalDetails, "detail", "value"),
     rules: toSortedPairs(propertyDetails?.rules, "rule", "value"),
     pricing: {
