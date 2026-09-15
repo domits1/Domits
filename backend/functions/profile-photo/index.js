@@ -1,43 +1,32 @@
 import { Controller } from "./controller/controller.js";
 
-let controller = null;
+const ORIGIN_HEADER = { "Access-Control-Allow-Origin": "*" };
+const CORS_HEADERS = {
+    ...ORIGIN_HEADER,
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+};
+
+const jsonResponse = (statusCode, body) => ({
+    statusCode,
+    headers: ORIGIN_HEADER,
+    body: JSON.stringify(body),
+});
+
+let controller;
 
 export const handler = async (event) => {
+    controller ??= new Controller();
 
     try {
-        if (!controller) {
-            controller = new Controller();
+        if (event.httpMethod === "OPTIONS") {
+            return { statusCode: 200, headers: CORS_HEADERS };
         }
-
-        switch (event.httpMethod) {
-            case "POST":
-                return await controller.uploadPhoto(event);
-
-            case "OPTIONS":
-                return {
-                    statusCode: 200,
-                    headers: {
-                        "Access-Control-Allow-Origin": "*",
-                        "Access-Control-Allow-Methods": "POST,OPTIONS",
-                        "Access-Control-Allow-Headers": "Content-Type,Authorization"
-                    }
-                };
-
-            default:
-                return {
-                    statusCode: 404,
-                    headers: { "Access-Control-Allow-Origin": "*" },
-                    body: JSON.stringify({ message: `Method ${event.httpMethod} not supported.` })
-                };
+        if (event.httpMethod === "POST") {
+            return await controller.uploadPhoto(event);
         }
+        return jsonResponse(404, { message: `Method ${event.httpMethod} not supported.` });
     } catch (error) {
-        return {
-            statusCode: 500,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({
-                message: "Internal Server Error",
-                error: error.message
-            })
-        };
+        return jsonResponse(500, { message: "Internal Server Error", error: error.message });
     }
 };
