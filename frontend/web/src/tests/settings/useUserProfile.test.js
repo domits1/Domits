@@ -287,6 +287,48 @@ describe("useUserProfile", () => {
     expect(globalThis.alert).toHaveBeenCalledWith("Please provide a valid first name.");
   });
 
+  test("onSaveUserName: shows alert and skips fetch when first name contains digits", async () => {
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onInputChange({ target: { name: "firstName", value: "John123" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserName();
+    });
+    expect(globalThis.alert).toHaveBeenCalledWith("Use letters, spaces, hyphens, or apostrophes.");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("onSaveUserName: allows an empty last name", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    globalThis.fetch.mockResolvedValue({
+      json: () => Promise.resolve({ statusCode: 200 }),
+    });
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onInputChange({ target: { name: "firstName", value: "Jane" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserName();
+    });
+    expect(globalThis.fetch).toHaveBeenCalled();
+  });
+
+  test("onSaveUserName: shows alert and skips fetch when last name contains digits", async () => {
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onInputChange({ target: { name: "firstName", value: "Jane" } });
+    });
+    act(() => {
+      result.current.onInputChange({ target: { name: "lastName", value: "Doe99" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserName();
+    });
+    expect(globalThis.alert).toHaveBeenCalledWith("Use letters, spaces, hyphens, or apostrophes.");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
   test("onSaveUserName: sends POST and updates first/last name on success", async () => {
     Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     globalThis.fetch.mockResolvedValue({
@@ -305,6 +347,31 @@ describe("useUserProfile", () => {
     expect(globalThis.fetch).toHaveBeenCalled();
     expect(result.current.user.firstName).toBe("Jane");
     expect(result.current.user.lastName).toBe("Doe");
+  });
+
+  // ─── Save phone ───────────────────────────────────────────────────────────
+
+  test("onSaveUserPhone: shows alert and skips fetch when phone is empty", async () => {
+    const { result } = renderHook(() => useUserProfile());
+    await act(async () => {
+      await result.current.onSaveUserPhone();
+    });
+    expect(globalThis.alert).toHaveBeenCalledWith("Please enter a phone number.");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("onSaveUserPhone: shows a single alert (not a duplicate) when the request throws", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    globalThis.fetch.mockRejectedValue(new Error("Network error"));
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onPhoneChange({ target: { value: "612345678" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserPhone();
+    });
+    expect(globalThis.alert).toHaveBeenCalledWith("Failed to update phone number. Please try again.");
+    expect(globalThis.alert).toHaveBeenCalledTimes(1);
   });
 
   // ─── Save email ───────────────────────────────────────────────────────────

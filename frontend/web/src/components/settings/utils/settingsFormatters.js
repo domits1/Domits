@@ -69,6 +69,20 @@ export const formatBirthdateForDisplay = (value) => {
     return `${paddedDay}-${paddedMonth}-${year}`;
 };
 
+export const validateName = (value, { fieldName = "name", required = true } = {}) => {
+    const trimmed = (value || "").trim();
+    if (!trimmed) {
+        return required ? `Please provide a valid ${fieldName}.` : "";
+    }
+    if (trimmed.length > 50) {
+        return `Please keep the ${fieldName} to 50 characters or fewer.`;
+    }
+    if (!/^[A-Za-z][A-Za-z\s'-]*$/.test(trimmed)) {
+        return "Use letters, spaces, hyphens, or apostrophes.";
+    }
+    return "";
+};
+
 export const validateNationality = (value) => {
     const trimmed = value.trim();
     if (!trimmed) {

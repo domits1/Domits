@@ -5,6 +5,7 @@ import {
   validateDateOfBirth,
   formatBirthdateForStorage,
   formatBirthdateForDisplay,
+  validateName,
   validateNationality,
 } from "../../components/settings/utils/settingsFormatters";
 
@@ -90,6 +91,37 @@ describe("settingsFormatters", () => {
       ["not-a-date", "not-a-date"],
     ])("formatBirthdateForDisplay(%p) → %p", (value, expected) => {
       expect(formatBirthdateForDisplay(value)).toBe(expected);
+    });
+  });
+
+  describe("validateName", () => {
+    test("required field: rejects empty or whitespace-only values", () => {
+      expect(validateName("", { fieldName: "first name" })).toBe("Please provide a valid first name.");
+      expect(validateName("   ", { fieldName: "first name" })).toBe("Please provide a valid first name.");
+    });
+
+    test("optional field: allows empty values", () => {
+      expect(validateName("", { fieldName: "last name", required: false })).toBe("");
+      expect(validateName("   ", { fieldName: "last name", required: false })).toBe("");
+    });
+
+    test("rejects values over 50 characters", () => {
+      expect(validateName("A".repeat(51), { fieldName: "first name" })).toBe(
+        "Please keep the first name to 50 characters or fewer."
+      );
+    });
+
+    test("rejects digits and symbols", () => {
+      expect(validateName("John123", { fieldName: "first name" })).toBe(
+        "Use letters, spaces, hyphens, or apostrophes."
+      );
+      expect(validateName("!!!", { fieldName: "first name" })).toBe(
+        "Use letters, spaces, hyphens, or apostrophes."
+      );
+    });
+
+    test("accepts letters, spaces, hyphens, and apostrophes", () => {
+      expect(validateName("Mary-Jane O'Brien", { fieldName: "first name" })).toBe("");
     });
   });
 

@@ -16,6 +16,7 @@ import {
   validateDateOfBirth,
   formatBirthdateForStorage,
   formatBirthdateForDisplay,
+  validateName,
   validateNationality,
 } from "../components/settings/utils/settingsFormatters";
 
@@ -265,8 +266,16 @@ export default function useUserProfile() {
   const saveUserName = async () => {
     const firstName = tempUser.firstName?.trim();
     const lastName = tempUser.lastName?.trim();
-    if (!firstName) {
-      alert("Please provide a valid first name.");
+
+    const firstNameError = validateName(tempUser.firstName || "", { fieldName: "first name" });
+    if (firstNameError) {
+      alert(firstNameError);
+      return;
+    }
+
+    const lastNameError = validateName(tempUser.lastName || "", { fieldName: "last name", required: false });
+    if (lastNameError) {
+      alert(lastNameError);
       return;
     }
 
@@ -334,7 +343,6 @@ export default function useUserProfile() {
       }
     } catch (error) {
       console.error("Error updating phone number:", error);
-      alert("Failed to update phone number. Please try again.");
       alert("Failed to update phone number. Please try again.");
     }
   };
