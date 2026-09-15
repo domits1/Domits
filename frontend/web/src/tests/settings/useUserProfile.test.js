@@ -158,6 +158,60 @@ describe("useUserProfile", () => {
     expect(result.current.selectedCountryCode).toBe("+44");
   });
 
+  // ─── Title / Sex (deferred save) ──────────────────────────────────────────
+
+  test("onTitleChange updates tempUser.title without saving immediately", () => {
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onTitleChange({ target: { value: "Mr." } });
+    });
+    expect(result.current.tempUser.title).toBe("Mr.");
+    expect(result.current.user.title).toBe("");
+    expect(Auth.updateUserAttributes).not.toHaveBeenCalled();
+  });
+
+  test("onSaveUserTitle saves the pending title and updates user state", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onTitleChange({ target: { value: "Ms." } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserTitle();
+    });
+    expect(Auth.updateUserAttributes).toHaveBeenCalledWith(
+      MOCK_COGNITO_USER,
+      expect.objectContaining({ "custom:title": "Ms." })
+    );
+    expect(result.current.user.title).toBe("Ms.");
+  });
+
+  test("onSexChange updates tempUser.sex without saving immediately", () => {
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onSexChange({ target: { value: "Female" } });
+    });
+    expect(result.current.tempUser.sex).toBe("Female");
+    expect(result.current.user.sex).toBe("");
+    expect(Auth.updateUserAttributes).not.toHaveBeenCalled();
+  });
+
+  test("onSaveUserSex saves the pending sex and updates user state", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onSexChange({ target: { value: "Female" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserSex();
+    });
+    expect(Auth.updateUserAttributes).toHaveBeenCalledWith(
+      MOCK_COGNITO_USER,
+      expect.objectContaining({ gender: "Female" })
+    );
+    expect(result.current.user.sex).toBe("Female");
+  });
+
   // ─── Toggle edit state ────────────────────────────────────────────────────
 
   test("onToggleEditState enables edit mode for a field", () => {

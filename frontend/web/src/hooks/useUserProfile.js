@@ -115,30 +115,32 @@ export default function useUserProfile() {
     }
   };
 
-  const handleTitleChange = async (e) => {
+  const handleTitleChange = (e) => {
     const value = e.target.value;
-    if (value === user.title) return;
     setTempUser((prevState) => ({ ...prevState, title: value }));
-    setUser((prevState) => ({ ...prevState, title: value }));
+  };
+
+  const handleSexChange = (e) => {
+    const value = e.target.value;
+    setTempUser((prevState) => ({ ...prevState, sex: value }));
+  };
+
+  const saveUserTitle = async () => {
     try {
       const currentUser = await Auth.currentAuthenticatedUser();
-      await Auth.updateUserAttributes(currentUser, { "custom:title": value || "" });
+      await Auth.updateUserAttributes(currentUser, { "custom:title": tempUser.title || "" });
+      setUser((prev) => ({ ...prev, title: tempUser.title }));
     } catch (error) {
       console.error("Error updating title:", error);
       alert("Failed to update title. Please try again.");
     }
   };
 
-  const handleSexChange = async (e) => {
-    const value = e.target.value;
-    setTempUser((prevState) => ({ ...prevState, sex: value }));
-    setUser((prevState) => ({ ...prevState, sex: value }));
-
-    if (!value) return;
-
+  const saveUserSex = async () => {
     try {
       const currentUser = await Auth.currentAuthenticatedUser();
-      await Auth.updateUserAttributes(currentUser, { gender: value });
+      await Auth.updateUserAttributes(currentUser, { gender: tempUser.sex || "" });
+      setUser((prev) => ({ ...prev, sex: tempUser.sex }));
     } catch (error) {
       console.error("Error updating gender:", error);
       alert("Failed to update gender. Please try again.");
@@ -518,6 +520,8 @@ export default function useUserProfile() {
     onSaveUserDateOfBirth: saveUserDateOfBirth,
     onSaveUserPlaceOfBirth: saveUserPlaceOfBirth,
     onSaveUserNationality: saveUserNationality,
+    onSaveUserTitle: saveUserTitle,
+    onSaveUserSex: saveUserSex,
     onToggleEditState: toggleEditState,
   };
 }

@@ -11,6 +11,8 @@ export default function usePersonalDataSave({
     onSaveUserDateOfBirth,
     onSaveUserPlaceOfBirth,
     onSaveUserNationality,
+    onSaveUserTitle,
+    onSaveUserSex,
 }) {
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
@@ -39,6 +41,12 @@ export default function usePersonalDataSave({
         }
         if ((tempUser.nationality || "").trim() !== (user.nationality || "").trim()) {
             saves.push(onSaveUserNationality());
+        }
+        if ((tempUser.title || "") !== (user.title || "")) {
+            saves.push(onSaveUserTitle());
+        }
+        if ((tempUser.sex || "") !== (user.sex || "")) {
+            saves.push(onSaveUserSex());
         }
 
         setIsSaving(true);
