@@ -1,5 +1,6 @@
+import { resolveAccommodationImageKey } from "../../../../utils/accommodationImage";
+
 const SITE_STATUS_PUBLISHED = "PUBLISHED";
-const IMAGE_KEY_FIELDS = Object.freeze(["original_key", "originalKey", "key", "web_key", "webKey", "url", "src"]);
 const AMENITY_ID_FIELDS = Object.freeze(["amenityId", "amenity_id", "id", "amenity"]);
 
 const cleanText = (value) =>
@@ -23,9 +24,6 @@ const firstFilledField = (entry, fields) => {
   return "";
 };
 
-const resolveImageKey = (image) =>
-  typeof image === "string" ? cleanText(image) : firstFilledField(image, IMAGE_KEY_FIELDS);
-
 const toSortedPairs = (entries, keyField, valueField) =>
   toList(entries)
     .map((entry) => `${cleanText(entry?.[keyField])}=${cleanText(entry?.[valueField])}`)
@@ -36,22 +34,29 @@ export const buildListingDigest = (propertyDetails) => {
   const property = propertyDetails?.property || {};
   const pricing = propertyDetails?.pricing || {};
   const location = propertyDetails?.location || {};
+  const checkIn = propertyDetails?.checkIn || {};
 
   return {
     title: cleanText(property.title),
     subtitle: cleanText(property.subtitle),
     description: cleanText(property.description),
-    images: toList(propertyDetails?.images).map(resolveImageKey).filter(Boolean),
+    images: toList(propertyDetails?.images)
+      .map((image) => resolveAccommodationImageKey(image))
+      .filter(Boolean),
     amenities: toList(propertyDetails?.amenities)
       .map((amenity) => firstFilledField(amenity, AMENITY_ID_FIELDS))
       .filter(Boolean)
       .sort((left, right) => left.localeCompare(right)),
     generalDetails: toSortedPairs(propertyDetails?.generalDetails, "detail", "value"),
     rules: toSortedPairs(propertyDetails?.rules, "rule", "value"),
-    pricing: {
-      roomRate: readNumber(pricing.roomRate ?? pricing.roomrate),
-      cleaning: readNumber(pricing.cleaning),
-    },
+    availabilityRestrictions: toSortedPairs(propertyDetails?.availabilityRestrictions, "restriction", "value"),
+    checkIn: [
+      cleanText(checkIn.checkIn?.from),
+      cleanText(checkIn.checkIn?.till),
+      cleanText(checkIn.checkOut?.from),
+      cleanText(checkIn.checkOut?.till),
+    ],
+    pricing: { roomRate: readNumber(pricing.roomRate ?? pricing.roomrate) },
     location: [cleanText(location.city), cleanText(location.country)],
   };
 };
