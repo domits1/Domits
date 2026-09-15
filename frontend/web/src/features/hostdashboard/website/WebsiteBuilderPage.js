@@ -48,6 +48,7 @@ import {
   upsertWebsiteDraft,
 } from "./services/websiteDraftService";
 import { fetchWebsiteSiteByPropertyId } from "./services/websiteSiteService";
+import WebsiteDomainPanel from "./domains/WebsiteDomainPanel";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import {
@@ -1426,6 +1427,8 @@ function WebsiteBuilderPage() {
 
                 <span className={styles.statusPill}>{draft.status || "DRAFT"}</span>
               </div>
+
+              <WebsiteDomainPanel propertyId={String(draft.propertyId || "")} />
             </article>
           );
         })}
