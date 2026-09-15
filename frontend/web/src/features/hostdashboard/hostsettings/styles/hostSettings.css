@@ -338,6 +338,21 @@
     border-color: #6b7280;
 }
 
+.pd-field-input-wrapper {
+    flex: 1;
+    min-width: 0;
+    display: block;
+}
+
+.pd-field-input-wrapper .react-datepicker__input-container {
+    display: block;
+    width: 100%;
+}
+
+.pd-field-input-wrapper input.pd-field-input {
+    width: 100%;
+}
+
 .pd-select-wrapper {
     flex: 1;
     min-width: 0;
@@ -402,6 +417,12 @@
 .pd-field-error {
     font-size: 0.78rem;
     color: #dc2626;
+    margin: 4px 0 0 136px;
+}
+
+.pd-field-success {
+    font-size: 0.78rem;
+    color: #15803d;
     margin: 4px 0 0 136px;
 }
 
@@ -684,7 +705,8 @@
         width: 100%;
     }
 
-    .pd-field-error {
+    .pd-field-error,
+    .pd-field-success {
         margin-left: 0;
     }
 

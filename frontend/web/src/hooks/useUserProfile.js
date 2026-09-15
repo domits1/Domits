@@ -12,10 +12,11 @@ import {
 } from "../components/settings/constants";
 import {
   normalizePreferredMfa,
-  formatDateOfBirth,
+  formatDateOfBirthValue,
   validateDateOfBirth,
   formatBirthdateForStorage,
   formatBirthdateForDisplay,
+  validateName,
   validateNationality,
 } from "../components/settings/utils/settingsFormatters";
 
@@ -62,12 +63,13 @@ export default function useUserProfile() {
   const [stripPhone, setStripPhone] = useState("");
   const [dateOfBirthError, setDateOfBirthError] = useState("");
   const [nationalityError, setNationalityError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState(false);
   const [authStatus, setAuthStatus] = useState({
     emailVerified: false,
     phoneVerified: false,
     preferredMFA: "NOMFA",
   });
-  const previousDobRef = useRef("");
   const pendingEmailRef = useRef("");
 
   const countryOptions = useMemo(() => countryList().getLabels(), []);
@@ -84,56 +86,44 @@ export default function useUserProfile() {
     if (name === "nationality" && nationalityError) {
       setNationalityError("");
     }
+    if (name === "email" && emailError) {
+      setEmailError("");
+    }
   };
 
-  const handleDateOfBirthChange = (e) => {
-    const digits = e.target.value.replaceAll(/\D/g, "").slice(0, 8);
-    const prevValue = previousDobRef.current || "";
-    const prevDigits = prevValue.replaceAll(/\D/g, "");
-    const isDeleting = e.target.value.length < prevValue.length;
-    let nextDigits = digits;
-
-    if (isDeleting && prevDigits.length === digits.length) {
-      const cursor = e.target.selectionStart ?? e.target.value.length;
-      if (prevValue[cursor] === "-") {
-        const digitsBefore = prevValue.slice(0, cursor).replaceAll(/\D/g, "").length;
-        const removeIndex = Math.max(digitsBefore - 1, 0);
-        nextDigits = prevDigits.slice(0, removeIndex) + prevDigits.slice(removeIndex + 1);
-      }
-    }
-
-    const formatted = formatDateOfBirth(nextDigits);
-    previousDobRef.current = formatted;
-    setTempUser((prev) => ({ ...prev, dateOfBirth: formatted }));
+  const handleDateOfBirthChange = (date) => {
+    setTempUser((prev) => ({ ...prev, dateOfBirth: formatDateOfBirthValue(date) }));
     if (dateOfBirthError) {
       setDateOfBirthError("");
     }
   };
 
-  const handleTitleChange = async (e) => {
+  const handleTitleChange = (e) => {
     const value = e.target.value;
-    if (value === user.title) return;
     setTempUser((prevState) => ({ ...prevState, title: value }));
-    setUser((prevState) => ({ ...prevState, title: value }));
+  };
+
+  const handleSexChange = (e) => {
+    const value = e.target.value;
+    setTempUser((prevState) => ({ ...prevState, sex: value }));
+  };
+
+  const saveUserTitle = async () => {
     try {
       const currentUser = await Auth.currentAuthenticatedUser();
-      await Auth.updateUserAttributes(currentUser, { "custom:title": value || "" });
+      await Auth.updateUserAttributes(currentUser, { "custom:title": tempUser.title || "" });
+      setUser((prev) => ({ ...prev, title: tempUser.title }));
     } catch (error) {
       console.error("Error updating title:", error);
       alert("Failed to update title. Please try again.");
     }
   };
 
-  const handleSexChange = async (e) => {
-    const value = e.target.value;
-    setTempUser((prevState) => ({ ...prevState, sex: value }));
-    setUser((prevState) => ({ ...prevState, sex: value }));
-
-    if (!value) return;
-
+  const saveUserSex = async () => {
     try {
       const currentUser = await Auth.currentAuthenticatedUser();
-      await Auth.updateUserAttributes(currentUser, { gender: value });
+      await Auth.updateUserAttributes(currentUser, { gender: tempUser.sex || "" });
+      setUser((prev) => ({ ...prev, sex: tempUser.sex }));
     } catch (error) {
       console.error("Error updating gender:", error);
       alert("Failed to update gender. Please try again.");
@@ -185,12 +175,17 @@ export default function useUserProfile() {
     if (trimmed === current) return "";
     return validateNationality(value);
   };
+  const showEmailSuccess = () => {
+    setEmailSuccess(true);
+    setTimeout(() => setEmailSuccess(false), 2500);
+  };
+
   const handleEmailVerification = async () => {
     try {
       const result = await confirmEmailChange(verificationCode);
 
       if (!result.success) {
-        alert("Incorrect verification code");
+        setEmailError("Incorrect verification code.");
         return;
       }
 
@@ -202,9 +197,13 @@ export default function useUserProfile() {
       if (editState.email) {
         toggleEditState("email");
       }
+
+      setIsVerifying(false);
+      setEmailError("");
+      showEmailSuccess();
     } catch (error) {
       console.error("Error confirming email change:", error);
-      alert("An error occurred during verification. Please try again.");
+      setEmailError("An error occurred during verification. Please try again.");
     }
   };
 
@@ -217,9 +216,12 @@ export default function useUserProfile() {
     const newEmail = tempUser.email?.trim();
 
     if (!newEmail || newEmail.length > 320 || !SAFE_EMAIL_REGEX.test(newEmail)) {
-      alert("Please provide a valid email address.");
+      setEmailError("Please provide a valid email address.");
       return;
     }
+
+    setEmailError("");
+    setEmailSuccess(false);
 
     try {
       const userInfo = await Auth.currentAuthenticatedUser();
@@ -236,12 +238,6 @@ export default function useUserProfile() {
 
       const result = await response.json();
 
-      if (!response.ok) {
-        console.error("Request failed with status:", response.status);
-        alert("Failed to update email. Please try again later.");
-        return;
-      }
-
       if (result.message === "Email update successful, please verify your new email.") {
         pendingEmailRef.current = newEmail;
         setIsVerifying(true);
@@ -249,22 +245,37 @@ export default function useUserProfile() {
       }
 
       if (result.message === "This email address is already in use.") {
-        alert(result.message);
+        setEmailError(result.message);
+        return;
+      }
+
+      if (!response.ok) {
+        console.error("Request failed with status:", response.status);
+        setEmailError("Failed to update email. Please try again later.");
         return;
       }
 
       console.error("Unexpected error:", result.message || "No message provided");
+      setEmailError("Failed to update email. Please try again later.");
     } catch (error) {
       console.error("Error updating email:", error);
-      alert("An error occurred while updating the email. Please try again later.");
+      setEmailError("An error occurred while updating the email. Please try again later.");
     }
   };
 
   const saveUserName = async () => {
     const firstName = tempUser.firstName?.trim();
     const lastName = tempUser.lastName?.trim();
-    if (!firstName) {
-      alert("Please provide a valid first name.");
+
+    const firstNameError = validateName(tempUser.firstName || "", { fieldName: "first name" });
+    if (firstNameError) {
+      alert(firstNameError);
+      return;
+    }
+
+    const lastNameError = validateName(tempUser.lastName || "", { fieldName: "last name", required: false });
+    if (lastNameError) {
+      alert(lastNameError);
       return;
     }
 
@@ -332,7 +343,6 @@ export default function useUserProfile() {
       }
     } catch (error) {
       console.error("Error updating phone number:", error);
-      alert("Failed to update phone number. Please try again.");
       alert("Failed to update phone number. Please try again.");
     }
   };
@@ -441,10 +451,6 @@ export default function useUserProfile() {
   }, []);
 
   useEffect(() => {
-    previousDobRef.current = tempUser.dateOfBirth || "";
-  }, [tempUser.dateOfBirth]);
-
-  useEffect(() => {
     const phone = user.phone || "";
     const matchingCode = [...countryCodes]
       .sort((a, b) => b.code.length - a.code.length)
@@ -465,6 +471,8 @@ export default function useUserProfile() {
     stripPhone,
     dateOfBirthError,
     nationalityError,
+    emailError,
+    emailSuccess,
     authStatus,
     placeOfBirthOptions,
     countryCodes,
@@ -498,6 +506,8 @@ export default function useUserProfile() {
     onSaveUserDateOfBirth: saveUserDateOfBirth,
     onSaveUserPlaceOfBirth: saveUserPlaceOfBirth,
     onSaveUserNationality: saveUserNationality,
+    onSaveUserTitle: saveUserTitle,
+    onSaveUserSex: saveUserSex,
     onToggleEditState: toggleEditState,
   };
 }

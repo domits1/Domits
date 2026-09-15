@@ -1150,6 +1150,7 @@
         "emailAddress": "Email address",
         "verificationCode": "Verification code sent to your email",
         "verify": "Verify",
+        "emailUpdated": "Email updated!",
         "phone": "Phone",
         "phoneNumber": "Phone number",
         "sex": "Sex",
