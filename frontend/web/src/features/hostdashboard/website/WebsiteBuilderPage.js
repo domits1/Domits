@@ -163,20 +163,20 @@ const getDraftPropertyId = (draft) => String(draft?.propertyId || "").trim();
 const getWebsiteDraftPreviewCacheKey = (draft) =>
   `${String(draft?.updatedAt || "").trim()}::${String(draft?.templateKey || "").trim()}`;
 
-const pruneWebsiteDraftPreviewModels = (previewModels, activePropertyIds) => {
-  let hasRemovedPreviewModel = false;
-  const nextPreviewModels = {};
+const keepActivePropertyEntries = (entriesByPropertyId, activePropertyIds) => {
+  let hasRemovedEntry = false;
+  const nextEntries = {};
 
-  Object.entries(previewModels || {}).forEach(([propertyId, previewModel]) => {
+  Object.entries(entriesByPropertyId || {}).forEach(([propertyId, entry]) => {
     if (activePropertyIds.has(propertyId)) {
-      nextPreviewModels[propertyId] = previewModel;
+      nextEntries[propertyId] = entry;
       return;
     }
 
-    hasRemovedPreviewModel = true;
+    hasRemovedEntry = true;
   });
 
-  return hasRemovedPreviewModel ? nextPreviewModels : previewModels;
+  return hasRemovedEntry ? nextEntries : entriesByPropertyId;
 };
 
 const pruneWebsiteDraftPreviewCacheKeys = (previewCacheKeys, activePropertyIds) => {
@@ -739,10 +739,10 @@ function WebsiteBuilderPage() {
       );
       if (isMounted) {
         setWebsiteDraftPreviewModels((currentPreviewModels) =>
-          pruneWebsiteDraftPreviewModels(currentPreviewModels, activePropertyIds)
+          keepActivePropertyEntries(currentPreviewModels, activePropertyIds)
         );
         setWebsiteDraftLiveSiteStates((currentLiveSiteStates) =>
-          pruneWebsiteDraftPreviewModels(currentLiveSiteStates, activePropertyIds)
+          keepActivePropertyEntries(currentLiveSiteStates, activePropertyIds)
         );
       }
 
