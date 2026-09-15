@@ -8,9 +8,11 @@ import GuestSettings from "./GuestSettings";
 import GuestSettingsHub from "./GuestSettingsHub";
 import GuestCommunicationPreferences from "./GuestCommunicationPreferences";
 import GuestWishlist from "./GuestWishlist";
+import GuestReviews from "./GuestReviews";
 import Messages from "../../components/messages/Messages";
 import ReservationDetails from "./ReservationDetails";
 import InquiryPaymentPage from "./InquiryPaymentPage";
+import GuestReviewForm from "./GuestReviewForm";
 
 const MainDashboardGuest = () => {
   const location = useLocation();
@@ -26,7 +28,13 @@ const MainDashboardGuest = () => {
       "/guestdashboard/settings/personal-data": "Settings",
       "/guestdashboard/settings/communication-preferences": "CommunicationPreferences",
       "/guestdashboard/wishlist": "Wishlist",
+      "/guestdashboard/reviews": "Reviews",
+      "/guestdashboard/reviews/new": "GuestReviewForm",
     };
+
+    if (location.pathname.startsWith("/guestdashboard/reviews/") && location.pathname.endsWith("/edit")) {
+      return "GuestReviewForm";
+    }
 
     if (location.pathname.startsWith("/guestdashboard/reservation/")) {
       return "ReservationDetails";
@@ -61,10 +69,15 @@ const MainDashboardGuest = () => {
       case "Wishlist":
         return <GuestWishlist />;
 
+      case "Reviews":
+        return <GuestReviews />;
+
       case "ReservationDetails":
         return <ReservationDetails />;
       case "InquiryPayment":
         return <InquiryPaymentPage />;
+      case "GuestReviewForm":
+        return <GuestReviewForm />;
 
       default:
         return <GuestDashboard />;
