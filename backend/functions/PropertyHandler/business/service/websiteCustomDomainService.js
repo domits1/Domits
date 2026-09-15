@@ -23,6 +23,11 @@ const CLOUDFRONT_DOMAIN_STATUS_ACTIVE = "active";
 const DNS_STATUS_VALID = "valid-configuration";
 const SDK_ERROR_DOMAIN_IN_USE = "CNAMEAlreadyExists";
 const SDK_ERROR_TENANT_NAME_EXISTS = "EntityAlreadyExists";
+const SDK_ERROR_INVALID_ARGUMENT = "InvalidArgument";
+const OWNERSHIP_ERROR_PATTERN = /ownership/i;
+const REASON_DNS_REQUIRED = "dns_required";
+const REASON_TENANT_CREATED = "tenant_created";
+const REASON_DOMAIN_IN_USE = "domain_in_use_elsewhere";
 const EVENT_DOMAIN_REQUESTED = "SITE_DOMAIN_REQUESTED";
 const EVENT_TYPE_BY_STATUS = Object.freeze({
   [DOMAIN_STATUS.VERIFIED]: "SITE_DOMAIN_VERIFIED",
@@ -70,6 +75,12 @@ export const normalizeWebsiteCustomDomain = (domain) => {
 
   return normalizedDomain;
 };
+
+export const isCustomDomainSyncable = (record) =>
+  Boolean(record?.verificationDetails?.tenantId) || record?.verificationDetails?.reason === REASON_DNS_REQUIRED;
+
+const isOwnershipError = (error) =>
+  error?.name === SDK_ERROR_INVALID_ARGUMENT && OWNERSHIP_ERROR_PATTERN.test(error?.message || "");
 
 const findTenantDomainStatus = (tenant, domain) =>
   (tenant?.domains || []).find((domainEntry) => domainEntry.domain === domain)?.status || "";
@@ -172,15 +183,18 @@ export class WebsiteCustomDomainService {
     };
 
     try {
-      return { tenant: await this.tenantRepository.createTenant(tenantInput), lastError: null };
+      return { tenant: await this.tenantRepository.createTenant(tenantInput), reason: REASON_TENANT_CREATED, lastError: null };
     } catch (error) {
       if (error?.name === SDK_ERROR_DOMAIN_IN_USE) {
-        return { tenant: null, lastError: SDK_ERROR_DOMAIN_IN_USE };
+        return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: SDK_ERROR_DOMAIN_IN_USE };
+      }
+      if (isOwnershipError(error)) {
+        return { tenant: null, reason: REASON_DNS_REQUIRED, lastError: SDK_ERROR_INVALID_ARGUMENT };
       }
       if (error?.name === SDK_ERROR_TENANT_NAME_EXISTS) {
         const adoptedTenant = await this.tenantRepository.getTenantByDomain(domain);
         if (adoptedTenant) {
-          return { tenant: adoptedTenant, lastError: null };
+          return { tenant: adoptedTenant, reason: REASON_TENANT_CREATED, lastError: null };
         }
       }
       throw new WebsiteCustomDomainError(
@@ -198,7 +212,8 @@ export class WebsiteCustomDomainService {
 
     const normalizedDomain = normalizeWebsiteCustomDomain(domain);
     const existingRecord = await this.domainRepository.getDomainByName(normalizedDomain);
-    if (existingRecord && existingRecord.siteId !== site.id) {
+    const ownRecord = existingRecord?.siteId === site.id ? existingRecord : null;
+    if (existingRecord && !ownRecord && existingRecord.verificationDetails?.tenantId) {
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
         `${normalizedDomain} is already connected to another website.`
@@ -211,25 +226,20 @@ export class WebsiteCustomDomainService {
         `This website already uses ${siteCustomDomain.domain}. Remove it before connecting another domain.`
       );
     }
-    if (existingRecord?.verificationDetails?.tenantId) {
-      return this.syncCustomDomain({ site, domainRecord: existingRecord });
+    if (ownRecord?.verificationDetails?.tenantId) {
+      return this.syncCustomDomain({ site, domainRecord: ownRecord });
     }
 
-    const { tenant, lastError } = await this.createOrAdoptTenant({ site, domain: normalizedDomain });
-    const status = tenant ? DOMAIN_STATUS.PENDING : DOMAIN_STATUS.FAILED;
-    const reason = tenant ? "tenant_created" : "domain_in_use_elsewhere";
     const record = await this.domainRepository.ensureDomain({
       siteId: site.id,
       domain: normalizedDomain,
       domainType: DOMAIN_TYPE_CUSTOM,
-      status,
+      status: DOMAIN_STATUS.PENDING,
       isPrimary: false,
       verificationDetails: this.buildVerificationDetails({
-        previous: existingRecord?.verificationDetails,
+        previous: ownRecord?.verificationDetails,
         domain: normalizedDomain,
-        tenant,
-        reason,
-        lastError,
+        reason: REASON_DNS_REQUIRED,
       }),
       lastCheckedAt: this.clock(),
     });
@@ -237,12 +247,32 @@ export class WebsiteCustomDomainService {
     await this.recordEventSafely(site, EVENT_DOMAIN_REQUESTED, {
       siteId: site.id,
       domain: normalizedDomain,
-      status,
-      tenantId: tenant?.id || null,
+      status: DOMAIN_STATUS.PENDING,
+      tenantId: null,
     });
-    await this.recordStatusEventSafely({ site, domain: normalizedDomain, previousStatus: null, status, reason });
 
     return record;
+  }
+
+  async provisionTenant({ site, record }) {
+    const { tenant, reason, lastError } = await this.createOrAdoptTenant({ site, domain: record.domain });
+    const isFailed = !tenant && reason !== REASON_DNS_REQUIRED;
+    const status = isFailed ? DOMAIN_STATUS.FAILED : DOMAIN_STATUS.PENDING;
+    const updatedRecord = await this.domainRepository.updateDomainStatusById(
+      record.id,
+      status,
+      this.buildVerificationDetails({
+        previous: record.verificationDetails,
+        domain: record.domain,
+        tenant,
+        reason,
+        lastError,
+      })
+    );
+
+    await this.recordStatusEventSafely({ site, domain: record.domain, previousStatus: record.status, status, reason });
+
+    return updatedRecord;
   }
 
   async recordStatusEventSafely({ site, domain, previousStatus, status, reason }) {
@@ -281,16 +311,19 @@ export class WebsiteCustomDomainService {
       throw new TypeError("Missing website site.");
     }
 
-    const record = domainRecord || (await this.domainRepository.getCustomDomainBySiteId(site.id));
-    if (!record) {
+    const storedRecord = domainRecord || (await this.domainRepository.getCustomDomainBySiteId(site.id));
+    if (!storedRecord) {
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
         "This website has no custom domain."
       );
     }
+    const record = storedRecord.verificationDetails?.tenantId
+      ? storedRecord
+      : await this.provisionTenant({ site, record: storedRecord });
     const tenantId = record.verificationDetails?.tenantId;
     if (!tenantId) {
-      return this.requestCustomDomain({ site, domain: record.domain });
+      return record;
     }
 
     let cloudFrontState;

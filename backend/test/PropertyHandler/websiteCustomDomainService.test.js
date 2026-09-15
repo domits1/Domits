@@ -1,6 +1,7 @@
 import { describe, it, expect, jest } from "@jest/globals";
 import {
   WebsiteCustomDomainService,
+  isCustomDomainSyncable,
   mapCloudFrontStateToDomainStatus,
 } from "../../functions/PropertyHandler/business/service/websiteCustomDomainService.js";
 import { WEBSITE_CUSTOM_DOMAIN_ERROR_CODES } from "../../functions/PropertyHandler/util/exception/WebsiteCustomDomainError.js";
@@ -70,7 +71,11 @@ const buildService = ({
   return { service, domainRepository, tenantRepository, eventRepository };
 };
 
-const namedError = (name) => Object.assign(new Error(name), { name });
+const namedError = (name, message = name) => Object.assign(new Error(message), { name });
+const OWNERSHIP_ERROR_MESSAGE =
+  "The provided Domain Name is not valid. Could not verify Domain Name ownership. It may not be pointing to a valid CloudFront resource.";
+const DNS_REQUIRED_RECORD = () =>
+  buildRecord({ verificationDetails: { tenantId: null, reason: "dns_required", lastError: null } });
 
 describe("WebsiteCustomDomainService constructor", () => {
   it("refuses to start without the CloudFront configuration", () => {
@@ -98,7 +103,7 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     }
   );
 
-  it("refuses a domain that belongs to another site", async () => {
+  it("refuses a domain another site has already proven with a tenant", async () => {
     const domainRepository = buildDomainRepository({
       getDomainByName: jest.fn().mockResolvedValue(buildRecord({ siteId: "site-2" })),
     });
@@ -108,6 +113,27 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
     });
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
+    expect(domainRepository.ensureDomain).not.toHaveBeenCalled();
+  });
+
+  it("lets a new claim take over a domain another site reserved but never proved", async () => {
+    const domainRepository = buildDomainRepository({
+      getDomainByName: jest
+        .fn()
+        .mockResolvedValue(buildRecord({ siteId: "site-2", verificationDetails: { tenantId: null, reason: "dns_required" } })),
+    });
+    const { service } = buildService({ domainRepository });
+
+    const record = await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
+
+    expect(record.siteId).toBe(SITE.id);
+    expect(domainRepository.ensureDomain).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: SITE.id, domain: DOMAIN, status: "PENDING" })
+    );
+    expect(domainRepository.ensureDomain.mock.calls[0][0].verificationDetails).toMatchObject({
+      tenantId: null,
+      reason: "dns_required",
+    });
   });
 
   it("refuses a second custom domain while the site already has one", async () => {
@@ -122,31 +148,12 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
   });
 
-  it("retries tenant creation for the site's own domain when the earlier attempt left no tenant", async () => {
-    const failedRecord = buildRecord({ status: "FAILED", verificationDetails: { tenantId: null } });
-    const domainRepository = buildDomainRepository({
-      getDomainByName: jest.fn().mockResolvedValue(failedRecord),
-      getCustomDomainBySiteId: jest.fn().mockResolvedValue(failedRecord),
-    });
-    const { service, tenantRepository } = buildService({ domainRepository });
-
-    const record = await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
-
-    expect(tenantRepository.createTenant).toHaveBeenCalledTimes(1);
-    expect(record.status).toBe("PENDING");
-  });
-
-  it("creates a tenant and persists a pending non-primary custom domain with the CNAME instruction", async () => {
+  it("stores the claim with the CNAME instruction and leaves CloudFront alone until the DNS record exists", async () => {
     const { service, domainRepository, tenantRepository, eventRepository } = buildService();
 
     const record = await service.requestCustomDomain({ site: SITE, domain: " WWW.Example.com. " });
 
-    expect(tenantRepository.createTenant).toHaveBeenCalledWith({
-      name: "dbw-site-1",
-      domain: DOMAIN,
-      distributionId: CONFIG.distributionId,
-      connectionGroupId: CONFIG.connectionGroupId,
-    });
+    expect(tenantRepository.createTenant).not.toHaveBeenCalled();
     expect(domainRepository.ensureDomain).toHaveBeenCalledWith(
       expect.objectContaining({
         siteId: SITE.id,
@@ -158,7 +165,8 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     );
     expect(record.verificationDetails).toMatchObject({
       activationMode: "cloudfront",
-      tenantId: TENANT.id,
+      tenantId: null,
+      reason: "dns_required",
       certificateApplied: false,
       dnsInstruction: { type: "CNAME", name: DOMAIN, value: CONFIG.routingEndpoint },
     });
@@ -167,63 +175,10 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
         hostId: SITE.hostId,
         propertyId: SITE.propertyId,
         eventType: "SITE_DOMAIN_REQUESTED",
-        payload: expect.objectContaining({ siteId: SITE.id, domain: DOMAIN, status: "PENDING" }),
+        payload: { siteId: SITE.id, domain: DOMAIN, status: "PENDING", tenantId: null },
       })
     );
     expect(eventRepository.recordEvent).toHaveBeenCalledTimes(1);
-  });
-
-  it("records SITE_DOMAIN_FAILED next to the request event when the domain is in use elsewhere", async () => {
-    const tenantRepository = buildTenantRepository({
-      createTenant: jest.fn().mockRejectedValue(namedError("CNAMEAlreadyExists")),
-    });
-    const { service, eventRepository } = buildService({ tenantRepository });
-
-    await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
-
-    const eventTypes = eventRepository.recordEvent.mock.calls.map(([input]) => input.eventType);
-    expect(eventTypes).toEqual(["SITE_DOMAIN_REQUESTED", "SITE_DOMAIN_FAILED"]);
-    expect(eventRepository.recordEvent.mock.calls[1][0].payload).toMatchObject({ reason: "domain_in_use_elsewhere" });
-  });
-
-  it("persists FAILED without throwing when the domain is already used by another CloudFront resource", async () => {
-    const tenantRepository = buildTenantRepository({
-      createTenant: jest.fn().mockRejectedValue(namedError("CNAMEAlreadyExists")),
-    });
-    const { service, domainRepository } = buildService({ tenantRepository });
-
-    const record = await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
-
-    expect(record.status).toBe("FAILED");
-    expect(domainRepository.ensureDomain.mock.calls[0][0]).toMatchObject({
-      status: "FAILED",
-      verificationDetails: expect.objectContaining({ tenantId: null, lastError: "CNAMEAlreadyExists" }),
-    });
-  });
-
-  it("adopts the existing tenant when the tenant name already exists", async () => {
-    const tenantRepository = buildTenantRepository({
-      createTenant: jest.fn().mockRejectedValue(namedError("EntityAlreadyExists")),
-      getTenantByDomain: jest.fn().mockResolvedValue(TENANT),
-    });
-    const { service } = buildService({ tenantRepository });
-
-    const record = await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
-
-    expect(tenantRepository.getTenantByDomain).toHaveBeenCalledWith(DOMAIN);
-    expect(record.verificationDetails.tenantId).toBe(TENANT.id);
-  });
-
-  it("wraps any other creation failure as TENANT_CREATE_FAILED", async () => {
-    const tenantRepository = buildTenantRepository({
-      createTenant: jest.fn().mockRejectedValue(namedError("AccessDenied")),
-    });
-    const { service, domainRepository } = buildService({ tenantRepository });
-
-    await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
-      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_CREATE_FAILED,
-    });
-    expect(domainRepository.ensureDomain).not.toHaveBeenCalled();
   });
 
   it("syncs instead of creating when this site already has a tenant for the domain", async () => {
@@ -234,6 +189,108 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
 
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
     expect(tenantRepository.getTenant).toHaveBeenCalledWith(TENANT.id);
+  });
+});
+
+describe("WebsiteCustomDomainService.syncCustomDomain tenant provisioning", () => {
+  it("creates the tenant once the DNS record is in place and reads CloudFront in the same sync", async () => {
+    const { service, domainRepository, tenantRepository } = buildService();
+
+    const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+    expect(tenantRepository.createTenant).toHaveBeenCalledWith({
+      name: "dbw-site-1",
+      domain: DOMAIN,
+      distributionId: CONFIG.distributionId,
+      connectionGroupId: CONFIG.connectionGroupId,
+    });
+    expect(domainRepository.updateDomainStatusById.mock.calls[0]).toEqual([
+      "domain-1",
+      "PENDING",
+      expect.objectContaining({ tenantId: TENANT.id, reason: "tenant_created", lastError: null }),
+    ]);
+    expect(tenantRepository.getTenant).toHaveBeenCalledWith(TENANT.id);
+    expect(record).toMatchObject({ status: "PENDING" });
+    expect(record.verificationDetails).toMatchObject({ tenantId: TENANT.id, reason: "certificate_pending" });
+  });
+
+  it("keeps dns_required without throwing while CloudFront cannot verify ownership yet", async () => {
+    const tenantRepository = buildTenantRepository({
+      createTenant: jest.fn().mockRejectedValue(namedError("InvalidArgument", OWNERSHIP_ERROR_MESSAGE)),
+    });
+    const { service, domainRepository, eventRepository } = buildService({ tenantRepository });
+
+    const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+    expect(record.status).toBe("PENDING");
+    expect(record.verificationDetails).toMatchObject({
+      tenantId: null,
+      reason: "dns_required",
+      lastError: "InvalidArgument",
+      dnsInstruction: { type: "CNAME", name: DOMAIN, value: CONFIG.routingEndpoint },
+    });
+    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith("domain-1", "PENDING", expect.anything());
+    expect(tenantRepository.getTenant).not.toHaveBeenCalled();
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("stores FAILED and records SITE_DOMAIN_FAILED when the domain is used by another CloudFront resource", async () => {
+    const tenantRepository = buildTenantRepository({
+      createTenant: jest.fn().mockRejectedValue(namedError("CNAMEAlreadyExists")),
+    });
+    const { service, domainRepository, eventRepository } = buildService({ tenantRepository });
+
+    const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+    expect(record.status).toBe("FAILED");
+    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+      "domain-1",
+      "FAILED",
+      expect.objectContaining({ tenantId: null, reason: "domain_in_use_elsewhere", lastError: "CNAMEAlreadyExists" })
+    );
+    expect(eventRepository.recordEvent).toHaveBeenCalledTimes(1);
+    expect(eventRepository.recordEvent.mock.calls[0][0]).toMatchObject({
+      eventType: "SITE_DOMAIN_FAILED",
+      payload: expect.objectContaining({ previousStatus: "PENDING", status: "FAILED", reason: "domain_in_use_elsewhere" }),
+    });
+  });
+
+  it("adopts the existing tenant when the tenant name already exists", async () => {
+    const tenantRepository = buildTenantRepository({
+      createTenant: jest.fn().mockRejectedValue(namedError("EntityAlreadyExists")),
+      getTenantByDomain: jest.fn().mockResolvedValue(TENANT),
+    });
+    const { service } = buildService({ tenantRepository });
+
+    const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+    expect(tenantRepository.getTenantByDomain).toHaveBeenCalledWith(DOMAIN);
+    expect(record.verificationDetails.tenantId).toBe(TENANT.id);
+  });
+
+  it("wraps any other creation failure as TENANT_CREATE_FAILED without touching the record", async () => {
+    const tenantRepository = buildTenantRepository({
+      createTenant: jest.fn().mockRejectedValue(namedError("AccessDenied")),
+    });
+    const { service, domainRepository } = buildService({ tenantRepository });
+
+    await expect(service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_CREATE_FAILED,
+    });
+    expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
+  });
+});
+
+describe("isCustomDomainSyncable", () => {
+  it("syncs records with a tenant or a pending DNS claim and leaves other tenant-less records alone", () => {
+    expect(isCustomDomainSyncable(buildRecord())).toBe(true);
+    expect(isCustomDomainSyncable(DNS_REQUIRED_RECORD())).toBe(true);
+    expect(
+      isCustomDomainSyncable(
+        buildRecord({ status: "FAILED", verificationDetails: { tenantId: null, reason: "domain_in_use_elsewhere" } })
+      )
+    ).toBe(false);
+    expect(isCustomDomainSyncable(null)).toBe(false);
   });
 });
 

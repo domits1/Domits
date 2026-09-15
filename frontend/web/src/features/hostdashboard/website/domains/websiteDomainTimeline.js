@@ -4,6 +4,9 @@ const MINIMUM_LABEL_COUNT = 3;
 const HALTED_STATUSES = new Set(["FAILED", "DISABLED"]);
 const COMPLETED_STEPS_BY_STATUS = Object.freeze({ ACTIVE: 4, VERIFIED: 3 });
 const REASON_DOMAIN_IN_USE = "domain_in_use_elsewhere";
+const REASON_DNS_REQUIRED = "dns_required";
+const DNS_REQUIRED_COPY =
+  "Create the CNAME record below at your DNS provider, then press Check again. We set up the domain as soon as the record is found.";
 const REASON_DNS_TIMED_OUT = "certificate_validation-timed-out";
 const CERTIFICATE_REASON_PREFIX = "certificate_";
 const CHECK_AGAIN_HINT = " Check again keeps looking. If it stays like this, contact support.";
@@ -88,6 +91,9 @@ export const buildDomainTimeline = (domain) => {
 export const resolveDomainProgressCopy = (domain) => {
   if (!domain || isDomainHalted(domain)) {
     return "";
+  }
+  if (domain.reason === REASON_DNS_REQUIRED) {
+    return DNS_REQUIRED_COPY;
   }
   return PROGRESS_COPY_BY_COMPLETED_STEPS[countCompletedSteps(domain)] || "";
 };
