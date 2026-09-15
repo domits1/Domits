@@ -53,6 +53,7 @@ const LISTING = {
     checkOut: { from: "08:00", till: "11:00" },
   },
   pricing: { property_id: PROPERTY_ID, roomRate: 190, weekendRate: 190, cleaning: 50 },
+  propertyType: { property_id: PROPERTY_ID, property_type: "House", spaceType: "Entire house" },
   location: {
     property_id: PROPERTY_ID,
     country: "Portugal",
@@ -85,6 +86,7 @@ describe("buildListingDigest", () => {
     const digest = buildListingDigest(LISTING);
 
     expect(digest).toEqual({
+      propertyType: "Entire house",
       title: "Cliff House",
       subtitle: "Sea view",
       description: "A calm place.",
@@ -100,6 +102,11 @@ describe("buildListingDigest", () => {
     expect(JSON.stringify(digest)).not.toMatch(
       /availableStartDate|whatsapp|2026-10-10|cleaning|weekendRate|Rua das Flores/
     );
+  });
+
+  it("falls back to the property type when no space type is set", () => {
+    expect(buildListingDigest({ propertyType: { property_type: "Boat" } }).propertyType).toBe("Boat");
+    expect(buildListingDigest({}).propertyType).toBe("");
   });
 
   it("resolves image keys in the order the live site uses and keeps legacy and string entries", () => {
@@ -129,6 +136,7 @@ describe("hasListingChangedSincePublish", () => {
     ["an edited description", withChanges({ property: { ...LISTING.property, description: "Now with a pool." } })],
     ["a changed nightly rate", withChanges({ pricing: { ...LISTING.pricing, roomRate: 210 } })],
     ["a new amenity", withChanges({ amenities: [...LISTING.amenities, { amenityId: "pool" }] })],
+    ["a changed property type", withChanges({ propertyType: { ...LISTING.propertyType, spaceType: "Private room" } })],
     [
       "a changed minimum stay",
       withChanges({ availabilityRestrictions: [{ ...LISTING.availabilityRestrictions[0], value: 5 }] }),

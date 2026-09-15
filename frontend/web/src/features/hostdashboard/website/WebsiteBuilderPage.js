@@ -48,7 +48,8 @@ import {
   upsertWebsiteDraft,
 } from "./services/websiteDraftService";
 import { fetchWebsiteSiteByPropertyId } from "./services/websiteSiteService";
-import { formatPublishedAtLabel, resolveLiveSiteStaleness } from "./services/websiteListingChange";
+import { formatPublishedAtLabel } from "./services/websiteListingChange";
+import { buildWebsiteDraftPreviewCacheKeyMap, resolveWebsiteDraftLiveSiteState } from "./services/websiteLiveSiteState";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import {
@@ -193,13 +194,8 @@ const pruneWebsiteDraftPreviewCacheKeys = (previewCacheKeys, activePropertyIds) 
 const buildWebsiteDraftPreviewModelMap = (previewEntries) =>
   Object.fromEntries(previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel]));
 
-const buildWebsiteDraftPreviewCacheKeyMap = (previewEntries) =>
-  Object.fromEntries(previewEntries.map(([propertyId, , previewCacheKey]) => [propertyId, previewCacheKey]));
-
 const buildWebsiteDraftLiveSiteStateMap = (previewEntries) =>
   Object.fromEntries(previewEntries.map(([propertyId, , , liveSiteState]) => [propertyId, liveSiteState]));
-
-const NOT_STALE_LIVE_SITE_STATE = Object.freeze({ isStale: false, publishedAt: null });
 
 const buildImageVariantMap = (images) => {
   const imageVariantMap = new Map();
@@ -441,19 +437,6 @@ const loadWebsiteDraftListingDetails = async (draft) => {
     return await fetchWebsitePropertyDetails(draft.propertyId);
   } catch {
     return null;
-  }
-};
-
-const resolveWebsiteDraftLiveSiteState = async (draft, propertyDetails) => {
-  if (!propertyDetails) {
-    return NOT_STALE_LIVE_SITE_STATE;
-  }
-
-  try {
-    const siteSummary = await fetchWebsiteSiteByPropertyId(draft.propertyId);
-    return resolveLiveSiteStaleness(siteSummary, propertyDetails);
-  } catch {
-    return NOT_STALE_LIVE_SITE_STATE;
   }
 };
 

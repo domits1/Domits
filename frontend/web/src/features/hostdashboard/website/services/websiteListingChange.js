@@ -35,8 +35,10 @@ export const buildListingDigest = (propertyDetails) => {
   const pricing = propertyDetails?.pricing || {};
   const location = propertyDetails?.location || {};
   const checkIn = propertyDetails?.checkIn || {};
+  const propertyType = propertyDetails?.propertyType || {};
 
   return {
+    propertyType: cleanText(propertyType.spaceType || propertyType.property_type),
     title: cleanText(property.title),
     subtitle: cleanText(property.subtitle),
     description: cleanText(property.description),

@@ -10,6 +10,7 @@ import {
   unpublishWebsiteSite,
 } from "./services/websiteSiteService";
 import { resolveLiveSiteStaleness } from "./services/websiteListingChange";
+import { reloadListingDetailsAfterPublish } from "./services/websiteLiveSiteState";
 import { getAmenityIconOptions } from "./rendering/amenityIconRegistry";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
 import {
@@ -919,6 +920,7 @@ function WebsiteEditorPage() {
       const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
+      setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, nextSiteSummary));
       announceWebsiteLiveSiteUpdate({
         siteId: nextSiteSummary?.site?.id,
         domain: nextSiteSummary?.primaryDomain?.domain,
@@ -951,6 +953,7 @@ function WebsiteEditorPage() {
       const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
+      setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, nextSiteSummary));
       announceWebsiteLiveSiteUpdate({
         siteId: nextSiteSummary?.site?.id,
         domain: nextSiteSummary?.primaryDomain?.domain,
@@ -964,6 +967,7 @@ function WebsiteEditorPage() {
     } catch (error) {
       const recoveredSiteSummary = await recoverPublishedSiteSummary();
       if (recoveredSiteSummary) {
+        setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, recoveredSiteSummary));
         toast.success("Live site published.");
         return;
       }
