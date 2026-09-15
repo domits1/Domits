@@ -1,4 +1,4 @@
-import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
+import { UnauthorizedException } from "../.shared/util/exception/unauthorizedException.js";
 import { CognitoIdentityProviderClient, GetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 
 const cognitoClient = new CognitoIdentityProviderClient({ region: "eu-north-1" });

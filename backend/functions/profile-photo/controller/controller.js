@@ -1,6 +1,6 @@
 import { uploadProfilePhoto } from "../business/service/photoService.js";
 import { AuthManager } from "../auth/authManager.js";
-import { BadRequestException } from "../util/exception/badRequestException.js";
+import { BadRequestException } from "../.shared/util/exception/badRequestException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 export class Controller {

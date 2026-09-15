@@ -1,7 +1,7 @@
 import { Controller } from "../../functions/profile-photo/controller/controller.js";
 import { AuthManager } from "../../functions/profile-photo/auth/authManager.js";
 import * as photoService from "../../functions/profile-photo/business/service/photoService.js";
-import { UnauthorizedException } from "../../functions/profile-photo/util/exception/unauthorizedException.js";
+import { UnauthorizedException } from "../../functions/.shared/util/exception/unauthorizedException.js";
 
 describe("profile-photo Controller - uploadPhoto", () => {
   let controller;

@@ -1,5 +1,5 @@
 import { uploadProfilePhoto } from "../../functions/profile-photo/business/service/photoService.js";
-import { BadRequestException } from "../../functions/profile-photo/util/exception/badRequestException.js";
+import { BadRequestException } from "../../functions/.shared/util/exception/badRequestException.js";
 
 const mockUploadPhoto = jest.fn();
 jest.mock("../../functions/profile-photo/data/photoRepository.js", () => ({

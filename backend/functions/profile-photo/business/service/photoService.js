@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { uploadPhoto } from "../../data/photoRepository.js";
-import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { BadRequestException } from "../../.shared/util/exception/badRequestException.js";
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_BYTES = 5 * 1024 * 1024;
