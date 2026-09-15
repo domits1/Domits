@@ -1138,8 +1138,11 @@
       "prefsSection": "Voorkeuren / Authenticatie",
       "photo": {
         "upload": "Uploaden",
-        "uploading": "Bezig...",
-        "remove": "Verwijderen"
+        "uploading": "Uploaden...",
+        "remove": "Verwijderen",
+        "removing": "Verwijderen...",
+        "uploaded": "Foto geüpload!",
+        "removed": "Foto verwijderd!"
       },
       "fields": {
         "fullName": "Volledige naam",

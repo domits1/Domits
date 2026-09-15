@@ -1,12 +1,29 @@
 import {useRef, useState} from "react";
 import {Auth} from "aws-amplify";
 import {PROFILE_PHOTO_MAX_SIZE} from "../components/settings/constants";
-import {getProfileUploadUrl} from "../components/settings/api/profileUpload";
+import {uploadProfilePhoto} from "../components/settings/api/profileUpload";
+
+const readFileAsDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+
+const PHOTO_SUCCESS_DISPLAY_MS = 2500;
 
 export default function usePhotoUpload(setUser) {
     const [photoError, setPhotoError] = useState("");
+    const [photoSuccess, setPhotoSuccess] = useState("");
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
     const photoInputRef = useRef(null);
+
+    const showPhotoSuccess = (kind) => {
+        setPhotoSuccess(kind);
+        setTimeout(() => setPhotoSuccess(""), PHOTO_SUCCESS_DISPLAY_MS);
+    };
 
     const handlePhotoButtonClick = () => {
         if (photoInputRef.current) {
@@ -31,32 +48,23 @@ export default function usePhotoUpload(setUser) {
 
         setIsUploadingPhoto(true);
         setPhotoError("");
+        setPhotoSuccess("");
 
         try {
-            const uploadData = await getProfileUploadUrl(file.type);
+            const session = await Auth.currentSession();
+            const accessToken = session.getAccessToken().getJwtToken();
 
-            if (!uploadData.uploadUrl || !uploadData.fields || !uploadData.fileUrl) {
+            const imageDataUrl = await readFileAsDataUrl(file);
+            const {fileUrl} = await uploadProfilePhoto(accessToken, imageDataUrl);
+
+            if (!fileUrl) {
                 throw new Error("Invalid upload response.");
             }
 
-            const formData = new FormData();
-            Object.entries(uploadData.fields).forEach(([key, value]) => {
-                formData.append(key, value);
-            });
-            formData.append("file", file);
-
-            const uploadResponse = await fetch(uploadData.uploadUrl, {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!uploadResponse.ok) {
-                throw new Error("Failed to upload image.");
-            }
-
             const currentUser = await Auth.currentAuthenticatedUser();
-            await Auth.updateUserAttributes(currentUser, {picture: uploadData.fileUrl});
-            setUser((prevState) => ({...prevState, picture: uploadData.fileUrl}));
+            await Auth.updateUserAttributes(currentUser, {picture: fileUrl});
+            setUser((prevState) => ({...prevState, picture: fileUrl}));
+            showPhotoSuccess("uploaded");
         } catch (error) {
             console.error("Error uploading profile photo:", error);
             setPhotoError("Failed to upload photo. Please try again.");
@@ -69,24 +77,28 @@ export default function usePhotoUpload(setUser) {
     };
 
     const handlePhotoRemove = async () => {
-        setIsUploadingPhoto(true);
+        setIsRemovingPhoto(true);
         setPhotoError("");
+        setPhotoSuccess("");
 
         try {
             const currentUser = await Auth.currentAuthenticatedUser();
             await Auth.updateUserAttributes(currentUser, {picture: ""});
             setUser((prevState) => ({...prevState, picture: ""}));
+            showPhotoSuccess("removed");
         } catch (error) {
             console.error("Error removing profile photo:", error);
             setPhotoError("Failed to remove photo. Please try again.");
         } finally {
-            setIsUploadingPhoto(false);
+            setIsRemovingPhoto(false);
         }
     };
 
     return {
         photoError,
+        photoSuccess,
         isUploadingPhoto,
+        isRemovingPhoto,
         photoInputRef,
         onPhotoButtonClick: handlePhotoButtonClick,
         onPhotoInputChange: handlePhotoInputChange,
