@@ -11,11 +11,19 @@ const readFileAsDataUrl = (file) =>
         reader.readAsDataURL(file);
     });
 
+const PHOTO_SUCCESS_DISPLAY_MS = 2500;
+
 export default function usePhotoUpload(setUser) {
     const [photoError, setPhotoError] = useState("");
+    const [photoSuccess, setPhotoSuccess] = useState("");
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
     const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
     const photoInputRef = useRef(null);
+
+    const showPhotoSuccess = (kind) => {
+        setPhotoSuccess(kind);
+        setTimeout(() => setPhotoSuccess(""), PHOTO_SUCCESS_DISPLAY_MS);
+    };
 
     const handlePhotoButtonClick = () => {
         if (photoInputRef.current) {
@@ -40,6 +48,7 @@ export default function usePhotoUpload(setUser) {
 
         setIsUploadingPhoto(true);
         setPhotoError("");
+        setPhotoSuccess("");
 
         try {
             const session = await Auth.currentSession();
@@ -55,6 +64,7 @@ export default function usePhotoUpload(setUser) {
             const currentUser = await Auth.currentAuthenticatedUser();
             await Auth.updateUserAttributes(currentUser, {picture: fileUrl});
             setUser((prevState) => ({...prevState, picture: fileUrl}));
+            showPhotoSuccess("uploaded");
         } catch (error) {
             console.error("Error uploading profile photo:", error);
             setPhotoError("Failed to upload photo. Please try again.");
@@ -69,11 +79,13 @@ export default function usePhotoUpload(setUser) {
     const handlePhotoRemove = async () => {
         setIsRemovingPhoto(true);
         setPhotoError("");
+        setPhotoSuccess("");
 
         try {
             const currentUser = await Auth.currentAuthenticatedUser();
             await Auth.updateUserAttributes(currentUser, {picture: ""});
             setUser((prevState) => ({...prevState, picture: ""}));
+            showPhotoSuccess("removed");
         } catch (error) {
             console.error("Error removing profile photo:", error);
             setPhotoError("Failed to remove photo. Please try again.");
@@ -84,6 +96,7 @@ export default function usePhotoUpload(setUser) {
 
     return {
         photoError,
+        photoSuccess,
         isUploadingPhoto,
         isRemovingPhoto,
         photoInputRef,

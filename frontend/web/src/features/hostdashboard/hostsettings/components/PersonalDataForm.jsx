@@ -82,6 +82,7 @@ const PersonalDataForm = ({
     isUploadingPhoto,
     isRemovingPhoto,
     photoError,
+    photoSuccess,
     photoInputRef,
     onPhotoButtonClick,
     onPhotoRemove,
@@ -167,7 +168,9 @@ const PersonalDataForm = ({
                                 {isRemovingPhoto ? t.photo.removing : t.photo.remove}
                             </button>
                         </div>
-                        {photoError && <p className="pd-field-error">{photoError}</p>}
+                        {photoError && <p className="pd-photo-error">{photoError}</p>}
+                        {photoSuccess === "uploaded" && <p className="pd-photo-success">{t.photo.uploaded}</p>}
+                        {photoSuccess === "removed" && <p className="pd-photo-success">{t.photo.removed}</p>}
                         <input
                             ref={photoInputRef}
                             type="file"
@@ -463,6 +466,7 @@ PersonalDataForm.propTypes = {
     isUploadingPhoto: PropTypes.bool.isRequired,
     isRemovingPhoto: PropTypes.bool.isRequired,
     photoError: PropTypes.string,
+    photoSuccess: PropTypes.string,
     photoInputRef: refShape.isRequired,
     onPhotoButtonClick: PropTypes.func.isRequired,
     onPhotoRemove: PropTypes.func.isRequired,

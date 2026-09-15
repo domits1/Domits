@@ -1140,7 +1140,9 @@
         "upload": "Subir",
         "uploading": "Subiendo...",
         "remove": "Eliminar",
-        "removing": "Eliminando..."
+        "removing": "Eliminando...",
+        "uploaded": "¡Foto subida!",
+        "removed": "¡Foto eliminada!"
       },
       "fields": {
         "fullName": "Nombre completo",

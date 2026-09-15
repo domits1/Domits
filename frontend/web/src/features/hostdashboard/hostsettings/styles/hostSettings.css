@@ -405,6 +405,21 @@
     margin: 4px 0 0 136px;
 }
 
+.pd-photo-error,
+.pd-photo-success {
+    font-size: 0.8rem;
+    text-align: center;
+    margin: 0;
+}
+
+.pd-photo-error {
+    color: #dc2626;
+}
+
+.pd-photo-success {
+    color: #15803d;
+}
+
 .personal-data-card-footer {
     display: flex;
     justify-content: flex-end;

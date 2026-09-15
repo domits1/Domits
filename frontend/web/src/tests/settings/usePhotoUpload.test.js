@@ -19,9 +19,10 @@ describe("usePhotoUpload", () => {
     });
   });
 
-  test("initial state: photoError is empty and isUploadingPhoto/isRemovingPhoto are false", () => {
+  test("initial state: photoError/photoSuccess are empty and isUploadingPhoto/isRemovingPhoto are false", () => {
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     expect(result.current.photoError).toBe("");
+    expect(result.current.photoSuccess).toBe("");
     expect(result.current.isUploadingPhoto).toBe(false);
     expect(result.current.isRemovingPhoto).toBe(false);
   });
@@ -79,7 +80,32 @@ describe("usePhotoUpload", () => {
     });
     expect(mockSetUser).toHaveBeenCalled();
     expect(result.current.photoError).toBe("");
+    expect(result.current.photoSuccess).toBe("uploaded");
     expect(result.current.isUploadingPhoto).toBe(false);
+  });
+
+  test("onPhotoInputChange: photoSuccess clears itself after the display timeout", async () => {
+    jest.useFakeTimers();
+    const mockCognitoUser = { username: "user-123" };
+    Auth.currentAuthenticatedUser.mockResolvedValue(mockCognitoUser);
+    Auth.updateUserAttributes.mockResolvedValue({});
+    profileUpload.uploadProfilePhoto.mockResolvedValue({
+      fileUrl: "https://accommodation.s3.eu-north-1.amazonaws.com/images/profile/user-123/abc.jpg",
+    });
+
+    const { result } = renderHook(() => usePhotoUpload(mockSetUser));
+    const file = new File(["img-data"], "photo.jpg", { type: "image/jpeg" });
+
+    await act(async () => {
+      await result.current.onPhotoInputChange({ target: { files: [file] } });
+    });
+    expect(result.current.photoSuccess).toBe("uploaded");
+
+    act(() => {
+      jest.advanceTimersByTime(2500);
+    });
+    expect(result.current.photoSuccess).toBe("");
+    jest.useRealTimers();
   });
 
   test("onPhotoInputChange: sets error and clears uploading flag when the upload request fails", async () => {
@@ -93,6 +119,7 @@ describe("usePhotoUpload", () => {
     });
 
     expect(result.current.photoError).toBe("Failed to upload photo. Please try again.");
+    expect(result.current.photoSuccess).toBe("");
     expect(result.current.isUploadingPhoto).toBe(false);
     expect(mockSetUser).not.toHaveBeenCalled();
   });
@@ -126,6 +153,7 @@ describe("usePhotoUpload", () => {
     const updater = mockSetUser.mock.calls[0][0];
     expect(updater({ picture: "old-url.jpg" })).toEqual(expect.objectContaining({ picture: "" }));
     expect(result.current.photoError).toBe("");
+    expect(result.current.photoSuccess).toBe("removed");
     expect(result.current.isRemovingPhoto).toBe(false);
   });
 

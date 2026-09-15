@@ -1140,7 +1140,9 @@
         "upload": "Hochladen",
         "uploading": "Wird hochgeladen...",
         "remove": "Entfernen",
-        "removing": "Wird entfernt..."
+        "removing": "Wird entfernt...",
+        "uploaded": "Foto hochgeladen!",
+        "removed": "Foto entfernt!"
       },
       "fields": {
         "fullName": "Vollständiger Name",
