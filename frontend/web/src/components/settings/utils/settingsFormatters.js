@@ -5,19 +5,24 @@ export const normalizePreferredMfa = (value) => {
     return value;
 };
 
-export const formatDateOfBirth = (digits) => {
-    if (!digits) return "";
-    const day = digits.slice(0, 2);
-    const month = digits.slice(2, 4);
-    const year = digits.slice(4, 8);
+export const parseDateOfBirth = (value) => {
+    const match = value?.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (!match) return null;
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+        return null;
+    }
+    return date;
+};
 
-    if (digits.length <= 2) {
-        return digits.length === 2 ? `${day}-` : day;
-    }
-    if (digits.length <= 4) {
-        return digits.length === 4 ? `${day}-${month}-` : `${day}-${month}`;
-    }
-    return `${day}-${month}-${year}`;
+export const formatDateOfBirthValue = (date) => {
+    if (!date) return "";
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${day}-${month}-${date.getFullYear()}`;
 };
 
 export const validateDateOfBirth = (value) => {

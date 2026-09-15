@@ -1,6 +1,7 @@
 import {
   normalizePreferredMfa,
-  formatDateOfBirth,
+  parseDateOfBirth,
+  formatDateOfBirthValue,
   validateDateOfBirth,
   formatBirthdateForStorage,
   formatBirthdateForDisplay,
@@ -22,17 +23,32 @@ describe("settingsFormatters", () => {
     });
   });
 
-  describe("formatDateOfBirth", () => {
-    test.each([
-      ["", ""],
-      ["1", "1"],
-      ["12", "12-"],
-      ["123", "12-3"],
-      ["1234", "12-34-"],
-      ["12345", "12-34-5"],
-      ["12345678", "12-34-5678"],
-    ])("formatDateOfBirth(%p) → %p", (digits, expected) => {
-      expect(formatDateOfBirth(digits)).toBe(expected);
+  describe("parseDateOfBirth", () => {
+    test("returns null for an empty or malformed value", () => {
+      expect(parseDateOfBirth("")).toBeNull();
+      expect(parseDateOfBirth("2000-01-01")).toBeNull();
+      expect(parseDateOfBirth(undefined)).toBeNull();
+    });
+
+    test("returns null for a calendar-invalid date", () => {
+      expect(parseDateOfBirth("31-02-2000")).toBeNull();
+    });
+
+    test("returns a local Date matching the DD-MM-YYYY value", () => {
+      const date = parseDateOfBirth("25-12-1990");
+      expect(date.getFullYear()).toBe(1990);
+      expect(date.getMonth()).toBe(11);
+      expect(date.getDate()).toBe(25);
+    });
+  });
+
+  describe("formatDateOfBirthValue", () => {
+    test("returns an empty string for a falsy date", () => {
+      expect(formatDateOfBirthValue(null)).toBe("");
+    });
+
+    test("formats a Date as DD-MM-YYYY", () => {
+      expect(formatDateOfBirthValue(new Date(1990, 11, 25))).toBe("25-12-1990");
     });
   });
 

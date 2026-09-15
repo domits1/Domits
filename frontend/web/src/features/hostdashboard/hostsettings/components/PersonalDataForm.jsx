@@ -1,8 +1,11 @@
 import React, { useRef, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import standardAvatar from "../../../../images/standard.png";
 import { normalizeImageUrl } from "../../../guestdashboard/utils/image";
+import { parseDateOfBirth } from "../../../../components/settings/utils/settingsFormatters";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
@@ -294,15 +297,18 @@ const PersonalDataForm = ({
 
                         <div className="pd-field">
                             <label className="pd-field-label" htmlFor="pd-dob">{t.fields.dateOfBirth}</label>
-                            <input
+                            <DatePicker
                                 id="pd-dob"
-                                type="text"
-                                name="dateOfBirth"
-                                value={tempUser.dateOfBirth || ""}
+                                selected={parseDateOfBirth(tempUser.dateOfBirth)}
                                 onChange={onDateOfBirthChange}
                                 className="pd-field-input"
-                                placeholder="DD-MM-YYYY"
-                                inputMode="numeric"
+                                placeholderText="DD-MM-YYYY"
+                                dateFormat="dd-MM-yyyy"
+                                maxDate={new Date()}
+                                showYearDropdown
+                                showMonthDropdown
+                                dropdownMode="select"
+                                wrapperClassName="pd-field-input-wrapper"
                             />
                             {dateOfBirthError && <p className="pd-field-error">{dateOfBirthError}</p>}
                         </div>

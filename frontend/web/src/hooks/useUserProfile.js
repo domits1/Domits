@@ -12,7 +12,7 @@ import {
 } from "../components/settings/constants";
 import {
   normalizePreferredMfa,
-  formatDateOfBirth,
+  formatDateOfBirthValue,
   validateDateOfBirth,
   formatBirthdateForStorage,
   formatBirthdateForDisplay,
@@ -69,7 +69,6 @@ export default function useUserProfile() {
     phoneVerified: false,
     preferredMFA: "NOMFA",
   });
-  const previousDobRef = useRef("");
   const pendingEmailRef = useRef("");
 
   const countryOptions = useMemo(() => countryList().getLabels(), []);
@@ -91,25 +90,8 @@ export default function useUserProfile() {
     }
   };
 
-  const handleDateOfBirthChange = (e) => {
-    const digits = e.target.value.replaceAll(/\D/g, "").slice(0, 8);
-    const prevValue = previousDobRef.current || "";
-    const prevDigits = prevValue.replaceAll(/\D/g, "");
-    const isDeleting = e.target.value.length < prevValue.length;
-    let nextDigits = digits;
-
-    if (isDeleting && prevDigits.length === digits.length) {
-      const cursor = e.target.selectionStart ?? e.target.value.length;
-      if (prevValue[cursor] === "-") {
-        const digitsBefore = prevValue.slice(0, cursor).replaceAll(/\D/g, "").length;
-        const removeIndex = Math.max(digitsBefore - 1, 0);
-        nextDigits = prevDigits.slice(0, removeIndex) + prevDigits.slice(removeIndex + 1);
-      }
-    }
-
-    const formatted = formatDateOfBirth(nextDigits);
-    previousDobRef.current = formatted;
-    setTempUser((prev) => ({ ...prev, dateOfBirth: formatted }));
+  const handleDateOfBirthChange = (date) => {
+    setTempUser((prev) => ({ ...prev, dateOfBirth: formatDateOfBirthValue(date) }));
     if (dateOfBirthError) {
       setDateOfBirthError("");
     }
@@ -459,10 +441,6 @@ export default function useUserProfile() {
   useEffect(() => {
     fetchUserData();
   }, []);
-
-  useEffect(() => {
-    previousDobRef.current = tempUser.dateOfBirth || "";
-  }, [tempUser.dateOfBirth]);
 
   useEffect(() => {
     const phone = user.phone || "";

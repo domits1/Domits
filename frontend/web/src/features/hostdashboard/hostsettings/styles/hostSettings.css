@@ -338,6 +338,21 @@
     border-color: #6b7280;
 }
 
+.pd-field-input-wrapper {
+    flex: 1;
+    min-width: 0;
+    display: block;
+}
+
+.pd-field-input-wrapper .react-datepicker__input-container {
+    display: block;
+    width: 100%;
+}
+
+.pd-field-input-wrapper input.pd-field-input {
+    width: 100%;
+}
+
 .pd-select-wrapper {
     flex: 1;
     min-width: 0;

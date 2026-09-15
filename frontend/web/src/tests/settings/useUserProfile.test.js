@@ -134,20 +134,36 @@ describe("useUserProfile", () => {
     expect(result.current.nationalityError).toBe("");
   });
 
-  test("onDateOfBirthChange formats the first two entered digits and appends a hyphen", () => {
+  test("onDateOfBirthChange stores the selected date as DD-MM-YYYY", () => {
     const { result } = renderHook(() => useUserProfile());
     act(() => {
-      result.current.onDateOfBirthChange({ target: { value: "01", selectionStart: 2 } });
-    });
-    expect(result.current.tempUser.dateOfBirth).toBe("01-");
-  });
-
-  test("onDateOfBirthChange produces fully formatted DD-MM-YYYY string for 8 digits", () => {
-    const { result } = renderHook(() => useUserProfile());
-    act(() => {
-      result.current.onDateOfBirthChange({ target: { value: "01011990", selectionStart: 8 } });
+      result.current.onDateOfBirthChange(new Date(1990, 0, 1));
     });
     expect(result.current.tempUser.dateOfBirth).toBe("01-01-1990");
+  });
+
+  test("onDateOfBirthChange clears the field when passed a null date", () => {
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onDateOfBirthChange(new Date(1990, 0, 1));
+    });
+    act(() => {
+      result.current.onDateOfBirthChange(null);
+    });
+    expect(result.current.tempUser.dateOfBirth).toBe("");
+  });
+
+  test("onDateOfBirthChange clears a previous dateOfBirthError", async () => {
+    const { result } = renderHook(() => useUserProfile());
+    await act(async () => {
+      await result.current.onSaveUserDateOfBirth();
+    });
+    expect(result.current.dateOfBirthError).not.toBe("");
+
+    act(() => {
+      result.current.onDateOfBirthChange(new Date(1990, 0, 1));
+    });
+    expect(result.current.dateOfBirthError).toBe("");
   });
 
   test("onCountryCodeChange updates selectedCountryCode", () => {
