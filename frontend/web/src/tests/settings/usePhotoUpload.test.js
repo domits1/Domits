@@ -14,7 +14,9 @@ describe("usePhotoUpload", () => {
   beforeEach(() => {
     mockSetUser = jest.fn();
     jest.clearAllMocks();
-    globalThis.fetch = jest.fn();
+    Auth.currentSession.mockResolvedValue({
+      getAccessToken: () => ({ getJwtToken: () => "mock-access-token" }),
+    });
   });
 
   test("initial state: photoError is empty and isUploadingPhoto/isRemovingPhoto are false", () => {
@@ -57,12 +59,9 @@ describe("usePhotoUpload", () => {
     const mockCognitoUser = { username: "user-123" };
     Auth.currentAuthenticatedUser.mockResolvedValue(mockCognitoUser);
     Auth.updateUserAttributes.mockResolvedValue({});
-    profileUpload.getProfileUploadUrl.mockResolvedValue({
-      uploadUrl: "https://s3.example.com/upload",
-      fields: { key: "profile/user-123.jpg", "Content-Type": "image/jpeg" },
-      fileUrl: "https://s3.example.com/profile/user-123.jpg",
+    profileUpload.uploadProfilePhoto.mockResolvedValue({
+      fileUrl: "https://accommodation.s3.eu-north-1.amazonaws.com/profile/user-123/abc.jpg",
     });
-    globalThis.fetch.mockResolvedValue({ ok: true });
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img-data"], "photo.jpg", { type: "image/jpeg" });
@@ -71,21 +70,20 @@ describe("usePhotoUpload", () => {
       await result.current.onPhotoInputChange({ target: { files: [file] } });
     });
 
-    expect(profileUpload.getProfileUploadUrl).toHaveBeenCalledWith("image/jpeg");
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      "https://s3.example.com/upload",
-      expect.objectContaining({ method: "POST" })
+    expect(profileUpload.uploadProfilePhoto).toHaveBeenCalledWith(
+      "mock-access-token",
+      expect.stringMatching(/^data:image\/jpeg;base64,/)
     );
     expect(Auth.updateUserAttributes).toHaveBeenCalledWith(mockCognitoUser, {
-      picture: "https://s3.example.com/profile/user-123.jpg",
+      picture: "https://accommodation.s3.eu-north-1.amazonaws.com/profile/user-123/abc.jpg",
     });
     expect(mockSetUser).toHaveBeenCalled();
     expect(result.current.photoError).toBe("");
     expect(result.current.isUploadingPhoto).toBe(false);
   });
 
-  test("onPhotoInputChange: sets error and clears uploading flag when presigned URL request fails", async () => {
-    profileUpload.getProfileUploadUrl.mockRejectedValue(new Error("Network error"));
+  test("onPhotoInputChange: sets error and clears uploading flag when the upload request fails", async () => {
+    profileUpload.uploadProfilePhoto.mockRejectedValue(new Error("Network error"));
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
@@ -99,31 +97,8 @@ describe("usePhotoUpload", () => {
     expect(mockSetUser).not.toHaveBeenCalled();
   });
 
-  test("onPhotoInputChange: sets error when S3 PUT returns non-ok response", async () => {
-    profileUpload.getProfileUploadUrl.mockResolvedValue({
-      uploadUrl: "https://s3.example.com/upload",
-      fields: { key: "some-key" },
-      fileUrl: "https://s3.example.com/photo.jpg",
-    });
-    globalThis.fetch.mockResolvedValue({ ok: false });
-
-    const { result } = renderHook(() => usePhotoUpload(mockSetUser));
-    const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
-
-    await act(async () => {
-      await result.current.onPhotoInputChange({ target: { files: [file] } });
-    });
-
-    expect(result.current.photoError).toBe("Failed to upload photo. Please try again.");
-    expect(result.current.isUploadingPhoto).toBe(false);
-  });
-
-  test("onPhotoInputChange: sets error when upload response is missing required fields", async () => {
-    profileUpload.getProfileUploadUrl.mockResolvedValue({
-      uploadUrl: null,
-      fields: null,
-      fileUrl: null,
-    });
+  test("onPhotoInputChange: sets error when upload response is missing fileUrl", async () => {
+    profileUpload.uploadProfilePhoto.mockResolvedValue({ fileUrl: null });
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
