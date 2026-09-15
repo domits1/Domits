@@ -93,6 +93,8 @@ const PersonalDataForm = ({
     stripPhone,
     dateOfBirthError,
     nationalityError,
+    emailError,
+    emailSuccess,
     isVerifying,
     verificationCode,
     onTitleChange,
@@ -255,6 +257,8 @@ const PersonalDataForm = ({
                                     placeholder={t.fields.emailAddress}
                                 />
                             )}
+                            {emailError && <p className="pd-field-error">{emailError}</p>}
+                            {emailSuccess && <p className="pd-field-success">{t.fields.emailUpdated}</p>}
                         </div>
 
                         <div className="pd-field">
@@ -473,6 +477,8 @@ PersonalDataForm.propTypes = {
     stripPhone: PropTypes.string.isRequired,
     dateOfBirthError: PropTypes.string,
     nationalityError: PropTypes.string,
+    emailError: PropTypes.string,
+    emailSuccess: PropTypes.bool,
     isVerifying: PropTypes.bool.isRequired,
     verificationCode: PropTypes.string.isRequired,
     onTitleChange: PropTypes.func.isRequired,

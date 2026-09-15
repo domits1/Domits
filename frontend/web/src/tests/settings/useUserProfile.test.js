@@ -62,6 +62,8 @@ describe("useUserProfile", () => {
     expect(result.current.isVerifying).toBe(false);
     expect(result.current.dateOfBirthError).toBe("");
     expect(result.current.nationalityError).toBe("");
+    expect(result.current.emailError).toBe("");
+    expect(result.current.emailSuccess).toBe(false);
   });
 
   test("editState fields all start as false", () => {
@@ -237,16 +239,17 @@ describe("useUserProfile", () => {
 
   // ─── Save email ───────────────────────────────────────────────────────────
 
-  test("onSaveUserEmail: shows alert when tempUser email is empty", async () => {
+  test("onSaveUserEmail: sets emailError when tempUser email is empty", async () => {
     Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
     await act(async () => {
       await result.current.onSaveUserEmail();
     });
-    expect(globalThis.alert).toHaveBeenCalledWith("Please provide a valid email address.");
+    expect(result.current.emailError).toBe("Please provide a valid email address.");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  test("onSaveUserEmail: shows alert for malformed email", async () => {
+  test("onSaveUserEmail: sets emailError for malformed email", async () => {
     Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
     act(() => {
@@ -255,7 +258,7 @@ describe("useUserProfile", () => {
     await act(async () => {
       await result.current.onSaveUserEmail();
     });
-    expect(globalThis.alert).toHaveBeenCalledWith("Please provide a valid email address.");
+    expect(result.current.emailError).toBe("Please provide a valid email address.");
   });
 
   test("onSaveUserEmail: sets isVerifying to true when API returns verification message", async () => {
@@ -273,12 +276,14 @@ describe("useUserProfile", () => {
       await result.current.onSaveUserEmail();
     });
     expect(result.current.isVerifying).toBe(true);
+    expect(result.current.emailError).toBe("");
   });
 
-  test("onSaveUserEmail: shows alert when API reports email already in use", async () => {
+  test("onSaveUserEmail: sets emailError when API reports email already in use, even on a 400 response", async () => {
     Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     globalThis.fetch.mockResolvedValue({
-      ok: true,
+      ok: false,
+      status: 400,
       json: () => Promise.resolve({ message: "This email address is already in use." }),
     });
     const { result } = renderHook(() => useUserProfile());
@@ -288,10 +293,55 @@ describe("useUserProfile", () => {
     await act(async () => {
       await result.current.onSaveUserEmail();
     });
-    expect(globalThis.alert).toHaveBeenCalledWith("This email address is already in use.");
+    expect(result.current.emailError).toBe("This email address is already in use.");
   });
 
-  test("onSaveUserEmail in verifying state: calls confirmEmailChange with the entered code", async () => {
+  test("onSaveUserEmail: sets a generic emailError when the response is not ok and carries no known message", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    globalThis.fetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ message: "Internal Server Error" }),
+    });
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onInputChange({ target: { name: "email", value: "new@example.com" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserEmail();
+    });
+    expect(result.current.emailError).toBe("Failed to update email. Please try again later.");
+  });
+
+  test("onSaveUserEmail in verifying state: sets emailError on an incorrect verification code", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({ message: "Email update successful, please verify your new email." }),
+    });
+    confirmEmailChange.mockResolvedValue({ success: false });
+
+    const { result } = renderHook(() => useUserProfile());
+    act(() => {
+      result.current.onInputChange({ target: { name: "email", value: "new@example.com" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserEmail();
+    });
+
+    act(() => {
+      result.current.onVerificationInputChange({ target: { value: "000000" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserEmail();
+    });
+
+    expect(result.current.emailError).toBe("Incorrect verification code.");
+    expect(result.current.isVerifying).toBe(true);
+  });
+
+  test("onSaveUserEmail in verifying state: calls confirmEmailChange with the entered code and shows success", async () => {
     Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     globalThis.fetch.mockResolvedValueOnce({
       ok: true,
@@ -319,6 +369,8 @@ describe("useUserProfile", () => {
 
     expect(confirmEmailChange).toHaveBeenCalledWith("123456");
     expect(result.current.user.email).toBe("new@example.com");
+    expect(result.current.isVerifying).toBe(false);
+    expect(result.current.emailSuccess).toBe(true);
   });
 
   // ─── Save date of birth ───────────────────────────────────────────────────

@@ -405,6 +405,12 @@
     margin: 4px 0 0 136px;
 }
 
+.pd-field-success {
+    font-size: 0.78rem;
+    color: #15803d;
+    margin: 4px 0 0 136px;
+}
+
 .personal-data-card-footer {
     display: flex;
     justify-content: flex-end;
@@ -684,7 +690,8 @@
         width: 100%;
     }
 
-    .pd-field-error {
+    .pd-field-error,
+    .pd-field-success {
         margin-left: 0;
     }
 

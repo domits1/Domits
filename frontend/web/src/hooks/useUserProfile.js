@@ -62,6 +62,8 @@ export default function useUserProfile() {
   const [stripPhone, setStripPhone] = useState("");
   const [dateOfBirthError, setDateOfBirthError] = useState("");
   const [nationalityError, setNationalityError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState(false);
   const [authStatus, setAuthStatus] = useState({
     emailVerified: false,
     phoneVerified: false,
@@ -83,6 +85,9 @@ export default function useUserProfile() {
     setTempUser((prev) => ({ ...prev, [name]: value }));
     if (name === "nationality" && nationalityError) {
       setNationalityError("");
+    }
+    if (name === "email" && emailError) {
+      setEmailError("");
     }
   };
 
@@ -185,12 +190,17 @@ export default function useUserProfile() {
     if (trimmed === current) return "";
     return validateNationality(value);
   };
+  const showEmailSuccess = () => {
+    setEmailSuccess(true);
+    setTimeout(() => setEmailSuccess(false), 2500);
+  };
+
   const handleEmailVerification = async () => {
     try {
       const result = await confirmEmailChange(verificationCode);
 
       if (!result.success) {
-        alert("Incorrect verification code");
+        setEmailError("Incorrect verification code.");
         return;
       }
 
@@ -202,9 +212,13 @@ export default function useUserProfile() {
       if (editState.email) {
         toggleEditState("email");
       }
+
+      setIsVerifying(false);
+      setEmailError("");
+      showEmailSuccess();
     } catch (error) {
       console.error("Error confirming email change:", error);
-      alert("An error occurred during verification. Please try again.");
+      setEmailError("An error occurred during verification. Please try again.");
     }
   };
 
@@ -217,9 +231,12 @@ export default function useUserProfile() {
     const newEmail = tempUser.email?.trim();
 
     if (!newEmail || newEmail.length > 320 || !SAFE_EMAIL_REGEX.test(newEmail)) {
-      alert("Please provide a valid email address.");
+      setEmailError("Please provide a valid email address.");
       return;
     }
+
+    setEmailError("");
+    setEmailSuccess(false);
 
     try {
       const userInfo = await Auth.currentAuthenticatedUser();
@@ -236,12 +253,6 @@ export default function useUserProfile() {
 
       const result = await response.json();
 
-      if (!response.ok) {
-        console.error("Request failed with status:", response.status);
-        alert("Failed to update email. Please try again later.");
-        return;
-      }
-
       if (result.message === "Email update successful, please verify your new email.") {
         pendingEmailRef.current = newEmail;
         setIsVerifying(true);
@@ -249,14 +260,21 @@ export default function useUserProfile() {
       }
 
       if (result.message === "This email address is already in use.") {
-        alert(result.message);
+        setEmailError(result.message);
+        return;
+      }
+
+      if (!response.ok) {
+        console.error("Request failed with status:", response.status);
+        setEmailError("Failed to update email. Please try again later.");
         return;
       }
 
       console.error("Unexpected error:", result.message || "No message provided");
+      setEmailError("Failed to update email. Please try again later.");
     } catch (error) {
       console.error("Error updating email:", error);
-      alert("An error occurred while updating the email. Please try again later.");
+      setEmailError("An error occurred while updating the email. Please try again later.");
     }
   };
 
@@ -465,6 +483,8 @@ export default function useUserProfile() {
     stripPhone,
     dateOfBirthError,
     nationalityError,
+    emailError,
+    emailSuccess,
     authStatus,
     placeOfBirthOptions,
     countryCodes,
