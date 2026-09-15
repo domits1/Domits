@@ -1,7 +1,7 @@
 import { PropertyBuilder } from "../business/service/propertyBuilder.js";
 import { PropertyService } from "../business/service/propertyService.js";
 import { WebsiteQuoteService } from "../business/service/websiteQuoteService.js";
-import { WebsiteCustomDomainService } from "../business/service/websiteCustomDomainService.js";
+import { WebsiteCustomDomainService, isCustomDomainSyncable } from "../business/service/websiteCustomDomainService.js";
 import { CloudFrontTenantRepository } from "../data/repository/cloudFrontTenantRepository.js";
 import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
@@ -3066,7 +3066,7 @@ export class PropertyController {
     async listWebsiteDomains(event) {
         return this.handleWebsiteDomainRequest(event, async ({ site }) => {
             const customDomain = await this.directBookingWebsiteDomainRepository.getCustomDomainBySiteId(site.id);
-            if (customDomain?.verificationDetails?.tenantId) {
+            if (isCustomDomainSyncable(customDomain)) {
                 await this.refreshWebsiteCustomDomainSafely({ site, customDomain });
             }
 

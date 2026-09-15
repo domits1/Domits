@@ -265,10 +265,13 @@ sequenceDiagram
     participant DB as standalone_site_domain
 
     Host->>Service: request(domain)
-    Service->>CF: CreateDistributionTenant(ManagedCertificateRequest, ValidationTokenHost=cloudfront)
-    Service->>DB: CUSTOM row, PENDING, is_primary=false, CNAME instruction
+    Service->>DB: CUSTOM row, PENDING, reason dns_required, is_primary=false, CNAME instruction
     Host->>Host: create CNAME domain -> routing endpoint
     loop each sync (dashboard load or explicit check)
+        alt row has no tenant yet
+            Service->>CF: CreateDistributionTenant(ManagedCertificateRequest, ValidationTokenHost=cloudfront)
+            Note over Service,CF: ownership InvalidArgument keeps dns_required; CNAMEAlreadyExists stores FAILED
+        end
         Service->>CF: GetDistributionTenant + GetManagedCertificateDetails
         alt certificate issued and not yet on the tenant
             Service->>CF: UpdateDistributionTenant(Customizations.Certificate.Arn, If-Match etag)
@@ -295,7 +298,8 @@ Rules the service enforces:
 - `ValidationTokenHost` is always `cloudfront`. The `self-hosted` default expects the host to serve the validation token from an existing server, which a new domain does not have, so it never validates.
 - Subdomains only in v1 (`www.example.com`, not `example.com`). An apex needs a Route 53 alias and the `_cf-challenge` TXT record, which is a different onboarding flow.
 - One custom domain per site. A second request returns `domain_limit_reached`; changing a domain goes through removal first.
-- A domain already tied to another site returns `domain_taken`. A domain already used by another CloudFront resource (`CNAMEAlreadyExists`) is stored as `FAILED` with the reason, because only `UpdateDomainAssociation` from the owning resource can free it.
+- CloudFront refuses `CreateDistributionTenant` until the domain already resolves to a CloudFront resource ("Could not verify Domain Name ownership"). Connect therefore stores the row first with reason `dns_required` and the CNAME instruction, without calling CloudFront. The tenant is created on the next sync (panel load or Check again) once the CNAME is in place; until then the ownership error keeps `dns_required` instead of failing the request.
+- A domain another site has proven with a tenant returns `domain_taken`. A row without a tenant is not a proven claim, so a new request from another site takes it over. A domain already used by another CloudFront resource (`CNAMEAlreadyExists`) is stored as `FAILED` with the reason, because only `UpdateDomainAssociation` from the owning resource can free it.
 - The custom row is created with `is_primary = false`. The fallback domain keeps serving until the promotion step lands.
 - Tenant names are `dbw-<siteId>`, so a retry after a failed database write adopts the existing tenant instead of creating a duplicate.
 - Transient CloudFront errors write no status at all (`updateDomainVerificationDetailsById`), keep the domain's own `reason`, store the error name in `lastError`, and surface as `sync_failed`. Two overlapping syncs therefore cannot roll a domain back to a stale status.
