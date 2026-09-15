@@ -1,0 +1,110 @@
+name: Deploy direct booking sites
+
+on:
+  push:
+    branches:
+      - acceptance
+    paths:
+      - "frontend/web/**"
+      - ".github/workflows/deploy-direct-booking-sites.yml"
+      - ".github/actions/setup-frontend/**"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-direct-booking-sites-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  SITES_BUCKET: domits-direct-booking-sites-acceptance
+  SITES_BUCKET_REGION: eu-north-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup frontend
+        uses: ./.github/actions/setup-frontend
+
+      - name: Write aws-exports
+        env:
+          AWS_EXPORTS: ${{ secrets.AWS_EXPORTS }}
+        run: |
+          if [ -z "$AWS_EXPORTS" ]; then
+            echo "::error::The AWS_EXPORTS secret is empty; the bundle would ship without an Amplify configuration."
+            exit 1
+          fi
+          printf '%s\n' "$AWS_EXPORTS" > frontend/web/src/aws-exports.js
+
+      - name: Build the sites bundle
+        working-directory: frontend/web
+        env:
+          CI: "true"
+          REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE: "true"
+          REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX: ${{ vars.REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX }}
+          REACT_APP_DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE: ${{ vars.REACT_APP_DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE }}
+          REACT_APP_BOOKINGS_API_BASE: ${{ vars.REACT_APP_BOOKINGS_API_BASE }}
+          REACT_APP_HOST_BOOKINGS_ENDPOINT: ${{ vars.REACT_APP_HOST_BOOKINGS_ENDPOINT }}
+          REACT_APP_ICAL_RETRIEVE_URL: ${{ vars.REACT_APP_ICAL_RETRIEVE_URL }}
+          REACT_APP_CONTACT_EMAIL_ENDPOINT: ${{ vars.REACT_APP_CONTACT_EMAIL_ENDPOINT }}
+          REACT_APP_DOMITS_WS_URL: ${{ vars.REACT_APP_DOMITS_WS_URL }}
+          REACT_APP_AUTOMATED_MESSAGING_API_URL: ${{ vars.REACT_APP_AUTOMATED_MESSAGING_API_URL }}
+          REACT_APP_PROFILE_UPLOAD_URL_ENDPOINT: ${{ vars.REACT_APP_PROFILE_UPLOAD_URL_ENDPOINT }}
+          REACT_APP_UPDATE_EMAIL_ENDPOINT: ${{ vars.REACT_APP_UPDATE_EMAIL_ENDPOINT }}
+          REACT_APP_UPDATE_NAME_ENDPOINT: ${{ vars.REACT_APP_UPDATE_NAME_ENDPOINT }}
+          REACT_APP_UPDATE_PHONE_ENDPOINT: ${{ vars.REACT_APP_UPDATE_PHONE_ENDPOINT }}
+          REACT_APP_CHANNEX_CERTIFICATION_USER_IDS: ${{ vars.REACT_APP_CHANNEX_CERTIFICATION_USER_IDS }}
+          REACT_APP_DEMO_OWNER_ID: ${{ vars.REACT_APP_DEMO_OWNER_ID }}
+          REACT_APP_DEMO_TESTER_ID: ${{ vars.REACT_APP_DEMO_TESTER_ID }}
+          REACT_APP_STRIPE_PUBLIC_KEY: ${{ secrets.REACT_APP_STRIPE_PUBLIC_KEY }}
+        run: |
+          for name in REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX REACT_APP_DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE; do
+            if [ -z "${!name}" ]; then
+              echo "::warning::$name is not set; the bundle will use the fallback compiled into the code."
+            fi
+          done
+          npm run build
+          test -f build/index.html
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.SITES_BUCKET_REGION }}
+
+      - name: Upload hashed assets
+        run: |
+          aws s3 sync frontend/web/build/static "s3://$SITES_BUCKET/static" \
+            --cache-control "public, max-age=31536000, immutable" \
+            --no-progress
+
+      - name: Upload root files
+        run: |
+          aws s3 sync frontend/web/build "s3://$SITES_BUCKET" \
+            --exclude "static/*" \
+            --exclude "index.html" \
+            --cache-control "public, max-age=300" \
+            --no-progress
+
+      - name: Upload index.html
+        run: |
+          aws s3 cp frontend/web/build/index.html "s3://$SITES_BUCKET/index.html" \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "text/html; charset=utf-8" \
+            --no-progress
+
+      - name: Invalidate index.html on CloudFront
+        if: vars.DIRECT_BOOKING_SITES_DISTRIBUTION_ID != ''
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.DIRECT_BOOKING_SITES_DISTRIBUTION_ID }}" \
+            --paths "/index.html" "/"
+
+      - name: Skip invalidation
+        if: vars.DIRECT_BOOKING_SITES_DISTRIBUTION_ID == ''
+        run: echo "::notice::DIRECT_BOOKING_SITES_DISTRIBUTION_ID is not set; no CloudFront invalidation was issued."
