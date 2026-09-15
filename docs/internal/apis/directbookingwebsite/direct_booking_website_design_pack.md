@@ -284,8 +284,8 @@ Status mapping from CloudFront to `standalone_site_domain.status`:
 | Certificate `pending-validation`, domain `inactive` | `PENDING` | `certificate_pending`; `dnsVerified` says whether the CNAME is seen |
 | Certificate `issued`, not yet applied to the tenant | `VERIFIED` | `certificate_issued`; the same sync applies it |
 | Certificate `issued`, applied, domain still `inactive` | `VERIFIED` | `certificate_applied`; tenant is redeploying |
+| Certificate `validation-timed-out`, `failed`, `revoked`, `expired` | `FAILED` | `certificate_<status>`; checked before the domain status so a broken certificate never reads as live |
 | Domain `active` | `ACTIVE` | `domain_active` |
-| Certificate `validation-timed-out`, `failed`, `revoked`, `expired` | `FAILED` | `certificate_<status>` |
 | Tenant `Enabled: false` | `DISABLED` | `tenant_disabled` |
 | Tenant not found | `FAILED` | `tenant_not_found` |
 | Certificate `inactive` (undocumented by AWS) | unchanged | `certificate_inactive` |
@@ -298,7 +298,7 @@ Rules the service enforces:
 - A domain already tied to another site returns `domain_taken`. A domain already used by another CloudFront resource (`CNAMEAlreadyExists`) is stored as `FAILED` with the reason, because only `UpdateDomainAssociation` from the owning resource can free it.
 - The custom row is created with `is_primary = false`. The fallback domain keeps serving until the promotion step lands.
 - Tenant names are `dbw-<siteId>`, so a retry after a failed database write adopts the existing tenant instead of creating a duplicate.
-- Transient CloudFront errors leave the status untouched, store the error name in `lastError`, and surface as `sync_failed`.
+- Transient CloudFront errors write no status at all (`updateDomainVerificationDetailsById`), keep the domain's own `reason`, store the error name in `lastError`, and surface as `sync_failed`. Two overlapping syncs therefore cannot roll a domain back to a stale status.
 
 Lambda configuration (PropertyHandler): `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_CONNECTION_GROUP_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_ROUTING_ENDPOINT`. The service refuses to construct without all three. The Lambda role needs `cloudfront:CreateDistributionTenant`, `GetDistributionTenant`, `GetDistributionTenantByDomain`, `GetManagedCertificateDetails`, `UpdateDistributionTenant`, `VerifyDnsConfiguration`.
 

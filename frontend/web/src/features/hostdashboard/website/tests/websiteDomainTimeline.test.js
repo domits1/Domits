@@ -72,6 +72,8 @@ describe("buildDomainTimeline", () => {
 describe("resolveDomainProgressCopy / resolveDomainReasonCopy", () => {
   it("tells the host what happens next at each stage", () => {
     expect(resolveDomainProgressCopy(domain())).toMatch(/create the cname record/i);
+    expect(resolveDomainProgressCopy(domain())).toMatch(/open this panel or press check again/i);
+    expect(resolveDomainProgressCopy(domain())).not.toMatch(/automatically|within an hour/i);
     expect(resolveDomainProgressCopy(domain({ dnsVerified: true }))).toMatch(/waiting for the certificate/i);
     expect(resolveDomainProgressCopy(domain({ status: "VERIFIED" }))).toMatch(/going live/i);
     expect(resolveDomainProgressCopy(domain({ status: "ACTIVE" }))).toMatch(/live/i);

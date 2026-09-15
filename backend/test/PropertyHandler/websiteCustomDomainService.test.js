@@ -40,6 +40,9 @@ const buildDomainRepository = (overrides = {}) => ({
   updateDomainStatusById: jest.fn(async (id, status, verificationDetails) =>
     buildRecord({ id, status, verificationDetails })
   ),
+  updateDomainVerificationDetailsById: jest.fn(async (id, verificationDetails) =>
+    buildRecord({ id, verificationDetails })
+  ),
   ...overrides,
 });
 
@@ -359,21 +362,23 @@ describe("WebsiteCustomDomainService.syncCustomDomain", () => {
     });
   });
 
-  it("keeps the current status, stores the error and throws SYNC_FAILED when CloudFront is unreachable", async () => {
+  it("writes no status, keeps the domain's own reason and throws SYNC_FAILED when CloudFront is unreachable", async () => {
     const tenantRepository = buildTenantRepository({
       getTenant: jest.fn().mockRejectedValue(namedError("Throttling")),
     });
     const { service, domainRepository } = buildService({ tenantRepository });
+    const domainRecord = buildRecord({
+      status: "FAILED",
+      verificationDetails: { tenantId: TENANT.id, reason: "certificate_expired", lastError: null },
+    });
 
-    await expect(
-      service.syncCustomDomain({ site: SITE, domainRecord: buildRecord({ status: "VERIFIED" }) })
-    ).rejects.toMatchObject({
+    await expect(service.syncCustomDomain({ site: SITE, domainRecord })).rejects.toMatchObject({
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.SYNC_FAILED,
     });
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+    expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
+    expect(domainRepository.updateDomainVerificationDetailsById).toHaveBeenCalledWith(
       "domain-1",
-      "VERIFIED",
-      expect.objectContaining({ lastError: "Throttling" })
+      expect.objectContaining({ reason: "certificate_expired", lastError: "Throttling" })
     );
   });
 });
@@ -390,6 +395,13 @@ describe("mapCloudFrontStateToDomainStatus", () => {
       ISSUED,
       "ACTIVE",
       "domain_active",
+    ],
+    [
+      "an active domain whose certificate was revoked",
+      tenantWith({ domains: [{ domain: DOMAIN, status: "active" }] }),
+      { ...ISSUED, status: "revoked" },
+      "FAILED",
+      "certificate_revoked",
     ],
     [
       "a timed out validation",

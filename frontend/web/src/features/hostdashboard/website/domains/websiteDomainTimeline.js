@@ -23,7 +23,7 @@ const STEPS = Object.freeze([
 ]);
 
 const PROGRESS_COPY_BY_COMPLETED_STEPS = Object.freeze({
-  1: "Create the CNAME record below at your DNS provider. We check it automatically, usually within an hour, sometimes longer.",
+  1: "Create the CNAME record below at your DNS provider. We check it each time you open this panel or press Check again.",
   2: "DNS record found. Waiting for the certificate.",
   3: "Certificate issued. Going live, usually within a few minutes.",
   4: "Your domain is live.",

@@ -317,4 +317,25 @@ export class DirectBookingWebsiteDomainRepository {
 
     return mapSiteDomainRow(rows?.[0] || null);
   }
+
+  async updateDomainVerificationDetailsById(domainId, verificationDetails = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const now = Date.now();
+
+    const rows = await client.query(
+      `UPDATE ${tableName}
+      SET
+        verification_details_json = $2,
+        last_checked_at = $3,
+        updated_at = $3
+      WHERE id = $1
+      RETURNING
+        ${SITE_DOMAIN_SELECT_COLUMNS}`,
+      [domainId, normalizeJsonObject(verificationDetails), now]
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
+  }
 }

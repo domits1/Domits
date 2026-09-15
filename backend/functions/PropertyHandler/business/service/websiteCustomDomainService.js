@@ -81,13 +81,12 @@ export const mapCloudFrontStateToDomainStatus = ({ tenant, certificate, domain, 
   if (!tenant.enabled) {
     return { status: DOMAIN_STATUS.DISABLED, reason: "tenant_disabled" };
   }
-  if (findTenantDomainStatus(tenant, domain) === CLOUDFRONT_DOMAIN_STATUS_ACTIVE) {
-    return { status: DOMAIN_STATUS.ACTIVE, reason: "domain_active" };
-  }
-
   const certificateStatus = certificate?.status || "";
   if (FAILED_CERTIFICATE_STATUSES.has(certificateStatus)) {
     return { status: DOMAIN_STATUS.FAILED, reason: `certificate_${certificateStatus}` };
+  }
+  if (findTenantDomainStatus(tenant, domain) === CLOUDFRONT_DOMAIN_STATUS_ACTIVE) {
+    return { status: DOMAIN_STATUS.ACTIVE, reason: "domain_active" };
   }
   if (certificateStatus === CERTIFICATE_STATUS_ISSUED) {
     return {
@@ -298,13 +297,12 @@ export class WebsiteCustomDomainService {
     try {
       cloudFrontState = await this.readCloudFrontState({ tenantId, domain: record.domain });
     } catch (error) {
-      await this.domainRepository.updateDomainStatusById(
+      await this.domainRepository.updateDomainVerificationDetailsById(
         record.id,
-        record.status,
         this.buildVerificationDetails({
           previous: record.verificationDetails,
           domain: record.domain,
-          reason: "sync_failed",
+          reason: record.verificationDetails?.reason || "",
           lastError: error?.name || error?.message || "sync_failed",
         })
       );
