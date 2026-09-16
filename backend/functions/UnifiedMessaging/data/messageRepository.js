@@ -224,6 +224,29 @@ class MessageRepository {
       return acc;
     }, {});
   }
+
+  async getLatestIncomingMessage(threadId, recipientId) {
+    const client = await Database.getInstance();
+    return client
+      .getRepository(UnifiedMessage)
+      .createQueryBuilder("message")
+      .where("message.threadId = :threadId", { threadId })
+      .andWhere("message.recipientId = :recipientId", { recipientId })
+      .orderBy("message.createdAt", "DESC")
+      .addOrderBy("message.id", "DESC")
+      .getOne();
+  }
+
+  async markMessageUnread(messageId) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(UnifiedMessage)
+      .set({ isRead: false })
+      .where({ id: messageId })
+      .execute();
+    return result?.affected ?? 0;
+  }
 }
 
 export default MessageRepository;

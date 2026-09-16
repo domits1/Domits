@@ -4,11 +4,11 @@
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ContactList from "./ContactList";
 import { getMessageCapabilities } from "./messageCapabilities";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
-import { markThreadRead } from "../../features/hostdashboard/hostmessages/services/messagingService";
+import { markThreadRead, markThreadUnread } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { getIdToken } from "../../services/getAccessToken";
 
 jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
@@ -16,6 +16,7 @@ jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
 jest.mock("../../features/hostdashboard/hostmessages/services/messagingService", () => ({
   __esModule: true,
   markThreadRead: jest.fn(),
+  markThreadUnread: jest.fn(),
 }));
 
 jest.mock("../../services/getAccessToken", () => ({
@@ -324,5 +325,319 @@ describe("ContactList realtime unread sync", () => {
     expect(updated[0].unreadCount).toBe(1);
     expect(updated[0].latestMessage.text).toBe("Hello, is this available?");
     expect(markThreadRead).not.toHaveBeenCalled();
+  });
+});
+
+describe("ContactList manual mark read/unread", () => {
+  const manualActionContact = {
+    partnerId: "host-1",
+    hostId: "host-1",
+    guestId: "guest-1",
+    givenName: "Reservation Host",
+    threadId: "thread-1",
+    propertyId: "property-1",
+    latestMessage: { text: "See you soon", createdAt: "2026-06-01T10:00:00.000Z" },
+  };
+
+  const renderForManualAction = (contact) => {
+    const setContacts = jest.fn();
+
+    render(
+      <ContactList
+        userId="host-1"
+        dashboardType="host"
+        contacts={[contact]}
+        pendingContacts={[]}
+        loading={false}
+        setContacts={setContacts}
+        onContactClick={jest.fn()}
+        onCloseChat={jest.fn()}
+        onNewMessage={jest.fn()}
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+
+    return { setContacts };
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getIdToken.mockResolvedValue("id-token-1");
+    markThreadRead.mockResolvedValue({ threadId: "thread-1", updated: 3 });
+    markThreadUnread.mockResolvedValue({ threadId: "thread-1", updated: 1 });
+  });
+
+  test("right-clicking an unread contact shows Mark as read in the context menu", () => {
+    renderForManualAction({ ...manualActionContact, unreadCount: 3 });
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+
+    expect(screen.getByText("Mark as read")).toBeInTheDocument();
+    expect(screen.queryByText("Mark as unread")).not.toBeInTheDocument();
+  });
+
+  test("right-clicking a read contact shows Mark as unread in the context menu", () => {
+    renderForManualAction({ ...manualActionContact, unreadCount: 0 });
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+
+    expect(screen.getByText("Mark as unread")).toBeInTheDocument();
+    expect(screen.queryByText("Mark as read")).not.toBeInTheDocument();
+  });
+
+  test("clicking Mark as read calls markThreadRead with the thread id and token", async () => {
+    renderForManualAction({ ...manualActionContact, unreadCount: 3 });
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as read"));
+
+    await waitFor(() => {
+      expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+  });
+
+  test("clicking Mark as unread calls markThreadUnread with the thread id and token", async () => {
+    renderForManualAction({ ...manualActionContact, unreadCount: 0 });
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as unread"));
+
+    await waitFor(() => {
+      expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+  });
+
+  test("marking as unread updates local unread state only after markThreadUnread succeeds", async () => {
+    let resolveMarkUnread;
+    markThreadUnread.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMarkUnread = resolve;
+        })
+    );
+
+    const contact = { ...manualActionContact, unreadCount: 0 };
+    const { setContacts } = renderForManualAction(contact);
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as unread"));
+
+    await waitFor(() => {
+      expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    expect(setContacts).not.toHaveBeenCalled();
+
+    resolveMarkUnread({ threadId: "thread-1", updated: 1 });
+
+    await waitFor(() => {
+      expect(setContacts).toHaveBeenCalled();
+    });
+
+    const updater = setContacts.mock.calls[0][0];
+    const updated = updater([contact]);
+    expect(updated[0].unreadCount).toBe(1);
+  });
+
+  test("marking as read leaves local unread state unchanged when markThreadRead fails", async () => {
+    markThreadRead.mockRejectedValue(new Error("network error"));
+
+    const contact = { ...manualActionContact, unreadCount: 3 };
+    const { setContacts } = renderForManualAction(contact);
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as read"));
+
+    await waitFor(() => {
+      expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(setContacts).not.toHaveBeenCalled();
+  });
+
+  test("opening the same conversation while Mark as unread is in flight re-syncs it back to read", async () => {
+    let resolveMarkUnread;
+    markThreadUnread.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMarkUnread = resolve;
+        })
+    );
+
+    const contact = { ...manualActionContact, unreadCount: 0 };
+    const setContacts = jest.fn();
+
+    const buildElement = (activeThreadId) => (
+      <ContactList
+        userId="host-1"
+        dashboardType="host"
+        contacts={[contact]}
+        pendingContacts={[]}
+        loading={false}
+        setContacts={setContacts}
+        onContactClick={jest.fn()}
+        onCloseChat={jest.fn()}
+        onNewMessage={jest.fn()}
+        activeThreadId={activeThreadId}
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+
+    const { rerender } = render(buildElement(null));
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as unread"));
+
+    await waitFor(() => {
+      expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    // Host opens this exact conversation while the mark-as-unread request is still in flight.
+    rerender(buildElement("thread-1"));
+
+    resolveMarkUnread({ threadId: "thread-1", updated: 1 });
+
+    await waitFor(() => {
+      expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    const finalState = setContacts.mock.calls.reduce((state, [updaterFn]) => updaterFn(state), [contact]);
+    expect(finalState[0].unreadCount).toBe(0);
+  });
+
+  const secondManualActionContact = {
+    hostId: "host-1",
+    guestId: "guest-2",
+    givenName: "Second Contact",
+    threadId: "thread-2",
+    propertyId: "property-2",
+    latestMessage: { text: "Looking forward to it", createdAt: "2026-06-02T10:00:00.000Z" },
+  };
+
+  test("every conversation row shows a visible actions button", () => {
+    render(
+      <ContactList
+        userId="host-1"
+        dashboardType="host"
+        contacts={[
+          { ...manualActionContact, unreadCount: 0 },
+          { ...secondManualActionContact, unreadCount: 3 },
+        ]}
+        pendingContacts={[]}
+        loading={false}
+        setContacts={jest.fn()}
+        onContactClick={jest.fn()}
+        onCloseChat={jest.fn()}
+        onNewMessage={jest.fn()}
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+
+    expect(screen.getAllByLabelText("Conversation actions")).toHaveLength(2);
+  });
+
+  test("clicking the actions button shows Mark as read for an unread contact", () => {
+    renderForManualAction({ ...manualActionContact, unreadCount: 3 });
+
+    fireEvent.click(screen.getByLabelText("Conversation actions"));
+
+    expect(screen.getByText("Mark as read")).toBeInTheDocument();
+    expect(screen.queryByText("Mark as unread")).not.toBeInTheDocument();
+  });
+
+  test("clicking the actions button shows Mark as unread for a read contact", () => {
+    renderForManualAction({ ...manualActionContact, unreadCount: 0 });
+
+    fireEvent.click(screen.getByLabelText("Conversation actions"));
+
+    expect(screen.getByText("Mark as unread")).toBeInTheDocument();
+    expect(screen.queryByText("Mark as read")).not.toBeInTheDocument();
+  });
+
+  test("clicking the actions button does not select or open the conversation", () => {
+    const onContactClick = jest.fn();
+
+    render(
+      <ContactList
+        userId="host-1"
+        dashboardType="host"
+        contacts={[{ ...manualActionContact, unreadCount: 0 }]}
+        pendingContacts={[]}
+        loading={false}
+        setContacts={jest.fn()}
+        onContactClick={onContactClick}
+        onCloseChat={jest.fn()}
+        onNewMessage={jest.fn()}
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Conversation actions"));
+
+    expect(onContactClick).not.toHaveBeenCalled();
+  });
+
+  test("clicking a dropdown action does not select or open the conversation", async () => {
+    const onContactClick = jest.fn();
+
+    render(
+      <ContactList
+        userId="host-1"
+        dashboardType="host"
+        contacts={[{ ...manualActionContact, unreadCount: 0 }]}
+        pendingContacts={[]}
+        loading={false}
+        setContacts={jest.fn()}
+        onContactClick={onContactClick}
+        onCloseChat={jest.fn()}
+        onNewMessage={jest.fn()}
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Conversation actions"));
+    fireEvent.click(screen.getByText("Mark as unread"));
+
+    await waitFor(() => {
+      expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    expect(onContactClick).not.toHaveBeenCalled();
+  });
+
+  test("the dropdown is tied to the row whose actions button was clicked, not any other row", () => {
+    render(
+      <ContactList
+        userId="host-1"
+        dashboardType="host"
+        contacts={[
+          { ...manualActionContact, unreadCount: 0 },
+          { ...secondManualActionContact, unreadCount: 3 },
+        ]}
+        pendingContacts={[]}
+        loading={false}
+        setContacts={jest.fn()}
+        onContactClick={jest.fn()}
+        onCloseChat={jest.fn()}
+        onNewMessage={jest.fn()}
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+
+    expect(screen.getAllByLabelText("Conversation actions")).toHaveLength(2);
+
+    const rows = screen.getAllByRole("listitem");
+    const secondContactRow = rows.find((row) => within(row).queryByText("Second Contact"));
+    const reservationHostRow = rows.find((row) => within(row).queryByText("Reservation Host"));
+
+    fireEvent.click(within(secondContactRow).getByLabelText("Conversation actions"));
+
+    expect(within(secondContactRow).getByText("Mark as read")).toBeInTheDocument();
+    expect(within(secondContactRow).queryByText("Mark as unread")).not.toBeInTheDocument();
+
+    expect(within(reservationHostRow).queryByText("Mark as read")).not.toBeInTheDocument();
+    expect(within(reservationHostRow).queryByText("Mark as unread")).not.toBeInTheDocument();
   });
 });

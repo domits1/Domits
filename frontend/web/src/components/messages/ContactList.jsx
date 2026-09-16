@@ -4,7 +4,7 @@ import { WebSocketContext } from "../../features/hostdashboard/hostmessages/cont
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
 import { getMessageCapabilities } from "./messageCapabilities";
-import { markThreadRead } from "../../features/hostdashboard/hostmessages/services/messagingService";
+import { markThreadRead, markThreadUnread } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { getIdToken } from "../../services/getAccessToken";
 
 const resolvePartnerId = (contact, selfUserId) => {
@@ -157,6 +157,13 @@ const markContactThreadReadLocally = (prevContacts, threadId) =>
     c?.threadId && String(c.threadId) === String(threadId) ? { ...c, unreadCount: 0 } : c
   );
 
+// Only called after a POST /threads/{id}/unread confirmation returns its updated count,
+// so local state never guesses ahead of what the backend actually flipped.
+const markContactThreadUnreadLocally = (prevContacts, threadId, updatedCount) =>
+  (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
+    c?.threadId && String(c.threadId) === String(threadId) ? { ...c, unreadCount: updatedCount } : c
+  );
+
 const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) => {
   setContacts?.((prevContacts) => {
     const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
@@ -203,7 +210,7 @@ const ContactList = ({
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactKey: null });
+  const [contextMenu, setContextMenu] = useState({ visible: false, contactKey: null, contact: null });
 
   const hydratingIdsRef = useRef(new Set());
   const lastWsMessageIdRef = useRef(null);
@@ -296,16 +303,57 @@ const ContactList = ({
   const handleContextMenu = (event, contact) => {
     if (!capabilities.canManageConversation) return;
     event.preventDefault();
+    event.stopPropagation();
     const partnerId = resolvePartnerId(contact, userId);
     if (!partnerId) return;
 
     const key = contact?.threadId || partnerId;
-    setContextMenu({ visible: true, x: event.clientX, y: event.clientY, contactKey: key });
+    setContextMenu({ visible: true, contactKey: key, contact });
   };
 
   const handleCloseSelectedChat = () => {
-    if (contextMenu.contactKey) onCloseChat?.(activeContactId);
-    setContextMenu({ visible: false, x: 0, y: 0, contactKey: null });
+    const partnerId = resolvePartnerId(contextMenu.contact, userId);
+    if (partnerId) onCloseChat?.(partnerId);
+    setContextMenu({ visible: false, contactKey: null, contact: null });
+  };
+
+  const handleMarkAsRead = async () => {
+    const threadId = contextMenu.contact?.threadId;
+    setContextMenu({ visible: false, contactKey: null, contact: null });
+    if (!threadId) return;
+
+    try {
+      const idToken = await getIdToken();
+      await markThreadRead(threadId, idToken);
+      setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, threadId));
+    } catch {
+      // Mark-read failures should not falsely update local state.
+    }
+  };
+
+  const handleMarkAsUnread = async () => {
+    const threadId = contextMenu.contact?.threadId;
+    setContextMenu({ visible: false, contactKey: null, contact: null });
+    if (!threadId) return;
+
+    try {
+      const idToken = await getIdToken();
+      const result = await markThreadUnread(threadId, idToken);
+
+      // If the host opened this exact thread while the request was still in flight,
+      // the existing auto-read effect already ran and skipped (it saw unreadCount: 0),
+      // so immediately re-sync backend + local state instead of leaving an actively
+      // viewed conversation unread.
+      if (String(activeThreadIdRef.current || "") === String(threadId)) {
+        await markThreadRead(threadId, idToken);
+        setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, threadId));
+        return;
+      }
+
+      setContacts?.((prevContacts) => markContactThreadUnreadLocally(prevContacts, threadId, result?.updated ?? 0));
+    } catch {
+      // Mark-unread failures should not falsely update local state.
+    }
   };
 
   useEffect(() => {
@@ -360,6 +408,7 @@ const ContactList = ({
         `${contact?.latestMessage?.createdAt || "unknown"}-${resolveContactName(contact)}`;
       const key = contact?.threadId || partnerId || fallbackKey;
       const isActive = selectedKey === key;
+      const isMenuOpenForRow = capabilities.canManageConversation && contextMenu.visible && contextMenu.contactKey === key;
 
       return (
         <li
@@ -369,7 +418,48 @@ const ContactList = ({
           onContextMenu={capabilities.canManageConversation ? (event) => handleContextMenu(event, contact) : undefined}
           style={{ cursor: "pointer" }}
         >
-          <ContactItem contact={contact} selected={isActive} />
+          <ContactItem
+            contact={contact}
+            selected={isActive}
+            onActionsClick={
+              capabilities.canManageConversation ? (event) => handleContextMenu(event, contact) : undefined
+            }
+          />
+
+          {isMenuOpenForRow && (
+            <div className="contact-context-menu" role="menu">
+              {(contextMenu.contact?.unreadCount || 0) > 0 ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleMarkAsRead();
+                  }}
+                >
+                  Mark as read
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleMarkAsUnread();
+                  }}
+                >
+                  Mark as unread
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleCloseSelectedChat();
+                }}
+              >
+                Close chat
+              </button>
+            </div>
+          )}
         </li>
       );
     });
@@ -438,14 +528,6 @@ const ContactList = ({
       </div>
 
       <ul className="contact-list-list">{listContent}</ul>
-
-      {capabilities.canManageConversation && contextMenu.visible && (
-        <div className="contact-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} role="menu">
-          <button type="button" onClick={handleCloseSelectedChat}>
-            Close chat
-          </button>
-        </div>
-      )}
     </div>
   );
 };
