@@ -6,6 +6,9 @@ const STATUS_REMOVING = "REMOVING";
 const REMOVING_COPY = "This domain is being removed. Press Check again in a moment to finish.";
 const COMPLETED_STEPS_BY_STATUS = Object.freeze({ ACTIVE: 4, VERIFIED: 3 });
 const REASON_DOMAIN_IN_USE = "domain_in_use_elsewhere";
+const REASON_DNS_REQUIRED = "dns_required";
+const DNS_REQUIRED_COPY =
+  "Create the CNAME record below at your DNS provider, then press Check again. We set up the domain as soon as the record is found.";
 const REASON_DNS_TIMED_OUT = "certificate_validation-timed-out";
 const CERTIFICATE_REASON_PREFIX = "certificate_";
 const CHECK_AGAIN_HINT = " Check again keeps looking. If it stays like this, contact support.";
@@ -50,6 +53,7 @@ const PANEL_ERROR_COPY = Object.freeze({
   unauthorized: "Your session has expired. Sign in again.",
   forbidden: "Your session has expired. Sign in again.",
   sync_failed: "We couldn't reach the domain service. Try again in a moment.",
+  tenant_not_owned: "This domain's setup belongs to another website. Contact support.",
   tenant_create_failed: "We couldn't reach the domain service. Try again in a moment.",
   network_error: "We couldn't reach the domain service. Try again in a moment.",
 });
@@ -95,6 +99,9 @@ export const resolveDomainProgressCopy = (domain) => {
   }
   if (isDomainRemoving(domain)) {
     return REMOVING_COPY;
+  }
+  if (domain.reason === REASON_DNS_REQUIRED) {
+    return DNS_REQUIRED_COPY;
   }
   return PROGRESS_COPY_BY_COMPLETED_STEPS[countCompletedSteps(domain)] || "";
 };

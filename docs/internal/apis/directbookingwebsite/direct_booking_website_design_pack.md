@@ -265,10 +265,13 @@ sequenceDiagram
     participant DB as standalone_site_domain
 
     Host->>Service: request(domain)
-    Service->>CF: CreateDistributionTenant(ManagedCertificateRequest, ValidationTokenHost=cloudfront)
-    Service->>DB: CUSTOM row, PENDING, is_primary=false, CNAME instruction
+    Service->>DB: CUSTOM row, PENDING, reason dns_required, is_primary=false, CNAME instruction
     Host->>Host: create CNAME domain -> routing endpoint
     loop each sync (dashboard load or explicit check)
+        alt row has no tenant yet
+            Service->>CF: CreateDistributionTenant(ManagedCertificateRequest, ValidationTokenHost=cloudfront)
+            Note over Service,CF: ownership InvalidArgument keeps dns_required; CNAMEAlreadyExists stores FAILED
+        end
         Service->>CF: GetDistributionTenant + GetManagedCertificateDetails
         alt certificate issued and not yet on the tenant
             Service->>CF: UpdateDistributionTenant(Customizations.Certificate.Arn, If-Match etag)
@@ -295,9 +298,11 @@ Rules the service enforces:
 - `ValidationTokenHost` is always `cloudfront`. The `self-hosted` default expects the host to serve the validation token from an existing server, which a new domain does not have, so it never validates.
 - Subdomains only in v1 (`www.example.com`, not `example.com`). An apex needs a Route 53 alias and the `_cf-challenge` TXT record, which is a different onboarding flow.
 - One custom domain per site. A second request returns `domain_limit_reached`; changing a domain goes through removal first.
-- A domain already tied to another site returns `domain_taken`. A domain already used by another CloudFront resource (`CNAMEAlreadyExists`) is stored as `FAILED` with the reason, because only `UpdateDomainAssociation` from the owning resource can free it.
+- CloudFront refuses `CreateDistributionTenant` until the domain already resolves to a CloudFront resource ("Could not verify Domain Name ownership"). Connect therefore stores the row first with reason `dns_required` and the CNAME instruction, without calling CloudFront. The tenant is created on the next sync (panel load or Check again) once the CNAME is in place; until then the ownership error keeps `dns_required` instead of failing the request.
+- A domain another site holds is always `domain_taken`, whether or not that site has a tenant yet. The CNAME target is the shared routing endpoint and CloudFront only checks that a hostname resolves to CloudFront, so the row is the only arbitration of ownership; letting another site take over an unproven row would let it create a tenant on the first site's DNS and serve its own site on that domain. Known gap, follow-up: a host can reserve a domain it does not control and hold it indefinitely (squatting on an unproven claim); the planned answer is an expiry for tenant-less rows or a per-site DNS proof such as a `_domits.<domain>` TXT record checked before the tenant is created. Every status write is scoped to `(id, site_id)`, and a provisioning write that finds its row gone disables the tenant it just created and answers `domain_taken`. A domain already used by another CloudFront resource (`CNAMEAlreadyExists`) is stored as `FAILED` with the reason, because only `UpdateDomainAssociation` from the owning resource can free it.
 - The custom row is created with `is_primary = false`. The fallback domain keeps serving until the promotion step lands.
 - Tenant names are `dbw-<siteId>`, so a retry after a failed database write adopts the existing tenant instead of creating a duplicate.
+- The name is also the ownership check. Before the service applies a certificate, verifies DNS, or adopts a tenant, it requires the tenant name to equal `dbw-<siteId>`; a `dbw-` name for another site is refused with `tenant_not_owned` (409) and `lastError: tenant_not_owned` on the row, and nothing is written at CloudFront. A name without the `dbw-` prefix is a legacy tenant created by hand in the AWS account (`developers-test`) and is accepted.
 - Transient CloudFront errors write no status at all (`updateDomainVerificationDetailsById`), keep the domain's own `reason`, store the error name in `lastError`, and surface as `sync_failed`. Two overlapping syncs therefore cannot roll a domain back to a stale status.
 
 Lambda configuration (PropertyHandler): `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_CONNECTION_GROUP_ID`, `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_ROUTING_ENDPOINT`. The service refuses to construct without all three. The Lambda role needs `cloudfront:CreateDistributionTenant`, `GetDistributionTenant`, `GetDistributionTenantByDomain`, `GetManagedCertificateDetails`, `UpdateDistributionTenant`, `VerifyDnsConfiguration`.
@@ -839,7 +844,7 @@ Host-authenticated routes on PropertyHandler. The caller must be in the `Host` g
 
 `DomainView` is the host-facing shape, `toHostWebsiteDomainView`: `domain`, `domainType`, `status`, `isPrimary`, `dnsRecord { type, name, value }` (custom domains only), `dnsVerified`, `certificateStatus`, `reason`, `lastError`, `lastCheckedAt`. Tenant IDs, certificate ARNs and connection group IDs never leave the backend.
 
-Error codes and statuses: `invalid_request` 400, `invalid_domain` 400, `unauthorized` 401, `forbidden` 403, `site_not_found` 404, `domain_not_found` 404, `domain_taken` 409, `domain_limit_reached` 409, `tenant_create_failed` 502, `sync_failed` 502, `domain_remove_failed` 502, `internal_error` 500.
+Error codes and statuses: `invalid_request` 400, `invalid_domain` 400, `unauthorized` 401, `forbidden` 403, `site_not_found` 404, `domain_not_found` 404, `domain_taken` 409, `domain_limit_reached` 409, `tenant_not_owned` 409, `tenant_create_failed` 502, `sync_failed` 502, `domain_remove_failed` 502, `internal_error` 500.
 
 API Gateway, after merge: resource `domains` under `/property/website` with GET and POST, child resource `verify` with POST, all Lambda-proxy to PropertyHandler, OPTIONS on both resources allowing `Authorization` and `Content-Type`, then a stage deploy. The Lambda needs the three `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_*` variables and the CloudFront IAM actions listed under "Custom domain activation"; until they exist these routes answer `500 internal_error` and log the missing variable, and the rest of the Lambda is unaffected.
 

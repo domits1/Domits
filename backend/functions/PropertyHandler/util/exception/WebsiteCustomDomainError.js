@@ -6,6 +6,7 @@ export const WEBSITE_CUSTOM_DOMAIN_ERROR_CODES = Object.freeze({
   TENANT_CREATE_FAILED: "tenant_create_failed",
   SYNC_FAILED: "sync_failed",
   DOMAIN_REMOVE_FAILED: "domain_remove_failed",
+  TENANT_NOT_OWNED: "tenant_not_owned",
 });
 
 const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
@@ -16,6 +17,7 @@ const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
   [WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_CREATE_FAILED]: 502,
   [WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.SYNC_FAILED]: 502,
   [WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED]: 502,
+  [WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED]: 409,
 });
 
 export class WebsiteCustomDomainError extends Error {

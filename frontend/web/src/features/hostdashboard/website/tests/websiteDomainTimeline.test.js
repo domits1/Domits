@@ -79,6 +79,15 @@ describe("resolveDomainProgressCopy / resolveDomainReasonCopy", () => {
     expect(resolveDomainProgressCopy(domain({ status: "ACTIVE" }))).toMatch(/live/i);
   });
 
+  it("tells the host to add the CNAME and press check again while the domain waits for its record", () => {
+    const waiting = domain({ reason: "dns_required", certificateStatus: null });
+
+    expect(resolveDomainProgressCopy(waiting)).toMatch(
+      /create the cname record below at your dns provider, then press check again/i
+    );
+    expect(buildDomainTimeline(waiting).map((step) => step.state)).toEqual(["done", "current", "pending", "pending"]);
+  });
+
   it("explains a failure from its reason and always points at check again", () => {
     expect(resolveDomainReasonCopy("domain_in_use_elsewhere")).toMatch(
       /already connected to another website or service/i
@@ -103,6 +112,7 @@ describe("resolveDomainErrorCopy", () => {
     ["unauthorized", "panel", /sign in again/i],
     ["forbidden", "panel", /sign in again/i],
     ["sync_failed", "panel", /couldn't reach the domain service/i],
+    ["tenant_not_owned", "panel", /belongs to another website/i],
     ["tenant_create_failed", "panel", /couldn't reach the domain service/i],
     ["network_error", "panel", /couldn't reach the domain service/i],
     ["internal_error", "panel", /our side/i],

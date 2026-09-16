@@ -258,6 +258,16 @@ describe("WebsiteDomainPanel", () => {
     expect(screen.queryByRole("textbox", { name: /your domain/i })).not.toBeInTheDocument();
   });
 
+  it("tells the host to add the CNAME and press check again while the domain waits for its record", async () => {
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, { ...CUSTOM, reason: "dns_required", certificateStatus: null }]);
+    await openPanel();
+
+    expect(await screen.findByText(/then press check again/i)).toBeInTheDocument();
+    expect(screen.getByText("d3lo.cloudfront.net")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /check again/i })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /your domain/i })).not.toBeInTheDocument();
+  });
+
   it("explains a failed domain and hides the DNS record", async () => {
     fetchWebsiteDomains.mockResolvedValue([
       FALLBACK,
