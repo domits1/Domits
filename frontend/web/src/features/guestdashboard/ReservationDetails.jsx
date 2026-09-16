@@ -505,7 +505,9 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     },
     cancellationPolicy: resolveReservationCancellationPolicy({ booking, propertyDetails }),
     rules: buildRuleLabels(propertyDetails),
-    instructions: [],
+    instructions: propertyDetails?.checkIn?.checkIn?.from
+  ? [`Check-in: ${propertyDetails.checkIn.checkIn.from}–${propertyDetails.checkIn.checkIn.till}`]
+  : [],
   };
 };
 
