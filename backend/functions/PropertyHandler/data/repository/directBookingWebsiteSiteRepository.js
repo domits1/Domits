@@ -34,6 +34,14 @@ const resolveSchemaName = (client) => {
 };
 
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
+
+const runStatement = async (client, statement, parameters) => {
+  const result = await client.query(statement, parameters, true);
+  return {
+    records: Array.isArray(result?.records) ? result.records : [],
+    affected: Number(result?.affected) || 0,
+  };
+};
 const buildSiteSelectQuery = (tableName, whereClause) =>
   `SELECT
         ${SITE_SELECT_COLUMNS}
@@ -120,7 +128,8 @@ export class DirectBookingWebsiteSiteRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
 
-    const rows = await client.query(
+    const { records } = await runStatement(
+      client,
       `DELETE FROM ${tableName}
       WHERE property_id = $1 AND host_id = $2
       RETURNING
@@ -142,7 +151,7 @@ export class DirectBookingWebsiteSiteRepository {
       [propertyId, hostId]
     );
 
-    return mapSiteRow(rows?.[0] || null);
+    return mapSiteRow(records[0] || null);
   }
 
   async upsertSite({
@@ -293,7 +302,8 @@ export class DirectBookingWebsiteSiteRepository {
     const now = Date.now();
     const suspendedAt = normalizedStatus === "SUSPENDED" ? now : null;
 
-    const rows = await client.query(
+    const { records } = await runStatement(
+      client,
       `UPDATE ${tableName}
       SET
         status = $2,
@@ -319,6 +329,6 @@ export class DirectBookingWebsiteSiteRepository {
       [siteId, normalizedStatus, suspendedAt, now]
     );
 
-    return mapSiteRow(rows?.[0] || null);
+    return mapSiteRow(records[0] || null);
   }
 }
