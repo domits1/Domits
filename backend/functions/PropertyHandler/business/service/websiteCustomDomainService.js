@@ -89,6 +89,10 @@ export const isTenantOwnedBySite = (tenant, siteId) => {
   return !tenantName.startsWith(TENANT_NAME_PREFIX) || tenantName === `${TENANT_NAME_PREFIX}${siteId}`;
 };
 
+const logCloudFrontFailure = ({ operation, domain, siteId, error }) => {
+  console.error(`[CustomDomain] ${operation} failed for ${domain} (site ${siteId}).`, error);
+};
+
 const isForeignTenantError = (error) =>
   error instanceof WebsiteCustomDomainError && error.code === WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED;
 
@@ -213,6 +217,7 @@ export class WebsiteCustomDomainService {
           return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: LAST_ERROR_TENANT_NOT_OWNED };
         }
       }
+      logCloudFrontFailure({ operation: "CreateDistributionTenant", domain, siteId: site.id, error });
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_CREATE_FAILED,
         `Could not create a CloudFront tenant for ${domain}.`,
@@ -365,6 +370,7 @@ export class WebsiteCustomDomainService {
       cloudFrontState = await this.readCloudFrontState({ tenantId, domain: record.domain, siteId: site.id });
     } catch (error) {
       const isForeignTenant = isForeignTenantError(error);
+      logCloudFrontFailure({ operation: "Reading the tenant state", domain: record.domain, siteId: site.id, error });
       await this.domainRepository.updateDomainVerificationDetailsById(
         record.id,
         site.id,
@@ -448,6 +454,7 @@ export class WebsiteCustomDomainService {
       if (isForeignTenantError(error)) {
         throw error;
       }
+      logCloudFrontFailure({ operation: "Starting the removal", domain: record.domain, siteId: site.id, error });
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
         `Could not remove ${record.domain}.`,
@@ -509,6 +516,7 @@ export class WebsiteCustomDomainService {
       if (isForeignTenantError(error)) {
         throw error;
       }
+      logCloudFrontFailure({ operation: "Finishing the removal", domain: record.domain, siteId: site.id, error });
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.SYNC_FAILED,
         `Could not finish removing ${record.domain}.`,
