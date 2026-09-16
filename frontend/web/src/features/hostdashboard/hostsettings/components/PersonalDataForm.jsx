@@ -119,6 +119,19 @@ const PersonalDataForm = ({
     showAuthMfa,
     authStatus,
     breadcrumbPath,
+    isChangingPassword,
+    currentPassword,
+    newPassword,
+    confirmPassword,
+    passwordError,
+    isSavingPassword,
+    passwordChangeSuccess,
+    onOpenPasswordChange,
+    onClosePasswordChange,
+    onCurrentPasswordChange,
+    onNewPasswordChange,
+    onConfirmPasswordChange,
+    onSubmitPasswordChange,
 }) => {
     const { language: lang } = useContext(LanguageContext);
     const t = contentByLanguage[lang]?.settings?.personalData ?? contentByLanguage.en.settings.personalData;
@@ -429,6 +442,98 @@ const PersonalDataForm = ({
                     )}
                 </div>
 
+                <div className="pd-auth-row">
+                    <span className="pd-pref-label">{t.prefs.passwordLabel}</span>
+                    <span className="pd-password-dots">{"•".repeat(8)}</span>
+                    <button
+                        type="button"
+                        className="pd-verify-btn"
+                        onClick={onOpenPasswordChange}
+                    >
+                        {t.prefs.changePassword}
+                    </button>
+                </div>
+
+                {isChangingPassword && (
+                    <div className="pd-password-modal-overlay">
+                        <div
+                            className="pd-password-modal"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="pd-password-modal-title"
+                        >
+                            <h3 id="pd-password-modal-title" className="pd-password-modal-title">
+                                {t.prefs.changePasswordTitle}
+                            </h3>
+
+                            <div className="pd-field">
+                                <label className="pd-field-label" htmlFor="pd-current-password">
+                                    {t.prefs.currentPassword}
+                                </label>
+                                <input
+                                    id="pd-current-password"
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={onCurrentPasswordChange}
+                                    className="pd-field-input"
+                                    autoComplete="current-password"
+                                />
+                            </div>
+
+                            <div className="pd-field">
+                                <label className="pd-field-label" htmlFor="pd-new-password">
+                                    {t.prefs.newPassword}
+                                </label>
+                                <input
+                                    id="pd-new-password"
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={onNewPasswordChange}
+                                    className="pd-field-input"
+                                    autoComplete="new-password"
+                                />
+                            </div>
+
+                            <div className="pd-field">
+                                <label className="pd-field-label" htmlFor="pd-confirm-password">
+                                    {t.prefs.confirmPassword}
+                                </label>
+                                <input
+                                    id="pd-confirm-password"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={onConfirmPasswordChange}
+                                    className="pd-field-input"
+                                    autoComplete="new-password"
+                                />
+                            </div>
+
+                            {passwordError && <p className="pd-field-error pd-password-error">{passwordError}</p>}
+                            {passwordChangeSuccess && (
+                                <p className="pd-password-success">{t.prefs.passwordChanged}</p>
+                            )}
+
+                            <div className="pd-password-modal-actions">
+                                <button
+                                    type="button"
+                                    className="pd-photo-btn pd-photo-btn--secondary"
+                                    onClick={onClosePasswordChange}
+                                >
+                                    {t.buttons.cancel}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="pd-save-btn"
+                                    onClick={onSubmitPasswordChange}
+                                    disabled={isSavingPassword}
+                                >
+                                    {isSavingPassword ? t.buttons.saving : t.prefs.savePassword}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {showAuthMfa && (
                     <>
                         <div className="pd-auth-row">
@@ -499,6 +604,19 @@ PersonalDataForm.propTypes = {
     showAuthMfa: PropTypes.bool.isRequired,
     authStatus: authStatusShape.isRequired,
     breadcrumbPath: PropTypes.string,
+    isChangingPassword: PropTypes.bool.isRequired,
+    currentPassword: PropTypes.string.isRequired,
+    newPassword: PropTypes.string.isRequired,
+    confirmPassword: PropTypes.string.isRequired,
+    passwordError: PropTypes.string,
+    isSavingPassword: PropTypes.bool.isRequired,
+    passwordChangeSuccess: PropTypes.bool.isRequired,
+    onOpenPasswordChange: PropTypes.func.isRequired,
+    onClosePasswordChange: PropTypes.func.isRequired,
+    onCurrentPasswordChange: PropTypes.func.isRequired,
+    onNewPasswordChange: PropTypes.func.isRequired,
+    onConfirmPasswordChange: PropTypes.func.isRequired,
+    onSubmitPasswordChange: PropTypes.func.isRequired,
 };
 
 export default PersonalDataForm;

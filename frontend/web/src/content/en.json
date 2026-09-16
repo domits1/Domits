@@ -1171,12 +1171,21 @@
         "phoneVerifiedYes": "Phone verified: Yes",
         "phoneVerifiedNo": "Phone verified: No",
         "authenticatorApp": "Authenticator app",
-        "totp": "App-based codes (TOTP)"
+        "totp": "App-based codes (TOTP)",
+        "passwordLabel": "Password",
+        "changePassword": "Change Password",
+        "changePasswordTitle": "Change your password",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "savePassword": "Save password",
+        "passwordChanged": "Password changed successfully."
       },
       "buttons": {
         "save": "Save changes",
         "saving": "Saving...",
-        "saved": "Saved!"
+        "saved": "Saved!",
+        "cancel": "Cancel"
       }
     },
     "communicationPreferences": {
