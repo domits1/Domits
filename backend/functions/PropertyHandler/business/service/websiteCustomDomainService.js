@@ -445,6 +445,9 @@ export class WebsiteCustomDomainService {
     try {
       return await this.startRemoval({ site, record });
     } catch (error) {
+      if (isForeignTenantError(error)) {
+        throw error;
+      }
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
         `Could not remove ${record.domain}.`,
@@ -453,12 +456,33 @@ export class WebsiteCustomDomainService {
     }
   }
 
+  async refuseForeignTenant({ record, tenant }) {
+    if (!tenant || isTenantOwnedBySite(tenant, record.siteId)) {
+      return;
+    }
+    await this.domainRepository.updateDomainVerificationDetailsById(
+      record.id,
+      record.siteId,
+      this.buildVerificationDetails({
+        previous: record.verificationDetails,
+        domain: record.domain,
+        reason: record.verificationDetails?.reason || "",
+        lastError: LAST_ERROR_TENANT_NOT_OWNED,
+      })
+    );
+    throw new WebsiteCustomDomainError(
+      WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED,
+      `The CloudFront tenant for ${record.domain} belongs to another website.`
+    );
+  }
+
   async startRemoval({ site, record }) {
     const tenantId = record.verificationDetails?.tenantId;
     const tenant = tenantId ? await this.tenantRepository.getTenant(tenantId) : null;
     if (!tenant) {
       return this.deleteCustomDomainRecord({ site, record });
     }
+    await this.refuseForeignTenant({ record, tenant });
     if (!tenant.enabled) {
       return this.finishRemovalWhenDeployed({ site, record, tenant });
     }
@@ -475,12 +499,16 @@ export class WebsiteCustomDomainService {
     const tenantId = record.verificationDetails?.tenantId;
     try {
       const tenant = tenantId ? await this.tenantRepository.getTenant(tenantId) : null;
+      await this.refuseForeignTenant({ record, tenant });
       if (tenant?.enabled) {
         await this.tenantRepository.disableTenant({ tenantId, etag: tenant.etag });
         return record;
       }
       return await this.finishRemovalWhenDeployed({ site, record, tenant });
     } catch (error) {
+      if (isForeignTenantError(error)) {
+        throw error;
+      }
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.SYNC_FAILED,
         `Could not finish removing ${record.domain}.`,
@@ -521,7 +549,10 @@ export class WebsiteCustomDomainService {
   }
 
   async deleteCustomDomainRecord({ site, record }) {
-    await this.domainRepository.deleteDomainById(record.id);
+    const deleted = await this.domainRepository.deleteDomainById(record.id, record.siteId);
+    if (!deleted) {
+      return null;
+    }
     await this.recordEventSafely(site, EVENT_DOMAIN_REMOVED, {
       siteId: site.id,
       domain: record.domain,

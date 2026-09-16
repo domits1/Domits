@@ -46,7 +46,7 @@ const buildDomainRepository = (overrides = {}) => ({
   updateDomainVerificationDetailsById: jest.fn(async (id, siteId, verificationDetails) =>
     buildRecord({ id, siteId, verificationDetails })
   ),
-  deleteDomainById: jest.fn().mockResolvedValue(undefined),
+  deleteDomainById: jest.fn().mockResolvedValue(true),
   ...overrides,
 });
 
@@ -593,7 +593,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
 
     expect(tenantRepository.getTenant).not.toHaveBeenCalled();
     expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1");
+    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
     expect(eventRepository.recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "SITE_DOMAIN_REMOVED",
@@ -613,7 +613,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
 
     expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
     expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1");
+    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
   });
 
   it("leaves a removing domain untouched on sync while the disable is still rolling out", async () => {
@@ -638,7 +638,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() })).resolves.toBeNull();
 
     expect(tenantRepository.deleteTenant).toHaveBeenCalledWith({ tenantId: TENANT.id, etag: "E3TAG" });
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1");
+    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
     expect(eventRepository.recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "SITE_DOMAIN_REMOVED",
@@ -654,7 +654,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() })).resolves.toBeNull();
 
     expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1");
+    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
   });
 
   it("leaves the row on REMOVING when the disable fails and retries the disable on the next sync", async () => {
@@ -689,6 +689,79 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.removeCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
     });
+  });
+
+  it("refuses to disable a tenant named for another site and records the error on the row", async () => {
+    const domainRepository = buildDomainRepository({
+      getCustomDomainBySiteId: jest.fn().mockResolvedValue(buildRecord({ status: "ACTIVE" })),
+    });
+    const tenantRepository = buildTenantRepository({
+      getTenant: jest.fn().mockResolvedValue({ ...TENANT, name: "dbw-site-2" }),
+    });
+    const { service, eventRepository } = buildService({ domainRepository, tenantRepository });
+
+    await expect(service.removeCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED,
+      statusCode: 409,
+    });
+
+    expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
+    expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+    expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
+    expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
+    expect(domainRepository.updateDomainVerificationDetailsById).toHaveBeenCalledWith(
+      "domain-1",
+      SITE.id,
+      expect.objectContaining({ lastError: "tenant_not_owned" })
+    );
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("refuses to delete a tenant named for another site while finishing a removal", async () => {
+    const tenantRepository = buildTenantRepository({
+      getTenant: jest.fn().mockResolvedValue({ ...DISABLED_DEPLOYED_TENANT, name: "dbw-site-2" }),
+    });
+    const { service, domainRepository } = buildService({ tenantRepository });
+
+    await expect(service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED,
+    });
+
+    expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+    expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
+    expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
+    expect(domainRepository.updateDomainVerificationDetailsById).toHaveBeenCalledWith(
+      "domain-1",
+      SITE.id,
+      expect.objectContaining({ reason: "removal_requested", lastError: "tenant_not_owned" })
+    );
+  });
+
+  it("still removes a legacy tenant whose name has no dbw- prefix", async () => {
+    const tenantRepository = buildTenantRepository({
+      getTenant: jest.fn().mockResolvedValue({ ...DISABLED_DEPLOYED_TENANT, name: "developers-test" }),
+    });
+    const { service, domainRepository } = buildService({ tenantRepository });
+
+    await expect(service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() })).resolves.toBeNull();
+
+    expect(tenantRepository.deleteTenant).toHaveBeenCalledWith({ tenantId: TENANT.id, etag: "E3TAG" });
+    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
+  });
+
+  it("treats a row that was already deleted as removed without recording a second event", async () => {
+    const domainRepository = buildDomainRepository({
+      getCustomDomainBySiteId: jest
+        .fn()
+        .mockResolvedValue(buildRecord({ verificationDetails: { tenantId: null, reason: "dns_required" } })),
+      deleteDomainById: jest.fn().mockResolvedValue(false),
+    });
+    const { service, eventRepository } = buildService({ domainRepository });
+
+    await expect(service.removeCustomDomain({ site: SITE, domain: DOMAIN })).resolves.toBeNull();
+
+    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
   });
 });
 
