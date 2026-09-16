@@ -219,6 +219,14 @@ export default function HostFinanceTab() {
   const processingAmount = balanceView.incomingTotal;
   const availableAmount = balanceView.availableTotal;
 
+  let statusTitle = "You are almost there";
+
+  if (!hasProperty) {
+    statusTitle = "List your property to get started";
+  } else if (!isConnected) {
+    statusTitle = "Securely connect your account to receive payouts";
+  }
+
   return (
     <main className="page-Host finance-page">
       <div className="finance-page-heading">
@@ -257,13 +265,7 @@ export default function HostFinanceTab() {
             </div>
             <div className="finance-status-content">
               <div>
-                <strong>
-                  {!hasProperty
-                    ? "List your property to get started"
-                    : !isConnected
-                      ? "Securely connect your account to receive payouts"
-                      : "You are almost there"}
-                </strong>
+                <strong>{statusTitle}</strong>
                 {!hasProperty ? (
                   <p>Add your property details before connecting Stripe and making it visible to guests.</p>
                 ) : !isConnected ? (
