@@ -23,6 +23,12 @@ const CLOUDFRONT_DOMAIN_STATUS_ACTIVE = "active";
 const DNS_STATUS_VALID = "valid-configuration";
 const SDK_ERROR_DOMAIN_IN_USE = "CNAMEAlreadyExists";
 const SDK_ERROR_TENANT_NAME_EXISTS = "EntityAlreadyExists";
+const SDK_ERROR_INVALID_ARGUMENT = "InvalidArgument";
+const OWNERSHIP_ERROR_PATTERN = /ownership/i;
+const REASON_DNS_REQUIRED = "dns_required";
+const REASON_TENANT_CREATED = "tenant_created";
+const REASON_DOMAIN_IN_USE = "domain_in_use_elsewhere";
+const LAST_ERROR_TENANT_NOT_OWNED = "tenant_not_owned";
 const EVENT_DOMAIN_REQUESTED = "SITE_DOMAIN_REQUESTED";
 const EVENT_TYPE_BY_STATUS = Object.freeze({
   [DOMAIN_STATUS.VERIFIED]: "SITE_DOMAIN_VERIFIED",
@@ -70,6 +76,20 @@ export const normalizeWebsiteCustomDomain = (domain) => {
 
   return normalizedDomain;
 };
+
+export const isCustomDomainSyncable = (record) =>
+  Boolean(record?.verificationDetails?.tenantId) || record?.verificationDetails?.reason === REASON_DNS_REQUIRED;
+
+export const isTenantOwnedBySite = (tenant, siteId) => {
+  const tenantName = String(tenant?.name || "");
+  return !tenantName.startsWith(TENANT_NAME_PREFIX) || tenantName === `${TENANT_NAME_PREFIX}${siteId}`;
+};
+
+const isForeignTenantError = (error) =>
+  error instanceof WebsiteCustomDomainError && error.code === WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED;
+
+const isOwnershipError = (error) =>
+  error?.name === SDK_ERROR_INVALID_ARGUMENT && OWNERSHIP_ERROR_PATTERN.test(error?.message || "");
 
 const findTenantDomainStatus = (tenant, domain) =>
   (tenant?.domains || []).find((domainEntry) => domainEntry.domain === domain)?.status || "";
@@ -172,15 +192,21 @@ export class WebsiteCustomDomainService {
     };
 
     try {
-      return { tenant: await this.tenantRepository.createTenant(tenantInput), lastError: null };
+      return { tenant: await this.tenantRepository.createTenant(tenantInput), reason: REASON_TENANT_CREATED, lastError: null };
     } catch (error) {
       if (error?.name === SDK_ERROR_DOMAIN_IN_USE) {
-        return { tenant: null, lastError: SDK_ERROR_DOMAIN_IN_USE };
+        return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: SDK_ERROR_DOMAIN_IN_USE };
+      }
+      if (isOwnershipError(error)) {
+        return { tenant: null, reason: REASON_DNS_REQUIRED, lastError: SDK_ERROR_INVALID_ARGUMENT };
       }
       if (error?.name === SDK_ERROR_TENANT_NAME_EXISTS) {
         const adoptedTenant = await this.tenantRepository.getTenantByDomain(domain);
+        if (adoptedTenant && isTenantOwnedBySite(adoptedTenant, site.id)) {
+          return { tenant: adoptedTenant, reason: REASON_TENANT_CREATED, lastError: null };
+        }
         if (adoptedTenant) {
-          return { tenant: adoptedTenant, lastError: null };
+          return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: LAST_ERROR_TENANT_NOT_OWNED };
         }
       }
       throw new WebsiteCustomDomainError(
@@ -215,21 +241,16 @@ export class WebsiteCustomDomainService {
       return this.syncCustomDomain({ site, domainRecord: existingRecord });
     }
 
-    const { tenant, lastError } = await this.createOrAdoptTenant({ site, domain: normalizedDomain });
-    const status = tenant ? DOMAIN_STATUS.PENDING : DOMAIN_STATUS.FAILED;
-    const reason = tenant ? "tenant_created" : "domain_in_use_elsewhere";
     const record = await this.domainRepository.ensureDomain({
       siteId: site.id,
       domain: normalizedDomain,
       domainType: DOMAIN_TYPE_CUSTOM,
-      status,
+      status: DOMAIN_STATUS.PENDING,
       isPrimary: false,
       verificationDetails: this.buildVerificationDetails({
         previous: existingRecord?.verificationDetails,
         domain: normalizedDomain,
-        tenant,
-        reason,
-        lastError,
+        reason: REASON_DNS_REQUIRED,
       }),
       lastCheckedAt: this.clock(),
     });
@@ -237,12 +258,42 @@ export class WebsiteCustomDomainService {
     await this.recordEventSafely(site, EVENT_DOMAIN_REQUESTED, {
       siteId: site.id,
       domain: normalizedDomain,
-      status,
-      tenantId: tenant?.id || null,
+      status: DOMAIN_STATUS.PENDING,
+      tenantId: null,
     });
-    await this.recordStatusEventSafely({ site, domain: normalizedDomain, previousStatus: null, status, reason });
 
     return record;
+  }
+
+  async provisionTenant({ site, record }) {
+    const { tenant, reason, lastError } = await this.createOrAdoptTenant({ site, domain: record.domain });
+    const isFailed = !tenant && reason !== REASON_DNS_REQUIRED;
+    const status = isFailed ? DOMAIN_STATUS.FAILED : DOMAIN_STATUS.PENDING;
+    const updatedRecord = await this.domainRepository.updateDomainStatusById(
+      record.id,
+      site.id,
+      status,
+      this.buildVerificationDetails({
+        previous: record.verificationDetails,
+        domain: record.domain,
+        tenant,
+        reason,
+        lastError,
+      })
+    );
+    if (!updatedRecord) {
+      if (tenant) {
+        await this.tenantRepository.disableTenant({ tenantId: tenant.id, etag: tenant.etag });
+      }
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
+        `${record.domain} was connected to another website while it was being set up.`
+      );
+    }
+
+    await this.recordStatusEventSafely({ site, domain: record.domain, previousStatus: record.status, status, reason });
+
+    return updatedRecord;
   }
 
   async recordStatusEventSafely({ site, domain, previousStatus, status, reason }) {
@@ -254,11 +305,17 @@ export class WebsiteCustomDomainService {
     await this.recordEventSafely(site, eventType, { siteId: site.id, domain, previousStatus, status, reason });
   }
 
-  async readCloudFrontState({ tenantId, domain }) {
+  async readCloudFrontState({ tenantId, domain, siteId }) {
     const [initialTenant, certificate] = await Promise.all([
       this.tenantRepository.getTenant(tenantId),
       this.tenantRepository.getManagedCertificate(tenantId),
     ]);
+    if (initialTenant && !isTenantOwnedBySite(initialTenant, siteId)) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED,
+        `The CloudFront tenant for ${domain} belongs to another website.`
+      );
+    }
     const shouldApplyCertificate =
       Boolean(initialTenant) && certificate?.status === CERTIFICATE_STATUS_ISSUED && !initialTenant.certificateArn;
     const tenant = shouldApplyCertificate
@@ -281,31 +338,39 @@ export class WebsiteCustomDomainService {
       throw new TypeError("Missing website site.");
     }
 
-    const record = domainRecord || (await this.domainRepository.getCustomDomainBySiteId(site.id));
-    if (!record) {
+    const storedRecord = domainRecord || (await this.domainRepository.getCustomDomainBySiteId(site.id));
+    if (!storedRecord) {
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
         "This website has no custom domain."
       );
     }
+    const record = storedRecord.verificationDetails?.tenantId
+      ? storedRecord
+      : await this.provisionTenant({ site, record: storedRecord });
     const tenantId = record.verificationDetails?.tenantId;
     if (!tenantId) {
-      return this.requestCustomDomain({ site, domain: record.domain });
+      return record;
     }
 
     let cloudFrontState;
     try {
-      cloudFrontState = await this.readCloudFrontState({ tenantId, domain: record.domain });
+      cloudFrontState = await this.readCloudFrontState({ tenantId, domain: record.domain, siteId: site.id });
     } catch (error) {
+      const isForeignTenant = isForeignTenantError(error);
       await this.domainRepository.updateDomainVerificationDetailsById(
         record.id,
+        site.id,
         this.buildVerificationDetails({
           previous: record.verificationDetails,
           domain: record.domain,
           reason: record.verificationDetails?.reason || "",
-          lastError: error?.name || error?.message || "sync_failed",
+          lastError: isForeignTenant ? LAST_ERROR_TENANT_NOT_OWNED : error?.name || error?.message || "sync_failed",
         })
       );
+      if (isForeignTenant) {
+        throw error;
+      }
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.SYNC_FAILED,
         `Could not read the CloudFront status for ${record.domain}.`,
@@ -320,6 +385,7 @@ export class WebsiteCustomDomainService {
     });
     const updatedRecord = await this.domainRepository.updateDomainStatusById(
       record.id,
+      site.id,
       status,
       this.buildVerificationDetails({
         previous: record.verificationDetails,
@@ -328,6 +394,12 @@ export class WebsiteCustomDomainService {
         reason,
       })
     );
+    if (!updatedRecord) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+        "This website has no custom domain."
+      );
+    }
 
     await this.recordStatusEventSafely({
       site,

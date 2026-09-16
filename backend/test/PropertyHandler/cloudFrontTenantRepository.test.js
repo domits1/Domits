@@ -127,4 +127,20 @@ describe("CloudFrontTenantRepository", () => {
     });
     expect(sentInput(client, 1)).toEqual({ Identifier: "dt_1", Domain: "www.example.com" });
   });
+
+  it("disables a tenant by sending only Enabled false with the etag and returns the new tenant state", async () => {
+    const client = buildClient({
+      UpdateDistributionTenantCommand: {
+        ...TENANT_RESPONSE,
+        ETag: "E2TAG",
+        DistributionTenant: { ...TENANT_RESPONSE.DistributionTenant, Enabled: false, Status: "InProgress" },
+      },
+    });
+    const repository = new CloudFrontTenantRepository({ client });
+
+    const tenant = await repository.disableTenant({ tenantId: "dt_1", etag: "E1TAG" });
+
+    expect(sentInput(client)).toEqual({ Id: "dt_1", IfMatch: "E1TAG", Enabled: false });
+    expect(tenant).toMatchObject({ etag: "E2TAG", enabled: false, status: "InProgress" });
+  });
 });

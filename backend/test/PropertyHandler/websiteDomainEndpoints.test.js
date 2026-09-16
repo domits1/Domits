@@ -144,6 +144,22 @@ describe("GET /property/website/domains", () => {
     expect(parseBody(response).domains).toHaveLength(2);
   });
 
+  it("syncs a domain that is still waiting for its DNS record so the tenant gets created on load", async () => {
+    const waitingDomain = {
+      ...CUSTOM_DOMAIN,
+      verificationDetails: { ...CUSTOM_DOMAIN.verificationDetails, tenantId: null, reason: "dns_required" },
+    };
+    const controller = buildController({ customDomain: waitingDomain, domains: [FALLBACK_DOMAIN, waitingDomain] });
+
+    const response = await controller.listWebsiteDomains(buildEvent({ query: { siteId: SITE.id } }));
+
+    expect(response.statusCode).toBe(200);
+    expect(controller.websiteCustomDomainService.syncCustomDomain).toHaveBeenCalledWith({
+      site: SITE,
+      domainRecord: waitingDomain,
+    });
+  });
+
   it("returns a failed domain that never got a tenant as stored instead of re-requesting it", async () => {
     const failedDomain = {
       ...CUSTOM_DOMAIN,
