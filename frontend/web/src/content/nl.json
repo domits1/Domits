@@ -1209,14 +1209,41 @@
       "breadcrumb": "Bedrijf",
       "title": "Bedrijf",
       "subtitle": "Beheer je bedrijfsinformatie.",
-      "section": "Bedrijfsgegevens",
+      "privateSection": "Privé",
+      "privateSectionNote": "Alleen voor jou zichtbaar — gebruikt voor facturen en rapporten.",
+      "publicSection": "Openbare informatie",
+      "publicSectionNote": "Zichtbaar voor gasten op je advertenties.",
       "fields": {
         "companyName": "Bedrijfsnaam",
         "placeholder": "Voer bedrijfsnaam in",
-        "hint": "Deze informatie verschijnt op facturen en rapporten."
+        "hint": "Deze informatie verschijnt op facturen en rapporten.",
+        "displayName": "Weergavenaam",
+        "displayNamePlaceholder": "Naam die gasten zien",
+        "logo": "Logo",
+        "logoUpload": "Logo uploaden",
+        "logoUploading": "Bezig met uploaden...",
+        "logoRemove": "Verwijderen",
+        "description": "Beschrijving",
+        "descriptionPlaceholder": "Vertel gasten over je bedrijf",
+        "website": "Website",
+        "websitePlaceholder": "https://voorbeeld.nl",
+        "publicEmail": "Openbaar e-mailadres",
+        "publicEmailPlaceholder": "contact@voorbeeld.nl",
+        "publicPhone": "Openbaar telefoonnummer",
+        "publicPhonePlaceholder": "+31 6 12345678",
+        "country": "Land",
+        "countryPlaceholder": "Voer land in"
+      },
+      "errors": {
+        "website": "Voer een geldige website-URL in.",
+        "publicEmail": "Voer een geldig e-mailadres in.",
+        "publicPhone": "Voer een geldig telefoonnummer in.",
+        "logo": "Logo uploaden mislukt. Probeer het opnieuw."
       },
       "buttons": {
-        "comingSoon": "Binnenkort beschikbaar"
+        "save": "Opslaan",
+        "saving": "Bezig met opslaan...",
+        "saved": "Opgeslagen"
       }
     },
     "compliance": {

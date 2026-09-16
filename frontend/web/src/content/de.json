@@ -1209,14 +1209,41 @@
       "breadcrumb": "Unternehmen",
       "title": "Unternehmen",
       "subtitle": "Verwalte deine Unternehmensinformationen.",
-      "section": "Unternehmensdetails",
+      "privateSection": "Privat",
+      "privateSectionNote": "Nur für dich sichtbar — wird für Rechnungen und Berichte verwendet.",
+      "publicSection": "Öffentliche Informationen",
+      "publicSectionNote": "Für Gäste auf deinen Inseraten sichtbar.",
       "fields": {
         "companyName": "Unternehmensname",
         "placeholder": "Unternehmensnamen eingeben",
-        "hint": "Diese Informationen erscheinen auf Rechnungen und Berichten."
+        "hint": "Diese Informationen erscheinen auf Rechnungen und Berichten.",
+        "displayName": "Anzeigename",
+        "displayNamePlaceholder": "Name, den Gäste sehen",
+        "logo": "Logo",
+        "logoUpload": "Logo hochladen",
+        "logoUploading": "Wird hochgeladen...",
+        "logoRemove": "Entfernen",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Erzähle Gästen von deinem Unternehmen",
+        "website": "Website",
+        "websitePlaceholder": "https://beispiel.de",
+        "publicEmail": "Öffentliche E-Mail-Adresse",
+        "publicEmailPlaceholder": "kontakt@beispiel.de",
+        "publicPhone": "Öffentliche Telefonnummer",
+        "publicPhonePlaceholder": "+49 30 12345678",
+        "country": "Land",
+        "countryPlaceholder": "Land eingeben"
+      },
+      "errors": {
+        "website": "Gib eine gültige Website-URL ein.",
+        "publicEmail": "Gib eine gültige E-Mail-Adresse ein.",
+        "publicPhone": "Gib eine gültige Telefonnummer ein.",
+        "logo": "Logo-Upload fehlgeschlagen. Bitte versuche es erneut."
       },
       "buttons": {
-        "comingSoon": "Demnächst verfügbar"
+        "save": "Speichern",
+        "saving": "Wird gespeichert...",
+        "saved": "Gespeichert"
       }
     },
     "compliance": {

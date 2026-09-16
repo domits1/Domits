@@ -1208,14 +1208,41 @@
       "breadcrumb": "Company",
       "title": "Company",
       "subtitle": "Manage your company information.",
-      "section": "Company Details",
+      "privateSection": "Private",
+      "privateSectionNote": "Only visible to you — used for invoices and reports.",
+      "publicSection": "Public Information",
+      "publicSectionNote": "Visible to guests on your listings.",
       "fields": {
         "companyName": "Company name",
         "placeholder": "Enter company name",
-        "hint": "This information will appear on invoices and reports."
+        "hint": "This information will appear on invoices and reports.",
+        "displayName": "Display name",
+        "displayNamePlaceholder": "Name shown to guests",
+        "logo": "Logo",
+        "logoUpload": "Upload logo",
+        "logoUploading": "Uploading...",
+        "logoRemove": "Remove",
+        "description": "Description",
+        "descriptionPlaceholder": "Tell guests about your company",
+        "website": "Website",
+        "websitePlaceholder": "https://example.com",
+        "publicEmail": "Public email",
+        "publicEmailPlaceholder": "contact@example.com",
+        "publicPhone": "Public phone",
+        "publicPhonePlaceholder": "+31 6 12345678",
+        "country": "Country",
+        "countryPlaceholder": "Enter country"
+      },
+      "errors": {
+        "website": "Enter a valid website URL.",
+        "publicEmail": "Enter a valid email address.",
+        "publicPhone": "Enter a valid phone number.",
+        "logo": "Failed to upload logo. Please try again."
       },
       "buttons": {
-        "comingSoon": "Coming soon"
+        "save": "Save",
+        "saving": "Saving...",
+        "saved": "Saved"
       }
     },
     "compliance": {
