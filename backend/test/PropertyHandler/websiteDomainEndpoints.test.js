@@ -67,6 +67,7 @@ const buildController = ({
   controller.websiteCustomDomainService = {
     requestCustomDomain: jest.fn().mockResolvedValue(CUSTOM_DOMAIN),
     syncCustomDomain: jest.fn().mockResolvedValue({ ...CUSTOM_DOMAIN, status: "VERIFIED" }),
+    removeCustomDomain: jest.fn().mockResolvedValue({ ...CUSTOM_DOMAIN, status: "REMOVING" }),
     ...service,
   };
   return controller;
@@ -167,6 +168,75 @@ describe("GET /property/website/domains", () => {
     expect(response.statusCode).toBe(200);
     expect(controller.websiteCustomDomainService.syncCustomDomain).not.toHaveBeenCalled();
     expect(parseBody(response).domains).toEqual([expect.objectContaining({ domainType: "FALLBACK", dnsRecord: null })]);
+  });
+});
+
+describe("DELETE /property/website/domains", () => {
+  const removeQuery = { siteId: SITE.id, domain: "www.example.com" };
+
+  it("starts the removal for the site and domain in the query and returns the removing domain", async () => {
+    const controller = buildController();
+
+    const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
+
+    expect(response.statusCode).toBe(200);
+    expect(controller.websiteCustomDomainService.removeCustomDomain).toHaveBeenCalledWith({
+      site: SITE,
+      domain: "www.example.com",
+    });
+    expect(parseBody(response).domain).toMatchObject({ domain: "www.example.com", status: "REMOVING" });
+  });
+
+  it("refuses a remove without the domain the host is looking at", async () => {
+    const controller = buildController();
+
+    const response = await controller.removeWebsiteDomain(
+      buildEvent({ method: "DELETE", query: { siteId: SITE.id } })
+    );
+
+    expect(response.statusCode).toBe(400);
+    expect(parseBody(response).error.code).toBe("invalid_domain");
+    expect(controller.websiteCustomDomainService.removeCustomDomain).not.toHaveBeenCalled();
+  });
+
+  it("answers with a null domain once the record is gone", async () => {
+    const controller = buildController({ service: { removeCustomDomain: jest.fn().mockResolvedValue(null) } });
+
+    const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ domain: null });
+  });
+
+  it("answers 404 for another host's site and never reaches the service", async () => {
+    const controller = buildController({ authorizedHostId: "host-2" });
+
+    const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
+
+    expect(response.statusCode).toBe(404);
+    expect(parseBody(response).error.code).toBe("site_not_found");
+    expect(controller.websiteCustomDomainService.removeCustomDomain).not.toHaveBeenCalled();
+  });
+
+  it("maps a removal failure to the error envelope", async () => {
+    const controller = buildController({
+      service: {
+        removeCustomDomain: jest
+          .fn()
+          .mockRejectedValue(
+            new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED, "Could not remove.")
+          ),
+      },
+    });
+
+    const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
+
+    expect(response.statusCode).toBe(502);
+    expect(parseBody(response).error).toEqual({
+      code: "domain_remove_failed",
+      message: "Could not remove.",
+      requestId: "req-1",
+    });
   });
 });
 

@@ -2,7 +2,7 @@ import Database from "database";
 import { randomUUID } from "node:crypto";
 
 const DOMAIN_ALLOWED_TYPES = new Set(["FALLBACK", "CUSTOM"]);
-const DOMAIN_ALLOWED_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
+const DOMAIN_ALLOWED_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED", "REMOVING"]);
 const SITE_DOMAIN_SELECT_COLUMNS = `id,
         site_id,
         domain,
@@ -59,7 +59,7 @@ const normalizeDomainType = (domainType) => {
 const normalizeDomainStatus = (status) => {
   const normalizedStatus = String(status || "").trim().toUpperCase();
   if (!DOMAIN_ALLOWED_STATUSES.has(normalizedStatus)) {
-    throw new TypeError("website domain status must be PENDING, VERIFIED, ACTIVE, FAILED, or DISABLED.");
+    throw new TypeError("website domain status must be PENDING, VERIFIED, ACTIVE, FAILED, DISABLED, or REMOVING.");
   }
 
   return normalizedStatus;
@@ -108,6 +108,18 @@ const mapSiteDomainRow = (row) => {
 export class DirectBookingWebsiteDomainRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
+  }
+
+  async deleteDomainById(domainId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    await client.query(
+      `DELETE FROM ${tableName}
+      WHERE id = $1`,
+      [domainId]
+    );
   }
 
   async deleteDomainsBySiteId(siteId) {

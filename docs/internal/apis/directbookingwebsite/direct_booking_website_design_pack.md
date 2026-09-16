@@ -54,7 +54,7 @@ Important alignment points for the rest of this document:
 
 - The currently implemented schema uses `standalone_site`, `standalone_site_domain`, `standalone_site_draft`, and `standalone_site_event`.
 - Earlier split-table ideas such as `standalone_site_theme`, `standalone_site_content`, and `standalone_site_section` are not the current implementation.
-- Custom-domain activation on the backend shipped on 2026-09-10 (see "Custom domain activation" under the state model), the host endpoints on 2026-09-11, and the dashboard panel on 2026-09-14. Promotion to primary and removal are still pending.
+- Custom-domain activation on the backend shipped on 2026-09-10 (see "Custom domain activation" under the state model), the host endpoints on 2026-09-11, the dashboard panel on 2026-09-14, and removal on 2026-09-16. Promotion to primary is still pending.
 - Quote, checkout, and booking sections later in this document remain forward design, not current runtime behavior.
 - The current frontend editor has progressed into section-scoped contracts for shared website areas such as:
   - `residenceSection`
@@ -304,7 +304,9 @@ Lambda configuration (PropertyHandler): `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTR
 
 Host endpoints shipped on 2026-09-11; see "Host custom domain API" under the API contract. The dashboard panel shipped on 2026-09-14: a collapsed "Custom domain" section on each website card in the website tab that lists the site's domains with their status, connects a subdomain, shows the CNAME record with copy buttons, renders the four-step timeline (added, DNS record found, certificate issued, live) from the domain status, and offers "Check again". The panel loads only when opened, validates the subdomain rule before calling the API, and maps every error code and failure reason to host copy (`domains/websiteDomainTimeline.js`).
 
-Not yet implemented: promotion of an `ACTIVE` custom domain to primary; removal (`DELETE /property/website/domains?siteId=`, which disables the tenant, then deletes it once the disable has deployed); retry after `validation-timed-out` (needs a new managed certificate request); a partial unique index on `(site_id) WHERE domain_type = 'CUSTOM'` to make the one-domain rule a database guarantee.
+Removal (`DELETE /property/website/domains?siteId=&domain=`) is two CloudFront steps because `DeleteDistributionTenant` answers `ResourceNotDisabled` while the tenant is enabled. The request moves the row to `REMOVING` (reason `removal_requested`) first and then disables the tenant with its current ETag, so a failed status write can never leave a disabled tenant behind an `ACTIVE` row; if the disable itself fails, the next sync retries it. The next sync (panel load or Check again) reads the tenant again and, once it is disabled and `Deployed` (about fifteen seconds on a real tenant), deletes it with the post-disable ETag and deletes the row, recording `SITE_DOMAIN_REMOVED`. A row without a tenant (`dns_required`, or a failed request) is deleted straight away, and a tenant that is already gone at CloudFront counts as removed. While the disable is still rolling out the row is left untouched.
+
+Not yet implemented: promotion of an `ACTIVE` custom domain to primary; retry after `validation-timed-out` (needs a new managed certificate request); a partial unique index on `(site_id) WHERE domain_type = 'CUSTOM'` to make the one-domain rule a database guarantee.
 
 ### Optional later `quote.status`
 Future only:
@@ -833,11 +835,11 @@ Host-authenticated routes on PropertyHandler. The caller must be in the `Host` g
 | `GET` | `/property/website/domains?siteId=` | query `siteId` | `200 { siteId, domains: [DomainView] }`; the custom domain is refreshed from CloudFront first when it has a tenant, and a refresh failure returns the stored status instead of an error |
 | `POST` | `/property/website/domains` | `{ siteId, domain }` | `201 { domain: DomainView }`; a domain already used by another CloudFront resource is still `201` with `status: "FAILED"` and `reason: "domain_in_use_elsewhere"` |
 | `POST` | `/property/website/domains/verify` | `{ siteId }` | `200 { domain: DomainView }`, the "check again" action |
-| `DELETE` | `/property/website/domains?siteId=` | query `siteId` | planned with removal |
+| `DELETE` | `/property/website/domains?siteId=&domain=` | query `siteId` and the `domain` the host is looking at | `200 { domain: DomainView }` with `status: "REMOVING"` while the tenant disable rolls out, or `200 { domain: null }` once the row is gone; a `domain` that is no longer the site's stored custom domain answers `404 domain_not_found` so a stale tab reloads instead of removing the wrong domain; `POST .../verify` also answers `{ domain: null }` when a sync finishes the removal |
 
 `DomainView` is the host-facing shape, `toHostWebsiteDomainView`: `domain`, `domainType`, `status`, `isPrimary`, `dnsRecord { type, name, value }` (custom domains only), `dnsVerified`, `certificateStatus`, `reason`, `lastError`, `lastCheckedAt`. Tenant IDs, certificate ARNs and connection group IDs never leave the backend.
 
-Error codes and statuses: `invalid_request` 400, `invalid_domain` 400, `unauthorized` 401, `forbidden` 403, `site_not_found` 404, `domain_not_found` 404, `domain_taken` 409, `domain_limit_reached` 409, `tenant_create_failed` 502, `sync_failed` 502, `internal_error` 500.
+Error codes and statuses: `invalid_request` 400, `invalid_domain` 400, `unauthorized` 401, `forbidden` 403, `site_not_found` 404, `domain_not_found` 404, `domain_taken` 409, `domain_limit_reached` 409, `tenant_create_failed` 502, `sync_failed` 502, `domain_remove_failed` 502, `internal_error` 500.
 
 API Gateway, after merge: resource `domains` under `/property/website` with GET and POST, child resource `verify` with POST, all Lambda-proxy to PropertyHandler, OPTIONS on both resources allowing `Authorization` and `Content-Type`, then a stage deploy. The Lambda needs the three `DIRECT_BOOKING_WEBSITE_CLOUDFRONT_*` variables and the CloudFront IAM actions listed under "Custom domain activation"; until they exist these routes answer `500 internal_error` and log the missing variable, and the rest of the Lambda is unaffected.
 
@@ -1050,6 +1052,7 @@ Raw events are written to `main.standalone_site_event`.
 | `domain_verified` | the managed certificate was issued and applied; shipped as `SITE_DOMAIN_VERIFIED` |
 | `domain_activated` | CloudFront reports the custom domain active; shipped as `SITE_DOMAIN_ACTIVATED` |
 | `domain_failed` | the domain is in use elsewhere, the certificate failed, or the tenant is gone; shipped as `SITE_DOMAIN_FAILED` |
+| `domain_removed` | the host removed the custom domain and its row is deleted; shipped as `SITE_DOMAIN_REMOVED` |
 | `booking_requested` | guest submits a booking request without payment; the booking is created with status `Inquiry` and the host still has to confirm. Distinct from `booking_completed`, which is reserved for a paid booking |
 | `checkout_started` | v2 only: booking funnel begins after quote validation |
 | `booking_completed` | v2 only: booking completes successfully |
@@ -1069,6 +1072,7 @@ Rows in `main.standalone_site_event` use the uppercase, `SITE_`-prefixed convent
 | `domain_verified` | `SITE_DOMAIN_VERIFIED` |
 | `domain_activated` | `SITE_DOMAIN_ACTIVATED` |
 | `domain_failed` | `SITE_DOMAIN_FAILED` |
+| `domain_removed` | `SITE_DOMAIN_REMOVED` |
 
 This mapping covers the quote, booking and custom domain events. Publish and page-view events were already stored under their own names before this section was written (`WEBSITE_SITE_PUBLISHED`, `WEBSITE_SITE_UNPUBLISHED`, `PUBLIC_SITE_OPENED`, `SITE_LCP_RECORDED`); the v2 checkout and confirmation events are not recorded yet.
 

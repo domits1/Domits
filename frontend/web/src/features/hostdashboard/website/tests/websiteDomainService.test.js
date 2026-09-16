@@ -2,6 +2,7 @@ import {
   WEBSITE_DOMAIN_CLIENT_ERROR_CODES,
   connectWebsiteDomain,
   fetchWebsiteDomains,
+  removeWebsiteDomain,
   verifyWebsiteDomain,
 } from "../services/websiteDomainService";
 
@@ -84,10 +85,30 @@ describe("websiteDomainService", () => {
       code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
       status: 200,
     });
-    fetch.mockResolvedValue(jsonResponse(200, { domain: null }));
+    fetch.mockResolvedValue(jsonResponse(200, { ok: true }));
     await expect(verifyWebsiteDomain("site-1")).rejects.toMatchObject({
       code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
     });
+  });
+
+  it("removes through DELETE with siteId in the query and reports the removing domain", async () => {
+    fetch.mockResolvedValue(jsonResponse(200, { domain: { ...DOMAIN_VIEW, status: "REMOVING" } }));
+
+    await expect(removeWebsiteDomain({ siteId: "site-1", domain: "www.example.com" })).resolves.toMatchObject({
+      status: "REMOVING",
+    });
+
+    const [url, options] = fetch.mock.calls[0];
+    expect(url).toMatch(/\/website\/domains\?siteId=site-1&domain=www\.example\.com$/);
+    expect(options.method).toBe("DELETE");
+    expect(options.body).toBeNull();
+  });
+
+  it("treats an explicit null domain from remove or verify as the domain being gone", async () => {
+    fetch.mockResolvedValue(jsonResponse(200, { domain: null }));
+
+    await expect(removeWebsiteDomain({ siteId: "site-1", domain: "www.example.com" })).resolves.toBeNull();
+    await expect(verifyWebsiteDomain("site-1")).resolves.toBeNull();
   });
 
   it("reports a failed body read as a network error", async () => {

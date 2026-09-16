@@ -7,6 +7,7 @@ import { WEBSITE_DOMAINS_STATUS, useWebsiteDomains } from "./useWebsiteDomains";
 import {
   buildDomainTimeline,
   isDomainHalted,
+  isDomainRemoving,
   resolveDomainProgressCopy,
   resolveDomainReasonCopy,
 } from "./websiteDomainTimeline";
@@ -17,6 +18,7 @@ const STATUS_LABELS = Object.freeze({
   ACTIVE: "Live",
   FAILED: "Failed",
   DISABLED: "Turned off",
+  REMOVING: "Removing",
 });
 const STEP_CLASS_BY_STATE = Object.freeze({
   done: "stepDone",
@@ -163,15 +165,17 @@ ConnectDomainForm.propTypes = {
   fieldError: PropTypes.string.isRequired,
 };
 
-function CustomDomainStatus({ domain, onCheckAgain, isChecking }) {
+function CustomDomainStatus({ domain, onCheckAgain, onRemove, isChecking, isRemoving }) {
   const isHalted = isDomainHalted(domain);
+  const isBeingRemoved = isDomainRemoving(domain);
   const isLive = domain.status === "ACTIVE";
-  const showDnsRecord = Boolean(domain.dnsRecord) && !isHalted;
+  const showDnsRecord = Boolean(domain.dnsRecord) && !isHalted && !isBeingRemoved;
+  const isBusy = isChecking || isRemoving;
   const checkedAt = formatCheckedAt(domain.lastCheckedAt);
 
   return (
     <div className={styles.customDomain}>
-      <DomainTimeline steps={buildDomainTimeline(domain)} />
+      {isBeingRemoved ? null : <DomainTimeline steps={buildDomainTimeline(domain)} />}
       <p className={isHalted ? styles.reason : styles.progress}>
         {isHalted ? resolveDomainReasonCopy(domain.reason) : resolveDomainProgressCopy(domain)}
       </p>
@@ -183,9 +187,18 @@ function CustomDomainStatus({ domain, onCheckAgain, isChecking }) {
       ) : null}
       {showDnsRecord && !isLive ? <DnsRecordBlock record={domain.dnsRecord} /> : null}
       <div className={builderStyles.buttonRow}>
-        <button type="button" className={builderStyles.secondaryButton} onClick={onCheckAgain} disabled={isChecking}>
+        <button type="button" className={builderStyles.secondaryButton} onClick={onCheckAgain} disabled={isBusy}>
           {isChecking ? "Checking…" : "Check again"}
         </button>
+        {isBeingRemoved ? null : (
+          <button
+            type="button"
+            className={builderStyles.secondaryButton}
+            onClick={() => onRemove(domain.domain)}
+            disabled={isBusy}>
+            {isRemoving ? "Removing…" : "Remove domain"}
+          </button>
+        )}
         {checkedAt ? <span className={builderStyles.metaText}>Last checked: {checkedAt}</span> : null}
       </div>
     </div>
@@ -194,13 +207,16 @@ function CustomDomainStatus({ domain, onCheckAgain, isChecking }) {
 
 CustomDomainStatus.propTypes = {
   domain: PropTypes.shape({
+    domain: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
     reason: PropTypes.string,
     dnsRecord: PropTypes.shape({}),
     lastCheckedAt: PropTypes.number,
   }).isRequired,
   onCheckAgain: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
   isChecking: PropTypes.bool.isRequired,
+  isRemoving: PropTypes.bool.isRequired,
 };
 
 function DomainPanelBody({ state }) {
@@ -242,7 +258,13 @@ function DomainPanelBody({ state }) {
         </p>
       ) : null}
       {state.customDomain ? (
-        <CustomDomainStatus domain={state.customDomain} onCheckAgain={state.checkAgain} isChecking={state.isChecking} />
+        <CustomDomainStatus
+          domain={state.customDomain}
+          onCheckAgain={state.checkAgain}
+          onRemove={state.remove}
+          isChecking={state.isChecking}
+          isRemoving={state.isRemoving}
+        />
       ) : (
         <ConnectDomainForm onConnect={state.connect} isConnecting={state.isConnecting} fieldError={state.fieldError} />
       )}
@@ -259,8 +281,10 @@ DomainPanelBody.propTypes = {
     fieldError: PropTypes.string.isRequired,
     isConnecting: PropTypes.bool.isRequired,
     isChecking: PropTypes.bool.isRequired,
+    isRemoving: PropTypes.bool.isRequired,
     connect: PropTypes.func.isRequired,
     checkAgain: PropTypes.func.isRequired,
+    remove: PropTypes.func.isRequired,
     reload: PropTypes.func.isRequired,
   }).isRequired,
 };

@@ -147,6 +147,9 @@ const handleDelete = async (event) => {
   if (isPath(event, "/property/images")) {
     return controller.deletePropertyImage(event);
   }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.removeWebsiteDomain(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.deleteWebsiteDraft(event);
   }
