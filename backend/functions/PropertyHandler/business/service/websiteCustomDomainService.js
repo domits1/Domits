@@ -11,6 +11,7 @@ const DOMAIN_STATUS = Object.freeze({
   ACTIVE: "ACTIVE",
   FAILED: "FAILED",
   DISABLED: "DISABLED",
+  REMOVING: "REMOVING",
 });
 const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const HOSTNAME_MAX_LENGTH = 253;
@@ -20,6 +21,9 @@ const CERTIFICATE_STATUS_ISSUED = "issued";
 const CERTIFICATE_STATUS_PENDING = "pending-validation";
 const FAILED_CERTIFICATE_STATUSES = new Set(["validation-timed-out", "failed", "revoked", "expired"]);
 const CLOUDFRONT_DOMAIN_STATUS_ACTIVE = "active";
+const CLOUDFRONT_TENANT_STATUS_DEPLOYED = "Deployed";
+const REASON_REMOVAL_REQUESTED = "removal_requested";
+const EVENT_DOMAIN_REMOVED = "SITE_DOMAIN_REMOVED";
 const DNS_STATUS_VALID = "valid-configuration";
 const SDK_ERROR_DOMAIN_IN_USE = "CNAMEAlreadyExists";
 const SDK_ERROR_TENANT_NAME_EXISTS = "EntityAlreadyExists";
@@ -345,6 +349,9 @@ export class WebsiteCustomDomainService {
         "This website has no custom domain."
       );
     }
+    if (storedRecord.status === DOMAIN_STATUS.REMOVING) {
+      return this.continueRemoval({ site, record: storedRecord });
+    }
     const record = storedRecord.verificationDetails?.tenantId
       ? storedRecord
       : await this.provisionTenant({ site, record: storedRecord });
@@ -410,5 +417,148 @@ export class WebsiteCustomDomainService {
     });
 
     return updatedRecord;
+  }
+
+  async removeCustomDomain({ site, domain }) {
+    if (!site?.id) {
+      throw new TypeError("Missing website site.");
+    }
+
+    const record = await this.domainRepository.getCustomDomainBySiteId(site.id);
+    if (!record) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+        "This website has no custom domain."
+      );
+    }
+    const requestedDomain = String(domain || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\.$/, "");
+    if (requestedDomain !== record.domain) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+        `${requestedDomain || "That domain"} is no longer this website's custom domain.`
+      );
+    }
+
+    try {
+      return await this.startRemoval({ site, record });
+    } catch (error) {
+      if (isForeignTenantError(error)) {
+        throw error;
+      }
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
+        `Could not remove ${record.domain}.`,
+        { cause: error }
+      );
+    }
+  }
+
+  async refuseForeignTenant({ record, tenant }) {
+    if (!tenant || isTenantOwnedBySite(tenant, record.siteId)) {
+      return;
+    }
+    await this.domainRepository.updateDomainVerificationDetailsById(
+      record.id,
+      record.siteId,
+      this.buildVerificationDetails({
+        previous: record.verificationDetails,
+        domain: record.domain,
+        reason: record.verificationDetails?.reason || "",
+        lastError: LAST_ERROR_TENANT_NOT_OWNED,
+      })
+    );
+    throw new WebsiteCustomDomainError(
+      WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED,
+      `The CloudFront tenant for ${record.domain} belongs to another website.`
+    );
+  }
+
+  async startRemoval({ site, record }) {
+    const tenantId = record.verificationDetails?.tenantId;
+    const tenant = tenantId ? await this.tenantRepository.getTenant(tenantId) : null;
+    if (!tenant) {
+      return this.deleteCustomDomainRecord({ site, record });
+    }
+    await this.refuseForeignTenant({ record, tenant });
+    if (!tenant.enabled) {
+      return this.finishRemovalWhenDeployed({ site, record, tenant });
+    }
+
+    const removingRecord = await this.markDomainRemoving({ record, tenant });
+    const disabledTenant = await this.tenantRepository.disableTenant({ tenantId, etag: tenant.etag });
+    if (!disabledTenant) {
+      return this.deleteCustomDomainRecord({ site, record: removingRecord });
+    }
+    return removingRecord;
+  }
+
+  async continueRemoval({ site, record }) {
+    const tenantId = record.verificationDetails?.tenantId;
+    try {
+      const tenant = tenantId ? await this.tenantRepository.getTenant(tenantId) : null;
+      await this.refuseForeignTenant({ record, tenant });
+      if (tenant?.enabled) {
+        await this.tenantRepository.disableTenant({ tenantId, etag: tenant.etag });
+        return record;
+      }
+      return await this.finishRemovalWhenDeployed({ site, record, tenant });
+    } catch (error) {
+      if (isForeignTenantError(error)) {
+        throw error;
+      }
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.SYNC_FAILED,
+        `Could not finish removing ${record.domain}.`,
+        { cause: error }
+      );
+    }
+  }
+
+  async finishRemovalWhenDeployed({ site, record, tenant }) {
+    if (tenant && tenant.status !== CLOUDFRONT_TENANT_STATUS_DEPLOYED) {
+      return record.status === DOMAIN_STATUS.REMOVING ? record : this.markDomainRemoving({ record, tenant });
+    }
+    if (tenant) {
+      await this.tenantRepository.deleteTenant({ tenantId: tenant.id, etag: tenant.etag });
+    }
+    return this.deleteCustomDomainRecord({ site, record });
+  }
+
+  async markDomainRemoving({ record, tenant }) {
+    const removingRecord = await this.domainRepository.updateDomainStatusById(
+      record.id,
+      record.siteId,
+      DOMAIN_STATUS.REMOVING,
+      this.buildVerificationDetails({
+        previous: record.verificationDetails,
+        domain: record.domain,
+        tenant,
+        reason: REASON_REMOVAL_REQUESTED,
+      })
+    );
+    if (!removingRecord) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+        "This website has no custom domain."
+      );
+    }
+    return removingRecord;
+  }
+
+  async deleteCustomDomainRecord({ site, record }) {
+    const deleted = await this.domainRepository.deleteDomainById(record.id, record.siteId);
+    if (!deleted) {
+      return null;
+    }
+    await this.recordEventSafely(site, EVENT_DOMAIN_REMOVED, {
+      siteId: site.id,
+      domain: record.domain,
+      previousStatus: record.status,
+      tenantId: record.verificationDetails?.tenantId || null,
+    });
+    return null;
   }
 }

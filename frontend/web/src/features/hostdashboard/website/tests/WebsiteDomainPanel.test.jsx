@@ -7,6 +7,7 @@ import {
   WebsiteDomainError,
   connectWebsiteDomain,
   fetchWebsiteDomains,
+  removeWebsiteDomain,
   verifyWebsiteDomain,
 } from "../services/websiteDomainService";
 
@@ -19,6 +20,7 @@ jest.mock("../services/websiteDomainService", () => {
     fetchWebsiteDomains: jest.fn(),
     connectWebsiteDomain: jest.fn(),
     verifyWebsiteDomain: jest.fn(),
+    removeWebsiteDomain: jest.fn(),
   };
 });
 
@@ -183,6 +185,77 @@ describe("WebsiteDomainPanel", () => {
     expect(await screen.findByText(/going live/i)).toBeInTheDocument();
     expect(verifyWebsiteDomain).toHaveBeenCalledWith("site-1");
     expect(screen.getByText("Verified")).toBeInTheDocument();
+  });
+
+  it("starts removing a connected domain and swaps the timeline for the removal line", async () => {
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, { ...CUSTOM, status: "ACTIVE", dnsVerified: true }]);
+    removeWebsiteDomain.mockResolvedValue({ ...CUSTOM, status: "REMOVING", reason: "removal_requested" });
+    await openPanel();
+    await screen.findByText("Domain live");
+
+    fireEvent.click(screen.getByRole("button", { name: /remove domain/i }));
+
+    expect(await screen.findByText(/this domain is being removed/i)).toBeInTheDocument();
+    expect(removeWebsiteDomain).toHaveBeenCalledWith({ siteId: "site-1", domain: "www.example.com" });
+    expect(screen.getByText("www.example.com")).toBeInTheDocument();
+    expect(screen.getByText("Removing")).toBeInTheDocument();
+    expect(screen.queryByText("Domain live")).not.toBeInTheDocument();
+    expect(screen.queryByText("d3lo.cloudfront.net")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /remove domain/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /check again/i })).toBeInTheDocument();
+  });
+
+  it("reloads instead of removing when the shown domain is no longer the stored one", async () => {
+    const replacement = {
+      ...CUSTOM,
+      domain: "www.new.com",
+      status: "ACTIVE",
+      dnsVerified: true,
+      dnsRecord: { ...CUSTOM.dnsRecord, name: "www.new.com" },
+    };
+    fetchWebsiteDomains
+      .mockResolvedValueOnce([FALLBACK, { ...CUSTOM, status: "ACTIVE", dnsVerified: true }])
+      .mockResolvedValueOnce([FALLBACK, replacement]);
+    removeWebsiteDomain.mockRejectedValue(
+      domainError("domain_not_found", "www.example.com is no longer this website's custom domain.")
+    );
+    await openPanel();
+    await screen.findByRole("link", { name: "www.example.com" });
+
+    fireEvent.click(screen.getByRole("button", { name: /remove domain/i }));
+
+    expect(await screen.findByRole("link", { name: "www.new.com" })).toBeInTheDocument();
+    expect(removeWebsiteDomain).toHaveBeenCalledWith({ siteId: "site-1", domain: "www.example.com" });
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("www.example.com")).not.toBeInTheDocument();
+    expect(screen.queryByText(/this domain is being removed/i)).not.toBeInTheDocument();
+  });
+
+  it("returns to the connect form once check again reports the domain gone", async () => {
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, { ...CUSTOM, status: "REMOVING", reason: "removal_requested" }]);
+    verifyWebsiteDomain.mockResolvedValue(null);
+    await openPanel();
+    await screen.findByText(/this domain is being removed/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /check again/i }));
+
+    expect(await screen.findByRole("textbox", { name: /your domain/i })).toBeInTheDocument();
+    expect(screen.queryByText("www.example.com")).not.toBeInTheDocument();
+    expect(screen.getByText(FALLBACK.domain)).toBeInTheDocument();
+  });
+
+  it("keeps the removal line when the tenant is not rolled out yet", async () => {
+    const removing = { ...CUSTOM, status: "REMOVING", reason: "removal_requested" };
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, removing]);
+    verifyWebsiteDomain.mockResolvedValue(removing);
+    await openPanel();
+    await screen.findByText(/this domain is being removed/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /check again/i }));
+
+    await waitFor(() => expect(verifyWebsiteDomain).toHaveBeenCalledWith("site-1"));
+    expect(screen.getByText(/press check again in a moment/i)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /your domain/i })).not.toBeInTheDocument();
   });
 
   it("tells the host to add the CNAME and press check again while the domain waits for its record", async () => {

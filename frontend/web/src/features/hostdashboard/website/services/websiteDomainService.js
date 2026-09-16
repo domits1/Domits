@@ -106,6 +106,9 @@ export const connectWebsiteDomain = async ({ siteId, domain }) => {
   return requireDomainView(payload, fallbackMessage);
 };
 
+const resolveDomainViewOrRemoved = (payload, fallbackMessage) =>
+  payload.domain === null ? null : requireDomainView(payload, fallbackMessage);
+
 export const verifyWebsiteDomain = async (siteId) => {
   const fallbackMessage = "We could not check this domain.";
   const payload = await sendWebsiteDomainRequest(
@@ -113,5 +116,15 @@ export const verifyWebsiteDomain = async (siteId) => {
     { method: "POST", body: JSON.stringify({ siteId }) },
     fallbackMessage
   );
-  return requireDomainView(payload, fallbackMessage);
+  return resolveDomainViewOrRemoved(payload, fallbackMessage);
+};
+
+export const removeWebsiteDomain = async ({ siteId, domain }) => {
+  const fallbackMessage = "We could not remove this domain.";
+  const payload = await sendWebsiteDomainRequest(
+    `${WEBSITE_DOMAINS_URL}?siteId=${encodeURIComponent(siteId)}&domain=${encodeURIComponent(domain)}`,
+    { method: "DELETE" },
+    fallbackMessage
+  );
+  return resolveDomainViewOrRemoved(payload, fallbackMessage);
 };

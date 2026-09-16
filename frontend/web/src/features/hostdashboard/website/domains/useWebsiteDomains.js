@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchWebsiteSiteByPropertyId } from "../services/websiteSiteService";
-import { connectWebsiteDomain, fetchWebsiteDomains, verifyWebsiteDomain } from "../services/websiteDomainService";
+import {
+  connectWebsiteDomain,
+  fetchWebsiteDomains,
+  removeWebsiteDomain,
+  verifyWebsiteDomain,
+} from "../services/websiteDomainService";
 import { resolveDomainErrorCopy, validateCustomDomainInput } from "./websiteDomainTimeline";
 
 export const WEBSITE_DOMAINS_STATUS = Object.freeze({
@@ -15,6 +20,7 @@ const DOMAIN_TYPE_CUSTOM = "CUSTOM";
 const SITE_STATUS_PUBLISHED = "PUBLISHED";
 const ACTION_CONNECT = "connect";
 const ACTION_CHECK = "check";
+const ACTION_REMOVE = "remove";
 const ERROR_SCOPE_FIELD = "field";
 const ERROR_SCOPE_PANEL = "panel";
 const RELOAD_ON_ERROR_CODES = new Set(["domain_limit_reached", "domain_not_found"]);
@@ -118,6 +124,16 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
     [runDomainAction, siteId]
   );
 
+  const remove = useCallback(
+    (domain) =>
+      runDomainAction({
+        action: ACTION_REMOVE,
+        request: () => removeWebsiteDomain({ siteId, domain }),
+        errorScope: ERROR_SCOPE_PANEL,
+      }),
+    [runDomainAction, siteId]
+  );
+
   return {
     status,
     domains,
@@ -126,8 +142,10 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
     fieldError,
     isConnecting: pendingAction === ACTION_CONNECT,
     isChecking: pendingAction === ACTION_CHECK,
+    isRemoving: pendingAction === ACTION_REMOVE,
     connect,
     checkAgain,
+    remove,
     reload: load,
   };
 };

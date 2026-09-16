@@ -2,6 +2,8 @@ const DEFAULT_FALLBACK_DOMAIN_SUFFIX = "direct.domits.com";
 const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const MINIMUM_LABEL_COUNT = 3;
 const HALTED_STATUSES = new Set(["FAILED", "DISABLED"]);
+const STATUS_REMOVING = "REMOVING";
+const REMOVING_COPY = "This domain is being removed. Press Check again in a moment to finish.";
 const COMPLETED_STEPS_BY_STATUS = Object.freeze({ ACTIVE: 4, VERIFIED: 3 });
 const REASON_DOMAIN_IN_USE = "domain_in_use_elsewhere";
 const REASON_DNS_REQUIRED = "dns_required";
@@ -79,6 +81,8 @@ const resolveStepState = (index, completedSteps, haltedState) => {
 
 export const isDomainHalted = (domain) => HALTED_STATUSES.has(domain?.status);
 
+export const isDomainRemoving = (domain) => domain?.status === STATUS_REMOVING;
+
 export const buildDomainTimeline = (domain) => {
   if (!domain) {
     return [];
@@ -92,6 +96,9 @@ export const buildDomainTimeline = (domain) => {
 export const resolveDomainProgressCopy = (domain) => {
   if (!domain || isDomainHalted(domain)) {
     return "";
+  }
+  if (isDomainRemoving(domain)) {
+    return REMOVING_COPY;
   }
   if (domain.reason === REASON_DNS_REQUIRED) {
     return DNS_REQUIRED_COPY;

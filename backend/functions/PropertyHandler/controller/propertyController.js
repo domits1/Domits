@@ -3104,6 +3104,21 @@ export class PropertyController {
         });
     }
 
+    // -------------------------
+    // DELETE /property/website/domains?siteId=&domain=
+    // -------------------------
+    async removeWebsiteDomain(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site, body }) => {
+            const domain = cleanWebsiteText(event?.queryStringParameters?.domain || body.domain);
+            if (!domain) {
+                throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
+            }
+
+            const record = await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
+            return { statusCode: 200, body: { domain: toHostWebsiteDomainView(record) } };
+        });
+    }
+
     async handleWebsiteDomainRequest(event, handle) {
         const requestId = cleanWebsiteText(event?.requestContext?.requestId) || randomUUID();
         try {

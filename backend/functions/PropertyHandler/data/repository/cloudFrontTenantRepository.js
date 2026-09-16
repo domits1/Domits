@@ -1,6 +1,7 @@
 import {
   CloudFrontClient,
   CreateDistributionTenantCommand,
+  DeleteDistributionTenantCommand,
   GetDistributionTenantByDomainCommand,
   GetDistributionTenantCommand,
   GetManagedCertificateDetailsCommand,
@@ -117,6 +118,13 @@ export class CloudFrontTenantRepository {
         await this.client.send(new UpdateDistributionTenantCommand({ Id: tenantId, IfMatch: etag, Enabled: false }))
       )
     );
+  }
+
+  deleteTenant({ tenantId, etag }) {
+    return nullWhenNotFound(async () => {
+      await this.client.send(new DeleteDistributionTenantCommand({ Id: tenantId, IfMatch: etag }));
+      return true;
+    });
   }
 
   async verifyDns({ tenantId, domain }) {

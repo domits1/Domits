@@ -143,4 +143,21 @@ describe("CloudFrontTenantRepository", () => {
     expect(sentInput(client)).toEqual({ Id: "dt_1", IfMatch: "E1TAG", Enabled: false });
     expect(tenant).toMatchObject({ etag: "E2TAG", enabled: false, status: "InProgress" });
   });
+
+  it("deletes a tenant with the etag and reports an already deleted tenant as null", async () => {
+    const client = buildClient({ DeleteDistributionTenantCommand: {} });
+    const repository = new CloudFrontTenantRepository({ client });
+
+    await expect(repository.deleteTenant({ tenantId: "dt_1", etag: "E3TAG" })).resolves.toBe(true);
+    expect(sentInput(client)).toEqual({ Id: "dt_1", IfMatch: "E3TAG" });
+
+    const goneClient = buildClient({
+      DeleteDistributionTenantCommand: () => {
+        throw buildNotFoundError();
+      },
+    });
+    await expect(
+      new CloudFrontTenantRepository({ client: goneClient }).deleteTenant({ tenantId: "dt_1", etag: "E3TAG" })
+    ).resolves.toBeNull();
+  });
 });
