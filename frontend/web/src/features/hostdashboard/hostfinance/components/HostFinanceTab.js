@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -14,6 +14,8 @@ import {
 import InvoicesSection from "./InvoicesSection";
 import { RefreshFunctions } from "../hooks/refreshFunctions.js";
 import { formatMoney } from "../utils/formatMoney";
+import { getHostListings } from "../services/stripeAccountService";
+import { isFinanceDemoMode } from "../mocks/financeDemoData";
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
@@ -70,6 +72,7 @@ function HelpPanel() {
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
+  const [listingState, setListingState] = useState({ hasProperty: false, isLive: false, loading: true });
   const {
     toast,
     payouts,
@@ -94,20 +97,59 @@ export default function HostFinanceTab() {
   const isBalanceLoading = Boolean(loadingStates.hostBalance);
   const isPayoutScheduleLoading = Boolean(loadingStates.getPayoutSchedule);
   const isConnected = Boolean(accountId && onboardingComplete);
+  const demoMode = isFinanceDemoMode();
+  const hasProperty = listingState.hasProperty;
   const hasActivity = charges.length > 0 || payouts.length > 0 || balanceView.total > 0;
-  const isLive = isConnected && hasActivity;
+  const isLive = isConnected && listingState.isLive;
+  const showFinancialData = isLive || (demoMode && hasActivity);
   const currency = balanceView.currency || "EUR";
 
   const recentCharges = useMemo(() => charges.slice(0, 4), [charges]);
   const recentPayouts = useMemo(() => payouts.slice(0, 3), [payouts]);
 
+  useEffect(() => {
+    let isCancelled = false;
+    getHostListings()
+      .then((listings) => {
+        if (isCancelled) return;
+        setListingState({
+          hasProperty: listings.length > 0,
+          isLive: listings.some(
+            (listing) => String(listing?.property?.status || "").toUpperCase() === "ACTIVE"
+          ),
+          loading: false,
+        });
+      })
+      .catch((error) => {
+        if (isCancelled) return;
+        console.error("Error fetching host listings for finance status:", error);
+        setListingState({ hasProperty: false, isLive: false, loading: false });
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [demoMode]);
+
   const ctaLabel = () => {
-    if (!isProcessing) return isConnected ? (isLive ? "Withdraw Funds" : "Go live") : "Connect Stripe";
+    if (!isProcessing) {
+      if (!isConnected) return "Connect Stripe";
+      if (!hasProperty) return "List your property";
+      return isLive ? "Withdraw Funds" : "Go live";
+    }
     return processingStep === "opening" ? "Opening link..." : "Working on it...";
   };
 
   const handlePrimaryAction = () => {
-    if (isConnected && !isLive) {
+    if (!isConnected) {
+      handleStripeAction();
+      return;
+    }
+    if (!hasProperty) {
+      navigate("/hostonboarding");
+      return;
+    }
+    if (!isLive) {
       navigate("/hostdashboard/listings");
       return;
     }
@@ -148,26 +190,34 @@ export default function HostFinanceTab() {
         ) : (
           <>
             <div className="finance-steps">
-              <Step number="1" label="List your property" complete />
+              <Step number="1" label="Connect Stripe" complete={isConnected} active={!isConnected} />
               <span className="finance-step-divider" />
-              <Step number="2" label="Connect Stripe" complete={isConnected} active={!isConnected} />
+              <Step number="2" label="List your property" complete={hasProperty} active={isConnected && !hasProperty} />
               <span className="finance-step-divider" />
-              <Step number="3" label="Go live" complete={isLive} active={isConnected && !isLive} />
+              <Step number="3" label="Go live" complete={isLive} active={isConnected && hasProperty && !isLive} />
             </div>
             <div className="finance-status-content">
               <div>
-                <strong>{isConnected ? "You are almost there" : "Securely connect your account to receive payouts"}</strong>
-                {isConnected ? (
-                  <p>Make your property visible to guests and start to<br />receive bookings.</p>
-                ) : (
+                <strong>
+                  {!isConnected
+                    ? "Securely connect your account to receive payouts"
+                    : !hasProperty
+                      ? "List your property to get started"
+                      : "You are almost there"}
+                </strong>
+                {!isConnected ? (
                   <ul>
                     <li>Takes 2–3 minutes</li>
                     <li>You&apos;ll be redirected to Stripe</li>
                     <li>Your data is secure and encrypted</li>
                   </ul>
+                ) : !hasProperty ? (
+                  <p>Add your property details before making it visible to guests.</p>
+                ) : (
+                  <p>Make your property visible to guests and start to<br />receive bookings.</p>
                 )}
               </div>
-              <button type="button" className="finance-button" onClick={handlePrimaryAction} disabled={isProcessing || isAccountLoading}>
+              <button type="button" className="finance-button" onClick={handlePrimaryAction} disabled={isProcessing || isAccountLoading || listingState.loading}>
                 {ctaLabel()}
               </button>
             </div>
@@ -180,18 +230,18 @@ export default function HostFinanceTab() {
         <div className="finance-balance-grid">
           <div className="finance-balance-card">
             <CircleDollarSign size={24} aria-hidden="true" />
-            <div><b>{isBalanceLoading ? "—" : getAmount(isLive ? availableAmount : 0, currency)}</b><span>Next payout</span></div>
-            {isLive && <small>{nextPayout?.arrivalDate || "Scheduled"}</small>}
+            <div><b>{isBalanceLoading ? "—" : getAmount(showFinancialData ? availableAmount : 0, currency)}</b><span>Next payout</span></div>
+            {showFinancialData && <small>{nextPayout?.arrivalDate || "Scheduled"}</small>}
           </div>
           <div className="finance-balance-card">
             <WalletCards size={24} aria-hidden="true" />
-            <div><b>{isBalanceLoading ? "—" : getAmount(isLive ? processingAmount : 0, currency)}</b><span>Arriving soon</span></div>
-            {isLive && <small>1–3 days</small>}
+            <div><b>{isBalanceLoading ? "—" : getAmount(showFinancialData ? processingAmount : 0, currency)}</b><span>Arriving soon</span></div>
+            {showFinancialData && <small>1–3 days</small>}
           </div>
           <div className="finance-balance-card">
             <Building2 size={24} aria-hidden="true" />
-            <div><b>{isBalanceLoading ? "—" : getAmount(isLive ? processingAmount : 0, currency)}</b><span>Processing</span></div>
-            {isLive && <small>Pending confirmation</small>}
+            <div><b>{isBalanceLoading ? "—" : getAmount(showFinancialData ? processingAmount : 0, currency)}</b><span>Processing</span></div>
+            {showFinancialData && <small>Pending confirmation</small>}
           </div>
         </div>
       </section>
@@ -201,7 +251,7 @@ export default function HostFinanceTab() {
           <section className="finance-section">
             <div className="finance-section-title"><h2>Upcoming Payouts</h2>{isLive && <ArrowRight size={17} aria-hidden="true" />}</div>
             <div className="finance-card finance-payouts-card">
-              {recentPayouts.length === 0 ? (
+              {!showFinancialData || recentPayouts.length === 0 ? (
                 <EmptyState title="No upcoming payouts" description="Payouts will appear here once you receive bookings." />
               ) : (
                 recentPayouts.map((payout, index) => (
@@ -219,7 +269,7 @@ export default function HostFinanceTab() {
               <h2>Transactions</h2>
               {isLive && <button type="button" className="finance-export-button"><Download size={12} aria-hidden="true" /> Export</button>}
             </div>
-            {!isLive ? (
+            {!showFinancialData ? (
               <div className="finance-card"><EmptyState title="No transactions yet" description="Your earnings and payouts will appear here once your property is live." /></div>
             ) : (
               <div className="finance-card finance-transactions-card">
