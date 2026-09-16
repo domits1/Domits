@@ -137,6 +137,11 @@ const routeDefinitions = [
   },
   {
     matches: (method, path) =>
+      method === "POST" && /\/threads\/[^/]+\/unread$/.test(String(path || "")),
+    handle: (event) => messageController.markThreadUnread(event),
+  },
+  {
+    matches: (method, path) =>
       method === "POST" &&
       String(path || "").includes("/integrations/") &&
       String(path || "").endsWith("/ingest/messages"),
