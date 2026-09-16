@@ -16,7 +16,7 @@ const getRequiredAccessToken = () => {
   return accessToken;
 };
 
-const buildAuthorizedHeaders = (contentType = null) => {
+export const buildAuthorizedHeaders = (contentType = null) => {
   const headers = {
     Authorization: getRequiredAccessToken(),
   };

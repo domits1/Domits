@@ -641,3 +641,62 @@ describe("ContactList manual mark read/unread", () => {
     expect(within(reservationHostRow).queryByText("Mark as unread")).not.toBeInTheDocument();
   });
 });
+
+describe("ContactList search filtering", () => {
+  const contactsForSearch = [
+    {
+      partnerId: "host-1",
+      hostId: "host-1",
+      guestId: "guest-1",
+      givenName: "Reservation Host",
+      threadId: "thread-1",
+      propertyId: "property-1",
+      bookingId: "booking-1",
+      latestMessage: { text: "See you soon", createdAt: "2026-06-01T10:00:00.000Z" },
+    },
+    {
+      partnerId: "guest-2",
+      hostId: "host-1",
+      guestId: "guest-2",
+      givenName: "Zoro Roronoa",
+      threadId: "thread-2",
+      propertyId: "property-2",
+      bookingId: "booking-42",
+      latestMessage: { text: "Looking forward to it", createdAt: "2026-06-02T10:00:00.000Z" },
+    },
+  ];
+
+  const renderForSearch = () =>
+    render(
+      <ContactList
+        userId="host-1"
+        dashboardType="host"
+        contacts={contactsForSearch}
+        pendingContacts={[]}
+        loading={false}
+        setContacts={jest.fn()}
+        onContactClick={jest.fn()}
+        onCloseChat={jest.fn()}
+        onNewMessage={jest.fn()}
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+
+  test("host can search conversations by contact name", () => {
+    renderForSearch();
+
+    fireEvent.change(screen.getByPlaceholderText("Search or start new chat"), { target: { value: "Zoro" } });
+
+    expect(screen.getByText("Zoro Roronoa")).toBeInTheDocument();
+    expect(screen.queryByText("Reservation Host")).not.toBeInTheDocument();
+  });
+
+  test("host can search conversations by booking ID", () => {
+    renderForSearch();
+
+    fireEvent.change(screen.getByPlaceholderText("Search or start new chat"), { target: { value: "booking-42" } });
+
+    expect(screen.getByText("Zoro Roronoa")).toBeInTheDocument();
+    expect(screen.queryByText("Reservation Host")).not.toBeInTheDocument();
+  });
+});
