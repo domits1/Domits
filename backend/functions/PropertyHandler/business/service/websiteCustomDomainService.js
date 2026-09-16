@@ -230,10 +230,9 @@ export class WebsiteCustomDomainService {
       return this.syncCustomDomain({ site, domainRecord: ownRecord });
     }
 
-    const record = await this.domainRepository.ensureDomain({
+    const claim = {
       siteId: site.id,
       domain: normalizedDomain,
-      domainType: DOMAIN_TYPE_CUSTOM,
       status: DOMAIN_STATUS.PENDING,
       isPrimary: false,
       verificationDetails: this.buildVerificationDetails({
@@ -242,7 +241,11 @@ export class WebsiteCustomDomainService {
         reason: REASON_DNS_REQUIRED,
       }),
       lastCheckedAt: this.clock(),
-    });
+    };
+    const record =
+      existingRecord && !ownRecord
+        ? await this.takeOverUnprovenDomain({ existingRecord, claim })
+        : await this.domainRepository.ensureDomain({ ...claim, domainType: DOMAIN_TYPE_CUSTOM });
 
     await this.recordEventSafely(site, EVENT_DOMAIN_REQUESTED, {
       siteId: site.id,
@@ -254,12 +257,28 @@ export class WebsiteCustomDomainService {
     return record;
   }
 
+  async takeOverUnprovenDomain({ existingRecord, claim }) {
+    const record = await this.domainRepository.claimDomain({
+      ...claim,
+      fromSiteId: existingRecord.siteId,
+      expectedUpdatedAt: existingRecord.updatedAt,
+    });
+    if (!record) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
+        `${claim.domain} was just connected to another website.`
+      );
+    }
+    return record;
+  }
+
   async provisionTenant({ site, record }) {
     const { tenant, reason, lastError } = await this.createOrAdoptTenant({ site, domain: record.domain });
     const isFailed = !tenant && reason !== REASON_DNS_REQUIRED;
     const status = isFailed ? DOMAIN_STATUS.FAILED : DOMAIN_STATUS.PENDING;
     const updatedRecord = await this.domainRepository.updateDomainStatusById(
       record.id,
+      site.id,
       status,
       this.buildVerificationDetails({
         previous: record.verificationDetails,
@@ -269,6 +288,15 @@ export class WebsiteCustomDomainService {
         lastError,
       })
     );
+    if (!updatedRecord) {
+      if (tenant) {
+        await this.tenantRepository.disableTenant({ tenantId: tenant.id, etag: tenant.etag });
+      }
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
+        `${record.domain} was connected to another website while it was being set up.`
+      );
+    }
 
     await this.recordStatusEventSafely({ site, domain: record.domain, previousStatus: record.status, status, reason });
 
@@ -332,6 +360,7 @@ export class WebsiteCustomDomainService {
     } catch (error) {
       await this.domainRepository.updateDomainVerificationDetailsById(
         record.id,
+        site.id,
         this.buildVerificationDetails({
           previous: record.verificationDetails,
           domain: record.domain,
@@ -353,6 +382,7 @@ export class WebsiteCustomDomainService {
     });
     const updatedRecord = await this.domainRepository.updateDomainStatusById(
       record.id,
+      site.id,
       status,
       this.buildVerificationDetails({
         previous: record.verificationDetails,
@@ -361,6 +391,12 @@ export class WebsiteCustomDomainService {
         reason,
       })
     );
+    if (!updatedRecord) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+        "This website has no custom domain."
+      );
+    }
 
     await this.recordStatusEventSafely({
       site,

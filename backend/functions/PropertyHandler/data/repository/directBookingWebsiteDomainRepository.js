@@ -295,7 +295,52 @@ export class DirectBookingWebsiteDomainRepository {
     return this.updateFallbackDomainStatus(siteId, status, verificationDetails);
   }
 
-  async updateDomainStatusById(domainId, status, verificationDetails = {}) {
+  async claimDomain({
+    domain,
+    fromSiteId,
+    expectedUpdatedAt,
+    siteId,
+    status,
+    isPrimary = false,
+    verificationDetails = {},
+    lastCheckedAt = Date.now(),
+  }) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const normalizedStatus = normalizeDomainStatus(status);
+    const normalizedDomain = String(domain || "").trim().toLowerCase();
+    const now = Date.now();
+
+    const rows = await client.query(
+      `UPDATE ${tableName}
+      SET
+        site_id = $4,
+        status = $5,
+        is_primary = $6,
+        verification_details_json = $7,
+        last_checked_at = $8,
+        updated_at = $9
+      WHERE domain = $1 AND site_id = $2 AND updated_at = $3
+      RETURNING
+        ${SITE_DOMAIN_SELECT_COLUMNS}`,
+      [
+        normalizedDomain,
+        fromSiteId,
+        normalizeTimestamp(expectedUpdatedAt),
+        siteId,
+        normalizedStatus,
+        Boolean(isPrimary),
+        normalizeJsonObject(verificationDetails),
+        normalizeTimestamp(lastCheckedAt),
+        now,
+      ]
+    );
+
+    return mapSiteDomainRow(rows?.[0] || null);
+  }
+
+  async updateDomainStatusById(domainId, siteId, status, verificationDetails = {}) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
@@ -305,20 +350,20 @@ export class DirectBookingWebsiteDomainRepository {
     const rows = await client.query(
       `UPDATE ${tableName}
       SET
-        status = $2,
-        verification_details_json = $3,
-        last_checked_at = $4,
-        updated_at = $4
-      WHERE id = $1
+        status = $3,
+        verification_details_json = $4,
+        last_checked_at = $5,
+        updated_at = $5
+      WHERE id = $1 AND site_id = $2
       RETURNING
         ${SITE_DOMAIN_SELECT_COLUMNS}`,
-      [domainId, normalizedStatus, normalizeJsonObject(verificationDetails), now]
+      [domainId, siteId, normalizedStatus, normalizeJsonObject(verificationDetails), now]
     );
 
     return mapSiteDomainRow(rows?.[0] || null);
   }
 
-  async updateDomainVerificationDetailsById(domainId, verificationDetails = {}) {
+  async updateDomainVerificationDetailsById(domainId, siteId, verificationDetails = {}) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
@@ -327,13 +372,13 @@ export class DirectBookingWebsiteDomainRepository {
     const rows = await client.query(
       `UPDATE ${tableName}
       SET
-        verification_details_json = $2,
-        last_checked_at = $3,
-        updated_at = $3
-      WHERE id = $1
+        verification_details_json = $3,
+        last_checked_at = $4,
+        updated_at = $4
+      WHERE id = $1 AND site_id = $2
       RETURNING
         ${SITE_DOMAIN_SELECT_COLUMNS}`,
-      [domainId, normalizeJsonObject(verificationDetails), now]
+      [domainId, siteId, normalizeJsonObject(verificationDetails), now]
     );
 
     return mapSiteDomainRow(rows?.[0] || null);

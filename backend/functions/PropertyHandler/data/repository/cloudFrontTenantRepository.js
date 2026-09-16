@@ -111,6 +111,14 @@ export class CloudFrontTenantRepository {
     return mapTenant(response);
   }
 
+  disableTenant({ tenantId, etag }) {
+    return nullWhenNotFound(async () =>
+      mapTenant(
+        await this.client.send(new UpdateDistributionTenantCommand({ Id: tenantId, IfMatch: etag, Enabled: false }))
+      )
+    );
+  }
+
   async verifyDns({ tenantId, domain }) {
     const response = await this.client.send(
       new VerifyDnsConfigurationCommand({ Identifier: tenantId, Domain: domain })
