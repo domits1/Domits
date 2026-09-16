@@ -756,14 +756,23 @@ export class PropertyService {
       await this.#upsertPropertyRule(propertyId, ruleName, isEnabled);
     }
   }
-
-  async getCustomRules(propertyId) {
+async getCustomRules(propertyId) {
+  try {
+    return await this.propertyCustomRuleRepository.getCustomRulesByPropertyId(propertyId);
+  } catch (error) {
+    console.warn(`Custom rules unavailable for property ${propertyId}:`, error.message);
     return [];
   }
+}
 
-  async updateCustomRules(propertyId, customRules) {
-    // Custom rules storage to be implemented
+async updateCustomRules(propertyId, customRules) {
+  try {
+    return await this.propertyCustomRuleRepository.replaceCustomRulesByPropertyId(propertyId, customRules);
+  } catch (error) {
+    console.warn(`Could not save custom rules for property ${propertyId}:`, error.message);
+    return [];
   }
+}
 
   async createPropertyType(type) {
     const result = await this.propertyTypeRepository.create(type);

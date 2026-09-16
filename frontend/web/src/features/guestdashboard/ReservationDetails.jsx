@@ -32,6 +32,7 @@ import { resolveAccommodationImageUrl, resolvePrimaryAccommodationImageUrl } fro
 import { getActiveCancellationPolicyId } from "../../utils/policyDisplayUtils.js";
 import { isValidDate, startOfDay } from "../../utils/dashboardShared";
 import { fetchPropertySummaries } from "./services/propertySummaryService";
+import AmenitiesSection from "./components/AmenitiesSection";
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
 const PAY_ROUTE_PREFIX = "/guestdashboard/pay/";
@@ -387,6 +388,7 @@ const buildReservationContent = ({
             <CancellationPolicySection policy={reservation.cancellationPolicy} />
 
             <HouseRules rules={reservation.rules} />
+            <AmenitiesSection amenityIds={reservation.amenities} />
 
             {isAwaitingInquiryPayment && (
               <div className="card helpCard">
@@ -505,9 +507,10 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     },
     cancellationPolicy: resolveReservationCancellationPolicy({ booking, propertyDetails }),
     rules: buildRuleLabels(propertyDetails),
-    instructions: propertyDetails?.checkIn?.checkIn?.from
+      instructions: propertyDetails?.checkIn?.checkIn?.from
   ? [`Check-in: ${propertyDetails.checkIn.checkIn.from}–${propertyDetails.checkIn.checkIn.till}`]
   : [],
+    amenities: Array.isArray(propertyDetails?.amenities) ? propertyDetails.amenities : [],
   };
 };
 
