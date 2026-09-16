@@ -40,7 +40,6 @@ const buildDomainRepository = (overrides = {}) => ({
   getDomainByName: jest.fn().mockResolvedValue(null),
   getCustomDomainBySiteId: jest.fn().mockResolvedValue(null),
   ensureDomain: jest.fn(async (input) => buildRecord(input)),
-  claimDomain: jest.fn(async (input) => buildRecord(input)),
   updateDomainStatusById: jest.fn(async (id, siteId, status, verificationDetails) =>
     buildRecord({ id, siteId, status, verificationDetails })
   ),
@@ -107,61 +106,19 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     }
   );
 
-  it("refuses a domain another site has already proven with a tenant", async () => {
+  it.each([
+    ["a tenant", { tenantId: TENANT.id, reason: "certificate_pending" }],
+    ["no tenant yet", { tenantId: null, reason: "dns_required" }],
+  ])("refuses a domain another site holds with %s and writes nothing", async (_label, verificationDetails) => {
     const domainRepository = buildDomainRepository({
-      getDomainByName: jest.fn().mockResolvedValue(buildRecord({ siteId: "site-2" })),
+      getDomainByName: jest.fn().mockResolvedValue(buildRecord({ siteId: "site-2", verificationDetails })),
     });
-    const { service, tenantRepository } = buildService({ domainRepository });
+    const { service, tenantRepository, eventRepository } = buildService({ domainRepository });
 
     await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
     });
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
-    expect(domainRepository.ensureDomain).not.toHaveBeenCalled();
-  });
-
-  it("takes over a domain another site reserved but never proved with a compare-and-swap on the row it read", async () => {
-    const unprovenRecord = buildRecord({
-      siteId: "site-2",
-      updatedAt: 1756000000000,
-      verificationDetails: { tenantId: null, reason: "dns_required" },
-    });
-    const domainRepository = buildDomainRepository({ getDomainByName: jest.fn().mockResolvedValue(unprovenRecord) });
-    const { service } = buildService({ domainRepository });
-
-    const record = await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
-
-    expect(record.siteId).toBe(SITE.id);
-    expect(domainRepository.ensureDomain).not.toHaveBeenCalled();
-    expect(domainRepository.claimDomain).toHaveBeenCalledWith(
-      expect.objectContaining({
-        domain: DOMAIN,
-        fromSiteId: "site-2",
-        expectedUpdatedAt: 1756000000000,
-        siteId: SITE.id,
-        status: "PENDING",
-      })
-    );
-    expect(domainRepository.claimDomain.mock.calls[0][0].verificationDetails).toMatchObject({
-      tenantId: null,
-      reason: "dns_required",
-    });
-  });
-
-  it("answers domain_taken and leaves the row alone when the takeover loses the race", async () => {
-    const domainRepository = buildDomainRepository({
-      getDomainByName: jest
-        .fn()
-        .mockResolvedValue(buildRecord({ siteId: "site-2", verificationDetails: { tenantId: null, reason: "dns_required" } })),
-      claimDomain: jest.fn().mockResolvedValue(null),
-    });
-    const { service, eventRepository } = buildService({ domainRepository });
-
-    await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
-      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
-    });
-
-    expect(domainRepository.claimDomain).toHaveBeenCalledTimes(1);
     expect(domainRepository.ensureDomain).not.toHaveBeenCalled();
     expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();

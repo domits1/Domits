@@ -224,8 +224,7 @@ export class WebsiteCustomDomainService {
 
     const normalizedDomain = normalizeWebsiteCustomDomain(domain);
     const existingRecord = await this.domainRepository.getDomainByName(normalizedDomain);
-    const ownRecord = existingRecord?.siteId === site.id ? existingRecord : null;
-    if (existingRecord && !ownRecord && existingRecord.verificationDetails?.tenantId) {
+    if (existingRecord && existingRecord.siteId !== site.id) {
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
         `${normalizedDomain} is already connected to another website.`
@@ -238,26 +237,23 @@ export class WebsiteCustomDomainService {
         `This website already uses ${siteCustomDomain.domain}. Remove it before connecting another domain.`
       );
     }
-    if (ownRecord?.verificationDetails?.tenantId) {
-      return this.syncCustomDomain({ site, domainRecord: ownRecord });
+    if (existingRecord?.verificationDetails?.tenantId) {
+      return this.syncCustomDomain({ site, domainRecord: existingRecord });
     }
 
-    const claim = {
+    const record = await this.domainRepository.ensureDomain({
       siteId: site.id,
       domain: normalizedDomain,
+      domainType: DOMAIN_TYPE_CUSTOM,
       status: DOMAIN_STATUS.PENDING,
       isPrimary: false,
       verificationDetails: this.buildVerificationDetails({
-        previous: ownRecord?.verificationDetails,
+        previous: existingRecord?.verificationDetails,
         domain: normalizedDomain,
         reason: REASON_DNS_REQUIRED,
       }),
       lastCheckedAt: this.clock(),
-    };
-    const record =
-      existingRecord && !ownRecord
-        ? await this.takeOverUnprovenDomain({ existingRecord, claim })
-        : await this.domainRepository.ensureDomain({ ...claim, domainType: DOMAIN_TYPE_CUSTOM });
+    });
 
     await this.recordEventSafely(site, EVENT_DOMAIN_REQUESTED, {
       siteId: site.id,
@@ -266,21 +262,6 @@ export class WebsiteCustomDomainService {
       tenantId: null,
     });
 
-    return record;
-  }
-
-  async takeOverUnprovenDomain({ existingRecord, claim }) {
-    const record = await this.domainRepository.claimDomain({
-      ...claim,
-      fromSiteId: existingRecord.siteId,
-      expectedUpdatedAt: existingRecord.updatedAt,
-    });
-    if (!record) {
-      throw new WebsiteCustomDomainError(
-        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
-        `${claim.domain} was just connected to another website.`
-      );
-    }
     return record;
   }
 
