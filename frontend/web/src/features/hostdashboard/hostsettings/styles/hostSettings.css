@@ -559,32 +559,59 @@
     color: #374151;
 }
 
-.pd-password-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(17, 24, 39, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    z-index: 1000;
-}
-
-.pd-password-modal {
-    background: #fff;
-    border-radius: 12px;
-    padding: 28px;
-    width: 100%;
-    max-width: 420px;
+.pd-password-inline {
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    padding: 20px 28px 24px;
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-.pd-password-modal-title {
+.pd-password-inline-title {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
     color: #111827;
+}
+
+.pd-password-inline .pd-field-label {
+    width: 180px;
+    min-width: 180px;
+}
+
+.pd-password-inline .pd-field-input {
+    flex: none;
+    width: 100%;
+}
+
+.pd-password-input-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 320px;
+}
+
+.pd-password-input-wrap .pd-field-input {
+    padding-right: 40px;
+}
+
+.pd-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.pd-password-toggle:hover {
+    color: #374151;
 }
 
 .pd-password-error {
@@ -597,10 +624,9 @@
     margin: 0;
 }
 
-.pd-password-modal-actions {
+.pd-password-inline-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
 }
 
 .pd-verified-check {
@@ -700,7 +726,8 @@
         gap: 4px;
     }
 
-    .pd-field-label {
+    .pd-field-label,
+    .pd-password-inline .pd-field-label {
         width: auto;
         min-width: auto;
         padding-top: 0;
@@ -768,8 +795,13 @@
         flex: 1 1 100%;
     }
 
-    .pd-password-modal {
-        padding: 20px;
+    .pd-password-inline {
+        padding: 16px;
+    }
+
+    .pd-password-input-wrap {
+        max-width: none;
+        width: 100%;
     }
 }
 

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import PersonalDataForm from "../../features/hostdashboard/hostsettings/components/PersonalDataForm";
@@ -125,6 +125,23 @@ describe("PersonalDataForm password management", () => {
     expect(onCurrentPasswordChange).toHaveBeenCalled();
     expect(onNewPasswordChange).toHaveBeenCalled();
     expect(onConfirmPasswordChange).toHaveBeenCalled();
+  });
+
+  test("toggling the eye icon reveals and re-hides a password field independently of the others", async () => {
+    renderForm({ isChangingPassword: true });
+
+    const currentPasswordInput = screen.getByLabelText("Current password");
+    const newPasswordInput = screen.getByLabelText("New password");
+    const currentPasswordField = currentPasswordInput.closest(".pd-field");
+
+    await userEvent.click(within(currentPasswordField).getByRole("button", { name: "Show password" }));
+
+    expect(currentPasswordInput).toHaveAttribute("type", "text");
+    expect(newPasswordInput).toHaveAttribute("type", "password");
+
+    await userEvent.click(within(currentPasswordField).getByRole("button", { name: "Hide password" }));
+
+    expect(currentPasswordInput).toHaveAttribute("type", "password");
   });
 
   test("submitting the password change flow calls onSubmitPasswordChange", async () => {

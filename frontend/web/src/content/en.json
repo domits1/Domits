@@ -1179,7 +1179,9 @@
         "newPassword": "New password",
         "confirmPassword": "Confirm new password",
         "savePassword": "Save password",
-        "passwordChanged": "Password changed successfully."
+        "passwordChanged": "Password changed successfully.",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
       },
       "buttons": {
         "save": "Save changes",

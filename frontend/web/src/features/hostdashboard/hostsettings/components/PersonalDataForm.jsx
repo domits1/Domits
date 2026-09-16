@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useContext } from "react";
+import React, { useRef, useEffect, useContext, useState } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import standardAvatar from "../../../../images/standard.png";
@@ -70,6 +70,56 @@ PhoneField.propTypes = {
     onPhoneChange: PropTypes.func.isRequired,
 };
 
+const EyeIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+);
+
+const EyeOffIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a20.29 20.29 0 015.06-6.06M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a20.29 20.29 0 01-2.16 3.19M14.12 14.12a3 3 0 11-4.24-4.24" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+);
+
+const PasswordField = ({ id, label, value, onChange, autoComplete, isVisible, onToggleVisibility, showLabel, hideLabel }) => (
+    <div className="pd-field">
+        <label className="pd-field-label" htmlFor={id}>{label}</label>
+        <div className="pd-password-input-wrap">
+            <input
+                id={id}
+                type={isVisible ? "text" : "password"}
+                value={value}
+                onChange={onChange}
+                className="pd-field-input"
+                autoComplete={autoComplete}
+            />
+            <button
+                type="button"
+                className="pd-password-toggle"
+                onClick={onToggleVisibility}
+                aria-label={isVisible ? hideLabel : showLabel}
+            >
+                {isVisible ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+        </div>
+    </div>
+);
+
+PasswordField.propTypes = {
+    id: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    value: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired,
+    autoComplete: PropTypes.string.isRequired,
+    isVisible: PropTypes.bool.isRequired,
+    onToggleVisibility: PropTypes.func.isRequired,
+    showLabel: PropTypes.string.isRequired,
+    hideLabel: PropTypes.string.isRequired,
+};
+
 function getSaveLabel(isSaving, saveSuccess, t) {
     if (isSaving) return t.buttons.saving;
     if (saveSuccess) return t.buttons.saved;
@@ -135,6 +185,13 @@ const PersonalDataForm = ({
 }) => {
     const { language: lang } = useContext(LanguageContext);
     const t = contentByLanguage[lang]?.settings?.personalData ?? contentByLanguage.en.settings.personalData;
+    const [visiblePasswordFields, setVisiblePasswordFields] = useState({
+        current: false,
+        new: false,
+        confirm: false,
+    });
+    const togglePasswordVisibility = (field) =>
+        setVisiblePasswordFields((prev) => ({ ...prev, [field]: !prev[field] }));
 
     return (
     <div className="personal-data-page">
@@ -448,88 +505,66 @@ const PersonalDataForm = ({
                     <button
                         type="button"
                         className="pd-verify-btn"
-                        onClick={onOpenPasswordChange}
+                        onClick={isChangingPassword ? onClosePasswordChange : onOpenPasswordChange}
                     >
-                        {t.prefs.changePassword}
+                        {isChangingPassword ? t.buttons.cancel : t.prefs.changePassword}
                     </button>
                 </div>
 
                 {isChangingPassword && (
-                    <div className="pd-password-modal-overlay">
-                        <div
-                            className="pd-password-modal"
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="pd-password-modal-title"
-                        >
-                            <h3 id="pd-password-modal-title" className="pd-password-modal-title">
-                                {t.prefs.changePasswordTitle}
-                            </h3>
+                    <div className="pd-password-inline">
+                        <p className="pd-password-inline-title">{t.prefs.changePasswordTitle}</p>
 
-                            <div className="pd-field">
-                                <label className="pd-field-label" htmlFor="pd-current-password">
-                                    {t.prefs.currentPassword}
-                                </label>
-                                <input
-                                    id="pd-current-password"
-                                    type="password"
-                                    value={currentPassword}
-                                    onChange={onCurrentPasswordChange}
-                                    className="pd-field-input"
-                                    autoComplete="current-password"
-                                />
-                            </div>
+                        <PasswordField
+                            id="pd-current-password"
+                            label={t.prefs.currentPassword}
+                            value={currentPassword}
+                            onChange={onCurrentPasswordChange}
+                            autoComplete="current-password"
+                            isVisible={visiblePasswordFields.current}
+                            onToggleVisibility={() => togglePasswordVisibility("current")}
+                            showLabel={t.prefs.showPassword}
+                            hideLabel={t.prefs.hidePassword}
+                        />
 
-                            <div className="pd-field">
-                                <label className="pd-field-label" htmlFor="pd-new-password">
-                                    {t.prefs.newPassword}
-                                </label>
-                                <input
-                                    id="pd-new-password"
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={onNewPasswordChange}
-                                    className="pd-field-input"
-                                    autoComplete="new-password"
-                                />
-                            </div>
+                        <PasswordField
+                            id="pd-new-password"
+                            label={t.prefs.newPassword}
+                            value={newPassword}
+                            onChange={onNewPasswordChange}
+                            autoComplete="new-password"
+                            isVisible={visiblePasswordFields.new}
+                            onToggleVisibility={() => togglePasswordVisibility("new")}
+                            showLabel={t.prefs.showPassword}
+                            hideLabel={t.prefs.hidePassword}
+                        />
 
-                            <div className="pd-field">
-                                <label className="pd-field-label" htmlFor="pd-confirm-password">
-                                    {t.prefs.confirmPassword}
-                                </label>
-                                <input
-                                    id="pd-confirm-password"
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={onConfirmPasswordChange}
-                                    className="pd-field-input"
-                                    autoComplete="new-password"
-                                />
-                            </div>
+                        <PasswordField
+                            id="pd-confirm-password"
+                            label={t.prefs.confirmPassword}
+                            value={confirmPassword}
+                            onChange={onConfirmPasswordChange}
+                            autoComplete="new-password"
+                            isVisible={visiblePasswordFields.confirm}
+                            onToggleVisibility={() => togglePasswordVisibility("confirm")}
+                            showLabel={t.prefs.showPassword}
+                            hideLabel={t.prefs.hidePassword}
+                        />
 
-                            {passwordError && <p className="pd-field-error pd-password-error">{passwordError}</p>}
-                            {passwordChangeSuccess && (
-                                <p className="pd-password-success">{t.prefs.passwordChanged}</p>
-                            )}
+                        {passwordError && <p className="pd-field-error pd-password-error">{passwordError}</p>}
+                        {passwordChangeSuccess && (
+                            <p className="pd-password-success">{t.prefs.passwordChanged}</p>
+                        )}
 
-                            <div className="pd-password-modal-actions">
-                                <button
-                                    type="button"
-                                    className="pd-photo-btn pd-photo-btn--secondary"
-                                    onClick={onClosePasswordChange}
-                                >
-                                    {t.buttons.cancel}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="pd-save-btn"
-                                    onClick={onSubmitPasswordChange}
-                                    disabled={isSavingPassword}
-                                >
-                                    {isSavingPassword ? t.buttons.saving : t.prefs.savePassword}
-                                </button>
-                            </div>
+                        <div className="pd-password-inline-actions">
+                            <button
+                                type="button"
+                                className="pd-save-btn"
+                                onClick={onSubmitPasswordChange}
+                                disabled={isSavingPassword}
+                            >
+                                {isSavingPassword ? t.buttons.saving : t.prefs.savePassword}
+                            </button>
                         </div>
                     </div>
                 )}

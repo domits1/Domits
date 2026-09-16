@@ -1180,7 +1180,9 @@
         "newPassword": "Nieuw wachtwoord",
         "confirmPassword": "Bevestig nieuw wachtwoord",
         "savePassword": "Wachtwoord opslaan",
-        "passwordChanged": "Wachtwoord succesvol gewijzigd."
+        "passwordChanged": "Wachtwoord succesvol gewijzigd.",
+        "showPassword": "Wachtwoord tonen",
+        "hidePassword": "Wachtwoord verbergen"
       },
       "buttons": {
         "save": "Wijzigingen opslaan",

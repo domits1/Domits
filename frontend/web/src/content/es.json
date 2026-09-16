@@ -1180,7 +1180,9 @@
         "newPassword": "Nueva contraseña",
         "confirmPassword": "Confirmar nueva contraseña",
         "savePassword": "Guardar contraseña",
-        "passwordChanged": "Contraseña cambiada con éxito."
+        "passwordChanged": "Contraseña cambiada con éxito.",
+        "showPassword": "Mostrar contraseña",
+        "hidePassword": "Ocultar contraseña"
       },
       "buttons": {
         "save": "Guardar cambios",
