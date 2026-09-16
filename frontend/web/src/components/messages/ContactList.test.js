@@ -508,6 +508,61 @@ describe("ContactList manual mark read/unread", () => {
     expect(finalState[0].unreadCount).toBe(0);
   });
 
+  test("falls back to marking unread locally when the corrective markThreadRead fails", async () => {
+    let resolveMarkUnread;
+    markThreadUnread.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMarkUnread = resolve;
+        })
+    );
+    markThreadRead.mockRejectedValue(new Error("network error"));
+
+    const contact = { ...manualActionContact, unreadCount: 0 };
+    const setContacts = jest.fn();
+
+    const buildElement = (activeThreadId) => (
+      <ContactList
+        userId="host-1"
+        dashboardType="host"
+        contacts={[contact]}
+        pendingContacts={[]}
+        loading={false}
+        setContacts={setContacts}
+        onContactClick={jest.fn()}
+        onCloseChat={jest.fn()}
+        onNewMessage={jest.fn()}
+        activeThreadId={activeThreadId}
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+
+    const { rerender } = render(buildElement(null));
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as unread"));
+
+    await waitFor(() => {
+      expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    // Host opens this exact conversation while the mark-as-unread request is still in flight.
+    rerender(buildElement("thread-1"));
+
+    resolveMarkUnread({ threadId: "thread-1", updated: 1 });
+
+    await waitFor(() => {
+      expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    await waitFor(() => {
+      expect(setContacts).toHaveBeenCalled();
+    });
+
+    const finalState = setContacts.mock.calls.reduce((state, [updaterFn]) => updaterFn(state), [contact]);
+    expect(finalState[0].unreadCount).toBe(1);
+  });
+
   const secondManualActionContact = {
     hostId: "host-1",
     guestId: "guest-2",

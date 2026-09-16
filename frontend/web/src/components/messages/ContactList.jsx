@@ -345,8 +345,14 @@ const ContactList = ({
       // so immediately re-sync backend + local state instead of leaving an actively
       // viewed conversation unread.
       if (String(activeThreadIdRef.current || "") === String(threadId)) {
-        await markThreadRead(threadId, idToken);
-        setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, threadId));
+        try {
+          await markThreadRead(threadId, idToken);
+          setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, threadId));
+        } catch {
+          // The unread flip itself already succeeded; only the corrective re-read failed.
+          // Fall back to the confirmed unread result instead of leaving local state stale.
+          setContacts?.((prevContacts) => markContactThreadUnreadLocally(prevContacts, threadId, result?.updated ?? 0));
+        }
         return;
       }
 
