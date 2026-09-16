@@ -51,6 +51,7 @@ const PANEL_ERROR_COPY = Object.freeze({
   unauthorized: "Your session has expired. Sign in again.",
   forbidden: "Your session has expired. Sign in again.",
   sync_failed: "We couldn't reach the domain service. Try again in a moment.",
+  tenant_not_owned: "This domain's setup belongs to another website. Contact support.",
   tenant_create_failed: "We couldn't reach the domain service. Try again in a moment.",
   network_error: "We couldn't reach the domain service. Try again in a moment.",
 });

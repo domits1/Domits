@@ -28,6 +28,7 @@ const OWNERSHIP_ERROR_PATTERN = /ownership/i;
 const REASON_DNS_REQUIRED = "dns_required";
 const REASON_TENANT_CREATED = "tenant_created";
 const REASON_DOMAIN_IN_USE = "domain_in_use_elsewhere";
+const LAST_ERROR_TENANT_NOT_OWNED = "tenant_not_owned";
 const EVENT_DOMAIN_REQUESTED = "SITE_DOMAIN_REQUESTED";
 const EVENT_TYPE_BY_STATUS = Object.freeze({
   [DOMAIN_STATUS.VERIFIED]: "SITE_DOMAIN_VERIFIED",
@@ -78,6 +79,14 @@ export const normalizeWebsiteCustomDomain = (domain) => {
 
 export const isCustomDomainSyncable = (record) =>
   Boolean(record?.verificationDetails?.tenantId) || record?.verificationDetails?.reason === REASON_DNS_REQUIRED;
+
+export const isTenantOwnedBySite = (tenant, siteId) => {
+  const tenantName = String(tenant?.name || "");
+  return !tenantName.startsWith(TENANT_NAME_PREFIX) || tenantName === `${TENANT_NAME_PREFIX}${siteId}`;
+};
+
+const isForeignTenantError = (error) =>
+  error instanceof WebsiteCustomDomainError && error.code === WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED;
 
 const isOwnershipError = (error) =>
   error?.name === SDK_ERROR_INVALID_ARGUMENT && OWNERSHIP_ERROR_PATTERN.test(error?.message || "");
@@ -193,8 +202,11 @@ export class WebsiteCustomDomainService {
       }
       if (error?.name === SDK_ERROR_TENANT_NAME_EXISTS) {
         const adoptedTenant = await this.tenantRepository.getTenantByDomain(domain);
-        if (adoptedTenant) {
+        if (adoptedTenant && isTenantOwnedBySite(adoptedTenant, site.id)) {
           return { tenant: adoptedTenant, reason: REASON_TENANT_CREATED, lastError: null };
+        }
+        if (adoptedTenant) {
+          return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: LAST_ERROR_TENANT_NOT_OWNED };
         }
       }
       throw new WebsiteCustomDomainError(
@@ -312,11 +324,17 @@ export class WebsiteCustomDomainService {
     await this.recordEventSafely(site, eventType, { siteId: site.id, domain, previousStatus, status, reason });
   }
 
-  async readCloudFrontState({ tenantId, domain }) {
+  async readCloudFrontState({ tenantId, domain, siteId }) {
     const [initialTenant, certificate] = await Promise.all([
       this.tenantRepository.getTenant(tenantId),
       this.tenantRepository.getManagedCertificate(tenantId),
     ]);
+    if (initialTenant && !isTenantOwnedBySite(initialTenant, siteId)) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_NOT_OWNED,
+        `The CloudFront tenant for ${domain} belongs to another website.`
+      );
+    }
     const shouldApplyCertificate =
       Boolean(initialTenant) && certificate?.status === CERTIFICATE_STATUS_ISSUED && !initialTenant.certificateArn;
     const tenant = shouldApplyCertificate
@@ -356,8 +374,9 @@ export class WebsiteCustomDomainService {
 
     let cloudFrontState;
     try {
-      cloudFrontState = await this.readCloudFrontState({ tenantId, domain: record.domain });
+      cloudFrontState = await this.readCloudFrontState({ tenantId, domain: record.domain, siteId: site.id });
     } catch (error) {
+      const isForeignTenant = isForeignTenantError(error);
       await this.domainRepository.updateDomainVerificationDetailsById(
         record.id,
         site.id,
@@ -365,9 +384,12 @@ export class WebsiteCustomDomainService {
           previous: record.verificationDetails,
           domain: record.domain,
           reason: record.verificationDetails?.reason || "",
-          lastError: error?.name || error?.message || "sync_failed",
+          lastError: isForeignTenant ? LAST_ERROR_TENANT_NOT_OWNED : error?.name || error?.message || "sync_failed",
         })
       );
+      if (isForeignTenant) {
+        throw error;
+      }
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.SYNC_FAILED,
         `Could not read the CloudFront status for ${record.domain}.`,

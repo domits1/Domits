@@ -112,6 +112,7 @@ describe("resolveDomainErrorCopy", () => {
     ["unauthorized", "panel", /sign in again/i],
     ["forbidden", "panel", /sign in again/i],
     ["sync_failed", "panel", /couldn't reach the domain service/i],
+    ["tenant_not_owned", "panel", /belongs to another website/i],
     ["tenant_create_failed", "panel", /couldn't reach the domain service/i],
     ["network_error", "panel", /couldn't reach the domain service/i],
     ["internal_error", "panel", /our side/i],
