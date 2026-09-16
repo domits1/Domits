@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 import { LanguageContext } from "../../context/LanguageContext";
@@ -112,9 +112,9 @@ describe("HostSettingsCompany page", () => {
         fireEvent.change(screen.getByLabelText("Company name"), { target: { value: "Acme Rentals" } });
         fireEvent.click(screen.getByRole("button", { name: /save/i }));
 
-        await waitFor(() => expect(
-            screen.getByText("We could not save your company information. Your changes are still here.")
-        ).toBeInTheDocument());
+        expect(
+            await screen.findByText("We could not save your company information. Your changes are still here.")
+        ).toBeInTheDocument();
         expect(screen.getByLabelText("Company name")).toHaveValue("Acme Rentals");
     });
 
@@ -132,7 +132,9 @@ describe("HostSettingsCompany page", () => {
 
         const file = new File(["img"], "logo.png", { type: "image/png" });
         const logoInput = screen.getByLabelText("Upload logo", { selector: "input" });
-        await waitFor(() => fireEvent.change(logoInput, { target: { files: [file] } }));
+        await act(async () => {
+            fireEvent.change(logoInput, { target: { files: [file] } });
+        });
 
         await waitFor(() => expect(getCompanyLogoUploadUrl).toHaveBeenCalledWith("image/png"));
         expect(globalThis.fetch).toHaveBeenCalledWith("https://s3.example.com/upload", expect.objectContaining({

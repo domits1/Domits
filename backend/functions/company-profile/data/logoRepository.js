@@ -1,6 +1,6 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 const BUCKET = process.env.S3_BUCKET || "accommodation";
 const REGION = process.env.AWS_REGION || "eu-north-1";
@@ -17,7 +17,7 @@ export class CompanyLogoRepository {
   }
 
   isAllowedContentType(contentType) {
-    return Object.prototype.hasOwnProperty.call(EXTENSION_BY_CONTENT_TYPE, contentType);
+    return Object.hasOwn(EXTENSION_BY_CONTENT_TYPE, contentType);
   }
 
   async createPresignedUpload(hostId, contentType) {

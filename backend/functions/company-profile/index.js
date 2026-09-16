@@ -12,7 +12,7 @@ const createLambdaResponse = (returnedResponse) => ({
   statusCode: returnedResponse?.statusCode || 200,
   headers: {
     ...corsHeaders,
-    ...(returnedResponse?.headers || {}),
+    ...returnedResponse?.headers,
   },
   body: JSON.stringify(returnedResponse?.response),
 });

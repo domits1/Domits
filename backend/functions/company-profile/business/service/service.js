@@ -2,7 +2,7 @@ import { CompanyProfileRepository } from "../../data/repository.js";
 import { CompanyLogoRepository } from "../../data/logoRepository.js";
 import { badRequest } from "../../util/httpErrors.js";
 
-const ALLOWED_PROFILE_FIELDS = [
+const ALLOWED_PROFILE_FIELDS = new Set([
   "companyName",
   "displayName",
   "logoUrl",
@@ -11,9 +11,9 @@ const ALLOWED_PROFILE_FIELDS = [
   "publicEmail",
   "publicPhone",
   "country",
-];
+]);
 
-const SPOOFED_HOST_ID_KEYS = ["hostId", "host_id"];
+const SPOOFED_HOST_ID_KEYS = new Set(["hostId", "host_id"]);
 
 const MAX_LENGTHS = {
   companyName: 200,
@@ -26,8 +26,12 @@ const MAX_LENGTHS = {
   country: 100,
 };
 
-const WEBSITE_PATTERN = /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+([/?#]\S*)?$/i;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// /i already covers case, so the character classes only need one case (no a-zA-Z duplication).
+const WEBSITE_PATTERN = /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?#]\S*)?$/i;
+// The final segment excludes "." so the mandatory "\." can only match the last dot in the
+// string; allowing "." on both sides of it let the engine retry every dot position on
+// failure (O(n^2) on crafted input).
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/;
 const PHONE_PATTERN = /^\+?[0-9\s().-]{6,20}$/;
 
 export const isValidWebsite = (value) => WEBSITE_PATTERN.test(value);
@@ -37,8 +41,6 @@ export const isValidPhone = (value) => {
   const digitCount = value.replace(/\D/g, "").length;
   return digitCount >= 6 && digitCount <= 15;
 };
-
-const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 
 export class CompanyProfileService {
   constructor({
@@ -82,18 +84,8 @@ export class CompanyProfileService {
   }
 
   validateProfile(payload) {
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      throw badRequest("Request body must be a company profile object.");
-    }
-
-    for (const key of Object.keys(payload)) {
-      if (SPOOFED_HOST_ID_KEYS.includes(key)) {
-        throw badRequest("hostId must not be provided for the company profile.");
-      }
-      if (!ALLOWED_PROFILE_FIELDS.includes(key)) {
-        throw badRequest(`Unknown company profile field: ${key}.`);
-      }
-    }
+    this.assertPlainObject(payload);
+    this.assertKnownFields(payload);
 
     const companyName = String(payload.companyName || "").trim();
     if (!companyName) {
@@ -104,33 +96,55 @@ export class CompanyProfileService {
     const profile = { companyName };
 
     for (const field of ["displayName", "logoUrl", "description", "country"]) {
-      const value = hasOwn(payload, field) ? String(payload[field] || "").trim() : "";
-      this.assertMaxLength(field, value);
-      profile[field] = value;
+      profile[field] = this.extractPlainField(payload, field);
     }
 
-    const website = hasOwn(payload, "website") ? String(payload.website || "").trim() : "";
-    this.assertMaxLength("website", website);
-    if (website && !isValidWebsite(website)) {
-      throw badRequest("website must be a valid URL.");
-    }
-    profile.website = website;
-
-    const publicEmail = hasOwn(payload, "publicEmail") ? String(payload.publicEmail || "").trim() : "";
-    this.assertMaxLength("publicEmail", publicEmail);
-    if (publicEmail && !isValidEmail(publicEmail)) {
-      throw badRequest("publicEmail must be a valid email address.");
-    }
-    profile.publicEmail = publicEmail;
-
-    const publicPhone = hasOwn(payload, "publicPhone") ? String(payload.publicPhone || "").trim() : "";
-    this.assertMaxLength("publicPhone", publicPhone);
-    if (publicPhone && !isValidPhone(publicPhone)) {
-      throw badRequest("publicPhone must be a valid phone number.");
-    }
-    profile.publicPhone = publicPhone;
+    profile.website = this.extractFormattedField(payload, "website", isValidWebsite, "website must be a valid URL.");
+    profile.publicEmail = this.extractFormattedField(
+      payload,
+      "publicEmail",
+      isValidEmail,
+      "publicEmail must be a valid email address."
+    );
+    profile.publicPhone = this.extractFormattedField(
+      payload,
+      "publicPhone",
+      isValidPhone,
+      "publicPhone must be a valid phone number."
+    );
 
     return profile;
+  }
+
+  assertPlainObject(payload) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw badRequest("Request body must be a company profile object.");
+    }
+  }
+
+  assertKnownFields(payload) {
+    for (const key of Object.keys(payload)) {
+      if (SPOOFED_HOST_ID_KEYS.has(key)) {
+        throw badRequest("hostId must not be provided for the company profile.");
+      }
+      if (!ALLOWED_PROFILE_FIELDS.has(key)) {
+        throw badRequest(`Unknown company profile field: ${key}.`);
+      }
+    }
+  }
+
+  extractPlainField(payload, field) {
+    const value = Object.hasOwn(payload, field) ? String(payload[field] || "").trim() : "";
+    this.assertMaxLength(field, value);
+    return value;
+  }
+
+  extractFormattedField(payload, field, isValidFormat, errorMessage) {
+    const value = this.extractPlainField(payload, field);
+    if (value && !isValidFormat(value)) {
+      throw badRequest(errorMessage);
+    }
+    return value;
   }
 
   assertMaxLength(field, value) {
@@ -141,16 +155,7 @@ export class CompanyProfileService {
   }
 
   emptyProfile() {
-    return {
-      companyName: "",
-      displayName: "",
-      logoUrl: "",
-      description: "",
-      website: "",
-      publicEmail: "",
-      publicPhone: "",
-      country: "",
-    };
+    return Object.fromEntries([...ALLOWED_PROFILE_FIELDS].map((field) => [field, ""]));
   }
 
   toApi(record) {

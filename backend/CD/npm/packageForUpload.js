@@ -1,6 +1,6 @@
-import * as fs from "fs/promises";
-import * as path from "path";
-import { fileURLToPath } from "url";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import * as zip from "zip-lib";
 
 // This mirrors the packaging steps in .github/workflows/deploy.yml (create
@@ -153,13 +153,25 @@ async function packageFunction(functionName) {
   }
 }
 
+const FUNCTION_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 const functionName = process.argv[2];
 if (!functionName) {
   console.error("Usage: node CD/npm/packageForUpload.js <function-name>");
   process.exit(1);
 }
 
-packageFunction(functionName).catch(error => {
+// Validate before any path is built from this value: it must look like a Lambda
+// function name (alphanumeric, hyphens, underscores) and must not contain "..",
+// so it can't be used to escape FUNCTIONS_DIR or BACKEND_DIR.
+if (!FUNCTION_NAME_PATTERN.test(functionName) || functionName.includes("..")) {
+  console.error(`Invalid function name: "${functionName}". Use only letters, numbers, hyphens, and underscores.`);
+  process.exit(1);
+}
+
+try {
+  await packageFunction(functionName);
+} catch (error) {
   console.error(`Failed to package "${functionName}": ${error.message}`);
   process.exit(1);
-});
+}
