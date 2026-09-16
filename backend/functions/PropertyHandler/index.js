@@ -41,6 +41,12 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/site/unpublish")) {
     return controller.unpublishWebsiteSite(event);
   }
+  if (isPath(event, "/property/website/domains/verify")) {
+    return controller.verifyWebsiteDomain(event);
+  }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.createWebsiteDomain(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -96,6 +102,9 @@ const handleGet = async (event) => {
   }
   if (isPath(event, "/property/website/kpis")) {
     return controller.getWebsiteKpis(event);
+  }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.listWebsiteDomains(event);
   }
   if (isPath(event, "/property/website/site")) {
     return controller.getWebsiteSiteByPropertyId(event);
