@@ -339,18 +339,19 @@ describe("ContactList manual mark read/unread", () => {
     latestMessage: { text: "See you soon", createdAt: "2026-06-01T10:00:00.000Z" },
   };
 
-  const renderForManualAction = (contact) => {
+  const renderForManualAction = (contactOrContacts, { onContactClick = jest.fn() } = {}) => {
     const setContacts = jest.fn();
+    const contactsArray = Array.isArray(contactOrContacts) ? contactOrContacts : [contactOrContacts];
 
     render(
       <ContactList
         userId="host-1"
         dashboardType="host"
-        contacts={[contact]}
+        contacts={contactsArray}
         pendingContacts={[]}
         loading={false}
         setContacts={setContacts}
-        onContactClick={jest.fn()}
+        onContactClick={onContactClick}
         onCloseChat={jest.fn()}
         onNewMessage={jest.fn()}
         capabilities={getMessageCapabilities("host")}
@@ -517,23 +518,10 @@ describe("ContactList manual mark read/unread", () => {
   };
 
   test("every conversation row shows a visible actions button", () => {
-    render(
-      <ContactList
-        userId="host-1"
-        dashboardType="host"
-        contacts={[
-          { ...manualActionContact, unreadCount: 0 },
-          { ...secondManualActionContact, unreadCount: 3 },
-        ]}
-        pendingContacts={[]}
-        loading={false}
-        setContacts={jest.fn()}
-        onContactClick={jest.fn()}
-        onCloseChat={jest.fn()}
-        onNewMessage={jest.fn()}
-        capabilities={getMessageCapabilities("host")}
-      />
-    );
+    renderForManualAction([
+      { ...manualActionContact, unreadCount: 0 },
+      { ...secondManualActionContact, unreadCount: 3 },
+    ]);
 
     expect(screen.getAllByLabelText("Conversation actions")).toHaveLength(2);
   });
@@ -558,21 +546,7 @@ describe("ContactList manual mark read/unread", () => {
 
   test("clicking the actions button does not select or open the conversation", () => {
     const onContactClick = jest.fn();
-
-    render(
-      <ContactList
-        userId="host-1"
-        dashboardType="host"
-        contacts={[{ ...manualActionContact, unreadCount: 0 }]}
-        pendingContacts={[]}
-        loading={false}
-        setContacts={jest.fn()}
-        onContactClick={onContactClick}
-        onCloseChat={jest.fn()}
-        onNewMessage={jest.fn()}
-        capabilities={getMessageCapabilities("host")}
-      />
-    );
+    renderForManualAction({ ...manualActionContact, unreadCount: 0 }, { onContactClick });
 
     fireEvent.click(screen.getByLabelText("Conversation actions"));
 
@@ -581,21 +555,7 @@ describe("ContactList manual mark read/unread", () => {
 
   test("clicking a dropdown action does not select or open the conversation", async () => {
     const onContactClick = jest.fn();
-
-    render(
-      <ContactList
-        userId="host-1"
-        dashboardType="host"
-        contacts={[{ ...manualActionContact, unreadCount: 0 }]}
-        pendingContacts={[]}
-        loading={false}
-        setContacts={jest.fn()}
-        onContactClick={onContactClick}
-        onCloseChat={jest.fn()}
-        onNewMessage={jest.fn()}
-        capabilities={getMessageCapabilities("host")}
-      />
-    );
+    renderForManualAction({ ...manualActionContact, unreadCount: 0 }, { onContactClick });
 
     fireEvent.click(screen.getByLabelText("Conversation actions"));
     fireEvent.click(screen.getByText("Mark as unread"));
@@ -608,23 +568,10 @@ describe("ContactList manual mark read/unread", () => {
   });
 
   test("the dropdown is tied to the row whose actions button was clicked, not any other row", () => {
-    render(
-      <ContactList
-        userId="host-1"
-        dashboardType="host"
-        contacts={[
-          { ...manualActionContact, unreadCount: 0 },
-          { ...secondManualActionContact, unreadCount: 3 },
-        ]}
-        pendingContacts={[]}
-        loading={false}
-        setContacts={jest.fn()}
-        onContactClick={jest.fn()}
-        onCloseChat={jest.fn()}
-        onNewMessage={jest.fn()}
-        capabilities={getMessageCapabilities("host")}
-      />
-    );
+    renderForManualAction([
+      { ...manualActionContact, unreadCount: 0 },
+      { ...secondManualActionContact, unreadCount: 3 },
+    ]);
 
     expect(screen.getAllByLabelText("Conversation actions")).toHaveLength(2);
 

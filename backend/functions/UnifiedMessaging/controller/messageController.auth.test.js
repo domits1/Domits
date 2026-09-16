@@ -129,29 +129,18 @@ describe("MessageController authenticated user handling", () => {
     });
   });
 
-  test("markThreadRead extracts threadId from the path and forwards the authenticated user", async () => {
-    mockMessageService.markThreadRead.mockResolvedValue({
-      statusCode: 200,
-      response: { threadId: "thread-1", updated: 2 },
-    });
-
-    await controller.markThreadRead(buildEvent({ path: "/default/threads/thread-1/read" }));
-
-    expect(mockMessageService.markThreadRead).toHaveBeenCalledWith(
-      "thread-1",
-      expect.objectContaining({ userId: "guest-1", isGuest: true })
-    );
-  });
-
-  test("markThreadUnread extracts threadId from the path and forwards the authenticated user", async () => {
-    mockMessageService.markThreadUnread.mockResolvedValue({
+  test.each([
+    ["markThreadRead", "read"],
+    ["markThreadUnread", "unread"],
+  ])("%s extracts threadId from the path and forwards the authenticated user", async (methodName, pathSuffix) => {
+    mockMessageService[methodName].mockResolvedValue({
       statusCode: 200,
       response: { threadId: "thread-1", updated: 1 },
     });
 
-    await controller.markThreadUnread(buildEvent({ path: "/default/threads/thread-1/unread" }));
+    await controller[methodName](buildEvent({ path: `/default/threads/thread-1/${pathSuffix}` }));
 
-    expect(mockMessageService.markThreadUnread).toHaveBeenCalledWith(
+    expect(mockMessageService[methodName]).toHaveBeenCalledWith(
       "thread-1",
       expect.objectContaining({ userId: "guest-1", isGuest: true })
     );
