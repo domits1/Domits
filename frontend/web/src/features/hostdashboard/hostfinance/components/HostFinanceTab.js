@@ -14,7 +14,7 @@ import {
 import InvoicesSection from "./InvoicesSection";
 import { RefreshFunctions } from "../hooks/refreshFunctions.js";
 import { formatMoney } from "../utils/formatMoney";
-import { getHostListings } from "../services/stripeAccountService";
+import { fetchHostOwnedListings } from "../../services/hostTaskPropertyService";
 import { isFinanceDemoMode } from "../mocks/financeDemoData";
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
@@ -49,9 +49,9 @@ function EmptyState({ title, description }) {
 
 function HelpPanel() {
   const questions = [
-    ["When will I be paid?", "Payouts are sent after a booking becomes eligible for payout."],
-    ["How do payouts work?", "Your available balance is paid according to your selected payout schedule."],
-    ["Why do I have to share my details with Stripe?", "Stripe securely verifies your identity and bank details."],
+    ["When will I be paid?", "Payment timelines are currently under discussion, but typically, payments will be processed shortly after the guest checks in. Exact details will be provided in your Stripe account once finalized."],
+    ["How do payouts work?", "Payments for your bookings will be deposited into your linked Stripe account. From there, Stripe will transfer the funds to your bank account or connected wallet within a week."],
+    ["Why do I have to share my details with Stripe?", "Stripe requires your details to verify your identity and ensure secure payment processing. This verification helps protect both hosts and guests."],
   ];
 
   return (
@@ -73,6 +73,8 @@ function HelpPanel() {
 export default function HostFinanceTab() {
   const navigate = useNavigate();
   const [listingState, setListingState] = useState({ hasProperty: false, isLive: false, loading: true });
+  const [transactionFilter, setTransactionFilter] = useState("all");
+  const [showAllPayouts, setShowAllPayouts] = useState(false);
   const {
     toast,
     payouts,
@@ -104,12 +106,42 @@ export default function HostFinanceTab() {
   const showFinancialData = isLive || (demoMode && hasActivity);
   const currency = balanceView.currency || "EUR";
 
-  const recentCharges = useMemo(() => charges.slice(0, 4), [charges]);
   const recentPayouts = useMemo(() => payouts.slice(0, 3), [payouts]);
+  const displayedPayouts = showAllPayouts ? payouts : recentPayouts;
+  const transactions = useMemo(
+    () => [
+      ...charges.map((charge, index) => {
+        const searchText = `${charge.description || ""} ${charge.status || ""}`.toLowerCase();
+        return {
+          id: `charge-${charge.paymentId || index}`,
+          type: searchText.includes("refund") ? "refunds" : "payments",
+          date: charge.createdDate,
+          description: charge.description || "Guest payment",
+          channel: charge.channel || charge.paymentMethod || "Stripe",
+          amount: charge.hostReceives,
+          currency: charge.currency || currency,
+          status: charge.status,
+        };
+      }),
+      ...payouts.map((payout, index) => ({
+        id: `payout-${payout.id || index}`,
+        type: "payouts",
+        date: payout.arrivalDate,
+        description: payout.status === "paid" ? "Payout to bank account" : "Upcoming payout",
+        channel: "Stripe",
+        amount: payout.amount,
+        currency: payout.currency || currency,
+        status: payout.status,
+      })),
+    ],
+    [charges, currency, payouts]
+  );
+  const filteredTransactions =
+    transactionFilter === "all" ? transactions : transactions.filter((transaction) => transaction.type === transactionFilter);
 
   useEffect(() => {
     let isCancelled = false;
-    getHostListings()
+    fetchHostOwnedListings()
       .then((listings) => {
         if (isCancelled) return;
         setListingState({
@@ -133,20 +165,20 @@ export default function HostFinanceTab() {
 
   const ctaLabel = () => {
     if (!isProcessing) {
-      if (!isConnected) return "Connect Stripe";
       if (!hasProperty) return "List your property";
+      if (!isConnected) return "Connect Stripe";
       return isLive ? "Withdraw Funds" : "Go live";
     }
     return processingStep === "opening" ? "Opening link..." : "Working on it...";
   };
 
   const handlePrimaryAction = () => {
-    if (!isConnected) {
-      handleStripeAction();
-      return;
-    }
     if (!hasProperty) {
       navigate("/hostonboarding");
+      return;
+    }
+    if (!isConnected) {
+      handleStripeAction();
       return;
     }
     if (!isLive) {
@@ -154,6 +186,33 @@ export default function HostFinanceTab() {
       return;
     }
     handleStripeAction();
+  };
+
+  const handleExportTransactions = () => {
+    if (filteredTransactions.length === 0) return;
+
+    const headers = ["Date", "Description", "Channel", "Amount", "Currency", "Status"];
+    const rows = filteredTransactions.map((transaction) => [
+      transaction.date,
+      transaction.description,
+      transaction.channel,
+      transaction.amount,
+      transaction.currency,
+      transaction.status,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(","))
+      .join("\r\n");
+    const blobUrl = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `domits-transactions-${transactionFilter}.csv`;
+    link.click();
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  const scrollToPayoutSettings = () => {
+    document.getElementById("finance-payout-settings")?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   const nextPayout = recentPayouts[0];
@@ -190,29 +249,29 @@ export default function HostFinanceTab() {
         ) : (
           <>
             <div className="finance-steps">
-              <Step number="1" label="Connect Stripe" complete={isConnected} active={!isConnected} />
+              <Step number="1" label="List your property" complete={hasProperty} active={!hasProperty} />
               <span className="finance-step-divider" />
-              <Step number="2" label="List your property" complete={hasProperty} active={isConnected && !hasProperty} />
+              <Step number="2" label="Connect Stripe" complete={isConnected} active={hasProperty && !isConnected} />
               <span className="finance-step-divider" />
               <Step number="3" label="Go live" complete={isLive} active={isConnected && hasProperty && !isLive} />
             </div>
             <div className="finance-status-content">
               <div>
                 <strong>
-                  {!isConnected
-                    ? "Securely connect your account to receive payouts"
-                    : !hasProperty
-                      ? "List your property to get started"
+                  {!hasProperty
+                    ? "List your property to get started"
+                    : !isConnected
+                      ? "Securely connect your account to receive payouts"
                       : "You are almost there"}
                 </strong>
-                {!isConnected ? (
+                {!hasProperty ? (
+                  <p>Add your property details before connecting Stripe and making it visible to guests.</p>
+                ) : !isConnected ? (
                   <ul>
                     <li>Takes 2–3 minutes</li>
                     <li>You&apos;ll be redirected to Stripe</li>
                     <li>Your data is secure and encrypted</li>
                   </ul>
-                ) : !hasProperty ? (
-                  <p>Add your property details before making it visible to guests.</p>
                 ) : (
                   <p>Make your property visible to guests and start to<br />receive bookings.</p>
                 )}
@@ -249,12 +308,25 @@ export default function HostFinanceTab() {
       <div className="finance-main-grid">
         <div className="finance-main-column">
           <section className="finance-section">
-            <div className="finance-section-title"><h2>Upcoming Payouts</h2>{isLive && <ArrowRight size={17} aria-hidden="true" />}</div>
+            <div className="finance-section-title">
+              <h2>Upcoming Payouts</h2>
+              {showFinancialData && payouts.length > 0 && (
+                <button
+                  type="button"
+                  className={`finance-section-action${showAllPayouts ? " is-expanded" : ""}`}
+                  onClick={() => setShowAllPayouts((expanded) => !expanded)}
+                  aria-label={showAllPayouts ? "Show fewer payouts" : "Show all payouts"}
+                  aria-expanded={showAllPayouts}
+                >
+                  <ArrowRight size={17} aria-hidden="true" />
+                </button>
+              )}
+            </div>
             <div className="finance-card finance-payouts-card">
               {!showFinancialData || recentPayouts.length === 0 ? (
                 <EmptyState title="No upcoming payouts" description="Payouts will appear here once you receive bookings." />
               ) : (
-                recentPayouts.map((payout, index) => (
+                displayedPayouts.map((payout, index) => (
                   <div className="finance-payout-row" key={payout.id || `${payout.arrivalDate}-${index}`}>
                     <div><span>{formatDate(payout.arrivalDate) || "Upcoming payout"}</span><small>{payout.status || "In 2 days"}</small></div>
                     <b>{getAmount(payout.amount, payout.currency || currency)}</b>
@@ -267,19 +339,45 @@ export default function HostFinanceTab() {
           <section className="finance-section finance-transactions-section">
             <div className="finance-section-title">
               <h2>Transactions</h2>
-              {isLive && <button type="button" className="finance-export-button"><Download size={12} aria-hidden="true" /> Export</button>}
+              {showFinancialData && (
+                <button
+                  type="button"
+                  className="finance-export-button"
+                  onClick={handleExportTransactions}
+                  disabled={filteredTransactions.length === 0}
+                >
+                  <Download size={12} aria-hidden="true" /> Export
+                </button>
+              )}
             </div>
             {!showFinancialData ? (
               <div className="finance-card"><EmptyState title="No transactions yet" description="Your earnings and payouts will appear here once your property is live." /></div>
             ) : (
               <div className="finance-card finance-transactions-card">
-                <div className="finance-tabs"><button type="button" className="is-selected">All</button><button type="button">Payments</button><button type="button">Payouts</button><button type="button">Refunds</button></div>
-                {recentCharges.length === 0 ? <EmptyState title="No transactions yet" description="Your transactions will appear here." /> : (
+                <div className="finance-tabs">
+                  {[
+                    ["all", "All"],
+                    ["payments", "Payments"],
+                    ["payouts", "Payouts"],
+                    ["refunds", "Refunds"],
+                  ].map(([filter, label]) => (
+                    <button
+                      key={filter}
+                      type="button"
+                      className={transactionFilter === filter ? "is-selected" : ""}
+                      onClick={() => setTransactionFilter(filter)}
+                      aria-pressed={transactionFilter === filter}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {filteredTransactions.length === 0 ? <EmptyState title="No transactions yet" description="Your transactions will appear here." /> : (
                   <div className="finance-transaction-table">
                     <div className="finance-transaction-head"><span>Date</span><span>Description</span><span>Channel</span><span>Amount</span></div>
-                    {recentCharges.map((charge, index) => (
-                      <div className="finance-transaction-row" key={`${charge.createdDate}-${index}`}>
-                        <span>{charge.createdDate || "—"}</span><span>{charge.description || "Guest payment"}</span><span>{charge.channel || "Stripe"}</span><span>{getAmount(charge.hostReceives, charge.currency || currency)}</span>
+                    {filteredTransactions.map((transaction) => (
+                      <div className="finance-transaction-row" key={transaction.id}>
+                        <span>{transaction.date || "—"}</span><span>{transaction.description}</span><span>{transaction.channel}</span><span>{getAmount(transaction.amount, transaction.currency)}</span>
                       </div>
                     ))}
                   </div>
@@ -290,8 +388,15 @@ export default function HostFinanceTab() {
         </div>
 
         <aside className="finance-side-column">
-          {isLive && <section className="finance-card finance-receive-card"><h2>Receive payouts in 3 steps <ArrowRight size={16} aria-hidden="true" /></h2><p>You are all set! Updates will appear here if changes are needed.</p></section>}
-          <section className="finance-card finance-settings-card">
+          {isLive && (
+            <section className="finance-card finance-receive-card">
+              <button type="button" className="finance-card-action" onClick={scrollToPayoutSettings}>
+                <h2>Receive payouts in 3 steps <ArrowRight size={16} aria-hidden="true" /></h2>
+                <p>You are all set! Updates will appear here if changes are needed.</p>
+              </button>
+            </section>
+          )}
+          <section id="finance-payout-settings" className="finance-card finance-settings-card">
             <h2>Payout Settings</h2>
             <div className={`finance-stripe-status${isConnected ? " is-connected" : ""}`}>
               {isConnected ? <><CheckCircle2 size={14} aria-hidden="true" /> Stripe Connected</> : "Connect Stripe to enable payouts"}

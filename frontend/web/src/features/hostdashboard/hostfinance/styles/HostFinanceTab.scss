@@ -1262,6 +1262,29 @@ $color-muted: #6b7280;
       margin-bottom: 8px;
     }
 
+    .finance-section-action {
+      display: grid;
+      place-items: center;
+      border: 0;
+      background: transparent;
+      color: #666;
+      padding: 2px;
+      cursor: pointer;
+
+      svg {
+        transition: transform 0.15s ease;
+      }
+
+      &.is-expanded svg {
+        transform: rotate(90deg);
+      }
+
+      &:focus-visible {
+        outline: 2px solid #0d9813;
+        outline-offset: 2px;
+      }
+    }
+
     > svg {
       color: #666;
     }
@@ -1394,6 +1417,29 @@ $color-muted: #6b7280;
       align-items: center;
       margin: 0 0 10px;
       font-size: 0.9rem;
+    }
+
+    .finance-card-action {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+
+      h2 {
+        transition: color 0.15s ease;
+      }
+
+      &:hover h2 {
+        color: #0d9813;
+      }
+
+      &:focus-visible {
+        outline: 2px solid #0d9813;
+        outline-offset: 3px;
+      }
     }
 
     p {

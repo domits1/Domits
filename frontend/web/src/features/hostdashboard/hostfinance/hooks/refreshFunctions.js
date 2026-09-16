@@ -73,7 +73,6 @@ export function RefreshFunctions() {
     }
 
     (async () => {
-      if (demoMode) return;
       try {
         updateLoadingState("account", true);
         const details = await getStripeAccountDetails();
