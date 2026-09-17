@@ -1084,7 +1084,7 @@ $color-muted: #6b7280;
     }
   }
 
-  .finance-steps {
+  .finance-progress-steps {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1097,12 +1097,12 @@ $color-muted: #6b7280;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: #888;
+    color: #4b5563;
     font-size: 0.9rem;
     white-space: nowrap;
 
     svg {
-      color: #bdbdbd;
+      color: #6b7280;
     }
 
     &.is-complete {
@@ -1125,7 +1125,7 @@ $color-muted: #6b7280;
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #bdbdbd;
+    background: #6b7280;
     color: #fff;
     font-size: 0.65rem;
     font-weight: 700;
@@ -1138,7 +1138,7 @@ $color-muted: #6b7280;
   .finance-step-divider {
     width: 58px;
     height: 1px;
-    background: #d4d4d4;
+    background: #9ca3af;
   }
 
   .finance-status-content {
@@ -1241,7 +1241,7 @@ $color-muted: #6b7280;
 
     small {
       margin-left: auto;
-      color: #666;
+      color: #4b5563;
       white-space: nowrap;
     }
   }
@@ -1267,7 +1267,7 @@ $color-muted: #6b7280;
       place-items: center;
       border: 0;
       background: transparent;
-      color: #666;
+      color: #4b5563;
       padding: 2px;
       cursor: pointer;
 
@@ -1286,7 +1286,7 @@ $color-muted: #6b7280;
     }
 
     > svg {
-      color: #666;
+      color: #4b5563;
     }
   }
 
@@ -1313,7 +1313,7 @@ $color-muted: #6b7280;
     }
 
     small {
-      color: #666;
+      color: #4b5563;
       font-size: 0.68rem;
     }
   }
@@ -1484,7 +1484,7 @@ $color-muted: #6b7280;
 
       &:disabled {
         background: #f4f4f4;
-        color: #aaa;
+        color: #6b7280;
       }
     }
   }
@@ -1509,7 +1509,7 @@ $color-muted: #6b7280;
     border-radius: 3px;
     background: #fff;
     padding: 7px;
-    color: #666;
+    color: #4b5563;
     font-size: 0.75rem;
     cursor: pointer;
 
@@ -1632,7 +1632,7 @@ $color-muted: #6b7280;
       padding: 16px;
     }
 
-    .finance-steps {
+    .finance-progress-steps {
       justify-content: flex-start;
       gap: 6px;
       overflow-x: auto;

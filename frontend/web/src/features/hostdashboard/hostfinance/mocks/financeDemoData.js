@@ -10,9 +10,10 @@ export const FINANCE_DEMO_DATA = {
     pending: [{ amount: 420, currency: "EUR" }],
   },
   payouts: [
-    { id: "po_demo_2000", arrivalDate: "May 6", amount: 2000, currency: "EUR", status: "In 2 days" },
-    { id: "po_demo_1820", arrivalDate: "May 13", amount: 1820, currency: "EUR", status: "In 9 days" },
-    { id: "po_demo_420", arrivalDate: "May 6", amount: 420, currency: "EUR", status: "Processing" },
+    { id: "po_demo_2000", arrivalDate: "May 6", arrivalDateAt: "2026-05-06T00:00:00.000Z", amount: 2000, currency: "EUR", status: "In 2 days", isProjected: true },
+    { id: "po_demo_1820", arrivalDate: "May 13", arrivalDateAt: "2026-05-13T00:00:00.000Z", amount: 1820, currency: "EUR", status: "In 9 days", isProjected: true },
+    { id: "po_demo_420", arrivalDate: "May 6", arrivalDateAt: "2026-05-06T00:00:00.000Z", amount: 420, currency: "EUR", status: "Processing", isProjected: true },
+    { id: "po_demo_paid", arrivalDate: "Apr 29", arrivalDateAt: "2026-04-29T00:00:00.000Z", amount: 1820, currency: "EUR", status: "paid", isProjected: false },
   ],
   charges: [
     {
@@ -22,30 +23,32 @@ export const FINANCE_DEMO_DATA = {
       hostReceives: 670,
       currency: "EUR",
       status: "succeeded",
-    },
-    {
-      createdDate: "Apr 15, 2026",
-      description: "Payout to bank account",
-      channel: "Stripe",
-      hostReceives: -1200,
-      currency: "EUR",
-      status: "paid",
+      transactionType: "payments",
+      createdAt: "2026-04-30T00:00:00.000Z",
     },
     {
       createdDate: "Mar 01, 2026",
       description: "Refund booking #017234",
       channel: "Booking.com",
       hostReceives: -50,
+      amountRefunded: 50,
+      refunded: true,
       currency: "EUR",
       status: "refunded",
+      transactionType: "refunds",
+      createdAt: "2026-03-01T00:00:00.000Z",
     },
     {
       createdDate: "Mar 01, 2026",
       description: "Refund booking #017668",
       channel: "Booking.com",
       hostReceives: -150,
+      amountRefunded: 150,
+      refunded: true,
       currency: "EUR",
       status: "refunded",
+      transactionType: "refunds",
+      createdAt: "2026-03-01T00:00:00.000Z",
     },
   ],
   schedule: {
@@ -57,6 +60,7 @@ export const FINANCE_DEMO_DATA = {
 
 export function isFinanceDemoMode() {
   if (typeof window === "undefined") return false;
+  if (process.env.NODE_ENV === "production") return false;
   const queryValue = new URLSearchParams(window.location.search).get("financeDemo");
   if (queryValue === "false") return false;
   return (
@@ -65,4 +69,3 @@ export function isFinanceDemoMode() {
     process.env.REACT_APP_FINANCE_DEMO_DATA === "true"
   );
 }
-

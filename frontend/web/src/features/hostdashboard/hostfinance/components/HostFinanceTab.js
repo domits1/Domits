@@ -18,6 +18,7 @@ import { fetchHostOwnedListings } from "../../services/hostTaskPropertyService";
 import { isFinanceDemoMode } from "../mocks/financeDemoData";
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+const DEMO_LISTINGS = [{ property: { id: "demo-property", status: "ACTIVE" } }];
 
 const formatDate = (value) => {
   if (!value) return null;
@@ -105,33 +106,41 @@ export default function HostFinanceTab() {
   const isLive = isConnected && listingState.isLive;
   const showFinancialData = isLive || (demoMode && hasActivity);
   const currency = balanceView.currency || "EUR";
+  const needsListing = !hasProperty;
+  const needsStripe = hasProperty && !isConnected;
 
   const recentPayouts = useMemo(() => payouts.slice(0, 3), [payouts]);
   const displayedPayouts = showAllPayouts ? payouts : recentPayouts;
   const transactions = useMemo(
     () => [
       ...charges.map((charge, index) => {
-        const searchText = `${charge.description || ""} ${charge.status || ""}`.toLowerCase();
         return {
           id: `charge-${charge.paymentId || index}`,
-          type: searchText.includes("refund") ? "refunds" : "payments",
+          type: charge.transactionType || "payments",
           date: charge.createdDate,
+          exportDate: charge.createdAt || charge.createdDate,
           description: charge.description || "Guest payment",
           channel: charge.channel || charge.paymentMethod || "Stripe",
-          amount: charge.hostReceives,
+          amount:
+            charge.transactionType === "refunds"
+              ? -Math.abs(charge.amountRefunded || charge.hostReceives || 0)
+              : charge.hostReceives,
           currency: charge.currency || currency,
           status: charge.status,
+          projected: false,
         };
       }),
-      ...payouts.map((payout, index) => ({
+      ...payouts.filter((payout) => !payout.isProjected && payout.id).map((payout, index) => ({
         id: `payout-${payout.id || index}`,
         type: "payouts",
         date: payout.arrivalDate,
-        description: payout.status === "paid" ? "Payout to bank account" : "Upcoming payout",
+        exportDate: payout.arrivalDateAt || payout.arrivalDate,
+        description: payout.isProjected ? "Projected payout" : "Payout to bank account",
         channel: "Stripe",
         amount: payout.amount,
         currency: payout.currency || currency,
         status: payout.status,
+        projected: Boolean(payout.isProjected),
       })),
     ],
     [charges, currency, payouts]
@@ -141,7 +150,8 @@ export default function HostFinanceTab() {
 
   useEffect(() => {
     let isCancelled = false;
-    fetchHostOwnedListings()
+    const listingsRequest = demoMode ? Promise.resolve(DEMO_LISTINGS) : fetchHostOwnedListings();
+    listingsRequest
       .then((listings) => {
         if (isCancelled) return;
         setListingState({
@@ -191,14 +201,15 @@ export default function HostFinanceTab() {
   const handleExportTransactions = () => {
     if (filteredTransactions.length === 0) return;
 
-    const headers = ["Date", "Description", "Channel", "Amount", "Currency", "Status"];
+    const headers = ["Date", "Description", "Channel", "Amount", "Currency", "Status", "Projected"];
     const rows = filteredTransactions.map((transaction) => [
-      transaction.date,
+      transaction.exportDate,
       transaction.description,
       transaction.channel,
       transaction.amount,
       transaction.currency,
       transaction.status,
+      transaction.projected ? "Yes" : "No",
     ]);
     const csv = [headers, ...rows]
       .map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(","))
@@ -216,8 +227,15 @@ export default function HostFinanceTab() {
   };
 
   const nextPayout = recentPayouts[0];
+  const arrivingSoonAmount = recentPayouts[1]?.amount || 0;
   const processingAmount = balanceView.incomingTotal;
   const availableAmount = balanceView.availableTotal;
+  const availableAmountForDisplay = showFinancialData ? availableAmount : 0;
+  const arrivingSoonAmountForDisplay = showFinancialData ? arrivingSoonAmount : 0;
+  const processingAmountForDisplay = showFinancialData ? processingAmount : 0;
+  const availableDisplay = isBalanceLoading ? "—" : getAmount(availableAmountForDisplay, currency);
+  const arrivingSoonDisplay = isBalanceLoading ? "—" : getAmount(arrivingSoonAmountForDisplay, currency);
+  const processingDisplay = isBalanceLoading ? "—" : getAmount(processingAmountForDisplay, currency);
 
   let statusTitle = "You are almost there";
 
@@ -242,7 +260,7 @@ export default function HostFinanceTab() {
               <strong>Ready to withdraw</strong>
               <b>{getAmount(availableAmount, currency)}</b>
               <small>
-                {getAmount(processingAmount, currency)} arriving soon <Info size={11} aria-hidden="true" />{" "}
+                {getAmount(arrivingSoonAmount, currency)} arriving soon <Info size={11} aria-hidden="true" />{" "}
                 <span>•</span> {getAmount(processingAmount, currency)} processing <Info size={11} aria-hidden="true" />
               </small>
             </div>
@@ -256,7 +274,7 @@ export default function HostFinanceTab() {
           </div>
         ) : (
           <>
-            <div className="finance-steps">
+            <div className="finance-progress-steps">
               <Step number="1" label="List your property" complete={hasProperty} active={!hasProperty} />
               <span className="finance-step-divider" />
               <Step number="2" label="Connect Stripe" complete={isConnected} active={hasProperty && !isConnected} />
@@ -266,15 +284,17 @@ export default function HostFinanceTab() {
             <div className="finance-status-content">
               <div>
                 <strong>{statusTitle}</strong>
-                {!hasProperty ? (
+                {needsListing && (
                   <p>Add your property details before connecting Stripe and making it visible to guests.</p>
-                ) : !isConnected ? (
+                )}
+                {needsStripe && (
                   <ul>
                     <li>Takes 2–3 minutes</li>
                     <li>You&apos;ll be redirected to Stripe</li>
                     <li>Your data is secure and encrypted</li>
                   </ul>
-                ) : (
+                )}
+                {!needsListing && !needsStripe && (
                   <p>Make your property visible to guests and start to<br />receive bookings.</p>
                 )}
               </div>
@@ -291,17 +311,17 @@ export default function HostFinanceTab() {
         <div className="finance-balance-grid">
           <div className="finance-balance-card">
             <CircleDollarSign size={24} aria-hidden="true" />
-            <div><b>{isBalanceLoading ? "—" : getAmount(showFinancialData ? availableAmount : 0, currency)}</b><span>Next payout</span></div>
+            <div><b>{availableDisplay}</b><span>Next payout</span></div>
             {showFinancialData && <small>{nextPayout?.arrivalDate || "Scheduled"}</small>}
           </div>
           <div className="finance-balance-card">
             <WalletCards size={24} aria-hidden="true" />
-            <div><b>{isBalanceLoading ? "—" : getAmount(showFinancialData ? processingAmount : 0, currency)}</b><span>Arriving soon</span></div>
+            <div><b>{arrivingSoonDisplay}</b><span>Arriving soon</span></div>
             {showFinancialData && <small>1–3 days</small>}
           </div>
           <div className="finance-balance-card">
             <Building2 size={24} aria-hidden="true" />
-            <div><b>{isBalanceLoading ? "—" : getAmount(showFinancialData ? processingAmount : 0, currency)}</b><span>Processing</span></div>
+            <div><b>{processingDisplay}</b><span>Processing</span></div>
             {showFinancialData && <small>Pending confirmation</small>}
           </div>
         </div>
