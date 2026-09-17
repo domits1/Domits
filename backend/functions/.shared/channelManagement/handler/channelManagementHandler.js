@@ -1,5 +1,6 @@
 import ChannelManagementController from "../controller/channelManagementController.js";
 import { isChannexCertificationUserAllowed } from "../utils/channexCertificationAccess.js";
+import { resolveAuthenticatedUserId, withAuthenticatedUserId } from "../utils/channelAuthenticatedUser.js";
 import {
   CHANNEX_RESTRICTIONS_SYNC_MODE,
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
@@ -106,18 +107,24 @@ const isProtectedChannexCertificationAdminRoute = (method, path) =>
     (route) =>
       route.methods.includes(method) && route.pattern.test(String(path || ""))
   );
-const shouldRejectChannexCertificationAdminRequest = (event) => {
-  if (
-    !isProtectedChannexCertificationAdminRoute(
-      event?.httpMethod,
-      event?.path
-    )
-  ) {
-    return false;
-  }
-  const userId = event?.queryStringParameters?.userId;
-  return !!userId && !isChannexCertificationUserAllowed(userId);
+const unauthorizedChannelRequest = {
+  statusCode: 401,
+  response: {
+    error: "UNAUTHORIZED",
+    message: "Authentication required.",
+  },
 };
+// Called Lambda-to-Lambda and authorized by x-domits-internal-token in the controller, never by a user token.
+const internalTokenRoutePaths = [
+  "/integrations/channex/booking-availability/sync",
+  "/integrations/channex/calendar-change/sync",
+];
+const isInternalTokenRoute = (method, path) =>
+  method === "POST" &&
+  internalTokenRoutePaths.some((routePath) => String(path || "").endsWith(routePath));
+const shouldRejectChannexCertificationAdminRequest = (event, userId) =>
+  isProtectedChannexCertificationAdminRoute(event?.httpMethod, event?.path) &&
+  !isChannexCertificationUserAllowed(userId);
 const isChannexRestrictionsSyncRequest = (method, path) =>
   method === "POST" &&
   String(path || "").endsWith("/integrations/channex/sync/restrictions");
@@ -357,10 +364,18 @@ export const handleChannelManagementEvent = async (event) => {
 
     const routeHandler = findRouteHandler(httpMethod, path);
     if (!routeHandler) return createLambdaResponse(notFound);
-    if (shouldRejectChannexCertificationAdminRequest(event)) {
+    if (isInternalTokenRoute(httpMethod, path)) {
+      return createLambdaResponse(await routeHandler(event));
+    }
+
+    const authenticatedUserId = resolveAuthenticatedUserId(event);
+    if (!authenticatedUserId) {
+      return createLambdaResponse(unauthorizedChannelRequest);
+    }
+    if (shouldRejectChannexCertificationAdminRequest(event, authenticatedUserId)) {
       return createLambdaResponse(forbiddenChannexCertificationAdmin);
     }
-    return createLambdaResponse(await routeHandler(event));
+    return createLambdaResponse(await routeHandler(withAuthenticatedUserId(event, authenticatedUserId)));
   } catch (error) {
     if (isChannexRestrictionsSyncRequest(httpMethod, path)) {
       console.error("Error in Channex restrictions sync handler:", error);
