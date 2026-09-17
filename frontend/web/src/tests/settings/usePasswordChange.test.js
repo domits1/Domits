@@ -65,33 +65,29 @@ describe("usePasswordChange", () => {
     expect(result.current.confirmPassword).toBe("");
   });
 
-  test("onSubmitPasswordChange: sets an error when a field is missing", async () => {
+  test.each([
+    [
+      "a field is missing",
+      { next: "newPass1!", confirm: "newPass1!" },
+      "Please fill in all password fields.",
+    ],
+    [
+      "the new password is too short",
+      { current: "oldPass1!", next: "short1!", confirm: "short1!" },
+      "Password must be at least 8 characters.",
+    ],
+    [
+      "new password and confirmation do not match",
+      { current: "oldPass1!", next: "newPass1!", confirm: "differentPass1!" },
+      "New password and confirmation do not match.",
+    ],
+  ])("onSubmitPasswordChange: sets an error when %s", async (_label, fields, expectedError) => {
     const { result } = setup();
 
-    fillPasswordFields(result, { next: "newPass1!", confirm: "newPass1!" });
+    fillPasswordFields(result, fields);
     await submitPasswordChange(result);
 
-    expect(result.current.passwordError).toBe("Please fill in all password fields.");
-    expect(Auth.changePassword).not.toHaveBeenCalled();
-  });
-
-  test("onSubmitPasswordChange: sets an error when the new password is too short", async () => {
-    const { result } = setup();
-
-    fillPasswordFields(result, { current: "oldPass1!", next: "short1!", confirm: "short1!" });
-    await submitPasswordChange(result);
-
-    expect(result.current.passwordError).toBe("Password must be at least 8 characters.");
-    expect(Auth.changePassword).not.toHaveBeenCalled();
-  });
-
-  test("onSubmitPasswordChange: sets an error when new password and confirmation do not match", async () => {
-    const { result } = setup();
-
-    fillPasswordFields(result, { current: "oldPass1!", next: "newPass1!", confirm: "differentPass1!" });
-    await submitPasswordChange(result);
-
-    expect(result.current.passwordError).toBe("New password and confirmation do not match.");
+    expect(result.current.passwordError).toBe(expectedError);
     expect(Auth.changePassword).not.toHaveBeenCalled();
   });
 
