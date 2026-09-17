@@ -86,6 +86,19 @@ const normalizeJsonObject = (value) => {
 
 const normalizeTimestamp = (value) => (value == null ? null : Number(value));
 
+const runStatement = async (client, statement, parameters) => {
+  const queryRunner = client.createQueryRunner();
+  try {
+    const result = await queryRunner.query(statement, parameters, true);
+    return {
+      records: Array.isArray(result?.records) ? result.records : [],
+      affected: Number(result?.affected) || 0,
+    };
+  } finally {
+    await queryRunner.release();
+  }
+};
+
 const mapSiteDomainRow = (row) => {
   if (!row) {
     return null;
@@ -224,7 +237,7 @@ export class DirectBookingWebsiteDomainRepository {
     const normalizedDomain = String(domain || "").trim().toLowerCase();
 
     const rows = await client.query(
-      `INSERT INTO ${tableName} (
+      `INSERT INTO ${tableName} AS existing (
         id,
         site_id,
         domain,
@@ -242,7 +255,7 @@ export class DirectBookingWebsiteDomainRepository {
         site_id = EXCLUDED.site_id,
         domain_type = EXCLUDED.domain_type,
         status = EXCLUDED.status,
-        is_primary = EXCLUDED.is_primary,
+        is_primary = existing.is_primary,
         verification_details_json = EXCLUDED.verification_details_json,
         last_checked_at = EXCLUDED.last_checked_at,
         updated_at = EXCLUDED.updated_at
@@ -308,6 +321,56 @@ export class DirectBookingWebsiteDomainRepository {
 
   async updatePrimaryLiveDomainStatus(siteId, status, verificationDetails = {}) {
     return this.updateFallbackDomainStatus(siteId, status, verificationDetails);
+  }
+
+  async promoteDomainToPrimary(siteId, domainId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    const { records } = await runStatement(
+      client,
+      `UPDATE ${tableName}
+      SET
+        is_primary = (id = $2),
+        updated_at = $3
+      WHERE site_id = $1
+        AND is_primary IS DISTINCT FROM (id = $2)
+        AND EXISTS (
+          SELECT 1
+          FROM ${tableName} candidate
+          WHERE candidate.id = $2
+            AND candidate.site_id = $1
+            AND candidate.domain_type = 'CUSTOM'
+            AND candidate.status = 'ACTIVE'
+        )
+      RETURNING
+        ${SITE_DOMAIN_SELECT_COLUMNS}`,
+      [siteId, domainId, Date.now()]
+    );
+
+    return records.map(mapSiteDomainRow).filter(Boolean);
+  }
+
+  async restoreFallbackDomainAsPrimary(siteId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    const { records } = await runStatement(
+      client,
+      `UPDATE ${tableName}
+      SET
+        is_primary = (domain_type = 'FALLBACK'),
+        updated_at = $2
+      WHERE site_id = $1
+        AND is_primary IS DISTINCT FROM (domain_type = 'FALLBACK')
+      RETURNING
+        ${SITE_DOMAIN_SELECT_COLUMNS}`,
+      [siteId, Date.now()]
+    );
+
+    return records.map(mapSiteDomainRow).filter(Boolean);
   }
 
   async updateDomainStatusById(domainId, siteId, status, verificationDetails = {}) {

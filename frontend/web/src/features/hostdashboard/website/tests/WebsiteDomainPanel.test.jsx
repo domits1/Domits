@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { toast } from "react-toastify";
 import WebsiteDomainPanel from "../domains/WebsiteDomainPanel";
 import { fetchWebsiteSiteByPropertyId } from "../services/websiteSiteService";
@@ -7,6 +7,7 @@ import {
   WebsiteDomainError,
   connectWebsiteDomain,
   fetchWebsiteDomains,
+  promoteWebsiteDomain,
   removeWebsiteDomain,
   verifyWebsiteDomain,
 } from "../services/websiteDomainService";
@@ -21,6 +22,7 @@ jest.mock("../services/websiteDomainService", () => {
     connectWebsiteDomain: jest.fn(),
     verifyWebsiteDomain: jest.fn(),
     removeWebsiteDomain: jest.fn(),
+    promoteWebsiteDomain: jest.fn(),
   };
 });
 
@@ -51,6 +53,8 @@ const CUSTOM = {
 };
 
 const domainError = (code, message = "") => new WebsiteDomainError({ code, message, status: 409, requestId: "req-1" });
+
+const domainRowOf = (domain) => screen.getAllByRole("listitem").find((item) => within(item).queryByText(domain));
 
 const openPanel = async () => {
   render(<WebsiteDomainPanel propertyId="property-1" />);
@@ -288,5 +292,50 @@ describe("WebsiteDomainPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /try again/i }));
 
     expect(await screen.findByText(FALLBACK.domain)).toBeInTheDocument();
+  });
+
+  it("offers to make a live custom domain the main address and moves the badge once it did", async () => {
+    const liveCustom = { ...CUSTOM, status: "ACTIVE", dnsVerified: true, certificateStatus: "issued", reason: null };
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, liveCustom]);
+    promoteWebsiteDomain.mockResolvedValue([
+      { ...FALLBACK, isPrimary: false },
+      { ...liveCustom, isPrimary: true },
+    ]);
+    await openPanel();
+    await screen.findByText("Domain live");
+    expect(within(domainRowOf(FALLBACK.domain)).getByText("Main address")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /make main address/i }));
+
+    expect(await within(domainRowOf("www.example.com")).findByText("Main address")).toBeInTheDocument();
+    expect(promoteWebsiteDomain).toHaveBeenCalledWith({ siteId: "site-1", domain: "www.example.com" });
+    expect(screen.getAllByText("Main address")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /mak(e|ing) main address/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /remove domain/i })).toBeInTheDocument();
+  });
+
+  it("does not offer the main address switch while the custom domain is not live", async () => {
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, CUSTOM]);
+    await openPanel();
+    await screen.findByText("Pending");
+
+    expect(screen.queryByRole("button", { name: /make main address/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /check again/i })).toBeInTheDocument();
+  });
+
+  it("explains a refused switch and keeps the button so the host can retry after check again", async () => {
+    const liveCustom = { ...CUSTOM, status: "ACTIVE", dnsVerified: true, certificateStatus: "issued", reason: null };
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, liveCustom]);
+    promoteWebsiteDomain.mockRejectedValue(
+      domainError("domain_not_active", "www.example.com is no longer live, so it cannot be the main address.")
+    );
+    await openPanel();
+    await screen.findByText("Domain live");
+
+    fireEvent.click(screen.getByRole("button", { name: /make main address/i }));
+
+    expect(await screen.findByText(/only a live domain can be the main address/i)).toBeInTheDocument();
+    expect(screen.getByText(/reference: req-1/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /make main address/i })).toBeEnabled();
   });
 });

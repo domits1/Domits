@@ -41,6 +41,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/site/unpublish")) {
     return controller.unpublishWebsiteSite(event);
   }
+  if (isPath(event, "/property/website/domains/primary")) {
+    return controller.promoteWebsiteDomain(event);
+  }
   if (isPath(event, "/property/website/domains/verify")) {
     return controller.verifyWebsiteDomain(event);
   }

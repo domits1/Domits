@@ -3119,6 +3119,22 @@ export class PropertyController {
         });
     }
 
+    async promoteWebsiteDomain(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site, body }) => {
+            const domain = cleanWebsiteText(body.domain);
+            if (!domain) {
+                throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
+            }
+
+            const domains = await this.getWebsiteCustomDomainService().promoteCustomDomain({ site, domain });
+            const summary = this.buildDirectBookingWebsiteSummary(site, domains);
+            return {
+                statusCode: 200,
+                body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
+            };
+        });
+    }
+
     async handleWebsiteDomainRequest(event, handle) {
         const requestId = cleanWebsiteText(event?.requestContext?.requestId) || randomUUID();
         try {

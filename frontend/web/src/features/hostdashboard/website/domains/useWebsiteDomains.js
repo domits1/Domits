@@ -3,6 +3,7 @@ import { fetchWebsiteSiteByPropertyId } from "../services/websiteSiteService";
 import {
   connectWebsiteDomain,
   fetchWebsiteDomains,
+  promoteWebsiteDomain,
   removeWebsiteDomain,
   verifyWebsiteDomain,
 } from "../services/websiteDomainService";
@@ -21,6 +22,7 @@ const SITE_STATUS_PUBLISHED = "PUBLISHED";
 const ACTION_CONNECT = "connect";
 const ACTION_CHECK = "check";
 const ACTION_REMOVE = "remove";
+const ACTION_PROMOTE = "promote";
 const ERROR_SCOPE_FIELD = "field";
 const ERROR_SCOPE_PANEL = "panel";
 const RELOAD_ON_ERROR_CODES = new Set(["domain_limit_reached", "domain_not_found"]);
@@ -31,6 +33,8 @@ const replaceCustomDomain = (domains, customDomain) => [
   ...domains.filter((entry) => !isCustomDomain(entry)),
   ...(customDomain ? [customDomain] : []),
 ];
+
+const replaceAllDomains = (domains, nextDomains) => nextDomains;
 
 export const useWebsiteDomains = ({ propertyId, enabled }) => {
   const [status, setStatus] = useState(WEBSITE_DOMAINS_STATUS.IDLE);
@@ -74,13 +78,13 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
   }, [enabled, load, status]);
 
   const runDomainAction = useCallback(
-    async ({ action, request, errorScope = ERROR_SCOPE_FIELD }) => {
+    async ({ action, request, errorScope = ERROR_SCOPE_FIELD, apply = replaceCustomDomain }) => {
       setPendingAction(action);
       setNotice(null);
       setFieldError("");
       try {
-        const domain = await request();
-        setDomains((current) => replaceCustomDomain(current, domain));
+        const result = await request();
+        setDomains((current) => apply(current, result));
         return true;
       } catch (error) {
         const presentation = resolveDomainErrorCopy(error);
@@ -134,6 +138,17 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
     [runDomainAction, siteId]
   );
 
+  const promote = useCallback(
+    (domain) =>
+      runDomainAction({
+        action: ACTION_PROMOTE,
+        request: () => promoteWebsiteDomain({ siteId, domain }),
+        errorScope: ERROR_SCOPE_PANEL,
+        apply: replaceAllDomains,
+      }),
+    [runDomainAction, siteId]
+  );
+
   return {
     status,
     domains,
@@ -143,9 +158,11 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
     isConnecting: pendingAction === ACTION_CONNECT,
     isChecking: pendingAction === ACTION_CHECK,
     isRemoving: pendingAction === ACTION_REMOVE,
+    isPromoting: pendingAction === ACTION_PROMOTE,
     connect,
     checkAgain,
     remove,
+    promote,
     reload: load,
   };
 };

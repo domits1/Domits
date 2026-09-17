@@ -3,6 +3,7 @@ import { buildAuthorizedHeaders } from "./websiteSiteService";
 
 const WEBSITE_DOMAINS_URL = `${PROPERTY_API_BASE}/website/domains`;
 const WEBSITE_DOMAIN_VERIFY_URL = `${WEBSITE_DOMAINS_URL}/verify`;
+const WEBSITE_DOMAIN_PRIMARY_URL = `${WEBSITE_DOMAINS_URL}/primary`;
 const JSON_CONTENT_TYPE = "application/json";
 
 export const WEBSITE_DOMAIN_CLIENT_ERROR_CODES = Object.freeze({
@@ -127,4 +128,21 @@ export const removeWebsiteDomain = async ({ siteId, domain }) => {
     fallbackMessage
   );
   return resolveDomainViewOrRemoved(payload, fallbackMessage);
+};
+
+export const promoteWebsiteDomain = async ({ siteId, domain }) => {
+  const fallbackMessage = "We could not make this domain the main address.";
+  const payload = await sendWebsiteDomainRequest(
+    WEBSITE_DOMAIN_PRIMARY_URL,
+    { method: "POST", body: JSON.stringify({ siteId, domain }) },
+    fallbackMessage
+  );
+  if (!Array.isArray(payload.domains)) {
+    throw new WebsiteDomainError({
+      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
+      message: fallbackMessage,
+      status: 200,
+    });
+  }
+  return payload.domains;
 };
