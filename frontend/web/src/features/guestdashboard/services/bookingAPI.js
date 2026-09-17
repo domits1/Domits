@@ -93,3 +93,31 @@ export async function cancelGuestBooking(bookingId) {
 
   return parseJsonResponse(response);
 }
+
+export async function updateBookingSpecialRequest(bookingId, specialRequest) {
+  if (!bookingId) {
+    throw new Error("Booking id is required to update the special request.");
+  }
+
+  const response = await fetch(API_BOOKINGS_BASE, {
+    method: "PATCH",
+    headers: {
+      Authorization: await getAccessToken(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "update-special-request",
+      bookingId,
+      specialRequest,
+    }),
+  });
+
+  if (!response.ok) {
+    const responseText = await response.text().catch(() => "");
+    throw new Error(
+      `Update special request failed: ${response.status} ${response.statusText} ${responseText}`.trim()
+    );
+  }
+
+  return parseJsonResponse(response);
+}

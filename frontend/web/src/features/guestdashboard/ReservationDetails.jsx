@@ -34,6 +34,7 @@ import { isValidDate, startOfDay } from "../../utils/dashboardShared";
 import { fetchPropertySummaries } from "./services/propertySummaryService";
 import AmenitiesSection from "./components/AmenitiesSection";
 import SpecialInstructionsSection from "./components/SpecialInstructionsSection";
+import SpecialRequestsSection from "./components/SpecialRequestsSection";
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
 const PAY_ROUTE_PREFIX = "/guestdashboard/pay/";
@@ -391,6 +392,10 @@ const buildReservationContent = ({
             <HouseRules rules={reservation.rules} />
             <AmenitiesSection amenityIds={reservation.amenities} />
             <SpecialInstructionsSection instructions={reservation.specialInstructions} />
+            <SpecialRequestsSection
+              bookingId={reservation.stay.bookingId}
+              specialRequest={reservation.specialRequest}
+            />
 
             {isAwaitingInquiryPayment && (
               <div className="card helpCard">
@@ -514,6 +519,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
   : [],
     amenities: Array.isArray(propertyDetails?.amenities) ? propertyDetails.amenities : [],
     specialInstructions: Array.isArray(propertyDetails?.customRules) ? propertyDetails.customRules : [],
+    specialRequest: String(booking?.specialRequest || booking?.special_request || ""),
   };
 };
 

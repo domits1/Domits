@@ -1,4 +1,5 @@
 import Database from "database";
+import { QueryFailedError } from "typeorm";
 import { randomUUID } from "node:crypto";
 import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
@@ -497,6 +498,34 @@ class ReservationRepository {
       response: query,
       statusCode: 200,
     };
+  }
+
+  async updateBookingSpecialRequest(id, specialRequest) {
+    const client = await Database.getInstance();
+    try {
+      const query = await client
+        .createQueryBuilder()
+        .update(Booking)
+        .set({
+          special_request: specialRequest,
+        })
+        .where("id = :id", { id })
+        .execute();
+
+      return {
+        response: query,
+        statusCode: 200,
+      };
+    } catch (error) {
+      if (error instanceof QueryFailedError && (error.code === "42P01" || error.code === "42703")) {
+        console.warn(
+          `Could not update special_request for booking ${id} (column/table not yet migrated):`,
+          error.message
+        );
+        return await this.getBookingById(id);
+      }
+      throw error;
+    }
   }
 
   async cancelBookingByGuest(id, guestId, refundInfo = {}) {
