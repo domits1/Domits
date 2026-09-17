@@ -42,7 +42,7 @@ export default function usePhotoUpload(setUser) {
         }
 
         if (file.size > PROFILE_PHOTO_MAX_SIZE) {
-            setPhotoError("Image must be 5MB or smaller.");
+            setPhotoError("Image must be 4MB or smaller.");
             return;
         }
 
@@ -67,7 +67,7 @@ export default function usePhotoUpload(setUser) {
             showPhotoSuccess("uploaded");
         } catch (error) {
             console.error("Error uploading profile photo:", error);
-            setPhotoError("Failed to upload photo. Please try again.");
+            setPhotoError(error?.message || "Failed to upload photo. Please try again.");
         } finally {
             setIsUploadingPhoto(false);
             if (photoInputRef.current) {

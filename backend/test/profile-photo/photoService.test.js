@@ -29,10 +29,10 @@ describe("photoService - uploadProfilePhoto", () => {
     expect(mockUploadPhoto).not.toHaveBeenCalled();
   });
 
-  test("throws when the decoded image exceeds 5MB", async () => {
-    const oversizedBase64 = Buffer.alloc(5 * 1024 * 1024 + 1).toString("base64");
+  test("throws when the decoded image exceeds 4MB", async () => {
+    const oversizedBase64 = Buffer.alloc(4 * 1024 * 1024 + 1).toString("base64");
     const dataUrl = `data:image/png;base64,${oversizedBase64}`;
-    await expect(uploadProfilePhoto("user-123", dataUrl)).rejects.toThrow("Image must be 5MB or smaller.");
+    await expect(uploadProfilePhoto("user-123", dataUrl)).rejects.toThrow("Image must be 4MB or smaller.");
     expect(mockUploadPhoto).not.toHaveBeenCalled();
   });
 

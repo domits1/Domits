@@ -46,14 +46,14 @@ describe("usePhotoUpload", () => {
     expect(mockSetUser).not.toHaveBeenCalled();
   });
 
-  test("onPhotoInputChange: sets error when file size exceeds 5 MB limit", async () => {
+  test("onPhotoInputChange: sets error when file size exceeds 4 MB limit", async () => {
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const oversizedFile = new File(["x"], "big.jpg", { type: "image/jpeg" });
     Object.defineProperty(oversizedFile, "size", { value: PROFILE_PHOTO_MAX_SIZE + 1 });
     await act(async () => {
       await result.current.onPhotoInputChange({ target: { files: [oversizedFile] } });
     });
-    expect(result.current.photoError).toBe("Image must be 5MB or smaller.");
+    expect(result.current.photoError).toBe("Image must be 4MB or smaller.");
   });
 
   const performSuccessfulUpload = async () => {
@@ -98,8 +98,24 @@ describe("usePhotoUpload", () => {
     jest.useRealTimers();
   });
 
-  test("onPhotoInputChange: sets error and clears uploading flag when the upload request fails", async () => {
-    profileUpload.uploadProfilePhoto.mockRejectedValue(new Error("Network error"));
+  test("onPhotoInputChange: surfaces the server's validation message when the upload request fails", async () => {
+    profileUpload.uploadProfilePhoto.mockRejectedValue(new Error("Image must be 4MB or smaller."));
+
+    const { result } = renderHook(() => usePhotoUpload(mockSetUser));
+    const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
+
+    await act(async () => {
+      await result.current.onPhotoInputChange({ target: { files: [file] } });
+    });
+
+    expect(result.current.photoError).toBe("Image must be 4MB or smaller.");
+    expect(result.current.photoSuccess).toBe("");
+    expect(result.current.isUploadingPhoto).toBe(false);
+    expect(mockSetUser).not.toHaveBeenCalled();
+  });
+
+  test("onPhotoInputChange: falls back to a generic message when the failure has no message", async () => {
+    profileUpload.uploadProfilePhoto.mockRejectedValue(new Error());
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
@@ -109,9 +125,6 @@ describe("usePhotoUpload", () => {
     });
 
     expect(result.current.photoError).toBe("Failed to upload photo. Please try again.");
-    expect(result.current.photoSuccess).toBe("");
-    expect(result.current.isUploadingPhoto).toBe(false);
-    expect(mockSetUser).not.toHaveBeenCalled();
   });
 
   test("onPhotoInputChange: sets error when upload response is missing fileUrl", async () => {
@@ -124,7 +137,7 @@ describe("usePhotoUpload", () => {
       await result.current.onPhotoInputChange({ target: { files: [file] } });
     });
 
-    expect(result.current.photoError).toBe("Failed to upload photo. Please try again.");
+    expect(result.current.photoError).toBe("Invalid upload response.");
   });
 
   test("onPhotoRemove: clears picture in Cognito and calls setUser with empty picture", async () => {
