@@ -156,9 +156,13 @@ describe("WebsiteCustomDomainService.promoteCustomDomain", () => {
     expect(domains).toHaveLength(2);
   });
 
-  it("throws DOMAIN_NOT_ACTIVE when the statement finds the row no longer live", async () => {
+  it("throws DOMAIN_NOT_ACTIVE when the statement changed nothing and the row is genuinely no longer live", async () => {
     const record = buildRecord();
     const domainRepository = buildDomainRepository(record, {
+      getCustomDomainBySiteId: jest
+        .fn()
+        .mockResolvedValueOnce(record)
+        .mockResolvedValueOnce(buildRecord({ status: "REMOVING" })),
       promoteDomainToPrimary: jest.fn().mockResolvedValue([]),
     });
     const { service, eventRepository } = buildService({ record, domainRepository });
@@ -169,6 +173,41 @@ describe("WebsiteCustomDomainService.promoteCustomDomain", () => {
 
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
     expect(domainRepository.listDomainsBySiteId).not.toHaveBeenCalled();
+  });
+
+  it("treats zero changed rows as success when a concurrent promote already moved the flag", async () => {
+    const record = buildRecord();
+    const domainRepository = buildDomainRepository(record, {
+      getCustomDomainBySiteId: jest
+        .fn()
+        .mockResolvedValueOnce(record)
+        .mockResolvedValueOnce(buildRecord({ isPrimary: true })),
+      promoteDomainToPrimary: jest.fn().mockResolvedValue([]),
+    });
+    const { service, eventRepository } = buildService({ record, domainRepository });
+
+    const domains = await service.promoteCustomDomain({ site: SITE, domain: DOMAIN });
+
+    expect(domainRepository.promoteDomainToPrimary).toHaveBeenCalledTimes(1);
+    expect(domainRepository.getCustomDomainBySiteId).toHaveBeenCalledTimes(2);
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+    expect(domains.map((entry) => [entry.domain, entry.isPrimary])).toEqual([
+      [FALLBACK.domain, false],
+      [DOMAIN, true],
+    ]);
+  });
+
+  it("throws DOMAIN_NOT_FOUND when the statement changed nothing because the row is gone", async () => {
+    const record = buildRecord();
+    const domainRepository = buildDomainRepository(record, {
+      getCustomDomainBySiteId: jest.fn().mockResolvedValueOnce(record).mockResolvedValueOnce(null),
+      promoteDomainToPrimary: jest.fn().mockResolvedValue([]),
+    });
+    const { service } = buildService({ record, domainRepository });
+
+    await expect(service.promoteCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+    });
   });
 });
 

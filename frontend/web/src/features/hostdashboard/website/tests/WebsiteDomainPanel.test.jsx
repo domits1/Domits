@@ -68,12 +68,10 @@ describe("WebsiteDomainPanel", () => {
     fetchWebsiteSiteByPropertyId.mockResolvedValue(PUBLISHED_SUMMARY);
     fetchWebsiteDomains.mockResolvedValue([FALLBACK]);
     connectWebsiteDomain.mockResolvedValue(CUSTOM);
-    verifyWebsiteDomain.mockResolvedValue({
-      ...CUSTOM,
-      status: "VERIFIED",
-      dnsVerified: true,
-      certificateStatus: "issued",
-    });
+    verifyWebsiteDomain.mockResolvedValue([
+      FALLBACK,
+      { ...CUSTOM, status: "VERIFIED", dnsVerified: true, certificateStatus: "issued" },
+    ]);
     Object.assign(navigator, { clipboard: { writeText: jest.fn().mockResolvedValue(undefined) } });
   });
 
@@ -193,7 +191,7 @@ describe("WebsiteDomainPanel", () => {
 
   it("starts removing a connected domain and swaps the timeline for the removal line", async () => {
     fetchWebsiteDomains.mockResolvedValue([FALLBACK, { ...CUSTOM, status: "ACTIVE", dnsVerified: true }]);
-    removeWebsiteDomain.mockResolvedValue({ ...CUSTOM, status: "REMOVING", reason: "removal_requested" });
+    removeWebsiteDomain.mockResolvedValue([FALLBACK, { ...CUSTOM, status: "REMOVING", reason: "removal_requested" }]);
     await openPanel();
     await screen.findByText("Domain live");
 
@@ -207,6 +205,25 @@ describe("WebsiteDomainPanel", () => {
     expect(screen.queryByText("d3lo.cloudfront.net")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /remove domain/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /check again/i })).toBeInTheDocument();
+  });
+
+  it("shows the fallback as the main address again when removing the promoted domain hands the flag back", async () => {
+    const promotedCustom = { ...CUSTOM, status: "ACTIVE", dnsVerified: true, reason: null, isPrimary: true };
+    fetchWebsiteDomains.mockResolvedValue([{ ...FALLBACK, isPrimary: false }, promotedCustom]);
+    removeWebsiteDomain.mockResolvedValue([
+      { ...FALLBACK, isPrimary: true },
+      { ...promotedCustom, status: "REMOVING", reason: "removal_requested", isPrimary: false },
+    ]);
+    await openPanel();
+    await screen.findByText("Domain live");
+    expect(within(domainRowOf("www.example.com")).getByText("Main address")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /remove domain/i }));
+
+    expect(await screen.findByText(/this domain is being removed/i)).toBeInTheDocument();
+    expect(within(domainRowOf(FALLBACK.domain)).getByText("Main address")).toBeInTheDocument();
+    expect(screen.getAllByText("Main address")).toHaveLength(1);
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(1);
   });
 
   it("reloads instead of removing when the shown domain is no longer the stored one", async () => {
@@ -237,7 +254,7 @@ describe("WebsiteDomainPanel", () => {
 
   it("returns to the connect form once check again reports the domain gone", async () => {
     fetchWebsiteDomains.mockResolvedValue([FALLBACK, { ...CUSTOM, status: "REMOVING", reason: "removal_requested" }]);
-    verifyWebsiteDomain.mockResolvedValue(null);
+    verifyWebsiteDomain.mockResolvedValue([FALLBACK]);
     await openPanel();
     await screen.findByText(/this domain is being removed/i);
 
@@ -251,7 +268,7 @@ describe("WebsiteDomainPanel", () => {
   it("keeps the removal line when the tenant is not rolled out yet", async () => {
     const removing = { ...CUSTOM, status: "REMOVING", reason: "removal_requested" };
     fetchWebsiteDomains.mockResolvedValue([FALLBACK, removing]);
-    verifyWebsiteDomain.mockResolvedValue(removing);
+    verifyWebsiteDomain.mockResolvedValue([FALLBACK, removing]);
     await openPanel();
     await screen.findByText(/this domain is being removed/i);
 

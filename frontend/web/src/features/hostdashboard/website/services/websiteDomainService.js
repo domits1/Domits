@@ -107,8 +107,16 @@ export const connectWebsiteDomain = async ({ siteId, domain }) => {
   return requireDomainView(payload, fallbackMessage);
 };
 
-const resolveDomainViewOrRemoved = (payload, fallbackMessage) =>
-  payload.domain === null ? null : requireDomainView(payload, fallbackMessage);
+const requireDomainList = (payload, fallbackMessage) => {
+  if (!Array.isArray(payload.domains)) {
+    throw new WebsiteDomainError({
+      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
+      message: fallbackMessage,
+      status: 200,
+    });
+  }
+  return payload.domains;
+};
 
 export const verifyWebsiteDomain = async (siteId) => {
   const fallbackMessage = "We could not check this domain.";
@@ -117,7 +125,7 @@ export const verifyWebsiteDomain = async (siteId) => {
     { method: "POST", body: JSON.stringify({ siteId }) },
     fallbackMessage
   );
-  return resolveDomainViewOrRemoved(payload, fallbackMessage);
+  return requireDomainList(payload, fallbackMessage);
 };
 
 export const removeWebsiteDomain = async ({ siteId, domain }) => {
@@ -127,7 +135,7 @@ export const removeWebsiteDomain = async ({ siteId, domain }) => {
     { method: "DELETE" },
     fallbackMessage
   );
-  return resolveDomainViewOrRemoved(payload, fallbackMessage);
+  return requireDomainList(payload, fallbackMessage);
 };
 
 export const promoteWebsiteDomain = async ({ siteId, domain }) => {
@@ -137,12 +145,5 @@ export const promoteWebsiteDomain = async ({ siteId, domain }) => {
     { method: "POST", body: JSON.stringify({ siteId, domain }) },
     fallbackMessage
   );
-  if (!Array.isArray(payload.domains)) {
-    throw new WebsiteDomainError({
-      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
-      message: fallbackMessage,
-      status: 200,
-    });
-  }
-  return payload.domains;
+  return requireDomainList(payload, fallbackMessage);
 };

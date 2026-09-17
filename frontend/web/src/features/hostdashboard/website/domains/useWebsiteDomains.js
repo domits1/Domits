@@ -78,7 +78,7 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
   }, [enabled, load, status]);
 
   const runDomainAction = useCallback(
-    async ({ action, request, errorScope = ERROR_SCOPE_FIELD, apply = replaceCustomDomain }) => {
+    async ({ action, request, errorScope = ERROR_SCOPE_PANEL, apply = replaceAllDomains }) => {
       setPendingAction(action);
       setNotice(null);
       setFieldError("");
@@ -113,39 +113,28 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
         setFieldError(error);
         return Promise.resolve(false);
       }
-      return runDomainAction({ action: ACTION_CONNECT, request: () => connectWebsiteDomain({ siteId, domain }) });
+      return runDomainAction({
+        action: ACTION_CONNECT,
+        request: () => connectWebsiteDomain({ siteId, domain }),
+        errorScope: ERROR_SCOPE_FIELD,
+        apply: replaceCustomDomain,
+      });
     },
     [runDomainAction, siteId]
   );
 
   const checkAgain = useCallback(
-    () =>
-      runDomainAction({
-        action: ACTION_CHECK,
-        request: () => verifyWebsiteDomain(siteId),
-        errorScope: ERROR_SCOPE_PANEL,
-      }),
+    () => runDomainAction({ action: ACTION_CHECK, request: () => verifyWebsiteDomain(siteId) }),
     [runDomainAction, siteId]
   );
 
   const remove = useCallback(
-    (domain) =>
-      runDomainAction({
-        action: ACTION_REMOVE,
-        request: () => removeWebsiteDomain({ siteId, domain }),
-        errorScope: ERROR_SCOPE_PANEL,
-      }),
+    (domain) => runDomainAction({ action: ACTION_REMOVE, request: () => removeWebsiteDomain({ siteId, domain }) }),
     [runDomainAction, siteId]
   );
 
   const promote = useCallback(
-    (domain) =>
-      runDomainAction({
-        action: ACTION_PROMOTE,
-        request: () => promoteWebsiteDomain({ siteId, domain }),
-        errorScope: ERROR_SCOPE_PANEL,
-        apply: replaceAllDomains,
-      }),
+    (domain) => runDomainAction({ action: ACTION_PROMOTE, request: () => promoteWebsiteDomain({ siteId, domain }) }),
     [runDomainAction, siteId]
   );
 

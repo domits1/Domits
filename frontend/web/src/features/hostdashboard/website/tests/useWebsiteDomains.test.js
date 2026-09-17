@@ -44,8 +44,8 @@ describe("useWebsiteDomains", () => {
   it("keeps a domain that is being removed and drops it once the server says it is gone", async () => {
     const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE" };
     fetchWebsiteDomains.mockImplementation(async (siteId) => [fallbackFor(siteId), custom]);
-    removeWebsiteDomain.mockResolvedValue({ ...custom, status: "REMOVING" });
-    verifyWebsiteDomain.mockResolvedValue(null);
+    removeWebsiteDomain.mockResolvedValue([fallbackFor("site-for-property-1"), { ...custom, status: "REMOVING" }]);
+    verifyWebsiteDomain.mockResolvedValue([fallbackFor("site-for-property-1")]);
     const { result } = renderHook(() => useWebsiteDomains({ propertyId: "property-1", enabled: true }));
     await waitFor(() => expect(result.current.customDomain?.status).toBe("ACTIVE"));
 

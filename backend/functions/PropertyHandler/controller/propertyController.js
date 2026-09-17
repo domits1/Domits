@@ -3070,13 +3070,17 @@ export class PropertyController {
                 await this.refreshWebsiteCustomDomainSafely({ site, customDomain });
             }
 
-            const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
-            const summary = this.buildDirectBookingWebsiteSummary(site, domains);
-            return {
-                statusCode: 200,
-                body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
-            };
+            return this.buildWebsiteDomainsResponse(site);
         });
+    }
+
+    async buildWebsiteDomainsResponse(site, domains = null) {
+        const siteDomains = domains || (await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id));
+        const summary = this.buildDirectBookingWebsiteSummary(site, siteDomains);
+        return {
+            statusCode: 200,
+            body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
+        };
     }
 
     // -------------------------
@@ -3099,8 +3103,8 @@ export class PropertyController {
     // -------------------------
     async verifyWebsiteDomain(event) {
         return this.handleWebsiteDomainRequest(event, async ({ site }) => {
-            const record = await this.getWebsiteCustomDomainService().syncCustomDomain({ site });
-            return { statusCode: 200, body: { domain: toHostWebsiteDomainView(record) } };
+            await this.getWebsiteCustomDomainService().syncCustomDomain({ site });
+            return this.buildWebsiteDomainsResponse(site);
         });
     }
 
@@ -3114,8 +3118,8 @@ export class PropertyController {
                 throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
             }
 
-            const record = await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
-            return { statusCode: 200, body: { domain: toHostWebsiteDomainView(record) } };
+            await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
+            return this.buildWebsiteDomainsResponse(site);
         });
     }
 
@@ -3127,11 +3131,7 @@ export class PropertyController {
             }
 
             const domains = await this.getWebsiteCustomDomainService().promoteCustomDomain({ site, domain });
-            const summary = this.buildDirectBookingWebsiteSummary(site, domains);
-            return {
-                statusCode: 200,
-                body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
-            };
+            return this.buildWebsiteDomainsResponse(site, domains);
         });
     }
 

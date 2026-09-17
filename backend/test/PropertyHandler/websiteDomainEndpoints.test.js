@@ -196,8 +196,13 @@ describe("GET /property/website/domains", () => {
 describe("DELETE /property/website/domains", () => {
   const removeQuery = { siteId: SITE.id, domain: "www.example.com" };
 
-  it("starts the removal for the site and domain in the query and returns the removing domain", async () => {
-    const controller = buildController();
+  it("starts the removal for the site and domain in the query and returns the refreshed domain list", async () => {
+    const controller = buildController({
+      domains: [
+        { ...FALLBACK_DOMAIN, isPrimary: true },
+        { ...CUSTOM_DOMAIN, status: "REMOVING", isPrimary: false },
+      ],
+    });
 
     const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
 
@@ -206,7 +211,10 @@ describe("DELETE /property/website/domains", () => {
       site: SITE,
       domain: "www.example.com",
     });
-    expect(parseBody(response).domain).toMatchObject({ domain: "www.example.com", status: "REMOVING" });
+    expect(parseBody(response).domains.map((entry) => [entry.domain, entry.status, entry.isPrimary])).toEqual([
+      [FALLBACK_DOMAIN.domain, expect.any(String), true],
+      ["www.example.com", "REMOVING", false],
+    ]);
   });
 
   it("refuses a remove without the domain the host is looking at", async () => {
@@ -221,13 +229,13 @@ describe("DELETE /property/website/domains", () => {
     expect(controller.websiteCustomDomainService.removeCustomDomain).not.toHaveBeenCalled();
   });
 
-  it("answers with a null domain once the record is gone", async () => {
+  it("answers the list without the custom entry once the record is gone", async () => {
     const controller = buildController({ service: { removeCustomDomain: jest.fn().mockResolvedValue(null) } });
 
     const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
 
     expect(response.statusCode).toBe(200);
-    expect(parseBody(response)).toEqual({ domain: null });
+    expect(parseBody(response).domains).toEqual([expect.objectContaining({ domainType: "FALLBACK" })]);
   });
 
   it("answers 404 for another host's site and never reaches the service", async () => {
@@ -331,14 +339,18 @@ describe("POST /property/website/domains", () => {
 });
 
 describe("POST /property/website/domains/verify", () => {
-  it("runs a sync and returns the refreshed domain", async () => {
-    const controller = buildController();
+  it("runs a sync and returns the refreshed domain list", async () => {
+    const controller = buildController({ domains: [FALLBACK_DOMAIN, { ...CUSTOM_DOMAIN, status: "VERIFIED" }] });
 
     const response = await controller.verifyWebsiteDomain(buildEvent({ method: "POST", body: { siteId: SITE.id } }));
 
     expect(response.statusCode).toBe(200);
     expect(controller.websiteCustomDomainService.syncCustomDomain).toHaveBeenCalledWith({ site: SITE });
-    expect(parseBody(response).domain.status).toBe("VERIFIED");
+    expect(parseBody(response).domains.map((entry) => [entry.domainType, entry.status])).toEqual([
+      ["FALLBACK", expect.any(String)],
+      ["CUSTOM", "VERIFIED"],
+    ]);
+    expect(JSON.stringify(parseBody(response))).not.toContain("dt_1");
   });
 
   it("answers 404 when the site has no custom domain", async () => {

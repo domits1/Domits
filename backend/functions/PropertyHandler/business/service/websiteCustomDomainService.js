@@ -484,10 +484,8 @@ export class WebsiteCustomDomainService {
     const changedRecords = await this.domainRepository.promoteDomainToPrimary(site.id, record.id);
     const promotedRecord = changedRecords.find((entry) => entry.id === record.id && entry.isPrimary);
     if (!promotedRecord) {
-      throw new WebsiteCustomDomainError(
-        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_ACTIVE,
-        `${record.domain} is no longer live, so it cannot be the main address.`
-      );
+      await this.confirmPromotedMeanwhile({ site, record });
+      return this.domainRepository.listDomainsBySiteId(site.id);
     }
 
     await this.recordEventSafely(site, EVENT_DOMAIN_PROMOTED, {
@@ -497,6 +495,22 @@ export class WebsiteCustomDomainService {
     });
 
     return this.domainRepository.listDomainsBySiteId(site.id);
+  }
+
+  async confirmPromotedMeanwhile({ site, record }) {
+    const currentRecord = await this.domainRepository.getCustomDomainBySiteId(site.id);
+    if (!currentRecord || currentRecord.id !== record.id) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+        `${record.domain} is no longer this website's custom domain.`
+      );
+    }
+    if (currentRecord.status !== DOMAIN_STATUS.ACTIVE || !currentRecord.isPrimary) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_ACTIVE,
+        `${record.domain} is no longer live, so it cannot be the main address.`
+      );
+    }
   }
 
   async handPrimaryBackToFallback(record) {
