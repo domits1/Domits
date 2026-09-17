@@ -33,6 +33,15 @@ const formatBookingDates = (bookingItem) => {
   return `${dateFormatterDD_MM_YYYY(arrivalDate)} -> ${dateFormatterDD_MM_YYYY(departureDate)}`;
 };
 
+const matchesSearchQuery = (booking, query, propertyMap) => {
+  const propertyId = getPropertyId(booking);
+  const propertyInfo = propertyId ? propertyMap[propertyId] : undefined;
+  const city = (propertyInfo?.city || booking?.city || booking?.location?.city || "").toLowerCase();
+  const title = (propertyInfo?.title || booking?.title || booking?.Title || "").toLowerCase();
+  const bookingId = String(getBookingId(booking) || "").toLowerCase();
+  return city.includes(query) || title.includes(query) || bookingId.includes(query);
+};
+
 const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
   const propertyId = getPropertyId(bookingItem);
   const fallbackTitle =
@@ -262,6 +271,17 @@ function GuestBooking() {
     () => splitBookingsByTime(paidBookings),
     [paidBookings]
   );
+
+  const tabCounts = useMemo(
+    () => ({
+      all: paidBookings.length,
+      current: currentBookings.length,
+      upcoming: upcomingBookings.length,
+      past: pastBookings.length,
+    }),
+    [paidBookings, currentBookings, upcomingBookings, pastBookings]
+  );
+
   const tabBookings = useMemo(() => {
   switch (activeTab) {
     case "current":
@@ -284,35 +304,40 @@ const tabEmptyMessages = {
 const filteredBookings = useMemo(() => {
   if (!searchQuery.trim()) return tabBookings;
    const query = searchQuery.trim().toLowerCase();
-  return tabBookings.filter((b) => {
-    const propertyId = getPropertyId(b);
-    const propertyInfo = propertyId ? propertyMap[propertyId] : undefined;
-    const city = (propertyInfo?.city || b?.city || b?.location?.city || "").toLowerCase();
-    const title = (propertyInfo?.title || b?.title || b?.Title || "").toLowerCase();
-    const bookingId = String(getBookingId(b) || "").toLowerCase();
-    return city.includes(query) || title.includes(query) || bookingId.includes(query);
-  });
+  return tabBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
 }, [tabBookings, searchQuery, propertyMap]);
+
+const filteredInquiryBookings = useMemo(() => {
+  if (!searchQuery.trim()) return inquiryBookings;
+  const query = searchQuery.trim().toLowerCase();
+  return inquiryBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
+}, [inquiryBookings, searchQuery, propertyMap]);
+
+const filteredCancelledBookings = useMemo(() => {
+  if (!searchQuery.trim()) return cancelledBookings;
+  const query = searchQuery.trim().toLowerCase();
+  return cancelledBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
+}, [cancelledBookings, searchQuery, propertyMap]);
 
   let bookingContent;
   if (isLoading) {
     bookingContent = <div className="guest-booking-loader">Loading...</div>;
-  } 
-   else {
+  } else if (error) {
     bookingContent = (
-      <div className="guest-booking-bookingContent">
-            {error && (
       <div className="guest-booking-error" role="alert">
         {error}
       </div>
-    )}
+    );
+  } else {
+    bookingContent = (
+      <div className="guest-booking-bookingContent">
         {propLoading && <div className="guest-booking-loader-inline">Loading property details...</div>}
 
-               {inquiryBookings.length > 0 && (
+               {filteredInquiryBookings.length > 0 && (
           <div className="guest-booking-summary-grid">
             <BookingSection
               title="Requests"
-              bookings={inquiryBookings}
+              bookings={filteredInquiryBookings}
               emptyMessage="No requests."
               propertyMap={propertyMap}
               handleBookingClick={handleBookingClick}
@@ -341,7 +366,7 @@ const filteredBookings = useMemo(() => {
               onClick={() => setActiveTab(tab.key)}
             >
               {tab.label}
-              <span className="guest-booking-tab-count">{tab.count}</span>
+              <span className="guest-booking-tab-count">{tabCounts[tab.key]}</span>
             </button>
           ))}
         </div>
@@ -355,11 +380,11 @@ const filteredBookings = useMemo(() => {
             extraClassName={activeTab === "past" ? "guest-card--past" : ""}
           />
         </div>
-                  {cancelledBookings.length > 0 && (
+                  {filteredCancelledBookings.length > 0 && (
           <div className="guest-booking-summary-grid">
             <BookingSection
               title="Cancelled Bookings"
-              bookings={cancelledBookings}
+              bookings={filteredCancelledBookings}
               emptyMessage="You do not have any cancelled bookings yet."
               propertyMap={propertyMap}
               handleBookingClick={handleBookingClick}
