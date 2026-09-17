@@ -26,6 +26,8 @@ const forbiddenChannexCertificationAdmin = {
   },
 };
 const protectedChannexCertificationAdminRoutes = [
+  { methods: ["POST"], pattern: /\/integrations\/channex\/connect$/ },
+  { methods: ["POST"], pattern: /\/integrations\/channex\/disconnect$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/status$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/properties$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/room-types$/ },

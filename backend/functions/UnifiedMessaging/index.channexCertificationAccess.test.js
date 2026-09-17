@@ -537,14 +537,14 @@ describe("Channel routes take the user from the Cognito token", () => {
       buildEvent({
         method: "POST",
         path,
-        sub: "token-user",
+        sub: "allowed-user",
         body: JSON.stringify({ userId: "victim-user", credentials: { apiKey: "key-1" } }),
       })
     );
 
     expect(response.statusCode).toBe(200);
     const forwardedEvent = mockIntegrationControllerMethods[controllerMethod].mock.calls[0][0];
-    expect(JSON.parse(forwardedEvent.body)).toEqual({ userId: "token-user", credentials: { apiKey: "key-1" } });
+    expect(JSON.parse(forwardedEvent.body)).toEqual({ userId: "allowed-user", credentials: { apiKey: "key-1" } });
   });
 
   test.each(credentialRoutes)("POST %s without a Cognito token is rejected before the controller runs", async (path, controllerMethod) => {
@@ -559,6 +559,23 @@ describe("Channel routes take the user from the Cognito token", () => {
     expect(response.statusCode).toBe(401);
     expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
     expect(parseBody(response)).toEqual({ error: "UNAUTHORIZED", message: "Authentication required." });
+    expect(mockIntegrationControllerMethods[controllerMethod]).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["/default/integrations/channex/connect", "connectChannex"],
+    ["/default/integrations/channex/disconnect", "disconnectChannex"],
+  ])("POST %s refuses a token user who is not allowlisted", async (path, controllerMethod) => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path,
+        sub: "not-allowed",
+        body: JSON.stringify({ credentials: { apiKey: "key-1" } }),
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
     expect(mockIntegrationControllerMethods[controllerMethod]).not.toHaveBeenCalled();
   });
 
