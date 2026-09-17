@@ -39,16 +39,29 @@ const SITE_ROW = {
   updated_at: 1757000000000,
 };
 
-const buildClient = (records) => ({
-  options: { schema: "main" },
-  query: jest.fn(async (statement, parameters, useStructuredResult) =>
-    useStructuredResult
-      ? { records, affected: records.length, raw: [records, records.length] }
-      : [records, records.length]
-  ),
-});
+const buildClient = (records) => {
+  const queryRunner = {
+    query: jest.fn(async (statement, parameters, useStructuredResult) =>
+      useStructuredResult
+        ? { records, affected: records.length, raw: [records, records.length] }
+        : [records, records.length]
+    ),
+    release: jest.fn().mockResolvedValue(undefined),
+  };
+  return {
+    options: { schema: "main" },
+    queryRunner,
+    createQueryRunner: jest.fn(() => queryRunner),
+    query: jest.fn(async () => {
+      throw new Error("DataSource.query must not be used for UPDATE or DELETE reads");
+    }),
+  };
+};
 
-const structuredCall = (client) => client.query.mock.calls[0];
+const structuredCall = (client) => {
+  expect(client.queryRunner.release).toHaveBeenCalledTimes(client.createQueryRunner.mock.calls.length);
+  return client.queryRunner.query.mock.calls[0];
+};
 
 describe("direct booking website repositories read UPDATE and DELETE results through the structured result", () => {
   let client;
@@ -117,6 +130,17 @@ describe("direct booking website repositories read UPDATE and DELETE results thr
 
     withRows([]);
     await expect(repository.deleteDomainById("domain-1", "site-2")).resolves.toBe(false);
+  });
+
+  it("releases the query runner when the statement throws", async () => {
+    withRows([]);
+    client.queryRunner.query.mockRejectedValueOnce(new Error("connection lost"));
+    const repository = new DirectBookingWebsiteDomainRepository();
+
+    await expect(repository.updateDomainStatusById("domain-1", "site-1", "verified", {})).rejects.toThrow(
+      "connection lost"
+    );
+    expect(client.queryRunner.release).toHaveBeenCalledTimes(1);
   });
 
   it("updateSiteStatus maps the returned site and reports null when the site is gone", async () => {

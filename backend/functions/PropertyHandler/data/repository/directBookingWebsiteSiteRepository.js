@@ -36,11 +36,16 @@ const resolveSchemaName = (client) => {
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
 
 const runStatement = async (client, statement, parameters) => {
-  const result = await client.query(statement, parameters, true);
-  return {
-    records: Array.isArray(result?.records) ? result.records : [],
-    affected: Number(result?.affected) || 0,
-  };
+  const queryRunner = client.createQueryRunner();
+  try {
+    const result = await queryRunner.query(statement, parameters, true);
+    return {
+      records: Array.isArray(result?.records) ? result.records : [],
+      affected: Number(result?.affected) || 0,
+    };
+  } finally {
+    await queryRunner.release();
+  }
 };
 const buildSiteSelectQuery = (tableName, whereClause) =>
   `SELECT

@@ -87,11 +87,16 @@ const normalizeJsonObject = (value) => {
 const normalizeTimestamp = (value) => (value == null ? null : Number(value));
 
 const runStatement = async (client, statement, parameters) => {
-  const result = await client.query(statement, parameters, true);
-  return {
-    records: Array.isArray(result?.records) ? result.records : [],
-    affected: Number(result?.affected) || 0,
-  };
+  const queryRunner = client.createQueryRunner();
+  try {
+    const result = await queryRunner.query(statement, parameters, true);
+    return {
+      records: Array.isArray(result?.records) ? result.records : [],
+      affected: Number(result?.affected) || 0,
+    };
+  } finally {
+    await queryRunner.release();
+  }
 };
 
 const mapSiteDomainRow = (row) => {
