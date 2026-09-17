@@ -94,7 +94,18 @@ function formatBytes(bytes) {
   return `${(bytes / 1024).toFixed(2)} KB`;
 }
 
+const FUNCTION_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 async function packageFunction(functionName) {
+  // Validate right here, before functionDir is built: it must look like a Lambda
+  // function name (alphanumeric, hyphens, underscores) and must not contain "..",
+  // so it can't be used to escape FUNCTIONS_DIR or BACKEND_DIR. Keeping this
+  // check adjacent to where functionDir is constructed (rather than only at the
+  // top-level call site) keeps SonarCloud's taint tracking able to see the guard.
+  if (!FUNCTION_NAME_PATTERN.test(functionName) || functionName.includes("..")) {
+    throw new Error(`Invalid function name: "${functionName}". Use only letters, numbers, hyphens, and underscores.`);
+  }
+
   const functionDir = path.join(FUNCTIONS_DIR, functionName);
   if (!(await pathExists(functionDir))) {
     throw new Error(`Function directory not found: ${functionDir}`);
@@ -153,19 +164,9 @@ async function packageFunction(functionName) {
   }
 }
 
-const FUNCTION_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
-
 const functionName = process.argv[2];
 if (!functionName) {
   console.error("Usage: node CD/npm/packageForUpload.js <function-name>");
-  process.exit(1);
-}
-
-// Validate before any path is built from this value: it must look like a Lambda
-// function name (alphanumeric, hyphens, underscores) and must not contain "..",
-// so it can't be used to escape FUNCTIONS_DIR or BACKEND_DIR.
-if (!FUNCTION_NAME_PATTERN.test(functionName) || functionName.includes("..")) {
-  console.error(`Invalid function name: "${functionName}". Use only letters, numbers, hyphens, and underscores.`);
   process.exit(1);
 }
 
