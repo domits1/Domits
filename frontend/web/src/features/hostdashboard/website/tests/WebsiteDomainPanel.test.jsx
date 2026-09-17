@@ -340,6 +340,46 @@ describe("WebsiteDomainPanel", () => {
     expect(screen.getByRole("button", { name: /check again/i })).toBeInTheDocument();
   });
 
+  it("tells the host the main address changed meanwhile and points at check again", async () => {
+    const liveCustom = { ...CUSTOM, status: "ACTIVE", dnsVerified: true, certificateStatus: "issued", reason: null };
+    fetchWebsiteDomains.mockResolvedValue([FALLBACK, liveCustom]);
+    promoteWebsiteDomain.mockRejectedValue(
+      domainError("primary_changed", "The main address of this website changed while this request was running.")
+    );
+    await openPanel();
+    await screen.findByText("Domain live");
+
+    fireEvent.click(screen.getByRole("button", { name: /make main address/i }));
+
+    expect(await screen.findByText(/main address changed while this request was running/i)).toBeInTheDocument();
+    expect(screen.getByText(/press check again to see the current one/i)).toBeInTheDocument();
+    expect(screen.queryByText(/not live/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /check again/i })).toBeEnabled();
+  });
+
+  it("reloads the list and tells the host the change was saved when the list came back unavailable", async () => {
+    const promotedCustom = { ...CUSTOM, status: "ACTIVE", dnsVerified: true, reason: null, isPrimary: true };
+    fetchWebsiteDomains
+      .mockResolvedValueOnce([{ ...FALLBACK, isPrimary: false }, promotedCustom])
+      .mockResolvedValueOnce([
+        { ...FALLBACK, isPrimary: true },
+        { ...promotedCustom, status: "REMOVING", reason: "removal_requested", isPrimary: false },
+      ]);
+    removeWebsiteDomain.mockRejectedValue(
+      domainError("domains_unavailable", "The change was saved, but the domain list could not be reloaded.")
+    );
+    await openPanel();
+    await screen.findByText("Domain live");
+
+    fireEvent.click(screen.getByRole("button", { name: /remove domain/i }));
+
+    expect(await screen.findByText(/this domain is being removed/i)).toBeInTheDocument();
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(2);
+    expect(within(domainRowOf(FALLBACK.domain)).getByText("Main address")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/your change was saved/i);
+    expect(screen.getByText(/reference: req-1/i)).toBeInTheDocument();
+  });
+
   it("explains a refused switch and keeps the button so the host can retry after check again", async () => {
     const liveCustom = { ...CUSTOM, status: "ACTIVE", dnsVerified: true, certificateStatus: "issued", reason: null };
     fetchWebsiteDomains.mockResolvedValue([FALLBACK, liveCustom]);
@@ -351,7 +391,7 @@ describe("WebsiteDomainPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /make main address/i }));
 
-    expect(await screen.findByText(/only a live domain can be the main address/i)).toBeInTheDocument();
+    expect(await screen.findByText(/not live, so it can't be the main address/i)).toBeInTheDocument();
     expect(screen.getByText(/reference: req-1/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /make main address/i })).toBeEnabled();
   });

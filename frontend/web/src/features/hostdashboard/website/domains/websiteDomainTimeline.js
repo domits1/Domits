@@ -54,7 +54,11 @@ const PANEL_ERROR_COPY = Object.freeze({
   forbidden: "Your session has expired. Sign in again.",
   sync_failed: "We couldn't reach the domain service. Try again in a moment.",
   tenant_not_owned: "This domain's setup belongs to another website. Contact support.",
-  domain_not_active: "Only a live domain can be the main address. Press Check again first.",
+  domain_not_active:
+    "This domain is not live, so it can't be the main address. Press Check again to see its current status.",
+  primary_changed: "The main address changed while this request was running. Press Check again to see the current one.",
+  domains_unavailable:
+    "Your change was saved, but the domain list had to be reloaded. Check that it shows what you expect.",
   tenant_create_failed: "We couldn't reach the domain service. Try again in a moment.",
   network_error: "We couldn't reach the domain service. Try again in a moment.",
 });

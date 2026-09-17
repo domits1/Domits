@@ -505,10 +505,16 @@ export class WebsiteCustomDomainService {
         `${record.domain} is no longer this website's custom domain.`
       );
     }
-    if (currentRecord.status !== DOMAIN_STATUS.ACTIVE || !currentRecord.isPrimary) {
+    if (currentRecord.status !== DOMAIN_STATUS.ACTIVE) {
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_ACTIVE,
         `${record.domain} is no longer live, so it cannot be the main address.`
+      );
+    }
+    if (!currentRecord.isPrimary) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.PRIMARY_CHANGED,
+        "The main address of this website changed while this request was running. Check again to see the current one."
       );
     }
   }

@@ -84,6 +84,32 @@ describe("useWebsiteDomains", () => {
     expect(result.current.notice).toBeNull();
   });
 
+  it("reloads the list and keeps the notice when the server saved the change but could not reload the list", async () => {
+    const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true };
+    fetchWebsiteDomains
+      .mockResolvedValueOnce([{ ...fallbackFor("site-for-property-1"), isPrimary: false }, custom])
+      .mockResolvedValueOnce([
+        { ...fallbackFor("site-for-property-1"), isPrimary: true },
+        { ...custom, status: "REMOVING", isPrimary: false },
+      ]);
+    removeWebsiteDomain.mockRejectedValue(
+      Object.assign(new Error("Saved, list unavailable."), { code: "domains_unavailable", requestId: "req-2" })
+    );
+    const { result } = renderHook(() => useWebsiteDomains({ propertyId: "property-1", enabled: true }));
+    await waitFor(() => expect(result.current.customDomain?.status).toBe("ACTIVE"));
+
+    await act(() => result.current.remove("www.example.com"));
+
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(2);
+    expect(result.current.domains.map((entry) => [entry.status, entry.isPrimary])).toEqual([
+      ["ACTIVE", true],
+      ["REMOVING", false],
+    ]);
+    expect(result.current.status).toBe(WEBSITE_DOMAINS_STATUS.READY);
+    expect(result.current.notice).toMatchObject({ scope: "panel", requestId: "req-2" });
+    expect(result.current.notice.message).toMatch(/change was saved/i);
+  });
+
   it("shows a promote refusal as a panel notice and keeps the list as it was", async () => {
     const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE", isPrimary: false };
     fetchWebsiteDomains.mockImplementation(async (siteId) => [fallbackFor(siteId), custom]);
@@ -96,7 +122,7 @@ describe("useWebsiteDomains", () => {
     await act(() => result.current.promote("www.example.com"));
 
     expect(result.current.notice).toMatchObject({ scope: "panel", requestId: "req-1" });
-    expect(result.current.notice.message).toMatch(/only a live domain/i);
+    expect(result.current.notice.message).toMatch(/not live, so it can't be the main address/i);
     expect(result.current.fieldError).toBe("");
     expect(result.current.domains).toHaveLength(2);
     expect(fetchWebsiteDomains).toHaveBeenCalledTimes(1);

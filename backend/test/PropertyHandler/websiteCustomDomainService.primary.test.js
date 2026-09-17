@@ -197,6 +197,22 @@ describe("WebsiteCustomDomainService.promoteCustomDomain", () => {
     ]);
   });
 
+  it("explains that the main address changed when the row is still live but lost the flag meanwhile", async () => {
+    const record = buildRecord();
+    const domainRepository = buildDomainRepository(record, {
+      getCustomDomainBySiteId: jest.fn().mockResolvedValueOnce(record).mockResolvedValueOnce(buildRecord()),
+      promoteDomainToPrimary: jest.fn().mockResolvedValue([]),
+    });
+    const { service, eventRepository } = buildService({ record, domainRepository });
+
+    await expect(service.promoteCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.PRIMARY_CHANGED,
+      statusCode: 409,
+      message: expect.stringMatching(/main address of this website changed while this request was running/i),
+    });
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
   it("throws DOMAIN_NOT_FOUND when the statement changed nothing because the row is gone", async () => {
     const record = buildRecord();
     const domainRepository = buildDomainRepository(record, {

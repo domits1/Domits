@@ -25,7 +25,7 @@ const ACTION_REMOVE = "remove";
 const ACTION_PROMOTE = "promote";
 const ERROR_SCOPE_FIELD = "field";
 const ERROR_SCOPE_PANEL = "panel";
-const RELOAD_ON_ERROR_CODES = new Set(["domain_limit_reached", "domain_not_found"]);
+const RELOAD_ON_ERROR_CODES = new Set(["domain_limit_reached", "domain_not_found", "domains_unavailable"]);
 
 const isCustomDomain = (entry) => entry?.domainType === DOMAIN_TYPE_CUSTOM;
 

@@ -3083,6 +3083,19 @@ export class PropertyController {
         };
     }
 
+    async readWebsiteDomainsAfterChange(site) {
+        try {
+            return await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        } catch (error) {
+            console.error(`[CustomDomain] domain list read failed after a completed change (site ${site.id}).`, error);
+            throw new WebsiteCustomDomainError(
+                WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAINS_UNAVAILABLE,
+                "The change was saved, but the domain list could not be reloaded. Check again to see the current state.",
+                { cause: error }
+            );
+        }
+    }
+
     // -------------------------
     // POST /property/website/domains
     // -------------------------
@@ -3104,7 +3117,7 @@ export class PropertyController {
     async verifyWebsiteDomain(event) {
         return this.handleWebsiteDomainRequest(event, async ({ site }) => {
             await this.getWebsiteCustomDomainService().syncCustomDomain({ site });
-            return this.buildWebsiteDomainsResponse(site);
+            return this.buildWebsiteDomainsResponse(site, await this.readWebsiteDomainsAfterChange(site));
         });
     }
 
@@ -3119,7 +3132,7 @@ export class PropertyController {
             }
 
             await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
-            return this.buildWebsiteDomainsResponse(site);
+            return this.buildWebsiteDomainsResponse(site, await this.readWebsiteDomainsAfterChange(site));
         });
     }
 

@@ -229,6 +229,23 @@ describe("DELETE /property/website/domains", () => {
     expect(controller.websiteCustomDomainService.removeCustomDomain).not.toHaveBeenCalled();
   });
 
+  it("answers domains_unavailable instead of internal_error when the list read fails after the removal committed", async () => {
+    const controller = buildController();
+    controller.directBookingWebsiteDomainRepository.listDomainsBySiteId = jest
+      .fn()
+      .mockRejectedValue(new Error("connection reset"));
+
+    const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
+
+    expect(controller.websiteCustomDomainService.removeCustomDomain).toHaveBeenCalledTimes(1);
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response).error).toEqual({
+      code: "domains_unavailable",
+      message: "The change was saved, but the domain list could not be reloaded. Check again to see the current state.",
+      requestId: "req-1",
+    });
+  });
+
   it("answers the list without the custom entry once the record is gone", async () => {
     const controller = buildController({ service: { removeCustomDomain: jest.fn().mockResolvedValue(null) } });
 
@@ -351,6 +368,31 @@ describe("POST /property/website/domains/verify", () => {
       ["CUSTOM", "VERIFIED"],
     ]);
     expect(JSON.stringify(parseBody(response))).not.toContain("dt_1");
+  });
+
+  it("answers domains_unavailable when the list read fails after the sync committed", async () => {
+    const controller = buildController();
+    controller.directBookingWebsiteDomainRepository.listDomainsBySiteId = jest
+      .fn()
+      .mockRejectedValue(new Error("connection reset"));
+
+    const response = await controller.verifyWebsiteDomain(buildEvent({ method: "POST", body: { siteId: SITE.id } }));
+
+    expect(controller.websiteCustomDomainService.syncCustomDomain).toHaveBeenCalledTimes(1);
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response).error.code).toBe("domains_unavailable");
+  });
+
+  it("keeps internal_error for a list read failure on GET, where nothing was changed", async () => {
+    const controller = buildController();
+    controller.directBookingWebsiteDomainRepository.listDomainsBySiteId = jest
+      .fn()
+      .mockRejectedValue(new Error("connection reset"));
+
+    const response = await controller.listWebsiteDomains(buildEvent({ query: { siteId: SITE.id } }));
+
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response).error.code).toBe("internal_error");
   });
 
   it("answers 404 when the site has no custom domain", async () => {
