@@ -107,7 +107,17 @@ async function packageFunction(functionName) {
   }
 
   const functionDir = path.join(FUNCTIONS_DIR, functionName);
-  if (!(await pathExists(functionDir))) {
+  // Inlined rather than routed through pathExists(): that helper is a separate
+  // function body, which reintroduces the same call-boundary gap the guard above
+  // was moved inline to close. Keeping the fs.access() call here, in the same
+  // scope as the guard, keeps this sink directly reachable from the sanitized value.
+  let functionDirExists = true;
+  try {
+    await fs.access(functionDir);
+  } catch {
+    functionDirExists = false;
+  }
+  if (!functionDirExists) {
     throw new Error(`Function directory not found: ${functionDir}`);
   }
 
