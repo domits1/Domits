@@ -99,6 +99,10 @@ export default function HostFinanceTab() {
   const isAccountLoading = Boolean(loadingStates.account);
   const isBalanceLoading = Boolean(loadingStates.hostBalance);
   const isPayoutScheduleLoading = Boolean(loadingStates.getPayoutSchedule);
+
+  const showFinanceSections = onboardingComplete;
+  const showFinanceSectionSkeletons = isAccountLoading;
+
   const isConnected = Boolean(accountId && onboardingComplete);
   const demoMode = isFinanceDemoMode();
   const hasProperty = listingState.hasProperty;
@@ -306,137 +310,144 @@ export default function HostFinanceTab() {
         )}
       </section>
 
-      <section className="finance-section">
-        <h2>Balance Details</h2>
-        <div className="finance-balance-grid">
-          <div className="finance-balance-card">
-            <CircleDollarSign size={24} aria-hidden="true" />
-            <div><b>{availableDisplay}</b><span>Next payout</span></div>
-            {showFinancialData && <small>{nextPayout?.arrivalDate || "Scheduled"}</small>}
-          </div>
-          <div className="finance-balance-card">
-            <WalletCards size={24} aria-hidden="true" />
-            <div><b>{arrivingSoonDisplay}</b><span>Arriving soon</span></div>
-            {showFinancialData && <small>1–3 days</small>}
-          </div>
-          <div className="finance-balance-card">
-            <Building2 size={24} aria-hidden="true" />
-            <div><b>{processingDisplay}</b><span>Processing</span></div>
-            {showFinancialData && <small>Pending confirmation</small>}
-          </div>
-        </div>
-      </section>
-
-      <div className="finance-main-grid">
-        <div className="finance-main-column">
+      {(showFinanceSections || showFinanceSectionSkeletons) && (
+        <>
           <section className="finance-section">
-            <div className="finance-section-title">
-              <h2>Upcoming Payouts</h2>
-              {showFinancialData && payouts.length > 0 && (
-                <button
-                  type="button"
-                  className={`finance-section-action${showAllPayouts ? " is-expanded" : ""}`}
-                  onClick={() => setShowAllPayouts((expanded) => !expanded)}
-                  aria-label={showAllPayouts ? "Show fewer payouts" : "Show all payouts"}
-                  aria-expanded={showAllPayouts}
-                >
-                  <ArrowRight size={17} aria-hidden="true" />
-                </button>
-              )}
-            </div>
-            <div className="finance-card finance-payouts-card">
-              {!showFinancialData || recentPayouts.length === 0 ? (
-                <EmptyState title="No upcoming payouts" description="Payouts will appear here once you receive bookings." />
-              ) : (
-                displayedPayouts.map((payout, index) => (
-                  <div className="finance-payout-row" key={payout.id || `${payout.arrivalDate}-${index}`}>
-                    <div><span>{formatDate(payout.arrivalDate) || "Upcoming payout"}</span><small>{payout.status || "In 2 days"}</small></div>
-                    <b>{getAmount(payout.amount, payout.currency || currency)}</b>
-                  </div>
-                ))
-              )}
+            <h2>Balance Details</h2>
+            <div className="finance-balance-grid">
+              <div className="finance-balance-card">
+                <CircleDollarSign size={24} aria-hidden="true" />
+                <div><b>{availableDisplay}</b><span>Next payout</span></div>
+                {showFinancialData && <small>{nextPayout?.arrivalDate || "Scheduled"}</small>}
+              </div>
+              <div className="finance-balance-card">
+                <WalletCards size={24} aria-hidden="true" />
+                <div><b>{arrivingSoonDisplay}</b><span>Arriving soon</span></div>
+                {showFinancialData && <small>1–3 days</small>}
+              </div>
+              <div className="finance-balance-card">
+                <Building2 size={24} aria-hidden="true" />
+                <div><b>{processingDisplay}</b><span>Processing</span></div>
+                {showFinancialData && <small>Pending confirmation</small>}
+              </div>
             </div>
           </section>
 
-          <section className="finance-section finance-transactions-section">
-            <div className="finance-section-title">
-              <h2>Transactions</h2>
-              {showFinancialData && (
-                <button
-                  type="button"
-                  className="finance-export-button"
-                  onClick={handleExportTransactions}
-                  disabled={filteredTransactions.length === 0}
-                >
-                  <Download size={12} aria-hidden="true" /> Export
-                </button>
-              )}
-            </div>
-            {!showFinancialData ? (
-              <div className="finance-card"><EmptyState title="No transactions yet" description="Your earnings and payouts will appear here once your property is live." /></div>
-            ) : (
-              <div className="finance-card finance-transactions-card">
-                <div className="finance-tabs">
-                  {[
-                    ["all", "All"],
-                    ["payments", "Payments"],
-                    ["payouts", "Payouts"],
-                    ["refunds", "Refunds"],
-                  ].map(([filter, label]) => (
+          <div className="finance-main-grid">
+            <div className="finance-main-column">
+              <section className="finance-section">
+                <div className="finance-section-title">
+                  <h2>Upcoming Payouts</h2>
+                  {showFinancialData && payouts.length > 0 && (
                     <button
-                      key={filter}
                       type="button"
-                      className={transactionFilter === filter ? "is-selected" : ""}
-                      onClick={() => setTransactionFilter(filter)}
-                      aria-pressed={transactionFilter === filter}
+                      className={`finance-section-action${showAllPayouts ? " is-expanded" : ""}`}
+                      onClick={() => setShowAllPayouts((expanded) => !expanded)}
+                      aria-label={showAllPayouts ? "Show fewer payouts" : "Show all payouts"}
+                      aria-expanded={showAllPayouts}
                     >
-                      {label}
+                      <ArrowRight size={17} aria-hidden="true" />
                     </button>
-                  ))}
+                  )}
                 </div>
-                {filteredTransactions.length === 0 ? <EmptyState title="No transactions yet" description="Your transactions will appear here." /> : (
-                  <div className="finance-transaction-table">
-                    <div className="finance-transaction-head"><span>Date</span><span>Description</span><span>Channel</span><span>Amount</span></div>
-                    {filteredTransactions.map((transaction) => (
-                      <div className="finance-transaction-row" key={transaction.id}>
-                        <span>{transaction.date || "—"}</span><span>{transaction.description}</span><span>{transaction.channel}</span><span>{getAmount(transaction.amount, transaction.currency)}</span>
+                <div className="finance-card finance-payouts-card">
+                  {!showFinancialData || recentPayouts.length === 0 ? (
+                    <EmptyState title="No upcoming payouts" description="Payouts will appear here once you receive bookings." />
+                  ) : (
+                    displayedPayouts.map((payout, index) => (
+                      <div className="finance-payout-row" key={payout.id || `${payout.arrivalDate}-${index}`}>
+                        <div><span>{formatDate(payout.arrivalDate) || "Upcoming payout"}</span><small>{payout.status || "In 2 days"}</small></div>
+                        <b>{getAmount(payout.amount, payout.currency || currency)}</b>
                       </div>
-                    ))}
+                    ))
+                  )}
+                </div>
+              </section>
+
+              <section className="finance-section finance-transactions-section">
+                <div className="finance-section-title">
+                  <h2>Transactions</h2>
+                  {showFinancialData && (
+                    <button
+                      type="button"
+                      className="finance-export-button"
+                      onClick={handleExportTransactions}
+                      disabled={filteredTransactions.length === 0}
+                    >
+                      <Download size={12} aria-hidden="true" /> Export
+                    </button>
+                  )}
+                </div>
+                {!showFinancialData ? (
+                  <div className="finance-card"><EmptyState title="No transactions yet" description="Your earnings and payouts will appear here once your property is live." /></div>
+                ) : (
+                  <div className="finance-card finance-transactions-card">
+                    <div className="finance-tabs">
+                      {[
+                        ["all", "All"],
+                        ["payments", "Payments"],
+                        ["payouts", "Payouts"],
+                        ["refunds", "Refunds"],
+                      ].map(([filter, label]) => (
+                        <button
+                          key={filter}
+                          type="button"
+                          className={transactionFilter === filter ? "is-selected" : ""}
+                          onClick={() => setTransactionFilter(filter)}
+                          aria-pressed={transactionFilter === filter}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    {filteredTransactions.length === 0 ? <EmptyState title="No transactions yet" description="Your transactions will appear here." /> : (
+                      <div className="finance-transaction-table">
+                        <div className="finance-transaction-head"><span>Date</span><span>Description</span><span>Channel</span><span>Amount</span></div>
+                        {filteredTransactions.map((transaction) => (
+                          <div className="finance-transaction-row" key={transaction.id}>
+                            <span>{transaction.date || "—"}</span><span>{transaction.description}</span><span>{transaction.channel}</span><span>{getAmount(transaction.amount, transaction.currency)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
-          </section>
-        </div>
-
-        <aside className="finance-side-column">
-          {isLive && (
-            <section className="finance-card finance-receive-card">
-              <button type="button" className="finance-card-action" onClick={scrollToPayoutSettings}>
-                <h2>Receive payouts in 3 steps <ArrowRight size={16} aria-hidden="true" /></h2>
-                <p>You are all set! Updates will appear here if changes are needed.</p>
-              </button>
-            </section>
-          )}
-          <section id="finance-payout-settings" className="finance-card finance-settings-card">
-            <h2>Payout Settings</h2>
-            <div className={`finance-stripe-status${isConnected ? " is-connected" : ""}`}>
-              {isConnected ? <><CheckCircle2 size={14} aria-hidden="true" /> Stripe Connected</> : "Connect Stripe to enable payouts"}
+              </section>
             </div>
-            <p>{isConnected ? "Bank account connected and ready for payouts." : "You will be able to set your bank account and payout schedule after connecting."}</p>
-            <button type="button" className="finance-outline-button" onClick={handleStripeAction} disabled={!isConnected || isProcessing}>{isConnected ? "Manage account" : "Connect Stripe"}</button>
-            <label htmlFor="finance-payout-frequency">Payout frequency</label>
-            <select id="finance-payout-frequency" value={payoutInterval || "daily"} onChange={(event) => setPayoutInterval(event.target.value)} disabled={!isConnected || isPayoutScheduleLoading}>
-              <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option>
-            </select>
-            {payoutInterval === "weekly" && <select value={weekly_anchor || ""} onChange={(event) => setWeeklyAnchor(event.target.value)}><option value="">Select weekday</option>{WEEKDAYS.map((day) => <option key={day} value={day}>{day}</option>)}</select>}
-            {payoutInterval === "monthly" && <select value={monthly_anchor || ""} onChange={(event) => setMonthlyAnchor(Number(event.target.value))}><option value="">Select day</option>{Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select>}
-            {isConnected && <button type="button" className="finance-save-button" onClick={handlePayoutSchedule}>Save schedule</button>}
-            {toast && <small className={`finance-toast ${toast.type}`}>{toast.message}</small>}
-          </section>
-          <HelpPanel />
-        </aside>
-      </div>
+
+            <aside className="finance-side-column">
+              {isLive && (
+                <section className="finance-card finance-receive-card">
+                  <button type="button" className="finance-card-action" onClick={scrollToPayoutSettings}>
+                    <h2>Receive payouts in 3 steps <ArrowRight size={16} aria-hidden="true" /></h2>
+                    <p>You are all set! Updates will appear here if changes are needed.</p>
+                  </button>
+                </section>
+              )}
+              <section id="finance-payout-settings" className="finance-card finance-settings-card">
+                <h2>Payout Settings</h2>
+                <div className={`finance-stripe-status${isConnected ? " is-connected" : ""}`}>
+                  {isConnected ? <><CheckCircle2 size={14} aria-hidden="true" /> Stripe Connected</> : "Connect Stripe to enable payouts"}
+                </div>
+                <p>{isConnected ? "Bank account connected and ready for payouts." : "You will be able to set your bank account and payout schedule after connecting."}</p>
+                <button type="button" className="finance-outline-button" onClick={handleStripeAction} disabled={!isConnected || isProcessing}>{isConnected ? "Manage account" : "Connect Stripe"}</button>
+                <label htmlFor="finance-payout-frequency">Payout frequency</label>
+                <select id="finance-payout-frequency" value={payoutInterval || "daily"} onChange={(event) => setPayoutInterval(event.target.value)} disabled={!isConnected || isPayoutScheduleLoading}>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+                {payoutInterval === "weekly" && <select value={weekly_anchor || ""} onChange={(event) => setWeeklyAnchor(event.target.value)}><option value="">Select weekday</option>{WEEKDAYS.map((day) => <option key={day} value={day}>{day}</option>)}</select>}
+                {payoutInterval === "monthly" && <select value={monthly_anchor || ""} onChange={(event) => setMonthlyAnchor(Number(event.target.value))}><option value="">Select day</option>{Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select>}
+                {isConnected && <button type="button" className="finance-save-button" onClick={handlePayoutSchedule}>Save schedule</button>}
+                {toast && <small className={`finance-toast ${toast.type}`}>{toast.message}</small>}
+              </section>
+            </aside>
+          </div>
+        </>
+      )}
+
+      <HelpPanel />
 
       <InvoicesSection />
     </main>
