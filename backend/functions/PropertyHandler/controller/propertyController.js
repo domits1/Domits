@@ -3394,6 +3394,71 @@ export class PropertyController {
     }
 
     // -------------------------
+    // GET /property/draft/:id
+    // -------------------------
+    async getDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const propertyId = event.pathParameters?.id;
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            const draft = await this.propertyService.getDraft(propertyId);
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(draft),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // PATCH /property/draft/:id
+    // -------------------------
+    async updateDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const propertyId = event.pathParameters?.id;
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            const eventBody = JSON.parse(event.body || "{}");
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyService.updateDraft(propertyId, eventBody);
+
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isDraftContentClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    isDraftContentClientError(error) {
+        return Boolean(error?.message?.startsWith("Draft "));
+    }
+
+    // -------------------------
     // Helper method (internal only)
     // -------------------------
     async createPropertyObject(propertyBuilder, body, userId, { skipImages = false } = {}) {

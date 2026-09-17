@@ -25,5 +25,41 @@ export const Property_Draft = new EntitySchema({
       generated: false,
       nullable: false,
     },
+    name: {
+      type: "varchar",
+      generated: false,
+      nullable: true,
+    },
+    address_line: {
+      type: "varchar",
+      generated: false,
+      nullable: true,
+    },
+    property_type: {
+      type: "varchar",
+      generated: false,
+      nullable: true,
+    },
+    capacity: {
+      type: "int",
+      generated: false,
+      nullable: true,
+    },
+    bedrooms: {
+      type: "int",
+      generated: false,
+      nullable: true,
+    },
+    bathrooms: {
+      type: "int",
+      generated: false,
+      nullable: true,
+    },
+    status: {
+      type: "varchar",
+      generated: false,
+      nullable: false,
+      default: "DRAFT",
+    },
   },
 });
