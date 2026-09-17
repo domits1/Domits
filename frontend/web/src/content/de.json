@@ -1178,7 +1178,8 @@
       "buttons": {
         "save": "Änderungen speichern",
         "saving": "Wird gespeichert...",
-        "saved": "Gespeichert!"
+        "saved": "Gespeichert!",
+        "saveError": "Speichern fehlgeschlagen. Bitte versuche es erneut."
       }
     },
     "communicationPreferences": {

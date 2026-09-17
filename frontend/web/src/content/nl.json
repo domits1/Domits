@@ -1178,7 +1178,8 @@
       "buttons": {
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan...",
-        "saved": "Opgeslagen!"
+        "saved": "Opgeslagen!",
+        "saveError": "Opslaan mislukt. Probeer het opnieuw."
       }
     },
     "communicationPreferences": {

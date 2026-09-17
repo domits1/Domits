@@ -1177,7 +1177,8 @@
       "buttons": {
         "save": "Save changes",
         "saving": "Saving...",
-        "saved": "Saved!"
+        "saved": "Saved!",
+        "saveError": "Failed to save. Please try again."
       }
     },
     "communicationPreferences": {

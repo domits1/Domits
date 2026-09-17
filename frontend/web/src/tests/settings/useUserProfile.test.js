@@ -193,14 +193,30 @@ describe("useUserProfile", () => {
       act(() => {
         result.current[changeKey]({ target: { value } });
       });
+      let saveResult;
       await act(async () => {
-        await result.current[saveKey]();
+        saveResult = await result.current[saveKey]();
       });
       expect(Auth.updateUserAttributes).toHaveBeenCalledWith(
         MOCK_COGNITO_USER,
         expect.objectContaining({ [attrKey]: value })
       );
       expect(result.current.user[userKey]).toBe(value);
+      expect(saveResult).toBe(true);
+    });
+
+    test(`${saveKey} returns false when Auth.updateUserAttributes rejects`, async () => {
+      Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+      Auth.updateUserAttributes.mockRejectedValueOnce(new Error("Cognito error"));
+      const { result } = renderHook(() => useUserProfile());
+      act(() => {
+        result.current[changeKey]({ target: { value } });
+      });
+      let saveResult;
+      await act(async () => {
+        saveResult = await result.current[saveKey]();
+      });
+      expect(saveResult).toBe(false);
     });
   };
 
@@ -281,11 +297,13 @@ describe("useUserProfile", () => {
   ])("onSaveUserName: shows alert and skips fetch when %s", async (_label, fields, expectedAlert) => {
     const { result } = renderHook(() => useUserProfile());
     setFields(result, fields);
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserName();
+      saveResult = await result.current.onSaveUserName();
     });
     expect(globalThis.alert).toHaveBeenCalledWith(expectedAlert);
     expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(saveResult).toBe(false);
   });
 
   test.each([
@@ -300,24 +318,43 @@ describe("useUserProfile", () => {
       });
       const { result } = renderHook(() => useUserProfile());
       setFields(result, fields);
+      let saveResult;
       await act(async () => {
-        await result.current.onSaveUserName();
+        saveResult = await result.current.onSaveUserName();
       });
       expect(globalThis.fetch).toHaveBeenCalled();
       expect(result.current.user.firstName).toBe(expectedFirst);
       expect(result.current.user.lastName).toBe(expectedLast);
+      expect(saveResult).toBe(true);
     }
   );
+
+  test("onSaveUserName: alerts and returns false when the API reports a non-200 status", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    globalThis.fetch.mockResolvedValue({
+      json: () => Promise.resolve({ statusCode: 400 }),
+    });
+    const { result } = renderHook(() => useUserProfile());
+    setFields(result, [["firstName", "Jane"]]);
+    let saveResult;
+    await act(async () => {
+      saveResult = await result.current.onSaveUserName();
+    });
+    expect(globalThis.alert).toHaveBeenCalledWith("Failed to update name. Please try again.");
+    expect(saveResult).toBe(false);
+  });
 
   // ─── Save phone ───────────────────────────────────────────────────────────
 
   test("onSaveUserPhone: shows alert and skips fetch when phone is empty", async () => {
     const { result } = renderHook(() => useUserProfile());
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserPhone();
+      saveResult = await result.current.onSaveUserPhone();
     });
     expect(globalThis.alert).toHaveBeenCalledWith("Please enter a phone number.");
     expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(saveResult).toBe(false);
   });
 
   test("onSaveUserPhone: shows a single alert (not a duplicate) when the request throws", async () => {
@@ -327,11 +364,13 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onPhoneChange({ target: { value: "612345678" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserPhone();
+      saveResult = await result.current.onSaveUserPhone();
     });
     expect(globalThis.alert).toHaveBeenCalledWith("Failed to update phone number. Please try again.");
     expect(globalThis.alert).toHaveBeenCalledTimes(1);
+    expect(saveResult).toBe(false);
   });
 
   // ─── Save email ───────────────────────────────────────────────────────────
@@ -339,11 +378,13 @@ describe("useUserProfile", () => {
   test("onSaveUserEmail: sets emailError when tempUser email is empty", async () => {
     Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserEmail();
+      saveResult = await result.current.onSaveUserEmail();
     });
     expect(result.current.emailError).toBe("Please provide a valid email address.");
     expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(saveResult).toBe(false);
   });
 
   test("onSaveUserEmail: sets emailError for malformed email", async () => {
@@ -369,11 +410,13 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onInputChange({ target: { name: "email", value: "new@example.com" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserEmail();
+      saveResult = await result.current.onSaveUserEmail();
     });
     expect(result.current.isVerifying).toBe(true);
     expect(result.current.emailError).toBe("");
+    expect(saveResult).toBe(true);
   });
 
   test("onSaveUserEmail: sets emailError when API reports email already in use, even on a 400 response", async () => {
@@ -387,10 +430,12 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onInputChange({ target: { name: "email", value: "taken@example.com" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserEmail();
+      saveResult = await result.current.onSaveUserEmail();
     });
     expect(result.current.emailError).toBe("This email address is already in use.");
+    expect(saveResult).toBe(false);
   });
 
   test("onSaveUserEmail: sets a generic emailError when the response is not ok and carries no known message", async () => {
@@ -404,10 +449,12 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onInputChange({ target: { name: "email", value: "new@example.com" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserEmail();
+      saveResult = await result.current.onSaveUserEmail();
     });
     expect(result.current.emailError).toBe("Failed to update email. Please try again later.");
+    expect(saveResult).toBe(false);
   });
 
   const getIntoEmailVerifyingState = async () => {
@@ -434,12 +481,14 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onVerificationInputChange({ target: { value: "000000" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserEmail();
+      saveResult = await result.current.onSaveUserEmail();
     });
 
     expect(result.current.emailError).toBe("Incorrect verification code.");
     expect(result.current.isVerifying).toBe(true);
+    expect(saveResult).toBe(false);
   });
 
   test("onSaveUserEmail in verifying state: calls confirmEmailChange with the entered code and shows success", async () => {
@@ -450,25 +499,29 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onVerificationInputChange({ target: { value: "123456" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserEmail();
+      saveResult = await result.current.onSaveUserEmail();
     });
 
     expect(confirmEmailChange).toHaveBeenCalledWith("123456");
     expect(result.current.user.email).toBe("new@example.com");
     expect(result.current.isVerifying).toBe(false);
     expect(result.current.emailSuccess).toBe(true);
+    expect(saveResult).toBe(true);
   });
 
   // ─── Save date of birth ───────────────────────────────────────────────────
 
   test("onSaveUserDateOfBirth: sets dateOfBirthError when date is empty", async () => {
     const { result } = renderHook(() => useUserProfile());
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserDateOfBirth();
+      saveResult = await result.current.onSaveUserDateOfBirth();
     });
     expect(result.current.dateOfBirthError).toBe("Please enter a date of birth.");
     expect(Auth.updateUserAttributes).not.toHaveBeenCalled();
+    expect(saveResult).toBe(false);
   });
 
   test("onSaveUserDateOfBirth: sets dateOfBirthError for wrong format", async () => {
@@ -476,10 +529,12 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onInputChange({ target: { name: "dateOfBirth", value: "not-a-date" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserDateOfBirth();
+      saveResult = await result.current.onSaveUserDateOfBirth();
     });
     expect(result.current.dateOfBirthError).toBe("Use format DD-MM-YYYY.");
+    expect(saveResult).toBe(false);
   });
 
   test("onSaveUserDateOfBirth: calls Auth with ISO date and updates user on success", async () => {
@@ -488,8 +543,9 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onInputChange({ target: { name: "dateOfBirth", value: "01-01-1990" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserDateOfBirth();
+      saveResult = await result.current.onSaveUserDateOfBirth();
     });
     expect(Auth.updateUserAttributes).toHaveBeenCalledWith(
       MOCK_COGNITO_USER,
@@ -497,6 +553,7 @@ describe("useUserProfile", () => {
     );
     expect(result.current.user.dateOfBirth).toBe("01-01-1990");
     expect(result.current.dateOfBirthError).toBe("");
+    expect(saveResult).toBe(true);
   });
 
   // ─── Save nationality ─────────────────────────────────────────────────────
@@ -509,11 +566,13 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onInputChange({ target: { name: "nationality", value } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserNationality();
+      saveResult = await result.current.onSaveUserNationality();
     });
     expect(result.current.nationalityError).toBe(expectedError);
     expect(Auth.updateUserAttributes).not.toHaveBeenCalled();
+    expect(saveResult).toBe(false);
   });
 
   test("onSaveUserNationality: saves valid nationality and updates user state", async () => {
@@ -522,14 +581,16 @@ describe("useUserProfile", () => {
     act(() => {
       result.current.onInputChange({ target: { name: "nationality", value: "German" } });
     });
+    let saveResult;
     await act(async () => {
-      await result.current.onSaveUserNationality();
+      saveResult = await result.current.onSaveUserNationality();
     });
 
     expect(Auth.updateUserAttributes).toHaveBeenCalledWith(
       MOCK_COGNITO_USER,
       expect.objectContaining({ "custom:nationality": "German" })
     );
+    expect(saveResult).toBe(true);
     expect(result.current.user.nationality).toBe("German");
     expect(result.current.nationalityError).toBe("");
   });

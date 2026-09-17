@@ -458,6 +458,10 @@
     background: #1d4ed8;
 }
 
+.pd-save-btn--error {
+    background: #dc2626;
+}
+
 /* ─── Rate Plans page ────────────────────────────────────────────────────── */
 
 .rate-plan-item {

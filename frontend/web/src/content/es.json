@@ -1178,7 +1178,8 @@
       "buttons": {
         "save": "Guardar cambios",
         "saving": "Guardando...",
-        "saved": "¡Guardado!"
+        "saved": "¡Guardado!",
+        "saveError": "Error al guardar. Inténtalo de nuevo."
       }
     },
     "communicationPreferences": {

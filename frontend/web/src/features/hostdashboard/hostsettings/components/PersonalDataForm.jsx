@@ -73,8 +73,9 @@ PhoneField.propTypes = {
     onPhoneChange: PropTypes.func.isRequired,
 };
 
-function getSaveLabel(isSaving, saveSuccess, t) {
+function getSaveLabel(isSaving, saveSuccess, saveError, t) {
     if (isSaving) return t.buttons.saving;
+    if (saveError) return t.buttons.saveError;
     if (saveSuccess) return t.buttons.saved;
     return t.buttons.save;
 }
@@ -110,6 +111,7 @@ const PersonalDataForm = ({
     onSaveAll,
     isSaving,
     saveSuccess,
+    saveError,
     onVerifyEmail,
     language,
     languageOptions,
@@ -359,11 +361,11 @@ const PersonalDataForm = ({
                 <div className="personal-data-card-footer">
                     <button
                         type="button"
-                        className={`pd-save-btn${saveSuccess ? " pd-save-btn--saved" : ""}`}
+                        className={`pd-save-btn${saveSuccess ? " pd-save-btn--saved" : ""}${saveError ? " pd-save-btn--error" : ""}`}
                         onClick={onSaveAll}
                         disabled={isSaving}
                     >
-                        {getSaveLabel(isSaving, saveSuccess, t)}
+                        {getSaveLabel(isSaving, saveSuccess, saveError, t)}
                     </button>
                 </div>
             </div>
@@ -497,6 +499,7 @@ PersonalDataForm.propTypes = {
     onSaveAll: PropTypes.func.isRequired,
     isSaving: PropTypes.bool.isRequired,
     saveSuccess: PropTypes.bool.isRequired,
+    saveError: PropTypes.bool.isRequired,
     onVerifyEmail: PropTypes.func.isRequired,
     language: PropTypes.string.isRequired,
     languageOptions: PropTypes.arrayOf(optionShape).isRequired,

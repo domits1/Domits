@@ -16,6 +16,7 @@ export default function usePersonalDataSave({
 }) {
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [saveError, setSaveError] = useState(false);
 
     const saveAll = async () => {
         const saves = [];
@@ -50,11 +51,23 @@ export default function usePersonalDataSave({
         }
 
         setIsSaving(true);
-        await Promise.allSettled(saves);
+        setSaveError(false);
+        const results = await Promise.allSettled(saves);
         setIsSaving(false);
+
+        const hasFailure = results.some(
+            (result) => result.status === "rejected" || result.value === false
+        );
+
+        if (hasFailure) {
+            setSaveError(true);
+            setTimeout(() => setSaveError(false), 2500);
+            return;
+        }
+
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2500);
     };
 
-    return { saveAll, isSaving, saveSuccess };
+    return { saveAll, isSaving, saveSuccess, saveError };
 }
