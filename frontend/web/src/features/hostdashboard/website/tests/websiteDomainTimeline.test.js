@@ -115,7 +115,7 @@ describe("resolveDomainErrorCopy", () => {
     ["tenant_not_owned", "panel", /belongs to another website/i],
     ["domain_not_active", "panel", /not live, so it can't be the main address/i],
     ["primary_changed", "panel", /main address changed while this request was running/i],
-    ["domains_unavailable", "panel", /change was saved, but the domain list had to be reloaded/i],
+    ["domains_unavailable", "panel", /request completed, but the domain list had to be reloaded/i],
     ["tenant_create_failed", "panel", /couldn't reach the domain service/i],
     ["network_error", "panel", /couldn't reach the domain service/i],
     ["internal_error", "panel", /our side/i],

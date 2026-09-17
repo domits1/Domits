@@ -241,7 +241,7 @@ describe("DELETE /property/website/domains", () => {
     expect(response.statusCode).toBe(500);
     expect(parseBody(response).error).toEqual({
       code: "domains_unavailable",
-      message: "The change was saved, but the domain list could not be reloaded. Check again to see the current state.",
+      message: "The request completed, but the domain list could not be reloaded. Check again to see the current state.",
       requestId: "req-1",
     });
   });

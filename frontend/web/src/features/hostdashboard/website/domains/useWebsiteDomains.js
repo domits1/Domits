@@ -52,14 +52,16 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
       const site = summary?.site;
       if (!site?.id || site.status !== SITE_STATUS_PUBLISHED) {
         setStatus(WEBSITE_DOMAINS_STATUS.UNPUBLISHED);
-        return;
+        return true;
       }
       setSiteId(site.id);
       setDomains(await fetchWebsiteDomains(site.id));
       setStatus(WEBSITE_DOMAINS_STATUS.READY);
+      return true;
     } catch (error) {
       setNotice(resolveDomainErrorCopy(error));
       setStatus(WEBSITE_DOMAINS_STATUS.ERROR);
+      return false;
     }
   }, [propertyId]);
 
@@ -88,11 +90,12 @@ export const useWebsiteDomains = ({ propertyId, enabled }) => {
         return true;
       } catch (error) {
         const presentation = resolveDomainErrorCopy(error);
-        const reloaded = RELOAD_ON_ERROR_CODES.has(String(error?.code || ""));
-        if (reloaded) {
-          await load();
+        const shouldReload = RELOAD_ON_ERROR_CODES.has(String(error?.code || ""));
+        if (shouldReload && !(await load())) {
+          return false;
         }
-        const showInField = presentation.scope === ERROR_SCOPE_FIELD && errorScope === ERROR_SCOPE_FIELD && !reloaded;
+        const showInField =
+          presentation.scope === ERROR_SCOPE_FIELD && errorScope === ERROR_SCOPE_FIELD && !shouldReload;
         if (showInField) {
           setFieldError(presentation.message);
         } else {

@@ -107,7 +107,31 @@ describe("useWebsiteDomains", () => {
     ]);
     expect(result.current.status).toBe(WEBSITE_DOMAINS_STATUS.READY);
     expect(result.current.notice).toMatchObject({ scope: "panel", requestId: "req-2" });
-    expect(result.current.notice.message).toMatch(/change was saved/i);
+    expect(result.current.notice.message).toMatch(/request completed/i);
+  });
+
+  it("shows the reload failure instead of the original notice when the recovery reload fails", async () => {
+    const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true };
+    fetchWebsiteDomains
+      .mockResolvedValueOnce([{ ...fallbackFor("site-for-property-1"), isPrimary: false }, custom])
+      .mockRejectedValueOnce(Object.assign(new Error("Session expired."), { code: "unauthorized", status: 401 }));
+    removeWebsiteDomain.mockRejectedValue(
+      Object.assign(new Error("Completed, list unavailable."), { code: "domains_unavailable", requestId: "req-2" })
+    );
+    const { result } = renderHook(() => useWebsiteDomains({ propertyId: "property-1", enabled: true }));
+    await waitFor(() => expect(result.current.customDomain?.status).toBe("ACTIVE"));
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.remove("www.example.com");
+    });
+
+    expect(outcome).toBe(false);
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toBe(WEBSITE_DOMAINS_STATUS.ERROR);
+    expect(result.current.notice.message).toMatch(/session has expired/i);
+    expect(result.current.notice.message).not.toMatch(/request completed/i);
+    expect(result.current.isRemoving).toBe(false);
   });
 
   it("shows a promote refusal as a panel notice and keeps the list as it was", async () => {

@@ -58,7 +58,7 @@ const PANEL_ERROR_COPY = Object.freeze({
     "This domain is not live, so it can't be the main address. Press Check again to see its current status.",
   primary_changed: "The main address changed while this request was running. Press Check again to see the current one.",
   domains_unavailable:
-    "Your change was saved, but the domain list had to be reloaded. Check that it shows what you expect.",
+    "Your request completed, but the domain list had to be reloaded. Check that it shows what you expect.",
   tenant_create_failed: "We couldn't reach the domain service. Try again in a moment.",
   network_error: "We couldn't reach the domain service. Try again in a moment.",
 });

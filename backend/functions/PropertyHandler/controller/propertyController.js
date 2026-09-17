@@ -3090,7 +3090,7 @@ export class PropertyController {
             console.error(`[CustomDomain] domain list read failed after a completed change (site ${site.id}).`, error);
             throw new WebsiteCustomDomainError(
                 WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAINS_UNAVAILABLE,
-                "The change was saved, but the domain list could not be reloaded. Check again to see the current state.",
+                "The request completed, but the domain list could not be reloaded. Check again to see the current state.",
                 { cause: error }
             );
         }

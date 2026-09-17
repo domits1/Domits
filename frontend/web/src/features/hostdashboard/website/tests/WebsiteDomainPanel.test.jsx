@@ -376,8 +376,25 @@ describe("WebsiteDomainPanel", () => {
     expect(await screen.findByText(/this domain is being removed/i)).toBeInTheDocument();
     expect(fetchWebsiteDomains).toHaveBeenCalledTimes(2);
     expect(within(domainRowOf(FALLBACK.domain)).getByText("Main address")).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent(/your change was saved/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/your request completed/i);
     expect(screen.getByText(/reference: req-1/i)).toBeInTheDocument();
+  });
+
+  it("shows the load failure with a retry when the reload after an unavailable list fails too", async () => {
+    const promotedCustom = { ...CUSTOM, status: "ACTIVE", dnsVerified: true, reason: null, isPrimary: true };
+    fetchWebsiteDomains
+      .mockResolvedValueOnce([{ ...FALLBACK, isPrimary: false }, promotedCustom])
+      .mockRejectedValueOnce(domainError("network_error"));
+    removeWebsiteDomain.mockRejectedValue(domainError("domains_unavailable", "The request completed."));
+    await openPanel();
+    await screen.findByText("Domain live");
+
+    fireEvent.click(screen.getByRole("button", { name: /remove domain/i }));
+
+    expect(await screen.findByText(/couldn't reach the domain service/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    expect(screen.queryByText(/your request completed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("www.example.com")).not.toBeInTheDocument();
   });
 
   it("explains a refused switch and keeps the button so the host can retry after check again", async () => {
