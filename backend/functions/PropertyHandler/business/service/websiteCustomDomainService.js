@@ -24,6 +24,7 @@ const CLOUDFRONT_DOMAIN_STATUS_ACTIVE = "active";
 const CLOUDFRONT_TENANT_STATUS_DEPLOYED = "Deployed";
 const REASON_REMOVAL_REQUESTED = "removal_requested";
 const EVENT_DOMAIN_REMOVED = "SITE_DOMAIN_REMOVED";
+const EVENT_DOMAIN_PROMOTED = "SITE_DOMAIN_PROMOTED";
 const DNS_STATUS_VALID = "valid-configuration";
 const SDK_ERROR_DOMAIN_IN_USE = "CNAMEAlreadyExists";
 const SDK_ERROR_TENANT_NAME_EXISTS = "EntityAlreadyExists";
@@ -416,7 +417,10 @@ export class WebsiteCustomDomainService {
       reason,
     });
 
-    return updatedRecord;
+    if (status === DOMAIN_STATUS.ACTIVE) {
+      return updatedRecord;
+    }
+    return this.handPrimaryBackToFallback(updatedRecord);
   }
 
   async removeCustomDomain({ site, domain }) {
@@ -424,6 +428,23 @@ export class WebsiteCustomDomainService {
       throw new TypeError("Missing website site.");
     }
 
+    const record = await this.findStoredCustomDomain({ site, domain });
+
+    try {
+      return await this.startRemoval({ site, record });
+    } catch (error) {
+      if (isForeignTenantError(error)) {
+        throw error;
+      }
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
+        `Could not remove ${record.domain}.`,
+        { cause: error }
+      );
+    }
+  }
+
+  async findStoredCustomDomain({ site, domain }) {
     const record = await this.domainRepository.getCustomDomainBySiteId(site.id);
     if (!record) {
       throw new WebsiteCustomDomainError(
@@ -441,19 +462,69 @@ export class WebsiteCustomDomainService {
         `${requestedDomain || "That domain"} is no longer this website's custom domain.`
       );
     }
+    return record;
+  }
 
-    try {
-      return await this.startRemoval({ site, record });
-    } catch (error) {
-      if (isForeignTenantError(error)) {
-        throw error;
-      }
+  async promoteCustomDomain({ site, domain }) {
+    if (!site?.id) {
+      throw new TypeError("Missing website site.");
+    }
+
+    const record = await this.findStoredCustomDomain({ site, domain });
+    if (record.status !== DOMAIN_STATUS.ACTIVE) {
       throw new WebsiteCustomDomainError(
-        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
-        `Could not remove ${record.domain}.`,
-        { cause: error }
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_ACTIVE,
+        `${record.domain} must be live before it can be the main address.`
       );
     }
+    if (record.isPrimary) {
+      return this.domainRepository.listDomainsBySiteId(site.id);
+    }
+
+    const changedRecords = await this.domainRepository.promoteDomainToPrimary(site.id, record.id);
+    const promotedRecord = changedRecords.find((entry) => entry.id === record.id && entry.isPrimary);
+    if (!promotedRecord) {
+      await this.confirmPromotedMeanwhile({ site, record });
+      return this.domainRepository.listDomainsBySiteId(site.id);
+    }
+
+    await this.recordEventSafely(site, EVENT_DOMAIN_PROMOTED, {
+      siteId: site.id,
+      domain: record.domain,
+      previousPrimaryDomain: changedRecords.find((entry) => !entry.isPrimary)?.domain || null,
+    });
+
+    return this.domainRepository.listDomainsBySiteId(site.id);
+  }
+
+  async confirmPromotedMeanwhile({ site, record }) {
+    const currentRecord = await this.domainRepository.getCustomDomainBySiteId(site.id);
+    if (!currentRecord || currentRecord.id !== record.id) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+        `${record.domain} is no longer this website's custom domain.`
+      );
+    }
+    if (currentRecord.status !== DOMAIN_STATUS.ACTIVE) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_ACTIVE,
+        `${record.domain} is no longer live, so it cannot be the main address.`
+      );
+    }
+    if (!currentRecord.isPrimary) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.PRIMARY_CHANGED,
+        "The main address of this website changed while this request was running. Check again to see the current one."
+      );
+    }
+  }
+
+  async handPrimaryBackToFallback(record) {
+    if (!record?.isPrimary) {
+      return record;
+    }
+    const changedRecords = await this.domainRepository.restoreFallbackDomainAsPrimary(record.siteId);
+    return changedRecords.find((entry) => entry.id === record.id) || { ...record, isPrimary: false };
   }
 
   async refuseForeignTenant({ record, tenant }) {
@@ -545,7 +616,7 @@ export class WebsiteCustomDomainService {
         "This website has no custom domain."
       );
     }
-    return removingRecord;
+    return this.handPrimaryBackToFallback(removingRecord);
   }
 
   async deleteCustomDomainRecord({ site, record }) {
@@ -553,6 +624,7 @@ export class WebsiteCustomDomainService {
     if (!deleted) {
       return null;
     }
+    await this.domainRepository.restoreFallbackDomainAsPrimary(record.siteId);
     await this.recordEventSafely(site, EVENT_DOMAIN_REMOVED, {
       siteId: site.id,
       domain: record.domain,

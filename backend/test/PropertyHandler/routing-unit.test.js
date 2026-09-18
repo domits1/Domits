@@ -35,6 +35,7 @@ const directRouteSpecs = [
   ["POST website draft upsert request", "upsertWebsiteDraft", "POST", "/property/website/draft", 200],
   ["POST website domain request", "createWebsiteDomain", "POST", "/property/website/domains", 201],
   ["POST website domain verify request", "verifyWebsiteDomain", "POST", "/property/website/domains/verify", 200],
+  ["POST website domain primary request", "promoteWebsiteDomain", "POST", "/property/website/domains/primary", 200],
   ["GET website domains request", "listWebsiteDomains", "GET", "/property/website/domains", 200],
   ["DELETE website domain request", "removeWebsiteDomain", "DELETE", "/property/website/domains", 200],
   ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],

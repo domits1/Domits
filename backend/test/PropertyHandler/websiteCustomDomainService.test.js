@@ -47,6 +47,9 @@ const buildDomainRepository = (overrides = {}) => ({
     buildRecord({ id, siteId, verificationDetails })
   ),
   deleteDomainById: jest.fn().mockResolvedValue(true),
+  listDomainsBySiteId: jest.fn().mockResolvedValue([]),
+  promoteDomainToPrimary: jest.fn().mockResolvedValue([]),
+  restoreFallbackDomainAsPrimary: jest.fn().mockResolvedValue([]),
   ...overrides,
 });
 
