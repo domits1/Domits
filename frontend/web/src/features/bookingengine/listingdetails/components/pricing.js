@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { getListingPricingBreakdown } from "../utils/pricing";
+import { calculatePriceSaving } from "../utils/calculatePriceSaving";
+import PriceSavingMessage from "./PriceSavingMessage";
+import getPricingSavingConfig from "../services/fetchPricingSavingConfig";
 
 const EURO_SYMBOL = "\u20AC";
 const fmt = (value) => `${EURO_SYMBOL}${Number(value).toFixed(2)}`;
@@ -14,6 +17,24 @@ const Pricing = ({ pricing = {}, nights = 1 }) => {
     serviceFee,
     total,
   } = getListingPricingBreakdown(pricing, nights || 1);
+
+  const [savingConfig, setSavingConfig] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getPricingSavingConfig().then((config) => {
+      if (!cancelled) {
+        setSavingConfig(config);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const saving = calculatePriceSaving(total, savingConfig);
 
   const rows = [
     {
@@ -37,6 +58,7 @@ const Pricing = ({ pricing = {}, nights = 1 }) => {
         <span className="pricing-row__label">Total</span>
         <span className="pricing-row__value">{fmt(total)}</span>
       </div>
+      <PriceSavingMessage saving={saving} />
     </div>
   );
 };

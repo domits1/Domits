@@ -223,6 +223,14 @@ export class PropertyService {
     };
   }
 
+  async getPricingSavingConfig() {
+    return {
+      domitsCommissionRate: 0.10,
+      comparisonCommissionRate: 0.155,
+      comparisonPlatformLabel: "other sites",
+    };
+  }
+
   async getActivePropertyCardsByType(type) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByType(type);
     const properties = await Promise.all(
