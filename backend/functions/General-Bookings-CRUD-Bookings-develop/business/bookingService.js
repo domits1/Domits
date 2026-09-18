@@ -433,6 +433,27 @@ class BookingService {
     };
   }
 
+  async updateSpecialRequest(bookingId, specialRequest, authToken) {
+    const normalizedBookingId = requireStr(bookingId);
+    if (!normalizedBookingId) {
+      throw new BadRequestException("bookingId is required.");
+    }
+    if (!authToken) {
+      throw new Unauthorized("Missing Authorization header.");
+    }
+
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+
+    const bookingBefore = bookingResult.response;
+    if (bookingBefore.guestid !== user.sub) {
+      throw new Forbidden("Only the guest of this booking may update the special request.");
+    }
+
+    return await this.reservationRepository.updateBookingSpecialRequest(normalizedBookingId, specialRequest);
+  }
+
   async cancelBooking(bookingId, authToken, { reason = null } = {}) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) {
