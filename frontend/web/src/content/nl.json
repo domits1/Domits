@@ -1127,8 +1127,82 @@
         "compliance": {
           "title": "Compliance",
           "desc": "Beheer je registratienummer en verificatie."
+        },
+        "onboarding": {
+          "title": "Onboarding",
+          "desc": "Volg je voortgang van het aanmelden van je woning tot livegang."
         }
       }
+    },
+    "onboardingHub": {
+      "breadcrumb": "Onboarding",
+      "title": "Onboarding",
+      "subtitle": "Volg per woning de voortgang, van aanmelden tot livegang.",
+      "propertyPicker": {
+        "label": "Woning",
+        "loading": "Je woningen worden geladen...",
+        "loadError": "We konden je woningen niet laden.",
+        "empty": "Je hebt nog geen gepubliceerde woningen."
+      },
+      "progress": {
+        "label": "{completed} van {total} stappen voltooid"
+      },
+      "accountWideBadge": "Voor je hele account",
+      "requiredBadge": "Verplicht",
+      "optionalBadge": "Optioneel",
+      "goLiveButton": "Live gaan",
+      "goLiveBlockedText": "Voltooi eerst de verplichte stappen",
+      "pricingConnectedSubDetail": "Dynamische prijzen via PriceLabs zijn ook gekoppeld.",
+      "steps": {
+        "listProperty": {
+          "title": "Woning aanmelden",
+          "desc": "Voeg de details, foto's en prijzen van je woning toe."
+        },
+        "website": {
+          "title": "Boekingswebsite bouwen",
+          "desc": "Maak een eigen boekingswebsite voor deze woning."
+        },
+        "channels": {
+          "title": "Kanalen koppelen",
+          "desc": "Synchroniseer deze woning met Airbnb, Booking.com, Vrbo en meer."
+        },
+        "automate": {
+          "title": "Werkzaamheden automatiseren",
+          "desc": "Stel betalingen en dynamische prijzen in voor je account."
+        },
+        "goLive": {
+          "title": "Live gaan",
+          "desc": "Controleer je woning en publiceer deze op Domits."
+        }
+      },
+      "statusComplete": "Voltooid",
+      "statusIncomplete": "Nog niet gestart",
+      "statusUnknown": "Status kon niet worden gecontroleerd"
+    },
+    "goLive": {
+      "breadcrumb": "Live gaan",
+      "title": "{propertyName} live zetten",
+      "subtitle": "Bekijk de checklist hieronder en publiceer daarna je woning.",
+      "loading": "Checklist wordt geladen...",
+      "loadError": "We konden deze woning niet laden.",
+      "missingPropertyId": "Er is geen woning opgegeven.",
+      "requiredSection": "Verplicht",
+      "optionalSection": "Optioneel",
+      "items": {
+        "listProperty": "Woning aanmelden",
+        "website": "Boekingswebsite bouwen",
+        "payments": "Betalingen (Stripe)",
+        "channels": "Kanalen koppelen",
+        "pricing": "Dynamische prijzen (PriceLabs)",
+        "tasks": "Taakbeheer"
+      },
+      "activateButton": "Woning publiceren",
+      "activating": "Bezig met publiceren...",
+      "alreadyLive": "Deze woning staat al live.",
+      "blockedMessage": "Voltooi eerst de verplichte stappen hierboven om live te gaan.",
+      "successMessage": "Je woning staat nu live!",
+      "errorMessage": "Er is iets misgegaan bij het publiceren van deze woning.",
+      "backToHub": "Terug naar Onboarding"
     },
     "personalData": {
       "breadcrumb": "Persoonlijke gegevens",

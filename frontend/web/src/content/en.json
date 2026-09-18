@@ -1126,8 +1126,82 @@
         "compliance": {
           "title": "Compliance",
           "desc": "Manage your registration number and verification."
+        },
+        "onboarding": {
+          "title": "Onboarding",
+          "desc": "Track your progress from listing your property to going live."
         }
       }
+    },
+    "onboardingHub": {
+      "breadcrumb": "Onboarding",
+      "title": "Onboarding",
+      "subtitle": "Track your progress for each listing, from creating it to going live.",
+      "propertyPicker": {
+        "label": "Listing",
+        "loading": "Loading your listings...",
+        "loadError": "We could not load your listings.",
+        "empty": "You don't have any published listings yet."
+      },
+      "progress": {
+        "label": "{completed} of {total} steps complete"
+      },
+      "accountWideBadge": "Account-wide",
+      "requiredBadge": "Required",
+      "optionalBadge": "Optional",
+      "goLiveButton": "Go live",
+      "goLiveBlockedText": "Complete required steps first",
+      "pricingConnectedSubDetail": "PriceLabs dynamic pricing is also connected.",
+      "steps": {
+        "listProperty": {
+          "title": "List Your Property",
+          "desc": "Add your property's details, photos and pricing."
+        },
+        "website": {
+          "title": "Build Direct Booking Website",
+          "desc": "Create a branded booking website for this listing."
+        },
+        "channels": {
+          "title": "Connect Channels",
+          "desc": "Sync this listing with Airbnb, Booking.com, Vrbo and more."
+        },
+        "automate": {
+          "title": "Automate Operations",
+          "desc": "Set up payments and dynamic pricing for your account."
+        },
+        "goLive": {
+          "title": "Go Live",
+          "desc": "Review your listing and publish it on Domits."
+        }
+      },
+      "statusComplete": "Complete",
+      "statusIncomplete": "Not started",
+      "statusUnknown": "Could not check status"
+    },
+    "goLive": {
+      "breadcrumb": "Go Live",
+      "title": "Go live with {propertyName}",
+      "subtitle": "Review the checklist below, then publish your listing.",
+      "loading": "Loading checklist...",
+      "loadError": "We could not load this listing.",
+      "missingPropertyId": "No listing was specified.",
+      "requiredSection": "Required",
+      "optionalSection": "Optional",
+      "items": {
+        "listProperty": "List Your Property",
+        "website": "Build Direct Booking Website",
+        "payments": "Payments (Stripe)",
+        "channels": "Connect Channels",
+        "pricing": "Dynamic Pricing (PriceLabs)",
+        "tasks": "Task Management"
+      },
+      "activateButton": "Publish listing",
+      "activating": "Publishing...",
+      "alreadyLive": "This listing is already live.",
+      "blockedMessage": "Complete the required steps above before going live.",
+      "successMessage": "Your listing is now live!",
+      "errorMessage": "Something went wrong while publishing this listing.",
+      "backToHub": "Back to Onboarding"
     },
     "personalData": {
       "breadcrumb": "Personal Data",
