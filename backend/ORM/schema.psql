@@ -514,3 +514,365 @@ ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS public_booking_ref VARCHAR(255
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(255);
 CREATE UNIQUE INDEX ASYNC booking_public_booking_ref_unique_test ON test.booking (public_booking_ref);
 CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique_test ON test.booking (idempotency_key);
+
+
+
+-- -----------------------------------------------------
+-- Table main.review
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.review;
+
+CREATE TABLE IF NOT EXISTS main.review (
+  id VARCHAR(255) NOT NULL,
+  booking_id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  reviewer_user_id VARCHAR(255) NOT NULL,
+  reviewee_user_id VARCHAR(255),
+  review_type VARCHAR(50) NOT NULL,
+  overall_rating NUMERIC(2,1) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  public_review TEXT NOT NULL,
+  private_feedback TEXT,
+  verification_status VARCHAR(50) NOT NULL DEFAULT 'UNVERIFIED',
+  publication_status VARCHAR(50) NOT NULL DEFAULT 'UNPUBLISHED',
+  status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_id_unique ON main.review (id);
+CREATE UNIQUE INDEX ASYNC review_booking_type_reviewer_unique
+  ON main.review (booking_id, review_type, reviewer_user_id);
+
+CREATE INDEX ASYNC review_property_idx ON main.review (property_id);
+CREATE INDEX ASYNC review_host_idx ON main.review (host_id);
+CREATE INDEX ASYNC review_reviewer_idx ON main.review (reviewer_user_id);
+CREATE INDEX ASYNC review_public_property_idx
+  ON main.review (property_id, publication_status, created_at);
+
+
+-- -----------------------------------------------------
+-- Table main.review_rating
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.review_rating;
+
+CREATE TABLE IF NOT EXISTS main.review_rating (
+  id VARCHAR(255) NOT NULL,
+  review_id VARCHAR(255) NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  rating NUMERIC(2,1) NOT NULL,
+  created_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_rating_id_unique ON main.review_rating (id);
+CREATE UNIQUE INDEX ASYNC review_rating_review_category_unique
+  ON main.review_rating (review_id, category);
+
+CREATE INDEX ASYNC review_rating_review_idx ON main.review_rating (review_id);
+
+
+
+-- -----------------------------------------------------
+-- Table test.review
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS test.review;
+
+CREATE TABLE IF NOT EXISTS test.review (
+  id VARCHAR(255) NOT NULL,
+  booking_id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  reviewer_user_id VARCHAR(255) NOT NULL,
+  reviewee_user_id VARCHAR(255),
+  review_type VARCHAR(50) NOT NULL,
+  overall_rating NUMERIC(2,1) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  public_review TEXT NOT NULL,
+  private_feedback TEXT,
+  verification_status VARCHAR(50) NOT NULL DEFAULT 'UNVERIFIED',
+  publication_status VARCHAR(50) NOT NULL DEFAULT 'UNPUBLISHED',
+  status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_id_unique_test ON test.review (id);
+CREATE UNIQUE INDEX ASYNC review_booking_type_reviewer_unique_test
+  ON test.review (booking_id, review_type, reviewer_user_id);
+
+CREATE INDEX ASYNC review_property_idx_test ON test.review (property_id);
+CREATE INDEX ASYNC review_host_idx_test ON test.review (host_id);
+CREATE INDEX ASYNC review_reviewer_idx_test ON test.review (reviewer_user_id);
+CREATE INDEX ASYNC review_public_property_idx_test
+  ON test.review (property_id, publication_status, created_at);
+
+
+-- -----------------------------------------------------
+-- Table test.review_rating
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS test.review_rating;
+
+CREATE TABLE IF NOT EXISTS test.review_rating (
+  id VARCHAR(255) NOT NULL,
+  review_id VARCHAR(255) NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  rating NUMERIC(2,1) NOT NULL,
+  created_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_rating_id_unique_test ON test.review_rating (id);
+CREATE UNIQUE INDEX ASYNC review_rating_review_category_unique_test
+  ON test.review_rating (review_id, category);
+
+CREATE INDEX ASYNC review_rating_review_idx_test ON test.review_rating (review_id);
+
+
+
+
+-- backend/ORM/schema.psql additions
+
+CREATE INDEX ASYNC review_status_idx_main ON main.review (status);
+CREATE INDEX ASYNC review_status_idx_test ON test.review (status);
+
+CREATE TABLE IF NOT EXISTS main.review_category (
+  id VARCHAR(255) NOT NULL,
+  key VARCHAR(100) NOT NULL,
+  label VARCHAR(255) NOT NULL,
+  description TEXT,
+  review_type VARCHAR(50) NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_category_key_type_unique_main
+  ON main.review_category (key, review_type);
+
+INSERT INTO main.review_category (
+  id,
+  key,
+  label,
+  description,
+  review_type,
+  is_active,
+  sort_order,
+  created_at,
+  updated_at
+)
+VALUES
+  ('main-review-category-cleanliness', 'cleanliness', 'Cleanliness', 'How clean the property was.', 'GUEST_TO_PROPERTY', true, 10, 0, 0),
+  ('main-review-category-accuracy', 'accuracy', 'Accuracy', 'How accurately the listing represented the stay.', 'GUEST_TO_PROPERTY', true, 20, 0, 0),
+  ('main-review-category-communication', 'communication', 'Communication', 'How clear and helpful communication was.', 'GUEST_TO_PROPERTY', true, 30, 0, 0),
+  ('main-review-category-location', 'location', 'Location', 'How suitable the property location was.', 'GUEST_TO_PROPERTY', true, 40, 0, 0),
+  ('main-review-category-checkin', 'checkIn', 'Check-in', 'How smooth the check-in experience was.', 'GUEST_TO_PROPERTY', true, 50, 0, 0),
+  ('main-review-category-value', 'value', 'Value', 'How good the stay felt for the price.', 'GUEST_TO_PROPERTY', true, 60, 0, 0)
+ON CONFLICT (key, review_type) DO UPDATE SET
+  label = EXCLUDED.label,
+  description = EXCLUDED.description,
+  is_active = EXCLUDED.is_active,
+  sort_order = EXCLUDED.sort_order,
+  updated_at = EXCLUDED.updated_at;
+
+CREATE TABLE IF NOT EXISTS main.review_request (
+  id VARCHAR(255) NOT NULL,
+  booking_id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  guest_id VARCHAR(255) NOT NULL,
+  review_type VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'OPEN',
+  requested_at BIGINT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  completed_at BIGINT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_request_booking_type_guest_unique_main
+  ON main.review_request (booking_id, review_type, guest_id);
+
+CREATE INDEX ASYNC review_request_guest_status_idx_main
+  ON main.review_request (guest_id, status);
+
+CREATE INDEX ASYNC review_request_booking_idx_main
+  ON main.review_request (booking_id);
+
+CREATE TABLE IF NOT EXISTS main.review_response (
+  id VARCHAR(255) NOT NULL,
+  review_id VARCHAR(255) NOT NULL,
+  responder_user_id VARCHAR(255) NOT NULL,
+  public_response TEXT NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'SUBMITTED',
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_response_review_unique_main
+  ON main.review_response (review_id);
+
+CREATE TABLE IF NOT EXISTS main.review_moderation (
+  id VARCHAR(255) NOT NULL,
+  review_id VARCHAR(255) NOT NULL,
+  target_type VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+  reason VARCHAR(255),
+  notes TEXT,
+  moderated_by_user_id VARCHAR(255),
+  moderated_at BIGINT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE INDEX ASYNC review_moderation_review_idx_main
+  ON main.review_moderation (review_id);
+
+CREATE INDEX ASYNC review_moderation_status_created_idx_main
+  ON main.review_moderation (status, created_at);
+
+CREATE TABLE IF NOT EXISTS main.review_verification (
+  id VARCHAR(255) NOT NULL,
+  review_id VARCHAR(255) NOT NULL,
+  booking_id VARCHAR(255) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'VERIFIED_STAY',
+  method VARCHAR(50) NOT NULL DEFAULT 'BOOKING_MATCH',
+  evidence_json TEXT,
+  verified_at BIGINT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_verification_review_unique_main
+  ON main.review_verification (review_id);
+
+CREATE INDEX ASYNC review_verification_booking_idx_main
+  ON main.review_verification (booking_id);
+
+CREATE TABLE IF NOT EXISTS test.review_category (
+  id VARCHAR(255) NOT NULL,
+  key VARCHAR(100) NOT NULL,
+  label VARCHAR(255) NOT NULL,
+  description TEXT,
+  review_type VARCHAR(50) NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_category_key_type_unique_test
+  ON test.review_category (key, review_type);
+
+INSERT INTO test.review_category (
+  id,
+  key,
+  label,
+  description,
+  review_type,
+  is_active,
+  sort_order,
+  created_at,
+  updated_at
+)
+VALUES
+  ('test-review-category-cleanliness', 'cleanliness', 'Cleanliness', 'How clean the property was.', 'GUEST_TO_PROPERTY', true, 10, 0, 0),
+  ('test-review-category-accuracy', 'accuracy', 'Accuracy', 'How accurately the listing represented the stay.', 'GUEST_TO_PROPERTY', true, 20, 0, 0),
+  ('test-review-category-communication', 'communication', 'Communication', 'How clear and helpful communication was.', 'GUEST_TO_PROPERTY', true, 30, 0, 0),
+  ('test-review-category-location', 'location', 'Location', 'How suitable the property location was.', 'GUEST_TO_PROPERTY', true, 40, 0, 0),
+  ('test-review-category-checkin', 'checkIn', 'Check-in', 'How smooth the check-in experience was.', 'GUEST_TO_PROPERTY', true, 50, 0, 0),
+  ('test-review-category-value', 'value', 'Value', 'How good the stay felt for the price.', 'GUEST_TO_PROPERTY', true, 60, 0, 0)
+ON CONFLICT (key, review_type) DO UPDATE SET
+  label = EXCLUDED.label,
+  description = EXCLUDED.description,
+  is_active = EXCLUDED.is_active,
+  sort_order = EXCLUDED.sort_order,
+  updated_at = EXCLUDED.updated_at;
+
+CREATE TABLE IF NOT EXISTS test.review_request (
+  id VARCHAR(255) NOT NULL,
+  booking_id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  guest_id VARCHAR(255) NOT NULL,
+  review_type VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'OPEN',
+  requested_at BIGINT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  completed_at BIGINT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_request_booking_type_guest_unique_test
+  ON test.review_request (booking_id, review_type, guest_id);
+
+CREATE INDEX ASYNC review_request_guest_status_idx_test
+  ON test.review_request (guest_id, status);
+
+CREATE INDEX ASYNC review_request_booking_idx_test
+  ON test.review_request (booking_id);
+
+CREATE TABLE IF NOT EXISTS test.review_response (
+  id VARCHAR(255) NOT NULL,
+  review_id VARCHAR(255) NOT NULL,
+  responder_user_id VARCHAR(255) NOT NULL,
+  public_response TEXT NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'SUBMITTED',
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_response_review_unique_test
+  ON test.review_response (review_id);
+
+CREATE TABLE IF NOT EXISTS test.review_moderation (
+  id VARCHAR(255) NOT NULL,
+  review_id VARCHAR(255) NOT NULL,
+  target_type VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+  reason VARCHAR(255),
+  notes TEXT,
+  moderated_by_user_id VARCHAR(255),
+  moderated_at BIGINT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE INDEX ASYNC review_moderation_review_idx_test
+  ON test.review_moderation (review_id);
+
+CREATE INDEX ASYNC review_moderation_status_created_idx_test
+  ON test.review_moderation (status, created_at);
+
+CREATE TABLE IF NOT EXISTS test.review_verification (
+  id VARCHAR(255) NOT NULL,
+  review_id VARCHAR(255) NOT NULL,
+  booking_id VARCHAR(255) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'VERIFIED_STAY',
+  method VARCHAR(50) NOT NULL DEFAULT 'BOOKING_MATCH',
+  evidence_json TEXT,
+  verified_at BIGINT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ASYNC review_verification_review_unique_test
+  ON test.review_verification (review_id);
+
+CREATE INDEX ASYNC review_verification_booking_idx_test
+  ON test.review_verification (booking_id);
