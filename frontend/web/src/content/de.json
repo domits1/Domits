@@ -1138,8 +1138,11 @@
       "prefsSection": "Einstellungen / Authentifizierung",
       "photo": {
         "upload": "Hochladen",
-        "uploading": "Wird verarbeitet...",
-        "remove": "Entfernen"
+        "uploading": "Wird hochgeladen...",
+        "remove": "Entfernen",
+        "removing": "Wird entfernt...",
+        "uploaded": "Foto hochgeladen!",
+        "removed": "Foto entfernt!"
       },
       "fields": {
         "fullName": "Vollständiger Name",
