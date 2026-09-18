@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import LanguageIcon from "@mui/icons-material/Language";
 import HomeIcon from "@mui/icons-material/Home";
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import styles from "./WebsiteBuilderPage.module.scss";
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
@@ -637,6 +637,9 @@ function WebsiteBuilderPage() {
   const websiteBuildAttemptRef = useRef(null);
   const websiteDraftPreviewCacheKeysRef = useRef({});
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialPropertyIdParam = String(searchParams.get("propertyId") || "").trim();
+  const hasAppliedInitialPropertyIdRef = useRef(false);
 
   const draftedPropertyIds = useMemo(
     () =>
@@ -697,6 +700,32 @@ function WebsiteBuilderPage() {
     void loadProperties();
     void loadHostWebsiteDrafts();
   }, []);
+
+  // Pre-select the listing passed via ?propertyId= (e.g. from the Onboarding
+  // hub) once both the property list and the draft list have loaded, so we
+  // know whether it already has a draft. Applies once per page load only —
+  // deliberately does not re-run after the host builds a draft, which would
+  // otherwise yank them back to a tab they may have already left.
+  useEffect(() => {
+    if (hasAppliedInitialPropertyIdRef.current) return;
+    if (!initialPropertyIdParam) return;
+    if (isLoading || isLoadingWebsiteDrafts) return;
+
+    hasAppliedInitialPropertyIdRef.current = true;
+
+    const matchesKnownProperty = propertyOptions.some(
+      (option) => option.value === initialPropertyIdParam
+    );
+    if (!matchesKnownProperty) return;
+
+    if (draftedPropertyIds.has(initialPropertyIdParam)) {
+      // Already has a draft - the default "My websites" tab already shows it.
+      setWorkspaceTab(WORKSPACE_TAB_WEBSITES);
+    } else {
+      setWorkspaceTab(WORKSPACE_TAB_BUILDER);
+      setSelectedPropertyId(initialPropertyIdParam);
+    }
+  }, [initialPropertyIdParam, isLoading, isLoadingWebsiteDrafts, propertyOptions, draftedPropertyIds]);
 
   useEffect(() => {
     setSelectedPropertyId((currentPropertyId) => {
