@@ -1024,6 +1024,7 @@ export class PropertyController {
                             .map((rule) => ({
                                 category: String(rule?.category || "").trim(),
                                 rule_text: String(rule?.rule_text || rule?.ruleText || "").trim(),
+                                enabled: rule?.enabled !== false,
                             }))
                             .filter((rule) => rule.category && rule.rule_text)
                             .map((rule) => [`${rule.category}::${rule.rule_text}`, rule])

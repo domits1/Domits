@@ -34,7 +34,8 @@ const Pricing = ({ pricing = {}, nights = 1 }) => {
     };
   }, []);
 
-  const saving = calculatePriceSaving(total, savingConfig);
+  const hasSelectedNights = Number(nights) > 0;
+  const saving = hasSelectedNights ? calculatePriceSaving(total, savingConfig) : null;
 
   const rows = [
     {

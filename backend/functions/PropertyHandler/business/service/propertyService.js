@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { QueryFailedError } from "typeorm";
+import { TypeORMError } from "typeorm";
 import { SystemManagerRepository } from "../../data/repository/systemManagerRepository.js";
 
 import { PropertyAmenityRepository } from "../../data/repository/propertyAmenityRepository.js";
@@ -765,16 +765,16 @@ export class PropertyService {
       await this.#upsertPropertyRule(propertyId, ruleName, isEnabled);
     }
   }
-isMissingCustomRulesTableError(error) {
-  return error instanceof QueryFailedError && error.code === "42P01";
+isCustomRulesSchemaError(error) {
+  return error instanceof TypeORMError;
 }
 
 async getCustomRules(propertyId) {
   try {
     return await this.propertyCustomRuleRepository.getCustomRulesByPropertyId(propertyId);
   } catch (error) {
-    if (this.isMissingCustomRulesTableError(error)) {
-      console.warn(`Custom rules table not yet migrated for property ${propertyId}:`, error.message);
+    if (this.isCustomRulesSchemaError(error)) {
+      console.warn(`Custom rules not available for property ${propertyId} (schema not yet migrated):`, error.message);
       return [];
     }
     throw error;
@@ -785,8 +785,8 @@ async updateCustomRules(propertyId, customRules) {
   try {
     return await this.propertyCustomRuleRepository.replaceCustomRulesByPropertyId(propertyId, customRules);
   } catch (error) {
-    if (this.isMissingCustomRulesTableError(error)) {
-      console.warn(`Could not save custom rules (table not yet migrated) for property ${propertyId}:`, error.message);
+    if (this.isCustomRulesSchemaError(error)) {
+      console.warn(`Could not save custom rules for property ${propertyId} (schema not yet migrated):`, error.message);
       return [];
     }
     throw error;

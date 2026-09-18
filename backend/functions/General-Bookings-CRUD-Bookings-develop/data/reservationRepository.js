@@ -1,5 +1,5 @@
 import Database from "database";
-import { QueryFailedError } from "typeorm";
+import { TypeORMError } from "typeorm";
 import { randomUUID } from "node:crypto";
 import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
@@ -517,7 +517,7 @@ class ReservationRepository {
         statusCode: 200,
       };
     } catch (error) {
-      if (error instanceof QueryFailedError && (error.code === "42P01" || error.code === "42703")) {
+      if (error instanceof TypeORMError) {
         console.warn(
           `Could not update special_request for booking ${id} (column/table not yet migrated):`,
           error.message

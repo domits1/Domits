@@ -5,9 +5,10 @@ import { updateBookingSpecialRequest } from "../services/bookingAPI";
 
 function SpecialRequestsSection({ bookingId, specialRequest, onUpdated }) {
   const [value, setValue] = useState(specialRequest || "");
+  const [savedValue, setSavedValue] = useState(specialRequest || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const hasChanges = value !== (specialRequest || "");
+  const hasChanges = value !== savedValue;
 
   const handleSubmit = async () => {
     if (!bookingId || isSubmitting) {
@@ -19,6 +20,7 @@ function SpecialRequestsSection({ bookingId, specialRequest, onUpdated }) {
     try {
       await updateBookingSpecialRequest(bookingId, value);
       toast.success("Special request updated.");
+      setSavedValue(value);
       if (onUpdated) {
         onUpdated(value);
       }
@@ -37,6 +39,7 @@ function SpecialRequestsSection({ bookingId, specialRequest, onUpdated }) {
 
       <textarea
         className="specialRequestInput"
+        aria-label="Special request"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="e.g. Late check-in around 9pm, extra pillows if possible"

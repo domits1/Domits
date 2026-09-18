@@ -170,7 +170,7 @@ class ReservationController {
   }
 
   requirePatchField(body, fieldName) {
-    if (!body?.[fieldName]) throw new Error(`Missing ${fieldName}.`);
+    if (!body?.[fieldName]) throw new BadRequestException(`Missing ${fieldName}.`);
     return body[fieldName];
   }
 
