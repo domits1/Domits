@@ -540,6 +540,7 @@ export class PropertyController {
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
                     bookingType: normalizedOverviewPayload.bookingType,
+                    customRules: normalizedOverviewPayload.customRules,
                 }
             );
 
@@ -804,6 +805,7 @@ export class PropertyController {
             amenities: body.amenities,
             rules: body.rules,
             bookingType: body.bookingType,
+            customRules: body.customRules,
         };
     }
 
@@ -1023,9 +1025,24 @@ export class PropertyController {
                     ).values()
                 )
                 : undefined,
+            customRules: Array.isArray(payload.customRules)
+                ? Array.from(
+                    new Map(
+                        payload.customRules
+                            .map((rule) => ({
+                                category: String(rule?.category || "").trim(),
+                                rule_text: String(rule?.rule_text || rule?.ruleText || "").trim(),
+                            }))
+                            .filter((rule) => rule.category && rule.rule_text)
+                            .map((rule) => [`${rule.category}::${rule.rule_text}`, rule])
+                    ).values()
+                )
+                : undefined,
             bookingType: this.resolveBookingType(payload.bookingType),
         };
     }
+        
+    
 
     normalizeCheckInPayload(checkIn) {
         if (!this.isPlainObject(checkIn) || !this.isPlainObject(checkIn.checkIn) || !this.isPlainObject(checkIn.checkOut)) {
@@ -2296,6 +2313,27 @@ export class PropertyController {
                 statusCode: 200,
                 headers: responseHeaders,
                 body: JSON.stringify(properties)
+            }
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // GET /property/pricing/saving-config
+    // -------------------------
+    async getPricingSavingConfig(event) {
+        try {
+            const config = await this.propertyService.getPricingSavingConfig();
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(config)
             }
         } catch (error) {
             console.error(error);
