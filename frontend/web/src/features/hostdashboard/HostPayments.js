@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import { HostRevenueService } from "../hostdashboard/services/HostRevenueService.js";
+import { HostKpiAllService } from "../hostdashboard/services/HostKpiAllService.js";
 import ClipLoader from "react-spinners/ClipLoader";
-import { FaMoneyBillWave, FaBed, FaRegClock, FaBuilding } from "react-icons/fa";
+import { FaMoneyBillWave, FaBed, FaRegClock, FaBuilding, FaExclamationTriangle } from "react-icons/fa";
 
 import RevenueOverview from "./HostRevenueCards/RevenueOverview.jsx";
 import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
@@ -18,6 +19,7 @@ const HostRevenues = () => {
   const [availableNights, setAvailableNights] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [propertyCount, setPropertyCount] = useState(0);
+  const [adr, setAdr] = useState(0);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -31,6 +33,7 @@ const HostRevenues = () => {
     nights: null,
     available: null,
     properties: null,
+    adr: null,
   });
 
   useEffect(() => {
@@ -66,11 +69,12 @@ const HostRevenues = () => {
       try {
         await Auth.currentSession();
 
-        const [revenue, nights, available, properties] = await Promise.all([
+        const [revenue, nights, available, properties, kpiAll] = await Promise.all([
           HostRevenueService.getRevenue(cognitoUserId),
           HostRevenueService.getBookedNights(cognitoUserId),
           HostRevenueService.getAvailableNights(cognitoUserId),
           HostRevenueService.getPropertyCount(cognitoUserId),
+          HostKpiAllService.fetchAll(cognitoUserId, "monthly"),
         ]);
 
         if (!isMountedRef.current) return;
@@ -79,12 +83,14 @@ const HostRevenues = () => {
         const nextNights = nights ?? 0;
         const nextAvailable = available ?? 0;
         const nextProperties = properties ?? 0;
+        const nextAdr = Number(kpiAll?.averageDailyRate ?? 0);
 
         const changed =
           lastRef.current.revenue !== nextRevenue ||
           lastRef.current.nights !== nextNights ||
           lastRef.current.available !== nextAvailable ||
-          lastRef.current.properties !== nextProperties;
+          lastRef.current.properties !== nextProperties ||
+          lastRef.current.adr !== nextAdr;
 
         if (lastRef.current.revenue !== nextRevenue) {
           setTotalRevenue(nextRevenue);
@@ -101,6 +107,10 @@ const HostRevenues = () => {
         if (lastRef.current.properties !== nextProperties) {
           setPropertyCount(nextProperties);
           lastRef.current.properties = nextProperties;
+        }
+        if (lastRef.current.adr !== nextAdr) {
+          setAdr(nextAdr);
+          lastRef.current.adr = nextAdr;
         }
 
         if (changed) setRefreshKey((k) => k + 1);
@@ -146,6 +156,8 @@ const HostRevenues = () => {
   }, [fetchAllData]);
 
   const occupancyRate = availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
+  const unbookedNights = Math.max(availableNights - bookedNights, 0);
+  const grossMissedRevenue = adr * unbookedNights;
 
   const handleDownloadReport = () => {
     const year = new Date().getFullYear();
@@ -157,6 +169,7 @@ const HostRevenues = () => {
       ["Available Nights", availableNights],
       ["Total Properties", propertyCount],
       ["Occupancy Rate (%)", occupancyRate.toFixed(2)],
+      ["Gross Missed Revenue (EUR)", grossMissedRevenue.toFixed(2)],
     ];
 
     const csvContent = rows.map((row) => row.join(",")).join("\n");
@@ -206,6 +219,12 @@ const HostRevenues = () => {
               <RevenueOverview icon={<FaBed />} title="Booked Nights" value={bookedNights.toLocaleString()} />
               <RevenueOverview icon={<FaRegClock />} title="Available Nights" value={availableNights.toLocaleString()} />
               <RevenueOverview icon={<FaBuilding />} title="Total Properties" value={propertyCount.toLocaleString()} />
+              <RevenueOverview
+                icon={<FaExclamationTriangle />}
+                tone="warning"
+                title="Gross Missed Revenue"
+                value={`€${grossMissedRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+              />
             </div>
             {availableNights > 0 && (
               <p className="hr-occupancy-summary">
@@ -221,6 +240,7 @@ const HostRevenues = () => {
               refreshKey={refreshKey}
               totalRevenue={totalRevenue}
               bookedNights={bookedNights}
+              availableNights={availableNights}
             />
           </div>
 

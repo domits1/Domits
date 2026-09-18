@@ -10,7 +10,7 @@ const METRIC_INFO = {
   ALOS: { label: "Average Length of Stay", key: "alos", format: (v) => `${Number(v).toFixed(1)} nights` },
 };
 
-const MonthlyComparison = ({ hostId, refreshKey, totalRevenue = 0, bookedNights = 0 }) => {
+const MonthlyComparison = ({ hostId, refreshKey, totalRevenue = 0, bookedNights = 0, availableNights = 0 }) => {
   const [selectedMetric, setSelectedMetric] = useState("OCC");
   const [metrics, setMetrics] = useState({ occ: 0, adr: 0, revpar: 0, alos: 0 });
 
@@ -99,6 +99,75 @@ const MonthlyComparison = ({ hostId, refreshKey, totalRevenue = 0, bookedNights 
   const currentValue = metrics[activeMetric.key];
   const hasData = Number(currentValue) !== 0;
 
+  const renderVisual = () => {
+    if (selectedMetric === "OCC") {
+      const pct = Math.min(Math.max(metrics.occ, 0), 100);
+      return (
+        <div className="mc-visual">
+          <div className="mc-bar-track">
+            <div className="mc-bar-fill" style={{ width: `${pct}%` }} />
+          </div>
+          <p className="mc-visual-caption">
+            {bookedNights.toLocaleString()} of {availableNights.toLocaleString()} available nights booked this month
+          </p>
+        </div>
+      );
+    }
+
+    if (selectedMetric === "ADR") {
+      const potentialRevenue = metrics.adr * availableNights;
+      return (
+        <div className="mc-visual">
+          <div className="mc-stat-block">
+            <span className="mc-stat-value">€{metrics.adr.toLocaleString()}</span>
+            <span className="mc-stat-label">average rate per booked night</span>
+          </div>
+          {availableNights > 0 && metrics.adr > 0 && (
+            <p className="mc-visual-caption">
+              At this rate, fully booking all {availableNights.toLocaleString()} available nights would generate €
+              {potentialRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })} this month
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    if (selectedMetric === "RevPAR") {
+      const gap = Math.max(metrics.adr - metrics.revpar, 0);
+      return (
+        <div className="mc-visual">
+          <div className="mc-stat-block">
+            <span className="mc-stat-value">€{metrics.revpar.toLocaleString()}</span>
+            <span className="mc-stat-label">revenue per available night</span>
+          </div>
+          {metrics.adr > 0 && gap > 0 && (
+            <p className="mc-visual-caption">
+              €{gap.toLocaleString(undefined, { maximumFractionDigits: 0 })} below your €
+              {metrics.adr.toLocaleString()} nightly rate, the gap left by nights that went unsold this month
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    if (selectedMetric === "ALOS") {
+      const cap = 10;
+      const filled = Math.min(Math.round(metrics.alos), cap);
+      return (
+        <div className="mc-visual">
+          <div className="mc-nights-row">
+            {Array.from({ length: cap }, (_, i) => (
+              <span key={i} className={`mc-night-dot ${i < filled ? "filled" : ""}`} />
+            ))}
+          </div>
+          <p className="mc-visual-caption">Guests stay {metrics.alos.toFixed(1)} nights on average this month</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   let content;
 
   if (loading) {
@@ -125,6 +194,8 @@ const MonthlyComparison = ({ hostId, refreshKey, totalRevenue = 0, bookedNights 
             <span className="mc-breakdown-value">{Number(bookedNights).toLocaleString()}</span>
           </div>
         </div>
+
+        {renderVisual()}
       </div>
     );
   }

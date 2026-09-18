@@ -61,6 +61,13 @@
         font-size: 14px;
       }
     }
+
+    &--tone-warning {
+      .ro-revenue-icon {
+        background-color: #fef3e6;
+        color: #b45309;
+      }
+    }
   }
 
   .ro-card-grid {

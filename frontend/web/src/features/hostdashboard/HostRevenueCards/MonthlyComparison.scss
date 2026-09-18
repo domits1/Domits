@@ -135,4 +135,64 @@ $card-shadow: rgba(0, 0, 0, 0.1);
       color: $text-dark;
     }
   }
+
+  .mc-visual {
+    margin-top: 24px;
+  }
+
+  .mc-bar-track {
+    height: 10px;
+    border-radius: 6px;
+    background: #e5e7eb;
+    overflow: hidden;
+  }
+
+  .mc-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: $accent-color;
+    transition: width 0.4s ease;
+  }
+
+  .mc-visual-caption {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: $text-muted;
+  }
+
+  .mc-stat-block {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    .mc-stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: $text-dark;
+    }
+
+    .mc-stat-label {
+      font-size: 13px;
+      color: $text-muted;
+    }
+  }
+
+  .mc-nights-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mc-night-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    background: #fff;
+
+    &.filled {
+      background: $accent-color;
+      border-color: $accent-color;
+    }
+  }
 }
