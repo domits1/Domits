@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { Auth } from "aws-amplify";
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { getIdToken } from "../../../../services/getAccessToken";
 
 const UserContext = createContext();
 export const useUser = () => useContext(UserContext);
@@ -25,7 +25,7 @@ export const UserProvider = ({ children }) => {
     async function fetchAccessToken() {
       try {
         if (userId) {
-          const token = await getAccessToken(userId);
+          const token = await getIdToken();
           setAccessToken(token);
         }
       } catch (error) {

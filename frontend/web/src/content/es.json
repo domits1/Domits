@@ -1100,12 +1100,17 @@
       "title": "Configuración",
       "subtitle": "Gestiona tu configuración personal y de cuenta en un solo lugar",
       "personalSection": "Configuración personal",
+      "communicationSection": "Preferencias de comunicación",
       "accountSection": "Configuración de cuenta",
       "breadcrumb": "Configuración",
       "cards": {
         "personalData": {
           "title": "Datos personales",
           "desc": "Gestiona tu información de contacto, foto de perfil y datos personales."
+        },
+        "communicationPreferences": {
+          "title": "Preferencias de comunicación",
+          "desc": "Elige cómo recibes actualizaciones y notificaciones importantes de Domits."
         },
         "company": {
           "title": "Empresa",
@@ -1175,6 +1180,31 @@
         "saved": "¡Guardado!"
       }
     },
+    "communicationPreferences": {
+      "breadcrumb": "Preferencias de comunicación",
+      "title": "Preferencias de comunicación",
+      "subtitle": "Elige cómo recibes actualizaciones y notificaciones importantes de Domits.",
+      "sectionTitle": "Preferencias de notificaciones",
+      "required": "Obligatorio",
+      "notificationsLabel": "notificaciones",
+      "channels": {
+        "email": "Correo electrónico",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "events": {
+        "reservation": "Reserva",
+        "cancellation": "Cancelación",
+        "messages": "Mensajes"
+      },
+      "states": {
+        "on": "ACT.",
+        "off": "DES."
+      },
+      "actions": {
+        "saveChanges": "Guardar cambios"
+      }
+    },
     "company": {
       "breadcrumb": "Empresa",
       "title": "Empresa",
@@ -1228,25 +1258,42 @@
       "inviteBtn": "+ Invitar miembros",
       "emptyState": "Aún no hay miembros adicionales. Invita a un co-anfitrión para empezar.",
       "loadError": "Error al cargar los miembros del equipo. Por favor, actualiza la página.",
-      "activeMembers": "Miembros activos",
-      "pendingInvitations": "Invitaciones pendientes",
+      "loadingMembers": "Cargando miembros del equipo…",
       "membershipsSection": "Equipos a los que perteneces",
       "membershipsCardHeader": "Membresías de co-anfitrión",
       "joined": "Se unió el",
       "memberAvatarAlt": "Avatar del miembro",
       "hostAvatarAlt": "Avatar del host",
+      "columnMember": "Miembro",
+      "columnRole": "Rol",
+      "columnPermissions": "Permisos",
+      "columnStatus": "Estado",
+      "columnActions": "Acciones",
+      "statusActive": "Activo",
+      "statusPending": "Pendiente",
+      "actionsMenuLabel": "Abrir menú de acciones",
+      "removeAction": "Eliminar",
+      "editRoleAction": "Editar rol",
+      "permissionsMore": "+{count} más",
+      "permissionsEmpty": "—",
       "removeModal": {
         "title": "Eliminar miembro del equipo",
         "body": "¿Estás seguro de que quieres eliminar a este miembro de tu equipo? Perderá acceso a tus propiedades y tareas.",
         "confirm": "Sí, eliminar",
         "cancel": "Cancelar"
       },
+      "editRoleModal": {
+        "title": "Editar rol",
+        "roleLabel": "Rol",
+        "saveBtn": "Guardar",
+        "cancel": "Cancelar",
+        "error": "Error al actualizar el rol. Por favor, inténtalo de nuevo."
+      },
       "inviteModal": {
         "title": "Invitar miembro al equipo",
         "emailLabel": "Dirección de correo electrónico",
         "emailPlaceholder": "colega@ejemplo.com",
         "roleLabel": "Rol",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Enviar invitación",
         "cancel": "Cancelar",
         "success": "✓ Invitación enviada a",

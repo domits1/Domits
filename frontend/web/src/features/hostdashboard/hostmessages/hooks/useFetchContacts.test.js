@@ -7,11 +7,13 @@ import PropTypes from "prop-types";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import useFetchContacts from "./useFetchContacts";
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
 import { fetchUserProfileById, getEmptyUserProfile } from "../../services/fetchUserProfileById";
+import fetchBookingDetailsAndAccommodation from "../utils/FetchBookingDetails";
 
 jest.mock("../../../../services/getAccessToken", () => ({
   getAccessToken: jest.fn(),
+  getIdToken: jest.fn(),
 }));
 
 jest.mock("../../services/fetchUserProfileById", () => ({
@@ -42,7 +44,12 @@ const Harness = ({ userId = "host-1", role = "host" }) => {
     <div>
       <div data-testid="loading">{String(loading)}</div>
       <div data-testid="contacts">
-        {contacts.map((contact) => `${contact.threadId || "legacy"}:${contact.partnerId}:${contact.platform}`).join("|")}
+        {contacts
+          .map(
+            (contact) =>
+              `${contact.threadId || "legacy"}:${contact.partnerId}:${contact.platform}:${contact.unreadCount ?? "none"}`
+          )
+          .join("|")}
       </div>
       <div data-testid="pending">{pendingContacts.length}</div>
     </div>
@@ -62,7 +69,8 @@ const okJson = (payload) => ({
 describe("useFetchContacts history merging", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getAccessToken.mockReturnValue("host-token-1");
+    getIdToken.mockResolvedValue("host-token-1");
+    getAccessToken.mockReturnValue("host-access-token-1");
     fetchUserProfileById.mockImplementation(async (userId) => ({
       ...getEmptyUserProfile(userId),
       givenName: `Profile ${userId}`,
@@ -82,6 +90,7 @@ describe("useFetchContacts history merging", () => {
             platform: "WHATSAPP",
             externalThreadId: "wa-thread-1",
             integrationAccountId: "integration-1",
+            unreadCount: 4,
           },
         ]);
       }
@@ -129,7 +138,7 @@ describe("useFetchContacts history merging", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    expect(screen.getByTestId("contacts")).toHaveTextContent("external-thread-1:+31612345678:WHATSAPP");
+    expect(screen.getByTestId("contacts")).toHaveTextContent("external-thread-1:+31612345678:WHATSAPP:4");
     expect(screen.getByTestId("contacts")).toHaveTextContent("legacy:legacy-guest-1:DOMITS");
     expect(screen.getByTestId("pending")).toHaveTextContent("0");
 
@@ -146,6 +155,10 @@ describe("useFetchContacts history merging", () => {
         method: "POST",
         body: JSON.stringify({ hostID: "host-1" }),
       })
+    );
+
+    expect(fetchBookingDetailsAndAccommodation).toHaveBeenCalledWith(
+      expect.objectContaining({ token: "host-access-token-1" })
     );
   });
 });

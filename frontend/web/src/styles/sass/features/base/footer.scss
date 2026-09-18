@@ -3,7 +3,7 @@ $primary-color: var(--primary-color);
 $footer-bg: #f8f8f8;
 $footer-text-color: #000;
 $footer-link-size: clamp(0.9rem, 0.85rem + 0.2vw, 1rem);
-$footer-icon-size: 2.5rem;
+$footer-icon-size: 2rem;
 $footer-icon-radius: 0.5rem;
 $footer-padding: 15px;
 $footer-header-size: 24px;
@@ -98,6 +98,24 @@ $breakpoint-sm: 480px;
         width: 2rem;
         height: 2rem;
       }
+    }
+  }
+
+  .footer-social-section {
+    .footer-section {
+      text-align: center;
+    }
+
+    .footer-lists {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 20px;
+      justify-items: center;
+      margin: 0 auto;
+    }
+
+    .footer-lists li {
+      line-height: 0;
     }
   }
 

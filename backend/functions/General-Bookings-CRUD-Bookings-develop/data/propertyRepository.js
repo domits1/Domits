@@ -19,7 +19,7 @@ const normalizeSchemaName = (value) => {
   return normalized === "public" ? "main" : normalized;
 };
 
-const qualifyTableName = (client, tableName) =>
+export const qualifyTableName = (client, tableName) =>
   `${quoteIdentifier(normalizeSchemaName(client?.options?.schema))}.${quoteIdentifier(tableName)}`;
 
 const toCalendarDateInt = (date) =>

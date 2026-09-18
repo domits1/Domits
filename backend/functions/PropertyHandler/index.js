@@ -32,11 +32,20 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/event")) {
     return controller.recordWebsiteAnalyticsEvent(event);
   }
+  if (isPath(event, "/property/website/public/quote")) {
+    return controller.createPublicWebsiteQuote(event);
+  }
   if (isPath(event, "/property/website/site/publish")) {
     return controller.publishWebsiteSite(event);
   }
   if (isPath(event, "/property/website/site/unpublish")) {
     return controller.unpublishWebsiteSite(event);
+  }
+  if (isPath(event, "/property/website/domains/verify")) {
+    return controller.verifyWebsiteDomain(event);
+  }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.createWebsiteDomain(event);
   }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
@@ -94,6 +103,9 @@ const handleGet = async (event) => {
   if (isPath(event, "/property/website/kpis")) {
     return controller.getWebsiteKpis(event);
   }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.listWebsiteDomains(event);
+  }
   if (isPath(event, "/property/website/site")) {
     return controller.getWebsiteSiteByPropertyId(event);
   }
@@ -134,6 +146,9 @@ const handleGet = async (event) => {
 const handleDelete = async (event) => {
   if (isPath(event, "/property/images")) {
     return controller.deletePropertyImage(event);
+  }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.removeWebsiteDomain(event);
   }
   if (isPath(event, "/property/website/draft")) {
     return controller.deleteWebsiteDraft(event);

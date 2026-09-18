@@ -20,6 +20,7 @@ import { UserProvider } from "../../../hostdashboard/hostmessages/context/AuthCo
 import { WebSocketProvider } from "../../../hostdashboard/hostmessages/context/webSocketContext";
 import { useAuth } from "../../../hostdashboard/hostmessages/hooks/useAuth";
 import ChatScreen from "../../../../components/messages/ChatScreen";
+import { getIdToken } from "../../../../services/getAccessToken";
 
 import "../../../../components/messages/messagesV2.scss";
 
@@ -69,9 +70,10 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
       inFlightRef.current = true;
 
       try {
+        const idToken = await getIdToken();
         const res = await fetch(`${UNIFIED_MESSAGING_API}/threads?userId=${encodeURIComponent(userId)}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
         });
 
         if (!res.ok) {

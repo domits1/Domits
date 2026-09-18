@@ -1100,12 +1100,17 @@
       "title": "Einstellungen",
       "subtitle": "Verwalte deine persönlichen und Kontoeinstellungen an einem Ort",
       "personalSection": "Persönliche Einstellungen",
+      "communicationSection": "Kommunikationseinstellungen",
       "accountSection": "Kontoeinstellungen",
       "breadcrumb": "Einstellungen",
       "cards": {
         "personalData": {
           "title": "Persönliche Daten",
           "desc": "Verwalte deine Kontaktdaten, Profilfoto und persönliche Angaben."
+        },
+        "communicationPreferences": {
+          "title": "Kommunikationseinstellungen",
+          "desc": "Wähle, wie du wichtige Updates und Benachrichtigungen von Domits erhältst."
         },
         "company": {
           "title": "Unternehmen",
@@ -1175,6 +1180,31 @@
         "saved": "Gespeichert!"
       }
     },
+    "communicationPreferences": {
+      "breadcrumb": "Kommunikationseinstellungen",
+      "title": "Kommunikationseinstellungen",
+      "subtitle": "Wähle, wie du wichtige Updates und Benachrichtigungen von Domits erhältst.",
+      "sectionTitle": "Benachrichtigungseinstellungen",
+      "required": "Erforderlich",
+      "notificationsLabel": "Benachrichtigungen",
+      "channels": {
+        "email": "E-Mail",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "events": {
+        "reservation": "Reservierung",
+        "cancellation": "Stornierung",
+        "messages": "Nachrichten"
+      },
+      "states": {
+        "on": "EIN",
+        "off": "AUS"
+      },
+      "actions": {
+        "saveChanges": "Änderungen speichern"
+      }
+    },
     "company": {
       "breadcrumb": "Unternehmen",
       "title": "Unternehmen",
@@ -1228,25 +1258,42 @@
       "inviteBtn": "+ Mitglieder einladen",
       "emptyState": "Noch keine weiteren Teammitglieder. Lade einen Co-Host ein, um zu beginnen.",
       "loadError": "Teammitglieder konnten nicht geladen werden. Bitte lade die Seite neu.",
-      "activeMembers": "Aktive Mitglieder",
-      "pendingInvitations": "Ausstehende Einladungen",
+      "loadingMembers": "Teammitglieder werden geladen…",
       "membershipsSection": "Teams, denen du angehörst",
       "membershipsCardHeader": "Co-Host-Mitgliedschaften",
       "joined": "Beigetreten am",
       "memberAvatarAlt": "Mitglied-Avatar",
       "hostAvatarAlt": "Host-Avatar",
+      "columnMember": "Mitglied",
+      "columnRole": "Rolle",
+      "columnPermissions": "Berechtigungen",
+      "columnStatus": "Status",
+      "columnActions": "Aktionen",
+      "statusActive": "Aktiv",
+      "statusPending": "Ausstehend",
+      "actionsMenuLabel": "Aktionsmenü öffnen",
+      "removeAction": "Entfernen",
+      "editRoleAction": "Rolle bearbeiten",
+      "permissionsMore": "+{count} weitere",
+      "permissionsEmpty": "—",
       "removeModal": {
         "title": "Teammitglied entfernen",
         "body": "Bist du sicher, dass du dieses Mitglied aus deinem Team entfernen möchtest? Sie verlieren den Zugriff auf deine Unterkünfte und Aufgaben.",
         "confirm": "Ja, entfernen",
         "cancel": "Abbrechen"
       },
+      "editRoleModal": {
+        "title": "Rolle bearbeiten",
+        "roleLabel": "Rolle",
+        "saveBtn": "Speichern",
+        "cancel": "Abbrechen",
+        "error": "Rolle konnte nicht aktualisiert werden. Bitte versuche es erneut."
+      },
       "inviteModal": {
         "title": "Teammitglied einladen",
         "emailLabel": "E-Mail-Adresse",
         "emailPlaceholder": "kollege@beispiel.com",
         "roleLabel": "Rolle",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Einladung senden",
         "cancel": "Abbrechen",
         "success": "✓ Einladung gesendet an",

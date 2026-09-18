@@ -448,7 +448,7 @@ const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }
     propertyDetails,
   });
   const checkInAvailable = hasCheckInInstructionsData({ booking, propertyDetails });
-  const bookingGuestEmail = firstDefined(booking?.guestemail, booking?.guestEmail);
+  const bookingGuestEmail = firstDefined(booking?.guestemail, booking?.guestEmail, booking?.guest_email);
   const bookingGuestPhone = firstDefined(booking?.guestphone, booking?.guestPhone);
   const isGuestProfilePending = guestProfile === null;
 

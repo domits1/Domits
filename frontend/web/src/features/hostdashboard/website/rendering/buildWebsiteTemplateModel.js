@@ -684,7 +684,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
     }),
     callToAction: {
       label: "Check live availability",
-      note: "Live pricing and availability stay server-side and are checked on quote request.",
+      note: "",
     },
     residenceSection: {
       title: "The residence",
@@ -719,6 +719,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
       journeyStops: true,
       contactSection: true,
       chatWidget: true,
+      quotePanel: true,
     },
   };
 };

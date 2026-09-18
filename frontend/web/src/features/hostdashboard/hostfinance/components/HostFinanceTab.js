@@ -242,8 +242,6 @@ export default function HostFinanceTab() {
   const isPayoutScheduleLoading = Boolean(loadingStates.getPayoutSchedule);
   const isFaqLoading = Boolean(loadingStates.faqs);
   const stripeIssues = !isAccountLoading && onboardingComplete && (!chargesEnabled || !payoutsEnabled);
-  const showFinanceSections = onboardingComplete;
-  const showFinanceSectionSkeletons = isAccountLoading;
 
   let stripeAlertMessage = "Payouts are currently disabled on your Stripe account. You will not receive funds.";
   if (!chargesEnabled && !payoutsEnabled) {
@@ -338,8 +336,7 @@ export default function HostFinanceTab() {
               </ul>
             </div>
 
-            {(showFinanceSections || showFinanceSectionSkeletons) && (
-              <>
+            <>
                 <div className="payouts-section">
                   <h3>Recent guest payments</h3>
 
@@ -604,8 +601,7 @@ export default function HostFinanceTab() {
                     </>
                   )}
                 </div>
-              </>
-            )}
+            </>
 
             <InvoicesSection />
           </div>

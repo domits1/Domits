@@ -362,6 +362,7 @@ function WebsitePublicSitePage() {
             showContactWidget={publicModel.visibility?.chatWidget ?? true}
             showBrowserChrome={false}
             enableScrollReveal={isPanoramaTemplate}
+            quoteContext={renderPayload?.site?.id ? { siteId: String(renderPayload.site.id) } : null}
           />
         </div>
       </main>
