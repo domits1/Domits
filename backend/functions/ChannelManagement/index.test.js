@@ -15,19 +15,31 @@ const { handler } = require("./index.js");
 
 const allControllerMethods = Object.values(mockChannelManagementControllerMethods);
 
-const buildHttpEvent = ({ method = "GET", path, query = {}, body = null, headers = {} }) => ({
+const buildHttpEvent = ({ method = "GET", path, query = {}, body = null, headers = {}, sub = null }) => ({
   httpMethod: method,
   path,
   queryStringParameters: query,
   headers,
   body,
+  ...(sub ? { requestContext: { authorizer: { claims: { sub } } } } : {}),
 });
 
 const parseBody = (response) => JSON.parse(response.body);
 
 describe("ChannelManagement handler contracts", () => {
+  const originalAllowlist = process.env.CHANNEX_CERTIFICATION_USER_IDS;
+
   beforeEach(() => {
+    process.env.CHANNEX_CERTIFICATION_USER_IDS = "host-1";
     allControllerMethods.forEach((method) => method.mockReset());
+  });
+
+  afterAll(() => {
+    if (originalAllowlist === undefined) {
+      delete process.env.CHANNEX_CERTIFICATION_USER_IDS;
+    } else {
+      process.env.CHANNEX_CERTIFICATION_USER_IDS = originalAllowlist;
+    }
   });
 
   test("entry point has no UnifiedMessaging dependency", () => {
@@ -50,14 +62,16 @@ describe("ChannelManagement handler contracts", () => {
     ],
   ])("GET %s delegates through the existing integration controller", async (path, controllerMethod, body) => {
     controllerMethod.mockResolvedValue({ statusCode: 200, response: body });
-    const event = buildHttpEvent({ path });
+    const event = buildHttpEvent({ path, sub: "host-1" });
 
     const response = await handler(event);
 
     expect(response.statusCode).toBe(200);
     expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
     expect(parseBody(response)).toEqual(body);
-    expect(controllerMethod).toHaveBeenCalledWith(event);
+    expect(controllerMethod).toHaveBeenCalledWith(
+      expect.objectContaining({ path, queryStringParameters: { userId: "host-1" } })
+    );
     expect(mockChannelManagementControllerMethods.pollLatestChannexBookings).not.toHaveBeenCalled();
   });
 
