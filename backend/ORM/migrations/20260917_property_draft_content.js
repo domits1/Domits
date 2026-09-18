@@ -18,8 +18,12 @@ export class PropertyDraftContent20260917 {
     await queryRunner.query(`
       ALTER TABLE main.property_draft ADD COLUMN IF NOT EXISTS bathrooms INT;
     `);
+    // Aurora DSQL cannot add NOT NULL on an existing table's column (SET NOT NULL
+    // does not exist for existing tables — see docs/internal/tools/dsql_booking_columns_runbook.md).
+    // DEFAULT applies to future writes only, so existing rows stay NULL until backfilled;
+    // see the companion .sql file's backfill step and 20260917_property_draft_content.sql.
     await queryRunner.query(`
-      ALTER TABLE main.property_draft ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'DRAFT';
+      ALTER TABLE main.property_draft ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'DRAFT';
     `);
   }
 

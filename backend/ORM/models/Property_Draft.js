@@ -56,9 +56,12 @@ export const Property_Draft = new EntitySchema({
       nullable: true,
     },
     status: {
+      // Aurora DSQL cannot enforce NOT NULL on a column added to an existing
+      // table (see docs/internal/tools/dsql_booking_columns_runbook.md), so this
+      // is nullable at the database level even though every write path sets it.
       type: "varchar",
       generated: false,
-      nullable: false,
+      nullable: true,
       default: "DRAFT",
     },
   },
