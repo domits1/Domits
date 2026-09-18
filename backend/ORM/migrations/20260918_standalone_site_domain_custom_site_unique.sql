@@ -56,4 +56,43 @@ ORDER BY id ASC;
 
 ROLLBACK;
 
+SELECT c.relname AS reported_constraint_name, n.nspname AS index_schema
+FROM pg_index i
+JOIN pg_class c ON c.oid = i.indexrelid
+JOIN pg_class t ON t.oid = i.indrelid
+JOIN pg_namespace n ON n.oid = t.relnamespace
+WHERE t.relname = 'standalone_site_domain'
+  AND n.nspname = 'main'
+  AND c.relname = 'standalone_site_domain_custom_site_unique';
+
+BEGIN;
+
+INSERT INTO main.standalone_site_domain
+  (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
+VALUES
+  ('race-custom-a', 'race-site', 'www.race-a.example', 'CUSTOM', 'PENDING', FALSE, '{}', 1789000000000, 1789000000000, 1789000000000);
+
+BEGIN;
+
+INSERT INTO main.standalone_site_domain
+  (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
+VALUES
+  ('race-custom-b', 'race-site', 'www.race-b.example', 'CUSTOM', 'PENDING', FALSE, '{}', 1789000000000, 1789000000000, 1789000000000);
+
+COMMIT;
+
+COMMIT;
+
+SELECT id, site_id, domain
+FROM main.standalone_site_domain
+WHERE site_id = 'race-site'
+ORDER BY id ASC;
+
+DELETE FROM main.standalone_site_domain
+WHERE site_id = 'race-site';
+
+SELECT COUNT(*) AS race_rows_left
+FROM main.standalone_site_domain
+WHERE site_id = 'race-site';
+
 DROP INDEX IF EXISTS main.standalone_site_domain_custom_site_unique;

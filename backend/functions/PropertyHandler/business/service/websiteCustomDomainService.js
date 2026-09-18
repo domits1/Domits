@@ -97,10 +97,12 @@ const isForeignTenantError = (error) =>
 const isUniqueViolationOn = (error, constraintName) =>
   error?.code === UNIQUE_VIOLATION_CODE && error?.constraint === constraintName;
 
-const domainLimitReachedError = (currentDomain) =>
+const domainLimitReachedError = (currentDomain = null) =>
   new WebsiteCustomDomainError(
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_LIMIT_REACHED,
-    `This website already uses ${currentDomain}. Remove it before connecting another domain.`
+    currentDomain
+      ? `This website already uses ${currentDomain}. Remove it before connecting another domain.`
+      : "This website already has a custom domain. Remove it before connecting another domain."
   );
 
 const isOwnershipError = (error) =>
@@ -284,8 +286,17 @@ export class WebsiteCustomDomainService {
       if (!isUniqueViolationOn(error, CUSTOM_DOMAIN_PER_SITE_INDEX)) {
         throw error;
       }
-      const winningDomain = await this.domainRepository.getCustomDomainBySiteId(site.id);
-      throw domainLimitReachedError(winningDomain?.domain || "another domain");
+      throw domainLimitReachedError(await this.readWinningCustomDomain(site));
+    }
+  }
+
+  async readWinningCustomDomain(site) {
+    try {
+      const winningRecord = await this.domainRepository.getCustomDomainBySiteId(site.id);
+      return winningRecord?.domain || null;
+    } catch (error) {
+      console.error(`[CustomDomain] reading the winning custom domain failed after a duplicate claim (site ${site.id}).`, error);
+      return null;
     }
   }
 

@@ -185,6 +185,38 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
   });
 
+  it("keeps domain_limit_reached with generic wording and logs when the winning row cannot be reread", async () => {
+    const readFailure = new Error("connection reset");
+    const domainRepository = buildDomainRepository({
+      getCustomDomainBySiteId: jest.fn().mockResolvedValueOnce(null).mockRejectedValueOnce(readFailure),
+      ensureDomain: jest.fn().mockRejectedValue(
+        Object.assign(new Error("duplicate key"), {
+          code: "23505",
+          constraint: "standalone_site_domain_custom_site_unique",
+        })
+      ),
+    });
+    const { service, eventRepository } = buildService({ domainRepository });
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+        code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_LIMIT_REACHED,
+        statusCode: 409,
+        message: "This website already has a custom domain. Remove it before connecting another domain.",
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `[CustomDomain] reading the winning custom domain failed after a duplicate claim (site ${SITE.id}).`
+        ),
+        readFailure
+      );
+      expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it("stores the claim with the CNAME instruction and leaves CloudFront alone until the DNS record exists", async () => {
     const { service, domainRepository, tenantRepository, eventRepository } = buildService();
 
