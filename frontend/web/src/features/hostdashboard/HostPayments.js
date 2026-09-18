@@ -2,13 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import { HostRevenueService } from "../hostdashboard/services/HostRevenueService.js";
 import ClipLoader from "react-spinners/ClipLoader";
+import { FaMoneyBillWave, FaBed, FaRegClock, FaBuilding } from "react-icons/fa";
 
 import RevenueOverview from "./HostRevenueCards/RevenueOverview.jsx";
-import OccupancyRateCard from "./HostRevenueCards/OccupancyRate.jsx";
-import RevPARCard from "./HostRevenueCards/RevPAR.jsx";
-import ADRCard from "./HostRevenueCards/ADRCard.jsx";
-import BookedNights from "./HostRevenueCards/BookedNights.jsx";
-import ALOSCard from "./HostRevenueCards/ALOSCard.jsx";
 import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
 
 import "./HostRevenueStyle.scss";
@@ -151,6 +147,31 @@ const HostRevenues = () => {
 
   const occupancyRate = availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
 
+  const handleDownloadReport = () => {
+    const year = new Date().getFullYear();
+    const rows = [
+      ["Metric", "Value"],
+      ["Year", year],
+      ["Total Revenue (EUR)", totalRevenue],
+      ["Booked Nights", bookedNights],
+      ["Available Nights", availableNights],
+      ["Total Properties", propertyCount],
+      ["Occupancy Rate (%)", occupancyRate.toFixed(2)],
+    ];
+
+    const csvContent = rows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `yearly-revenue-report-${year}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="hr-revenue-spinner-container">
@@ -165,32 +186,49 @@ const HostRevenues = () => {
 
   return (
     <main className="hr-page-body hr-container">
-      <h2>Yearly Report</h2>
+      <h2>Yearly Revenue</h2>
+      <p className="hr-subtitle">Track your earning and key performance indicators for your vacation rentals.</p>
 
       <section className="hr-host-revenues">
         <div className="hr-content">
-          <div className="hr-revenue-overview">
-            <RevenueOverview title="Total Revenue" value={`€${totalRevenue.toLocaleString()}`} />
-            <RevenueOverview title="Booked Nights" value={bookedNights.toLocaleString()} />
-            <RevenueOverview title="Available Nights" value={availableNights.toLocaleString()} />
-            <RevenueOverview title="Total Properties" value={propertyCount.toLocaleString()} />
+          <div className="hr-hero-revenue">
+            <RevenueOverview
+              variant="hero"
+              icon={<FaMoneyBillWave />}
+              title="Total Revenue"
+              value={`€${totalRevenue.toLocaleString()}`}
+            />
+          </div>
+
+          <div className="hr-performance-overview">
+            <h3 className="hr-section-title">Performance Overview</h3>
+            <div className="hr-performance-cards">
+              <RevenueOverview icon={<FaBed />} title="Booked Nights" value={bookedNights.toLocaleString()} />
+              <RevenueOverview icon={<FaRegClock />} title="Available Nights" value={availableNights.toLocaleString()} />
+              <RevenueOverview icon={<FaBuilding />} title="Total Properties" value={propertyCount.toLocaleString()} />
+            </div>
+            {availableNights > 0 && (
+              <p className="hr-occupancy-summary">
+                {bookedNights.toLocaleString()} of {availableNights.toLocaleString()} nights booked (
+                {occupancyRate.toFixed(0)}% occupancy)
+              </p>
+            )}
           </div>
 
           <div className="hr-monthly-comparison">
-            <MonthlyComparison hostId={cognitoUserId} refreshKey={refreshKey} />
+            <MonthlyComparison
+              hostId={cognitoUserId}
+              refreshKey={refreshKey}
+              totalRevenue={totalRevenue}
+              bookedNights={bookedNights}
+            />
           </div>
 
-          <div className="hr-cards">
-            <OccupancyRateCard
-              occupancyRate={occupancyRate.toFixed(2)}
-              numberOfProperties={propertyCount}
-              refreshKey={refreshKey}
-            />
-
-            <ADRCard refreshKey={refreshKey} />
-            <RevPARCard refreshKey={refreshKey} />
-            <BookedNights refreshKey={refreshKey} />
-            <ALOSCard hostId={cognitoUserId} refreshKey={refreshKey} />
+          <div className="hr-report-card">
+            <p className="hr-report-text">Export a CSV summary of your yearly revenue and performance data.</p>
+            <button type="button" className="hr-download-btn" onClick={handleDownloadReport}>
+              Download Report
+            </button>
           </div>
         </div>
       </section>

@@ -1,41 +1,78 @@
 .ro-revenue-card {
-    padding: 5px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border: 1px solid #e5e7eb;
     border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.2);
-    }
-  
-    .ro-revenue-title {
-      font-size: 15px;
-      margin-bottom: 10px;
-      color: #333;
-      font-weight: 300;
-    }
-  
-    .ro-revenue-value {
-      font-size: 2rem;
-      margin-bottom: 20px;
-      color: #0D9813;
-    }
-  
-    .ro-card-grid {
+    background-color: #fff;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.06);
+    text-align: left;
+
+    .ro-revenue-icon {
+      flex-shrink: 0;
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-items: center;
-      padding: 20px;
-      width: 100%;
-  
-      @media (max-width: 768px) {
-        .ro-revenue-card {
-          max-width: 100%;
-        }
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background-color: #e9f7ef;
+      color: #0d9813;
+      font-size: 20px;
+    }
+
+    .ro-revenue-text {
+      min-width: 0;
+    }
+
+    .ro-revenue-title {
+      font-size: 13px;
+      margin: 4px 0 0;
+      color: #6b7280;
+      font-weight: 400;
+    }
+
+    .ro-revenue-value {
+      font-size: 1.5rem;
+      margin: 0;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    &--hero {
+      padding: 20px 24px;
+      border: 1px solid #bfe6c2;
+      background-color: #f2faf3;
+      box-shadow: none;
+
+      .ro-revenue-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+      }
+
+      .ro-revenue-value {
+        font-size: 2rem;
+        color: #0d9813;
+      }
+
+      .ro-revenue-title {
+        font-size: 14px;
       }
     }
   }
-  
+
+  .ro-card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+    width: 100%;
+
+    @media (max-width: 768px) {
+      .ro-revenue-card {
+        max-width: 100%;
+      }
+    }
+  }
