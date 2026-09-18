@@ -1172,12 +1172,23 @@
         "phoneVerifiedYes": "Telefoon geverifieerd: Ja",
         "phoneVerifiedNo": "Telefoon geverifieerd: Nee",
         "authenticatorApp": "Authenticator-app",
-        "totp": "App-gebaseerde codes (TOTP)"
+        "totp": "App-gebaseerde codes (TOTP)",
+        "passwordLabel": "Wachtwoord",
+        "changePassword": "Wachtwoord wijzigen",
+        "changePasswordTitle": "Wijzig je wachtwoord",
+        "currentPassword": "Huidig wachtwoord",
+        "newPassword": "Nieuw wachtwoord",
+        "confirmPassword": "Bevestig nieuw wachtwoord",
+        "savePassword": "Wachtwoord opslaan",
+        "passwordChanged": "Wachtwoord succesvol gewijzigd.",
+        "showPassword": "Wachtwoord tonen",
+        "hidePassword": "Wachtwoord verbergen"
       },
       "buttons": {
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan...",
-        "saved": "Opgeslagen!"
+        "saved": "Opgeslagen!",
+        "cancel": "Annuleren"
       }
     },
     "communicationPreferences": {

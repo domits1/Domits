@@ -1172,12 +1172,23 @@
         "phoneVerifiedYes": "Teléfono verificado: Sí",
         "phoneVerifiedNo": "Teléfono verificado: No",
         "authenticatorApp": "Aplicación de autenticación",
-        "totp": "Códigos basados en aplicación (TOTP)"
+        "totp": "Códigos basados en aplicación (TOTP)",
+        "passwordLabel": "Contraseña",
+        "changePassword": "Cambiar contraseña",
+        "changePasswordTitle": "Cambia tu contraseña",
+        "currentPassword": "Contraseña actual",
+        "newPassword": "Nueva contraseña",
+        "confirmPassword": "Confirmar nueva contraseña",
+        "savePassword": "Guardar contraseña",
+        "passwordChanged": "Contraseña cambiada con éxito.",
+        "showPassword": "Mostrar contraseña",
+        "hidePassword": "Ocultar contraseña"
       },
       "buttons": {
         "save": "Guardar cambios",
         "saving": "Guardando...",
-        "saved": "¡Guardado!"
+        "saved": "¡Guardado!",
+        "cancel": "Cancelar"
       }
     },
     "communicationPreferences": {
