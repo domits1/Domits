@@ -1225,6 +1225,7 @@
         "emailAddress": "E-mailadres",
         "verificationCode": "Verificatiecode verzonden naar je e-mail",
         "verify": "Verifiëren",
+        "emailUpdated": "E-mail bijgewerkt!",
         "phone": "Telefoon",
         "phoneNumber": "Telefoonnummer",
         "sex": "Geslacht",
@@ -1251,7 +1252,8 @@
       "buttons": {
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan...",
-        "saved": "Opgeslagen!"
+        "saved": "Opgeslagen!",
+        "saveError": "Opslaan mislukt. Probeer het opnieuw."
       }
     },
     "communicationPreferences": {

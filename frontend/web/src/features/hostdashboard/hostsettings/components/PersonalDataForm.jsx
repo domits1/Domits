@@ -1,8 +1,11 @@
 import React, { useRef, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import standardAvatar from "../../../../images/standard.png";
 import { normalizeImageUrl } from "../../../guestdashboard/utils/image";
+import { parseDateOfBirth } from "../../../../components/settings/utils/settingsFormatters";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
@@ -70,8 +73,9 @@ PhoneField.propTypes = {
     onPhoneChange: PropTypes.func.isRequired,
 };
 
-function getSaveLabel(isSaving, saveSuccess, t) {
+function getSaveLabel(isSaving, saveSuccess, saveError, t) {
     if (isSaving) return t.buttons.saving;
+    if (saveError) return t.buttons.saveError;
     if (saveSuccess) return t.buttons.saved;
     return t.buttons.save;
 }
@@ -93,6 +97,8 @@ const PersonalDataForm = ({
     stripPhone,
     dateOfBirthError,
     nationalityError,
+    emailError,
+    emailSuccess,
     isVerifying,
     verificationCode,
     onTitleChange,
@@ -105,6 +111,7 @@ const PersonalDataForm = ({
     onSaveAll,
     isSaving,
     saveSuccess,
+    saveError,
     onVerifyEmail,
     language,
     languageOptions,
@@ -255,6 +262,8 @@ const PersonalDataForm = ({
                                     placeholder={t.fields.emailAddress}
                                 />
                             )}
+                            {emailError && <p className="pd-field-error">{emailError}</p>}
+                            {emailSuccess && <p className="pd-field-success">{t.fields.emailUpdated}</p>}
                         </div>
 
                         <div className="pd-field">
@@ -290,15 +299,18 @@ const PersonalDataForm = ({
 
                         <div className="pd-field">
                             <label className="pd-field-label" htmlFor="pd-dob">{t.fields.dateOfBirth}</label>
-                            <input
+                            <DatePicker
                                 id="pd-dob"
-                                type="text"
-                                name="dateOfBirth"
-                                value={tempUser.dateOfBirth || ""}
+                                selected={parseDateOfBirth(tempUser.dateOfBirth)}
                                 onChange={onDateOfBirthChange}
                                 className="pd-field-input"
-                                placeholder="DD-MM-YYYY"
-                                inputMode="numeric"
+                                placeholderText="DD-MM-YYYY"
+                                dateFormat="dd-MM-yyyy"
+                                maxDate={new Date()}
+                                showYearDropdown
+                                showMonthDropdown
+                                dropdownMode="select"
+                                wrapperClassName="pd-field-input-wrapper"
                             />
                             {dateOfBirthError && <p className="pd-field-error">{dateOfBirthError}</p>}
                         </div>
@@ -349,11 +361,11 @@ const PersonalDataForm = ({
                 <div className="personal-data-card-footer">
                     <button
                         type="button"
-                        className={`pd-save-btn${saveSuccess ? " pd-save-btn--saved" : ""}`}
+                        className={`pd-save-btn${saveSuccess ? " pd-save-btn--saved" : ""}${saveError ? " pd-save-btn--error" : ""}`}
                         onClick={onSaveAll}
                         disabled={isSaving}
                     >
-                        {getSaveLabel(isSaving, saveSuccess, t)}
+                        {getSaveLabel(isSaving, saveSuccess, saveError, t)}
                     </button>
                 </div>
             </div>
@@ -473,6 +485,8 @@ PersonalDataForm.propTypes = {
     stripPhone: PropTypes.string.isRequired,
     dateOfBirthError: PropTypes.string,
     nationalityError: PropTypes.string,
+    emailError: PropTypes.string,
+    emailSuccess: PropTypes.bool,
     isVerifying: PropTypes.bool.isRequired,
     verificationCode: PropTypes.string.isRequired,
     onTitleChange: PropTypes.func.isRequired,
@@ -485,6 +499,7 @@ PersonalDataForm.propTypes = {
     onSaveAll: PropTypes.func.isRequired,
     isSaving: PropTypes.bool.isRequired,
     saveSuccess: PropTypes.bool.isRequired,
+    saveError: PropTypes.bool.isRequired,
     onVerifyEmail: PropTypes.func.isRequired,
     language: PropTypes.string.isRequired,
     languageOptions: PropTypes.arrayOf(optionShape).isRequired,

@@ -338,6 +338,21 @@
     border-color: #6b7280;
 }
 
+.pd-field-input-wrapper {
+    flex: 1;
+    min-width: 0;
+    display: block;
+}
+
+.pd-field-input-wrapper .react-datepicker__input-container {
+    display: block;
+    width: 100%;
+}
+
+.pd-field-input-wrapper input.pd-field-input {
+    width: 100%;
+}
+
 .pd-select-wrapper {
     flex: 1;
     min-width: 0;
@@ -405,6 +420,12 @@
     margin: 4px 0 0 136px;
 }
 
+.pd-field-success {
+    font-size: 0.78rem;
+    color: #15803d;
+    margin: 4px 0 0 136px;
+}
+
 .personal-data-card-footer {
     display: flex;
     justify-content: flex-end;
@@ -435,6 +456,10 @@
 
 .pd-save-btn--saved {
     background: #1d4ed8;
+}
+
+.pd-save-btn--error {
+    background: #dc2626;
 }
 
 /* ─── Rate Plans page ────────────────────────────────────────────────────── */
@@ -716,7 +741,8 @@
         width: 100%;
     }
 
-    .pd-field-error {
+    .pd-field-error,
+    .pd-field-success {
         margin-left: 0;
     }
 

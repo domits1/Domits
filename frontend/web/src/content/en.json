@@ -1224,6 +1224,7 @@
         "emailAddress": "Email address",
         "verificationCode": "Verification code sent to your email",
         "verify": "Verify",
+        "emailUpdated": "Email updated!",
         "phone": "Phone",
         "phoneNumber": "Phone number",
         "sex": "Sex",
@@ -1250,7 +1251,8 @@
       "buttons": {
         "save": "Save changes",
         "saving": "Saving...",
-        "saved": "Saved!"
+        "saved": "Saved!",
+        "saveError": "Failed to save. Please try again."
       }
     },
     "communicationPreferences": {

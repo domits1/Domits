@@ -1225,6 +1225,7 @@
         "emailAddress": "Dirección de correo electrónico",
         "verificationCode": "Código de verificación enviado a tu correo electrónico",
         "verify": "Verificar",
+        "emailUpdated": "¡Correo electrónico actualizado!",
         "phone": "Teléfono",
         "phoneNumber": "Número de teléfono",
         "sex": "Sexo",
@@ -1251,7 +1252,8 @@
       "buttons": {
         "save": "Guardar cambios",
         "saving": "Guardando...",
-        "saved": "¡Guardado!"
+        "saved": "¡Guardado!",
+        "saveError": "Error al guardar. Inténtalo de nuevo."
       }
     },
     "communicationPreferences": {
