@@ -141,6 +141,82 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
   });
 
+  it("answers domain_limit_reached with the winning domain when the insert loses the race on the per-site index", async () => {
+    const domainRepository = buildDomainRepository({
+      getCustomDomainBySiteId: jest
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(buildRecord({ domain: "www.first.com" })),
+      ensureDomain: jest.fn().mockRejectedValue(
+        Object.assign(
+          new Error('duplicate key value violates unique constraint "standalone_site_domain_custom_site_unique"'),
+          {
+            code: "23505",
+            constraint: "standalone_site_domain_custom_site_unique",
+          }
+        )
+      ),
+    });
+    const { service, tenantRepository, eventRepository } = buildService({ domainRepository });
+
+    await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_LIMIT_REACHED,
+      statusCode: 409,
+      message: "This website already uses www.first.com. Remove it before connecting another domain.",
+    });
+    expect(domainRepository.getCustomDomainBySiteId).toHaveBeenCalledTimes(2);
+    expect(tenantRepository.createTenant).not.toHaveBeenCalled();
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("passes a unique violation on any other index through untouched", async () => {
+    const violation = Object.assign(
+      new Error('duplicate key value violates unique constraint "standalone_site_domain_unique"'),
+      {
+        code: "23505",
+        constraint: "standalone_site_domain_unique",
+      }
+    );
+    const domainRepository = buildDomainRepository({ ensureDomain: jest.fn().mockRejectedValue(violation) });
+    const { service, eventRepository } = buildService({ domainRepository });
+
+    await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toBe(violation);
+    expect(domainRepository.getCustomDomainBySiteId).toHaveBeenCalledTimes(1);
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("keeps domain_limit_reached with generic wording and logs when the winning row cannot be reread", async () => {
+    const readFailure = new Error("connection reset");
+    const domainRepository = buildDomainRepository({
+      getCustomDomainBySiteId: jest.fn().mockResolvedValueOnce(null).mockRejectedValueOnce(readFailure),
+      ensureDomain: jest.fn().mockRejectedValue(
+        Object.assign(new Error("duplicate key"), {
+          code: "23505",
+          constraint: "standalone_site_domain_custom_site_unique",
+        })
+      ),
+    });
+    const { service, eventRepository } = buildService({ domainRepository });
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+        code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_LIMIT_REACHED,
+        statusCode: 409,
+        message: "This website already has a custom domain. Remove it before connecting another domain.",
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `[CustomDomain] reading the winning custom domain failed after a duplicate claim (site ${SITE.id}).`
+        ),
+        readFailure
+      );
+      expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it("stores the claim with the CNAME instruction and leaves CloudFront alone until the DNS record exists", async () => {
     const { service, domainRepository, tenantRepository, eventRepository } = buildService();
 
@@ -216,7 +292,12 @@ describe("WebsiteCustomDomainService.syncCustomDomain tenant provisioning", () =
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
     });
 
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith("domain-1", SITE.id, "PENDING", expect.anything());
+    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+      "domain-1",
+      SITE.id,
+      "PENDING",
+      expect.anything()
+    );
     expect(tenantRepository.disableTenant).toHaveBeenCalledWith({ tenantId: TENANT.id, etag: TENANT.etag });
     expect(tenantRepository.getTenant).not.toHaveBeenCalled();
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
@@ -250,7 +331,12 @@ describe("WebsiteCustomDomainService.syncCustomDomain tenant provisioning", () =
       lastError: "InvalidArgument",
       dnsInstruction: { type: "CNAME", name: DOMAIN, value: CONFIG.routingEndpoint },
     });
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith("domain-1", SITE.id, "PENDING", expect.anything());
+    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+      "domain-1",
+      SITE.id,
+      "PENDING",
+      expect.anything()
+    );
     expect(tenantRepository.getTenant).not.toHaveBeenCalled();
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
   });
@@ -273,7 +359,11 @@ describe("WebsiteCustomDomainService.syncCustomDomain tenant provisioning", () =
     expect(eventRepository.recordEvent).toHaveBeenCalledTimes(1);
     expect(eventRepository.recordEvent.mock.calls[0][0]).toMatchObject({
       eventType: "SITE_DOMAIN_FAILED",
-      payload: expect.objectContaining({ previousStatus: "PENDING", status: "FAILED", reason: "domain_in_use_elsewhere" }),
+      payload: expect.objectContaining({
+        previousStatus: "PENDING",
+        status: "FAILED",
+        reason: "domain_in_use_elsewhere",
+      }),
     });
   });
 
@@ -672,7 +762,12 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.removeCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
     });
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith("domain-1", SITE.id, "REMOVING", expect.anything());
+    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+      "domain-1",
+      SITE.id,
+      "REMOVING",
+      expect.anything()
+    );
     expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
 
     const record = await service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() });
