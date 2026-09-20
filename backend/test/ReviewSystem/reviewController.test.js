@@ -36,6 +36,27 @@ describe("ReviewController", () => {
     expect(reviewService.getReviewById).toHaveBeenCalledWith(event, "review-1");
   });
 
+  it("returns Domits private feedback from the service", async () => {
+    const reviewService = {
+      getDomitsPrivateFeedback: jest.fn().mockResolvedValue({
+        feedback: [{ id: "feedback-1", feedbackType: "domits_private", message: "Internal note." }],
+      }),
+    };
+
+    const controller = new ReviewController({ reviewService });
+    const event = {
+      httpMethod: "GET",
+      pathParameters: { id: "review-1" },
+    };
+    const response = await controller.getDomitsPrivateFeedback(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({
+      feedback: [{ id: "feedback-1", feedbackType: "domits_private", message: "Internal note." }],
+    });
+    expect(reviewService.getDomitsPrivateFeedback).toHaveBeenCalledWith(event);
+  });
+
   it("returns 201 when a review is created", async () => {
     const reviewService = {
       createReview: jest.fn().mockResolvedValue({ review: { id: "review-1" } }),
@@ -64,6 +85,42 @@ describe("ReviewController", () => {
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toEqual({ id: "review-1", title: "Updated" });
     expect(reviewService.updateReview).toHaveBeenCalledWith(event);
+  });
+
+  it("returns saved response draft from the service", async () => {
+    const reviewService = {
+      saveDraftResponse: jest.fn().mockResolvedValue({ response: { id: "response-1", status: "draft" } }),
+    };
+
+    const controller = new ReviewController({ reviewService });
+    const event = {
+      httpMethod: "POST",
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Thanks for staying." }),
+    };
+    const response = await controller.saveDraftResponse(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({ response: { id: "response-1", status: "draft" } });
+    expect(reviewService.saveDraftResponse).toHaveBeenCalledWith(event);
+  });
+
+  it("returns published response from the service", async () => {
+    const reviewService = {
+      publishResponse: jest.fn().mockResolvedValue({ response: { id: "response-1", status: "published" } }),
+    };
+
+    const controller = new ReviewController({ reviewService });
+    const event = {
+      httpMethod: "POST",
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Thanks for staying." }),
+    };
+    const response = await controller.publishResponse(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({ response: { id: "response-1", status: "published" } });
+    expect(reviewService.publishResponse).toHaveBeenCalledWith(event);
   });
 
   it("maps service errors to HTTP responses", async () => {

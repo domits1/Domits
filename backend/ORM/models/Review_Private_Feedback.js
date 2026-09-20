@@ -5,15 +5,16 @@ const bigintTransformer = {
   to: (value) => value,
 };
 
-export const Review_Response = new EntitySchema({
-  name: "Review_Response",
-  tableName: "review_response",
+export const Review_Private_Feedback = new EntitySchema({
+  name: "Review_Private_Feedback",
+  tableName: "review_private_feedback",
   columns: {
     id: { primary: true, type: "varchar", generated: false, nullable: false },
     reviewId: { name: "review_id", type: "varchar", nullable: false },
-    authorId: { name: "author_id", type: "varchar", nullable: false },
-    authorRole: { name: "author_role", type: "varchar", nullable: false },
-    status: { type: "varchar", nullable: false, default: "draft" },
+    reservationId: { name: "reservation_id", type: "varchar", nullable: false },
+    guestId: { name: "guest_id", type: "varchar", nullable: false },
+    propertyId: { name: "property_id", type: "varchar", nullable: false },
+    feedbackType: { name: "feedback_type", type: "varchar", nullable: false },
     message: { type: "text", nullable: false },
     createdAt: {
       name: "created_at",
@@ -25,18 +26,6 @@ export const Review_Response = new EntitySchema({
       name: "updated_at",
       type: "bigint",
       nullable: false,
-      transformer: bigintTransformer,
-    },
-    publishedAt: {
-      name: "published_at",
-      type: "bigint",
-      nullable: true,
-      transformer: bigintTransformer,
-    },
-    deletedAt: {
-      name: "deleted_at",
-      type: "bigint",
-      nullable: true,
       transformer: bigintTransformer,
     },
   },

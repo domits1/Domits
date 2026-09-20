@@ -32,6 +32,15 @@ class ReviewController {
     }
   }
 
+  async getDomitsPrivateFeedback(event) {
+    try {
+      const result = await this.reviewService.getDomitsPrivateFeedback(event);
+      return this.ok(result);
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   async create(event) {
     try {
       const result = await this.reviewService.createReview(event);
@@ -48,6 +57,42 @@ class ReviewController {
   async update(event) {
     try {
       const result = await this.reviewService.updateReview(event);
+      return this.ok(result);
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async saveDraftResponse(event) {
+    try {
+      const result = await this.reviewService.saveDraftResponse(event);
+      return this.ok(result);
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async publishResponse(event) {
+    try {
+      const result = await this.reviewService.publishResponse(event);
+      return this.ok(result);
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async editResponse(event) {
+    try {
+      const result = await this.reviewService.editResponse(event);
+      return this.ok(result);
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async deleteResponse(event) {
+    try {
+      const result = await this.reviewService.deleteResponse(event);
       return this.ok(result);
     } catch (error) {
       return this.handleError(error);

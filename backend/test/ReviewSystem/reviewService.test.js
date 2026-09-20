@@ -73,8 +73,18 @@ const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilit
     updateReviewWithRatings: jest.fn(),
     softDeleteReview: jest.fn(),
     getPublishedReviewsByPropertyId: jest.fn(),
+    getReviewsForHost: jest.fn(),
     getReviewsByBookingForUser: jest.fn(),
     getReviewsWrittenByUser: jest.fn(),
+    hasActiveTeamMembership: jest.fn().mockResolvedValue(false),
+    getResponseByReviewId: jest.fn().mockResolvedValue(null),
+    saveReviewResponse: jest.fn().mockImplementation(async (response) => response),
+    updateReviewResponse: jest.fn().mockImplementation(async (responseId, updateData) => ({
+      id: responseId,
+      ...updateData,
+    })),
+    getDomitsPrivateFeedbackForReview: jest.fn(),
+    recordReviewAuditEvent: jest.fn().mockResolvedValue(undefined),
     toPublicReview: jest.fn((review) => ({
       id: review.id,
       overallRating: review.overallRating,
@@ -84,6 +94,7 @@ const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilit
       status: review.status,
       createdAt: review.createdAt,
       categoryRatings: review.categoryRatings || {},
+      response: review.response?.status === "published" ? review.response : null,
     })),
     ...repositoryOverrides,
   };
@@ -186,6 +197,49 @@ describe("ReviewService day 5 unit coverage", () => {
         moderation: null,
       })
     );
+  });
+
+  it("stores Domits private feedback separately when a guest submits a review", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await service.createReview(
+      createEvent(
+        createReviewPayload({
+          domitsPrivateFeedback: "Domits should know the payment receipt was confusing.",
+        })
+      )
+    );
+
+    expect(reviewRepository.createReviewWithRatings).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.any(Array),
+      expect.objectContaining({
+        domitsPrivateFeedback: expect.objectContaining({
+          reviewId: expect.any(String),
+          reservationId: "booking-1",
+          guestId: "guest-1",
+          propertyId: "property-1",
+          feedbackType: "domits_private",
+          message: "Domits should know the payment receipt was confusing.",
+          createdAt: NOW,
+          updatedAt: NOW,
+        }),
+      })
+    );
+  });
+
+  it("rejects Domits private feedback that is too long", async () => {
+    const { service, reviewRepository, eligibilityService } = buildService();
+
+    await expect(
+      service.createReview(createEvent(createReviewPayload({ domitsPrivateFeedback: "x".repeat(2001) })))
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Domits private feedback must be 2000 characters or less.",
+    });
+
+    expect(reviewRepository.createReviewWithRatings).not.toHaveBeenCalled();
+    expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
   it("rejects unsupported review types", async () => {
@@ -316,10 +370,76 @@ describe("ReviewService day 5 unit coverage", () => {
       categoryRatings: {
         cleanliness: 5,
       },
+      response: null,
     });
     expect(result.review.privateFeedback).toBeUndefined();
     expect(result.review.reviewerUserId).toBeUndefined();
     expect(result.review.hostId).toBeUndefined();
+    expect(result.review.domitsPrivateFeedback).toBeUndefined();
+  });
+
+  it("allows authorized Domits internal users to read Domits private feedback", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "admin-1", role: "admin" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+        getDomitsPrivateFeedbackForReview: jest.fn().mockResolvedValue([
+          {
+            id: "feedback-1",
+            reviewId: "review-1",
+            feedbackType: "domits_private",
+            message: "Internal support note.",
+          },
+        ]),
+      },
+    });
+
+    await expect(
+      service.getDomitsPrivateFeedback(createEvent(null, { pathParameters: { id: "review-1" } }))
+    ).resolves.toEqual({
+      feedback: [
+        {
+          id: "feedback-1",
+          reviewId: "review-1",
+          feedbackType: "domits_private",
+          message: "Internal support note.",
+        },
+      ],
+    });
+
+    expect(reviewRepository.getDomitsPrivateFeedbackForReview).toHaveBeenCalledWith("review-1");
+    expect(reviewRepository.recordReviewAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "review.domits_private_feedback.read",
+        reviewId: "review-1",
+        actorId: "admin-1",
+        actorRole: "admin",
+        occurredAt: NOW,
+      })
+    );
+  });
+
+  it("blocks hosts from reading Domits private feedback", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+        getDomitsPrivateFeedbackForReview: jest.fn(),
+      },
+    });
+
+    await expect(
+      service.getDomitsPrivateFeedback(createEvent(null, { pathParameters: { id: "review-1" } }))
+    ).rejects.toMatchObject({
+      statusCode: 403,
+      message: "Only authorized Domits internal users can view this feedback.",
+    });
+
+    expect(reviewRepository.getDomitsPrivateFeedbackForReview).not.toHaveBeenCalled();
   });
 
   it("allows the author to view unpublished review private data", async () => {
@@ -438,7 +558,302 @@ describe("ReviewService day 5 unit coverage", () => {
     });
 
     expect(authManager.authenticate).not.toHaveBeenCalled();
-    expect(reviewRepository.getPublishedReviewsByPropertyId).toHaveBeenCalledWith("property-1");
+    expect(reviewRepository.getPublishedReviewsByPropertyId).toHaveBeenCalledWith("property-1", {
+      sort: "recent",
+      verifiedOnly: false,
+      category: null,
+    });
     expect(result).toEqual(publicSummary);
+  });
+
+  it("passes public review sorting and filters to the repository", async () => {
+    const publicSummary = {
+      reviews: [],
+      totalReviews: 0,
+      overallRating: null,
+      categoryRatings: {},
+    };
+
+    const { service, reviewRepository } = buildService({
+      repositoryOverrides: {
+        getPublishedReviewsByPropertyId: jest.fn().mockResolvedValue(publicSummary),
+      },
+    });
+
+    const result = await service.getReviews({
+      headers: {},
+      pathParameters: { propertyId: "property-1" },
+      queryStringParameters: {
+        sort: "highest",
+        verified: "true",
+        category: "cleanliness",
+      },
+    });
+
+    expect(reviewRepository.getPublishedReviewsByPropertyId).toHaveBeenCalledWith("property-1", {
+      sort: "highest",
+      verifiedOnly: true,
+      category: "cleanliness",
+    });
+    expect(result).toEqual(publicSummary);
+  });
+
+  it("rejects unsupported public review sort values", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await expect(
+      service.getReviews({
+        headers: {},
+        queryStringParameters: {
+          propertyId: "property-1",
+          sort: "oldest",
+        },
+      })
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Unsupported review sort value.",
+    });
+
+    expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsupported public review category filters", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await expect(
+      service.getReviews({
+        headers: {},
+        queryStringParameters: {
+          propertyId: "property-1",
+          category: "wifi",
+        },
+      })
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Unsupported rating category: wifi.",
+    });
+
+    expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsupported verified filter values", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await expect(
+      service.getReviews({
+        headers: {},
+        queryStringParameters: {
+          propertyId: "property-1",
+          verified: "false",
+        },
+      })
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "verified must be true when provided.",
+    });
+
+    expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
+  });
+
+  it("returns host reviews only after host access is authorized", async () => {
+    const hostReviews = [createReview()];
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewsForHost: jest.fn().mockResolvedValue(hostReviews),
+      },
+    });
+
+    const result = await service.getReviews({
+      headers: { Authorization: "Bearer access-token-1" },
+      queryStringParameters: { hostId: "host-1" },
+    });
+
+    expect(result).toEqual({ reviews: hostReviews });
+    expect(reviewRepository.getReviewsForHost).toHaveBeenCalledWith("host-1");
+  });
+
+  it("saves a draft response for an eligible public review", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+      },
+    });
+
+    const result = await service.saveDraftResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Thank you for staying with us." }),
+    });
+
+    expect(reviewRepository.saveReviewResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reviewId: "review-1",
+        authorId: "host-1",
+        authorRole: "host",
+        status: "draft",
+        message: "Thank you for staying with us.",
+        createdAt: NOW,
+        updatedAt: NOW,
+        publishedAt: null,
+        deletedAt: null,
+      })
+    );
+    expect(result.response.status).toBe("draft");
+    expect(reviewRepository.recordReviewAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "review.response.saved_as_draft",
+        reviewId: "review-1",
+        actorId: "host-1",
+      })
+    );
+  });
+
+  it("publishes an existing draft response", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+        getResponseByReviewId: jest.fn().mockResolvedValue({
+          id: "response-1",
+          reviewId: "review-1",
+          status: "draft",
+          message: "Draft response.",
+        }),
+      },
+    });
+
+    const result = await service.publishResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Published response." }),
+    });
+
+    expect(reviewRepository.updateReviewResponse).toHaveBeenCalledWith(
+      "response-1",
+      expect.objectContaining({
+        status: "published",
+        message: "Published response.",
+        publishedAt: NOW,
+        deletedAt: null,
+      })
+    );
+    expect(result.response.status).toBe("published");
+  });
+
+  it("rejects responses for ineligible unpublished reviews", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(
+          createReview({
+            status: "SUBMITTED",
+            publicationStatus: "UNPUBLISHED",
+            verificationStatus: "UNVERIFIED",
+          })
+        ),
+      },
+    });
+
+    await expect(
+      service.saveDraftResponse({
+        headers: { Authorization: "Bearer access-token-1" },
+        pathParameters: { id: "review-1" },
+        body: JSON.stringify({ message: "Thanks." }),
+      })
+    ).rejects.toMatchObject({
+      statusCode: 403,
+      message: "Only approved public reviews can receive host responses.",
+    });
+
+    expect(reviewRepository.saveReviewResponse).not.toHaveBeenCalled();
+  });
+
+  it("rejects unrelated users from creating responses", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "guest-2", role: "Guest" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+      },
+    });
+
+    await expect(
+      service.saveDraftResponse({
+        headers: { Authorization: "Bearer access-token-1" },
+        pathParameters: { id: "review-1" },
+        body: JSON.stringify({ message: "Thanks." }),
+      })
+    ).rejects.toMatchObject({
+      statusCode: 403,
+      message: "You are not allowed to respond to this review.",
+    });
+
+    expect(reviewRepository.hasActiveTeamMembership).toHaveBeenCalledWith("guest-2", "host-1");
+    expect(reviewRepository.saveReviewResponse).not.toHaveBeenCalled();
+  });
+
+  it("allows active property-manager team members to respond", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({
+          sub: "team-member-1",
+          role: "Property Operations Manager",
+        }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+        hasActiveTeamMembership: jest.fn().mockResolvedValue(true),
+      },
+    });
+
+    await service.saveDraftResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Thanks for the feedback." }),
+    });
+
+    expect(reviewRepository.saveReviewResponse).toHaveBeenCalled();
+  });
+
+  it("soft deletes an existing response", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+        getResponseByReviewId: jest.fn().mockResolvedValue({
+          id: "response-1",
+          reviewId: "review-1",
+          status: "published",
+          message: "Published response.",
+        }),
+      },
+    });
+
+    const result = await service.deleteResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+    });
+
+    expect(result).toEqual({ message: "Review response deleted successfully." });
+    expect(reviewRepository.updateReviewResponse).toHaveBeenCalledWith(
+      "response-1",
+      expect.objectContaining({
+        deletedAt: NOW,
+        updatedAt: NOW,
+      })
+    );
   });
 });
