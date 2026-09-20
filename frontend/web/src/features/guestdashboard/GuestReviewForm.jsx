@@ -196,6 +196,7 @@ function GuestReviewForm() {
   const [title, setTitle] = useState("");
   const [publicReview, setPublicReview] = useState("");
   const [privateFeedback, setPrivateFeedback] = useState("");
+  const [domitsPrivateFeedback, setDomitsPrivateFeedback] = useState("");
   const [loadingReview, setLoadingReview] = useState(Boolean(editReviewId));
   const [submittingStatus, setSubmittingStatus] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -306,6 +307,10 @@ function GuestReviewForm() {
       nextErrors.privateFeedback = "Private feedback must be 2000 characters or less.";
     }
 
+    if (!isEditMode && domitsPrivateFeedback.trim().length > 2000) {
+      nextErrors.domitsPrivateFeedback = "Private feedback to Domits must be 2000 characters or less.";
+    }
+
     setFieldErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -341,6 +346,7 @@ function GuestReviewForm() {
           title: title.trim(),
           publicReview: publicReview.trim(),
           privateFeedback: privateFeedback.trim() || null,
+          domitsPrivateFeedback: domitsPrivateFeedback.trim() || null,
           categoryRatings,
           status,
         });
@@ -496,7 +502,7 @@ function GuestReviewForm() {
 
         <section className="guestReviewSection guestReviewPrivateSection">
           <label className="guestReviewLabel" htmlFor="private-feedback">
-            Private feedback
+            Private feedback for the host
           </label>
           <textarea
             id="private-feedback"
@@ -516,6 +522,33 @@ function GuestReviewForm() {
           </div>
           <p>This feedback is only shared privately with the host.</p>
         </section>
+
+        {!isEditMode && (
+          <section className="guestReviewSection guestReviewDomitsPrivateSection">
+            <label className="guestReviewLabel" htmlFor="domits-private-feedback">
+              Private feedback for Domits
+            </label>
+            <textarea
+              id="domits-private-feedback"
+              className={`guestReviewTextarea ${fieldErrors.domitsPrivateFeedback ? "guestReviewInputInvalid" : ""}`}
+              value={domitsPrivateFeedback}
+              disabled={!isEditable}
+              onChange={(event) => {
+                setDomitsPrivateFeedback(event.target.value);
+                setFieldErrors((currentErrors) => ({ ...currentErrors, domitsPrivateFeedback: "" }));
+              }}
+              maxLength={2000}
+              placeholder="Share issues, suggestions, or concerns privately with Domits."
+            />
+            <div className="guestReviewInputMeta">
+              {fieldErrors.domitsPrivateFeedback && (
+                <p className="guestReviewFieldError">{fieldErrors.domitsPrivateFeedback}</p>
+              )}
+              <span>{domitsPrivateFeedback.length}/2000</span>
+            </div>
+            <p>This is private for Domits internal support and will not appear publicly or be shared with the host.</p>
+          </section>
+        )}
 
         <div className="guestReviewActions">
           <button

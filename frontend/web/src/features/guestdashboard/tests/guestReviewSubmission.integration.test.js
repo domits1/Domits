@@ -130,8 +130,12 @@ const fillValidReviewForm = () => {
     target: { value: "The apartment was clean, calm, and close to everything we needed." },
   });
 
-  fireEvent.change(screen.getByLabelText("Private feedback"), {
+  fireEvent.change(screen.getByLabelText("Private feedback for the host"), {
     target: { value: "A second set of towels would be helpful." },
+  });
+
+  fireEvent.change(screen.getByLabelText("Private feedback for Domits"), {
+    target: { value: "Domits should know the payment receipt was confusing." },
   });
 };
 
@@ -186,6 +190,7 @@ describe("guest review submission integration", () => {
         title: "Wonderful stay",
         publicReview: "The apartment was clean, calm, and close to everything we needed.",
         privateFeedback: "A second set of towels would be helpful.",
+        domitsPrivateFeedback: "Domits should know the payment receipt was confusing.",
         categoryRatings: {
           cleanliness: 5,
           accuracy: 5,
@@ -224,6 +229,22 @@ describe("guest review submission integration", () => {
     fireEvent.click(screen.getByRole("button", { name: /submit review/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Missing booking information for this review.");
+    expect(createReview).not.toHaveBeenCalled();
+  });
+
+  it("validates private feedback for Domits before submitting", async () => {
+    renderWithRoutes({
+      initialEntry: "/guestdashboard/reviews/new?bookingId=booking-1&propertyId=property-1",
+    });
+
+    fillValidReviewForm();
+    fireEvent.change(screen.getByLabelText("Private feedback for Domits"), {
+      target: { value: "x".repeat(2001) },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /submit review/i }));
+
+    expect(await screen.findByText("Private feedback to Domits must be 2000 characters or less.")).toBeInTheDocument();
     expect(createReview).not.toHaveBeenCalled();
   });
 });

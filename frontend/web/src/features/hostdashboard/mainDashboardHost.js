@@ -6,6 +6,7 @@ import HostCalendar from "./hostcalen/HostCalendar";
 import HostReservations from "./HostReservations";
 import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
+import HostReviews from "./HostReviews";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
@@ -114,6 +115,7 @@ function MainDashboardHost() {
           <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />
           <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
           <Route path="revenues" element={<HostReports />} />
+          <Route path="reviews" element={<HostReviews />} />
 
           <Route path="tasks" element={<HostPropertyCare />} />
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />

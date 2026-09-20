@@ -332,6 +332,19 @@
   }
 }
 
+.guestReviewDomitsPrivateSection {
+  padding: 16px;
+  border: 1px solid #b9d6ff;
+  border-radius: 8px;
+  background: #f4f8ff;
+
+  p {
+    margin: 0;
+    color: #3d5878;
+    font-size: 14px;
+  }
+}
+
 .guestReviewActions {
   display: flex;
   justify-content: flex-end;
