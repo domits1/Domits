@@ -6,7 +6,7 @@ const OPTIONS_RESPONSE = {
     statusCode: 200,
     headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type,Authorization"
     }
 };
@@ -38,6 +38,10 @@ export const handler = async (event) => {
 
         if (method === "POST") {
             return await controller.inviteMember(event);
+        }
+
+        if (method === "PUT") {
+            return await controller.updateMemberRole(event);
         }
 
         if (method === "DELETE") {

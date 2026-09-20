@@ -1127,8 +1127,82 @@
         "compliance": {
           "title": "Compliance",
           "desc": "Verwalte deine Registrierungsnummer und Verifizierung."
+        },
+        "onboarding": {
+          "title": "Onboarding",
+          "desc": "Verfolge deinen Fortschritt vom Eintragen deiner Unterkunft bis zur Veröffentlichung."
         }
       }
+    },
+    "onboardingHub": {
+      "breadcrumb": "Onboarding",
+      "title": "Onboarding",
+      "subtitle": "Verfolge den Fortschritt für jede Unterkunft, von der Erstellung bis zur Veröffentlichung.",
+      "propertyPicker": {
+        "label": "Unterkunft",
+        "loading": "Deine Unterkünfte werden geladen...",
+        "loadError": "Wir konnten deine Unterkünfte nicht laden.",
+        "empty": "Du hast noch keine veröffentlichten Unterkünfte."
+      },
+      "progress": {
+        "label": "{completed} von {total} Schritten abgeschlossen"
+      },
+      "accountWideBadge": "Kontoweit",
+      "requiredBadge": "Erforderlich",
+      "optionalBadge": "Optional",
+      "goLiveButton": "Veröffentlichen",
+      "goLiveBlockedText": "Schließe zuerst die erforderlichen Schritte ab",
+      "pricingConnectedSubDetail": "Dynamische Preise über PriceLabs sind ebenfalls verbunden.",
+      "steps": {
+        "listProperty": {
+          "title": "Unterkunft eintragen",
+          "desc": "Füge die Details, Fotos und Preise deiner Unterkunft hinzu."
+        },
+        "website": {
+          "title": "Direktbuchungs-Website erstellen",
+          "desc": "Erstelle eine eigene Buchungs-Website für diese Unterkunft."
+        },
+        "channels": {
+          "title": "Kanäle verbinden",
+          "desc": "Synchronisiere diese Unterkunft mit Airbnb, Booking.com, Vrbo und mehr."
+        },
+        "automate": {
+          "title": "Abläufe automatisieren",
+          "desc": "Richte Zahlungen und dynamische Preise für dein Konto ein."
+        },
+        "goLive": {
+          "title": "Veröffentlichen",
+          "desc": "Überprüfe deine Unterkunft und veröffentliche sie auf Domits."
+        }
+      },
+      "statusComplete": "Abgeschlossen",
+      "statusIncomplete": "Noch nicht begonnen",
+      "statusUnknown": "Status konnte nicht geprüft werden"
+    },
+    "goLive": {
+      "breadcrumb": "Veröffentlichen",
+      "title": "{propertyName} veröffentlichen",
+      "subtitle": "Überprüfe die Checkliste unten und veröffentliche anschließend deine Unterkunft.",
+      "loading": "Checkliste wird geladen...",
+      "loadError": "Wir konnten diese Unterkunft nicht laden.",
+      "missingPropertyId": "Es wurde keine Unterkunft angegeben.",
+      "requiredSection": "Erforderlich",
+      "optionalSection": "Optional",
+      "items": {
+        "listProperty": "Unterkunft eintragen",
+        "website": "Direktbuchungs-Website erstellen",
+        "payments": "Zahlungen (Stripe)",
+        "channels": "Kanäle verbinden",
+        "pricing": "Dynamische Preise (PriceLabs)",
+        "tasks": "Aufgabenverwaltung"
+      },
+      "activateButton": "Unterkunft veröffentlichen",
+      "activating": "Wird veröffentlicht...",
+      "alreadyLive": "Diese Unterkunft ist bereits veröffentlicht.",
+      "blockedMessage": "Schließe zuerst die erforderlichen Schritte oben ab, um zu veröffentlichen.",
+      "successMessage": "Deine Unterkunft ist jetzt live!",
+      "errorMessage": "Beim Veröffentlichen dieser Unterkunft ist etwas schiefgelaufen.",
+      "backToHub": "Zurück zu Onboarding"
     },
     "personalData": {
       "breadcrumb": "Persönliche Daten",
@@ -1209,14 +1283,41 @@
       "breadcrumb": "Unternehmen",
       "title": "Unternehmen",
       "subtitle": "Verwalte deine Unternehmensinformationen.",
-      "section": "Unternehmensdetails",
+      "privateSection": "Privat",
+      "privateSectionNote": "Nur für dich sichtbar — wird für Rechnungen und Berichte verwendet.",
+      "publicSection": "Öffentliche Informationen",
+      "publicSectionNote": "Für Gäste auf deinen Inseraten sichtbar.",
       "fields": {
         "companyName": "Unternehmensname",
         "placeholder": "Unternehmensnamen eingeben",
-        "hint": "Diese Informationen erscheinen auf Rechnungen und Berichten."
+        "hint": "Diese Informationen erscheinen auf Rechnungen und Berichten.",
+        "displayName": "Anzeigename",
+        "displayNamePlaceholder": "Name, den Gäste sehen",
+        "logo": "Logo",
+        "logoUpload": "Logo hochladen",
+        "logoUploading": "Wird hochgeladen...",
+        "logoRemove": "Entfernen",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Erzähle Gästen von deinem Unternehmen",
+        "website": "Website",
+        "websitePlaceholder": "https://beispiel.de",
+        "publicEmail": "Öffentliche E-Mail-Adresse",
+        "publicEmailPlaceholder": "kontakt@beispiel.de",
+        "publicPhone": "Öffentliche Telefonnummer",
+        "publicPhonePlaceholder": "+49 30 12345678",
+        "country": "Land",
+        "countryPlaceholder": "Land eingeben"
+      },
+      "errors": {
+        "website": "Gib eine gültige Website-URL ein.",
+        "publicEmail": "Gib eine gültige E-Mail-Adresse ein.",
+        "publicPhone": "Gib eine gültige Telefonnummer ein.",
+        "logo": "Logo-Upload fehlgeschlagen. Bitte versuche es erneut."
       },
       "buttons": {
-        "comingSoon": "Demnächst verfügbar"
+        "save": "Speichern",
+        "saving": "Wird gespeichert...",
+        "saved": "Gespeichert"
       }
     },
     "compliance": {
@@ -1258,25 +1359,42 @@
       "inviteBtn": "+ Mitglieder einladen",
       "emptyState": "Noch keine weiteren Teammitglieder. Lade einen Co-Host ein, um zu beginnen.",
       "loadError": "Teammitglieder konnten nicht geladen werden. Bitte lade die Seite neu.",
-      "activeMembers": "Aktive Mitglieder",
-      "pendingInvitations": "Ausstehende Einladungen",
+      "loadingMembers": "Teammitglieder werden geladen…",
       "membershipsSection": "Teams, denen du angehörst",
       "membershipsCardHeader": "Co-Host-Mitgliedschaften",
       "joined": "Beigetreten am",
       "memberAvatarAlt": "Mitglied-Avatar",
       "hostAvatarAlt": "Host-Avatar",
+      "columnMember": "Mitglied",
+      "columnRole": "Rolle",
+      "columnPermissions": "Berechtigungen",
+      "columnStatus": "Status",
+      "columnActions": "Aktionen",
+      "statusActive": "Aktiv",
+      "statusPending": "Ausstehend",
+      "actionsMenuLabel": "Aktionsmenü öffnen",
+      "removeAction": "Entfernen",
+      "editRoleAction": "Rolle bearbeiten",
+      "permissionsMore": "+{count} weitere",
+      "permissionsEmpty": "—",
       "removeModal": {
         "title": "Teammitglied entfernen",
         "body": "Bist du sicher, dass du dieses Mitglied aus deinem Team entfernen möchtest? Sie verlieren den Zugriff auf deine Unterkünfte und Aufgaben.",
         "confirm": "Ja, entfernen",
         "cancel": "Abbrechen"
       },
+      "editRoleModal": {
+        "title": "Rolle bearbeiten",
+        "roleLabel": "Rolle",
+        "saveBtn": "Speichern",
+        "cancel": "Abbrechen",
+        "error": "Rolle konnte nicht aktualisiert werden. Bitte versuche es erneut."
+      },
       "inviteModal": {
         "title": "Teammitglied einladen",
         "emailLabel": "E-Mail-Adresse",
         "emailPlaceholder": "kollege@beispiel.com",
         "roleLabel": "Rolle",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Einladung senden",
         "cancel": "Abbrechen",
         "success": "✓ Einladung gesendet an",

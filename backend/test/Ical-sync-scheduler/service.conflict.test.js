@@ -101,11 +101,12 @@ describe("Ical-sync-scheduler Service automatic sync reliability", () => {
     expect(result.ok).toBe(true);
     expect(result.succeeded).toBe(1);
     expect(result.failed).toBe(1);
+    expect(result.skipped).toBe(0);
     expect(mockFetchExternalCalendar).toHaveBeenCalledTimes(2);
     expect(mockUpsertSource).toHaveBeenCalledTimes(1);
   });
 
-  test("a source missing propertyId, sourceId or calendarUrl is skipped without fetching", async () => {
+  test("a source missing propertyId, sourceId or calendarUrl is reported as skipped, not succeeded", async () => {
     const malformedSource = buildSource({ calendarUrl: "" });
     mockListSources.mockResolvedValue([malformedSource]);
     const service = new Service();
@@ -114,7 +115,8 @@ describe("Ical-sync-scheduler Service automatic sync reliability", () => {
 
     expect(mockFetchExternalCalendar).not.toHaveBeenCalled();
     expect(mockUpsertSource).not.toHaveBeenCalled();
-    expect(result.succeeded).toBe(1);
+    expect(result.skipped).toBe(1);
+    expect(result.succeeded).toBe(0);
     expect(result.failed).toBe(0);
   });
 });
