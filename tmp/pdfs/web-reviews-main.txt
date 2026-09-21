@@ -1,0 +1,1040 @@
+--- Page 1 ---
+domits1 Domits
+Code Issues 881 Pull requests19 Agents DiscussionsActions Projects Wiki
+Security and quality153 Insights Settings
+Web: Reviews main #90
+New issue
+Open
+Assignees
+Labels
+Milestone 1.2.8 Web: Reviews
+Listed in #502
+L2: Capability
+stefanhopman1opened on Jan 2, 2024 Last edited by stefanhopman1 Member
+🚀  Capability Summary
+To give guests a better understanding of what listing / host they are contacting, we want to implement a
+reviewing system within Domits. Not only should listings and hosts recieve reviews, guests are also
+reviewable.
+PMS Capabilities: Listings, CRS, CM, Direct Bookings, RMS, Calendar & Prices, Inbox, Tasks, Finance,
+Reviews, Intelligence, Settings, Integrations, Agentic AI
+Use Case / Scenario Testing Review System #3208
+Domits: Review System
+Feature Summary
+Build a Domits Review System that manages the complete guest feedback and reputation lifecycle across
+the Domits ecosystem.
+The system should support:
+Guest reviews Web: Reviews: Review system for guests on hosts #2690
+
+--- Page 2 ---
+Property reviews
+Host reviews Web: Reviews: Review system for hosts to guests #2691
+Experience reviews
+Reservation reviews
+Category ratings
+Written reviews
+Private feedback
+Public reviews
+Review requests
+Review reminders
+Review moderation
+Review verification
+Review responses
+Review analytics
+Sentiment analysis
+AI review intelligence
+Reputation management
+Review syndication
+Review widgets
+Review-based personalization
+Review-driven operational improvement
+Options:
+The review system should become the reputation layer of Domits.
+Problem Statement
+Traditional vacation-rental review systems primarily focus on collecting a star rating and displaying a
+written comment.
+This provides limited value to Hosts and guests.
+Hosts need to understand:
+What guests actually liked
+What disappointed them
+Which operational problems repeatedly occur
+Which properties are improving or declining
+Web: Reviews: Review system for guests on listings #2689
+Web: Reviews: Review impacts shown listings / hosts #2692
+Web: Reviews: Review Filters in Booking Engine #2693
+Web: Reviews: (Allow hosts to respond to guest reviews) #3143
+
+--- Page 3 ---
+Which teams or service providers affect satisfaction
+Which guest segments are happiest
+Why guests choose to return
+What actions will improve future reviews
+Guests need trustworthy information to understand:
+Whether a property is genuinely high quality
+What previous guests experienced
+What the property is really like
+Whether reviews are authentic
+Whether recent performance is improving or declining
+Domits should therefore transform reviews from a static reputation score into a continuous guest-
+experience intelligence system.
+Desired Outcome
+Domits should create a trusted feedback loop:
+Every completed stay should create an opportunity to learn, improve and strengthen the property's
+reputation.
+Target Users
+Reservation
+    ↓
+Guest Experience
+    ↓
+Review Request
+    ↓
+Guest Feedback
+    ↓
+Verification
+    ↓
+Moderation
+    ↓
+Public Review
+    ↓
+Sentiment & Intelligence
+    ↓
+Operational Action
+    ↓
+Improved Experience
+    ↓
+Better Reviews
+Guests / Customers
+
+
+--- Page 4 ---
+Business & User Impact
+Impact level
+User reach
+Reviews influence:
+Booking conversion
+Guest trust
+Property ranking
+Direct-booking conversion
+Repeat bookings
+Host reputation
+Property performance
+Guest satisfaction
+Operational quality
+1. Review Types
+Domits should support multiple review types.
+Hosts / Property Managers / Enterprise
+Admin / Internal users
+Developers
+Operations
+Guest Experience Teams
+Revenue / Marketing Teams
+Owners
+Low
+Medium
+High
+Critical
+Few users
+Many users
+All users
+
+
+--- Page 5 ---
+Property Review
+Guest reviews the property and stay.
+Host Review
+Guest reviews the Host or property-management experience.
+Experience Review
+Guest reviews an additional experience:
+Private chef
+Yacht
+Transfer
+Wellness
+Excursion
+Concierge service
+Service Review
+Review specific services:
+Housekeeping
+Maintenance
+Guest support
+Check-in
+Concierge
+Reservation Review
+Review the overall booking experience.
+2. Review Structure
+A review should contain:
+Review
+├── Overall Rating
+├── Category Ratings
+├── Written Review
+├── Private Feedback
+├── Guest
+├── Reservation
+├── Property
+├── Host
+├── Stay Dates
+├── Review Date
+
+--- Page 6 ---
+3. Rating System
+Overall rating
+Use a standard:
+1–5 stars
+with half-star support where appropriate.
+Category ratings
+Luxury hospitality should support configurable categories such as:
+Overall
+Cleanliness
+Accuracy
+Communication
+Check-in
+Location
+Comfort
+Amenities
+Value
+Service
+Privacy
+Experience
+Property managers should be able to configure additional internal categories.
+4. Luxury Hospitality Review Model
+For premium properties, support richer questions.
+Example:
+Your stay
+├── Verification Status
+├── Publication Status
+├── Sentiment
+├── Topics
+├── Response
+└── Metadata
+
+--- Page 7 ---
+Overall experience
+★★★★★
+Property
+Cleanliness ★★★★★
+Comfort ★★★★★
+Design ★★★★★
+Amenities ★★★★★
+Location ★★★★★
+Service
+Communication ★★★★★
+Check-in ★★★★★
+Hospitality ★★★★★
+Experience
+What was the highlight of your stay?
+Was there anything we could have done better?
+5. Public vs Private Feedback
+Separate:
+Public Review
+Visible to:
+Future guests
+Host
+Property manager
+Domits
+Private Feedback
+Visible only to:
+Host
+Property manager
+Authorized Domits staff
+This is important because guests may want to honestly report:
+
+--- Page 8 ---
+"The villa was beautiful, but the air conditioning in the master bedroom was unreliable."
+without necessarily wanting that detail publicly displayed.
+6. Review Request Engine
+Automatically request reviews after checkout.
+Example:
+Support configurable timing.
+Channels:
+Email
+SMS
+WhatsApp
+In-app
+Guest portal
+7. Smart Review Requests
+Review requests should be personalized.
+Example:
+Thank you for staying at Villa Azure. We hope you had an incredible time in Ibiza. We'd love to hear
+about your experience.
+The system should know:
+Guest name
+Property
+Stay
+Host
+Destination
+Checkout
+   ↓
+Wait X hours
+   ↓
+Review Request
+   ↓
+Reminder
+   ↓
+Final Reminder
+
+--- Page 9 ---
+Experience
+Preferred language
+8. Review Verification
+Reviews should be strongly tied to real reservations.
+A review should receive:
+Verified Stay
+when:
+This dramatically increases trust.
+Prevent:
+Fake reviews
+Duplicate reviews
+Reviews without stays
+Unauthorized submissions
+Automated spam
+9. Review Eligibility
+Define configurable rules.
+Example:
+Support configurable review windows.
+Guest
++
+Completed Reservation
++
+Valid Stay
++
+Eligible Review Window
+Reservation status = Completed
+AND
+Guest is associated with reservation
+AND
+Review window is open
+AND
+No existing review
+
+--- Page 10 ---
+10. Guest Review Experience
+The guest should have an extremely simple flow.
+The experience should be optimized for mobile.
+11. Review Responses
+Hosts should be able to publicly respond.
+Example:
+Thank you for staying with us, Sarah. We're delighted that you enjoyed the villa and hope to
+welcome you back to Ibiza soon.
+Responses should support:
+Draft
+Publish
+Edit
+Delete where permitted
+AI assistance
+Translation
+12. AI Review Response
+Domits AI can generate suggested responses.
+How was your stay?
+★★★★★
+What did you love?
+[................................]
+What could we improve?
+[................................]
+Would you stay with us again?
+[ Yes ] [ Maybe ] [ No ]
+[Submit Review]
+Open Web: Reviews main#90
+
+--- Page 11 ---
+Example:
+The Host always controls publication.
+13. AI Review Intelligence
+Analyze every review for:
+Sentiment
+Topics
+Complaints
+Compliments
+Opportunities
+Recurring issues
+Emerging problems
+Service quality
+Guest preferences
+Example:
+Guest review:
+"Beautiful villa and amazing location. The check-in
+process was slightly confusing."
+AI suggestion:
+"Thank you for your wonderful feedback. We're delighted
+you enjoyed the villa and its location. We also appreciate
+your note about check-in and are reviewing the process to
+make arrival even smoother for future guests."
+Positive
+92%
+Top positive themes:
+1. Location
+2. Villa design
+3. Pool
+4. Communication
+Negative themes:
+1. Wi-Fi
+2. Check-in instructions
+
+--- Page 12 ---
+14. Sentiment Analysis
+Each review receives:
+Also calculate:
+Sentiment score
+Topic sentiment
+Category sentiment
+Trend over time
+15. Review Topic Intelligence
+Automatically identify topics such as:
+Pool
+Beach
+Location
+Cleanliness
+Wi-Fi
+Kitchen
+Beds
+Service
+Staff
+Check-in
+Noise
+Privacy
+Views
+Design
+Value
+This allows managers to identify problems without reading every review manually.
+16. Review Health Score
+Create a property-level Review Health Score.
+Sentiment
+├── Positive
+├── Neutral
+└── Negative
+
+--- Page 13 ---
+Example:
+Calculated from:
+Average rating
+Recent ratings
+Review volume
+Sentiment
+Response rate
+Response time
+Category performance
+Trend
+Verified-review ratio
+The exact weighting should be configurable and transparent internally.
+17. Reputation Dashboard
+Create:
+Reputation → Overview
+Display:
+Average rating
+Review count
+Verified reviews
+Review response rate
+Sentiment
+Review health
+Rating trend
+Recent reviews
+Negative themes
+Positive themes
+Recommended actions
+18. Property Reputation
+Review Health
+92 / 100
+★★★★★
+
+--- Page 14 ---
+Every property should have its own reputation profile.
+Example:
+19. Portfolio Reputation
+Property managers should see portfolio-wide performance.
+Allow filtering by:
+Destination
+Brand
+Property
+Manager
+Team
+Period
+Rating
+Topic
+20. Review Trends
+Track:
+Rating over time
+Review volume
+Sentiment over time
+Villa Azure
+4.92 ★
+287 reviews
+Cleanliness     4.96
+Location        4.98
+Communication   4.91
+Comfort         4.89
+Value           4.72
+Portfolio
+├── Average Rating: 4.84
+├── Reviews: 12,483
+├── Response Rate: 98%
+├── Positive Sentiment: 94%
+└── Review Health: 91
+
+--- Page 15 ---
+Category performance
+Property performance
+Destination performance
+Detect:
+21. Reputation Alerts
+Automatically alert Hosts when:
+Rating drops
+Negative sentiment increases
+Multiple guests mention the same issue
+A property receives a 1–2 star review
+Response is overdue
+Review volume declines
+A recurring operational problem emerges
+Example:
+Reputation Alert
+4 guests mentioned unreliable Wi-Fi at Villa Azure during the last 30 days.
+22. Review → Task Automation
+Reviews should connect directly to Operations.
+Example:
+Improving
+Stable
+Declining
+Critical
+Review
+"Pool wasn't heated."
+        ↓
+AI identifies issue
+        ↓
+Create Task
+
+--- Page 16 ---
+This turns guest feedback into operational improvement.
+23. Review → CRM
+Reviews become part of the Guest 360 profile.
+Store:
+Reviews written
+Ratings given
+Sentiment
+Preferences
+Complaints
+Compliments
+Topics
+Host responses
+Example:
+24. Review → Personalization
+Review intelligence can improve future guest experiences.
+"Inspect pool heating system"
+        ↓
+Assign Maintenance
+        ↓
+Resolve
+        ↓
+Close Task
+Guest: Sarah
+Lifetime Value: €18,400
+Stays: 5
+Average Rating Given: 4.9
+Sentiment: Highly Positive
+Preferred: Beachfront properties
+Likes: Privacy, design, concierge
+
+--- Page 17 ---
+If a guest previously praised:
+"The private chef was incredible."
+Domits CRM can identify this as a preference and recommend similar experiences during the next
+booking.
+25. Review → Direct Booking
+Reviews should become a major conversion asset.
+Display:
+Average rating
+Review count
+Recent reviews
+Verified reviews
+Category ratings
+Guest testimonials
+Support:
+Review carousel
+Property review widget
+Destination review widget
+Homepage testimonial section
+Structured review data for SEO
+26. Review Widgets
+Provide embeddable review components:
+and:
+Review Summary
+★★★★★  4.92
+287 verified reviews
+Guest Reviews
+★★★★★
+"Absolutely incredible villa..."
+— Sarah, Netherlands
+Verified Stay
+
+--- Page 18 ---
+27. Review Sorting
+Guests should be able to sort/filter reviews by:
+Most recent
+Highest rated
+Lowest rated
+Verified
+Couples
+Families
+Groups
+Business
+Trip type
+Where the underlying reservation data supports it and privacy requirements are satisfied.
+28. Review Translation
+Automatically translate reviews into the user's preferred language.
+Store:
+Original review
+Translation
+Translation language
+Translation provider/version
+Clearly indicate translated content.
+29. Review Moderation
+Build a moderation pipeline:
+Submitted
+   ↓
+Automated Checks
+   ↓
+AI Safety / Spam Analysis
+   ↓
+Policy Validation
+   ↓
+Publish
+
+--- Page 19 ---
+Flag:
+Spam
+Fraud
+Abuse
+Personal information
+Threats
+Illegal content
+Hate speech
+Manipulation
+Irrelevant content
+Human moderation should be available for escalations.
+30. Review Disputes
+Hosts should be able to dispute reviews.
+Workflow:
+Possible outcomes:
+Review remains
+Review edited
+Review removed
+Review hidden pending investigation
+Dispute rejected
+All decisions must be audited.
+31. Review Integrity
+Domits should actively protect review authenticity.
+Review
+ ↓
+Dispute
+ ↓
+Reason
+ ↓
+Evidence
+ ↓
+Moderation
+ ↓
+Decision
+
+--- Page 20 ---
+Implement:
+Verified reservation linkage
+One review per eligible stay
+Duplicate detection
+Fraud detection
+Abnormal rating detection
+Review velocity monitoring
+Account reputation
+IP/device signals where legally appropriate
+Manipulation detection
+Never allow Hosts to selectively delete legitimate negative reviews.
+32. Review Analytics
+Enterprise reporting should include:
+Guest
+Reviews submitted
+Rating behavior
+Sentiment
+Topics
+Property
+Rating
+Review volume
+Category scores
+Sentiment
+Trend
+Portfolio
+Portfolio rating
+Destination comparison
+Property ranking
+Review health
+Operations
+Recurring complaints
+Resolution rate
+
+--- Page 21 ---
+Time to resolution
+Review improvement after resolution
+33. AI Reputation Manager
+Create an AI-powered Reputation Manager.
+It should answer:
+"Why did our rating drop this month?"
+"Which properties have the biggest reputation risk?"
+"What are guests complaining about most?"
+"Which operational issue should we fix first?"
+"Which properties are improving fastest?"
+"Summarize our Ibiza portfolio reputation."
+Example:
+34. Review Benchmarking
+For enterprise customers, support benchmarking:
+Property vs portfolio
+Destination vs portfolio
+Brand vs portfolio
+Current period vs previous period
+Portfolio Reputation
+Rating: 4.87 ↓ 0.04
+Primary driver:
+Cleanliness complaints increased 18%.
+Highest-risk properties:
+1. Villa Azure
+2. Casa Luna
+3. Villa Sol
+Recommended action:
+Increase pre-arrival housekeeping inspection
+for these three properties.
+
+--- Page 22 ---
+Property vs anonymized internal benchmark
+Avoid exposing competitors' private data.
+35. Review-Based Ranking
+Reviews may influence Domits search and merchandising.
+Potential ranking signals:
+Rating
+Review count
+Recent review performance
+Review health
+Verified review ratio
+Category quality
+Ranking must avoid creating an opaque or unfair system.
+36. Review Lifecycle
+Reservation Completed
+        ↓
+Review Eligible
+        ↓
+Request Sent
+        ↓
+Guest Submits
+        ↓
+Verification
+        ↓
+Moderation
+        ↓
+Published
+        ↓
+Host Response
+        ↓
+AI Analysis
+        ↓
+Operational Intelligence
+        ↓
+CRM Intelligence
+        ↓
+Analytics
+
+--- Page 23 ---
+37. Data Model
+Relationships:
+38. API
+Review
+ReviewRating
+ReviewCategory
+ReviewResponse
+ReviewRequest
+ReviewReminder
+ReviewVerification
+ReviewModeration
+ReviewDispute
+ReviewTranslation
+ReviewSentiment
+ReviewTopic
+ReviewInsight
+ReviewAlert
+ReviewBenchmark
+ReviewWidget
+ReviewAggregation
+Guest
+  ↓
+Reservation
+  ↓
+Review
+  ├── Property
+  ├── Host
+  ├── Experience
+  ├── Ratings
+  ├── Response
+  ├── Sentiment
+  ├── Topics
+  └── Moderation
+GET    /reviews
+POST   /reviews
+GET    /reviews/:id
+PATCH  /reviews/:id
+POST   /reviews/:id/respond
+POST   /reviews/:id/dispute
+GET    /properties/:id/reviews
+GET    /hosts/:id/reviews
+
+--- Page 24 ---
+39. Events
+40. Permissions
+Host
+View reviews
+Respond to reviews
+View private feedback
+GET    /reviews/analytics
+GET    /reviews/reputation
+GET    /reviews/insights
+GET    /review-requests
+POST   /review-requests/:id/send
+GET    /review-widgets
+POST   /review-widgets
+POST   /reviews/:id/translate
+POST   /reviews/:id/analyze
+review.requested
+review.reminded
+review.submitted
+review.verified
+review.published
+review.updated
+review.response.created
+review.response.published
+review.flagged
+review.moderated
+review.disputed
+review.dispute.resolved
+review.sentiment.analyzed
+review.topic.detected
+review.insight.created
+review.alert.created
+review.task.created
+review.rating.changed
+review.reputation.changed
+
+--- Page 25 ---
+View analytics
+Manage review settings
+Guest Experience
+View reviews
+Respond
+Manage review requests
+View feedback
+Operations
+View operational insights
+Create tasks from feedback
+Marketing
+Publish approved testimonials
+Manage review widgets
+Use reviews in marketing
+Enterprise Admin
+Configure review policies
+Configure categories
+Manage permissions
+View portfolio analytics
+Domits Admin
+Moderate
+Investigate disputes
+Manage platform policies
+Manage fraud detection
+41. Privacy
+Review functionality must comply with privacy requirements.
+Support:
+Consent
+Data minimization
+Guest privacy
+Data retention
+
+--- Page 26 ---
+Data export
+Data deletion
+Anonymization where appropriate
+Never expose unnecessary guest personal information publicly.
+42. Performance
+Review pages and widgets should be highly performant.
+Targets:
+Review summary API <300ms
+Property review page <1s server response target
+Review widget minimal impact on website performance
+Analytics queries optimized for large portfolios
+Support millions of reviews
+Use aggregation tables/materialized views where appropriate for high-volume analytics.
+43. Acceptance Criteria
+Guests can submit reviews after eligible stays.
+Reviews are linked to reservations.
+Verified stays are clearly identified.
+Guests can provide overall and category ratings.
+Guests can submit public and private feedback.
+Hosts can respond to reviews.
+Review requests can be automated.
+Review reminders can be automated.
+Reviews can be moderated.
+Guests can dispute moderation decisions where applicable.
+Hosts can dispute reviews.
+Duplicate/fraudulent reviews are detected.
+Reviews are analyzed for sentiment.
+Review topics are automatically identified.
+Review insights are available at property and portfolio level.
+Reputation trends are available.
+
+--- Page 27 ---
+44. Key KPIs
+KPI Target
+Verified review ratio ≥99%
+Review request delivery ≥99.9%
+Review processing success ≥99.9%
+Review fraud incidents <0.1%
+Review moderation SLA <24h
+Review response rate ≥90%
+Review widget availability ≥99.99%
+Review analytics accuracy ≥99.9%
+Review-to-task automation accuracy ≥95%
+Guest review submission conversion Track & optimize
+Average portfolio rating Track
+Review sentiment Track
+Direct-booking conversion uplift from reviews Track
+45. Core Principle
+Reviews should not be the end of the guest journey. They should be the beginning of the next
+improvement cycle.
+Negative feedback can automatically generate operational tasks.
+Review data integrates with Guest CRM.
+Reviews can be displayed on Direct Booking Websites.
+Reviews support translation.
+Review widgets are available.
+Review analytics support enterprise portfolios.
+AI can summarize reputation and recommend actions.
+All sensitive actions are audited.
+Tenant isolation is enforced.
+Critical review flows have automated E2E coverage.
+
+--- Page 28 ---
+Domits Reviews should transform:
+Guest Experience → Feedback → Reputation → Intelligence → Action → Better Experience
+The ultimate goal is to build the most trusted reputation and guest-feedback infrastructure in luxury
+vacation rentals, while giving Hosts actionable intelligence that directly improves their properties,
+operations, guest relationships and direct-booking performance.
+App issues
+Ideas:
+Video reviews
+iLLy-27on Mar 27, 2024 Contributor
+Travelers can leave a review on Hosts and a Host can also leave a review on different Travelers.
+Reviews can be deleted
+Reviews should have ratings (for example 1-5 stars) and should also include a clarification for such
+rating.
+App: Reviews main App: Reviews main #232
+App: Guest Dashboard (Reviews tab) App: Guest dashboard (Reviews tab) #550
+App: Host Dashboard (Reviews tab) App iOS: Host dashboard (Reviews tab) #556
+Create sub-issue
+stefanhopman1added this to the 6.3 Reviews milestone on Jan 2, 2024
+Timmhartadded this to  Domits: Webon Jan 26, 2024
+Timmhartmoved this to Todo in  Domits: Webon Jan 26, 2024
+Timmhartassigned SHvanderWilton Jan 29, 2024
+iLLy-27self-assigned thison Mar 27, 2024
+iLLy-27assigned kacperfl and unassigned SHvanderWilton Mar 27, 2024
+stefanhopman1added  on Apr 2, 2024
+L3: Epic
+
+--- Page 29 ---
+13 remaining items
+Load more
+stefanhopman1changed the title Reviews Web: Reviews main on Apr 2, 2024
+stefanhopman1mentioned this on Apr 2, 2024
+App: Reviews main #232
+stefanhopman1mentioned this on Apr 9, 2024
+Web: Property Management System (PMS) #149
+stefanhopman1unassigned iLLy-27andkacperflon Oct 28, 2024
+stefanhopman1removed this from  Domits: Webon Nov 11, 2024
+stefanhopman1mentioned this in 5 issues on Mar 23
+Website: Multi-Calendar & Pricing main (CRU) #36
+Web Host Messaging: Unified Inbox for Guest Communication (Email, Text, Whatsapp) #767
+Task Management main #2794
+Web: Finance Suite (Host Payouts, Guest Payments, Accounting) main #163
+Marketplace for integrations main issue #433
+vanheerwaardenchiel-bitmarked Website: Guest dashboard (Reviews tab) #146 as a
+duplicate of this issue on Mar 30
+vanheerwaardenchiel-bitunmarked Website: Guest dashboard (Reviews tab) #146 as a
+duplicate of this issue on Mar 30
+vanheerwaardenchiel-bitmentioned this on Mar 30
+Website: Guest dashboard (Reviews tab) #146
+vanheerwaardenchiel-bitmentioned this on May 21
+Web: Business analytic dashboards #3029
+stefanhopman1mentioned this in 2 issues on Jun 18
+Host: Business Intelligence #1490
+Channel Management: Direct Reservations Suite #2600
+
+--- Page 30 ---
+Metadata
+Please follow this repository's contributing guidelines, security policy and code of conduct.
+vanheerwaardenchiel-bitmentioned this on Jun 23
+Website: internal Customer Relation Mangement (CRM) #3136
+stefanhopman1mentioned this in 2 issues 3d ago
+Enterprise Management Capability #3174
+Use Case / Scenario Testing Review System #3208
+stefanhopman1assigned PuoK243d ago
+Add a comment
+Paste, drop, or click to add files Comment
+Write Preview
+Use Markdown to format your comment
+Close issue
+
+--- Page 31 ---
+
+
+--- Page 32 ---
+
+
+--- Page 33 ---
+
+
+--- Page 34 ---
+
+
+--- Page 35 ---
+
+
+--- Page 36 ---
+
+
+--- Page 37 ---
+
+
+--- Page 38 ---
+
+
+--- Page 39 ---
+
+
+--- Page 40 ---
+Assignees
+PuoK24
+Labels
+L2: Capability
+No type
+Type
+Fields
+Priority Choose an option
+2.9 Reviews
+Status
+Projects
+Todo
+Milestone
+No due date
+1.2.8 Web: Reviews
+None yet
+Relationships
+Create a branch for this issue or link a pull request.
+Development
+Customize
+Unsubscribe
+You're receiving notifications because you're subscribed to this thread.
+Notifications
++2
+Participants
+Open in GitHub Copilot app
+Transfer issue
+Clone issue
+Lock conversation
+2/3Pin issue
+
+--- Page 41 ---
+Give feedback

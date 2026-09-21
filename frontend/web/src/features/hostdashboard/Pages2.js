@@ -14,6 +14,7 @@ import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
 import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
   checkChannexCertificationAccess,
@@ -32,6 +33,7 @@ const NAV = [
     to: "integrations-marketplace",
   },
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
+  { key: "Reviews", label: "Reviews", icon: <ReviewsOutlinedIcon />, to: "reviews" },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },

@@ -1,215 +1,124 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Pages from "./Pages.js";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import spinner from "../../images/spinnner.gif";
-import deleteIcon from "../../images/icons/cross.png";
-import styles from './HostReviews.module.css';
-import general from './HostDashboard.module.scss'
-import { Auth } from "aws-amplify";
+import styles from "./HostReviews.module.css";
+import general from "./HostDashboard.module.scss";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import useEffectiveHostId from "../../hooks/useEffectiveHostId";
+import ReviewResponseEditor from "./components/ReviewResponseEditor";
+import { fetchHostReviews } from "./services/reviewResponseService";
+
+const formatStatus = (status) =>
+  String(status || "draft")
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/^\w/, (char) => char.toUpperCase());
+
+const getReviewDate = (review) => review?.publishedAt || review?.createdAt || review?.date || "";
+const getReviewText = (review) => review?.publicReview || review?.content || "No written review provided.";
+const getReviewTitle = (review) => review?.title || "Guest review";
 
 function HostReviews() {
-    const [reviews, setReviews] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isLoading2, setIsLoading2] = useState(true);
-    const [receivedReviews, setReceivedReviews] = useState([]);
-    const [userId, setUserId] = useState(null);
-    const navigate = useNavigate();
+  const { effectiveHostId, loading: identityLoading } = useEffectiveHostId();
+  const [reviews, setReviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-    useEffect(() => {
-        const setUserIdAsync = async () => {
-            try {
-                const userInfo = await Auth.currentUserInfo();
-                setUserId(userInfo.attributes.sub);
-            } catch (error) {
-                console.error("Error setting user id:", error);
-            }
-        };
-
-        setUserIdAsync();
-    }, []);
-
-     useEffect(() => {
-            const checkUserLoggedIn = async () => {
-                try {
-                    const userInfo = await Auth.currentUserInfo();
-                    if (userInfo) {
-                        setUserId(userInfo.attributes.sub);
-                    } else {
-                        // If no user info, redirect to the login page
-                        navigate('/login');
-                    }
-                } catch (error) {
-                    console.error("Error checking user login status:", error);
-                    history.push('/login'); // Redirect to login on error
-                }
-            };
-
-            checkUserLoggedIn();
-        }, [history]);
-
-    useEffect(() => {
-        const retrieveReviews = async () => {
-            if (!userId) {
-                console.log("No user id")
-                return;
-            }
-
-            const options = {
-                userIdFrom: userId
-            };
-            setIsLoading(true);
-            try {
-                const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews', {
-                    method: 'POST',
-                    body: JSON.stringify(options),
-                    headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                setReviews(data);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (userId) {
-            retrieveReviews();
-        }
-    }, [userId]); // This effect depends on userId, it runs when userId is set
-    useEffect(() => {
-        const retrieveReceivedReviews = async () => {
-            if (!userId) {
-                console.log("No user id")
-                return;
-            }
-            console.log(userId);
-            const options = {
-                itemIdTo: userId
-            };
-            setIsLoading2(true);
-            try {
-                const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReceivedReviews', {
-                    method: 'POST',
-                    body: JSON.stringify(options),
-                    headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                setReceivedReviews(data);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setIsLoading2(false);
-            }
-        };
-
-        if (userId) {
-            retrieveReceivedReviews();
-        }
-    }, [userId]);
-
-    const asyncDeleteReview = async (review) => {
-        if(confirm("Are you sure you want to delete this review?") == true) {
-            let reviewId = review["reviewId "];
-
-                    const options = {
-                                    "reviewId ": reviewId
-                                };
-
-                    try {
-                         const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/DeleteReview', {
-                           method: 'DELETE',
-                           body: JSON.stringify(options),
-                           headers: {
-                            'Content-type': 'application/json; charset=UTF-8',
-                             }
-                          });
-                           if (!response.ok) {
-                               throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            const updatedReviews = reviews.filter(r => r["reviewId "] !== reviewId);
-                            setReviews(updatedReviews);
-                          } catch (error) {
-                            console.error(error);
-                          }
-        }
+  const loadReviews = useCallback(async () => {
+    if (!effectiveHostId) {
+      setReviews([]);
+      setIsLoading(false);
+      return;
     }
-    return (
-        <main className="page-body">
-            <h2>Reviews</h2>
-            <div className={styles.reviewGrid}>
-                <Pages />
-                <div className={styles.contentContainer}>
-                    <div className={styles.reviewColumn}>
-                        <div className={styles.reviewBox}>
-                            <p className={styles.boxText}>My reviews ({reviews.length})</p>
-                            {isLoading ? (
-                                    <div className={general.loadingContainer}>
-                                        <img className={general.spinner} src={spinner}/>
-                                    </div>
-                                ) :
-                            reviews.length > 0 ? (
-                                reviews.map((review, index) => (
-                                    <div key={index} className={styles.reviewTab}>
-                                        <h2 className={styles.reviewHeader}>{review.title}</h2>
-                                        <p className={styles.reviewContent}>{review.content}</p>
-                                        <p className={styles.reviewDate}>Written on: {DateFormatterDD_MM_YYYY(review.date)}</p>
-                                        <button
-                                            onClick={() => asyncDeleteReview(review)}
-                                            className={styles.reviewDelete}
-                                        >
-                                            <img src={deleteIcon} className="cross" alt="Delete"></img></button>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className={styles.reviewAlert}>It appears that you have not written any reviews yet...</p>
-                            )}
-                        </div>
-                        <div className={styles.reviewBox}>
-                            <p className={styles.boxText}>Received reviews({receivedReviews.length})</p>
-                            {isLoading ? (
-                                    <div className={general.loadingContainer}>
-                                        <img className={general.spinner} src={spinner}/>
-                                    </div>
-                                ) :
-                                receivedReviews.length > 0 ? (
-                                    receivedReviews.map((receivedReview, index) => (
-                                        <div key={index} className={styles.reviewTab}>
-                                        <h2 className={styles.reviewHeader}>{receivedReview.title}</h2>
-                                        <p className={styles.reviewContent}>{receivedReview.content}</p>
-                                        <p className={styles.reviewDate}>Written on: {DateFormatterDD_MM_YYYY(receivedReview.date)}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className={styles.reviewAlert}>It appears that you have not received any reviews yet...</p>
-                            )}
-                        </div>
-                    </div>
-                    <div className={styles.reviewColumn}>
-                        <div className={styles.reviewBox}>
-                            <p className={styles.boxText}>Disputes</p>
-                        </div>
-                        <div className={styles.reviewBox}>
-                            <p className={styles.boxText}>Recent reviews</p>
-                        </div>
-                    </div>
+
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      const data = await fetchHostReviews(effectiveHostId);
+      setReviews(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setErrorMessage(error.message || "Could not load host reviews.");
+      setReviews([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [effectiveHostId]);
+
+  useEffect(() => {
+    if (!identityLoading) {
+      loadReviews();
+    }
+  }, [identityLoading, loadReviews]);
+
+  const sortedReviews = useMemo(
+    () => [...reviews].sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)),
+    [reviews]
+  );
+
+  const publicReviews = sortedReviews.filter((review) => review.status === "PUBLISHED");
+  const draftResponses = sortedReviews.filter((review) => review.response?.status === "draft");
+
+  return (
+    <main className="page-body">
+      <h2>Reviews</h2>
+      <div className={styles.reviewGrid}>
+        <div className={styles.contentContainer}>
+          <section className={styles.reviewColumnWide} aria-label="Host review responses">
+            <div className={styles.reviewBox}>
+              <div className={styles.reviewBoxHeader}>
+                <div>
+                  <p className={styles.boxText}>Received reviews ({sortedReviews.length})</p>
+                  <p className={styles.reviewSubtext}>
+                    {publicReviews.length} public, {draftResponses.length} draft responses
+                  </p>
                 </div>
+                <button type="button" className={styles.refreshButton} onClick={loadReviews} disabled={isLoading}>
+                  {isLoading ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
+
+              {identityLoading || isLoading ? (
+                <div className={general.loadingContainer} aria-busy="true">
+                  <img className={general.spinner} src={spinner} alt="Loading reviews" />
+                </div>
+              ) : errorMessage ? (
+                <p className={styles.reviewError} role="alert">
+                  {errorMessage}
+                </p>
+              ) : sortedReviews.length > 0 ? (
+                sortedReviews.map((review) => (
+                  <article key={review.id || review.reviewId} className={styles.reviewTab}>
+                    <div className={styles.reviewHeaderRow}>
+                      <div>
+                        <h3 className={styles.reviewHeader}>{getReviewTitle(review)}</h3>
+                        <p className={styles.reviewDate}>
+                          Written on: {getReviewDate(review) ? DateFormatterDD_MM_YYYY(getReviewDate(review)) : "-"}
+                        </p>
+                      </div>
+                      <span className={styles.reviewStatus}>{formatStatus(review.status)}</span>
+                    </div>
+
+                    <p className={styles.reviewContent}>{getReviewText(review)}</p>
+
+                    {review.privateFeedback && (
+                      <div className={styles.privateFeedback}>
+                        <strong>Private feedback</strong>
+                        <p>{review.privateFeedback}</p>
+                      </div>
+                    )}
+
+                    <ReviewResponseEditor review={review} onChanged={loadReviews} styles={styles} />
+                  </article>
+                ))
+              ) : (
+                <p className={styles.reviewAlert}>No received reviews are ready for response yet.</p>
+              )}
             </div>
-        </main>
-    );
+          </section>
+        </div>
+      </div>
+    </main>
+  );
 }
 
 export default HostReviews;
