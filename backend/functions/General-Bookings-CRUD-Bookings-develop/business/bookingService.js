@@ -8,7 +8,7 @@ import Unauthorized from "../util/exception/Unauthorized.js";
 import TypeException from "../util/exception/TypeException.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
-import ReservationRepository from "../data/reservationRepository.js";
+import ReservationRepository, { CONFLICT_EXISTING_BOOKING } from "../data/reservationRepository.js";
 import StripeRepository from "../data/stripeRepository.js";
 import CognitoRepository from "../data/cognitoRepository.js";
 import PropertyRepository from "../data/propertyRepository.js";
@@ -173,6 +173,10 @@ class BookingService {
     return parseBookingDateToMs(value, fieldName);
   }
 
+  getStripeClient() {
+    return this.stripeRepository.getClient();
+  }
+
   async confirmPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
     if (booking.status === BOOKING_STATUS_PAID) {
@@ -272,24 +276,28 @@ class BookingService {
     if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
     const booking = bookingResult.response;
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
-    if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
+    if (booking.status !== BOOKING_STATUS_INQUIRY) throw new BadRequestException("Booking is not in Inquiry status.");
 
-    await this.reservationRepository.updateBookingStatus(bookingId, BOOKING_STATUS_AWAITING_PAYMENT);
-
-    const overlapping = await this.reservationRepository.getOverlappingInquiries({
+    const result = await this.reservationRepository.acceptInquiryWithOverlapDecline({
+      bookingId,
       propertyId: booking.property_id,
       arrivalDateMs: booking.arrivaldate,
       departureDateMs: booking.departuredate,
-      excludeBookingId: bookingId,
     });
-    await Promise.all(overlapping.map((b) => this.reservationRepository.updateBookingStatus(b.id, "Declined")));
+
+    if (!result.accepted) {
+      if (result.reason === CONFLICT_EXISTING_BOOKING) {
+        throw new BadRequestException("Dates are no longer available for this booking.");
+      }
+      throw new BadRequestException("Booking is not in Inquiry status.");
+    }
 
     return {
       bookingId,
       status: BOOKING_STATUS_AWAITING_PAYMENT,
       hostId: booking.hostid,
       propertyId: booking.property_id,
-      declinedCount: overlapping.length,
+      declinedCount: result.declinedCount,
       dates: {
         arrivalDate: booking.arrivaldate,
         departureDate: booking.departuredate,

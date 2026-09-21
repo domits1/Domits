@@ -59,11 +59,13 @@ $color-muted: #6b7280;
 
 .host-pc-finance {
   background: #fff;
+  box-sizing: border-box;
   border-radius: $radius;
   box-shadow: $shadow;
+  min-width: 0;
   padding: 16px;
-  max-width: 100%;
-  width: 960px;
+  max-width: 960px;
+  width: 100%;
   margin: 0 auto;
   @include up($bp-md) {
     padding: 24px;
@@ -76,6 +78,14 @@ $color-muted: #6b7280;
 .finance-content {
   display: grid;
   gap: 16px;
+  min-width: 0;
+  width: 100%;
+
+  > * {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
   @include up($bp-sm) {
     gap: 20px;
   }
@@ -526,6 +536,7 @@ $color-muted: #6b7280;
 
 .payout-frequency {
   background: $muted;
+  backdrop-filter: saturate(120%);
   padding: 18px;
   border-radius: $radius;
   box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
@@ -663,10 +674,6 @@ $color-muted: #6b7280;
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.payout-frequency {
-  backdrop-filter: saturate(120%);
 }
 
 @include up($bp-lg) {
@@ -828,12 +835,105 @@ $color-muted: #6b7280;
 }
 
 .invoices-section {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
   margin-top: 32px;
+  overflow: hidden;
+  width: 100%;
 
   h3 {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 16px;
+  }
+
+  .table-wrap {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
+  }
+
+  .invoices-table {
+    background: #fff;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.88rem;
+    min-width: 1150px;
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+      border-bottom: 1px solid #eef0f2;
+      padding: 14px 16px;
+      vertical-align: middle;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    thead th {
+      background: #f8faf9;
+      color: #475467;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: normal;
+    }
+
+    tbody {
+      tr {
+        transition: background-color 0.15s ease;
+
+        &:hover {
+          background: #f8fcf8;
+        }
+
+        &:last-child td {
+          border-bottom: 0;
+        }
+      }
+    }
+  }
+
+  .invoice-number-cell {
+    color: #0d9813;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 700;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .invoice-property-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    max-width: 100%;
+    gap: 4px;
+    text-align: center;
+
+    strong,
+    span {
+      display: block;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+
+    strong {
+      color: #111827;
+      font-weight: 700;
+    }
+
+    span {
+      color: #667085;
+      font-size: 0.78rem;
+    }
   }
 }
 
@@ -869,8 +969,13 @@ $color-muted: #6b7280;
 
 .invoices-loading,
 .invoices-empty {
+  background: #f8faf9;
+  border: 1px dashed #d0d5d2;
+  border-radius: 12px;
   color: $color-muted;
   font-size: 0.9rem;
+  padding: 32px 20px;
+  text-align: center;
 }
 
 .invoices-error {
@@ -883,6 +988,7 @@ $color-muted: #6b7280;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 600;
+  white-space: nowrap;
 
   &--finalized {
     background: rgba($color-success, 0.12);
@@ -896,19 +1002,40 @@ $color-muted: #6b7280;
 }
 
 .invoice-download-btn {
-  padding: 4px 12px;
-  border-radius: 6px;
+  align-items: center;
+  box-sizing: border-box;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 12px;
+  border-radius: 8px;
   border: 1px solid $color-success;
   background: transparent;
   color: $color-success;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
+  flex: 0 0 36px;
+  width: 100%;
 
   &:hover {
     background: $color-success;
     color: #fff;
   }
+
+  &:focus-visible {
+    outline: 3px solid rgba($color-success, 0.25);
+    outline-offset: 2px;
+  }
+}
+
+.invoice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
 }
 
 @keyframes finance-skeleton-wave {

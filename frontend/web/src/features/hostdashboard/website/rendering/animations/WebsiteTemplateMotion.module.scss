@@ -16,6 +16,12 @@
   filter: blur(0) !important;
 }
 
+.scrollRevealSettled {
+  transform: none !important;
+  filter: none !important;
+  will-change: auto !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .previewCanvasAnimated [data-scroll-reveal] {
     opacity: 1;

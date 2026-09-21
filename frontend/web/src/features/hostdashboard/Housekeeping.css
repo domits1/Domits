@@ -894,6 +894,11 @@
     gap: 10px;
 }
 
+.attachment-thumb-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
 .attachment-thumb {
     display: block;
     width: 80px;
@@ -924,6 +929,28 @@
     color: #991b1b;
     font-size: 12px;
     font-weight: 700;
+}
+
+.attachment-remove-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background-color: #dc3545;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    font-size: 12px;
+}
+
+.attachment-remove-btn:hover {
+    background-color: #b02a37;
 }
 
 .activity-section {

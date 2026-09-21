@@ -5,6 +5,8 @@ import GuestDashboard from "./GuestDashboard";
 import GuestBooking from "./GuestBooking";
 import GuestPayments from "./GuestPayments";
 import GuestSettings from "./GuestSettings";
+import GuestSettingsHub from "./GuestSettingsHub";
+import GuestCommunicationPreferences from "./GuestCommunicationPreferences";
 import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
 import ReservationDetails from "./ReservationDetails";
@@ -20,7 +22,9 @@ const MainDashboardGuest = () => {
       "/guestdashboard/bookings": "Bookings",
       "/guestdashboard/messages": "Messages",
       "/guestdashboard/payments": "Payments",
-      "/guestdashboard/settings": "Settings",
+      "/guestdashboard/settings": "SettingsHub",
+      "/guestdashboard/settings/personal-data": "Settings",
+      "/guestdashboard/settings/communication-preferences": "CommunicationPreferences",
       "/guestdashboard/wishlist": "Wishlist",
     };
 
@@ -45,9 +49,14 @@ const MainDashboardGuest = () => {
       case "Payments":
         return <GuestPayments />;
 
+      case "SettingsHub":
+        return <GuestSettingsHub />;
 
       case "Settings":
         return <GuestSettings />;
+
+      case "CommunicationPreferences":
+        return <GuestCommunicationPreferences />;
 
       case "Wishlist":
         return <GuestWishlist />;

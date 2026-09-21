@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import ChannexBookingRevisionLog from "./ChannexBookingRevisionLog";
 import {
   cancelBooking,
+  connectChannex,
   getChannexAriPayloadPreview,
   getChannexAriPreview,
   getChannexAriTargets,
@@ -360,6 +361,11 @@ const createSetupSelection = () => ({
   externalPropertyId: "",
   externalRoomTypeId: "",
   externalRatePlanId: "",
+});
+
+const createConnectForm = () => ({
+  apiKey: "",
+  displayName: "",
 });
 
 const findById = (items, key, value) =>
@@ -1183,8 +1189,8 @@ ErrorCallout.propTypes = {
   }),
 };
 
-const SectionCard = ({ title, description, actions, state, children }) => (
-  <section className="channex-diagnostics-card">
+const SectionCard = ({ title, description, actions, state, children, className }) => (
+  <section className={["channex-diagnostics-card", className].filter(Boolean).join(" ")}>
     <div className="channex-diagnostics-card-header">
       <div>
         <h3>{title}</h3>
@@ -1208,6 +1214,41 @@ SectionCard.propTypes = {
     errorDetails: PropTypes.object,
   }),
   children: PropTypes.node,
+  className: PropTypes.string,
+};
+
+const getConnectButtonLabel = ({ loading, isConnected }) => {
+  if (loading) return "Connecting...";
+  return isConnected ? "Reconnect" : "Connect";
+};
+
+// A 200 response does not mean the key works: the backend stores the credential first and
+// reports Channex's own verdict in `connected`, so a rejected key still returns 200.
+const ConnectOutcome = ({ result }) => (
+  <>
+    {result.connected ? (
+      <p className="host-integrations-success-banner">Channex credentials verified and connected.</p>
+    ) : (
+      <ErrorCallout error="Channex rejected these credentials. The key was stored, but the integration is not usable yet." />
+    )}
+    <DetailGrid
+      items={[
+        { label: "Connected", value: result.connected ? "Yes" : "No" },
+        { label: "Validation state", value: result.validationState },
+        { label: "Provider status", value: result.providerStatus },
+        { label: "Integration account", value: result.integration?.id },
+      ]}
+    />
+  </>
+);
+
+ConnectOutcome.propTypes = {
+  result: PropTypes.shape({
+    connected: PropTypes.bool,
+    validationState: PropTypes.string,
+    providerStatus: PropTypes.string,
+    integration: PropTypes.object,
+  }).isRequired,
 };
 
 const ACTION_CONFIG = [
@@ -1263,6 +1304,9 @@ function ChannexDiagnosticsPanel({ userId }) {
   const [setupRatePlansState, setSetupRatePlansState] = useState(createRequestState);
   const [setupMappingState, setSetupMappingState] = useState(createRequestState);
   const [setupSelection, setSetupSelection] = useState(createSetupSelection);
+  const [connectForm, setConnectForm] = useState(createConnectForm);
+  const [connectState, setConnectState] = useState(createRequestState);
+  const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [actionStates, setActionStates] = useState({});
   const [modifyBookingForm, setModifyBookingForm] = useState(MODIFY_BOOKING_DEMO_DEFAULTS);
   const [modifyBookingState, setModifyBookingState] = useState(createRequestState);
@@ -1414,6 +1458,40 @@ function ChannexDiagnosticsPanel({ userId }) {
       externalRatePlanId,
     }));
     setSetupMappingState(createRequestState());
+  };
+
+  const submitChannexConnect = async () => {
+    const apiKey = connectForm.apiKey.trim();
+    if (!apiKey) {
+      setConnectState({
+        loading: false,
+        error: "Enter a Channex API key before connecting.",
+        errorDetails: null,
+        data: null,
+      });
+      return null;
+    }
+
+    const data = await runRequest({
+      setState: setConnectState,
+      request: () =>
+        connectChannex({
+          userId,
+          apiKey,
+          displayName: connectForm.displayName.trim(),
+        }),
+    });
+
+    if (data) {
+      // Keep the entered key when Channex rejected it, so a typo can be corrected without re-pasting.
+      if (data.connected) {
+        setConnectForm(createConnectForm());
+        setApiKeyVisible(false);
+      }
+      await refreshStatus();
+    }
+
+    return data;
   };
 
   const saveSetupMapping = async () => {
@@ -1583,6 +1661,8 @@ function ChannexDiagnosticsPanel({ userId }) {
   };
 
   const status = statusState.data || {};
+  const connectResult = connectState.data;
+  const isConnected = String(status.status || "").toUpperCase() === "CONNECTED";
   const targets = targetsState.data || {};
   const latestEvidence = latestEvidenceState.data?.item || null;
   const ariPreview = ariPreviewState.data || {};
@@ -1644,6 +1724,52 @@ function ChannexDiagnosticsPanel({ userId }) {
 
   const renderSetup = () => (
     <div className="channex-diagnostics-grid">
+      <SectionCard
+        title="Channex credentials"
+        description="Connect this Domits host account to Channex with a user API key generated in the Channex profile settings."
+        state={connectState}
+        className="channex-diagnostics-card--credentials channex-diagnostics-card--align-top">
+        <form
+          className="host-integrations-field-grid"
+          onSubmit={(event) => {
+            event.preventDefault();
+            submitChannexConnect();
+          }}>
+          <label className="host-integrations-field">
+            <span>Channex API key</span>
+            <input
+              type={apiKeyVisible ? "text" : "password"}
+              value={connectForm.apiKey}
+              autoComplete="off"
+              placeholder="Channex user API key"
+              onChange={(event) => setConnectForm((current) => ({ ...current, apiKey: event.target.value }))}
+            />
+          </label>
+          <label className="host-integrations-field">
+            <span>Display name (optional)</span>
+            <input
+              value={connectForm.displayName}
+              placeholder="Channex"
+              onChange={(event) => setConnectForm((current) => ({ ...current, displayName: event.target.value }))}
+            />
+          </label>
+
+          <div className="channex-diagnostics-actions">
+            <button
+              type="button"
+              className="host-integrations-secondary-btn"
+              onClick={() => setApiKeyVisible((current) => !current)}>
+              {apiKeyVisible ? "Hide API key" : "Show API key"}
+            </button>
+            <button type="submit" className="host-integrations-primary-btn" disabled={!userId || connectState.loading}>
+              {getConnectButtonLabel({ loading: connectState.loading, isConnected })}
+            </button>
+          </div>
+        </form>
+
+        {connectResult ? <ConnectOutcome result={connectResult} /> : null}
+      </SectionCard>
+
       <SectionCard
         title="Setup & Connection"
         description="Admin-only single-unit mapping setup for one Domits property, one Channex property, one room type, and one rate plan."
@@ -1778,6 +1904,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         title="Current mapping readiness"
         description="Readiness after setup save, or the latest readiness loaded for the selected Domits property."
         state={targetsState}
+        className="channex-diagnostics-card--align-top"
       >
         {targetsState.data ? (
           <>
