@@ -257,7 +257,7 @@ export class DirectBookingWebsiteDomainRepository {
     const normalizedDomain = String(domain || "").trim().toLowerCase();
 
     const rows = await client.query(
-      `INSERT INTO ${tableName} (
+      `INSERT INTO ${tableName} AS existing (
         id,
         site_id,
         domain,
@@ -272,13 +272,13 @@ export class DirectBookingWebsiteDomainRepository {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       ON CONFLICT (domain)
       DO UPDATE SET
-        site_id = EXCLUDED.site_id,
         domain_type = EXCLUDED.domain_type,
         status = EXCLUDED.status,
         is_primary = EXCLUDED.is_primary,
         verification_details_json = EXCLUDED.verification_details_json,
         last_checked_at = EXCLUDED.last_checked_at,
         updated_at = EXCLUDED.updated_at
+      WHERE existing.site_id = EXCLUDED.site_id
       RETURNING
         id,
         site_id,

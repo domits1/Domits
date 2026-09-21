@@ -343,6 +343,12 @@ export class WebsiteCustomDomainService {
       }),
       lastCheckedAt: this.clock(),
     });
+    if (!record) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
+        `${normalizedDomain} was connected to another website while it was being set up.`
+      );
+    }
 
     await this.recordEventSafely(site, EVENT_DOMAIN_REQUESTED, {
       siteId: site.id,

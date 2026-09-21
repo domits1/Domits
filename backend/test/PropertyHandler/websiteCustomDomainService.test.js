@@ -142,6 +142,78 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
   });
 
+  it("answers domain_taken and changes nothing when a delayed claim finds the row now belongs to another site", async () => {
+    const domainRepository = buildDomainRepository({ ensureDomain: jest.fn().mockResolvedValue(null) });
+    const { service, tenantRepository, eventRepository } = buildService({ domainRepository });
+
+    await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
+      statusCode: 409,
+    });
+
+    expect(domainRepository.ensureDomain).toHaveBeenCalledTimes(1);
+    expect(domainRepository.ensureDomain).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: SITE.id, domain: DOMAIN })
+    );
+    expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
+    expect(tenantRepository.createTenant).not.toHaveBeenCalled();
+    expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
+    expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("keeps a stale claim from clearing another site's tenant reference and disabling its tenant", async () => {
+    const siteB = { id: "site-2", hostId: "host-2", propertyId: "property-2", status: "PUBLISHED" };
+    const tenantB = { ...TENANT, id: "dt_b", name: "dbw-site-2" };
+    const rowOfB = buildRecord({
+      id: "domain-b",
+      siteId: siteB.id,
+      status: "ACTIVE",
+      verificationDetails: { tenantId: tenantB.id },
+    });
+    const domainRepository = buildDomainRepository({
+      ensureDomain: jest.fn().mockResolvedValue(null),
+      getCustomDomainBySiteId: jest.fn(async (siteId) => (siteId === siteB.id ? rowOfB : null)),
+      countDomainsByTenantId: jest.fn(async (tenantId) => (tenantId === tenantB.id ? 1 : 0)),
+    });
+    const tenantRepository = buildTenantRepository({
+      getTenant: jest.fn().mockResolvedValue(tenantB),
+      getTenantByDomain: jest.fn().mockResolvedValue(tenantB),
+    });
+    const { service } = buildService({ domainRepository, tenantRepository });
+
+    await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
+    });
+    await expect(service.syncCustomDomain({ site: SITE })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+    });
+
+    expect(tenantRepository.createTenant).not.toHaveBeenCalled();
+    expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
+    expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+    expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
+    expect(await domainRepository.getCustomDomainBySiteId(siteB.id)).toBe(rowOfB);
+  });
+
+  it("reclaims the site's own tenant-less row without touching CloudFront", async () => {
+    const ownRow = buildRecord({ verificationDetails: { tenantId: null, reason: "dns_required" } });
+    const domainRepository = buildDomainRepository({
+      getDomainByName: jest.fn().mockResolvedValue(ownRow),
+      getCustomDomainBySiteId: jest.fn().mockResolvedValue(ownRow),
+    });
+    const { service, tenantRepository } = buildService({ domainRepository });
+
+    const record = await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
+
+    expect(domainRepository.ensureDomain).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: SITE.id, domain: DOMAIN, domainType: "CUSTOM", status: "PENDING" })
+    );
+    expect(record.siteId).toBe(SITE.id);
+    expect(record.verificationDetails.reason).toBe("dns_required");
+    expect(tenantRepository.createTenant).not.toHaveBeenCalled();
+  });
+
   it("stores the claim with the CNAME instruction and leaves CloudFront alone until the DNS record exists", async () => {
     const { service, domainRepository, tenantRepository, eventRepository } = buildService();
 
