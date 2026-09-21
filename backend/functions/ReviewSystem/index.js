@@ -84,64 +84,97 @@ const isReviewsCollectionPath = (event) => normalizePath(event) === "/reviews";
 const isPropertyReviewsPath = (event) => Boolean(getPropertyIdFromReviewsPath(event));
 const isReviewDetailPath = (event) => Boolean(getReviewIdFromPath(event));
 
-export const handler = async (event) => {
+const addDomitsPrivateFeedbackPathParameters = (event) => ({
+  ...event,
+  pathParameters: {
+    ...(event.pathParameters || {}),
+    id: getDomitsPrivateFeedbackReviewIdFromPath(event),
+  },
+});
+
+const routeEvent = (event) => withReviewResponsePathParameters(withPropertyReviewPathParameters(withReviewId(event)));
+
+const ROUTES = [
+  {
+    method: "GET",
+    matches: (event) => Boolean(getDomitsPrivateFeedbackReviewIdFromPath(event)),
+    prepare: (event) => addDomitsPrivateFeedbackPathParameters(routeEvent(event)),
+    handle: (controller, event) => controller.getDomitsPrivateFeedback(event),
+  },
+  {
+    method: "POST",
+    matches: (event) => getReviewResponseRouteFromPath(event)?.action === "response",
+    prepare: routeEvent,
+    handle: (controller, event) => controller.saveDraftResponse(event),
+  },
+  {
+    method: "POST",
+    matches: (event) => getReviewResponseRouteFromPath(event)?.action === "publish",
+    prepare: routeEvent,
+    handle: (controller, event) => controller.publishResponse(event),
+  },
+  {
+    method: "PATCH",
+    matches: (event) => getReviewResponseRouteFromPath(event)?.action === "response",
+    prepare: routeEvent,
+    handle: (controller, event) => controller.editResponse(event),
+  },
+  {
+    method: "DELETE",
+    matches: (event) => getReviewResponseRouteFromPath(event)?.action === "response",
+    prepare: routeEvent,
+    handle: (controller, event) => controller.deleteResponse(event),
+  },
+  {
+    method: "POST",
+    matches: isReviewsCollectionPath,
+    prepare: routeEvent,
+    handle: (controller, event) => controller.create(event),
+  },
+  {
+    method: "GET",
+    matches: (event) => isReviewsCollectionPath(event) || isPropertyReviewsPath(event),
+    prepare: routeEvent,
+    handle: (controller, event) => controller.get(event),
+  },
+  {
+    method: "GET",
+    matches: isReviewDetailPath,
+    prepare: routeEvent,
+    handle: (controller, event) => controller.getById(event),
+  },
+  {
+    method: "PATCH",
+    matches: isReviewDetailPath,
+    prepare: routeEvent,
+    handle: (controller, event) => controller.update(event),
+  },
+];
+
+const notFoundResponse = () => ({
+  statusCode: 404,
+  headers: responseHeaders,
+  body: JSON.stringify({ message: "Route not found." }),
+});
+
+const getController = () => {
   if (!controller) {
     controller = new ReviewController();
   }
 
+  return controller;
+};
+
+export const handler = async (event) => {
+  const reviewController = getController();
+
   if (event.httpMethod === "OPTIONS") {
-    return controller.options();
+    return reviewController.options();
   }
 
-  const responseRoute = getReviewResponseRouteFromPath(event);
-  const domitsPrivateFeedbackReviewId = getDomitsPrivateFeedbackReviewIdFromPath(event);
-  const routedEvent = withReviewResponsePathParameters(withPropertyReviewPathParameters(withReviewId(event)));
+  const route = ROUTES.find((candidate) => candidate.method === event.httpMethod && candidate.matches(event));
 
-  if (event.httpMethod === "GET" && domitsPrivateFeedbackReviewId) {
-    return controller.getDomitsPrivateFeedback({
-      ...routedEvent,
-      pathParameters: {
-        ...(routedEvent.pathParameters || {}),
-        id: domitsPrivateFeedbackReviewId,
-      },
-    });
-  }
+  if (!route) return notFoundResponse();
 
-  if (event.httpMethod === "POST" && responseRoute?.action === "response") {
-    return controller.saveDraftResponse(routedEvent);
-  }
-
-  if (event.httpMethod === "POST" && responseRoute?.action === "publish") {
-    return controller.publishResponse(routedEvent);
-  }
-
-  if (event.httpMethod === "PATCH" && responseRoute?.action === "response") {
-    return controller.editResponse(routedEvent);
-  }
-
-  if (event.httpMethod === "DELETE" && responseRoute?.action === "response") {
-    return controller.deleteResponse(routedEvent);
-  }
-
-  if (event.httpMethod === "POST" && isReviewsCollectionPath(event)) {
-    return controller.create(routedEvent);
-  }
-
-  if (event.httpMethod === "GET" && (isReviewsCollectionPath(event) || isPropertyReviewsPath(event))) {
-    return controller.get(routedEvent);
-  }
-
-  if (event.httpMethod === "GET" && isReviewDetailPath(event)) {
-    return controller.getById(routedEvent);
-  }
-
-  if (event.httpMethod === "PATCH" && isReviewDetailPath(event)) {
-    return controller.update(routedEvent);
-  }
-
-  return {
-    statusCode: 404,
-    headers: responseHeaders,
-    body: JSON.stringify({ message: "Route not found." }),
-  };
+  return route.handle(reviewController, route.prepare(event));
 };

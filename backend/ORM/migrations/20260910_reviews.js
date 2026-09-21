@@ -15,6 +15,7 @@ export class Reviews20260910 {
         private_feedback TEXT,
         verification_status VARCHAR(50) NOT NULL DEFAULT 'VERIFIED_STAY',
         publication_status VARCHAR(50) NOT NULL DEFAULT 'PUBLISHED',
+        status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
         created_at BIGINT NOT NULL,
         updated_at BIGINT NOT NULL,
         PRIMARY KEY (id)
@@ -67,6 +68,7 @@ export class Reviews20260910 {
         private_feedback TEXT,
         verification_status VARCHAR(50) NOT NULL DEFAULT 'VERIFIED_STAY',
         publication_status VARCHAR(50) NOT NULL DEFAULT 'PUBLISHED',
+        status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
         created_at BIGINT NOT NULL,
         updated_at BIGINT NOT NULL,
         PRIMARY KEY (id)

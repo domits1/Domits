@@ -48,9 +48,12 @@ export class ReviewsEntities20260911 {
         CREATE TABLE IF NOT EXISTS ${schema}.review_response (
           id VARCHAR(255) NOT NULL,
           review_id VARCHAR(255) NOT NULL,
-          responder_user_id VARCHAR(255) NOT NULL,
-          public_response TEXT NOT NULL,
-          status VARCHAR(50) NOT NULL DEFAULT 'SUBMITTED',
+          author_id VARCHAR(255) NOT NULL,
+          author_role VARCHAR(100) NOT NULL,
+          message TEXT NOT NULL,
+          status VARCHAR(50) NOT NULL DEFAULT 'draft',
+          published_at BIGINT,
+          deleted_at BIGINT,
           created_at BIGINT NOT NULL,
           updated_at BIGINT NOT NULL,
           PRIMARY KEY (id)

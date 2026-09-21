@@ -47,6 +47,7 @@ class ReviewService {
       });
   }
 
+  // Property reviews are public; booking, host, and personal views stay scoped to the authenticated caller.
   async getReviews(event) {
     const query = event.queryStringParameters || {};
     const propertyId = query.propertyId || event.pathParameters?.propertyId;
@@ -61,12 +62,12 @@ class ReviewService {
     }
 
     if (query.bookingId) {
-      const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+      const user = await this.getAuthenticatedUser(event);
       return this.reviewRepository.getReviewsByBookingForUser(query.bookingId, user.sub);
     }
 
     if (query.mine === "true") {
-      const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+      const user = await this.getAuthenticatedUser(event);
       return this.reviewRepository.getReviewsWrittenByUser(user.sub);
     }
 
@@ -74,7 +75,7 @@ class ReviewService {
   }
 
   async getHostReviews(event, hostId) {
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+    const user = await this.getAuthenticatedUser(event);
     await this.assertHostReviewAccess(user, hostId);
 
     return {
@@ -121,6 +122,7 @@ class ReviewService {
     }
   }
 
+  // Published detail views use the public DTO so private reviewer and Domits feedback never leaks by id.
   async getReviewById(event, reviewId) {
     const review = await this.reviewRepository.getReviewById(reviewId);
 
@@ -132,7 +134,7 @@ class ReviewService {
       return { review: this.reviewRepository.toPublicReview(review) };
     }
 
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+    const user = await this.getAuthenticatedUser(event);
 
     if (review.reviewerUserId !== user.sub && review.hostId !== user.sub) {
       throw new ForbiddenException("You are not allowed to view this review.");
@@ -141,8 +143,9 @@ class ReviewService {
     return { review };
   }
 
+  // Eligibility is checked before records are built so duplicate, stay-window, and booking errors stop one workflow.
   async createReview(event) {
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+    const user = await this.getAuthenticatedUser(event);
     const body = this.parseBody(event.body);
 
     await this.validateCreateReviewPayload(body);
@@ -183,14 +186,12 @@ class ReviewService {
     return this.reviewRepository.createReviewWithRatings(review, ratings, workflowRecords);
   }
 
+  // Internal Domits feedback is audited on read because it is intentionally hidden from hosts and public DTOs.
   async getDomitsPrivateFeedback(event) {
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+    const user = await this.getAuthenticatedUser(event);
     this.assertDomitsInternalAccess(user);
 
-    const reviewId = event.pathParameters?.id;
-    if (!reviewId) {
-      throw new BadRequestException("Missing review id.");
-    }
+    const reviewId = this.getRequiredReviewId(event);
 
     const review = await this.reviewRepository.getReviewById(reviewId);
     if (!review) {
@@ -212,14 +213,11 @@ class ReviewService {
     return { feedback };
   }
 
+  // Content edits and status transitions have different actors, so each rule is enforced before persistence.
   async updateReview(event) {
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
-    const reviewId = event.pathParameters?.id || event.queryStringParameters?.id;
+    const user = await this.getAuthenticatedUser(event);
+    const reviewId = this.getRequiredReviewId(event, { allowQueryString: true });
     const body = this.parseBody(event.body);
-
-    if (!reviewId) {
-      throw new BadRequestException("Missing review id.");
-    }
 
     await this.validateUpdateReviewPayload(body);
 
@@ -228,12 +226,7 @@ class ReviewService {
       throw new NotFoundException("Review not found.");
     }
 
-    const isContentUpdate =
-      body.title !== undefined ||
-      body.publicReview !== undefined ||
-      body.privateFeedback !== undefined ||
-      body.overallRating !== undefined ||
-      body.categoryRatings !== undefined;
+    const isContentUpdate = this.hasReviewContentUpdate(body);
 
     if (isContentUpdate && review.reviewerUserId !== user.sub) {
       throw new ForbiddenException("Only the author can update review content.");
@@ -277,13 +270,10 @@ class ReviewService {
     return this.reviewRepository.updateReviewWithRatings(reviewId, updateData, ratings, workflowRecords);
   }
 
+  // Reviews are soft-deleted to preserve the moderation and booking history tied to the stay.
   async deleteReview(event) {
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
-    const reviewId = event.pathParameters?.id || event.queryStringParameters?.id;
-
-    if (!reviewId) {
-      throw new BadRequestException("Missing review id.");
-    }
+    const user = await this.getAuthenticatedUser(event);
+    const reviewId = this.getRequiredReviewId(event, { allowQueryString: true });
 
     const review = await this.reviewRepository.getReviewById(reviewId);
     if (!review) {
@@ -306,13 +296,9 @@ class ReviewService {
   }
 
   async editResponse(event) {
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
-    const reviewId = event.pathParameters?.id;
+    const user = await this.getAuthenticatedUser(event);
+    const reviewId = this.getRequiredReviewId(event);
     const body = this.parseBody(event.body);
-
-    if (!reviewId) {
-      throw new BadRequestException("Missing review id.");
-    }
 
     this.validateResponseMessage(body.message);
 
@@ -342,12 +328,8 @@ class ReviewService {
   }
 
   async deleteResponse(event) {
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
-    const reviewId = event.pathParameters?.id;
-
-    if (!reviewId) {
-      throw new BadRequestException("Missing review id.");
-    }
+    const user = await this.getAuthenticatedUser(event);
+    const reviewId = this.getRequiredReviewId(event);
 
     const review = await this.getResponseEligibleReview(reviewId);
     await this.assertHostReviewAccess(user, review.hostId);
@@ -375,13 +357,9 @@ class ReviewService {
   }
 
   async upsertResponse(event, status) {
-    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
-    const reviewId = event.pathParameters?.id;
+    const user = await this.getAuthenticatedUser(event);
+    const reviewId = this.getRequiredReviewId(event);
     const body = this.parseBody(event.body);
-
-    if (!reviewId) {
-      throw new BadRequestException("Missing review id.");
-    }
 
     this.validateResponseMessage(body.message);
 
@@ -402,10 +380,7 @@ class ReviewService {
       status,
       message: body.message.trim(),
       updatedAt: now,
-      publishedAt:
-        status === REVIEW_RESPONSE_STATUSES.PUBLISHED
-          ? existingResponse?.publishedAt || now
-          : null,
+      publishedAt: status === REVIEW_RESPONSE_STATUSES.PUBLISHED ? existingResponse?.publishedAt || now : null,
       deletedAt: null,
     };
 
@@ -429,6 +404,34 @@ class ReviewService {
     });
 
     return { response };
+  }
+
+  async getAuthenticatedUser(event) {
+    return this.authManager.authenticate(this.getAuthorizationHeader(event));
+  }
+
+  getAuthorizationHeader(event) {
+    return event.headers?.Authorization || event.headers?.authorization;
+  }
+
+  getRequiredReviewId(event, { allowQueryString = false } = {}) {
+    const reviewId = event.pathParameters?.id || (allowQueryString ? event.queryStringParameters?.id : null);
+
+    if (!reviewId) {
+      throw new BadRequestException("Missing review id.");
+    }
+
+    return reviewId;
+  }
+
+  hasReviewContentUpdate(body) {
+    return (
+      body.title !== undefined ||
+      body.publicReview !== undefined ||
+      body.privateFeedback !== undefined ||
+      body.overallRating !== undefined ||
+      body.categoryRatings !== undefined
+    );
   }
 
   async validateCreateReviewPayload(body) {
@@ -743,7 +746,7 @@ class ReviewService {
 
   parseBody(rawBody) {
     try {
-      return typeof rawBody === "string" ? JSON.parse(rawBody || "{}") : rawBody || {};
+      return typeof rawBody === "string"? JSON.parse(rawBody || "{}") : rawBody || {};
     } catch {
       throw new BadRequestException("Request body must be valid JSON.");
     }

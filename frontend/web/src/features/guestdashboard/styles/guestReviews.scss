@@ -46,6 +46,7 @@
 .guestReviewHistoryError {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   border: 1px solid #f0b8b8;
   border-radius: 8px;
@@ -58,6 +59,10 @@
   svg {
     width: 20px;
     height: 20px;
+  }
+
+  span {
+    flex: 1 1 240px;
   }
 }
 

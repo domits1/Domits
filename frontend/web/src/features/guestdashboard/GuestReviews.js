@@ -55,7 +55,6 @@ function GuestReviews() {
       setReviews(Array.isArray(data) ? data : []);
     } catch (error) {
       setErrorMessage(error.message || "Could not load your reviews.");
-      setReviews([]);
     } finally {
       setLoading(false);
     }
@@ -96,15 +95,17 @@ function GuestReviews() {
         </button>
       </header>
 
-      {errorMessage && (
+      {loading ? (
+        <div className="guestReviewHistoryState">Loading reviews...</div>
+      ) : errorMessage ? (
         <div className="guestReviewHistoryError" role="alert">
           <ErrorOutlineRoundedIcon aria-hidden="true" />
           <span>{errorMessage}</span>
+          <button type="button" className="guestReviewHistoryRefreshButton" onClick={loadReviews}>
+            <RefreshRoundedIcon aria-hidden="true" />
+            Retry
+          </button>
         </div>
-      )}
-
-      {loading ? (
-        <div className="guestReviewHistoryState">Loading reviews...</div>
       ) : sortedReviews.length === 0 ? (
         <section className="guestReviewHistoryEmpty">
           <RateReviewRoundedIcon aria-hidden="true" />

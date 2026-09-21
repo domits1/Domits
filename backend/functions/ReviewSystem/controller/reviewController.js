@@ -15,109 +15,56 @@ class ReviewController {
   }
 
   async get(event) {
-    try {
-      const result = await this.reviewService.getReviews(event);
-      return this.ok(result);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.getReviews(event));
   }
 
   async getById(event) {
-    try {
-      const result = await this.reviewService.getReviewById(event, event.pathParameters?.id);
-      return this.ok(result);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.getReviewById(event, event.pathParameters?.id));
   }
 
   async getDomitsPrivateFeedback(event) {
-    try {
-      const result = await this.reviewService.getDomitsPrivateFeedback(event);
-      return this.ok(result);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.getDomitsPrivateFeedback(event));
   }
 
   async create(event) {
-    try {
-      const result = await this.reviewService.createReview(event);
-      return {
-        statusCode: 201,
-        headers: responseHeaders,
-        body: JSON.stringify(result),
-      };
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.createReview(event), 201);
   }
 
   async update(event) {
-    try {
-      const result = await this.reviewService.updateReview(event);
-      return this.ok(result);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.updateReview(event));
   }
 
   async saveDraftResponse(event) {
-    try {
-      const result = await this.reviewService.saveDraftResponse(event);
-      return this.ok(result);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.saveDraftResponse(event));
   }
 
   async publishResponse(event) {
-    try {
-      const result = await this.reviewService.publishResponse(event);
-      return this.ok(result);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.publishResponse(event));
   }
 
   async editResponse(event) {
-    try {
-      const result = await this.reviewService.editResponse(event);
-      return this.ok(result);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.editResponse(event));
   }
 
   async deleteResponse(event) {
-    try {
-      const result = await this.reviewService.deleteResponse(event);
-      return this.ok(result);
-    } catch (error) {
-      return this.handleError(error);
-    }
+    return this.respond(() => this.reviewService.deleteResponse(event));
   }
 
   async delete(event) {
+    return this.respond(() => this.reviewService.deleteReview(event));
+  }
+
+  async respond(action, statusCode = 200) {
     try {
-      const result = await this.reviewService.deleteReview(event);
+      const result = await action();
       return {
-        statusCode: 200,
+        statusCode,
         headers: responseHeaders,
         body: JSON.stringify(result),
       };
     } catch (error) {
       return this.handleError(error);
     }
-  }
-
-  ok(result) {
-    return {
-      statusCode: 200,
-      headers: responseHeaders,
-      body: JSON.stringify(result),
-    };
   }
 
   handleError(error) {

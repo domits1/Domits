@@ -2,8 +2,21 @@
 
 import { getAccessToken } from "../../../services/getAccessToken";
 
-export const REVIEW_API_BASE =
-  process.env.REACT_APP_REVIEW_API_BASE || "https://YOUR_REVIEW_API_URL/reviews";
+export const getReviewApiBase = () => String(process.env.REACT_APP_REVIEW_API_BASE || "").trim().replace(/\/+$/, "");
+
+const requireReviewApiBase = () => {
+  const reviewApiBase = getReviewApiBase();
+
+  if (!reviewApiBase) {
+    throw new Error("Review service is not configured.");
+  }
+
+  return reviewApiBase;
+};
+
+const buildReviewUrl = (path = "") => `${requireReviewApiBase()}${path}`;
+
+const buildReviewCollectionUrl = () => new URL(requireReviewApiBase(), window.location.origin);
 
 const parseJsonResponse = async (response) => {
   const responseText = await response.text().catch(() => "");
@@ -20,7 +33,7 @@ const parseJsonResponse = async (response) => {
 };
 
 export async function createReview(payload) {
-  const response = await fetch(REVIEW_API_BASE, {
+  const response = await fetch(buildReviewUrl(), {
     method: "POST",
     headers: {
       Authorization: getAccessToken(),
@@ -39,7 +52,7 @@ export async function createReview(payload) {
 }
 
 export async function getReviewById(reviewId) {
-  const response = await fetch(`${REVIEW_API_BASE}/${encodeURIComponent(reviewId)}`, {
+  const response = await fetch(buildReviewUrl(`/${encodeURIComponent(reviewId)}`), {
     method: "GET",
     headers: {
       Authorization: getAccessToken(),
@@ -56,7 +69,7 @@ export async function getReviewById(reviewId) {
 }
 
 export async function updateReview(reviewId, payload) {
-  const response = await fetch(`${REVIEW_API_BASE}/${encodeURIComponent(reviewId)}`, {
+  const response = await fetch(buildReviewUrl(`/${encodeURIComponent(reviewId)}`), {
     method: "PATCH",
     headers: {
       Authorization: getAccessToken(),
@@ -75,7 +88,7 @@ export async function updateReview(reviewId, payload) {
 }
 
 export async function getGuestReviewHistory() {
-  const requestUrl = new URL(REVIEW_API_BASE);
+  const requestUrl = buildReviewCollectionUrl();
   requestUrl.searchParams.set("mine", "true");
 
   const response = await fetch(requestUrl.toString(), {
