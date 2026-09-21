@@ -3296,6 +3296,7 @@ export class PropertyController {
             const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
 
             if (existingSite?.id) {
+                await this.releaseWebsiteCustomDomainSafely(existingSite);
                 await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
                 await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);
             }
@@ -3325,6 +3326,18 @@ export class PropertyController {
                 return this.badRequest(error.message);
             }
             return this.websiteServerError();
+        }
+    }
+
+    async releaseWebsiteCustomDomainSafely(site) {
+        const customDomain = await this.directBookingWebsiteDomainRepository.getCustomDomainBySiteId(site.id);
+        if (!customDomain?.verificationDetails?.tenantId) {
+            return;
+        }
+        try {
+            await this.getWebsiteCustomDomainService().releaseTenantForSite({ site, record: customDomain });
+        } catch (error) {
+            console.error(`[CustomDomain] disabling the tenant for ${customDomain.domain} on website delete failed (site ${site.id}).`, error);
         }
     }
 
