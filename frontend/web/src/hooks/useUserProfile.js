@@ -89,6 +89,9 @@ export default function useUserProfile() {
     if (name === "email" && emailError) {
       setEmailError("");
     }
+    if (name === "email" && emailSuccess) {
+      setEmailSuccess(false);
+    }
   };
 
   const handleDateOfBirthChange = (date) => {

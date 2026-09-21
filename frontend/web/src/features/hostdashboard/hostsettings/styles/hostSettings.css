@@ -308,6 +308,7 @@
 
 .pd-field {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: 16px;
 }
@@ -415,12 +416,14 @@
 }
 
 .pd-field-error {
+    flex-basis: 100%;
     font-size: 0.78rem;
     color: #dc2626;
     margin: 4px 0 0 136px;
 }
 
 .pd-field-success {
+    flex-basis: 100%;
     font-size: 0.78rem;
     color: #15803d;
     margin: 4px 0 0 136px;

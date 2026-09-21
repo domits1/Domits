@@ -511,6 +511,24 @@ describe("useUserProfile", () => {
     expect(saveResult).toBe(true);
   });
 
+  test("onInputChange clears emailSuccess when the email field changes again", async () => {
+    confirmEmailChange.mockResolvedValue({ success: true });
+    const result = await getIntoEmailVerifyingState();
+
+    act(() => {
+      result.current.onVerificationInputChange({ target: { value: "123456" } });
+    });
+    await act(async () => {
+      await result.current.onSaveUserEmail();
+    });
+    expect(result.current.emailSuccess).toBe(true);
+
+    act(() => {
+      result.current.onInputChange({ target: { name: "email", value: "edited-again@example.com" } });
+    });
+    expect(result.current.emailSuccess).toBe(false);
+  });
+
   // ─── Save date of birth ───────────────────────────────────────────────────
 
   test("onSaveUserDateOfBirth: sets dateOfBirthError when date is empty", async () => {

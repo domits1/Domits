@@ -22,6 +22,8 @@ import {
 
 const contentByLanguage = { en, nl, de, es };
 
+const fixedPopperProps = { strategy: "fixed" };
+
 const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, stripPhone, onPhoneChange }) => {
     const selectRef = useRef(null);
 
@@ -173,7 +175,7 @@ const PersonalDataForm = ({
                                 {t.photo.remove}
                             </button>
                         </div>
-                        {photoError && <p className="pd-field-error">{photoError}</p>}
+                        {photoError && <p className="pd-field-error" role="alert">{photoError}</p>}
                         <input
                             ref={photoInputRef}
                             type="file"
@@ -242,6 +244,7 @@ const PersonalDataForm = ({
                                         onChange={onVerificationInputChange}
                                         className="pd-field-input"
                                         placeholder={t.fields.verificationCode}
+                                        aria-describedby={emailError ? "pd-email-error" : undefined}
                                     />
                                     <button
                                         type="button"
@@ -260,10 +263,21 @@ const PersonalDataForm = ({
                                     onChange={onInputChange}
                                     className="pd-field-input"
                                     placeholder={t.fields.emailAddress}
+                                    aria-describedby={
+                                        emailError ? "pd-email-error" : emailSuccess ? "pd-email-success" : undefined
+                                    }
                                 />
                             )}
-                            {emailError && <p className="pd-field-error">{emailError}</p>}
-                            {emailSuccess && <p className="pd-field-success">{t.fields.emailUpdated}</p>}
+                            {emailError && (
+                                <p id="pd-email-error" className="pd-field-error" role="alert">
+                                    {emailError}
+                                </p>
+                            )}
+                            {emailSuccess && (
+                                <p id="pd-email-success" className="pd-field-success" role="status">
+                                    {t.fields.emailUpdated}
+                                </p>
+                            )}
                         </div>
 
                         <div className="pd-field">
@@ -311,8 +325,15 @@ const PersonalDataForm = ({
                                 showMonthDropdown
                                 dropdownMode="select"
                                 wrapperClassName="pd-field-input-wrapper"
+                                portalId="datepicker-portal"
+                                popperProps={fixedPopperProps}
+                                ariaDescribedBy={dateOfBirthError ? "pd-dob-error" : undefined}
                             />
-                            {dateOfBirthError && <p className="pd-field-error">{dateOfBirthError}</p>}
+                            {dateOfBirthError && (
+                                <p id="pd-dob-error" className="pd-field-error" role="alert">
+                                    {dateOfBirthError}
+                                </p>
+                            )}
                         </div>
 
                         <div className="pd-field">
@@ -344,6 +365,7 @@ const PersonalDataForm = ({
                                     value={tempUser.nationality || ""}
                                     onChange={onInputChange}
                                     className="pd-field-input pd-field-select"
+                                    aria-describedby={nationalityError ? "pd-nationality-error" : undefined}
                                 >
                                     <option value="">{t.fields.nationality}</option>
                                     {placeOfBirthOptions.map((country) => (
@@ -353,7 +375,11 @@ const PersonalDataForm = ({
                                     ))}
                                 </select>
                             </div>
-                            {nationalityError && <p className="pd-field-error">{nationalityError}</p>}
+                            {nationalityError && (
+                                <p id="pd-nationality-error" className="pd-field-error" role="alert">
+                                    {nationalityError}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
