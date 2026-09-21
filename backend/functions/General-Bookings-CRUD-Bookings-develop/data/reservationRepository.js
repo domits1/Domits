@@ -562,6 +562,7 @@ class ReservationRepository {
       return {
         response: query,
         statusCode: 200,
+        persisted: true,
       };
     } catch (error) {
       if (error instanceof TypeORMError) {
@@ -569,7 +570,8 @@ class ReservationRepository {
           `Could not update special_request for booking ${id} (column/table not yet migrated):`,
           error.message
         );
-        return await this.getBookingById(id);
+        const fallback = await this.getBookingById(id);
+        return { ...fallback, persisted: false };
       }
       throw error;
     }
