@@ -619,6 +619,102 @@ describe("ContactList manual mark read/unread", () => {
     expect(within(reservationHostRow).queryByText("Mark as read")).not.toBeInTheDocument();
     expect(within(reservationHostRow).queryByText("Mark as unread")).not.toBeInTheDocument();
   });
+
+  test("two legacy contacts without a threadId, sharing the same partner but different bookings, keep independent menu state", () => {
+    const legacyBookingA = {
+      partnerId: "guest-legacy",
+      hostId: "host-1",
+      guestId: "guest-legacy",
+      givenName: "Legacy Booking A",
+      threadId: null,
+      propertyId: "property-A",
+      bookingId: "booking-A",
+      unreadCount: 0,
+      latestMessage: { text: "Hi from A", createdAt: "2026-06-01T09:00:00.000Z" },
+    };
+    const legacyBookingB = {
+      partnerId: "guest-legacy",
+      hostId: "host-1",
+      guestId: "guest-legacy",
+      givenName: "Legacy Booking B",
+      threadId: null,
+      propertyId: "property-B",
+      bookingId: "booking-B",
+      unreadCount: 3,
+      latestMessage: { text: "Hi from B", createdAt: "2026-06-02T09:00:00.000Z" },
+    };
+
+    renderForManualAction([legacyBookingA, legacyBookingB]);
+
+    expect(screen.getAllByLabelText("Conversation actions")).toHaveLength(2);
+
+    const rows = screen.getAllByRole("listitem");
+    const rowA = rows.find((row) => within(row).queryByText("Legacy Booking A"));
+    const rowB = rows.find((row) => within(row).queryByText("Legacy Booking B"));
+
+    fireEvent.click(within(rowA).getByLabelText("Conversation actions"));
+
+    expect(within(rowA).getByRole("menu")).toBeInTheDocument();
+    expect(within(rowB).queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  test("completing Mark as unread must not discard an unread message that arrived from realtime while the request was in flight", async () => {
+    let resolveMarkUnread;
+    markThreadUnread.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMarkUnread = resolve;
+        })
+    );
+
+    const contact = { ...manualActionContact, unreadCount: 0 };
+    const setContacts = jest.fn();
+
+    const buildElement = (wsMessage) => (
+      <WebSocketContext.Provider value={{ messages: wsMessage ? [wsMessage] : [] }}>
+        <ContactList
+          userId="host-1"
+          dashboardType="host"
+          contacts={[contact]}
+          pendingContacts={[]}
+          loading={false}
+          setContacts={setContacts}
+          onContactClick={jest.fn()}
+          onCloseChat={jest.fn()}
+          onNewMessage={jest.fn()}
+          capabilities={getMessageCapabilities("host")}
+        />
+      </WebSocketContext.Provider>
+    );
+
+    const { rerender } = render(buildElement(null));
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as unread"));
+
+    await waitFor(() => {
+      expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    // A genuine new incoming message arrives via realtime while the request is still in flight.
+    rerender(
+      buildElement({
+        userId: "+31612345678",
+        senderId: "+31612345678",
+        recipientId: "host-1",
+        text: "Are you still there?",
+        threadId: "thread-1",
+        createdAt: "2026-06-01T10:20:00.000Z",
+      })
+    );
+
+    resolveMarkUnread({ threadId: "thread-1", updated: 1 });
+
+    await waitFor(() => {
+      const finalState = setContacts.mock.calls.reduce((state, [updaterFn]) => updaterFn(state), [contact]);
+      expect(finalState[0].unreadCount).toBe(2);
+    });
+  });
 });
 
 describe("ContactList search filtering", () => {

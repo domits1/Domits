@@ -29,6 +29,24 @@ const resolvePartnerId = (contact, selfUserId) => {
   return picked || null;
 };
 
+// Row/menu identity, kept separate from the simpler key that drives the "active" highlight.
+// A thread gives a unique identity on its own. Without one (legacy contacts), the same
+// partner can have several distinct conversations, so the same dimensions used by
+// useFetchContacts' getContactMergeKey (partner + property/booking + platform) disambiguate
+// them, otherwise two such rows collapse onto the same key and share one menu.
+const buildRowMenuKey = (contact, selfUserId) => {
+  if (contact?.threadId) return contact.threadId;
+
+  const partnerId = resolvePartnerId(contact, selfUserId);
+  if (!partnerId) return null;
+
+  const propertyId = contact?.propertyId || contact?.AccoId || "";
+  const bookingId = contact?.bookingId || contact?.bookingid || "";
+  const platform = String(contact?.platform || "DOMITS").toUpperCase();
+
+  return ["participants", partnerId, propertyId, bookingId, platform].join(":");
+};
+
 const resolveContactName = (contact) => {
   if (!contact) return "Unknown";
   const direct = contact.givenName || contact.name || contact.fullName || contact.displayName || contact.contactName;
@@ -157,11 +175,15 @@ const markContactThreadReadLocally = (prevContacts, threadId) =>
     c?.threadId && String(c.threadId) === String(threadId) ? { ...c, unreadCount: 0 } : c
   );
 
-// Only called after a POST /threads/{id}/unread confirmation returns its updated count,
-// so local state never guesses ahead of what the backend actually flipped.
+// Only called after a POST /threads/{id}/unread confirmation returns its updated count.
+// Adds that confirmed flip on top of whatever unreadCount is locally current, rather than
+// overwriting it, so a genuine realtime message that arrived while the request was still
+// in flight (already incremented via upsertContactFromIncoming) isn't discarded.
 const markContactThreadUnreadLocally = (prevContacts, threadId, updatedCount) =>
   (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
-    c?.threadId && String(c.threadId) === String(threadId) ? { ...c, unreadCount: updatedCount } : c
+    c?.threadId && String(c.threadId) === String(threadId)
+      ? { ...c, unreadCount: (c.unreadCount || 0) + updatedCount }
+      : c
   );
 
 const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) => {
@@ -307,7 +329,7 @@ const ContactList = ({
     const partnerId = resolvePartnerId(contact, userId);
     if (!partnerId) return;
 
-    const key = contact?.threadId || partnerId;
+    const key = buildRowMenuKey(contact, userId);
     setContextMenu({ visible: true, contactKey: key, contact });
   };
 
@@ -417,8 +439,9 @@ const ContactList = ({
         contact?.id ||
         contact?.latestMessage?.id ||
         `${contact?.latestMessage?.createdAt || "unknown"}-${resolveContactName(contact)}`;
-      const key = contact?.threadId || partnerId || fallbackKey;
-      const isActive = selectedKey === key;
+      const activeKey = contact?.threadId || partnerId || fallbackKey;
+      const key = buildRowMenuKey(contact, userId) || fallbackKey;
+      const isActive = selectedKey === activeKey;
       const isMenuOpenForRow = capabilities.canManageConversation && contextMenu.visible && contextMenu.contactKey === key;
 
       return (

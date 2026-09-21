@@ -243,7 +243,7 @@ class MessageRepository {
       .createQueryBuilder()
       .update(UnifiedMessage)
       .set({ isRead: false })
-      .where({ id: messageId })
+      .where({ id: messageId, isRead: true })
       .execute();
     return result?.affected ?? 0;
   }
