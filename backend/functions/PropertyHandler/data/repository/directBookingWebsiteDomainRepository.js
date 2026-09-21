@@ -86,6 +86,19 @@ const normalizeJsonObject = (value) => {
 
 const normalizeTimestamp = (value) => (value == null ? null : Number(value));
 
+const runStatement = async (client, statement, parameters) => {
+  const queryRunner = client.createQueryRunner();
+  try {
+    const result = await queryRunner.query(statement, parameters, true);
+    return {
+      records: Array.isArray(result?.records) ? result.records : [],
+      affected: Number(result?.affected) || 0,
+    };
+  } finally {
+    await queryRunner.release();
+  }
+};
+
 const mapSiteDomainRow = (row) => {
   if (!row) {
     return null;
@@ -115,14 +128,15 @@ export class DirectBookingWebsiteDomainRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
 
-    const rows = await client.query(
+    const { affected } = await runStatement(
+      client,
       `DELETE FROM ${tableName}
       WHERE id = $1 AND site_id = $2
       RETURNING id`,
       [domainId, siteId]
     );
 
-    return Array.isArray(rows) && rows.length > 0;
+    return affected > 0;
   }
 
   async deleteDomainsBySiteId(siteId) {
@@ -300,7 +314,8 @@ export class DirectBookingWebsiteDomainRepository {
     const normalizedStatus = normalizeDomainStatus(status);
     const now = Date.now();
 
-    const rows = await client.query(
+    const { records } = await runStatement(
+      client,
       `UPDATE ${tableName}
       SET
         status = $2,
@@ -309,20 +324,11 @@ export class DirectBookingWebsiteDomainRepository {
         updated_at = $4
       WHERE site_id = $1 AND domain_type = 'FALLBACK'
       RETURNING
-        id,
-        site_id,
-        domain,
-        domain_type,
-        status,
-        is_primary,
-        verification_details_json,
-        last_checked_at,
-        created_at,
-        updated_at`,
+        ${SITE_DOMAIN_SELECT_COLUMNS}`,
       [siteId, normalizedStatus, normalizeJsonObject(verificationDetails), now]
     );
 
-    return mapSiteDomainRow(rows?.[0] || null);
+    return mapSiteDomainRow(records[0] || null);
   }
 
   async updatePrimaryLiveDomainStatus(siteId, status, verificationDetails = {}) {
@@ -336,7 +342,8 @@ export class DirectBookingWebsiteDomainRepository {
     const normalizedStatus = normalizeDomainStatus(status);
     const now = Date.now();
 
-    const rows = await client.query(
+    const { records } = await runStatement(
+      client,
       `UPDATE ${tableName}
       SET
         status = $3,
@@ -349,7 +356,7 @@ export class DirectBookingWebsiteDomainRepository {
       [domainId, siteId, normalizedStatus, normalizeJsonObject(verificationDetails), now]
     );
 
-    return mapSiteDomainRow(rows?.[0] || null);
+    return mapSiteDomainRow(records[0] || null);
   }
 
   async updateDomainVerificationDetailsById(domainId, siteId, verificationDetails = {}) {
@@ -358,7 +365,8 @@ export class DirectBookingWebsiteDomainRepository {
     const tableName = siteDomainTableName(schemaName);
     const now = Date.now();
 
-    const rows = await client.query(
+    const { records } = await runStatement(
+      client,
       `UPDATE ${tableName}
       SET
         verification_details_json = $3,
@@ -370,6 +378,6 @@ export class DirectBookingWebsiteDomainRepository {
       [domainId, siteId, normalizeJsonObject(verificationDetails), now]
     );
 
-    return mapSiteDomainRow(rows?.[0] || null);
+    return mapSiteDomainRow(records[0] || null);
   }
 }
