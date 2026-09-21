@@ -241,12 +241,12 @@ function GuestBooking() {
   const inquiryBookings = useMemo(() => getInquiryBookings(bookings), [bookings]);
 
   useEffect(() => {
-    const combined = [...paidBookings, ...cancelledBookings];
+    const combined = [...paidBookings, ...cancelledBookings, ...inquiryBookings];
     if (!combined.length) return;
 
     const ids = Array.from(new Set(combined.map((b) => getPropertyId(b)).filter(Boolean)));
     if (ids.length) fetchPropertyDetails(ids);
-  }, [paidBookings, cancelledBookings, fetchPropertyDetails]);
+  }, [paidBookings, cancelledBookings, inquiryBookings, fetchPropertyDetails]);
 
   const handleBookingClick = (bookingItem) => {
     const bookingId = getBookingId(bookingItem);

@@ -5,9 +5,10 @@ import { updateBookingSpecialRequest } from "../services/bookingAPI";
 
 function SpecialRequestsSection({ bookingId, specialRequest, onUpdated }) {
   const [value, setValue] = useState(specialRequest || "");
+  const [savedValue, setSavedValue] = useState(specialRequest || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const hasChanges = value !== (specialRequest || "");
+  const hasChanges = value !== savedValue;
 
   const handleSubmit = async () => {
     if (!bookingId || isSubmitting) {
@@ -17,10 +18,15 @@ function SpecialRequestsSection({ bookingId, specialRequest, onUpdated }) {
     setIsSubmitting(true);
 
     try {
-      await updateBookingSpecialRequest(bookingId, value);
-      toast.success("Special request updated.");
-      if (onUpdated) {
-        onUpdated(value);
+      const result = await updateBookingSpecialRequest(bookingId, value);
+      if (result?.persisted === false) {
+        toast.error("Special requests aren't available yet — try again later.");
+      } else {
+        toast.success("Special request updated.");
+        setSavedValue(value);
+        if (onUpdated) {
+          onUpdated(value);
+        }
       }
     } catch (error) {
       console.error("Failed to update special request:", error);
