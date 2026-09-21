@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useContext } from "react";
 import { WebSocketContext } from "../context/webSocketContext";
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { getIdToken } from "../../../../services/getAccessToken";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
@@ -236,7 +236,7 @@ export const useFetchMessages = (userId) => {
 
       let token = null;
       try {
-        token = requireToken(options.accessToken || getAccessToken());
+        token = requireToken(options.accessToken || (await getIdToken()));
       } catch (authError) {
         setError(authError);
         setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: prev[recipientId] || [] }));

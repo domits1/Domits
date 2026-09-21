@@ -40,7 +40,7 @@ const DEFAULT_NEW_TASK = {
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
-const AttachmentThumb = ({ attachment }) => {
+const AttachmentThumb = ({ attachment, onRemove }) => {
     const [url, setUrl] = React.useState(null);
 
     React.useEffect(() => {
@@ -59,15 +59,28 @@ const AttachmentThumb = ({ attachment }) => {
     const isPdf = name.endsWith('.pdf');
 
     return (
-        <a href={url} target="_blank" rel="noreferrer" className="attachment-thumb">
-            {isPdf ? <div className="attachment-pdf-icon">PDF</div> : <img src={url} alt={name} />}
-        </a>
+        <div className="attachment-thumb-wrapper">
+            <a href={url} target="_blank" rel="noreferrer" className="attachment-thumb">
+                {isPdf ? <div className="attachment-pdf-icon">PDF</div> : <img src={url} alt={name} />}
+            </a>
+            {onRemove && (
+                <button
+                    type="button"
+                    className="attachment-remove-btn"
+                    aria-label={`Remove ${name}`}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
+                >
+                    <LuX />
+                </button>
+            )}
+        </div>
     );
 };
 
 
 AttachmentThumb.propTypes = {
     attachment: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.string]).isRequired,
+    onRemove: PropTypes.func,
 };
 
 const isTaskOverdue = (task, todayStr) => (
@@ -246,6 +259,17 @@ const HostPropertyCare = () => {
         { value: 'Medium', label: 'Medium', cls: 'priority-medium' },
         { value: 'High',   label: 'High',   cls: 'priority-high' },
         { value: 'Urgent', label: 'Urgent', cls: 'priority-urgent' },
+    ];
+    const TASK_TYPE_OPTIONS = [
+        'Cleaning',
+        'Maintenance',
+        'Inspection',
+        'Mid-stay',
+        'Sanitation',
+        'Check-in',
+        'Inventory',
+        'Administration',
+        'Issue',
     ];
 
     const [propertyOptions, setPropertyOptions] = useState([]);
@@ -542,6 +566,13 @@ const HostPropertyCare = () => {
         setEditedTask(prev => ({
             ...prev,
             attachments: [...(prev.attachments || []), ...files],
+        }));
+    };
+
+    const handleRemoveAttachment = (index) => {
+        setEditedTask(prev => ({
+            ...prev,
+            attachments: (prev.attachments || []).filter((_, i) => i !== index),
         }));
     };
 
@@ -1614,12 +1645,11 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-type'>Type</label>
-                                <div className="radio-group">
-                                    <label><input type="radio" id='task-type-cleaning' name="type" value="Cleaning" checked={newTask.type === 'Cleaning'} onChange={handleInputChange} /> Cleaning</label>
-                                    <label><input type="radio" id='task-type-maintenance' name="type" value="Maintenance" checked={newTask.type === 'Maintenance'} onChange={handleInputChange} /> Maintenance</label>
-                                    <label><input type="radio" id='task-type-inspection' name="type" value="Inspection" checked={newTask.type === 'Inspection'} onChange={handleInputChange} /> Inspection</label>
-                                    <label><input type="radio" id='task-type-administration' name="type" value="Administration" checked={newTask.type === 'Administration'} onChange={handleInputChange} /> Administration</label>
-                                </div>
+                                <select id='task-type' name="type" value={newTask.type} onChange={handleInputChange} required>
+                                    {TASK_TYPE_OPTIONS.map(option => (
+                                        <option key={option} value={option}>{option}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-assignee'>Assignee</label>
@@ -1752,10 +1782,9 @@ const HostPropertyCare = () => {
                                 <div className="form-group">
                                     <label htmlFor='task-type'>Type</label>
                                     <select id='task-type' name="type" value={editedTask.type} onChange={handleEditChange}>
-                                        <option value="Cleaning">Cleaning</option>
-                                        <option value="Maintenance">Maintenance</option>
-                                        <option value="Inspection">Inspection</option>
-                                        <option value="Administration">Administration</option>
+                                        {TASK_TYPE_OPTIONS.map(option => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -1764,7 +1793,7 @@ const HostPropertyCare = () => {
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor='task-due-date'>Due Date</label>
-                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} onClick={(e) => e.target.showPicker?.()} />
+                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} min={getTodayString()} onChange={handleEditChange} onClick={(e) => e.target.showPicker?.()} />
                                 </div>
                             </div>
 
@@ -1778,8 +1807,12 @@ const HostPropertyCare = () => {
                                         <p className="no-attachments-text">No attachments yet.</p>
                                     ) : (
                                         <div className="attachments-grid">
-                                            {editedTask.attachments.map((f) => (
-                                                <AttachmentThumb key={f instanceof File ? f.name : f} attachment={f} />
+                                            {editedTask.attachments.map((f, index) => (
+                                                <AttachmentThumb
+                                                    key={f instanceof File ? f.name : f}
+                                                    attachment={f}
+                                                    onRemove={() => handleRemoveAttachment(index)}
+                                                />
                                             ))}
                                         </div>
                                     )}

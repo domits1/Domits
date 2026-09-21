@@ -328,7 +328,9 @@ const pushGroupedPayloads = async ({
   }
 
   return {
-    success: results.every((result) => result.success),
+    // [].every(...) is vacuously true, so an empty batch must be checked for explicitly:
+    // otherwise pushing nothing would report the same success as pushing everything.
+    success: results.length > 0 && results.every((result) => result.success),
     results,
   };
 };

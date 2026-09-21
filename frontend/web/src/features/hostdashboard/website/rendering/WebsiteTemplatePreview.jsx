@@ -188,6 +188,7 @@ export function WebsiteTemplateSurface({
   browserTitle = "",
   onSelectTarget,
   activeTargetId = "",
+  quoteContext = null,
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
@@ -234,6 +235,7 @@ export function WebsiteTemplateSurface({
             model={model}
             onSelectTarget={onSelectTarget}
             activeTargetId={activeTargetId}
+            quoteContext={quoteContext}
           />
         ) : (
           <UnsupportedTemplatePreview templateName={template.name} />
@@ -252,6 +254,7 @@ export function WebsiteTemplateSurface({
 
 WebsiteTemplateSurface.propTypes = {
   templateId: PropTypes.string.isRequired,
+  quoteContext: PropTypes.shape({ siteId: PropTypes.string }),
   model: websiteTemplatePreviewModelPropType,
   viewport: PropTypes.oneOf(["desktop", "tablet", "mobile"]),
   showContactWidget: PropTypes.bool,

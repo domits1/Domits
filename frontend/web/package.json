@@ -128,7 +128,7 @@
     "sass": "^1.86.1",
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
-    "swiper": "^11.1.14",
+    "swiper": "^12.1.2",
     "zustand": "^5.0.3"
   },
   "eslintConfig": {
@@ -148,5 +148,9 @@
     "moduleNameMapper": {
       "^axios$": "axios/dist/node/axios.cjs"
     }
+  },
+  "overrides": {
+    "shell-quote": "1.10.0",
+    "websocket-driver": "0.7.5"
   }
 }

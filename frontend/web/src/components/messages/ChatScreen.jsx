@@ -178,6 +178,7 @@ const ChatScreen = ({
       bookingId: bookingId || null,
       isSent: true,
       platform: resolvedPlatform,
+      deliveryStatus: "pending",
     };
 
     isNearBottomRef.current = true;
@@ -206,6 +207,7 @@ const ChatScreen = ({
         threadId: saved?.threadId || optimistic.threadId,
         bookingId: saved?.bookingId || optimistic.bookingId,
         platform: saved?.platform || resolvedPlatform,
+        deliveryStatus: saved?.deliveryStatus,
       };
 
       setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? finalMsg : m)));

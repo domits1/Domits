@@ -3,20 +3,31 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { sendTeamInviteEmail } from "../emailService.js";
+import { ALLOWED_TEAM_MEMBER_ROLES, DEFAULT_TEAM_MEMBER_ROLE } from "../../util/roles.js";
 import { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 import Database from "database";
 
 const cognitoClient = new CognitoIdentityProviderClient({ region: "eu-north-1" });
 const USER_POOL_ID = "eu-north-1_mPxNhvSFX";
 
+export const normalizeRole = (role) => {
+    if (!role) return DEFAULT_TEAM_MEMBER_ROLE;
+    const normalized = String(role).trim();
+    if (!ALLOWED_TEAM_MEMBER_ROLES.includes(normalized)) {
+        throw new BadRequestException(`role must be one of: ${ALLOWED_TEAM_MEMBER_ROLES.join(", ")}.`);
+    }
+    return normalized;
+};
+
 export class Service {
-    constructor() {
-        this.repository = new Repository();
+    constructor({ repository = new Repository() } = {}) {
+        this.repository = repository;
     }
 
     async inviteMember(hostId, hostEmail, email, role) {
         if (!email) throw new BadRequestException("Email is required.");
 
+        const normalizedRole = normalizeRole(role);
         const dataSource = await Database.getInstance();
 
         const existing = await this.repository.findByHostAndEmail(dataSource, hostId, email);
@@ -27,7 +38,7 @@ export class Service {
         const record = {
             host_id: hostId,
             member_email: email,
-            role: role || "Property Operations Manager",
+            role: normalizedRole,
             status: "pending",
             invited_at: Date.now(),
         };
@@ -47,6 +58,20 @@ export class Service {
 
         await this.repository.delete(dataSource, memberId);
         return { message: "Team member removed." };
+    }
+
+    async updateMemberRole(hostId, memberId, role) {
+        if (!role) throw new BadRequestException("Role is required.");
+        const normalizedRole = normalizeRole(role);
+
+        const dataSource = await Database.getInstance();
+
+        const member = await this.repository.findById(dataSource, memberId);
+        if (!member) throw new NotFoundException("Team member not found.");
+        if (member.host_id !== hostId) throw new ForbiddenException("You do not have permission to edit this team member.");
+
+        await this.repository.update(dataSource, memberId, { role: normalizedRole });
+        return { ...member, role: normalizedRole };
     }
 
     async getUserInfo(cognitoUsername) {
