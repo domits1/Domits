@@ -137,6 +137,25 @@ export class DirectBookingWebsiteDomainRepository {
     );
   }
 
+  async countDomainsByTenantId(tenantId) {
+    const normalizedTenantId = String(tenantId || "").trim();
+    if (!normalizedTenantId) {
+      throw new TypeError("tenantId is required.");
+    }
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    const rows = await client.query(
+      `SELECT COUNT(*)::int AS domain_count
+      FROM ${tableName}
+      WHERE POSITION($1 IN verification_details_json) > 0`,
+      [`"tenantId":"${normalizedTenantId}"`]
+    );
+
+    return Number(rows?.[0]?.domain_count) || 0;
+  }
+
   async listDomainsBySiteId(siteId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);

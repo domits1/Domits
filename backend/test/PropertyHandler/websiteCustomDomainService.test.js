@@ -47,6 +47,7 @@ const buildDomainRepository = (overrides = {}) => ({
     buildRecord({ id, siteId, verificationDetails })
   ),
   deleteDomainById: jest.fn().mockResolvedValue(true),
+  countDomainsByTenantId: jest.fn().mockResolvedValue(0),
   ...overrides,
 });
 
@@ -216,7 +217,12 @@ describe("WebsiteCustomDomainService.syncCustomDomain tenant provisioning", () =
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
     });
 
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith("domain-1", SITE.id, "PENDING", expect.anything());
+    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+      "domain-1",
+      SITE.id,
+      "PENDING",
+      expect.anything()
+    );
     expect(tenantRepository.disableTenant).toHaveBeenCalledWith({ tenantId: TENANT.id, etag: TENANT.etag });
     expect(tenantRepository.getTenant).not.toHaveBeenCalled();
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
@@ -250,7 +256,12 @@ describe("WebsiteCustomDomainService.syncCustomDomain tenant provisioning", () =
       lastError: "InvalidArgument",
       dnsInstruction: { type: "CNAME", name: DOMAIN, value: CONFIG.routingEndpoint },
     });
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith("domain-1", SITE.id, "PENDING", expect.anything());
+    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+      "domain-1",
+      SITE.id,
+      "PENDING",
+      expect.anything()
+    );
     expect(tenantRepository.getTenant).not.toHaveBeenCalled();
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
   });
@@ -273,7 +284,184 @@ describe("WebsiteCustomDomainService.syncCustomDomain tenant provisioning", () =
     expect(eventRepository.recordEvent).toHaveBeenCalledTimes(1);
     expect(eventRepository.recordEvent.mock.calls[0][0]).toMatchObject({
       eventType: "SITE_DOMAIN_FAILED",
-      payload: expect.objectContaining({ previousStatus: "PENDING", status: "FAILED", reason: "domain_in_use_elsewhere" }),
+      payload: expect.objectContaining({
+        previousStatus: "PENDING",
+        status: "FAILED",
+        reason: "domain_in_use_elsewhere",
+      }),
+    });
+  });
+
+  describe("orphaned tenant cleanup on CNAMEAlreadyExists", () => {
+    const ORPHAN = {
+      etag: "EORPHAN",
+      id: "dt_orphan",
+      name: "dbw-site-9",
+      enabled: false,
+      status: "Deployed",
+      distributionId: CONFIG.distributionId,
+      connectionGroupId: CONFIG.connectionGroupId,
+      certificateArn: null,
+      domains: [{ domain: DOMAIN, status: "inactive" }],
+    };
+    const cnameOnceThenCreate = () =>
+      jest.fn().mockRejectedValueOnce(namedError("CNAMEAlreadyExists")).mockResolvedValue(TENANT);
+
+    it("deletes a disabled, deployed, unreferenced dbw- tenant holding the domain and creates the tenant on retry", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue(ORPHAN),
+      });
+      const { service, domainRepository } = buildService({ tenantRepository });
+
+      const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+      expect(domainRepository.countDomainsByTenantId).toHaveBeenCalledWith(ORPHAN.id);
+      expect(tenantRepository.deleteTenant).toHaveBeenCalledWith({ tenantId: ORPHAN.id, etag: ORPHAN.etag });
+      expect(tenantRepository.createTenant).toHaveBeenCalledTimes(2);
+      expect(record.verificationDetails).toMatchObject({
+        tenantId: TENANT.id,
+        reason: "certificate_pending",
+        lastError: null,
+      });
+      expect(record.status).toBe("PENDING");
+    });
+
+    it.each([
+      ["still enabled", { ...ORPHAN, enabled: true }],
+      ["still rolling out", { ...ORPHAN, status: "InProgress" }],
+      ["not created by Domits", { ...ORPHAN, name: "developers-test" }],
+      ["on another distribution", { ...ORPHAN, distributionId: "E99OTHER" }],
+    ])("never deletes a tenant that is %s and answers as before", async (_label, tenant) => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue(tenant),
+      });
+      const { service, domainRepository } = buildService({ tenantRepository });
+
+      const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+      expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+      expect(domainRepository.countDomainsByTenantId).not.toHaveBeenCalled();
+      expect(tenantRepository.createTenant).toHaveBeenCalledTimes(1);
+      expect(record.status).toBe("FAILED");
+      expect(record.verificationDetails).toMatchObject({
+        reason: "domain_in_use_elsewhere",
+        lastError: "CNAMEAlreadyExists",
+      });
+    });
+
+    it("never deletes a tenant that a domain row still references, even when it looks abandoned", async () => {
+      const domainRepository = buildDomainRepository({ countDomainsByTenantId: jest.fn().mockResolvedValue(1) });
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue(ORPHAN),
+      });
+      const { service } = buildService({ domainRepository, tenantRepository });
+
+      const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+      expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+      expect(tenantRepository.createTenant).toHaveBeenCalledTimes(1);
+      expect(record.status).toBe("FAILED");
+    });
+
+    it("treats a tenant that another cleanup already deleted as freed and still retries the create", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue(ORPHAN),
+        deleteTenant: jest.fn().mockResolvedValue(null),
+      });
+      const { service } = buildService({ tenantRepository });
+
+      const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+      expect(tenantRepository.createTenant).toHaveBeenCalledTimes(2);
+      expect(record.verificationDetails.tenantId).toBe(TENANT.id);
+    });
+
+    it("answers as before when the delete is refused with a stale etag and leaves the tenant alone", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue(ORPHAN),
+        deleteTenant: jest.fn().mockRejectedValue(namedError("PreconditionFailed")),
+      });
+      const { service } = buildService({ tenantRepository });
+      const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+      try {
+        const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+        expect(tenantRepository.createTenant).toHaveBeenCalledTimes(1);
+        expect(record.status).toBe("FAILED");
+        expect(record.verificationDetails).toMatchObject({
+          reason: "domain_in_use_elsewhere",
+          lastError: "CNAMEAlreadyExists",
+        });
+        expect(consoleError).toHaveBeenCalledWith(
+          expect.stringContaining(`[CustomDomain] deleting the orphaned tenant holding ${DOMAIN} failed.`),
+          expect.anything()
+        );
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
+    it("answers as before when the tenant lookup itself fails", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockRejectedValue(namedError("AccessDenied")),
+      });
+      const { service } = buildService({ tenantRepository });
+      const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+      try {
+        const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+        expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+        expect(tenantRepository.createTenant).toHaveBeenCalledTimes(1);
+        expect(record.status).toBe("FAILED");
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
+    it("frees the orphan only once: a second CNAMEAlreadyExists on the retry is stored as before", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: jest.fn().mockRejectedValue(namedError("CNAMEAlreadyExists")),
+        getTenantByDomain: jest.fn().mockResolvedValue(ORPHAN),
+      });
+      const { service, eventRepository } = buildService({ tenantRepository });
+
+      const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+      expect(tenantRepository.deleteTenant).toHaveBeenCalledTimes(1);
+      expect(tenantRepository.createTenant).toHaveBeenCalledTimes(2);
+      expect(record.status).toBe("FAILED");
+      expect(record.verificationDetails).toMatchObject({
+        reason: "domain_in_use_elsewhere",
+        lastError: "CNAMEAlreadyExists",
+      });
+      expect(eventRepository.recordEvent.mock.calls[0][0]).toMatchObject({ eventType: "SITE_DOMAIN_FAILED" });
+    });
+
+    it("wraps any other failure on the retry as TENANT_CREATE_FAILED after the orphan is gone", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: jest
+          .fn()
+          .mockRejectedValueOnce(namedError("CNAMEAlreadyExists"))
+          .mockRejectedValueOnce(namedError("AccessDenied")),
+        getTenantByDomain: jest.fn().mockResolvedValue(ORPHAN),
+      });
+      const { service, domainRepository } = buildService({ tenantRepository });
+
+      await expect(service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() })).rejects.toMatchObject(
+        {
+          code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_CREATE_FAILED,
+        }
+      );
+      expect(tenantRepository.deleteTenant).toHaveBeenCalledTimes(1);
+      expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
     });
   });
 
@@ -537,6 +725,43 @@ describe("WebsiteCustomDomainService.syncCustomDomain", () => {
   });
 });
 
+describe("WebsiteCustomDomainService.releaseTenantForSite", () => {
+  it("disables the site's enabled tenant with its current etag when the website is deleted", async () => {
+    const { service, tenantRepository } = buildService();
+
+    const result = await service.releaseTenantForSite({ site: SITE, record: buildRecord({ status: "ACTIVE" }) });
+
+    expect(tenantRepository.getTenant).toHaveBeenCalledWith(TENANT.id);
+    expect(tenantRepository.disableTenant).toHaveBeenCalledWith({ tenantId: TENANT.id, etag: TENANT.etag });
+    expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+    expect(result).toEqual(DISABLED_TENANT);
+  });
+
+  it.each([
+    [
+      "no tenant id on the row",
+      buildRecord({ verificationDetails: { tenantId: null, reason: "dns_required" } }),
+      TENANT,
+    ],
+    ["the tenant already gone", buildRecord(), null],
+    ["the tenant already disabled", buildRecord(), DISABLED_TENANT],
+    ["a tenant named for another site", buildRecord(), { ...TENANT, name: "dbw-site-2" }],
+  ])("touches nothing at CloudFront with %s", async (_label, record, tenant) => {
+    const tenantRepository = buildTenantRepository({ getTenant: jest.fn().mockResolvedValue(tenant) });
+    const { service } = buildService({ tenantRepository });
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      await service.releaseTenantForSite({ site: SITE, record });
+
+      expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
+      expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+});
+
 describe("WebsiteCustomDomainService.removeCustomDomain", () => {
   const removingRecord = () =>
     buildRecord({ status: "REMOVING", verificationDetails: { tenantId: TENANT.id, reason: "removal_requested" } });
@@ -672,7 +897,12 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.removeCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
     });
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith("domain-1", SITE.id, "REMOVING", expect.anything());
+    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+      "domain-1",
+      SITE.id,
+      "REMOVING",
+      expect.anything()
+    );
     expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
 
     const record = await service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() });

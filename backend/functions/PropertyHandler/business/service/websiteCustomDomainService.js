@@ -95,6 +95,13 @@ const isForeignTenantError = (error) =>
 const isOwnershipError = (error) =>
   error?.name === SDK_ERROR_INVALID_ARGUMENT && OWNERSHIP_ERROR_PATTERN.test(error?.message || "");
 
+export const isDeletableOrphanTenant = (tenant, distributionId) =>
+  String(tenant?.name || "").startsWith(TENANT_NAME_PREFIX) &&
+  tenant?.enabled === false &&
+  tenant?.status === CLOUDFRONT_TENANT_STATUS_DEPLOYED &&
+  Boolean(distributionId) &&
+  tenant?.distributionId === distributionId;
+
 const findTenantDomainStatus = (tenant, domain) =>
   (tenant?.domains || []).find((domainEntry) => domainEntry.domain === domain)?.status || "";
 
@@ -198,27 +205,84 @@ export class WebsiteCustomDomainService {
     try {
       return { tenant: await this.tenantRepository.createTenant(tenantInput), reason: REASON_TENANT_CREATED, lastError: null };
     } catch (error) {
-      if (error?.name === SDK_ERROR_DOMAIN_IN_USE) {
-        return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: SDK_ERROR_DOMAIN_IN_USE };
+      if (error?.name === SDK_ERROR_DOMAIN_IN_USE && (await this.freeOrphanedTenant({ domain }))) {
+        return this.retryCreateTenant({ site, domain, tenantInput });
       }
-      if (isOwnershipError(error)) {
-        return { tenant: null, reason: REASON_DNS_REQUIRED, lastError: SDK_ERROR_INVALID_ARGUMENT };
-      }
-      if (error?.name === SDK_ERROR_TENANT_NAME_EXISTS) {
-        const adoptedTenant = await this.tenantRepository.getTenantByDomain(domain);
-        if (adoptedTenant && isTenantOwnedBySite(adoptedTenant, site.id)) {
-          return { tenant: adoptedTenant, reason: REASON_TENANT_CREATED, lastError: null };
-        }
-        if (adoptedTenant) {
-          return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: LAST_ERROR_TENANT_NOT_OWNED };
-        }
-      }
-      throw new WebsiteCustomDomainError(
-        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_CREATE_FAILED,
-        `Could not create a CloudFront tenant for ${domain}.`,
-        { cause: error }
-      );
+      return this.mapTenantCreateFailure({ site, domain, error });
     }
+  }
+
+  async retryCreateTenant({ site, domain, tenantInput }) {
+    try {
+      return { tenant: await this.tenantRepository.createTenant(tenantInput), reason: REASON_TENANT_CREATED, lastError: null };
+    } catch (error) {
+      return this.mapTenantCreateFailure({ site, domain, error });
+    }
+  }
+
+  async mapTenantCreateFailure({ site, domain, error }) {
+    if (error?.name === SDK_ERROR_DOMAIN_IN_USE) {
+      return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: SDK_ERROR_DOMAIN_IN_USE };
+    }
+    if (isOwnershipError(error)) {
+      return { tenant: null, reason: REASON_DNS_REQUIRED, lastError: SDK_ERROR_INVALID_ARGUMENT };
+    }
+    if (error?.name === SDK_ERROR_TENANT_NAME_EXISTS) {
+      const adoptedTenant = await this.tenantRepository.getTenantByDomain(domain);
+      if (adoptedTenant && isTenantOwnedBySite(adoptedTenant, site.id)) {
+        return { tenant: adoptedTenant, reason: REASON_TENANT_CREATED, lastError: null };
+      }
+      if (adoptedTenant) {
+        return { tenant: null, reason: REASON_DOMAIN_IN_USE, lastError: LAST_ERROR_TENANT_NOT_OWNED };
+      }
+    }
+    throw new WebsiteCustomDomainError(
+      WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.TENANT_CREATE_FAILED,
+      `Could not create a CloudFront tenant for ${domain}.`,
+      { cause: error }
+    );
+  }
+
+  async freeOrphanedTenant({ domain }) {
+    let tenant;
+    try {
+      tenant = await this.tenantRepository.getTenantByDomain(domain);
+    } catch (error) {
+      console.error(`[CustomDomain] looking up the tenant holding ${domain} failed.`, error);
+      return false;
+    }
+    if (!isDeletableOrphanTenant(tenant, this.config.distributionId)) {
+      return false;
+    }
+    if ((await this.domainRepository.countDomainsByTenantId(tenant.id)) > 0) {
+      return false;
+    }
+    try {
+      await this.tenantRepository.deleteTenant({ tenantId: tenant.id, etag: tenant.etag });
+      return true;
+    } catch (error) {
+      console.error(`[CustomDomain] deleting the orphaned tenant holding ${domain} failed.`, error);
+      return false;
+    }
+  }
+
+  async releaseTenantForSite({ site, record }) {
+    const tenantId = record?.verificationDetails?.tenantId;
+    if (!tenantId) {
+      return null;
+    }
+    const tenant = await this.tenantRepository.getTenant(tenantId);
+    if (!tenant) {
+      return null;
+    }
+    if (!isTenantOwnedBySite(tenant, site.id)) {
+      console.error(`[CustomDomain] the tenant for ${record.domain} belongs to another website; left untouched (site ${site.id}).`);
+      return null;
+    }
+    if (!tenant.enabled) {
+      return tenant;
+    }
+    return this.tenantRepository.disableTenant({ tenantId: tenant.id, etag: tenant.etag });
   }
 
   async requestCustomDomain({ site, domain }) {
