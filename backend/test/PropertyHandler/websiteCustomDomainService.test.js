@@ -327,8 +327,98 @@ describe("WebsiteCustomDomainService.syncCustomDomain tenant provisioning", () =
       expect(record.status).toBe("PENDING");
     });
 
+    const ENABLED_ORPHAN = { ...ORPHAN, enabled: true };
+    const expectAnsweredAsBefore = (record) => {
+      expect(record.status).toBe("FAILED");
+      expect(record.verificationDetails).toMatchObject({
+        reason: "domain_in_use_elsewhere",
+        lastError: "CNAMEAlreadyExists",
+      });
+    };
+
+    it("disables an enabled unreferenced dbw- tenant of another site, logs it, and answers as before", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue(ENABLED_ORPHAN),
+      });
+      const { service, domainRepository } = buildService({ tenantRepository });
+      const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+      try {
+        const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+        expect(domainRepository.countDomainsByTenantId).toHaveBeenCalledWith(ENABLED_ORPHAN.id);
+        expect(tenantRepository.disableTenant).toHaveBeenCalledWith({
+          tenantId: ENABLED_ORPHAN.id,
+          etag: ENABLED_ORPHAN.etag,
+        });
+        expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+        expect(tenantRepository.createTenant).toHaveBeenCalledTimes(1);
+        expectAnsweredAsBefore(record);
+        expect(consoleError).toHaveBeenCalledWith(
+          expect.stringContaining(
+            `[CustomDomain] disabled the orphaned tenant ${ENABLED_ORPHAN.name} holding ${DOMAIN}`
+          )
+        );
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
+    it("leaves an enabled tenant named for the site doing the cleanup alone", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue({ ...ENABLED_ORPHAN, name: `dbw-${SITE.id}` }),
+      });
+      const { service, domainRepository } = buildService({ tenantRepository });
+
+      const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+      expect(domainRepository.countDomainsByTenantId).not.toHaveBeenCalled();
+      expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
+      expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+      expectAnsweredAsBefore(record);
+    });
+
+    it("leaves an enabled tenant that a domain row still references alone", async () => {
+      const domainRepository = buildDomainRepository({ countDomainsByTenantId: jest.fn().mockResolvedValue(1) });
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue(ENABLED_ORPHAN),
+      });
+      const { service } = buildService({ domainRepository, tenantRepository });
+
+      const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+      expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
+      expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
+      expectAnsweredAsBefore(record);
+    });
+
+    it("answers as before with a log when disabling the enabled orphan is refused with a stale etag", async () => {
+      const tenantRepository = buildTenantRepository({
+        createTenant: cnameOnceThenCreate(),
+        getTenantByDomain: jest.fn().mockResolvedValue(ENABLED_ORPHAN),
+        disableTenant: jest.fn().mockRejectedValue(namedError("PreconditionFailed")),
+      });
+      const { service } = buildService({ tenantRepository });
+      const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+      try {
+        const record = await service.syncCustomDomain({ site: SITE, domainRecord: DNS_REQUIRED_RECORD() });
+
+        expect(tenantRepository.createTenant).toHaveBeenCalledTimes(1);
+        expectAnsweredAsBefore(record);
+        expect(consoleError).toHaveBeenCalledWith(
+          expect.stringContaining(`[CustomDomain] disabling the orphaned tenant holding ${DOMAIN} failed.`),
+          expect.anything()
+        );
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
     it.each([
-      ["still enabled", { ...ORPHAN, enabled: true }],
       ["still rolling out", { ...ORPHAN, status: "InProgress" }],
       ["not created by Domits", { ...ORPHAN, name: "developers-test" }],
       ["on another distribution", { ...ORPHAN, distributionId: "E99OTHER" }],
@@ -746,6 +836,8 @@ describe("WebsiteCustomDomainService.releaseTenantForSite", () => {
     ["the tenant already gone", buildRecord(), null],
     ["the tenant already disabled", buildRecord(), DISABLED_TENANT],
     ["a tenant named for another site", buildRecord(), { ...TENANT, name: "dbw-site-2" }],
+    ["a hand-made tenant without the dbw- prefix", buildRecord(), { ...TENANT, name: "developers-test" }],
+    ["a tenant on another distribution", buildRecord(), { ...TENANT, distributionId: "E99OTHER" }],
   ])("touches nothing at CloudFront with %s", async (_label, record, tenant) => {
     const tenantRepository = buildTenantRepository({ getTenant: jest.fn().mockResolvedValue(tenant) });
     const { service } = buildService({ tenantRepository });

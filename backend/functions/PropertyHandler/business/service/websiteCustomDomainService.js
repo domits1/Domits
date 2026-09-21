@@ -95,10 +95,8 @@ const isForeignTenantError = (error) =>
 const isOwnershipError = (error) =>
   error?.name === SDK_ERROR_INVALID_ARGUMENT && OWNERSHIP_ERROR_PATTERN.test(error?.message || "");
 
-export const isDeletableOrphanTenant = (tenant, distributionId) =>
+export const isDomitsTenantOnDistribution = (tenant, distributionId) =>
   String(tenant?.name || "").startsWith(TENANT_NAME_PREFIX) &&
-  tenant?.enabled === false &&
-  tenant?.status === CLOUDFRONT_TENANT_STATUS_DEPLOYED &&
   Boolean(distributionId) &&
   tenant?.distributionId === distributionId;
 
@@ -205,7 +203,7 @@ export class WebsiteCustomDomainService {
     try {
       return { tenant: await this.tenantRepository.createTenant(tenantInput), reason: REASON_TENANT_CREATED, lastError: null };
     } catch (error) {
-      if (error?.name === SDK_ERROR_DOMAIN_IN_USE && (await this.freeOrphanedTenant({ domain }))) {
+      if (error?.name === SDK_ERROR_DOMAIN_IN_USE && (await this.freeOrphanedTenant({ site, domain }))) {
         return this.retryCreateTenant({ site, domain, tenantInput });
       }
       return this.mapTenantCreateFailure({ site, domain, error });
@@ -243,7 +241,7 @@ export class WebsiteCustomDomainService {
     );
   }
 
-  async freeOrphanedTenant({ domain }) {
+  async freeOrphanedTenant({ site, domain }) {
     let tenant;
     try {
       tenant = await this.tenantRepository.getTenantByDomain(domain);
@@ -251,10 +249,20 @@ export class WebsiteCustomDomainService {
       console.error(`[CustomDomain] looking up the tenant holding ${domain} failed.`, error);
       return false;
     }
-    if (!isDeletableOrphanTenant(tenant, this.config.distributionId)) {
+    if (!isDomitsTenantOnDistribution(tenant, this.config.distributionId)) {
+      return false;
+    }
+    if (tenant.name === this.buildTenantName(site.id)) {
+      return false;
+    }
+    if (!tenant.enabled && tenant.status !== CLOUDFRONT_TENANT_STATUS_DEPLOYED) {
       return false;
     }
     if ((await this.domainRepository.countDomainsByTenantId(tenant.id)) > 0) {
+      return false;
+    }
+    if (tenant.enabled) {
+      await this.disableOrphanedTenant({ tenant, domain });
       return false;
     }
     try {
@@ -263,6 +271,15 @@ export class WebsiteCustomDomainService {
     } catch (error) {
       console.error(`[CustomDomain] deleting the orphaned tenant holding ${domain} failed.`, error);
       return false;
+    }
+  }
+
+  async disableOrphanedTenant({ tenant, domain }) {
+    try {
+      await this.tenantRepository.disableTenant({ tenantId: tenant.id, etag: tenant.etag });
+      console.error(`[CustomDomain] disabled the orphaned tenant ${tenant.name} holding ${domain}; the next check can delete it once it is deployed.`);
+    } catch (error) {
+      console.error(`[CustomDomain] disabling the orphaned tenant holding ${domain} failed.`, error);
     }
   }
 
@@ -275,14 +292,18 @@ export class WebsiteCustomDomainService {
     if (!tenant) {
       return null;
     }
-    if (!isTenantOwnedBySite(tenant, site.id)) {
-      console.error(`[CustomDomain] the tenant for ${record.domain} belongs to another website; left untouched (site ${site.id}).`);
+    if (!this.isTenantCreatedForSite(tenant, site.id)) {
+      console.error(`[CustomDomain] the tenant for ${record.domain} was not created for this website; left untouched (site ${site.id}).`);
       return null;
     }
     if (!tenant.enabled) {
       return tenant;
     }
     return this.tenantRepository.disableTenant({ tenantId: tenant.id, etag: tenant.etag });
+  }
+
+  isTenantCreatedForSite(tenant, siteId) {
+    return tenant?.name === this.buildTenantName(siteId) && tenant?.distributionId === this.config.distributionId;
   }
 
   async requestCustomDomain({ site, domain }) {
