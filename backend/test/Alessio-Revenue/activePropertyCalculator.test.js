@@ -13,7 +13,6 @@ describe('Enterprise Active Property Counting', () => {
   });
 
   test('should call Property.count with correct active property filter and calculate monthly total', async () => {
-    // Mock Property.count to return 300 active properties
     Property.count.mockResolvedValue(300);
 
     const enterpriseId = 'test_enterprise_123';
@@ -22,7 +21,6 @@ describe('Enterprise Active Property Counting', () => {
     const pricePerProperty = 49;
     const totalCost = activeCount * pricePerProperty;
 
-    // Verify Property.count was called with active status criteria
     expect(Property.count).toHaveBeenCalledWith({
       where: {
         enterprise_id: enterpriseId,
@@ -31,7 +29,6 @@ describe('Enterprise Active Property Counting', () => {
       }
     });
 
-    // Verify property count and calculation
     expect(activeCount).toBe(300);
     expect(totalCost).toBe(14700);
   });
