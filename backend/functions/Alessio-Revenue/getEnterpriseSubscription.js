@@ -1,28 +1,46 @@
-const { getActivePropertyCount } = require('./activePropertyCalculator');
-const EnterpriseRatePlan = require('database/models/EnterpriseRatePlan');
+import { getEnterpriseBillingDetails } from "./activePropertyCalculator.js";
 
-exports.handler = async (event) => {
-  const enterpriseId = event.pathParameters.enterpriseId;
+export const handler = async (event) => {
+  const enterpriseId = event.pathParameters?.enterpriseId;
 
-  const plan = await EnterpriseRatePlan.findOne({
-    where: { enterprise_id: enterpriseId, status: 'active' }
-  });
+  if (!enterpriseId) {
+    return {
+      statusCode: 400,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: "enterpriseId is required",
+      }),
+    };
+  }
 
-  const activeProperties = await getActivePropertyCount(enterpriseId);
-  const pricePerProperty = plan ? Number.parseFloat(plan.price_per_property) : 49.00;
-  const estimatedMonthlyCost = activeProperties * pricePerProperty;
+  try {
+    const billingDetails =
+      await getEnterpriseBillingDetails(enterpriseId);
 
-  return {
-    statusCode: 200,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      enterpriseId,
-      planName: "Enterprise",
-      pricePerProperty,
-      currency: plan ? plan.currency : 'USD',
-      activeProperties,
-      estimatedMonthlyCost,
-      nextBillingDate: "2026-10-01"
-    })
-  };
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        enterpriseId,
+        planName: "Enterprise",
+        ...billingDetails,
+      }),
+    };
+  } catch (error) {
+    console.error("Failed to get enterprise subscription:", error);
+
+    return {
+      statusCode: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: "Failed to retrieve enterprise subscription",
+      }),
+    };
+  }
 };

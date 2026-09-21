@@ -1,18 +1,62 @@
-const { Model, DataTypes } = require('sequelize');
+import { EntitySchema } from "typeorm";
 
-class EnterpriseRatePlan extends Model {
-  static init(sequelize) {
-    return super.init({
-      id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-      enterprise_id: { type: DataTypes.STRING, allowNull: false },
-      price_per_property: { type: DataTypes.DECIMAL(10, 2), defaultValue: 49.00 },
-      currency: { type: DataTypes.STRING(3), defaultValue: 'USD' },
-      billing_frequency: { type: DataTypes.STRING, defaultValue: 'monthly' },
-      status: { type: DataTypes.STRING, defaultValue: 'active' },
-      effective_from: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-      effective_until: { type: DataTypes.DATE, allowNull: true }
-    }, { sequelize, tableName: 'enterprise_rate_plans' });
-  }
-}
-
-module.exports = EnterpriseRatePlan;
+export const EnterpriseRatePlan = new EntitySchema({
+  name: "EnterpriseRatePlan",
+  tableName: "enterprise_rate_plans",
+  columns: {
+    id: {
+      primary: true,
+      type: "uuid",
+      generated: false,
+      nullable: false,
+    },
+    enterprise_id: {
+      type: "varchar",
+      nullable: false,
+    },
+    price_per_property: {
+      type: "numeric",
+      precision: 10,
+      scale: 2,
+      nullable: false,
+      default: 49.00,
+    },
+    currency: {
+      type: "varchar",
+      length: 3,
+      nullable: false,
+      default: "EUR",
+    },
+    billing_frequency: {
+      type: "varchar",
+      length: 20,
+      nullable: false,
+      default: "monthly",
+    },
+    status: {
+      type: "varchar",
+      length: 20,
+      nullable: false,
+      default: "active",
+    },
+    effective_from: {
+      type: "timestamp with time zone",
+      nullable: false,
+      default: () => "CURRENT_TIMESTAMP",
+    },
+    effective_until: {
+      type: "timestamp with time zone",
+      nullable: true,
+    },
+    created_at: {
+      type: "timestamp with time zone",
+      nullable: false,
+      default: () => "CURRENT_TIMESTAMP",
+    },
+    updated_at: {
+      type: "timestamp with time zone",
+      nullable: false,
+      default: () => "CURRENT_TIMESTAMP",
+    },
+  },
+});

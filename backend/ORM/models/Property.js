@@ -1,4 +1,4 @@
-import {EntitySchema} from "typeorm";
+import { EntitySchema } from "typeorm";
 
 export const Property = new EntitySchema({
     name: "Property",
@@ -30,9 +30,18 @@ export const Property = new EntitySchema({
             type: "varchar",
             nullable: false
         },
+        enterpriseid: {
+            type: "varchar",
+            nullable: true
+        },
         status: {
             type: "varchar",
             nullable: false
+        },
+        is_deleted: {
+            type: "boolean",
+            nullable: false,
+            default: false
         },
         createdat: {
             type: "bigint",
@@ -61,4 +70,4 @@ export const Property = new EntitySchema({
             default: null,
         },
     }
-})
+});

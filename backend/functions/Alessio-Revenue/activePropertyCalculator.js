@@ -1,39 +1,60 @@
-const { Property } = require('../../ORM/models/Property.js');
-const { EnterpriseRatePlan } = require('../../ORM/models/EnterpriseRatePlan.js');
+import Database from "database";
+import { Property } from "database/models/Property";
+import { EnterpriseRatePlan } from "database/models/EnterpriseRatePlan";
 
-const DEFAULT_PRICE_PER_PROPERTY = 49.00;
+const DEFAULT_PRICE_PER_PROPERTY_CENTS = 4900;
+const DEFAULT_CURRENCY = "EUR";
 
 async function getActivePropertyCount(enterpriseId) {
-  return await Property.count({
+  const client = await Database.getInstance();
+  const propertyRepository = client.getRepository(Property);
+
+  return propertyRepository.count({
+    where: {
+      enterpriseid: enterpriseId,
+      status: "ACTIVE",
+      is_deleted: false,
+    },
+  });
+}
+
+async function getEnterpriseRatePlan(enterpriseId) {
+  const client = await Database.getInstance();
+  const ratePlanRepository = client.getRepository(EnterpriseRatePlan);
+
+  return ratePlanRepository.findOne({
     where: {
       enterprise_id: enterpriseId,
-      status: 'active',
-      is_deleted: false
-    }
+      status: "active",
+    },
+    order: {
+      effective_from: "DESC",
+    },
   });
 }
 
 async function getEnterpriseBillingDetails(enterpriseId) {
-  // 1. Haal het actieve tariefplan op uit de database
-  const ratePlan = await EnterpriseRatePlan.findOne({
-    where: {
-      enterprise_id: enterpriseId,
-      status: 'active'
-    }
-  });
+  const [activeProperties, ratePlan] = await Promise.all([
+    getActivePropertyCount(enterpriseId),
+    getEnterpriseRatePlan(enterpriseId),
+  ]);
 
-  const pricePerProperty = ratePlan ? parseFloat(ratePlan.price_per_property) : DEFAULT_PRICE_PER_PROPERTY;
+  const pricePerPropertyCents = ratePlan
+    ? Math.round(Number(ratePlan.price_per_property) * 100)
+    : DEFAULT_PRICE_PER_PROPERTY_CENTS;
 
-  const activeProperties = await getActivePropertyCount(enterpriseId);
+  const estimatedMonthlyCostCents =
+    activeProperties * pricePerPropertyCents;
 
   return {
     activeProperties,
-    pricePerProperty,
-    estimatedMonthlyCost: activeProperties * pricePerProperty
+    pricePerProperty: pricePerPropertyCents / 100,
+    currency: ratePlan?.currency ?? DEFAULT_CURRENCY,
+    estimatedMonthlyCost: estimatedMonthlyCostCents / 100,
   };
 }
 
-module.exports = {
+export {
   getActivePropertyCount,
-  getEnterpriseBillingDetails
+  getEnterpriseBillingDetails,
 };
