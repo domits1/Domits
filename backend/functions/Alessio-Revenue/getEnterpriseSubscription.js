@@ -9,7 +9,7 @@ exports.handler = async (event) => {
   });
 
   const activeProperties = await getActivePropertyCount(enterpriseId);
-  const pricePerProperty = plan ? parseFloat(plan.price_per_property) : 49.00;
+  const pricePerProperty = plan ? Number.parseFloat(plan.price_per_property) : 49.00;
   const estimatedMonthlyCost = activeProperties * pricePerProperty;
 
   return {
