@@ -14,6 +14,13 @@ import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
+const ACCEPT_INQUIRY_MAX_ATTEMPTS = 3;
+const SERIALIZATION_FAILURE_SQLSTATE = "40001";
+// Everything that isn't Inquiry and isn't in NON_BLOCKING_BOOKING_STATUSES blocks a new booking
+// elsewhere in this file (assertNoBookingConflict, getBlockedDatesByPropertyId). Reuse that same
+// definition here instead of a second, separately-maintained list of "blocking" statuses.
+const ACCEPT_INQUIRY_EXCLUDED_STATUSES = NON_BLOCKING_BOOKING_STATUSES.filter((status) => status !== "Inquiry");
+export const CONFLICT_EXISTING_BOOKING = "CONFLICT_EXISTING_BOOKING";
 
 class ReservationRepository {
   // ---------
@@ -469,17 +476,57 @@ class ReservationRepository {
     });
   }
 
-  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
+  // Aurora DSQL uses optimistic concurrency: nothing blocks. FOR UPDATE puts the target and its
+  // overlapping Inquiry siblings in this transaction's conflict set, so when two overlapping
+  // inquiries are accepted at once, the second commit fails with SQLSTATE 40001 (OC000) and rolls
+  // back entirely. Retrying re-reads the committed state, where the loser finds its target already
+  // declined and returns accepted:false instead of surfacing a raw conflict error.
+  async acceptInquiryWithOverlapDecline(args) {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await this.acceptInquiryWithOverlapDeclineOnce(args);
+      } catch (error) {
+        const isConflict = error?.code === SERIALIZATION_FAILURE_SQLSTATE;
+        if (!isConflict || attempt >= ACCEPT_INQUIRY_MAX_ATTEMPTS) throw error;
+      }
+    }
+  }
+
+  async acceptInquiryWithOverlapDeclineOnce({ bookingId, propertyId, arrivalDateMs, departureDateMs }) {
     const client = await Database.getInstance();
-    return await client
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .where("booking.property_id = :propertyId", { propertyId })
-      .andWhere("booking.status = :status", { status: "Inquiry" })
-      .andWhere("booking.id != :excludeBookingId", { excludeBookingId })
-      .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
-      .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
-      .getMany();
+    return client.transaction(async (manager) => {
+      const lockedRows = await manager
+        .getRepository(Booking)
+        .createQueryBuilder("booking")
+        .setLock("pessimistic_write")
+        .where("booking.property_id = :propertyId", { propertyId })
+        .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: ACCEPT_INQUIRY_EXCLUDED_STATUSES })
+        .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
+        .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
+        .getMany();
+
+      const targetRow = lockedRows.find((row) => row.id === bookingId);
+      if (!targetRow || targetRow.status !== "Inquiry") {
+        return { accepted: false, declinedCount: 0 };
+      }
+
+      // A concurrent create() or accept() may have already moved an overlapping booking past
+      // Inquiry before this transaction acquired the lock. Confirming here would double-book,
+      // so refuse instead of only declining Inquiry siblings.
+      const hasBlockingOverlap = lockedRows.some((row) => row.id !== bookingId && row.status !== "Inquiry");
+      if (hasBlockingOverlap) {
+        return { accepted: false, declinedCount: 0, reason: CONFLICT_EXISTING_BOOKING };
+      }
+
+      await manager.createQueryBuilder().update(Booking).set({ status: "Awaiting Payment" }).where("id = :id", { id: bookingId }).execute();
+
+      const overlapping = lockedRows.filter((row) => row.id !== bookingId);
+      for (const overlap of overlapping) {
+        await manager.createQueryBuilder().update(Booking).set({ status: "Declined" }).where("id = :id", { id: overlap.id }).execute();
+      }
+
+      return { accepted: true, declinedCount: overlapping.length };
+    });
   }
 
   async updateBookingDates(id, arrivalDateMs, departureDateMs) {

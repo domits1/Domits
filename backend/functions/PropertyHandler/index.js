@@ -41,6 +41,12 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/site/unpublish")) {
     return controller.unpublishWebsiteSite(event);
   }
+  if (isPath(event, "/property/website/domains/verify")) {
+    return controller.verifyWebsiteDomain(event);
+  }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.createWebsiteDomain(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -49,6 +55,8 @@ const handlePost = async (event) => {
   }
   return controller.create(event);
 };
+
+const DRAFT_ID_RESOURCE = "/property/draft/{id}";
 
 const handlePatch = async (event) => {
   if (isPath(event, "/property/images/order")) {
@@ -59,6 +67,9 @@ const handlePatch = async (event) => {
   }
   if (isPath(event, "/property/calendar/overrides")) {
     return controller.updatePropertyCalendarOverrides(event);
+  }
+  if (isPath(event, DRAFT_ID_RESOURCE)) {
+    return controller.updateDraft(event);
   }
   return controller.activateProperty(event);
 };
@@ -97,6 +108,9 @@ const handleGet = async (event) => {
   if (isPath(event, "/property/website/kpis")) {
     return controller.getWebsiteKpis(event);
   }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.listWebsiteDomains(event);
+  }
   if (isPath(event, "/property/website/site")) {
     return controller.getWebsiteSiteByPropertyId(event);
   }
@@ -109,7 +123,6 @@ const handleGet = async (event) => {
   if (isPath(event, "/property/pricing/saving-config")) {
     return controller.getPricingSavingConfig(event);
   }
-
   const hostDashboardSubResource = getSubResource(
     event,
     "/property/hostDashboard/{subResource}",
@@ -140,6 +153,9 @@ const handleGet = async (event) => {
 const handleDelete = async (event) => {
   if (isPath(event, "/property/images")) {
     return controller.deletePropertyImage(event);
+  }
+  if (isPath(event, "/property/website/domains")) {
+    return controller.removeWebsiteDomain(event);
   }
   if (isPath(event, "/property/website/draft")) {
     return controller.deleteWebsiteDraft(event);
