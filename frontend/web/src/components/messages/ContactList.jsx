@@ -331,7 +331,12 @@ const ContactList = ({
     let list = Array.isArray(contacts) ? [...contacts] : [];
 
     if (capabilities.canSearch && searchTerm) {
-      list = list.filter((c) => resolveContactName(c).toLowerCase().includes(searchTerm.toLowerCase()));
+      const term = searchTerm.toLowerCase();
+      list = list.filter((c) => {
+        const nameMatches = resolveContactName(c).toLowerCase().includes(term);
+        const bookingIdMatches = String(c?.bookingId ?? "").toLowerCase().includes(term);
+        return nameMatches || bookingIdMatches;
+      });
     }
     if (capabilities.canFilterByReadStatus && tab === "unread") {
       list = list.filter((c) => (c.unreadCount || 0) > 0);

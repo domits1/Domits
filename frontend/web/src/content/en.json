@@ -1126,8 +1126,82 @@
         "compliance": {
           "title": "Compliance",
           "desc": "Manage your registration number and verification."
+        },
+        "onboarding": {
+          "title": "Onboarding",
+          "desc": "Track your progress from listing your property to going live."
         }
       }
+    },
+    "onboardingHub": {
+      "breadcrumb": "Onboarding",
+      "title": "Onboarding",
+      "subtitle": "Track your progress for each listing, from creating it to going live.",
+      "propertyPicker": {
+        "label": "Listing",
+        "loading": "Loading your listings...",
+        "loadError": "We could not load your listings.",
+        "empty": "You don't have any published listings yet."
+      },
+      "progress": {
+        "label": "{completed} of {total} steps complete"
+      },
+      "accountWideBadge": "Account-wide",
+      "requiredBadge": "Required",
+      "optionalBadge": "Optional",
+      "goLiveButton": "Go live",
+      "goLiveBlockedText": "Complete required steps first",
+      "pricingConnectedSubDetail": "PriceLabs dynamic pricing is also connected.",
+      "steps": {
+        "listProperty": {
+          "title": "List Your Property",
+          "desc": "Add your property's details, photos and pricing."
+        },
+        "website": {
+          "title": "Build Direct Booking Website",
+          "desc": "Create a branded booking website for this listing."
+        },
+        "channels": {
+          "title": "Connect Channels",
+          "desc": "Sync this listing with Airbnb, Booking.com, Vrbo and more."
+        },
+        "automate": {
+          "title": "Automate Operations",
+          "desc": "Set up payments and dynamic pricing for your account."
+        },
+        "goLive": {
+          "title": "Go Live",
+          "desc": "Review your listing and publish it on Domits."
+        }
+      },
+      "statusComplete": "Complete",
+      "statusIncomplete": "Not started",
+      "statusUnknown": "Could not check status"
+    },
+    "goLive": {
+      "breadcrumb": "Go Live",
+      "title": "Go live with {propertyName}",
+      "subtitle": "Review the checklist below, then publish your listing.",
+      "loading": "Loading checklist...",
+      "loadError": "We could not load this listing.",
+      "missingPropertyId": "No listing was specified.",
+      "requiredSection": "Required",
+      "optionalSection": "Optional",
+      "items": {
+        "listProperty": "List Your Property",
+        "website": "Build Direct Booking Website",
+        "payments": "Payments (Stripe)",
+        "channels": "Connect Channels",
+        "pricing": "Dynamic Pricing (PriceLabs)",
+        "tasks": "Task Management"
+      },
+      "activateButton": "Publish listing",
+      "activating": "Publishing...",
+      "alreadyLive": "This listing is already live.",
+      "blockedMessage": "Complete the required steps above before going live.",
+      "successMessage": "Your listing is now live!",
+      "errorMessage": "Something went wrong while publishing this listing.",
+      "backToHub": "Back to Onboarding"
     },
     "personalData": {
       "breadcrumb": "Personal Data",
@@ -1137,8 +1211,11 @@
       "prefsSection": "Preferences / Authentication",
       "photo": {
         "upload": "Upload",
-        "uploading": "Working...",
-        "remove": "Remove"
+        "uploading": "Uploading...",
+        "remove": "Remove",
+        "removing": "Removing...",
+        "uploaded": "Photo uploaded!",
+        "removed": "Photo removed!"
       },
       "fields": {
         "fullName": "Full name",
@@ -1210,14 +1287,41 @@
       "breadcrumb": "Company",
       "title": "Company",
       "subtitle": "Manage your company information.",
-      "section": "Company Details",
+      "privateSection": "Private",
+      "privateSectionNote": "Only visible to you — used for invoices and reports.",
+      "publicSection": "Public Information",
+      "publicSectionNote": "Visible to guests on your listings.",
       "fields": {
         "companyName": "Company name",
         "placeholder": "Enter company name",
-        "hint": "This information will appear on invoices and reports."
+        "hint": "This information will appear on invoices and reports.",
+        "displayName": "Display name",
+        "displayNamePlaceholder": "Name shown to guests",
+        "logo": "Logo",
+        "logoUpload": "Upload logo",
+        "logoUploading": "Uploading...",
+        "logoRemove": "Remove",
+        "description": "Description",
+        "descriptionPlaceholder": "Tell guests about your company",
+        "website": "Website",
+        "websitePlaceholder": "https://example.com",
+        "publicEmail": "Public email",
+        "publicEmailPlaceholder": "contact@example.com",
+        "publicPhone": "Public phone",
+        "publicPhonePlaceholder": "+31 6 12345678",
+        "country": "Country",
+        "countryPlaceholder": "Enter country"
+      },
+      "errors": {
+        "website": "Enter a valid website URL.",
+        "publicEmail": "Enter a valid email address.",
+        "publicPhone": "Enter a valid phone number.",
+        "logo": "Failed to upload logo. Please try again."
       },
       "buttons": {
-        "comingSoon": "Coming soon"
+        "save": "Save",
+        "saving": "Saving...",
+        "saved": "Saved"
       }
     },
     "compliance": {
@@ -1259,13 +1363,24 @@
       "inviteBtn": "+ Invite members",
       "emptyState": "No additional team members yet. Invite a co-host to get started.",
       "loadError": "Failed to load team members. Please refresh the page.",
-      "activeMembers": "Active members",
-      "pendingInvitations": "Pending invitations",
+      "loadingMembers": "Loading team members…",
       "membershipsSection": "Teams you belong to",
       "membershipsCardHeader": "Co-host memberships",
       "joined": "Joined",
       "memberAvatarAlt": "Member avatar",
       "hostAvatarAlt": "Host avatar",
+      "columnMember": "Member",
+      "columnRole": "Role",
+      "columnPermissions": "Permissions",
+      "columnStatus": "Status",
+      "columnActions": "Actions",
+      "statusActive": "Active",
+      "statusPending": "Pending",
+      "actionsMenuLabel": "Open actions menu",
+      "removeAction": "Remove",
+      "editRoleAction": "Edit role",
+      "permissionsMore": "+{count} more",
+      "permissionsEmpty": "—",
       "removeModal": {
         "title": "Remove team member",
         "body": "Are you sure you want to remove this member from your team? They will lose access to your properties and tasks.",
@@ -1277,11 +1392,17 @@
         "emailLabel": "Email address",
         "emailPlaceholder": "colleague@example.com",
         "roleLabel": "Role",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Send invitation",
         "cancel": "Cancel",
         "success": "✓ Invitation sent to",
         "error": "Failed to send invitation. Please try again."
+      },
+      "editRoleModal": {
+        "title": "Edit role",
+        "roleLabel": "Role",
+        "saveBtn": "Save",
+        "cancel": "Cancel",
+        "error": "Failed to update role. Please try again."
       }
     }
   },

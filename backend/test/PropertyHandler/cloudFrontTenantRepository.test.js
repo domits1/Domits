@@ -127,4 +127,37 @@ describe("CloudFrontTenantRepository", () => {
     });
     expect(sentInput(client, 1)).toEqual({ Identifier: "dt_1", Domain: "www.example.com" });
   });
+
+  it("disables a tenant by sending only Enabled false with the etag and returns the new tenant state", async () => {
+    const client = buildClient({
+      UpdateDistributionTenantCommand: {
+        ...TENANT_RESPONSE,
+        ETag: "E2TAG",
+        DistributionTenant: { ...TENANT_RESPONSE.DistributionTenant, Enabled: false, Status: "InProgress" },
+      },
+    });
+    const repository = new CloudFrontTenantRepository({ client });
+
+    const tenant = await repository.disableTenant({ tenantId: "dt_1", etag: "E1TAG" });
+
+    expect(sentInput(client)).toEqual({ Id: "dt_1", IfMatch: "E1TAG", Enabled: false });
+    expect(tenant).toMatchObject({ etag: "E2TAG", enabled: false, status: "InProgress" });
+  });
+
+  it("deletes a tenant with the etag and reports an already deleted tenant as null", async () => {
+    const client = buildClient({ DeleteDistributionTenantCommand: {} });
+    const repository = new CloudFrontTenantRepository({ client });
+
+    await expect(repository.deleteTenant({ tenantId: "dt_1", etag: "E3TAG" })).resolves.toBe(true);
+    expect(sentInput(client)).toEqual({ Id: "dt_1", IfMatch: "E3TAG" });
+
+    const goneClient = buildClient({
+      DeleteDistributionTenantCommand: () => {
+        throw buildNotFoundError();
+      },
+    });
+    await expect(
+      new CloudFrontTenantRepository({ client: goneClient }).deleteTenant({ tenantId: "dt_1", etag: "E3TAG" })
+    ).resolves.toBeNull();
+  });
 });
