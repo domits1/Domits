@@ -120,6 +120,9 @@ const handleGet = async (event) => {
   if (isPath(event, "/property/calendar/overrides")) {
     return controller.getPropertyCalendarOverrides(event);
   }
+  if (isPath(event, DRAFT_ID_RESOURCE)) {
+    return controller.getDraft(event);
+  }
   if (isPath(event, "/property/pricing/saving-config")) {
     return controller.getPricingSavingConfig(event);
   }
