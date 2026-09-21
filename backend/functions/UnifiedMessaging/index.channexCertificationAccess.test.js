@@ -21,6 +21,10 @@ const mockIntegrationControllerMethods = {
   pullLatestChannexBookings: jest.fn(),
   pollLatestChannexBookings: jest.fn(),
   acknowledgeChannexBookingRevisions: jest.fn(),
+  connectChannex: jest.fn(),
+  disconnectChannex: jest.fn(),
+  connectHolidu: jest.fn(),
+  disconnectHolidu: jest.fn(),
 };
 
 jest.mock("./controller/messageController.js", () => ({
@@ -50,11 +54,13 @@ jest.mock("./controller/whatsappWebhookController.js", () => ({
 
 const { handler } = require("./index.js");
 
-const buildEvent = ({ method = "GET", path, query = {}, body = null }) => ({
+const buildEvent = ({ method = "GET", path, query = {}, body = null, sub = null, headers = {} }) => ({
   httpMethod: method,
   path,
   queryStringParameters: query,
+  headers,
   body,
+  ...(sub ? { requestContext: { authorizer: { claims: { sub } } } } : {}),
 });
 
 const parseBody = (response) => JSON.parse(response.body);
@@ -84,7 +90,7 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     const response = await handler(
       buildEvent({
         path: "/default/integrations/channex/status",
-        query: { userId: "allowed-user" },
+        sub: "allowed-user",
       })
     );
 
@@ -101,7 +107,7 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     });
     const event = buildEvent({
       path: "/default/integrations/holidu/status",
-      query: { userId: "user-1" },
+      sub: "user-1",
     });
 
     const response = await handler(event);
@@ -111,14 +117,16 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       channel: "HOLIDU",
       status: "CONNECTED",
     });
-    expect(mockIntegrationControllerMethods.checkHoliduStatus).toHaveBeenCalledWith(event);
+    expect(mockIntegrationControllerMethods.checkHoliduStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ path: event.path, queryStringParameters: { userId: "user-1" } })
+    );
   });
 
   test("not-allowed user gets 403 before Channex status controller logic runs", async () => {
     const response = await handler(
       buildEvent({
         path: "/default/integrations/channex/status",
-        query: { userId: "not-allowed" },
+        sub: "not-allowed",
       })
     );
 
@@ -131,29 +139,24 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(mockIntegrationControllerMethods.checkChannexStatus).not.toHaveBeenCalled();
   });
 
-  test("missing userId keeps existing validation path", async () => {
-    mockIntegrationControllerMethods.checkChannexStatus.mockResolvedValue({
-      statusCode: 400,
-      response: { error: "Missing required query param: userId" },
-    });
-
+  test("a protected route without a Cognito token gets 401 before controller logic runs", async () => {
     const response = await handler(
       buildEvent({
         path: "/default/integrations/channex/status",
-        query: {},
+        query: { userId: "allowed-user" },
       })
     );
 
-    expect(response.statusCode).toBe(400);
-    expect(parseBody(response)).toEqual({ error: "Missing required query param: userId" });
-    expect(mockIntegrationControllerMethods.checkChannexStatus).toHaveBeenCalledTimes(1);
+    expect(response.statusCode).toBe(401);
+    expect(parseBody(response)).toEqual({ error: "UNAUTHORIZED", message: "Authentication required." });
+    expect(mockIntegrationControllerMethods.checkChannexStatus).not.toHaveBeenCalled();
   });
 
   test("admin access endpoint returns allowed true for allowlisted user", async () => {
     const response = await handler(
       buildEvent({
         path: "/default/integrations/channex/admin-access",
-        query: { userId: "allowed-user" },
+        sub: "allowed-user",
       })
     );
 
@@ -167,7 +170,7 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     const response = await handler(
       buildEvent({
         path: "/default/integrations/channex/admin-access",
-        query: { userId: "not-allowed" },
+        sub: "not-allowed",
       })
     );
 
@@ -176,23 +179,24 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(mockIntegrationControllerMethods.checkChannexStatus).not.toHaveBeenCalled();
   });
 
-  test("admin access endpoint returns allowed false when userId is missing", async () => {
+  test("admin access endpoint without a Cognito token gets 401", async () => {
     const response = await handler(
       buildEvent({
         path: "/default/integrations/channex/admin-access",
-        query: {},
+        query: { userId: "allowed-user" },
       })
     );
 
-    expect(response.statusCode).toBe(200);
-    expect(parseBody(response)).toEqual({ allowed: false });
+    expect(response.statusCode).toBe(401);
+    expect(parseBody(response)).toEqual({ error: "UNAUTHORIZED", message: "Authentication required." });
   });
 
   test("booking revisions list endpoint is protected", async () => {
     const response = await handler(
       buildEvent({
         path: "/default/integrations/channex/bookings/revisions",
-        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        sub: "not-allowed",
+        query: { domitsPropertyId: "property-1" },
       })
     );
 
@@ -215,7 +219,7 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method,
         path,
-        query: { userId: "not-allowed" },
+        sub: "not-allowed",
         body: method === "POST" ? "{}" : null,
       })
     );
@@ -237,8 +241,8 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     const response = await handler(
       buildEvent({
         path,
+        sub: "allowed-user",
         query: {
-          userId: "allowed-user",
           externalPropertyId: "external-property-1",
           externalRoomTypeId: "room-type-1",
         },
@@ -264,7 +268,7 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/setup/mapping",
-        query: { userId: "allowed-user" },
+        sub: "allowed-user",
         body: JSON.stringify({
           domitsPropertyId: "domits-property-1",
           externalPropertyId: "external-property-1",
@@ -288,8 +292,8 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/sync/restrictions",
+        sub: "not-allowed",
         query: {
-          userId: "not-allowed",
           domitsPropertyId: "property-1",
           dateFrom: "2026-05-01",
           dateTo: "2026-05-02",
@@ -332,7 +336,8 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/bookings/receive",
-        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        sub: "not-allowed",
+        query: { domitsPropertyId: "property-1" },
       })
     );
 
@@ -345,7 +350,8 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/bookings/pull",
-        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        sub: "not-allowed",
+        query: { domitsPropertyId: "property-1" },
       })
     );
 
@@ -417,7 +423,8 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/certification/test-case",
-        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        sub: "not-allowed",
+        query: { domitsPropertyId: "property-1" },
         body: JSON.stringify({ testCaseId: "2" }),
       })
     );
@@ -431,7 +438,8 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/certification/cancel-booking",
-        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        sub: "not-allowed",
+        query: { domitsPropertyId: "property-1" },
         body: JSON.stringify({ bookingId: "booking-1" }),
       })
     );
@@ -454,7 +462,8 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/certification/cancel-booking",
-        query: { userId: "allowed-user", domitsPropertyId: "property-1" },
+        sub: "allowed-user",
+        query: { domitsPropertyId: "property-1" },
         body: JSON.stringify({ bookingId: "booking-1" }),
       })
     );
@@ -473,7 +482,8 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/bookings/ack",
-        query: { userId: "not-allowed", domitsPropertyId: "property-1" },
+        sub: "not-allowed",
+        query: { domitsPropertyId: "property-1" },
         body: JSON.stringify({ revisionIds: ["revision-1"] }),
       })
     );
@@ -487,7 +497,7 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
       buildEvent({
         method: "OPTIONS",
         path: "/default/integrations/channex/sync/restrictions",
-        query: { userId: "not-allowed" },
+        sub: "not-allowed",
       })
     );
 
@@ -495,5 +505,153 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(response.body).toBe("");
     expect(response.headers["Access-Control-Allow-Methods"]).toContain("OPTIONS");
     expect(mockIntegrationControllerMethods.syncChannexRestrictions).not.toHaveBeenCalled();
+  });
+});
+
+describe("Channel routes take the user from the Cognito token", () => {
+  const originalEnv = process.env.CHANNEX_CERTIFICATION_USER_IDS;
+  const credentialRoutes = [
+    ["/default/integrations/channex/connect", "connectChannex"],
+    ["/default/integrations/channex/disconnect", "disconnectChannex"],
+    ["/default/integrations/holidu/connect", "connectHolidu"],
+    ["/default/integrations/holidu/disconnect", "disconnectHolidu"],
+  ];
+
+  beforeEach(() => {
+    process.env.CHANNEX_CERTIFICATION_USER_IDS = "allowed-user";
+    Object.values(mockIntegrationControllerMethods).forEach((method) => method.mockReset());
+  });
+
+  afterAll(() => {
+    if (originalEnv === undefined) {
+      delete process.env.CHANNEX_CERTIFICATION_USER_IDS;
+    } else {
+      process.env.CHANNEX_CERTIFICATION_USER_IDS = originalEnv;
+    }
+  });
+
+  test.each(credentialRoutes)("POST %s acts for the token user, not the userId in the body", async (path, controllerMethod) => {
+    mockIntegrationControllerMethods[controllerMethod].mockResolvedValue({ statusCode: 200, response: { ok: true } });
+
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path,
+        sub: "allowed-user",
+        body: JSON.stringify({ userId: "victim-user", credentials: { apiKey: "key-1" } }),
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    const forwardedEvent = mockIntegrationControllerMethods[controllerMethod].mock.calls[0][0];
+    expect(JSON.parse(forwardedEvent.body)).toEqual({ userId: "allowed-user", credentials: { apiKey: "key-1" } });
+  });
+
+  test.each(credentialRoutes)("POST %s without a Cognito token is rejected before the controller runs", async (path, controllerMethod) => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path,
+        body: JSON.stringify({ userId: "victim-user", credentials: { apiKey: "key-1" } }),
+      })
+    );
+
+    expect(response.statusCode).toBe(401);
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(parseBody(response)).toEqual({ error: "UNAUTHORIZED", message: "Authentication required." });
+    expect(mockIntegrationControllerMethods[controllerMethod]).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["/default/integrations/channex/connect", "connectChannex"],
+    ["/default/integrations/channex/disconnect", "disconnectChannex"],
+  ])("POST %s refuses a token user who is not allowlisted", async (path, controllerMethod) => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path,
+        sub: "not-allowed",
+        body: JSON.stringify({ credentials: { apiKey: "key-1" } }),
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods[controllerMethod]).not.toHaveBeenCalled();
+  });
+
+  test("an admin route refuses a token user who is not allowlisted, whatever userId the query names", async () => {
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/status",
+        sub: "not-allowed",
+        query: { userId: "allowed-user" },
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods.checkChannexStatus).not.toHaveBeenCalled();
+  });
+
+  test("an admin route refuses a request that leaves the userId out of the query", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/setup/mapping",
+        sub: "not-allowed",
+        body: JSON.stringify({ domitsPropertyId: "property-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockIntegrationControllerMethods.saveChannexSetupMapping).not.toHaveBeenCalled();
+  });
+
+  test("an admin route forwards the token user as the query userId", async () => {
+    mockIntegrationControllerMethods.checkChannexStatus.mockResolvedValue({ statusCode: 200, response: { ok: true } });
+
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/status",
+        sub: "allowed-user",
+        query: { userId: "someone-else", domitsPropertyId: "property-1" },
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    const forwardedEvent = mockIntegrationControllerMethods.checkChannexStatus.mock.calls[0][0];
+    expect(forwardedEvent.queryStringParameters).toEqual({ userId: "allowed-user", domitsPropertyId: "property-1" });
+  });
+
+  test("admin access answers for the token user, not the userId in the query", async () => {
+    const response = await handler(
+      buildEvent({
+        path: "/default/integrations/channex/admin-access",
+        sub: "not-allowed",
+        query: { userId: "allowed-user" },
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ allowed: false });
+  });
+
+  test("internal booking-availability sync still runs without a Cognito token", async () => {
+    mockIntegrationControllerMethods.syncChannexBookingAvailability.mockResolvedValue({
+      statusCode: 200,
+      response: { syncType: "booking-availability" },
+    });
+
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/channex/booking-availability/sync",
+        headers: { "x-domits-internal-token": "internal-token" },
+        body: JSON.stringify({ userId: "host-1", domitsPropertyId: "property-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(200);
+    const forwardedEvent = mockIntegrationControllerMethods.syncChannexBookingAvailability.mock.calls[0][0];
+    expect(JSON.parse(forwardedEvent.body)).toEqual({ userId: "host-1", domitsPropertyId: "property-1" });
   });
 });
