@@ -40,7 +40,7 @@ export const Property = new EntitySchema({
         },
         is_deleted: {
             type: "boolean",
-            nullable: false,
+            nullable: true,
             default: false
         },
         createdat: {
