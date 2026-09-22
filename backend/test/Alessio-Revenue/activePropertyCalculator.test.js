@@ -17,20 +17,26 @@ jest.mock("database", () => ({
 }));
 
 describe("Enterprise Active Property Calculator", () => {
-  const mockPropertyRepository = {
-    count: jest.fn(),
-    findOne: jest.fn(),
+  const mockPropertyQueryBuilder = {
+    where: jest.fn(),
+    andWhere: jest.fn(),
+    getOne: jest.fn(),
+    getCount: jest.fn(),
   };
 
-  const mockRatePlanRepository = {
-    createQueryBuilder: jest.fn(),
-  };
-
-  const mockQueryBuilder = {
+  const mockRatePlanQueryBuilder = {
     where: jest.fn(),
     andWhere: jest.fn(),
     orderBy: jest.fn(),
     getOne: jest.fn(),
+  };
+
+  const mockPropertyRepository = {
+    createQueryBuilder: jest.fn(),
+  };
+
+  const mockRatePlanRepository = {
+    createQueryBuilder: jest.fn(),
   };
 
   const mockDataSource = {
@@ -40,17 +46,29 @@ describe("Enterprise Active Property Calculator", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockPropertyRepository.findOne.mockResolvedValue({
-      enterpriseid: "ent_123",
-      hostid: "host_123",
-    });
+    mockPropertyQueryBuilder.where.mockReturnValue(
+      mockPropertyQueryBuilder
+    );
+    mockPropertyQueryBuilder.andWhere.mockReturnValue(
+      mockPropertyQueryBuilder
+    );
 
-    mockQueryBuilder.where.mockReturnValue(mockQueryBuilder);
-    mockQueryBuilder.andWhere.mockReturnValue(mockQueryBuilder);
-    mockQueryBuilder.orderBy.mockReturnValue(mockQueryBuilder);
+    mockRatePlanQueryBuilder.where.mockReturnValue(
+      mockRatePlanQueryBuilder
+    );
+    mockRatePlanQueryBuilder.andWhere.mockReturnValue(
+      mockRatePlanQueryBuilder
+    );
+    mockRatePlanQueryBuilder.orderBy.mockReturnValue(
+      mockRatePlanQueryBuilder
+    );
+
+    mockPropertyRepository.createQueryBuilder.mockReturnValue(
+      mockPropertyQueryBuilder
+    );
 
     mockRatePlanRepository.createQueryBuilder.mockReturnValue(
-      mockQueryBuilder
+      mockRatePlanQueryBuilder
     );
 
     Database.getInstance.mockResolvedValue(mockDataSource);
@@ -69,25 +87,50 @@ describe("Enterprise Active Property Calculator", () => {
   });
 
   test("counts active properties for an enterprise", async () => {
-    mockPropertyRepository.count.mockResolvedValue(10);
+    mockPropertyQueryBuilder.getCount.mockResolvedValue(10);
 
     const count = await getActivePropertyCount("ent_123");
 
-    expect(mockPropertyRepository.count).toHaveBeenCalledWith({
-      where: {
-        enterpriseid: "ent_123",
+    expect(
+      mockPropertyRepository.createQueryBuilder
+    ).toHaveBeenCalledWith("property");
+
+    expect(mockPropertyQueryBuilder.where).toHaveBeenCalledWith(
+      "property.enterpriseid = :enterpriseId",
+      {
+        enterpriseId: "ent_123",
+      }
+    );
+
+    expect(mockPropertyQueryBuilder.andWhere).toHaveBeenCalledWith(
+      "property.status = :status",
+      {
         status: "ACTIVE",
-        is_deleted: false,
-      },
-    });
+      }
+    );
+
+    expect(mockPropertyQueryBuilder.andWhere).toHaveBeenCalledWith(
+      "property.is_deleted = :isDeleted",
+      {
+        isDeleted: false,
+      }
+    );
+
+    expect(mockPropertyQueryBuilder.getCount).toHaveBeenCalled();
 
     expect(count).toBe(10);
   });
 
   test("calculates cost using the active rate plan", async () => {
-    mockPropertyRepository.count.mockResolvedValue(50);
+    mockPropertyQueryBuilder.getOne.mockResolvedValue({
+      id: "property_123",
+      enterpriseid: "ent_discount",
+      hostid: "host_123",
+    });
 
-    mockQueryBuilder.getOne.mockResolvedValue({
+    mockPropertyQueryBuilder.getCount.mockResolvedValue(50);
+
+    mockRatePlanQueryBuilder.getOne.mockResolvedValue({
       price_per_property_cents: 3900,
       currency: "EUR",
     });
@@ -97,29 +140,53 @@ describe("Enterprise Active Property Calculator", () => {
       "host_123"
     );
 
-    expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+    expect(
+      mockPropertyRepository.createQueryBuilder
+    ).toHaveBeenCalledWith("property");
+
+    expect(mockPropertyQueryBuilder.where).toHaveBeenCalledWith(
+      "property.enterpriseid = :enterpriseId",
+      {
+        enterpriseId: "ent_discount",
+      }
+    );
+
+    expect(mockPropertyQueryBuilder.andWhere).toHaveBeenCalledWith(
+      "property.hostid = :hostId",
+      {
+        hostId: "host_123",
+      }
+    );
+
+    expect(mockPropertyQueryBuilder.getOne).toHaveBeenCalled();
+
+    expect(
+      mockRatePlanRepository.createQueryBuilder
+    ).toHaveBeenCalledWith("ratePlan");
+
+    expect(mockRatePlanQueryBuilder.where).toHaveBeenCalledWith(
       "ratePlan.enterprise_id = :enterpriseId",
       {
         enterpriseId: "ent_discount",
       }
     );
 
-    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+    expect(mockRatePlanQueryBuilder.andWhere).toHaveBeenCalledWith(
       "ratePlan.status = :status",
       {
         status: "ACTIVE",
       }
     );
 
-    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+    expect(mockRatePlanQueryBuilder.andWhere).toHaveBeenCalledWith(
       "ratePlan.effective_from <= CURRENT_TIMESTAMP"
     );
 
-    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+    expect(mockRatePlanQueryBuilder.andWhere).toHaveBeenCalledWith(
       "(ratePlan.effective_until IS NULL OR ratePlan.effective_until >= CURRENT_TIMESTAMP)"
     );
 
-    expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+    expect(mockRatePlanQueryBuilder.orderBy).toHaveBeenCalledWith(
       "ratePlan.effective_from",
       "DESC"
     );
@@ -133,8 +200,15 @@ describe("Enterprise Active Property Calculator", () => {
   });
 
   test("falls back to the default EUR rate when no plan exists", async () => {
-    mockPropertyRepository.count.mockResolvedValue(5);
-    mockQueryBuilder.getOne.mockResolvedValue(null);
+    mockPropertyQueryBuilder.getOne.mockResolvedValue({
+      id: "property_123",
+      enterpriseid: "ent_standard",
+      hostid: "host_123",
+    });
+
+    mockPropertyQueryBuilder.getCount.mockResolvedValue(5);
+
+    mockRatePlanQueryBuilder.getOne.mockResolvedValue(null);
 
     const result = await getEnterpriseBillingDetails(
       "ent_standard",
@@ -150,29 +224,35 @@ describe("Enterprise Active Property Calculator", () => {
   });
 
   test("uses the latest effective rate plan", async () => {
-    mockPropertyRepository.count.mockResolvedValue(100);
+    mockPropertyQueryBuilder.getOne.mockResolvedValue({
+      id: "property_123",
+      enterpriseid: "ent_123",
+      hostid: "host_123",
+    });
 
-    mockQueryBuilder.getOne.mockResolvedValue({
+    mockPropertyQueryBuilder.getCount.mockResolvedValue(100);
+
+    mockRatePlanQueryBuilder.getOne.mockResolvedValue({
       price_per_property_cents: 4900,
       currency: "EUR",
     });
 
     await getEnterpriseBillingDetails("ent_123", "host_123");
 
-    expect(mockRatePlanRepository.createQueryBuilder).toHaveBeenCalledWith(
-      "ratePlan"
-    );
+    expect(
+      mockRatePlanRepository.createQueryBuilder
+    ).toHaveBeenCalledWith("ratePlan");
 
-    expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+    expect(mockRatePlanQueryBuilder.orderBy).toHaveBeenCalledWith(
       "ratePlan.effective_from",
       "DESC"
     );
 
-    expect(mockQueryBuilder.getOne).toHaveBeenCalled();
+    expect(mockRatePlanQueryBuilder.getOne).toHaveBeenCalled();
   });
 
   test("rejects a host without access to the enterprise", async () => {
-    mockPropertyRepository.findOne.mockResolvedValue(null);
+    mockPropertyQueryBuilder.getOne.mockResolvedValue(null);
 
     await expect(
       getEnterpriseBillingDetails("ent_other", "host_123")
@@ -181,13 +261,24 @@ describe("Enterprise Active Property Calculator", () => {
       message: "You do not have access to this enterprise.",
     });
 
-    expect(mockPropertyRepository.findOne).toHaveBeenCalledWith({
-      where: {
-        enterpriseid: "ent_other",
-        hostid: "host_123",
-      },
-    });
+    expect(mockPropertyQueryBuilder.where).toHaveBeenCalledWith(
+      "property.enterpriseid = :enterpriseId",
+      {
+        enterpriseId: "ent_other",
+      }
+    );
 
-    expect(mockRatePlanRepository.createQueryBuilder).not.toHaveBeenCalled();
+    expect(mockPropertyQueryBuilder.andWhere).toHaveBeenCalledWith(
+      "property.hostid = :hostId",
+      {
+        hostId: "host_123",
+      }
+    );
+
+    expect(mockPropertyQueryBuilder.getOne).toHaveBeenCalled();
+
+    expect(
+      mockRatePlanRepository.createQueryBuilder
+    ).not.toHaveBeenCalled();
   });
 });
