@@ -10,8 +10,11 @@ import { getMessageCapabilities } from "./messageCapabilities";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import { markThreadRead, markThreadUnread } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { getIdToken } from "../../services/getAccessToken";
+import { toast } from "react-toastify";
 
 jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
+
+jest.mock("react-toastify", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
 jest.mock("../../features/hostdashboard/hostmessages/services/messagingService", () => ({
   __esModule: true,
@@ -219,7 +222,9 @@ describe("ContactList realtime unread sync", () => {
     expect(markThreadRead).not.toHaveBeenCalled();
   });
 
-  test("incoming message to the active thread increments locally, then resets to 0 only once markThreadRead succeeds", async () => {
+  test("incoming message to the active thread increments locally, then decrements by the confirmed updated count once markThreadRead succeeds", async () => {
+    markThreadRead.mockResolvedValue({ threadId: "thread-1", updated: 4 });
+
     const contactWithUnread = { ...baseContact, unreadCount: 3 };
     const { setContacts } = renderActiveThreadMessage(contactWithUnread);
 
@@ -238,7 +243,7 @@ describe("ContactList realtime unread sync", () => {
     });
   });
 
-  test("markThreadRead failure does not leave unreadCount falsely at 0", async () => {
+  test("markThreadRead failure does not leave unreadCount falsely at 0 and shows a visible error", async () => {
     markThreadRead.mockRejectedValue(new Error("network error"));
 
     const contactWithUnread = { ...baseContact, unreadCount: 3 };
@@ -250,6 +255,10 @@ describe("ContactList realtime unread sync", () => {
 
     await waitFor(() => {
       expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
     });
 
     // Flush the rejected promise chain and any unrelated hydration update, then confirm
@@ -440,7 +449,27 @@ describe("ContactList manual mark read/unread", () => {
     expect(updated[0].unreadCount).toBe(1);
   });
 
-  test("marking as read leaves local unread state unchanged when markThreadRead fails", async () => {
+  test("marking as unread leaves local unread state unchanged and shows a visible error when markThreadUnread fails", async () => {
+    markThreadUnread.mockRejectedValue(new Error("network error"));
+
+    const contact = { ...manualActionContact, unreadCount: 0 };
+    const { setContacts } = renderForManualAction(contact);
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as unread"));
+
+    await waitFor(() => {
+      expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+
+    expect(setContacts).not.toHaveBeenCalled();
+  });
+
+  test("marking as read leaves local unread state unchanged and shows a visible error when markThreadRead fails", async () => {
     markThreadRead.mockRejectedValue(new Error("network error"));
 
     const contact = { ...manualActionContact, unreadCount: 3 };
@@ -453,14 +482,70 @@ describe("ContactList manual mark read/unread", () => {
       expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
 
     expect(setContacts).not.toHaveBeenCalled();
   });
 
-  // Shared by both "thread becomes active while Mark as unread is in flight" scenarios:
-  // renders, opens the menu, clicks Mark as unread, waits for the request to fire, then
-  // simulates the host opening that same conversation before the request resolves.
+  test("completing Mark as read must not discard a genuine unread message that arrived from realtime while the request was in flight", async () => {
+    let resolveMarkRead;
+    markThreadRead.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMarkRead = resolve;
+        })
+    );
+
+    const contact = { ...manualActionContact, unreadCount: 1 };
+    const setContacts = jest.fn();
+
+    const buildElement = (wsMessage) => (
+      <WebSocketContext.Provider value={{ messages: wsMessage ? [wsMessage] : [] }}>
+        <ContactList
+          userId="host-1"
+          dashboardType="host"
+          contacts={[contact]}
+          pendingContacts={[]}
+          loading={false}
+          setContacts={setContacts}
+          onContactClick={jest.fn()}
+          onCloseChat={jest.fn()}
+          onNewMessage={jest.fn()}
+          capabilities={getMessageCapabilities("host")}
+        />
+      </WebSocketContext.Provider>
+    );
+
+    const { rerender } = render(buildElement(null));
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Mark as read"));
+
+    await waitFor(() => {
+      expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    rerender(
+      buildElement({
+        userId: "+31612345678",
+        senderId: "+31612345678",
+        recipientId: "host-1",
+        text: "Wait, one more thing",
+        threadId: "thread-1",
+        createdAt: "2026-06-01T10:20:00.000Z",
+      })
+    );
+
+    resolveMarkRead({ threadId: "thread-1", updated: 1 });
+
+    await waitFor(() => {
+      const finalState = setContacts.mock.calls.reduce((state, [updaterFn]) => updaterFn(state), [contact]);
+      expect(finalState[0].unreadCount).toBe(1);
+    });
+  });
+
   const setupInFlightUnreadWhileThreadBecomesActive = async () => {
     let resolveMarkUnread;
     markThreadUnread.mockImplementation(
@@ -498,7 +583,6 @@ describe("ContactList manual mark read/unread", () => {
       expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
     });
 
-    // Host opens this exact conversation while the mark-as-unread request is still in flight.
     rerender(buildElement("thread-1"));
 
     return {
@@ -521,7 +605,7 @@ describe("ContactList manual mark read/unread", () => {
     expect(finalState[0].unreadCount).toBe(0);
   });
 
-  test("falls back to marking unread locally when the corrective markThreadRead fails", async () => {
+  test("falls back to marking unread locally and shows a visible error when the corrective markThreadRead fails", async () => {
     markThreadRead.mockRejectedValue(new Error("network error"));
 
     const { contact, setContacts, resolveMarkUnread } = await setupInFlightUnreadWhileThreadBecomesActive();
@@ -538,6 +622,8 @@ describe("ContactList manual mark read/unread", () => {
 
     const finalState = setContacts.mock.calls.reduce((state, [updaterFn]) => updaterFn(state), [contact]);
     expect(finalState[0].unreadCount).toBe(1);
+
+    expect(toast.error).toHaveBeenCalled();
   });
 
   const secondManualActionContact = {
@@ -696,7 +782,6 @@ describe("ContactList manual mark read/unread", () => {
       expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
     });
 
-    // A genuine new incoming message arrives via realtime while the request is still in flight.
     rerender(
       buildElement({
         userId: "+31612345678",

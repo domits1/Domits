@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useMemo, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
@@ -29,11 +30,6 @@ const resolvePartnerId = (contact, selfUserId) => {
   return picked || null;
 };
 
-// Row/menu identity, kept separate from the simpler key that drives the "active" highlight.
-// A thread gives a unique identity on its own. Without one (legacy contacts), the same
-// partner can have several distinct conversations, so the same dimensions used by
-// useFetchContacts' getContactMergeKey (partner + property/booking + platform) disambiguate
-// them, otherwise two such rows collapse onto the same key and share one menu.
 const buildRowMenuKey = (contact, selfUserId) => {
   if (contact?.threadId) return contact.threadId;
 
@@ -130,8 +126,6 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
   const hasExisting = idx > -1;
   if (hasExisting) {
     const previousUnreadCount = updated[idx]?.unreadCount || 0;
-    // Never clear unreadCount here: only a confirmed markThreadRead() success may do that
-    // (see markContactThreadReadLocally), so local state can't drift ahead of the backend.
     const nextUnreadCount = isGenuineIncoming ? previousUnreadCount + 1 : previousUnreadCount;
 
     updated[idx] = {
@@ -168,17 +162,13 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
   return updated;
 };
 
-// Only called after a POST /threads/{id}/read confirmation, so local state never
-// claims "read" ahead of the backend actually confirming it.
-const markContactThreadReadLocally = (prevContacts, threadId) =>
+const markContactThreadReadLocally = (prevContacts, threadId, updatedCount) =>
   (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
-    c?.threadId && String(c.threadId) === String(threadId) ? { ...c, unreadCount: 0 } : c
+    c?.threadId && String(c.threadId) === String(threadId)
+      ? { ...c, unreadCount: Math.max(0, (c.unreadCount || 0) - (updatedCount || 0)) }
+      : c
   );
 
-// Only called after a POST /threads/{id}/unread confirmation returns its updated count.
-// Adds that confirmed flip on top of whatever unreadCount is locally current, rather than
-// overwriting it, so a genuine realtime message that arrived while the request was still
-// in flight (already incremented via upsertContactFromIncoming) isn't discarded.
 const markContactThreadUnreadLocally = (prevContacts, threadId, updatedCount) =>
   (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
     c?.threadId && String(c.threadId) === String(threadId)
@@ -267,10 +257,14 @@ const ContactList = ({
       if (!isFromCurrentUser && isAddressedToCurrentUser && isActiveThread && incomingThreadId) {
         getIdToken()
           .then((idToken) => markThreadRead(incomingThreadId, idToken))
-          .then(() => {
-            setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, incomingThreadId));
+          .then((result) => {
+            setContacts?.((prevContacts) =>
+              markContactThreadReadLocally(prevContacts, incomingThreadId, result?.updated ?? 0)
+            );
           })
-          .catch(() => {});
+          .catch(() => {
+            toast.error("Could not mark this conversation as read. Please try again.");
+          });
       }
 
       const hydrateKey = String(partnerId);
@@ -346,10 +340,10 @@ const ContactList = ({
 
     try {
       const idToken = await getIdToken();
-      await markThreadRead(threadId, idToken);
-      setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, threadId));
+      const result = await markThreadRead(threadId, idToken);
+      setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, threadId, result?.updated ?? 0));
     } catch {
-      // Mark-read failures should not falsely update local state.
+      toast.error("Could not mark this conversation as read. Please try again.");
     }
   };
 
@@ -362,25 +356,22 @@ const ContactList = ({
       const idToken = await getIdToken();
       const result = await markThreadUnread(threadId, idToken);
 
-      // If the host opened this exact thread while the request was still in flight,
-      // the existing auto-read effect already ran and skipped (it saw unreadCount: 0),
-      // so immediately re-sync backend + local state instead of leaving an actively
-      // viewed conversation unread.
       if (String(activeThreadIdRef.current || "") === String(threadId)) {
         try {
-          await markThreadRead(threadId, idToken);
-          setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, threadId));
+          const readResult = await markThreadRead(threadId, idToken);
+          setContacts?.((prevContacts) =>
+            markContactThreadReadLocally(prevContacts, threadId, readResult?.updated ?? 0)
+          );
         } catch {
-          // The unread flip itself already succeeded; only the corrective re-read failed.
-          // Fall back to the confirmed unread result instead of leaving local state stale.
           setContacts?.((prevContacts) => markContactThreadUnreadLocally(prevContacts, threadId, result?.updated ?? 0));
+          toast.error("Could not reopen this conversation as read. Please try again.");
         }
         return;
       }
 
       setContacts?.((prevContacts) => markContactThreadUnreadLocally(prevContacts, threadId, result?.updated ?? 0));
     } catch {
-      // Mark-unread failures should not falsely update local state.
+      toast.error("Could not mark this conversation as unread. Please try again.");
     }
   };
 
