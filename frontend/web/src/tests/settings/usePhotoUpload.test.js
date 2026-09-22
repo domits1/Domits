@@ -48,9 +48,8 @@ describe("usePhotoUpload", () => {
 
   test("onPhotoInputChange: sets error when file size exceeds 4 MB limit", async () => {
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
-    const oversizedFile = new File([new Uint8Array(PROFILE_PHOTO_MAX_SIZE + 1)], "big.jpg", {
-      type: "image/jpeg",
-    });
+    const oversizedFile = new File(["x"], "big.jpg", { type: "image/jpeg" });
+    Object.defineProperty(oversizedFile, "size", { value: PROFILE_PHOTO_MAX_SIZE + 1 });
     await act(async () => {
       await result.current.onPhotoInputChange({ target: { files: [oversizedFile] } });
     });

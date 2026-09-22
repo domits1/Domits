@@ -42,9 +42,8 @@ describe("useCompanyLogoUpload", () => {
 
     test("onLogoInputChange: sets error when file size exceeds the 5MB limit", async () => {
         const { result } = renderHook(() => useCompanyLogoUpload(onLogoChange));
-        const oversizedFile = new File([new Uint8Array(COMPANY_LOGO_MAX_SIZE + 1)], "big.png", {
-            type: "image/png",
-        });
+        const oversizedFile = new File(["x"], "big.png", { type: "image/png" });
+        Object.defineProperty(oversizedFile, "size", { value: COMPANY_LOGO_MAX_SIZE + 1 });
         await act(async () => {
             await result.current.onLogoInputChange({ target: { files: [oversizedFile] } });
         });
