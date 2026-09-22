@@ -405,6 +405,21 @@
     margin: 4px 0 0 136px;
 }
 
+.pd-photo-error,
+.pd-photo-success {
+    font-size: 0.8rem;
+    text-align: center;
+    margin: 0;
+}
+
+.pd-photo-error {
+    color: #dc2626;
+}
+
+.pd-photo-success {
+    color: #15803d;
+}
+
 .personal-data-card-footer {
     display: flex;
     justify-content: flex-end;
@@ -490,6 +505,38 @@
     .company-card-hint {
         margin-left: 0;
     }
+}
+
+.settings-section-note {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: -8px 0 14px;
+}
+
+.company-logo-preview {
+    display: block;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+}
+
+.company-logo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    border: 1px dashed #d1d5db;
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 12px;
+    box-sizing: border-box;
 }
 
 /* ─── Preferences / Authentication card ─────────────────────────────────── */

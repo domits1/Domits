@@ -613,11 +613,32 @@ const renderPanoramaTrustCards = ({ featuredTrustCards, onSelectTarget, activeTa
 const PANORAMA_AVAILABILITY_ANCHOR = "#availability";
 const LazyQuoteAvailabilitySection = lazy(() => import("../booking/QuoteAvailabilitySection"));
 
+const PANORAMA_AVAILABILITY_SECTION_ID = "availability";
+
 const renderPanoramaHeroCallToAction = ({ model, onSelectTarget, activeTargetId }) => {
+  const callToActionNote = String(model.callToAction?.note || "").trim();
   const callToActionContent = (
     <>
-      <strong>{model.callToAction.label}</strong>
-      <span>{model.callToAction.note || model.stay?.nightlyRateLabel || "Direct booking website"}</span>
+      <strong className={styles.panoramaHeroPrimaryActionLabel}>
+        {model.callToAction.label}
+        <svg
+          className={styles.panoramaHeroPrimaryActionArrow}
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+          focusable="false"
+          data-testid="panorama-hero-cta-arrow"
+        >
+          <path
+            d="M8 3v9m0 0 4-4m-4 4-4-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </strong>
+      {callToActionNote ? <span>{callToActionNote}</span> : null}
     </>
   );
 
@@ -1315,7 +1336,8 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
           : null}
         {viewState.showAvailabilityCalendar ? (
           <section
-            id="availability"
+            id={PANORAMA_AVAILABILITY_SECTION_ID}
+            aria-label="Availability"
             className={buildPanoramaDeferredSectionClassName(
               styles.panoramaAvailabilityShell,
               shouldDeferBelowFoldSections

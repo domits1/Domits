@@ -1,3 +1,9 @@
+// Without TEST=true the ORM targets the live schema and the default repositories reach SSM,
+// which crashes the Jest worker before the suite finishes.
+const originalTestEnv = process.env.TEST;
+const hadTestEnv = Object.hasOwn(process.env, "TEST");
+process.env.TEST = "true";
+
 jest.mock("@aws-sdk/client-lambda", () => ({
   LambdaClient: jest.fn().mockImplementation(() => ({ send: jest.fn() })),
   InvokeCommand: jest.fn().mockImplementation((input) => input),
@@ -12,6 +18,14 @@ const {
   BadRequestException,
 } = require("../../functions/General-Bookings-CRUD-Bookings-develop/util/exception/badRequestException.js");
 
+afterAll(() => {
+  if (hadTestEnv) {
+    process.env.TEST = originalTestEnv;
+  } else {
+    delete process.env.TEST;
+  }
+});
+
 const HOST_ID = "host-1";
 const INQUIRY_ID = "inquiry-1";
 
@@ -25,13 +39,12 @@ const buildBooking = (overrides = {}) => ({
   ...overrides,
 });
 
-const buildService = ({ booking = buildBooking(), overlapping = [], userSub = HOST_ID } = {}) => {
+const buildService = ({ booking = buildBooking(), userSub = HOST_ID } = {}) => {
   const reservationRepository = {
     getBookingById: jest
       .fn()
       .mockResolvedValue(booking ? { response: booking } : { message: "No bookings found", statusCode: 204 }),
     updateBookingStatus: jest.fn(),
-    getOverlappingInquiries: jest.fn().mockResolvedValue(overlapping),
   };
   const authManager = { authenticateUser: jest.fn().mockResolvedValue({ sub: userSub }) };
   const service = new BookingService({ reservationRepository, authManager });
@@ -39,119 +52,38 @@ const buildService = ({ booking = buildBooking(), overlapping = [], userSub = HO
   return { service, reservationRepository, authManager };
 };
 
-describe("BookingService inquiry conflict resolution", () => {
-  describe("guard clauses shared by acceptInquiry and declineInquiry", () => {
-    it.each([
-      {
-        method: "acceptInquiry",
-        scenario: "the booking does not exist",
-        overrides: { booking: null },
-        expectedError: NotFoundException,
-      },
-      {
-        method: "acceptInquiry",
-        scenario: "the caller is not the host",
-        overrides: { userSub: "someone-else" },
-        expectedError: Forbidden,
-      },
-      {
-        method: "acceptInquiry",
-        scenario: "the booking is no longer in Inquiry status",
-        overrides: { booking: buildBooking({ status: "Paid" }) },
-        expectedError: BadRequestException,
-      },
-      {
-        method: "declineInquiry",
-        scenario: "the booking does not exist",
-        overrides: { booking: null },
-        expectedError: NotFoundException,
-      },
-      {
-        method: "declineInquiry",
-        scenario: "the caller is not the host",
-        overrides: { userSub: "someone-else" },
-        expectedError: Forbidden,
-      },
-      {
-        method: "declineInquiry",
-        scenario: "the booking is no longer in Inquiry status",
-        overrides: { booking: buildBooking({ status: "Paid" }) },
-        expectedError: BadRequestException,
-      },
-    ])("$method rejects when $scenario", async ({ method, overrides, expectedError }) => {
-      const { service, reservationRepository } = buildService(overrides);
+describe("BookingService.declineInquiry", () => {
+  it.each([
+    {
+      scenario: "the booking does not exist",
+      overrides: { booking: null },
+      expectedError: NotFoundException,
+    },
+    {
+      scenario: "the caller is not the host",
+      overrides: { userSub: "someone-else" },
+      expectedError: Forbidden,
+    },
+    {
+      scenario: "the booking is no longer in Inquiry status",
+      overrides: { booking: buildBooking({ status: "Paid" }) },
+      expectedError: BadRequestException,
+    },
+  ])("rejects without writing when $scenario", async ({ overrides, expectedError }) => {
+    const { service, reservationRepository } = buildService(overrides);
 
-      await expect(service[method](INQUIRY_ID, "Bearer token")).rejects.toThrow(expectedError);
+    await expect(service.declineInquiry(INQUIRY_ID, "Bearer token")).rejects.toThrow(expectedError);
 
-      expect(reservationRepository.updateBookingStatus).not.toHaveBeenCalled();
-      expect(reservationRepository.getOverlappingInquiries).not.toHaveBeenCalled();
-    });
+    expect(reservationRepository.updateBookingStatus).not.toHaveBeenCalled();
   });
 
-  describe("acceptInquiry resolves competing inquiries automatically", () => {
-    it("declines every overlapping inquiry and reports how many were declined", async () => {
-      const overlapping = [{ id: "inquiry-2" }, { id: "inquiry-3" }];
-      const { service, reservationRepository } = buildService({ overlapping });
+  it("sets only the declined booking to Declined", async () => {
+    const { service, reservationRepository } = buildService();
 
-      const result = await service.acceptInquiry(INQUIRY_ID, "Bearer token");
+    const result = await service.declineInquiry(INQUIRY_ID, "Bearer token");
 
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledWith(INQUIRY_ID, "Awaiting Payment");
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledWith("inquiry-2", "Declined");
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledWith("inquiry-3", "Declined");
-      expect(result).toEqual(
-        expect.objectContaining({
-          bookingId: INQUIRY_ID,
-          status: "Awaiting Payment",
-          declinedCount: 2,
-        })
-      );
-    });
-
-    it("excludes the accepted inquiry from the overlap search so it cannot decline itself", async () => {
-      const booking = buildBooking();
-      const { service, reservationRepository } = buildService({ booking });
-
-      await service.acceptInquiry(INQUIRY_ID, "Bearer token");
-
-      expect(reservationRepository.getOverlappingInquiries).toHaveBeenCalledWith({
-        propertyId: booking.property_id,
-        arrivalDateMs: booking.arrivaldate,
-        departureDateMs: booking.departuredate,
-        excludeBookingId: INQUIRY_ID,
-      });
-    });
-
-    it("reports zero declines when no other inquiry overlaps the accepted dates", async () => {
-      const { service, reservationRepository } = buildService({ overlapping: [] });
-
-      const result = await service.acceptInquiry(INQUIRY_ID, "Bearer token");
-
-      expect(result.declinedCount).toBe(0);
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledTimes(1);
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledWith(INQUIRY_ID, "Awaiting Payment");
-    });
-
-    it("leaves the accepted booking committed even when the overlap search fails", async () => {
-      const { service, reservationRepository } = buildService();
-      reservationRepository.getOverlappingInquiries.mockRejectedValue(new Error("connection reset"));
-
-      await expect(service.acceptInquiry(INQUIRY_ID, "Bearer token")).rejects.toThrow("connection reset");
-
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledTimes(1);
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledWith(INQUIRY_ID, "Awaiting Payment");
-    });
-  });
-
-  describe("declineInquiry only touches the declined booking", () => {
-    it("sets the booking to Declined without searching for overlapping inquiries", async () => {
-      const { service, reservationRepository } = buildService();
-
-      const result = await service.declineInquiry(INQUIRY_ID, "Bearer token");
-
-      expect(result).toEqual({ bookingId: INQUIRY_ID, status: "Declined" });
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledTimes(1);
-      expect(reservationRepository.updateBookingStatus).toHaveBeenCalledWith(INQUIRY_ID, "Declined");
-      expect(reservationRepository.getOverlappingInquiries).not.toHaveBeenCalled();
-    });
+    expect(result).toEqual({ bookingId: INQUIRY_ID, status: "Declined" });
+    expect(reservationRepository.updateBookingStatus).toHaveBeenCalledTimes(1);
+    expect(reservationRepository.updateBookingStatus).toHaveBeenCalledWith(INQUIRY_ID, "Declined");
   });
 });

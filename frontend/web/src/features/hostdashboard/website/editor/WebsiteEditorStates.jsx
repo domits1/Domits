@@ -13,6 +13,7 @@ import {
 } from "./websiteEditorUtils";
 import styles from "../WebsiteEditorPage.module.scss";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
+import { formatPublishedAtLabel } from "../services/websiteListingChange";
 
 export function WebsiteEditorLoadingState({
   renderLoadingSection,
@@ -105,6 +106,7 @@ export function WebsiteEditorActionMenu({
   updateLiveSiteChanges,
   isMutatingDraft,
   hasLiveSyncPending,
+  canUpdateLiveSite,
   isUpdatingLiveSite,
   publishLiveSite,
   canPublishSite,
@@ -163,7 +165,7 @@ export function WebsiteEditorActionMenu({
               role="menuitem"
               className={styles.actionMenuItem}
               onClick={updateLiveSiteChanges}
-              disabled={isMutatingDraft || !hasLiveSyncPending}
+              disabled={isMutatingDraft || !canUpdateLiveSite}
             >
               {isUpdatingLiveSite ? "Updating..." : "Update live site"}
             </button>
@@ -213,6 +215,7 @@ WebsiteEditorActionMenu.propTypes = {
   updateLiveSiteChanges: PropTypes.func.isRequired,
   isMutatingDraft: PropTypes.bool.isRequired,
   hasLiveSyncPending: PropTypes.bool.isRequired,
+  canUpdateLiveSite: PropTypes.bool.isRequired,
   isUpdatingLiveSite: PropTypes.bool.isRequired,
   publishLiveSite: PropTypes.func.isRequired,
   canPublishSite: PropTypes.bool.isRequired,
@@ -232,8 +235,11 @@ export function WebsiteEditorPublicSitePanel({
   siteSummaryError,
   hasLiveSite,
   hasLiveSyncPending,
+  isListingStale = false,
+  listingPublishedAt = null,
   draftId,
 }) {
+  const listingPublishedAtLabel = formatPublishedAtLabel(listingPublishedAt);
   const { primaryLinkLabel, primaryLinkValue, secondaryLinkHref } = resolvePublicSiteLinkPresentation({
     hasLiveSite,
     primarySiteDomain,
@@ -281,6 +287,15 @@ export function WebsiteEditorPublicSitePanel({
       </div>
 
       {siteSummaryError ? <p className={styles.publicSiteError}>{siteSummaryError}</p> : null}
+      {!siteSummaryError && hasLiveSite && isListingStale ? (
+        <output className={styles.publicSiteStale}>
+          <strong>
+            Your listing changed after the last publish
+            {listingPublishedAtLabel ? ` (${listingPublishedAtLabel})` : ""}.
+          </strong>{" "}
+          Guests still see the older version. Use &ldquo;Update live site&rdquo; to publish the current listing.
+        </output>
+      ) : null}
       {!siteSummaryError && hasLiveSite && hasLiveSyncPending ? (
         <p className={styles.publicSiteHint}>
           Update the live site to push the latest editor changes to the public website.
@@ -303,5 +318,7 @@ WebsiteEditorPublicSitePanel.propTypes = {
   siteSummaryError: PropTypes.string,
   hasLiveSite: PropTypes.bool.isRequired,
   hasLiveSyncPending: PropTypes.bool.isRequired,
+  isListingStale: PropTypes.bool,
+  listingPublishedAt: PropTypes.number,
   draftId: PropTypes.string,
 };

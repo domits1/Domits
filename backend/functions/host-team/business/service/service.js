@@ -60,6 +60,20 @@ export class Service {
         return { message: "Team member removed." };
     }
 
+    async updateMemberRole(hostId, memberId, role) {
+        if (!role) throw new BadRequestException("Role is required.");
+        const normalizedRole = normalizeRole(role);
+
+        const dataSource = await Database.getInstance();
+
+        const member = await this.repository.findById(dataSource, memberId);
+        if (!member) throw new NotFoundException("Team member not found.");
+        if (member.host_id !== hostId) throw new ForbiddenException("You do not have permission to edit this team member.");
+
+        await this.repository.update(dataSource, memberId, { role: normalizedRole });
+        return { ...member, role: normalizedRole };
+    }
+
     async getUserInfo(cognitoUsername) {
         try {
             const result = await cognitoClient.send(new AdminGetUserCommand({
