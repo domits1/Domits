@@ -14,12 +14,10 @@ export const EnterpriseRatePlan = new EntitySchema({
       type: "varchar",
       nullable: false,
     },
-    price_per_property: {
-      type: "numeric",
-      precision: 10,
-      scale: 2,
+    price_per_property_cents: {
+      type: "integer",
       nullable: false,
-      default: 49.00,
+      default: 4900,
     },
     currency: {
       type: "varchar",
@@ -37,7 +35,7 @@ export const EnterpriseRatePlan = new EntitySchema({
       type: "varchar",
       length: 20,
       nullable: false,
-      default: "active",
+      default: "ACTIVE",
     },
     effective_from: {
       type: "timestamp with time zone",
