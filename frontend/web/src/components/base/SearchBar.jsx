@@ -17,9 +17,6 @@ import calendarIcon from "../../images/icons/calendar.png";
 import searchIcon from "../../images/icons/search-lg.svg";
 import usersIcon from "../../images/icons/users-01.png";
 import locationIcon from "../../images/icons/destination-pin.png";
-import houseIcon from "../../images/icons/house.png";
-import houseBoatIcon from "../../images/icons/house-boat.png";
-import camperVanIcon from "../../images/icons/camper-van.png";
 
 const contentByLanguage = {
   en,
@@ -84,7 +81,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
   const [infants, setInfants] = useState(0);
   const [pets, setPets] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [error, setError] = useState("");
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isMobile, setIsMobile] = useState(false);
@@ -118,7 +114,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
   };
 
   const guestDropdownRef = useRef();
-  const typeDropdownRef = useRef();
 
   const resetGuests = useCallback((e) => {
     e.stopPropagation();
@@ -138,21 +133,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
     setShowGuestDropdown(false);
   };
 
-  const toggleTypeDropdown = useCallback((e) => {
-    e.stopPropagation();
-    setShowTypeDropdown((prevState) => !prevState);
-  }, []);
-
-  const closeTypeDropdown = (e) => {
-    e.stopPropagation();
-    setShowTypeDropdown(false);
-  };
-
-  const selectPropertyType = useCallback((value) => {
-    setAccommodation((prev) => (prev === value ? '' : value));
-    setShowTypeDropdown(false);
-  }, []);
-
   const totalGuests = adults + children + infants + pets;
   const guestSummaryText = totalGuests > 0 ? `${totalGuests} ${searchContent.guests}` : searchContent.guests;
 
@@ -171,22 +151,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
 
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [showGuestDropdown]);
-
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target)) {
-        setShowTypeDropdown(false);
-      }
-    };
-
-    if (showTypeDropdown) {
-      document.addEventListener('mousedown', handleOutsideClick);
-    } else {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    }
-
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [showTypeDropdown]);
 
   const handleChange = (e) => {
     setAddress(e.target.value);
@@ -325,12 +289,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
     },
   ];
 
-  const propertyTypeOptions = [
-    { value: 'House', label: searchContent.house, icon: houseIcon },
-    { value: 'Boat', label: searchContent.boat, icon: houseBoatIcon },
-    { value: 'Camper', label: searchContent.camper, icon: camperVanIcon },
-  ];
-
   const renderDateField = () => (
     <div className={`search-check-in-out search-bar-field ${hasSelectedDates ? 'has-value' : ''}`}>
       <img src={calendarIcon} alt="" aria-hidden="true" className="search-field-icon search-field-icon--calendar" />
@@ -379,45 +337,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
                   onKeyDown={handleKeyDown}
                   className="search-places-input"
                 />
-              </div>
-
-              <div className="search-type-wrapper">
-                <button
-                  type="button"
-                  className={`search-type-section search-bar-field ${showTypeDropdown ? 'active' : ''}`}
-                  onClick={toggleTypeDropdown}
-                  aria-expanded={showTypeDropdown}
-                  aria-haspopup="listbox">
-                  <img src={houseIcon} alt="" aria-hidden="true" className="search-field-icon search-field-icon--type" />
-                  <span className={`search-type-text ${accommodation ? '' : 'is-placeholder'}`}>
-                    {accommodation || searchContent.accommodation}
-                  </span>
-                </button>
-
-                <div className={`search-type-dropdown ${showTypeDropdown ? 'active' : ''}`}
-                  ref={typeDropdownRef}>
-                  {isMobile && (
-                    <button
-                      type="button"
-                      className="search-close-type-dropdown"
-                      onClick={closeTypeDropdown}
-                    >
-                      <FaTimes />
-                    </button>
-                  )}
-
-                  {propertyTypeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      className={`search-type-option ${accommodation === option.value ? 'is-selected' : ''}`}
-                      onClick={() => selectPropertyType(option.value)}
-                    >
-                      <img src={option.icon} alt="" aria-hidden="true" className="search-type-option-icon" />
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {renderDateField()}

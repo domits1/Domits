@@ -30,7 +30,7 @@
     },
     "search": {
       "destination": "Destination",
-      "accommodation": "Type",
+      "accommodation": "Accommodation",
       "checkInOut": "Check in • out",
       "guests": "Guests",
       "adults": "Adults",
