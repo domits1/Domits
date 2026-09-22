@@ -1,24 +1,14 @@
-const mockMessageRepository = {
-  createMessage: jest.fn(),
-  getMessagesByThreadId: jest.fn(),
-  markThreadMessagesRead: jest.fn(),
-  getUnreadCountsForThreads: jest.fn(),
-};
-const mockThreadRepository = {
-  createThread: jest.fn(),
-  findThread: jest.fn(),
-  findThreadByBookingId: jest.fn(),
-  getThreadById: jest.fn(),
-  getThreadsForUser: jest.fn(),
-  updateThreadActivity: jest.fn(),
-  upsertExternalThread: jest.fn(),
-};
-const mockBookingRepository = {
-  getBookingById: jest.fn(),
-  findBookingsForGuestHost: jest.fn(),
-  findBookingsForGuestHostProperty: jest.fn(),
-  hostOwnsProperty: jest.fn(),
-};
+const {
+  createMockMessageRepository,
+  createMockThreadRepository,
+  createMockBookingRepository,
+  hostAuth,
+  buildThread,
+} = require("./messageServiceTestUtils.js");
+
+const mockMessageRepository = createMockMessageRepository();
+const mockThreadRepository = createMockThreadRepository();
+const mockBookingRepository = createMockBookingRepository();
 const mockWhatsAppAdapterInstance = { sendMessage: jest.fn(), describeFailure: jest.fn() };
 
 jest.mock("../data/messageRepository.js", () => ({
@@ -44,15 +34,14 @@ jest.mock("./whatsappProviderAdapter.js", () => ({
 
 const MessageService = require("./messageService.js").default;
 
-const hostAuth = { userId: "host-1", isGuest: false, isHost: true };
+const thread = buildThread;
 
-const thread = (patch = {}) => ({
-  id: "thread-1",
-  hostId: "host-1",
-  guestId: "guest-1",
-  propertyId: "property-1",
-  platform: "DOMITS",
-  ...patch,
+const registeredTestProviderAdapter = () => ({
+  sendMessage: jest.fn().mockResolvedValue({ providerMessageId: "tp-1" }),
+});
+
+const withTestProvider = (testProviderAdapter) => ({
+  providerAdapters: { WHATSAPP: mockWhatsAppAdapterInstance, TEST_PROVIDER: testProviderAdapter },
 });
 
 describe("MessageService outbound provider routing", () => {
@@ -149,11 +138,9 @@ describe("MessageService outbound provider routing", () => {
       mockThreadRepository.getThreadById.mockResolvedValue(
         thread({ platform: "TEST_PROVIDER", integrationAccountId: "integration-9", externalThreadId: "ext-9" })
       );
-      const testProviderAdapter = { sendMessage: jest.fn().mockResolvedValue({ providerMessageId: "tp-1" }) };
+      const testProviderAdapter = registeredTestProviderAdapter();
 
-      const service = new MessageService({
-        providerAdapters: { WHATSAPP: mockWhatsAppAdapterInstance, TEST_PROVIDER: testProviderAdapter },
-      });
+      const service = new MessageService(withTestProvider(testProviderAdapter));
       const result = await service.sendMessage({ threadId: "thread-1", content: "hi" }, hostAuth);
 
       expect(testProviderAdapter.sendMessage).toHaveBeenCalledWith(
@@ -169,11 +156,9 @@ describe("MessageService outbound provider routing", () => {
       mockThreadRepository.upsertExternalThread.mockResolvedValue(
         thread({ id: "new-thread", platform: "TEST_PROVIDER", integrationAccountId: "integration-9", externalThreadId: "ext-9" })
       );
-      const testProviderAdapter = { sendMessage: jest.fn().mockResolvedValue({ providerMessageId: "tp-1" }) };
+      const testProviderAdapter = registeredTestProviderAdapter();
 
-      const service = new MessageService({
-        providerAdapters: { WHATSAPP: mockWhatsAppAdapterInstance, TEST_PROVIDER: testProviderAdapter },
-      });
+      const service = new MessageService(withTestProvider(testProviderAdapter));
       const result = await service.sendMessage(
         {
           platform: "TEST_PROVIDER",
@@ -197,11 +182,9 @@ describe("MessageService outbound provider routing", () => {
         thread({ platform: "TEST_PROVIDER", integrationAccountId: "integration-9", externalThreadId: "ext-9" })
       );
       const attachments = [{ url: "https://example.com/a.png", type: "image" }];
-      const testProviderAdapter = { sendMessage: jest.fn().mockResolvedValue({ providerMessageId: "tp-1" }) };
+      const testProviderAdapter = registeredTestProviderAdapter();
 
-      const service = new MessageService({
-        providerAdapters: { WHATSAPP: mockWhatsAppAdapterInstance, TEST_PROVIDER: testProviderAdapter },
-      });
+      const service = new MessageService(withTestProvider(testProviderAdapter));
       await service.sendMessage({ threadId: "thread-1", content: "", attachments }, hostAuth);
 
       expect(testProviderAdapter.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ attachments }));
@@ -215,9 +198,7 @@ describe("MessageService outbound provider routing", () => {
       const sendError = new Error("provider unreachable");
       const testProviderAdapter = { sendMessage: jest.fn().mockRejectedValue(sendError) };
 
-      const service = new MessageService({
-        providerAdapters: { WHATSAPP: mockWhatsAppAdapterInstance, TEST_PROVIDER: testProviderAdapter },
-      });
+      const service = new MessageService(withTestProvider(testProviderAdapter));
       const result = await service.sendMessage({ threadId: "thread-1", content: "hi" }, hostAuth);
 
       expect(mockMessageRepository.createMessage).toHaveBeenCalledWith(
