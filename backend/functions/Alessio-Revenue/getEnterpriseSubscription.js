@@ -1,20 +1,47 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { AuthManager } from "../PropertyHandler/auth/authManager.js";
-import { SystemManagerRepository } from "../PropertyHandler/data/repository/systemManagerRepository.js";
+import { CognitoRepository } from "./data/cognitoRepository.js";
 import { getEnterpriseBillingDetails } from "./activePropertyCalculator.js";
 
-const authManager = new AuthManager(
-  new DynamoDBClient({}),
-  new SystemManagerRepository()
-);
+const cognitoRepository = new CognitoRepository();
+
+function getAccessToken(event) {
+  return event.headers?.Authorization || event.headers?.authorization;
+}
+
+function getGroup(user) {
+  return user.UserAttributes?.find(
+    (attribute) => attribute.Name === "custom:group"
+  )?.Value;
+}
 
 export const handler = async (event) => {
   try {
-    const accessToken =
-      event.headers?.Authorization ||
-      event.headers?.authorization;
+    const accessToken = getAccessToken(event);
 
-    await authManager.authorizeGroupRequest(accessToken, "Host");
+    if (!accessToken) {
+      return {
+        statusCode: 401,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: "You must be logged in.",
+        }),
+      };
+    }
+
+    const user = await cognitoRepository.getUserByAccessToken(accessToken);
+
+    if (getGroup(user) !== "Host") {
+      return {
+        statusCode: 403,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: "You must be a Host.",
+        }),
+      };
+    }
 
     const enterpriseId = event.pathParameters?.enterpriseId;
 
@@ -30,8 +57,10 @@ export const handler = async (event) => {
       };
     }
 
-    const billingDetails =
-      await getEnterpriseBillingDetails(enterpriseId);
+    const billingDetails = await getEnterpriseBillingDetails(
+      enterpriseId,
+      user.Username
+    );
 
     return {
       statusCode: 200,
@@ -54,7 +83,7 @@ export const handler = async (event) => {
       },
       body: JSON.stringify({
         message:
-          error.statusCode === 401 || error.statusCode === 403
+          error.statusCode === 403
             ? error.message
             : "Failed to retrieve enterprise subscription",
       }),
