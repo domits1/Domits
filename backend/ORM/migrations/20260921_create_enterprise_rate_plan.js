@@ -7,7 +7,7 @@ export class EnterpriseRatePlan20260921 {
 
         await queryRunner.query(`
             ALTER TABLE main.property
-            ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN;
+            ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
         `);
 
         await queryRunner.query(`
