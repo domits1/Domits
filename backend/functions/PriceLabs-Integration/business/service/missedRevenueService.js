@@ -1,3 +1,5 @@
+import { validateDateRange } from "../../util/dateRange.js";
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // Only a secured booking blocks a night. Inquiry and Awaiting Payment aren't
@@ -71,6 +73,8 @@ export class MissedRevenueService {
    * would require assumptions this data doesn't reliably support yet.
    */
   async getMissedRevenue(hostId, startDate, endDate) {
+    validateDateRange(startDate, endDate);
+
     const connection = await this.repo.getConnectionByHost(hostId);
     if (!connection?.is_active) {
       return { connected: false };

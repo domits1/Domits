@@ -14,6 +14,15 @@ const createService = (opts) => {
 };
 
 describe("MissedRevenueService.getMissedRevenue", () => {
+  test("rejects a range longer than 366 days even when called directly, bypassing the controller", async () => {
+    const { service, repository } = createService();
+
+    await expect(service.getMissedRevenue("host-1", "2025-01-01", "2026-12-31")).rejects.toEqual(
+      expect.objectContaining({ status: 400 })
+    );
+    expect(repository.getCalendarPriceDataForHost).not.toHaveBeenCalled();
+  });
+
   test("returns not connected when the host has no active PriceLabs connection", async () => {
     const { service, repository } = createService({ connection: null });
 
