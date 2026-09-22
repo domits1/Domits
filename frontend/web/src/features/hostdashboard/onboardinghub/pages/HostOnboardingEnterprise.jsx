@@ -38,14 +38,17 @@ const STEP_KEYS = [
 ];
 const REQUIRED_STEP_KEYS = new Set(["company", "team", "listProperties", "website", "payments"]);
 
+// Channels and Pricing point at Calendar & Pricing for now rather than their
+// eventual dedicated pages (Channex account settings, PriceLabs setup) --
+// the destination asked for while those flows are not ready yet.
 const STEP_LINKS = {
   company: "/hostdashboard/settings/company",
   team: "/hostdashboard/settings/team",
   listProperties: "/hostdashboard/listings",
   website: "/hostdashboard/website",
-  channels: "/hostdashboard/integrations-marketplace",
+  channels: "/hostdashboard/calendar-pricing",
   payments: "/hostdashboard/finance",
-  pricing: "/hostdashboard/pricelabs",
+  pricing: "/hostdashboard/calendar-pricing",
   tasks: "/hostdashboard/tasks",
   marketplace: "/hostdashboard/integrations-marketplace",
 };
