@@ -29,6 +29,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
   const failures = new Map();
   const calls = [];
   let nextId = 1;
+  let transactionInFlight = false;
 
   const rowsForSite = (siteId) => [...store.values()].filter((row) => row.siteId === siteId);
 
@@ -72,24 +73,36 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
   };
 
   const runAtomically = async (name, work) => {
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const draft = new Map([...store.entries()].map(([id, row]) => [id, clone(row)]));
-      try {
-        const result = await work(draft);
-        const commitFailure = takeFailure(`${name}:commit`);
-        if (commitFailure) {
-          throw commitFailure;
-        }
-        store.clear();
-        draft.forEach((row, id) => store.set(id, row));
-        return result;
-      } catch (error) {
-        if (String(error?.code) !== "40001") {
-          throw error;
+    if (transactionInFlight) {
+      throw new Error(
+        `storingDomainRepository models sequential transactions only, and ${name} overlapped another one. It replaces the whole store on commit, so it cannot represent two transactions in flight; pause outside the transaction, or drive one at a time.`
+      );
+    }
+    transactionInFlight = true;
+
+    try {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const draft = new Map([...store.entries()].map(([id, row]) => [id, clone(row)]));
+        try {
+          const result = await work(draft);
+          await passGate(`${name}:commit`);
+          const commitFailure = takeFailure(`${name}:commit`);
+          if (commitFailure) {
+            throw commitFailure;
+          }
+          store.clear();
+          draft.forEach((row, id) => store.set(id, row));
+          return result;
+        } catch (error) {
+          if (String(error?.code) !== "40001") {
+            throw error;
+          }
         }
       }
+      throw serializationConflict();
+    } finally {
+      transactionInFlight = false;
     }
-    throw serializationConflict();
   };
 
   return {

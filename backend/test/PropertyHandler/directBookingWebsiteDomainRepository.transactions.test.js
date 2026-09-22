@@ -24,20 +24,30 @@ const FALLBACK_ROW = { ...CUSTOM_ROW, id: "domain-0", domain_type: "FALLBACK", i
 
 const conflictError = (code) => Object.assign(new Error("serialization failure"), { code });
 
-const buildRunner = (responses) => {
+const buildRunner = (responses, { failBegin = null, failCommit = null, failRollback = null } = {}) => {
   const runner = {
     isTransactionActive: false,
     connect: jest.fn().mockResolvedValue(undefined),
     startTransaction: jest.fn(async () => {
       runner.isTransactionActive = true;
+      if (failBegin) {
+        throw failBegin;
+      }
     }),
     commitTransaction: jest.fn(async () => {
+      if (failCommit) {
+        throw failCommit;
+      }
       runner.isTransactionActive = false;
     }),
     rollbackTransaction: jest.fn(async () => {
+      if (failRollback) {
+        throw failRollback;
+      }
       runner.isTransactionActive = false;
     }),
     release: jest.fn().mockResolvedValue(undefined),
+    releasePostgresConnection: jest.fn().mockResolvedValue(undefined),
     query: jest.fn(async () => {
       const next = responses.shift();
       if (next instanceof Error) {
@@ -118,10 +128,7 @@ describe("DirectBookingWebsiteDomainRepository transactional hand-back", () => {
   });
 
   it.each(["40001", "OC001"])("retries the transaction once when the commit conflicts with %s", async (code) => {
-    const failing = buildRunner([{ records: [CUSTOM_ROW], affected: 1 }]);
-    failing.commitTransaction = jest.fn(async () => {
-      throw conflictError(code);
-    });
+    const failing = buildRunner([{ records: [CUSTOM_ROW], affected: 1 }], { failCommit: conflictError(code) });
     const succeeding = buildRunner([
       { records: [CUSTOM_ROW], affected: 1 },
       { records: [{ ...FALLBACK_ROW, is_primary: true }], affected: 1 },
@@ -143,13 +150,8 @@ describe("DirectBookingWebsiteDomainRepository transactional hand-back", () => {
   });
 
   it("gives up after a second conflict instead of retrying forever", async () => {
-    const buildConflicting = () => {
-      const runner = buildRunner([{ records: [CUSTOM_ROW], affected: 1 }]);
-      runner.commitTransaction = jest.fn(async () => {
-        throw conflictError("40001");
-      });
-      return runner;
-    };
+    const buildConflicting = () =>
+      buildRunner([{ records: [CUSTOM_ROW], affected: 1 }], { failCommit: conflictError("40001") });
     const runners = [buildConflicting(), buildConflicting()];
     const { client } = buildClient([...runners]);
 
@@ -216,19 +218,88 @@ describe("DirectBookingWebsiteDomainRepository transactional hand-back", () => {
     expect(runner.release).toHaveBeenCalledTimes(1);
   });
 
-  it("releases the runner even when the transaction never started", async () => {
-    const runner = buildRunner([]);
-    runner.startTransaction = jest.fn(async () => {
-      throw new Error("connection lost");
-    });
+  it("rolls back and releases when the transaction fails to begin", async () => {
+    const runner = buildRunner([], { failBegin: new Error("could not start transaction") });
     buildClient([runner]);
 
     await expect(
       new DirectBookingWebsiteDomainRepository().deleteDomainAndRestoreFallbackById("domain-1", "site-1")
-    ).rejects.toThrow("connection lost");
+    ).rejects.toThrow("could not start transaction");
 
-    expect(runner.rollbackTransaction).not.toHaveBeenCalled();
+    expect(runner.isTransactionActive).toBe(false);
+    expect(runner.rollbackTransaction).toHaveBeenCalledTimes(1);
+    expect(runner.query).not.toHaveBeenCalled();
     expect(runner.release).toHaveBeenCalledTimes(1);
+    expect(runner.releasePostgresConnection).not.toHaveBeenCalled();
+  });
+
+  it("discards the connection instead of pooling it when the rollback fails", async () => {
+    const rollbackFailure = new Error("rollback refused");
+    const runner = buildRunner([{ records: [CUSTOM_ROW], affected: 1 }, new Error("restore unavailable")], {
+      failRollback: rollbackFailure,
+    });
+    buildClient([runner]);
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      await expect(
+        new DirectBookingWebsiteDomainRepository().updateDomainStatusAndRestoreFallbackById(
+          "domain-1",
+          "site-1",
+          "REMOVING",
+          {}
+        )
+      ).rejects.toThrow("restore unavailable");
+
+      expect(runner.rollbackTransaction).toHaveBeenCalledTimes(1);
+      expect(runner.releasePostgresConnection).toHaveBeenCalledWith(rollbackFailure);
+      expect(runner.release).not.toHaveBeenCalled();
+      expect(consoleError).toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it("falls back to a plain release when the runner cannot discard its connection", async () => {
+    const runner = buildRunner([{ records: [CUSTOM_ROW], affected: 1 }, new Error("restore unavailable")], {
+      failRollback: new Error("rollback refused"),
+    });
+    delete runner.releasePostgresConnection;
+    buildClient([runner]);
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      await expect(
+        new DirectBookingWebsiteDomainRepository().updateDomainStatusAndRestoreFallbackById(
+          "domain-1",
+          "site-1",
+          "REMOVING",
+          {}
+        )
+      ).rejects.toThrow("restore unavailable");
+
+      expect(runner.release).toHaveBeenCalledTimes(1);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it("returns the connection to the pool when the rollback succeeds", async () => {
+    const runner = buildRunner([{ records: [CUSTOM_ROW], affected: 1 }, new Error("restore unavailable")]);
+    buildClient([runner]);
+
+    await expect(
+      new DirectBookingWebsiteDomainRepository().updateDomainStatusAndRestoreFallbackById(
+        "domain-1",
+        "site-1",
+        "REMOVING",
+        {}
+      )
+    ).rejects.toThrow("restore unavailable");
+
+    expect(runner.rollbackTransaction).toHaveBeenCalledTimes(1);
+    expect(runner.release).toHaveBeenCalledTimes(1);
+    expect(runner.releasePostgresConnection).not.toHaveBeenCalled();
   });
 });
 

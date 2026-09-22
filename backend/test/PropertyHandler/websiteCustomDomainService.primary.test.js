@@ -228,7 +228,6 @@ describe("WebsiteCustomDomainService.promoteCustomDomain", () => {
   });
 });
 
-
 const storedFallback = (overrides = {}) => ({
   id: "domain-0",
   siteId: SITE.id,
@@ -461,5 +460,25 @@ describe("WebsiteCustomDomainService custom domain claim", () => {
     await expect(service.requestCustomDomain({ site: SITE, domain: "www.second.com" })).rejects.toMatchObject({
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_LIMIT_REACHED,
     });
+  });
+});
+
+describe("storing repository transaction model", () => {
+  it("refuses two overlapping transactions instead of letting one erase the other's writes", async () => {
+    const { service, domainRepository } = buildStoringService({ rows: promotedSite() });
+
+    const gate = domainRepository.pauseBefore("updateDomainStatusAndRestoreFallbackById:commit");
+    const firstRemoval = service.removeCustomDomain({ site: SITE, domain: DOMAIN });
+    await gate.reached;
+
+    await expect(
+      domainRepository.updateDomainStatusAndRestoreFallbackById("domain-1", SITE.id, "FAILED", {})
+    ).rejects.toThrow(/sequential transactions only/);
+
+    gate.release();
+    await firstRemoval;
+
+    expect(primaryDomainOf(domainRepository)).toBe(FALLBACK.domain);
+    expect(domainRepository.rowById("domain-1")).toMatchObject({ status: "REMOVING", isPrimary: false });
   });
 });

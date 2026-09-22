@@ -133,11 +133,31 @@ const runStatement = async (client, statement, parameters) => {
 const isTransientTransactionConflict = (error) =>
   TRANSIENT_CONFLICT_CODES.has(String(error?.code || error?.driverError?.code || ""));
 
+const rollbackReportingFailure = async (queryRunner) => {
+  try {
+    await queryRunner.rollbackTransaction();
+    return null;
+  } catch (error) {
+    console.error("[CustomDomain] rolling back a domain transaction failed; discarding the connection.", error);
+    return error;
+  }
+};
+
+const releaseQueryRunner = async (queryRunner, discardError) => {
+  if (discardError && typeof queryRunner.releasePostgresConnection === "function") {
+    await queryRunner.releasePostgresConnection(discardError);
+    return;
+  }
+
+  await queryRunner.release();
+};
+
 const runInTransaction = async (client, work) => {
   let lastError = null;
 
   for (let attempt = 0; attempt < TRANSACTION_ATTEMPT_LIMIT; attempt += 1) {
     const queryRunner = client.createQueryRunner();
+    let discardError = null;
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
@@ -146,14 +166,14 @@ const runInTransaction = async (client, work) => {
       return result;
     } catch (error) {
       if (queryRunner.isTransactionActive) {
-        await queryRunner.rollbackTransaction().catch(() => undefined);
+        discardError = await rollbackReportingFailure(queryRunner);
       }
       if (!isTransientTransactionConflict(error)) {
         throw error;
       }
       lastError = error;
     } finally {
-      await queryRunner.release();
+      await releaseQueryRunner(queryRunner, discardError);
     }
   }
 
