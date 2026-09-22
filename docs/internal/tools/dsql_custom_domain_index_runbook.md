@@ -127,6 +127,8 @@ Case 2, commit-time failure (block 9, two psql sessions):
 4. Session B: `COMMIT;` (only if step 2 succeeded). This is the observation. Record the SQLSTATE and message verbatim.
 5. The `SELECT` must show exactly one `race-site` row. Run the `DELETE` and confirm `race_rows_left = 0`.
 
+These two blocks write committed rows into the live table, unlike the smoke tests in blocks 6 and 7, which roll back and leave nothing. Case 1 runs in autocommit, so `race-custom-a` is a real row in `main.standalone_site_domain` the moment the statement returns; case 2 commits `race-custom-c` from session A at step 3. Probe rows therefore exist in `main` between the upsert and the `DELETE`, and anything reading that table in that window sees them, including the running Lambdas. The `DELETE` for `race-site` is the only thing that removes them, so run it even when an observation fails, and never stop after a failed step without running it. `race_rows_left = 0` is the confirmation that the table is clean again. The blast radius is small by construction: `race-site` is not a real site id, and the `.example` names are reserved for documentation by RFC 2606, so they can never resolve to CloudFront and a probe row can never become a live custom domain. The rows are still real while they exist, though, and a host who tried to connect one of those exact names in that window would be refused with `domain_taken` until the `DELETE` runs.
+
 Reading the outcomes:
 
 - Case 1 failing with `23505` on `standalone_site_domain_custom_site_unique` is what the mapping is written for; with check A passing, that interleaving answers `domain_limit_reached`.
